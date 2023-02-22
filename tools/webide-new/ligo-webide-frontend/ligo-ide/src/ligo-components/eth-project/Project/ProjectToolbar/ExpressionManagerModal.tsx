@@ -52,7 +52,7 @@ const ExpressionManagerModal = ({
       const decls = await WebIdeApi.listDeclarations({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         project: { sourceFiles: contractFiles, main: projectManager.mainFilePath },
-        onlyEndpoint: false,
+        onlyEndpoint: managerType === "dryRun",
       });
       setDeclarations(
         decls.data.map((d) => {
@@ -113,7 +113,7 @@ const ExpressionManagerModal = ({
       ref={modalRef}
       title={managerType === "dryRun" ? "Dry Run" : "Compile Expression"}
       textConfirm={managerType === "dryRun" ? "Run" : "Compile"}
-      pending={loading && (managerType === "dryRun" ? "Runing" : "Compiling")}
+      pending={loading && (managerType === "dryRun" ? "Running" : "Compiling")}
       confirmDisabled={
         name === "" || (managerType === "dryRun" ? storage === "" || params === "" : false)
       }

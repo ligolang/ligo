@@ -25,7 +25,7 @@ export default function ToolbarButton({
   ) : (
     children || (
       <>
-        <span className={isExpanded ? "ml-2 mr-2" : ""} key="icon">
+        <span className={isExpanded ? "ml-2 mr-2" : ""} key="icon" style={{ minWidth: "1.2rem" }}>
           <i className={icon} />
         </span>
         {isExpanded ? tooltip : null}

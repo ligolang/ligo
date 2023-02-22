@@ -24,8 +24,8 @@ const hardcodedTemplates = [
   { id: "hashlock", gitLink: undefined, display: "Hashlock Contract", existingSyntaxes: synIds },
 ];
 const pSyntaxes = [
-  { id: "mligo", display: "Camel Ligo" },
-  { id: "jsligo", display: "JS Ligo" },
+  { id: "mligo", display: "CameLIGO" },
+  { id: "jsligo", display: "JsLIGO" },
 ];
 
 const mapSyntaxes = (s: string) => {
@@ -171,7 +171,7 @@ const NewProjectModal = forwardRef((_, ref) => {
               templateInfo.existingSyntaxes.includes(s.id)
             );
             if (newSyntaxes.length === 0) {
-              newSyntaxes.push({ id: "mligo", display: "Camel Ligo" });
+              newSyntaxes.push({ id: "mligo", display: "CameLIGO" });
             }
             setTemplate(tmp);
             setSyntaxes(newSyntaxes);

@@ -305,7 +305,7 @@ export default class Workspace extends Component {
               <ToolbarButton
                 id="gist"
                 icon="fab fa-github"
-                tooltip="Upload to gist"
+                tooltip="Upload to Gist"
                 readOnly={readOnly}
                 onClick={() => this.gistUploadFileModal()}
                 isExpanded={this.state.expanded}

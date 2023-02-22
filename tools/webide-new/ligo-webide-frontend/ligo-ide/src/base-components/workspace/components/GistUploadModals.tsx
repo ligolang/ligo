@@ -121,7 +121,7 @@ const GistUploadModals = forwardRef(
     return (
       <Modal
         ref={modalRef}
-        title="Upload workspace to gist"
+        title="Upload Workspace to Gist"
         textConfirm={newToken !== "" ? "Save" : gistLink !== "" ? "Ok" : "Upload"}
         pending={loading && "Uploading..."}
         confirmDisabled={!token}
