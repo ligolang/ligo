@@ -6,6 +6,7 @@ module Cmd = Bos.Cmd
 module Trace = Simple_utils.Trace
 module Constants = Cli_helpers.Constants
 module T = Core
+module Formatter = Ligo_formatter
 
 type project_entity =
   [ `LIBRARY

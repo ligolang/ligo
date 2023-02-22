@@ -4,6 +4,7 @@ module Helpers = Ligo_compile.Helpers
 module Run = Ligo_run.Of_michelson
 open Ligo_prim
 module Raw_options = Compiler_options.Raw_options
+module Formatter = Ligo_formatter
 
 let loc = Location.dummy
 

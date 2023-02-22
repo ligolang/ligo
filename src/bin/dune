@@ -3,7 +3,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries core_kernel.version_util core_kernel.caml_threads simple-utils
-   cmdliner ligo ligo_compile build repl install publish user cli_helpers
+   cmdliner ligo ligo_init ligo_compile build repl install publish user cli_helpers
    daemon ligo_api)
  (modules command_unx cli version))
 

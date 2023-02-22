@@ -2,7 +2,7 @@ open Api_helpers
 
 let dump_changelog display_format no_colour () =
   let value = Changelog.changelog in
-  let format = Formatter.changelog_format in
+  let format = Ligo_formatter.changelog_format in
   format_result ~display_format ~no_colour format (fun ~raise:_ -> value)
 
 
@@ -12,4 +12,3 @@ module Run = Run
 module Info = Info
 module Print = Print
 module Mutate = Mutate
-module Ligo_init = Ligo_init

@@ -5,7 +5,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils ligo.decompile ligo.scopes build interpreter bos
-   cli_helpers cohttp-lwt-unix tar tar-unix decompress.gz))
+   cli_helpers tar tar-unix decompress.gz ligo.formatter))
 
 (rule
  (targets changelog.ml)

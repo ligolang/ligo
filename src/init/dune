@@ -1,0 +1,3 @@
+(library
+ (name ligo_init)
+ (libraries core bos simple-utils cli_helpers cohttp-lwt-unix decompress.gz tar-unix api_helpers ligo_formatter))

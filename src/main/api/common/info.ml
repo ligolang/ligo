@@ -2,6 +2,7 @@ open Api_helpers
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
+module Formatter = Ligo_formatter
 
 let measure_contract (raw_options : Raw_options.t) source_file display_format no_colour ()
   =
