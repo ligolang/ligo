@@ -13,8 +13,8 @@
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
-  "docs": {
-    "Intro": ["intro/introduction", "intro/installation", "intro/editor-support"],
+  docs: {
+    Intro: ["intro/introduction", "intro/installation", "intro/editor-support"],
     "Language Basics": [
       "language-basics/types",
       "language-basics/constants-and-variables",
@@ -28,9 +28,9 @@ const sidebars = {
       "language-basics/sets-lists-tuples",
       "language-basics/exceptions",
       "language-basics/modules",
-      "language-basics/tezos-specific"
+      "language-basics/tezos-specific",
     ],
-    "Advanced": [
+    Advanced: [
       "advanced/timestamps-addresses",
       "advanced/entrypoints-contracts",
       "advanced/include",
@@ -44,12 +44,9 @@ const sidebars = {
       "advanced/interop",
       "advanced/embedded-michelson",
       "advanced/package-management",
-      "advanced/global-constants"
+      "advanced/global-constants",
     ],
-    "Reference": [
-      "api/cli-commands",
-      "api/cheat-sheet"
-    ],
+    Reference: ["api/cli-commands", "api/cheat-sheet"],
     "Sub-Commands": [
       "manpages/changelog",
       "manpages/add-user",
@@ -86,9 +83,9 @@ const sidebars = {
       "manpages/run test",
       "manpages/run test-expr",
       "manpages/transpile contract",
-      "manpages/transpile expression"
+      "manpages/transpile expression",
     ],
-    "API":[
+    API: [
       "reference/toplevel",
       "reference/big-map-reference",
       "reference/bitwise-reference",
@@ -100,66 +97,96 @@ const sidebars = {
       "reference/string-reference",
       "reference/option-reference",
       "reference/current-reference",
-      "reference/test"
+      "reference/test",
     ],
     "Protocol Upgrades": [
       "protocol/hangzhou",
       "protocol/ithaca",
       "protocol/jakarta",
       "protocol/kathmandu",
-      "protocol/lima"
-    ]
+      "protocol/lima",
+    ],
   },
   "contributors-docs": {
-    "Introduction": [
+    Introduction: [
       "contributors/origin",
       "contributors/philosophy",
       "contributors/getting-started",
-      "contributors/documentation-and-releases"
+      "contributors/documentation-and-releases",
     ],
     "Big Picture": [
       "contributors/big-picture/overview",
       "contributors/big-picture/front-end",
       "contributors/big-picture/middle-end",
       "contributors/big-picture/back-end",
-      "contributors/big-picture/vendors"
+      "contributors/big-picture/vendors",
     ],
     "Road Map": [
       "contributors/road-map/short-term",
-      "contributors/road-map/long-term"
-    ]
+      "contributors/road-map/long-term",
+    ],
   },
-  "tutorials": {
-    "Get-started" : [
-      "tutorials/getting-started/getting-started"
-    ],
-    "First-contract": [
-      "tutorials/taco-shop/tezos-taco-shop-smart-contract",
-      "tutorials/taco-shop/tezos-taco-shop-payout"
-    ],
-    "Migrating from Ethereum": [
-      "tutorials/tz-vs-eth/tz-vs-eth"
-    ],
-    "Inter-contract invocations": [
-      "tutorials/inter-contract-calls/inter-contract-calls"
-    ],
-    "Security": [
-      "tutorials/security/security"
-    ],
-    "Optimisation": [
-      "tutorials/optimisation/optimisation"
-    ]
-  },
-  "faq": {
-    "FAQ": [
+  tutorials: [
+    {
+      label: "Getting started",
+      type: "doc",
+      id: "tutorials/getting-started/getting-started",
+    },
+    {
+      type: "category",
+      label: "First contract",
+      collapsible: true,
+      collapsed: true,
+      items: [
+        "tutorials/taco-shop/tezos-taco-shop-smart-contract",
+        "tutorials/taco-shop/tezos-taco-shop-payout",
+      ],
+    },
+    {
+      type: "category",
+      label: "LIGO Registry",
+      collapsible: true,
+      collapsed: true,
+      items: [
+        "tutorials/registry/what-is-the-registry",
+        "tutorials/registry/how-to-make-an-audit",
+      ],
+    },
+    {
+      type: "doc",
+      id: "tutorials/start-a-project-from-a-template",
+    },
+    {
+      type: "doc",
+      label: "Migrating from Ethereum",
+      id: "tutorials/tz-vs-eth/tz-vs-eth",
+    },
+    {
+      type: "doc",
+      label: "Inter-contract invocations",
+      id: "tutorials/inter-contract-calls/inter-contract-calls",
+    },
+    {
+      type: "doc",
+      label: "Smart contract security",
+      id: "tutorials/security/security",
+    },
+    {
+      label: "Optimisation",
+      type: "doc",
+      id: "tutorials/optimisation/optimisation",
+    },
+  ],
+  faq: {
+    FAQ: [
       "faq/intro",
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
       "faq/catch-error-view",
       "faq/cameligo-ocaml-syntax-diff",
-      "faq/tezos-now-advance-time"
-    ]
-  }
+      "faq/tezos-now-advance-time",
+    ],
+  },
 };
 
 module.exports = sidebars;
