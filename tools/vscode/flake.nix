@@ -34,7 +34,7 @@
             copyToRoot = pkgs.buildEnv {
               name = "vscode-extension-env-base";
               paths = with pkgs; [
-                vscodium ligo-bin nodePackages.esy yarn nodejs xvfb-run
+                vscodium nodePackages.esy yarn nodejs xvfb-run
                 bashInteractive caCertificates coreutils curl perl gnutar gzip
               ];
               pathsToLink = [ "/bin" "/lib" "/etc" ];
@@ -43,9 +43,9 @@
           copyToRoot = pkgs.buildEnv {
             name = "vscode-extension-env";
             paths = [
-              vscode-extension-package
+              vscode-extension-package ligo-bin
             ];
-            pathsToLink = [ "/libexec" ];
+            pathsToLink = [ "/libexec" "/bin" ];
           };
           config = {
             Cmd = [
