@@ -1,0 +1,7 @@
+
+author: sashasashasasha151
+description: "\\n\\nTyposElements in the expanded toolbar now alignedIt is possible to fold/unfold root folderEditor zoomDry run use `--only-ep` flagIn case of only wallet connected and no keys in kp, you will see wallet address in kp selectorFixed problem with impossibility to open kp manager from deploy modal twice\\n"
+merge_request: '2364'
+title: "[LIGO-832] Second round of fixes"
+type: fixed
+            

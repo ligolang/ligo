@@ -55,7 +55,7 @@ export default class RenameProjectModal extends PureComponent {
     return (
       <Modal
         ref={this.modal}
-        title="Rename project"
+        title="Rename Project"
         textConfirm="Rename"
         onConfirm={this.onRenameProject}
         pending={creating && "Renaming..."}

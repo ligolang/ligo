@@ -149,7 +149,7 @@ const OpenProjectModal = forwardRef((_, ref) => {
   return (
     <Modal
       ref={modalRef}
-      title="Load project"
+      title="Load Project"
       textConfirm="Load"
       onConfirm={onOpenProject}
       pending={loading && "Loading..."}

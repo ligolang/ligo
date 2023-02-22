@@ -379,7 +379,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
   };
 
   const handleExpand = (keys, { node }) => {
-    if (node.root || !!dragTarget || node.isLeaf) return;
+    if (!!dragTarget || node.isLeaf) return;
     setAutoExpandParent(false);
     setExpandKeys(keys);
     setSelectNode(node);
