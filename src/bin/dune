@@ -2,9 +2,22 @@
  (name cli)
  (instrumentation
   (backend bisect_ppx))
- (libraries core_kernel.version_util core_kernel.caml_threads simple-utils
-   cmdliner ligo ligo_init ligo_compile build repl install publish user cli_helpers
-   daemon ligo_api)
+ (libraries
+  core_kernel.version_util
+  core_kernel.caml_threads
+  simple-utils
+  cmdliner
+  ligo
+  ligo_init
+  ligo_compile
+  build
+  repl
+  install
+  publish
+  user
+  cli_helpers
+  daemon
+  ligo_api)
  (modules command_unx cli version))
 
 (library
@@ -25,8 +38,20 @@
  (name publish)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix tar tar-unix decompress.gz
-   bigstringaf base64 cohttp-lwt-unix yojson digestif ligo.unix)
+ (libraries
+  cli_helpers
+  simple-utils
+  lwt
+  lwt.unix
+  tar
+  tar-unix
+  decompress.gz
+  bigstringaf
+  base64
+  cohttp-lwt-unix
+  yojson
+  digestif
+  ligo.unix)
  (preprocess
   (pps ppx_deriving_yojson))
  (modules publish))
@@ -35,8 +60,14 @@
  (name user)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix base64 cohttp-lwt-unix
-   lambda-term)
+ (libraries
+  cli_helpers
+  simple-utils
+  lwt
+  lwt.unix
+  base64
+  cohttp-lwt-unix
+  lambda-term)
  ;Remove unused libs
  (preprocess
   (pps ppx_deriving_yojson))
@@ -81,8 +112,14 @@
  (public_name ligo)
  (instrumentation
   (backend bisect_ppx))
- (libraries ligo_lsp simple-utils cmdliner ligo ligo.main_interpreter.unix
-   ligo.api.unix cli)
+ (libraries
+  ligo_lsp
+  simple-utils
+  cmdliner
+  ligo
+  ligo.main_interpreter.unix
+  ligo.api.unix
+  cli)
  (flags
   -open
   Core
@@ -94,11 +131,22 @@
  (name js_main)
  (ocamlc_flags -g)
  (js_of_ocaml
- (link_flags "--source-map-root=%{project_root}")
-  (javascript_files threads.js others.js bls12-polynomial.js stdint.js
-    digestif.js))
- (libraries core zarith_stubs_js integers_stubs_js ctypes_stubs_js ligo_api
-   ligo_api_js ligo.main_interpreter.js js_of_ocaml)
+  (link_flags "--source-map-root=%{project_root}")
+  (javascript_files
+   threads.js
+   others.js
+   bls12-polynomial.js
+   stdint.js
+   digestif.js))
+ (libraries
+  core
+  zarith_stubs_js
+  integers_stubs_js
+  ctypes_stubs_js
+  ligo_api
+  ligo_api_js
+  ligo.main_interpreter.js
+  js_of_ocaml)
  (modes js)
  (preprocess
   (pps js_of_ocaml-ppx))

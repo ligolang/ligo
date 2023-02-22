@@ -13,8 +13,18 @@
   preprocessing_jsligo
   lexing_shared
   menhir_js_tokens)
- (modules PreParser State Token ES6FUN ES6FUN_hook VBAR VBAR_hook SEMI
-   SEMI_hook Attributes Self))
+ (modules
+  PreParser
+  State
+  Token
+  ES6FUN
+  ES6FUN_hook
+  VBAR
+  VBAR_hook
+  SEMI
+  SEMI_hook
+  Attributes
+  Self))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of
@@ -25,8 +35,14 @@
  (deps
   (:ParToken ../../../../02-parsing/jsligo/ParToken.mly))
  (action
-  (run menhir %{ParToken} --only-tokens --inspection --table --base
-    MenhirToken)))
+  (run
+   menhir
+   %{ParToken}
+   --only-tokens
+   --inspection
+   --table
+   --base
+   MenhirToken)))
 
 (library
  (name menhir_js_tokens)
@@ -47,5 +63,13 @@
 (menhir
  (merge_into PreParser)
  (modules ../../../../02-parsing/jsligo/ParToken PreParser)
- (flags -la 1 --table --strict --explain --inspection --cmly
-   --external-tokens Token))
+ (flags
+  -la
+  1
+  --table
+  --strict
+  --explain
+  --inspection
+  --cmly
+  --external-tokens
+  Token))

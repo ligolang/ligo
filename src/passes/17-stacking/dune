@@ -3,8 +3,14 @@
  (public_name ligo.stacking)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils proto-alpha-utils ligo_coq_ocaml self_michelson
-   mini_c environment tezos-hacl)
+ (libraries
+  simple-utils
+  proto-alpha-utils
+  ligo_coq_ocaml
+  self_michelson
+  mini_c
+  environment
+  tezos-hacl)
  (inline_tests)
  (preprocess
   (pps ppx_inline_test ppx_expect ppx_poly_constructor)))

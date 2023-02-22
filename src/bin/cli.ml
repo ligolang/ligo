@@ -1839,9 +1839,7 @@ let print_group =
 let init_library =
   let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
-    then
-      return_result ~return
-      @@ Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
+    then return_result ~return @@ Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
     else
       return_result ~return
       @@ Ligo_init.new_project
@@ -1873,8 +1871,7 @@ let init_contract =
   let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
     then
-      return_result ~return
-      @@ Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
+      return_result ~return @@ Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
     else
       return_result ~return
       @@ Ligo_init.new_project

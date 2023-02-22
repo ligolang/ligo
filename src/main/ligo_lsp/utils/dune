@@ -5,5 +5,14 @@
   (:standard -w +A-4-40-42-44-70))
  (instrumentation
   (backend bisect_ppx))
- (libraries linol linol-lwt lsp compiler_options simple-utils scopes
-   syntax_types checking desugaring ligo.preprocessing))
+ (libraries
+  linol
+  linol-lwt
+  lsp
+  compiler_options
+  simple-utils
+  scopes
+  syntax_types
+  checking
+  desugaring
+  ligo.preprocessing))

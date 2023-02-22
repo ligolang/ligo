@@ -3,7 +3,12 @@
  (public_name ligo.cameligo)
  (instrumentation
   (backend bisect_ppx))
- (libraries tree_abstraction_shared simple-utils cst parsing ast_imperative
-   predefined)
+ (libraries
+  tree_abstraction_shared
+  simple-utils
+  cst
+  parsing
+  ast_imperative
+  predefined)
  (preprocess
   (pps ppx_poly_constructor)))

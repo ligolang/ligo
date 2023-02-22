@@ -9,7 +9,7 @@
   (deps
    (env_var EXPECT_ONLY_TEST)
    (source_tree
-     ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
+    ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
    (source_tree ../../test/contracts)
    (source_tree ../../test/projects)
    (source_tree ../../test/lexer)))

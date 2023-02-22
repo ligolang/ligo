@@ -23,8 +23,14 @@
  (deps
   (:ParToken ../../../../02-parsing/pascaligo/ParToken.mly))
  (action
-  (run menhir %{ParToken} --only-tokens --inspection --table --base
-    MenhirToken)))
+  (run
+   menhir
+   %{ParToken}
+   --only-tokens
+   --inspection
+   --table
+   --base
+   MenhirToken)))
 
 (library
  (name mh_psc_tokens)
