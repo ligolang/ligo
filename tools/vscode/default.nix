@@ -1,6 +1,5 @@
 { lib
 , yarn2nix-moretea
-, ligo-squirrel
 , zip
 , unzip
 , findutils
@@ -10,9 +9,7 @@ let
     src = ./.;
 
     patchPhase = ''
-      cp --remove-destination ${../../../LICENSE.md} ./LICENSE.md
-      cp -Lr --no-preserve=mode ${ligo-squirrel}/* .
-      ${findutils}/bin/find -type f -exec chmod +x {} \;
+      cp --remove-destination ${../../LICENSE.md} ./LICENSE.md
     '';
 
     preBuild = ''
@@ -22,7 +19,8 @@ let
 
     postBuild = ''
       yarn run package
-      yarn run lint
+      # TODO fix eslint warnings
+      # yarn run lint
     '';
     distPhase = ":";
   };

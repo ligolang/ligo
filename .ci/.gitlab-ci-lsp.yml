@@ -88,26 +88,24 @@ lsp-contract-test:
   script:
     - nix build $FLAKE_FLAGS ./tools/lsp#checks.x86_64-linux.ligo-contracts-test
 
-vscode-lsp-extension-linux:
-  stage: tools-check
-  rules: *lsp_mr_dev
-  needs: [lsp-build]
-  script:
-    - nix build $FLAKE_FLAGS ./tools/lsp#vscode-extension-native
-
 vscode-extension-docker-test:
   stage: tools-check
-  rules: *lsp_mr_dev
-  needs: [docker_extract, lsp-build]
+  rules: &vscode_extension_mr_dev
+    - !reference [.vscode_extension_mr_changes]
+    - !reference [.dev]
+  needs: [docker_extract]
   script:
     - git add ./ligo # Ligo binary is needed for these tests
-    - nix build $FLAKE_FLAGS 'git+file:///'$PWD'?dir=tools/lsp'#tests.x86_64-linux.vscode-extenstion-test-docker-image
+    - nix build $FLAKE_FLAGS ./tools/vscode#tests.x86_64-linux.vscode-extenstion-test-docker-image
     - docker load -i result
     - docker run --rm vscode-extension-test
+  # Nuke imported image to save some space
+  after_script:
+    - docker image rm vscode-extension-test
 
 vscode-extension-publish-check:
   stage: tools-check
-  rules: *lsp_mr_dev
+  rules: *vscode_extension_mr_dev
   needs: []
   script:
     - nix flake $FLAKE_FLAGS check ./tools/vsce
@@ -115,12 +113,12 @@ vscode-extension-publish-check:
 vscode-lsp-extension:
   stage: tooling
   rules:
-    - !reference [.lsp_mr_changes]
+    - !reference [.vscode_extension_mr_changes]
     - !reference [.dev]
     - !reference [.vscode_production]
   needs: []
   script:
-    - nix build $FLAKE_FLAGS ./tools/lsp#vscode-extension
+    - nix build $FLAKE_FLAGS ./tools/vscode#vscode-extension
     - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
   artifacts:
     paths:
