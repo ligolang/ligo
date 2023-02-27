@@ -70,7 +70,7 @@ val get_value
   -> (mutable_flag * Type.t, [> `Mut_var_captured | `Not_found ]) result
 
 val get_imm : t -> Value_var.t -> Type.t option
-val get_mut : t -> Value_var.t -> (Type.t, [> `Mut_var_captured | `Not_found ]) result
+val get_mut : t -> Value_var.t -> Type.t option
 val get_type : t -> Type_var.t -> Type.t option
 val get_module : t -> Module_var.t -> Signature.t option
 val get_type_vars : t -> Type_var.Set.t

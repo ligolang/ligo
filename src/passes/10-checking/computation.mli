@@ -126,15 +126,10 @@ module Context : sig
   val get_imm_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_mut var] returns the type of the mutable variable [var].
-      Returning [Error] if not found in the current context or is escapes. *)
-  val get_mut
-    :  Value_var.t
-    -> ((Type.t, [ `Mut_var_captured | `Not_found ]) result, 'err, 'wrn) t
+      Returning [None] if not found in the current context. *)
+  val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
 
-  val get_mut_exn
-    :  Value_var.t
-    -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Type.t, 'err, 'wrn) t
+  val get_mut_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context.
