@@ -28,6 +28,7 @@
 (ert-deftest ligo-auto-mode-alist-test ()
   "Check that file extensions are properly binded to according mode"
   (should (member '("\\.mligo\\'" . ligo-caml-mode) auto-mode-alist))
+  (should (member '("\\.ligo\\'" . ligo-pascal-mode) auto-mode-alist))
   )
 
 (ert-deftest ligo-squirrel-bin-test ()

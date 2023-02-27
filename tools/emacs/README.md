@@ -1,6 +1,6 @@
 # Emacs plugin for LIGO
 
-This plugin features syntax highlighting and `lsp-mode` support for CameLIGO.
+This plugin features syntax highlighting and `lsp-mode` support for PascaLIGO and CameLIGO.
 
 For the LSP to work, you need to install `lsp-mode` and put `ligo-squirrel` executable in PATH.
 

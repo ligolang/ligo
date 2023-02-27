@@ -160,7 +160,7 @@ let uri_extension : DocumentUri.t -> string option =
   snd @. Filename.split_extension @. DocumentUri.to_path
 
 
-let get_syntax = Syntax.of_ext_opt @. uri_extension
+let get_syntax = Syntax.of_ext_opt ~support_pascaligo:true @. uri_extension
 
 let get_comment syntax =
   let block =

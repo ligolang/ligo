@@ -8,6 +8,7 @@ import {
 
 function getBlockComment(lang: Dialect): [string, string] {
   switch (lang) {
+    case Dialect.PASCALIGO:
     case Dialect.CAMELIGO:
       return ['(*', '*)']
     case Dialect.JSLIGO:
@@ -58,8 +59,10 @@ function blockCommentTest(lang: Dialect) {
 }
 
 suite('LIGO: Insert comments (LIGO-425 regression)', () => {
+  lineCommentTest(Dialect.PASCALIGO)
   lineCommentTest(Dialect.CAMELIGO)
   lineCommentTest(Dialect.JSLIGO)
+  lineCommentTest(Dialect.PASCALIGO)
   blockCommentTest(Dialect.CAMELIGO)
   blockCommentTest(Dialect.JSLIGO)
 })
