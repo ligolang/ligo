@@ -144,38 +144,3 @@ let%expect_test _ =
       5 |     return add();
 
     Invalid capture of mutable variable "x" |}]
-
-(*
-let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "multiple_vars_1.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/vars_consts/multiple_vars_1.ligo", line 4, characters 4-5:
-      3 |     const (x, y) = (4, 5);
-      4 |     x := 2;
-      5 |     y := 3;
-
-    Mutable variable "x" not found. |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "multiple_vars_2.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/vars_consts/multiple_vars_2.ligo", line 4, characters 38-39:
-      3 |     var (x, y) := (4, 5);
-      4 |     function add(const _u : unit) is (x + y);
-      5 |   } with add(unit)
-
-    Invalid capture of mutable variable "x" |}]
-
-let%expect_test _ =
-  run_ligo_bad [ "print"; "ast-typed"; bad_test "capture_assign.ligo" ];
-  [%expect
-    {|
-    File "../../test/contracts/negative/vars_consts/capture_assign.ligo", line 5, characters 4-5:
-      4 |     const y = 0;
-      5 |     x := 6;
-      6 |   } with unit;
-
-    Invalid capture of mutable variable "x" |}]
-*)

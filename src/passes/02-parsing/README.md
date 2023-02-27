@@ -409,7 +409,7 @@ message cannot propose it as a valid future.
    but we do not do so, which make it is hard to remember when
    priority played a role, because Menhir only reports the number of
    states where priority of reduction played a role, but does not tell
-   which ones.
+   which ones. *)
 
   14. Inlining a production with `%inline` reduces the number of
       states in the generated LR automaton, but it may increase
