@@ -28,6 +28,8 @@ include:
   - '/.ci/.gitlab-ci-lsp.yml'
   - '/.ci/.gitlab-ci-debugger.yml'
   - '/.ci/.gitlab-ci-webide-new.yml'
+  # CI manage notification
+  - '/.ci/.gitlab-ci-notify.yml'
 .submodule-clone:
   before_script:
     - git submodule sync --recursive
