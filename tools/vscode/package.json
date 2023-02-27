@@ -17,6 +17,7 @@
         "vscode": "^1.57.0"
     },
     "activationEvents": [
+        "onLanguage:ligo",
         "onLanguage:mligo",
         "onLanguage:jsligo"
     ],
@@ -24,6 +25,21 @@
     "main": "./client/out/extension",
     "contributes": {
         "languages": [
+            {
+                "id": "ligo",
+                "aliases": [
+                    "PascaLIGO"
+                ],
+                "extensions": [
+                    ".ligo",
+                    ".pligo"
+                ],
+                "icon": {
+                    "light": "logo.png",
+                    "dark": "logo.png"
+                },
+                "configuration": "./syntaxes/ligo.configuration.json"
+            },
             {
                 "id": "mligo",
                 "aliases": [
@@ -54,6 +70,11 @@
             }
         ],
         "grammars": [
+            {
+                "language": "ligo",
+                "scopeName": "source.ligo",
+                "path": "./syntaxes/ligo.tmLanguage.json"
+            },
             {
                 "language": "mligo",
                 "scopeName": "source.mligo",

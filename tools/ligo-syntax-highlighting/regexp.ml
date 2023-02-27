@@ -18,6 +18,18 @@ let let_binding_match3: Core.regexp = {
   vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>";
 }
 
+let let_binding_match1_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(function\\\\)\\\\b";
+  textmate = "\\b(function)\\b";
+  vim      = "\\<function\\>";
+}
+
+let let_binding_match2_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)";
+  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
+  vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
+}
+
 let lambda_begin: Core.regexp = {
   emacs    = "\\\\b\\\\(fun\\\\)\\\\b";
   textmate = "\\b(fun)\\b";
@@ -34,6 +46,12 @@ let of_keyword_match: Core.regexp = {
   emacs    = "\\\\b\\\\(of)\\\\b";
   textmate = "\\b(of)\\b";
   vim      = "\\<\\(of\\)\\>";
+}
+
+let is_keyword_match: Core.regexp = {
+  emacs    = "\\\\b\\\\(is)\\\\b";
+  textmate = "\\b(is)\\b";
+  vim      = "\\<\\(is\\)\\>";
 }
 
 let record_keyword_match: Core.regexp = {
@@ -54,12 +72,24 @@ let structure_keywords_match: Core.regexp = {
   vim      = "\\<\\(struct\\|end\\|in\\)\\>";
 }
 
+let control_keywords_match_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(case\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|end\\\\|in\\\\|is\\\\|from\\\\|skip\\\\|block\\\\|contains\\\\|to\\\\|step\\\\|of\\\\|while\\\\|for\\\\|remove\\\\)\\\\b";
+  textmate = "\\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\\b";
+  vim      = "\\<\\(case\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\|is\\|from\\|skip\\|block\\|contains\\|to\\|step\\|of\\|while\\|for\\|remove\\)\\>"
+}
+
 let operators_match: Core.regexp = {
   emacs    = "::\\\\|-\\\\|+\\\\|/\\\\|\\\\b\\\\(mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\)\\\\b\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|<>\\\\|<=\\\\|>=";
   textmate = "::|\\-|\\+|\\b(mod|land|lor|lxor|lsl|lsr)\\b|&&|\\|\\||>|<>|<=|=>|<|>";
   vim      = "::\\|-\\|+\\|/\\|\\<\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\>\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>="
 }
 
+
+let operators_match_ligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(-\\\\|+\\\\|/\\\\|mod\\\\|land\\\\|lor\\\\|lxor\\\\|lsl\\\\|lsr\\\\|&&\\\\|||\\\\|<\\\\|>\\\\|=/=\\\\|<=\\\\|>=\\\\)\\\\b";
+  textmate = "\\b(\\-|\\+|mod|land|lor|lxor|lsl|lsr|&&|\\|\\||>|=/=|<=|=>|<|>)\\b";
+  vim      = "\\<\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\>"
+}
 
 let module_match1: Core.regexp = {
   emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\.";
@@ -161,6 +191,12 @@ let multiplication_match: Core.regexp = {
   emacs    = "\\\\(*\\\\)";
   textmate = "(*)";
   vim      = "*";
+}
+
+let const_or_var: Core.regexp = {
+  emacs    = "\\\\b\\\\(const\\\\|var\\\\)\\\\b";
+  textmate = "\\b(const|var)\\b";
+  vim      = "\\<\\(const\\|var\\)\\>"
 }
 
 (* TODO: add regexps for emacs & vim later *)
@@ -398,4 +434,51 @@ let type_as_end_jsligo: Core.regexp = {
   emacs    = "";
   textmate = "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
   vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@=";
+}
+
+let type_binder_positive_lookahead_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = "(?=([a-zA-Z0-9_,]+|\\s)+>)";
+  vim      = "\\([a-zA-Z0-9_,]\\|\\s\\)\\+>\\@=";
+}
+
+(*
+  follow(type_annotation) = SEMI RPAR RBRACKET Is EQ ASS
+  n.b.: Remove the `%inline` from `type_annotation` before running Menhir to see
+  its FOLLOW set.
+*)
+let type_annotation_begin_ligo: Core.regexp = type_annotation_begin
+
+let type_annotation_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = ";\\\\|)\\\\|}\\\\|\\\\bis\\\\b\\\\|=\\\\|:=";
+  textmate = "(?=;|\\)|\\]|\\bis\\b|=|:=)";
+  vim      = "\\(;\\|)\\|}\\|\\<is\\>\\|=\\|:=\\)\\@=";
+}
+
+(* follow(type_decl) = Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr *)
+let type_definition_begin_ligo: Core.regexp = type_definition_begin
+
+let type_definition_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "\\\\b\\\\(type\\\\|recursive\\\\|module\\\\|function\\\\|end\\\\|const\\\\)\\\\b\\\\|;\\\\|{\\\\|^#\\\\|\\\\[@";
+  textmate = "(?=\\b(type|recursive|module|function|end|const)\\b|;|{|^#|\\[@)";
+  vim      = "\\(\\<\\(type\\|recursive\\|module\\|function\\|end\\|const\\)\\>\\|;\\|{\\|^#\\|\\[@\\)\\@=";
+}
+
+let type_operator_match_ligo: Core.regexp = {
+  emacs    = "\\\\(->\\\\|\\\\.\\\\||\\\\|\\\\*\\\\)";
+  textmate = "(->|\\.|\\||\\*)";
+  vim      = "\\(->\\|\\.\\||\\|\\*\\)";
+}
+
+(* follow(field_decl) = SEMI RBRACKET *)
+let type_annotation_field_begin_ligo: Core.regexp = type_annotation_begin
+
+let type_annotation_field_end_ligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = ";\\\\|\\\\]";
+  textmate = "(?=;|\\])";
+  vim      = "\\(;\\|\\]\\)\\@=";
 }

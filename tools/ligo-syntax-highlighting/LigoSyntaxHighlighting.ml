@@ -103,6 +103,7 @@ let output: string -> string -> string -> string -> _ Term.ret = fun vscode_dire
     `Error (false, "Not a valid directory to output TextMate files")
   else (
     let syntaxes_without_jsligo = [
+      ("ligo", PascaLIGO.syntax_highlighting);
       ("mligo", CameLIGO.syntax_highlighting);
     ] in
     let syntaxes = ("jsligo", JsLIGO.syntax_highlighting) :: syntaxes_without_jsligo in
