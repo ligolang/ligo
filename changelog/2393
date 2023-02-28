@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nAdd a new subcommand (`ligo lsp`) whose purpose is to allow LSP clients (Visual Studio Code, Emacs, Vim, etc) to communicate with the new LIGO Language Server, which is being rewritten in OCaml. This command is not meant to be launched manually by users, but rather by editors. The rewrite was officially made in [!2303](https://gitlab.com/ligolang/ligo/-/merge_requests/2303).\\n\\nThe initial release supports diagnostics (errors only), go to definition, hover, rename (only in open files), references (only in open files), and type definition.\\n\\nAs the rewrite is new, it does not yet support feature parity with the old language server, and bugs are to be expected.\\n\\nOther LSP features (hover, folding range, document link, warnings for diagnostics, prepare rename) have since been implemented in other merge requests.\\n\\nOfficial support for the Vim, Emacs, and Visual Studio Code plugins will come soon, as well as the VS Code plugin release on the Marketplace and OpenVSX.\\n\\n"
+merge_request: '2393'
+title: "[Chore] Add a changelog documenting the initial write of the LSP"
+type: added
+            
