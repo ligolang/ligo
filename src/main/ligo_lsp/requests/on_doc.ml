@@ -32,6 +32,19 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       uri
       { get_scope_info = new_state; syntax; code = contents };
     let simple_diags = Diagnostics.get_diagnostics new_state in
-    let diags = List.map Diagnostics.from_simple_diagnostic simple_diags in
+    let deprecation_warnings =
+      match syntax with
+      | PascaLIGO ->
+        [ Diagnostics.
+            { range = None
+            ; message = "PascaLIGO is not officially supported in this LIGO version"
+            ; severity = DiagnosticSeverity.Warning
+            }
+        ]
+      | CameLIGO | JsLIGO -> []
+    in
+    let diags =
+      List.map Diagnostics.from_simple_diagnostic (simple_diags @ deprecation_warnings)
+    in
     send_diagnostic diags
 end
