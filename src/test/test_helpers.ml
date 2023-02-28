@@ -139,10 +139,13 @@ let wrap_ref file f =
 
 let type_file ~raise ?(st = "auto") f entry options =
   ignore st;
-  Build.qualified_typed ~raise ~options entry f
+  Build.qualified_typed ~raise ~options entry (Build.Source_input.From_file f)
 
 
-let core_file ~raise f options = Build.qualified_core ~raise ~options f
+let core_file ~raise f options =
+  Build.qualified_core ~raise ~options (Build.Source_input.From_file f)
+
+
 let core_file_unqualified ~raise f options = Build.unqualified_core ~raise ~options f
 
 let get_program ~raise ?(st = "auto") f entry =

@@ -1,0 +1,10 @@
+(library
+ (name ligo_formatter)
+ (public_name ligo.formatter)
+ (libraries
+  simple-utils
+  ligo_prim
+  tezos-utils
+  proto-alpha-utils
+  ast_typed
+  mini_c))

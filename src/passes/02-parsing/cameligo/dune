@@ -3,8 +3,16 @@
 (menhir
  (merge_into Parser)
  (modules ParToken Parser)
- (flags -la 1 --table --strict --explain --inspection --cmly
-   --external-tokens Lexing_cameligo.Token))
+ (flags
+  -la
+  1
+  --table
+  --strict
+  --explain
+  --inspection
+  --cmly
+  --external-tokens
+  Lexing_cameligo.Token))
 
 (rule
  (targets RecoverParser.ml)
@@ -69,9 +77,19 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir --unused-tokens --update-errors errors.msg.in --table --strict
-     --external-tokens Lexer_cameligo.Token --base Parser.mly ParToken.mly
-     Parser.mly))))
+   (run
+    menhir
+    --unused-tokens
+    --update-errors
+    errors.msg.in
+    --table
+    --strict
+    --external-tokens
+    Lexer_cameligo.Token
+    --base
+    Parser.mly
+    ParToken.mly
+    Parser.mly))))
 
 (rule
  (target errors.msg.new)
@@ -79,17 +97,38 @@
  (action
   (with-stdout-to
    %{target}
-   (run menhir --unused-tokens --list-errors --table --strict
-     --external-tokens Lexer_cameligo.Token --base Parser.mly ParToken.mly
-     Parser.mly))))
+   (run
+    menhir
+    --unused-tokens
+    --list-errors
+    --table
+    --strict
+    --external-tokens
+    Lexer_cameligo.Token
+    --base
+    Parser.mly
+    ParToken.mly
+    Parser.mly))))
 
 (rule
  (alias runtest)
  (deps errors.msg errors.msg.new)
  (action
-  (run menhir --unused-tokens --table --strict --external-tokens
-    Lexer_cameligo.Token --base Parser.mly ParToken.mly Parser.mly
-    --compare-errors errors.msg.new --compare-errors errors.msg)))
+  (run
+   menhir
+   --unused-tokens
+   --table
+   --strict
+   --external-tokens
+   Lexer_cameligo.Token
+   --base
+   Parser.mly
+   ParToken.mly
+   Parser.mly
+   --compare-errors
+   errors.msg.new
+   --compare-errors
+   errors.msg)))
 
 (rule
  (targets ParErr.ml)
@@ -97,6 +136,16 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir --unused-tokens --table --strict --external-tokens
-     Lexer_cameligo.Token --base Parser.mly ParToken.mly Parser.mly
-     --compile-errors errors.msg.in))))
+   (run
+    menhir
+    --unused-tokens
+    --table
+    --strict
+    --external-tokens
+    Lexer_cameligo.Token
+    --base
+    Parser.mly
+    ParToken.mly
+    Parser.mly
+    --compile-errors
+    errors.msg.in))))

@@ -1,0 +1,18 @@
+(library
+ (name interpreter)
+ (public_name ligo.main_interpreter)
+ (virtual_modules mutation)
+ (instrumentation
+  (backend bisect_ppx))
+ (preprocess
+  (pps ppx_here))
+ (libraries
+  ast_aggregated
+  ligo_interpreter
+  tezos-memory-proto-alpha
+  main_errors
+  ligo_compile
+  build
+  ligo_run
+  self_ast_typed
+  bls12-381))

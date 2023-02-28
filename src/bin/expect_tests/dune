@@ -1,6 +1,6 @@
 (library
  (name cli_expect_tests)
- (libraries simple-utils cli ligo.unix)
+ (libraries simple-utils cli ligo.unix ligo.api.unix)
  (inline_tests
   (flags
    ; (-only-test %{env:EXPECT_ONLY_TEST=build_module_test.ml:6}) ;
@@ -9,7 +9,7 @@
   (deps
    (env_var EXPECT_ONLY_TEST)
    (source_tree
-     ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
+    ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
    (source_tree ../../test/contracts)
    (source_tree ../../test/projects)
    (source_tree ../../test/lexer)))

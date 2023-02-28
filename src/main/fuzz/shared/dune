@@ -3,4 +3,4 @@
  (public_name ligo.fuzz.shared)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils tezos-utils qcheck ligo.ast_typed))
+ (libraries simple-utils qcheck ligo.ast_typed))
