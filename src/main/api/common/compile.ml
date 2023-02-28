@@ -88,7 +88,7 @@ let contract
     | File filename -> BuildSystem.Source_input.From_file filename
     | Text (source_code, syntax) ->
       BuildSystem.Source_input.(
-        Raw { id = "foo" ^ Syntax.to_ext syntax; code = source_code })
+        Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
   in
   let code, views = Build.build_contract ~raise ~options entry_point views source in
   let file_constants = read_file_constants ~raise file_constants in
