@@ -96,14 +96,12 @@ docker_build:
     # Copy JSOO PoC IDE
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/ligo/jsoo/dist ./ligo-demo-ide
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
-    - docker save -o ligo_builder.tar.gz ${LIGO_IMAGE_TAG}-builder
   after_script:
     - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
       - ligo.tar.gz
-      - ligo_builder.tar.gz
 docker_extract:
   stage: docker-extract
   rules:
@@ -120,7 +118,6 @@ docker_extract:
       artifacts: true
   script:
     - docker load -i ligo.tar.gz
-    - docker load -i ligo_builder.tar.gz
     - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo .
     - chmod +rwx ligo
     # Check that the binary is truly static and has 0 dependencies
