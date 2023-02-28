@@ -223,6 +223,7 @@ export default class Workspace extends Component {
             this.throttledDispatchResizeEvent();
           }}
           onDragFinished={this.onDragTerminal}
+          style={{ overflow: undefined }}
         >
           <CodeEditorCollection
             ref={this.codeEditor}
@@ -271,6 +272,7 @@ export default class Workspace extends Component {
             }
             return size;
           }}
+          style={{ overflow: undefined }}
         >
           <div className="d-flex flex-column align-items-stretch h-100">
             <div className={`d-flex border-bottom-1 ${this.state.expanded ? "flex-column" : ""}`}>

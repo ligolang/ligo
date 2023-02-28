@@ -4,10 +4,54 @@ import PropTypes from "prop-types";
 
 import * as monaco from "monaco-editor";
 import throttle from "lodash/throttle";
+import {
+  MonacoLanguageClient,
+  CloseAction,
+  ErrorAction,
+  MonacoServices,
+} from "monaco-languageclient";
+import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from "vscode-ws-jsonrpc";
 
 import modelSessionManager from "./modelSessionManager";
 import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
+
+function createWebSocket() {
+  const url = "ws://localhost:8080";
+  const webSocket = new WebSocket(url);
+  webSocket.onopen = () => {
+    const socket = toSocket(webSocket);
+    const reader = new WebSocketMessageReader(socket);
+    const writer = new WebSocketMessageWriter(socket);
+    const languageClient = createLanguageClient({
+      reader,
+      writer,
+    });
+    languageClient.start();
+    reader.onClose(() => languageClient.stop());
+  };
+}
+
+function createLanguageClient(transports) {
+  return new MonacoLanguageClient({
+    name: "Sample Language Client",
+    clientOptions: {
+      // use a language id as a document selector
+      documentSelector: ["cameligoext", "jsligoext"],
+      // disable the default error handler
+      errorHandler: {
+        error: () => ({ action: ErrorAction.Continue }),
+        closed: () => ({ action: CloseAction.DoNotRestart }),
+      },
+    },
+    // create a language client connection from the JSON RPC connection on demand
+    connectionProvider: {
+      get: () => {
+        return Promise.resolve(transports);
+      },
+    },
+  });
+}
 
 export default class MonacoEditor extends Component {
   static propTypes = {
@@ -88,6 +132,10 @@ export default class MonacoEditor extends Component {
       },
       mouseWheelZoom: true,
     });
+    // install Monaco language client services
+    MonacoServices.install();
+
+    createWebSocket();
 
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent(() => {
