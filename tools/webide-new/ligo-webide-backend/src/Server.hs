@@ -17,7 +17,7 @@ import Servant.Swagger.UI (swaggerSchemaUIServer)
 
 import Api (API, SwaggeredAPI)
 import Common (WebIDEM)
-import Config (Config(..))
+import Config (ServerConfig(..))
 import Error (LigoCompilerError, MorleyError, convertToServerError, customFormatters)
 import Method.Compile (compile)
 import Method.CompileExpression (compileExpression)
@@ -29,16 +29,16 @@ import Method.ListDeclarations (listDeclarations)
 import Method.ListTemplates (listTemplates)
 import SwaggerSchema (webIdeOpenApi)
 
-startApp :: Config -> IO ()
-startApp config = run (cPort config) (mkApp config)
+startApp :: ServerConfig -> IO ()
+startApp config = run (scPort config) (mkApp config)
 
-mkApp :: Config -> Application
+mkApp :: ServerConfig -> Application
 mkApp config =
   maybeLogRequests . corsWithContentType $ serveWithContext (Proxy @SwaggeredAPI) (customFormatters :. EmptyContext) server
   where
     maybeLogRequests :: Middleware
     maybeLogRequests =
-      if cVerbose config
+      if scVerbosity config >= 1
       then logStdoutDev
       else id
 

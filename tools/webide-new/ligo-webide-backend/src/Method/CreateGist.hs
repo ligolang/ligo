@@ -10,7 +10,7 @@ import GitHub
 import GitHub.Internal.Prelude (Binary, genericRnf)
 
 import Common (WebIDEM)
-import Config (cGistToken)
+import Config (scGistToken)
 import Error (GistError(..))
 import Schema.GistCreateUpdateRequest (GistCreateUpdateRequest(..))
 import Source (Source(..), SourceFile(..))
@@ -43,7 +43,7 @@ updateGistR ugist = command Post ["gists", ugGistId ugist] (encode ugist)
 
 createGist :: GistCreateUpdateRequest -> WebIDEM Text
 createGist request = do
-  dockerizedLigo <- lift $ asks cGistToken
+  dockerizedLigo <- lift $ asks scGistToken
   let files = fromList $ flip map (gcuSourceFiles request) $
         \s -> (Text.pack $ sfFilePath s, NewGistFile $ unSource $ sfSource s)
   result <- liftIO $ github (OAuth (encodeUtf8 dockerizedLigo :: BS.ByteString)) $ case gcuGistId request of

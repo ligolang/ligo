@@ -224,12 +224,7 @@ export default class Tabs extends PureComponent {
     }
 
     return (
-      <div
-        className={classnames(
-          "d-flex flex-column w-100 h-100 overflow-hidden",
-          this.props.className
-        )}
-      >
+      <div className={classnames("d-flex flex-column w-100 h-100", this.props.className)}>
         <TabHeader
           ref={this.header}
           size={this.props.size}
@@ -244,7 +239,7 @@ export default class Tabs extends PureComponent {
           ToolButtons={this.props.ToolButtons}
           contextMenu={this.props.tabContextMenu}
         />
-        <div className="d-flex flex-1 flex-column overflow-hidden p-relative">
+        <div className="d-flex flex-1 flex-column p-relative">
           {Bar}
           {content}
         </div>

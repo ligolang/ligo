@@ -5,7 +5,7 @@ import Data.Text qualified as Text
 import System.Environment qualified (lookupEnv)
 import Test.Tasty (TestName, TestTree, defaultMain, testGroup)
 
-import Config (Config(..))
+import Config (ServerConfig(..))
 import Server (mkApp)
 
 import Test.Common (TestM)
@@ -33,17 +33,20 @@ main = do
   ligoPath <- lookupEnv "LIGO_PATH"
   octezClientPath <- lookupEnv "OCTEZ_CLIENT_PATH"
   dockerLigoVersion <- lookupEnv "DOCKER_LIGO_VERSION"
+  clientCounter <- newIORef 0
 
-  let standardConfig = Config
-        { cLigoPath = Just ligoPath
-        , cOctezClientPath = Just octezClientPath
-        , cPort = 0 -- not used
-        , cVerbose = False
-        , cDockerizedLigoVersion = Nothing
-        , cGistToken = ""
+  let standardConfig = ServerConfig
+        { scLigoPath = ligoPath
+        , scOctezClientPath = Just octezClientPath
+        , scPort = 0 -- not used
+        , scVerbosity = 0
+        , scDockerizedLigoVersion = Nothing
+        , scGistToken = ""
+        , scLSPWorkspacePrefix = "/tmp" -- not used
+        , scLSPClientCounter = clientCounter -- not used
         }
   let dockerizedConfig = standardConfig
-        {cDockerizedLigoVersion = Just dockerLigoVersion}
+        {scDockerizedLigoVersion = Just dockerLigoVersion}
 
   testWithApplication (pure (mkApp standardConfig)) $ \standardPort ->
     testWithApplication (pure (mkApp dockerizedConfig)) $ \dockerizedPort ->

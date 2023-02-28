@@ -216,7 +216,7 @@ export default class CodeEditorCollection extends PureComponent {
 
     return (
       <div
-        className={classnames("d-flex w-100 h-100 overflow-hidden", {
+        className={classnames("d-flex w-100 h-100", {
           bg2: this.tabs.current && this.tabs.current.state.tabs.length !== 1,
         })}
       >

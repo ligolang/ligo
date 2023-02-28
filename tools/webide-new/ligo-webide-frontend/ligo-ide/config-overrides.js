@@ -102,6 +102,7 @@ function enableTS() {
 const overrides = [
   addWebpackAlias({
     "~": path.resolve(__dirname, "src/"),
+    'vscode/services': require.resolve('vscode/services')
   }),
   overrideProcessEnv({
     CDN: JSON.stringify(!!process.env.CDN),

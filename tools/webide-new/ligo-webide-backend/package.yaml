@@ -66,6 +66,9 @@ library:
   source-dirs: src
   dependencies:
   - aeson
+  - aeson-pretty
+  - async
+  - attoparsec
   - bytestring
   - containers
   - directory
@@ -74,11 +77,15 @@ library:
   - fmt
   - github
   - katip
+  - lens
+  - lsp-types
   - megaparsec
   - microlens-platform
+  - monad-control
   - morley
   - morley-client
   - mtl
+  - optparse-applicative
   - process
   - servant-client
   - servant-server
@@ -87,10 +94,13 @@ library:
   - openapi3
   - temporary
   - text
+  - transformers
+  - unliftio
   - wai
   - wai-cors
   - wai-extra
   - warp
+  - websockets
 
 executables:
   ligo-webide-backend:
@@ -101,8 +111,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - katip
     - ligo-webide-backend
-    - optparse-applicative
+    - wai-websockets
+    - warp
+    - websockets
 
   swagger-gen:
     main: Main.hs
