@@ -265,7 +265,8 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   }
 
   if (data === '') {
-    await vscode.window.showWarningMessage(
+    // We purposefully omit the `await` here to avoid the extension hanging.
+    vscode.window.showWarningMessage(
       '`ligo --version` returned the empty string. Assuming it was built locally. Ensure this LIGO build supports `ligo lsp`.',
     )
     return
