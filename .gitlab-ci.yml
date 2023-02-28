@@ -87,6 +87,16 @@ docker_build:
     - job: changelog
       artifacts: true
   script:
+    # Because JSOO artifacts are only present in ligo-builder stage.
+    # ligo-builder stage is discarded during the creation of ligo image for consumers
+    # so that we can offer them a leaner image with just necessary ligo tools
+    - DOCKER_BUILDKIT=1 docker build .
+      --build-arg=ci_commit_tag=$CI_COMMIT_TAG
+      --build-arg=ci_commit_sha=$CI_COMMIT_SHA
+      --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
+      --build-arg=changelog_path=changelog.txt
+      --target ligo-builder
+      -t ${LIGO_IMAGE_TAG}-builder
     - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
@@ -94,7 +104,7 @@ docker_build:
       --build-arg=changelog_path=changelog.txt
       -t ${LIGO_IMAGE_TAG}
     # Copy JSOO PoC IDE
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/ligo/jsoo/dist ./ligo-demo-ide
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}-builder):/ligo/jsoo/dist ./ligo-demo-ide
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
   after_script:
     - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
