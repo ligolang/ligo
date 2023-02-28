@@ -1,7 +1,7 @@
 notify-christian-on-frontend-change:
   stage: post-build-action
   script:
-    - MESSAGE="Someone edited frontend https://gitlab.com/ligolang/ligo/-/merge_requests/$CI_PIPELINE_ID"
+    - MESSAGE="Someone edited frontend https://gitlab.com/ligolang/ligo/-/merge_requests/$CI_MERGE_REQUEST_IID"
     - "curl -d \"text=${MESSAGE}\" -d 'channel=UC5125SQP' -H \"Authorization: Bearer ${SLACK_LIGO_ALERTER_TOKEN}\" -X POST https://slack.com/api/chat.postMessage --trace-ascii /dev/stdout"
   when: on_failure
   rules:
