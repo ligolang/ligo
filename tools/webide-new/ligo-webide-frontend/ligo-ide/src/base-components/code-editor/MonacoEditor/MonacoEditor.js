@@ -86,6 +86,7 @@ export default class MonacoEditor extends Component {
         autohide: true,
         showSlider: "mouseover",
       },
+      mouseWheelZoom: true,
     });
 
     modelSessionManager.editor = monacoEditor;

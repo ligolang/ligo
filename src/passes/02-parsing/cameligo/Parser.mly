@@ -28,7 +28,6 @@ let mk_wild region =
 
 (* Reductions on error *)
 
-%on_error_reduce tuple_expr_level
 %on_error_reduce seq_expr
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce call_expr_level
@@ -554,78 +553,18 @@ base_cond:
   base_cond__open(base_cond) { $1 }
 
 base_expr(right_expr):
-  let_in_expr(right_expr)
-| let_mut_in_expr(right_expr)
+  tuple_expr
+| let_in_expr(right_expr)
 | local_type_decl(right_expr)
 | local_module_decl(right_expr)
 | local_module_alias(right_expr)
 | fun_expr(right_expr)
-| for_expr
-| while_expr
-| ass_expr_level { $1 }
+| disj_expr_level { $1 }
 
-(* For loops *)
-
-for_expr:
-  for_int_expr
-| for_in_expr { $1 }
-
-for_int_expr:
-  "for" index "=" expr direction expr block { 
-    let kwd_for  = $1 in
-    let equal    = $3 in
-    let stop     = $7.kwd_done#region in
-    let region   = cover kwd_for#region stop in
-    let value    = {kwd_for;
-                    index     = $2;
-                    equal;
-                    bound1    = $4;
-                    direction = $5;
-                    bound2    = $6;
-                    body      = $7}
-    in EFor {region; value} }
-
-index:
-  "_"         { mk_wild $1#region }
-| var_pattern { $1 }
-
-direction:
-  "to"     { To $1 }
-| "downto" { Downto $1 }
-
-block:
-  "do" ioption(series) "done" { 
-    let kwd_do    = $1 in
-    let kwd_done  = $3 in
-    let value     = {kwd_do;
-                     seq_expr = $2;
-                     kwd_done}
-    in value }
-
-for_in_expr:
-  "for" pattern "in" expr block { 
-    let kwd_for  = $1 in
-    let kwd_in   = $3 in
-    let stop     = $5.kwd_done#region in
-    let region   = cover kwd_for#region stop in
-    let value    = {kwd_for;
-                    pattern     = $2;
-                    kwd_in;
-                    collection  = $4;
-                    body        = $5}
-    in EForIn {region; value} }
-
-while_expr:
-  "while" expr block { 
-    let kwd_while = $1 in
-    let stop      = $3.kwd_done#region in
-    let region    = cover kwd_while#region stop in
-    let value     = {kwd_while;
-                     cond = $2;
-                     body = $3}
-    in EWhile {region; value} }
-
-(* Conditional *)
+tuple_expr:
+  tuple(disj_expr_level) {
+    let region = nsepseq_to_region expr_to_region $1
+    in ETuple {region; value=$1} }
 
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
@@ -723,26 +662,6 @@ let_in_expr(right_expr):
                   body       = $6}
     in ELetIn {region; value} }
 
-let_mut_in_expr(right_expr):
-  attributes "let" "mut" let_mut_binding "in" right_expr {
-    let kwd_let = $2 in
-    let kwd_mut = $3 in
-    let kwd_in = $5 in
-    let stop = expr_to_region $6 in
-    let region = cover kwd_let#region stop in
-    let value = { attributes = $1;
-                  kwd_let;
-                  kwd_mut;
-                  binding    = $4;
-                  kwd_in;
-                  body       = $6}
-    in ELetMutIn {region; value} }
-
-let_mut_binding:
-  var_pattern let_rhs_type "=" expr {
-    {binders = (PVar $1, []); type_params=None;
-     rhs_type=$2; eq=$3; let_rhs=$4} }
-
 local_type_decl(right_expr):
   type_decl "in" right_expr  {
     let stop   = expr_to_region $3 in
@@ -784,45 +703,6 @@ fun_expr(right_expr):
 
 lambda_app_type:
   prod_type_level | sum_type(prod_type_level) { $1 }
-
-(* The rule [ass_expr_level] is above the [tuple_expr_level].
-   This is because OCaml interprets
-      x := 1, 2
-    as
-      x := (1, 2)
-    and not
-      (x := 1, 2)
-
-    Note that we still respect the expression hierarchy with the following preorder:
-      core
-      < (call | constr)
-      < unary
-      < shift
-      < mult
-      < add
-      < cons
-      < cat
-      < comp
-      < conj
-      < disj
-      < tuple
-      < ass
-*)
-
-ass_expr_level:
-  variable ":=" ass_expr_level {
-    let start  = $1.region in
-    let stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {binder=$1; ass=$2; expr=$3}
-    in EAssign {region; value} }
-| tuple_expr_level { $1 }
-
-tuple_expr_level:
-  tuple(disj_expr_level) {
-    let region = nsepseq_to_region expr_to_region $1
-    in ETuple {region; value=$1} }
-| disj_expr_level { $1 }
 
 disj_expr_level:
   bin_op(disj_expr_level, "||", conj_expr_level)
@@ -1076,7 +956,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence { $1 }
+| let_in_sequence
+| tuple_expr { $1 }
 
 let_in_sequence:
   attributes "let" ioption("rec") let_binding "in" series  {
@@ -1099,7 +980,4 @@ let_in_sequence:
     in ELetIn {region; value} }
 
 seq_expr:
-  ass_expr_level
-| for_expr
-| while_expr
-| if_then_else(seq_expr) { $1 }
+  disj_expr_level | if_then_else (seq_expr) { $1 }

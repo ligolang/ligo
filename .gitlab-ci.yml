@@ -28,6 +28,8 @@ include:
   - '/.ci/.gitlab-ci-lsp.yml'
   - '/.ci/.gitlab-ci-debugger.yml'
   - '/.ci/.gitlab-ci-webide-new.yml'
+  # CI manage notification
+  - '/.ci/.gitlab-ci-notify.yml'
 .submodule-clone:
   before_script:
     - git submodule sync --recursive
@@ -158,7 +160,7 @@ check-generated-highlighting:
     - scripts/diff_dir.sh highlighting/vim/ftdetect tools/vim/ligo/start/ligo/ftdetect
     - scripts/diff_dir.sh highlighting/vim/plugin tools/vim/ligo/start/ligo/plugin
     - scripts/diff_dir.sh highlighting/vim/syntax tools/vim/ligo/start/ligo/syntax
-    - scripts/diff_dir.sh highlighting/vscode tools/lsp/vscode-plugin/syntaxes
+    - scripts/diff_dir.sh highlighting/vscode tools/vscode/syntaxes
     - scripts/diff_dir.sh highlighting/textmate tools/ligo-syntax-highlighting/textmate
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

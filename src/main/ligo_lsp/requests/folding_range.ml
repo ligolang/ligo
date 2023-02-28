@@ -75,8 +75,6 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | EPar { value; region } -> mk_region region :: expr value.inside
     (* FIXME: LIGO provides no body ranges for the definition of a ... in ... *)
     | ELetIn { value; _ } -> let_binding value.binding @ expr value.body
-    | ELetMutIn { value; _ } -> let_binding value.binding @ expr value.body
-    | EAssign { value; _ } -> expr value.expr
     | ETypeIn { value; _ } -> type_decl value.type_decl @ expr value.body
     | EModIn { value; _ } -> module_decl value.mod_decl @ expr value.body
     | EModAlias { value; _ } -> module_alias value.mod_alias @ expr value.body
@@ -85,9 +83,6 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
       mk_region region :: sepseq_concat_map value.elements ~f:expr
     | ECodeInj { value; region } -> mk_region region :: expr value.code
     | ERevApp { value; _ } -> bin_op value
-    | EWhile { value; region } -> mk_region region :: while_loop value
-    | EFor { value; region } -> mk_region region :: for_loop value
-    | EForIn { value; region } -> mk_region region :: for_in_loop value
     | EVar _ | EBytes _ | EUnit _ -> []
   and case value = expr value.expr @ cases value.cases
   and cases { value; _ } = nsepseq_concat_map value ~f:case_clause
@@ -144,12 +139,6 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | Path_property value -> field_path_assignment_property value
     | Path_punned_property _ -> []
   and field_path_assignment_property value = expr value.field_expr
-  and while_loop value = expr value.cond @ loop_body value.body
-  and for_loop value = expr value.bound1 @ expr value.bound2 @ loop_body value.body
-  and for_in_loop value =
-    pattern value.pattern @ expr value.collection @ loop_body value.body
-  and loop_body value =
-    value_map ~f:(nsepseq_concat_map ~f:expr) ~default:[] value.seq_expr
   and field_decl value = type_expr value.field_type
   (* Pattern *)
   and pattern = function

@@ -33,6 +33,7 @@ module M (Params : Params) = struct
    fun code_input ->
     let syntax =
       Syntax.of_string_opt
+        ~support_pascaligo:true
         ~raise
         (Syntax_name "auto")
         (match code_input with
@@ -104,7 +105,13 @@ module M (Params : Params) = struct
     let options = Compiler_options.set_init_env options env in
     let core_c_unit = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
     let ast_core =
-      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+      let syntax =
+        Syntax.of_string_opt
+          ~raise
+          ~support_pascaligo:true
+          (Syntax_name "auto")
+          (Some file_name)
+      in
       Helpers.inject_declaration ~options ~raise syntax core_c_unit
     in
     Ligo_compile.Of_core.typecheck ~raise ~options Ligo_compile.Of_core.Env ast_core
@@ -143,7 +150,13 @@ module Infer (Params : Params) = struct
    fun () file_name meta c_unit ->
     let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
     let module_ =
-      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some file_name) in
+      let syntax =
+        Syntax.of_string_opt
+          ~support_pascaligo:true
+          ~raise
+          (Syntax_name "auto")
+          (Some file_name)
+      in
       Helpers.inject_declaration ~options ~raise syntax module_
     in
     module_
@@ -158,7 +171,10 @@ let get_top_level_syntax ~options ?filename () : Syntax_types.t =
   match Compiler_options.(options.frontend.syntax) with
   | Some x -> x
   | None ->
-    (match Trace.to_option @@ Syntax.of_string_opt (Syntax_name "auto") filename with
+    (match
+       Trace.to_option
+       @@ Syntax.of_string_opt ~support_pascaligo:true (Syntax_name "auto") filename
+     with
     | Some x -> x
     | None -> failwith "Top-level syntax not found")
 

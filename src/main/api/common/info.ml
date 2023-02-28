@@ -3,6 +3,7 @@ module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 module Formatter = Ligo_formatter
+module Trace = Simple_utils.Trace
 
 let measure_contract (raw_options : Raw_options.t) source_file display_format no_colour ()
   =
@@ -74,7 +75,11 @@ let get_scope_raw
     | Raw_input_lsp { file; _ } -> file
   in
   let syntax =
-    Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some file_name)
+    Syntax.of_string_opt
+      ~support_pascaligo:true
+      ~raise
+      (Syntax_name raw_options.syntax)
+      (Some file_name)
   in
   let protocol_version =
     Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -93,7 +98,7 @@ let get_scope_raw
       Build.qualified_core_from_raw_input ~raise ~options file code
   in
   let lib =
-    (* We need stdlib for [Build.Stdlib.get], 
+    (* We need stdlib for [Build.Stdlib.get],
        because if [no_stdlib] we get [Build.Stdlib.empty] *)
     let options = Compiler_options.set_no_stdlib options false in
     Build.Stdlib.get ~options

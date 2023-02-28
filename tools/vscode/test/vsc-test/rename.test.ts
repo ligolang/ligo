@@ -12,7 +12,7 @@ const newContractsDir: string = path.join(contractsDir, 'renamed-directory')
 suite('LIGO: Rename directory', () => {
   test('Renaming does not make the extension stop working', async () => {
     try {
-      const uri = await vscode.Uri.file(path.join(oldContractsDir, 'LIGO-320.mligo'))
+      const uri = vscode.Uri.file(path.join(oldContractsDir, 'LIGO-320.mligo'))
       const position = new vscode.Position(1, 5)
 
       const doc = await vscode.workspace.openTextDocument(uri)

@@ -205,7 +205,7 @@ class HeaderWithRedux extends PureComponent {
         uiState={this.props.uiState}
         customNetworks={this.props.customNetworks}
         customNetworkModalStatus={this.props.customNetworkModalStatus}
-        onCancelKp={() => this.setState({ setIsOpenKeypair: false })}
+        onCancelKp={() => this.setState({ isOpenKeypair: false })}
         isOpenKeypair={this.state.isOpenKeypair}
       />
     );

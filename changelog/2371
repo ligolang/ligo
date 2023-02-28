@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFolding ranges allow the language server client to collapse or expand regions of code. Although some clients like Visual Studio Code can try to automatically deduce ranges based on regions, others like Emacs or Vim might not, so we implement the folding range requests from LSP in `ligo lsp`.\\n\\n"
+merge_request: '2371'
+title: "[#1648] Implement folding range for the LSP"
+type: added
+            

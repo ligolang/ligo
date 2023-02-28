@@ -55,18 +55,10 @@ type kwd_type      = lexeme wrap
 type kwd_with      = lexeme wrap
 type kwd_module    = lexeme wrap
 type kwd_struct    = lexeme wrap
-type kwd_mut       = lexeme wrap
-type kwd_for       = lexeme wrap
-type kwd_while     = lexeme wrap
-type kwd_to        = lexeme wrap
-type kwd_downto    = lexeme wrap
-type kwd_do        = lexeme wrap
-type kwd_done      = lexeme wrap
 
 (* Symbols *)
 
 type arrow    = lexeme wrap  (* "->" *)
-type ass      = lexeme wrap  (* ":=" *)
 type cons     = lexeme wrap  (* "::" *)
 type cat      = lexeme wrap  (* "^"  *)
 type append   = lexeme wrap  (* "@"  *)
@@ -290,12 +282,6 @@ and field_pattern = {
   pattern    : pattern
 }
 
-and assign = {
-  binder : variable;
-  ass : ass;
-  expr : expr
-}
-
 and expr =
   ECase     of expr case reg
 | ECond     of cond_expr reg
@@ -316,8 +302,6 @@ and expr =
 | ETuple    of (expr, comma) nsepseq reg
 | EPar      of expr par reg
 | ELetIn    of let_in reg
-| ELetMutIn of let_mut_in reg
-| EAssign   of assign reg
 | ETypeIn   of type_in reg
 | EModIn    of mod_in reg
 | EModAlias of mod_alias reg
@@ -325,9 +309,6 @@ and expr =
 | ESeq      of expr injection reg
 | ECodeInj  of code_inj reg
 | ERevApp   of rev_app bin_op reg
-| EWhile    of while_loop reg
-| EFor      of for_loop reg
-| EForIn    of for_in_loop reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -476,15 +457,6 @@ and let_in = {
   attributes : attributes
 }
 
-and let_mut_in = {
-  kwd_let    : kwd_let;
-  kwd_mut    : kwd_mut;
-  binding    : let_binding;
-  kwd_in     : kwd_in;
-  body       : expr;
-  attributes : attributes
-}
-
 and type_in = {
   type_decl  : type_decl;
   kwd_in     : kwd_in;
@@ -519,40 +491,6 @@ and cond_expr = {
   kwd_then : kwd_then;
   ifso     : expr;
   ifnot    : (kwd_else * expr) option;
-}
-
-and for_loop = {
-  kwd_for   : kwd_for;
-  index     : var_pattern reg;
-  equal     : equal;
-  bound1    : expr;
-  direction : direction;
-  bound2    : expr;
-  body      : loop_body
-}
-
-and while_loop = {
-  kwd_while : kwd_while;
-  cond      : expr;
-  body      : loop_body
-}
-
-and for_in_loop = {
-  kwd_for     : kwd_for;
-  pattern     : pattern;
-  kwd_in      : kwd_in;
-  collection  : expr;
-  body        : loop_body
-}
-
-and direction = 
-  | To of kwd_to
-  | Downto of kwd_downto
-
-and loop_body = {
-  kwd_do    : kwd_do;
-  seq_expr  : (expr, semi) nsepseq option;
-  kwd_done  : kwd_done
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -642,9 +580,8 @@ let expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
-| EModA {region; _} | ECodeInj {region; _} | ELetMutIn {region; _}
-| ERevApp {region; _} | EAssign {region; _} | EFor {region; _}
-| EWhile {region; _} | EForIn {region; _} -> region
+| EModA {region; _} | ECodeInj {region; _}
+| ERevApp {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

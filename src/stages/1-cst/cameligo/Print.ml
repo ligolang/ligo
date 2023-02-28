@@ -307,82 +307,6 @@ and print_constr_pattern state {value; _} =
     None -> ()
   | Some pat -> print_pattern state pat
 
-and print_loop_body state { kwd_do = _; seq_expr; kwd_done = _ } =
-  match seq_expr with
-  | None -> print_node (state#pad 1 0) "<empty>"
-  | Some exprs ->
-      let exprs = Utils.nsepseq_to_list exprs in
-      let n_exprs = List.length exprs in
-      List.iteri exprs ~f:(fun i expr -> print_expr (state#pad n_exprs i) expr)
-
-and print_direction state direction =
-  match direction with
-  | To kwd | Downto kwd -> print_loc_node state kwd#payload kwd#region
-
-and print_index state index = print_pvar state index
-
-and print_for_loop state
-    { kwd_for = _; index; equal = _; bound1; direction; bound2; body } =
-  let () =
-    let state = state#pad 5 0 in
-    print_node state "<index>";
-    print_index (state#pad 1 0) index
-  in
-  let () =
-    let state = state#pad 5 1 in
-    print_node state "<bound1>";
-    print_expr (state#pad 1 0) bound1
-  in
-  let () =
-    let state = state#pad 5 2 in
-    print_node state "<direction>";
-    print_direction (state#pad 1 0) direction
-  in
-  let () =
-    let state = state#pad 5 3 in
-    print_node state "<bound2>";
-    print_expr (state#pad 1 0) bound2
-  in
-  let () =
-    let state = state#pad 5 4 in
-    print_node state "<body>";
-    print_loop_body (state#pad 1 0) body
-  in
-  ()
-
-and print_for_in_loop state
-    { kwd_for = _; pattern; kwd_in = _; collection; body } =
-  let () =
-    let state = state#pad 3 0 in
-    print_node state "<pattern>";
-    print_pattern (state#pad 1 0) pattern
-  in
-  let () =
-    let state = state#pad 3 1 in
-    print_node state "<collection>";
-    print_expr (state#pad 1 0) collection
-  in
-  let () =
-    let state = state#pad 3 2 in
-    print_node state "<body>";
-    print_loop_body (state#pad 1 0) body
-  in
-  ()
-
-and print_while_loop state
-    { kwd_while = _; cond; body } =
-  let () = 
-    let state = state#pad 2 0 in
-    print_node state "<cond>";
-    print_expr (state#pad 1 0) cond
-  in
-  let () = 
-    let state = state#pad 2 1 in
-    print_node state "<body>";
-    print_loop_body (state#pad 1 0) body
-  in
-  ()
-  
 and print_expr state = function
   ECase {value; region} ->
     print_loc_node state "ECase" region;
@@ -440,9 +364,6 @@ and print_expr state = function
 | ELetIn {value; region} ->
     print_loc_node state  "ELetIn" region;
     print_let_in state value
-| ELetMutIn {value; region} ->
-    print_loc_node state "ELetMutIn" region;
-    print_let_mut_in state value
 | ETypeIn {value; region} ->
     print_loc_node state  "ETypeIn" region;
     print_type_in state value
@@ -463,32 +384,6 @@ and print_expr state = function
     print_code_inj state value
 | ERevApp {value; region} ->
     print_bin_op "ERevApp" region state value
-| EAssign {value; region} ->
-    print_loc_node state "EAssign" region;
-    print_assign state value
-| EFor {value; region} ->
-    print_loc_node state "EFor" region;
-    print_for_loop state value
-| EForIn {value; region} ->
-    print_loc_node state "EForIn" region;
-    print_for_in_loop state value
-| EWhile {value; region} ->
-    print_loc_node state "EWhile" region;
-    print_while_loop state value
-
-and print_assign state (assign : CST.assign) = 
-  let { binder; ass = _; expr } = assign in
-  let () =
-    let state = state#pad 2 0 in
-    print_node state "<binder>";
-    print_ident (state#pad 1 0) binder
-  in
-  let () =
-    let state = state#pad 2 1 in
-    print_node state "<expr>";
-    print_expr (state#pad 1 0) expr
-  in 
-  ()
 
 and print_module_access :
   type a. (state -> a -> unit ) -> state -> a module_access -> unit =
@@ -543,39 +438,6 @@ and print_let_in state node =
     let state = state#pad arity 0 in
     print_node state "<binders>";
     print_binders state binders; rank in
-  let rank =
-    match rhs_type with
-      None -> rank
-    | Some (_, type_expr) ->
-       let state = state#pad arity (rank+1) in
-       print_node state "<lhs type>";
-       print_type_expr (state#pad 1 0) type_expr;
-       rank+1 in
-  let rank =
-    let state = state#pad arity (rank+1) in
-    print_node state "<rhs>";
-    print_expr (state#pad 1 0) let_rhs;
-    rank+1 in
-  let rank =
-    let state = state#pad arity (rank+1) in
-    print_node state "<body>";
-    print_expr (state#pad 1 0) body;
-    rank+1 in
-  let () =
-    if not (List.is_empty attributes) then
-      let state = state#pad arity (rank+1)
-      in print_attributes state attributes
-  in ()
-
-and print_let_mut_in state node =
-  let {binding; body; attributes; kwd_mut = _; _} = node in
-  let {binders; rhs_type; let_rhs; _} = binding in
-  let arity = if Option.is_none rhs_type then 3 else 4 in
-  let arity = if List.is_empty attributes then arity else arity+1 in
-  let rank =
-    let state = state#pad arity 0 in
-    print_node state "<binders>";
-    print_binders state binders; 0 in
   let rank =
     match rhs_type with
       None -> rank

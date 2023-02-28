@@ -1,0 +1,17 @@
+notify-christian-on-frontend-change:
+  stage: post-build-action
+  script:
+    - MESSAGE="Someone edited frontend https://gitlab.com/ligolang/ligo/-/merge_requests/$CI_PIPELINE_ID"
+    - "curl -d \"text=${MESSAGE}\" -d 'channel=UC5125SQP' -H \"Authorization: Bearer ${SLACK_LIGO_ALERTER_TOKEN}\" -X POST https://slack.com/api/chat.postMessage --trace-ascii /dev/stdout"
+  when: on_failure
+  rules:
+  # 2654428 & UC5125SQP = Christian 
+  - if: $GITLAB_USER_ID == "2654428"
+    when: never
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    changes:
+      - src/stages/1-cst/**/*
+      - src/passes/00-preprocessing/**/*
+      - src/passes/01-lexing/**/*
+      - src/passes/02-parsing/**/*
+    when: always

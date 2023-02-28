@@ -310,12 +310,11 @@ let get_mut =
     hashable
     (module Value_var)
     (fun t var ->
-      let rec loop ?(locked = false) = function
-        | C_value (var', Mutable, type_) :: _ when Value_var.equal var var' ->
-          if locked then Error `Mut_var_captured else Ok type_
-        | C_mut_lock _ :: items -> loop ~locked:true items
-        | _ :: items -> loop ~locked items
-        | [] -> Error `Not_found
+      let rec loop = function
+        | C_value (var', Mutable, type_) :: _ when Value_var.equal var var' -> Some type_
+        | C_mut_lock _ :: _ -> None
+        | _ :: items -> loop items
+        | [] -> None
       in
       loop t)
 
