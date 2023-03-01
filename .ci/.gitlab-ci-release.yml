@@ -192,7 +192,6 @@ update_release_metadata:
         CI_COMMIT_TAG=${CI_COMMIT_BRANCH#"release/"}
       fi
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
-    - git branch -D laucans/fix-pipeline
     - git fetch
     - git checkout release/$CI_COMMIT_TAG
     - ./.ci/scripts/release_metadata/edit_release_metadata.sh LAST_RELEASE_VERSION $CI_COMMIT_TAG
