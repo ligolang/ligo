@@ -288,8 +288,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
       const newVersion = await promptLigoUpdate(ligoPath, semverTest)
       switch (typeof newVersion) {
         case 'string':
-          // TODO: Replace with actual LIGO version with LIGO LSP.
-          if (semver.lt(newVersion, semver.coerce('0.61.0'))) {
+          if (semver.lt(newVersion, '0.61.0')) {
             return await unsupportedVersion()
           }
           break
@@ -332,5 +331,4 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   }
 
   await validateSemver(data)
-  await validateRollingRelease(data)
 }
