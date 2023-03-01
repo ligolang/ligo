@@ -3190,6 +3190,39 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
+(* Example contract from getting-started in PascaLIGO using --deprecated *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "increment.ligo"; "--deprecated" ];
+  [%expect
+    {|
+    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; contract "increment.ligo" ];
+  [%expect
+    {|
+    Invalid file extension for '../../test/contracts/increment.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can enable its support using the --deprecated flag. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "expression"; "pascaligo"; "1 + 1" ];
+  [%expect
+    {|
+    Invalid syntax.
+    PascaLIGO is deprecated.
+    Hint: You can enable its support using the --deprecated flag. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "expression"; "pascaligo"; "1 + 1"; "--deprecated" ];
+  [%expect {|
+    2 |}]
+
 (* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_capitalized_entrypoint.mligo" ];

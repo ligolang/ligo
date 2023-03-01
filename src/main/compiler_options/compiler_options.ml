@@ -52,12 +52,15 @@ type backend =
   ; no_colour : bool
   }
 
+type common = { deprecated : bool }
+
 type t =
   { frontend : frontend
   ; tools : tools
   ; test_framework : test_framework
   ; middle_end : middle_end
   ; backend : backend
+  ; common : common
   }
 
 let warn_unused_rec ~syntax should_warn =
@@ -119,7 +122,8 @@ let make
     ; no_colour = raw_options.no_colour
     }
   in
-  { frontend; tools; test_framework; middle_end; backend }
+  let common = { deprecated = raw_options.deprecated } in
+  { frontend; tools; test_framework; middle_end; backend; common }
 
 
 let set_init_env opts init_env =

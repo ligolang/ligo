@@ -136,7 +136,9 @@ let compile_groups ~raise filename grp_list =
    fun ((syntax, grp, protocol_version), (lang, contents)) ->
     trace ~raise (test_md_file filename syntax grp contents)
     @@ fun ~raise ->
-    let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
+    let syntax =
+      Syntax.of_string_opt ~raise ~support_pascaligo:false (Syntax_name syntax) None
+    in
     let options =
       Compiler_options.make
         ~syntax

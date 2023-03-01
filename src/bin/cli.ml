@@ -307,6 +307,13 @@ let no_colour =
   flag ~doc name no_arg
 
 
+let deprecated =
+  let open Command.Param in
+  let name = "--deprecated" in
+  let doc = "enable deprecated language PascaLIGO" in
+  flag ~doc name no_arg
+
+
 let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
@@ -505,6 +512,7 @@ let compile_file =
       show_warnings
       warning_as_error
       no_colour
+      deprecated
       michelson_comments
       constants
       file_constants
@@ -524,6 +532,7 @@ let compile_file =
         ~no_stdlib
         ~warning_as_error
         ~no_colour
+        ~deprecated
         ~constants
         ~file_constants
         ~project_root
@@ -563,6 +572,7 @@ let compile_file =
     <*> warn
     <*> werror
     <*> no_colour
+    <*> deprecated
     <*> michelson_comments
     <*> constants
     <*> file_constants
@@ -584,6 +594,7 @@ let compile_parameter =
       now
       display_format
       no_colour
+      deprecated
       michelson_format
       output_file
       show_warnings
@@ -603,6 +614,7 @@ let compile_parameter =
         ~constants
         ~file_constants
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -642,6 +654,7 @@ let compile_parameter =
     <*> now
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> michelson_code_format
     <*> output_file
     <*> warn
@@ -660,6 +673,7 @@ let compile_expression =
       init_file
       display_format
       no_colour
+      deprecated
       without_run
       no_stdlib
       michelson_format
@@ -681,6 +695,7 @@ let compile_expression =
         ~constants
         ~file_constants
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -709,6 +724,7 @@ let compile_expression =
     <*> init_file
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> without_run
     <*> no_stdlib
     <*> michelson_code_format
@@ -734,6 +750,7 @@ let compile_storage =
       now
       display_format
       no_colour
+      deprecated
       michelson_format
       output_file
       show_warnings
@@ -753,6 +770,7 @@ let compile_storage =
         ~constants
         ~file_constants
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -792,6 +810,7 @@ let compile_storage =
     <*> now
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> michelson_code_format
     <*> output_file
     <*> warn
@@ -810,6 +829,7 @@ let compile_constant =
       init_file
       display_format
       no_colour
+      deprecated
       without_run
       show_warnings
       warning_as_error
@@ -824,6 +844,7 @@ let compile_constant =
         ~without_run
         ~warning_as_error
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -846,6 +867,7 @@ let compile_constant =
     <*> init_file
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> without_run
     <*> warn
     <*> werror
@@ -917,13 +939,21 @@ let mutate_cst =
       libraries
       display_format
       no_colour
+      deprecated
       seed
       generator
       project_root
       ()
     =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
+      Raw_options.make
+        ~syntax
+        ~protocol_version
+        ~libraries
+        ~generator
+        ~project_root
+        ~deprecated
+        ()
     in
     return_result ~return
     @@ Api.Mutate.mutate_cst raw_options source_file display_format seed no_colour
@@ -943,6 +973,7 @@ let mutate_cst =
     <*> libraries
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> seed
     <*> generator
     <*> project_root)
@@ -956,13 +987,21 @@ let mutate_ast =
       libraries
       display_format
       no_colour
+      deprecated
       seed
       generator
       project_root
       ()
     =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~libraries ~generator ~project_root ()
+      Raw_options.make
+        ~syntax
+        ~protocol_version
+        ~libraries
+        ~generator
+        ~project_root
+        ~deprecated
+        ()
     in
     return_result ~return
     @@ Api.Mutate.mutate_ast raw_options source_file display_format seed no_colour
@@ -982,6 +1021,7 @@ let mutate_ast =
     <*> libraries
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> seed
     <*> generator
     <*> project_root)
@@ -1001,6 +1041,7 @@ let test =
       cli_expr_inj
       display_format
       no_colour
+      deprecated
       show_warnings
       project_root
       warn_unused_rec
@@ -1011,6 +1052,7 @@ let test =
         ~syntax
         ~steps
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ~cli_expr_inj
         ~test:true
@@ -1035,6 +1077,7 @@ let test =
     <*> cli_expr_inj
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> warn
     <*> project_root
     <*> warn_unused_rec)
@@ -1049,6 +1092,7 @@ let test_expr =
       cli_expr_inj
       display_format
       no_colour
+      deprecated
       show_warnings
       project_root
       warn_unused_rec
@@ -1059,6 +1103,7 @@ let test_expr =
         ~syntax
         ~steps
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ~cli_expr_inj
         ~test:true
@@ -1084,6 +1129,7 @@ let test_expr =
     <*> cli_expr_inj
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> warn
     <*> project_root
     <*> warn_unused_rec)
@@ -1104,6 +1150,7 @@ let dry_run =
       protocol_version
       display_format
       no_colour
+      deprecated
       show_warnings
       warning_as_error
       project_root
@@ -1117,6 +1164,7 @@ let dry_run =
         ~protocol_version
         ~warning_as_error
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -1157,6 +1205,7 @@ let dry_run =
     <*> protocol_version
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> warn
     <*> werror
     <*> project_root
@@ -1177,6 +1226,7 @@ let evaluate_call =
       protocol_version
       display_format
       no_colour
+      deprecated
       show_warnings
       warning_as_error
       project_root
@@ -1190,6 +1240,7 @@ let evaluate_call =
         ~protocol_version
         ~warning_as_error
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -1228,6 +1279,7 @@ let evaluate_call =
     <*> protocol_version
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> warn
     <*> werror
     <*> project_root
@@ -1247,6 +1299,7 @@ let evaluate_expr =
       protocol_version
       display_format
       no_colour
+      deprecated
       show_warnings
       warning_as_error
       project_root
@@ -1260,6 +1313,7 @@ let evaluate_expr =
         ~protocol_version
         ~warning_as_error
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ()
     in
@@ -1296,6 +1350,7 @@ let evaluate_expr =
     <*> protocol_version
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> warn
     <*> werror
     <*> project_root
@@ -1315,12 +1370,19 @@ let interpret =
       now
       display_format
       no_colour
+      deprecated
       project_root
       warn_unused_rec
       ()
     =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~project_root ~warn_unused_rec ()
+      Raw_options.make
+        ~syntax
+        ~protocol_version
+        ~project_root
+        ~deprecated
+        ~warn_unused_rec
+        ()
     in
     return_result ~return
     @@ Api.Run.interpret
@@ -1357,6 +1419,7 @@ let interpret =
     <*> now
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> project_root
     <*> warn_unused_rec)
 
@@ -1375,8 +1438,8 @@ let run_group =
 
 (** Info commands *)
 let list_declarations =
-  let f source_file only_ep syntax display_format no_colour project_root () =
-    let raw_options = Raw_options.make ~only_ep ~syntax ~project_root () in
+  let f source_file only_ep syntax display_format no_colour deprecated project_root () =
+    let raw_options = Raw_options.make ~only_ep ~syntax ~project_root ~deprecated () in
     return_result ~return
     @@ Api.Info.list_declarations raw_options source_file display_format no_colour
   in
@@ -1394,6 +1457,7 @@ let list_declarations =
     <*> syntax
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> project_root)
 
 
@@ -1406,6 +1470,7 @@ let measure_contract =
       protocol_version
       display_format
       no_colour
+      deprecated
       enable_typed_opt
       show_warnings
       warning_as_error
@@ -1421,6 +1486,7 @@ let measure_contract =
         ~views
         ~warning_as_error
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ~enable_typed_opt
         ()
@@ -1444,6 +1510,7 @@ let measure_contract =
     <*> protocol_version
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> enable_michelson_typed_opt
     <*> warn
     <*> werror
@@ -1458,6 +1525,7 @@ let get_scope =
       libraries
       display_format
       no_colour
+      deprecated
       with_types
       project_root
       no_stdlib
@@ -1469,6 +1537,7 @@ let get_scope =
         ~libraries
         ~with_types
         ~project_root
+        ~deprecated
         ~no_stdlib
         ()
     in
@@ -1489,6 +1558,7 @@ let get_scope =
     <*> libraries
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> with_types
     <*> project_root
     <*> no_stdlib)
@@ -1506,8 +1576,10 @@ let info_group =
 
 (** Print commands *)
 let preprocessed =
-  let f source_file syntax libraries display_format project_root no_colour () =
-    let raw_options = Raw_options.make ~syntax ~libraries ~project_root ~no_colour () in
+  let f source_file syntax libraries display_format project_root no_colour deprecated () =
+    let raw_options =
+      Raw_options.make ~syntax ~libraries ~project_root ~no_colour ~deprecated ()
+    in
     return_result ~return @@ Api.Print.preprocess raw_options source_file display_format
   in
   let summary =
@@ -1528,13 +1600,23 @@ let preprocessed =
      <*> libraries
      <*> display_format
      <*> project_root
-     <*> no_colour)
+     <*> no_colour
+     <*> deprecated)
 
 
 let pretty_print =
-  let f source_file syntax display_format warning_as_error no_colour project_root () =
+  let f
+      source_file
+      syntax
+      display_format
+      warning_as_error
+      no_colour
+      deprecated
+      project_root
+      ()
+    =
     let raw_options =
-      Raw_options.make ~syntax ~warning_as_error ~no_colour ~project_root ()
+      Raw_options.make ~syntax ~warning_as_error ~no_colour ~project_root ~deprecated ()
     in
     return_result ~return @@ Api.Print.pretty_print raw_options source_file display_format
   in
@@ -1551,12 +1633,13 @@ let pretty_print =
      <*> display_format
      <*> werror
      <*> no_colour
+     <*> deprecated
      <*> project_root)
 
 
 let print_graph =
-  let f source_file syntax display_format project_root no_colour () =
-    let raw_options = Raw_options.make ~syntax ~project_root ~no_colour () in
+  let f source_file syntax display_format project_root no_colour deprecated () =
+    let raw_options = Raw_options.make ~syntax ~project_root ~no_colour ~deprecated () in
     return_result ~return
     @@ Api.Print.dependency_graph raw_options source_file display_format
   in
@@ -1569,12 +1652,18 @@ let print_graph =
      explores all imported source files (recursively) following a DFS strategy."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> project_root <*> no_colour)
+  @@ (f
+     <$> source_file
+     <*> syntax
+     <*> display_format
+     <*> project_root
+     <*> no_colour
+     <*> deprecated)
 
 
 let print_cst =
-  let f source_file syntax display_format no_colour project_root () =
-    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root () in
+  let f source_file syntax display_format no_colour deprecated project_root () =
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~deprecated () in
     return_result ~return @@ Api.Print.cst raw_options source_file display_format
   in
   let summary =
@@ -1585,12 +1674,18 @@ let print_cst =
      preprocessing and parsing."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour <*> project_root)
+  @@ (f
+     <$> source_file
+     <*> syntax
+     <*> display_format
+     <*> no_colour
+     <*> deprecated
+     <*> project_root)
 
 
 let print_ast =
-  let f source_file syntax display_format no_colour project_root () =
-    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root () in
+  let f source_file syntax display_format no_colour deprecated project_root () =
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~deprecated () in
     return_result ~return @@ Api.Print.ast raw_options source_file display_format
   in
   let summary =
@@ -1602,12 +1697,20 @@ let print_ast =
      desugaring step is applied."
   in
   Command.basic ~summary ~readme
-  @@ (f <$> source_file <*> syntax <*> display_format <*> no_colour <*> project_root)
+  @@ (f
+     <$> source_file
+     <*> syntax
+     <*> display_format
+     <*> no_colour
+     <*> deprecated
+     <*> project_root)
 
 
 let print_ast_core =
-  let f source_file syntax display_format self_pass project_root no_colour () =
-    let raw_options = Raw_options.make ~syntax ~self_pass ~project_root ~no_colour () in
+  let f source_file syntax display_format self_pass project_root no_colour deprecated () =
+    let raw_options =
+      Raw_options.make ~syntax ~self_pass ~project_root ~no_colour ~deprecated ()
+    in
     return_result ~return @@ Api.Print.ast_core raw_options source_file display_format
   in
   let summary =
@@ -1622,7 +1725,8 @@ let print_ast_core =
      <*> display_format
      <*> self_pass
      <*> project_root
-     <*> no_colour)
+     <*> no_colour
+     <*> deprecated)
 
 
 let print_ast_typed =
@@ -1636,6 +1740,7 @@ let print_ast_typed =
       warn_unused_rec
       test
       no_colour
+      deprecated
       ()
     =
     let raw_options =
@@ -1647,6 +1752,7 @@ let print_ast_typed =
         ~warn_unused_rec
         ~test
         ~no_colour
+        ~deprecated
         ()
     in
     return_result ~return @@ Api.Print.ast_typed raw_options source_file display_format
@@ -1670,7 +1776,8 @@ let print_ast_typed =
      <*> project_root
      <*> warn_unused_rec
      <*> test_mode
-     <*> no_colour)
+     <*> no_colour
+     <*> deprecated)
 
 
 let print_ast_aggregated =
@@ -1684,6 +1791,7 @@ let print_ast_aggregated =
       warn_unused_rec
       test
       no_colour
+      deprecated
       ()
     =
     let raw_options =
@@ -1695,6 +1803,7 @@ let print_ast_aggregated =
         ~warn_unused_rec
         ~test
         ~no_colour
+        ~deprecated
         ()
     in
     return_result ~return
@@ -1719,7 +1828,8 @@ let print_ast_aggregated =
     <*> project_root
     <*> warn_unused_rec
     <*> test_mode
-    <*> no_colour)
+    <*> no_colour
+    <*> deprecated)
 
 
 let print_ast_expanded =
@@ -1729,6 +1839,7 @@ let print_ast_expanded =
       protocol_version
       display_format
       no_colour
+      deprecated
       self_pass
       project_root
       warn_unused_rec
@@ -1741,6 +1852,7 @@ let print_ast_expanded =
         ~protocol_version
         ~self_pass
         ~project_root
+        ~deprecated
         ~warn_unused_rec
         ~test
         ()
@@ -1764,6 +1876,7 @@ let print_ast_expanded =
     <*> protocol_version
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> self_pass
     <*> project_root
     <*> warn_unused_rec
@@ -1780,6 +1893,7 @@ let print_mini_c =
       project_root
       warn_unused_rec
       no_colour
+      deprecated
       ()
     =
     let raw_options =
@@ -1789,6 +1903,7 @@ let print_mini_c =
         ~project_root
         ~warn_unused_rec
         ~no_colour
+        ~deprecated
         ()
     in
     return_result ~return
@@ -1813,7 +1928,8 @@ let print_mini_c =
     <*> optimize
     <*> project_root
     <*> warn_unused_rec
-    <*> no_colour)
+    <*> no_colour
+    <*> deprecated)
 
 
 let print_group =
@@ -1926,11 +2042,14 @@ let repl =
       now
       display_format
       no_colour
+      deprecated
       init_file
       project_root
       ()
     =
-    let raw_options = Raw_options.make ~syntax ~protocol_version ~project_root () in
+    let raw_options =
+      Raw_options.make ~syntax ~protocol_version ~project_root ~deprecated ()
+    in
     return_result ~return
     @@ Repl.main
          raw_options
@@ -1958,6 +2077,7 @@ let repl =
     <*> now
     <*> display_format
     <*> no_colour
+    <*> deprecated
     <*> init_file
     <*> project_root)
 
