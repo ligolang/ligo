@@ -10,7 +10,7 @@ RUN apk update && apk upgrade && apk --no-cache add \
   build-base snappy-dev alpine-sdk \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
-  libffi-dev \
+  libffi-dev nodejs npm \
   cargo py3-pip \
   && pip3 install jsonschema \
   # install opam:
@@ -42,6 +42,11 @@ COPY src /ligo/src
 COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
+
+# JSOO
+COPY jsoo /ligo/jsoo
+COPY Makefile /ligo
+
 # Run tests
 RUN opam exec -- dune build @check \
   && opam exec -- dune runtest --profile static --no-buffer \
@@ -67,6 +72,8 @@ RUN LIGO_VERSION=$(/ligo/scripts/version.sh) opam exec -- dune build -p ligo --p
   && cp /ligo/_build/install/default/bin/ligo /tmp/ligo \
   # Run doc
   && opam exec -- dune build @doc
+RUN npm i -g webpack-cli
+RUN cd /ligo && opam exec -- make build-demo-webide
 
 FROM esydev/esy:nightly-alpine as esy
 

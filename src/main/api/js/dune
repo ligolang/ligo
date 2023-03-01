@@ -1,0 +1,6 @@
+(library
+ (name ligo_api_js)
+ (public_name ligo.api.js)
+ (implements ligo.api)
+ (instrumentation
+  (backend bisect_ppx)))

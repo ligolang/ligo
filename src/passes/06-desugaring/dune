@@ -3,7 +3,11 @@
  (public_name ligo.desugaring)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_imperative ast_core syntax_types
-   tree_abstraction)
+ (libraries
+  simple-utils
+  ast_imperative
+  ast_core
+  syntax_types
+  tree_abstraction)
  (preprocess
   (pps ppx_poly_constructor)))

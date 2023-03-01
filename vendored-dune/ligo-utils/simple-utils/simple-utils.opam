@@ -12,7 +12,11 @@ bug-reports  : "https://gitlab.com/ligolang/ligo-utils/issues"
 # If you change the dependencies, run `opam lock` in the root
 depends      : ["dune"
                 "base"
+                "zarith"
+                "core"
                 "yojson"
+                "ppx_compare"
+                "ppx_hash"
                 "ppx_deriving"
                 "ppx_deriving_yojson"]
 build        : [["dune" "build" "-p" name]]

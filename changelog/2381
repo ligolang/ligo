@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\n\\n"
+merge_request: '2381'
+title: "Adds a js_of_ocaml setup with Dune and a PoC IDE to demo the bundle"
+type: fixed
+            

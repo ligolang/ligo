@@ -12,7 +12,7 @@ bug-reports  : "https://gitlab.com/ligolang/ligo/-/issues"
 license      : "MIT"
 
 # If you change the dependencies, run `opam lock` in the root
-depends      : []
+depends      : ["dune" "ocaml"]
 build        : [
                 [ "dune" "build" "-p" name "-j" jobs ]
                ]

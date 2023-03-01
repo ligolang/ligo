@@ -466,7 +466,7 @@ let ligorc_path =
   let open Command.Param in
   let name = "--ligorc-path" in
   let doc = "PATH path to .ligorc file." in
-  let spec = optional_with_default Constants.ligo_rc_path string in
+  let spec = optional_with_default (Constants.ligo_rc_path ()) string in
   flag ~doc name spec
 
 
@@ -533,7 +533,7 @@ let compile_file =
     return_result ~return ~show_warnings ?output_file
     @@ Api.Compile.contract
          raw_options
-         source_file
+         (Api.Compile.File source_file)
          display_format
          michelson_format
          michelson_comments
@@ -1839,12 +1839,10 @@ let print_group =
 let init_library =
   let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
-    then
-      return_result ~return
-      @@ Ligo_api.Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
+    then return_result ~return @@ Ligo_init.list ~kind:`LIBRARY ~display_format ~no_colour
     else
       return_result ~return
-      @@ Ligo_api.Ligo_init.new_project
+      @@ Ligo_init.new_project
            ~version:Version.version
            ~kind:`LIBRARY
            ~project_name_opt:project_name
@@ -1873,11 +1871,10 @@ let init_contract =
   let f project_name template (template_list : bool) display_format no_colour registry () =
     if template_list
     then
-      return_result ~return
-      @@ Ligo_api.Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
+      return_result ~return @@ Ligo_init.list ~kind:`CONTRACT ~display_format ~no_colour
     else
       return_result ~return
-      @@ Ligo_api.Ligo_init.new_project
+      @@ Ligo_init.new_project
            ~version:Version.version
            ~kind:`CONTRACT
            ~project_name_opt:project_name
@@ -2032,10 +2029,33 @@ let daemon =
   Command.basic ~summary ~readme (f <$> ligo_bin_path)
 
 
+module Lsp_server = struct
+  (* Main code
+  This is the code that creates an instance of the lsp server class
+  and runs it as a task. *)
+
+  module Requests = Ligo_lsp.Server.Requests
+
+  module Server = Ligo_lsp.Server.Make (struct
+    module Info = Ligo_api.Info
+    module Print = Ligo_api.Print
+  end)
+
+  let run () =
+    let s = new Server.lsp_server in
+    let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
+    let task = Linol_lwt.Jsonrpc2.run server in
+    match Linol_lwt.run task with
+    | () -> Ok ("", "")
+    | exception e ->
+      let e = Caml.Printexc.to_string e in
+      Error ("", e)
+end
+
 let lsp =
   let summary = "[BETA] launch a LIGO lsp server" in
   let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
-  let f () = return_result ~return @@ fun () -> Ligo_api.Lsp_server.run () in
+  let f () = return_result ~return @@ fun () -> Lsp_server.run () in
   Command.basic ~summary ~readme (Command.Param.return f)
 
 

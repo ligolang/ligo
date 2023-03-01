@@ -3,7 +3,12 @@
  (public_name ligo.self_ast_imperative)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils ast_imperative tezos-crypto tezos-base main_warnings
-   syntax_types predefined)
+ (libraries
+  simple-utils
+  ast_imperative
+  tezos-crypto
+  main_warnings
+  syntax_types
+  predefined)
  (preprocess
   (pps ppx_poly_constructor)))

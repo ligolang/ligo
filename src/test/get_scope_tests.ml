@@ -89,7 +89,7 @@ let files_in_all_dirs ?(except = []) dirs =
   |> List.filter ~f:(fun x -> not @@ List.mem except x ~equal:String.equal)
 
 
-let main =
+let _main =
   Printexc.record_backtrace true;
   Alcotest.run
     "get-scope json validation tests"
