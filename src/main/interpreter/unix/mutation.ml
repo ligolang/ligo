@@ -4,7 +4,7 @@ module LT = Ligo_interpreter.Types
 module LC = Ligo_interpreter.Combinators
 open Ligo_prim
 
-let get_syntax ~raise syntax loc =
+let get_syntax ~raise ~support_pascaligo syntax loc =
   match syntax with
   | Some syntax -> syntax
   | None ->
@@ -14,7 +14,10 @@ let get_syntax ~raise syntax loc =
       let file = r#file in
       let syntax =
         Simple_utils.Trace.to_stdlib_result
-          (Syntax.of_string_opt (Syntax_types.Syntax_name "auto") (Some file))
+          (Syntax.of_string_opt
+             ~support_pascaligo
+             (Syntax_types.Syntax_name "auto")
+             (Some file))
       in
       (match syntax with
       | Ok (r, _) -> r
@@ -29,7 +32,7 @@ let mutate_some_contract
   let n = Z.to_int z in
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   let f (e, (l, m)) =
-    let syntax = get_syntax ~raise syntax l in
+    let syntax = get_syntax ~raise ~support_pascaligo:true syntax l in
     let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
     e, (l, m, s)
   in
@@ -45,7 +48,7 @@ let mutate_some_value
   let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   let f (e, (loc, m)) =
-    let syntax = get_syntax ~raise syntax loc in
+    let syntax = get_syntax ~raise ~support_pascaligo:true syntax loc in
     let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
     e, (loc, m, s)
   in
@@ -60,7 +63,7 @@ let mutate_all_value
   let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
   let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
   let f (e, (loc, m)) =
-    let syntax = get_syntax ~raise syntax loc in
+    let syntax = get_syntax ~raise ~support_pascaligo:true syntax loc in
     let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
     e, (loc, m, s)
   in

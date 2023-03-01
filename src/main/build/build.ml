@@ -33,7 +33,7 @@ module M (Params : Params) = struct
    fun code_input ->
     let syntax =
       Syntax.of_string_opt
-        ~support_pascaligo:true
+        ~support_pascaligo:options.common.deprecated
         ~raise
         (Syntax_name "auto")
         (match code_input with
@@ -108,7 +108,7 @@ module M (Params : Params) = struct
       let syntax =
         Syntax.of_string_opt
           ~raise
-          ~support_pascaligo:true
+          ~support_pascaligo:options.common.deprecated
           (Syntax_name "auto")
           (Some file_name)
       in
@@ -152,7 +152,7 @@ module Infer (Params : Params) = struct
     let module_ =
       let syntax =
         Syntax.of_string_opt
-          ~support_pascaligo:true
+          ~support_pascaligo:options.common.deprecated
           ~raise
           (Syntax_name "auto")
           (Some file_name)
@@ -173,7 +173,10 @@ let get_top_level_syntax ~options ?filename () : Syntax_types.t =
   | None ->
     (match
        Trace.to_option
-       @@ Syntax.of_string_opt ~support_pascaligo:true (Syntax_name "auto") filename
+       @@ Syntax.of_string_opt
+            ~support_pascaligo:options.common.deprecated
+            (Syntax_name "auto")
+            filename
      with
     | Some x -> x
     | None -> failwith "Top-level syntax not found")

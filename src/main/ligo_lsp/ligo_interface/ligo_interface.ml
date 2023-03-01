@@ -49,7 +49,11 @@ module Make (Ligo_api : LIGO_API) = struct
     (* #include - Pass lib or dirs *)
     let dir_name = Filename.dirname file in
     let compiler_options =
-      Compiler_options.Raw_options.make ~with_types:true ~libraries:[ dir_name ] ()
+      Compiler_options.Raw_options.make
+        ~with_types:true
+        ~libraries:[ dir_name ]
+        ~deprecated:true
+        ()
     in
     Ligo_api.Info.get_scope_trace
       compiler_options
@@ -59,7 +63,7 @@ module Make (Ligo_api : LIGO_API) = struct
 
   let formatting : DocumentUri.t -> (string * string, string * string) result =
    fun uri ->
-    let compiler_options = Compiler_options.Raw_options.make () in
+    let compiler_options = Compiler_options.Raw_options.make ~deprecated:true () in
     let file_path = DocumentUri.to_path uri in
     let display_format = Simple_utils.Display.human_readable in
     Ligo_api.Print.pretty_print compiler_options file_path display_format ()

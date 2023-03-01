@@ -7,7 +7,7 @@ let main source syntax =
   let entry_point = "main" in
   let views = Default_options.views in
   let syntax_v =
-    match Syntax.of_ext_opt (Some syntax) with
+    match Syntax.of_ext_opt ~support_pascaligo:Default_options.deprecated (Some syntax) with
     | Some v -> v
     | None -> failwith ("Invalid syntax " ^ syntax)
   in
