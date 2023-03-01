@@ -107,6 +107,12 @@
                     "type": "string",
                     "default": "baker",
                     "description": "Account for originating contracts from. It should contain enough money for origination"
+                },
+                "ligoLanguageServer.deprecated": {
+                    "scope": "resource",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable support for compiling and deploying contracts written in the deprecated PascaLIGO syntax."
                 }
             }
         },
