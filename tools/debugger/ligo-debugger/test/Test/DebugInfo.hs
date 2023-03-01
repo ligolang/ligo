@@ -18,6 +18,7 @@ import Morley.Debugger.Core (SourceLocation, SourceLocation' (..), SrcLoc (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
+import Morley.Util.PeanoNatural (toPeanoNatural')
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -126,6 +127,15 @@ test_SourceMapper = testGroup "Reading source mapper"
             (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
+        , LigoMereLocInfo
+            (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
+            ?- SomeInstr
+                (    T.Nested
+                $    T.Nested (T.PUSH @'T.TInt (T.VInt 42))
+                T.:# T.Nested (T.SWAP)
+                T.:# T.ADD @'T.TInt @'T.TInt
+                )
+
         , LigoMereEnvInfo
             [LigoStackEntryVar "s2" intType]
             ?- SomeInstr dummyInstr
@@ -135,8 +145,31 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
+            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 18))
+            ?- SomeInstr
+                (    T.Nested
+                $    T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @2)
+                T.:# T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @3)
+                T.:# T.MUL @'T.TInt @'T.TInt
+                )
+
+        , LigoMereLocInfo
             (LigoRange file (LigoPosition 3 11) (LigoPosition 3 22))
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
+
+        , LigoMereLocInfo
+            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 22))
+            ?- SomeInstr
+                (    T.Nested
+                $    T.Nested (T.PUSH @'T.TInt (T.VInt 2))
+                T.:# T.Nested
+                       (    T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @2)
+                       T.:# T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @3)
+                       T.:# T.MUL @'T.TInt @'T.TInt
+                       )
+                T.:# T.MUL
+                T.:# T.DROP
+                )
 
         , LigoMereEnvInfo
             [LigoStackEntryVar "s2" intType]
@@ -147,8 +180,21 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr (T.NIL @'T.TOperation)
 
         , LigoMereLocInfo
+            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 24))
+            ?- SomeInstr (T.Nested $ T.NIL @'T.TOperation)
+
+        , LigoMereLocInfo
             (LigoRange file (LigoPosition 4 3) (LigoPosition 4 28))
             ?- SomeInstr T.PAIR
+
+        , LigoMereLocInfo
+            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 28))
+            ?- SomeInstr
+                (    T.Nested
+                $    T.Nested T.Nop
+                T.:# T.Nested (T.NIL @'T.TOperation)
+                T.:# T.PAIR
+                )
 
         , LigoMereEnvInfo
             [ LigoStackEntryVar "main" mainType

@@ -397,7 +397,9 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
             & groupBy (\lhs rhs -> getRange lhs == getRange rhs)
             <&> last
 
-      case stripDuplicateRanges $ spineAtPoint (ligoRangeToRange ligoRange) contract of
+      let squirrelRange = ligoRangeToRange ligoRange
+
+      case stripDuplicateRanges $ spineAtPoint squirrelRange contract of
         -- Locations for @()@ in function declaration in CameLIGO.
         -- We ignore locations for @UNIT@ but it's not enough.
         (layer @Ctor -> Just (AST.Ctor "Unit")) : _ -> pass
@@ -447,6 +449,29 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
         -- After evaluating first @some_check@ we'll see a location for the whole
         -- @begin..end@ block. This location corresponds to the @Seq@ node.
         (layer @Expr -> Just AST.Seq{}) : _ -> pass
+
+        -- Location for @case@ word in @switch@ statement.
+        (layer @CaseOrDefaultStm -> Just (AST.CaseStm val vals)) : _
+          | squirrelRange /= getRange val && not (squirrelRange `elem` (getRange <$> vals)) -> pass
+
+        -- Location for @default@ word in @switch@ statement.
+        (layer @CaseOrDefaultStm -> Just (AST.DefaultStm vals)) : _
+          | not $ squirrelRange `elem` (getRange <$> vals) -> pass
+
+        -- A group of nodes which have nested statements/expressions.
+        -- It's inconvenient to stop at them because they could be pretty large
+        -- and we have other locations that seem to be more convenient to stop
+        -- (like locations for predicate inside @if@s and loops).
+        (layer @Expr -> Just AST.SwitchStm{}) : _ -> pass
+        (layer @Expr -> Just AST.Case{}) : _ -> pass
+        (layer @Expr -> Just AST.WhileLoop{}) : _ -> pass
+        (layer @Expr -> Just AST.ForOfLoop{}) : _ -> pass
+        (layer @Expr -> Just AST.If{}) : _ -> pass
+
+        -- Locations for standalone names.
+        (layer @AST.Name -> Just{}) : _ -> pass
+        (layer @QualifiedName -> Just{}) : _ -> pass
+
         _ -> empty
 
     shouldIgnoreMetaByInstruction = case instr of
