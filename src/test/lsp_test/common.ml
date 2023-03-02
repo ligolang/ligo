@@ -1,27 +1,32 @@
 open Lsp.Types
 
+let pp_with_yojson (f : 'a -> Yojson.Safe.t) : 'a Fmt.t =
+ fun formatter link -> Yojson.Safe.pretty_print formatter @@ f link
+
+
 (* Range *)
 
-let pp_range ppf x = Fmt.pf ppf "%S" (Utils.range_to_string x)
+let pp_range = pp_with_yojson Range.yojson_of_t
 let eq_range = Caml.( = )
-let range : Range.t Alcotest.testable = Alcotest.testable pp_range eq_range
+let testable_range : Range.t Alcotest.testable = Alcotest.testable pp_range eq_range
 
-let diagnostic_severity_to_string = function
-  | DiagnosticSeverity.Error -> "error"
-  | DiagnosticSeverity.Warning -> "warning"
-  | DiagnosticSeverity.Information -> "information"
-  | DiagnosticSeverity.Hint -> "hint"
+(* Position *)
+let pp_position = pp_with_yojson Position.yojson_of_t
+let eq_position = Caml.( = )
 
-
-(* DiagnosticSeverity *)
-
-let pp_diagnostic_severity ppf x = Fmt.pf ppf "%S" (diagnostic_severity_to_string x)
-let eq_diagnostic_severity = Caml.( = )
-
-let diagnostic_severity : DiagnosticSeverity.t Alcotest.testable =
-  Alcotest.testable pp_diagnostic_severity eq_diagnostic_severity
+let testable_position : Position.t Alcotest.testable =
+  Alcotest.testable pp_position eq_position
 
 
+(* Locations *)
+let pp_locations = pp_with_yojson Locations.yojson_of_t
+let eq_locations = Caml.( = )
+
+let testable_locations : Locations.t Alcotest.testable =
+  Alcotest.testable pp_locations eq_locations
+
+
+(* should_match_list *)
 let rec remove_by (eq : 'a -> 'a -> bool) (y : 'a) (xs : 'a list) : 'a list =
   match xs with
   | [] -> []
@@ -42,21 +47,22 @@ let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool
 
 (* FIXME: In case of failure, the printed format is pretty ugly and gets repeated twice. *)
 let should_match_list
+    ?(msg : string option)
     (testable_a : 'a Alcotest.testable)
     ~(actual : 'a list)
     ~(expected : 'a list)
     : unit
-  =
-  match match_list ~actual ~expected ~eq:(Alcotest.equal testable_a) with
+  = match match_list ~actual ~expected ~eq:(Alcotest.equal testable_a) with
   | [], [] -> ()
   | extra, missing ->
     let format_list = Fmt.Dump.list (Alcotest.pp testable_a) in
     Alcotest.failf
-      ("Lists do not match."
+      ("%s"
       ^^ "\n* Expected: %a"
       ^^ "\n* Actual:   %a"
       ^^ "\n* Extra:    %a"
       ^^ "\n* Missing:  %a")
+      (Option.value ~default:"Lists do not match." msg)
       format_list
       expected
       format_list

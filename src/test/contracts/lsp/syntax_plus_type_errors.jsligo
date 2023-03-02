@@ -1,0 +1,5 @@
+const y = 42
+
+const x : string = 13
+
+const z = -1 + let

@@ -3,7 +3,7 @@ open Lsp_test_requests
 let _main =
   Printexc.record_backtrace true;
   Alcotest.run
-    "lsp server tests"
+    "lsp_server_tests"
     [ Definition.tests
     ; Prepare_rename.tests
     ; Diagnostics.tests

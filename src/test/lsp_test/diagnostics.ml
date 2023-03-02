@@ -14,118 +14,103 @@ end)
 
 module Diagnostics = Requests.Diagnostics
 open Common
+open Handlers
 
-(* TODO: Allow reading from a file. *)
 type diagnostics_test =
   { test_name : string
-  ; dialect : Syntax_types.t
-  ; source : string
+  ; file_path : string
   ; diagnostics : Diagnostics.simple_diagnostic list
   }
 
-let pp_simple_diagnostic
-    ppf
-    ({ severity; message; range } : Diagnostics.simple_diagnostic)
-  =
-  let range_str =
-    Option.value_map range ~default:"<no location>" ~f:Utils.range_to_string
-  in
-  Fmt.pf ppf "{%S; %S; %S}" (diagnostic_severity_to_string severity) message range_str
+let pp_diagnostic = pp_with_yojson Lsp.Types.Diagnostic.yojson_of_t
+let eq_diagnostic = Caml.( = )
+
+let testable_diagnostic : Diagnostic.t Alcotest.testable =
+  Alcotest.testable pp_diagnostic eq_diagnostic
 
 
-let eq_simple_diagnostic = Caml.( = )
-
-let simple_diagnostic : Diagnostics.simple_diagnostic Alcotest.testable =
-  Alcotest.testable pp_simple_diagnostic eq_simple_diagnostic
-
-
-let get_diagnostics_test ({ test_name; dialect; source; diagnostics } : diagnostics_test)
+let get_diagnostics_test ({ test_name; file_path; diagnostics } : diagnostics_test)
     : unit Alcotest.test_case
   =
   Alcotest.test_case test_name `Quick
   @@ fun () ->
-  let file =
-    match dialect with
-    | CameLIGO -> "test.mligo"
-    | JsLIGO -> "test.jsligo"
-    | PascaLIGO -> "test.ligo"
-  in
-  let uri = DocumentUri.of_path file in
-  let get_scope_info = Scopes.unfold_get_scope @@ Ligo_interface.get_scope uri source in
-  let expected_diagnostics = List.sort ~compare:Caml.compare diagnostics in
-  let actual_diagnostics =
-    List.sort ~compare:Caml.compare @@ Diagnostics.get_diagnostics get_scope_info
-  in
-  Alcotest.(check (list simple_diagnostic))
-    "Diagnostics match"
-    expected_diagnostics
-    actual_diagnostics
+  let _uri, actual_diagnostics = test_run_session @@ open_file (to_absolute file_path) in
+  should_match_list
+    ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
+    testable_diagnostic
+    ~actual:actual_diagnostics
+    ~expected:(List.map ~f:Diagnostics.from_simple_diagnostic diagnostics)
 
 
 let test_cases =
-  [ { test_name = "Type error"
-    ; dialect = CameLIGO
-    ; source = "let x : int = \"string\""
+  [ { test_name = "Type errors"
+    ; file_path = "contracts/negative/error_typer_1.mligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
-          ; message = "Invalid type(s).\nExpected \"int\", but got: \"string\"."
-          ; range = Some (Utils.interval 0 14 22)
+          ; message = "Invalid type(s)\nCannot unify int with string."
+          ; range = Some (Utils.interval 2 19 27)
+          }
+        ; { severity = DiagnosticSeverity.Error
+          ; message = "Variable \"foo\" not found. "
+          ; range = Some (Utils.interval 5 31 34)
           }
         ]
     }
   ; { test_name = "Syntax error"
-    ; dialect = JsLIGO
-    ; source = "type number => int"
+    ; file_path = "contracts/lsp/syntax_error.mligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
           ; message =
-              "Ill-formed type declaration.\n\
-               At this point, one of the following is expected:\n\
-              \  * the assignment symbol '=' followed by a type expression;\n\
-              \  * type parameters between chevrons '<' and '>', if defining a\n\
-              \    parametric type.\n"
-          ; range = Some (Utils.interval 0 12 14)
+              "Ill-formed contract.\n\
+               At this point, if the declaration is complete, one of the following is\n\
+               expected:\n\
+              \  * another declaration;\n\
+              \  * the end of the file.\n"
+          ; range = Some (Utils.interval 0 10 11)
           }
         ]
     }
-  ; { test_name = "Warning"
-    ; dialect = JsLIGO
-    ; source = "let x = 0"
+  ; { test_name = "Warnings"
+    ; file_path = "contracts/lsp/warnings.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
           ; message =
               "Toplevel let declaration are silently change to const declaration.@"
-          ; range = Some (Utils.interval 0 0 9)
+          ; range = Some (Utils.interval 0 0 10)
+          }
+        ; { severity = DiagnosticSeverity.Warning
+          ; message =
+              "\n\
+               Warning: unused variable \"x\".\n\
+               Hint: replace it by \"_x\" to prevent this warning.\n"
+          ; range = Some (Utils.interval 2 10 11)
           }
         ]
     }
-  ; { test_name = "All OK"
-    ; dialect = JsLIGO
-    ; source = "const x : int = 0"
-    ; diagnostics = []
-    }
-  ; { test_name = "Multiple diagnostics"
-    ; dialect = CameLIGO
-    ; source = "let x = end\nlet y : string = 0"
+  ; { test_name = "Syntax and type errors"
+    ; file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
           ; message =
-              "Ill-formed value declaration.\nAt this point, an expression is expected.\n"
-          ; range = Some (Utils.interval 0 8 11)
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed local value declaration.\n\
-               At this point, if the expression of the left-hand side is complete,\n\
-               the keyword 'in' is expected, followed by an expression.\n"
-          ; range = Some (Utils.point 1 18)
+              "Ill-formed expression.\nAt this point, an expression is expected.\n"
+          ; range = Some (Utils.interval 4 15 18)
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
-          ; range = Some (Utils.interval 1 17 18)
+          ; range = Some (Utils.interval 2 19 21)
+          }
+        ; { severity = DiagnosticSeverity.Error
+          ; message =
+              "Variable \"_#170\" not found. "
+              (* FIXME 1689 - we shoul not report that things added by
+                 error recovery do not exist, also the number here can
+                 be changed after any changes in LIGO, maybe we want to
+                 rewrite that test so it would not require promotion too often*)
+          ; range = Some (Utils.point 4 13)
           }
         ]
     }
+  ; { test_name = "All OK"; file_path = "contracts/lsp/simple.mligo"; diagnostics = [] }
   ]
 
 
