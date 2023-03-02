@@ -17,7 +17,6 @@ top of optint to get the best representation of an int32. """
 
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
-  [ "ocaml" "./install/install.ml" ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
 
@@ -29,9 +28,8 @@ install: [
 depends: [
   "ocaml"         {>= "4.07.0"}
   "dune"          {>= "2.6.0"}
-  "conf-pkg-config" {build}
   "dune-configurator"
-  "optint"        {>= "0.2.0"}
+  "optint"        {>= "0.3.0"}
   "alcotest"      {with-test}
   "bos"           {with-test}
   "astring"       {with-test}
@@ -41,20 +39,16 @@ depends: [
   "ocamlfind"     {with-test}
 ]
 
-depopts: [
-  "ocaml-freestanding"
-]
-
 conflicts: [
   "mirage-xen" {< "6.0.0"}
-  "ocaml-freestanding" {< "0.4.3"}
+  "ocaml-freestanding"
 ]
 url {
   src:
-    "https://github.com/mirage/checkseum/releases/download/v0.4.0/checkseum-0.4.0.tbz"
+    "https://github.com/mirage/checkseum/releases/download/v0.5.0/checkseum-0.5.0.tbz"
   checksum: [
-    "sha256=2ba40f32db39fa1c47d9af96435374970301a2c846d93d1b4a8ccd83346f025a"
-    "sha512=3edee66d3fa8fb0e11cf05d24f925341c96c53864cb4fb5b6173e29038882d33e3ee82819a3a2bedde717a3658c866278d09196862735d2ac9da889badd26e7b"
+    "sha256=7b15657499f0958fc7f6d01e03a5ac41e5349fed641005fedd8cb0a776ffde2e"
+    "sha512=d0344e6bf9e3bb48fa20efe186ac30fd383e73a0de0f249c3b18ce1b3e27f85a5e0f9433dd199c2c60ea27c6425c34a01a2b48dbd3d93f36fa6eec79d3f086da"
   ]
 }
-x-commit-hash: "a09c7397401e5f7dee4ea58a2af521f47d84c0ee"
+x-commit-hash: "b68d57c053f08314cc23fc7505f2bb981d360379"

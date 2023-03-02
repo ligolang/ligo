@@ -48,7 +48,7 @@
     "license": "MIT",
     "dependencies": {
       "@opam/hacl-star-raw": "*",
-      "@opam/tezos-rust-libs": "*",
+      "@opam/tezos-rust-libs": "1.1",
       "esy-libev": "*",
       "@opam/tezos-base": "*",
       "@opam/tezos-micheline": "*",

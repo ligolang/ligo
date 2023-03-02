@@ -1,9 +1,10 @@
 --- ./dune
 +++ ./dune
-@@ -6,4 +6,4 @@
+@@ -5,6 +5,6 @@
+  (libraries unix)
   (public_name ligo.unix))
- 
- 
+
 -(vendored_dirs vendored-dune vendors)
 +(vendored_dirs vendored-dune)
 
+ (dirs :standard \ jsoo)

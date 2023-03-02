@@ -10,6 +10,12 @@ esy-windows:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+        - dune
+      when: always
   script:
     - git config http.postBuffer 1048576000
     - npm i -g @esy-nightly/esy --force
@@ -45,6 +51,11 @@ publish_npm_windows_x86:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+      when: always
   script:
     - |      
       if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
@@ -68,6 +79,11 @@ esy-macos-darwin:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
       when: always
   script:
     - mkdir -p ~/.npm
@@ -96,6 +112,11 @@ publish_npm_darwin:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+      when: always
   script:
     - |      
       if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
@@ -119,6 +140,11 @@ esy-macos-m1:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
       when: always
   script:
     - mkdir -p ~/.npm
@@ -147,6 +173,11 @@ publish_npm_darwin_arm64:
         - src/**/*
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
       when: always
   script:
     - |      
