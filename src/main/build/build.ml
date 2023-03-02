@@ -342,16 +342,25 @@ let build_expression ~raise
   mini_c_exp, aggregated
 
 
+let parse_module_path ~loc s =
+  if String.equal s ""
+  then []
+  else (
+    let ms = String.split s ~on:'.' in
+    List.map ~f:(Module_var.of_input_var ~loc) ms)
+
+
 let rec build_contract_aggregated ~raise
-    : options:Compiler_options.t -> string -> string list -> Source_input.code_input -> _
+    : options:Compiler_options.t -> string -> string -> string list -> Source_input.code_input -> _
   =
- fun ~options entry_point cli_views source ->
+ fun ~options entry_point module_ cli_views source ->
   let entry_point = Value_var.of_input_var ~loc entry_point in
+  let module_path = parse_module_path ~loc module_ in
   let typed_prg = qualified_typed ~raise ~options Ligo_compile.Of_core.Env source in
   let typed_contract =
     trace ~raise self_ast_typed_tracer
     @@ Ligo_compile.Of_core.specific_passes
-         (Ligo_compile.Of_core.Contract entry_point)
+         (Ligo_compile.Of_core.Contract { entrypoint = entry_point ; module_path })
          typed_prg
   in
   let typed_views =
@@ -361,7 +370,8 @@ let rec build_contract_aggregated ~raise
         | [] -> None
         | x -> Some x
       in
-      Ligo_compile.Of_core.View { command_line_views; contract_entry = entry_point }
+      Ligo_compile.Of_core.View
+        { command_line_views; contract_entry = entry_point; module_path }
     in
     trace ~raise self_ast_typed_tracer
     @@ Ligo_compile.Of_core.specific_passes form typed_prg
@@ -373,8 +383,13 @@ let rec build_contract_aggregated ~raise
       ~contract_pass:true
       typed_contract
       entry_point
+      module_path
   in
-  let agg_views = build_aggregated_views ~raise ~options typed_views in
+  let agg_views =
+    match typed_views with
+    | [] -> None
+    | _ -> build_aggregated_views ~raise ~options module_path typed_views
+  in
   let parameter_ty, storage_ty =
     trace_option
       ~raise
@@ -391,13 +406,13 @@ let rec build_contract_aggregated ~raise
 
 
 and build_contract_stacking ~raise
-    :  options:Compiler_options.t -> string -> string list -> Source_input.code_input
+    :  options:Compiler_options.t -> string -> string -> string list -> Source_input.code_input
     -> (Stacking.compiled_expression * _)
        * ((Value_var.t * Stacking.compiled_expression) list * _)
   =
- fun ~options entry_point cli_views source ->
+ fun ~options entry_point module_ cli_views source ->
   let _, aggregated, agg_views =
-    build_contract_aggregated ~raise ~options entry_point cli_views source
+    build_contract_aggregated ~raise ~options entry_point module_ cli_views source
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
@@ -407,9 +422,9 @@ and build_contract_stacking ~raise
 
 
 (* building a contract in michelson *)
-and build_contract ~raise ~options entry_point views source =
+and build_contract ~raise ~options entry_point module_ views source =
   let (contract, _), (views, _) =
-    build_contract_stacking ~raise ~options entry_point views source
+    build_contract_stacking ~raise ~options entry_point module_ views source
   in
   contract, views
 
@@ -421,6 +436,7 @@ and build_contract_meta_ligo ~raise ~options entry_point views file_name =
       ~raise
       ~options
       entry_point
+      ""
       views
       (Source_input.From_file file_name)
   in
@@ -428,20 +444,28 @@ and build_contract_meta_ligo ~raise ~options entry_point views file_name =
 
 
 and build_aggregated_views ~raise
-    :  options:Compiler_options.t -> Ast_typed.program
+    :  options:Compiler_options.t -> Module_var.t list -> Ast_typed.program
     -> (Value_var.t list * Ast_aggregated.expression) option
   =
- fun ~options contract ->
-  let view_names = List.map ~f:fst (Ast_typed.Helpers.get_views contract) in
-  match view_names with
+ fun ~options module_path contract ->
+  let contract, view_info =
+    Self_ast_typed.Helpers.update_module
+      module_path
+      Ast_typed.Helpers.fetch_views_in_program
+      contract
+  in
+  match view_info with
   | [] -> None
   | _ ->
     let aggregated =
       Ligo_compile.Of_typed.apply_to_entrypoint_view
         ~raise:{ raise with warning = (fun _ -> ()) }
         ~options:options.middle_end
+        module_path
         contract
+        view_info
     in
+    let view_names = List.map ~f:(fun (_, b) -> Binder.get_var b) view_info in
     Some (view_names, aggregated)
 
 

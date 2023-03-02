@@ -156,7 +156,11 @@ let get_program ~raise ?(st = "auto") f entry =
 
 
 let get_program f ?st =
-  get_program ?st f (Contract (Ligo_prim.Value_var.of_input_var ~loc "main"))
+  get_program
+    ?st
+    f
+    (Contract
+       { entrypoint = Ligo_prim.Value_var.of_input_var ~loc "main"; module_path = [] })
 
 
 let expression_to_core ~raise expression =
@@ -677,7 +681,8 @@ let compile_main ~raise f () =
       ~raise
       ~options:options.middle_end
       (get_program ~raise f ())
-    @@ Ligo_prim.Value_var.of_input_var ~loc "main"
+      (Ligo_prim.Value_var.of_input_var ~loc "main")
+      []
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in

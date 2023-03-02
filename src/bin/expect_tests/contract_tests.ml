@@ -3801,3 +3801,113 @@ let%expect_test _ =
     { parameter unit ;
       storage int ;
       code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "C" ];
+  [%expect
+    {|
+    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } ;
+      view "foo" int int { UNPAIR ; ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "entrypoint_in_module.mligo"
+    ; "-m"
+    ; "C"
+    ; "-v"
+    ; "bar"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/entrypoint_in_module.mligo", line 20, characters 14-17:
+     19 |    | Reset         -> 0)
+     20 |   [@view] let foo (i : int) (store : storage) : int = i + store
+     21 |   let bar (i : int) (store : storage) : int = 1 + i + store
+
+    Warning: This view will be ignored, command line option override [
+    view] annotation
+
+    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } ;
+      view "bar" int int { UNPAIR ; PUSH int 1 ; ADD ; ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "Bar" ];
+  [%expect {|
+    Internal error: Entrypoint main does not exist |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "Barrau" ];
+  [%expect
+    {|
+    An internal error ocurred. Please, contact the developers.
+    Module Barrau not found with last Barrau. |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "entrypoint_in_module.mligo"
+    ; "Increment 32"
+    ; "-m"
+    ; "C"
+    ];
+  [%expect {|
+    (Left (Right 32)) |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "storage"; contract "entrypoint_in_module.mligo"; "5"; "-m"; "C" ];
+  [%expect {|
+    5 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "entrypoint_in_module.mligo"
+    ; "Increment 5"
+    ; "37"
+    ; "-m"
+    ; "C"
+    ];
+  [%expect {|
+    ( LIST_EMPTY() , 42 ) |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "contract"; contract "entrypoint_in_module.jsligo"; "-m"; "M.C" ];
+  [%expect
+    {|
+    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } ;
+      view "foo" int int { UNPAIR ; ADD } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "increment_module.jsligo"; "-m"; "C" ];
+  [%expect
+    {|
+    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } } |}]

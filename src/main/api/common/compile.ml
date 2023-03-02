@@ -86,7 +86,7 @@ let contract
     =
     options.backend
   in
-  let Compiler_options.{ entry_point; _ } = options.frontend in
+  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let source =
     match source with
     | File filename -> BuildSystem.Source_input.From_file filename
@@ -94,7 +94,7 @@ let contract
       BuildSystem.Source_input.(
         Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
   in
-  let code, views = Build.build_contract ~raise ~options entry_point views source in
+  let code, views = Build.build_contract ~raise ~options entry_point module_ views source in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   Ligo_compile.Of_michelson.build_contract
@@ -252,20 +252,22 @@ let parameter
       ()
   in
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
-  let Compiler_options.{ entry_point; _ } = options.frontend in
+  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   let entry_point = Value_var.of_input_var ~loc entry_point in
+  let module_path = Build.parse_module_path ~loc module_ in
   let app_typed_prg =
     Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
   in
-  let ( app_typed_prg
+  let app_typed_prg
       , entry_point
-      , Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } )
+      , contract_type
     =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
-    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
+    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point module_path app_typed_prg
   in
+  let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } = contract_type in
   let parameter_ty = Checking.untype_type_expression parameter_ty in
   let typed_param =
     Trace.try_with
@@ -301,11 +303,13 @@ let parameter
   in
   let (_ : Mini_c.meta Run.Michelson.michelson) =
     let aggregated_contract =
-      Ligo_compile.Of_typed.apply_to_entrypoint_contract
+      Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
         ~raise
         ~options:options.middle_end
         app_typed_prg
         entry_point
+        module_path
+        contract_type
     in
     let expanded =
       Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract
@@ -335,12 +339,13 @@ let parameter
   let compiled_param =
     Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param
   in
+  let module_ = Self_ast_typed.Helpers.get_module module_path app_typed_prg in
   let () =
     Ligo_compile.Of_typed.assert_equal_contract_type
       ~raise
       Check_parameter
       entry_point
-      app_typed_prg
+      module_
       typed_param
   in
   let options =
@@ -392,11 +397,12 @@ let storage
       ~has_env_comments:false
       ()
   in
-  let Compiler_options.{ entry_point; _ } = options.frontend in
+  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   let entry_point = Value_var.of_input_var ~loc entry_point in
+  let module_path = Build.parse_module_path ~loc module_ in
   let app_typed_prg =
     Build.qualified_typed
       ~raise
@@ -404,13 +410,11 @@ let storage
       Ligo_compile.Of_core.Env
       (Build.Source_input.From_file source_file)
   in
-  let ( app_typed_prg
-      , entry_point
-      , Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } )
-    =
+  let app_typed_prg, entry_point, contract_type =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
-    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point app_typed_prg
+    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point module_path app_typed_prg
   in
+  let Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } = contract_type in
   let storage_ty = Checking.untype_type_expression storage_ty in
   let typed_param =
     Trace.try_with
@@ -446,11 +450,13 @@ let storage
   in
   let (_ : Mini_c.meta Run.Michelson.michelson) =
     let aggregated_contract =
-      Ligo_compile.Of_typed.apply_to_entrypoint_contract
+      Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
         ~raise
         ~options:options.middle_end
         app_typed_prg
         entry_point
+        module_path
+        contract_type
     in
     let expanded =
       Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_contract
@@ -480,12 +486,13 @@ let storage
   let compiled_param =
     Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param
   in
+  let module_ = Self_ast_typed.Helpers.get_module module_path app_typed_prg in
   let () =
     Ligo_compile.Of_typed.assert_equal_contract_type
       ~raise
       Check_storage
       entry_point
-      app_typed_prg
+      module_
       typed_param
   in
   let options =

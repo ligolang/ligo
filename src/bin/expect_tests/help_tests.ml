@@ -104,6 +104,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [--werror]                 . treat warnings as errors
   [-e ENTRY-POINT], --entry-point
                              . the entry-point that will be compiled.
+  [-m MODULE], --module      . the entry-point will be compiled from that
+                               module.
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                the LIGO environment (kathmandu ,
                                lima). By default, the current protocol (lima)
@@ -168,6 +170,8 @@ let%expect_test _ =
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point that will be compiled.
+      [-m MODULE], --module      . the entry-point will be compiled from that
+                                   module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (kathmandu ,
                                    lima). By default, the current protocol (lima)
@@ -232,6 +236,8 @@ let%expect_test _ =
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point that will be compiled.
+      [-m MODULE], --module      . the entry-point will be compiled from that
+                                   module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (kathmandu ,
                                    lima). By default, the current protocol (lima)
@@ -319,6 +325,8 @@ let%expect_test _ =
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point that will be compiled.
+      [-m MODULE], --module      . the entry-point will be compiled from that
+                                   module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (kathmandu ,
                                    lima). By default, the current protocol (lima)
