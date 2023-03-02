@@ -10,7 +10,7 @@ type config =
 
 type notify_back_mockable =
   | Normal of notify_back
-  | Mock of Jsonrpc2.Diagnostic.t list ref
+  | Mock of Jsonrpc2.Diagnostic.t list ref (* FIXME: collect logs for tests *)
 
 type handler_env =
   { notify_back : notify_back_mockable

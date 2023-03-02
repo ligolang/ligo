@@ -13,6 +13,14 @@ let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
   Diagnostic.create ?severity:(Some severity) ~message ~range ()
 
 
+let to_simple_diagnostic : Diagnostic.t -> simple_diagnostic =
+ fun diag ->
+  { severity = Option.value ~default:DiagnosticSeverity.Error diag.severity
+  ; message = diag.message
+  ; range = Some diag.range
+  }
+
+
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
 let get_diagnostics : Ligo_interface.get_scope_info -> simple_diagnostic list =
  fun { errors; warnings; _ } ->
