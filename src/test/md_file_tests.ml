@@ -53,7 +53,7 @@ let get_groups md_file : snippetsmap =
   let aux : snippetsmap -> Md.block -> snippetsmap =
    fun grp_map el ->
     match el.header with
-    | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("jsligo" as s) ->
+    | (*Some ("pascaligo" as s) | *) Some ("cameligo" as s) | Some ("jsligo" as s) ->
       let () =
         (*sanity check*)
         List.iter
