@@ -12,71 +12,88 @@ module Requests = Ligo_lsp.Server.Requests.Make (struct
   module Print = Ligo_api.Print
 end)
 
-(* TODO: Allow reading from a file. *)
+open Requests.Handler
+open Common
+open Handlers
+
 type prepare_rename_test =
   { test_name : string
-  ; dialect : Syntax_types.t
-  ; source : string
+  ; file_path : string
   ; reference : Position.t
   ; can_rename : bool
   }
 
 let get_prepare_rename_test
-    ({ test_name; dialect; source; reference; can_rename } : prepare_rename_test)
+    ({ test_name; file_path; reference; can_rename } : prepare_rename_test)
     : unit Alcotest.test_case
   =
   Alcotest.test_case test_name `Quick
   @@ fun () ->
-  let file =
-    match dialect with
-    | CameLIGO -> "test.mligo"
-    | JsLIGO -> "test.jsligo"
-    | PascaLIGO -> "test.ligo"
+  let result, _diagnostics =
+    test_run_session
+    @@ let@ uri = open_file (to_absolute file_path) in
+       Requests.on_req_prepare_rename reference uri
   in
-  let uri = DocumentUri.of_path file in
-  let get_scope_info = Ligo_interface.get_scope uri source in
-  let get_scope_info = Ligo_interface_tools.unfold_get_scope get_scope_info in
-  (* TODO: Improve error messages. *)
-  match Requests.prepare_rename reference uri get_scope_info.definitions with
+  let error_prefix = Format.asprintf "In %s, %a: " file_path pp_position reference in
+  match result with
   | None ->
-    if can_rename then Alcotest.fail "Cannot prepare rename for this reference." else ()
+    if can_rename
+    then Alcotest.fail @@ error_prefix ^ "Cannot prepare rename for this reference."
+    else ()
   | Some actual_range ->
     if can_rename
     then
       if Utils.is_position_in_range reference actual_range
       then ()
-      else Alcotest.fail "Reference is not contained within the range."
-    else Alcotest.fail "Should not be able to rename this identifier, but we can."
+      else Alcotest.fail @@ error_prefix ^ "Reference is not contained within the range."
+    else Alcotest.fail @@ error_prefix ^ "Should not be able to rename this identifier, but we can."
 
 
 let test_cases =
-  [ { test_name = "Identifier"
-    ; dialect = CameLIGO
-    ; source = "let x = 1\nlet y = x"
+  [ { test_name = "Identifier (definition)"
+    ; file_path = "contracts/lsp/simple.mligo"
+    ; reference = Position.create ~line:0 ~character:4
+    ; can_rename = true
+    }
+  ; { test_name = "Identifier (reference)"
+    ; file_path = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:1 ~character:8
     ; can_rename = true
     }
+    (* FIXME #1694 should not allow to rename assert
+  ; { test_name = "Identifier from stdlib"
+    ; file_path = "contracts/lsp/simple.mligo"
+    ; reference = Position.create ~line:5 ~character:8
+    ; can_rename = false
+    } *)
+  ; { test_name = "Number"
+    ; file_path = "contracts/lsp/simple.mligo"
+    ; reference = Position.create ~line:0 ~character:8
+    ; can_rename = false
+    }
   ; { test_name = "Type"
-    ; dialect = CameLIGO
-    ; source = "type number = int\nlet x : number = 0"
-    ; reference = Position.create ~line:1 ~character:8
+    ; file_path = "contracts/lsp/local_module.mligo"
+    ; reference = Position.create ~line:2 ~character:8
     ; can_rename = true
     }
   ; { test_name = "Module"
-    ; dialect = JsLIGO
-    ; source = "namespace A\n{const x = 0\n}\nconst x = A.x"
-    ; reference = Position.create ~line:3 ~character:10
+    ; file_path = "contracts/lsp/local_module.mligo"
+    ; reference = Position.create ~line:6 ~character:16
     ; can_rename = true
     }
   ; { test_name = "Built-in type"
-    ; dialect = JsLIGO
-    ; source = "const str : string = \"\""
-    ; reference = Position.create ~line:0 ~character:13
+    ; file_path = "contracts/lsp/local_module.mligo"
+    ; reference = Position.create ~line:1 ~character:11
     ; can_rename = false
     }
+    (* FIXME #1694 should not allow to rename bool
+  ; { test_name = "Type from stdlib"
+    ; file_path = "contracts/lsp/local_module.mligo"
+    ; reference = Position.create ~line:5 ~character:28
+    ; can_rename = false
+    } *)
   ; { test_name = "Keyword"
-    ; dialect = CameLIGO
-    ; source = "let x = 1"
+    ; file_path = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:0
     ; can_rename = false
     }

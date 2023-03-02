@@ -36,7 +36,7 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
   match links_opt with
   | Some links ->
     Alcotest.(check (list testable_document_link))
-      "Document links match"
+      (Format.asprintf "Document links mismatch for %s:" file_path)
       links
       document_links
   | None -> Alcotest.fail "Expected some list of document links, got None"

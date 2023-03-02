@@ -1,0 +1,3 @@
+let y = 10
+
+const f = x => 12 + y
