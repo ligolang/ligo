@@ -9,6 +9,7 @@ type frontend =
   { syntax : Syntax_types.t option
   ; (* dialect : string ; [@dead "frontend.dialect"]  *)
     entry_point : string
+  ; module_ : string
   ; libraries : string list
   ; project_root : string option
   ; no_colour : bool
@@ -82,6 +83,7 @@ let make
     { syntax
     ; libraries = raw_options.libraries
     ; entry_point = raw_options.entry_point
+    ; module_ = raw_options.module_
     ; project_root = raw_options.project_root
     ; no_colour = raw_options.no_colour
     }

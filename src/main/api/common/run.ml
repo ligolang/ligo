@@ -106,8 +106,9 @@ let dry_run
       (Some source_file)
   in
   let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
-  let Compiler_options.{ entry_point; _ } = options.frontend in
+  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let entry_point = Value_var.of_input_var ~loc:Location.dummy entry_point in
+  let module_path = Build.parse_module_path ~loc:Location.dummy module_ in
   let typed_prg =
     Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
   in
@@ -117,6 +118,7 @@ let dry_run
       ~options:options.middle_end
       typed_prg
       entry_point
+      module_path
   in
   let expanded_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
   let mini_c_prg = Compile.Of_expanded.compile_expression ~raise expanded_prg in

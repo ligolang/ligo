@@ -275,10 +275,175 @@ type contract_type =
   ; storage : Ast_typed.type_expression
   }
 
-let fetch_contract_type ~raise
-    : Value_var.t -> program -> program * expression_variable * contract_type
+(* get_module [mp] [p] looks for the module struct to which module
+   path [mp] points in program [p] *)
+let get_module module_path decls =
+  let rec get_module module_path decls =
+    match decls, module_path with
+    | _, [] -> `Found (List.rev decls)
+    | [], _ -> `Not_found module_path
+    | decl :: rest, m :: ms ->
+      (match Location.unwrap decl with
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_struct inner_decls; _ }
+          ; module_attr = _
+          }
+        when Module_var.equal module_binder m ->
+        let found = get_module ms (List.rev inner_decls) in
+        (match found with
+        | `Found data -> `Found data
+        | `Not_found module_path -> get_module module_path rest)
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+          ; module_attr = _
+          }
+        when Module_var.equal module_binder m -> get_module (module_var :: ms) rest
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+          ; module_attr = _
+          }
+        when Module_var.equal module_binder m ->
+        get_module (List.Ne.to_list module_path' @ ms) rest
+      | _ -> get_module module_path rest)
+  in
+  let decls = List.rev decls in
+  match get_module module_path decls with
+  | `Found decls -> decls
+  | `Not_found f ->
+    failwith
+      (Format.asprintf
+         "Module %a not found with last %a"
+         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
+         module_path
+         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
+         f)
+
+
+(* update_module [mp] [f] [p] looks for the module struct to which
+   module path [mp] points in program [p] and replaces it by applying
+   [f] to [mp] *)
+let update_module (type a) module_path (f : program -> program * a) (prg : program)
+    : program * a
   =
- fun main_fname m ->
+  let rec find_module acc module_path decls =
+    match decls, module_path with
+    | _, [] -> `Updated (f (List.rev decls))
+    | [], _ -> `Not_here module_path
+    | decl :: rest, m :: ms ->
+      let loc = Location.get_location decl in
+      (match Location.unwrap decl with
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_struct inner_decls; location }
+          ; module_attr
+          }
+        when Module_var.equal module_binder m ->
+        (match find_module [] ms (List.rev inner_decls) with
+        | `Updated (inner_decls, a) ->
+          let decl =
+            Location.wrap ~loc
+            @@ D_module
+                 { module_binder
+                 ; module_ = { wrap_content = M_struct inner_decls; location }
+                 ; module_attr
+                 }
+          in
+          `Updated (List.rev rest @ (decl :: acc), a)
+        | `Not_here module_path -> find_module (decl :: acc) module_path rest)
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+          ; module_attr = _
+          }
+        when Module_var.equal module_binder m ->
+        find_module (decl :: acc) (module_var :: ms) rest
+      | D_module
+          { module_binder
+          ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+          ; module_attr = _
+          }
+        when Module_var.equal module_binder m ->
+        find_module (decl :: acc) (List.Ne.to_list module_path' @ ms) rest
+      | _ -> find_module (decl :: acc) module_path rest)
+  in
+  let prg = List.rev prg in
+  match find_module [] module_path prg with
+  | `Updated prg -> prg
+  | `Not_here f ->
+    failwith
+      (Format.asprintf
+         "Module %a not found with last %a"
+         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
+         module_path
+         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
+         f)
+
+
+(* drop_until [pred] [mp] [p] looks for a declaration in module path
+   [mp] inside program [p] that makes [pred] true, discarding all the
+   previously non-used declarations *)
+let drop_until
+    :  (declaration -> bool) -> Module_var.t list -> program
+    -> program * [ `Found of declaration | `Not_found of Module_var.t list ]
+  =
+ fun pred module_path prg_decls ->
+  let prg_decls = List.rev prg_decls in
+  let rec find_module acc module_path decls =
+    match decls with
+    | [] -> acc, `Not_found module_path
+    | decl :: rest ->
+      let loc = Location.get_location decl in
+      (match Location.unwrap decl, module_path with
+      | ( D_module
+            { module_binder
+            ; module_ = Location.{ wrap_content = M_struct inner_decls; location }
+            ; module_attr
+            }
+        , m :: ms )
+        when Module_var.equal module_binder m ->
+        let inner_decls, found = find_module [] ms (List.rev inner_decls) in
+        (match found with
+        | `Found data ->
+          let decl =
+            Location.wrap ~loc
+            @@ D_module
+                 { module_binder
+                 ; module_ = { wrap_content = M_struct inner_decls; location }
+                 ; module_attr
+                 }
+          in
+          List.rev rest @ (decl :: acc), `Found data
+        | `Not_found module_path -> find_module (decl :: acc) module_path rest)
+      | ( D_module
+            { module_binder
+            ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+            ; module_attr = _
+            }
+        , m :: ms )
+        when Module_var.equal module_binder m ->
+        find_module (decl :: acc) (module_var :: ms) rest
+      | ( D_module
+            { module_binder
+            ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+            ; module_attr = _
+            }
+        , m :: ms )
+        when Module_var.equal module_binder m ->
+        find_module (decl :: acc) (Simple_utils.List.Ne.to_list module_path' @ ms) rest
+      | _, [] when pred decl -> List.rev rest @ (decl :: acc), `Found decl
+      | _, _ -> find_module acc module_path rest)
+  in
+  find_module [] module_path prg_decls
+
+
+let fetch_contract_type ~raise
+    :  Value_var.t -> Module_var.t list -> program
+    -> program * expression_variable * contract_type
+  =
+ fun main_fname module_path m ->
   let aux declt (prog, contract_type_opt) =
     let return () = declt :: prog, contract_type_opt in
     let loc = Location.get_location declt in
@@ -325,7 +490,8 @@ let fetch_contract_type ~raise
       else return ()
     | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
   in
-  let m, main_decl_opt = List.fold_right ~f:aux ~init:([], None) m in
+  let run m = List.fold_right ~f:aux ~init:([], None) m in
+  let m, main_decl_opt = update_module module_path run m in
   let main_decl =
     trace_option
       ~raise

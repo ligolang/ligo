@@ -25,13 +25,14 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format no
       (Some source_file)
   in
   let options = Compiler_options.make ~protocol_version ~raw_options ~syntax () in
-  let Compiler_options.{ entry_point; _ } = options.frontend in
+  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let Compiler_options.{ views; _ } = options.backend in
   let michelson, views =
     Build.build_contract
       ~raise
       ~options
       entry_point
+      module_
       views
       (Build.Source_input.From_file source_file)
   in

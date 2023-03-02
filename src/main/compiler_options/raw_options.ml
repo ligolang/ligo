@@ -9,6 +9,7 @@ type t =
   ; (* Frontend *)
     syntax : string
   ; entry_point : string
+  ; module_ : string
   ; libraries : string list
   ; project_root : string option
   ; (* Tools *)
@@ -49,6 +50,7 @@ module Default_options = struct
   let syntax = "auto"
   let dialect = "terse"
   let entry_point = "main"
+  let module_ = ""
   let libraries = []
   let project_root = None
 
@@ -85,6 +87,7 @@ let make
     ?(warn_unused_rec = Default_options.warn_unused_rec)
     ?(syntax = Default_options.syntax)
     ?(entry_point = Default_options.entry_point)
+    ?(module_ = Default_options.module_)
     ?(libraries = Default_options.libraries)
     ?(project_root = Default_options.project_root)
     ?(only_ep = Default_options.only_ep)
@@ -116,6 +119,7 @@ let make
   ; (* Frontend *)
     syntax
   ; entry_point
+  ; module_
   ; libraries
   ; project_root
   ; (* Tools *)

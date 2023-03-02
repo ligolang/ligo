@@ -6,6 +6,7 @@ module Ligo_string = Simple_utils.Ligo_string
 type contract_pass_data =
   { contract_type : Helpers.contract_type
   ; main_name : Value_var.t
+  ; module_path : Module_var.t list
   }
 
 module VVarSet = Caml.Set.Make (Value_var)
@@ -312,66 +313,81 @@ and get_fv_program (env : env) acc : program -> _ * program = function
   | hd :: tl -> get_fv_program env (hd :: acc) tl
 
 
+let make_env module_path element =
+  let init = { empty_env with used_var = VVarSet.singleton element } in
+  List.fold_right
+    module_path
+    ~f:(fun module_name env -> { empty_env with env = MVarMap.singleton module_name env })
+    ~init
+
+
 let remove_unused ~raise : contract_pass_data -> program -> program =
- fun contract_pass_data prg ->
-  (* Process declaration in reverse order *)
-  let prg_decls = List.rev prg in
-  let aux (decl : declaration) =
-    match decl.wrap_content with
-    | D_value { binder = { var; _ }; _ }
-    | D_irrefutable_match { pattern = { wrap_content = P_var { var; _ }; _ }; _ } ->
-      not (Value_var.equal var contract_pass_data.main_name)
-    | D_irrefutable_match _ | D_type _ | D_module _ -> true
+ fun contract_pass_data prg_decls ->
+  let main_fname = contract_pass_data.main_name in
+  let prg_decls, main_decl_opt =
+    Helpers.drop_until
+      (fun decl ->
+        match Location.unwrap decl with
+        | D_value { binder; expr = _; attr = _ }
+          when Value_var.equal (Binder.get_var binder) main_fname -> true
+        | D_irrefutable_match
+            { pattern = { wrap_content = P_var binder; _ }; expr = _; attr = _ }
+          when Value_var.equal (Binder.get_var binder) main_fname -> true
+        | _ -> false)
+      contract_pass_data.module_path
+      prg_decls
   in
-  (* Remove the definition after the main entry_point (can't be relevant), mostly remove the test *)
-  let prg_decls = List.drop_while prg_decls ~f:aux in
-  let main_decl, prg_decls =
-    trace_option ~raise (Errors.corner_case "Entrypoint not found")
-    @@ Simple_utils.List.uncons prg_decls
+  let main_decl_opt =
+    match main_decl_opt with
+    | `Not_found _ -> None
+    | `Found data -> Some data
   in
-  let env =
+  let main_decl =
+    trace_option ~raise (Errors.corner_case "Entrypoint not found") @@ main_decl_opt
+  in
+  let binder =
     trace_option ~raise (Errors.corner_case "Entrypoint not found")
     @@
     match main_decl.wrap_content with
-    | D_value dc ->
-      let env, _ = get_fv dc.expr in
-      Some env
-    | D_irrefutable_match dc ->
-      let env, _ = get_fv dc.expr in
-      Some env
-    | D_type _ | D_module _ -> None
+    | D_value dc -> Some dc.binder
+    | D_irrefutable_match
+        { pattern = { wrap_content = P_var binder; _ }; expr = _; attr = _ } ->
+      Some binder
+    | _ -> None
   in
-  let _, module_ = get_fv_program env [ main_decl ] prg_decls in
+  let env = make_env contract_pass_data.module_path @@ Binder.get_var binder in
+  let _env, module_ = get_fv_program env [] (List.rev prg_decls) in
   module_
 
 
-let remove_unused_for_views : program -> program =
- fun prg ->
-  (* Process declaration in reverse order *)
-  let is_view (decl : declaration) =
-    match decl.wrap_content with
-    | D_value { attr; _ } | D_irrefutable_match { attr; _ } -> attr.view
-    | D_type _ | D_module _ -> false
+let remove_unused_for_views : Module_var.t list -> program -> program =
+ fun module_path prg_decls ->
+  let prg_decls, _ =
+    Helpers.drop_until
+      (fun decl ->
+        match Location.unwrap decl with
+        | D_value { binder = _; expr = _; attr } when attr.view -> true
+        | D_irrefutable_match { pattern = { wrap_content = P_var _; _ }; expr = _; attr }
+          when attr.view -> true
+        | _ -> false)
+      module_path
+      prg_decls
   in
-  (* Remove the definition after the last view (can't be relevant), mostly remove the test *)
-  let prg_decls = List.drop_while (List.rev prg) ~f:(fun x -> not (is_view x)) in
-  (* Format.eprintf "prg_decls:%a\n" (Ast_typed.PP.program ~use_hidden:false) prg ; *)
+  let module_ = Helpers.get_module module_path prg_decls in
   let envs =
-    List.filter_map prg_decls ~f:(fun decl ->
+    List.filter_map module_ ~f:(fun decl ->
         match decl.wrap_content with
         | D_value dc when dc.attr.view ->
           let rhs_env, _ = get_fv dc.expr in
-          let lhs_env =
-            { empty_env with used_var = VVarSet.of_list [ Binder.get_var dc.binder ] }
-          in
+          let lhs_env = make_env module_path @@ Binder.get_var dc.binder in
           Some (lhs_env, rhs_env)
         | D_irrefutable_match dc when dc.attr.view ->
           let rhs_env, _ = get_fv dc.expr in
           let lhs_env =
-            { empty_env with
-              used_var =
-                VVarSet.of_list (List.map ~f:Binder.get_var (Pattern.binders dc.pattern))
-            }
+            unions
+              (List.map
+                 ~f:(fun b -> make_env module_path (Binder.get_var b))
+                 (Pattern.binders dc.pattern))
           in
           Some (lhs_env, rhs_env)
         | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ -> None)
@@ -379,7 +395,7 @@ let remove_unused_for_views : program -> program =
   (* lhs_envs = variables bound by declaration ; rhs_envs = free variables in declaration rhs *)
   let lhs_envs, rhs_envs = List.unzip envs in
   let env = merge_env (unions lhs_envs) (unions rhs_envs) in
-  let _, module_ = get_fv_program env [] prg_decls in
+  let _, module_ = get_fv_program env [] (List.rev prg_decls) in
   module_
 
 

@@ -60,14 +60,37 @@ let compile_expression ~raise ~options : Ast_typed.expression -> Ast_aggregated.
   trace ~raise self_ast_aggregated_tracer @@ Self_ast_aggregated.all_expression ~options x
 
 
-let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false)
-    : Ast_typed.program -> Value_var.t -> Ast_aggregated.expression
+let apply_to_entrypoint_with_contract_type ~raise ~options ?(contract_pass = false)
+    :  Ast_typed.program -> Value_var.t -> Module_var.t list -> _
+    -> Ast_aggregated.expression
   =
- fun prg entrypoint ->
+ fun prg entrypoint module_path contract_type ->
+  let loc = Location.dummy in
+  let Self_ast_typed.Helpers.{ parameter = p_ty; storage = s_ty } = contract_type in
+  let ty =
+    t_arrow
+      ~loc
+      (t_pair ~loc p_ty s_ty)
+      (t_pair ~loc (t_list ~loc (t_operation ~loc ())) s_ty)
+      ()
+  in
+  let ep_expr =
+    let open Ast_typed in
+    match module_path with
+    | [] -> e_a_variable ~loc entrypoint ty
+    | _ -> e_module_accessor ~loc { module_path; element = entrypoint } ty
+  in
+  compile_expression_in_context ~raise ~options ~contract_pass prg ep_expr
+
+
+let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false)
+    : Ast_typed.program -> Value_var.t -> Module_var.t list -> Ast_aggregated.expression
+  =
+ fun prg entrypoint module_path ->
   let loc = Location.dummy in
   let prg, entrypoint, Self_ast_typed.Helpers.{ parameter = p_ty; storage = s_ty } =
     trace ~raise self_ast_typed_tracer
-    @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint prg
+    @@ Self_ast_typed.Helpers.fetch_contract_type entrypoint module_path prg
   in
   let ty =
     t_arrow
@@ -76,8 +99,13 @@ let apply_to_entrypoint_contract ~raise ~options ?(contract_pass = false)
       (t_pair ~loc (t_list ~loc (t_operation ~loc ())) s_ty)
       ()
   in
-  let var_ep = Ast_typed.(e_a_variable ~loc entrypoint ty) in
-  compile_expression_in_context ~raise ~options ~contract_pass prg var_ep
+  let ep_expr =
+    let open Ast_typed in
+    match module_path with
+    | [] -> e_a_variable ~loc entrypoint ty
+    | _ -> e_module_accessor ~loc { module_path; element = entrypoint } ty
+  in
+  compile_expression_in_context ~raise ~options ~contract_pass prg ep_expr
 
 
 let apply_to_entrypoint ~raise ~options
@@ -125,11 +153,11 @@ let assert_equal_contract_type ~raise
 
 
 let apply_to_entrypoint_view ~raise ~options
-    : Ast_typed.program -> Ast_aggregated.expression
+    :  Module_var.t list -> Ast_typed.program
+    -> (Ast_typed.type_expression * _ Binder.t) list -> Ast_aggregated.expression
   =
- fun prg ->
+ fun module_path prg views_info ->
   let loc = Location.dummy in
-  let prg, views_info = Ast_typed.Helpers.fetch_views_in_program prg in
   let aux : int -> _ -> Label.t * expression =
    fun i (view_ty, view_binder) ->
     let a_ty, s_ty, r_ty =
@@ -137,7 +165,14 @@ let apply_to_entrypoint_view ~raise ~options
       trace_option ~raise main_unknown @@ Ast_typed.get_view_form view_ty
     in
     let ty = t_arrow ~loc (t_pair ~loc a_ty s_ty) r_ty () in
-    Label.of_int i, Ast_typed.(e_a_variable ~loc (Binder.get_var view_binder) ty)
+    let ep_expr =
+      let open Ast_typed in
+      match module_path with
+      | [] -> e_a_variable ~loc (Binder.get_var view_binder) ty
+      | _ ->
+        e_module_accessor ~loc { module_path; element = Binder.get_var view_binder } ty
+    in
+    Label.of_int i, ep_expr
   in
   let tuple_view =
     Ast_typed.ez_e_a_record ~loc ~layout:Layout.comb (List.mapi ~f:aux views_info)

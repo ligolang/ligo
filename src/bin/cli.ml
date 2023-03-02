@@ -38,6 +38,14 @@ let entry_point =
   flag ~doc ~aliases:[ "--entry-point" ] name spec
 
 
+let module_ =
+  let open Command.Param in
+  let name = "m" in
+  let doc = "MODULE the entry-point will be compiled from that module." in
+  let spec = optional_with_default Default_options.module_ string in
+  flag ~doc ~aliases:[ "--module" ] name spec
+
+
 let source_file =
   let name = "SOURCE_FILE" in
   let _doc = "the path to the smart contract file." in
@@ -499,6 +507,7 @@ let compile_file =
   let f
       source_file
       entry_point
+      module_
       views
       syntax
       protocol_version
@@ -523,6 +532,7 @@ let compile_file =
     let raw_options =
       Raw_options.make
         ~entry_point
+        ~module_
         ~syntax
         ~views
         ~protocol_version
@@ -559,6 +569,7 @@ let compile_file =
     (f
     <$> source_file
     <*> entry_point
+    <*> module_
     <*> on_chain_views
     <*> syntax
     <*> protocol_version
@@ -584,6 +595,7 @@ let compile_parameter =
   let f
       source_file
       entry_point
+      module_
       expression
       syntax
       protocol_version
@@ -609,6 +621,7 @@ let compile_parameter =
       Raw_options.make
         ~syntax
         ~entry_point
+        ~module_
         ~protocol_version
         ~warning_as_error
         ~constants
@@ -644,6 +657,7 @@ let compile_parameter =
     (f
     <$> source_file
     <*> entry_point
+    <*> module_
     <*> expression "parameter"
     <*> syntax
     <*> protocol_version
@@ -741,6 +755,7 @@ let compile_storage =
       source_file
       expression
       entry_point
+      module_
       syntax
       protocol_version
       amount
@@ -764,6 +779,7 @@ let compile_storage =
     let raw_options =
       Raw_options.make
         ~entry_point
+        ~module_
         ~syntax
         ~protocol_version
         ~warning_as_error
@@ -801,6 +817,7 @@ let compile_storage =
     <$> source_file
     <*> expression "STORAGE"
     <*> entry_point
+    <*> module_
     <*> syntax
     <*> protocol_version
     <*> amount
@@ -1141,6 +1158,7 @@ let dry_run =
       parameter
       storage
       entry_point
+      module_
       amount
       balance
       sender
@@ -1160,6 +1178,7 @@ let dry_run =
     let raw_options =
       Raw_options.make
         ~entry_point
+        ~module_
         ~syntax
         ~protocol_version
         ~warning_as_error
@@ -1196,6 +1215,7 @@ let dry_run =
     <*> expression "PARAMETER"
     <*> expression "STORAGE"
     <*> entry_point
+    <*> module_
     <*> amount
     <*> balance
     <*> sender

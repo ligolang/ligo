@@ -26,10 +26,12 @@ let type_file ~raise ~(options : Compiler_options.t) f stx form : Ast_typed.prog
   typed
 
 
-let compile_file ~raise ~options f stx ep =
-  let typed = type_file ~raise ~options f stx @@ Contract ep in
+let compile_file ~raise ~options f stx ep mp =
+  let typed =
+    type_file ~raise ~options f stx @@ Contract { entrypoint = ep; module_path = mp }
+  in
   let aggregated =
-    Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed ep
+    Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed ep mp
   in
   let expanded = Of_aggregated.compile_expression ~raise aggregated in
   let mini_c = Of_expanded.compile_expression ~raise expanded in
