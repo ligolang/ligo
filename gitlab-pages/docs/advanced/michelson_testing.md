@@ -28,6 +28,22 @@ test our LIGO contracts. As a first step, we need to compile our LIGO
 contract to Michelson code. Suppose we write the following simple
 contract:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+// This is mockup_testme.ligo
+type storage is string
+
+type parameter is Append of string
+
+type return is list (operation) * storage
+
+function main (const action : parameter; const store : storage) : return is
+ ((nil : list (operation)),    // No operations
+  case action of [Append (s) -> store ^ s])
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -68,6 +84,17 @@ const main = ([action, store]: [parameter, storage]): return_ => {
 
 To obtain Michelson code from it, we run the LIGO compiler like so:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo --entry-point main
+// Outputs:
+// { parameter string ;
+//   storage string ;
+//   code { UNPAIR ; SWAP ; CONCAT ; NIL operation ; PAIR } }
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -84,6 +111,13 @@ ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo
 Instead of outputting the resulted compiled code in the screen, we can
 tell LIGO to write it in a file called `mockup_testme.tz`:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo --entry-point main --output-file mockup_testme.tz
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -162,6 +196,15 @@ mockup-client get contract storage for mockup_testme
 Then, we execute a call to our contract with parameter `Append
 ("bar")`. To do so, we first compile the parameter as follows:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.ligo "Append (\"bar\")" --entry-point main
+// Outputs:
+// "bar"
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell

@@ -43,7 +43,7 @@ tested. The simplicity of LIGO also keeps its compiled output
 unbloated. Our hope is to have a simple, strongly typed language with
 a low footprint.
 
-LIGO currently offers three syntaxes:
+LIGO currently offers two syntaxes:
 
   - **JsLIGO**, a TypeScript/JavaScript inspired syntax that aims to
     be familiar to those coming from TypeScript/JavaScript.

@@ -13,6 +13,15 @@ occurred.  If you need more information on the kind of error, you can
 either add variants to the correct values if their type is a sum type,
 or define your own type result like in OCaml:
 
+<Syntax syntax="pascaligo">
+
+In PascaLIGO :
+
+```pascaligo group=failwith_view
+type result (s,f) is Ok of s | Error of f
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLIGO:

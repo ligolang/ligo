@@ -12,6 +12,16 @@ has a modular structure, you might find it useful to use the
 You take the code that you want to include and put it in a separate
 file, for example the contract names `included`:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+
+// Demonstrate PascaLIGO inclusion statements, see includer.ligo
+
+const foo : int = 144
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -35,6 +45,15 @@ const foo = 144;
 And then you can include this code using the `#include` statement like
 so:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+#include "included.ligo"
+
+const bar : int = foo
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip

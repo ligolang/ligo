@@ -17,6 +17,13 @@ For any given type `t`, there is a canonical function of type `t -> t`
 immediately. For instance, we can write the identity function for
 `int` as follows:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=mono
+function id (const x : int) : int is x
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=mono
@@ -36,6 +43,13 @@ const id = (x: int): int => x;
 However, if we would want to use the same function on a different
 type, such as `nat`, we will need to write a new definition:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=mono
+function idnat (const x : nat) : nat is x
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=mono
@@ -59,6 +73,16 @@ the rest, the body of the function remains the same.
 Thanks to parametric polymorphism, we can write a single function
 declaration that works for both cases.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=poly
+function id<a> (const x : a) : a is x
+```
+
+Here we introduce a type variable `a` which can be generalised using
+`<a>` after the function name in the declaration.
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=poly
@@ -84,6 +108,14 @@ types prefixed with `_` are treated as generalisable.
 We can then use this function directly in different types by just
 regular application:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=poly
+const three_i : int = id (3);
+const three_s : string = id ("three");
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=poly
@@ -121,6 +153,16 @@ be generalised. We will write a direct version of the function using
 an accumulator, but the reader can experiment with different
 variations by using `List` combinators.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=poly
+function rev<a> (const xs : list (a)) : list (a) is {
+  var acc := (nil : list (a));
+  for x in list xs { acc := x # acc; };
+} with acc
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=poly
@@ -154,6 +196,14 @@ We use an accumulator variable `acc` to keep the elements of the list
 processed, consing each element on it. As with the identity function,
 we can then use it directly in different types:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=poly
+const lint : list (int) = rev (list [1; 2; 3]);
+const lnat : list (nat) = rev (list [1n; 2n; 3n]);
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=poly

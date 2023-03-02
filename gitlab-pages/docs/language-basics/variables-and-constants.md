@@ -14,6 +14,20 @@ reassigned. Put in another way, they can be assigned once, at their
 declaration. When defining a constant you need to provide a `name`,
 `type` and a `value`:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=a
+const age : int = 25
+```
+
+You can evaluate the constant definition above using the following CLI
+command:
+```shell
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo --entry-point age
+# Outputs: 25
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -73,6 +87,41 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-const
 
 ## Variables
 
+<Syntax syntax="pascaligo">
+
+Variables, unlike constants, are *mutable*. They cannot be declared in
+a *global scope*, but they can be declared and used within functions,
+or as function parameters.
+
+> ⚠️ Please be wary that mutation only works within the function scope
+> itself, values outside of the function scope will not be
+> affected. In other words, when a function is called, its arguments
+> are copied, *as well as the environment*. Any side-effect to that
+> environment is therefore lost when the function returns.
+
+
+```pascaligo group=b
+// The following is invalid: use `const` for global values instead.
+// var four := 4
+
+function add (const a : int; const b : int) is {
+  var c := a + 2 * b;
+  c := c - b
+} with c
+```
+
+> ⚠ Notice the assignment operator `:=` for `var`, instead of `=` for
+> constants.
+
+You can run the `add` function defined above using the LIGO compiler
+like this:
+
+```shell
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.ligo '(1,1)' --entry-point add
+# Outputs: 2
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 As expected in the pure subset of a functional language, CameLIGO only
@@ -136,6 +185,13 @@ practice because we do not pronounce aloud the underscores, and there
 is the issue of one or two underscores. To solve all those problems,
 in LIGO, you can prefix you identifier with `@`, like `@amount`.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=a
+const @Unique_name = true
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
