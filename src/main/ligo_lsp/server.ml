@@ -13,7 +13,6 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   open Lsp
   module Requests = Requests.Make (Ligo_api)
   open Requests.Handler
-  (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* one env per document *)
   let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
@@ -64,6 +63,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method decode_apply_settings (settings : Yojson.Safe.t) : unit =
         let open Yojson.Safe.Util in
         let ligo_language_server = settings |> member "ligoLanguageServer" in
+        (* FIXME: Allow disabling features. *)
+        (* FIXME: Support deprecated. *)
         config
           <- { config with
                max_number_of_problems =
