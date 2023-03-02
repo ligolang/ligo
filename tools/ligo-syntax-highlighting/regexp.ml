@@ -43,7 +43,7 @@ let lambda_end: Core.regexp = {
 }
 
 let of_keyword_match: Core.regexp = {
-  emacs    = "\\\\b\\\\(of)\\\\b";
+  emacs    = "\\\\b\\\\(of\\\\)\\\\b";
   textmate = "\\b(of)\\b";
   vim      = "\\<\\(of\\)\\>";
 }
