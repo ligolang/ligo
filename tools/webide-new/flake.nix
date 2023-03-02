@@ -131,10 +131,8 @@
         localSystem = system;
       };
       ligo-binary = {
-        # ligo 86aca37be2fc4fc46efbd74e47d7991f6800ca8e
-        # To update the used ligo version, find corresponding 'docker_extract' job in CI pipeline for
-        # the given revision and use its id below. To get the hash, use 'nix-prefetch-url <url>'
-        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/3779146953/artifacts/raw/ligo"; sha256 = "00did3dlfscsw221swidbs9kkklzfkg74kyfd4hr6qqcs9mmjrr1"; };
+        # ligo 0.61.0
+        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/3857618664/artifacts/raw/ligo"; hash = "sha256-0dI7a94Q5L+5w+ry7va39uWrODrWuAXw6yZpB8l5WnE="; };
       };
       ligo-syntaxes = pkgs.callPackage ../vscode/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
