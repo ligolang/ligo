@@ -13,6 +13,26 @@ a failure: this is where the predefined function `failwith` comes in.
 The failwith function raises an error that cannot be caught, which
 terminates the contract.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=failwith
+type parameter is
+  Zero of nat
+| Pos  of nat
+
+type storage is unit
+
+type return is list (operation) * storage
+
+function main (const p : parameter; const s : storage) : return is {
+  case p of [
+    Zero (n) -> if n > 0n then failwith ("Should be zero.")
+  | Pos (n)  -> if n = 0n then failwith ("Should be positive.")
+  ]
+} with (nil, s)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=failwith
@@ -47,6 +67,17 @@ function `assert_some_with_error` is like `assert_some` but an error
 message can be given. When a condition is not met, the contract will
 stop executing and display an error.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=failwith
+function main (const p : bool; const s : storage) : return is {
+  assert (p)
+} with (nil, s)
+
+function some (const o : option (unit)) is assert_some (o)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=failwith
@@ -77,6 +108,15 @@ let some = (o: option<unit>) => {
 
 You can use `assert_with_error` or `assert_some_with_error` to use a custom error message
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=failwith
+function main (const p : bool; const s : storage) : return is {
+  assert_with_error (p, "My custom error message.")
+} with (nil, s)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=failwith

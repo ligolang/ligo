@@ -29,6 +29,13 @@ to the Michelson code
 In a contract, we can make reference to a global constant by using the
 `Tezos.constant` operation:
 
+<Syntax syntax="pascaligo">
+
+```
+(Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2") : int -> int)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```
@@ -52,6 +59,13 @@ type-checker) which are the constants that we are assuming to be
 already registered in the context. They are passed to the `compile
 contract` sub-command in the `--constants` argument:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile contract global_call.ligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -107,6 +121,17 @@ simplifies the usage flow (see example below).
 
 Given the following contract `global_call`:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pre_global
+function helper (const s : string; const x : int) : int is
+  String.length(s) + x * 3 + 2
+
+function main(const p : string; const s : int) : list(operation) * int is
+  ((nil : list(operation)), helper(p, s))
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=pre_global
@@ -134,6 +159,31 @@ const main = (p: string, s: int) : [list<operation>, int] =>
 We want to turn the function `helper` into a global constant. The first
 step is to ask LIGO to compile the constant:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile constant pascaligo "helper" --init-file global_call.ligo
+// Outputs:
+// Michelson constant as JSON string:
+// "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
+// This string can be passed in `--constants` argument when compiling a contract.
+//
+// Remember to register it in the network, e.g.:
+// > tezos-client register global constant "{ UNPAIR ;
+//   PUSH int 2 ;
+//   PUSH int 3 ;
+//   DIG 3 ;
+//   MUL ;
+//   DIG 2 ;
+//   SIZE ;
+//   ADD ;
+//   ADD }" from bootstrap1
+//
+// Constant hash:
+// exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -189,6 +239,13 @@ ligo compile constant jsligo "helper" --init-file global_const.jsligo
 
 As we can see, the constant hash is:
 
+<Syntax syntax="pascaligo">
+
+```
+exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```
@@ -208,6 +265,13 @@ expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8
 We can now remove the `helper` function from the code, and replace the
 references to `helper` by
 
+<Syntax syntax="pascaligo">
+
+```
+(Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf") : string * int -> int)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```
@@ -226,6 +290,14 @@ references to `helper` by
 
 The new version of `global_call` looks as follows:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+function main(const p : string; const s : int) : list(operation) * int is
+  ((nil : list(operation)), ((Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf") : string * int -> int))(p, s))
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -248,6 +320,13 @@ Save the constant's Micheline value in a file `consts.json` (that will be
 used when calling `compile contract`). This file must be a JSON list
 consisting of the string returned by `compile constant`:
 
+<Syntax syntax="pascaligo">
+
+```
+["{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```
@@ -267,6 +346,19 @@ consisting of the string returned by `compile constant`:
 We can compile the code using the `compile contract` sub-command,
 passing the file with constants in the flag `--file-constants`:
 
+<Syntax syntax="pascaligo">
+
+```shell
+ligo compile contract global_call.ligo --file-constants consts.json
+// Outputs:
+// { parameter string ;
+//   storage int ;
+//   code { constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" ;
+//          NIL operation ;
+//          PAIR } }
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -314,6 +406,27 @@ The string returned by `Test.register_constant` can be used via
 A simple usage case is the following, in which we obtain a
 `michelson_program` by using `Test.eval`:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=test_global
+type storage is int
+type parameter is unit
+
+function f(const x : int) : int is x * 3 + 2;
+
+const ct : string = Test.register_constant(Test.eval(f));
+
+function main(const p : parameter; const s : storage) is
+  ((nil : list(operation)), (((Tezos.constant(ct) : int -> int))(s)));
+
+const test = {
+  const (taddr, _, _) = Test.originate(main, 1, 0tez);
+  const ctr = Test.to_contract(taddr);
+  const _ = Test.transfer_to_contract_exn(ctr, Unit, 0tez);
+} with assert(Test.get_storage(taddr) = 5);
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_global

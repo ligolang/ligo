@@ -42,7 +42,9 @@ let _dummy_2 : (initial_timestamp : timestamp, no_of_accounts: nat, amount: list
 -->
 
 So, to bake and advance time, you can use:
-
+<SyntaxTitle syntax="pascaligo">
+val Test.bake_until_n_cycle_end : nat -> unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val Test.bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
@@ -52,7 +54,9 @@ let Test.bake_until_n_cycle_end = (cycles : nat) => unit
 </SyntaxTitle>
 
 Depending on the situation, the following can be useful as well:
-
+<SyntaxTitle syntax="pascaligo">
+val Test.reset_state_at : timestamp * nat * list (tez) -> unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val Test.reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>

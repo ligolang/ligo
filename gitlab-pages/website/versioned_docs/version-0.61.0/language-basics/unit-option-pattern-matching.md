@@ -18,6 +18,14 @@ The `unit` type in Michelson or LIGO is a predefined type that
 contains only one value that carries no information. It is used when
 no relevant information is required or produced. Here is how it used.
 
+<Syntax syntax="pascaligo">
+
+In PascaLIGO, the unique value of the `unit` type is `Unit`.
+```pascaligo group=a
+const n : unit = Unit // Note the capital letter
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLIGO, the unique value of the `unit` type is `()`, following
@@ -120,6 +128,15 @@ the enumerated types found in Java, C++, JavaScript etc.
 Here is how we define a coin as being either head or tail (and nothing
 else):
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=b
+type coin is Head | Tail
+const head : coin = Head
+const tail : coin = Tail
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -150,6 +167,25 @@ In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
 define different kinds of users of a system.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=c
+type id is nat
+
+type user is
+  Admin   of id
+| Manager of id
+| Guest
+
+const u : user = Admin (1000n)
+const g : user = Guest
+```
+
+In PascaLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -202,6 +238,30 @@ You can add a type annotation to remove this ambiguity.
 if no type is defined in this scope, it will look in the latest module, if not in the second latest etc.
 Below, it will choose `t1`, and if `t1` didn't match it would have chosen `t2`, otherwise `t3`, etc.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=multi_sum
+type t2 is A of int | B of int
+
+module MyModule is {
+  type t5 is A of int | C of bool
+  type t4 is A of int | D of int
+
+  module MySubModule is {
+    type t6 is A of int | E of tez
+  }
+}
+
+module MySecondModule is {
+  type t3 is A of int | F of int
+}
+
+type t1 is A of int | G of tez
+
+// The compiler will search above for sum types with an 'A' constructor
+const x = A(42)
+```
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=multi_sum
@@ -252,6 +312,23 @@ const x = A(42);
 ```
 </Syntax>
 
+<Syntax syntax="pascaligo">
+
+In PascaLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
+The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
+
+```pascaligo group=sum_shadow
+module M is {
+  type t1 is A of int | B of int
+}
+module M is {
+  const y = 10
+}
+
+// This will fail because A will not be found
+// const x = A (42)
+```
+</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
@@ -281,6 +358,14 @@ type would be `None`, otherwise `Some (v)`, where `v` is some
 meaningful value *of any type*. An example in arithmetic is the
 division operation:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=d
+function div (const a : nat; const b : nat) : option (nat) is
+  if b = 0n then None else Some (a/b)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -334,6 +419,23 @@ with `_` can be used as a binder to prevent warnings.
 
 Here is a function that transforms a colour variant type to an int.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_variant
+type color is
+  RGB     of int * int * int
+| Gray    of int
+| Default
+
+function int_of_color (const c : color) : int is
+  case c of [
+  | RGB (r,g,b) -> 16 + b + g * 6 + r * 36
+  | Gray (i)    -> 232 + i
+  | Default     -> 0
+  ]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=pm_variant
@@ -389,6 +491,25 @@ let on_tuple (v : my_tuple) : int =
 ```
 
 </Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_rec_tuple
+type my_record is record [a : int; b : nat; c : string]
+
+type my_tuple is int * nat * string
+
+function on_record (const v : my_record) : int is
+  case v of [
+   record [a; b = b_renamed ; c = _] -> a + int (b_renamed)
+  ]
+
+function on_tuple (const v : my_tuple) : int is
+  case v of [
+   (x, y, _) -> x + int (y)
+  ]
+```
+
+</Syntax>
 
 <Syntax syntax="jsligo">
 
@@ -406,6 +527,18 @@ let weird_length (v : int list) : int =
   | [] -> -1
   | [ a; b ; c] -> -2
   | x -> int (List.length x)
+```
+
+</Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_lists
+function weird_length (const v : list (int)) : int is
+  case v of [
+    nil -> -1
+  | list [a; b; c] -> -2
+  | x -> int (List.length (x))
+  ]
 ```
 
 </Syntax>
@@ -442,3 +575,19 @@ let complex = fun (x:complex_t) (y:complex_t) ->
 ```
 
 </Syntax>
+<Syntax syntax="pascaligo">
+
+```pascaligo group=pm_complex
+type complex_t is record [a : option (list (int)); b : list (int)]
+
+function complex (const x : complex_t; const y : complex_t) is
+  case (x, y) of [
+    (record [a=None; b=_], _)               -> -1
+  | (_, record [a = Some (nil); b = hd#tl]) -> hd
+  | (_, record [a = Some (hd#tl); b=nil])   -> hd
+  | (record [a = Some (a); b=_], _)         -> int (List.length (a))
+  ]
+```
+
+</Syntax>
+

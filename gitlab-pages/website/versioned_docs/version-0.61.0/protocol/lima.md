@@ -20,6 +20,9 @@ The types `chest` and the primitive `Tezos.open_chest` are deprecated (see the c
 #### Tezos
 
 
+<SyntaxTitle syntax="pascaligo">
+val create_ticket&lt;value&gt; : value -> nat -> option (ticket (value))
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>

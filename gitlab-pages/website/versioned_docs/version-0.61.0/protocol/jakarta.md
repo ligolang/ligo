@@ -12,7 +12,9 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 ### New types
 
 #### Tezos
-
+<SyntaxTitle syntax="pascaligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type tx_rollup_l2_address
 </SyntaxTitle>
@@ -26,6 +28,10 @@ A type used to identify accounts on transaction rollups’ legders. Values of ty
 
 #### Tezos
 
+
+<SyntaxTitle syntax="pascaligo">
+val min_block_time : unit -> nat
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val min_block_time : unit -> nat
 </SyntaxTitle>
