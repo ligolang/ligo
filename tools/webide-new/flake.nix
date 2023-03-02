@@ -136,7 +136,7 @@
         # the given revision and use its id below. To get the hash, use 'nix-prefetch-url <url>'
         "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/3779146953/artifacts/raw/ligo"; sha256 = "00did3dlfscsw221swidbs9kkklzfkg74kyfd4hr6qqcs9mmjrr1"; };
       };
-      ligo-syntaxes = pkgs.callPackage ../lsp/vscode-plugin/syntaxes {};
+      ligo-syntaxes = pkgs.callPackage ../vscode/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;
       frontend = (pkgs.callPackage ./ligo-webide-frontend/ligo-ide { inherit ligo-syntaxes; }) { git-proxy = "https://ligo-webide-cors-proxy.serokell.team"; };
       backend = haskellPkgs.callPackage ./ligo-webide-backend { };
