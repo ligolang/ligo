@@ -19,7 +19,7 @@ compileExpression request =
       Just d -> pure d
 
     (ec, out, err) <- runLigo dirPath $
-      ["compile", "expression", "--no-color"]
+      ["compile", "expression", "--no-color", "--deprecated"]
       ++ [prettyDialect dialect, Text.unpack (cerFunction request)]
       ++ maybe []
            (\df -> ["--display-format", prettyDisplayFormat df])
