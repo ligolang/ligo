@@ -349,14 +349,14 @@ let vim_plugin (syntaxes: (string * Core.t) list): string =
   let fmt = formatter_of_buffer buffer in
   let allow_list = String.concat ", " (List.map (fun (name, _) -> "'" ^ name ^ "'") syntaxes) in
   fprintf fmt "\" THIS FILE WAS AUTOMATICALLY GENERATED. DO NOT MODIFY MANUALLY OR YOUR CHANGES WILL BE LOST.\n";
-  fprintf fmt "if executable('ligo-squirrel')\n";
+  fprintf fmt "if executable('ligo')\n";
   fprintf fmt "  if !exists(\"autocommands_loaded\")\n";
   fprintf fmt "    let autocommands_loaded=1\n";
   fprintf fmt "    augroup ligoRegisterLanguageServer\n";
   fprintf fmt "      autocmd User lsp_setup\n";
   fprintf fmt "          \\ call lsp#register_server({\n";
   fprintf fmt "          \\   'name': 'ligo_lsp',\n";
-  fprintf fmt "          \\   'cmd': {server_info->['ligo-squirrel']},\n";
+  fprintf fmt "          \\   'cmd': {server_info->['ligo', 'lsp']},\n";
   fprintf fmt "          \\   'allowlist': [%s],\n" allow_list;
   fprintf fmt "          \\ })\n";
   fprintf fmt "    augroup END\n";

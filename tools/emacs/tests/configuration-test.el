@@ -1,6 +1,6 @@
 (require 'ert)
 (require 'lsp-mode)
-(require 'ligo-mode)
+(require 'mligo-mode "ligo-mode.el")
 
 (ligo-setup-lsp)
 
@@ -31,9 +31,9 @@
   (should (member '("\\.ligo\\'" . ligo-pascal-mode) auto-mode-alist))
   )
 
-(ert-deftest ligo-squirrel-bin-test ()
+(ert-deftest ligo-bin-test ()
   "Check that LSP server is set"
-  (should (file-executable-p (executable-find ligo-squirrel-bin)))
+  (should (file-executable-p (executable-find ligo-bin)))
   )
 
 (ert-deftest ligo-setup-lsp-test ()

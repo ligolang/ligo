@@ -2,7 +2,7 @@
 
 This plugin features syntax highlighting and `lsp-mode` support for PascaLIGO and CameLIGO.
 
-For the LSP to work, you need to install `lsp-mode` and put `ligo-squirrel` executable in PATH.
+For the LSP to work, you need to install `lsp-mode` and put `ligo` executable in PATH.
 
 ## Automatic installation
 
@@ -35,6 +35,31 @@ For users of `lsp-mode`, setup can be performed automatically by using
     (ligo-setup-lsp)))
 ```
 
+# Spacemacs configuration
+
+For Spacemacs it's enough to add `ligo-mode` to `dotspacemacs-additional-packages` in `.spacemacs` file and enable `lsp` layer.
+
+Also add following code into `dotspacemacs/user-config ()` to setup automatic load the plugin for `.mligo` files:
+```lisp
+(defun dotspacemacs/user-config ()
+  ...
+  (require 'lsp-mode)
+  (ligo-setup-lsp)
+  (add-hook 'ligo-caml-mode-hook #'lsp)
+)
+```
+
+If you want load `ligo-mode.el` package from local path (for development or hacking) you can use `quelpa` (`ligo-mode` in `dotspacemacs-additional-packages` should be commented):
+
+```lisp
+(defun dotspacemacs/user-config ()
+  ...
+  (quelpa '(ligo-mode :fetcher file
+                      :path "/home/user/ligo/tools/emacs/ligo-mode.el"))
+  ...
+)
+```
+
 # Development
 
 ## Tests
@@ -45,7 +70,7 @@ Tests can be run in two ways:
 ```bash
 cd tools/emacs/
 cask install # create virtual env and install test deps
-cask emacs --batch -l tests/configuration-test.el -f ert-run-tests-batch-and-exit
+cask emacs --batch -L . -l tests/configuration-test.el -f ert-run-tests-batch-and-exit
 ```
 Before it you should install [Cask](https://github.com/cask/cask/) utility that allows to setup isolated test environment.
 
