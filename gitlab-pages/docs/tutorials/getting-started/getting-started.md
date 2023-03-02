@@ -121,6 +121,38 @@ In this section and the following one we will use a simple smart-contract that i
 
 First, create a `ligo_tutorial` folder on your computer. Then download and put the contract in this folder. It is available in  [Cameligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.mligo) and [Jsligo](https://gitlab.com/ligolang/ligo/-/raw/dev/src/test/contracts/increment.jsligo)
 
+<Syntax syntax="pascaligo">
+
+Open your editor in the folder and the file `increment.ligo` in the editor. You should have this code
+
+```pascaligo test-ligo group=a
+type storage is int
+
+type parameter is
+  Increment of int
+| Decrement of int
+| Reset
+
+// Two entrypoints
+
+function add (const store : storage; const delta : int) is
+  store + delta
+
+function sub (const store : storage; const delta : int) is
+  store - delta
+
+(* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. *)
+function main (const action : parameter; const store : storage) : list(operation) * storage is
+ (nil,    // No operations
+  case action of [
+    Increment (n) -> add (store, n)
+  | Decrement (n) -> sub (store, n)
+  | Reset         -> 0
+  ])
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 Open your editor in the folder and the file `increment.mligo` in the editor. You should have this code
@@ -183,6 +215,13 @@ const main = (action: parameter, store: storage) : [list <operation>, storage] =
 
 Now we are going to compile the contract, open a terminal in the folder. (or the vs-code built-in terminal with Ctrl+shift+²) and run the following command:
 
+<Syntax syntax="pascaligo">
+
+```zsh
+ligo compile contract increment.ligo -o increment.tz
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```zsh
@@ -211,6 +250,13 @@ As we can never underline enough the importance of tests in the context of smart
 
   Using the `interpret` command, one can run ligo code in the context of an init file. For instance
 
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run interpret "<code>" --init-file increment.ligo
+  ```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh
@@ -230,6 +276,13 @@ As we can never underline enough the importance of tests in the context of smart
   will run `<code>` after evaluating everything in the contract file. This is useful to test arbitrary functions and variables in your code.
 
   For instance, to test the `add` function you can run
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run interpret "add(10,32)" --init-file increment.ligo
+  ```
+
+</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -251,6 +304,13 @@ As we can never underline enough the importance of tests in the context of smart
   Running several of this command will cover the complete code.
 
   To run the contract as called on the blockchain, you will prefer the command `dry-run` which take the contract, the entrypoint, the initial parameter and the initial storage, like so
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run dry-run increment.ligo "Increment(32)" "10"
+  ```
+
+</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -277,6 +337,21 @@ As we can never underline enough the importance of tests in the context of smart
 
   In LIGO, you are able to write tests directly in the source file, using the `Test` module.
 
+<Syntax syntax="pascaligo">
+
+  Add the following line at the end of `increment.ligo`
+
+```pascaligo test-ligo group=a
+const test_increment = {
+    const initial_storage = 10;
+    const (taddr, _, _) = Test.originate(main, initial_storage, 0tez);
+    const contr = Test.to_contract(taddr);
+    const _ = Test.transfer_to_contract_exn(contr, Increment(1), 1mutez);
+    const storage = Test.get_storage(taddr);
+  } with assert (storage = initial_storage + 1);
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
   Add the following line at the end of `increment.mligo`
@@ -310,6 +385,13 @@ const test_increment = (() : unit => {
   which execute the same test as the previous section.
 
   Now simply run the command
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo run test increment.ligo
+  ```
+
+</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -385,6 +467,13 @@ const test_increment = (() : unit => {
   We are now ready to send a transaction to our contract. We want to send a transaction with parameter "Increment (32)" but the parameter is written is ligo.
   For that, it must first be converted to a Michelson parameter. Which is done by running :
 
+<Syntax syntax="pascaligo">
+
+  ```zsh
+  ligo compile parameter increment.ligo "Increment (32)"
+  ```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
   ```zsh

@@ -18,6 +18,18 @@ special operator (`.`).
 
 Let us first consider an example of record type declaration.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+type user is
+  record [
+    id       : nat;
+    is_admin : bool;
+    name     : string
+  ]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
@@ -44,6 +56,20 @@ type user = {
 
 And here is how a record value is defined:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+const alice : user =
+  record [
+    id       = 1n;
+    is_admin = True;
+    name     = "Alice"
+  ]
+```
+
+> Notice that since `alice` is declared as a `const`, none of its fields can be updated.
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
@@ -74,6 +100,13 @@ let alice : user = {
 If we want the contents of a given field, we use the (`.`) infix
 operator, like so:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+const alice_admin : bool = alice.is_admin
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
@@ -95,6 +128,15 @@ let alice_admin = alice.is_admin;
 We can also access fields of a record using the destructuring syntax.
 This allows accessing multiple fields of a record in a concise manner, like so:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+function user_to_tuple (const u : user) is {
+  const record[ id ; is_admin ; name ] = u;
+} with (id, is_admin, name)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
@@ -119,6 +161,15 @@ let userToTuple = (u : user) => {
 We can ignore some fields of the records we can do so by
 using `_` (underscore), like so:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=records1
+function get_id (const u : user) is {
+  const record[ id ; is_admin = _ ; name = _ ] = u;
+} with id
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=records1
@@ -158,6 +209,72 @@ updated record.
 Let us consider defining a function that translates three-dimensional
 points on a plane.
 
+<Syntax syntax="pascaligo">
+
+In PascaLIGO, the shape of that expression is
+`<record variable> with <record expression>`.
+The record variable is the record to update, and the
+record expression is the update itself.
+
+```pascaligo group=records2
+type point is record [x : int; y : int; z : int]
+type vector is record [dx : int; dy : int]
+
+const origin : point = record [x = 0; y = 0; z = 0]
+
+function xy_translate (var p : point; const vec : vector) : point is
+  p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+```
+
+You can call the function `xy_translate` defined above by running the
+following command of the shell:
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_update.ligo
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+> You have to understand that `p` has not been changed by the functional
+> update: a nameless new version of it has been created and returned by
+> the block-less function.
+
+The previous example features a frequent design pattern when updating
+records:
+
+```pascaligo skip
+  p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+```
+
+To shorten those functional updates, PascaLIGO features **lenses**:
+
+```pascaligo skip
+  p with record [x += vec.dx; y += vec.dy]
+```
+
+The available arithmetic lenses are `+=`, `-=`, `*=`, `/=`. There is a
+general lens, when a field is updated by a function call that takes
+the old field value and produces the new, like so:
+
+```pascaligo skip
+function lens (const old_field : int) : int (* new field *) is ...
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens; y |= lens]
+```
+
+Of course, in general, you can use a different lens for different
+fields. Also a lens may need arguments beyond the old field:
+
+```pascaligo skip
+function lens (const extra : int) : int -> int is
+  function (const old_field : int) : int is old_field + extra
+
+function update (var p : point; const vec : vector) : point is
+  p with record [x |= lens (1); y |= lens (2)]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 The syntax for the functional updates of record in CameLIGO follows
@@ -221,6 +338,28 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo
 
 #### Nested updates
 
+<Syntax syntax="pascaligo">
+
+A unique feature of LIGO is the ability to perform nested updates on
+ records. For example if you have the following record structure:
+
+```pascaligo
+type color is Blue | Green
+
+type preferences is
+  record [
+    color : color;
+    other : int
+  ]
+
+type account is
+  record [
+    id          : int;
+    preferences : preferences
+  ]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 A unique feature of LIGO is the ability to perform nested updates on
@@ -268,6 +407,17 @@ type account = {
 
 You can update the nested record with the following code:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+
+function change_color_preference (var account : account; const color : color ) : account is {
+  account := account with record [preferences.color = color]
+} with account
+
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -298,6 +448,92 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record
 # Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
 ```
 
+<Syntax syntax="pascaligo">
+
+### Record Patches
+
+Another way to understand what it means to update a record value is to
+make sure that any further reference to the value afterwards will
+exhibit the modification. This is called a `patch` and this is only
+possible in PascaLIGO, because a patch is an *instruction*, therefore
+we can only use it in a block. Similarly to a *functional update*, a
+patch takes a record to be updated and a record with a subset of the
+fields to update, then applies the latter to the former (hence the
+name "patch").
+
+Let us consider defining a function that translates three-dimensional
+points on a plane.
+
+```pascaligo group=records3
+type point is record [x : int; y : int; z : int]
+type vector is record [dx : int; dy : int]
+
+function xy_translate (var p : point; const vec : vector) : point is {
+  patch p with record [x = p.x + vec.dx];
+  patch p with record [y = p.y + vec.dy]
+} with p
+```
+
+You can call the function `xy_translate` defined above by running the
+following command of the shell:
+
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_patch.ligo
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+Of course, we can actually translate the point with only one `patch`,
+as the previous example was meant to show that, after the first patch,
+the value of `p` indeed changed. So, a shorter version would be
+
+```pascaligo group=records4
+type point is record [x : int; y : int; z : int]
+type vector is record [dx : int; dy : int]
+
+function xy_translate (var p : point; const vec : vector) : point is {
+  patch p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+} with p
+```
+
+You can call the new function `xy_translate` defined above by running the
+following command of the shell:
+
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_patch2.ligo
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+Record patches can actually be simulated with functional updates. All
+we have to do is *declare a new record value with the same name as the
+one we want to update* and use a functional update, like so:
+
+```pascaligo group=records5
+type point is record [x : int; y : int; z : int]
+type vector is record [dx : int; dy : int]
+
+function xy_translate (var p : point; const vec : vector) : point is {
+  const p : point = p with record [x = p.x + vec.dx; y = p.y + vec.dy]
+} with p
+```
+
+You can call the new function `xy_translate` defined above by running the
+following command of the shell:
+
+```shell
+ligo run evaluate-call
+gitlab-pages/docs/language-basics/src/maps-records/record_simu.ligo
+"(record [x=2;y=3;z=1], record [dx=3;dy=4])" --entry-point xy_translate
+# Outputs: {z = 1 , y = 7 , x = 5}
+```
+
+The hiding of a variable by another (here `p`) is called `shadowing`.
+
+</Syntax>
+
 ### Comparison
 
 Record types are comparable, which allows to check for equality and
@@ -321,6 +557,14 @@ sense.
 Here is how a custom map from addresses to a pair of integers is
 defined.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+type move is int * int
+type register is map (address, move)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -344,6 +588,13 @@ type register = map<address, move>;
 
 Here is how to create an empty map.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+const empty : register = map []
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -365,6 +616,21 @@ let empty: register = Map.empty;
 
 And here is how to create a non-empty map value:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+const moves : register =
+  map [
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
+```
+
+Notice the `->` between the key and its value and `;` to separate
+individual map entries. The annotated value `("<string value>" :
+address)` means that we cast a string into an address. Also, `map` is
+a keyword.
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -400,6 +666,18 @@ that we type-cast a string into an address.
 
 ### Accessing Map Bindings
 
+<Syntax syntax="pascaligo">
+
+In PascaLIGO, we can use the postfix `[]` operator to read the `move`
+value associated to a given key (`address` here) in the register. Here
+is an example:
+
+```pascaligo group=maps
+const my_balance : option (move) =
+  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -423,6 +701,17 @@ Notice how the value we read is an optional value: this is to force
 the reader to account for a missing key in the map. This requires
 *pattern matching*.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+function force_access (const key : address; const moves : register) : move is
+  case moves[key] of [
+    Some (move) -> move
+  | None -> failwith ("No move.")
+  ]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -454,6 +743,33 @@ Given a map, we may want to add a new binding, remove one, or modify
 one by changing the value associated to an already existing key. All
 those operations are called *updates*.
 
+<Syntax syntax="pascaligo">
+
+The values of a PascaLIGO map can be updated using the usual
+assignment syntax `<map variable>[<key>] := <new value>`. Let us
+consider an example.
+
+```pascaligo group=maps
+function assign (var m : register) : register is {
+  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
+} with m
+```
+
+If multiple bindings need to be updated, PascaLIGO offers a *patch
+instruction* for maps, similar to that for records.
+
+```pascaligo group=maps
+function assignments (var m : register) : register is {
+  patch m with map [
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+  ]
+} with m
+```
+
+See further for the removal of bindings.
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 We can update a binding in a map in CameLIGO by means of the
@@ -504,6 +820,18 @@ let add = (m: register) =>
 
 To remove a binding from a map, we need its key.
 
+
+<Syntax syntax="pascaligo">
+
+In PascaLIGO, there is a special instruction to remove a binding from
+a map.
+```pascaligo group=maps
+function delete (const key : address; var moves : register) : register is {
+  remove key from map moves
+} with moves
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLIGO, we use the predefined function `Map.remove` as follows:
@@ -551,6 +879,16 @@ over maps is called `Map.iter`. In the following example, the register
 of moves is iterated to check that the start of each move is above
 `3`.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+function iter_op (const m : register) : unit is {
+  function predicate (const i : address; const j : move) is
+    assert (j.0 > 3)
+} with Map.iter (predicate, m)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -582,6 +920,16 @@ implementing the map operation over maps is called `Map.map`. In the
 following example, we add `1` to the ordinate of the moves in the
 register.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+function map_op (const m : register) : register is {
+  function increment (const _ : address ; const j : move) is
+    (j.0, j.1 + 1)
+} with Map.map (increment, m)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -615,6 +963,16 @@ traversal of the data structure is over.
 The predefined functional iterator implementing the folded operation
 over maps is called `Map.fold` and is used as follows.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=maps
+function fold_op (const m : register) : int is {
+  function folded (const i : int; const j : address * move) is
+    i + j.1.1
+} with Map.fold (folded, m, 5)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=maps
@@ -653,6 +1011,14 @@ interface for big maps is analogous to the one used for ordinary maps.
 Here is how we define a big map:
 
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+type move is int * int
+type register is big_map (address, move)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_maps
@@ -676,6 +1042,13 @@ type register = big_map<address, move>;
 
 Here is how to create an empty big map.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const empty : register = big_map []
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_maps
@@ -696,6 +1069,21 @@ let empty: register = Big_map.empty;
 
 And here is how to create a non-empty map value:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const moves : register =
+  big_map [
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
+```
+
+Notice the right arrow `->` between the key and its value and the
+semicolon separating individual map entries. The value annotation
+`("<string value>" : address)` means that we cast a string into an
+address. -->
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_maps
@@ -736,6 +1124,14 @@ postfix `[]` operator to read the associated `move` value. However,
 the value we read is an optional value (in our case, of type `option
 (move)`), to account for a missing key. Here is an example:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=big_maps
+const my_balance : option (move) =
+  moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=big_maps
@@ -757,6 +1153,30 @@ let my_balance: option<move> =
 
 ### Updating Big Maps
 
+<Syntax syntax="pascaligo">
+
+The values of a PascaLIGO big map can be updated using the
+assignment syntax for ordinary maps
+
+```pascaligo group=big_maps
+function assign (var m : register) : register is {
+  m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
+} with m
+```
+
+If multiple bindings need to be updated, PascaLIGO offers a *patch
+instruction* for maps, similar to that for records.
+
+```pascaligo group=big_maps
+function assignments (var m : register) : register is {
+  patch m with map [
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+  ]
+} with m
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 We can update a big map in CameLIGO using the `Big_map.update`
@@ -789,6 +1209,21 @@ let updated_map: register =
 Removing a binding in a map is done differently according to the LIGO
 syntax.
 
+<Syntax syntax="pascaligo">
+
+PascaLIGO features a special syntactic construct to remove bindings
+from maps, of the form `remove <key> from map <map expression>`. For
+example,
+
+```pascaligo group=big_maps
+function rem (var m : register) : register is {
+  remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
+} with m
+
+const updated_map : register = rem (moves)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLIGO, the predefined function which removes a binding in a map

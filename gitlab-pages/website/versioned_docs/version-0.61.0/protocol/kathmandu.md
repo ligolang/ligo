@@ -15,7 +15,9 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 #### Tezos
 
-
+<SyntaxTitle syntax="pascaligo">
+val emit&lt;a&gt; :  string -> a -> operation
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val emit : string -> 'a -> operation
 </SyntaxTitle>
@@ -27,7 +29,9 @@ let emit: string => &apos;a => operation
 Build an event operation. To actually emit an event, this operation must be returned the same way as other operations (origination / transfer ..)
 
 #### Test
-
+<SyntaxTitle syntax="pascaligo">
+val get_last_events_from&lt;a,p,s&gt; : typed_address (p,s) -> string -> list (a)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_last_events_from : ('p,'s) typed_address -> string -> 'a list
 </SyntaxTitle>
@@ -44,6 +48,21 @@ function must be annotated with the expected payload type.
 
 Here is how you emit events and fetch them from your tests:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo test-ligo group=test_ex
+function main ( const x : (int*int) * unit ) is
+  (list [Tezos.emit ("%foo", x.0) ; Tezos.emit ("%foo", x.0.0)], Unit)
+
+const test_foo = {
+  const (ta, _, _) = Test.originate (main, Unit, 0tez) ;
+  const _ = Test.transfer_to_contract_exn (Test.to_contract (ta), (1,2), 0tez) ;
+  const x = (Test.get_last_events_from (ta, "foo") : list (int*int)) ;
+  const y = (Test.get_last_events_from (ta, "foo") : list (int)) ;
+} with (x,y)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex

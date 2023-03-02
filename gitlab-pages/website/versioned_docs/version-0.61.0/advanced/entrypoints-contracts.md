@@ -24,6 +24,14 @@ type of a main function is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+type storage is ...  // Any name, any type
+type return is list (operation) * storage
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -50,6 +58,18 @@ contract's parameter.
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=a
+type parameter is nat
+type storage is nat
+type return is list (operation) * storage
+
+function save (const action : parameter; const store : storage) : return is
+  (nil, store)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -97,6 +117,35 @@ In the following example, the storage contains a counter of type `nat`
 and a name of type `string`. Depending on the parameter of the
 contract, either the counter or the name is updated.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=b
+type parameter is
+  Action_A of nat
+| Action_B of string
+
+type storage is
+  record [
+    counter : nat;
+    name    : string
+  ]
+
+type return is list (operation) * storage
+
+function entry_A (const n : nat; const store : storage) : return is
+  (nil, store with record [counter = n])
+
+function entry_B (const s : string; const store : storage) : return is
+  (nil, store with record [name = s])
+
+function main (const action : parameter; const store : storage): return is
+  case action of [
+    Action_A (n) -> entry_A (n, store)
+  | Action_B (s) -> entry_B (s, store)
+  ]
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -166,6 +215,21 @@ This example shows how `Tezos.get_amount` and `failwith` can be used to
 decline any transaction that sends more tez than `0tez`, that is, no
 incoming tokens are accepted.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=c
+type parameter is unit
+type storage is unit
+type return is list (operation) * storage
+
+function deny (const action : parameter; const store : storage) : return is
+  if Tezos.get_amount() > 0tez then
+    failwith ("This contract does not accept tokens.")
+  else (nil, store)
+```
+
+</Syntax>
+
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -204,6 +268,17 @@ const deny = (action: parameter, store: storage): return_ => {
 This example shows how `Tezos.get_sender` can be used to deny access to an
 entrypoint.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=c
+const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
+
+function main (const action : parameter; const store : storage) : return is
+  if Tezos.get_sender() =/= owner then failwith ("Access denied.")
+  else (nil, store)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -258,6 +333,50 @@ type `parameter`, and we have a `proxy` contract that accepts the same
 parameter type, and forwards the call to the deployed counter
 contract.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+// counter.ligo
+type parameter is
+  Increment of nat
+| Decrement of nat
+| Reset
+
+type storage is unit
+
+type return is list (operation) * storage
+```
+
+```pascaligo group=d
+// proxy.ligo
+
+type parameter is
+  Increment of nat
+| Decrement of nat
+| Reset
+
+type storage is unit
+
+type return is list (operation) * storage
+
+const dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address)
+
+function proxy (const action : parameter; const store : storage): return is {
+  const counter : contract (parameter) =
+    case (Tezos.get_contract_opt (dest) : option (contract (parameter))) of [
+      Some (contract) -> contract
+    | None -> failwith ("Contract not found.")
+    ];
+
+  (* Reuse the parameter in the subsequent
+     transaction or use another one, `mock_param`. *)
+
+  const mock_param : parameter = Increment (5n);
+  const op = Tezos.transaction (action, 0tez, counter);
+} with (list[op], store)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip

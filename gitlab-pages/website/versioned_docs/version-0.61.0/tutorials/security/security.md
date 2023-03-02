@@ -17,6 +17,46 @@ Tezos limits the resources available to the contracts. It bounds operations size
 
 Let us look at a seemingly innocent wallet contract that stores an event log:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+type parameter is
+  Fund
+| Send of address * tez
+
+type tx is
+  Incoming of address * tez
+| Outgoing of address * tez
+
+type storage is record [owner : address; transactionLog : list (tx)]
+
+function send (const dst : address; const @amount : tez) is {
+  const callee = Tezos.get_contract_opt (dst)
+} with
+    case callee of [
+      Some (contract) -> {
+        const op = Tezos.transaction (Unit, @amount, contract)
+      } with (Outgoing (dst, @amount), list [op])
+    | None -> (failwith ("Could not send tokens") : tx * list (operation))
+    ]
+
+function receive (const src : address; const @amount : tez) is
+  (Incoming (src, @amount), (list [] : list (operation)))
+
+function main (const p : parameter; const s : storage) is {
+  const result
+  = case p of [
+      Fund -> receive (Tezos.get_sender (), Tezos.get_amount ())
+    | Send (args) -> {
+        assert ((Tezos.get_sender ()) = s.owner and (Tezos.get_amount ()) = 0mutez)
+      } with send (args)
+    ];
+  const tx = result.0;
+  const ops = result.1
+} with (ops, s with record [transactionLog = tx # s.transactionLog])
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -81,6 +121,21 @@ Aside from bakers, other actors can indirectly influence the transaction orderin
 
 A classic example of a system vulnerable to this kind of attacks is a decentralised exchange with an on-chain orderbook, like this one (let us assume just one asset pair for clarity):
 
+<Syntax syntax="pascaligo">
+
+```pascaligo skip
+type order is record [price : nat; volume : nat]
+
+type storage is record [bids : list (order); asks : list (order)]
+
+type parameter is Buy of order | Sell of order
+
+function buy (const order : order; var s : storage) is ...
+function sell (const order : order; var s : storage) is ...
+function main (const p : parameter; var s : storage) is ...
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -132,6 +187,32 @@ You may notice that the _effect_ of updating the storage happens after _interact
 
 It is quite hard to repeat this attack on Tezos, where the contract storage is always updated _before_ any interactions:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+type storage is record [beneficiary : address; balances : map (address, tez)]
+
+type parameter is tez * contract (unit)
+
+function withdraw (const param : parameter; var s : storage) is {
+  const @amount = param.0;
+  const beneficiary = param.1;
+  const beneficiary_addr = Tezos.address (beneficiary);
+  const @balance = 
+    case Map.find_opt (beneficiary_addr, s.balances) of [
+      Some (v) -> v
+    | None -> 0mutez
+    ];
+  if @balance < @amount then failwith ("Insufficient balance");
+  const new_balance = case (@balance - @amount) of [
+    | Some (x) -> x
+    | None -> (failwith ("Insufficient balance") : tez) ] ;
+  const op = Tezos.transaction (Unit, @amount, beneficiary);
+  s.balances [beneficiary_addr] := new_balance
+} with (list [op], s)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -197,6 +278,30 @@ When emitting a transaction to an untrusted contract, you can not assume that it
 
 Let us consider the following example:
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+type storage is record [owner : address; beneficiaries : list (address)]
+
+function send_rewards (const beneficiary_addr : address) is {
+  const maybe_contract = 
+    Tezos.get_contract_opt (beneficiary_addr);
+  const beneficiary = 
+    case maybe_contract of [
+      Some (contract) -> contract
+    | None -> (failwith ("CONTRACT_NOT_FOUND") : contract (unit))
+    ]
+} with Tezos.transaction (Unit, 5000000mutez, beneficiary)
+
+function main (const p : unit; const s : storage) is
+  if (Tezos.get_sender ()) =/= s.owner
+  then (failwith ("ACCESS_DENIED") : list (operation) * storage)
+  else {
+    const ops = List.map (send_rewards, s.beneficiaries)
+  } with (ops, s)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo

@@ -18,6 +18,18 @@ The behaviour of the subtraction operator `-` on values of type `tez` has been c
 Subtracting values of type `tez` yeilds on optional value. (This emits
 the `SUB_MUTEZ` Michelson instruction)
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=b
+
+const d : option (tez) = 5mutez - 1mutez (* Some (4mutez) *)
+
+const e : option (tez) = 1mutez - 5mutez (* None *)
+
+```
+
+</Syntax>
+
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -41,6 +53,9 @@ let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
 
 #### Option Module
 
+<SyntaxTitle syntax="pascaligo">
+val map : ('a -> 'b) -> option ('a) -> option ('b)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val map : ('a -> 'b) -> 'a option -> 'b option
 </SyntaxTitle>
@@ -59,6 +74,9 @@ If the value is `None` the function is not executed/applied.
 
 ### Test
 
+<SyntaxTitle syntax="pascaligo">
+val set_now : timestamp -> unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_now : timestamp -> unit
 </SyntaxTitle>

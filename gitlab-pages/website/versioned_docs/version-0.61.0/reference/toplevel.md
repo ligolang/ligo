@@ -10,6 +10,9 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 These types and functions are available without any needed prefix.
 
+<SyntaxTitle syntax="pascaligo">
+type address
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type address
 </SyntaxTitle>
@@ -20,6 +23,9 @@ type address
 
 An untyped address which can refer to a smart contract or account.
 
+<SyntaxTitle syntax="pascaligo">
+type big_map (key, value)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) big_map
 </SyntaxTitle>
@@ -28,6 +34,17 @@ type ('key, 'value) big_map
 type big_map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
+<Syntax syntax="pascaligo">
+
+The type of a big map from values of type `key` to
+values of type `value` is `big_map (key, value)`.
+
+```pascaligo group=big_map
+type move is int * int
+type register is big_map (address, move)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 The type of a big map from values of type `key` to values
@@ -54,6 +71,9 @@ type register = big_map<address, move>;
 
 Be aware that a `big_map` cannot appear inside another `big_map`.
 
+<SyntaxTitle syntax="pascaligo">
+type bool
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type bool
 </SyntaxTitle>
@@ -62,6 +82,9 @@ type bool
 type bool
 </SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+type bytes
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type bytes
 </SyntaxTitle>
@@ -70,6 +93,9 @@ type bytes
 type bytes
 </SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+type contract (param)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'param contract
 </SyntaxTitle>
@@ -82,6 +108,9 @@ A typed contract.
 
 Use `unit` as `param` to indicate an implicit account.
 
+<SyntaxTitle syntax="pascaligo">
+type chain_id
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type chain_id
 </SyntaxTitle>
@@ -92,6 +121,9 @@ type chain_id
 
 The identifier of a chain, used to indicate test or main chains.
 
+<SyntaxTitle syntax="pascaligo">
+type int
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type int
 </SyntaxTitle>
@@ -104,6 +136,9 @@ An integer.
 
 The only size limit to integers is gas.
 
+<SyntaxTitle syntax="pascaligo">
+type key
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type key
 </SyntaxTitle>
@@ -114,6 +149,9 @@ type key
 
 A public cryptographic key.
 
+<SyntaxTitle syntax="pascaligo">
+type key_hash
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type key_hash
 </SyntaxTitle>
@@ -124,6 +162,9 @@ type key_hash
 
 The hash of a public cryptographic key.
 
+<SyntaxTitle syntax="pascaligo">
+type list (t)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 't list
 </SyntaxTitle>
@@ -134,6 +175,9 @@ type list&lt;&apos;t&gt;
 
 A sequence of elements of the same type.
 
+<SyntaxTitle syntax="pascaligo">
+type map (key, value)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('key, 'value) map
 </SyntaxTitle>
@@ -142,6 +186,17 @@ type ('key, 'value) map
 type map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
+<Syntax syntax="pascaligo">
+
+The type of a map from values of type `key` to
+values of type `value` is `map (key, value)`.
+
+```pascaligo group=maps
+type move is int * int
+type register is map (address, move)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 The type of a map from values of type `key` to values
@@ -166,6 +221,9 @@ type register = map <address, move>;
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+type nat
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type nat
 </SyntaxTitle>
@@ -178,6 +236,9 @@ A natural number.
 
 The only size limit to natural numbers is gas.
 
+<SyntaxTitle syntax="pascaligo">
+type operation
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type operation
 </SyntaxTitle>
@@ -188,6 +249,10 @@ type operation
 
 An operation emitted by the contract
 
+
+<SyntaxTitle syntax="pascaligo">
+type set ('value)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'value set
 </SyntaxTitle>
@@ -196,6 +261,9 @@ type 'value set
 type set&lt;&apos;value&gt;
 </SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+type signature
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type signature
 </SyntaxTitle>
@@ -206,6 +274,10 @@ type signature
 
 A cryptographic signature.
 
+
+<SyntaxTitle syntax="pascaligo">
+type string
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type string
 </SyntaxTitle>
@@ -216,6 +288,9 @@ type string
 
 A sequence of characters.
 
+<SyntaxTitle syntax="pascaligo">
+type tez
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type tez
 </SyntaxTitle>
@@ -226,6 +301,9 @@ type tez
 
 A specific type for tokens.
 
+<SyntaxTitle syntax="pascaligo">
+type timestamp
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type timestamp
 </SyntaxTitle>
@@ -236,6 +314,9 @@ type timestamp
 
 A date in the real world.
 
+<SyntaxTitle syntax="pascaligo">
+type unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type unit
 </SyntaxTitle>
@@ -244,6 +325,10 @@ type unit
 type unit
 </SyntaxTitle>
 
+
+<SyntaxTitle syntax="pascaligo">
+val is_nat : int -> option (nat)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val is_nat: int -> nat option
 </SyntaxTitle>
@@ -254,6 +339,9 @@ let is_nat: (i: int) => option&lt;nat&gt;
 
 Convert an `int` to a `nat` if possible.
 
+<SyntaxTitle syntax="pascaligo">
+val abs : int -> nat
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val abs: int -> nat
 </SyntaxTitle>
@@ -264,6 +352,9 @@ let abs: (i: int) => nat
 
 Cast an `int` to `nat`.
 
+<SyntaxTitle syntax="pascaligo">
+val int : nat -> int
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val int: nat -> int
 </SyntaxTitle>
@@ -274,6 +365,9 @@ let int: (n: nat) => int
 
 Cast an `nat` to `int`.
 
+<SyntaxTitle syntax="pascaligo">
+const unit : unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val unit: unit
 </SyntaxTitle>
@@ -285,7 +379,9 @@ let unit: unit
 A helper to create a unit.
 
 <a name="failwith"></a>
-
+<SyntaxTitle syntax="pascaligo">
+val failwith&lt;a&gt; : a -> b
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val failwith : 'a -> 'b
 </SyntaxTitle>
@@ -300,6 +396,15 @@ not supported at the moment.
 Using this currently requires in general a type annotation on the
 `failwith` call.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function main (const p : int; const s : unit) : list (operation) * unit is {
+  if p > 10 then failwith ("Failure.");
+} with ((nil : list (operation)), s)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -318,6 +423,9 @@ let main = (p: int, s: unit): unit => {
 
 </Syntax>
 
+<SyntaxTitle syntax="pascaligo">
+val assert : bool -> unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val assert : bool -> unit
 </SyntaxTitle>
@@ -327,6 +435,19 @@ let assert: (condition: bool) => unit
 </SyntaxTitle>
 
 Check if a certain condition has been met. If not the contract will fail.
+
+<SyntaxTitle syntax="pascaligo">
+val ediv : int -> int -> option (int * nat)
+</SyntaxTitle>
+<SyntaxTitle syntax="pascaligo">
+val ediv : mutez -> nat -> option (mutez * mutez)
+</SyntaxTitle>
+<SyntaxTitle syntax="pascaligo">
+val ediv : mutez -> mutez -> option (nat * mutez)
+</SyntaxTitle>
+<SyntaxTitle syntax="pascaligo">
+val ediv : nat -> nat -> option (nat * nat)
+</SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
 val ediv : int -> int -> (int * nat) option
@@ -357,6 +478,9 @@ let ediv: (value: nat, divided_by: nat) => option&lt;[nat, nat]&gt;
 
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.
 
+<SyntaxTitle syntax="pascaligo">
+val ignore&lt;a&gt; : a -> unit
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val ignore : 'a -> unit
 </SyntaxTitle>
@@ -367,14 +491,23 @@ let ignore: (value: &apos;a) => &apos;unit
 
 Ignores a value, it can be an alternative to `_` prefixed variables.
 
+<SyntaxTitle syntax="pascaligo">
+type sapling_state (n)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'n sapling_state
 </SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+type sapling_transaction (n)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'n sapling_transaction
 </SyntaxTitle>
 
+<SyntaxTitle syntax="pascaligo">
+type ticket (v)
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 'v ticket
 </SyntaxTitle>
@@ -389,6 +522,14 @@ Note that a variable containing a ticket can only be used once (they are not `DU
 The ticket type can be defined over a comparable type `'v`.
 `'v` being the type of the value used to identify a given ticket.
 
+<Syntax syntax="pascaligo">
+
+```pascaligo group=ticket_t
+type va is int
+type my_ticket is ticket (va)
+```
+
+</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=ticket_t
@@ -398,6 +539,10 @@ type my_ticket = va ticket
 
 </Syntax>
 
+
+<SyntaxTitle syntax="pascaligo">
+type tx_rollup_l2_address
+</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type tx_rollup_l2_address
 </SyntaxTitle>
