@@ -16,6 +16,7 @@ import Control.Monad.Except (Except, liftEither, runExcept, throwError)
 import Data.DList qualified as DL
 import Data.Data (Data)
 import Data.Default (Default, def)
+import Data.HashSet qualified as HashSet
 import Data.Set qualified as Set
 import Fmt (Buildable (..), Builder, indentF, pretty, unlinesF, (+|), (|+))
 import Generics.SYB (everywhere, mkM, mkT)
@@ -39,7 +40,7 @@ import Morley.Michelson.TypeCheck.Instr qualified as Tc
 import Morley.Michelson.Typed
   (BadTypeForScope (BtHasTicket), Contract' (..), ContractCode' (unContractCode), DfsSettings (..),
   HandleImplicitDefaultEp (WithImplicitDefaultEp), Instr (..), SomeContract (..), dfsFoldInstr,
-  pattern ConcreteMeta)
+  pattern (:#), pattern ConcreteMeta)
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (mformatAddress)
@@ -332,11 +333,12 @@ preprocessContract con@U.Contract{..} typesRules instrRules =
 -- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
 --    wrappers that carry the debug info.
 -- 3. All contract filepaths that would be used in debugging session.
+-- 4. All locations that are related to lambdas.
 readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath])
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet LigoRange)
 readLigoMapper ligoMapper typeRules instrRules = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
@@ -352,19 +354,24 @@ readLigoMapper ligoMapper typeRules instrRules = do
         & unstableNub
         & filter (not . isLigoStdLib)
 
-  let exprLocs =
+  let (exprLocs, lambdaLocs) =
         -- We expect a lot of duplicates, stripping them via putting to Set
-        Set.fromList $
+        bimap Set.fromList HashSet.fromList $
         getSourceLocations (unContractCode $ cCode extContract)
 
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (exprLocs, extendedContract, allFiles)
+  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs)
 
   where
-    getSourceLocations :: Instr i o -> [ExpressionSourceLocation]
-    getSourceLocations = DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
+    getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [LigoRange])
+    getSourceLocations = bimap DL.toList DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
       ConcreteMeta (liiLocation @'Unique -> Just loc) instr
-        -> DL.singleton (ExpressionSourceLocation loc $ not . shouldIgnoreMeta loc instr)
+        -> let lambdaRange =
+                case instr of
+                  Nested LAMBDA{} -> DL.singleton loc
+                  Nested (LAMBDA{} :# _) -> DL.singleton loc
+                  _ -> mempty
+           in (DL.singleton (ExpressionSourceLocation loc $ not . shouldIgnoreMeta loc instr), lambdaRange)
       _ -> mempty

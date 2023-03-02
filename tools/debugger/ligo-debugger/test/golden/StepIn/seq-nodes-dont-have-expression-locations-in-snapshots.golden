@@ -25,7 +25,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (0)
+  isStatus: running / expression evaluated (42)
   isStackFrames:
     [StackFrame:
       sfName: main

@@ -59,6 +59,7 @@ import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
 
 import AST (LIGO)
+import Duplo (leq)
 import Parser (ParsedInfo)
 import Range (HasRange (getRange), Range (..))
 
@@ -68,6 +69,7 @@ import Morley.Debugger.Core.Navigate
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
   MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos, mfwsFailed),
@@ -80,7 +82,6 @@ import Morley.Util.Lens (postfixLFields)
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
-import Morley.Michelson.ErrorPos (ErrorSrcPos(ErrorSrcPos))
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
@@ -244,6 +245,10 @@ data CollectorState m = CollectorState
     -- ^ Last range. We can use it to get
     -- the latest position where some
     -- failure occurred.
+  , csLambdaLocs :: HashSet LigoRange
+    -- ^ Locations for lambdas. We need them to ignore statements recording
+    -- in cases when some location is present in this set and it is not
+    -- associated with @LAMBDA@ instruction.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -335,7 +340,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     preExecutedStage embeddedMetaMb instr stack = case embeddedMetaMb of
       Just LigoIndexedInfo{..} -> do
         whenJust liiLocation \loc -> do
-          statements <- getStatements loc
+          statements <- getStatements instr loc
 
           forM_ statements \statement -> do
             unlessM (HS.member statement <$> use csRecordedStatementRangesL) do
@@ -532,8 +537,38 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       csLastRangeMbL ?= loc
       lift $ C.yield newSnap
 
-    getStatements :: LigoRange -> CollectingEvalOp m [LigoRange]
-    getStatements ligoRange = do
+    getStatements :: Instr i o -> LigoRange -> CollectingEvalOp m [LigoRange]
+    getStatements instr ligoRange = do
+      {-
+        Here we need to clarify some implementation moments.
+
+        For each @ligoRange@ we're trying to find the nearest scope
+        (like function call or loop). With loops everything seems straightforward
+        but for functions we're doing one trick.
+
+        In LIGO we can define functions in 2 ways:
+        1. Binding definition (like @let foo (a, b : int * int) = a + b@)
+        2. Lambda definition (like @let foo = fun (a, b : int * int) -> a + b@)
+
+        Both definitions compile to @LAMBDA@ instr with some source location, but
+        for (1) we'll have location for function arguments and for (2) location for the whole
+        @fun .. -> ..@ body.
+
+        In (1) case we wan't to record a statement location for not top-level function assignment and
+        at this moment we can do this only with these arguments locations, so, we can't just ignore them.
+        Moreover, these argument locations appear in the @LAMBDA@s body.
+
+        This is handled by matching on the current instruction. If it's a @LAMBDA@ then we'll record statements.
+        If it's not a @LAMBDA@, but range is associated with some @LAMBDA@ instr then we'll just return empty
+        statements list.
+      -}
+
+      let isLambda =
+            case instr of
+              Nested LAMBDA{} -> True
+              Nested (LAMBDA{} :# _) -> True
+              _ -> False
+
       let range@Range{..} = ligoRangeToRange ligoRange
 
       parsedLigo <-
@@ -541,19 +576,46 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           (error [int||File #{_rFile} is not parsed for some reason|])
           <$> use (csParsedFilesL . at _rFile)
 
-      statements <- filterAndReverseStatements $ spineAtPoint range parsedLigo
-      pure $ rangeToLigoRange . getRange <$> statements
+      isLambdaLoc <- HS.member ligoRange <$> use csLambdaLocsL
+
+      if isLambdaLoc && not isLambda
+      then pure []
+      else do
+        let statements = filterAndReverseStatements isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
+
+        pure $ rangeToLigoRange . getRange <$> statements
       where
-        filterAndReverseStatements :: [LIGO ParsedInfo] -> CollectingEvalOp m [LIGO ParsedInfo]
-        filterAndReverseStatements = go []
+        -- Here we're looking for statements and the nearest scope locations.
+        -- These statements are filtered by strict inclusivity of their ranges to this scope.
+        filterAndReverseStatements :: Bool -> Range -> [LIGO ParsedInfo] -> [LIGO ParsedInfo]
+        filterAndReverseStatements = \isLambdaLoc startRange nodes ->
+          let (statements, scopeRange) = usingState startRange $ go [] nodes isLambdaLoc False
+          in filter (\(getRange -> stmtRange) -> stmtRange `leq` scopeRange && stmtRange /= scopeRange) statements
           where
-            go :: [LIGO ParsedInfo] -> [LIGO ParsedInfo] -> CollectingEvalOp m [LIGO ParsedInfo]
-            go acc nodes =
+            go :: [LIGO ParsedInfo] -> [LIGO ParsedInfo] -> Bool -> Bool -> State Range [LIGO ParsedInfo]
+            go acc nodes isLambdaLoc ignore =
               tryToProcessLigoStatement
-                (\x xs -> go (x : acc) xs)
-                (\xs -> go acc xs)
+                onSuccess
+                onFail
                 (pure acc)
                 nodes
+              where
+                -- Note, that @BFunction@ binding not always is a scope. Sometimes we want
+                -- to treat it as a statement. From observations we'll see that it's a statement
+                -- if and only if it's discovered as a first statement that cover the given range.
+
+                onSuccess x xs = decide True x (go (x : acc) xs)
+                onFail x xs = decide False x (go acc xs)
+
+                decide :: Bool -> LIGO ParsedInfo -> (Bool -> Bool -> State Range [LIGO ParsedInfo]) -> State Range [LIGO ParsedInfo]
+                decide isOnSuccess x cont
+                  | ignore = cont isLambdaLoc ignore
+                  | getRange x /= ligoRangeToRange ligoRange && isScopeForStatements isLambdaLoc x
+                      = put (getRange x) >> cont isLambdaLoc True
+                  | otherwise =
+                      let
+                        isFunctionAssignment = isScopeForStatements (not isLambdaLoc) x && isOnSuccess
+                      in cont (isLambdaLoc && not isFunctionAssignment) ignore
 
 runCollectInterpretSnapshots
   :: (MonadUnliftIO m, MonadActive m)
@@ -630,8 +692,9 @@ collectInterpretSnapshots
   -> ContractEnv
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
+  -> HashSet LigoRange
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger =
+collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger lambdaLocs =
   runCollectInterpretSnapshots
     (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
     env
@@ -659,6 +722,7 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csLoggingFunction = logger
       , csMainFunctionName = Name entrypoint
       , csLastRangeMb = Nothing
+      , csLambdaLocs = lambdaLocs
       }
 
     -- Strip duplicate locations.

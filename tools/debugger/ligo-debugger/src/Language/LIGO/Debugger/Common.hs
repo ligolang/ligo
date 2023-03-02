@@ -18,6 +18,8 @@ module Language.LIGO.Debugger.Common
   , rangeToLigoRange
   , getMetaMbAndUnwrap
   , isLocationForFunctionCall
+  , isScopeForStatements
+  , isStandaloneOrTupleArgument
   , shouldIgnoreMeta
   , buildType
   , ExpressionSourceLocation (..)
@@ -37,8 +39,8 @@ import Fmt (Buildable (..), pretty)
 import Text.Interpolation.Nyan
 
 import AST
-  (Binding, CaseOrDefaultStm, Ctor, Expr, LIGO, Pattern, QualifiedName, SomeLIGO (SomeLIGO),
-  findNodeAtPoint)
+  (Binding, CaseOrDefaultStm, Ctor, Expr, LIGO, NameDecl, Pattern, QualifiedName,
+  SomeLIGO (SomeLIGO), findNodeAtPoint)
 import AST qualified
 import Duplo (layer, leq, spineTo)
 import Extension (getExt)
@@ -136,7 +138,7 @@ getStatementLocs locs parsedContracts =
             worthPicking =
               tryToProcessLigoStatement
                 (const . const $ True)
-                (const False)
+                (const . const $ False)
                 False
 
 -- | Here we decide whether the node is at the top-level
@@ -167,7 +169,7 @@ containsNode tree node = getRange node `elem` nodes
 -- In empty case if will return @onEmpty@ value.
 tryToProcessLigoStatement
   :: (LIGO ParsedInfo -> [LIGO ParsedInfo] -> res) -- ^ @onSuccess@
-  -> ([LIGO ParsedInfo] -> res) -- ^ @onFail@
+  -> (LIGO ParsedInfo -> [LIGO ParsedInfo] -> res) -- ^ @onFail@
   -> res -- ^ @onEmpty@
   -> [LIGO ParsedInfo]
   -> res
@@ -179,13 +181,13 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
   -- @BConst@ node corresponds to some assignments in JsLIGO.
   -- We should ignore it only in case if it occurs at top-level.
   x@(layer -> Just AST.BConst{}) : xs@(y : _)
-    | isTopLevel y -> onFail xs
+    | isTopLevel y -> onFail x xs
     | otherwise -> onSuccess x xs
 
   -- It would be convenient to see function assignments
   -- that not at top level.
   x@(layer -> Just AST.BFunction{}) : xs@(y : _)
-    | isTopLevel y -> onFail xs
+    | isTopLevel y -> onFail x xs
     | otherwise -> onSuccess x xs
 
   -- Like with @BConst@ but couldn't be encountered at top-level.
@@ -221,7 +223,8 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
     | couldBeLastInSomeScope x
       -- Check that the parent node could be a new scope.
     , isNewScope y x -> onSuccess x xs
-  _ : xs -> onFail xs
+
+  x : xs -> onFail x xs
   where
     couldBeLastInSomeScope :: LIGO ParsedInfo -> Bool
     couldBeLastInSomeScope (layer -> Just expr) = case expr of
@@ -381,6 +384,43 @@ isLocationForFunctionCall ligoRange parsedContracts = isJust do
   AST.Apply{} <- layer node
   pass
 
+-- | Checks that the given node is a scope for
+-- some statements (these scopes are not the same as from @tryToProcessLigoStatement@).
+--
+-- Note that @BFunction@ node not always is a new scope.
+-- We'll treat it as a new scope scope in cases when the current location
+-- is not associated with @LAMBDA@ instruction.
+isScopeForStatements :: Bool -> LIGO ParsedInfo -> Bool
+isScopeForStatements isLambdaLoc node
+  | Just AST.WhileLoop{} <- layer node = True
+  | Just AST.ForOfLoop{} <- layer node = True
+  | Just AST.Lambda{} <- layer node = True
+  | Just AST.BFunction{} <- layer node = not isLambdaLoc
+  | otherwise = False
+
+-- | Checks that a given sequence of nested nodes
+-- is standalone or tuple argument.
+isStandaloneOrTupleArgument :: [LIGO ParsedInfo] -> Bool
+isStandaloneOrTupleArgument = \case
+  (layer @NameDecl -> Just{}) : xs -> isStandaloneOrTupleArgumentImpl xs
+  xs -> isStandaloneOrTupleArgumentImpl xs
+  where
+    isStandaloneOrTupleArgumentImpl :: [LIGO ParsedInfo] -> Bool
+    isStandaloneOrTupleArgumentImpl = \case
+      -- Locations for function declaration arguments.
+      (layer @Pattern -> Just{}) : (layer @Pattern -> Just pat) : (isFunctionDecl -> True) : _
+          -- Argument has type annotation.
+        | AST.IsAnnot{} <- pat -> True
+          -- Argument is just in parentheses.
+        | AST.IsParen{} <- pat -> True
+
+      _ -> False
+
+    isFunctionDecl :: LIGO ParsedInfo -> Bool
+    isFunctionDecl (layer @Binding -> Just AST.BFunction{}) = True
+    isFunctionDecl (layer @Expr -> Just AST.Lambda{}) = True
+    isFunctionDecl _ = False
+
 -- | Sometimes we want to ignore metas for some instructions.
 shouldIgnoreMeta :: LigoRange -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
 shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction || shouldIgnoreMetaByLocation
@@ -425,13 +465,6 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
         -- Locations for function names in JsLIGO.
         (layer @Pattern -> Just AST.IsVar{}) : _ -> pass
 
-        -- Locations for function arguments.
-        (layer @Pattern -> Just{}) : (layer @Pattern -> Just pat) : (layer @Binding -> Just AST.BFunction{}) : _
-            -- Argument has type annotation.
-          | AST.IsAnnot{} <- pat -> pass
-            -- Argument is just in parentheses.
-          | AST.IsParen{} <- pat -> pass
-
         -- Locations for top-level functions
         (layer @Binding -> Just AST.BFunction{}) : node : _
           | isTopLevel node -> pass
@@ -472,7 +505,9 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
         (layer @AST.Name -> Just{}) : _ -> pass
         (layer @QualifiedName -> Just{}) : _ -> pass
 
-        _ -> empty
+        nodes
+          | isStandaloneOrTupleArgument nodes -> pass
+          | otherwise -> empty
 
     shouldIgnoreMetaByInstruction = case instr of
       -- @PUSH@es have location metas that point to constants.

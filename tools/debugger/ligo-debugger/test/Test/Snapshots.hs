@@ -1318,20 +1318,20 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ move Forward
         void $ move Forward
 
-        liftIO $ step "Aux function in \"fold\" is statement"
-        checkSnapshot \case
-          InterpretSnapshot
-            { isStatus = InterpretRunning EventFacedStatement
-            , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 9 41) (LigoPosition 9 50)
-                } :| _
-            } -> pass
-          snap -> unexpectedSnapshot snap
-
-        void $ move Forward
-
         replicateM_ 3 do
           let loc = LigoRange file (LigoPosition 9 41) (LigoPosition 9 50)
+
+          liftIO $ step "Aux function body in \"fold\" is statement"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStatus = InterpretRunning EventFacedStatement
+              , isStackFrames = StackFrame
+                  { sfLoc = loc'
+                  } :| _
+              } | loc == loc' -> pass
+            snap -> unexpectedSnapshot snap
+
+          void $ move Forward
 
           checkSnapshot \case
             InterpretSnapshot
@@ -1548,7 +1548,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
 
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
-      (locations, _, _) <-
+      (locations, _, _, _) <-
         case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err

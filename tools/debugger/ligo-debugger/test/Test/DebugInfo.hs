@@ -48,11 +48,11 @@ collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \c
 collectContractMetas :: HashMap FilePath (LIGO ParsedInfo) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
 collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unContractCode . T.cCode
 
--- | Run the given contract + entrypoint, build code with embedded ligo metadata,
+-- | Run the given contract + entrypoint, build code with embedded ligo metadata.
 buildSourceMapper
   :: FilePath
   -> String
-  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath])
+  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet LigoRange)
 buildSourceMapper file entrypoint = do
   ligoMapper <- compileLigoContractDebug entrypoint file
   case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
@@ -72,7 +72,7 @@ test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
 
-      (exprLocs, T.SomeContract contract, allFiles) <- buildSourceMapper file "main"
+      (exprLocs, T.SomeContract contract, allFiles, _) <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
@@ -227,7 +227,7 @@ test_SourceMapper = testGroup "Reading source mapper"
 
   , testCase "metas are not shifted in `if` blocks" do
       let file = contractsDir </> "if.mligo"
-      (_, T.SomeContract contract, allFiles) <- buildSourceMapper file "main"
+      (_, T.SomeContract contract, allFiles, _) <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
@@ -265,7 +265,7 @@ test_Function_call_locations = testGroup "Function call locations"
     checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
     checkLocations contractName expectedLocs = do
       let file = contractsDir </> contractName
-      (Set.map (ligoRangeToSourceLocation . eslLigoRange) -> locs, _, _) <- buildSourceMapper file "main"
+      (Set.map (ligoRangeToSourceLocation . eslLigoRange) -> locs, _, _, _) <- buildSourceMapper file "main"
 
       forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
         if Set.member loc locs
