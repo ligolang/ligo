@@ -61,7 +61,7 @@ export const mkAxios = (): AxiosInstance => {
   return instance;
 };
 
-const baseUrl = "/api";
+const baseUrl = `http://${process.env.BACKEND_URL!}`;
 
 const addProtocol = <T extends { protocol?: string }>(args: T) => {
   const argsWithProtocol = args;
