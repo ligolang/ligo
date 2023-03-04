@@ -46,6 +46,22 @@ First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/3857618664
 sudo apt install ./ligo.deb
 ```
 
+## Arch User repository
+
+It's possible to install latest release of ligo through [AUR](https://aur.archlinux.org/packages/ligo-bin)
+
+```zsh
+git clone https://aur.archlinux.org/ligo-bin.git
+cd ligo-bin
+makepkg -si
+```
+
+Or through tools like [yay](https://github.com/Jguer/yay)
+
+```zsh
+yay -S ligo-bin
+```
+
 ## Dockerised installation
 If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release 0.61.0](./changelog.md):
 
