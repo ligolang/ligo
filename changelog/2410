@@ -1,0 +1,7 @@
+
+author: Laucans
+description: "You can now install ligo through AUR\\n\\n\\n```zsh\\ngit clone https://aur.archlinux.org/ligo-bin.git\\ncd ligo-bin\\nmakepkg -si\\n\\n```\\n\\nor\\n\\n\\n```zsh\\nyay -S ligo-bin\\n\\n```\\n\\n"
+merge_request: '2410'
+title: "Ligo is distributed through AUR for Arch linux"
+type: added
+            
