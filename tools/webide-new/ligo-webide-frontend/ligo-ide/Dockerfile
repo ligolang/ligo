@@ -20,6 +20,7 @@ RUN yarn install
 
 ENV MEASUREMENT_ID="G-5H01XTN4PY"
 ENV GIT_PROXY="https://ligo-webide-cors-proxy.serokell.team"
+ENV BACKEND_URL="https://backend.ide.ligolang.org"
 COPY --from=syntaxes . ./src/ligo-components/eth-project/Project/languages/syntaxes/
 RUN echo $(ls ./src/ligo-components/eth-project/Project/languages/syntaxes/)
 RUN yarn build:react-prod

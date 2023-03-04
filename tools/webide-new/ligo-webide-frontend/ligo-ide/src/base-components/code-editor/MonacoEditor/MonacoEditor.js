@@ -17,7 +17,7 @@ import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
 
 function createWebSocket() {
-  const url = "ws://localhost:8080";
+  const url = `ws://${process.env.BACKEND_URL}`;
   const webSocket = new WebSocket(url);
   webSocket.onopen = () => {
     const socket = toSocket(webSocket);
