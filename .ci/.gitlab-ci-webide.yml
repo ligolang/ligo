@@ -1,5 +1,3 @@
-variables:
-
 #######################################################################
 # MR integration
 #######################################################################
@@ -8,6 +6,8 @@ webide-define-image-tag:
   extends: .docker-image
   stage: pretooling
   rules:
+    - if: '$CI_COMMIT_BRANCH == "webide-release/frontend"'
+      when: always
     - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide-new/ligo-webide-frontend/**/*
@@ -93,8 +93,33 @@ webide-new-frontend-build-and-push:
         - tools/webide-new/ligo-webide-frontend/**/*
       when: always
   script:
-    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes tools/webide-new/ligo-webide-frontend/ligo-ide -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
+    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes 
+      --build-arg backend_url=ligo-webide-v2.gcp-npr.marigold.dev 
+      -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile.stg 
+      tools/webide-new/ligo-webide-frontend/ligo-ide 
+      -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker push "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
+
+
+webide-new-release-frontend-build-and-push:
+  extends: .docker-image
+  stage: deploy
+  needs:
+    - job: webide-define-image-tag
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "webide-release/frontend"'
+      when: always
+  script:
+    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes 
+      --build-arg backend_url=backend.ide.ligolang.org  
+      -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
+      tools/webide-new/ligo-webide-frontend/ligo-ide 
+      -t release-${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - docker push "release-${WEBIDE_FRONTEND_NEW_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
