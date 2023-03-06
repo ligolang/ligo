@@ -94,7 +94,7 @@ webide-new-frontend-build-and-push:
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes 
-      --build-arg backend_url=ligo-webide-v2.gcp-npr.marigold.dev 
+      --build-arg backend_url=backend.ligo-webide-v2.gcp-npr.marigold.dev 
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
       -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
