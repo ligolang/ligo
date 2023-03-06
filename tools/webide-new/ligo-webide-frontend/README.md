@@ -5,6 +5,9 @@
 On `ligo-ide` run `yarn install` to install dependencies, `yarn build:react` to build project and `yarn dev:react` will start it on `localhost:3000`. \
 Also for working with `git` you need to specify `GIT_PROXY` env variable. This proxy is required by one of the dependencies, see https://github.com/isomorphic-git/isomorphic-git#cors-support. For connecting to the backend, you need to specify a `BACKEND_URL` env variable.
 
+To build with Docker, provide backend url with the arg `--build-arg backend_url`.
+To generate a release, push a new branch named `webide-release/frontend`
+
 ## Deploy
 
 For deployment you need to run `yarn build:react-prod`. It include `NODE_ENV=production` and `PUBLIC_URL=/` env variable. Also you need to specify same `GIT_PROXY` and `BACKEND_URL` env variables as on the previous point.
