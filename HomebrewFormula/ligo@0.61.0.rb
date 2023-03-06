@@ -1,18 +1,18 @@
-class LigoAT0580 < Formula
+class LigoAT0610 < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
   license "MIT"
 
   # We clone repo explicitely to preserve the information about git submodules
-  url "https://gitlab.com/ligolang/ligo.git", tag: "0.58.0", revision: "471ba4d2d18db3edd7361f874ed983c528bb9b22"
-  version "0.58.0"
+  url "https://gitlab.com/ligolang/ligo.git", tag: "0.61.0", revision: "cc2f894abf7ec5afb7f5fddb8b1f85c5a36773f7"
+  version "0.61.0"
   head "https://gitlab.com/ligolang/ligo.git", branch: "dev"
 
 
   bottle do
     root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current"
-  # bottle arm64_ventura
-  # bottle ventura
+    sha256 cellar: :any, arm64_ventura: "bfe355a760fa8f70caab60d93e00dab712cf3d9dddb9e6a99865992539fca10c"
+    sha256 cellar: :any, ventura: "b7f408685a76aefe57030809bdf123a08b09ed0804db81bf5052bf6a22942278"
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]
@@ -32,7 +32,7 @@ class LigoAT0580 < Formula
 
   def install
     # ligo version is taken from the environment variable in build-time
-    ENV["LIGO_VERSION"] = "0.58.0"
+    ENV["LIGO_VERSION"] = "0.61.0"
     # avoid opam prompts
     ENV["OPAMYES"] = "true"
 
