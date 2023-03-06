@@ -20,6 +20,9 @@ RUN yarn install
 
 ENV MEASUREMENT_ID="G-5H01XTN4PY"
 ENV GIT_PROXY="https://ligo-webide-cors-proxy.serokell.team"
+ARG backend_url
+ARG http_protocol
+ENV HTTP_PROTOCOL=$http_protocol
 ENV BACKEND_URL=$backend_url
 COPY --from=syntaxes . ./src/ligo-components/eth-project/Project/languages/syntaxes/
 RUN echo $(ls ./src/ligo-components/eth-project/Project/languages/syntaxes/)
