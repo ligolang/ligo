@@ -25,6 +25,26 @@ vscode-extension-publish-check:
   script:
     - nix flake $FLAKE_FLAGS check ./tools/vsce
 
+emacs-lsp-client-test:
+  stage: tools-check
+  tags:
+    - docker
+  image: silex/emacs:27.2-ci-cask
+  variables:
+    EMACS: "emacs-27.2"
+  rules:
+    - !reference [.dev]
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+      - tools/emacs/**/*
+  needs: [docker_extract]
+  script:
+    # Add ligo to path
+    - export PATH=$PWD:$PATH
+    - cd tools/emacs
+    - cask install
+    - cask emacs --batch -L . -l tests/configuration-test.el -f ert-run-tests-batch
+
 vscode-lsp-extension:
   stage: tooling
   rules:
