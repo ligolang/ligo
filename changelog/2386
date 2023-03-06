@@ -2,6 +2,6 @@
 author: er433
 description: "\\nA new argument is available when compiling a contract: `-m`, which allows to select a module path where the entrypoint (and views) is located.\\n\\n#### Example file `increment.jsligo`\\n\\n\\n```\\ntype storage = int;\\n\\ntype parameter =\\n  [\"Increment\", int]\\n| [\"Decrement\", int]\\n| [\"Reset\"];\\n\\ntype ret = [list<operation>, storage];\\n\\nconst add = (store : storage, delta : int) : storage => store + delta;\\nconst sub = (store : storage, delta : int) : storage => store - delta;\\n\\nnamespace C {\\n\\n  const main = (action : parameter, store : storage) : ret => {\\n   return [list([]) as list<operation>,\\n   match (action, {\\n    Increment:(n: int) => add (store, n),\\n    Decrement:(n: int) => sub (store, n),\\n    Reset    :()  => 0})]\\n  };\\n\\n}\\n\\n```\\n\\n#### Compilation using `-m`\\n\\n\\n```\\n$ ligo compile contract increment.jsligo -m C\\n{ parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;\\n  storage int ;\\n  code { UNPAIR ;\\n         IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;\\n         NIL operation ;\\n         PAIR } }\\n\\n\\n```\\n\\n"
 merge_request: '2386'
-title: "Draft: CLI: new `-m` parameter for module selection"
+title: "CLI: new `-m` parameter for module selection"
 type: added
             
