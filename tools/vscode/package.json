@@ -94,7 +94,7 @@
                     "scope": "resource",
                     "type": "number",
                     "default": 100,
-                    "description": "Controls the maximum number of problems produced by the server."
+                    "description": "Controls the maximum number of diagnostics produced by the server per file."
                 },
                 "ligoLanguageServer.ligoBinaryPath": {
                     "scope": "resource",
@@ -113,6 +113,18 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Enable support for compiling and deploying contracts written in the deprecated PascaLIGO syntax."
+                },
+                "ligoLanguageServer.loggingVerbosity": {
+                    "scope": "resource",
+                    "type": "string",
+                    "enum": [
+                        "error",
+                        "warning",
+                        "info",
+                        "log"
+                    ],
+                    "default": "info",
+                    "description": "The verbosity of logging. Error will show only errors, warning will show errors and warnings, and so on."
                 }
             }
         },

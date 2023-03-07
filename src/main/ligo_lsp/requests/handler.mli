@@ -1,14 +1,22 @@
 module Hashtbl = Caml.Hashtbl
 
+(** Stores the configuration pertaining to the LIGO language server. *)
+type config =
+  { max_number_of_problems : int
+        (** The maximum number of diagnostics to be shown. Defaults to 100. *)
+  ; logging_verbosity : Lsp.Types.MessageType.t
+        (** The level of verbosity when logging. Defaults to Info. *)
+  }
+
 (** We can send diagnostics to user or just save them to list in case of testing *)
 type notify_back_mockable =
   | Normal of Linol_lwt.Jsonrpc2.notify_back
   | Mock of Linol_lwt.Diagnostic.t list ref
 
-(** Enviroment availiable in Handler monad *)
+(** Environment available in Handler monad *)
 type handler_env =
   { notify_back : notify_back_mockable
-  ; debug : bool
+  ; config : config
   ; docs_cache : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
   }
 
@@ -41,7 +49,7 @@ val lift_IO : 'a Lwt.t -> 'a Handler.t
 val ask : handler_env Handler.t
 
 val ask_notify_back : notify_back_mockable Handler.t
-val ask_debug : bool Handler.t
+val ask_config : config Handler.t
 
 val ask_docs_cache
   : (Linol_lwt.DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t
