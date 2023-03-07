@@ -17,7 +17,10 @@ let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
 
 
 let default_config : config =
-  { max_number_of_problems = 100; logging_verbosity = MessageType.Info }
+  { max_number_of_problems = 100
+  ; logging_verbosity = MessageType.Info
+  ; disabled_features = []
+  }
 
 
 (* Lsp server class
@@ -60,7 +63,6 @@ class lsp_server =
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
       let ligo_language_server = settings |> member "ligoLanguageServer" in
-      (* FIXME: Allow disabling features. *)
       (* FIXME: Support deprecated. *)
       config
         <- { config with
@@ -79,6 +81,11 @@ class lsp_server =
                | Some "info" -> MessageType.Info
                | Some "log" -> MessageType.Log
                | Some _ | None -> default_config.logging_verbosity)
+           ; disabled_features =
+               ligo_language_server
+               |> member "disabledFeatures"
+               |> to_option to_list
+               |> Utils.value_map ~f:(List.map to_string) ~default:[]
            }
 
     method! on_req_initialize
@@ -141,51 +148,56 @@ class lsp_server =
                   -> r Client_request.t
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : _ Client_request.t) ->
-        let run ~uri =
-          run_handler
-            { notify_back =
-                Normal
-                  (new notify_back
-                     ~uri
-                     ~notify_back
-                     ~server_request
-                     ~workDoneToken:None
-                     ~partialResultToken:None
-                     ())
-            ; config
-            ; docs_cache = get_scope_buffers
-            }
+        let run ~uri ~default =
+          let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
+          if List.mem method_ config.disabled_features
+          then Fun.const @@ IO.return default
+          else
+            run_handler
+              { notify_back =
+                  Normal
+                    (new notify_back
+                       ~uri
+                       ~notify_back
+                       ~server_request
+                       ~workDoneToken:None
+                       ~partialResultToken:None
+                       ())
+              ; config
+              ; docs_cache = get_scope_buffers
+              }
         in
         match r with
         | Client_request.TextDocumentFormatting { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_formatting uri
+          run ~uri ~default:None @@ Requests.on_req_formatting uri
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_definition position uri
+          run ~uri ~default:None @@ Requests.on_req_definition position uri
         | Client_request.TextDocumentHover { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_hover position uri
+          run ~uri ~default:None @@ Requests.on_req_hover position uri
         | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_prepare_rename position uri
+          run ~uri ~default:None @@ Requests.on_req_prepare_rename position uri
         | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_rename newName position uri
+          let default = WorkspaceEdit.create () in
+          run ~uri ~default @@ Requests.on_req_rename newName position uri
         | Client_request.TextDocumentReferences { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_references position uri
+          run ~uri ~default:None @@ Requests.on_req_references position uri
         | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_type_definition position uri
+          run ~uri ~default:None @@ Requests.on_req_type_definition position uri
         | Client_request.TextDocumentLink { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_document_link uri
+          run ~uri ~default:None @@ Requests.on_req_document_link uri
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_folding_range uri
+          run ~uri ~default:None @@ Requests.on_req_folding_range uri
         | Client_request.TextDocumentRangeFormatting { range; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri @@ Requests.on_req_range_formatting uri range
+          run ~uri ~default:None @@ Requests.on_req_range_formatting uri range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

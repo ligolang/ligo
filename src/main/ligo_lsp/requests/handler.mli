@@ -6,6 +6,8 @@ type config =
         (** The maximum number of diagnostics to be shown. Defaults to 100. *)
   ; logging_verbosity : Lsp.Types.MessageType.t
         (** The level of verbosity when logging. Defaults to Info. *)
+  ; disabled_features : string list
+        (** Disabled requests, i.e., they are not handled by the language server. Defaults to []. *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
