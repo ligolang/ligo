@@ -71,8 +71,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
          Handle me with #1657. *)
       method on_notif_doc_did_close ~notify_back:_ _ : unit IO.t = Linol_lwt.return ()
       method! config_hover = Some (`Bool true)
-
-      (*method config_formatting = Some (`Bool true)*)
+      method config_formatting = Some (`Bool true)
       method! config_definition = Some (`Bool true)
       method config_document_link_provider = Some (DocumentLinkOptions.create ())
 
@@ -87,8 +86,8 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
       method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t
           =
         { c with
-          hoverProvider =
-            self#config_hover (*; documentFormattingProvider = self#config_formatting*)
+          hoverProvider = self#config_hover
+        ; documentFormattingProvider = self#config_formatting
         ; definitionProvider = self#config_definition
         ; renameProvider = self#config_rename
         ; referencesProvider = self#config_references
@@ -111,12 +110,9 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
               }
           in
           match r with
-          | Client_request.TextDocumentFormatting _ ->
-            (* Formatting is temporarily disabled. See:
-               https://gitlab.com/ligolang/ligo/-/merge_requests/2393#note_1295248628
+          | Client_request.TextDocumentFormatting { textDocument; _ } ->
             let uri = textDocument.uri in
-            run ~uri @@ Requests.on_req_formatting uri *)
-            IO.return None
+            run ~uri @@ Requests.on_req_formatting uri
           | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
             let uri = textDocument.uri in
             run ~uri @@ Requests.on_req_definition position uri

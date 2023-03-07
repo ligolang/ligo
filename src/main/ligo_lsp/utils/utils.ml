@@ -290,13 +290,18 @@ type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.ra
 
 exception Fatal_cst_error of string
 
-let get_cst (syntax : Syntax_types.t) (code : string) : (dialect_cst, string) result =
+let get_cst ~(strict : bool) (syntax : Syntax_types.t) (code : string)
+    : (dialect_cst, string) result
+  =
   let buffer = Caml.Buffer.of_seq (Caml.String.to_seq code) in
-  (* Warnings and errors will be reported to the user via diagnostics, so we ignore them here. *)
+  (* Warnings and errors will be reported to the user via diagnostics, so we
+     ignore them here unless the strict mode is enabled. *)
   let raise : parsing_raise =
     { error = (fun err -> raise @@ Fatal_cst_error (parsing_error_to_string err))
     ; warning = (fun _ -> ())
-    ; log_error = (fun _ -> ())
+    ; log_error =
+        (fun err ->
+          if strict then raise @@ Fatal_cst_error (parsing_error_to_string err))
     ; fast_fail = false
     }
   in

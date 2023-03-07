@@ -1,4 +1,14 @@
 open Scopes.Types
+open Utils
+
+module CameLIGO_pretty =
+  Parsing_shared.Common.MakePretty (Cst_cameligo.CST) (Parsing_cameligo.Pretty)
+
+module JsLIGO_pretty =
+  Parsing_shared.Common.MakePretty (Cst_jsligo.CST) (Parsing_jsligo.Pretty)
+
+module PascaLIGO_pretty =
+  Parsing_shared.Common.MakePretty (Cst_pascaligo.CST) (Parsing_pascaligo.Pretty)
 
 type get_scope_api_result =
   Main_errors.all list * Main_warnings.all list * (Scopes.def list * Scopes.scopes) option
@@ -26,15 +36,6 @@ module type LIGO_API = sig
       -> unit
       -> get_scope_api_result
   end
-
-  module Print : sig
-    val pretty_print
-      :  Compiler_options.Raw_options.t
-      -> string
-      -> Simple_utils.Display.ex_display_format
-      -> unit
-      -> (string * string, string * string) result
-  end
 end
 
 module Make (Ligo_api : LIGO_API) = struct
@@ -59,14 +60,6 @@ module Make (Ligo_api : LIGO_API) = struct
       compiler_options
       (Raw_input_lsp { file; code = source })
       ()
-
-
-  let formatting : DocumentUri.t -> (string * string, string * string) result =
-   fun uri ->
-    let compiler_options = Compiler_options.Raw_options.make ~deprecated:true () in
-    let file_path = DocumentUri.to_path uri in
-    let display_format = Simple_utils.Display.human_readable in
-    Ligo_api.Print.pretty_print compiler_options file_path display_format ()
 end
 
 let unfold_get_scope ((errors, warnings, plain_data_opt) : get_scope_api_result)
@@ -95,3 +88,18 @@ let unfold_get_scope ((errors, warnings, plain_data_opt) : get_scope_api_result)
     | Some (plain_decls, scopes) -> true, extract_defs plain_decls, Some scopes
   in
   { errors; warnings; has_info; definitions; scopes }
+
+
+let doc_to_string ~(width : int) (doc : PPrint.document) : string =
+  let buffer = Buffer.create 131 in
+  PPrint.ToBuffer.pretty 1.0 width buffer doc;
+  Buffer.contents buffer
+
+let pretty_print_cst ~(width : int) ~(dialect_cst : dialect_cst) : string =
+  let doc =
+    match dialect_cst with
+    | CameLIGO_cst cst -> Parsing_cameligo.Pretty.print cst
+    | JsLIGO_cst cst -> Parsing_jsligo.Pretty.print cst
+    | PascaLIGO_cst cst -> Parsing_pascaligo.Pretty.print cst
+  in
+  doc_to_string ~width doc

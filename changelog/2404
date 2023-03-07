@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded support for document formatting request to `ligo lsp`.\\n"
+merge_request: '2404'
+title: "[#1655] Fix and enable LSP formatting"
+type: added
+            

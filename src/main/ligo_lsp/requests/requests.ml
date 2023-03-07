@@ -2,7 +2,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   include Definition
   include Document_link
   include Folding_range
-  include Formatting.Make (Ligo_api)
+  include Formatting
   include Hover
   include On_doc.Make (Ligo_api)
   include Prepare_rename
