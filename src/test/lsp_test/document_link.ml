@@ -3,7 +3,6 @@ open Handlers
 
 module Requests = Ligo_lsp.Server.Requests.Make (struct
   module Info = Ligo_api.Info
-  module Print = Ligo_api.Print
 end)
 
 open Requests.Handler

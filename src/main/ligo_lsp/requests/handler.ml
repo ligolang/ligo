@@ -105,6 +105,15 @@ let send_debug_msg (s : string) : unit Handler.t =
   when_ debug @@ send_log_msg ~type_:MessageType.Info s
 
 
+let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
+  let@ nb = ask_notify_back in
+  match nb with
+  | Normal nb ->
+    lift_IO
+      (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
+  | Mock _ -> return ()
+
+    
 let with_cached_doc
     ?(return_default_if_no_info = true)
     (uri : DocumentUri.t)
@@ -132,12 +141,19 @@ let with_cached_doc_pure
   with_cached_doc ?return_default_if_no_info uri default f'
 
 
-let with_cst : DocumentUri.t -> 'a -> (dialect_cst -> 'a Handler.t) -> 'a Handler.t =
- fun uri default f ->
+let with_cst
+    ?(strict = false)
+    ?(on_error : string -> unit handler =
+      fun err -> send_debug_msg @@ "Unable to get CST: " ^ err)
+    (uri : DocumentUri.t)
+    (default : 'a)
+    (f : dialect_cst -> 'a Handler.t)
+    : 'a Handler.t
+  =
   with_cached_doc ~return_default_if_no_info:false uri default
   @@ fun { syntax; code; _ } ->
-  match get_cst syntax code with
+  match get_cst ~strict syntax code with
   | Error err ->
-    let@ () = send_debug_msg @@ "Unable to get CST: " ^ err in
+    let@ () = on_error err in
     return default
   | Ok cst -> f cst

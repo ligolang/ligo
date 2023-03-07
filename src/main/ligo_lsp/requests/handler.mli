@@ -65,6 +65,9 @@ val send_diagnostic : Linol_lwt.Diagnostic.t list -> unit Handler.t
 (** Message will appear in log in case debug is enabled *)
 val send_debug_msg : string -> unit Handler.t
 
+(** Displays a pop-up message *)
+val send_message : ?type_:Linol_lwt.MessageType.t -> string -> unit Handler.t
+
 (**
 Use doc info from cache. In case it's not availiable, return default value.
 Also returns default value if `get_scope` for this file fails, unless
@@ -84,9 +87,18 @@ val with_cached_doc_pure
   -> (Ligo_interface.file_data -> 'a)
   -> 'a Handler.t
 
-(** Like with_cached_doc, but parses a CST from code *)
+(** Like with_cached_doc, but parses a CST from code. If `strict` is passed, error
+    recovery for parsing is disabled, so default arg will be returned in case of
+    any parse error.
+    `on_error` allows to display a pop-up instead of just adding a debug message
+    in case of an error. This is helpful for displaying to user why his request failed.
+    We should not display pop-up when automated (e.g. document link) request failed,
+    but should when e.g. formatting failed because of syntax error.
+*)
 val with_cst
-  :  Linol_lwt.DocumentUri.t
+  :  ?strict:bool
+  -> ?on_error:(string -> unit Handler.t)
+  -> Linol_lwt.DocumentUri.t
   -> 'a
   -> (Utils.dialect_cst -> 'a Handler.t)
   -> 'a Handler.t

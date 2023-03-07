@@ -2178,7 +2178,6 @@ module Lsp_server = struct
 
   module Server = Ligo_lsp.Server.Make (struct
     module Info = Ligo_api.Info
-    module Print = Ligo_api.Print
   end)
 
   let run () =

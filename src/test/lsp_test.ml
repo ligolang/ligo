@@ -9,4 +9,5 @@ let _main =
     ; Diagnostics.tests
     ; Document_link.tests
     ; Folding_range.tests
+    ; Formatting.tests
     ]
