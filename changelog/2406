@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nAdd support for decoding \"maximum number of problems\" and \"verbosity\" from the VS Code configuration.\\n\\n"
+merge_request: '2406'
+title: "[#1658] Support getting configuration from VSCode"
+type: added
+            
