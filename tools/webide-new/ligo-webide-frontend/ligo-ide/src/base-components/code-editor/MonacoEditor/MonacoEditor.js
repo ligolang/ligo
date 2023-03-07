@@ -37,7 +37,7 @@ function createLanguageClient(transports) {
     name: "Sample Language Client",
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ["cameligoext", "jsligoext"],
+      documentSelector: ["cameligoext", "jsligoext", "pascaligoext"],
       // disable the default error handler
       errorHandler: {
         error: () => ({ action: ErrorAction.Continue }),

@@ -7,6 +7,8 @@ import mligoTm from "./syntaxes/mligo.tmLanguage.json";
 import mligoConfiguration from "./syntaxes/mligo.configuration.json";
 import jsligoTm from "./syntaxes/jsligo.tmLanguage.json";
 import jsligoConfiguration from "./syntaxes/jsligo.configuration.json";
+import ligoTm from "./syntaxes/ligo.tmLanguage.json";
+import ligoConfiguration from "./syntaxes/ligo.configuration.json";
 import { LangConfiguration } from "./type";
 
 const convertConfiguration = (conf: {
@@ -37,16 +39,32 @@ const convertConfiguration = (conf: {
 };
 
 export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
+  monaco.languages.register({ id: "pascaligoext" });
   monaco.languages.register({ id: "cameligoext" });
   monaco.languages.register({ id: "jsligoext" });
   monaco.languages.register({ id: "tzext" });
 
+  monaco.languages.setLanguageConfiguration(
+    "pascaligoext",
+    convertConfiguration(ligoConfiguration)
+  );
   monaco.languages.setLanguageConfiguration(
     "cameligoext",
     convertConfiguration(mligoConfiguration)
   );
   monaco.languages.setLanguageConfiguration("jsligoext", convertConfiguration(jsligoConfiguration));
   monaco.languages.setLanguageConfiguration("tzext", convertConfiguration(jsligoConfiguration));
+
+  const ligoRegistry = new Registry({
+    getGrammarDefinition: async () => {
+      return new Promise((resolve) => {
+        resolve({
+          format: "json",
+          content: ligoTm,
+        });
+      });
+    },
+  });
 
   const mligoRegistry = new Registry({
     getGrammarDefinition: async () => {
@@ -81,6 +99,9 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
     },
   });
 
+  const ligoGrammars = new Map<string, string>();
+  ligoGrammars.set("pascaligoext", "source.ligo");
+
   const mligoGrammars = new Map<string, string>();
   mligoGrammars.set("cameligoext", "source.mligo");
 
@@ -90,6 +111,7 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
   const tzGrammars = new Map<string, string>();
   tzGrammars.set("tzext", "source.michelson");
 
+  await wireTmGrammars(monaco, ligoRegistry, ligoGrammars, editor);
   await wireTmGrammars(monaco, mligoRegistry, mligoGrammars, editor);
   await wireTmGrammars(monaco, jsligoRegistry, jsligoGrammars, editor);
   await wireTmGrammars(monaco, tzRegistry, tzGrammars, editor);

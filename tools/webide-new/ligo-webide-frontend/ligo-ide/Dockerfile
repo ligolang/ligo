@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.4
 # To run the build on this image, you have to change the build context for ../../../ with the following command 
-# docker buildx build --build-context syntaxes=../../../lsp/vscode-plugin/syntaxes .
-# Because this project is using some file from ../../../lsp/vscode-plugin/syntaxes through symlink.
+# docker buildx build --build-context syntaxes=../../../vscode/syntaxes .
+# Because this project is using some file from ../../../vscode/syntaxes through symlink.
 
 # Here symlink gonna be replaced by the files themself
 

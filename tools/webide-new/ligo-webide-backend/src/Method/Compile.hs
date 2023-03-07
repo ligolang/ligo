@@ -15,9 +15,10 @@ compile :: CompileRequest -> WebIDEM CompilerResponse
 compile request =
   withProject (rProject request) $ \(dirPath, fullMainPath) -> do
     let initial = case rStorage request of
-          Nothing -> ["compile", "contract", fullMainPath]
+          Nothing -> ["compile", "contract", "--deprecated", fullMainPath]
           Just storage ->
-            ["compile", "storage", "--no-color", fullMainPath, Text.unpack storage]
+            ["compile", "storage", "--no-color", "--deprecated",
+             fullMainPath, Text.unpack storage]
 
     (ec, out, err) <- runLigo dirPath $
       initial

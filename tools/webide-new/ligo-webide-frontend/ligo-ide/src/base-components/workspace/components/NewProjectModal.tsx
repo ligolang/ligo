@@ -16,7 +16,7 @@ type Template = {
   existingSyntaxes: string[];
 };
 
-const synIds = ["mligo", "jsligo"];
+const synIds = ["mligo", "ligo", "jsligo"];
 const hardcodedTemplates = [
   { id: "empty", gitLink: undefined, display: "Empty Project", existingSyntaxes: synIds },
   { id: "increment", gitLink: undefined, display: "Increment", existingSyntaxes: synIds },
@@ -25,6 +25,7 @@ const hardcodedTemplates = [
 ];
 const pSyntaxes = [
   { id: "mligo", display: "CameLIGO" },
+  { id: "ligo", display: "PascaLIGO" },
   { id: "jsligo", display: "JsLIGO" },
 ];
 
@@ -35,11 +36,14 @@ const mapSyntaxes = (s: string) => {
   if (s === "jsligo") {
     return "jsligo";
   }
+  if (s === "pascaligo") {
+    return "ligo";
+  }
   return s;
 };
 
 const convertLigoTemplates = (templates: string[]) => {
-  const syntaxPrefixes = ["cameligo", "jsligo"];
+  const syntaxPrefixes = ["cameligo", "jsligo", "pascaligo"];
   const splittedTemplates = templates.map((t) => t.split("-"));
 
   const s = new Set();

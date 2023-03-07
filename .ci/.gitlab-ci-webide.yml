@@ -52,10 +52,10 @@ webide-new-frontend-build:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
-        - tools/lsp/vscode-plugin/syntaxes
+        - tools/vscode/syntaxes
       when: always
   script:
-    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes tools/webide-new/ligo-webide-frontend/ligo-ide
+    - docker buildx build --build-context syntaxes=tools/vscode/syntaxes tools/webide-new/ligo-webide-frontend/ligo-ide
   after_script:
     - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
 
@@ -93,7 +93,7 @@ webide-new-frontend-build-and-push:
         - tools/webide-new/ligo-webide-frontend/**/*
       when: always
   script:
-    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes 
+    - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
       --build-arg backend_url=backend.ligo-webide-v2.gcp-npr.marigold.dev
       --build-arg http_protocol=https
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
@@ -115,7 +115,7 @@ webide-new-release-frontend-build-and-push:
     - if: '$CI_COMMIT_BRANCH == "webide-release/frontend"'
       when: always
   script:
-    - docker buildx build --build-context syntaxes=tools/lsp/vscode-plugin/syntaxes 
+    - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
       --build-arg backend_url=backend.ide.ligolang.org
       --build-arg http_protocol=https
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
