@@ -3,13 +3,18 @@ open Linol_lwt.Jsonrpc2
 open Utils
 module Hashtbl = Caml.Hashtbl
 
+type config =
+  { max_number_of_problems : int
+  ; logging_verbosity : MessageType.t
+  }
+
 type notify_back_mockable =
   | Normal of notify_back
-  | Mock of Jsonrpc2.Diagnostic.t list ref
+  | Mock of Jsonrpc2.Diagnostic.t list ref (* FIXME: collect logs for tests *)
 
 type handler_env =
   { notify_back : notify_back_mockable
-  ; debug : bool
+  ; config : config
   ; docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
   }
 
@@ -44,7 +49,7 @@ let fmap_to (x : 'a Handler.t) (f : 'a -> 'b) : 'b Handler.t = fmap f x
 let lift_IO (m : 'a IO.t) : 'a Handler.t = Handler (fun _ -> m)
 let ask : handler_env Handler.t = Handler IO.return
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
-let ask_debug : bool Handler.t = fmap (fun x -> x.debug) ask
+let ask_config : config Handler.t = fmap (fun x -> x.config) ask
 
 let ask_docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t =
   fmap (fun x -> x.docs_cache) ask
@@ -87,7 +92,11 @@ let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Hand
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal nb -> lift_IO (nb#send_log_msg ~type_ s)
+  | Normal nb ->
+    let@ { logging_verbosity; _ } = ask_config in
+    if Caml.(type_ <= logging_verbosity)
+    then lift_IO @@ nb#send_log_msg ~type_ s
+    else return ()
   | Mock _ -> return ()
 
 
@@ -100,10 +109,7 @@ let send_diagnostic (s : Jsonrpc2.Diagnostic.t list) : unit Handler.t =
     return ()
 
 
-let send_debug_msg (s : string) : unit Handler.t =
-  let@ debug = ask_debug in
-  when_ debug @@ send_log_msg ~type_:MessageType.Info s
-
+let send_debug_msg : string -> unit Handler.t = send_log_msg ~type_:MessageType.Log
 
 let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
   let@ nb = ask_notify_back in

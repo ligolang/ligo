@@ -6,14 +6,17 @@ open Linol_lwt
 open Requests.Handler
 open Utils
 
-let test_run_session (session : 'a Handler.t) : 'a * Jsonrpc2.Diagnostic.t list =
+let default_test_config : config =
+  { max_number_of_problems = Int.max_value; logging_verbosity = Log }
+
+
+let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
+    : 'a * Jsonrpc2.Diagnostic.t list
+  =
   let mocked_notify_back = ref [] in
   let result =
     run_handler
-      { notify_back = Mock mocked_notify_back
-      ; debug = false
-      ; docs_cache = Hashtbl.create 32
-      }
+      { notify_back = Mock mocked_notify_back; config; docs_cache = Hashtbl.create 32 }
       session
   in
   Lwt_main.run result, !mocked_notify_back

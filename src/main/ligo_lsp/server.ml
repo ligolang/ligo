@@ -13,11 +13,14 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   open Lsp
   module Requests = Requests.Make (Ligo_api)
   open Requests.Handler
-  (* This file is free software, part of linol. See file "LICENSE" for more information *)
 
   (* one env per document *)
   let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
     Hashtbl.create 32
+
+
+  let default_config : config =
+    { max_number_of_problems = 100; logging_verbosity = MessageType.Info }
 
 
   (* Lsp server class
@@ -35,18 +38,13 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
   class lsp_server =
     object (self)
       inherit server as super
-
-      (* FIXME we should read this from VSCode config *)
-      val debug_handlers = false
+      val mutable config : config = default_config
 
       (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
       method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
         run_handler
-          { notify_back = Normal notify_back
-          ; debug = debug_handlers
-          ; docs_cache = get_scope_buffers
-          }
+          { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
         @@ Requests.on_doc document.uri content
 
       (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
@@ -59,11 +57,44 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           ~new_content
           : unit IO.t =
         run_handler
-          { notify_back = Normal notify_back
-          ; debug = debug_handlers
-          ; docs_cache = get_scope_buffers
-          }
+          { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
         @@ Requests.on_doc document.uri new_content
+
+      method decode_apply_settings (settings : Yojson.Safe.t) : unit =
+        let open Yojson.Safe.Util in
+        let ligo_language_server = settings |> member "ligoLanguageServer" in
+        (* FIXME: Allow disabling features. *)
+        (* FIXME: Support deprecated. *)
+        config
+          <- { config with
+               max_number_of_problems =
+                 ligo_language_server
+                 |> member "maxNumberOfProblems"
+                 |> to_int_option
+                 |> Option.value ~default:default_config.max_number_of_problems
+             ; logging_verbosity =
+                 (ligo_language_server
+                 |> member "loggingVerbosity"
+                 |> to_string_option
+                 |> function
+                 | Some "error" -> MessageType.Error
+                 | Some "warning" -> MessageType.Warning
+                 | Some "info" -> MessageType.Info
+                 | Some "log" -> MessageType.Log
+                 | Some _ | None -> default_config.logging_verbosity)
+             }
+
+      method! on_req_initialize
+          ~(notify_back : notify_back)
+          (initParams : InitializeParams.t)
+          : InitializeResult.t IO.t =
+        let* initResult = super#on_req_initialize ~notify_back initParams in
+        let () =
+          match initParams.initializationOptions with
+          | None -> ()
+          | Some settings -> self#decode_apply_settings settings
+        in
+        Lwt.return initResult
 
       (* TODO: When the document closes, we should thinking about removing the
          state associated to the file from the global hashtable state, to avoid
@@ -96,6 +127,15 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         ; foldingRangeProvider = self#config_folding_range
         }
 
+      method! on_notification_unhandled
+          : notify_back:notify_back -> Client_notification.t -> unit IO.t =
+        fun ~notify_back -> function
+          (* FIXME: We don't have a way to register the configuration change
+           dynamically. See: https://github.com/c-cube/linol/issues/16 *)
+          | Client_notification.ChangeConfiguration { settings } ->
+            Lwt.return (self#decode_apply_settings settings)
+          | n -> super#on_notification_unhandled ~notify_back n
+
       method! on_request
           : type r.  notify_back:(Server_notification.t -> unit Lwt.t)
                     -> id:Req_id.t
@@ -105,7 +145,7 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
           let run ~uri =
             run_handler
               { notify_back = Normal (new notify_back ~uri ~notify_back ())
-              ; debug = debug_handlers
+              ; config
               ; docs_cache = get_scope_buffers
               }
           in

@@ -18,6 +18,7 @@ type diagnostics_test =
   { test_name : string
   ; file_path : string
   ; diagnostics : Diagnostics.simple_diagnostic list
+  ; max_number_of_problems : int option
   }
 
 let pp_diagnostic = pp_with_yojson Lsp.Types.Diagnostic.yojson_of_t
@@ -27,12 +28,19 @@ let testable_diagnostic : Diagnostic.t Alcotest.testable =
   Alcotest.testable pp_diagnostic eq_diagnostic
 
 
-let get_diagnostics_test ({ test_name; file_path; diagnostics } : diagnostics_test)
+let get_diagnostics_test
+    ({ test_name; file_path; diagnostics; max_number_of_problems } : diagnostics_test)
     : unit Alcotest.test_case
   =
   Alcotest.test_case test_name `Quick
   @@ fun () ->
-  let _uri, actual_diagnostics = test_run_session @@ open_file (to_absolute file_path) in
+  let config =
+    Option.map max_number_of_problems ~f:(fun max_number_of_problems ->
+        { default_test_config with max_number_of_problems })
+  in
+  let _uri, actual_diagnostics =
+    test_run_session ?config @@ open_file (to_absolute file_path)
+  in
   should_match_list
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
     testable_diagnostic
@@ -53,6 +61,7 @@ let test_cases =
           ; range = Some (Utils.interval 5 31 34)
           }
         ]
+    ; max_number_of_problems = None
     }
   ; { test_name = "Syntax error"
     ; file_path = "contracts/lsp/syntax_error.mligo"
@@ -67,6 +76,7 @@ let test_cases =
           ; range = Some (Utils.interval 0 10 11)
           }
         ]
+    ; max_number_of_problems = None
     }
   ; { test_name = "Warnings"
     ; file_path = "contracts/lsp/warnings.jsligo"
@@ -84,6 +94,7 @@ let test_cases =
           ; range = Some (Utils.interval 2 10 11)
           }
         ]
+    ; max_number_of_problems = None
     }
   ; { test_name = "Syntax and type errors"
     ; file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
@@ -107,8 +118,33 @@ let test_cases =
           ; range = Some (Utils.point 4 13)
           }
         ]
+    ; max_number_of_problems = None
     }
-  ; { test_name = "All OK"; file_path = "contracts/lsp/simple.mligo"; diagnostics = [] }
+  ; { test_name = "All OK"
+    ; file_path = "contracts/lsp/simple.mligo"
+    ; diagnostics = []
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Limit from 11 to 2 diagnostics in session"
+    ; file_path = "contracts/warning_sum_types.mligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Warning
+          ; message =
+              "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \
+               \"ttop2\" but could be of type \"ttop\".\n\
+               Hint: You might want to add a type annotation. \n"
+          ; range = Some (Utils.interval 64 14 23)
+          }
+        ; { severity = DiagnosticSeverity.Warning
+          ; message =
+              "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ttop\" \
+               but could be of type \"ta\".\n\
+               Hint: You might want to add a type annotation. \n"
+          ; range = Some (Utils.interval 65 14 21)
+          }
+        ]
+    ; max_number_of_problems = Some 2
+    }
   ]
 
 
