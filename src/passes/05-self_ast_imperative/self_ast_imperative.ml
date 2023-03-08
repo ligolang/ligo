@@ -24,10 +24,13 @@ let all_module_mapper ~raise ~js_style_no_shadowing =
   else [ Expression_soundness.linearity_prg ~raise ]
 
 
+let all_declaration_mapper ~raise = [ Expression_soundness.linearity_declaration ~raise ]
+
 let all_program ~raise ~js_style_no_shadowing =
-  List.map
-    ~f:(fun el -> Helpers.Program el)
-    (all_module_mapper ~raise ~js_style_no_shadowing)
+  List.map ~f:(fun el -> Helpers.Declaration el) (all_declaration_mapper ~raise)
+  @ List.map
+      ~f:(fun el -> Helpers.Program el)
+      (all_module_mapper ~raise ~js_style_no_shadowing)
 
 
 let all_exp ~raise ~js_style_no_shadowing =
@@ -51,8 +54,10 @@ let all_program ~raise ~js_style_no_shadowing init =
 
 let all_expression ~raise ~js_style_no_shadowing init =
   let all_p =
-    List.map ~f:Helpers.map_expression
+    List.map ~f:(fun f -> Helpers.map_expression (Expression f))
     @@ all_expression_mapper ~raise ~js_style_no_shadowing
+    @ List.map ~f:(fun f -> Helpers.map_expression (Declaration f))
+    @@ all_declaration_mapper ~raise
   in
   List.fold ~f:( |> ) all_p ~init
 

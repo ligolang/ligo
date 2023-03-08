@@ -37,15 +37,19 @@ let checks_linearity ~raise : expression -> unit =
   ()
 
 
-let linearity_prg ~raise : program -> program =
+let linearity_declaration ~raise : declaration -> declaration =
  fun x ->
-  let f : declaration -> unit =
-   fun x ->
+  let () =
     match x.wrap_content with
     | D_irrefutable_match { pattern; _ } -> check_linearity_pattern ~raise pattern
     | D_value _ | D_type _ | D_module _ -> ()
   in
-  List.iter ~f x;
+  x
+
+
+let linearity_prg ~raise : program -> program =
+ fun x ->
+  let _ = List.map ~f:(linearity_declaration ~raise) x in
   x
 
 
