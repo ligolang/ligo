@@ -62,31 +62,34 @@ class lsp_server =
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
-      let ligo_language_server = settings |> member "ligoLanguageServer" in
-      (* FIXME: Support deprecated. *)
-      config
-        <- { config with
-             max_number_of_problems =
-               ligo_language_server
-               |> member "maxNumberOfProblems"
-               |> to_int_option
-               |> Option.value ~default:default_config.max_number_of_problems
-           ; logging_verbosity =
-               (ligo_language_server
-               |> member "loggingVerbosity"
-               |> to_string_option
-               |> function
-               | Some "error" -> MessageType.Error
-               | Some "warning" -> MessageType.Warning
-               | Some "info" -> MessageType.Info
-               | Some "log" -> MessageType.Log
-               | Some _ | None -> default_config.logging_verbosity)
-           ; disabled_features =
-               ligo_language_server
-               |> member "disabledFeatures"
-               |> to_option to_list
-               |> Utils.value_map ~f:(List.map to_string) ~default:[]
-           }
+      (* TODO (#1706, #1706): Support reading the configuration from Vim and Emacs. *)
+      match to_option (member "ligoLanguageServer") settings with
+      | None -> ()
+      | Some ligo_language_server ->
+        (* FIXME: Support deprecated. *)
+        config
+          <- { config with
+               max_number_of_problems =
+                 ligo_language_server
+                 |> member "maxNumberOfProblems"
+                 |> to_int_option
+                 |> Option.value ~default:default_config.max_number_of_problems
+             ; logging_verbosity =
+                 (ligo_language_server
+                 |> member "loggingVerbosity"
+                 |> to_string_option
+                 |> function
+                 | Some "error" -> MessageType.Error
+                 | Some "warning" -> MessageType.Warning
+                 | Some "info" -> MessageType.Info
+                 | Some "log" -> MessageType.Log
+                 | Some _ | None -> default_config.logging_verbosity)
+             ; disabled_features =
+                 ligo_language_server
+                 |> member "disabledFeatures"
+                 |> to_option to_list
+                 |> Utils.value_map ~f:(List.map to_string) ~default:[]
+             }
 
     method! on_req_initialize
         ~(notify_back : notify_back)
