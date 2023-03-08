@@ -2,15 +2,26 @@
 open Simple_utils
 open Ligo_prim
 
+module Attr : sig
+  type t =
+    { entry : bool
+    ; view : bool
+    }
+  [@@deriving compare, hash, equal]
+
+  val default : t
+  val of_core_attr : Ast_core.ValueAttr.t -> t
+end
+
 module Signature : sig
   type t = item list
 
   and item =
-    | S_value of Value_var.t * Type.t
+    | S_value of Value_var.t * Type.t * Attr.t
     | S_type of Type_var.t * Type.t
     | S_module of Module_var.t * t
 
-  val get_value : t -> Value_var.t -> Type.t option
+  val get_value : t -> Value_var.t -> (Type.t * Attr.t) option
   val get_type : t -> Type_var.t -> Type.t option
   val get_module : t -> Module_var.t -> t option
   val pp : Format.formatter -> t -> unit
@@ -26,7 +37,7 @@ and mutable_flag = Param.mutable_flag =
   | Immutable
 
 and item =
-  | C_value of Value_var.t * mutable_flag * Type.t
+  | C_value of Value_var.t * mutable_flag * Type.t * Attr.t
   | C_type of Type_var.t * Type.t
   | C_type_var of Type_var.t * Kind.t
   | C_module of Module_var.t * Signature.t
@@ -53,9 +64,9 @@ val join : t -> t -> t
 val ( |@ ) : t -> t -> t
 val item_of_signature_item : Signature.item -> item
 val pp : Format.formatter -> t -> unit
-val add_value : t -> Value_var.t -> mutable_flag -> Type.t -> t
+val add_value : t -> Value_var.t -> mutable_flag -> Type.t -> Attr.t -> t
 val add_mut : t -> Value_var.t -> Type.t -> t
-val add_imm : t -> Value_var.t -> Type.t -> t
+val add_imm : t -> Value_var.t -> ?attr:Attr.t -> Type.t -> t
 val add_type : t -> Type_var.t -> Type.t -> t
 val add_type_var : t -> Type_var.t -> Kind.t -> t
 val add_texists_var : t -> Type_var.t -> Kind.t -> t
@@ -67,9 +78,9 @@ val add_module : t -> Module_var.t -> Signature.t -> t
 val get_value
   :  t
   -> Value_var.t
-  -> (mutable_flag * Type.t, [> `Mut_var_captured | `Not_found ]) result
+  -> (mutable_flag * Type.t * Attr.t, [> `Mut_var_captured | `Not_found ]) result
 
-val get_imm : t -> Value_var.t -> Type.t option
+val get_imm : t -> Value_var.t -> (Type.t * Attr.t) option
 val get_mut : t -> Value_var.t -> Type.t option
 val get_type : t -> Type_var.t -> Type.t option
 val get_module : t -> Module_var.t -> Signature.t option

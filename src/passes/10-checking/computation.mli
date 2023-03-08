@@ -98,6 +98,7 @@ type 'a exit =
       (** Similar to [Lift_type] but for signatures. *)
 
 module Context : sig
+  module Attr = Context.Attr
   module Signature = Context.Signature
 
   (** {1 Context lookup functions} *)
@@ -109,7 +110,9 @@ module Context : sig
       captured by a closure), then we return [Error]. *)
   val get_value
     :  Value_var.t
-    -> ( (Context.mutable_flag * Type.t, [ `Mut_var_captured | `Not_found ]) result
+    -> ( ( Context.mutable_flag * Type.t * Context.Attr.t
+         , [ `Mut_var_captured | `Not_found ] )
+         result
        , 'err
        , 'wrn )
        t
@@ -117,13 +120,16 @@ module Context : sig
   val get_value_exn
     :  Value_var.t
     -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc)
-    -> (Context.mutable_flag * Type.t, 'err, 'wrn) t
+    -> (Context.mutable_flag * Type.t * Context.Attr.t, 'err, 'wrn) t
 
   (** [get_imm var] returns the type of the immutable variable [var].
       Returning [None] if not found in the current context. *)
-  val get_imm : Value_var.t -> (Type.t option, 'err, 'wrn) t
+  val get_imm : Value_var.t -> ((Type.t * Context.Attr.t) option, 'err, 'wrn) t
 
-  val get_imm_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+  val get_imm_exn
+    :  Value_var.t
+    -> error:'err Errors.with_loc
+    -> (Type.t * Context.Attr.t, 'err, 'wrn) t
 
   (** [get_mut var] returns the type of the mutable variable [var].
       Returning [None] if not found in the current context. *)
@@ -248,7 +254,7 @@ val create_type : ?meta:Ast_core.type_expression -> Type.constr -> (Type.t, 'err
     computation [in_] *)
 
 val def
-  :  (Value_var.t * Param.mutable_flag * Type.t) list
+  :  (Value_var.t * Param.mutable_flag * Type.t * Context.Attr.t) list
   -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t

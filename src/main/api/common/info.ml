@@ -27,7 +27,7 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format no
   let options = Compiler_options.make ~protocol_version ~raw_options ~syntax () in
   let Compiler_options.{ entry_point; module_; _ } = options.frontend in
   let Compiler_options.{ views; _ } = options.backend in
-  let michelson, views =
+  let Build.{ entrypoint; views } =
     Build.build_contract
       ~raise
       ~options
@@ -36,6 +36,8 @@ let measure_contract (raw_options : Raw_options.t) source_file display_format no
       views
       (Build.Source_input.From_file source_file)
   in
+  let michelson = entrypoint.value in
+  let views = List.map ~f:(fun { name; value } -> name, value) views in
   let contract =
     Compile.Of_michelson.build_contract
       ~raise
@@ -65,7 +67,7 @@ let list_declarations
   in
   let options = Compiler_options.make ~raw_options ~syntax () in
   let prg =
-    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
   let declarations = Compile.Of_typed.list_declarations raw_options.only_ep prg in
   source_file, declarations

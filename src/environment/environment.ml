@@ -131,6 +131,7 @@ let meta_ligo_types
     ; v_ast_contract ~loc, t_constant ~loc Ast_contract []
     ; v_gen ~loc, t_abstraction1 ~loc Gen star
     ; v_int64 ~loc, t_constant ~loc Int64 []
+    ; v_views ~loc, t_abstraction1 ~loc Views star
     ]
 
 

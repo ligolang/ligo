@@ -824,6 +824,12 @@ call_expr:
                  | _,  l -> last expr_to_region l in
     let region = cover start stop in
     ECall {region; value=$1,$2} }
+| "contract_of" nsepseq(module_name,".") {
+    let kwd_contract = $1 in
+    let stop = nsepseq_to_region (fun x -> x.region) $2 in
+    let region = cover kwd_contract#region stop in
+    let value  = $2 in
+    EContract {region; value } }
 
 core_expr:
   "<int>"                             {               EArith (Int (unwrap $1)) }

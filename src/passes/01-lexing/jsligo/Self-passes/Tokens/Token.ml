@@ -132,6 +132,10 @@ module T =
     | Namespace   of lexeme Wrap.t  (* namespace *)
     | Type        of lexeme Wrap.t  (* type      *)
 
+    (* Contract keywords *)
+
+    | Contract of lexeme Wrap.t  (* contract_of *)
+
     (* Virtual tokens *)
 
     | ZWSP   of lexeme Wrap.t  (* Zero-Width SPace *)
@@ -245,6 +249,10 @@ module T =
     | Namespace t
     | Type      t -> t#payload
 
+    (* Contract keywords *)
+
+    | Contract t -> t#payload
+
     (* Virtual tokens *)
 
     | ZWSP _
@@ -310,6 +318,10 @@ module T =
      let mk_Namespace region = Namespace (wrap_namespace region)
      let mk_Type      region = Type      (wrap_type      region)
 
+     let wrap_contract = wrap "contract_of"
+
+     let mk_Contract region = Contract (wrap_contract region)
+
     (* All keyword smart constructors *)
 
      let keywords = [
@@ -334,7 +346,8 @@ module T =
   (*   mk_With;   *)
        mk_As;
        mk_Namespace;
-       mk_Type
+       mk_Type;
+       mk_Contract
      ]
 
     (* All keywords *)
@@ -963,6 +976,10 @@ module T =
     | As          t -> t#region, "As"
     | Namespace   t -> t#region, "Namespace"
     | Type        t -> t#region, "Type"
+
+    (* Contract keywords *)
+
+    | Contract t -> t#region, "Contract"
 
     (* Virtual tokens *)
 

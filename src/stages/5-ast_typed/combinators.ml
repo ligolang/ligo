@@ -86,7 +86,14 @@ let t__type_ ~loc ?core () : type_expression = t_constant ~loc ?core _type_ []
 let t__type_ ~loc ?core t : type_expression = t_constant ~loc ?core _type_ [ t ]
   [@@map
     _type_
-    , ("list", "set", "contract", "ticket", "sapling_state", "sapling_transaction", "gen")]
+    , ( "list"
+      , "set"
+      , "contract"
+      , "ticket"
+      , "sapling_state"
+      , "sapling_transaction"
+      , "gen"
+      , "views" )]
 
 
 let t_ext_int ~loc ?core t : type_expression =
@@ -496,7 +503,7 @@ let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments 
 
 
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [ p ] }
-  [@@map _ct_, "some"]
+  [@@map _ct_, ("some", "test_nil_views")]
 
 
 let e__ct_ p p' : expression_content =
@@ -504,8 +511,9 @@ let e__ct_ p p' : expression_content =
   [@@map _ct_, ("cons", "set_add", "map_remove")]
 
 
-let e_map_add k v tl : expression_content =
-  E_constant { cons_name = C_MAP_ADD; arguments = [ k; v; tl ] }
+let e__ct_ p p' p'' : expression_content =
+  E_constant { cons_name = C__CT_; arguments = [ p; p'; p'' ] }
+  [@@map _ct_, ("map_add", "test_cons_views")]
 
 
 let e__type_ p : expression_content = E_literal (Literal__type_ p)
@@ -610,6 +618,15 @@ let e_a_mod_in ~loc module_binder rhs let_result =
 (* Constants *)
 let e_a_nil ~loc t = make_e ~loc (e_nil ()) (t_list ~loc t)
 let e_a_cons ~loc hd tl = make_e ~loc (e_cons hd tl) (t_list ~loc hd.type_expression)
+
+let e_a_test_nil_views ~loc s =
+  make_e ~loc (e_test_nil_views (e_a_unit ~loc ())) (t_views ~loc s)
+
+
+let e_a_test_cons_views ~loc s name hd tl =
+  make_e ~loc (e_test_cons_views name hd tl) (t_views ~loc s)
+
+
 let e_a_set_empty ~loc t = make_e ~loc (e_set_empty ()) (t_set ~loc t)
 let e_a_set_add ~loc hd tl = make_e ~loc (e_set_add hd tl) (t_set ~loc hd.type_expression)
 let e_a_map_empty ~loc kt vt = make_e ~loc (e_map_empty ()) (t_map ~loc kt vt)

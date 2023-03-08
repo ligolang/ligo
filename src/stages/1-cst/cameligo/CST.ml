@@ -55,6 +55,7 @@ type kwd_type      = lexeme wrap
 type kwd_with      = lexeme wrap
 type kwd_module    = lexeme wrap
 type kwd_struct    = lexeme wrap
+type kwd_contract  = lexeme wrap
 
 (* Symbols *)
 
@@ -309,6 +310,7 @@ and expr =
 | ESeq      of expr injection reg
 | ECodeInj  of code_inj reg
 | ERevApp   of rev_app bin_op reg
+| EContract of ((module_name, dot) nsepseq) reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -582,6 +584,7 @@ let expr_to_region = function
 | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
 | EModA {region; _} | ECodeInj {region; _}
 | ERevApp {region; _} -> region
+| EContract {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

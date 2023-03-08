@@ -22,6 +22,7 @@ type all =
     * Ast_imperative.expression
     * Ast_imperative.type_expression
   | `Main_view_ignored of Location.t
+  | `Main_entry_ignored of Location.t
   | `Michelson_typecheck_failed_with_different_protocol of
     Environment.Protocols.t * Tezos_error_monad.Error_monad.error list
   | `Jsligo_deprecated_failwith_no_return of Location.t
@@ -101,6 +102,13 @@ let pp
         f
         "@[<hv>%a@ Warning: This view will be ignored, command line option override [@ \
          view] annotation@.@]"
+        snippet_pp
+        loc
+    | `Main_entry_ignored loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@ Warning: This entry will be ignored, command line option override [@ \
+         entry] annotation@.@]"
         snippet_pp
         loc
     | `Self_ast_typed_warning_unused (loc, s) ->
@@ -257,6 +265,14 @@ let to_warning : all -> Simple_utils.Warning.t =
     let message =
       Format.sprintf
         "Warning: This view will be ignored, command line option override [@ view] \
+         annotation@."
+    in
+    let content = make_content ~message ~location () in
+    make ~stage:"view compilation" ~content
+  | `Main_entry_ignored location ->
+    let message =
+      Format.sprintf
+        "Warning: This entry will be ignored, command line option override [@ entry] \
          annotation@."
     in
     let content = make_content ~message ~location () in

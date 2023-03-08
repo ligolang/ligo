@@ -18,26 +18,12 @@ let to_core ~raise ~options ~meta (c_unit : Buffer.t) file_path =
   core
 
 
-let type_file ~raise ~(options : Compiler_options.t) f stx form : Ast_typed.program =
+let type_file ~raise ~(options : Compiler_options.t) ?cform f stx : Ast_typed.program =
   let meta = Of_source.extract_meta stx in
   let c_unit, _ = Of_source.preprocess_file ~raise ~options:options.frontend ~meta f in
   let core = to_core ~raise ~options ~meta c_unit f in
-  let typed = Of_core.typecheck ~raise ~options form core in
+  let typed = Of_core.typecheck ~raise ~options ?cform core in
   typed
-
-
-let compile_file ~raise ~options f stx ep mp =
-  let typed =
-    type_file ~raise ~options f stx @@ Contract { entrypoint = ep; module_path = mp }
-  in
-  let aggregated =
-    Of_typed.apply_to_entrypoint_contract ~raise ~options:options.middle_end typed ep mp
-  in
-  let expanded = Of_aggregated.compile_expression ~raise aggregated in
-  let mini_c = Of_expanded.compile_expression ~raise expanded in
-  let michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
-  let contract = Of_michelson.build_contract ~raise michelson in
-  contract
 
 
 let core_expression_string ~raise syntax expression =
@@ -68,7 +54,7 @@ let core_program_string ~raise ~options syntax expression =
 
 let type_program_string ~raise ~options syntax expression =
   let core = core_program_string ~raise ~options syntax expression in
-  let typed = Of_core.typecheck ~raise ~options Env core in
+  let typed = Of_core.typecheck ~raise ~options core in
   typed, core
 
 

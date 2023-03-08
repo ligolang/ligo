@@ -52,7 +52,8 @@ let should_match_list
     ~(actual : 'a list)
     ~(expected : 'a list)
     : unit
-  = match match_list ~actual ~expected ~eq:(Alcotest.equal testable_a) with
+  =
+  match match_list ~actual ~expected ~eq:(Alcotest.equal testable_a) with
   | [], [] -> ()
   | extra, missing ->
     let format_list = Fmt.Dump.list (Alcotest.pp testable_a) in

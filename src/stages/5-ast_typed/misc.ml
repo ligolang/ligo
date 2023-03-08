@@ -233,7 +233,14 @@ let get_entry (lst : program) (name : Value_var.t) : expression option =
         { binder
         ; expr
         ; attr =
-            { inline = _; no_mutation = _; view = _; public = _; hidden = _; thunk = _ }
+            { inline = _
+            ; no_mutation = _
+            ; view = _
+            ; public = _
+            ; hidden = _
+            ; thunk = _
+            ; entry = _
+            }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
     | D_irrefutable_match _ | D_type _ | D_module _ -> None
   in
@@ -255,3 +262,81 @@ let get_type_of_contract ty =
       return (parameter, storage)
     | _ -> None)
   | _ -> None
+
+
+let build_entry_type p_ty s_ty =
+  let open Combinators in
+  let loc = Location.generated in
+  t_arrow
+    ~loc
+    (t_pair ~loc p_ty s_ty)
+    (t_pair ~loc (t_list ~loc (t_operation ~loc ())) s_ty)
+    ()
+
+
+let should_uncurry_entry entry_ty =
+  let is_t_list_operation listop =
+    Option.is_some @@ Combinators.assert_t_list_operation listop
+  in
+  match Combinators.get_t_arrow entry_ty with
+  | Some { type1 = tin; type2 = return } ->
+    (match Combinators.get_t_tuple tin, Combinators.get_t_tuple return with
+    | Some [ parameter; storage ], Some [ listop; storage' ] ->
+      if is_t_list_operation listop && type_expression_eq (storage, storage')
+      then `No (parameter, storage)
+      else `Bad
+    | _ ->
+      let parameter = tin in
+      (match Combinators.get_t_arrow return with
+      | Some { type1 = storage; type2 = return } ->
+        (match Combinators.get_t_pair return with
+        | Some (listop, storage') ->
+          if is_t_list_operation listop && type_expression_eq (storage, storage')
+          then `Yes (parameter, storage)
+          else `Bad
+        | _ -> `Bad)
+      | None -> `Bad))
+  | None -> `Bad
+
+
+let parameter_from_entrypoints
+    :  (Value_var.t * type_expression) List.Ne.t
+    -> ( type_expression * type_expression
+       , [> `Not_entry_point_form of Types.type_expression
+         | `Storage_does_not_match of
+           Value_var.t * Types.type_expression * Value_var.t * Types.type_expression
+         ] )
+       result
+  =
+ fun ((entrypoint, entrypoint_type), rest) ->
+  let open Result in
+  let* parameter, storage =
+    match should_uncurry_entry entrypoint_type with
+    | `Yes (parameter, storage) | `No (parameter, storage) ->
+      Result.Ok (parameter, storage)
+    | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+  in
+  let* parameter_list =
+    List.fold_result
+      ~init:[ String.capitalize (Value_var.to_name_exn entrypoint), parameter ]
+      ~f:(fun parameters (ep, ep_type) ->
+        let* parameter_, storage_ =
+          match should_uncurry_entry ep_type with
+          | `Yes (parameter, storage) | `No (parameter, storage) ->
+            Result.Ok (parameter, storage)
+          | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+        in
+        let* () =
+          Result.of_option
+            ~error:(`Storage_does_not_match (entrypoint, storage, ep, storage_))
+          @@ assert_type_expression_eq (storage_, storage)
+        in
+        return ((String.capitalize (Value_var.to_name_exn ep), parameter_) :: parameters))
+      rest
+  in
+  return
+    ( Combinators.t_sum_ez
+        ~loc:Location.generated
+        ~layout:Combinators.default_layout
+        parameter_list
+    , storage )

@@ -219,6 +219,7 @@ and pp_expr = function
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 | ETernary e -> pp_ternary e
+| EContract e -> pp_contract e
 
 and pp_array (node: (array_item, comma) Utils.sepseq brackets reg) =
   match node.value.inside with
@@ -540,6 +541,11 @@ and pp_assign_pattern {value = {property; value; _}; _} =
 
 and pp_destruct {value = {property; target; _}; _} =
   pp_ident property ^^ string ":" ^^ pp_val_binding target
+
+and pp_contract {value; _} =
+  string "(contract_of "
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident value))
+  ^^ string ")"
 
 let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern

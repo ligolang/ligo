@@ -6,7 +6,7 @@ let rec decompile : I.expression -> O.expression =
  fun exp ->
   let decompile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
    fun { inline; no_mutation; view; public; hidden; thunk } ->
-    { inline; no_mutation; view; public; hidden; thunk }
+    { inline; no_mutation; view; public; hidden; thunk; entry = false }
   in
   let return expression_content : O.expression =
     { expression_content

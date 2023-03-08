@@ -45,7 +45,7 @@ let dependency_graph (raw_options : Raw_options.t) source_file display_format ()
       (Some source_file)
   in
   let options = Compiler_options.make ~raw_options ~syntax () in
-  let g, _ = Build.dependency_graph ~raise ~options Env source_file in
+  let g, _ = Build.dependency_graph ~raise ~options source_file in
   g, source_file
 
 
@@ -157,7 +157,7 @@ let ast_typed (raw_options : Raw_options.t) source_file display_format () =
   in
   let Compiler_options.{ self_pass; _ } = options.tools in
   let typed =
-    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
   (* Here, I would like to write this, but it become slow ...
          let typed = Build.unqualified_typed ~raise ~options Env source_file in
@@ -193,7 +193,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file display_format () =
   in
   let Compiler_options.{ self_pass; _ } = options.tools in
   let typed =
-    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
   Compile.Of_typed.compile_expression_in_context
     ~raise
@@ -222,7 +222,7 @@ let ast_expanded (raw_options : Raw_options.t) source_file display_format no_col
   in
   let Compiler_options.{ self_pass; _ } = options.tools in
   let typed =
-    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
   let aggregated =
     Compile.Of_typed.compile_expression_in_context
@@ -256,7 +256,7 @@ let mini_c (raw_options : Raw_options.t) source_file display_format optimize () 
     Compiler_options.make ~protocol_version ~raw_options ~syntax ()
   in
   let typed =
-    Build.qualified_typed ~raise Env ~options (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
   match optimize with
   | None ->

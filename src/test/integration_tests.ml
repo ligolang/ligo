@@ -4,7 +4,7 @@ open Main_errors
 open Ast_imperative.Combinators
 
 let init_env = Environment.default Environment.Protocols.current
-let type_file f = type_file f Env options
+let type_file f = type_file f options
 
 (*
 let type_alias ~raise () : unit =

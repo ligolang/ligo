@@ -150,6 +150,9 @@
 %token <string Wrap.t> Namespace "namespace" [@recover.expr Token.wrap_namespace $loc]
 %token <string Wrap.t> Type      "type"      [@recover.expr Token.wrap_type      $loc]
 
+(* Contract keywords *)
+%token <string Wrap.t> Contract "contract_of" [@recover.expr Token.wrap_contract $loc]
+
 (* Virtual tokens *)
 
 %token <string Wrap.t> ZWSP   [@recover.expr Token.wrap_zwsp   $loc]

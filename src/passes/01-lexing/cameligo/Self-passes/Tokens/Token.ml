@@ -106,6 +106,7 @@ module T =
     | Then      of lexeme Wrap.t  (* then   *)
     | Type      of lexeme Wrap.t  (* type   *)
     | With      of lexeme Wrap.t  (* with   *)
+    | Contract  of lexeme Wrap.t  (* contract_of *)
 
     (* Virtual tokens *)
 
@@ -193,7 +194,8 @@ module T =
     | Struct t
     | Then   t
     | Type   t
-    | With   t -> t#payload
+    | With   t
+    | Contract t -> t#payload
 
     (* Virtual tokens *)
 
@@ -229,6 +231,7 @@ module T =
     let wrap_then   = wrap "then"
     let wrap_type   = wrap "type"
     let wrap_with   = wrap "with"
+    let wrap_contract   = wrap "contract_of"
 
     (* Smart constructors *)
 
@@ -255,6 +258,7 @@ module T =
     let mk_Then   region = Then   (wrap_then   region)
     let mk_Type   region = Type   (wrap_type   region)
     let mk_With   region = With   (wrap_with   region)
+    let mk_Contract region = Contract (wrap_contract region)
 
     (* All keyword smart constructors *)
 
@@ -281,7 +285,8 @@ module T =
       mk_Struct;
       mk_Then;
       mk_Type;
-      mk_With
+      mk_With;
+      mk_Contract
     ]
 
     (* All keywords *)
@@ -748,6 +753,7 @@ module T =
     | Then   t -> t#region, "Then"
     | Type   t -> t#region, "Type"
     | With   t -> t#region, "With"
+    | Contract t -> t#region, "Contract"
 
     (* Virtual tokens *)
 

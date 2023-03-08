@@ -56,6 +56,7 @@ let rec is_dup (t : type_expression) =
           | Michelson_program
           | Gen
           | Int64
+          | Views
           (* Externals are dup *)
           | External _ )
       ; _

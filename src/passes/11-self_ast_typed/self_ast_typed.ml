@@ -2,6 +2,8 @@ module Errors = Errors
 module Helpers = Helpers
 open Ligo_prim
 
+let make_entry_point_program = Make_entry_point.program
+
 let all_program_passes ~raise ~warn_unused_rec =
   [ Unused.unused_map_program ~raise
   ; Muchused.muchused_map_program ~raise
@@ -20,6 +22,7 @@ let contract_passes ~raise =
 
 
 let all_program ~raise ~warn_unused_rec init =
+  let init = Make_entry_point.make_main_module ~raise init in
   List.fold ~f:( |> ) (all_program_passes ~raise ~warn_unused_rec) ~init
 
 
@@ -27,7 +30,17 @@ let all_expression ~raise ~warn_unused_rec init =
   List.fold ~f:( |> ) (all_expression_passes ~raise ~warn_unused_rec) ~init
 
 
-let all_contract ~raise main_name module_path (prg : Ast_typed.program) =
+let all_contract ~raise entrypoints module_path (prg : Ast_typed.program) =
+  let module_ = Helpers.get_module module_path prg in
+  let module_ =
+    match entrypoints with
+    | [] -> module_
+    | _ ->
+      Helpers.strip_entry_annotations module_
+      |> Helpers.annotate_with_entry ~raise entrypoints
+  in
+  let main_name, module_ = Make_entry_point.program ~raise module_ in
+  let prg, () = Helpers.update_module module_path (fun _ -> module_, ()) prg in
   let prg, main_name, contract_type =
     Helpers.fetch_contract_type ~raise main_name module_path prg
   in
@@ -39,10 +52,11 @@ let all_contract ~raise main_name module_path (prg : Ast_typed.program) =
     @@ contract_passes ~raise
   in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
-  Contract_passes.remove_unused ~raise data prg
+  let prg = Contract_passes.remove_unused ~raise data prg in
+  (main_name, contract_type), prg
 
 
-let all_view ~raise command_line_views main_name module_path prg =
+let all_view ~raise command_line_views main_name module_path contract_type prg =
   let module_ = Helpers.get_module module_path prg in
   let () =
     (* detects whether a declared view (passed with --views command line option) overwrites an annotated view ([@view] let ..) *)
@@ -69,9 +83,6 @@ let all_view ~raise command_line_views main_name module_path prg =
     | Some command_line_views ->
       Helpers.strip_view_annotations module_
       |> Helpers.annotate_with_view ~raise command_line_views
-  in
-  let prg, main_name, contract_type =
-    Helpers.fetch_contract_type ~raise main_name module_path prg
   in
   let f decl =
     match Ast_typed.Helpers.fetch_view_type decl with

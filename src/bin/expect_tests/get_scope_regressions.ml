@@ -162,7 +162,7 @@ let%expect_test _ =
     (f#2 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
-    Content: |resolved: ∀ gen#6 : * . gen#6 -> int|
+    Content: |resolved: ∀ gen#7 : * . gen#7 -> int|
     references: []
     (g#3 -> g)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5
@@ -178,7 +178,7 @@ let%expect_test _ =
     (x#1 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
-    Content: |resolved: gen#6|
+    Content: |resolved: gen#7|
     references: []
     Type definitions:
     Module definitions:

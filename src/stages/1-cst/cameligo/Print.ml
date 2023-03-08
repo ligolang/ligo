@@ -384,6 +384,12 @@ and print_expr state = function
     print_code_inj state value
 | ERevApp {value; region} ->
     print_bin_op "ERevApp" region state value
+| EContract {value; region} ->
+    print_loc_node state "EContract" region;
+    let binders        = Utils.nsepseq_to_list value in
+    let len            = List.length binders in
+    let apply len rank = print_ident (state#pad len rank) in
+    List.iteri ~f:(apply len) binders
 
 and print_module_access :
   type a. (state -> a -> unit ) -> state -> a module_access -> unit =

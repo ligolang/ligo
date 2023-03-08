@@ -15,6 +15,7 @@ let default_attr : I.ValueAttr.t =
   ; view = false
   ; hidden = false
   ; thunk = false
+  ; entry = false
   }
 
 

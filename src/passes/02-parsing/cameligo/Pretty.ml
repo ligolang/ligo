@@ -214,6 +214,12 @@ and pp_expr = function
 | ESeq        e -> pp_seq e
 | ECodeInj    e -> pp_code_inj e
 | ERevApp     e -> pp_rev_app e
+| EContract   e -> pp_contract e
+
+and pp_contract {value; _} =
+  string "(contract_of "
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident value))
+  ^^ string ")"
 
 and pp_rev_app e = pp_bin_op "|>" e
 

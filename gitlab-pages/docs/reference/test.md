@@ -266,6 +266,35 @@ let originate_uncurried = (contract: (ps: ['param, 'storage]) => [list &lt;opera
 Originate a contract with an entrypoint function in uncurried form, initial storage and initial balance.
 
 <SyntaxTitle syntax="cameligo">
+val originate_module : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let originate_module = (contract: module_contract&lt;&apos;param, &apos;storage&gt;, init: &apos;storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
+</SyntaxTitle>
+
+Originate a contract from a module/namespace. To obtain a `module_contract` from a module, use the `$contract` keyword.
+
+<Syntax syntax="cameligo">
+
+```cameligo skip
+let taddr, contract, size =
+  Test.originate_module (contract_of C) [] init_storage 0tez
+...
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo skip
+let [taddr, contract, size] = Test.originate_module(contract_of(C), list([]), init_storage, 0 as tez);
+```
+
+</Syntax>
+
+
+<SyntaxTitle syntax="cameligo">
 val compile_contract : ('param * 'storage -> operation list * 'storage) -> michelson_contract
 </SyntaxTitle>
 

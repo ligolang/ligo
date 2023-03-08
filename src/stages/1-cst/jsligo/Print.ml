@@ -381,6 +381,12 @@ and print_expr state = function
 | ETernary {value; region} ->
     print_loc_node state "ETernary" region;
     print_ternary state value
+| EContract {value; region} ->
+    print_loc_node state "EContract" region;
+    let binders        = Utils.nsepseq_to_list value in
+    let len            = List.length binders in
+    let apply len rank = print_ident (state#pad len rank) in
+    List.iteri ~f:(apply len) binders
 
 and print_constr_expr state (node: (constr * expr option) reg) =
   let constr, expr_opt = node.value in

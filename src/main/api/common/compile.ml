@@ -94,7 +94,11 @@ let contract
       BuildSystem.Source_input.(
         Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
   in
-  let code, views = Build.build_contract ~raise ~options entry_point module_ views source in
+  let Build.{ entrypoint; views } =
+    Build.build_contract ~raise ~options entry_point module_ views source
+  in
+  let code = entrypoint.value in
+  let views = List.map ~f:(fun { name; value } -> name, value) views in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   Ligo_compile.Of_michelson.build_contract
@@ -146,16 +150,13 @@ let expression
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
-  let mini_c_exp, _ =
+  let Build.{ expression; _ } =
     Build.build_expression ~raise ~options syntax expression init_file
-  in
-  let compiled_exp =
-    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
   in
   no_comment
   @@
   if without_run
-  then Run.clean_expression compiled_exp.expr
+  then Run.clean_expression expression.expr
   else (
     let options =
       Run.make_dry_run_options
@@ -169,7 +170,7 @@ let expression
         ; parameter_ty = None
         }
     in
-    Run.evaluate_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty)
+    Run.evaluate_expression ~raise ~options expression.expr expression.expr_ty)
 
 
 let constant (raw_options : Raw_options.t) constants init_file display_format no_colour ()
@@ -200,14 +201,13 @@ let constant (raw_options : Raw_options.t) constants init_file display_format no
       ()
   in
   let Compiler_options.{ without_run; _ } = options.backend in
-  let mini_c_exp, _ = Build.build_expression ~raise ~options syntax constants init_file in
-  let compiled_exp =
-    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
+  let Build.{ expression; _ } =
+    Build.build_expression ~raise ~options syntax constants init_file
   in
   let hash, value =
     if without_run
-    then Run.clean_constant ~raise compiled_exp.expr
-    else Run.evaluate_constant ~raise compiled_exp.expr compiled_exp.expr_ty
+    then Run.clean_constant ~raise expression.expr
+    else Run.evaluate_constant ~raise expression.expr expression.expr_ty
   in
   hash, value
 
@@ -252,20 +252,28 @@ let parameter
       ()
   in
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
-  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+  let Compiler_options.{ entry_point = _; module_; _ } = options.frontend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
-  let entry_point = Value_var.of_input_var ~loc entry_point in
+  (* let entry_point = List.map ~f:(Value_var.of_input_var ~loc) entry_point in *)
   let module_path = Build.parse_module_path ~loc module_ in
   let app_typed_prg =
-    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
-  let app_typed_prg
-      , entry_point
-      , contract_type
-    =
+  let entry_point, app_typed_prg, contract_type =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
-    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point module_path app_typed_prg
+    @@ fun ~raise ->
+    let f module_ =
+      let main_name, module_ = Self_ast_typed.make_entry_point_program ~raise module_ in
+      module_, main_name
+    in
+    let prg, main_name =
+      Self_ast_typed.Helpers.update_module module_path f app_typed_prg
+    in
+    let prg, main_name, contract_type =
+      Self_ast_typed.Helpers.fetch_contract_type ~raise main_name module_path prg
+    in
+    main_name, prg, contract_type
   in
   let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = _ } = contract_type in
   let parameter_ty = Checking.untype_type_expression parameter_ty in
@@ -401,18 +409,25 @@ let storage
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
-  let entry_point = Value_var.of_input_var ~loc entry_point in
+  let _entry_point = List.map ~f:(Value_var.of_input_var ~loc) entry_point in
   let module_path = Build.parse_module_path ~loc module_ in
   let app_typed_prg =
-    Build.qualified_typed
-      ~raise
-      ~options
-      Ligo_compile.Of_core.Env
-      (Build.Source_input.From_file source_file)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
-  let app_typed_prg, entry_point, contract_type =
+  let entry_point, app_typed_prg, contract_type =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
-    @@ Self_ast_typed.Helpers.fetch_contract_type entry_point module_path app_typed_prg
+    @@ fun ~raise ->
+    let f module_ =
+      let main_name, module_ = Self_ast_typed.make_entry_point_program ~raise module_ in
+      module_, main_name
+    in
+    let prg, main_name =
+      Self_ast_typed.Helpers.update_module module_path f app_typed_prg
+    in
+    let prg, main_name, contract_type =
+      Self_ast_typed.Helpers.fetch_contract_type ~raise main_name module_path prg
+    in
+    main_name, prg, contract_type
   in
   let Self_ast_typed.Helpers.{ parameter = _; storage = storage_ty } = contract_type in
   let storage_ty = Checking.untype_type_expression storage_ty in

@@ -138,7 +138,7 @@ module Command = struct
         * LT.value
         * Ast_aggregated.type_expression
         -> LT.value tezos_command
-    | Compile_contract : Location.t * LT.value -> LT.value tezos_command
+    | Compile_contract : Location.t * LT.value * LT.value -> LT.value tezos_command
     | Compile_ast_contract : Location.t * LT.value -> LT.value tezos_command
     | Decompile :
         LT.mcode * LT.mcode * Ast_aggregated.type_expression
@@ -424,7 +424,7 @@ module Command = struct
         raise.error
         @@ Errors.generic_error Location.generated "Trying to measure a non-contract")
     | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
-      let options = Compiler_options.set_entry_point options entry_point in
+      let options = Compiler_options.set_entry_point options [ entry_point ] in
       let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
       let main, views =
@@ -432,7 +432,7 @@ module Command = struct
           ~raise
           ~options
           source_file
-          entry_point
+          [ entry_point ]
           views
       in
       LT.V_Ast_contract { main; views }, ctxt
@@ -538,8 +538,8 @@ module Command = struct
         (match data_opt with
         | Some data -> raise.error @@ Errors.meta_lang_eval loc calltrace data
         | None -> raise.error @@ Errors.target_lang_failwith loc calltrace data))
-    | Compile_contract (loc, v) ->
-      let ast_aggregated =
+    | Compile_contract (loc, v, vs) ->
+      let main =
         match v with
         | LT.V_Func_val
             { arg_binder; arg_mut_flag = Immutable; body; orig_lambda; env; rec_name } ->
@@ -561,7 +561,39 @@ module Command = struct
           raise.error
           @@ Errors.generic_error loc "Contract does not reduce to a function value?"
       in
-      LT.V_Ast_contract { main = ast_aggregated; views = None }, ctxt
+      let views =
+        match vs with
+        | LT.V_Views [] -> None
+        | LT.V_Views vs ->
+          let f (s, f) (vs, k) =
+            let v = Value_var.of_input_var ~loc s in
+            let open Ast_aggregated in
+            let p =
+              Location.wrap ~loc
+              @@ Pattern.P_var (Binder.make v f.LT.orig_lambda.type_expression)
+            in
+            let expr =
+              Michelson_backend.val_to_ast
+                ~raise
+                ~loc
+                (V_Func_val f)
+                f.orig_lambda.type_expression
+            in
+            let k result =
+              e_a_let_in ~loc p expr (k result) ValueAttr.default_attributes
+            in
+            (v, f.orig_lambda.type_expression) :: vs, k
+          in
+          let vs, k = List.fold_right vs ~f ~init:([], fun x -> x) in
+          let es = List.map vs ~f:(fun (v, t) -> Ast_aggregated.e_a_variable ~loc v t) in
+          let record = Record.record_of_tuple es in
+          let tuple = Ast_aggregated.e_a_record ~loc record in
+          let vs = List.map vs ~f:fst in
+          Some (vs, k tuple)
+        | _ ->
+          raise.error @@ Errors.generic_error loc "Views doe not reduce to a view value?"
+      in
+      LT.V_Ast_contract { main; views }, ctxt
     | Compile_ast_contract (loc, v) ->
       let contract =
         match v with

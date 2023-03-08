@@ -423,6 +423,7 @@ let uncurry_expression (expr : expression) : expression =
                 ; public = true
                 ; hidden = false
                 ; thunk = false
+                ; entry = false
                 }
             in
             (* Construct the let *)

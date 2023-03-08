@@ -8,7 +8,7 @@ type t =
     warn_unused_rec : bool
   ; (* Frontend *)
     syntax : string
-  ; entry_point : string
+  ; entry_point : string list
   ; module_ : string
   ; libraries : string list
   ; project_root : string option
@@ -49,7 +49,7 @@ module Default_options = struct
   (* Frontend *)
   let syntax = "auto"
   let dialect = "terse"
-  let entry_point = "main"
+  let entry_point = []
   let module_ = ""
   let libraries = []
   let project_root = None

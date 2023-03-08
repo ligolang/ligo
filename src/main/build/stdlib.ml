@@ -52,7 +52,7 @@ let type_ ~options x =
   let open Compiler_options in
   let no_colour = options.tools.no_colour in
   match
-    Simple_utils.Trace.to_stdlib_result (Ligo_compile.Of_core.typecheck ~options Env x)
+    Simple_utils.Trace.to_stdlib_result (Ligo_compile.Of_core.typecheck ~options x)
   with
   | Ok (x, _w) -> x
   | Error (e, _w) ->

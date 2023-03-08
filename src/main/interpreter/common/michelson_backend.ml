@@ -165,6 +165,7 @@ let add_ast_env
         ; public = false
         ; hidden = false
         ; thunk = false
+        ; entry = false
         }
     else e
   in
@@ -368,7 +369,7 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
 
 
 let compile_contract_file ~raise ~options source_file entry_point declared_views =
-  let aggregated, views =
+  let _, aggregated, views =
     Build.build_contract_meta_ligo ~raise ~options entry_point declared_views source_file
   in
   aggregated, views
@@ -795,6 +796,7 @@ let rec val_to_ast ~raise ~loc
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: location"
   | V_Typed_address _ ->
     raise.error @@ Errors.generic_error loc "Cannot be abstracted: typed_address"
+  | V_Views _ -> raise.error @@ Errors.generic_error loc "Cannot be abstracted: views"
 
 
 and make_ast_func ~raise ?name env mut_flag arg body orig =

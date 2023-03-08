@@ -272,7 +272,8 @@ module Test = struct
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
   let size (c : michelson_contract) : int = [%external ("TEST_SIZE", c)]
   let compile_contract (type p s) (f : p * s -> operation list * s) : michelson_contract =
-    let ast_c : ast_contract = [%external ("TEST_COMPILE_CONTRACT", f)] in
+    let no_vs : s views = [%external ("TEST_NIL_VIEWS", ())] in
+    let ast_c : ast_contract = [%external ("TEST_COMPILE_CONTRACT", f, no_vs)] in
     [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
   let read_contract_from_file (fn : string) : michelson_contract = [%external ("TEST_READ_CONTRACT_FROM_FILE", fn)]
   let chr (n : nat) : string option =
@@ -362,8 +363,18 @@ module Test = struct
     let c = size f in
     let a : (p, s) typed_address = cast_address a in
     (a, f, c)
+    let compile_contract_with_views (type p s) (f : p * s -> operation list * s) (vs : s views) : michelson_contract =
+      let ast_c : ast_contract = [%external ("TEST_COMPILE_CONTRACT", f, vs)] in
+      [%external ("TEST_COMPILE_AST_CONTRACT", ast_c)]
   let originate_uncurried (type p s) (f : p * s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
     let f = compile_contract f in
+    let s = eval s in
+    let a = originate_contract f s t in
+    let c = size f in
+    let a : (p, s) typed_address = cast_address a in
+    (a, f, c)
+  let originate_module (type p s) ((f, vs) : (p * s -> operation list * s) * s views) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
+    let f = compile_contract_with_views f vs in
     let s = eval s in
     let a = originate_contract f s t in
     let c = size f in

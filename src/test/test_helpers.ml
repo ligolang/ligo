@@ -137,9 +137,9 @@ let wrap_ref file f =
 
 (* Common functions used in tests *)
 
-let type_file ~raise ?(st = "auto") f entry options =
+let type_file ~raise ?(st = "auto") ?cform f options =
   ignore st;
-  Build.qualified_typed ~raise ~options entry (Build.Source_input.From_file f)
+  Build.qualified_typed ~raise ~options ?cform (Build.Source_input.From_file f)
 
 
 let core_file ~raise f options =
@@ -148,19 +148,15 @@ let core_file ~raise f options =
 
 let core_file_unqualified ~raise f options = Build.unqualified_core ~raise ~options f
 
-let get_program ~raise ?(st = "auto") f entry =
+let get_program ~raise ?(st = "auto") f ?cform =
   wrap_ref f (fun s ->
-      let program = type_file ~raise ~st f entry options in
+      let program = type_file ~raise ~st ?cform f options in
       s := Some (program, f);
       program)
 
 
 let get_program f ?st =
-  get_program
-    ?st
-    f
-    (Contract
-       { entrypoint = Ligo_prim.Value_var.of_input_var ~loc "main"; module_path = [] })
+  get_program ?st ~cform:(Contract { entrypoints = [ "main" ]; module_path = [] }) f
 
 
 let expression_to_core ~raise expression =
@@ -260,6 +256,9 @@ let typed_program_with_imperative_input_to_michelson
   =
   Printexc.record_backtrace true;
   let core = Ligo_compile.Of_imperative.compile_expression ~raise input in
+  let entry_point =
+    Ligo_prim.Value_var.of_input_var ~loc:Location.generated entry_point
+  in
   let app = Ligo_compile.Of_core.apply entry_point core in
   let typed_app =
     Ligo_compile.Of_core.compile_expression ~raise ~options ~init_prog:program app

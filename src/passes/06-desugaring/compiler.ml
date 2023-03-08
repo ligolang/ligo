@@ -17,11 +17,13 @@ let compile_value_attributes : I.Attr.t -> O.ValueAttr.t =
   let is_inline attr = String.equal "inline" attr in
   let is_no_mutation attr = String.equal "no_mutation" attr in
   let is_view attr = String.equal "view" attr in
+  let is_entry attr = String.equal "entry" attr in
   let is_hidden attr = String.equal "hidden" attr in
   let is_thunk attr = String.equal "thunk" attr in
   let get_inline : string list -> bool = List.exists ~f:is_inline in
   let get_no_mutation : string list -> bool = List.exists ~f:is_no_mutation in
   let get_view : string list -> bool = List.exists ~f:is_view in
+  let get_entry : string list -> bool = List.exists ~f:is_entry in
   let get_hidden : string list -> bool = List.exists ~f:is_hidden in
   let get_public : string list -> bool =
    fun attr -> not (List.mem attr "private" ~equal:String.equal)
@@ -31,9 +33,10 @@ let compile_value_attributes : I.Attr.t -> O.ValueAttr.t =
   let no_mutation = get_no_mutation attributes in
   let public = get_public attributes in
   let view = get_view attributes in
+  let entry = get_entry attributes in
   let hidden = get_hidden attributes in
   let thunk = get_thunk attributes in
-  { inline; no_mutation; view; public; hidden; thunk }
+  { inline; no_mutation; view; public; hidden; thunk; entry }
 
 
 let compile_type_attributes : I.Attr.t -> O.TypeOrModuleAttr.t =
@@ -410,6 +413,7 @@ and desugar_sequence_to_let ~loc expr1 expr2 =
     ; public = true
     ; hidden = false
     ; thunk = false
+    ; entry = false
     }
 
 

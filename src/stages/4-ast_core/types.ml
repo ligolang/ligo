@@ -42,6 +42,7 @@ module ValueAttr = struct
       TODO: we should change the type of such constants to be `unit -> 'a` instead of just 'a
     *)
       view : bool
+    ; entry : bool
     ; public : bool
     ; (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
       set to true for standard libraries
@@ -56,16 +57,18 @@ module ValueAttr = struct
 
   let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
 
-  let pp ppf { inline; no_mutation; view; public; hidden; thunk } =
+  let pp ppf { inline; no_mutation; view; entry; public; hidden; thunk } =
     fprintf
       ppf
-      "%a%a%a%a%a%a"
+      "%a%a%a%a%a%a%a"
       (pp_if_set "inline")
       inline
       (pp_if_set "no_mutation")
       no_mutation
       (pp_if_set "view")
       view
+      (pp_if_set "entry")
+      entry
       (pp_if_set "private")
       (not public)
       (pp_if_set "hidden")
@@ -78,6 +81,7 @@ module ValueAttr = struct
     { inline = false
     ; no_mutation = false
     ; view = false
+    ; entry = false
     ; public = true
     ; hidden = false
     ; thunk = false

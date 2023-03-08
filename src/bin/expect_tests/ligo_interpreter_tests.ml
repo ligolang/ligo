@@ -920,6 +920,26 @@ let%expect_test _ =
       - test_nested_record_assign_array_notation_level2 exited with value ().
       - test_nested_record_assign_tuple_assign_array_notation_level2 exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_originate_module.mligo" ];
+  [%expect
+    {test|
+    Deployed the contract:
+    { parameter (or (int %add) (int %sub)) ;
+      storage int ;
+      code { UNPAIR ; IF_LEFT { ADD } { SWAP ; SUB } ; NIL operation ; PAIR } ;
+      view "get" unit int { CDR } ;
+      view "get_diff" int int { UNPAIR ; SWAP ; SUB } }
+    With storage: 0
+    Storage after call: 42 |test}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_originate_module.jsligo" ];
+  [%expect
+    {test|
+    Everything at the top-level was executed.
+    - test_increment exited with value (). |test}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 

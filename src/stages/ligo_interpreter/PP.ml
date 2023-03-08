@@ -80,6 +80,7 @@ let rec pp_value ~no_colour : Format.formatter -> value -> unit =
     | V_Location _ -> Format.fprintf ppf "Heap location"
     | V_Typed_address c ->
       Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
+    | V_Views _ -> Format.fprintf ppf "views"
 
 
 let pp_value_expr ~no_colour : Format.formatter -> value_expr -> unit =
