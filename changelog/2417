@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nFixes stackoverflows during Lexing in the browser\\n\\n"
+merge_request: '2417'
+title: "Use js_of_ocaml's --enable=effects flag to fix stackoverflows"
+type: fixed
+            
