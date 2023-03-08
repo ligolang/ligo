@@ -131,6 +131,13 @@ and declaration ppf (d : declaration) =
   | D_type td -> Types.Type_decl.pp type_expression ppf td
   | D_module md -> Types.Module_decl.pp module_expr ppf md
 
+and declaration_content ppf (d : declaration_content) =
+  match d with
+  | D_value vd -> Types.Value_decl.pp expression type_expression_option ppf vd
+  | D_irrefutable_match pd ->
+    Types.Pattern_decl.pp expression type_expression_option ppf pd
+  | D_type td -> Types.Type_decl.pp type_expression ppf td
+  | D_module md -> Types.Module_decl.pp module_expr ppf md
 
 and decl ppf d = declaration ppf d
 

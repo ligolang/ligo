@@ -45,6 +45,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
 type exp_mapper = expression -> expression
 type ty_exp_mapper = type_expression -> type_expression
 type mod_mapper = module_ -> module_
+type declaration_mapper = decl -> decl
 type program_mapper = program -> program
 
 type abs_mapper =
@@ -52,12 +53,18 @@ type abs_mapper =
   | Type_expression of ty_exp_mapper
   | Module of mod_mapper
   | Program of program_mapper
+  | Declaration of declaration_mapper
 
-let rec map_expression : exp_mapper -> expression -> expression =
+let rec map_expression : abs_mapper -> expression -> expression =
  fun f e ->
-  let self = map_expression f in
-  let self_type = Fun.id in
-  let e' = f e in
+  let self, self_type, self_mod =
+    map_expression f, map_type_expression f, map_module_expr f
+  in
+  let e' =
+    match f with
+    | Expression f -> f e
+    | _ -> e
+  in
   let return expression_content = { e' with expression_content } in
   match e'.expression_content with
   | E_list lst ->
@@ -103,10 +110,10 @@ let rec map_expression : exp_mapper -> expression -> expression =
     let ti = Type_in.map self (fun a -> a) ti in
     return @@ E_type_in ti
   | E_mod_in mi ->
-    let mi = Mod_in.map self self_type mi in
+    let mi = Mod_in.map self self_mod mi in
     return @@ E_mod_in mi
   | E_lambda l ->
-    let l = Lambda.map self self_type l in
+    let l = Lambda.map self (Option.map ~f:self_type) l in
     return @@ E_lambda l
   | E_type_abstraction ta ->
     let ta = Type_abs.map self ta in
@@ -142,10 +149,14 @@ let rec map_expression : exp_mapper -> expression -> expression =
     return e'
 
 
-and map_type_expression : ty_exp_mapper -> type_expression -> type_expression =
+and map_type_expression : abs_mapper -> type_expression -> type_expression =
  fun f te ->
   let self = map_type_expression f in
-  let te' = f te in
+  let te' =
+    match f with
+    | Type_expression f -> f te
+    | _ -> te
+  in
   let return type_content = { type_content; location = te.location } in
   match te'.type_content with
   | T_sum temap ->
@@ -185,12 +196,12 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression =
     return @@ T_for_all x
 
 
-and map_module_expr : mod_mapper -> module_expr -> module_expr =
+and map_module_expr : abs_mapper -> module_expr -> module_expr =
  fun f m ->
   let return wrap_content : module_expr = { m with wrap_content } in
   match m.wrap_content with
   | M_struct decls ->
-    let decls = f decls in
+    let decls = map_module f decls in
     return (M_struct decls)
   | M_module_path _ -> m
   | M_variable _ -> m
@@ -200,44 +211,45 @@ and map_module : abs_mapper -> module_ -> module_ =
  fun m p ->
   let p =
     match m with
-    | Module m' -> m' p
+    | Module f -> f p
     | _ -> p
   in
-  List.map ~f:(map_decl m) p
+  List.map ~f:(map_declaration m) p
 
 
-and map_declaration_content (m : abs_mapper) (x : declaration_content)
-    : declaration_content
-  =
-  match x, m with
-  | D_value dc, Expression m' ->
-    let dc = Types.Value_decl.map (map_expression m') (fun a -> a) dc in
-    D_value dc
-  | D_type dt, Type_expression m' ->
-    let dt = Types.Type_decl.map (map_type_expression m') dt in
-    D_type dt
-  | D_module dm, Module m' ->
-    let module_ = map_module_expr m' dm.module_ in
+and map_declaration (m : abs_mapper) (x : declaration) : declaration =
+  let self_exp, self_type, self_mod, _self_prg =
+    map_expression m, map_type_expression m, map_module_expr m, map_module_expr m
+  in
+  let return d = Location.wrap ~loc:(Location.get_location x) d in
+  let x =
+    match m with
+    | Declaration f -> f x
+    | _ -> x
+  in
+  match Location.unwrap x with
+  | D_value dc ->
+    let dc = Types.Value_decl.map self_exp (Option.map ~f:self_type) dc in
+    return @@ D_value dc
+  | D_type dt ->
+    let dt = Types.Type_decl.map self_type dt in
+    return @@ D_type dt
+  | D_module dm ->
+    let module_ = self_mod dm.module_ in
     let dm = { dm with module_ } in
-    D_module dm
-  | D_module dm, Expression _ ->
-    let dm = Types.Module_decl.map (Location.map @@ Module_expr.map (map_decl m)) dm in
-    D_module dm
-  | D_irrefutable_match dp, Expression m' ->
-    let dp = Types.Pattern_decl.map (map_expression m') (fun a -> a) dp in
-    D_irrefutable_match dp
-  | decl, _ -> decl
+    return @@ D_module dm
+  | D_irrefutable_match dp ->
+    let dp = Types.Pattern_decl.map self_exp (Option.map ~f:self_type) dp in
+    return @@ D_irrefutable_match dp
 
-
-and map_decl m = Location.map (map_declaration_content m)
 
 let map_program m (p : program) =
-  let p =
+  let m, p =
     match m with
-    | Program m' -> m' p
-    | _ -> p
+    | Program m' -> Module m', m' p
+    | _ -> m, p
   in
-  List.map ~f:(Location.map (map_declaration_content m)) p
+  List.map ~f:(map_declaration m) p
 
 
 type ('a, 'err) fold_mapper = 'a -> expression -> bool * 'a * expression
