@@ -52,6 +52,7 @@ let v_typed_address : Tezos_protocol.Protocol.Alpha_context.Contract.t -> value 
 let v_list : value list -> value = fun xs -> V_List xs
 let v_set : value list -> value = fun xs -> V_Set xs
 let v_map : (value * value) list -> value = fun xs -> V_Map xs
+let v_views : (string * func_val) list -> value = fun xs -> V_Views xs
 
 let extract_pair : value -> (value * value) option =
  fun p ->
@@ -362,6 +363,7 @@ let tag_value : value -> int = function
   | V_Gen _ -> 11
   | V_Location _ -> 12
   | V_Typed_address _ -> 13
+  | V_Views _ -> 14
 
 
 let rec compare_value (v : value) (v' : value) : int =
@@ -413,6 +415,8 @@ let rec compare_value (v : value) (v' : value) : int =
   | V_Location loc, V_Location loc' -> Int.compare loc loc'
   | V_Typed_address a, V_Typed_address a' ->
     Tezos_protocol.Protocol.Alpha_context.Contract.compare a a'
+  | V_Views vs, V_Views vs' ->
+    List.compare (Tuple2.compare ~cmp1:String.compare ~cmp2:Caml.compare) vs vs'
   | ( ( V_Ct _
       | V_List _
       | V_Record _
@@ -426,7 +430,8 @@ let rec compare_value (v : value) (v' : value) : int =
       | V_Ast_contract _
       | V_Gen _
       | V_Location _
-      | V_Typed_address _ )
+      | V_Typed_address _
+      | V_Views _ )
     , ( V_Ct _
       | V_List _
       | V_Record _
@@ -440,7 +445,8 @@ let rec compare_value (v : value) (v' : value) : int =
       | V_Ast_contract _
       | V_Gen _
       | V_Location _
-      | V_Typed_address _ ) ) -> Int.compare (tag_value v) (tag_value v')
+      | V_Typed_address _
+      | V_Views _ ) ) -> Int.compare (tag_value v) (tag_value v')
 
 
 let equal_constant_val (c : constant_val) (c' : constant_val) : bool =

@@ -54,7 +54,7 @@ let type_file_ ~raise f test syntax () =
     let options = Compiler_options.set_syntax options syntax in
     Compiler_options.set_test_flag options test
   in
-  let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f Env options in
+  let (_ : Ast_typed.program) = Test_helpers.type_file ~raise f options in
   ()
 
 
@@ -64,7 +64,7 @@ let agg_file_ ~raise f test syntax () =
     let options = Compiler_options.set_syntax options syntax in
     Compiler_options.set_test_flag options test
   in
-  let prg = Test_helpers.type_file ~raise f Env options in
+  let prg = Test_helpers.type_file ~raise f options in
   let (_ : Ast_aggregated.program) =
     trace ~raise aggregation_tracer
     @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg
@@ -78,7 +78,7 @@ let mini_c_file_ ~raise f test syntax () =
     let options = Compiler_options.set_syntax options syntax in
     Compiler_options.set_test_flag options test
   in
-  let prg = Test_helpers.type_file ~raise f Env options in
+  let prg = Test_helpers.type_file ~raise f options in
   let ctxt, exp =
     trace ~raise aggregation_tracer
     @@ Aggregation.compile_program (Ast_typed.e_a_unit ~loc ()) prg

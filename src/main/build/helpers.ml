@@ -101,6 +101,7 @@ let inject_declaration ~options ~raise
         ; public = false
         ; hidden = false
         ; thunk = false
+        ; entry = false
         }
     in
     let d =

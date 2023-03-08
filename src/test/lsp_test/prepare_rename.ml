@@ -44,7 +44,10 @@ let get_prepare_rename_test
       if Utils.is_position_in_range reference actual_range
       then ()
       else Alcotest.fail @@ error_prefix ^ "Reference is not contained within the range."
-    else Alcotest.fail @@ error_prefix ^ "Should not be able to rename this identifier, but we can."
+    else
+      Alcotest.fail
+      @@ error_prefix
+      ^ "Should not be able to rename this identifier, but we can."
 
 
 let test_cases =

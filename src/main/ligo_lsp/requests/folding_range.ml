@@ -29,6 +29,8 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   let rec declaration_list value = nseq_concat_map value.decl ~f:declaration
   (* Module *)
   and module_alias _ = []
+  (* Contract *)
+  and contract _ = []
   (* Type expression *)
   and type_expr = function
     | TProd { value; _ } -> nsepseq_concat_map value ~f:type_expr
@@ -83,6 +85,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
       mk_region region :: sepseq_concat_map value.elements ~f:expr
     | ECodeInj { value; region } -> mk_region region :: expr value.code
     | ERevApp { value; _ } -> bin_op value
+    | EContract { value; region } -> mk_region region :: contract value (* FIXME *)
     | EVar _ | EBytes _ | EUnit _ -> []
   and case value = expr value.expr @ cases value.cases
   and cases { value; _ } = nsepseq_concat_map value ~f:case_clause
@@ -228,6 +231,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | Switch_default_case value -> value_map ~f:statements ~default:[] value.statements
   and import = function
     | Import_rename _ | Import_all_as _ | Import_selected _ -> []
+  and contract _ = []
   and for_of value = expr value.expr @ statement value.statement
   (* Pattern *)
   and pattern = function
@@ -293,6 +297,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | ECodeInj { value; region } -> mk_region region :: expr value.code
     | ETernary { value; region } ->
       mk_region region :: (expr value.condition @ expr value.truthy @ expr value.falsy)
+    | EContract { value; region } -> mk_region region :: contract value (* FIXME *)
     | EVar _ | EBytes _ | EUnit _ -> []
   and fun_expr value =
     expr value.parameters

@@ -1127,6 +1127,11 @@ and compile_expression ~raise : CST.expr -> AST.expr =
     let truthy = self ternary.truthy in
     let falsy = self ternary.falsy in
     e_cond ~loc test truthy falsy
+  | EContract { region; value } ->
+    let loc = Location.lift region in
+    let module_ = List.Ne.map compile_mod_var @@ npseq_to_ne_list value in
+    let module_ = List.Ne.to_list module_ in
+    e_module_accessor ~loc module_ (Value_var.of_input_var ~loc "$contract")
 
 
 and compile_pattern ~raise : CST.pattern -> AST.ty_expr option Pattern.t =

@@ -279,8 +279,8 @@ let push_pattern_in_scope scope pattern attributes path =
 
 
 let compile_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
- fun { inline; no_mutation; view; public; hidden; thunk } ->
-  { inline; no_mutation; view; public; hidden; thunk }
+ fun { inline; no_mutation; view; public; hidden; thunk; entry } ->
+  { inline; no_mutation; view; public; hidden; thunk; entry }
 
 
 (* this is doing nothing *)

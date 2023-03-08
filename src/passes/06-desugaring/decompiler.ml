@@ -12,12 +12,13 @@ let decompile_row_elem_attributes michelson_annotation =
 
 
 let decompile_value_attributes : O.ValueAttr.t -> I.Attr.t =
- fun { inline; no_mutation; view; public; hidden; thunk } ->
+ fun { inline; no_mutation; view; public; hidden; thunk; entry } ->
   List.filter_map
     ~f:(fun (cond, ret) -> Option.some_if cond ret)
     [ inline, "inline"
     ; no_mutation, "no_mutation"
     ; view, "view"
+    ; entry, "entry"
     ; not public, "private"
     ; hidden, "hidden"
     ; thunk, "thunk"

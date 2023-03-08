@@ -34,8 +34,17 @@ let entry_point =
   let open Command.Param in
   let name = "e" in
   let doc = "ENTRY-POINT the entry-point that will be compiled." in
-  let spec = optional_with_default Default_options.entry_point string in
+  let spec =
+    optional_with_default Default_options.entry_point
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string
+  in
   flag ~doc ~aliases:[ "--entry-point" ] name spec
+
+
+let function_name =
+  let name = "FUNCTION" in
+  let _doc = "the function to evaluate." in
+  Command.Param.(anon (name %: create_arg_type Fn.id))
 
 
 let module_ =
@@ -1235,8 +1244,8 @@ let dry_run =
 let evaluate_call =
   let f
       source_file
+      function_name
       parameter
-      entry_point
       amount
       balance
       sender
@@ -1255,7 +1264,6 @@ let evaluate_call =
     =
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~syntax
         ~protocol_version
         ~warning_as_error
@@ -1268,6 +1276,7 @@ let evaluate_call =
     @@ Api.Run.evaluate_call
          raw_options
          source_file
+         function_name
          parameter
          amount
          balance
@@ -1288,8 +1297,8 @@ let evaluate_call =
     ~readme
     (f
     <$> source_file
+    <*> function_name
     <*> expression "PARAMETER"
-    <*> entry_point
     <*> amount
     <*> balance
     <*> sender

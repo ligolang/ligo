@@ -341,7 +341,7 @@ let%expect_test _ =
     {|
     run a function with the given parameter.
 
-      ligo run evaluate-call SOURCE_FILE PARAMETER_EXPRESSION
+      ligo run evaluate-call SOURCE_FILE FUNCTION PARAMETER_EXPRESSION
 
     This sub-command runs a LIGO function on a given argument. The context is initialized from a source file where the function is implemented. The interpretation is done using Michelson's interpreter.
 
@@ -375,8 +375,6 @@ let%expect_test _ =
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
-      [-e ENTRY-POINT], --entry-point
-                                 . the entry-point that will be compiled.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (kathmandu ,
                                    lima). By default, the current protocol (lima)

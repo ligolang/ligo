@@ -195,8 +195,8 @@ let evaluate_type_with_default_layout type_ =
 
 
 let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
- fun { inline; no_mutation; view; public; hidden; thunk } ->
-  { inline; no_mutation; view; public; hidden; thunk }
+ fun { inline; no_mutation; view; public; hidden; thunk; entry } ->
+  { inline; no_mutation; view; public; hidden; thunk; entry }
 
 
 let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
@@ -384,7 +384,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
   | E_literal lit -> infer_literal lit
   | E_constant { cons_name = const; arguments = args } -> infer_constant const args
   | E_variable var ->
-    let%bind mut_flag, type_ =
+    let%bind mut_flag, type_, _ =
       Context.get_value_exn var ~error:(function
           | `Not_found -> unbound_variable var
           | `Mut_var_captured -> mut_var_captured var)
@@ -510,7 +510,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     in
     let%bind lambda =
       def
-        [ fun_name, Immutable, fun_type ]
+        [ fun_name, Immutable, fun_type, Context.Attr.default ]
         ~on_exit:Drop
         ~in_:(check_lambda (Lambda.map Fn.id Option.some lambda) arg_type ret_type)
     in
@@ -627,7 +627,7 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind sig_ =
       Context.get_signature_exn module_path' ~error:(unbound_module module_path)
     in
-    let%bind elt_type =
+    let%bind elt_type, _ =
       raise_opt ~error:(unbound_variable element) @@ Signature.get_value sig_ element
     in
     const E.(return @@ O.E_module_accessor { module_path; element }) elt_type
@@ -672,7 +672,10 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind incr = check incr t_int in
     let%bind final = check final t_int in
     let%bind f_body =
-      def [ binder, Immutable, t_int ] ~on_exit:Drop ~in_:(check f_body t_unit)
+      def
+        [ binder, Immutable, t_int, Context.Attr.default ]
+        ~on_exit:Drop
+        ~in_:(check f_body t_unit)
     in
     const
       E.(
@@ -697,7 +700,9 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     in
     let%bind fe_body =
       def
-        [ key_binder, Immutable, key_type; val_binder, Immutable, val_type ]
+        [ key_binder, Immutable, key_type, Context.Attr.default
+        ; val_binder, Immutable, val_type, Context.Attr.default
+        ]
         ~on_exit:Drop
         ~in_:(check fe_body t_unit)
     in
@@ -733,7 +738,10 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
           ~with_:(fun _ -> get_t_map type_)
     in
     let%bind fe_body =
-      def [ binder, Immutable, binder_type ] ~on_exit:Drop ~in_:(check fe_body t_unit)
+      def
+        [ binder, Immutable, binder_type, Context.Attr.default ]
+        ~on_exit:Drop
+        ~in_:(check fe_body t_unit)
     in
     const
       E.(
@@ -782,7 +790,11 @@ and check_lambda
       ~on_exit:Drop
       ~in_:
         (def
-           [ Param.get_var binder, Param.get_mut_flag binder, arg_type ]
+           [ ( Param.get_var binder
+             , Param.get_mut_flag binder
+             , arg_type
+             , Context.Attr.default )
+           ]
            ~on_exit:Drop
            ~in_:(check_expression result ret_type))
   in
@@ -826,13 +838,15 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
           in
           let%bind ret_type, result =
             def
-              [ Param.get_var binder, Param.get_mut_flag binder, arg_type ]
+              [ ( Param.get_var binder
+                , Param.get_mut_flag binder
+                , arg_type
+                , Context.Attr.default )
+              ]
               ~on_exit:Lift_type
               ~in_:(infer_expression result)
           in
-          let%bind type_ =
-            create_type @@ Type.t_arrow { type1 = arg_type; type2 = ret_type }
-          in
+          let%bind type_ = create_type @@ Type.t_arrow arg_type ret_type in
           const
             E.(
               let%bind result = result
@@ -908,7 +922,7 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
   | T_exists tvar ->
     let%bind tvar1 = exists Type in
     let%bind tvar2 = exists Type in
-    let%bind arr = create_type @@ Type.t_arrow { type1 = tvar1; type2 = tvar2 } in
+    let%bind arr = create_type @@ Type.t_arrow tvar1 tvar2 in
     let%bind () = unify_texists tvar arr in
     let%bind args = check_expression args tvar1 in
     return (tvar2, E.return, args)
@@ -1213,7 +1227,8 @@ and def_frag
  fun frag ~on_exit ~in_ ->
   let open C in
   def
-    (List.map frag ~f:(fun (var, mut_flag, type_) -> var, mut_flag, type_))
+    (List.map frag ~f:(fun (var, mut_flag, type_) ->
+         var, mut_flag, type_, Context.Attr.default))
     ~on_exit
     ~in_
 
@@ -1306,7 +1321,10 @@ and infer_declaration (decl : I.declaration)
         and pattern = pattern in
         let%bind () = check_let_annomalies ~syntax pattern expr.type_expression in
         return @@ O.D_irrefutable_match { pattern; expr; attr })
-      (List.map ~f:(fun (v, _, ty) -> Context.Signature.S_value (v, ty)) frags)
+      (List.map
+         ~f:(fun (v, _, ty) ->
+           Context.Signature.S_value (v, ty, Context.Attr.of_core_attr attr))
+         frags)
   | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
     let%bind type_expr = evaluate_type_with_default_layout type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
@@ -1329,9 +1347,10 @@ and infer_declaration (decl : I.declaration)
         let%bind expr_type = decode expr_type
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
-      [ S_value (var, expr_type) ]
+      [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
   | D_module { module_binder; module_; module_attr = { public; hidden } } ->
     let%bind sig_, module_ = infer_module_expr module_ in
+    let%bind sig_ = Generator.make_main_signature sig_ in
     const
       E.(
         let%bind module_ = module_ in

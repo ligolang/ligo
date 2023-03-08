@@ -44,6 +44,7 @@ type t =
   | External of string
   | Gen [@only_interpreter]
   | Int64 [@only_interpreter]
+  | Views [@only_interpreter]
 [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
 
 let to_string = function
@@ -89,6 +90,7 @@ let to_string = function
   | External s -> "external_" ^ s
   | Gen -> "pbt_gen"
   | Int64 -> "int64"
+  | Views -> "views"
 
 
 let of_string = function
@@ -136,6 +138,7 @@ let of_string = function
   | "external_u_ediv" -> External "u_ediv"
   | "pbt_gen" -> Gen
   | "int64" -> Int64
+  | "views" -> Views
   | "external_and" -> External "and"
   | "external_u_and" -> External "u_and"
   | _ -> failwith "Forgot to add constant name in constant.ml?"
@@ -187,6 +190,7 @@ let external_ediv = External "ediv"
 let external_u_ediv = External "u_ediv"
 let gen = Gen
 let int64 = Int64
+let views = Views
 let v_bool = Type_var.of_input_var "bool"
 let v_string = Type_var.of_input_var (to_string String)
 let v_bytes = Type_var.of_input_var (to_string Bytes)
@@ -235,3 +239,4 @@ let v_external_and = Type_var.of_input_var (to_string @@ External "and")
 let v_external_u_and = Type_var.of_input_var (to_string @@ External "u_and")
 let v_gen = Type_var.of_input_var (to_string @@ Gen)
 let v_int64 = Type_var.of_input_var (to_string @@ Int64)
+let v_views = Type_var.of_input_var (to_string @@ Views)

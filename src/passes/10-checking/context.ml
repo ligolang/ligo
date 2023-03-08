@@ -43,12 +43,23 @@ module Phys_hashable (T : T) = struct
   let hash t = Caml.Hashtbl.hash t
 end
 
+module Attr = struct
+  type t =
+    { entry : bool
+    ; view : bool
+    }
+  [@@deriving compare, hash, equal]
+
+  let default = { entry = false; view = false }
+  let of_core_attr ({ entry; view; _ } : Ast_core.ValueAttr.t) = { entry; view }
+end
+
 module Signature = struct
   module T = struct
     type t = item list
 
     and item =
-      | S_value of Value_var.t * Type.t
+      | S_value of Value_var.t * Type.t * Attr.t
       | S_type of Type_var.t * Type.t
       | S_module of Module_var.t * t
     [@@deriving compare, hash]
@@ -65,7 +76,8 @@ module Signature = struct
       (module Value_var)
       (fun t var ->
         (find_map t ~f:(function
-            | S_value (var', type_) when Value_var.equal var var' -> Some type_
+            | S_value (var', type_, attr) when Value_var.equal var var' ->
+              Some (type_, attr)
             | _ -> None) [@landmark "get_value"]))
 
 
@@ -92,8 +104,8 @@ module Signature = struct
   let rec equal_item : item -> item -> bool =
    fun item1 item2 ->
     match item1, item2 with
-    | S_value (var1, type1), S_value (var2, type2) ->
-      Value_var.equal var1 var2 && Type.equal type1 type2
+    | S_value (var1, type1, attr1), S_value (var2, type2, attr2) ->
+      Value_var.equal var1 var2 && Type.equal type1 type2 && Attr.equal attr1 attr2
     | S_type (tvar1, type1), S_type (tvar2, type2) ->
       Type_var.equal tvar1 tvar2 && Type.equal type1 type2
     | S_module (mvar1, sig1), S_module (mvar2, sig2) ->
@@ -150,7 +162,7 @@ module Signature = struct
 
     let rec pp_item ppf item =
       match item with
-      | S_value (var, type_) ->
+      | S_value (var, type_, _attr) ->
         Format.fprintf ppf "%a : %a" Value_var.pp var Type.pp type_
       | S_type (tvar, type_) ->
         Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
@@ -174,7 +186,7 @@ module T = struct
   type t = item list
 
   and item =
-    | C_value of Value_var.t * mutable_flag * Type.t
+    | C_value of Value_var.t * mutable_flag * Type.t * Attr.t
     | C_type of Type_var.t * Type.t
     | C_type_var of Type_var.t * Kind.t
     | C_module of Module_var.t * Signature.t
@@ -206,7 +218,7 @@ module PP = struct
 
   let item ppf item =
     match item with
-    | C_value (evar, mut_flag, type_) ->
+    | C_value (evar, mut_flag, type_, _attr) ->
       Format.fprintf
         ppf
         "%a%a : %a"
@@ -253,9 +265,13 @@ let of_list items = List.rev items
 (* Inifix notations for [add] and [join] *)
 let ( |:: ) = add
 let ( |@ ) = join
-let add_value t var mut_flag type_ = t |:: C_value (var, mut_flag, type_)
-let add_imm t var type_ = t |:: C_value (var, Immutable, type_)
-let add_mut t var type_ = t |:: C_value (var, Mutable, type_)
+let add_value t var mut_flag type_ attr = t |:: C_value (var, mut_flag, type_, attr)
+
+let add_imm t var ?(attr = Attr.default) type_ =
+  t |:: C_value (var, Immutable, type_, attr)
+
+
+let add_mut t var type_ = t |:: C_value (var, Mutable, type_, Attr.default)
 let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
 let add_texists_var t tvar kind = t |:: C_texists_var (tvar, kind)
@@ -264,7 +280,7 @@ let add_lexists_var t lvar fields = t |:: C_lexists_var (lvar, fields)
 
 let item_of_signature_item (sig_item : Signature.item) : item =
   match sig_item with
-  | S_value (var, type_) -> C_value (var, Immutable, type_)
+  | S_value (var, type_, attr) -> C_value (var, Immutable, type_, attr)
   | S_type (tvar, type_) -> C_type (tvar, type_)
   | S_module (mvar, sig_) -> C_module (mvar, sig_)
 
@@ -284,10 +300,10 @@ let get_value =
     (fun t var ->
       let[@landmark "get_value"] rec loop ?(locked = false) items =
         match items with
-        | C_value (var', mut_flag, type_) :: _ when Value_var.equal var var' ->
+        | C_value (var', mut_flag, type_, attr) :: _ when Value_var.equal var var' ->
           (match mut_flag, locked with
           | Mutable, true -> Error `Mut_var_captured
-          | _ -> Ok (mut_flag, type_))
+          | _ -> Ok (mut_flag, type_, attr))
         | C_mut_lock _ :: items -> loop ~locked:true items
         | _ :: items -> loop ~locked items
         | [] -> Error `Not_found
@@ -301,7 +317,8 @@ let get_imm =
     (module Value_var)
     (fun t var ->
       List.find_map t ~f:(function
-          | C_value (var', Immutable, type_) when Value_var.equal var var' -> Some type_
+          | C_value (var', Immutable, type_, attr) when Value_var.equal var var' ->
+            Some (type_, attr)
           | _ -> None))
 
 
@@ -311,7 +328,8 @@ let get_mut =
     (module Value_var)
     (fun t var ->
       let rec loop = function
-        | C_value (var', Mutable, type_) :: _ when Value_var.equal var var' -> Some type_
+        | C_value (var', Mutable, type_, _) :: _ when Value_var.equal var var' ->
+          Some type_
         | C_mut_lock _ :: _ -> None
         | _ :: items -> loop items
         | [] -> None
@@ -476,7 +494,7 @@ module Apply = struct
   let rec sig_item ctx (sig_item : Signature.item) : Signature.item =
     match sig_item with
     | S_type (tvar, type') -> S_type (tvar, type_ ctx type')
-    | S_value (var, type') -> S_value (var, type_ ctx type')
+    | S_value (var, type', attr) -> S_value (var, type_ ctx type', attr)
     | S_module (mvar, sig') -> S_module (mvar, sig_ ctx sig')
 
 
@@ -486,10 +504,11 @@ end
 let equal_item : item -> item -> bool =
  fun item1 item2 ->
   match item1, item2 with
-  | C_value (var1, mut_flag1, type1), C_value (var2, mut_flag2, type2) ->
+  | C_value (var1, mut_flag1, type1, attr1), C_value (var2, mut_flag2, type2, attr2) ->
     Value_var.equal var1 var2
     && Param.equal_mutable_flag mut_flag1 mut_flag2
     && Type.equal type1 type2
+    && Attr.equal attr1 attr2
   | C_type (tvar1, type1), C_type (tvar2, type2) ->
     Type_var.equal tvar1 tvar2 && Type.equal type1 type2
   | C_type_var (tvar1, kind1), C_type_var (tvar2, kind2) ->
@@ -900,7 +919,7 @@ end = struct
         loop t
         &&
         (match item with
-        | C_value (var, _, type') ->
+        | C_value (var, _, type', _) ->
           (match type_ type' ~ctx with
           | Some Type -> true
           | _ ->
@@ -1012,7 +1031,7 @@ end = struct
 
   and signature_item ~ctx (sig_item : Signature.item) =
     match sig_item with
-    | S_value (_var, type') ->
+    | S_value (_var, type', _) ->
       (match type_ ~ctx type' with
       | Some Type -> true
       | _ -> false)

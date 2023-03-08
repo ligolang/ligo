@@ -333,6 +333,7 @@ module Fold_helpers (M : Monad) = struct
       let* code = self value.code in
       let value = { value with code } in
       return @@ ECodeInj { value; region }
+    | EContract { value; region } -> return @@ EContract { value; region }
 
 
   and matching_cases self (cases : _ Utils.nsepseq reg) =

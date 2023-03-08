@@ -126,6 +126,7 @@ and expression_content ppf (ec : expression_content) =
           ; no_mutation = _
           ; public = __LOC__
           ; view = _
+          ; entry = _
           ; hidden = true
           ; thunk = _
           }

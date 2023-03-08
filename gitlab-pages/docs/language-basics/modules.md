@@ -435,3 +435,82 @@ import US_DOLLAR = EURO;
 ```
 
 </Syntax>
+
+
+## Modules as Contracts
+
+When a module contains declarations that are tagged with the attribute
+`@entry`, then a contract can be obtained from such module. All
+declarations in the module tagged as `@entry` are grouped, and a
+dispatcher contract is generated.
+
+<Syntax syntax="cameligo">
+
+```cameligo group=contract
+module C = struct
+  [@entry] let increment (p : int) (s : int) : operation list * int = [], s + p
+  [@entry] let decrement (p : int) (s : int) : operation list * int = [], s - p
+end
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=contract
+namespace C {
+  // @entry
+  const increment = (p : int, s : int) : [list<operation>, int] => [list([]), s + p];
+  // @entry
+  const decrement = (p : int, s : int) : [list<operation>, int] => [list([]), s - p];
+};
+```
+
+</Syntax>
+
+A module can be compiled as a contract using `-m`:
+
+<Syntax syntax="cameligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/contract.mligo -m C
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/contract.jsligo -m C
+```
+
+</Syntax>
+
+To access the contract from the module, the primitive `contract_of`
+can be used. This is particularly useful for working with the testing
+framework, in conjunction with the function `Test.originate_module`:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=contract
+let test =
+  let ta, _, _ = Test.originate_module (contract_of C) 0 0tez in
+  let c = Test.to_contract ta in
+  let _ = Test.transfer_to_contract_exn c (Increment 42) 0tez in
+  assert (42 = Test.get_storage ta)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=contract
+const test = (() => {
+  let [taddr, _, _] = Test.originate_module(contract_of(C), 0, 0 as tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1 as mutez);
+  return assert(Test.get_storage(taddr) == 42);
+}) ();
+```
+
+</Syntax>

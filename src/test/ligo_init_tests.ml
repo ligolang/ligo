@@ -182,11 +182,7 @@ let test_init_list_template_contract_template ~no_colour ~raise:_ () =
     "list of projects:\n" ^ String.concat ~sep:"\n" expected_contract_list ^ "\n"
   in
   let result_list =
-    Ligo_init.list
-      ~kind:`CONTRACT
-      ~display_format:Display.human_readable
-      ~no_colour
-      ()
+    Ligo_init.list ~kind:`CONTRACT ~display_format:Display.human_readable ~no_colour ()
   in
   let _ =
     match result_list with

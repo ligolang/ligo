@@ -8,7 +8,7 @@ module Raw_options = Raw_options
 type frontend =
   { syntax : Syntax_types.t option
   ; (* dialect : string ; [@dead "frontend.dialect"]  *)
-    entry_point : string
+    entry_point : string list
   ; module_ : string
   ; libraries : string list
   ; project_root : string option

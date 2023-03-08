@@ -218,7 +218,7 @@ let import_file ~raise ~raw_options state file_name module_name =
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
     let prg =
-      Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file file_name)
+      Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
     in
     Location.wrap ~loc (Module_expr.M_struct prg)
   in
@@ -254,7 +254,7 @@ let use_file ~raise ~raw_options state file_name =
   let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
   let module' =
-    Build.qualified_typed ~raise ~options Env (Build.Source_input.From_file file_name)
+    Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
   in
   let env = Environment.append state.env module' in
   let state =

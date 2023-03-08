@@ -403,7 +403,13 @@ call_expr_level:
 (* Function calls *)
 
 call_expr:
-  lambda par(ioption(nsepseq(fun_arg,","))) {
+  "contract_of" "(" nsepseq(module_name,".") ")" {
+    let kwd_contract = $1 in
+    let _stop = nsepseq_to_region (fun x -> x.region) $3 in
+    let region = cover kwd_contract#region $4#region in
+    let value  = $3 in
+    EContract {region; value } }
+| lambda par(ioption(nsepseq(fun_arg,","))) {
     let par    = $2.value in
     let start  = expr_to_region $1
     and stop   = $2.region in
