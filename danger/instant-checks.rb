@@ -13,8 +13,8 @@ if mr_merging_branches?
   )
 else
 
-
-check_trailing_whitespaces()
+# TODO: uncomment this when bugs are fixed.
+# check_trailing_whitespaces()
 
 # Clean commits history
 if git.commits.any? { |c| c.subject =~ /^Merge branch/ }
