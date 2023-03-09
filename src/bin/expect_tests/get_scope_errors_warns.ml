@@ -2,6 +2,8 @@ open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/" ^ s
 
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
+
 let%expect_test _ =
   run_ligo_good
     [ "info"
@@ -373,3 +375,5 @@ let%expect_test _ =
       3 | end
     :
     Warning: variable "Foo.x" cannot be used more than once. |}]
+
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""

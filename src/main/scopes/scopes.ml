@@ -137,12 +137,6 @@ let[@warning "-32"] pp_references : Format.formatter -> reference list -> unit =
  fun f refs -> List.iter refs ~f:(pp_reference f)
 
 
-let get_location_of_module_path : MVar.t list -> Location.t =
- fun mvs ->
-  List.fold mvs ~init:Location.dummy ~f:(fun loc m ->
-      Location.cover loc (MVar.get_location m))
-
-
 let rec update_variable_reference : VVar.t -> def list -> bool * def list =
  fun ev defs ->
   match defs with
@@ -924,7 +918,7 @@ and module_expression ~raise
     let def, reference =
       let name = get_mod_binder_name top in
       let range = MVar.get_location top in
-      let body_range = get_location_of_module_path mvs in
+      let body_range = Misc.get_location_of_module_path mvs in
       let alias = List.map mvs ~f:get_mod_binder_name in
       let def = make_m_alias_def ~range ~body_range name def_type alias in
       let reference = ModuleAlias mvs in
@@ -1139,8 +1133,8 @@ let scopes
   let stdlib, stdlib_core = stdlib in
   let type_env = Environment.append options.init_env stdlib in
   let tenv = { type_env; bindings = Misc.Bindings_map.empty; decls = [] } in
+  let stdlib_defs = stdlib_defs ~raise ~options stdlib_core in
   let defs, scopes =
-    let stdlib_defs = stdlib_defs ~raise ~options stdlib_core in
     let `Toplevel top_defs, defs, _, _, scopes =
       declarations
         ~raise
@@ -1157,4 +1151,12 @@ let scopes
   in
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
+  (* Use WIP new implementation only during expect_tests *)
+  let defs =
+    match Sys.getenv "LIGO_GET_SCOPE_USE_NEW_IMP" with
+    | Some s when String.(s <> "") ->
+      let new_defs = Definitions.definitions prg stdlib_defs in
+      Definitions.Merge_defs_temp.merge_defs defs new_defs
+    | Some _ | None -> defs
+  in
   defs, scopes

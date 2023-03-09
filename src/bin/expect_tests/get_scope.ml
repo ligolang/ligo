@@ -2,6 +2,8 @@ open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/" ^ s
 
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
+
 let%expect_test _ =
   run_ligo_good
     [ "info"
@@ -2188,3 +2190,5 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-5 |}]
+
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
