@@ -1123,6 +1123,33 @@ let stdlib_defs ~raise
     ignore_local_defs stdlib_defs)
 
 
+let rec patch_refs : def list -> References.references -> def list =
+ fun defs refs ->
+  let open References in
+  List.map defs ~f:(fun def ->
+      match def with
+      | Variable v ->
+        (match LMap.find_opt v.range refs with
+        | None -> Types.Variable v
+        | Some references -> Variable { v with references })
+      | Type t ->
+        (match LMap.find_opt t.range refs with
+        | None -> Types.Type t
+        | Some references -> Type { t with references })
+      | Module m ->
+        let mod_case =
+          match m.mod_case with
+          | Alias a -> Types.Alias a
+          | Def defs -> Def (patch_refs defs refs)
+        in
+        let m =
+          match LMap.find_opt m.range refs with
+          | None -> m
+          | Some references -> { m with references }
+        in
+        Module { m with mod_case })
+
+
 let scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
@@ -1156,7 +1183,9 @@ let scopes
     match Sys.getenv "LIGO_GET_SCOPE_USE_NEW_IMP" with
     | Some s when String.(s <> "") ->
       let new_defs = Definitions.definitions prg stdlib_defs in
-      Definitions.Merge_defs_temp.merge_defs defs new_defs
+      let defs = Definitions.Merge_defs_temp.merge_defs defs new_defs in
+      let refs = References.declarations (stdlib_core @ prg) in
+      patch_refs defs refs
     | Some _ | None -> defs
   in
   defs, scopes
