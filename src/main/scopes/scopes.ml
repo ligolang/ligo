@@ -451,19 +451,16 @@ let rec expression ~raise
     let var = Param.get_var binder in
     let core_type = Param.get_ascr binder in
     let def =
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            result.location
-        ])
+      let binder_loc = VVar.get_location var in
+      Misc.make_v_def
+        ~with_types
+        ?core_type
+        tenv.bindings
+        Local
+        var
+        binder_loc
+        result.location
+      |> Option.to_list
     in
     let `Local local_defs, `Toplevel top_defs, defs_result, refs_result, tenv, scopes =
       expression tenv result (`Toplevel top_defs) (`Local (def @ local_defs))
@@ -518,12 +515,9 @@ let rec expression ~raise
     , merge_same_scopes scopes @ scopes' )
   | E_for { binder; start; incr; final; f_body } ->
     let def =
-      if VVar.is_generated binder
-      then []
-      else (
-        let binder_loc = VVar.get_location binder in
-        [ Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location
-        ])
+      let binder_loc = VVar.get_location binder in
+      Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location
+      |> Option.to_list
     in
     let `Local local_defs, `Toplevel top_defs, defs_start, refs_start, tenv, scopes1 =
       expression tenv start (`Toplevel top_defs) (`Local (def @ local_defs))
@@ -558,7 +552,7 @@ let rec expression ~raise
     let defs =
       binders
       |> List.filter ~f:VVar.is_generated
-      |> List.map ~f:(fun binder ->
+      |> List.filter_map ~f:(fun binder ->
              let loc = VVar.get_location binder in
              Misc.make_v_def
                ~with_types
@@ -645,22 +639,18 @@ let rec expression ~raise
     let binders, rhs = set_core_type_if_possible binders rhs in
     let t_refs = List.concat (List.map ~f:find_binder_type_references binders) in
     let defs_binder =
-      List.concat_map binders ~f:(fun binder ->
+      List.filter_map binders ~f:(fun binder ->
           let var = Binder.get_var binder in
           let core_type = Binder.get_ascr binder in
-          if VVar.is_generated var
-          then []
-          else (
-            let binder_loc = VVar.get_location var in
-            [ Misc.make_v_def
-                ~with_types
-                ?core_type
-                tenv.bindings
-                Local
-                var
-                binder_loc
-                rhs.location
-            ]))
+          let binder_loc = VVar.get_location var in
+          Misc.make_v_def
+            ~with_types
+            ?core_type
+            tenv.bindings
+            Local
+            var
+            binder_loc
+            rhs.location)
     in
     let `Local local_defs, `Toplevel top_defs, defs_rhs, refs_rhs, tenv, scopes =
       expression tenv rhs (`Toplevel top_defs) (`Local local_defs)
@@ -693,29 +683,27 @@ let rec expression ~raise
         fun_name
         binder_loc
         result.location
+      |> Option.to_list
     in
     let def_par =
       let var = Param.get_var binder in
       let core_type = Param.get_ascr binder in
-      if VVar.is_generated var
-      then []
-      else (
-        let binder_loc = VVar.get_location var in
-        [ Misc.make_v_def
-            ~with_types
-            ~core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            result.location
-        ])
+      let binder_loc = VVar.get_location var in
+      Misc.make_v_def
+        ~with_types
+        ~core_type
+        tenv.bindings
+        Local
+        var
+        binder_loc
+        result.location
+      |> Option.to_list
     in
     let `Local local_defs, `Toplevel top_defs, defs_result, refs_result, tenv, scopes =
       expression tenv result (`Toplevel top_defs) (`Local (def_par @ local_defs))
     in
     let scopes = merge_same_scopes scopes in
-    let defs = def_par @ [ def_fun ] in
+    let defs = def_par @ def_fun in
     let `Toplevel top_defs, defs, refs =
       update_references (refs_result @ t_refs) defs (`Toplevel top_defs)
     in
@@ -724,7 +712,7 @@ let rec expression ~raise
     , defs_result @ defs
     , refs
     , tenv
-    , add_defs_to_scopes (def_par @ [ def_fun ]) scopes )
+    , add_defs_to_scopes (def_par @ def_fun) scopes )
   | E_type_in { type_binder; rhs; let_result } ->
     let t_refs = find_type_references rhs in
     let tdef = [ type_expression type_binder Local rhs ] in
@@ -773,8 +761,9 @@ let rec expression ~raise
                       var
                       binder_loc
                       body.location
+                    |> Option.to_list
                   in
-                  def :: defs, refs @ t_refs
+                  def @ defs, refs @ t_refs
                 | P_unit
                 | P_list (Cons _)
                 | P_list (List _)
@@ -939,7 +928,7 @@ and declaration_expression ~raise
   in
   let defs = patch_top_level_references defs (`Toplevel local_defs) in
   let defs' =
-    List.map binders ~f:(fun binder ->
+    List.filter_map binders ~f:(fun binder ->
         let core_type = Binder.get_ascr binder in
         let ev = Binder.get_var binder in
         let range = VVar.get_location ev in
