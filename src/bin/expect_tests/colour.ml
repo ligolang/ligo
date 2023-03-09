@@ -117,7 +117,7 @@ let%expect_test _ =
   (* Setting the NO_COLOR env var to something, we expect a colorless output *)
   (* According to the no-color.org standard,
      NO_COLOR is on as long as it doesn't contain en empty string *)
-  Ligo_unix.putenv ~key:"NO_COLOR" ~data:"42";
+  Ligo_unix.putenv ~key:"NO_COLOR" ~data:"true";
   run_ligo_bad [ "compile"; "contract"; contract ];
   [%expect
     {|

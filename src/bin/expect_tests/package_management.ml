@@ -342,6 +342,7 @@ let%expect_test _ =
     |> List.length
     |> fun len -> if len > 0 then "Test passed" else "Test failed"
   in
+  Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true";
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -400,7 +401,8 @@ let%expect_test _ =
   [%expect {|
     include_include/main.mligo declarations:
     main
-    hello |}]
+    hello |}];
+  Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
 
 (* main file resolution tests *)
 
