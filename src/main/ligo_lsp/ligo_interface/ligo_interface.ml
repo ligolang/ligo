@@ -12,8 +12,8 @@ type file_data =
   ; get_scope_info : get_scope_info
   }
 
-let get_scope : DocumentUri.t -> string -> get_scope_info =
- fun uri source ->
+let get_scope : deprecated:bool -> DocumentUri.t -> string -> get_scope_info =
+ fun ~deprecated uri source ->
   (* packages - project_root [later] *)
   let file = DocumentUri.to_path uri in
   (* #include - Pass lib or dirs *)
@@ -22,7 +22,7 @@ let get_scope : DocumentUri.t -> string -> get_scope_info =
     Compiler_options.Raw_options.make
       ~with_types:true
       ~libraries:[ dir_name ]
-      ~deprecated:true
+      ~deprecated
       ()
   in
   unfold_get_scope

@@ -20,6 +20,7 @@ let default_config : config =
   { max_number_of_problems = 100
   ; logging_verbosity = MessageType.Info
   ; disabled_features = []
+  ; deprecated = false
   }
 
 
@@ -45,10 +46,25 @@ class lsp_server =
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       run_handler
         { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
-      @@ Requests.on_doc document.uri content
+      @@ let@ { deprecated; _ } = ask_config in
+         let@ () =
+           if not deprecated
+           then (
+             match Utils.get_syntax document.uri with
+             | None -> return ()
+             | Some PascaLIGO ->
+               send_message
+                 ~type_:MessageType.Error
+                 "PascaLIGO is deprecated and not fully supported. To use the language \
+                  server with it, enable \"ligoLanguageServer.deprecated\" in the Visual \
+                  Studio Code configuration."
+             | Some (CameLIGO | JsLIGO) -> return ())
+           else return ()
+         in
+         Requests.on_doc document.uri content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
-       by the server each time a new document is opened. *)
+       by the server each time a document is changed. *)
     method on_notif_doc_did_change
         ~notify_back
         document
@@ -62,11 +78,9 @@ class lsp_server =
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
-      (* TODO (#1706, #1706): Support reading the configuration from Vim and Emacs. *)
       match to_option (member "ligoLanguageServer") settings with
-      | None -> ()
+      | None -> config <- { config with deprecated = true }
       | Some ligo_language_server ->
-        (* FIXME: Support deprecated. *)
         config
           <- { config with
                max_number_of_problems =
@@ -89,6 +103,11 @@ class lsp_server =
                  |> member "disabledFeatures"
                  |> to_option to_list
                  |> Utils.value_map ~f:(List.map to_string) ~default:[]
+             ; deprecated =
+                 ligo_language_server
+                 |> member "deprecated"
+                 |> to_bool_option
+                 |> Option.value ~default:default_config.deprecated
              }
 
     method! on_req_initialize
@@ -96,17 +115,26 @@ class lsp_server =
         (initParams : InitializeParams.t)
         : InitializeResult.t IO.t =
       let* initResult = super#on_req_initialize ~notify_back initParams in
+      (* Currently, the behaviors of these editors will be as follow:
+         * Emacs: Will send [Some `Null]. In [decode_apply_settings] we handle
+           this by seeting [deprecated] as [true] so this editor may launch
+           when opening PascaLIGO files.
+           TODO: Fix this in #1706.
+         * Vim: Will send [None], so we handle it similarly to Emacs.
+           TODO: Fix this in #1707.
+         * Visual Studio Code: As we support reading the configuration from
+           this editor, we proceed with our ordinary business and decode it. *)
       let () =
         match initParams.initializationOptions with
-        | None -> ()
+        | None -> config <- { config with deprecated = true }
         | Some settings -> self#decode_apply_settings settings
       in
       Lwt.return initResult
 
     (* TODO: When the document closes, we should thinking about removing the
-         state associated to the file from the global hashtable state, to avoid
-         leaking memory. We should also think about clearing diagnostics.
-         Handle me with #1657. *)
+       state associated to the file from the global hashtable state, to avoid
+       leaking memory. We should also think about clearing diagnostics.
+       Handle me with #1657. *)
     method on_notif_doc_did_close ~notify_back:_ _ : unit IO.t = Linol_lwt.return ()
     method! config_hover = Some (`Bool true)
     method config_formatting = Some (`Bool true)

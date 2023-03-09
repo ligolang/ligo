@@ -7,6 +7,7 @@ type config =
   { max_number_of_problems : int
   ; logging_verbosity : MessageType.t
   ; disabled_features : string list
+  ; deprecated : bool
   }
 
 type notify_back_mockable =

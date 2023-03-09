@@ -8,6 +8,8 @@ type config =
         (** The level of verbosity when logging. Defaults to Info. *)
   ; disabled_features : string list
         (** Disabled requests, i.e., they are not handled by the language server. Defaults to []. *)
+  ; deprecated : bool
+        (** Enable support for the deprecated PascaLIGO syntax. Defaults to [false]. *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
