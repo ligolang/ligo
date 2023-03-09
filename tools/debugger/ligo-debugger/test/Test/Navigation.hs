@@ -131,7 +131,6 @@ test_values_inside_switch_and_match_with_are_statements =
         runData
         (dumpAllSnapshotsWithStep doStep)
 
--- TODO: #1684 fix wrong order of local functions statements locations
 test_local_function_assignments_are_statements :: TestTree
 test_local_function_assignments_are_statements =
   let

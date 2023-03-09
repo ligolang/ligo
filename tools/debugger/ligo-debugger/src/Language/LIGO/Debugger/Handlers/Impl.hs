@@ -423,6 +423,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsAllLocs = Nothing
     , lsBinaryPath = binaryPathMb
     , lsParsedContracts = Nothing
+    , lsLambdaLocs = Nothing
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
@@ -508,7 +509,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     Right ligoDebugInfo -> do
       logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-      (exprLocs, someContract, allFiles) <-
+      (exprLocs, someContract, allFiles, lambdaLocs) <-
         readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
         & either (throwIO . MichelsonDecodeException) pure
 
@@ -530,6 +531,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
           { lsCollectedRunInfo = Just $ onlyContractRunInfo contract
           , lsAllLocs = Just allLocs
           , lsParsedContracts = Just parsedContracts
+          , lsLambdaLocs = Just lambdaLocs
           }
 
         lServerState <- getServerState
@@ -661,6 +663,8 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   param <- "Parameter is not initialized" `expectInitialized` pure paramMb
   stor <- "Storage is not initialized" `expectInitialized` pure storMb
 
+  lambdaLocs <- getLambdaLocs
+
   let contractState = ContractState
         { csBalance = [tz|0u|]
         , csContract = contract
@@ -688,6 +692,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         dummyContractEnv { ceContracts = M.fromList [(dummySelf, contractState)] }
         parsedContracts
         (unlifter . logMessage)
+        lambdaLocs
 
   let ds = initDebuggerState his allLocs
 

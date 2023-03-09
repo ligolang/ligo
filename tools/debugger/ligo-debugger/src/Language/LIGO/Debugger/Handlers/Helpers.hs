@@ -79,6 +79,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
+  , lsLambdaLocs :: Maybe (HashSet LigoRange)
   }
 
 instance Buildable LigoLanguageServerState where
@@ -193,6 +194,11 @@ getParsedContracts
   => RIO ext (HashMap FilePath (LIGO ParsedInfo))
 getParsedContracts =
   "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
+
+getLambdaLocs
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (HashSet LigoRange)
+getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do
