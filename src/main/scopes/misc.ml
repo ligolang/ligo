@@ -127,15 +127,19 @@ let resolve_if : with_types:bool -> bindings_map -> Value_var.t -> type_case =
 
 let make_v_def
     :  with_types:bool -> ?core_type:Ast_core.type_expression -> bindings_map -> def_type
-    -> Value_var.t -> Location.t -> Location.t -> def
+    -> Value_var.t -> Location.t -> Location.t -> def option
   =
  fun ~with_types ?core_type bindings def_type var range body_range ->
-  let type_case =
-    match core_type with
-    | Some t -> Core t
-    | None -> resolve_if ~with_types bindings var
-  in
-  make_v_def (get_binder_name var) type_case def_type range body_range
+  if Value_var.is_generated var
+  then None
+  else (
+    let type_case =
+      match core_type with
+      | Some t -> Core t
+      | None -> resolve_if ~with_types bindings var
+    in
+    Some (make_v_def (get_binder_name var) type_case def_type range body_range))
+
 
 let get_location_of_module_path : Module_var.t list -> Location.t =
  fun mvs ->

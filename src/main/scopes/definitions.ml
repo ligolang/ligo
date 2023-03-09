@@ -13,16 +13,9 @@ module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module Types = Types
 
-(* HACK: ignore_generated hack is required to match the output to old implementation
-   In the old implementation there is a bug not all generated variables are ignored.
-   In a followup MR fix the old implementation i.e. ignore all generated variables *)
-(* TODO: after merge remove [ignore_generated] *)
-let defs_of_vvar ?(ignore_generated = true) ~(body : AST.expression)
-    : VVar.t -> def list -> def list
-  =
+let defs_of_vvar ~(body : AST.expression) : VVar.t -> def list -> def list =
  fun vvar acc ->
-  (* let ignore_wildcard = not (VVar.is_name vvar "_") in *)
-  if ignore_generated && VVar.is_generated vvar
+  if VVar.is_generated vvar
   then acc
   else (
     let name = get_binder_name vvar in
@@ -46,10 +39,8 @@ let defs_of_vvar ?(ignore_generated = true) ~(body : AST.expression)
     Variable vdef :: acc)
 
 
-let defs_of_binder ?(ignore_generated = false) ~(body : AST.expression)
-    : _ Binder.t -> def list -> def list
-  =
- fun binder acc -> defs_of_vvar ~ignore_generated ~body (Binder.get_var binder) acc
+let defs_of_binder ~(body : AST.expression) : _ Binder.t -> def list -> def list =
+ fun binder acc -> defs_of_vvar ~body (Binder.get_var binder) acc
 
 
 let defs_of_tvar ~(bindee : Ast_core.type_expression) : TVar.t -> def list -> def list =
@@ -97,13 +88,13 @@ let defs_of_mvar ~(bindee : Ast_core.module_expr) ~(mod_case : mod_case)
     Module mdef :: acc)
 
 
-let rec defs_of_pattern ?(ignore_generated = true) ~(body : AST.expression)
+let rec defs_of_pattern ~(body : AST.expression)
     : AST.type_expression option Linear_pattern.t -> def list -> def list
   =
  fun ptrn acc ->
   let self ~body p = defs_of_pattern ~body p in
   let ptrn_binders = AST.Pattern.binders ptrn in
-  let f defs binder = defs_of_binder ~ignore_generated ~body binder defs in
+  let f defs binder = defs_of_binder ~body binder defs in
   let defs = List.fold ~init:acc ~f ptrn_binders in
   defs
 
@@ -141,7 +132,7 @@ let rec defs_of_expr : AST.expression -> def list -> def list =
   | E_matching { matchee; cases } ->
     let defs_of_match_cases cases acc =
       let defs_of_match_case acc ({ pattern; body } : _ AST.Match_expr.match_case) =
-        defs_of_pattern ~ignore_generated:false ~body pattern @@ defs_of_expr body @@ acc
+        defs_of_pattern ~body pattern @@ defs_of_expr body @@ acc
       in
       List.fold ~init:acc ~f:defs_of_match_case cases
     in
