@@ -4,7 +4,14 @@ let default = [ "/.ligo"; "/_esy"; "/node_modules"; "/esy.lock"; "/.git" ]
 
 let read ~ligoignore_path : t =
   let entries =
-    try In_channel.read_lines ligoignore_path with
+    try
+      ligoignore_path
+      |> In_channel.read_lines
+      |> (* Ignore comments (line that start with #) *)
+      List.filter ~f:(Fn.compose not (String.is_prefix ~prefix:"#"))
+      |> (* Ignore empty lines *)
+      List.filter ~f:(Fn.compose not String.is_empty)
+    with
     | _ -> []
   in
   let ligoignore = List.dedup_and_sort ~compare:String.compare @@ entries @ default in

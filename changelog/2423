@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nFor a LIGO package with name `@ligo/fa`\\n\\n### Before\\n\\n\\n```\\n$ ligo.61 publish --dry-run\\n==> Reading manifest... Done\\n==> Validating manifest file... Done\\n==> Finding project root... Done\\n==> Packing tarball... An internal error ocurred. Please, contact the developers.\\n(Sys_error \"/tmp/@ligo/fa675f7d1.0.1: No such file or directory\").\\n\\n```\\n\\n### After\\n\\n\\n```\\n$ ligo publish --dry-run\\n==> Reading manifest... Done\\n==> Validating manifest file... Done\\n==> Finding project root... Done\\n==> Packing tarball... Done\\n    publishing: @ligo/fa@1.0.1\\n    === Tarball Details ===\\n    name:          @ligo/fa\\n    version:       1.0.1\\n    filename:      @ligo/fa-1.0.1.tgz\\n    package size:  36.4 kB\\n    unpacked size: 249.5 kB\\n    shasum:        a1755ccfecb90d06440aef9d0808ec1499fc22f4\\n    integrity:     sha512-c986ef7bc12cd[...]9b6f8c626f8fba7\\n    total files:   49\\n\\n```\\n\\n"
+merge_request: '2423'
+title: "Fix bugs in `ligo publish`"
+type: fixed
+            
