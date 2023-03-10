@@ -1,0 +1,1 @@
+let fst x _ = x

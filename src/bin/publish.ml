@@ -11,6 +11,16 @@ let object__to_yojson o =
   `Assoc (List.fold o ~init:[] ~f:(fun kvs (k, v) -> (k, `String v) :: kvs))
 
 
+let remove_unfriendly_filename_chars fname =
+  (* In a filename ignore the following
+     1. null char
+     2. /
+     3. \
+     4. space *)
+  let r = Str.regexp "[\000/\\ ]" in
+  Str.global_replace r "_" fname
+
+
 let with_logging ~before ?(after = "Done") fn =
   let () = Printf.printf "==> %s... %!" before in
   match fn () with
@@ -345,7 +355,11 @@ let tar ~name ~version files =
   let files, sizes = List.unzip files in
   let unpacked_size = List.fold sizes ~init:0 ~f:( + ) in
   let fcount = List.length files in
-  let fname = Caml.Filename.temp_file name (Semver.to_string version) in
+  let fname =
+    Caml.Filename.temp_file
+      (remove_unfriendly_filename_chars name)
+      (Semver.to_string version)
+  in
   let fd = Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666 in
   let () = Tar_unix.Archive.create files fd in
   let () = Ligo_unix.close fd in

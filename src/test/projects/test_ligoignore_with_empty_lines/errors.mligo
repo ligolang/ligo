@@ -1,0 +1,1 @@
+let error = "SOME ERROR"
