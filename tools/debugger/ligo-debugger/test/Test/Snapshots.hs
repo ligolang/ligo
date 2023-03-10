@@ -1244,6 +1244,341 @@ test_Snapshots = testGroup "Snapshots collection"
                   } :| _
               } | typ == expectedType -> pass
             snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Polymorphic functions have types" \step -> do
+        let file = contractsDir </> "polymorphic-function.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let expectedIntType = LigoTypeResolved (intType' ~> intType')
+
+          let operationList = mkConstantType "List" [mkSimpleConstantType "Operation"]
+          let expectedOperationListType = LigoTypeResolved (operationList ~> operationList)
+
+          liftIO $ step "Check types for monomorphed functions"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ1
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ2
+                            }
+                        }
+                      : _
+                  } :| _
+              } | typ1 == expectedOperationListType && typ2 == expectedIntType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Nested structures have types" \step -> do
+        let file = contractsDir </> "nested-structure-type.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          moveTill Forward $
+            isAtLine 15
+
+          let expectedComplexType = LigoTypeResolved
+                $ mkRecordType
+                    [ ("simple_field", mkSimpleConstantType "String")
+                    , ("complex_field"
+                      , mkRecordType
+                          [ ("inner_field1", intType')
+                          , ("inner_field2", intType')
+                          ]
+                      )
+                    ]
+
+          liftIO $ step "Check type for nested structure"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ
+                            }
+                        } : _
+                  } :| _
+              } | typ == expectedComplexType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Sum with nested record type" \step -> do
+        let file = contractsDir </> "sum-with-record-type.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let expectedType = LigoTypeResolved
+                $ mkSumType
+                    [ ( "A"
+                      , mkRecordType
+                          [ ("a1", intType')
+                          , ("a2", mkSimpleConstantType "String")
+                          ]
+                      )
+                    , ( "B"
+                      , mkRecordType
+                          [ ("b1", mkSimpleConstantType "String")
+                          , ("b2", intType')
+                          ]
+                      )
+                    ]
+
+          void $ moveTill Forward $
+            goesAfter (SrcLoc 7 0)
+
+          liftIO $ step "Check type for sum type with inner record"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ
+                            }
+                        } : _
+                  } :| _
+              } | typ == expectedType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Never type" \step -> do
+        let file = contractsDir </> "never-type.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let expectedType = LigoTypeResolved (unitType' ~> mkSimpleConstantType "Never")
+
+          liftIO $ step "Check \"never\" function type"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ
+                            }
+                        } : _
+                  } :| _
+              } | typ == expectedType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Some types from stdlib" \step -> do
+        let file = contractsDir </> "types-from-stdlib.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let bytesType = LigoTypeResolved (mkSimpleConstantType "Bytes")
+
+          let setType = LigoTypeResolved
+                $ mkConstantType "Set" [intType']
+
+          let mapType = LigoTypeResolved
+                $ mkConstantType "Map"
+                    [ intType'
+                    , mkSimpleConstantType "String"
+                    ]
+
+          void $ moveTill Forward
+            $ isAtLine 7
+
+          liftIO $ step "Check some types from stdlib"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ1
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ2
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ3
+                            }
+                        } : _
+                  } :| _
+              } | typ1 == mapType
+                , typ2 == setType
+                , typ3 == bytesType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Polymorphic values have types" \step -> do
+        let file = contractsDir </> "polymorphic-types.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let intOptionType = LigoTypeResolved (mkOptionType intType')
+          let stringOptionType = LigoTypeResolved (mkOptionType $ mkSimpleConstantType "String")
+
+          void $ moveTill Forward
+            $ goesAfter (SrcLoc 4 0)
+
+          liftIO $ step "Check monomorphed \"option\" type"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack =
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ1
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ2
+                            }
+                        } : _
+                  } :| _
+              } | typ1 == stringOptionType
+                , typ2 == intOptionType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Shadowed types" \step -> do
+        let file = contractsDir </> "shadowed-types.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          void $ move Forward
+          
+          -- Note that at this moment we're showing raw types.
+          -- It means that "type string = int" will have
+          -- "int" raw type.
+          liftIO $ step "Check shadowed type"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack =
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ
+                            }
+                        } : _
+                  } :| _
+              } | typ == intType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Types from Tezos" \step -> do
+        let file = contractsDir </> "tezos-types.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let tezType = LigoTypeResolved (mkSimpleConstantType "Tez")
+          let timestampType = LigoTypeResolved (mkSimpleConstantType "Timestamp")
+          let addressType = LigoTypeResolved (mkSimpleConstantType "Address")
+
+          void $ moveTill Forward
+            $ isAtLine 4
+
+          -- TODO: check "sapling_state" type as well after #1711 is resolved.
+          liftIO $ step "Check types from Tezos module"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack =
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ1
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ2
+                            }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ3
+                            }
+                        } : _
+                  } :| _
+              } | typ1 == addressType
+                , typ2 == timestampType
+                , typ3 == tezType -> pass
+            snap -> unexpectedSnapshot snap
+
+    , testCaseSteps "Layout comb types" \step -> do
+        let file = contractsDir </> "layout-comb-types.mligo"
+        let runData = ContractRunData
+              { crdProgram = file
+              , crdEntrypoint = Nothing
+              , crdParam = ()
+              , crdStorage = 0 :: Integer
+              }
+
+        testWithSnapshots runData do
+          let combedType = LigoTypeResolved
+                $ mkRecordType
+                    [ ("a", intType')
+                    , ("b", mkSimpleConstantType "Nat")
+                    , ("c", mkSimpleConstantType "String")
+                    ]
+
+          void $ moveTill Forward
+            $ isAtLine 9
+
+          liftIO $ step "Check combed type"
+          checkSnapshot \case
+            InterpretSnapshot
+              { isStackFrames = StackFrame
+                  { sfStack = _ :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ
+                            }
+                        } : _
+                  } :| _
+              } | typ == combedType -> pass
+            snap -> unexpectedSnapshot snap
     ]
 
   , testCaseSteps "Builtin functions have locations" \step -> do
