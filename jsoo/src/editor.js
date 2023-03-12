@@ -31,6 +31,18 @@ const main = (action: parameter, store: storage) : [ list<operation> , storage ]
     Reset:     ()  => 0}))
   ]
 };
+
+const test_1 = (() => {
+  assert(1 == 1);
+})();
+
+const test_increment = (() => {
+  let initial_storage = 42;
+  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  return assert(Test.get_storage(taddr) == initial_storage + 1);
+}) ();
 `,
     }),
     parent: document.getElementById("ligo"),

@@ -59,6 +59,21 @@ async function main() {
       })
     );
   });
+  document.getElementById("test")?.addEventListener("click", function () {
+    // @ts-ignore
+    let michelson = window.ligo.test(
+      ligoEditor.state.doc.toJSON().join("\n"),
+      // @ts-ignore
+      document.getElementById("syntax")?.value
+    );
+    console.log(michelson);
+    michelsonEditor.setState(
+      EditorState.create({
+        extensions: [basicSetup],
+        doc: michelson,
+      })
+    );
+  });
 }
 
 main();
