@@ -34,9 +34,9 @@ and row_element = ty_expr Row.t
 
 and type_expression =
   { type_content : type_content
-  ; type_meta : type_meta [@eq.ignore] [@hash.ignore]
-  ; orig_var : Type_var.t option [@eq.ignore] [@hash.ignore]
-  ; location : Location.t [@eq.ignore] [@hash.ignore]
+  ; type_meta : type_meta [@eq.ignore] [@hash.ignore] [@compare.ignore]
+  ; orig_var : Type_var.t option [@eq.ignore] [@hash.ignore] [@compare.ignore]
+  ; location : Location.t [@eq.ignore] [@hash.ignore] [@compare.ignore]
   }
 
 and ty_expr = type_expression [@@deriving eq, compare, yojson, hash]

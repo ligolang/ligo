@@ -254,11 +254,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
         List.fold_left
           path
           ~f:(fun expr (i, n, ty, _) ->
-              E_proj ({ content = expr;
-                        type_expression = ty;
-                        location = Location.generated}, i, n))
-          ~init:struct_'.content in
-      return content
+              let expr = { content = E_proj (expr, i, n) ; type_expression = ty ; location = Location.generated } in
+              expr)
+          ~init:struct_' in
+      return content.content
     )
   | E_update {struct_; path; update} -> (
       (* Compile record update to simple constructors &

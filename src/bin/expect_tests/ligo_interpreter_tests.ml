@@ -674,36 +674,39 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1WxkuJtr9rxYaziDJY7gHA83H3BUbEn1G1 , { parameter unit ;
+    - test_x exited with value (KT1X92QM6i2RhjuTMgHvYJA6nDu7udpmNU39 , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address bool)) ;
-      code { CDR ;
-             PUSH bool True ;
+      code { PUSH bool True ;
              PUSH bool False ;
+             DIG 2 ;
+             CDR ;
+             DUP 3 ;
              DUP 2 ;
-             DUP 4 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
-                    DUP 5 ;
+                    DUP 3 ;
                     CDR ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { DUP 2 ; AND } { DROP ; DUP 3 ; AND } } ;
+                    IF_NONE { DUP 3 ; AND } { DROP ; DUP 4 ; AND } } ;
              DROP ;
+             DUP 3 ;
              DUP 2 ;
-             DUP 4 ;
              CAR ;
              CDR ;
              ITER { SWAP ;
                     EMPTY_MAP address bool ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { DUP 2 ; AND } { DROP ; DUP 3 ; AND } } ;
+                    IF_NONE { DUP 3 ; AND } { DROP ; DUP 4 ; AND } } ;
+             DIG 2 ;
+             DIG 3 ;
              DROP 3 ;
              NIL operation ;
-             PAIR } } , 224). |}]
+             PAIR } } , 236). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
@@ -1092,7 +1095,6 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
-    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 9, characters 14-49 |}]
 
 let%expect_test _ =
@@ -1268,5 +1270,4 @@ let%expect_test _ =
     An uncaught error occured:
     Failwith: "foo"
     Trace:
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 ,
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]
