@@ -11,6 +11,13 @@ val type_program
   -> I.program
   -> O.program
 
+val type_program_with_signature
+  :  raise:(typer_error, Main_warnings.all) raise
+  -> options:Compiler_options.middle_end
+  -> ?env:Environment.t
+  -> I.program
+  -> O.program * O.signature
+
 val type_declaration
   :  raise:(typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end

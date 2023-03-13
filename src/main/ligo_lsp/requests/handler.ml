@@ -119,7 +119,7 @@ let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handl
       (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
   | Mock _ -> return ()
 
-    
+
 let with_cached_doc
     ?(return_default_if_no_info = true)
     (uri : DocumentUri.t)

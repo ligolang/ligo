@@ -105,6 +105,21 @@ let decode type_ ~raise subst =
            else loc)))
 
 
+let decode_attribute (attr : Context.Attr.t) : O.sig_item_attribute =
+  { entry = attr.entry; view = attr.view }
+
+
+let rec decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature =
+  let decode_item (item : Context.Signature.item) : O.sig_item =
+    match item with
+    | S_value (var, type_, attr) ->
+      S_value (var, decode ~raise type_ subst, decode_attribute attr)
+    | S_type (var, type_) -> S_type (var, decode ~raise type_ subst)
+    | S_module (var, sig_) -> S_module (var, decode_signature ~raise sig_ subst)
+  in
+  List.map ~f:decode_item sig_
+
+
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =
   Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type
 

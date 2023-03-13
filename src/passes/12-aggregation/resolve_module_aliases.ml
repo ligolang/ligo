@@ -231,10 +231,10 @@ and compile_module_expr mvar path
     -> Aliases.t * Module_var.t list * AST.module_expr option
   =
  fun aliases mexpr ->
-  match mexpr.wrap_content with
+  match mexpr.module_content with
   | M_struct prg ->
     let aliases, prg = compile_module (mvar :: path) aliases prg in
-    aliases, mvar :: path, Some { mexpr with wrap_content = M_struct prg }
+    aliases, mvar :: path, Some { mexpr with module_content = M_struct prg }
   | M_variable v ->
     let aliases, path' = Aliases.get aliases v in
     aliases, path', None

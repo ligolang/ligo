@@ -242,11 +242,11 @@ and get_fv_module (env : env) acc = function
 
 
 and get_fv_module_expr env x =
-  match x.wrap_content with
+  match x.module_content with
   | M_struct prg ->
     (* TODO: user [get_fv_program] & removed [get_fv_module] *)
     let new_env, prg = get_fv_module env [] @@ List.rev prg in
-    new_env, { x with wrap_content = M_struct prg }
+    new_env, { x with module_content = M_struct prg }
   | M_module_path path ->
     let rec push_env (name, name_lst) toto =
       match name_lst with
@@ -255,7 +255,7 @@ and get_fv_module_expr env x =
         { empty_env with env = MVarMap.singleton name @@ push_env (hd, tl) toto }
     in
     let new_env = push_env path env in
-    new_env, { x with wrap_content = M_module_path path }
+    new_env, { x with module_content = M_module_path path }
   | M_variable v ->
     let new_env = { empty_env with env = MVarMap.singleton v env } in
     new_env, x

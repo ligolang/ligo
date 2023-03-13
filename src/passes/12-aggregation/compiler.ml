@@ -556,7 +556,7 @@ and compile_module_expr ~raise ?(module_attr = { public = true; hidden = false }
     : Path.t -> Scope.t -> I.module_expr -> Scope.t * O.context
   =
  fun path scope mexpr ->
-  let loc = mexpr.location in
+  let loc = mexpr.module_location in
   let rec get_declarations_from_scope scope new_path old_path =
     let dcls = Scope.get_declarations scope in
     let module_ =
@@ -586,7 +586,7 @@ and compile_module_expr ~raise ?(module_attr = { public = true; hidden = false }
   let super_attr : O.ModuleAttr.t =
     { public = module_attr.public; hidden = module_attr.hidden }
   in
-  match mexpr.wrap_content with
+  match mexpr.module_content with
   | M_struct m ->
     (* Keep the scope of identifiers be start with an empty list of declaration (corresponding to this module) *)
     let scope = Scope.clean_declarations scope in

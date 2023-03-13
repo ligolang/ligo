@@ -585,7 +585,8 @@ let%expect_test _ =
   run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
-  [%expect {|
+  [%expect
+    {|
     ==> Reading manifest... Done
     ==> Validating manifest file... Done
     ==> Finding project root... Done

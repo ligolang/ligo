@@ -178,8 +178,9 @@ and untype_pattern : _ O.Pattern.t -> _ I.Pattern.t =
 
 and untype_module_expr : O.module_expr -> I.module_expr =
  fun module_expr ->
-  let return wrap_content : I.module_expr = { module_expr with wrap_content } in
-  match module_expr.wrap_content with
+  let loc = module_expr.module_location in
+  let return wrap_content : I.module_expr = Location.wrap ~loc wrap_content in
+  match module_expr.module_content with
   | M_struct prg ->
     let prg = untype_module prg in
     return (M_struct prg)

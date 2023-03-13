@@ -1,7 +1,6 @@
 open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/" ^ s
-
 let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
 
 let%expect_test _ =

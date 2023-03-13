@@ -106,7 +106,7 @@ let rec extract_variable_types
     Self_ast_typed.Helpers.fold_expression aux prev expr
   | D_type _ -> prev
   | D_module { module_; _ } ->
-    (match module_.wrap_content with
+    (match module_.module_content with
     | M_variable _ -> prev
     | M_module_path _ -> prev
     | M_struct ds ->

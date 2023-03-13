@@ -13,6 +13,7 @@ val all_lmap_unit : unit t Label.Map.t -> unit t
 
 include module type of Let_syntax
 
+val decode_signature : Context.Signature.t -> Ast_typed.signature t
 val decode : Type.t -> Ast_typed.type_expression t
 
 val check_anomalies

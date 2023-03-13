@@ -183,7 +183,27 @@ and declaration ?(use_hidden = true) ppf (d : declaration) =
 and decl ppf d = declaration ppf d
 
 and module_expr ppf (me : module_expr) : unit =
-  Location.pp_wrap (Module_expr.pp decl) ppf me
+  Format.fprintf
+    ppf
+    "@[%a : %a@]"
+    (Module_expr.pp decl)
+    me.module_content
+    signature
+    me.signature
+
+
+and sig_item ppf (d : sig_item) =
+  match d with
+  | S_value (var, type_, _) ->
+    Format.fprintf ppf "@[<2>val %a :@ %a@]" Value_var.pp var type_expression type_
+  | S_type (var, type_) ->
+    Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
+  | S_module (var, sig_) ->
+    Format.fprintf ppf "@[<2>module %a =@ %a@]" Module_var.pp var signature sig_
+
+
+and signature ppf (sig_ : signature) : unit =
+  Format.fprintf ppf "@[<v>sig@[<v1>@,%a@]@,end@]" (list_sep sig_item (tag "@,")) sig_
 
 
 let module_ ppf (m : module_) = list_sep decl (tag "@,") ppf m

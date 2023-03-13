@@ -29,13 +29,22 @@ module M : functor (Params : Params) -> sig
 
   module AST : sig
     type declaration = Ast_typed.declaration
+    type signature = Ast_typed.signature
     type t = Ast_typed.program
     type environment = Environment.t
+    type sig_environment = Environment.signature
 
     val add_ast_to_env : t -> environment -> environment
-    val add_module_to_env : module_name -> environment -> environment -> environment
+
+    val add_module_to_env
+      :  module_name
+      -> environment
+      -> sig_environment
+      -> environment
+      -> environment
+
     val init_env : environment
-    val make_module_declaration : module_name -> t -> declaration
+    val make_module_declaration : module_name -> t -> signature -> declaration
   end
 
   val lib_ast : unit -> AST.t
@@ -100,6 +109,13 @@ val qualified_typed
   -> ?cform:Ligo_compile.Of_core.form
   -> Source_input.code_input
   -> Ast_typed.program
+
+val qualified_typed_with_signature
+  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t
+  -> ?cform:Ligo_compile.Of_core.form
+  -> Source_input.code_input
+  -> Ast_typed.program * Ast_typed.signature
 
 val build_contract_meta_ligo
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise

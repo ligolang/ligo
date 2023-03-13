@@ -95,6 +95,7 @@ let doc_to_string ~(width : int) (doc : PPrint.document) : string =
   PPrint.ToBuffer.pretty 1.0 width buffer doc;
   Buffer.contents buffer
 
+
 let pretty_print_cst ~(width : int) ~(dialect_cst : dialect_cst) : string =
   let doc =
     match dialect_cst with

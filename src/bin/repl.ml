@@ -217,10 +217,14 @@ let import_file ~raise ~raw_options state file_name module_name =
   in
   let options = Compiler_options.set_init_env options state.env in
   let module_ =
-    let prg =
-      Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
+    let prg, signature =
+      Build.qualified_typed_with_signature
+        ~raise
+        ~options
+        (Build.Source_input.From_file file_name)
     in
-    Location.wrap ~loc (Module_expr.M_struct prg)
+    Ast_typed.
+      { module_content = Module_expr.M_struct prg; module_location = loc; signature }
   in
   let module_ =
     Ast_typed.
