@@ -110,7 +110,7 @@ let test_cases =
           }
         ; { severity = DiagnosticSeverity.Error
           ; message =
-              "Variable \"_#175\" not found. "
+              "Variable \"_#41\" not found. "
               (* FIXME 1689 - we shoul not report that things added by
                  error recovery do not exist, also the number here can
                  be changed after any changes in LIGO, maybe we want to
