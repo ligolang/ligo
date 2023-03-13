@@ -190,3 +190,26 @@ publish_npm_darwin_arm64:
     - status=0  ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-m1$SUFFIX || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/darwin-arm64
 
+publish_ligojs:
+  stage: push
+  needs:
+    - job: docker_build
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - src/**/*
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+  script:
+    - |      
+      if [[ $CI_COMMIT_REF_NAME == "dev" ]]; then
+        SUFFIX=-dev
+      fi
+    - cd ./ligo-npm
+    - chmod 664 package.json
+    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json windows)
+    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public || status=1

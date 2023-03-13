@@ -106,6 +106,7 @@ docker_build:
       --build-arg=changelog_path=changelog.txt
       -t ${LIGO_IMAGE_TAG}
     # Copy JSOO PoC IDE
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}-builder):/ligo/npm ./ligo-npm
     - docker cp $(docker create ${LIGO_IMAGE_TAG}-builder):/ligo/jsoo/dist ./ligo-demo-ide
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
   after_script:
@@ -113,6 +114,8 @@ docker_build:
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
+      - ligo-npm
+      - ligo-demo-ide
       - ligo.tar.gz
 docker_extract:
   stage: docker-extract
@@ -149,7 +152,6 @@ docker_extract:
       - ligo.deb
       - doc
       - highlighting
-      - ligo-demo-ide
 
 check-generated-highlighting:
   stage: tooling

@@ -1,0 +1,25 @@
+{
+  "name": "ligolang",
+  "module": "./ligo.js",
+  "version": "0.61.0-dev.1",
+  "scripts": {
+    "build": "cp ../_build/default/src/bin/js_main*.js . && chmod u+rw js_main.bc.* && rollup -c ./rollup.config.mjs"
+  },
+  "files": [
+    "ligo.js",
+    "js_main.bc.js"
+  ],
+  "dependencies": {
+    "@ligolang/ocaml-bls12-381": "latest",
+    "@ligolang/secp256k1-wasm": "latest",
+    "@ligolang/hacl-wasm": "latest"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "*",
+    "@web/rollup-plugin-import-meta-assets": "^1.0.7",
+    "rollup": "*",
+    "rollup-plugin-polyfill-node": "^0.11.0"
+  }
+}
