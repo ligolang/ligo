@@ -1,0 +1,31 @@
+{
+  "name": "ligojs-example",
+  "scripts": {
+    "build:webpack": "webpack build",
+    "start": "webpack-dev-server",
+    "build:rollup": "rollup -c ./rollup.config.mjs"
+  },
+  "dependencies": {
+    "ligolang": "file:../../npm"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^24.0.0",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "*",
+    "@web/rollup-plugin-import-meta-assets": "^1.0.7",
+    "browserify-fs": "^1.0.0",
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
+    "html-webpack-plugin": "^5.5.0",
+    "path-browserify": "^1.0.1",
+    "rollup": "*",
+    "rollup-plugin-polyfill-node": "^0.11.0",
+    "stream-browserify": "^3.0.0",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.5",
+    "util": "^0.12.5",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
+  }
+}

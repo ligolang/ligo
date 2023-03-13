@@ -46,6 +46,8 @@ COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 # JSOO
 COPY jsoo /ligo/jsoo
 COPY Makefile /ligo
+COPY npm /ligo/npm
+COPY examples /ligo/examples
 
 # Run tests
 RUN opam exec -- dune build @check \
@@ -74,6 +76,8 @@ RUN LIGO_VERSION=$(/ligo/scripts/version.sh) opam exec -- dune build -p ligo --p
   && opam exec -- dune build @doc
 RUN npm i -g webpack-cli
 RUN cd /ligo && opam exec -- make build-demo-webide
+RUN cd /ligo/npm && rm /ligo/npm/ligolang-*.tgz ; npm i && npm run build && npm pack
+RUN cd /ligo/examples/ligojs && npm i && npm run build:webpack
 
 FROM esydev/esy:nightly-alpine as esy
 
