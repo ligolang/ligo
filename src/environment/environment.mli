@@ -2,6 +2,7 @@ module Protocols = Protocols
 
 (* Environment is a "prelude" to all modules in LIGO *)
 type t
+type signature
 
 val pp : Format.formatter -> t -> unit
 val add_declaration : Ast_typed.decl -> t -> t
@@ -11,6 +12,7 @@ val add_module
   -> ?hidden:unit
   -> Ligo_prim.Module_var.t
   -> Ast_typed.module_
+  -> signature
   -> t
   -> t
 

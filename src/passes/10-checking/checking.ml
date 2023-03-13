@@ -1266,8 +1266,10 @@ and infer_module_expr (mod_expr : I.module_expr)
     return
     @@ ( sig_
        , E.(
-           let%bind content = content in
-           return (Location.wrap ~loc content : O.module_expr)) )
+           let%bind module_content = content in
+           let%bind signature = decode_signature sig_ in
+           return ({ module_content; module_location = loc; signature } : O.module_expr))
+       )
   in
   set_loc mod_expr.location
   @@
@@ -1387,16 +1389,24 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
       ~f:(fun decl loc -> Location.cover loc decl.location)
       ~init:decl.location *)
 
-let type_program ~raise ~options ?env program =
+let type_program_with_signature ~raise ~options ?env program =
   let loc = Location.generated in
   C.run_elab
-    (let%map.C _, program = infer_module program in
-     program)
+    (let%map.C signature, program = infer_module program in
+     E.(
+       let%bind program = program in
+       let%bind signature = decode_signature signature in
+       return (program, signature)))
     ~raise
     ~options
     ~loc
     ?env
     ()
+
+
+let type_program ~raise ~options ?env program =
+  let program, _ = type_program_with_signature ~raise ~options ?env program in
+  program
 
 
 let type_declaration ~raise ~options ?env decl =

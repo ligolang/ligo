@@ -245,7 +245,7 @@ and get_all_declarations (module_name : Module_var.t)
         [ name, expr.type_expression ]
       | D_module
           { module_binder
-          ; module_ = { wrap_content = M_struct module_; _ }
+          ; module_ = { module_content = M_struct module_; _ }
           ; module_attr = _
           } ->
         let recs = get_all_declarations module_binder module_ in
@@ -280,7 +280,7 @@ and muchuse_module_expr
     (module_binder : Module_var.t)
     (module_ : module_expr)
   =
-  match Location.unwrap module_ with
+  match module_.module_content with
   | M_struct module_ ->
     let decls = get_all_declarations module_binder module_ in
     List.fold_right

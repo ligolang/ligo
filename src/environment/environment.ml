@@ -6,16 +6,19 @@ module Protocols = Protocols
 (* This is an env use by repl and build *)
 (* Environment records declarations already seen in reverse orders. Use for different kind of processes *)
 type t = program
+type signature = Ast_typed.signature
 
 let pp ppf m = PP.module_ ppf @@ m
 let loc = Location.env
 
 let add_module
-    :  ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_typed.module_ -> t
-    -> t
+    :  ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_typed.module_
+    -> signature -> t -> t
   =
- fun ?public ?hidden module_binder module_ env ->
-  let module_ = Location.wrap ~loc @@ Module_expr.M_struct module_ in
+ fun ?public ?hidden module_binder module_ signature env ->
+  let module_ =
+    { module_content = Module_expr.M_struct module_; module_location = loc; signature }
+  in
   let new_d =
     Location.wrap ~loc
     @@ D_module

@@ -65,20 +65,25 @@ module M (Params : Params) = struct
 
   module AST = struct
     type declaration = Ast_typed.declaration
+    type signature = Ast_typed.signature
     type t = Ast_typed.program
+    type sig_environment = Environment.signature
     type environment = Environment.t
 
     let add_ast_to_env : t -> environment -> environment =
      fun ast env -> Environment.append env ast
 
 
-    let add_module_to_env : module_name -> environment -> environment -> environment =
-     fun module_name ast_typed_env env ->
+    let add_module_to_env
+        : module_name -> environment -> sig_environment -> environment -> environment
+      =
+     fun module_name ast_typed_env sig_env env ->
       let module_name = Module_var.of_input_var ~loc module_name in
       Environment.add_module
         ~public:()
         module_name
         (Environment.to_module ast_typed_env)
+        sig_env
         env
 
 
@@ -87,9 +92,15 @@ module M (Params : Params) = struct
       Environment.append type_env std_lib.content_typed
 
 
-    let make_module_declaration : module_name -> t -> declaration =
-     fun module_binder ast_typed ->
-      let module_ = Location.wrap ~loc (Module_expr.M_struct ast_typed) in
+    let make_module_declaration : module_name -> t -> signature -> declaration =
+     fun module_binder ast_typed signature ->
+      let module_ =
+        Ast_typed.
+          { module_content = Module_expr.M_struct ast_typed
+          ; module_location = loc
+          ; signature
+          }
+      in
       let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
         ~loc
@@ -296,6 +307,23 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
   let s = Source_input.Raw { code; id } in
   let x = trace ~raise build_error_tracer @@ from_result (compile_qualified s) in
   Ligo_compile.Of_core.typecheck ~raise ~options x
+
+
+let qualified_typed_with_signature ~raise
+    :  options:Compiler_options.t -> ?cform:Ligo_compile.Of_core.form
+    -> Source_input.code_input -> Ast_typed.program * Ast_typed.signature
+  =
+ fun ~options ?cform source ->
+  (* let std_lib = Stdlib.get ~options in
+    let open Build_typed(struct
+      let raise = raise
+      let options = options
+      let std_lib = std_lib
+      let top_level_syntax = get_top_level_syntax ~options ~filename ()
+    end) in
+    let prg = trace ~raise build_error_tracer @@ from_result (compile_qualified (Source_input.From_file filename)) in *)
+  let prg = qualified_core ~raise ~options source in
+  Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ?cform prg
 
 
 type expression_mini_c =

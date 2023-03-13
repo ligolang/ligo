@@ -342,8 +342,8 @@ and fold_map_expression_in_module_expr
     : 'a fold_mapper -> 'a -> module_expr -> 'a * module_expr
   =
  fun fold_mapper acc x ->
-  let return r wrap_content = r, { x with wrap_content } in
-  match x.wrap_content with
+  let return r module_content = r, { x with module_content } in
+  match x.module_content with
   | M_struct decls ->
     let res, decls = fold_map_module fold_mapper acc decls in
     return res (Module_expr.M_struct decls)

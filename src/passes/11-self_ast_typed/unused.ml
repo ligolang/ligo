@@ -161,7 +161,7 @@ and defuse_of_cases defuse cases =
 
 
 and defuse_of_module_expr defuse (module_expr : module_expr) : defuse =
-  match Location.unwrap module_expr with
+  match module_expr.module_content with
   | M_struct decls ->
     List.fold_left decls ~init:(defuse, []) ~f:(fun (defuse, unused_) decl ->
         let defuse, unused = defuse_of_declaration defuse decl in
@@ -202,8 +202,8 @@ and unused_decl ~raise x = unused_declaration ~raise x
 
 and unused_map_module_expr ~raise : module_expr -> module_expr = function
   | m ->
-    let return wrap_content : module_expr = { m with wrap_content } in
-    (match Location.unwrap m with
+    let return module_content : module_expr = { m with module_content } in
+    (match m.module_content with
     | M_struct x -> return @@ M_struct (unused_map_module ~raise x)
     | M_variable _ -> m
     | M_module_path _ -> m)

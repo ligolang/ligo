@@ -243,22 +243,29 @@ let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
     [ entrypoint_type_decl; entrypoint_function_decl; views_decl; contract_decl ]
 
 
-let make_main_module_expr ~raise (module_ : Ast_typed.module_expr) =
-  match Location.unwrap module_ with
+let make_main_module_expr ~raise (module_content : Ast_typed.module_content) =
+  match module_content with
   | M_struct ds ->
     let postfix = program ~raise ds in
-    Location.wrap ~loc:(Location.get_location module_)
-    @@ Module_expr.M_struct (ds @ postfix)
-  | _ -> module_
+    Module_expr.M_struct (ds @ postfix)
+  | _ -> module_content
 
 
 let make_main_module ~raise (program : Ast_typed.program) =
   let f d =
     match Location.unwrap d with
-    | Ast_typed.D_module { module_binder; module_attr; module_ } ->
-      let module_ = make_main_module_expr ~raise module_ in
+    | Ast_typed.D_module
+        { module_binder
+        ; module_attr
+        ; module_ = { module_content; module_location; signature }
+        } ->
+      let module_content = make_main_module_expr ~raise module_content in
       Location.wrap ~loc:(Location.get_location d)
-      @@ Ast_typed.D_module { module_binder; module_attr; module_ }
+      @@ Ast_typed.D_module
+           { module_binder
+           ; module_attr
+           ; module_ = { module_content; module_location; signature }
+           }
     | _ -> d
   in
   Helpers.Declaration_mapper.map_module f program

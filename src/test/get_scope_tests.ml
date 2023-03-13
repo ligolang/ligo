@@ -4,7 +4,6 @@ module InfoApi = Ligo_api.Info
 module Raw_options = Compiler_options.Raw_options
 
 let schema = "../main/scopes/schema.json"
-
 let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
 
 let validate_json_file file_name =
@@ -149,5 +148,6 @@ let _main =
             schema_test_negative ~with_types:true ~speed:`Slow file ~expected_status:None)
       )
     ]
+
 
 let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""

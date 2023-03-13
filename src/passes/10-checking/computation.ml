@@ -60,7 +60,7 @@ let rec signature_of_module_expr
     : ctx:Context.t -> Ast_typed.module_expr -> Context.Signature.t
   =
  fun ~ctx mod_expr ->
-  match mod_expr.wrap_content with
+  match mod_expr.module_content with
   | M_struct decls -> signature_of_module ~ctx decls
   | M_variable mvar ->
     (match Context.get_module ctx mvar with

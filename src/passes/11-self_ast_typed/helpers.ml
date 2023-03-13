@@ -69,7 +69,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
 
 and fold_expression_in_module_expr : ('a -> expression -> 'a) -> 'a -> module_expr -> 'a =
  fun self acc x ->
-  match x.wrap_content with
+  match x.module_content with
   | M_struct decls ->
     List.fold
       ~f:(fun acc x ->
@@ -230,8 +230,8 @@ and map_expression_in_module_expr
     : (expression -> expression) -> module_expr -> module_expr
   =
  fun self x ->
-  let return wrap_content : module_expr = { x with wrap_content } in
-  match x.wrap_content with
+  let return module_content : module_expr = { x with module_content } in
+  match x.module_content with
   | M_struct decls ->
     let decls = map_module self decls in
     return (M_struct decls)
@@ -300,7 +300,7 @@ let get_module module_path decls =
       (match Location.unwrap decl with
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_struct inner_decls; _ }
+          ; module_ = { module_content = M_struct inner_decls; _ }
           ; module_attr = _
           }
         when Module_var.equal module_binder m ->
@@ -310,13 +310,13 @@ let get_module module_path decls =
         | `Not_found module_path -> get_module module_path rest)
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+          ; module_ = { module_content = M_variable module_var; _ }
           ; module_attr = _
           }
         when Module_var.equal module_binder m -> get_module (module_var :: ms) rest
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+          ; module_ = { module_content = M_module_path module_path'; _ }
           ; module_attr = _
           }
         when Module_var.equal module_binder m ->
@@ -351,7 +351,8 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
       (match Location.unwrap decl with
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_struct inner_decls; location }
+          ; module_ =
+              { module_content = M_struct inner_decls; module_location; signature }
           ; module_attr
           }
         when Module_var.equal module_binder m ->
@@ -361,7 +362,8 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
             Location.wrap ~loc
             @@ D_module
                  { module_binder
-                 ; module_ = { wrap_content = M_struct inner_decls; location }
+                 ; module_ =
+                     { module_content = M_struct inner_decls; module_location; signature }
                  ; module_attr
                  }
           in
@@ -369,14 +371,14 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
         | `Not_here module_path -> find_module (decl :: acc) module_path rest)
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+          ; module_ = { module_content = M_variable module_var; _ }
           ; module_attr = _
           }
         when Module_var.equal module_binder m ->
         find_module (decl :: acc) (module_var :: ms) rest
       | D_module
           { module_binder
-          ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+          ; module_ = { module_content = M_module_path module_path'; _ }
           ; module_attr = _
           }
         when Module_var.equal module_binder m ->
@@ -413,7 +415,8 @@ let drop_until
       (match Location.unwrap decl, module_path with
       | ( D_module
             { module_binder
-            ; module_ = Location.{ wrap_content = M_struct inner_decls; location }
+            ; module_ =
+                { module_content = M_struct inner_decls; module_location; signature }
             ; module_attr
             }
         , m :: ms )
@@ -425,7 +428,8 @@ let drop_until
             Location.wrap ~loc
             @@ D_module
                  { module_binder
-                 ; module_ = { wrap_content = M_struct inner_decls; location }
+                 ; module_ =
+                     { module_content = M_struct inner_decls; module_location; signature }
                  ; module_attr
                  }
           in
@@ -433,7 +437,7 @@ let drop_until
         | `Not_found module_path -> find_module (decl :: acc) module_path rest)
       | ( D_module
             { module_binder
-            ; module_ = Location.{ wrap_content = M_variable module_var; _ }
+            ; module_ = { module_content = M_variable module_var; _ }
             ; module_attr = _
             }
         , m :: ms )
@@ -441,7 +445,7 @@ let drop_until
         find_module (decl :: acc) (module_var :: ms) rest
       | ( D_module
             { module_binder
-            ; module_ = Location.{ wrap_content = M_module_path module_path'; _ }
+            ; module_ = { module_content = M_module_path module_path'; _ }
             ; module_attr = _
             }
         , m :: ms )
@@ -844,7 +848,7 @@ end = struct
 
   and get_fv_module_expr : module_expr -> moduleEnv' =
    fun x ->
-    match x.wrap_content with
+    match x.module_content with
     | M_struct prg -> get_fv_module prg
     | M_variable _ ->
       { modVarSet = ModVarSet.empty
@@ -965,8 +969,8 @@ module Declaration_mapper = struct
       : (declaration -> declaration) -> module_expr -> module_expr
     =
    fun f x ->
-    let return wrap_content : module_expr = { x with wrap_content } in
-    match x.wrap_content with
+    let return module_content : module_expr = { x with module_content } in
+    match x.module_content with
     | M_struct decls ->
       let decls = map_module f decls in
       return (M_struct decls)
