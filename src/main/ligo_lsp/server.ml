@@ -40,6 +40,7 @@ class lsp_server =
   object (self)
     inherit server as super
     val mutable config : config = default_config
+    val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
@@ -81,40 +82,45 @@ class lsp_server =
       match to_option (member "ligoLanguageServer") settings with
       | None -> config <- { config with deprecated = true }
       | Some ligo_language_server ->
-        config
-          <- { config with
-               max_number_of_problems =
-                 ligo_language_server
-                 |> member "maxNumberOfProblems"
-                 |> to_int_option
-                 |> Option.value ~default:default_config.max_number_of_problems
-             ; logging_verbosity =
-                 (ligo_language_server
-                 |> member "loggingVerbosity"
-                 |> to_string_option
-                 |> function
-                 | Some "error" -> MessageType.Error
-                 | Some "warning" -> MessageType.Warning
-                 | Some "info" -> MessageType.Info
-                 | Some "log" -> MessageType.Log
-                 | Some _ | None -> default_config.logging_verbosity)
-             ; disabled_features =
-                 ligo_language_server
-                 |> member "disabledFeatures"
-                 |> to_option to_list
-                 |> Utils.value_map ~f:(List.map to_string) ~default:[]
-             ; deprecated =
-                 ligo_language_server
-                 |> member "deprecated"
-                 |> to_bool_option
-                 |> Option.value ~default:default_config.deprecated
-             }
+        self#decode_apply_ligo_language_server ligo_language_server
+
+    method decode_apply_ligo_language_server (ligo_language_server : Yojson.Safe.t) : unit
+        =
+      let open Yojson.Safe.Util in
+      config
+        <- { config with
+             max_number_of_problems =
+               ligo_language_server
+               |> member "maxNumberOfProblems"
+               |> to_int_option
+               |> Option.value ~default:default_config.max_number_of_problems
+           ; logging_verbosity =
+               (ligo_language_server
+               |> member "loggingVerbosity"
+               |> to_string_option
+               |> function
+               | Some "error" -> MessageType.Error
+               | Some "warning" -> MessageType.Warning
+               | Some "info" -> MessageType.Info
+               | Some "log" -> MessageType.Log
+               | Some _ | None -> default_config.logging_verbosity)
+           ; disabled_features =
+               ligo_language_server
+               |> member "disabledFeatures"
+               |> to_option to_list
+               |> Utils.value_map ~f:(List.map to_string) ~default:[]
+           ; deprecated =
+               ligo_language_server
+               |> member "deprecated"
+               |> to_bool_option
+               |> Option.value ~default:default_config.deprecated
+           }
 
     method! on_req_initialize
         ~(notify_back : notify_back)
-        (initParams : InitializeParams.t)
+        (init_params : InitializeParams.t)
         : InitializeResult.t IO.t =
-      let* initResult = super#on_req_initialize ~notify_back initParams in
+      let* init_result = super#on_req_initialize ~notify_back init_params in
       (* Currently, the behaviors of these editors will be as follow:
          * Emacs: Will send [Some `Null]. In [decode_apply_settings] we handle
            this by seeting [deprecated] as [true] so this editor may launch
@@ -125,11 +131,12 @@ class lsp_server =
          * Visual Studio Code: As we support reading the configuration from
            this editor, we proceed with our ordinary business and decode it. *)
       let () =
-        match initParams.initializationOptions with
+        match init_params.initializationOptions with
         | None -> config <- { config with deprecated = true }
         | Some settings -> self#decode_apply_settings settings
       in
-      Lwt.return initResult
+      client_capabilities <- init_params.capabilities;
+      IO.return init_result
 
     (* TODO: When the document closes, we should thinking about removing the
        state associated to the file from the global hashtable state, to avoid
@@ -166,14 +173,59 @@ class lsp_server =
     method! on_notification_unhandled
         : notify_back:notify_back -> Client_notification.t -> unit IO.t =
       fun ~notify_back -> function
-        (* FIXME: We don't have a way to register the configuration change
-           dynamically. See: https://github.com/c-cube/linol/issues/16 *)
-        | Client_notification.ChangeConfiguration { settings } ->
-          Lwt.return (self#decode_apply_settings settings)
+        | Client_notification.Initialized ->
+          (match client_capabilities.workspace with
+          | None -> IO.return ()
+          | Some { didChangeConfiguration; _ } ->
+            (match didChangeConfiguration with
+            | None -> IO.return ()
+            | Some { dynamicRegistration } ->
+              (match dynamicRegistration with
+              | None | Some false -> IO.return ()
+              | Some true ->
+                let register_change_configuration : Registration.t =
+                  { id = "ligoChangeConfiguration"
+                  ; method_ = "workspace/didChangeConfiguration"
+                  ; registerOptions = Some `Null
+                  }
+                in
+                let* _req_id =
+                  notify_back#send_request
+                    (Server_request.ClientRegisterCapability
+                       { registrations = [ register_change_configuration ] })
+                    (function
+                      | Error err ->
+                        notify_back#send_log_msg ~type_:MessageType.Error err.message
+                      | Ok () -> IO.return ())
+                in
+                IO.return ())))
+        | Client_notification.ChangeConfiguration _ ->
+          (* FIXME: When we have a configuration change, we are getting `null`
+             for some reason. Explicitly ask for the configuration as a
+             workaround. *)
+          (match client_capabilities.workspace with
+          | None -> IO.return ()
+          | Some { configuration; _ } ->
+            (match configuration with
+            | None | Some false -> IO.return ()
+            | Some true ->
+              let* _req_id =
+                notify_back#send_request
+                  (Server_request.WorkspaceConfiguration
+                     { items =
+                         [ ConfigurationItem.create ~section:"ligoLanguageServer" () ]
+                     })
+                  (function
+                    | Error err ->
+                      notify_back#send_log_msg ~type_:MessageType.Error err.message
+                    | Ok configs ->
+                      IO.return (List.iter self#decode_apply_ligo_language_server configs))
+              in
+              IO.return ()))
         | n -> super#on_notification_unhandled ~notify_back n
 
     method! on_request
-        : type r.  notify_back:(Server_notification.t -> unit Lwt.t)
+        : type r.  notify_back:(Server_notification.t -> unit IO.t)
                   -> server_request:send_request
                   -> id:Req_id.t
                   -> r Client_request.t
