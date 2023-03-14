@@ -148,3 +148,7 @@ For example, when executing binary operations, the right operand is computed fir
 In debugger we try to preserve the execution order, otherwise runs in production and in debugger could have different outcomes. As example of this change in result imagine a binary operation, both sides of which result in a failure.
 
 However, some reorderings can be safely illiminated. We try to handle such cases accordingly, but if you think this is your case, we would appreciate if you reported this issue.
+
+### I see many instances of the same function/value in the variables pane
+
+It's okay. At this moment debugger doesn't support polymorphic types in the variables pane, so, you'll see all monomorphed variants that are used in your contract.
