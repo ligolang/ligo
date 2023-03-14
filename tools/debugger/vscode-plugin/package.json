@@ -255,6 +255,13 @@
                 "title": "Debug: Switch to last stepping granularity",
                 "description": "Changes stepping granularity to the previously selected one"
             }
+        ],
+        "keybindings": [
+            {
+                "command": "extension.ligo-debugger.useLastSteppingGranularity",
+                "key": "ctrl+f10",
+                "mac": "cmd+f10"
+            }
         ]
     },
     "scripts": {
