@@ -1,3 +1,4 @@
+open Linol_lwt
 open Handler
 open Utils
 
@@ -14,10 +15,7 @@ let hover_string : Syntax_types.t -> Scopes.def -> string =
   | Module mdef -> Utils.print_module syntax mdef
 
 
-let on_req_hover
-    :  Lsp.Types.Position.t -> Lsp.Types.DocumentUri.t
-    -> Lsp.Types.Hover.t option Handler.t
-  =
+let on_req_hover : Position.t -> DocumentUri.t -> Hover.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->
@@ -27,11 +25,11 @@ let on_req_hover
   @@ fun syntax ->
   let syntax_highlight = Syntax.to_string syntax in
   let hover_string = hover_string syntax definition in
-  let marked_string : Lsp.Types.MarkedString.t =
+  let marked_string : MarkedString.t =
     { value = Format.sprintf "```%s\n" syntax_highlight ^ hover_string ^ "\n```"
     ; language = None
     }
   in
   let contents = `MarkedString marked_string in
-  let hover = Lsp.Types.Hover.create ~contents () in
+  let hover = Hover.create ~contents () in
   return (Some hover)
