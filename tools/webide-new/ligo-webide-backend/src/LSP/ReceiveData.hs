@@ -3,7 +3,6 @@ module LSP.ReceiveData (receiveData) where
 import Control.Arrow ((>>>))
 import Control.Lens (to)
 import Data.Aeson qualified as Aeson
-import Data.Aeson.Encode.Pretty qualified as Aeson (encodePretty)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
 import Data.Text qualified as Text
@@ -39,7 +38,7 @@ prettyJSON :: BS.ByteString -> Text
 prettyJSON bs =
   case Aeson.decodeStrict bs of
     Just (obj :: Aeson.Value) ->
-      decodeUtf8 (BSL.toStrict (Aeson.encodePretty obj))
+      decodeUtf8 (BSL.toStrict (Aeson.encode obj))
     Nothing -> "<no parse>"
 
 addContentLength :: BS.ByteString -> BS.ByteString
