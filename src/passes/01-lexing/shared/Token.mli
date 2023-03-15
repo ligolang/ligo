@@ -59,6 +59,10 @@ module type S =
     val to_region : token -> Region.t
     val concrete  : string -> lexeme
 
+    (* TRANSFORMATIONS *)
+
+    val add_directive : Directive.t -> token -> token
+
     (* INJECTIONS *)
 
     (* Preprocessing directives *)

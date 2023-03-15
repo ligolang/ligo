@@ -197,16 +197,13 @@ module Fold_helpers (M : Monad) = struct
       return @@ E_List { value; region }
     | E_Nil _ as e -> return e
     | E_Ctor _ as e -> return e
+
     | E_App { value; region } ->
-      let lambda, expr = value in
-      let* expr =
-        bind_map_option
-          (fun (e : expr tuple) ->
-            let* inside = bind_map_npseq self e.value.inside in
-            ok { e with value = { e.value with inside } })
-          expr
-      in
-      let value = lambda, expr in
+      let lam, args = value in
+      let* lam = self lam in
+      let* inside = bind_map_pseq self args.value.inside in
+      let args = { args with value = { args.value with inside } } in
+      let value = lam, args in
       return @@ E_App { value; region }
     | E_Record { value; region } ->
       let aux (e : (expr, expr) field reg) =
@@ -233,13 +230,6 @@ module Fold_helpers (M : Monad) = struct
       let value = { value with field } in
       return @@ E_ModPath { value; region }
     | E_Var _ as e -> return e
-    | E_Call { value; region } ->
-      let lam, args = value in
-      let* lam = self lam in
-      let* inside = bind_map_pseq self args.value.inside in
-      let args = { args with value = { args.value with inside } } in
-      let value = lam, args in
-      return @@ E_Call { value; region }
     | E_Bytes _ as e -> return @@ e
     | E_Tuple { value; region } ->
       let* inside = bind_map_npseq self value.inside in

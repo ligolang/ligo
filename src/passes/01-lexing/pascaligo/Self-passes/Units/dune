@@ -9,7 +9,8 @@
   ;; Vendors
   simple-utils
   LexerLib
+  preprocessing_pascaligo
   ;; LIGO
   lexing_shared
   lx_psc_self_tokens)
- (modules Self ZWSP))
+ (modules Self ZWSP Comments))

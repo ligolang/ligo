@@ -6,11 +6,11 @@ module type S =
 
     include LexerLib.Options.S
 
-    val mono        : bool  (* --mono        *)
-    val pretty      : bool  (* --pretty      *)
-    val cst         : bool  (* --cst         *)
-    val recovery    : bool  (* --recovery    *)
-    val used_tokens : bool  (* --used-tokens *)
+    val mono        : bool          (* --mono        *)
+    val pretty      : bool          (* --pretty      *)
+    val cst         : bool          (* --cst         *)
+    val recovery    : bool          (* --recovery    *)
+    val used_tokens : bool          (* --used-tokens *)
 
     (* File path where tracing will be printed:
          * [None] means no option;

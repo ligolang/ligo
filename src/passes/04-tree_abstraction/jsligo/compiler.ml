@@ -11,7 +11,10 @@ open AST
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: List.map ~f:snd tl
 let npseq_to_ne_list (hd, tl) = hd, List.map ~f:snd tl
+
 let r_split = Location.r_split
+
+let w_split (x : 'a CST.Wrap.t) : 'a * Location.t = x#payload, Location.lift x#region
 
 let compile_variable var =
   let var, loc = r_split var in
@@ -32,7 +35,7 @@ let compile_attributes : CST.attribute list -> string list =
  fun attr ->
   let f : CST.attribute -> string =
    fun x ->
-    let (k, v_opt), _loc = r_split x in
+    let (k, v_opt), _loc = w_split x in
     match v_opt with
     | Some (String v | Ident v) -> String.concat ~sep:":" [ k; v ]
     | None -> k
@@ -385,10 +388,15 @@ let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | _ as e -> raise.error @@ expected_a_variable (CST.expr_to_region e)
 
 
-let compile_component_to_access ~raise : CST.expr -> _ Access_path.access = function
+let rec compile_component_to_access ~raise
+  : CST.expr -> _ Access_path.access = function
   | EArith (Int i) -> Access_tuple (snd i.value)
   | EString (String s) -> Access_record s.value
-  | _ as e -> raise.error @@ expected_an_int_or_string e
+  | EPar e -> compile_component_to_access ~raise e.value.inside
+  | EAnnot e ->
+      let expr, _, _ = e.value in
+      compile_component_to_access ~raise expr
+  | e -> raise.error @@ expected_an_int_or_string e
 
 
 let compile_selection ~raise : CST.selection -> _ Access_path.access * Location.t =
@@ -934,7 +942,7 @@ and compile_expression ~raise : CST.expr -> AST.expr =
     return @@ e_annotation ~loc expr ty
   | ECodeInj ci ->
     let ci, loc = r_split ci in
-    let language, _ = r_split ci.language in
+    let language, _ = w_split ci.language in
     let code = self ci.code in
     return @@ e_raw_code ~loc language code
   | ESeq seq ->
@@ -1332,13 +1340,14 @@ and merge_statement_results ~raise
   | Binding_return a, Binding_return b -> Binding_return (a <@ b)
 
 
-and filter_private (attributes : CST.attributes) =
-  List.filter ~f:(fun v -> not @@ String.equal (fst v.value) "private") attributes
+and filter_private (attributes : CST.attribute list) =
+  List.filter ~f:(fun v -> not @@ String.equal (fst v#payload) "private")
+    attributes
 
 
 (* can probably be cleaned up *)
 and compile_val_binding ~raise
-    :  CST.attributes -> CST.val_binding Region.reg -> Region.t
+    :  CST.attribute list -> CST.val_binding Region.reg -> Region.t
     -> [ `Fun of type_expression option Binder.t
        | `Val of type_expression option Pattern.t
        ]
@@ -1435,7 +1444,7 @@ and compile_val_binding ~raise
 
 
 and compile_let_binding ~raise
-    : CST.attributes -> CST.val_binding Region.reg -> Region.t -> AST.declaration
+    : CST.attribute list -> CST.val_binding Region.reg -> Region.t -> AST.declaration
   =
  fun attributes val_binding region ->
   let lhs, attr, expr = compile_val_binding ~raise attributes val_binding region in
@@ -1446,7 +1455,7 @@ and compile_let_binding ~raise
 
 
 and compile_let_in_binding ~raise
-    :  const:bool -> CST.attributes -> CST.val_binding Region.reg -> Region.t
+    :  const:bool -> CST.attribute list -> CST.val_binding Region.reg -> Region.t
     -> AST.expression -> AST.expression
   =
  fun ~const attributes val_binding region ->
@@ -1498,9 +1507,10 @@ and compile_statement ?(wrap = false) ~raise : CST.statement -> statement_result
   let expr e = Expr e in
   let return r : statement_result = Return r in
   match statement with
-  | SExpr e ->
-    let e = self_expr e in
-    expr e
+  | SExpr (attr, e) ->
+     let () = ignore attr in (* TODO *)
+     let e = self_expr e in
+     expr e
   | SBlock { value = { inside; _ }; region = _ } when not wrap ->
     let statements = self_statements ~wrap:true inside in
     statements
@@ -1767,7 +1777,7 @@ and compile_statement ?(wrap = false) ~raise : CST.statement -> statement_result
       List.fold_left cases ~init:initial ~f:(fun acc case ->
           merge_statement_results ~raise acc (process_case case))
       (* in
-      match o with 
+      match o with
         Binding e -> Binding e
       | _ as e -> e     *))
   | SBreak b -> Break (e_unit ~loc:(Location.lift b#region) ())
@@ -1779,7 +1789,7 @@ and compile_statement ?(wrap = false) ~raise : CST.statement -> statement_result
     binding (e_type_in ~loc type_binder rhs)
   | SNamespace n ->
     let (_, name, rhs, attributes), loc = r_split n in
-    ignore attributes;
+    ignore attributes; (* TODO *)
     let module_binder = compile_mod_var name in
     let rhs =
       let decls = compile_namespace ~raise rhs.value.inside in

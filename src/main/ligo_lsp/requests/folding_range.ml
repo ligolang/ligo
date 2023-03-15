@@ -201,7 +201,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   and statement = function
     | SBlock { value; region } ->
       mk_region region :: nsepseq_concat_map value.inside ~f:statement
-    | SExpr value -> expr value
+    | SExpr (_attrs, value) -> expr value
     | SCond { value; region } -> mk_region region :: cond_statement value
     | SReturn { value; region } ->
       mk_region region :: value_map ~f:expr ~default:[] value.expr

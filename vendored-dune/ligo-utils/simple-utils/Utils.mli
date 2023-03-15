@@ -105,3 +105,8 @@ module Int :
     module Map : Caml.Map.S with type key = t
     module Set : Caml.Set.S with type elt = t
   end
+
+(* Optional let *)
+
+val (let*) : 'a option -> ('a -> 'b option) -> 'b option
+val return : 'a -> 'a option

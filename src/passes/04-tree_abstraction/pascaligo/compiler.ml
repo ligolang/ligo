@@ -33,6 +33,7 @@ let check_no_attributes
 
 
 let r_split = Location.r_split
+
 let w_split (x : 'a CST.Wrap.t) : 'a * Location.t = x#payload, Location.lift x#region
 
 let compile_variable var =
@@ -64,7 +65,7 @@ let compile_attributes : CST.attribute list -> AST.attributes =
  fun attr ->
   let f : CST.attribute -> string =
    fun x ->
-    let (k, v_opt), _loc = r_split x in
+    let (k, v_opt), _loc = w_split x in
     match v_opt with
     | Some (Ident v | String v) -> String.concat ~sep:":" [ k; v ]
     | None -> k
@@ -315,17 +316,6 @@ let rec compile_expression
   | E_Geq ge -> compile_bin_op C_GE ge
   | E_Equal eq -> compile_bin_op C_EQ eq
   | E_Neq ne -> compile_bin_op C_NEQ ne
-  | E_Call { value = E_Var var, args; region } ->
-    let loc = Location.lift region in
-    let var, loc_var = w_split var in
-    let func = e_variable_ez ~loc:loc_var var in
-    let args, _loc = compile_arguments args in
-    List.fold_left ~f:(fun e arg -> e_application ~loc e arg) ~init:func args
-  | E_Call call ->
-    let (func, args), loc = r_split call in
-    let func = self func in
-    let args, _loc = compile_arguments args in
-    List.fold_left ~f:(fun e arg -> e_application ~loc e arg) ~init:func args
   | E_Tuple lst -> compile_tuple_expression lst
   | E_Record record ->
     let record, loc = r_split record in
@@ -479,15 +469,37 @@ let rec compile_expression
     | "Unit" -> e_unit ~loc ()
     | _ -> e_constructor ~loc v (e_unit ~loc ()))
   | E_App x ->
-    let (expr, args_opt), loc = r_split x in
-    (match expr, args_opt with
-    | CST.E_Ctor x, None when String.equal (fst (w_split x)) "Unit" -> e_unit ~loc ()
-    | CST.E_Ctor x, _ ->
-      let ctor_name, _loc = w_split x in
-      let args_o = Option.map ~f:compile_tuple_expression args_opt in
-      let args = Option.value ~default:(e_unit ~loc ()) args_o in
-      e_constructor ~loc ctor_name args
-    | _ -> failwith "impossible")
+    let (expr, args), loc = r_split x in
+    (match expr, args.value.inside with
+     | CST.E_Ctor x, None
+       when String.equal (fst (w_split x)) "Unit" -> e_unit ~loc ()
+     | CST.E_Ctor x, Some nsepseq ->
+         let par = CST.{
+           lpar   = args.value.lpar;
+           inside = nsepseq;
+           rpar   = args.value.rpar} in
+         let args : CST.expr CST.tuple =
+           Region.{region = args.region; value = par} in
+         let ctor_name, _loc = w_split x in
+         let args = compile_tuple_expression args in
+         e_constructor ~loc ctor_name args
+     | CST.E_Var var, args' ->
+         let args' = CST.{
+           lpar   = args.value.lpar;
+           inside = args';
+           rpar   = args.value.rpar} in
+         let args' =
+           Region.{region = args.region; value = args'} in
+         let var, loc_var = w_split var in
+         let func = e_variable_ez ~loc:loc_var var in
+         let args, _loc = compile_arguments args' in
+         List.fold_left ~f:(fun e arg -> e_application ~loc e arg)
+           ~init:func args
+     | _ ->
+       let func = self expr in
+       let args, _loc = compile_arguments args in
+       List.fold_left ~f:(fun e arg -> e_application ~loc e arg)
+         ~init:func args)
   | E_Case case ->
     let CST.{ cases; expr; _ }, loc = r_split case in
     let matchee = self expr in
@@ -562,7 +574,7 @@ let rec compile_expression
     e_big_map ~loc map
   | E_CodeInj ci ->
     let ci, loc = r_split ci in
-    let language, _ = r_split ci.language in
+    let language, _ = w_split ci.language in
     let language, _ = r_split language in
     let code = self ci.code in
     e_raw_code ~loc language code
@@ -1036,8 +1048,8 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
     let default_rhs = remove_func item (e_variable ~loc v) in
     let last_proj_update prev_proj = remove_func item prev_proj in
     return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
-  | I_Call { region; value = f, args } ->
-    return @@ compile_expression ~raise (E_Call { region; value = f, args })
+  | I_Call call ->
+    return @@ compile_expression ~raise (E_App call)
 
 
 and compile_binding ~raise

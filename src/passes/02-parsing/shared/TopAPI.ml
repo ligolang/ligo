@@ -7,7 +7,6 @@ module Region          = Simple_utils.Region
 module Utils           = Simple_utils.Utils
 module Std             = Simple_utils.Std
 module Lexbuf          = Simple_utils.Lexbuf
-module Snippet         = Simple_utils.Snippet
 module Unit            = LexerLib.Unit
 module type LEXER      = ParserLib.LowAPI.LEXER
 module type PARSER     = ParserLib.LowAPI.PARSER

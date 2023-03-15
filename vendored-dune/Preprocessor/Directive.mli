@@ -24,12 +24,16 @@ type ending = [
    the string containing the file to include, with its region. *)
 
 type include_directive = <
-  region           : Region.t;
-  file_path        : file_path Region.reg;
-  trailing_comment : string Region.reg option
+  region            : Region.t;
+  file_path         : file_path Region.reg;
+  trailing_comment  : string Region.reg option;
+  previous_comments : string Region.reg list;
+  add_previous_com  : string Region.reg -> include_directive;
+  set_file_path     : file_path Region.reg -> include_directive
 >
 
 val mk_include :
+  ?previous_comments:string Region.reg ->
   ?trailing_comment:message Region.reg ->
   Region.t -> file_path Region.reg -> include_directive
 
@@ -41,13 +45,17 @@ val mk_include :
    module to fetch, with its region. *)
 
 type import_directive = <
-  region           : Region.t;
-  file_path        : file_path Region.reg;
-  module_name      : module_name Region.reg;
-  trailing_comment : message Region.reg option
+  region            : Region.t;
+  file_path         : file_path Region.reg;
+  module_name       : module_name Region.reg;
+  trailing_comment  : message Region.reg option;
+  previous_comments : string Region.reg list;
+  add_previous_com  : string Region.reg -> import_directive;
+  set_file_path     : file_path Region.reg -> import_directive
 >
 
 val mk_import :
+  ?previous_comments:string Region.reg ->
   ?trailing_comment:message Region.reg ->
   Region.t ->
   file_path Region.reg ->
@@ -59,15 +67,18 @@ val mk_import :
    [expression] is the argument of "#if" (a boolean expression). *)
 
 type bool_expr = <
-  region           : Region.t;
-  expression       : E_AST.t;
-  trailing_comment : string Region.reg option
+  region            : Region.t;
+  expression        : E_AST.t;
+  trailing_comment  : string Region.reg option;
+  previous_comments : string Region.reg list;
+  add_previous_com  : string Region.reg -> bool_expr
 >
 
 type if_directive   = bool_expr
 type elif_directive = bool_expr
 
 val mk_bool_expr :
+  ?previous_comments:string Region.reg ->
   ?trailing_comment:message Region.reg ->
   Region.t ->
   E_AST.t -> if_directive
@@ -146,6 +157,11 @@ val to_region : t -> Region.t
 val to_lexeme : t -> string Region.reg
 val project   : t -> Region.t * string
 val to_string : offsets:bool -> [`Byte | `Point] -> t -> string
+
+(* EMBEDDING PREVIOUS COMMENTS *)
+
+val add_comment  : string Region.reg -> t -> t
+val get_comments : t -> string Region.reg list
 
 (* SCANNERS *)
 

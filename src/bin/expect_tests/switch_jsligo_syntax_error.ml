@@ -28,8 +28,9 @@ let%expect_test _ =
      10 |       case 3:
      11 |         output = output + "@@@";
     Ill-formed switch statement.
-    At this point, if the last case is complete, a closing brace '}' is
-    expected. |}]
+    At this point, if the case is complete, one of the following is expected:
+      * another case;
+      * a closing brace '}' if no more cases. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -44,8 +45,9 @@ let%expect_test _ =
      14 |       default:
      15 |         output = output + "***";
     Ill-formed switch statement.
-    At this point, if the last case is complete, a closing brace '}' is
-    expected. |}]
+    At this point, if the case is complete, one of the following is expected:
+      * another case;
+      * a closing brace '}' if no more cases. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -62,7 +64,7 @@ let%expect_test _ =
     Ill-formed block of statements.
     At this point, one of the following is expected:
       * another statement;
-      * a closing brace '}' if the block is complete. |}]
+      * a closing brace '}' if no more statements. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -109,4 +111,4 @@ let%expect_test _ =
     Ill-formed block of statements.
     At this point, one of the following is expected:
       * another statement;
-      * a closing brace '}' if the block is complete. |}]
+      * a closing brace '}' if no more statements. |}]

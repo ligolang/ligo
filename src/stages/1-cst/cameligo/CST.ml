@@ -67,10 +67,10 @@ type dot      = lexeme wrap  (* "."  *)
 
 (* Arithmetic operators *)
 
-type minus    = lexeme wrap  (* "-" *)
-type plus     = lexeme wrap  (* "+" *)
-type slash    = lexeme wrap  (* "/" *)
-type times    = lexeme wrap  (* "*" *)
+type minus = lexeme wrap  (* "-" *)
+type plus  = lexeme wrap  (* "+" *)
+type slash = lexeme wrap  (* "/" *)
+type times = lexeme wrap  (* "*" *)
 
 (* Boolean operators *)
 
@@ -127,8 +127,8 @@ type type_constr = string reg
 type constr      = string reg
 type type_param  = string reg
 
-type attribute   = Attr.t
-type attributes  = Attr.attribute reg list
+type attribute   = Attr.t wrap
+type language    = lexeme Region.reg wrap
 
 (* Parentheses *)
 
@@ -159,7 +159,7 @@ and declaration =
 (* Non-recursive values *)
 
 and let_decl =
-  (kwd_let * kwd_rec option * let_binding * attributes)
+  (kwd_let * kwd_rec option * let_binding * attribute list)
 
 and let_binding = {
   type_params : type_params par reg option;
@@ -231,20 +231,20 @@ and cartesian = (type_expr, times) nsepseq reg
 and sum_type = {
   lead_vbar  : vbar option;
   variants   : (variant reg, vbar) nsepseq;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and variant = {
   constr     : constr;
   arg        : (kwd_of * type_expr) option;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and field_decl = {
   field_name : field_name;
   colon      : colon;
   field_type : type_expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and pattern =
@@ -264,7 +264,7 @@ and pattern =
 
 and var_pattern = {
   variable   : variable;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and list_pattern =
@@ -324,7 +324,7 @@ and 'a ne_injection = {
   compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option;
-  attributes  : attributes
+  attributes  : attribute list
 }
 
 and compound =
@@ -404,8 +404,8 @@ and selection =
   FieldName of variable
 | Component of (string * Z.t) reg
 
-and field_assign = 
-  Property of field_assign_property 
+and field_assign =
+  Property of field_assign_property
 | Punned_property of field_name
 
 and field_assign_property = {
@@ -422,7 +422,7 @@ and update = {
   rbrace   : rbrace
 }
 
-and field_path_assignment = 
+and field_path_assignment =
   Path_property of field_path_assignment_property
 | Path_punned_property of field_name
 
@@ -456,7 +456,7 @@ and let_in = {
   binding    : let_binding;
   kwd_in     : kwd_in;
   body       : expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and type_in = {
@@ -484,7 +484,7 @@ and fun_expr = {
   rhs_type    : (colon * type_expr) option;
   arrow       : arrow;
   body        : expr;
-  attributes  : attributes
+  attributes  : attribute list
 }
 
 and cond_expr = {
@@ -500,7 +500,7 @@ and cond_expr = {
    the innermost covers the <language>. *)
 
 and code_inj = {
-  language : string reg reg;
+  language : language;
   code     : expr;
   rbracket : rbracket;
 }

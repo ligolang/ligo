@@ -8,13 +8,14 @@ module Lexbuf = Simple_utils.Lexbuf
 
 (* Internal dependencies *)
 
-module Config      = Preprocessing_pascaligo.Config
-module Token       = Lexing_pascaligo.Token
-module UnitPasses  = Lx_psc_self_units.Self
-module TokenPasses = Lx_psc_self_tokens.Self
-module ParErr      = Parsing_pascaligo.ParErr
-module Tree        = Cst_shared.Tree
-module CST         = Cst_pascaligo.CST
+module Config       = Preprocessing_pascaligo.Config
+module Token        = Lexing_pascaligo.Token
+module UnitPasses   = Lx_psc_self_units.Self
+module TokenPasses  = Lx_psc_self_tokens.Self
+module ParErr       = Parsing_pascaligo.ParErr
+module Tree         = Cst_shared.Tree
+module CST          = Cst_pascaligo.CST
+module JsLIGOPretty = Parsing_jsligo.Pretty
 
 (* APIs *)
 
@@ -27,6 +28,7 @@ module ParserAPI  = Parsing_shared.TopAPI
 module PreprocParams = Preprocessor.CLI.Make (Config)
 module LexerParams   = LexerLib.CLI.Make (PreprocParams)
 module Parameters    = ParserLib.CLI.Make (LexerParams)
+module Options       = Parameters.Options
 
 (* Instantiating preprocessor and lexer *)
 
@@ -96,9 +98,30 @@ let () =
   let open! Main in
   match check_cli () with
     Ok ->
-      let file = Option.value Parameters.Options.input ~default:"" in
-      let no_colour = Parameters.Options.no_colour in
-      let std, _cst = parse ~no_colour (Lexbuf.File file) in
+      let file = Option.value Options.input ~default:"" in
+      let no_colour = Options.no_colour in
+      let std, cst = parse ~no_colour (Lexbuf.File file) in
+      let () =
+        match cst, Options.jsligo with
+          Ok (cst, _), Some file_opt ->
+             let jsligo_cst = JsLIGO.of_cst cst in
+             let doc = JsLIGOPretty.print jsligo_cst in
+             let width =
+               match Terminal_size.get_columns () with
+                 None -> 60
+               | Some c -> c in
+             let buffer = Buffer.create 2000 in
+             let () =
+               PPrint.ToBuffer.pretty 1.0 width buffer doc in
+             let contents = Buffer.contents buffer in (
+             match file_opt with
+               None -> Std.(add_line std.out contents)
+             | Some file ->
+                 let out_chan = Out_channel.open_text file in
+                 Out_channel.output_string out_chan contents;
+                 Out_channel.close out_chan
+           )
+        | _ -> () in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in
       Printf.printf  "%s%!" (Std.string_of std.out);

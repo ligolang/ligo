@@ -118,17 +118,17 @@ module MakeParser
 
       let module LexerParams =
         LexerLib.CLI.MakeDefault (PreprocParams) in
-      
-      let module LexerParams = struct 
+
+      let module LexerParams = struct
         include LexerParams
 
-        module Options = struct 
+        module Options = struct
           include LexerParams.Options
- 
-          let preprocess = preprocess_
-        end 
 
-      end 
+          let preprocess = preprocess_
+        end
+
+      end
       in
 
       let module MainLexer =

@@ -36,12 +36,17 @@ let sprintf  = Printf.sprintf
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-let print_attribute state (node : Attr.t reg) =
-  let key, val_opt = node.value in
+let print_attribute state (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   match val_opt with
     None ->
       Tree.print_unary state "<attribute>" Tree.print_node key
-  | Some (String value | Ident value) ->
+  | Some String value ->
+      let children = [
+        Tree.mk_child Tree.print_node key;
+        Tree.mk_child Tree.print_node ("\"" ^ value ^ "\"")]
+      in Tree.print state "<attributes>" children
+  | Some Ident value ->
       let children = [
         Tree.mk_child Tree.print_node key;
         Tree.mk_child Tree.print_node value]
@@ -55,7 +60,7 @@ let print_list :
     let children = List.map ~f:(Tree.mk_child print) list
     in Tree.print ?region state label children
 
-let print_attributes state (node : Attr.attribute reg list) =
+let print_attributes state (node : Attr.t wrap list) =
   print_list state "<attributes>" print_attribute node
 
 (** {1 Pretty-printing the AST} *)
@@ -102,9 +107,11 @@ and print_statement state = function
     let statements = Utils.nsepseq_to_list inside in
     let apply len rank = print_statement (state#pad len rank) in
     List.iteri ~f:(List.length statements |> apply) statements
-| SExpr e ->
+| SExpr (attributes, expr) ->
+   (if not (List.is_empty attributes) then
+      print_attributes state attributes);
     print_node  state "SExpr";
-    print_expr (state#pad 1 0) e
+    print_expr (state#pad 1 0) expr
 | SCond {value; region} ->
     print_loc_node state "SCond" region;
     print_cond_statement state value
@@ -161,7 +168,8 @@ and print_const_stmt state (node: const_decl reg) =
   let apply len rank = print_val_binding (state#pad len rank) in
   List.iteri ~f:(List.length val_bindings |> apply) val_bindings
 
-and print_for_of state {index; expr; statement; _} =
+and print_for_of state {attributes; index; expr; statement; _} =
+  print_attributes state attributes;
   print_ident state index;
   print_expr state expr;
   print_statement state statement
@@ -424,7 +432,7 @@ and print_fun_expr state node =
     Option.iter ~f:(fun type_params ->
     let state = state#pad fields 0 in
     print_node state "<type_params>";
-    print_type_generics (state#pad 1 0) type_params) 
+    print_type_generics (state#pad 1 0) type_params)
     type_params in
   let () =
     let state = state#pad fields 0 in
@@ -456,7 +464,7 @@ and print_code_inj state rc =
   let () =
     let state = state#pad 2 0 in
     print_node state "<language>";
-    print_string (state#pad 1 0) rc.language in
+    print_node (state#pad 1 0) rc.language#payload in
   let () =
     let state = state#pad 2 1 in
     print_node state "<code>";
@@ -562,6 +570,9 @@ and print_ternary state ternary =
   print_expr (state#pad 1 0) @@ ternary.falsy
 
 and print_cond_statement state (cond: cond_statement) =
+  let attributes = cond.attributes in
+  let () = if not (List.is_empty attributes) then
+      print_attributes state attributes in
   let () =
     let state = state#pad 3 0 in
     print_node state "<condition>";
@@ -684,7 +695,7 @@ and print_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in
   let apply len rank = print_type_expr (state#pad len rank)
   in List.iteri ~f:(List.length components |> apply) components
-  
+
 and print_field_decl state {value; _} =
   let arity = if List.is_empty value.attributes then 1 else 2 in
   print_ident      state value.field_name;

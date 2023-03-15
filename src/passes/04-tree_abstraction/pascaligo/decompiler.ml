@@ -227,7 +227,7 @@ let rec get_e_accessor : AST.expression -> _ =
     @@ Format.asprintf "%a should be a variable expression" AST.PP.expression expr
 
 
-let get_e_tuple : AST.expression -> _ =
+let get_e_tuple : AST.expression -> AST.expression list =
  fun expr ->
   match expr.expression_content with
   | E_tuple tuple -> tuple
@@ -392,15 +392,19 @@ and decompile_eos
     | [] -> return_expr @@ expr
     | _ ->
       let arguments = decompile_arguments arguments in
-      let const : CST.call = Region.wrap_ghost (expr, arguments) in
+      let const : CST.call =
+        Region.wrap_ghost (expr, arguments) in
       (match output with
-      | Expression -> return_expr (CST.E_Call const)
+      | Expression -> return_expr (CST.E_App const)
       | Statements -> return_inst (CST.I_Call const)))
   | E_literal literal ->
     (* TODO: Check these new cases coming from dev *)
     (match literal with
     | Literal_unit ->
-      return_expr @@ CST.E_App (Region.wrap_ghost (CST.E_Ctor (Wrap.ghost "Unit"), None))
+        let call_args = Region.wrap_ghost (par None)
+        and ctor = CST.E_Ctor (Wrap.ghost "Unit")
+        in return_expr @@
+        CST.E_App (Region.wrap_ghost (ctor, call_args))
     | Literal_int i -> return_expr @@ CST.E_Int (Wrap.ghost (Z.to_string i, i))
     | Literal_nat n -> return_expr @@ CST.E_Nat (Wrap.ghost (Z.to_string n, n))
     | Literal_timestamp time ->
@@ -465,7 +469,7 @@ and decompile_eos
     let lamb = decompile_expression lamb in
     let args = decompile_arguments @@ get_e_tuple args in
     (match output with
-    | Expression -> return_expr @@ CST.E_Call (Region.wrap_ghost (lamb, args))
+    | Expression -> return_expr @@ CST.E_App (Region.wrap_ghost (lamb, args))
     | Statements -> return_inst @@ CST.I_Call (Region.wrap_ghost (lamb, args)))
   | E_lambda lambda ->
     let parameters, ret_type, return = decompile_lambda lambda in
@@ -548,16 +552,17 @@ and decompile_eos
     in
     return @@ (Some lst, expr)
   | E_raw_code { language; code } ->
-    let language = Region.wrap_ghost @@ Region.wrap_ghost @@ language in
+    let language : CST.language =
+      Wrap.ghost @@ Region.wrap_ghost @@ language in
     let code = decompile_expression code in
     let ci : CST.code_inj = { language; code; rbracket = Token.ghost_rbracket } in
     return_expr @@ CST.E_CodeInj (Region.wrap_ghost ci)
   | E_constructor { constructor; element } ->
-    let (Label constr) = constructor in
+    let Label constr = constructor in
     let constr = Wrap.ghost constr in
-    let element = decompile_to_tuple_expr @@ get_e_tuple element in
+    let element = decompile_arguments @@ get_e_tuple element in
     return_expr_with_par
-    @@ CST.E_App (Region.wrap_ghost (CST.E_Ctor constr, Some element))
+    @@ CST.E_App (Region.wrap_ghost (CST.E_Ctor constr, element))
   | E_matching { matchee; cases } ->
     let expr = decompile_expression matchee in
     let opening, closing = enclosing_brackets in

@@ -325,11 +325,12 @@ module Fold_helpers (M : Monad) = struct
     | SBlock { value; region } ->
       let* inside = bind_map_npseq self value.inside in
       return @@ SBlock { value = { value with inside }; region }
-    | SExpr e ->
+    | SExpr (attributes, e) ->
       let* e = self_expr e in
-      return @@ SExpr e
+      return @@ SExpr (attributes, e)
     | SCond { value; region } ->
-      let { kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } = value in
+      let { attributes;
+            kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } = value in
       let* inside = self_expr inside in
       let* ifso = self ifso in
       let map_ifnot (else_, statement) =
@@ -337,7 +338,7 @@ module Fold_helpers (M : Monad) = struct
         ok (else_, statement)
       in
       let* ifnot = bind_map_option map_ifnot ifnot in
-      let value = { kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } in
+      let value = { attributes; kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } in
       return @@ SCond { value; region }
     | SReturn { value = { kwd_return; expr }; region } ->
       let* expr = bind_map_option self_expr expr in

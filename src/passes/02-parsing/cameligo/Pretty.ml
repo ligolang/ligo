@@ -53,8 +53,8 @@ and pp_let_decl {value; _} =
                 else pp_attributes attr ^/^ let_str
   in let_str ^^ pp_let_binding binding
 
-and pp_attribute (node : Attr.t reg) =
-  let key, val_opt = node.value in
+and pp_attribute (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   let thread = string "[@" ^^ string key in
   let thread = match val_opt with
                  Some (String value | Ident value) ->
@@ -392,7 +392,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = string language.value.value
+  let language = string language#payload.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 

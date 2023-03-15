@@ -11,10 +11,10 @@ module Parameters    = LexerLib.CLI.Make (PreprocParams)
 module Options       = Parameters.Options
 module Lexer         = Lexing_shared.Lexer.Make (Options) (Token)
 
-let scan_comment scan comment =
-  let lexbuf = Lexing.from_string comment#payload in
-  let ()     = Lexbuf.reset_file comment#region#file lexbuf in
-  let line   = comment#region#start#line in
+let scan_comment scan comment region =
+  let lexbuf = Lexing.from_string comment in
+  let ()     = Lexbuf.reset_file region#file lexbuf in
+  let line   = region#start#line in
   let ()     = Lexbuf.reset_line line lexbuf
   in scan lexbuf
 
@@ -22,12 +22,16 @@ let collect_attributes tokens =
   let open! Token in
   let rec inner acc = function
     LineCom c :: tokens -> (
-      match scan_comment (Lexer.line_comment_attr acc) c with
+      let comment = "// " ^ c#payload in
+      let line_comment = Lexer.line_comment_attr acc in
+      match scan_comment line_comment comment c#region with
         Ok acc    -> inner acc tokens
       | Error msg -> Error (acc, msg))
 
   | BlockCom c :: tokens -> (
-      match scan_comment (Lexer.block_comment_attr acc) c with
+      let comment = Printf.sprintf "/* %s */" c#payload in
+      let block_comment = Lexer.block_comment_attr acc in
+      match scan_comment block_comment comment c#region with
         Ok acc    -> inner acc tokens
       | Error msg -> Error (acc, msg))
 

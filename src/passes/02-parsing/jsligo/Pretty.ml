@@ -10,7 +10,7 @@ module List = Core.List
 
 let pp_braces printer (node : 'a braces reg) =
   let inside = node.value.inside
-  in string "{" ^^ nest 1 (printer inside ^^ string "}")
+  in string "{" ^/^ nest 1 (printer inside ^^ string "}")
 
 let pp_brackets printer (node : 'a brackets reg) =
   let inside = node.value.inside
@@ -24,11 +24,13 @@ let pp_nsepseq :
     in separate_map sep printer elems
 
 let rec print cst =
-    Utils.nseq_to_list cst.statements
-  |> List.map ~f:pp_toplevel_statement
-  |> separate_map hardline group
-(*  let stmts     = Utils.nseq_to_list cst.statements in
-  let stmts     = List.map ~f:pp_toplevel_statement stmts in
+  Utils.nseq_to_list cst.statements
+|> List.map ~f:pp_toplevel_statement
+|> separate_map hardline group
+
+(*
+  let stmts    = Utils.nseq_to_list cst.statements in
+  let stmts    = List.map ~f:pp_toplevel_statement stmts in
   let app stmt = group (stmt ^^ string ";")
   in separate_map (hardline ^^ hardline) app stmts *)
 
@@ -40,7 +42,7 @@ and pp_toplevel_statement = function
 
 and pp_statement ?top = function
   SBlock      s -> pp_SBlock s
-| SExpr       s -> pp_expr s
+| SExpr       s -> pp_SExpr s
 | SCond       s -> group (pp_cond_expr s)
 | SReturn     s -> pp_return s
 | SLet        s -> pp_let ?top s
@@ -57,6 +59,12 @@ and pp_statement ?top = function
 and pp_SBlock stmt =
   let print = pp_nsepseq ";" pp_statement
   in group (pp_braces print stmt)
+
+and pp_SExpr (node: attribute list * expr) =
+  let attr, expr = node in
+  let expr_doc   = pp_expr expr in
+  if List.is_empty attr then expr_doc
+  else pp_attributes attr ^/^ expr_doc
 
 and pp_for_of {value; _} =
   string "for" ^^ string "("
@@ -100,29 +108,34 @@ and pp_namespace ?top {value = (_, name, statements, attributes); _} =
     Some true -> true
   | _ -> false
   in
-  let is_private = List.exists ~f:(fun a -> String.equal (fst a.value) "private") attributes in
+  let is_private =
+    List.exists ~f:(fun a -> String.equal (fst a#payload) "private") attributes in
   let attributes  = filter_private attributes in
   let pp_statements = pp_nsepseq ";" pp_statement in
-  (if List.is_empty attributes then empty else pp_attributes attributes) ^^
-  string "namespace " ^^ string name.value
+  (if List.is_empty attributes then empty else pp_attributes attributes)
+  ^/^ string "namespace " ^^ string name.value
   ^^ (if ((top && is_private) || not top) then string "" else string "export ")
   ^^ group (pp_braces pp_statements statements)
 
 and pp_cond_expr {value; _} =
-  let {test; ifso; ifnot; _} = value in
-  let if_then = string "if" ^^ pp_par_expr test ^^ string " " ^^ pp_statement ifso in
-  match ifnot with
-    None -> if_then
-  | Some (_,statement) ->
-      if_then ^^ string " else " ^^ pp_statement statement
+  let {attributes; test; ifso; ifnot; _} = value in
+  let if_then =
+    string "if" ^^ pp_par_expr test ^^ string " " ^^ pp_statement ifso in
+  let cond_doc =
+    match ifnot with
+      None -> if_then
+    | Some (_,statement) ->
+      if_then ^^ string " else " ^^ pp_statement statement in
+  if List.is_empty attributes then cond_doc
+  else pp_attributes attributes ^/^ cond_doc
 
 and pp_return {value = {expr; _}; _} =
   match expr with
     Some s -> string "return " ^^ pp_expr s
   | None -> string "return"
 
-and filter_private (attributes: CST.attributes) : CST.attributes =
-  List.filter ~f:(fun (v: CST.attribute) -> not (String.equal (fst v.value) "private")) attributes
+and filter_private (attributes: CST.attribute list) : CST.attribute list =
+  List.filter ~f:(fun (v: CST.attribute) -> not (String.equal (fst v#payload) "private")) attributes
 
 and pp_let ?top (node : let_decl reg) =
   let {attributes; bindings; _} : let_decl = node.value in
@@ -130,24 +143,27 @@ and pp_let ?top (node : let_decl reg) =
     Some true -> true
   | _ -> false
   in
-  let is_private = List.exists ~f:(fun a -> String.equal (fst a.value) "private") attributes in
+  let is_private = List.exists ~f:(fun a -> String.equal (fst a#payload) "private") attributes in
   let attributes  = filter_private attributes in
   (if List.is_empty attributes then empty else pp_attributes attributes)
-     ^^ (if ((top && is_private) || not top) then string "" else string "export ")
-     ^^ string "let " ^^ pp_nsepseq "," pp_val_binding bindings
+  ^/^
+  (if ((top && is_private) || not top) then string "" else string "export ")
+  ^^ string "let " ^^ pp_nsepseq "," pp_val_binding bindings
 
-and pp_const {value = {bindings; _}; _} =
-  string "const " ^^ pp_nsepseq "," pp_val_binding bindings
+and pp_const {value = {bindings; attributes; _};  _} =
+  let const_doc =
+    string "const " ^^ pp_nsepseq "," pp_val_binding bindings in
+  if List.is_empty attributes then const_doc
+  else pp_attributes attributes ^/^ const_doc
 
 and pp_val_binding {value = {binders; lhs_type; expr; _}; _} =
-  prefix 2 0 ((match lhs_type with
-    Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
-  | None -> pp_pattern binders)
-  ^^
-  string " = "
-  )
-
-  (pp_expr expr)
+  prefix 2 0
+    ((match lhs_type with
+        Some (_, type_expr) ->
+          pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
+      | None -> pp_pattern binders)
+     ^^ string " = ")
+    (pp_expr expr)
 
 and pp_switch {value = {expr; cases; _}; _} =
   string "switch(" ^^ pp_expr expr ^^ string ")"
@@ -177,12 +193,14 @@ and pp_case = function
 
 
 and pp_type {value; _} =
-  let ({name; params; type_expr; _}: type_decl) = value
-  in
-  string "type " ^^ string name.value
-  ^^ pp_type_params params
-  ^^ string " ="
-  ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+  let ({attributes; name; params; type_expr; _}: type_decl) = value in
+  let attributes  = filter_private attributes in
+  let type_doc = string "type " ^^ string name.value
+                 ^^ pp_type_params params
+                 ^^ string " ="
+                 ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
+  in if List.is_empty attributes then type_doc
+     else pp_attributes attributes ^/^ type_doc
 
 and pp_type_params = function
   None -> empty
@@ -213,13 +231,19 @@ and pp_expr = function
 | EObject  e -> group (pp_object_expr e)
 | EString  e -> pp_string_expr e
 | EProj    e -> pp_projection e
-| EAssign     (a,b,c) -> pp_assign (a,b,c)
-| EAnnot   e -> pp_annot_expr e
+| EAssign  e -> pp_assign e
+| EAnnot   e -> group (pp_annot_expr e)
 | EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
-| ECodeInj _ -> failwith "TODO: ECodeInj"
+| ECodeInj e -> pp_code_inj e
 | ETernary e -> pp_ternary e
 | EContract e -> pp_contract e
+
+and pp_code_inj (node: code_inj reg) =
+  let {language; code} = node.value in
+  let language = string language#payload
+  and code     = pp_expr code in
+  string "(" ^^ language ^/^ code ^^ string ")"
 
 and pp_array (node: (array_item, comma) Utils.sepseq brackets reg) =
   match node.value.inside with
@@ -290,14 +314,13 @@ and pp_assign (a, op, b) =
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
-    group (nest 1 (pp_expr expr ^/^ string "as "
-    ^^ pp_type_expr type_expr))
+    pp_expr expr ^/^ string "as" ^/^ pp_type_expr type_expr
 
 and pp_ternary {value; _} =
   pp_expr value.condition ^^
-  string "?" ^^
+  string " ? " ^^
   nest 2 (pp_expr value.truthy) ^^
-  string ":" ^^
+  string " : " ^^
   nest 2 (pp_expr value.falsy)
 
 and pp_logic_expr = function
@@ -437,15 +460,18 @@ and pp_variant_comp (node: variant_comp) =
      else let sep = string "," ^/^ break 0
           in group (constr ^^ sep ^^ separate_map sep pp_type_expr params)
 
-and pp_attribute (node : Attr.t reg) =
-  let key, val_opt = node.value in
+and pp_attribute (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   let thread = string "/* @" ^^ string key in
   let thread = match val_opt with
-                 Some (String value | Ident value) ->
+                 Some Ident value ->
                    group (thread ^/^ nest 2 (string value))
+               | Some String value ->
+                   group (thread ^/^ nest 2 (string ("\"" ^ value ^ "\"")))
                | None -> thread in
   let thread = thread ^^ string " */"
   in thread
+
 and pp_attributes = function
   [] -> empty
 | attrs ->

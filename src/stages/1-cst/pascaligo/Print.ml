@@ -39,8 +39,8 @@ let print_sepseq state ?region label print node =
 let print_nseq state ?region label print node =
   print_list state ?region label print (Utils.nseq_to_list node)
 
-let print_attribute state (node : Attr.t reg) =
-  let key, val_opt = node.value in
+let print_attribute state (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   match val_opt with
     None ->
       Tree.print_unary state "<attribute>" Tree.print_node key
@@ -55,7 +55,7 @@ let print_attribute state (node : Attr.t reg) =
         Tree.mk_child Tree.print_node value]
       in Tree.print state "<attributes>" children
 
-let print_attributes state (node : Attr.attribute reg list) =
+let print_attributes state (node : Attr.t wrap list) =
   print_list state "<attributes>" print_attribute node
 
 (* Preprocessing directives *)
@@ -119,7 +119,6 @@ and print_declaration state = function
 | D_Directive d -> print_D_Directive state d
 | D_Fun       d -> print_D_Fun       state d
 | D_Module    d -> print_D_Module    state d
-(*| D_ModAlias  d -> print_D_ModAlias  state d*)
 | D_Type      d -> print_D_Type      state d
 
 (* Attributed declaration *)
@@ -457,7 +456,7 @@ and print_call state label (node : call) =
   let func, args = value
 
   and mk_func state =
-    Tree.print_unary state "<function>" print_expr
+    Tree.print_unary state "<fun/ctor>" print_expr
 
   and mk_args state (node : (expr, comma) Utils.sepseq par reg) =
     print_sepseq state "<arguments>" print_expr node.value.inside in
@@ -833,7 +832,6 @@ and print_expr state = function
 | E_BigMap    e -> print_E_BigMap    state e
 | E_Block     e -> print_E_Block     state e
 | E_Bytes     e -> print_E_Bytes     state e
-| E_Call      e -> print_E_Call      state e
 | E_Case      e -> print_E_Case      state e
 | E_Cat       e -> print_E_Cat       state e
 | E_CodeInj   e -> print_E_CodeInj   state e
@@ -893,13 +891,8 @@ and print_E_And state (node : kwd_and bin_op reg) =
 
 (* Constructor application (or constant constructor) as expressions *)
 
-and print_E_App state (node : (expr * expr tuple option) reg) =
-  let Region.{value; region} = node in
-  let ctor, args = value in
-  let children = [
-    Tree.mk_child     print_expr                   ctor;
-    Tree.mk_child_opt (print_ctor_args print_expr) args]
-  in Tree.print state "E_App" ~region children
+and print_E_App state (node : call) =
+  print_call state "E_App" node
 
 (* Attributed expressions *)
 
@@ -938,11 +931,6 @@ and print_E_Block state (node : block_with reg) =
 and print_E_Bytes state (node : (lexeme * Hex.t) wrap) =
   Tree.print_bytes "E_Bytes" state node
 
-(* Function calls *)
-
-and print_E_Call state (node : call) =
-  print_call state "E_Call" node
-
 (* Case expressions *)
 
 and print_E_Case state (node : expr case reg) =
@@ -958,12 +946,12 @@ and print_E_Cat state (node : caret bin_op reg) =
 and print_E_CodeInj state (node : code_inj reg) =
   let Region.{value; region} = node in
   let children = [
-    Tree.mk_child print_language value.language.value;
+    Tree.mk_child print_language value.language;
     Tree.mk_child print_code     value.code]
   in Tree.print state "E_CodeInj" ~region children
 
 and print_language state (node : language) =
-  Tree.print_unary state "<language>" Tree.print_node node.value
+  Tree.print_unary state "<language>" Tree.print_node (node#payload).value
 
 and print_code state (node : expr) =
   Tree.print_unary state "<code>" print_expr node
