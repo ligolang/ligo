@@ -109,16 +109,17 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type variable     = string reg
-type fun_name     = string reg
-type type_name    = string reg
-type type_var     = string reg
-type type_constr  = string reg
-type constr       = string reg
-type attribute    = Attr.attribute reg
-type field_name   = string reg
-type module_name  = string reg
+type variable    = string reg
+type fun_name    = string reg
+type type_name   = string reg
+type type_var    = string reg
+type type_constr = string reg
+type constr      = string reg
+type field_name  = string reg
+type module_name = string reg
 
+type attribute   = Attr.t wrap
+type language    = lexeme wrap
 
 (* Parentheses *)
 
@@ -163,16 +164,14 @@ and toplevel_statement =
 
 and ast = t
 
-and attributes = attribute list
-
 (* Non-recursive values *)
 
 and val_binding = {
-  binders    : pattern;
+  binders     : pattern;
   type_params : type_generics option;
-  lhs_type   : (colon * type_expr) option;
-  eq         : equal;
-  expr       : expr
+  lhs_type    : (colon * type_expr) option;
+  eq          : equal;
+  expr        : expr
 }
 
 and type_generics = (variable, comma) nsepseq chevrons reg
@@ -180,7 +179,7 @@ and type_generics = (variable, comma) nsepseq chevrons reg
 (* Type declarations *)
 
 and type_decl = {
-  attributes : attributes;
+  attributes : attribute list;
   kwd_type   : kwd_type;
   name       : type_name;
   params     : type_vars option;
@@ -217,7 +216,7 @@ and type_params = (type_expr, comma) nsepseq chevrons reg
 
 and cartesian = {
   inside     : (type_expr, comma) nsepseq brackets reg;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and 'a module_access = {
@@ -229,12 +228,12 @@ and 'a module_access = {
 and sum_type = {
   leading_vbar : vbar option;
   variants     : (variant reg, vbar) nsepseq reg;
-  attributes   : attributes
+  attributes   : attribute list
 }
 
 and variant = {
   tuple        : variant_comp brackets reg;
-  attributes   : attributes
+  attributes   : attribute list
 }
 
 and variant_comp = {
@@ -246,7 +245,7 @@ and field_decl = {
   field_name : field_name;
   colon      : colon;
   field_type : type_expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and rest_pattern = {
@@ -270,7 +269,7 @@ and pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
 | PVar      of var_pattern reg
-| PConstr   of variable
+| PConstr   of variable         (* Not used in the Parser! *)
 | PDestruct of destruct reg
 | PObject   of object_pattern
 | PArray    of array_pattern
@@ -289,18 +288,18 @@ and string_expr =
 | Verbatim of string reg
 
 and return = {
-  kwd_return: kwd_return;
-  expr: expr option;
+  kwd_return : kwd_return;
+  expr       : expr option
 }
 
 and switch = {
-  kwd_switch  : kwd_switch;
-  lpar        : lpar;
-  expr        : expr;
-  rpar        : rpar;
-  lbrace      : lbrace;
-  cases       : switch_case nseq;
-  rbrace      : rbrace;
+  kwd_switch : kwd_switch;
+  lpar       : lpar;
+  expr       : expr;
+  rpar       : rpar;
+  lbrace     : lbrace;
+  cases      : switch_case nseq;
+  rbrace     : rbrace
 }
 
 and switch_case =
@@ -326,9 +325,10 @@ and array_item =
 | Rest_entry of array_item_rest reg
 
 and property2 = {
-  name  : expr;
-  colon : colon;
-  value : expr
+  name       : expr;
+  colon      : colon;
+  value      : expr;
+  attributes : attribute list
 }
 
 and property_rest = {
@@ -355,7 +355,7 @@ and expr =
 | EObject  of object_expr
 | EString  of string_expr
 | EProj    of projection reg
-| EAssign  of expr * operator reg * expr
+| EAssign  of (expr * operator reg * expr)
 | EConstr  of (constr * expr option) reg
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
@@ -385,37 +385,38 @@ and operator =
 and object_expr = (property, comma) nsepseq braces reg
 
 and statement =
-  SBlock      of (statement, semi) nsepseq braces reg
-| SExpr       of expr
-| SCond       of cond_statement reg
-| SReturn     of return reg
-| SLet        of let_decl reg
-| SConst      of const_decl reg
-| SType       of type_decl reg
-| SSwitch     of switch reg
-| SBreak      of kwd_break
-| SNamespace  of namespace_statement
-| SExport     of (kwd_export * statement) reg
-| SImport     of import reg
-| SWhile      of while_stmt reg
-| SForOf      of for_of reg
+  SBlock     of statements braces reg
+| SExpr      of (attribute list * expr)
+| SCond      of cond_statement reg
+| SReturn    of return reg
+| SLet       of let_decl reg
+| SConst     of const_decl reg
+| SType      of type_decl reg
+| SSwitch    of switch reg
+| SBreak     of kwd_break
+| SNamespace of namespace_statement
+| SExport    of (kwd_export * statement) reg
+| SImport    of import reg
+| SWhile     of while_stmt reg
+| SForOf     of for_of reg
 
 and namespace_statement =
-  (kwd_namespace * module_name * statements braces reg * attributes) reg
+  (kwd_namespace * module_name * statements braces reg * attribute list) reg
 
 and while_stmt = {
-  kwd_while: kwd_while;
-  lpar:      lpar;
-  expr:      expr;
-  rpar:      rpar;
-  statement: statement;
+  kwd_while : kwd_while;
+  lpar      : lpar;
+  expr      : expr;
+  rpar      : rpar;
+  statement : statement
 }
 
 and for_of = {
+  attributes : attribute list;
   kwd_for    : kwd_for;
   lpar       : lpar;
-  index_kind : index_kind;
   index      : variable;
+  index_kind : index_kind;
   kwd_of     : kwd_of;
   expr       : expr;
   rpar       : rpar;
@@ -444,10 +445,9 @@ and import =
 | Import_selected of {
     kwd_import   : kwd_import;
     imported     : (field_name, comma) nsepseq braces reg;
-    kwd_from      : kwd_from;
+    kwd_from     : kwd_from;
     module_path  : string reg
   }
-
 
 and statements = (statement, semi) nsepseq
 
@@ -455,19 +455,14 @@ and arguments =
   Multiple of (expr, comma) nsepseq par reg
 | Unit     of the_unit reg
 
-and annot_expr = expr * kwd_as * type_expr (* TODO: Used with colon too in Parser *)
-
-and 'a injection = {
-  compound   : compound option;
-  elements   : ('a, semi) sepseq;
-  terminator : semi option
-}
+(* TODO: Used with colon too in Parser *)
+and annot_expr = expr * kwd_as * type_expr
 
 and 'a ne_injection = {
   compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option;
-  attributes  : attributes
+  attributes  : attribute list
 }
 
 and compound =
@@ -516,23 +511,23 @@ and projection = {
   selection : selection;
 }
 
+and selection =
+  FieldName of selection_field_name reg
+| Component of expr brackets reg
+
 and selection_field_name = {
   dot   : dot;
   value : variable
 }
 
-and selection =
-  FieldName of selection_field_name reg
-| Component of expr brackets reg
-
 and let_decl = {
-  attributes : attributes;
+  attributes : attribute list;
   kwd_let    : kwd_let;
   bindings   : (val_binding reg, comma) nsepseq
 }
 
 and const_decl = {
-  attributes : attributes;
+  attributes : attribute list;
   kwd_const  : kwd_const;
   bindings   : (val_binding reg, comma) nsepseq;
 }
@@ -543,13 +538,14 @@ and body =
 
 and fun_expr = {
   type_params : type_generics option;
-  parameters : expr;
-  lhs_type   : (colon * type_expr) option;
-  arrow      : arrow;
-  body       : body;
+  parameters  : expr;
+  lhs_type    : (colon * type_expr) option;
+  arrow       : arrow;
+  body        : body;
 }
 
 and cond_statement = {
+  attributes : attribute list;
   kwd_if : kwd_if;
   test   : expr par;
   ifso   : statement;
@@ -561,7 +557,7 @@ and cond_statement = {
    the innermost covers the <language>. *)
 
 and code_inj = {
-  language : string reg;
+  language : language;
   code     : expr;
 }
 
@@ -634,7 +630,7 @@ let rec expr_to_region = function
 
 let statement_to_region = function
   SBreak b -> b#region
-| SExpr e -> expr_to_region e
+| SExpr (_,e) -> expr_to_region e
 | SBlock {region; _ }
 | SCond {region; _}
 | SReturn {region; _}

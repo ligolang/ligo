@@ -47,8 +47,8 @@ module T =
     | Mutez    of (lexeme * Int64.t) Wrap.t
     | Ident    of lexeme Wrap.t
     | UIdent   of lexeme Wrap.t
-    | Lang     of lexeme Region.reg Region.reg
-    | Attr     of Attr.t Region.reg
+    | Lang     of lexeme Region.reg Wrap.t
+    | Attr     of Attr.t Wrap.t
 
     (* Symbols *)
 
@@ -118,6 +118,9 @@ module T =
 
     type token = t
 
+    (* NOT USED FOR CAMELIGO: STUB *)
+
+    let add_directive (_ : Directive.t) (token : t) = token
 
     (* FROM TOKENS TO LEXEMES *)
 
@@ -136,8 +139,9 @@ module T =
     | Mutez t    -> fst t#payload
     | Ident t
     | UIdent t   -> t#payload
-    | Attr t     -> Attr.to_lexeme t.Region.value
-    | Lang lang  -> "[%" ^ Region.(lang.value.value)
+    | Attr t     -> Attr.to_lexeme t#payload
+    | Lang lang  -> "[%" ^ lang#payload.value
+
 
     (* Symbols *)
 
@@ -533,13 +537,12 @@ module T =
     let wrap_ident    i = Wrap.wrap i
     let wrap_uident   c = Wrap.wrap c
 
-    let wrap_attr key value region =
-      Region.{value = (key, value); region}
+    let wrap_attr key value region = wrap (key, value) region
 
-    let wrap_lang lang region =
+    let wrap_lang lang region : lexeme Region.reg Wrap.t =
       let start = region#start#shift_bytes (String.length "[%") in
-      let lang_reg = Region.make ~start ~stop:region#stop in
-      Region.{region; value = {value=lang; region=lang_reg}}
+      let lang_reg = Region.make ~start ~stop:region#stop
+      in  wrap Region.{value=lang; region=lang_reg} region
 
     let ghost_string   s = wrap_string   s   Region.ghost
     let ghost_verbatim s = wrap_verbatim s   Region.ghost
@@ -692,10 +695,10 @@ module T =
         t#region, sprintf "Ident %S" t#payload
     | UIdent t ->
         t#region, sprintf "UIdent %S" t#payload
-    | Attr {region; value} ->
-        region, sprintf "Attr %s" (Attr.to_string value)
-    | Lang {value = {value = payload; _}; region; _} ->
-        region, sprintf "Lang %S" payload
+    | Attr t ->
+        t#region, sprintf "Attr %s" (Attr.to_string t#payload)
+    | Lang t ->
+        t#region, sprintf "Lang %S" t#payload.value
 
     (* Symbols *)
 
@@ -845,13 +848,13 @@ module T =
 
     (* Attributes *)
 
-    let mk_attr ~key ?value region = Attr {region; value = key, value}
+    let mk_attr ~key ?value region = Attr (wrap (key, value) region)
 
     (* Code injection *)
 
     type lang_err = Wrong_lang_syntax of string (* Not CameLIGO *)
 
-    let mk_lang lang region = Ok (Lang Region.{value=lang; region})
+    let mk_lang lang region = Ok (Lang (wrap lang region))
 
     (* PREDICATES *)
 

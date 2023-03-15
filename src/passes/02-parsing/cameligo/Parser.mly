@@ -852,7 +852,7 @@ core_expr:
 
 code_inj:
   "[%lang" expr "]" {
-    let region = cover $1.region $3#region
+    let region = cover $1#region $3#region
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
 

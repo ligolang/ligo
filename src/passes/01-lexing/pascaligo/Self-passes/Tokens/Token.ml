@@ -37,6 +37,11 @@ module T =
 
       Directive of Directive.t
 
+      (* Comments *)
+
+    | BlockCom of lexeme Wrap.t
+    | LineCom  of lexeme Wrap.t
+
       (* Literals *)
 
     | String   of lexeme Wrap.t
@@ -47,8 +52,8 @@ module T =
     | Mutez    of (lexeme * Int64.t) Wrap.t
     | Ident    of lexeme Wrap.t
     | UIdent   of lexeme Wrap.t
-    | Lang     of lexeme Region.reg Region.reg
-    | Attr     of Attr.t Region.reg
+    | Lang     of lexeme Region.reg Wrap.t
+    | Attr     of Attr.t Wrap.t
 
     (* Symbols *)
 
@@ -85,42 +90,42 @@ module T =
 
     (* Keywords *)
 
-    | And        of lexeme Wrap.t  (* and       *)
-    | Begin      of lexeme Wrap.t  (* begin     *)
-    | BigMap     of lexeme Wrap.t  (* big_map   *)
-    | Block      of lexeme Wrap.t  (* block     *)
-    | Case       of lexeme Wrap.t  (* case      *)
-    | Const      of lexeme Wrap.t  (* const     *)
-    | Contains   of lexeme Wrap.t  (* contains  *)
-    | Else       of lexeme Wrap.t  (* else      *)
-    | End        of lexeme Wrap.t  (* end       *)
-    | For        of lexeme Wrap.t  (* for       *)
-    | From       of lexeme Wrap.t  (* from      *)
-    | Function   of lexeme Wrap.t  (* function  *)
-    | If         of lexeme Wrap.t  (* if        *)
-    | In         of lexeme Wrap.t  (* in        *)
-    | Is         of lexeme Wrap.t  (* is        *)
-    | List       of lexeme Wrap.t  (* list      *)
-    | Map        of lexeme Wrap.t  (* map       *)
-    | Mod        of lexeme Wrap.t  (* mod       *)
-    | Module     of lexeme Wrap.t  (* module    *)
-    | Nil        of lexeme Wrap.t  (* nil       *)
-    | Not        of lexeme Wrap.t  (* not       *)
-    | Of         of lexeme Wrap.t  (* of        *)
-    | Or         of lexeme Wrap.t  (* or        *)
-    | Patch      of lexeme Wrap.t  (* patch     *)
-    | Record     of lexeme Wrap.t  (* record    *)
-    | Recursive  of lexeme Wrap.t  (* recursive *)
-    | Remove     of lexeme Wrap.t  (* remove    *)
-    | Set        of lexeme Wrap.t  (* set       *)
-    | Skip       of lexeme Wrap.t  (* skip      *)
-    | Step       of lexeme Wrap.t  (* step      *)
-    | Then       of lexeme Wrap.t  (* then      *)
-    | To         of lexeme Wrap.t  (* to        *)
-    | Type       of lexeme Wrap.t  (* type      *)
-    | Var        of lexeme Wrap.t  (* var       *)
-    | While      of lexeme Wrap.t  (* while     *)
-    | With       of lexeme Wrap.t  (* with      *)
+    | And       of lexeme Wrap.t  (* and       *)
+    | Begin     of lexeme Wrap.t  (* begin     *)
+    | BigMap    of lexeme Wrap.t  (* big_map   *)
+    | Block     of lexeme Wrap.t  (* block     *)
+    | Case      of lexeme Wrap.t  (* case      *)
+    | Const     of lexeme Wrap.t  (* const     *)
+    | Contains  of lexeme Wrap.t  (* contains  *)
+    | Else      of lexeme Wrap.t  (* else      *)
+    | End       of lexeme Wrap.t  (* end       *)
+    | For       of lexeme Wrap.t  (* for       *)
+    | From      of lexeme Wrap.t  (* from      *)
+    | Function  of lexeme Wrap.t  (* function  *)
+    | If        of lexeme Wrap.t  (* if        *)
+    | In        of lexeme Wrap.t  (* in        *)
+    | Is        of lexeme Wrap.t  (* is        *)
+    | List      of lexeme Wrap.t  (* list      *)
+    | Map       of lexeme Wrap.t  (* map       *)
+    | Mod       of lexeme Wrap.t  (* mod       *)
+    | Module    of lexeme Wrap.t  (* module    *)
+    | Nil       of lexeme Wrap.t  (* nil       *)
+    | Not       of lexeme Wrap.t  (* not       *)
+    | Of        of lexeme Wrap.t  (* of        *)
+    | Or        of lexeme Wrap.t  (* or        *)
+    | Patch     of lexeme Wrap.t  (* patch     *)
+    | Record    of lexeme Wrap.t  (* record    *)
+    | Recursive of lexeme Wrap.t  (* recursive *)
+    | Remove    of lexeme Wrap.t  (* remove    *)
+    | Set       of lexeme Wrap.t  (* set       *)
+    | Skip      of lexeme Wrap.t  (* skip      *)
+    | Step      of lexeme Wrap.t  (* step      *)
+    | Then      of lexeme Wrap.t  (* then      *)
+    | To        of lexeme Wrap.t  (* to        *)
+    | Type      of lexeme Wrap.t  (* type      *)
+    | Var       of lexeme Wrap.t  (* var       *)
+    | While     of lexeme Wrap.t  (* while     *)
+    | With      of lexeme Wrap.t  (* with      *)
 
     (* Virtual tokens *)
 
@@ -140,6 +145,11 @@ module T =
 
       Directive d -> (Directive.to_lexeme d).Region.value
 
+      (* Comments *)
+
+    | LineCom t  -> sprintf "// %s" t#payload
+    | BlockCom t -> sprintf "(* %s *)" t#payload
+
       (* Literals *)
 
     | String t   -> sprintf "%S" t#payload (* Escaped *)
@@ -150,8 +160,8 @@ module T =
     | Mutez t    -> fst t#payload
     | Ident t
     | UIdent t   -> t#payload
-    | Attr t     -> Attr.to_lexeme t.Region.value
-    | Lang lang  -> "[%" ^ Region.(lang.value.value)
+    | Attr t     -> Attr.to_lexeme t#payload
+    | Lang lang  -> "[%" ^ lang#payload.value
 
     (* Symbols *)
 
@@ -622,22 +632,21 @@ module T =
 
     (* IMPORTANT: These values cannot be exported in Token.mli *)
 
-    let wrap_string   s = Wrap.wrap s
-    let wrap_verbatim s = Wrap.wrap s
-    let wrap_bytes    b = Wrap.wrap ("0x" ^ Hex.show b, b)
-    let wrap_int      z = Wrap.wrap (Z.to_string z, z)
-    let wrap_nat      z = Wrap.wrap (Z.to_string z ^ "n", z)
-    let wrap_mutez    i = Wrap.wrap (Int64.to_string i ^ "mutez", i)
-    let wrap_ident    i = Wrap.wrap i
-    let wrap_uident   c = Wrap.wrap c
+    let wrap_string   s = wrap s
+    let wrap_verbatim s = wrap s
+    let wrap_bytes    b = wrap ("0x" ^ Hex.show b, b)
+    let wrap_int      z = wrap (Z.to_string z, z)
+    let wrap_nat      z = wrap (Z.to_string z ^ "n", z)
+    let wrap_mutez    i = wrap (Int64.to_string i ^ "mutez", i)
+    let wrap_ident    i = wrap i
+    let wrap_uident   c = wrap c
 
-    let wrap_attr key value region =
-      Region.{value = (key, value); region}
+    let wrap_attr key value region = wrap (key, value) region
 
-    let wrap_lang lang region =
+    let wrap_lang lang region : lexeme Region.reg Wrap.t =
       let start = region#start#shift_bytes (String.length "[%") in
-      let lang_reg = Region.make ~start ~stop:region#stop in
-      Region.{region; value = {value=lang; region=lang_reg}}
+      let lang_reg = Region.make ~start ~stop:region#stop
+      in  wrap Region.{value=lang; region=lang_reg} region
 
     let ghost_string   s = wrap_string   s   Region.ghost
     let ghost_verbatim s = wrap_verbatim s   Region.ghost
@@ -660,6 +669,18 @@ module T =
     let ghost_UIdent   c = UIdent   (ghost_uident c)
     let ghost_Attr   k v = Attr     (ghost_attr k v)
     let ghost_Lang     l = Lang     (ghost_lang l)
+
+    (* COMMENTS *)
+
+    let wrap_block_com  c    = Wrap.wrap c
+    let ghost_block_com c    = wrap_block_com c Region.ghost
+    let mk_BlockCom c region = BlockCom (wrap_block_com c region)
+    let ghost_BlockCom c     = mk_BlockCom c Region.ghost
+
+    let wrap_line_com c     = Wrap.wrap c
+    let ghost_line_com c    = wrap_line_com c Region.ghost
+    let mk_LineCom c region = LineCom (wrap_line_com c region)
+    let ghost_LineCom c     = mk_LineCom c Region.ghost
 
     (* VIRTUAL TOKENS *)
 
@@ -783,6 +804,13 @@ module T =
 
       Directive d -> Directive.project d
 
+      (* Comments *)
+
+    | LineCom t ->
+        t#region, sprintf "LineCom %S" t#payload
+    | BlockCom t ->
+        t#region, sprintf "BlockCom %S" t#payload
+
       (* Literals *)
 
     | String t ->
@@ -806,10 +834,10 @@ module T =
         t#region, sprintf "Ident %S" t#payload
     | UIdent t ->
         t#region, sprintf "UIdent %S" t#payload
-    | Attr {region; value} ->
-        region, sprintf "Attr %s" (Attr.to_string value)
-    | Lang {value = {value = payload; _}; region; _} ->
-        region, sprintf "Lang %S" payload
+    | Attr t ->
+        t#region, sprintf "Attr %s" (Attr.to_string t#payload)
+    | Lang t ->
+        t#region, sprintf "Lang %S" t#payload.value
 
     (* Symbols *)
 
@@ -891,6 +919,109 @@ module T =
 
     | EOF t -> t#region, "EOF"
 
+    (* TRANSFORMATIONS *)
+
+    let add_directive (d: Directive.t) = function
+      (* Tokens that do not carry directives *)
+
+      Directive _ as t -> t (* To avoid this: right-to-left traversal *)
+    | LineCom   _ as t -> t (* To avoid this: transform into attribute *)
+    | BlockCom  _ as t -> t (* To avoid this: transform into attribute *)
+    | ZWSP      _ as t -> t (* Virtual token *)
+
+    (* Attributes *)
+
+    | Attr     w -> Attr     (w#add_directive d)
+
+      (* Literals *)
+
+    | String   w -> String   (w#add_directive d)
+    | Verbatim w -> Verbatim (w#add_directive d)
+    | Bytes    w -> Bytes    (w#add_directive d)
+    | Int      w -> Int      (w#add_directive d)
+    | Nat      w -> Nat      (w#add_directive d)
+    | Mutez    w -> Mutez    (w#add_directive d)
+    | Ident    w -> Ident    (w#add_directive d)
+    | UIdent   w -> UIdent   (w#add_directive d)
+    | Lang     w -> Lang     (w#add_directive d)
+
+    (* Symbols *)
+
+    | SEMI     w -> SEMI     (w#add_directive d)
+    | COMMA    w -> COMMA    (w#add_directive d)
+    | LPAR     w -> LPAR     (w#add_directive d)
+    | RPAR     w -> RPAR     (w#add_directive d)
+    | LBRACE   w -> LBRACE   (w#add_directive d)
+    | RBRACE   w -> RBRACE   (w#add_directive d)
+    | LBRACKET w -> LBRACKET (w#add_directive d)
+    | RBRACKET w -> RBRACKET (w#add_directive d)
+    | SHARP    w -> SHARP    (w#add_directive d)
+    | VBAR     w -> VBAR     (w#add_directive d)
+    | ARROW    w -> ARROW    (w#add_directive d)
+    | ASS      w -> ASS      (w#add_directive d)
+    | EQ       w -> EQ       (w#add_directive d)
+    | COLON    w -> COLON    (w#add_directive d)
+    | LT       w -> LT       (w#add_directive d)
+    | LE       w -> LE       (w#add_directive d)
+    | GT       w -> GT       (w#add_directive d)
+    | NE       w -> NE       (w#add_directive d)
+    | PLUS     w -> PLUS     (w#add_directive d)
+    | MINUS    w -> MINUS    (w#add_directive d)
+    | SLASH    w -> SLASH    (w#add_directive d)
+    | TIMES    w -> TIMES    (w#add_directive d)
+    | DOT      w -> DOT      (w#add_directive d)
+    | WILD     w -> WILD     (w#add_directive d)
+    | CARET    w -> CARET    (w#add_directive d)
+    | PLUS_EQ  w -> PLUS_EQ  (w#add_directive d)
+    | MINUS_EQ w -> MINUS_EQ (w#add_directive d)
+    | TIMES_EQ w -> TIMES_EQ (w#add_directive d)
+    | SLASH_EQ w -> SLASH_EQ (w#add_directive d)
+    | VBAR_EQ  w -> VBAR_EQ  (w#add_directive d)
+
+    (* Keywords *)
+
+    | And       w -> And       (w#add_directive d)
+    | Begin     w -> Begin     (w#add_directive d)
+    | BigMap    w -> BigMap    (w#add_directive d)
+    | Block     w -> Block     (w#add_directive d)
+    | Case      w -> Case      (w#add_directive d)
+    | Const     w -> Const     (w#add_directive d)
+    | Contains  w -> Contains  (w#add_directive d)
+    | Else      w -> Else      (w#add_directive d)
+    | End       w -> End       (w#add_directive d)
+    | For       w -> For       (w#add_directive d)
+    | From      w -> From      (w#add_directive d)
+    | Function  w -> Function  (w#add_directive d)
+    | If        w -> If        (w#add_directive d)
+    | In        w -> In        (w#add_directive d)
+    | Is        w -> Is        (w#add_directive d)
+    | List      w -> List      (w#add_directive d)
+    | Map       w -> Map       (w#add_directive d)
+    | Mod       w -> Mod       (w#add_directive d)
+    | Module    w -> Module    (w#add_directive d)
+    | Nil       w -> Nil       (w#add_directive d)
+    | Not       w -> Not       (w#add_directive d)
+    | Of        w -> Of        (w#add_directive d)
+    | Or        w -> Or        (w#add_directive d)
+    | Patch     w -> Patch     (w#add_directive d)
+    | Record    w -> Record    (w#add_directive d)
+    | Recursive w -> Recursive (w#add_directive d)
+    | Remove    w -> Remove    (w#add_directive d)
+    | Set       w -> Set       (w#add_directive d)
+    | Skip      w -> Skip      (w#add_directive d)
+    | Step      w -> Step      (w#add_directive d)
+    | Then      w -> Then      (w#add_directive d)
+    | To        w -> To        (w#add_directive d)
+    | Type      w -> Type      (w#add_directive d)
+    | Var       w -> Var       (w#add_directive d)
+    | While     w -> While     (w#add_directive d)
+    | With      w -> With      (w#add_directive d)
+
+    (* End-Of-File *)
+
+    | EOF w -> EOF (w#add_directive d)
+
+
     (* CONVERSIONS *)
 
     let to_string ~offsets mode token =
@@ -971,13 +1102,13 @@ module T =
 
     (* Attributes *)
 
-    let mk_attr ~key ?value region = Attr {region; value = key, value}
+    let mk_attr ~key ?value region = Attr (wrap (key, value) region)
 
     (* Code injection *)
 
     type lang_err = Wrong_lang_syntax of string (* Not PascaLIGO *)
 
-    let mk_lang lang region = Ok (Lang Region.{value=lang; region})
+    let mk_lang lang region = Ok (Lang (wrap lang region))
 
     (* PREDICATES *)
 

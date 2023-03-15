@@ -115,9 +115,8 @@ type module_name = lexeme wrap
 type field_name  = lexeme wrap
 type ctor        = lexeme wrap
 
-type language    = lexeme reg   (* Not [wrap] *)
-
-type attribute   = Attr.t reg
+type attribute   = Attr.t wrap
+type language    = lexeme Region.reg wrap
 
 (* Parentheses *)
 
@@ -250,11 +249,11 @@ and type_expr =
 | T_Fun     of (type_expr * arrow * type_expr) reg (*          x -> y *)
 | T_Int     of (lexeme * Z.t) wrap                 (*              42 *)
 | T_ModPath of type_expr module_path reg           (*     A.B.(x * y) *)
-| T_Par     of type_expr par reg                   (*             (t) *)
+| T_Par     of type_expr par reg                   (*        (x -> y) *)
 | T_Record  of field_decl reg compound reg (* record [a; [@a1] b : t] *)
-| T_String  of lexeme wrap                         (*             "x" *)
+| T_String  of lexeme wrap                         (*           "foo" *)
 | T_Sum     of sum_type reg                        (* [@a] A | B of t *)
-| T_Var     of variable                            (*               x *)
+| T_Var     of variable                            (*               t *)
 
 (* Application of type constructors *)
 
@@ -350,7 +349,7 @@ and assignment = {
   rhs    : expr
 }
 
-(* Procedure call *)
+(* Procedure/function call and application of data constructor *)
 
 and call = (expr * call_args) reg
 
@@ -480,7 +479,7 @@ and pattern =
   P_App      of (pattern * pattern tuple option) reg (*    C (x,y) *)
 | P_Attr     of (attribute * pattern)                (*   [@var] x *)
 | P_Bytes    of (lexeme * Hex.t) wrap                (*     0xFFFA *)
-| P_Cons     of (pattern * sharp * pattern) reg      (*     x :: y *)
+| P_Cons     of (pattern * sharp * pattern) reg      (*      x # y *)
 | P_Ctor     of ctor                                 (*          C *)
 | P_Int      of (lexeme * Z.t) wrap                  (*         42 *)
 | P_List     of pattern compound reg                 (* list [4;x] *)
@@ -543,12 +542,11 @@ and typed_pattern = {
 and expr =
   E_Add       of plus bin_op reg                (* x + y           *)
 | E_And       of kwd_and bin_op reg             (* x and y         *)
-| E_App       of (expr * expr tuple option) reg (* Foo (x,y)       *)
+| E_App       of call                           (* Foo (x,y)       *)
 | E_Attr      of (attribute * expr)             (* [@a] (x,y)      *)
 | E_BigMap    of binding reg compound reg
 | E_Block     of block_with reg
 | E_Bytes     of (lexeme * Hex.t) wrap          (* 0xFFFA          *)
-| E_Call      of call                           (* M.f (x,y)       *)
 | E_Case      of expr case reg
 | E_Cat       of caret bin_op reg               (* "Hello" ^ world *)
 | E_CodeInj   of code_inj reg
@@ -635,7 +633,7 @@ and 'a un_op = {
    the innermost covers the <language>. *)
 
 and code_inj = {
- language : language reg;
+ language : language;
  code     : expr;
  rbracket : rbracket
 }
@@ -728,7 +726,6 @@ let rec expr_to_region = function
 | E_BigMap    {region; _}
 | E_Block     {region; _} -> region
 | E_Bytes     t -> t#region
-| E_Call      {region; _}
 | E_Case      {region; _}
 | E_Cat       {region; _}
 | E_CodeInj   {region; _} -> region
@@ -842,3 +839,25 @@ let field_lens_to_region = function
 | Lens_Mult x -> x#region
 | Lens_Div x  -> x#region
 | Lens_Fun x  -> x#region
+
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
+
+let rec statement_to_region = function
+  S_Attr    s -> region_of_S_Attr s
+| S_Decl    s -> region_of_S_Decl s
+| S_Instr   s -> region_of_S_Instr s
+| S_VarDecl s -> region_of_S_VarDecl s
+
+and region_of_S_Attr (node: attribute * statement) =
+  statement_to_region (snd node)
+
+and region_of_S_Decl (node: declaration) =
+  decl_to_region node
+
+and region_of_S_Instr (node: instruction) =
+  instr_to_region node
+
+and region_of_S_VarDecl (node: var_decl reg) =
+  node.region

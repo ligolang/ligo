@@ -26,14 +26,14 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
 
     let make_help buffer : Buffer.t =
       let options = [
-        "      --mono         Use Menhir monolithic API";
-        "      --cst          Print the CST";
-        "      --pretty       Pretty-print the input";
-        "      --recovery     Enable error recovery";
-        "      Debug options:";
-        "      --used-tokens  Print the tokens up to the syntax error";
-        "      --trace-recovery [output_file]";
-        "                     Enable verbose printing of intermediate steps\n                     of the error recovery algorithm to output_file\n                     if provided, or stdout otherwise"
+        "      --mono           Use Menhir monolithic API";
+        "      --cst            Print the CST";
+        "      --pretty         Pretty-print the input";
+        "      --recovery       Enable error recovery";
+        "Debug options:";
+        "      --used-tokens    Print the tokens up to the syntax error";
+        "      --trace-recovery[=<file>]";
+        "                       Enable verbose printing of intermediate steps\n                       of the error recovery algorithm to output_file\n                       if provided, or stdout otherwise"
       ] in
       begin
         Buffer.add_string buffer (String.concat ~sep:"\n" options);
@@ -67,9 +67,10 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     | Some Some path -> "Some (Some " ^ path ^ ")"
 
     let set_trace_recovery path =
-      match !trace_recovery with
-        None -> trace_recovery := Some (Some path)
-      | _ -> raise (Getopt.Error "Only one --trace-recovery option allowed.")
+      if Caml.(!trace_recovery = None)
+      then trace_recovery := Some (Some path)
+      else raise (Getopt.Error
+                    "Only one --trace-recovery option allowed.")
 
     (* Specifying the command-line options a la GNU
 
@@ -132,8 +133,9 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       |> add "--version" |> add "-v"
 
     let opt_with_arg =
-      SSet.empty
-      |> SSet.add "--trace-recovery"
+      let open SSet in
+      empty
+      |> add "--trace-recovery"
 
     let argv_copy = Array.copy Sys.argv
 

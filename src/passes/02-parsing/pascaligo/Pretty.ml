@@ -101,22 +101,22 @@ and print_declarations (node : declarations) =
    add or modify some, please make sure they remain in order. *)
 
 and print_declaration = function
-  D_Attr      d -> print_D_Attr d
-| D_Const     d -> print_D_Const d
-| D_Directive d -> string (Directive.to_lexeme d).Region.value
-| D_Fun       d -> print_D_Fun d
-| D_Module    d -> print_D_Module d
-| D_Type      d -> print_D_Type d
+  D_Attr      d -> print_D_Attr      d
+| D_Const     d -> print_D_Const     d
+| D_Directive d -> print_D_Directive d
+| D_Fun       d -> print_D_Fun       d
+| D_Module    d -> print_D_Module    d
+| D_Type      d -> print_D_Type      d
 
 (* Attributed declaration *)
 
-and print_D_Attr (node) =
+and print_D_Attr (node: (attribute * declaration) reg) =
   let attributes, declaration = unroll_D_Attr node.value in
   let thread = print_declaration declaration
   in print_attributes thread attributes
 
-and print_attribute (node : Attr.t reg) =
-  let key, val_opt = node.value in
+and print_attribute (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   let thread = string "[@" ^^ string key in
   let thread = match val_opt with
                  Some (String value | Ident value) ->
@@ -161,6 +161,13 @@ and print_opt_type thread (node : type_annotation option) =
 
 and print_type_annotation thread (_, type_expr : type_annotation) =
   group (thread ^/^ nest 2 (string ": " ^^ print_type_expr type_expr))
+
+and print_D_Directive (node: Directive.t) =
+  let comments  = Directive.get_comments node in
+  let comments  = List.map ~f:(fun x -> x.value) comments in
+  let comments  = separate_map hardline string comments in
+  let directive = string (Directive.to_lexeme node).Region.value
+  in comments ^/^ directive
 
 (* Function declaration *)
 
@@ -861,7 +868,6 @@ and print_expr (node : expr) =
   | E_BigMap    e -> print_E_BigMap    e
   | E_Block     e -> print_E_Block     e
   | E_Bytes     e -> print_E_Bytes     e
-  | E_Call      e -> print_E_Call      e
   | E_Case      e -> print_E_Case      e
   | E_Cat       e -> print_E_Cat       e
   | E_CodeInj   e -> print_E_CodeInj   e
@@ -915,11 +921,7 @@ and print_bin_op (node : lexeme wrap bin_op reg) =
 
 (* Application to data constructors *)
 
-and print_E_App (node : (expr * expr tuple option) reg) =
-  match node.value with
-    ctor, None -> print_expr ctor
-  | ctor, Some tuple ->
-      group (print_expr ctor ^//^ print_tuple print_expr tuple)
+and print_E_App (node : call) = print_call node
 
 (* Attributes expressions *)
 
@@ -957,10 +959,6 @@ and print_E_Block (node : block_with reg) =
 
 and print_E_Bytes (node : (lexeme * Hex.t) wrap) = print_bytes node
 
-(* Function calls *)
-
-and print_E_Call (node : call) = print_call node
-
 (* Case expressions *)
 
 and print_E_Case (node : expr case reg) =
@@ -974,7 +972,7 @@ and print_E_Cat (node : caret bin_op reg) = print_bin_op node
 
 and print_E_CodeInj (node : code_inj reg) =
   let node     = node.value in
-  let language = string node.language.value.value
+  let language = string node.language#payload.value
   and code     = print_expr node.code
   in group (string "[%" ^^ language ^/^ code ^^ string "]")
 
@@ -994,7 +992,7 @@ and print_E_Cond (node : expr conditional reg) =
   and if_so  = print_expr node.if_so
   and if_not = node.if_not
   in
-  let thread = string "if "  ^^ group (nest 3 test) in
+  let thread = string "if " ^^ group (nest 3 test) in
   let thread = thread ^/^ string "then"
                ^^ group (nest 2 (break 1 ^^ if_so)) in
   let thread =

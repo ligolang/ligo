@@ -23,8 +23,7 @@
     let open Directive in
     PP_Linemarker (mk_line_directive region linenum filename flag)
 
-  let mk_lang region =
-    Region.{value = {value="Ghost_lang"; region}; region}
+  let mk_lang region = Token.wrap_lang "Ghost_lang" region
 
   (* Ghost semantic values for inserted tokens *)
 
@@ -48,17 +47,17 @@
 
 (* Literals *)
 
-%token     <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
-%token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
-%token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
-%token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]
-%token        <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
-%token        <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
-%token    <(string * Int64.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
-%token                <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc] [@recover.cost 900]
-%token                <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
-%token            <Attr.t Region.reg> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
-%token <string Region.reg Region.reg> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
+%token  <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
+%token             <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
+%token             <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
+%token   <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]
+%token     <(string * Z.t) Wrap.t> Int       "<int>"       [@recover.expr mk_int       $loc]
+%token     <(string * Z.t) Wrap.t> Nat       "<nat>"       [@recover.expr mk_nat       $loc]
+%token <(string * Int64.t) Wrap.t> Mutez     "<mutez>"     [@recover.expr mk_mutez     $loc]
+%token             <string Wrap.t> Ident     "<ident>"     [@recover.expr mk_ident     $loc] [@recover.cost 900]
+%token             <string Wrap.t> UIdent    "<uident>"    [@recover.expr mk_uident    $loc]
+%token             <Attr.t Wrap.t> Attr      "[@attr]"     [@recover.expr mk_attr      $loc]
+%token  <string Region.reg Wrap.t> Lang      "[%lang"      [@recover.expr mk_lang      $loc]
 
 (* Symbols *)
 

@@ -274,9 +274,10 @@ let ident     = (small | '_'+ (letter | digit)) (letter | '_' | digit)*
 let ext_ident = '@' (letter | digit | '_')+
 let uident    = capital (letter | '_' | digit)*
 
-let string    = '"' [^ '"' '\\' '\n']* '"' as value
+let string    = '"' ([^ '"' '\\' '\n']* as value) '"'
 let key       = letter (letter | digit | '_' | '.' (letter | digit))*
-let str_attr  = (key as key) ((blank* ':' blank* | blank+) (string as value))?
+let str_attr  = (key as key)
+                ((blank* ':' blank* | blank+ | '\n' blank*) string)?
 let id_attr   = (key as key)
                 ((blank* ':' blank* | blank+) (ident | uident as value))?
 

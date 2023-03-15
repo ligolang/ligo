@@ -52,8 +52,7 @@ interactive_expr: Case UIdent Of LBRACKET VBAR UIdent ARROW UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -83,8 +82,7 @@ interactive_expr: Case UIdent Of LBRACKET UIdent ARROW UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -262,8 +260,7 @@ interactive_expr: Begin For Ident ARROW Ident In Map UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -645,8 +642,7 @@ interactive_expr: Begin Patch UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ##
 interactive_expr: Begin If UIdent Then Patch UIdent While
 ##
@@ -662,8 +658,7 @@ interactive_expr: Begin If UIdent Then Patch UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ##
 
 Ill-formed patch instruction.
@@ -836,8 +831,7 @@ interactive_expr: Begin If UIdent Then Remove UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -865,8 +859,7 @@ interactive_expr: Begin Remove UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3325,8 +3318,7 @@ interactive_expr: Begin LPAR UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3359,8 +3351,7 @@ interactive_expr: Begin If UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3389,8 +3380,7 @@ interactive_expr: Begin If UIdent Then If UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3425,8 +3415,7 @@ interactive_expr: If UIdent Then If UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3454,8 +3443,7 @@ interactive_expr: If UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3568,8 +3556,7 @@ interactive_expr: Begin For Ident ASS UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3602,8 +3589,7 @@ interactive_expr: Begin For Ident ASS UIdent To UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3640,8 +3626,7 @@ interactive_expr: Begin Case UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3673,8 +3658,7 @@ interactive_expr: Ident LBRACKET UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3706,8 +3690,7 @@ interactive_expr: Begin While UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3739,8 +3722,7 @@ interactive_expr: BigMap LBRACKET UIdent ARROW UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3780,8 +3762,7 @@ interactive_expr: Case UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3815,8 +3796,7 @@ interactive_expr: LPAR UIdent COMMA UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3851,8 +3831,7 @@ interactive_expr: LPAR UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3886,8 +3865,7 @@ interactive_expr: Lang UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -3919,8 +3897,7 @@ interactive_expr: Map LBRACKET UIdent ARROW UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4335,8 +4312,7 @@ interactive_expr: Ident LPAR UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4372,8 +4348,7 @@ interactive_expr: UIdent LPAR UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4408,8 +4383,7 @@ interactive_expr: List LBRACKET UIdent End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4446,8 +4420,7 @@ interactive_expr: Set LBRACKET UIdent End
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4531,8 +4504,7 @@ interactive_expr: Begin For Ident In Set UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -4564,8 +4536,7 @@ interactive_expr: Begin For Ident In List UIdent While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level
@@ -5103,8 +5074,7 @@ interactive_expr: BigMap LBRACKET UIdent Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 227, spurious reduction of production ctor_app_expr -> UIdent
-## In state 295, spurious reduction of production core_expr -> ctor_app_expr
+## In state 227, spurious reduction of production core_expr -> UIdent
 ## In state 315, spurious reduction of production update_expr_level -> core_expr
 ## In state 280, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 309, spurious reduction of production mult_expr_level -> unary_expr_level

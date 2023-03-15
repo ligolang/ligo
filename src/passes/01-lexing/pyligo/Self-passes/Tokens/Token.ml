@@ -154,6 +154,11 @@ module T =
     type token = t
 
 
+    (* NOT USED FOR JSLIGO: STUB *)
+
+    let add_directive (_ : Directive.t) (token : t) = token
+
+
     (* FROM TOKENS TO LEXEMES *)
 
     let to_lexeme = function

@@ -4,6 +4,7 @@
 
 module AST = Ast_imperative
 module CST = Cst.Jsligo
+module Wrap = Lexing_shared.Wrap
 module Predefined = Predefined.Tree_abstraction
 module Shared_helpers = Tree_abstraction_shared.Helpers
 module Region = Simple_utils.Region
@@ -64,8 +65,9 @@ let braced d =
   CST.{ lbrace = Token.ghost_lbrace; rbrace = Token.ghost_rbrace; inside = d }
 
 
-let filter_private (attributes : CST.attributes) =
-  List.filter ~f:(fun v -> not (String.equal (fst v.value) "private")) attributes
+let filter_private (attributes : CST.attribute list) =
+  List.filter ~f:(fun v -> not (String.equal (fst v#payload) "private"))
+    attributes
 
 
 (* Decompiler *)
@@ -244,7 +246,7 @@ let e_hd : _ -> CST.expr = function
 
 let rec s_hd = function
   | [ Statement hd ] -> hd
-  | [ Expr e ] -> CST.SExpr e
+  | [ Expr e ] -> CST.SExpr ([], e) (* TODO: attributes? *)
   | lst ->
     let lst = List.map ~f:(fun e -> s_hd [ e ]) lst in
     let lst = list_to_nsepseq ~sep:Token.ghost_semi lst in
@@ -546,7 +548,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
       let body = decompile_expression_in let_result in
       [ Statement (CST.SImport (Region.wrap_ghost mod_alias)) ] @ body)
   | E_raw_code { language; code } ->
-    let language = Region.wrap_ghost language in
+    let language = Wrap.ghost language in
     let code = decompile_expression_in code in
     let code, kwd_as, type_expr =
       match code with
@@ -590,6 +592,7 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
                { name = EVar (Region.wrap_ghost str)
                ; colon = Token.ghost_colon
                ; value = expr
+               ; attributes = []
                })
       in
       field
@@ -683,7 +686,9 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let ifnot = decompile_expression_in else_clause in
     let ifnot = s_hd ifnot in
     let ifnot = Some (Token.ghost_else, ifnot) in
-    let cond : CST.cond_statement = { kwd_if = Token.ghost_if; test; ifso; ifnot } in
+    let cond : CST.cond_statement = {
+      attributes=[]; (* TODO *)
+      kwd_if = Token.ghost_if; test; ifso; ifnot } in
     return_expr @@ [ Statement (CST.SCond (Region.wrap_ghost cond)) ]
   | E_tuple tuple ->
     let tuple =
@@ -785,7 +790,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let block = decompile_expression_in fe_body in
     let statement = s_hd block in
     let for_of : CST.for_of =
-      { kwd_for = Token.ghost_for
+      { attributes = [] (* TODO *)
+      ; kwd_for = Token.ghost_for
       ; lpar = Token.ghost_lpar
       ; index_kind = `Const Token.ghost_const
       ; index = var
@@ -858,7 +864,10 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let update = e_hd update in
     let p : CST.property =
       CST.Property
-        (Region.wrap_ghost CST.{ name; colon = Token.ghost_colon; value = update })
+        (Region.wrap_ghost CST.{ attributes = [];
+                                 name;
+                                 colon = Token.ghost_colon;
+                                 value = update })
     in
     return_expr
     @@ [ Expr
@@ -878,7 +887,7 @@ and statements_to_block (statements : statement_or_expr list) =
       ~f:(fun f ->
         match f with
         | Statement s -> s
-        | Expr e -> SExpr e)
+        | Expr e -> SExpr ([], e)) (* TODO: attributes? *)
       statements
   in
   let s = list_to_nsepseq ~sep:Token.ghost_semi statements in
@@ -890,17 +899,18 @@ and add_return statements =
   let last, before =
     match statements with
     | Statement last :: before -> last, before
-    | Expr last :: before -> SExpr last, before
+    | Expr last :: before -> SExpr ([], last), before (* TODO: attributes? *)
     | _ -> failwith "not implemented"
   in
   let rec aux l =
     match l with
-    | CST.SExpr (EUnit _) ->
+    | CST.SExpr (_, EUnit _) -> (* TODO: attributes? *)
       CST.SReturn (Region.wrap_ghost CST.{ kwd_return = Token.ghost_return; expr = None })
-    | CST.SExpr e ->
+    | CST.SExpr (_, e) -> (* TODO: attributes? *)
       CST.SReturn
         (Region.wrap_ghost CST.{ kwd_return = Token.ghost_return; expr = Some e })
-    | CST.SCond { value = { kwd_if; test; ifso; ifnot }; region } ->
+    | CST.SCond { value = { attributes=[]; (* TODO *)
+                            kwd_if; test; ifso; ifnot }; region } ->
       let ifso = aux ifso in
       let ifnot =
         match ifnot with
@@ -909,7 +919,8 @@ and add_return statements =
           Some (e, s)
         | None -> None
       in
-      CST.SCond { value = { kwd_if; test; ifso; ifnot }; region }
+      CST.SCond { value = { attributes = []; (* TODO *)
+                            kwd_if; test; ifso; ifnot }; region }
     | CST.SBlock { value = { lbrace; inside; rbrace }; region } ->
       let inside = Utils.nsepseq_to_list inside in
       let inside = List.rev inside in
@@ -1080,7 +1091,7 @@ and decompile_declaration : AST.declaration -> CST.statement =
   | D_type { type_binder; type_expr; type_attr } ->
     let attr = type_attr in
     let is_private = List.mem ~equal:Caml.( = ) attr "private" in
-    let attributes : CST.attributes = decompile_attributes attr in
+    let attributes : CST.attribute list = decompile_attributes attr in
     let attributes = filter_private attributes in
     let name = decompile_type_var type_binder in
     let (params : CST.type_vars option) =
@@ -1115,7 +1126,7 @@ and decompile_declaration : AST.declaration -> CST.statement =
     else CST.SExport (Region.wrap_ghost (Token.ghost_export, type_))
   | D_value { binder; attr; expr } ->
     let is_private = List.mem ~equal:Caml.( = ) attr "private" in
-    let attributes : CST.attributes = decompile_attributes attr in
+    let attributes : CST.attribute list = decompile_attributes attr in
     let var = CST.PVar (decompile_variable2 @@ Binder.get_var binder) in
     let binders = var in
     let lhs_type =
@@ -1140,7 +1151,7 @@ and decompile_declaration : AST.declaration -> CST.statement =
     else CST.SExport (Region.wrap_ghost (Token.ghost_export, const))
   | D_irrefutable_match { pattern; attr; expr } ->
     let is_private = List.mem ~equal:String.equal attr "private" in
-    let attributes : CST.attributes = decompile_attributes attr in
+    let attributes : CST.attribute list = decompile_attributes attr in
     let binders =
       match decompile_pattern pattern with
       | Ok x -> x

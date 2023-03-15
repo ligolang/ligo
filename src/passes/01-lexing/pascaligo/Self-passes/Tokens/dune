@@ -9,10 +9,11 @@
   ;; Vendors
   simple-utils
   LexerLib
+  preprocessing_pascaligo
   ;; LIGO
   lexing_shared
   mh_psc_tokens)
- (modules Token Self))
+ (modules Token Self Comments Directives))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of

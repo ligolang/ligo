@@ -422,10 +422,10 @@ declaration:
 
 attr_decl:
  "[@attr]" declaration {
-    let start = $1.region in
+    let start = $1#region in
     let stop = decl_to_region $2 in
-    let region = cover start stop in
-    { region; value = ($1, $2) } }
+    let region = cover start stop
+    in {region; value = ($1, $2)} }
 
 (* Type declarations *)
 
@@ -615,7 +615,7 @@ field_decl:
                | Some (_, t) -> type_expr_to_region t in
     let region = match $1 with
                          [] -> cover $2#region stop
-                 | start::_ -> cover start.region stop
+                 | start::_ -> cover start#region stop
     and value = {attributes=$1; field_name=$2; field_type=$3}
     in {region; value} }
 
@@ -842,7 +842,7 @@ patch_expr:
   record_expr         { `Record $1.Region.value.kind, E_Record $1 }
 | map_expr            { `Map    $1.Region.value.kind, E_Map    $1 }
 | set_expr            { `Set    $1.Region.value.kind, E_Set    $1 }
-| patchable call_expr { $1,                           E_Call   $2 }
+| patchable call_expr { $1,                           E_App    $2 }
 | patchable par(expr) { $1,                           E_Par    $2 }
 
 %inline
@@ -1212,14 +1212,20 @@ core_expr:
 | list_expr       { E_List     $1 }
 | record_expr     { E_Record   $1 }
 | code_inj        { E_CodeInj  $1 }
-| ctor_app_expr   { E_App      $1 }
 | map_expr        { E_Map      $1 }
 | big_map_expr    { E_BigMap   $1 }
 | set_expr        { E_Set      $1 }
 | par(typed_expr) { E_Typed    $1 }
-| call_expr       { E_Call     $1 }
 | attr_expr       { E_Attr     $1 }
+| application     { E_App      $1 }
+| ctor            { E_Ctor     $1 }
 | left_expr       { $1 }
+
+(* Applications *)
+
+%inline
+application:
+  ctor_app_expr | call_expr { $1 }
 
 (* Left-value expression *)
 
@@ -1417,8 +1423,10 @@ compound_items(element):
 
 ctor_app_expr:
   ctor par(nsepseq(ctor_arg,",")) {
-    mk_reg (cover $1#region $2.region) (E_Ctor $1, Some $2) }
-| ctor { {region=$1#region; value = (E_Ctor $1, None)} }
+    let sepseq = Some $2.value.inside in
+    let value  = {$2.value with inside = sepseq} in
+    let args   = Region.{region=$2.region; value} in
+    mk_reg (cover $1#region $2.region) (E_Ctor $1, args) }
 
 ctor_arg: expr { $1 }
 
@@ -1455,7 +1463,7 @@ update_expr:
 
 code_inj:
   "[%lang" expr "]" {
-    let region = cover $1.region $3#region
+    let region = cover $1#region $3#region
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
 

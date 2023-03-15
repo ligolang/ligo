@@ -41,40 +41,40 @@ type action =
 | ["GetTotalSupply", getTotalSupply];
 
 let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
-  let new_allowances = 0; 
-  if (Tezos.get_sender() == p.address_from) { 
-	  new_allowances = s.allowances; 
+  let new_allowances = 0;
+  if (Tezos.get_sender() == p.address_from) {
+    new_allowances = s.allowances;
   }
   else {
-	  let opt = Big_map.find_opt ([Tezos.get_sender(),p.address_from], s.allowances);
-	  let authorized_value: nat = match(opt, {
-	    Some: (value: nat) => value,
-	    None: () => (0 as nat)
-	  });
-	  if (authorized_value < p.value) { 
-	    (failwith ("Not Enough Allowance") as allowances); 
-	  }
-	  else { 
-	    new_allowances = Big_map.update ([Tezos.get_sender(), p.address_from], (Some (abs(authorized_value - p.value))), s.allowances); 
-	  };
+    let opt = Big_map.find_opt ([Tezos.get_sender(),p.address_from], s.allowances);
+    let authorized_value: nat = match(opt, {
+      Some: (value: nat) => value,
+      None: () => (0 as nat)
+    });
+    if (authorized_value < p.value) {
+      failwith ("Not Enough Allowance") as allowances;
+    }
+    else {
+      new_allowances = Big_map.update ([Tezos.get_sender(), p.address_from], (Some (abs(authorized_value - p.value))), s.allowances);
+    };
   };
   let opt = Big_map.find_opt (p.address_from, s.tokens);
   let sender_balance: nat = match (opt, {
-	  Some: (value: nat) => value,
-  	None: () => (0 as nat)
+    Some: (value: nat) => value,
+    None: () => (0 as nat)
   });
-  if (sender_balance < p.value) { 
-	  (failwith ("Not Enough Balance") as [list <operation>, storage]); 
+  if (sender_balance < p.value) {
+    failwith ("Not Enough Balance") as [list <operation>, storage];
   }
   else {
-	  let new_tokens = Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
-	  let opt = Big_map.find_opt (p.address_to, s.tokens);
-	  let receiver_balance:nat  = match(opt, {
-	    Some: (value: nat) => value,
-	    None: () => (0 as nat)
-	  });
-	  let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-	  return [(list([]) as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
+    let new_tokens = Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
+    let opt = Big_map.find_opt (p.address_to, s.tokens);
+    let receiver_balance:nat  = match(opt, {
+      Some: (value: nat) => value,
+      None: () => (0 as nat)
+    });
+    let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
+    return [(list([]) as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
   };
 };
 

@@ -123,17 +123,16 @@ module Make (Config : Config.S) (Client : Client.S) =
 
       let hash_state = state in
 
-      (* We syncronise the logical state with the matched string *)
+      (* We synchronise the logical state with the matched string *)
 
       let state, Region.{region; _} = state#sync lexbuf in
 
-      (* We determine the regon of the line number *)
+      (* We determine the region of the line number *)
 
       let length   = String.length linenum in
       let start    = region#stop#shift_bytes (-length) in
       let line_reg = Region.make ~start ~stop:region#stop in
       let linenum  = Region.{region=line_reg; value=linenum} in
-
 
       (* We make a preprocessing state and scan the expected
          linemarker. *)
@@ -174,7 +173,7 @@ module Make (Config : Config.S) (Client : Client.S) =
                  preprocessing of an #include directive. We assume that
                  the user never writes one, otherwise preprocessing
                  may fail. More precisely, we assume that each [Push]
-                 (below) is associate to one [Pop] (this case). *)
+                 (below) is associated to one [Pop] (this case). *)
               Lexbuf.reset_file arg_file lexbuf;
               Ok state
 
@@ -375,7 +374,6 @@ rule scan state = parse
       Some block when String.(block#opening = lexeme) ->
         let state, Region.{region; _} = state#sync lexbuf in
         let thread = Thread.make ~opening:region in
-        let thread = thread#push_string lexeme in
         let* thread, state = in_block block thread state lexbuf
         in scan (state#push_block thread) lexbuf
     | Some _ | None -> callback_with_cont scan state lexbuf }
@@ -386,7 +384,6 @@ rule scan state = parse
       Some opening when String.(opening = lexeme) ->
         let state, Region.{region; _} = state#sync lexbuf in
         let thread = Thread.make ~opening:region in
-        let thread = thread#push_string lexeme in
         let* state = in_line thread state lexbuf
         in scan state lexbuf
     | Some _ | None -> callback_with_cont scan state lexbuf }
@@ -462,7 +459,7 @@ and in_block block thread state = parse
 | block_comment_closing {
     let state, Region.{value=lexeme; _} = state#sync lexbuf in
     if   String.(block#closing = lexeme)
-    then Ok (thread#push_string lexeme, state)
+    then Ok (thread, state)
     else scan_utf8_wrap (scan_utf8 open_block)
                         (in_block block)
                         thread state lexbuf }

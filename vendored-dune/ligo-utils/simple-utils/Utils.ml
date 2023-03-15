@@ -172,3 +172,12 @@ let error_yojson_format format =
   Error ("Invalid JSON value.
           An object with the following specification is expected:"
          ^ format)
+
+(* Optional let *)
+
+let (let*) o f =
+  match o with
+    None -> None
+  | Some x -> f x
+
+let return x = Some x

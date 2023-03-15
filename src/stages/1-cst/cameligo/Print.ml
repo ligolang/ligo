@@ -23,6 +23,7 @@ open! Region (* TODO: Remove *)
 module Tree = Cst_shared.Tree
 
 type state = Tree.state
+type label = Tree.label
 
 open CST (* THE ONLY GLOBAL OPENING *)
 
@@ -33,18 +34,21 @@ let sprintf  = Printf.sprintf
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-let print_attribute state (node : Attr.t reg) =
-  let key, val_opt = node.value in
+let print_attribute state (node : Attr.t wrap) =
+  let key, val_opt = node#payload in
   match val_opt with
     None ->
       Tree.print_unary state "<attribute>" Tree.print_node key
-  | Some (String value | Ident value) ->
+  | Some String value ->
+      let children = [
+        Tree.mk_child Tree.print_node key;
+        Tree.mk_child Tree.print_node ("\"" ^ value ^ "\"")]
+      in Tree.print state "<attributes>" children
+  | Some Ident value ->
       let children = [
         Tree.mk_child Tree.print_node key;
         Tree.mk_child Tree.print_node value]
       in Tree.print state "<attributes>" children
-
-type label = Tree.label
 
 let print_list :
   state -> ?region:Region.t -> label -> 'a Tree.printer -> 'a list -> unit =
@@ -52,9 +56,8 @@ let print_list :
     let children = List.map ~f:(Tree.mk_child print) list
     in Tree.print ?region state label children
 
-let print_attributes state (node : Attr.attribute reg list) =
+let print_attributes state (node : Attr.t wrap list) =
   print_list state "<attributes>" print_attribute node
-
 
 (* Pretty-printing the CST *)
 
@@ -421,7 +424,7 @@ and print_code_inj state rc =
   let () =
     let state = state#pad 2 0 in
     print_node state "<language>";
-    print_string (state#pad 1 0) rc.language.value in
+    print_string (state#pad 1 0) rc.language#payload in
   let () =
     let state = state#pad 2 1 in
     print_node state "<code>";

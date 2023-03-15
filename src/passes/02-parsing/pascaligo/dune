@@ -4,8 +4,7 @@
  (merge_into Parser)
  (modules ParToken Parser)
  (flags
-  -la
-  1
+  -la 1
   --table
   --strict
   --explain
@@ -45,10 +44,8 @@
   hex)
  (flags
   (:standard \ -open Core)
-  (-open
-   Cst_pascaligo ;; for CST in Parser.mli
-   -open
-   Lexing_shared)))
+  (-open Cst_pascaligo ;; for CST in Parser.mli
+   -open Lexing_shared)))
 
 ;; for Attr, Wrap in Parser.mli
 
@@ -62,10 +59,12 @@
   lexing_pascaligo
   parsing_shared
   parsing_pascaligo
+  parsing_jsligo
   cst_pascaligo
+  cst_jsligo
   ;; Third party
   hex)
- (modules ParserMain)
+ (modules ParserMain JsLIGO)
  (flags
   (:standard \ -open Core)))
 

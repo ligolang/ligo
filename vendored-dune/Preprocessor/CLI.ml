@@ -45,15 +45,15 @@ module Make (Config : Config.S) : PARAMETERS =
                  and each <option> (if any) is one of the following:\n"
                 file
       and options = [
-        "  -I <paths>         Inclusion paths (colon-separated)";
-        "  -D <symbols>       Predefined symbols (colon-separated)";
-        "  -h, --help         This help";
-        "  -v, --version      Commit hash on stdout";
-        "      --cli          Print given options (debug)";
-        "      --columns      Columns for source locations";
-        "      --show-pp      Print result of preprocessing";
-        "      --no-colour    Disable coloured printing on stdout";
-        "      --project-root Path to the root of the project"
+        "  -I <paths>           Inclusion paths (colon-separated)";
+        "  -D <symbols>         Predefined symbols (colon-separated)";
+        "  -h, --help           This help";
+        "  -v, --version        Commit hash on stdout";
+        "      --cli            Print given options (debug)";
+        "      --columns        Columns for source locations";
+        "      --show-pp        Print result of preprocessing";
+        "      --no-colour      Disable coloured printing on stdout";
+        "      --project-root=<path>\n                       Path to the root of the project"
       ] in
       begin
         Buffer.add_string buffer header;

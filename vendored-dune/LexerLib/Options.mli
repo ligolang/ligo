@@ -29,6 +29,7 @@ module type S =
     val preprocess   : bool               (* --pre                   *)
     val string       : string option      (* --string                *)
     val print_passes : bool               (* --print-passes          *)
+    val jsligo       : string option option (* --jsligo              *)
     val mode         : [`Byte | `Point]   (* --bytes                 *)
     val command      : [`Copy | `Units | `Tokens] option
                                          (* --copy/--units/--tokens *)
