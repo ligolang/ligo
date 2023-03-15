@@ -1,8 +1,10 @@
 ## Motivation and Context
 <!--- Why is this change required? What problem does it solve? -->
-<!--- If it fixes an open issue, please link to the issue here using **Related Issue(s)**: #issue_num(s). -->
+<!--- If it fixes an open issue, please link to the issue in `Related issues` section -->
 
-**Related Issue(s)**: <!-- insert the related issue here, or none if not appliable -->
+### Related issues
+
+Resolves <!-- insert the related issue here, or none if not appliable -->.
 
 ### :white_check_mark: Checklist for the LIGO Debugger
 
