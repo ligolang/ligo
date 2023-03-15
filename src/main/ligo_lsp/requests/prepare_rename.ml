@@ -1,10 +1,8 @@
 module Loc = Simple_utils.Location
+open Lsp.Types
 open Handler
 
-let prepare_rename
-    :  Lsp.Types.Position.t -> Lsp.Types.DocumentUri.t -> Scopes.def list
-    -> Lsp.Types.Range.t option
-  =
+let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t option =
  fun pos uri defs ->
   let open Option in
   Definition.get_definition pos uri defs
@@ -14,10 +12,7 @@ let prepare_rename
   List.find ~f:(Utils.is_position_in_range pos) refs
 
 
-let on_req_prepare_rename
-    :  Lsp.Types.Position.t -> Lsp.Types.DocumentUri.t
-    -> Lsp.Types.Range.t option Handler.t
-  =
+let on_req_prepare_rename : Position.t -> DocumentUri.t -> Range.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->

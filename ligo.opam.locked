@@ -100,14 +100,14 @@ depends: [
   "json-data-encoding" {= "0.12.1"}
   "json-data-encoding-bson" {= "0.12.1"}
   "jsonm" {= "1.0.1"}
-  "jsonrpc" {= "1.14.2"}
+  "jsonrpc" {= "1.11.6"}
   "jst-config" {= "v0.15.1"}
   "lambda-term" {= "3.3.1"}
-  "linol" {= "0.4"}
-  "linol-lwt" {= "0.4"}
+  "linol" {= "0.5"}
+  "linol-lwt" {= "0.5"}
   "logs" {= "0.7.0"}
   "lru" {= "0.3.1"}
-  "lsp" {= "1.14.2"}
+  "lsp" {= "1.11.6"}
   "lwt" {= "5.6.1"}
   "lwt-canceler" {= "0.3"}
   "lwt_log" {= "1.1.2"}
@@ -318,11 +318,9 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
-  [ "linol.0.5" "git+https://github.com/c-cube/linol.git" ]
-  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git" ]
-  [ "linol.0.4" "git+https://github.com/c-cube/linol.git" ]
-  [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git" ]
-  [ "lsp.1.14.2" "git+https://github.com/ocaml/ocaml-lsp.git#1.14.2" ]
+  [ "linol.0.5" "git+https://github.com/c-cube/linol.git#5a29a9e1456a431122c51f44bc10c51f46f8d592" ]
+  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#5a29a9e1456a431122c51f44bc10c51f46f8d592" ]
+  [ "lsp.1.11.6" "git+https://github.com/ocaml/ocaml-lsp.git#1.11.6" ]
   [
     "ocaml-recovery-parser.0.2.4"
     "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"

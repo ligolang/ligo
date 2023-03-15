@@ -84,6 +84,7 @@ esy-macos-darwin:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
       when: always
   script:
     - mkdir -p ~/.npm
