@@ -141,6 +141,7 @@ library
     , unliftio-core
     , unliftio-pool
     , unordered-containers
+    , vector
     , witherable
   default-language: Haskell2010
 

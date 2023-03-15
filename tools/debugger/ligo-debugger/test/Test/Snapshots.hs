@@ -8,6 +8,7 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
+import Cli.Json (LigoTypeContent (LTCSingleton), LigoTypeLiteralValue (LTLVInt))
 import Control.Category ((>>>))
 import Control.Lens (Each (each), has, ix, makeLensesWith, toListOf, (?~), (^?!))
 import Control.Monad.Writer (listen)
@@ -1484,7 +1485,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           void $ move Forward
-          
+
           -- Note that at this moment we're showing raw types.
           -- It means that "type string = int" will have
           -- "int" raw type.
@@ -1515,11 +1516,15 @@ test_Snapshots = testGroup "Snapshots collection"
           let tezType = LigoTypeResolved (mkSimpleConstantType "Tez")
           let timestampType = LigoTypeResolved (mkSimpleConstantType "Timestamp")
           let addressType = LigoTypeResolved (mkSimpleConstantType "Address")
+          let saplingFooType = LigoTypeResolved
+                $  unitType'
+                ~> mkConstantType "Sapling_state"
+                    [ mkTypeExpression $ LTCSingleton (LTLVInt 42)
+                    ]
 
           void $ moveTill Forward
-            $ isAtLine 4
+            $ isAtLine 7
 
-          -- TODO: check "sapling_state" type as well after #1711 is resolved.
           liftIO $ step "Check types from Tezos module"
           checkSnapshot \case
             InterpretSnapshot
@@ -1539,11 +1544,17 @@ test_Snapshots = testGroup "Snapshots collection"
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
                             { leseType = typ3
                             }
+                        } :
+                      StackItem
+                        { siLigoDesc = LigoStackEntry LigoExposedStackEntry
+                            { leseType = typ4
+                            }
                         } : _
                   } :| _
-              } | typ1 == addressType
-                , typ2 == timestampType
-                , typ3 == tezType -> pass
+              } | typ1 == saplingFooType
+                , typ2 == addressType
+                , typ3 == timestampType
+                , typ4 == tezType -> pass
             snap -> unexpectedSnapshot snap
 
     , testCaseSteps "Layout comb types" \step -> do

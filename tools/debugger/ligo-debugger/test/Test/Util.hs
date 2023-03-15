@@ -50,6 +50,7 @@ module Test.Util
   , mkSnapshotsForImpl
   , dummyLoggingFunction
   -- * LIGO types construct helpers
+  , mkTypeExpression
   , mkConstantType
   , mkArrowType
   , (~>)
