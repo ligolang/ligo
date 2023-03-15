@@ -269,6 +269,8 @@ bottle-ventura-i7:
 
 bottle-ventura-m1:
   stage: pretooling
+  variables:
+    GIT_STRATEGY: clone
   tags:
     - mac
     - m1
@@ -301,6 +303,8 @@ bottle-ventura-m1:
 
 update-bottle-reference:
   stage: pretooling
+  variables:
+    GIT_STRATEGY: clone
   needs:
       - job: bottle-ventura-i7
         artifacts: true
