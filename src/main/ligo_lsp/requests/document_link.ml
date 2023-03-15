@@ -1,4 +1,3 @@
-open Linol_lwt
 open Utils
 open Handler
 module Trace = Simple_utils.Trace
@@ -34,26 +33,24 @@ let extract_directives_pascaligo (cst : Parsing.Pascaligo.CST.t)
 
 
 let extract_link_from_directive ~(relative_to_dir : string)
-    : Preprocessor.Directive.t -> DocumentLink.t option
+    : Preprocessor.Directive.t -> Lsp.Types.DocumentLink.t option
   = function
   | PP_Include d ->
     let range = Utils.region_to_range d#file_path.region
-    and target =
-      DocumentUri.of_path @@ Filename.concat relative_to_dir d#file_path.value
-    in
-    Option.some @@ DocumentLink.create ~range ~target ()
+    and target = Filename.concat relative_to_dir d#file_path.value in
+    Option.some @@ Lsp.Types.DocumentLink.create ~range ~target ()
   | PP_Import d ->
     let range = Utils.region_to_range d#file_path.region
-    and target =
-      DocumentUri.of_path @@ Filename.concat relative_to_dir d#file_path.value
-    in
-    Option.some @@ DocumentLink.create ~range ~target ()
+    and target = Filename.concat relative_to_dir d#file_path.value in
+    Option.some @@ Lsp.Types.DocumentLink.create ~range ~target ()
   | _ -> None
 
 
-let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option handler =
-  let@ () = send_debug_msg @@ "On document_link:" ^ DocumentUri.to_path uri in
-  let dir = Filename.dirname (DocumentUri.to_path uri) in
+let on_req_document_link (uri : Lsp.Types.DocumentUri.t)
+    : Lsp.Types.DocumentLink.t list option handler
+  =
+  let@ () = send_debug_msg @@ "On document_link:" ^ Lsp.Types.DocumentUri.to_path uri in
+  let dir = Filename.dirname (Lsp.Types.DocumentUri.to_path uri) in
   let@ directives_opt =
     with_cst uri None
     @@ function

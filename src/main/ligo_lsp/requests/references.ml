@@ -1,6 +1,4 @@
 open Ligo_interface
-open Linol_lwt
-open Linol_lwt.Jsonrpc2
 module Loc = Simple_utils.Location
 
 (* TODO: use Set, List & Hashtbl from Core *)
@@ -10,7 +8,9 @@ module List = Caml.List
 open Handler
 open Utils
 
-let get_references : DocumentUri.t -> Loc.t -> Scopes.def list -> Range.t list =
+let get_references
+    : Lsp.Types.DocumentUri.t -> Loc.t -> Scopes.def list -> Lsp.Types.Range.t list
+  =
  fun uri location defs ->
   defs
   |> List.filter_map (fun def ->
@@ -24,7 +24,8 @@ let get_references : DocumentUri.t -> Loc.t -> Scopes.def list -> Range.t list =
 
 
 let get_all_references
-    : Loc.t -> (DocumentUri.t, file_data) Hashtbl.t -> (DocumentUri.t * Range.t list) list
+    :  Loc.t -> (Lsp.Types.DocumentUri.t, file_data) Hashtbl.t
+    -> (Lsp.Types.DocumentUri.t * Lsp.Types.Range.t list) list
   =
  fun location get_scope_buffers ->
   let go (file, { get_scope_info; _ }) =
@@ -42,7 +43,10 @@ let get_all_references
   get_scope_buffers |> Hashtbl.to_seq |> List.of_seq |> List.fold_left filter_map []
 
 
-let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Handler.t =
+let on_req_references
+    :  Lsp.Types.Position.t -> Lsp.Types.DocumentUri.t
+    -> Lsp.Types.Location.t list option Handler.t
+  =
  fun pos uri ->
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc uri None
@@ -50,9 +54,11 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
   when_some (Definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   let references = get_all_references (get_location definition) get_scope_buffers in
-  let@ () = send_debug_msg @@ "On references request on " ^ DocumentUri.to_path uri in
+  let@ () =
+    send_debug_msg @@ "On references request on " ^ Lsp.Types.DocumentUri.to_path uri
+  in
   let show_reference (uri, ranges) =
-    DocumentUri.to_path uri
+    Lsp.Types.DocumentUri.to_path uri
     ^ "\n"
     ^ String.concat ~sep:"\n"
     @@ List.map range_to_string ranges
@@ -62,6 +68,6 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
   in
   references
   |> List.map (fun (file, ranges) ->
-         List.map (fun range -> Location.create ~uri:file ~range) ranges)
+         List.map (fun range -> Lsp.Types.Location.create ~uri:file ~range) ranges)
   |> List.flatten
   |> return

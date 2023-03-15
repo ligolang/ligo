@@ -1,4 +1,3 @@
-open Linol_lwt
 open Handler
 open Utils
 module Loc = Simple_utils.Location
@@ -13,7 +12,10 @@ let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
   | Unresolved -> None
 
 
-let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
+let on_req_type_definition
+    :  Lsp.Types.Position.t -> Lsp.Types.DocumentUri.t
+    -> Lsp.Types.Locations.t option Handler.t
+  =
  fun pos uri ->
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->
