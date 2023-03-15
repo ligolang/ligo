@@ -21,7 +21,6 @@ FILES_PATH_TO_EDIT=(
     "$ROOT_FOLDER/tools/webide/Dockerfile"
     "$ROOT_FOLDER/gitlab-pages/docs/intro/installation.md"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
-    "$ROOT_FOLDER/nix/get_ligo_light.nix"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
 )
 
