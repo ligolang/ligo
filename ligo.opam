@@ -79,9 +79,9 @@ depends: [
   "ocamlformat-rpc" { = "0.21.0" }
   "ocaml-lsp-server" { >= "1.14.0" }
   # dependencies for ligo lsp (OCaml implementation)
-  "lsp" { = "1.11.6" }
-  "linol" { = "0.5" }
-  "linol-lwt" { = "0.5" }
+  "lsp" { = "1.14.2" }
+  "linol" { = "0.4" }
+  "linol-lwt" { = "0.4" }
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
@@ -126,6 +126,6 @@ pin-depends: [
   [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
-  [ "linol.0.5" "git+https://github.com/c-cube/linol.git" ]
-  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git" ]
+  [ "linol.0.4" "git+https://github.com/c-cube/linol.git" ]
+  [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git" ]
 ]

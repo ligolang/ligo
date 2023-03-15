@@ -144,7 +144,14 @@ module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
         fun ~notify_back ~id (r : _ Client_request.t) ->
           let run ~uri =
             run_handler
-              { notify_back = Normal (new notify_back ~uri ~notify_back ())
+              { notify_back =
+                  Normal
+                    (new notify_back
+                       ~uri
+                       ~notify_back
+                       ~workDoneToken:None
+                       ~partialResultToken:None
+                       ())
               ; config
               ; docs_cache = get_scope_buffers
               }
