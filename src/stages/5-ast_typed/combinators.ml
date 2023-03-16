@@ -143,6 +143,36 @@ let t_abstraction2 ~loc name kind_l kind_r : type_expression =
     ()
 
 
+let t_abstraction3 ~loc name kind_l kind_m kind_r : type_expression =
+  let ty_binder_l = Type_var.fresh ~loc ~name:"_l" () in
+  let ty_binder_m = Type_var.fresh ~loc ~name:"_m" () in
+  let ty_binder_r = Type_var.fresh ~loc ~name:"_r" () in
+  let type_ =
+    t_constant
+      ~loc
+      name
+      [ t_variable ~loc ty_binder_l ()
+      ; t_variable ~loc ty_binder_m ()
+      ; t_variable ~loc ty_binder_r ()
+      ]
+  in
+  t_abstraction
+    ~loc
+    { ty_binder = ty_binder_l
+    ; kind = kind_l
+    ; type_ =
+        t_abstraction
+          ~loc
+          { ty_binder = ty_binder_m
+          ; kind = kind_m
+          ; type_ =
+              t_abstraction ~loc { ty_binder = ty_binder_r; kind = kind_r; type_ } ()
+          }
+          ()
+    }
+    ()
+
+
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder; kind; type_ } ()
 
 let t_record ~loc ?core ~layout fields : type_expression =

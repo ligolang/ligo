@@ -197,7 +197,6 @@ module Fold_helpers (M : Monad) = struct
       return @@ E_List { value; region }
     | E_Nil _ as e -> return e
     | E_Ctor _ as e -> return e
-
     | E_App { value; region } ->
       let lam, args = value in
       let* lam = self lam in

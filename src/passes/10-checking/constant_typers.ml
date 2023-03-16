@@ -1584,6 +1584,99 @@ module External_types = struct
              return ret_type)
 
 
+  let map_find_opt_types : _ t =
+    let open Type in
+    let open C in
+    let open Let_syntax in
+    fun (received_arg_types : Type.t list) ->
+      if List.length received_arg_types <> 2
+      then
+        raise (corner_case "Unequal lengths between mode annotation and argument types")
+      else (
+        let k = List.nth_exn received_arg_types 0 in
+        let%bind k = Context.tapply k in
+        let m_or_bm = List.nth_exn received_arg_types 1 in
+        let%bind m_or_bm = Context.tapply m_or_bm in
+        let%bind k', v =
+          match get_t_big_map m_or_bm with
+          | Some (k', v) -> return (k', v)
+          | None ->
+            (match get_t_map m_or_bm with
+            | Some (k', v) -> return (k', v)
+            | None ->
+              raise
+                (corner_case
+                   "external_find_opt: second parameter is neither big_map nor map"))
+        in
+        let%bind k' = Context.tapply k' in
+        let%bind () = unify k k' in
+        let%bind v = Context.tapply v in
+        let%bind loc = loc () in
+        return (t_option ~loc v ()))
+
+
+  let map_add_types : _ t =
+    let open Type in
+    let open C in
+    let open Let_syntax in
+    fun (received_arg_types : Type.t list) ->
+      if List.length received_arg_types <> 3
+      then
+        raise (corner_case "Unequal lengths between mode annotation and argument types")
+      else (
+        let k = List.nth_exn received_arg_types 0 in
+        let%bind k = Context.tapply k in
+        let v = List.nth_exn received_arg_types 1 in
+        let%bind v = Context.tapply v in
+        let m_or_bm = List.nth_exn received_arg_types 2 in
+        let%bind m_or_bm = Context.tapply m_or_bm in
+        let%bind k', v' =
+          match get_t_big_map m_or_bm with
+          | Some (k', v') -> return (k', v')
+          | None ->
+            (match get_t_map m_or_bm with
+            | Some (k', v') -> return (k', v')
+            | None ->
+              raise
+                (corner_case
+                   "external_find_opt: second parameter is neither big_map nor map"))
+        in
+        let%bind k' = Context.tapply k' in
+        let%bind () = unify k k' in
+        let%bind v' = Context.tapply v' in
+        let%bind () = unify v v' in
+        return m_or_bm)
+
+
+  let map_remove_types : _ t =
+    let open Type in
+    let open C in
+    let open Let_syntax in
+    fun (received_arg_types : Type.t list) ->
+      if List.length received_arg_types <> 2
+      then
+        raise (corner_case "Unequal lengths between mode annotation and argument types")
+      else (
+        let k = List.nth_exn received_arg_types 0 in
+        let%bind k = Context.tapply k in
+        let m_or_bm = List.nth_exn received_arg_types 1 in
+        let%bind m_or_bm = Context.tapply m_or_bm in
+        let%bind k', _ =
+          match get_t_big_map m_or_bm with
+          | Some (k', v) -> return (k', v)
+          | None ->
+            (match get_t_map m_or_bm with
+            | Some (k', v) -> return (k', v)
+            | None ->
+              raise
+                (corner_case
+                   "external_find_opt: second parameter is neither big_map nor map"))
+        in
+        let%bind k' = Context.tapply k' in
+        let%bind () = unify k k' in
+        return m_or_bm)
+
+
   let int_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in

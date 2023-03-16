@@ -329,8 +329,7 @@ module Fold_helpers (M : Monad) = struct
       let* e = self_expr e in
       return @@ SExpr (attributes, e)
     | SCond { value; region } ->
-      let { attributes;
-            kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } = value in
+      let { attributes; kwd_if; test = { inside; lpar; rpar }; ifso; ifnot } = value in
       let* inside = self_expr inside in
       let* ifso = self ifso in
       let map_ifnot (else_, statement) =

@@ -1,6 +1,6 @@
 module Region = Simple_utils.Region
-module Attr   = Lexing_shared.Attr
-module Wrap   = Lexing_shared.Wrap
+module Attr = Lexing_shared.Attr
+module Wrap = Lexing_shared.Wrap
 
 let decompile_attributes lst =
   let f : string -> Attr.t Wrap.t =

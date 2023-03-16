@@ -33,7 +33,6 @@ let check_no_attributes
 
 
 let r_split = Location.r_split
-
 let w_split (x : 'a CST.Wrap.t) : 'a * Location.t = x#payload, Location.lift x#region
 
 let compile_variable var =
@@ -471,35 +470,28 @@ let rec compile_expression
   | E_App x ->
     let (expr, args), loc = r_split x in
     (match expr, args.value.inside with
-     | CST.E_Ctor x, None
-       when String.equal (fst (w_split x)) "Unit" -> e_unit ~loc ()
-     | CST.E_Ctor x, Some nsepseq ->
-         let par = CST.{
-           lpar   = args.value.lpar;
-           inside = nsepseq;
-           rpar   = args.value.rpar} in
-         let args : CST.expr CST.tuple =
-           Region.{region = args.region; value = par} in
-         let ctor_name, _loc = w_split x in
-         let args = compile_tuple_expression args in
-         e_constructor ~loc ctor_name args
-     | CST.E_Var var, args' ->
-         let args' = CST.{
-           lpar   = args.value.lpar;
-           inside = args';
-           rpar   = args.value.rpar} in
-         let args' =
-           Region.{region = args.region; value = args'} in
-         let var, loc_var = w_split var in
-         let func = e_variable_ez ~loc:loc_var var in
-         let args, _loc = compile_arguments args' in
-         List.fold_left ~f:(fun e arg -> e_application ~loc e arg)
-           ~init:func args
-     | _ ->
-       let func = self expr in
-       let args, _loc = compile_arguments args in
-       List.fold_left ~f:(fun e arg -> e_application ~loc e arg)
-         ~init:func args)
+    | CST.E_Ctor x, None when String.equal (fst (w_split x)) "Unit" -> e_unit ~loc ()
+    | CST.E_Ctor x, Some nsepseq ->
+      let par =
+        CST.{ lpar = args.value.lpar; inside = nsepseq; rpar = args.value.rpar }
+      in
+      let args : CST.expr CST.tuple = Region.{ region = args.region; value = par } in
+      let ctor_name, _loc = w_split x in
+      let args = compile_tuple_expression args in
+      e_constructor ~loc ctor_name args
+    | CST.E_Var var, args' ->
+      let args' =
+        CST.{ lpar = args.value.lpar; inside = args'; rpar = args.value.rpar }
+      in
+      let args' = Region.{ region = args.region; value = args' } in
+      let var, loc_var = w_split var in
+      let func = e_variable_ez ~loc:loc_var var in
+      let args, _loc = compile_arguments args' in
+      List.fold_left ~f:(fun e arg -> e_application ~loc e arg) ~init:func args
+    | _ ->
+      let func = self expr in
+      let args, _loc = compile_arguments args in
+      List.fold_left ~f:(fun e arg -> e_application ~loc e arg) ~init:func args)
   | E_Case case ->
     let CST.{ cases; expr; _ }, loc = r_split case in
     let matchee = self expr in
@@ -1048,8 +1040,7 @@ and compile_instruction ~raise : ?next:AST.expression -> CST.instruction -> AST.
     let default_rhs = remove_func item (e_variable ~loc v) in
     let last_proj_update prev_proj = remove_func item prev_proj in
     return @@ compile_assignment ~loc ~last_proj_update ~lhs:v ~path ~default_rhs
-  | I_Call call ->
-    return @@ compile_expression ~raise (E_App call)
+  | I_Call call -> return @@ compile_expression ~raise (E_App call)
 
 
 and compile_binding ~raise

@@ -909,6 +909,12 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
       try_
         (let%bind ret_type = Context.tapply ret_type in
          match ret_type.content with
+         | T_construct { constructor = External "map_find_opt"; parameters; _ } ->
+           Constant_typers.External_types.map_find_opt_types parameters
+         | T_construct { constructor = External "map_add"; parameters; _ } ->
+           Constant_typers.External_types.map_add_types parameters
+         | T_construct { constructor = External "map_remove"; parameters; _ } ->
+           Constant_typers.External_types.map_remove_types parameters
          | T_construct { constructor = External "int"; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
          | T_construct { constructor = External ("ediv" | "u_ediv"); parameters; _ } ->
