@@ -1066,15 +1066,15 @@ and expr_of_map (kind: string) (node: binding reg compound reg) =
       let list        = Js.EVar (reg_of "list") in
       let list_call   = Js.ECall (reg_of (list, list_args))
       in
-      let module_name = reg_of "Set"
+      let module_name = reg_of "Map"
       and selector    = Token.ghost_dot
       and field       = Js.EVar (reg_of "literal") in
-      let set_literal = Js.{module_name; selector; field} in
-      let set_literal = Js.EModA (reg_of set_literal)
+      let map_literal = Js.{module_name; selector; field} in
+      let map_literal = Js.EModA (reg_of map_literal)
       in
-      let set_literal_args =
+      let map_literal_args =
         Js.Multiple (reg_of (par_of (list_call,[])))
-      in Js.ECall (reg_of (set_literal, set_literal_args))
+      in Js.ECall (reg_of (map_literal, map_literal_args))
 
 and array_item_of_binding (node: binding reg) =
   let {key; value; _} = node.value in
