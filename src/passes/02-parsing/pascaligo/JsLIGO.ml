@@ -1097,9 +1097,9 @@ and expr_of_E_MapLookup (node: map_lookup reg) =
   | index, [] ->
       let map          = expr_of_expr map in
       let index        = expr_of_expr index in
-      let module_name  = reg_of "ExternalMap"
+      let module_name  = reg_of "Transpiled"
       and selector     = Token.ghost_dot
-      and field        = Js.EVar (reg_of "find_opt") in
+      and field        = Js.EVar (reg_of "map_find_opt") in
       let map_find_opt = Js.{module_name; selector; field} in
       let map_find_opt = Js.EModA (reg_of map_find_opt) in
       let comma        = Token.ghost_comma in
@@ -1464,9 +1464,9 @@ and statement_of_I_Assign (node: assignment reg) =
         E_Var _ | E_Proj _ -> (
           match keys with
             key, [] ->
-              let module_name = reg_of "ExternalMap"
+              let module_name = reg_of "Transpiled"
               and selector    = Token.ghost_dot
-              and field       = Js.EVar (reg_of "add") in
+              and field       = Js.EVar (reg_of "map_add") in
               let map_add     = Js.{module_name; selector; field} in
               let map_add     = Js.EModA (reg_of map_add)
               in
@@ -1756,9 +1756,9 @@ and statement_of_I_Remove (node: removal reg) =
       let e_assign    = Js.EAssign (collection, op, remove_call)
       in Js.SExpr ([], e_assign)
   | `Map _ ->
-      let module_name = reg_of "ExternalMap"
+      let module_name = reg_of "Transpiled"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "remove") in
+      and field       = Js.EVar (reg_of "map_remove") in
       let map_remove  = Js.{module_name; selector; field} in
       let map_remove  = Js.EModA (reg_of map_remove) in
       let comma       = Token.ghost_comma in

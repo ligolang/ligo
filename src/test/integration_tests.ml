@@ -2458,6 +2458,7 @@ let block_scope_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "test_6" (e_unit ~loc ()) (e_int ~loc 2) in
   ()
 
+
 (*
 let assignment_operators_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/assignment_operators.jsligo" in
@@ -3329,6 +3330,7 @@ let switch_return_jsligo ~raise () : unit =
   let _ = expect_eq ~raise program "main2" (e_int ~loc 3) (e_int ~loc (-1)) in
   ()
 
+
 (*
 let transitive_jsligo ~raise () : unit =
   let program = type_file ~raise "./contracts/transitive.jsligo" in
@@ -3497,9 +3499,9 @@ let main =
     ; test_w "loop_bugs (jsligo)" loop_bugs_jsligo
     ; test_w "if no else (jsligo)" if_no_else_jsligo
     ; test_w "tuple_assignment (jsligo)" tuple_assignment_jsligo
-    (*    ; test_w "chained_assignment (jsligo)" chained_assignment_jsligo*)
+      (*    ; test_w "chained_assignment (jsligo)" chained_assignment_jsligo*)
     ; test_w "block_scope (jsligo)" block_scope_jsligo
-(*    ; test_w "assignment_operators (jsligo)" assignment_operators_jsligo*)
+      (*    ; test_w "assignment_operators (jsligo)" assignment_operators_jsligo*)
     ; test_w "if_if_return (jsligo)" if_if_return_jsligo
     ; test_w "switch case (jsligo)" switch_cases_jsligo
     ; test_w "for-of & while loop (jsligo)" while_and_for_loops_jsligo
@@ -3508,7 +3510,7 @@ let main =
     ; test_w "destruct func object param (jsligo)" func_object_destruct_jsligo
     ; test_w "destruct func tuple param (jsligo)" func_tuple_destruct_jsligo
     ; test_w "switch_return (jsligo)" switch_return_jsligo
-    (*    ; test_w "transitive (jsligo)" transitive_jsligo*)
+      (*    ; test_w "transitive (jsligo)" transitive_jsligo*)
     ; test_w "if_semi (jsligo)" if_semi_jsligo
     ; test_w "return_handling (jsligo)" if_semi_jsligo
     ]

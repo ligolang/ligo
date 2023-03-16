@@ -11,9 +11,7 @@ open AST
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: List.map ~f:snd tl
 let npseq_to_ne_list (hd, tl) = hd, List.map ~f:snd tl
-
 let r_split = Location.r_split
-
 let w_split (x : 'a CST.Wrap.t) : 'a * Location.t = x#payload, Location.lift x#region
 
 let compile_variable var =
@@ -388,14 +386,13 @@ let expression_to_variable ~raise : CST.expr -> CST.variable = function
   | _ as e -> raise.error @@ expected_a_variable (CST.expr_to_region e)
 
 
-let rec compile_component_to_access ~raise
-  : CST.expr -> _ Access_path.access = function
+let rec compile_component_to_access ~raise : CST.expr -> _ Access_path.access = function
   | EArith (Int i) -> Access_tuple (snd i.value)
   | EString (String s) -> Access_record s.value
   | EPar e -> compile_component_to_access ~raise e.value.inside
   | EAnnot e ->
-      let expr, _, _ = e.value in
-      compile_component_to_access ~raise expr
+    let expr, _, _ = e.value in
+    compile_component_to_access ~raise expr
   | e -> raise.error @@ expected_an_int_or_string e
 
 
@@ -1341,8 +1338,7 @@ and merge_statement_results ~raise
 
 
 and filter_private (attributes : CST.attribute list) =
-  List.filter ~f:(fun v -> not @@ String.equal (fst v#payload) "private")
-    attributes
+  List.filter ~f:(fun v -> not @@ String.equal (fst v#payload) "private") attributes
 
 
 (* can probably be cleaned up *)
@@ -1508,9 +1504,10 @@ and compile_statement ?(wrap = false) ~raise : CST.statement -> statement_result
   let return r : statement_result = Return r in
   match statement with
   | SExpr (attr, e) ->
-     let () = ignore attr in (* TODO *)
-     let e = self_expr e in
-     expr e
+    let () = ignore attr in
+    (* TODO *)
+    let e = self_expr e in
+    expr e
   | SBlock { value = { inside; _ }; region = _ } when not wrap ->
     let statements = self_statements ~wrap:true inside in
     statements
@@ -1789,7 +1786,8 @@ and compile_statement ?(wrap = false) ~raise : CST.statement -> statement_result
     binding (e_type_in ~loc type_binder rhs)
   | SNamespace n ->
     let (_, name, rhs, attributes), loc = r_split n in
-    ignore attributes; (* TODO *)
+    ignore attributes;
+    (* TODO *)
     let module_binder = compile_mod_var name in
     let rhs =
       let decls = compile_namespace ~raise rhs.value.inside in

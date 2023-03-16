@@ -83,19 +83,19 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "duplicate_ticket_local_module.mligo" ];
   [%expect
     {|
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 7, characters 8-14:
-    6 |   module B = struct
-    7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
-    8 |     let y = ticket, ticket
-  :
-  Warning: variable "ticket" cannot be used more than once.
-
   File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 4-26:
     7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
     8 |     let y = ticket, ticket
     9 |   end in
   :
   Warning: variable "B.y" cannot be used more than once.
+
+  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 7, characters 8-14:
+    6 |   module B = struct
+    7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
+    8 |     let y = ticket, ticket
+  :
+  Warning: variable "ticket" cannot be used more than once.
 
   Error(s) occurred while type checking the contract:
   Ill typed contract:

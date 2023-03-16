@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2431'
+title: "Transpilation: add ad-hoc typers for map/big_map operations"
+type: added
+            

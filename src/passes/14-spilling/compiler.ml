@@ -91,6 +91,16 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     (* External types are allowed (since they're fully resolved) *)
+    | (External "map_find_opt", [ _ ; param2 ]) ->
+      (match (compile_type param2).type_content with
+      | T_big_map (_, v) | T_map (_, v) -> return (T_option v)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_map_find_opt application"))
+    | (External "map_add", [ _ ; _; param3 ]) -> return (compile_type param3).type_content
+    | (External "map_remove", [ _ ; param2 ]) -> return (compile_type param2).type_content
+    | (External "map_remove_value", [ _ ; param2 ]) ->
+      (match (compile_type param2).type_content with
+      | T_big_map (_, v) | T_map (_, v) -> return v.type_content
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_map_remove application"))
     | (External "int", [ param ]) ->
       (match (compile_type param).type_content with
       | T_base TB_bls12_381_fr | T_base TB_nat -> return (T_base TB_int)

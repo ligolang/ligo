@@ -66,8 +66,7 @@ let braced d =
 
 
 let filter_private (attributes : CST.attribute list) =
-  List.filter ~f:(fun v -> not (String.equal (fst v#payload) "private"))
-    attributes
+  List.filter ~f:(fun v -> not (String.equal (fst v#payload) "private")) attributes
 
 
 (* Decompiler *)
@@ -686,9 +685,10 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let ifnot = decompile_expression_in else_clause in
     let ifnot = s_hd ifnot in
     let ifnot = Some (Token.ghost_else, ifnot) in
-    let cond : CST.cond_statement = {
-      attributes=[]; (* TODO *)
-      kwd_if = Token.ghost_if; test; ifso; ifnot } in
+    let cond : CST.cond_statement =
+      { attributes = []; (* TODO *)
+                         kwd_if = Token.ghost_if; test; ifso; ifnot }
+    in
     return_expr @@ [ Statement (CST.SCond (Region.wrap_ghost cond)) ]
   | E_tuple tuple ->
     let tuple =
@@ -864,10 +864,8 @@ let rec decompile_expression_in : AST.expression -> statement_or_expr list =
     let update = e_hd update in
     let p : CST.property =
       CST.Property
-        (Region.wrap_ghost CST.{ attributes = [];
-                                 name;
-                                 colon = Token.ghost_colon;
-                                 value = update })
+        (Region.wrap_ghost
+           CST.{ attributes = []; name; colon = Token.ghost_colon; value = update })
     in
     return_expr
     @@ [ Expr
@@ -904,13 +902,16 @@ and add_return statements =
   in
   let rec aux l =
     match l with
-    | CST.SExpr (_, EUnit _) -> (* TODO: attributes? *)
+    | CST.SExpr (_, EUnit _) ->
+      (* TODO: attributes? *)
       CST.SReturn (Region.wrap_ghost CST.{ kwd_return = Token.ghost_return; expr = None })
-    | CST.SExpr (_, e) -> (* TODO: attributes? *)
+    | CST.SExpr (_, e) ->
+      (* TODO: attributes? *)
       CST.SReturn
         (Region.wrap_ghost CST.{ kwd_return = Token.ghost_return; expr = Some e })
-    | CST.SCond { value = { attributes=[]; (* TODO *)
-                            kwd_if; test; ifso; ifnot }; region } ->
+    | CST.SCond
+        { value = { attributes = []; (* TODO *)
+                                     kwd_if; test; ifso; ifnot }; region } ->
       let ifso = aux ifso in
       let ifnot =
         match ifnot with
@@ -919,8 +920,9 @@ and add_return statements =
           Some (e, s)
         | None -> None
       in
-      CST.SCond { value = { attributes = []; (* TODO *)
-                            kwd_if; test; ifso; ifnot }; region }
+      CST.SCond
+        { value = { attributes = []; (* TODO *)
+                                     kwd_if; test; ifso; ifnot }; region }
     | CST.SBlock { value = { lbrace; inside; rbrace }; region } ->
       let inside = Utils.nsepseq_to_list inside in
       let inside = List.rev inside in
