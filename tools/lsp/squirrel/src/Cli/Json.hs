@@ -19,6 +19,8 @@ module Cli.Json
   , LigoTypeExpression (..)
   , LigoTableField (..)
   , LigoVariable (..), LigoTypeVariable, LigoModuleVariable
+  , LigoTypeLiteralValue (..)
+  , LigoString (..)
   , LigoTypeSum
   , LigoTypeRecord
   , LigoTypeArrow (..)
@@ -49,12 +51,13 @@ import Data.Data
 import Data.Foldable qualified (toList)
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
+import Data.Vector qualified as V
 import Debug qualified (show)
 import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
 import Language.LSP.Types qualified as J
 
-import AST.Skeleton hiding (CString)
+import AST.Skeleton
 import Diagnostic (Message (..), MessageDetail (FromLIGO), Severity (..))
 import Duplo.Lattice (leq)
 import Duplo.Pretty (Pretty (..), text, (<+>), (<.>))
@@ -255,30 +258,54 @@ data LigoTypeFull
 -- { "type_content": [ <type>, LigoTypeContentInner ] }
 -- ```
 data LigoTypeContent
-  = -- | Type call represented by the list of arguments and its constructor.
-  ---- Common for 4th and 5th stage
-    -- | `"t_variable"`
-    LTCVariable LigoTypeVariable
-  |
-    LTCSum LigoTypeSum
-  | -- | `"t_record"`
-    LTCRecord LigoTypeRecord
-  | -- | `"t_arrow"`
-    LTCArrow LigoTypeArrow
-  |
-    LTCSingleton Value -- TODO not used
-  |
-    LTCAbstraction LigoTypeForAll
-  |
-    LTCForAll LigoTypeForAll
-  ---- 4th stage specific
-  |
-    LTCApp LigoTypeApp
-  |
-    LTCModuleAccessor LigoTypeModuleAccessor
-  ---- 5th stage specific
-  | -- `"t_constant"`
-    LTCConstant LigoTypeConstant
+    -- | Type call represented by the list of arguments and its constructor.
+    -- Common for 4th and 5th stage
+    --
+    -- @T_variable@
+  = LTCVariable LigoTypeVariable
+  | LTCSum LigoTypeSum
+    -- | @T_record@
+  | LTCRecord LigoTypeRecord
+    -- | @T_arrow@
+  | LTCArrow LigoTypeArrow
+    -- | @T_singleton@
+  | LTCSingleton LigoTypeLiteralValue
+  | LTCAbstraction LigoTypeForAll
+  | LTCForAll LigoTypeForAll
+    -- 4th stage specific
+  | LTCApp LigoTypeApp
+  | LTCModuleAccessor LigoTypeModuleAccessor
+    -- | 5th stage specific
+    -- @T_constant@
+  | LTCConstant LigoTypeConstant
+  deriving stock (Generic, Show, Eq, Data)
+  deriving anyclass (NFData)
+
+data LigoTypeLiteralValue
+  = LTLVUnit
+  | LTLVInt Int
+  | LTLVNat Int
+  | LTLVTimestamp Int
+  | LTLVMutez Int
+  | LTLVString LigoString
+  | LTLVBytes Text
+  | LTLVAddress Text
+  | LTLVSignature Text
+  | LTLVKey Text
+  | LTLVKeyHash Text
+  | LTLVChainId Text
+  | LTLVOperation Text
+  | LTLVBls_381G1 Text
+  | LTLVBls_381G2 Text
+  | LTLVBls_381Fr Text
+  | LTLVChest Text
+  | LTLVChestKey Text
+  deriving stock (Generic, Show, Eq, Data)
+  deriving anyclass (NFData)
+
+data LigoString
+  = LSStandard Text
+  | LSVerbatim Text
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
@@ -446,6 +473,28 @@ instance FromJSON LigoTypeFull where
     [("unresolved", Null )] -> pure LTFUnresolved
     _ -> fail "wrong `LigoTypeFull` format"
 
+instance FromJSON LigoTypeLiteralValue where
+  parseJSON val = twoElemParser val <|> unitParser val
+    where
+      twoElemParser = genericParseJSON defaultOptions
+        { sumEncoding = TwoElemArray
+        , constructorTagModifier = ("Literal" ++) . toSnakeCase . drop 4
+        }
+
+      unitParser = withArray "Literal_unit" \arr -> do
+        case V.length arr of
+          1 -> do
+            let ctor = V.unsafeIndex arr 0
+            guard (ctor == "Literal_unit")
+            pure LTLVUnit
+          len -> fail $ "Expected array of size 1, got" <> show len
+
+instance FromJSON LigoString where
+  parseJSON = genericParseJSON defaultOptions
+    { sumEncoding = TwoElemArray
+    , constructorTagModifier = drop 2
+    }
+
 -- [ "t_variable", ...]
 instance FromJSON LigoTypeContent where
   parseJSON = genericParseJSON defaultOptions
@@ -568,8 +617,8 @@ fromLigoType st = \case
       [] -> mkErr "malformed sum type, please report this as a bug"
       v : vs -> make' (st, TSum (v :| vs))
 
-  LTCSingleton      _ -> mkErr "unsupported type Singleton"      -- TODO not used
-  LTCAbstraction    _ -> mkErr "unsupported type Abstraction"    -- TODO not used
+  LTCSingleton literalValue -> fromLigoTypeLiteralValue literalValue
+  LTCAbstraction _ -> mkErr "unsupported type Abstraction"    -- TODO not used
 
   LTCForAll LigoTypeForAll{..} ->
     let tyVar = fromLigoTypeExpression _ltfaType_ in
@@ -588,6 +637,32 @@ fromLigoType st = \case
   LTCArrow LigoTypeArrow {..} ->
     make' (st, TArrow (fromLigoTypeExpression _ltaType1) (fromLigoTypeExpression _ltaType2))
   where
+    fromLigoTypeLiteralValue :: LigoTypeLiteralValue -> LIGO Info
+    fromLigoTypeLiteralValue = \case
+      LTLVUnit -> make' (st, Name "()")
+      LTLVInt n -> make' (st, CInt $ show n)
+      LTLVNat n -> make' (st, CNat $ show n)
+      LTLVTimestamp n -> make' (st, CInt $ show n)
+      LTLVMutez n -> make' (st, CTez $ show n)
+      LTLVString str -> fromLigoString str
+      LTLVBytes str -> make' (st, CBytes str)
+      LTLVAddress str -> make' (st, CString str)
+      LTLVSignature str -> make' (st, CString str)
+      LTLVKey str -> make' (st, CString str)
+      LTLVKeyHash str -> make' (st, CString str)
+      LTLVChainId str -> make' (st, CString str)
+      LTLVOperation bts -> make' (st, CBytes bts)
+      LTLVBls_381G1 bts -> make' (st, CBytes bts)
+      LTLVBls_381G2 bts -> make' (st, CBytes bts)
+      LTLVBls_381Fr bts -> make' (st, CBytes bts)
+      LTLVChest bts -> make' (st, CBytes bts)
+      LTLVChestKey bts -> make' (st, CBytes bts)
+
+    fromLigoString :: LigoString -> LIGO Info
+    fromLigoString = \case
+      LSStandard str -> make' (st, CString str)
+      LSVerbatim str -> make' (st, Verbatim str)
+
     fromLigoVariable :: LigoVariable -> LIGO Info
     fromLigoVariable = fromLigoPrimitive NameType . _lvName
 
