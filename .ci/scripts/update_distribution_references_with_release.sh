@@ -18,7 +18,7 @@ DEB_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/ra
 BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo"
 
 FILES_PATH_TO_EDIT=(
-    "$ROOT_FOLDER/tools/webide/Dockerfile"
+    "$ROOT_FOLDER/tools/webide-new/ligo-webide-backend/Dockerfile"
     "$ROOT_FOLDER/gitlab-pages/docs/intro/installation.md"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
     "$ROOT_FOLDER/gitlab-pages/docs/tutorials/getting-started/getting-started.md"
