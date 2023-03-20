@@ -860,13 +860,17 @@ let scopes
   let scopes = fix_shadowing_in_scopes scopes in
   let defs = resolve_module_aliases_to_module_ids defs in
   (* Use WIP new implementation only during expect_tests *)
-  let defs =
+  let defs, scopes =
     match Sys.getenv "LIGO_GET_SCOPE_USE_NEW_IMP" with
     | Some s when String.(s <> "") ->
       let new_defs = Definitions.definitions prg stdlib_defs in
       let defs = Definitions.Merge_defs_temp.merge_defs defs new_defs in
       let refs = References.declarations (stdlib_core @ prg) in
-      patch_refs defs refs
-    | Some _ | None -> defs
+      let env_preload_decls = if options.no_stdlib then [] else stdlib_core in
+      let new_scopes = Scopes_new.Of_Ast.declarations ~env_preload_decls prg in
+      let scopes = Scopes_new.to_old_scopes (flatten_defs defs @ stdlib_defs) new_scopes in
+      let scopes = fix_shadowing_in_scopes scopes in
+      patch_refs defs refs, scopes
+    | Some _ | None -> defs, scopes
   in
   defs, scopes
