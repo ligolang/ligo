@@ -314,7 +314,7 @@ let%expect_test _ =
     (x#1 -> x)
     Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-13
-    Content: |resolved: option (ticket (nat))|
+    Content: |resolved: ( option (ticket (nat)) * option (ticket (nat)) )|
     references: []
     Type definitions:
     Module definitions:
@@ -345,7 +345,7 @@ let%expect_test _ =
     (x#2 -> x)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
     Body Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-21
-    Content: |resolved: ticket (nat)|
+    Content: |resolved: ( ticket (nat) * ticket (nat) )|
     references: []
     Type definitions:
     Module definitions:
