@@ -286,3 +286,53 @@ let sum_of_elements : int = List.fold_right (sum_right, my_list, 0);
 ```
 
 </Syntax>
+
+
+<SyntaxTitle syntax="cameligo">
+val find_opt : ('a -> bool) -> 'a list -> 'a option
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let find_opt: (mapper: ((item: 'a) => bool), list: list&lt;'a&gt;) => option&lt;'a&gt;
+</SyntaxTitle>
+
+Finds the first element satisfying the given predicate.
+
+
+<SyntaxTitle syntax="cameligo">
+val filter_map : ('a -> 'b option) -> 'a list -> 'b list
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let filter_map: (mapper: ((item: 'a) => option&lt;'b&gt;), list: list&lt;'a&gt;) => list&lt;'b&gt;
+</SyntaxTitle>
+
+Apply a function to items of a list to create a new list, but the function can omit certain elements by returning `None`.
+
+Notice: built in terms of `fold_right`.
+
+
+<SyntaxTitle syntax="cameligo">
+val update : ('a -> 'a option) -> 'a list -> 'a list
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let update: (upd: ((item: 'a) => option&lt;'a&gt;), list: list&lt;'a&gt;) => list&lt;'a&gt;
+</SyntaxTitle>
+
+Apply a function to items of a list to create a new list of the same type, but certain elements can be changed using `upd`.
+
+Notice: built in terms of `map`.
+
+
+<SyntaxTitle syntax="cameligo">
+val update_with : ('a -> 'a option) -> 'a -> 'a list -> 'a list
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let update_with: (upd: ((item: 'a) => option&lt;'a&gt;), new_item: 'a, list: list&lt;'a&gt;) => list&lt;'a&gt;
+</SyntaxTitle>
+
+Create a new list of the same type: if the predicate is satisfied on some element, this element is replaced for the new item.
+
+Notice: built in terms of `map`.
