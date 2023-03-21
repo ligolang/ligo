@@ -868,7 +868,9 @@ let scopes
       let refs = References.declarations (stdlib_core @ prg) in
       let env_preload_decls = if options.no_stdlib then [] else stdlib_core in
       let new_scopes = Scopes_new.Of_Ast.declarations ~env_preload_decls prg in
-      let scopes = Scopes_new.to_old_scopes (flatten_defs defs @ stdlib_defs) new_scopes in
+      let scopes =
+        Scopes_new.to_old_scopes (flatten_defs defs @ stdlib_defs) new_scopes
+      in
       let scopes = fix_shadowing_in_scopes scopes in
       patch_refs defs refs, scopes
     | Some _ | None -> defs, scopes

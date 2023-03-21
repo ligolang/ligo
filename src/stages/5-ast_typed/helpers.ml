@@ -72,7 +72,7 @@ let destruct_arrows (t : type_expression) =
 
 let destruct_tuple (t : type_expression) =
   match t.type_content with
-  | T_record row -> Row.to_tuple row
+  | T_record row when Row.is_tuple row -> Row.to_tuple row
   | _ -> [ t ]
 
 

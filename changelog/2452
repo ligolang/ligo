@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2452'
+title: "Fix: better error managing when entrypoint is not annotated"
+type: fixed
+            

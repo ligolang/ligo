@@ -380,7 +380,7 @@ let get_t_bool t : unit option =
 let get_t_tuple (t : t) : t list option =
   let tuple_of_record row = Row.to_tuple row in
   match t.content with
-  | T_record row -> Some (tuple_of_record row)
+  | T_record row when Row.is_tuple row -> Some (tuple_of_record row)
   | _ -> None
 
 
@@ -398,7 +398,7 @@ let get_t_option (t : t) : t option =
 
 let get_t_pair (t : t) : (t * t) option =
   match t.content with
-  | T_record m ->
+  | T_record m when Row.is_tuple m ->
     (match Row.to_tuple m with
     | [ t1; t2 ] -> Some (t1, t2)
     | _ -> None)
