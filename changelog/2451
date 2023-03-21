@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew functions in stdlib's `List` module:\\n`val filter_map : ('a -> 'b option) -> 'a list -> 'b list``val update : ('a -> 'a option) -> 'a list -> 'a list``val update_with : ('a -> 'a option) -> 'a -> 'a list -> 'a list`\\n"
+merge_request: '2451'
+title: "Stdlib: list updating functions"
+type: added
+            

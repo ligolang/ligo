@@ -42,3 +42,9 @@ const find_y6 : option<int> =
 
 const find_z2 : option<int> = 
   List.find_opt ((z_elem : int) : bool => z_elem == 2, z);
+
+const filter_map_y : list<nat> = List.filter_map ((x : int) => { if (x == 3 || x == 5) { return Some(abs(x + 2)) } ; return None() }, y);
+
+const update_filter_map_y : list<nat> = List.update ((x : nat) => { if (x == (5 as nat)) { return Some(7 as nat) }; return None() }, filter_map_y);
+
+const update_with_filter_map_y : list<nat> = List.update_with ((x : nat) => x == (5 as nat), (42 as nat), list([(5 as nat), ...filter_map_y]));
