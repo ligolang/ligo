@@ -13,38 +13,34 @@ let contract source_file new_syntax syntax display_format no_colour () =
       (Syntax_name syntax)
       (Some source_file)
   in
+  let new_syntax =
+    Syntax.of_string_opt ~raise ~support_pascaligo:true (Syntax_name new_syntax) None
+  in
   let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
   let meta = Compile.Of_source.extract_meta syntax in
   let c_unit, _ =
     Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file
   in
-  let core = Compile.Utils.to_core ~raise ~options ~meta c_unit source_file in
-  let imperative = Decompile.Of_core.decompile core in
-  let new_syntax =
-    Syntax.of_string_opt ~raise ~support_pascaligo:true (Syntax_name new_syntax) None
+  let buffer =
+    let open Trace in
+    let open Main_errors in
+    match syntax, new_syntax with
+    | PascaLIGO, JsLIGO ->
+      let old_cst =
+        trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file c_unit source_file
+      in
+      let new_cst = Parsing_pascaligo.JsLIGO.of_cst old_cst in
+      Parsing.Jsligo.pretty_print new_cst
+    | _ ->
+      if Syntax_types.equal syntax new_syntax
+      then
+        raise.error
+        @@ Main_errors.main_transpilation_same_source_and_dest_syntax
+             (Syntax.to_string syntax)
+      else
+        raise.error
+        @@ Main_errors.main_transpilation_unsupported_syntaxes
+             (Syntax.to_string syntax)
+             (Syntax.to_string new_syntax)
   in
-  let buffer = Decompile.Of_imperative.decompile imperative new_syntax in
-  buffer
-
-
-let expression expression new_syntax syntax display_format no_colour () =
-  format_result ~display_format ~no_colour Parsing.Formatter.ppx_format
-  @@ fun ~raise ->
-  (* Compiling chain *)
-  let syntax =
-    Syntax.of_string_opt ~raise ~support_pascaligo:true (Syntax_name syntax) None
-  in
-  let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
-  let meta = Compile.Of_source.make_meta syntax in
-  let c_unit_expr, _ =
-    Compile.Of_source.preprocess_string ~raise ~options:options.frontend ~meta expression
-  in
-  let imperative = Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_expr in
-  let core = Compile.Of_imperative.compile_expression ~raise imperative in
-  (* Decompiling chain *)
-  let n_syntax =
-    Syntax.of_string_opt ~raise ~support_pascaligo:true (Syntax_name new_syntax) None
-  in
-  let imperative = Decompile.Of_core.decompile_expression core in
-  let buffer = Decompile.Of_imperative.decompile_expression imperative n_syntax in
   buffer

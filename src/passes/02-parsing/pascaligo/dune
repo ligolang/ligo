@@ -29,11 +29,12 @@
  (public_name ligo.parsing.pascaligo)
  (instrumentation
   (backend bisect_ppx))
- (modules Parser ParErr Pretty RecoverParser)
+ (modules Parser ParErr Pretty RecoverParser JsLIGO)
  (libraries
   ;; LIGO
   lexing_pascaligo
   lexing_shared
+  cst_jsligo
   cst_pascaligo
   ;; Vendors
   simple-utils
@@ -67,7 +68,7 @@
   cst_jsligo
   ;; Third party
   hex)
- (modules ParserMain JsLIGO)
+ (modules ParserMain)
  (flags
   (:standard \ -open Core)))
 

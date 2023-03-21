@@ -15,6 +15,7 @@ module TokenPasses  = Lx_psc_self_tokens.Self
 module ParErr       = Parsing_pascaligo.ParErr
 module Tree         = Cst_shared.Tree
 module CST          = Cst_pascaligo.CST
+module JsLIGO       = Parsing_pascaligo.JsLIGO
 module JsLIGOPretty = Parsing_jsligo.Pretty
 
 (* APIs *)
