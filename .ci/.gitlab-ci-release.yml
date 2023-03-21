@@ -446,6 +446,39 @@ publish-AUR-package:
   rules:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
+
+
+#######################################################################
+# Following script is executed when pipeline has executed Tag process
+# Related to the update nixpkg https://github.com/NixOS/nixpkgs
+#######################################################################
+
+publish-nixpkg:
+  stage: push
+  script:
+    - git clone "https://github.com/laucans/nixpkgs.git"
+    - PRECEDENT_LIGO_VERSION_NIX=$(.ci/scripts/nix/retrieve_version.sh nixpkgs/pkgs/development/compilers/ligo/default.nix)
+    - .ci/scripts/nix/update_ligo_default_nix_file.sh nixpkgs/pkgs/development/compilers/ligo/default.nix $RELEASE_VERSION
+    - cd nixpkgs
+    - git remote rm origin && git remote add origin https://ligolangbot:${GITLAB_LIGO_PUBLIC_REPO_TOKEN}@github.com/ligolang/nixpkgs.git
+    - git add pkgs/development/compilers/ligo/default.nix
+    - git status
+    - "git commit -am \"ligo: ${PRECEDENT_LIGO_VERSION_NIX} -> ${RELEASE_VERSION}\""
+    - git remote -v
+    - git push -u origin master:$(../.ci/scripts/nix/generate_nixpkgs_branch_name.sh $RELEASE_VERSION)
+    - ../.ci/scripts/nix/generate_pr.sh "ligolang:$(../.ci/scripts/nix/generate_nixpkgs_branch_name.sh $RELEASE_VERSION)" $PRECEDENT_LIGO_VERSION_NIX $RELEASE_VERSION $GITLAB_LIGO_PUBLIC_REPO_TOKEN
+    - MESSAGE="New pull request to update ligo has been generated on https://github.com/NixOS/nixpkgs"
+  # U01MBUD7YG6 = Ulrik who is owner of nixpkgs and can merge PR
+    - "curl -d \"text=${MESSAGE}\" -d 'channel=U01MBUD7YG6' -H \"Authorization: Bearer ${SLACK_LIGO_ALERTER_TOKEN}\" -X POST https://slack.com/api/chat.postMessage --trace-ascii /dev/stdout"
+    - "curl -d \"text=${MESSAGE}\" -d 'channel=U02LTGFM85S' -H \"Authorization: Bearer ${SLACK_LIGO_ALERTER_TOKEN}\" -X POST https://slack.com/api/chat.postMessage --trace-ascii /dev/stdout"
+  needs:
+    - job: build_release_env_vars
+      artifacts: true
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
+      when: always 
+
+
 #######################################################################
 # Following script is executed when pipeline has executed Tag process
 # Related to the update of Gitpod
