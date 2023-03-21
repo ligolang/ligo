@@ -94,10 +94,11 @@ module Def = struct
       List.find ~f old_defs
     in
     find_def_opt new_def prg_defs
-    (* match find_def_opt new_def prg_defs with
+
+
+  (* match find_def_opt new_def prg_defs with
     | Some _ as ok -> ok
     | None -> pp Format.err_formatter new_def; None *)
-
 
   let defs_to_types_defs (prg_defs : Types.def list) : def list -> Types.def list =
    fun new_defs -> List.filter_map ~f:(to_types_def_opt prg_defs) new_defs

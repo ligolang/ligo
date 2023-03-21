@@ -172,9 +172,9 @@ let resolve_mpath
  fun mvs env ->
   let init : module_usages = [] in
   let f : module_usages -> _ -> module_usages =
-    fun acc (input, real, _resolved, _defs_of_that_module) ->
-      let input_loc = Module_var.get_location input in
-      (real, `Usage input_loc) :: acc
+   fun acc (input, real, _resolved, _defs_of_that_module) ->
+    let input_loc = Module_var.get_location input in
+    (real, `Usage input_loc) :: acc
   in
   let defs = env.avail_defs @ env.parent in
   let mmap = env.module_map in
@@ -182,7 +182,7 @@ let resolve_mpath
   match m_opt with
   | None -> Error acc
   | Some (_real, resolved, _defs) -> Ok (resolved, acc)
- 
+
 
 (** [resolve_module_alias_and_update_mvar_references] will resolve the module path 
     with the help of [resolve_module_alias_in_env] and in addition to that It'll 

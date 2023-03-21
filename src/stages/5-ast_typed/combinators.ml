@@ -421,13 +421,13 @@ let tuple_of_record row = Row.to_tuple row
 
 let get_t_tuple (t : type_expression) : type_expression list option =
   match t.type_content with
-  | T_record row -> Some (tuple_of_record row)
+  | T_record row when Row.is_tuple row -> Some (tuple_of_record row)
   | _ -> None
 
 
 let get_t_pair (t : type_expression) : (type_expression * type_expression) option =
   match t.type_content with
-  | T_record m ->
+  | T_record m when Row.is_tuple m ->
     (match tuple_of_record m with
     | [ t1; t2 ] -> Some (t1, t2)
     | _ -> None)
