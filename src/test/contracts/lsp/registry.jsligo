@@ -37,4 +37,6 @@ const arePrimes = (l: list<int>): list<int> => {
   )
 };
 
-const main = ([_action, store]: [unit, storage]): return_ => { return [list([]) as list<operation>, arePrimes(store)] };
+const main = ([_action, store]: [unit, storage]): return_ => {
+  return [list([]) as list<operation>, arePrimes(store)]
+};

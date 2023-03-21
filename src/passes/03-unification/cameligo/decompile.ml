@@ -208,7 +208,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   let parens : CST.type_expr -> CST.type_expr =
    fun t -> T_Par (w CST.{ lpar = ghost_lpar; inside = t; rpar = ghost_rpar })
   in
-  (* Since [a -> (b -> c)] is identical to [a -> (b -> c)], it a [T_Fun] is an rhs of another [T_Fun],
+  (* Since [a -> (b -> c)] is identical to [a -> (b -> c)], if a [T_Fun] is an rhs of another [T_Fun],
      we don't need parens. So we call `p ~arrow_rhs:true` for the rhs of a T_Fun *)
   let p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
    fun ?(arrow_rhs = false) t ->

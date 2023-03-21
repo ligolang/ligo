@@ -169,7 +169,7 @@ let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handl
 
 
 (**
-Use doc info from cache. In case it's not availiable, return default value.
+Use doc info from cache. In case it's not available, return default value.
 Also returns default value if `get_scope` for this file fails, unless
 `return_default_if_no_info = false` was specified
 *)

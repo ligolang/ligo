@@ -1,3 +1,7 @@
+(* This module contains wrappers for various LIGO functions:
+   get-scope that collects information about definitions in a file
+   and pretty-printers that can print a CST as a code for some dialect or
+   can decompile AST to CST and then print it *)
 open Imports
 module Get_scope = Get_scope
 open Get_scope
@@ -31,12 +35,6 @@ let get_scope : deprecated:bool -> Path.t -> string -> get_scope_info =
   @@ get_scope_trace compiler_options (Raw_input_lsp { file; code = source }) ()
 
 
-let doc_to_string ~(width : int) (doc : PPrint.document) : string =
-  let buffer = Buffer.create 131 in
-  PPrint.ToBuffer.pretty 1.0 width buffer doc;
-  Buffer.contents buffer
-
-
 type pp_mode =
   { indent : int
   ; width : int
@@ -62,7 +60,7 @@ let with_pp_mode
       method leading_vbar = pprint_state#leading_vbar
     end
   in
-  doc_to_string ~width
+  Helpers_pretty.doc_to_string ~width
   @@
   match x with
   | CameLIGO code ->
@@ -135,6 +133,10 @@ let pretty_print_type_expression
   | Error err ->
     `Nonpretty
       ( err
-      , Option.value_map prefix ~default:"" ~f:(fun x ->
-            Helpers_pretty.doc_to_string ~width:10000 x ^ " ")
-        ^ Format.asprintf "%a" Ast_core.PP.type_expression te )
+      , Helpers_pretty.doc_to_string ~width:10000
+        @@
+        let prefix_doc =
+          Option.value_map prefix ~default:PPrint.empty ~f:PPrint.(fun x -> x ^^ space)
+        in
+        PPrint.(
+          prefix_doc ^^ string (Format.asprintf "%a" Ast_core.PP.type_expression te)) )

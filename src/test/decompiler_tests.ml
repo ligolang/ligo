@@ -156,7 +156,7 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "arrow with parens on RHS"
       ; code = "type t = int -> (A of int)"
-      ; expected = "int -> (A of int)" (* Thsi is correct: parse error without parens *)
+      ; expected = "int -> (A of int)" (* This is correct: parse error without parens *)
       ; syntax = CameLIGO
       }
     ; { name = "product (inferred)"
