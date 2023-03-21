@@ -53,12 +53,11 @@ let%expect_test _ =
     Type definitions:
     Module definitions: |}]
 
-(*
 let%expect_test _ =
   run_ligo_good
     [ "info"
     ; "get-scope"
-    ; gs "missing_stdlib.ligo"
+    ; gs "missing_stdlib.mligo"
     ; "--format"
     ; "dev"
     ; "--with-types"
@@ -67,30 +66,30 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ p#0  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 2, characters 30-55
-    [ c#1 p#0  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 3, characters 7-23
+    [ p#0  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-23
+    [ p#0  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
+    [ c#1 p#0  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
 
     Variable definitions:
     (c#1 -> c)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 2, characters 8-9
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 2, characters 30-56
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
     Content: |core: contract (unit)|
     references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 3, characters 22-23
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 16-17
     (main#2 -> main)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 1, characters 9-13
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 1, character 0 to line 3, character 24
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-8
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 10-11
     Content: |core: key_hash -> address|
     references: []
     (p#0 -> p)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 1, characters 21-22
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 1, character 48 to line 3, character 24
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash|
     references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.ligo", line 2, characters 54-55
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 50-51
     Type definitions:
     Module definitions: |}]
-*)
 
 let%expect_test _ =
   run_ligo_good

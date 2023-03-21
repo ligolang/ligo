@@ -23,12 +23,6 @@ module PP = PP
 type def = Types.def
 type scopes = Types.scopes
 
-type typing_env =
-  { type_env : Environment.t
-  ; bindings : Misc.bindings_map
-  ; decls : Ast_typed.declaration list
-  }
-
 let rec drop_last : 'a list -> 'a * 'a list =
  fun xs ->
   match xs with
@@ -37,79 +31,6 @@ let rec drop_last : 'a list -> 'a * 'a list =
   | x :: xs ->
     let last, xs = drop_last xs in
     last, x :: xs
-
-
-let set_core_type_if_possible
-    :  AST.type_expression option Binder.t list -> AST.expression
-    -> AST.type_expression option Binder.t list * AST.expression
-  =
- fun binders expr ->
-  match binders, expr.expression_content with
-  | [ binder ], AST.E_ascription { anno_expr; type_annotation } ->
-    let binder = Binder.set_ascr binder (Some type_annotation) in
-    [ binder ], anno_expr
-  | _ -> binders, expr
-
-
-let collect_warns_and_errs
-    ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    tracer
-    (e, ws)
-  =
-  let () = List.iter ws ~f:raise.warning in
-  raise.log_error (tracer e)
-
-
-let checking
-    ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    ~options
-    tenv
-    decl
-  =
-  let typed_prg =
-    Simple_utils.Trace.to_stdlib_result
-    @@ Checking.type_declaration ~options ~env:tenv.type_env decl
-  in
-  Result.(
-    match typed_prg with
-    | Ok (decl, ws) ->
-      let module AST = Ast_typed in
-      let bindings = Misc.extract_variable_types tenv.bindings decl.wrap_content in
-      let type_env = Environment.add_declaration decl tenv.type_env in
-      let decls = tenv.decls @ [ decl ] in
-      let () = List.iter ws ~f:raise.warning in
-      { type_env; bindings; decls }
-    | Error (e, ws) ->
-      collect_warns_and_errs ~raise Main_errors.checking_tracer (e, ws);
-      tenv)
-
-
-let checking_self_pass
-    ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    ~(options : Compiler_options.middle_end)
-    tenv
-  =
-  match
-    let warn_unused_rec = options.warn_unused_rec in
-    Simple_utils.Trace.to_stdlib_result
-    @@ Self_ast_typed.all_program ~warn_unused_rec tenv.decls
-  with
-  | Ok (_, ws) -> List.iter ws ~f:raise.warning
-  | Error (e, ws) ->
-    collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer (e, ws)
-
-
-let update_typing_env
-    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
-    -> options:Compiler_options.middle_end -> typing_env -> AST.declaration -> typing_env
-  =
- fun ~raise ~with_types ~options tenv decl ->
-  match with_types with
-  | true ->
-    let tenv = checking ~raise ~options tenv decl in
-    let () = checking_self_pass ~raise ~options tenv in
-    tenv
-  | false -> tenv
 
 
 let join_defs_and_top_defs
@@ -189,121 +110,104 @@ let patch_top_level_references : def list -> [ `Toplevel of def list ] -> def li
 
 
 let rec expression ~raise
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.expression -> [ `Toplevel of def list ] -> [ `Local of def list ]
-    -> [ `Local of def list ] * [ `Toplevel of def list ] * def list * typing_env * scopes
+    :  options:Compiler_options.middle_end -> AST.expression -> [ `Toplevel of def list ]
+    -> [ `Local of def list ]
+    -> [ `Local of def list ] * [ `Toplevel of def list ] * def list * scopes
   =
- fun ~with_types ~options tenv e (`Toplevel top_defs) (`Local local_defs) ->
-  let expression = expression ~raise ~with_types ~options in
+ fun ~options e (`Toplevel top_defs) (`Local local_defs) ->
+  let expression = expression ~raise ~options in
   match e.expression_content with
-  | E_literal _ -> `Local local_defs, `Toplevel top_defs, [], tenv, [ e.location, [] ]
-  | E_raw_code _ -> `Local local_defs, `Toplevel top_defs, [], tenv, [ e.location, [] ]
-  | E_variable _ev -> `Local local_defs, `Toplevel top_defs, [], tenv, [ e.location, [] ]
-  | E_module_accessor _m ->
-    `Local local_defs, `Toplevel top_defs, [], tenv, [ e.location, [] ]
+  | E_literal _ -> `Local local_defs, `Toplevel top_defs, [], [ e.location, [] ]
+  | E_raw_code _ -> `Local local_defs, `Toplevel top_defs, [], [ e.location, [] ]
+  | E_variable _ev -> `Local local_defs, `Toplevel top_defs, [], [ e.location, [] ]
+  | E_module_accessor _m -> `Local local_defs, `Toplevel top_defs, [], [ e.location, [] ]
   | E_constant { arguments; _ } ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
       List.fold_left
         arguments
-        ~init:(`Local local_defs, `Toplevel top_defs, [], tenv, [])
-        ~f:(fun (`Local local_defs, `Toplevel top_defs, defs, tenv, scopes) e ->
-          let `Local local_defs, `Toplevel top_defs, ds, tenv, scopes' =
-            expression tenv e (`Toplevel top_defs) (`Local local_defs)
+        ~init:(`Local local_defs, `Toplevel top_defs, [], [])
+        ~f:(fun (`Local local_defs, `Toplevel top_defs, defs, scopes) e ->
+          let `Local local_defs, `Toplevel top_defs, ds, scopes' =
+            expression e (`Toplevel top_defs) (`Local local_defs)
           in
-          `Local (ds @ local_defs), `Toplevel top_defs, ds @ defs, tenv, scopes @ scopes')
+          `Local (ds @ local_defs), `Toplevel top_defs, ds @ defs, scopes @ scopes')
     in
-    `Local local_defs, `Toplevel top_defs, defs, tenv, merge_same_scopes scopes
+    `Local local_defs, `Toplevel top_defs, defs, merge_same_scopes scopes
   | E_application { lamb; args } ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-      expression tenv lamb (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression lamb (`Toplevel top_defs) (`Local local_defs)
     in
     let scopes = merge_same_scopes scopes in
-    let `Local local_defs, `Toplevel top_defs, defs', tenv, scopes' =
-      expression tenv args (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs', scopes' =
+      expression args (`Toplevel top_defs) (`Local local_defs)
     in
     let scopes' = merge_same_scopes scopes' in
     let scopes_final = merge_same_scopes (scopes @ scopes') in
-    ( `Local (defs' @ defs @ local_defs)
-    , `Toplevel top_defs
-    , defs' @ defs
-    , tenv
-    , scopes_final )
+    `Local (defs' @ defs @ local_defs), `Toplevel top_defs, defs' @ defs, scopes_final
   | E_lambda { binder; result; output_type = _ } ->
     let var = Param.get_var binder in
     let core_type = Param.get_ascr binder in
     let def =
       let binder_loc = VVar.get_location var in
-      Misc.make_v_def
-        ~with_types
-        ?core_type
-        tenv.bindings
-        Local
-        var
-        binder_loc
-        result.location
-      |> Option.to_list
+      Misc.make_v_def ?core_type Local var binder_loc result.location |> Option.to_list
     in
-    let `Local local_defs, `Toplevel top_defs, defs_result, tenv, scopes =
-      expression tenv result (`Toplevel top_defs) (`Local (def @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_result, scopes =
+      expression result (`Toplevel top_defs) (`Local (def @ local_defs))
     in
     let scopes = merge_same_scopes scopes in
     ( `Local (defs_result @ local_defs)
     , `Toplevel top_defs
     , defs_result @ def
-    , tenv
     , add_defs_to_scopes def scopes )
   | E_type_abstraction { result; _ } ->
-    expression tenv result (`Toplevel top_defs) (`Local local_defs)
+    expression result (`Toplevel top_defs) (`Local local_defs)
   | E_constructor { element; _ } ->
-    expression tenv element (`Toplevel top_defs) (`Local local_defs)
+    expression element (`Toplevel top_defs) (`Local local_defs)
   | E_accessor { struct_; _ } ->
-    expression tenv struct_ (`Toplevel top_defs) (`Local local_defs)
+    expression struct_ (`Toplevel top_defs) (`Local local_defs)
   | E_ascription { anno_expr; type_annotation = _ } ->
-    let `Local local_defs, `Toplevel top_defs, defs, env, scopes =
-      expression tenv anno_expr (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression anno_expr (`Toplevel top_defs) (`Local local_defs)
     in
-    `Local local_defs, `Toplevel top_defs, defs, env, scopes
+    `Local local_defs, `Toplevel top_defs, defs, scopes
   | E_update { struct_; update; _ } ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-      expression tenv struct_ (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression struct_ (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs', tenv, scopes' =
-      expression tenv update (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs', scopes' =
+      expression update (`Toplevel top_defs) (`Local local_defs)
     in
     ( `Local (defs' @ defs @ local_defs)
     , `Toplevel top_defs
     , defs' @ defs
-    , tenv
     , merge_same_scopes scopes @ scopes' )
   | E_while { cond; body } ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-      expression tenv cond (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression cond (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs', tenv, scopes' =
-      expression tenv body (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs', scopes' =
+      expression body (`Toplevel top_defs) (`Local local_defs)
     in
     ( `Local (defs' @ defs @ local_defs)
     , `Toplevel top_defs
     , defs' @ defs
-    , tenv
     , merge_same_scopes scopes @ scopes' )
   | E_for { binder; start; incr; final; f_body } ->
     let def =
       let binder_loc = VVar.get_location binder in
-      Misc.make_v_def ~with_types tenv.bindings Local binder binder_loc start.location
-      |> Option.to_list
+      Misc.make_v_def Local binder binder_loc start.location |> Option.to_list
     in
-    let `Local local_defs, `Toplevel top_defs, defs_start, tenv, scopes1 =
-      expression tenv start (`Toplevel top_defs) (`Local (def @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_start, scopes1 =
+      expression start (`Toplevel top_defs) (`Local (def @ local_defs))
     in
-    let `Local local_defs, `Toplevel top_defs, defs_incr, tenv, scopes2 =
-      expression tenv incr (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_incr, scopes2 =
+      expression incr (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_final, tenv, scopes3 =
-      expression tenv final (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_final, scopes3 =
+      expression final (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_body, tenv, scopes4 =
-      expression tenv f_body (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_body, scopes4 =
+      expression f_body (`Toplevel top_defs) (`Local local_defs)
     in
     let scopes4 = add_defs_to_scopes def scopes4 in
     let scopes =
@@ -315,7 +219,6 @@ let rec expression ~raise
     ( `Local (defs_start @ defs_incr @ defs_final @ defs_body @ local_defs)
     , `Toplevel top_defs
     , defs_start @ defs_incr @ defs_final @ defs_body @ def
-    , tenv
     , add_defs_to_scopes def scopes )
   | E_for_each { fe_binder = binder1, binder2; collection; fe_body; _ } ->
     let binders = binder1 :: Option.to_list binder2 in
@@ -324,50 +227,42 @@ let rec expression ~raise
       |> List.filter ~f:VVar.is_generated
       |> List.filter_map ~f:(fun binder ->
              let loc = VVar.get_location binder in
-             Misc.make_v_def
-               ~with_types
-               tenv.bindings
-               Local
-               binder
-               loc
-               collection.location)
+             Misc.make_v_def Local binder loc collection.location)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_coll, tenv, scopes_coll =
-      expression tenv collection (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_coll, scopes_coll =
+      expression collection (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_body, tenv, scopes_body =
-      expression tenv fe_body (`Toplevel top_defs) (`Local (defs @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_body, scopes_body =
+      expression fe_body (`Toplevel top_defs) (`Local (defs @ local_defs))
     in
     let scopes_body = add_defs_to_scopes defs scopes_body in
     let scopes = merge_same_scopes scopes_coll @ scopes_body in
     ( `Local (defs_body @ defs_coll @ local_defs)
     , `Toplevel top_defs
     , defs_body @ defs_coll @ defs
-    , tenv
     , scopes )
   | E_record e_lable_map ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
       Record.fold
         e_lable_map
-        ~init:(`Local local_defs, `Toplevel top_defs, [], tenv, [])
-        ~f:(fun (`Local local_defs, `Toplevel top_defs, defs, tenv, scopes) e ->
-          let `Local local_defs, `Toplevel top_defs, defs', tenv, scopes' =
-            expression tenv e (`Toplevel top_defs) (`Local local_defs)
+        ~init:(`Local local_defs, `Toplevel top_defs, [], [])
+        ~f:(fun (`Local local_defs, `Toplevel top_defs, defs, scopes) e ->
+          let `Local local_defs, `Toplevel top_defs, defs', scopes' =
+            expression e (`Toplevel top_defs) (`Local local_defs)
           in
           let scopes' = merge_same_scopes scopes' in
           ( `Local (defs' @ local_defs)
           , `Toplevel top_defs
           , defs' @ defs
-          , tenv
           , merge_same_scopes scopes @ scopes' ))
     in
-    `Local local_defs, `Toplevel top_defs, defs, tenv, scopes
+    `Local local_defs, `Toplevel top_defs, defs, scopes
   | E_assign { binder = _; expression = e } ->
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-      expression tenv e (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression e (`Toplevel top_defs) (`Local local_defs)
     in
     let scopes = merge_same_scopes scopes in
-    `Local local_defs, `Toplevel top_defs, defs, tenv, scopes
+    `Local local_defs, `Toplevel top_defs, defs, scopes
   | E_let_in
       { let_binder = _
       ; rhs = { expression_content = E_recursive _; _ } as rhs
@@ -377,107 +272,76 @@ let rec expression ~raise
     (* For recursive functions we don't need to add a def for [let_binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_rhs] *)
-    let `Local local_defs, `Toplevel top_defs, defs_rhs, tenv, scopes =
-      expression tenv rhs (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_rhs, scopes =
+      expression rhs (`Toplevel top_defs) (`Local local_defs)
     in
     let def, defs_rhs = drop_last defs_rhs in
-    let `Local local_defs, `Toplevel top_defs, defs_result, tenv, scopes' =
-      expression tenv let_result (`Toplevel top_defs) (`Local ([ def ] @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_result, scopes' =
+      expression let_result (`Toplevel top_defs) (`Local ([ def ] @ local_defs))
     in
     let scopes' = add_defs_to_scopes [ def ] scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    `Local local_defs, `Toplevel top_defs, defs_result @ defs_rhs @ [ def ], tenv, scopes
+    `Local local_defs, `Toplevel top_defs, defs_result @ defs_rhs @ [ def ], scopes
   | E_let_mut_in { let_binder; rhs; let_result; _ }
   | E_let_in { let_binder; rhs; let_result; _ } ->
     let binders = AST.Pattern.binders let_binder in
-    let binders, rhs = set_core_type_if_possible binders rhs in
     let defs_binder =
       List.filter_map binders ~f:(fun binder ->
           let var = Binder.get_var binder in
           let core_type = Binder.get_ascr binder in
           let binder_loc = VVar.get_location var in
-          Misc.make_v_def
-            ~with_types
-            ?core_type
-            tenv.bindings
-            Local
-            var
-            binder_loc
-            rhs.location)
+          Misc.make_v_def ?core_type Local var binder_loc rhs.location)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_rhs, tenv, scopes =
-      expression tenv rhs (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_rhs, scopes =
+      expression rhs (`Toplevel top_defs) (`Local local_defs)
     in
-    let `Local local_defs, `Toplevel top_defs, defs_result, tenv, scopes' =
-      expression tenv let_result (`Toplevel top_defs) (`Local (defs_binder @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_result, scopes' =
+      expression let_result (`Toplevel top_defs) (`Local (defs_binder @ local_defs))
     in
     let scopes' = add_defs_to_scopes defs_binder scopes' in
     let scopes = merge_same_scopes scopes @ scopes' in
-    ( `Local local_defs
-    , `Toplevel top_defs
-    , defs_result @ defs_rhs @ defs_binder
-    , tenv
-    , scopes )
+    `Local local_defs, `Toplevel top_defs, defs_result @ defs_rhs @ defs_binder, scopes
   | E_recursive
       { fun_name; fun_type; lambda = { binder; result; _ }; force_lambdarec = _ } ->
     let def_fun =
       let binder_loc = VVar.get_location fun_name in
-      Misc.make_v_def
-        ~with_types
-        ~core_type:fun_type
-        tenv.bindings
-        Local
-        fun_name
-        binder_loc
-        result.location
+      Misc.make_v_def ~core_type:fun_type Local fun_name binder_loc result.location
       |> Option.to_list
     in
     let def_par =
       let var = Param.get_var binder in
       let core_type = Param.get_ascr binder in
       let binder_loc = VVar.get_location var in
-      Misc.make_v_def
-        ~with_types
-        ~core_type
-        tenv.bindings
-        Local
-        var
-        binder_loc
-        result.location
-      |> Option.to_list
+      Misc.make_v_def ~core_type Local var binder_loc result.location |> Option.to_list
     in
-    let `Local local_defs, `Toplevel top_defs, defs_result, tenv, scopes =
-      expression tenv result (`Toplevel top_defs) (`Local (def_par @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_result, scopes =
+      expression result (`Toplevel top_defs) (`Local (def_par @ local_defs))
     in
     let scopes = merge_same_scopes scopes in
     let defs = def_par @ def_fun in
     ( `Local (defs_result @ local_defs)
     , `Toplevel top_defs
     , defs_result @ defs
-    , tenv
     , add_defs_to_scopes (def_par @ def_fun) scopes )
   | E_type_in { type_binder; rhs; let_result } ->
     let tdef = [ type_expression type_binder Local rhs ] in
-    let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-      expression tenv let_result (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs, scopes =
+      expression let_result (`Toplevel top_defs) (`Local local_defs)
     in
     ( `Local (tdef @ local_defs)
     , `Toplevel top_defs
     , tdef @ defs
-    , tenv
     , add_defs_to_scopes tdef scopes )
   | E_matching { matchee; cases } ->
-    let `Local local_defs, `Toplevel top_defs, defs_matchee, tenv, scopes =
-      expression tenv matchee (`Toplevel top_defs) (`Local local_defs)
+    let `Local local_defs, `Toplevel top_defs, defs_matchee, scopes =
+      expression matchee (`Toplevel top_defs) (`Local local_defs)
     in
     let scopes = merge_same_scopes scopes in
-    let `Local local_defs, `Toplevel top_defs, defs_cases, tenv, scopes' =
+    let `Local local_defs, `Toplevel top_defs, defs_cases, scopes' =
       List.fold_left
         cases
-        ~init:(`Local local_defs, `Toplevel top_defs, [], tenv, [])
-        ~f:
-          (fun (`Local local_defs, `Toplevel top_defs, defs, tenv, scopes)
-               { pattern; body } ->
+        ~init:(`Local local_defs, `Toplevel top_defs, [], [])
+        ~f:(fun (`Local local_defs, `Toplevel top_defs, defs, scopes) { pattern; body } ->
           let defs_pat =
             AST.Pattern.fold_pattern
               (fun defs (p : _ AST.Pattern.t) ->
@@ -487,14 +351,7 @@ let rec expression ~raise
                     let var = Binder.get_var binder in
                     let core_type = Binder.get_ascr binder in
                     let binder_loc = VVar.get_location var in
-                    Misc.make_v_def
-                      ~with_types
-                      ?core_type
-                      tenv.bindings
-                      Local
-                      var
-                      binder_loc
-                      body.location
+                    Misc.make_v_def ?core_type Local var binder_loc body.location
                     |> Option.to_list
                   in
                   def @ defs
@@ -505,62 +362,40 @@ let rec expression ~raise
               []
               pattern
           in
-          let `Local local_defs, `Toplevel top_defs, defs_body, tenv, scopes' =
-            expression tenv body (`Toplevel top_defs) (`Local local_defs)
+          let `Local local_defs, `Toplevel top_defs, defs_body, scopes' =
+            expression body (`Toplevel top_defs) (`Local local_defs)
           in
           let scopes' = merge_same_scopes scopes' in
           let scopes' = add_defs_to_scopes defs_pat scopes' in
           ( `Local (defs_body @ defs_pat @ local_defs)
           , `Toplevel top_defs
           , defs_body @ defs_pat @ defs
-          , tenv
           , merge_same_scopes scopes @ scopes' ))
     in
-    ( `Local local_defs
-    , `Toplevel top_defs
-    , defs_matchee @ defs_cases
-    , tenv
-    , scopes @ scopes' )
+    `Local local_defs, `Toplevel top_defs, defs_matchee @ defs_cases, scopes @ scopes'
   | E_mod_in { module_binder; rhs; let_result } ->
-    let `Local local_defs, `Toplevel top_defs, defs_module, tenv, scopes =
+    let `Local local_defs, `Toplevel top_defs, defs_module, scopes =
       match join_defs_and_top_defs local_defs (`Toplevel top_defs) with
       | Some (top_defs, uid) ->
-        let `Toplevel top_defs, defs_module, tenv, scopes =
-          module_expression
-            ~raise
-            ~with_types
-            ~options
-            tenv
-            Local
-            module_binder
-            rhs
-            (`Toplevel top_defs)
+        let `Toplevel top_defs, defs_module, scopes =
+          module_expression ~raise ~options Local module_binder rhs (`Toplevel top_defs)
         in
         let local_defs, top_defs = split_defs top_defs uid in
-        `Local local_defs, `Toplevel top_defs, defs_module, tenv, scopes
+        `Local local_defs, `Toplevel top_defs, defs_module, scopes
       | None ->
-        let `Toplevel top_defs, defs_module, tenv, scopes =
-          module_expression
-            ~raise
-            ~with_types
-            ~options
-            tenv
-            Local
-            module_binder
-            rhs
-            (`Toplevel top_defs)
+        let `Toplevel top_defs, defs_module, scopes =
+          module_expression ~raise ~options Local module_binder rhs (`Toplevel top_defs)
         in
-        `Local local_defs, `Toplevel top_defs, defs_module, tenv, scopes
+        `Local local_defs, `Toplevel top_defs, defs_module, scopes
     in
-    let `Local local_defs, `Toplevel top_defs, defs_result, tenv, scopes' =
-      expression tenv let_result (`Toplevel top_defs) (`Local (defs_module @ local_defs))
+    let `Local local_defs, `Toplevel top_defs, defs_result, scopes' =
+      expression let_result (`Toplevel top_defs) (`Local (defs_module @ local_defs))
     in
     let scopes' = merge_same_scopes scopes' in
     let scopes' = add_defs_to_scopes defs_module scopes' in
     ( `Local local_defs
     , `Toplevel top_defs
     , defs_result @ defs_module
-    , tenv
     , merge_same_scopes scopes @ scopes' )
 
 
@@ -575,30 +410,20 @@ and type_expression : TVar.t -> def_type -> AST.type_expression -> def =
 
 
 and module_expression ~raise
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env -> def_type
-    -> MVar.t -> AST.module_expr -> [ `Toplevel of def list ]
-    -> [ `Toplevel of def list ] * def list * typing_env * scopes
+    :  options:Compiler_options.middle_end -> def_type -> MVar.t -> AST.module_expr
+    -> [ `Toplevel of def list ] -> [ `Toplevel of def list ] * def list * scopes
   =
- fun ~with_types ~options tenv def_type top m (`Toplevel top_defs) ->
+ fun ~options def_type top m (`Toplevel top_defs) ->
   match m.wrap_content with
   | M_struct decls ->
-    let `Toplevel top_defs, defs, tenv, scopes =
-      (* [update_tenv] is [false] because [update_typing_env] already types
-         nested modules, so we only need to call it at toplevel declarations. *)
-      declarations
-        ~raise
-        ~update_tenv:false
-        ~with_types
-        ~options
-        tenv
-        decls
-        (`Toplevel top_defs)
+    let `Toplevel top_defs, defs, scopes =
+      declarations ~raise ~options decls (`Toplevel top_defs)
     in
     let range = MVar.get_location top in
     let body_range = m.location in
     let name = get_mod_binder_name top in
     let def = make_m_def ~range ~body_range name def_type defs in
-    `Toplevel top_defs, [ def ], tenv, scopes
+    `Toplevel top_defs, [ def ], scopes
   | M_variable mv ->
     let def =
       let name = get_mod_binder_name top in
@@ -608,7 +433,7 @@ and module_expression ~raise
       let def = make_m_alias_def ~range ~body_range name def_type alias in
       def
     in
-    `Toplevel top_defs, [ def ], tenv, []
+    `Toplevel top_defs, [ def ], []
   | M_module_path path ->
     let mvs = List.Ne.to_list path in
     let def =
@@ -619,18 +444,17 @@ and module_expression ~raise
       let def = make_m_alias_def ~range ~body_range name def_type alias in
       def
     in
-    `Toplevel top_defs, [ def ], tenv, []
+    `Toplevel top_defs, [ def ], []
 
 
 and declaration_expression ~raise
-    :  with_types:bool -> options:Compiler_options.middle_end -> typing_env
-    -> AST.type_expression option Binder.t list -> AST.expression
-    -> [ `Toplevel of def list ]
-    -> [ `Toplevel of def list ] * def list * typing_env * scopes
+    :  options:Compiler_options.middle_end -> AST.type_expression option Binder.t list
+    -> AST.expression -> [ `Toplevel of def list ]
+    -> [ `Toplevel of def list ] * def list * scopes
   =
- fun ~with_types ~options tenv binders e (`Toplevel top_defs) ->
-  let `Local local_defs, `Toplevel top_defs, defs, tenv, scopes =
-    expression ~raise ~with_types ~options tenv e (`Toplevel top_defs) (`Local [])
+ fun ~options binders e (`Toplevel top_defs) ->
+  let `Local local_defs, `Toplevel top_defs, defs, scopes =
+    expression ~raise ~options e (`Toplevel top_defs) (`Local [])
   in
   let defs = patch_top_level_references defs (`Toplevel local_defs) in
   let defs' =
@@ -639,23 +463,16 @@ and declaration_expression ~raise
         let ev = Binder.get_var binder in
         let range = VVar.get_location ev in
         let body_range = e.location in
-        Misc.make_v_def ~with_types ?core_type tenv.bindings Global ev range body_range)
+        Misc.make_v_def ?core_type Global ev range body_range)
   in
-  `Toplevel top_defs, defs' @ defs, tenv, scopes
+  `Toplevel top_defs, defs' @ defs, scopes
 
 
 and declaration ~raise
-    :  with_types:bool -> options:Compiler_options.middle_end -> update_tenv:bool
-    -> typing_env -> AST.declaration -> [ `Toplevel of def list ]
-    -> [ `Toplevel of def list ] * def list * typing_env * scopes
+    :  options:Compiler_options.middle_end -> AST.declaration -> [ `Toplevel of def list ]
+    -> [ `Toplevel of def list ] * def list * scopes
   =
- fun ~with_types ~options ~update_tenv tenv decl (`Toplevel top_defs) ->
-  let tenv =
-    if update_tenv
-    then (* only at top-level *)
-      update_typing_env ~raise ~with_types ~options tenv decl
-    else tenv
-  in
+ fun ~options decl (`Toplevel top_defs) ->
   match decl.wrap_content with
   | D_value
       { binder = _; expr = { expression_content = E_recursive _; _ } as expr; attr = _ }
@@ -663,85 +480,47 @@ and declaration ~raise
     (* For recursive functions we don't need to add a def for [binder]
         becase it will be added by the [E_recursive] case we just need to extract it
         out of the [defs_expr] *)
-    let `Local local_defs, `Toplevel top_defs, defs_expr, tenv, scopes =
-      expression ~raise ~with_types ~options tenv expr (`Toplevel top_defs) (`Local [])
+    let `Local local_defs, `Toplevel top_defs, defs_expr, scopes =
+      expression ~raise ~options expr (`Toplevel top_defs) (`Local [])
     in
     let defs_expr = patch_top_level_references defs_expr (`Toplevel local_defs) in
     let defs_expr = patch_top_level_references defs_expr (`Toplevel local_defs) in
     let def, defs_expr = drop_last defs_expr in
-    `Toplevel top_defs, [ def ] @ defs_expr, tenv, scopes
+    `Toplevel top_defs, [ def ] @ defs_expr, scopes
   | D_irrefutable_match { pattern; expr; _ } ->
     let binders = AST.Pattern.binders pattern in
-    let binders, expr = set_core_type_if_possible binders expr in
-    let `Toplevel top_defs, defs, env, scopes =
-      declaration_expression
-        ~raise
-        ~with_types
-        ~options
-        tenv
-        binders
-        expr
-        (`Toplevel top_defs)
+    let `Toplevel top_defs, defs, scopes =
+      declaration_expression ~raise ~options binders expr (`Toplevel top_defs)
     in
-    `Toplevel top_defs, defs, env, scopes
+    `Toplevel top_defs, defs, scopes
   | D_value { binder; expr; attr = _ } ->
-    let `Toplevel top_defs, defs, env, scopes =
-      declaration_expression
-        ~raise
-        ~with_types
-        ~options
-        tenv
-        [ binder ]
-        expr
-        (`Toplevel top_defs)
+    let `Toplevel top_defs, defs, scopes =
+      declaration_expression ~raise ~options [ binder ] expr (`Toplevel top_defs)
     in
-    `Toplevel top_defs, defs, env, scopes
+    `Toplevel top_defs, defs, scopes
   | D_type { type_binder; type_expr; type_attr = _ } ->
     let def = type_expression type_binder Global type_expr in
-    `Toplevel top_defs, [ def ], tenv, []
+    `Toplevel top_defs, [ def ], []
   | D_module { module_binder; module_; module_attr = _ } ->
-    let `Toplevel top_defs, defs, env, scopes =
-      module_expression
-        ~raise
-        ~with_types
-        ~options
-        tenv
-        Global
-        module_binder
-        module_
-        (`Toplevel top_defs)
+    let `Toplevel top_defs, defs, scopes =
+      module_expression ~raise ~options Global module_binder module_ (`Toplevel top_defs)
     in
-    `Toplevel top_defs, defs, env, scopes
+    `Toplevel top_defs, defs, scopes
 
 
 and declarations ~raise
-    :  with_types:bool -> options:Compiler_options.middle_end -> ?update_tenv:bool
-    -> ?stdlib_defs:def list -> ?top_level:bool -> typing_env -> AST.declaration list
-    -> [ `Toplevel of def list ]
-    -> [ `Toplevel of def list ] * def list * typing_env * scopes
+    :  options:Compiler_options.middle_end -> ?stdlib_defs:def list -> ?top_level:bool
+    -> AST.declaration list -> [ `Toplevel of def list ]
+    -> [ `Toplevel of def list ] * def list * scopes
   =
- fun ~with_types
-     ~options
-     ?(update_tenv = true)
-     ?(stdlib_defs = [])
-     ?(top_level = false)
-     tenv
-     decls
-     (`Toplevel top_defs) ->
-  let `Toplevel top_defs, `Global gdefs, `Local ldefs, tenv, scopes =
+ fun ~options ?(stdlib_defs = []) ?(top_level = false) decls (`Toplevel top_defs) ->
+  let `Toplevel top_defs, `Global gdefs, `Local ldefs, scopes =
     List.fold_left
       decls
-      ~init:(`Toplevel top_defs, `Global stdlib_defs, `Local [], tenv, [])
-      ~f:(fun (`Toplevel top_defs, `Global gdefs, `Local ldefs, tenv, scopes) decl ->
-        let `Toplevel top_defs, defs', tenv, scopes' =
-          declaration
-            ~raise
-            ~with_types
-            ~options
-            ~update_tenv
-            tenv
-            decl
-            (`Toplevel top_defs)
+      ~init:(`Toplevel top_defs, `Global stdlib_defs, `Local [], [])
+      ~f:(fun (`Toplevel top_defs, `Global gdefs, `Local ldefs, scopes) decl ->
+        let `Toplevel top_defs, defs', scopes' =
+          declaration ~raise ~options decl (`Toplevel top_defs)
         in
         let `Global gdefs', `Local ldefs' = filter_local_defs defs' in
         let scopes' = add_defs_to_scopes gdefs scopes' in
@@ -749,10 +528,9 @@ and declarations ~raise
         ( `Toplevel top_defs
         , `Global (gdefs' @ gdefs)
         , `Local (ldefs' @ ldefs)
-        , tenv
         , scopes @ scopes' ))
   in
-  `Toplevel top_defs, ldefs @ gdefs, tenv, scopes
+  `Toplevel top_defs, ldefs @ gdefs, scopes
 
 
 let resolve_module_aliases_to_module_ids : def list -> def list =
@@ -794,11 +572,8 @@ let stdlib_defs ~raise
   if no_stdlib
   then []
   else (
-    let tenv =
-      { type_env = options.init_env; bindings = Misc.Bindings_map.empty; decls = [] }
-    in
-    let `Toplevel top_defs, stdlib_defs, _, _ =
-      declarations ~raise ~with_types:false ~options tenv stdlib_core (`Toplevel [])
+    let `Toplevel top_defs, stdlib_defs, _ =
+      declarations ~raise ~options stdlib_core (`Toplevel [])
     in
     let stdlib_defs = patch_top_level_references stdlib_defs (`Toplevel top_defs) in
     ignore_local_defs stdlib_defs)
@@ -831,26 +606,41 @@ let rec patch_refs : def list -> References.references -> def list =
         Module { m with mod_case })
 
 
+let rec patch_types : def list -> Types_pass.t -> def list =
+ fun defs bindings ->
+  List.map defs ~f:(fun def ->
+      match def with
+      | Variable v ->
+        (match v.t, Types_pass.LMap.find_opt v.range bindings with
+        | Unresolved, Some t -> Types.Variable { v with t }
+        | _ -> Variable v)
+      | Type t -> Type t
+      | Module m ->
+        let mod_case =
+          match m.mod_case with
+          | Alias a -> Types.Alias a
+          | Def defs -> Def (patch_types defs bindings)
+        in
+        Module { m with mod_case })
+
+
 let scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> AST.module_ -> def list * scopes
   =
  fun ~raise ~with_types ~options ~stdlib prg ->
+  ignore with_types;
   let () = reset_counter () in
-  let stdlib, stdlib_core = stdlib in
-  let type_env = Environment.append options.init_env stdlib in
-  let tenv = { type_env; bindings = Misc.Bindings_map.empty; decls = [] } in
+  let stdlib_decls, stdlib_core = stdlib in
   let stdlib_defs = stdlib_defs ~raise ~options stdlib_core in
   let defs, scopes =
-    let `Toplevel top_defs, defs, _, scopes =
+    let `Toplevel top_defs, defs, scopes =
       declarations
         ~raise
-        ~with_types
         ~options
         ~stdlib_defs
         ~top_level:true
-        tenv
         prg
         (`Toplevel stdlib_defs)
     in
@@ -863,13 +653,15 @@ let scopes
   let defs, scopes =
     match Sys.getenv "LIGO_GET_SCOPE_USE_NEW_IMP" with
     | Some s when String.(s <> "") ->
+      let types = Types_pass.resolve ~raise ~options ~stdlib_decls prg in
       let new_defs = Definitions.definitions prg stdlib_defs in
       let defs = Definitions.Merge_defs_temp.merge_defs defs new_defs in
+      let defs = patch_types defs types in
       let refs = References.declarations (stdlib_core @ prg) in
       let env_preload_decls = if options.no_stdlib then [] else stdlib_core in
-      let new_scopes = Scopes_new.Of_Ast.declarations ~env_preload_decls prg in
+      let new_scopes = Scopes_pass.Of_Ast.declarations ~env_preload_decls prg in
       let scopes =
-        Scopes_new.to_old_scopes (flatten_defs defs @ stdlib_defs) new_scopes
+        Scopes_pass.to_old_scopes (flatten_defs defs @ stdlib_defs) new_scopes
       in
       let scopes = fix_shadowing_in_scopes scopes in
       patch_refs defs refs, scopes

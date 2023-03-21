@@ -248,12 +248,3 @@ let fix_shadowing_in_scope : scope -> scope =
 
 let fix_shadowing_in_scopes : scopes -> scopes =
  fun scopes -> List.map scopes ~f:fix_shadowing_in_scope
-
-
-module Bindings_map = Simple_utils.Map.Make (struct
-  type t = Ast_typed.expression_variable
-
-  let compare = Value_var.compare
-end)
-
-type bindings_map = Ast_typed.type_expression Bindings_map.t
