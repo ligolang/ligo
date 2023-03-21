@@ -121,6 +121,19 @@ let rec error_ppformat
         f
         "@[<hv>Invalid syntax.@.PascaLIGO is deprecated.@.Hint: You can enable its \
          support using the --deprecated flag.@]"
+    | `Main_transpilation_unsupported_syntaxes (src_syntax, dst_syntax) ->
+      Format.fprintf
+        f
+        "@[<hv>Invalid syntaxes.@.Syntactic-level transpilation from %s to %s is not \
+         supported.@]"
+        src_syntax
+        dst_syntax
+    | `Main_transpilation_same_source_and_dest_syntax syntax ->
+      Format.fprintf
+        f
+        "@[<hv>Invalid syntaxes.@.Source and destination of transpilation are the same \
+         (%s).@]"
+        syntax
     | `Main_unparse_tracer errs ->
       let errs =
         List.map
@@ -588,6 +601,16 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Build_error_tracer e -> [ BuildSystem.Errors.error_json e ]
   | `Main_deprecated_pascaligo_filename _ | `Main_deprecated_pascaligo_syntax _ ->
     let content = make_content ~message:"PascaLIGO is deprecated" () in
+    [ make ~stage:"command line interpreter" ~content ]
+  | `Main_transpilation_unsupported_syntaxes _ ->
+    let content = make_content ~message:"Unsupported syntaxes for transpilation" () in
+    [ make ~stage:"command line interpreter" ~content ]
+  | `Main_transpilation_same_source_and_dest_syntax _ ->
+    let content =
+      make_content
+        ~message:"Source and destination syntaxes of transpilation are the same"
+        ()
+    in
     [ make ~stage:"command line interpreter" ~content ]
   | `Main_invalid_generator_name _ ->
     let content = make_content ~message:"bad generator name" () in

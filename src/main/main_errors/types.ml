@@ -12,6 +12,8 @@ type all =
   | `Main_invalid_protocol_version of string list * string
   | `Main_deprecated_pascaligo_filename of string
   | `Main_deprecated_pascaligo_syntax of unit
+  | `Main_transpilation_unsupported_syntaxes of string * string
+  | `Main_transpilation_same_source_and_dest_syntax of string
   | `Main_unparse_tracer of tezos_alpha_error list
   | `Main_typecheck_contract_tracer of
     Environment.Protocols.t * int Tezos_utils.Michelson.michelson * tezos_alpha_error list

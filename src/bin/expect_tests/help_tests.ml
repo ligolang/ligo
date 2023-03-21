@@ -11,7 +11,8 @@ let%expect_test _ =
     === subcommands ===
 
       compile                    . compile a ligo program to michelson
-      transpile                  . [BETA] transpile ligo code from a syntax to
+      transpile                  . Transpile ligo code from a syntax to another
+      transpile-with-ast         . [BETA] transpile ligo code from a syntax to
                                    another
       run                        . compile and interpret ligo code
       info                       . tools to get information from contracts

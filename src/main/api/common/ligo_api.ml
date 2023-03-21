@@ -8,6 +8,7 @@ let dump_changelog display_format no_colour () =
 
 module Compile = Compile
 module Transpile = Transpile
+module Transpile_with_ast = Transpile_with_ast
 module Run = Run
 module Info = Info
 module Print = Print
