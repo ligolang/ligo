@@ -39,11 +39,38 @@ esy-windows:
       - platform-windows-x64
       - ligo_installer.exe 
 
+esy-test-windows:
+  tags:
+    - windows
+  stage: test
+  needs:
+    - job: esy-windows
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+        - dune
+      when: always
+  script:
+    - ls
+    - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
+    - $env:HOME = 'C:/Users/gitlabrunner'
+    - cd ./platform-windows-x64; npm pack; npm i -g ./ligolang-0.60.0-dev.tgz --force; cd ..
+    - bash -c "sh scripts/esy-multiplat-e2e-ci.sh"
+
 publish_npm_windows_x86:
   stage: push
   needs:
     - job: esy-windows
       artifacts: true
+    - job: esy-test-windows
+      artifacts: false
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
@@ -62,7 +89,7 @@ publish_npm_windows_x86:
     - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag windows$SUFFIX || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/windows-x86
 
-esy-macos-darwin:
+esy-macos-intel:
   extends: .submodule-clone
   tags:
     - mac
@@ -73,7 +100,7 @@ esy-macos-darwin:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.0/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
@@ -96,11 +123,39 @@ esy-macos-darwin:
     paths:
       - platform-darwin
 
-publish_npm_darwin:
+esy-test-macos-intel:
+  stage: test
+  tags:
+    - mac
+    - i7
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+        - dune
+      when: always
+  needs:
+    - job: esy-macos-intel
+      artifacts: true
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i --force -g ./platform-darwin
+    - sh scripts/esy-multiplat-e2e-ci.sh
+
+publish_npm_darwin_x86_64:
   stage: push
   needs:
-    - job: esy-macos-darwin
+    - job: esy-macos-intel
       artifacts: true
+    - job: esy-test-macos-intel
+      artifacts: false
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
@@ -136,6 +191,7 @@ esy-macos-m1:
       changes:
         - esy.json
         - esy.lock/index.json
+        - dune
       when: always
   script:
     - mkdir -p ~/.npm
@@ -153,11 +209,39 @@ esy-macos-m1:
     paths:
       - platform-darwin-arm64
 
+esy-test-macos-m1:
+  stage: test
+  tags:
+    - mac
+    - m1
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+      changes:
+        - esy.json
+        - esy.lock/index.json
+        - dune
+      when: always
+  needs:
+    - job: esy-macos-m1
+      artifacts: true
+  script:
+    - mkdir -p ~/.npm
+    - npm config set prefix '~/.npm'
+    - export PATH=~/.npm/bin:$PATH
+    - npm i --force -g ./platform-darwin-arm64
+    - sh scripts/esy-multiplat-e2e-ci.sh
+
 publish_npm_darwin_arm64:
   stage: push
   needs:
     - job: esy-macos-m1
       artifacts: true
+    - job: esy-test-macos-m1
+      artifacts: false
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:

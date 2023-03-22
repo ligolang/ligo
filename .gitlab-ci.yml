@@ -11,6 +11,7 @@ stages:
   - tools-build                     # build projects from 'tools'
   - tools-check                     # run tests for projects from 'tools'
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
+  - test                            # e2e tests
   - push                            # deploy docker images, pages, releases (tag)
   - deploy                          # deploy web IDE, website preview
   - release                         # Manage branch matching ^release/*
