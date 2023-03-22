@@ -2,7 +2,7 @@ open Lsp_test_requests
 
 let _main =
   Printexc.record_backtrace true;
-  Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true";
+  Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"";
   Alcotest.run
     "lsp_server_tests"
     [ Definition.tests
