@@ -21,7 +21,7 @@ let defs_of_vvar ~(body : AST.expression) : VVar.t -> def list -> def list =
     let name = get_binder_name vvar in
     let vdef : vdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name in
+      let uid : string = Types.make_def_id name (VVar.get_location vvar) in
       let range : Location.t = VVar.get_location vvar in
       let body_range : Location.t =
         match body.expression_content with
@@ -51,7 +51,7 @@ let defs_of_tvar ~(bindee : Ast_core.type_expression) : TVar.t -> def list -> de
     let name = get_type_binder_name tvar in
     let tdef : tdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name in
+      let uid : string = Types.make_def_id name (TVar.get_location tvar) in
       let range : Location.t = TVar.get_location tvar in
       let body_range : Location.t = bindee.location (* How to get this ? *) in
       let content : Ast_core.type_expression = bindee in
@@ -72,7 +72,7 @@ let defs_of_mvar ~(bindee : Ast_core.module_expr) ~(mod_case : mod_case)
     let name = get_mod_binder_name mvar in
     let mdef : mdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name in
+      let uid : string = Types.make_def_id name (MVar.get_location mvar) in
       let range : Location.t = MVar.get_location mvar in
       let body_range : Location.t =
         match Location.unwrap bindee with

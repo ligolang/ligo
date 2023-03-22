@@ -1163,7 +1163,6 @@ let scopes
     -> AST.module_ -> def list * scopes
   =
  fun ~raise ~with_types ~options ~stdlib prg ->
-  let () = reset_counter () in
   let stdlib_decls, stdlib_core = stdlib in
   let type_env = Environment.append options.init_env stdlib_decls in
   let tenv = { type_env; bindings = Misc.Bindings_map.empty; decls = [] } in
