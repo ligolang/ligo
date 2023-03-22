@@ -1,0 +1,12 @@
+{ parameter unit ;
+  storage unit ;
+  code { DROP ;
+         PUSH nat 1 ;
+         PUSH nat 1 ;
+         ADD ;
+         PUSH nat 2 ;
+         COMPARE ;
+         EQ ;
+         IF { UNIT } { PUSH string "failed assertion" ; FAILWITH } ;
+         NIL operation ;
+         PAIR } }
