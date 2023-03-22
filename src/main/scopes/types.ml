@@ -14,14 +14,6 @@ let get_mod_binder_name : Module_var.t -> string =
  fun v -> if Module_var.is_generated v then generated_flag else Module_var.to_name_exn v
 
 
-let counter = ref 0
-let reset_counter () = counter := 0
-
-let make_def_id name =
-  let c, () = !counter, incr counter in
-  name ^ "#" ^ string_of_int c
-
-
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module LSet = Caml.Set.Make (Location)
@@ -132,15 +124,21 @@ let get_references = function
   | Module m -> m.references
 
 
+let make_def_id name (loc : Location.t) =
+  match loc with
+  | File region -> name ^ "#" ^ region#compact ~file:false `Point
+  | Virtual v -> name ^ "#" ^ v
+
+
 let make_v_def : string -> type_case -> def_type -> Location.t -> Location.t -> def =
  fun name t def_type range body_range ->
-  let uid = make_def_id name in
+  let uid = make_def_id name range in
   Variable { name; range; body_range; t; uid; references = LSet.empty; def_type }
 
 
 let make_t_def : string -> def_type -> Location.t -> Ast_core.type_expression -> def =
  fun name def_type loc te ->
-  let uid = make_def_id name in
+  let uid = make_def_id name loc in
   Type
     { name
     ; range = loc
@@ -156,7 +154,7 @@ let make_m_def
     : range:Location.t -> body_range:Location.t -> string -> def_type -> def list -> def
   =
  fun ~range ~body_range name def_type members ->
-  let uid = make_def_id name in
+  let uid = make_def_id name range in
   let mod_case = Def members in
   Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
 
@@ -166,7 +164,7 @@ let make_m_alias_def
     -> def
   =
  fun ~range ~body_range name def_type alias ->
-  let uid = make_def_id name in
+  let uid = make_def_id name range in
   let mod_case = Alias alias in
   Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
 
