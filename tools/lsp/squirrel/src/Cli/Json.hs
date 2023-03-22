@@ -36,6 +36,7 @@ module Cli.Json
   , fromLigoRangeOrDef
   , fromLigoErrorToMsg
   , fromLigoTypeFull
+  , toSnakeCase
   ) where
 
 import Prelude hiding (Element, Product (..), sum)
