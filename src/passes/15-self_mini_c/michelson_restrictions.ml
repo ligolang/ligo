@@ -44,11 +44,11 @@ let rec check_comparable ~raise (error : type_expression -> _) : type_expression
 let not_comparable ~raise : expression -> expression =
   fun e ->
   let f t = match t.type_content with
-    | T_set t ->
-      let () = check_comparable ~raise (not_comparable "set") t in
+    | T_set u ->
+      let () = check_comparable ~raise (not_comparable "set" t) u in
       t
-    | T_ticket t ->
-      let () = check_comparable ~raise (not_comparable "ticket") t in
+    | T_ticket u ->
+      let () = check_comparable ~raise (not_comparable "ticket" t) u in
       t
     | _ -> t in
   let _ = Helpers.map_type_expression f e.type_expression in

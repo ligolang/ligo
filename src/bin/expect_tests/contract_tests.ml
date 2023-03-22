@@ -450,6 +450,11 @@ let%expect_test _ =
       1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
       2 |
 
+    This type is used inside:
+    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 15-28:
+      1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
+      2 |
+
     The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
 
 let%expect_test _ =
@@ -458,6 +463,11 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 17-24:
+      2 |
+      3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
+
+    This type is used inside:
+    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 16-32:
       2 |
       3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
 

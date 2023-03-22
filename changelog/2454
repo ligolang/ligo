@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2454'
+title: "Errors: improve comparable error by showing the context type"
+type: fixed
+            
