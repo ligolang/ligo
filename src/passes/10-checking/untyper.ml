@@ -28,7 +28,10 @@ let rec untype_type_expression (t : O.type_expression) : I.type_expression =
     let arguments = List.map ~f:self parameters in
     let type_operator = Type_var.of_input_var ~loc (Literal_types.to_string injection) in
     return
-    @@ I.T_app { type_operator = Module_access.make_el @@ type_operator; arguments }
+    @@
+    (match arguments with
+    | [] -> I.T_variable type_operator
+    | _ -> I.T_app { type_operator = Module_access.make_el @@ type_operator; arguments })
   | O.T_singleton l -> return @@ I.T_singleton l
   | O.T_abstraction x ->
     let x = Abstraction.map self x in
