@@ -326,11 +326,11 @@ Notice: built in terms of `map`.
 
 
 <SyntaxTitle syntax="cameligo">
-val update_with : ('a -> 'a option) -> 'a -> 'a list -> 'a list
+val update_with : ('a -> bool) -> 'a -> 'a list -> 'a list
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let update_with: (upd: ((item: 'a) => option&lt;'a&gt;), new_item: 'a, list: list&lt;'a&gt;) => list&lt;'a&gt;
+let update_with: (upd: ((item: 'a) => bool), new_item: 'a, list: list&lt;'a&gt;) => list&lt;'a&gt;
 </SyntaxTitle>
 
 Create a new list of the same type: if the predicate is satisfied on some element, this element is replaced for the new item.
