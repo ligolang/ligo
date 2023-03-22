@@ -1,7 +1,7 @@
 open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/" ^ s
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
 
 let%expect_test _ =
   run_ligo_good
@@ -16,7 +16,6 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 18-43
     [ foo_record#0  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 4, characters 8-9
     [ foo_record#0  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 5, characters 8-9
     [ c#1 foo_record#0  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-11
@@ -172,7 +171,6 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 8-11
     [  ] File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 14-21
 
     Variable definitions:
@@ -201,17 +199,13 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
     [ x#1 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
     [ x#3 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
     [ bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
     [ s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
     [ x#6 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
-    [ x#7 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
-    [ x#8 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
-    [ x#8 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-22
-    [ x#8 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
-    [ x#8 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+    [ x#7 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-15
+    [ x#8 s#5 bar#4 foo#2 storage#0  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-38
 
     Variable definitions:
     (bar#4 -> bar)
@@ -314,7 +308,7 @@ let%expect_test _ =
     (x#1 -> x)
     Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-13
-    Content: |resolved: ( option (ticket (nat)) * option (ticket (nat)) )|
+    Content: |resolved: option (ticket (nat))|
     references: []
     Type definitions:
     Module definitions:
@@ -336,8 +330,7 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-20
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-64
     [ Foo#1 x#0  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14
     [ Foo#1 x#0  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-21
 
@@ -345,7 +338,7 @@ let%expect_test _ =
     (x#2 -> x)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
     Body Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-21
-    Content: |resolved: ( ticket (nat) * ticket (nat) )|
+    Content: |resolved: ticket (nat)|
     references: []
     Type definitions:
     Module definitions:

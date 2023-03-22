@@ -4,7 +4,7 @@ module InfoApi = Ligo_api.Info
 module Raw_options = Compiler_options.Raw_options
 
 let schema = "../main/scopes/schema.json"
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:"true"
+let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
 
 let validate_json_file file_name =
   let command_str = Format.sprintf "python3 -m jsonschema -i %s %s" file_name schema in
