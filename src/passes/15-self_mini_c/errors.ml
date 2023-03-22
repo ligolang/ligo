@@ -11,7 +11,7 @@ type self_mini_c_error = [
   | `Self_mini_c_corner_case of string
   | `Self_mini_c_fvs_in_create_contract_lambda of Mini_c.expression * Value_var.t
   | `Self_mini_c_create_contract_lambda of Constant.constant' * Mini_c.expression
-  | `Self_mini_c_not_comparable of string * Mini_c.type_expression
+  | `Self_mini_c_not_comparable of string * Mini_c.type_expression * Mini_c.type_expression
   | `Self_mini_c_bad_capture of Simple_utils.Location.t * Mini_c.type_expression
 ] [@@deriving poly_constructor { prefix = "self_mini_c_" }]
 
@@ -39,10 +39,10 @@ let error_ppformat : display_format:string display_format -> no_colour:bool ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of Tezos.create_contract.@.The first argument must be an inline function. @]"
         snippet_pp e.location
-    | `Self_mini_c_not_comparable (s, t) ->
+    | `Self_mini_c_not_comparable (s, big_t, t) ->
       Format.fprintf f
-        "@[<hv>%a@.The %s constructor needs a comparable type argument, but it was given a non-comparable one.@]"
-        snippet_pp t.location s
+        "@[<hv>%a@.This type is used inside:@.%a@.The %s constructor needs a comparable type argument, but it was given a non-comparable one.@]"
+        snippet_pp t.location snippet_pp big_t.location s
     | `Self_mini_c_bad_capture (l, t) ->
       let pp_type ppf (t : Mini_c.type_expression) =
         match t.source_type with
@@ -91,7 +91,7 @@ let error_ppformat : display_format:string display_format -> no_colour:bool ->
       let location = e.location in
       let content = make_content ~message ~location () in
       make ~stage ~content
-    | `Self_mini_c_not_comparable (s, t) ->
+    | `Self_mini_c_not_comparable (s, _big_t, t) ->
       let message = Format.sprintf  "Type is not comparable under constructor %s." s in
       let location = t.location in
       let content = make_content ~message ~location () in

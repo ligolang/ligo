@@ -919,9 +919,9 @@ let transpile_contract =
   in
   let summary = "Transpile a contract to another syntax." in
   let readme () =
-    "This sub-command transpiles a source file to another syntax.\
-     It parses the source file and performs the transpiling at the syntactic level.\
-     It can be used for transpiling PascaLIGO contracts to JsLIGO."
+    "This sub-command transpiles a source file to another syntax.It parses the source \
+     file and performs the transpiling at the syntactic level.It can be used for \
+     transpiling PascaLIGO contracts to JsLIGO."
   in
   Command.basic
     ~summary
@@ -934,6 +934,7 @@ let transpile_contract =
     <*> no_colour
     <*> output_file)
 
+
 let transpile_group =
   Command.group ~summary:"Transpile ligo code from a syntax to another"
   @@ [ "contract", transpile_contract ]
@@ -943,9 +944,17 @@ let transpile_group =
 let transpile_with_ast_contract =
   let f source_file new_syntax syntax display_format no_colour output_file () =
     return_result ~return ?output_file
-    @@ Api.Transpile_with_ast.contract source_file new_syntax syntax display_format no_colour
+    @@ Api.Transpile_with_ast.contract
+         source_file
+         new_syntax
+         syntax
+         display_format
+         no_colour
   in
-  let summary = "[BETA] transpile a contract to another syntax, compiling down to the AST and then decompiling." in
+  let summary =
+    "[BETA] transpile a contract to another syntax, compiling down to the AST and then \
+     decompiling."
+  in
   let readme () =
     "[BETA] This sub-command transpiles a source file to another syntax. It does not use \
      the build system, but the source file is preprocessed. Comments are currently not \
@@ -966,7 +975,12 @@ let transpile_with_ast_contract =
 let transpile_with_ast_expression =
   let f syntax expression new_syntax display_format no_colour () =
     return_result ~return
-    @@ Api.Transpile_with_ast.expression expression new_syntax syntax display_format no_colour
+    @@ Api.Transpile_with_ast.expression
+         expression
+         new_syntax
+         syntax
+         display_format
+         no_colour
   in
   let summary = "[BETA] transpile an expression to another syntax." in
   let readme () =
@@ -981,7 +995,9 @@ let transpile_with_ast_expression =
 
 let transpile_with_ast_group =
   Command.group ~summary:"[BETA] transpile ligo code from a syntax to another"
-  @@ [ "contract", transpile_with_ast_contract; "expression", transpile_with_ast_expression ]
+  @@ [ "contract", transpile_with_ast_contract
+     ; "expression", transpile_with_ast_expression
+     ]
 
 
 (** Mutate commands *)
