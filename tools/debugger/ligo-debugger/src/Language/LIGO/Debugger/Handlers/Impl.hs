@@ -30,15 +30,15 @@ import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
-  SnapshotEdgeStatus (SnapshotAtEnd), SourceLocation, SrcLoc (..), curSnapshot, frozen,
-  groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory, slEnd)
+  PausedReason (..), SnapshotEdgeStatus (SnapshotAtEnd), SourceLocation, SrcLoc (..), curSnapshot,
+  frozen, groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory, slEnd)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..),
   DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
-  HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), StopEventDesc (..),
-  StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
+  HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), ShouldStop (..),
+  StopEventDesc (..), StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
@@ -90,10 +90,11 @@ instance HasSpecificMessages LIGO where
   type InterpretSnapshotExt LIGO = InterpretSnapshot 'Unique
   type StopEventExt LIGO = InterpretEvent
   type StepGranularityExt LIGO = LigoStepGranularity
+  type PausedReasonExt LIGO = LigoSpecificPausedReason
 
   reportErrorAndStoppedEvent = \case
     ExceptionMet exception -> writeException True exception
-    Paused reason -> writeStoppedEvent reason
+    Paused reason label -> writeStoppedEvent reason label
     TerminatedOkMet -> writeTerminatedEvent
     PastFinish -> do
       snap <- zoom dsDebuggerState $ frozen curSnapshot
@@ -106,7 +107,7 @@ instance HasSpecificMessages LIGO where
             -- but let's handle this condition gracefully anyway.
             writeTerminatedEvent
         _ -> error "Unexpected status"
-    ReachedStart -> writeStoppedEvent "entry"
+    ReachedStart -> writeStoppedEvent PlainPaused "entry"
     where
       writeTerminatedEvent = do
         InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
@@ -152,19 +153,26 @@ instance HasSpecificMessages LIGO where
 
               _ -> throwM $ ImpossibleHappened "Expected the last element to be a pair of operations and storage"
 
-      writeStoppedEvent reason = do
+      writeStoppedEvent reason label = do
+        let hitBreakpointIds = case reason of
+              -- Wait for this issue to be resolved:
+              -- https://gitlab.com/morley-framework/morley-debugger/-/issues/91
+              -- BreakpointPaused ids -> unBreakpointId <$> toList ids
+              _ -> []
+
         (mDesc, mLongDesc) <- zoom dsDebuggerState $ frozen (getStopEventInfo @LIGO Proxy)
-        let fullReason = case mDesc of
-              Nothing -> reason
-              Just (StopEventDesc desc) -> reason <> ", " <> desc
+        let fullLabel = case mDesc of
+              Nothing -> label
+              Just (StopEventDesc desc) -> label <> ", " <> desc
         pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
           { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody
-            { DAP.reasonStoppedEventBody = toString fullReason
+            { DAP.reasonStoppedEventBody = toString fullLabel
               -- ↑ By putting moderately large text we slightly violate DAP spec,
               -- but it seems to be worth it
             , DAP.threadIdStoppedEventBody = 1
             , DAP.allThreadsStoppedStoppedEventBody = True
             , DAP.textStoppedEventBody = maybe "" pretty mLongDesc
+            , DAP.hitBreakpointIdsStoppedEventBody = hitBreakpointIds
             }
           }
 
@@ -325,9 +333,12 @@ instance HasSpecificMessages LIGO where
               ]
           }
 
+        return $ ShouldStop False
+
     , Handler \(SomeException err) -> do
         writeErrResponse @ImpossibleHappened
           [int||Internal (unhandled) error: #exc{err}|]
+        return $ ShouldStop False
     ]
     where
       writeErrResponse
@@ -703,7 +714,7 @@ initDebuggerState his allLocs = DebuggerState
   { _dsSnapshots = playInterpretHistory his
   , _dsSources =
       fmap @(Map MichelsonSource)
-        (DebugSource mempty . fromList . map fst . toList @(Set _))
+        (\locs -> DebugSource mempty (fromList . map fst $ toList @(Set _) locs) 0)
         (groupSourceLocations $ toList allLocs)
   }
 

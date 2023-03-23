@@ -204,30 +204,33 @@ infixl 0 @?==
 
 compareWithCurLocation
   :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
-  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
-compareWithCurLocation oldSrcLoc = FrozenPredicate $
-  getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
+  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
+compareWithCurLocation oldSrcLoc = FrozenPredicate do
+  Just pos <- getExecutedPosition
+  guard (pos /= oldSrcLoc)
 
 goesAfter
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> FrozenPredicate (DebuggerState is) m
-goesAfter loc = FrozenPredicate $ fromMaybe False <$>
-  ((\(SourceLocation _ startPos _) -> startPos >= loc) <<$>> getExecutedPosition)
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m ()
+goesAfter loc = FrozenPredicate do
+  Just (SourceLocation _ startPos _) <- getExecutedPosition
+  guard (startPos >= loc)
 
 goesBefore
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> FrozenPredicate (DebuggerState is) m
-goesBefore loc = FrozenPredicate $ fromMaybe False <$>
-  ((\(SourceLocation _ _ endPos) -> endPos <= loc) <<$>> getExecutedPosition)
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m ()
+goesBefore loc = FrozenPredicate do
+  Just (SourceLocation _ _ endPos) <- getExecutedPosition
+  guard (endPos <= loc)
 
 goesBetween
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> SrcLoc -> FrozenPredicate (DebuggerState is) m
+  => SrcLoc -> SrcLoc -> FrozenPredicate (DebuggerState is) m ()
 goesBetween left right = goesAfter left && goesBefore right
 
 isAtLine
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => Word -> FrozenPredicate (DebuggerState is) m
+  => Word -> FrozenPredicate (DebuggerState is) m ()
 isAtLine line =
   goesBetween
     (SrcLoc line 0)
@@ -236,16 +239,16 @@ isAtLine line =
 goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
-  void $ case oldSrcLocMb of
-    Just oldSrcLoc -> moveTill Forward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
-    Nothing -> continueUntilBreakpoint NextBreak
+  case oldSrcLocMb of
+    Just oldSrcLoc -> void $ moveTill Forward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
+    Nothing -> void $ continueUntilBreakpoint NextBreak
 
 goToPreviousBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToPreviousBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
-  void $ case oldSrcLocMb of
-    Just oldSrcLoc -> moveTill Backward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
-    Nothing -> reverseContinue NextBreak
+  case oldSrcLocMb of
+    Just oldSrcLoc -> void $ moveTill Backward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
+    Nothing -> void $ reverseContinue NextBreak
 
 data ContractRunData =
   forall param st.

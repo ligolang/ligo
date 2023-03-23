@@ -15,7 +15,7 @@ import Test.Tasty.Hedgehog (testProperty)
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
-  (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition),
+  (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition), PausedReason (..),
   SourceLocation' (..), SrcLoc (..), curSnapshot, frozen, getCurMethodBlockLevel,
   getFutureSnapshotsNum, moveTill, switchBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand' (..))
@@ -333,7 +333,7 @@ test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
         -- Do a step over...
         do
           moveRes <- processLigoStep (CNext dir granularity)
-          unless (moveRes == MovedSuccessfully) $
+          unless (moveRes == MovedSuccessfully PlainPaused) $
             -- We started at the end of the tape, this case is not interesting
             liftProp discard
 

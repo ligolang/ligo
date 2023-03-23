@@ -2,12 +2,13 @@ module Language.LIGO.Debugger.Navigate
   ( isAtBreakpoint
   , LigoStepGranularity (..)
   , allLigoStepGranularities
+  , LigoSpecificPausedReason (..)
   , processLigoStep
   ) where
 
 import Control.Lens (ix)
 import Data.Default (Default (..))
-import Data.Set qualified as Set
+import Data.Map qualified as Map
 import Fmt (Buildable (..))
 
 import Morley.Debugger.Core.Common
@@ -22,17 +23,18 @@ import Language.LIGO.Debugger.Snapshots
 -- semantics is inconvenient for us.
 isAtBreakpoint
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => FrozenPredicate (DebuggerState is) m
-isAtBreakpoint = FrozenPredicate $ fmap isJust . runMaybeT $ do
+  => FrozenPredicate (DebuggerState is) m BreakpointId
+isAtBreakpoint = FrozenPredicate do
   Just curLoc <- getExecutedPosition
   sources <- view dsSources
   Just sourceInfo <- pure $ sources ^? ix (_slPath curLoc)
   let curLine = slLine (_slStart curLoc)
 
   -- Find if any breakpoint is at the same line as we are
-  Just nextPosAfterBreakpoint <-
-        pure $ Set.lookupGT (SrcLoc curLine 0) (_dsBreakpoints sourceInfo)
+  Just (nextPosAfterBreakpoint, breakpoint) <-
+        pure $ Map.lookupGT (SrcLoc curLine 0) (_dsBreakpoints sourceInfo)
   guard (slLine nextPosAfterBreakpoint == curLine)
+  return breakpoint
 
 -- | Stepping granularity allowed in our debugger.
 data LigoStepGranularity
@@ -81,9 +83,9 @@ granularityMatchesEvent = \case
 matchesGranularityP
   :: Monad m
   => LigoStepGranularity
-  -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+  -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
 matchesGranularityP gran = FrozenPredicate do
-  statusMatches . isStatus <$> curSnapshot
+  guard . statusMatches . isStatus =<< curSnapshot
   where
     statusMatches :: InterpretStatus -> Bool
     statusMatches = \case
@@ -94,14 +96,27 @@ matchesGranularityP gran = FrozenPredicate do
 {-# ANN isFunctionCallP ("HLint: ignore Redundant <$>" :: Text) #-}
 
 -- | Like @matchesGranularityP@ but discards the current granularity.
-isFunctionCallP :: Monad m => FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+isFunctionCallP :: Monad m => FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
 isFunctionCallP = FrozenPredicate do
-  isStatus <$> curSnapshot >>= \case
-    InterpretRunning (EventExpressionPreview FunctionCall) -> pure True
-    _ -> pure False
+  InterpretRunning (EventExpressionPreview FunctionCall) <-
+    isStatus <$> curSnapshot
+  pass
 
--- Necessary due to https://gitlab.com/morley-framework/morley/-/issues/912
-{-# ANN processLigoStep ("HLint: ignore Use or" :: Text) #-}
+-- | Different reasons why could we stop.
+type LigoPausedReason = PausedReason LigoSpecificPausedReason
+
+-- | Stop reasons specific to LIGO, some basic ones are declared by
+-- morley-debugger.
+data LigoSpecificPausedReason
+  = SpecificMetFunctionCall
+    -- ^ Special stop before entering a function call.
+  deriving stock (Show, Eq)
+
+pattern OneBreakpointPaused :: BreakpointId -> LigoPausedReason
+pattern OneBreakpointPaused bi = BreakpointPaused (bi :| [])
+
+pattern MetFunctionCall :: LigoPausedReason
+pattern MetFunctionCall = OtherPaused SpecificMetFunctionCall
 
 -- | Handle a stepping command.
 {- Implementation notes:
@@ -165,42 +180,43 @@ We can step with `Next` till it and use `StepIn` to go inside.
 processLigoStep
   :: (HistoryReplay (InterpretSnapshot u) m)
   => StepCommand LigoStepGranularity
-  -> m MovementResult
+  -> m (MovementResult LigoPausedReason)
 processLigoStep = \case
   CContinue dir ->
-    moveTill dir isAtBreakpoint
+    OneBreakpointPaused <<$>> moveTill dir isAtBreakpoint
 
   CStepIn gran ->
-    moveTill Forward $ foldr1 (||) $ fromList
-      [ matchesGranularityP gran
-      , isAtBreakpoint
-      , isFunctionCallP
+    moveTill Forward $ asum
+      [ PlainPaused <$ matchesGranularityP gran
+      , OneBreakpointPaused <$> isAtBreakpoint
+      , MetFunctionCall <$ isFunctionCallP
       ]
 
   CNext dir gran -> do
     methodNestingLevelBeforeStep <- frozen getCurMethodBlockLevel
     let notWithinNestedMethod = FrozenPredicate do
           curMethodNestingLevel <- getCurMethodBlockLevel
-          return (curMethodNestingLevel <= methodNestingLevelBeforeStep)
+          guard (curMethodNestingLevel <= methodNestingLevelBeforeStep)
     let notWithinCurrentMethod = FrozenPredicate do
           curMethodNestingLevel <- getCurMethodBlockLevel
-          return (curMethodNestingLevel < methodNestingLevelBeforeStep)
+          guard (curMethodNestingLevel < methodNestingLevelBeforeStep)
 
-    moveTill dir $ foldr1 (||) $ fromList
+    moveTill dir $ asum
       [ -- In common scenario we skip entering into methods and skip
         -- too small granularities.
         -- For instance, at statement granularity we really want to skip
         -- entire expressions having multiple function calls.
-        notWithinNestedMethod && matchesGranularityP gran
+        PlainPaused <$ notWithinNestedMethod <* matchesGranularityP gran
         -- If we stepped out of the method, it's fine to first step at
         -- the event where our function call is evaluated.
-      , notWithinCurrentMethod
+      , PlainPaused <$ notWithinCurrentMethod
         -- Any breakpoint is a good reason to interrupt.
-      , isAtBreakpoint
+      , OneBreakpointPaused <$> isAtBreakpoint
       ]
 
   CStepOut _gran ->
-    moveOutsideMethod
+    const PlainPaused <<$>> moveOutsideMethod
 
   -- Copypasted from @defaultProcessStep@
-  CRestartFrame amt -> moveToStartFrame amt
+  CRestartFrame amt ->
+    const PlainPaused <<$>> moveToStartFrame amt

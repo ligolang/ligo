@@ -81,7 +81,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward (FrozenPredicate $ pure Nothing)
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -325,13 +325,11 @@ test_Snapshots = testGroup "Snapshots collection"
         let stopAtFile
               :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
               => FilePath
-              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
             stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
-              let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
-              case locMb of
-                Just loc -> pure $ lrFile loc == filePath
-                Nothing -> pure False
+              Just loc <- pure $ snap ^? isStackFramesL . ix 0 . sfLocL
+              guard $ lrFile loc == filePath
 
         liftIO $ step "Go to nested contract"
         _ <- moveTill Forward $ stopAtFile nestedFile
@@ -428,8 +426,8 @@ test_Snapshots = testGroup "Snapshots collection"
               curSnapshot >>= \case
                 InterpretSnapshot
                   { isStatus = InterpretRunning EventFacedStatement
-                  } -> pure True
-                _ -> pure False
+                  } -> pure pass
+                _ -> pure Nothing
 
         let goAndCheckLinePosition pos = do
               stepNextLine
@@ -560,7 +558,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   InterpretRunning EventFacedStatement -> True
                   _ -> False
 
-            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward false
 
             ( snaps
                 <&> do \InterpretSnapshot{..} ->
@@ -656,7 +654,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
       step [int||Going through all execution history|]
       testWithSnapshotsImpl logger runData do
-        void $ moveTill Forward $ FrozenPredicate $ pure False
+        void $ moveTill Forward false
 
       unlessM (readIORef anyWritten) do
         assertFailure [int||No logs we're dumped during snapshot collection|]
@@ -678,12 +676,12 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue False)
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
 
           srcLocAtGt <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
@@ -691,7 +689,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping back"
           void . moveTill Backward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ has statusExpressionEvaluatedP status
+            guard $ has statusExpressionEvaluatedP status
 
 
           status <- isStatus <$> frozen curSnapshot
@@ -752,17 +750,17 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue (3 :: Integer))
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
           srcLocAtDiv <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
           liftIO $ step "jumping to the previously computed value"
           void . moveTill Backward $ FrozenPredicate do
-            has statusExpressionEvaluatedP . isStatus <$> curSnapshot
+            preview statusExpressionEvaluatedP . isStatus <$> curSnapshot
 
           srcLocAtBack <- sfLoc . head . isStackFrames <$> frozen curSnapshot
           liftIO $ assertBool
@@ -872,7 +870,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let stackFramesCheck :: ([[Text]] -> Bool) -> HistoryReplayM (InterpretSnapshot u) IO ()
           stackFramesCheck namesCheck = do
             (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <-
-              listen $ moveTill Forward (FrozenPredicate $ pure False)
+              listen $ moveTill Forward false
             liftIO $
               assertBool
                 [int||Expected to have only one stack frame \
@@ -903,9 +901,9 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
+        moveTill Forward do
           goesBetween (SrcLoc 8 0) (SrcLoc 12 0)
-          && matchesSrcType (MSFile nestedFile)
+          matchesSrcType (MSFile nestedFile)
 
         -- Skip "lst" and "sum(...)"" statements
         replicateM_ 2 do
@@ -1131,7 +1129,7 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ moveTill Forward $
           goesAfter (SrcLoc 5 0)
 
-        moveTill Forward $ FrozenPredicate $ pure False
+        moveTill Forward $ FrozenPredicate $ pure Nothing
 
         liftIO $ step [int||Check that failed location is known|]
         checkSnapshot \case
