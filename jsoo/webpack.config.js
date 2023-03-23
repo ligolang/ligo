@@ -3,6 +3,10 @@ const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const distPath = path.resolve(__dirname, "dist");
+let commitHash = require("child_process")
+  .execSync("git rev-parse --short HEAD")
+  .toString()
+  .trim();
 
 module.exports = {
   resolve: {
@@ -47,6 +51,7 @@ module.exports = {
       Buffer: ["buffer", "Buffer"],
     }),
     new webpack.DefinePlugin({
+      __COMMIT_HASH__: JSON.stringify(commitHash),
       "process.browser": JSON.stringify(true),
       "process.nextTick": "window.setImmediate", //./node_modules/levelup/lib/write-stream.js
       "process.env.NODE_DEBUG": JSON.stringify(process.env.NODE_DEBUG || ""),

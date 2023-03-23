@@ -38,6 +38,10 @@ async function main() {
   await initialize();
   let app = "js_main";
   let path = "";
+  document
+    .getElementsByTagName("h1")[0]
+    // @ts-ignore
+    .appendChild(document.createTextNode(" Build ID: " + __COMMIT_HASH__));
   // No runtime file needed since we just enable effects,
   // and it can only be enabled in whole program compilation
   // mode with Dune
