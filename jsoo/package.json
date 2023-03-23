@@ -6,7 +6,7 @@
   "scripts": {
     "cp-static": "find ../_build -type f -name 'js_main.*.js' -print -exec cp -f {} ./dist/ \\; ; cp ./foo.jsligo dist/",
     "build": "webpack build; npm run cp-static",
-    "start": "rm -rf dist; mkdir -p dist; npm run cp-static; webpack-dev-server"
+    "start": "sh ./watchman.sh; rm -rf dist; mkdir -p dist; npm run cp-static; webpack-dev-server"
   },
   "keywords": [],
   "author": "ligolang developers",
