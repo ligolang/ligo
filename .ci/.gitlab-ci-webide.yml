@@ -5,21 +5,26 @@
 webide-define-image-tag:
   extends: .docker-image
   stage: pretooling
+  needs:
+    - job: changelog
+      artifacts: false
   rules:
-    - if: '$CI_COMMIT_BRANCH == "webide-release/frontend"'
-      when: always
-    - if: '$CI_COMMIT_BRANCH == "dev"'
-      changes:
-        - tools/webide-new/ligo-webide-frontend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
       when: always
     - if: '$CI_COMMIT_BRANCH == "dev"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      changes:
+        - tools/webide-new/ligo-webide-frontend/**/*
+        - tools/vscode/syntaxes
+      when: always
   script:
+    - NPR_ENVIRONMENT=$(echo "$CI_MERGE_REQUEST_TITLE" | grep -io 'webide-[ab]' | head -1 | sed 's/^webide//')
     - FORMATED_CI_JOB_STARTED_AT="${CI_JOB_STARTED_AT//:/-}"
-    - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
-    - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}"
+    - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
+    - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - echo "WEBIDE_NEW_IMAGE_TAG=${WEBIDE_NEW_IMAGE_TAG}" >> webide-img-tag.env
     - echo "WEBIDE_FRONTEND_NEW_IMAGE_TAG=${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >> webide-img-tag.env
   artifacts:
@@ -33,7 +38,9 @@ webide-new-backend-build:
     - job: changelog
       artifacts: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
@@ -49,6 +56,8 @@ webide-new-frontend-build:
     - job: changelog
       artifacts: false
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'      
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide-new/ligo-webide-frontend/ligo-ide/**/*
@@ -70,9 +79,7 @@ webide-new-backend-build-and-push-backend:
     - job: webide-define-image-tag
       artifacts: true 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "dev"'
-      changes:
-        - tools/webide-new/ligo-webide-backend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'      
       when: always
   script:
     - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}
@@ -88,9 +95,7 @@ webide-new-frontend-build-and-push:
     - job: webide-define-image-tag
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == "dev"'
-      changes:
-        - tools/webide-new/ligo-webide-frontend/**/*
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'      
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
@@ -104,6 +109,23 @@ webide-new-frontend-build-and-push:
   after_script:
     - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
 
+webide-new-release-backend-build-and-push:
+  extends: .docker-image
+  stage: deploy
+  needs:
+    - job: webide-define-image-tag
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      changes:
+        - tools/webide-new/ligo-webide-backend/**/*
+      when: always
+  script:
+    - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}
+    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - docker push "${WEBIDE_NEW_IMAGE_TAG}"
+  after_script:
+    - docker image rm "${WEBIDE_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
 
 webide-new-release-frontend-build-and-push:
   extends: .docker-image
@@ -112,7 +134,10 @@ webide-new-release-frontend-build-and-push:
     - job: webide-define-image-tag
       artifacts: true
   rules:
-    - if: '$CI_COMMIT_BRANCH == "webide-release/frontend"'
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      changes:
+        - tools/webide-new/ligo-webide-frontend/**/*
+        - tools/vscode/syntaxes
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
