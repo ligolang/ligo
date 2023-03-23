@@ -133,9 +133,9 @@ export default class MonacoEditor extends Component {
       mouseWheelZoom: true,
     });
     // install Monaco language client services
-    MonacoServices.install();
+    // MonacoServices.install();
 
-    createWebSocket();
+    // createWebSocket();
 
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent(() => {
