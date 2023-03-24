@@ -437,3 +437,29 @@ let declarations : AST.declaration list -> references =
   let env = Env.empty in
   let refs, _ = declarations decls refs env in
   refs
+
+
+let rec patch : references -> Types.def list -> Types.def list =
+ fun refs defs ->
+  List.map defs ~f:(fun def ->
+      match def with
+      | Variable v ->
+        (match LMap.find_opt v.range refs with
+        | None -> Types.Variable v
+        | Some references -> Variable { v with references })
+      | Type t ->
+        (match LMap.find_opt t.range refs with
+        | None -> Types.Type t
+        | Some references -> Type { t with references })
+      | Module m ->
+        let mod_case =
+          match m.mod_case with
+          | Alias a -> Types.Alias a
+          | Def defs -> Def (patch refs defs)
+        in
+        let m =
+          match LMap.find_opt m.range refs with
+          | None -> m
+          | Some references -> { m with references }
+        in
+        Module { m with mod_case })

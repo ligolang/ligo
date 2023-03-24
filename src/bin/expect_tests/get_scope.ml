@@ -1,7 +1,6 @@
 open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/" ^ s
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
 
 let%expect_test _ =
   run_ligo_good
@@ -17,6 +16,7 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 1, characters 8-9
+    [ a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 11-28
     [ j#4:47-48 i#4:37-38 a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-21
     [ g#5:8-9 j#4:47-48 i#4:37-38 a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 12-25
     [ k#6:8-9 g#5:8-9 j#4:47-48 i#4:37-38 a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 7, characters 4-21
@@ -156,6 +156,7 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 1, characters 8-9
+    [ a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 11-27
     [ j#4:46-47 i#4:36-37 a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-63
     [ f#4:6-7 a#1:4-5  ] File "../../test/contracts/get_scope_tests/lambda.mligo", line 5, characters 2-7
 
@@ -204,12 +205,13 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-40
     [ mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 8-9
     [ a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 17-18
     [ c#6:13-14 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 26-27
     [ x#7:8-9 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 13-18
     [ y#8:8-9 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 13-18
-    [ b#5:4-5 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 11, characters 11-19
+    [ b#5:4-5 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 11, characters 9-21
     [ b#5:4-5 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 12-13
     [ c#13:8-9 b#5:4-5 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 14, characters 4-5
     [ hd#15:4-6 tl#15:8-10 b#5:4-5 a#3:4-5 mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15
@@ -386,12 +388,16 @@ let%expect_test _ =
     [  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 8-9
     [ c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-40
     [ j#4:39-40 i#4:37-38 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-21
-    [ k#5:8-9 j#4:39-40 i#4:37-38 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-10
-    [ m#8:23-24 n#8:13-14 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-36
+    [ k#5:8-9 j#4:39-40 i#4:37-38 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-11
+    [ m#8:23-24 n#8:13-14 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-12
+    [ m#8:23-24 n#8:13-14 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 18-19
+    [ m#8:23-24 n#8:13-14 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 25-36
     [ z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 10-18
     [ v#11:6-7 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 12, characters 10-15
-    [ b#12:6-7 v#11:6-7 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 2-9
-    [ y#15:11-12 x#15:8-9 b#3:4-5 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 5 to line 17, character 15
+    [ b#12:6-7 v#11:6-7 z#8:10-11 c#4:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 2-10
+    [ y#15:11-12 x#15:8-9 b#3:4-5 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 5-10
+    [ y#15:11-12 x#15:8-9 b#3:4-5 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 16-18
+    [ y#15:11-12 x#15:8-9 b#3:4-5 a#1:4-5  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 17, characters 7-16
 
     Variable definitions:
     (a#1:4-5 -> a)
@@ -560,6 +566,7 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 13-36
     [ myrec#1:5-10  ] File "../../test/contracts/get_scope_tests/records.mligo", line 3, characters 8-9
     [ a#3:4-5 myrec#1:5-10  ] File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 22-23
     [ i#6:18-19 a#3:4-5 myrec#1:5-10  ] File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 35-36
@@ -628,10 +635,10 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 8-9
-    [ a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 14
     [ c#5:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 30-31
     [ d#5:26-27 c#5:10-11 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-44
-    [ e#6:9-10 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 20-30
+    [ e#6:9-10 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 18-32
+    [ a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 33
 
     Variable definitions:
     (a#1:4-5 -> a)
@@ -682,10 +689,11 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 11-27
     [ j#2:46-47 i#2:36-37  ] File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-63
     [ b#3:7-8 f#2:6-7  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 16-19
-    [ f#2:6-7  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 11-31
     [ c#3:26-27 f#2:6-7  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 35-36
+    [ f#2:6-7  ] File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 2-37
 
     Variable definitions:
     (a#1:4-5 -> a)
@@ -826,6 +834,8 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-45
+    [ foo_variant#1:5-16  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
     [ foo_record#2:5-15 foo_variant#1:5-16  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 12-13
     [ a#4:4-5 foo_record#2:5-15 foo_variant#1:5-16  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 12-14
     [ b#6:4-5 a#4:4-5 foo_record#2:5-15 foo_variant#1:5-16  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
@@ -1595,21 +1605,39 @@ let%expect_test _ =
   [%expect
     {|
       Scopes:
+      [  ] File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 13-16
+      [ t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 4-28
+      [ t#2:9-10 x#3:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 12-13
       [ x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 16-17
+      [ t#2:9-10 x#3:12-13 a#5:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 12-20
       [ a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 31-36
+      [ bar#10:16-19 foo#9:13-16 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 16-19
       [ bar#10:16-19 foo#9:13-16 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 22-29
+      [ g#12:12-13 bar#10:16-19 foo#9:13-16 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 16-26
       [ g#12:12-13 bar#10:16-19 foo#9:13-16 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 37-44
       [ h#14:12-13 g#12:12-13 bar#10:16-19 foo#9:13-16 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 15, characters 8-10
-      [ B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
-      [ hmm#23:5-8 c#21:4-5 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
-      [ d#24:4-5 hmm#23:5-8 c#21:4-5 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
-      [ idk#29:5-8 c#27:4-5 d#24:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
-      [ q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
-      [ e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
-      [ qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
-      [ boo#44:12-15 i#43:8-9 qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
-      [ j#46:8-9 boo#44:12-15 i#43:8-9 qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
-      [ x#49:14-15 exp2#40:4-8 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 foo#9:13-16 bar#10:16-19 h#14:12-13 g#12:12-13 exp1#8:8-12 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-11
+      [ B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
+      [ c#21:4-5 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-14
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8 c#21:4-5 hmm#23:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 8-15
+      [ hmm#23:5-8 c#21:4-5 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 8-11
+      [ d#24:4-5 hmm#23:5-8 c#21:4-5 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
+      [ c#27:4-5 d#24:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 11-14
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5 idk#29:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 8-16
+      [ idk#29:5-8 c#27:4-5 d#24:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
+      [ d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 32, characters 9-12
+      [ s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 0-21
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5 idk#29:5-8 s#32:5-6 q#33:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 8-9
+      [ q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
+      [ A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5 idk#29:5-8 s#32:5-6 q#33:8-9 e#36:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 8-14
+      [ e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
+      [ qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 12-15
+      [ qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
+      [ boo#44:12-15 i#43:8-9 qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 12-19
+      [ boo#44:12-15 i#43:8-9 qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
+      [ j#46:8-9 boo#44:12-15 i#43:8-9 qux#41:9-12 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
+      [ x#49:14-15 exp2#40:4-8 f#38:4-5 e#36:4-5 q#33:8-9 s#32:5-6 d#30:4-5 idk#29:5-8 c#27:4-5 hmm#23:5-8 B#18:7-8 A#1:7-8 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 b#6:8-9 a#5:8-9 x#3:12-13 t#2:9-10  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
 
       Variable definitions:
       (c#21:4-5 -> c)
@@ -2051,6 +2079,7 @@ let%expect_test _ =
     {|
     Scopes:
     [ X#1:7-8 Mangled_module_____________________test__contracts__get_scope_tests__x____mligo#env x#4:4-5 y#3:4-5 x#1:5-6  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
+    [  ] File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 9-33
     [ x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 8-9
     [ y#3:4-5 x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
     [ y#3:4-5 x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 22-24
@@ -2189,5 +2218,3 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-5 |}]
-
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""

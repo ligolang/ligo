@@ -1,7 +1,6 @@
 open Cli_expect
 
 let gs s = "../../test/contracts/get_scope_tests/regressions/" ^ s
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""
 
 let%expect_test _ =
   run_ligo_good
@@ -16,9 +15,9 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ _useless#2:20-28 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
-    [ do_nothing#2:6-16 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 2-26
     [ s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, character 16 to line 4, character 1
+    [ _useless#2:20-28 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
+    [ do_nothing#2:6-16 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 2-27
     [ iter_op#1:6-13  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
 
     Variable definitions:
@@ -66,7 +65,8 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-51
+    [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-23
+    [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
     [ c#2:6-7 p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
 
     Variable definitions:
@@ -103,8 +103,12 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 8, character 13 to line 9, character 17
+    [  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, character 12 to line 5, character 1
+    [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 7, characters 14-18
+    [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 8, characters 13-14
+    [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 9, characters 13-17
     [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 10, characters 13-20
+    [ alice#7:6-11 user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 18-22
     [ alice#7:6-11 user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-30
 
     Variable definitions:
@@ -277,7 +281,10 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 16-19
+    [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
+    [ A#1:7-8 C#3:11-12 toto#4:12-16 titi#2:9-13 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
     [ E#11:11-12 D#8:7-8 A#1:7-8 C#3:11-12 toto#4:12-16 titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
 
     Variable definitions:
@@ -349,6 +356,7 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 1, characters 11-14
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
     [ F#8:15-16 A#2:11-12 C#3:15-16 toto#4:16-20  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
     [ E#7:11-12 toto#9:12-16 F#8:15-16 A#2:11-12 C#3:15-16 toto#4:16-20  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
@@ -409,5 +417,3 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-5 |}]
-
-let () = Ligo_unix.putenv ~key:"LIGO_GET_SCOPE_USE_NEW_IMP" ~data:""

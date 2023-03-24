@@ -6,6 +6,8 @@ module Pattern = Ast_typed.Pattern
 
 type t = type_case LMap.t
 
+let empty = LMap.empty
+
 module Of_Ast_typed = struct
   let add_binding : t -> Ast_typed.expression_variable * Ast_typed.type_expression -> t =
    fun env binding ->
@@ -242,7 +244,8 @@ module Of_Ast_core = struct
    fun bindings decl ->
     match Location.unwrap decl with
     | D_value { binder; expr; _ } ->
-      let bindings = add_binders bindings [ binder ] in
+      let binders, expr = set_core_type_if_possible [ binder ] expr in
+      let bindings = add_binders bindings binders in
       expression bindings expr
     | D_irrefutable_match { pattern; expr; _ } ->
       let binders = Pattern.binders pattern in
@@ -372,3 +375,21 @@ let resolve
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
   let bindings = tenv.bindings in
   Of_Ast_core.declarations bindings prg
+
+
+let rec patch : t -> Types.def list -> Types.def list =
+ fun bindings defs ->
+  List.map defs ~f:(fun def ->
+      match def with
+      | Variable v ->
+        (match v.t, LMap.find_opt v.range bindings with
+        | Unresolved, Some t -> Types.Variable { v with t }
+        | _ -> Variable v)
+      | Type t -> Type t
+      | Module m ->
+        let mod_case =
+          match m.mod_case with
+          | Alias a -> Types.Alias a
+          | Def defs -> Def (patch bindings defs)
+        in
+        Module { m with mod_case })

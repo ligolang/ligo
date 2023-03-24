@@ -13,6 +13,12 @@ module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module Types = Types
 
+let get_location_of_module_path : Module_var.t list -> Location.t =
+ fun mvs ->
+  List.fold mvs ~init:Location.dummy ~f:(fun loc m ->
+      Location.cover loc (Module_var.get_location m))
+
+
 let defs_of_vvar ~(body : AST.expression) : VVar.t -> def list -> def list =
  fun vvar acc ->
   if VVar.is_generated vvar
@@ -78,7 +84,7 @@ let defs_of_mvar ~(bindee : Ast_core.module_expr) ~(mod_case : mod_case)
         match Location.unwrap bindee with
         | M_struct _ -> Location.get_location bindee
         | M_variable mvar -> MVar.get_location mvar
-        | M_module_path mpath -> Misc.get_location_of_module_path @@ List.Ne.to_list mpath
+        | M_module_path mpath -> get_location_of_module_path @@ List.Ne.to_list mpath
       in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
       let mod_case : mod_case = mod_case in
@@ -124,7 +130,7 @@ let rec defs_of_expr : AST.expression -> def list -> def list =
   | E_type_in { type_binder; rhs; let_result } ->
     defs_of_tvar ~bindee:rhs type_binder @@ self let_result @@ acc
   | E_mod_in { module_binder; rhs; let_result } ->
-    let mod_case = mod_case_of_mod_expr rhs in
+    let mod_case = mod_case_of_mod_expr ~defs_of_decls rhs in
     defs_of_mvar ~mod_case ~bindee:rhs module_binder @@ self let_result @@ acc
   | E_raw_code { language; code } -> []
   (* Variant *)
@@ -168,8 +174,11 @@ let rec defs_of_expr : AST.expression -> def list -> def list =
   | E_while { cond; body } -> self cond @@ self body @@ acc
 
 
-and mod_case_of_mod_expr : AST.module_expr -> mod_case =
- fun mod_expr ->
+and mod_case_of_mod_expr
+    :  defs_of_decls:(AST.declaration list -> def list -> def list) -> AST.module_expr
+    -> mod_case
+  =
+ fun ~defs_of_decls mod_expr ->
   let alias_of_mvars : Module_var.t list -> mod_case =
    fun mvars ->
     let path = List.map ~f:(fun mvar -> Format.asprintf "%a" MVar.pp mvar) mvars in
@@ -193,7 +202,7 @@ and defs_of_decl : AST.declaration -> def list -> def list =
   | D_module { module_binder; module_; module_attr } ->
     (* Here, the module body's defs are within the lhs_def,
          mod_case_of_mod_expr recursively calls defs_of_decl *)
-    let mod_case : mod_case = mod_case_of_mod_expr module_ in
+    let mod_case : mod_case = mod_case_of_mod_expr ~defs_of_decls module_ in
     defs_of_mvar ~mod_case ~bindee:module_ module_binder @@ acc
 
 
@@ -205,101 +214,25 @@ let definitions : AST.program -> def list -> def list =
  fun prg acc -> defs_of_decls prg acc
 
 
-module Merge_defs_temp = struct
-  let sort_by_range ds =
-    List.sort ds ~compare:(fun d1 d2 -> Location.compare (get_range d1) (get_range d2))
+module Of_Stdlib = struct
+  let rec defs_of_decl : AST.declaration -> def list -> def list =
+   fun decl acc ->
+    match Location.unwrap decl with
+    | D_value { binder; expr; attr } -> defs_of_binder ~body:expr binder acc
+    | D_irrefutable_match { pattern; expr; attr } ->
+      defs_of_pattern ~body:expr pattern acc
+    | D_type { type_binder; type_expr; type_attr } ->
+      defs_of_tvar ~bindee:type_expr type_binder acc
+    | D_module { module_binder; module_; module_attr } ->
+      (* Here, the module body's defs are within the lhs_def,
+         mod_case_of_mod_expr recursively calls defs_of_decl *)
+      let mod_case : mod_case = mod_case_of_mod_expr module_ ~defs_of_decls in
+      defs_of_mvar ~mod_case ~bindee:module_ module_binder acc
 
 
-  (* The old imp computes 4 things : (range, body range, types, refs)
-      The new imp computes 2 things so far : (range', body_range') 
-      types and refs will be computed in later passes, not yet implemented
-
-      We expect range == range' and body_range == body_range' (new impl returns the same as old imp)
-      So, we return (range', body_range', types, refs)
-      and expect the expect_test result to be the same *)
-  let merge_defs_opt (old_defs : def list) (new_defs : def list) : def list option =
-    let rec aux (olds : def list) (news : def list) (acc : def list) : def list option =
-      let olds = sort_by_range olds in
-      let news = sort_by_range news in
-      let merge_mod_cases (o : mod_case) (n : mod_case) : mod_case option =
-        match o, n with
-        | Def o, Def n ->
-          (match aux o n [] with
-          | Some dlist -> Some (Def dlist)
-          | None -> None)
-        | (Alias _ as old), Alias _ -> Some old
-        | _, _ -> None
-      in
-      match olds, news with
-      | [], [] -> Some acc
-      | Variable o :: tail_old, Variable n :: tail_new ->
-        if String.equal o.name n.name && Location.equal o.range n.range
-        then (
-          let merged_def : def =
-            Variable
-              { name = o.name
-              ; uid = o.uid
-              ; range = n.range
-              ; body_range = n.body_range
-              ; t = o.t
-              ; references = o.references
-              ; def_type = o.def_type
-              }
-          in
-          aux tail_old tail_new (merged_def :: acc))
-        else None
-      | Type o :: tail_old, Type n :: tail_new ->
-        if String.equal o.name n.name && Location.equal o.range n.range
-        then (
-          let merged_def : def =
-            Type
-              { name = o.name
-              ; uid = o.uid
-              ; range = n.range
-              ; body_range = n.body_range
-              ; content = o.content
-              ; def_type = o.def_type
-              ; references = o.references
-              }
-          in
-          aux tail_old tail_new (merged_def :: acc))
-        else None
-      | Module o :: tail_old, Module n :: tail_new ->
-        if String.equal o.name o.name && Location.equal o.range n.range
-        then (
-          match merge_mod_cases o.mod_case n.mod_case with
-          | None -> None
-          | Some merged_mod_case ->
-            let merged_def : def =
-              Module
-                { name = o.name
-                ; uid = o.uid
-                ; range = n.range
-                ; body_range = n.body_range
-                ; references = o.references
-                ; mod_case = merged_mod_case
-                ; def_type = o.def_type
-                }
-            in
-            aux tail_old tail_new (merged_def :: acc))
-        else None
-      | _, _ -> None
-    in
-    aux old_defs new_defs []
+  and defs_of_decls : AST.declaration list -> def list -> def list =
+   fun decls acc -> List.fold ~init:acc ~f:(fun accu decl -> defs_of_decl decl accu) decls
 
 
-  let merge_defs old_defs new_defs : def list =
-    let defs =
-      match merge_defs_opt old_defs new_defs with
-      | Some merged_defs -> merged_defs
-      | None ->
-        Format.printf
-          "OLD:\n%a\n\nNEW:\n%a\n"
-          PP.definitions
-          old_defs
-          PP.definitions
-          new_defs;
-        failwith "IMP MISMATCH"
-    in
-    defs
+  let definitions : AST.program -> def list = fun prg -> defs_of_decls prg []
 end
