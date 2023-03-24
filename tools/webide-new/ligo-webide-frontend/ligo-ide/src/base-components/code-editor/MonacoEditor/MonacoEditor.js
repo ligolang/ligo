@@ -121,6 +121,49 @@ export default class MonacoEditor extends Component {
     if (modelSessionManager.projectManager.onEditorReady) {
       modelSessionManager.projectManager.onEditorReady(this.monacoEditor, this);
     }
+
+    // Override go-to-definition logic
+    const services = [
+      ...this.monacoEditor._instantiationService._parent._services._entries.values(),
+    ];
+    const textModelService = services.find(
+      (x) => Object.getPrototypeOf(x) && "createModelReference" in Object.getPrototypeOf(x)
+    );
+
+    // GoToDefinition validates that the range is within the bounds of
+    // the text model, so just generate a really big one that will work
+    // for any range.
+    const navigationTextModel = monaco.editor.createModel(new Array(10000).fill("").join("\n"));
+
+    textModelService.createModelReference = async (uri) => {
+      const reference = {
+        async load() {
+          return navigationTextModel;
+        },
+        dispose() {},
+        textEditorModel: navigationTextModel,
+      };
+      return {
+        object: reference,
+        dispose() {},
+      };
+    };
+
+    const codeEditorService = this.monacoEditor._codeEditorService;
+    const openEditorBase = codeEditorService.openCodeEditor.bind(codeEditorService);
+    codeEditorService.openCodeEditor = async (input, source) => {
+      const result = await openEditorBase(input, source);
+      if (result === null) {
+        modelSessionManager.nextEditorCursorUpdate = input.options.selection;
+        actions.workspace.openFile({
+          path: input.resource.path.substring(1),
+          remote: true,
+          pathInProject: modelSessionManager.projectManager.pathInProject(input.resource.path),
+          isLeaf: true,
+        });
+      }
+      return result; // always return the base result
+    };
   }
 
   shouldComponentUpdate(props) {
@@ -128,7 +171,21 @@ export default class MonacoEditor extends Component {
       if (this.props.modelSession.model) {
         this.props.modelSession.viewState = this.monacoEditor.saveViewState();
       }
-      props.modelSession.recoverInEditor(this.monacoEditor);
+      props.modelSession.recoverInEditor(this.monacoEditor).then(() => {
+        if (modelSessionManager.nextEditorCursorUpdate !== null) {
+          modelSessionManager.editor.revealRangeInCenterIfOutsideViewport({
+            startLineNumber: modelSessionManager.nextEditorCursorUpdate.startLineNumber,
+            endLineNumber: modelSessionManager.nextEditorCursorUpdate.endLineNumber,
+            startColumn: modelSessionManager.nextEditorCursorUpdate.startColumn,
+            endColumn: modelSessionManager.nextEditorCursorUpdate.endColumn,
+          });
+          modelSessionManager.editor.setPosition({
+            lineNumber: modelSessionManager.nextEditorCursorUpdate.startLineNumber,
+            column: modelSessionManager.nextEditorCursorUpdate.startColumn,
+          });
+          modelSessionManager.nextEditorCursorUpdate = null;
+        }
+      });
 
       this.throttledLayoutEditor();
     }
