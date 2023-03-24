@@ -9,6 +9,8 @@ webide-define-image-tag:
     - job: changelog
       artifacts: false
   rules:
+    - if: ($CI_MERGE_REQUEST_EVENT_TYPE == "merge_train")
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
       when: always
     - if: '$CI_COMMIT_BRANCH == "dev"'
@@ -22,7 +24,7 @@ webide-define-image-tag:
       when: always
   script:
     - FORMATED_CI_JOB_STARTED_AT="${CI_JOB_STARTED_AT//:/-}"
-    - NPR_ENVIRONMENT="$(echo ${CI_MERGE_REQUEST_TITLE} | grep -io 'webide-[ab]' | head -1 | sed 's/^webide//')" || true
+    - NPR_ENVIRONMENT="$(echo ${CI_MERGE_REQUEST_TITLE} | grep -io 'webide-[ab]' | head -1 | sed 's/^[wW][eE][bB][Ii][dD][eE]//')" || true
     - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - echo "WEBIDE_NEW_IMAGE_TAG=${WEBIDE_NEW_IMAGE_TAG}" >> webide-img-tag.env
@@ -40,7 +42,7 @@ webide-new-backend-build:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
       when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
@@ -79,6 +81,8 @@ webide-new-backend-build-and-push-backend:
     - job: webide-define-image-tag
       artifacts: true 
   rules:
+    - if: ($CI_MERGE_REQUEST_EVENT_TYPE == "merge_train")
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'      
       when: always
   script:
@@ -95,11 +99,13 @@ webide-new-frontend-build-and-push:
     - job: webide-define-image-tag
       artifacts: true
   rules:
+    - if: ($CI_MERGE_REQUEST_EVENT_TYPE == "merge_train")
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TITLE =~ /^[w;W]eb[I;i]de-/'      
       when: always
   script:
     - docker buildx build --build-context syntaxes=tools/vscode/syntaxes
-      --build-arg backend_url=backend.ligo-webide-v2.gcp-npr.marigold.dev
+      --build-arg backend_url=backend.ligo-webide-v2${NPR_ENVIRONMENT}.gcp-npr.marigold.dev
       --build-arg http_protocol=https
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
