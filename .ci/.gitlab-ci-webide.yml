@@ -21,10 +21,10 @@ webide-define-image-tag:
         - tools/vscode/syntaxes
       when: always
   script:
-    - NPR_ENVIRONMENT=$(echo "$CI_MERGE_REQUEST_TITLE" | grep -io 'webide-[ab]' | head -1 | sed 's/^webide//')
     - FORMATED_CI_JOB_STARTED_AT="${CI_JOB_STARTED_AT//:/-}"
+    - NPR_ENVIRONMENT="$(echo ${CI_MERGE_REQUEST_TITLE} | grep -io 'webide-[ab]' | head -1 | sed 's/^webide//')" || true
     - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
-    - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
+    - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - echo "WEBIDE_NEW_IMAGE_TAG=${WEBIDE_NEW_IMAGE_TAG}" >> webide-img-tag.env
     - echo "WEBIDE_FRONTEND_NEW_IMAGE_TAG=${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >> webide-img-tag.env
   artifacts:
@@ -121,11 +121,11 @@ webide-new-release-backend-build-and-push:
         - tools/webide-new/ligo-webide-backend/**/*
       when: always
   script:
-    - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}
+    - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}-release
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
-    - docker push "${WEBIDE_NEW_IMAGE_TAG}"
+    - docker push "${WEBIDE_NEW_IMAGE_TAG}-release"
   after_script:
-    - docker image rm "${WEBIDE_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm "${WEBIDE_NEW_IMAGE_TAG}-release" >/dev/null 2>&1 || true
 
 webide-new-release-frontend-build-and-push:
   extends: .docker-image
@@ -145,8 +145,8 @@ webide-new-release-frontend-build-and-push:
       --build-arg http_protocol=https
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
-      -t release-${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
+      -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
-    - docker push "release-${WEBIDE_FRONTEND_NEW_IMAGE_TAG}"
+    - docker push "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release"
   after_script:
-    - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release" >/dev/null 2>&1 || true
