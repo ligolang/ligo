@@ -662,3 +662,9 @@ let property_to_region = function
 let array_item_to_region = function
   Expr_entry e -> expr_to_region e
 | Rest_entry {region; _} -> region
+
+let toplevel_statement_to_region = function
+  TopLevel (statement, None) -> statement_to_region statement
+| TopLevel (statement, Some semi) ->
+    Region.cover (statement_to_region statement) semi#region
+| Directive d -> Directive.to_region d

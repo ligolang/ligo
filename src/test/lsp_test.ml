@@ -10,4 +10,5 @@ let _main =
     ; Document_link.tests
     ; Folding_range.tests
     ; Formatting.tests
+    ; Range_formatting.tests
     ]

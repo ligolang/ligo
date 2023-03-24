@@ -100,6 +100,7 @@ class lsp_server =
     method on_notif_doc_did_close ~notify_back:_ _ : unit IO.t = Linol_lwt.return ()
     method! config_hover = Some (`Bool true)
     method config_formatting = Some (`Bool true)
+    method config_range_formatting = Some (`Bool true)
     method! config_definition = Some (`Bool true)
     method config_document_link_provider = Some (DocumentLinkOptions.create ())
 
@@ -121,6 +122,7 @@ class lsp_server =
       ; typeDefinitionProvider = self#config_type_definition
       ; documentLinkProvider = self#config_document_link_provider
       ; foldingRangeProvider = self#config_folding_range
+      ; documentRangeFormattingProvider = self#config_range_formatting
       }
 
     method! on_notification_unhandled
@@ -182,5 +184,8 @@ class lsp_server =
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri @@ Requests.on_req_folding_range uri
+        | Client_request.TextDocumentRangeFormatting { range; textDocument; _ } ->
+          let uri = textDocument.uri in
+          run ~uri @@ Requests.on_req_range_formatting uri range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

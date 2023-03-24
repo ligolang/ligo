@@ -92,4 +92,4 @@ let test_cases =
   ]
 
 
-let tests = "folding range", List.map ~f:get_folding_range_test test_cases
+let tests = "folding_range", List.map ~f:get_folding_range_test test_cases

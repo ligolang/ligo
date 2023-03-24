@@ -5,15 +5,6 @@ open Linol_lwt
 
 type nonrec get_scope_info = get_scope_info
 
-module CameLIGO_pretty =
-  Parsing_shared.Common.MakePretty (Cst_cameligo.CST) (Parsing_cameligo.Pretty)
-
-module JsLIGO_pretty =
-  Parsing_shared.Common.MakePretty (Cst_jsligo.CST) (Parsing_jsligo.Pretty)
-
-module PascaLIGO_pretty =
-  Parsing_shared.Common.MakePretty (Cst_pascaligo.CST) (Parsing_pascaligo.Pretty)
-
 (** To support dirty files, we store some data about files in memory *)
 type file_data =
   { syntax : Syntax_types.t

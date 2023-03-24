@@ -30,7 +30,7 @@ let get_formatting_test ({ file_path; expected } : formatting_test)
       range;
     check
       Alcotest.string
-      "Formatted file foes not match the expected."
+      "Formatted file does not match the expected."
       (In_channel.read_all path_to_expected)
       newText
   | Some _, _ -> fail "Formatting returned multiple edits."

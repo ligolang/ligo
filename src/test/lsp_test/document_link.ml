@@ -83,4 +83,4 @@ let test_cases =
   ]
 
 
-let tests = "document link", List.map ~f:get_document_link_test test_cases
+let tests = "document_link", List.map ~f:get_document_link_test test_cases

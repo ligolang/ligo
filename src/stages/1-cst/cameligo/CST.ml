@@ -599,3 +599,10 @@ let path_to_region = function
 let type_ctor_arg_to_region = function
   CArg  t -> type_expr_to_region t
 | CArgTuple t -> t.region
+
+let declaration_to_region = function
+  Let { region; _ } -> region
+| TypeDecl { region; _ } -> region
+| ModuleDecl { region; _ } -> region
+| ModuleAlias { region; _ } -> region
+| Directive d -> Directive.to_region d

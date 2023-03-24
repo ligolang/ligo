@@ -591,11 +591,14 @@ and pp_fun_type {value; _} =
 
 and pp_type_par t = pp_par pp_type_expr t
 
-let print_type_expr _state = pp_type_expr
-let print_pattern   _state = pp_pattern
-let print_expr      _state = pp_expr
+let print_type_expr   _state = pp_type_expr
+let print_pattern     _state = pp_pattern
+let print_expr        _state = pp_expr
+let print_declaration _state = pp_declaration
 
-type cst        = CST.t
-type expr       = CST.expr
-type type_expr  = CST.type_expr
-type pattern    = CST.pattern
+
+type cst         = CST.t
+type expr        = CST.expr
+type type_expr   = CST.type_expr
+type pattern     = CST.pattern
+type declaration = CST.declaration
