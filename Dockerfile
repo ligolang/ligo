@@ -49,6 +49,9 @@ COPY jsoo /ligo/jsoo
 COPY Makefile /ligo
 COPY npm /ligo/npm
 COPY examples /ligo/examples
+COPY 0001-Nairobi-JSOO-Gas-free.patch /ligo
+COPY 0002-JSOO-Use-lib_hacl-compatible-with-hacl-star-0.4.1.patch /ligo
+
 
 # Run tests
 RUN opam exec -- dune runtest --profile static --no-buffer \
