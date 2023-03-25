@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "cp-static": "find ../_build -type f -name 'js_main.*.js' -print -exec cp -f {} ./dist/ \\; ;",
+    "cp-static": "find ../_build -type f -name 'js_main.*.js' -print -exec cp -f {} ./dist/ \\; ; cp ./foo.jsligo dist/",
     "build": "webpack build; npm run cp-static",
     "start": "rm -rf dist; mkdir -p dist; npm run cp-static; webpack-dev-server"
   },
