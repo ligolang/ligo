@@ -20,7 +20,6 @@ import Data.Data (Data)
 import Data.HashMap.Strict qualified as HM
 import Data.Time.Clock.System (SystemTime (MkSystemTime), systemToUTCTime)
 import Data.Time.Format.ISO8601 (iso8601Show)
-import Data.Vector qualified as V
 import Fmt (Buildable (build), Builder, pretty)
 import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
@@ -151,14 +150,6 @@ instance (Generic a, GFromJSON Zero (Rep a), KnownNat n) => FromJSON (LigoValueJ
   parseJSON = fmap LigoValueJSON . genericParseJSON defaultOptions
     { fieldLabelModifier = genericDrop (natVal (Proxy @n) + 1) . toSnakeCase
     }
-
-guardOneElemList :: Text -> Value -> Parser ()
-guardOneElemList expected = withArray (toString expected) \arr -> do
-  case V.length arr of
-    1 -> do
-      String ctor <- pure $ V.unsafeIndex arr 0
-      guard (ctor == expected)
-    len -> fail $ "Expected array of size 1, got " <> show len
 
 toUpperCase :: String -> String
 toUpperCase = \case

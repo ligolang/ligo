@@ -4,14 +4,15 @@ module AST.Parser.Camligo
   ( recognise
   ) where
 
+import Data.Default (def)
 import Prelude hiding (Alt)
 
 import AST.Skeleton
 
 import Duplo.Tree
 
-import Parser
 import ParseTree
+import Parser
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -191,12 +192,12 @@ recognise (SomeRawTree dialect rawTree)
         "fun_type"     -> TArrow   <$> field  "domain" <*> field "codomain"
         "prod_type"    -> TProduct <$> fields "x"
         "app_type"     -> TApply   <$> field  "f"      <*> fields "x"
-        "record_type"  -> TRecord  <$> fields "field"
+        "record_type"  -> TRecord def <$> fields "field"
         "tuple_type"   -> TProduct <$> fields "x"
         "TypeWildcard" -> pure TWildcard
         "var_type"     -> TVariable <$> field "name"
-        "sum_type_prod_type_level" -> TSum <$> fields1 "variant"
-        "sum_type_fun_type_level"  -> TSum <$> fields1 "variant"
+        "sum_type_prod_type_level" -> TSum def <$> fields1 "variant"
+        "sum_type_fun_type_level"  -> TSum def <$> fields1 "variant"
         _              -> fallthrough
 
     -- Module access:

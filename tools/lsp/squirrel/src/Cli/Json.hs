@@ -21,6 +21,7 @@ module Cli.Json
   , LigoVariable (..), LigoTypeVariable, LigoModuleVariable
   , LigoTypeLiteralValue (..)
   , LigoString (..)
+  , LigoLayout (..)
   , LigoTypeSum
   , LigoTypeRecord
   , LigoTypeArrow (..)
@@ -36,6 +37,7 @@ module Cli.Json
   , fromLigoRangeOrDef
   , fromLigoErrorToMsg
   , fromLigoTypeFull
+  , guardOneElemList
   , toSnakeCase
   ) where
 
@@ -331,11 +333,17 @@ type LigoTypeRecord = LigoTypeTable
 
 data LigoTypeTable = LigoTypeTable
   { _lttFields :: HM.HashMap Text LigoTableField
-  , _lttLayout  :: Value -- TODO not used
+  , _lttLayout  :: Maybe LigoLayout
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
   deriving (FromJSON) via LigoJSON 3 LigoTypeTable
+
+data LigoLayout
+  = LTree
+  | LComb
+  deriving stock (Generic, Show, Eq, Data)
+  deriving anyclass (NFData)
 
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]
@@ -475,20 +483,15 @@ instance FromJSON LigoTypeFull where
     _ -> fail "wrong `LigoTypeFull` format"
 
 instance FromJSON LigoTypeLiteralValue where
-  parseJSON val = twoElemParser val <|> unitParser val
+  parseJSON val = asum
+    [ twoElemParser val
+    , LTLVUnit <$ guardOneElemList "Literal_unit" val
+    ]
     where
       twoElemParser = genericParseJSON defaultOptions
         { sumEncoding = TwoElemArray
         , constructorTagModifier = ("Literal" ++) . toSnakeCase . drop 4
         }
-
-      unitParser = withArray "Literal_unit" \arr -> do
-        case V.length arr of
-          1 -> do
-            let ctor = V.unsafeIndex arr 0
-            guard (ctor == "Literal_unit")
-            pure LTLVUnit
-          len -> fail $ "Expected array of size 1, got" <> show len
 
 instance FromJSON LigoString where
   parseJSON = genericParseJSON defaultOptions
@@ -512,6 +515,12 @@ instance FromJSON LigoRange where
     , constructorTagModifier = drop 2
     }
 
+instance FromJSON LigoLayout where
+  parseJSON val = asum
+    [ LTree <$ guardOneElemList "L_tree" val
+    , LComb <$ guardOneElemList "L_comb" val
+    ]
+
 ----------------------------------------------------------------------------
 -- Pretty
 ----------------------------------------------------------------------------
@@ -528,6 +537,14 @@ instance Pretty LigoError where
 ----------------------------------------------------------------------------
 -- Helpers
 ----------------------------------------------------------------------------
+
+guardOneElemList :: Text -> Value -> Parser ()
+guardOneElemList expected = withArray (toString expected) \arr -> do
+  case V.length arr of
+    1 -> do
+      String ctor <- pure $ V.unsafeIndex arr 0
+      guard (ctor == expected)
+    len -> fail $ "Expected array of size 1, got " <> show len
 
 -- | Converts string to snake_case
 toSnakeCase :: String -> String
@@ -611,12 +628,15 @@ fromLigoType st = \case
 
   LTCRecord record ->
     let record' = fromLigoTable FieldProduct record in
-    make' (st, TRecord record')
+    let ligoLayout = fromMaybe LTree (_lttLayout record) in
+    make' (st, TRecord (ligoLayoutToLayout ligoLayout) record')
 
   LTCSum sum ->
     case fromLigoTable FieldSum sum of
       [] -> mkErr "malformed sum type, please report this as a bug"
-      v : vs -> make' (st, TSum (v :| vs))
+      v : vs ->
+        let ligoLayout = fromMaybe LTree (_lttLayout sum) in
+        make' (st, TSum (ligoLayoutToLayout ligoLayout) (v :| vs))
 
   LTCSingleton literalValue -> fromLigoTypeLiteralValue literalValue
   LTCAbstraction _ -> mkErr "unsupported type Abstraction"    -- TODO not used
@@ -638,6 +658,11 @@ fromLigoType st = \case
   LTCArrow LigoTypeArrow {..} ->
     make' (st, TArrow (fromLigoTypeExpression _ltaType1) (fromLigoTypeExpression _ltaType2))
   where
+    ligoLayoutToLayout :: LigoLayout -> Layout
+    ligoLayoutToLayout = \case
+      LTree -> Tree
+      LComb -> Comb
+
     fromLigoTypeLiteralValue :: LigoTypeLiteralValue -> LIGO Info
     fromLigoTypeLiteralValue = \case
       LTLVUnit -> make' (st, Name "()")
@@ -681,7 +706,10 @@ fromLigoType st = \case
       make' (st, TApply n p)
 
     fromLigoTable fieldKind x =
-      map (uncurry (fromLigoTableField fieldKind)) $ toPairs $ _lttFields x
+      map (uncurry (fromLigoTableField fieldKind)) $ sortBy comp $ toPairs $ _lttFields x
+      where
+        comp :: (Text, LigoTableField) -> (Text, LigoTableField) -> Ordering
+        comp (_, LigoTableField{_ltfDeclPos = lhs}) (_, LigoTableField{_ltfDeclPos = rhs}) = compare lhs rhs
 
     fromLigoTableField
       :: FieldKind
