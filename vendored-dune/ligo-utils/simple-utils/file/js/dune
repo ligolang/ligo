@@ -1,0 +1,6 @@
+(library
+ (name simple_utils_file_js)
+ (public_name simple-utils-js)
+ (libraries js_of_ocaml-lwt uri)
+ (preprocess (pps js_of_ocaml-ppx))
+ (implements simple_utils_file))

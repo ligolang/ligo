@@ -22,6 +22,8 @@ module Snippet = Snippet
 
 module Error = Error
 module Warning = Warning
+module File = Simple_utils_file
+module Http_uri = Simple_utils_http_uri
 
 (* Originally by Christian Rinderknecht *)
 

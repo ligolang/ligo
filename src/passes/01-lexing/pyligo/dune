@@ -19,6 +19,8 @@
 (executable
  (name LexerMain)
  (libraries
+  simple-utils-unix
+  simple-utils-unix.http_uri
   ;; LIGO
   preprocessing_pyligo
   lexing_shared

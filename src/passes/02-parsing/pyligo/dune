@@ -59,6 +59,8 @@
 (executable
  (name ParserMain)
  (libraries
+  simple-utils-unix
+  simple-utils-unix.http_uri
   ;; LIGO
   preprocessing_pyligo
   lexing_pyligo

@@ -24,6 +24,8 @@
   lexing_shared
   lexing_jsligo
   ;; Third party
+  simple-utils-unix
+  simple-utils-unix.http_uri
   str)
  (modules Version LexerMain))
 

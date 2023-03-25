@@ -4,7 +4,8 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils zarith hex tezos-hacl)
- (inline_tests)
+ (inline_tests
+  (libraries simple-utils-unix.http_uri simple-utils-unix))
  (preprocess
   (pps
    ppx_expect

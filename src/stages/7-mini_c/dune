@@ -4,6 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries simple-utils tezos-micheline ligo_prim ast_expanded)
- (inline_tests)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess
   (pps ppx_expect)))

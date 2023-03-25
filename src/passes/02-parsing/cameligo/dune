@@ -63,6 +63,8 @@
   parsing_shared
   parsing_cameligo
   cst_cameligo
+  simple-utils-unix
+  simple-utils-unix.http_uri
   ;; Third party
   hex)
  (modules ParserMain)
