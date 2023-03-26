@@ -190,7 +190,7 @@ module Esy =
     (* The function [find_manifest_path] finds manifest file for a package. *)
 
     let find_manifest_path directory = 
-      if Stdlib.Sys.file_exists (directory / "esy.json") 
+      if match Simple_utils.File.exists (directory ^ "/" ^ "esy.json") with Some _ -> true | _ -> false
       then Some (directory / "esy.json")
       else if Stdlib.Sys.file_exists (directory / "package.json")
       then Some (directory / "package.json")

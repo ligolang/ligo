@@ -57,12 +57,9 @@ module Make (Config : Config.S) (Options : Options.S) =
     let rec find_in_cli_paths file_path = function
       [] -> None
     | dir::dirs ->
-        let path =
-          if String.(dir = "." || dir = "") then file_path
-          else dir ^ "/" ^ file_path in
-        match Caml.Sys.file_exists path with
-        | true           -> Some path
-        | false -> find_in_cli_paths file_path dirs
+       (match Simple_utils.File.exists ~dir file_path with
+        | Some path  -> Some path
+        | None -> find_in_cli_paths file_path dirs)
 
     (* The call [find dir file inclusion_paths] looks for [file] in
        [dir]. If the file is not found, it is sought in the
@@ -71,12 +68,10 @@ module Make (Config : Config.S) (Options : Options.S) =
        the [inclusion_paths] with the help of module [ModRes]. *)
 
     let find dir file inclusion_paths =
-      let path =
-        if String.(dir = "." || dir = "") then file
-        else dir ^ "/" ^ file in
-      match Caml.Sys.file_exists path with
-      | true -> Some path
-      | false ->
+      let path = file in
+      match Simple_utils.File.exists ~dir path with
+      | Some path -> Some path
+      | None ->
           match find_in_cli_paths file Options.dirs with
             Some _ as some -> some
           | None ->
@@ -85,9 +80,9 @@ module Make (Config : Config.S) (Options : Options.S) =
               in match file_opt with
                    None -> None
                  | Some file ->
-                     match Caml.Sys.file_exists file with
-                     | true -> file_opt
-                     | false -> None
+                     match Simple_utils.File.exists file with
+                     | Some path -> file_opt
+                     | None -> None
 
     (* STRING PROCESSING *)
 
@@ -197,18 +192,15 @@ module Make (Config : Config.S) (Options : Options.S) =
                  * The third component of the triple is an updated
                    value of the [state] (see [incl_chan] above). *)
 
-            let incl_path, incl_chan, state =
+            let incl_path, incl_file_str, state =
               match find path incl_file external_dirs with
                 None ->
                   fail state incl_region (Error.File_not_found incl_file)
               | Some incl_path ->
-                  try
-                    let in_chan = open_in incl_path in
-                    let state   = state#push_chan in_chan
-                    in incl_path, in_chan, state
-                  with Sys_error msg ->
-                    Error.Failed_opening (incl_path, msg)
-                    |> fail state incl_region in
+                 (match Simple_utils.File.read incl_path with
+                 | Some incl_file_str -> incl_path, incl_file_str, state
+                 | None -> Error.Failed_opening (incl_path, (incl_path ^ "not found")) |> fail state incl_region)
+            in
             
             (* We check if the current file exists in the stack of ancestors 
                in which case we fail with the error [Error.Cyclic_inclusion]
@@ -230,7 +222,7 @@ module Make (Config : Config.S) (Options : Options.S) =
             (* We prepare a lexing buffer from the input channel bound to
                the file to include. *)
 
-            let incl_buf = Lexing.from_channel incl_chan in
+            let incl_buf = Lexing.from_string incl_file_str in
 
             (* We instruct the lexing buffer just created that the
                corresponding file name is [incl_file] (recall that
