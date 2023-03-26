@@ -11,7 +11,7 @@ license      : "MIT"
 homepage     : "https://gitlab.com/ligolang/BuildSystem"
 bug-reports  : "https://gitlab.com/ligolang/BuildSystem/issues"
 # If you change the dependencies, run `opam lock` in the root
-depends      : ["dune" "base" "ocaml" "simple-utils" "ocamlgraph"]
+depends      : ["dune" "base" "ocaml" "uri" "simple-utils" "ocamlgraph"]
 build        : [
                 [ "dune" "build" "-p" name "-j" jobs ]
                ]

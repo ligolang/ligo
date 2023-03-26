@@ -37,6 +37,7 @@ module M (Params : Params) = struct
         ~raise
         (Syntax_name "auto")
         (match code_input with
+        | HTTP uri -> Some (Http_uri.get_filename uri)
         | From_file file_name -> Some file_name
         | Raw { id; _ } -> Some id
         | Raw_input_lsp { file; _ } -> Some file)
@@ -44,6 +45,9 @@ module M (Params : Params) = struct
     let meta = Ligo_compile.Of_source.extract_meta syntax in
     let c_unit, deps =
       match code_input with
+      | HTTP uri ->
+        let code = Http_uri.fetch uri in
+        Ligo_compile.Helpers.preprocess_string ~raise ~meta ~options:options.frontend code
       | From_file file_name ->
         Ligo_compile.Helpers.preprocess_file
           ~raise
@@ -234,6 +238,7 @@ let qualified_core ~raise
 
     let top_level_syntax =
       match source with
+      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
       | Raw_input_lsp _ -> Syntax_types.CameLIGO
       | From_file filename -> get_top_level_syntax ~options ~filename ()
       | Raw _ -> Syntax_types.CameLIGO

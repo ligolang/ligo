@@ -81,6 +81,7 @@ let get_scope_raw
   =
   let file_name =
     match source_file with
+    | HTTP uri -> Simple_utils.Http_uri.get_filename uri
     | From_file file_name -> file_name
     | Raw { id; _ } -> id
     | Raw_input_lsp { file; _ } -> file
@@ -102,6 +103,7 @@ let get_scope_raw
        that is the reason for no_stdlib as true *)
     let options = Compiler_options.set_no_stdlib options true in
     match source_file with
+    | HTTP uri -> Build.qualified_core ~raise ~options (Build.Source_input.HTTP uri)
     | From_file file_name ->
       Build.qualified_core ~raise ~options (Build.Source_input.From_file file_name)
     | Raw file -> Build.qualified_core_from_string ~raise ~options file
