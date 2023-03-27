@@ -273,13 +273,13 @@ val originate_module : (('param, 'storage) module_contract) -> 'storage -> tez -
 let originate_module = (contract: module_contract&lt;&apos;param, &apos;storage&gt;, init: &apos;storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
 </SyntaxTitle>
 
-Originate a contract from a module/namespace. To obtain a `module_contract` from a module, use the `$contract` keyword.
+Originate a contract from a module/namespace. To obtain a `module_contract` from a module, use the `contract_of` keyword.
 
 <Syntax syntax="cameligo">
 
 ```cameligo skip
 let taddr, contract, size =
-  Test.originate_module (contract_of C) [] init_storage 0tez
+  Test.originate_module (contract_of C) init_storage 0tez
 ...
 ```
 
@@ -288,7 +288,7 @@ let taddr, contract, size =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [taddr, contract, size] = Test.originate_module(contract_of(C), list([]), init_storage, 0 as tez);
+let [taddr, contract, size] = Test.originate_module(contract_of(C), init_storage, 0 as tez);
 ```
 
 </Syntax>
