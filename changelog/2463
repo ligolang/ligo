@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew function in module `Set`: `val filter_map : ('a -> b option) -> 'a set -> 'b set`.\\n\\n"
+merge_request: '2463'
+title: "Stdlib: filter_map function for Set"
+type: added
+            

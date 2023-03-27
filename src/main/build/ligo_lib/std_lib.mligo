@@ -132,6 +132,8 @@ module Set = struct
   let iter (type a) (f : a -> unit) (s : a set) : unit = [%external ("SET_ITER", f, s)]
   let fold (type a b) (f : b * a -> b) (s : a set) (i : b) : b = [%external ("SET_FOLD", f, s, i)]
   let fold_desc (type a b) (f : a * b -> b) (s : a set) (i : b) : b = [%external ("SET_FOLD_DESC", f, s, i)]
+  let filter_map (type a b) (f : a -> b option) (xs : a set) : b set =
+    fold_desc (fun (a : a * b set) -> match f a.0 with | None -> a.1 | Some b -> add b a.1) xs (empty : b set)
 end
 
 module List = struct
@@ -149,7 +151,7 @@ module List = struct
   let find_opt (type a) (f : a -> bool) (xs : a list) : a option = 
     fold_right (fun (a : a * a option) -> if f a.0 then Some a.0 else a.1) xs None
   let filter_map (type a b) (f : a -> b option) (xs : a list) : b list =
-    fold_right (fun (a : a * b list) -> match f a.0 with | None -> a.1 | Some b -> (b :: a . 1)) xs []
+    fold_right (fun (a : a * b list) -> match f a.0 with | None -> a.1 | Some b -> (b :: a.1)) xs []
   let update (type a) (f : a -> a option) (xs : a list) : a list =
     map (fun a -> match f a with | None -> a | Some a -> a) xs
   let update_with (type a) (f : a -> bool) (v : a) (xs : a list) : a list =

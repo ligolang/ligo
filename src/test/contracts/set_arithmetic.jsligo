@@ -35,4 +35,6 @@ let aggregate = ( [i,j] : [list <int>, int]) : list <int> => list ([j, ...i]);
 let fold_op  = (s : set <int>) : list<int> => Set.fold (aggregate, s, list([]) as list<int>)
 
 let aggregate2 = ( [i,j] : [int , list<int>]) : list<int> => list ([i, ...j]);
-let fold_right = (s : set <int>) : list<int> => Set.fold_desc (aggregate2, s, list([]) as list<int>)
+let fold_right = (s : set <int>) : list<int> => Set.fold_desc (aggregate2, s, list([]) as list<int>);
+
+let filter_map_lit = Set.filter_map((s : string) => { if (String.length(s) > (3 as nat)) { return Some(String.length(s)); } ; return None(); } , literal_op());
