@@ -425,3 +425,16 @@ let sum_of_elements_desc : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 
 </Syntax>
+
+
+<SyntaxTitle syntax="cameligo">
+val filter_map : ('a -> 'b option) -> 'a set -> 'b set
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let filter_map: (mapper: ((item: 'a) => option&lt;'b&gt;), set: set&lt;'a&gt;) => set&lt;'b&gt;
+</SyntaxTitle>
+
+Apply a function to items of a set to create a new set, but the function can omit certain elements by returning `None`.
+
+Notice: built in terms of `fold_desc`.
