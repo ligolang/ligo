@@ -243,7 +243,7 @@ instance Buildable LigoTypeRef where
 
 newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
   deriving stock (Data)
-  deriving newtype (Show, Generic, NFData)
+  deriving newtype (Show, Generic, NFData, Hashable)
 
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
 pattern LigoTypeResolved typ = LigoType (Just typ)

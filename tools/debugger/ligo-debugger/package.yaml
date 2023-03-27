@@ -84,6 +84,7 @@ library:
     - lens
     - lens-aeson
     - ligo-squirrel
+    - monad-stm
     - morley
     - morley-debugger
     - mtl
@@ -94,7 +95,9 @@ library:
     - semver
     - singletons
     - singletons-th
+    - some
     - stm
+    - stm-containers
     - syb
     - template-haskell
     - th-utilities

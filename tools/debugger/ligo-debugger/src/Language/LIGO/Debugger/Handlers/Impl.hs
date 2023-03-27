@@ -12,6 +12,7 @@ import Debug qualified
 import Unsafe qualified
 
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
+import Control.Concurrent (threadDelay)
 import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
 import Data.Char (toLower)
 import Data.Default (def)
@@ -20,25 +21,29 @@ import Data.Singletons (demote)
 import Fmt (Builder, blockListF, pretty)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
-import UnliftIO (withRunInIO)
+import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
+import UnliftIO.Async (async)
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
+import Control.DelayedValues qualified as DV
 import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
   PausedReason (..), SnapshotEdgeStatus (SnapshotAtEnd), SourceLocation, SrcLoc (..), curSnapshot,
   frozen, groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory, slEnd)
+import Morley.Debugger.DAP.Handlers (runSTMHandler, writePostAction)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSessionState (..),
-  DAPSpecificEvent (OutputEvent, StoppedEvent, TerminatedEvent), DAPSpecificResponse (..),
-  HasSpecificMessages (..), RIO, RequestBase (..), RioContext (..), ShouldStop (..),
-  StopEventDesc (..), StoppedReason (..), dsDebuggerState, dsVariables, pushMessage)
+  DAPSpecificEvent (InvalidatedEvent, OutputEvent, StoppedEvent, TerminatedEvent),
+  DAPSpecificResponse (..), HandlerEnv (..), HasSpecificMessages (..), RIO, RequestBase (..),
+  RioContext (..), ShouldStop (..), StopEventDesc (..), StoppedReason (..), dsDebuggerState,
+  dsVariables, pushMessage)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
@@ -249,7 +254,7 @@ instance HasSpecificMessages LIGO where
     where
       toDAPStackFrames snap =
         let frames = toList $ isStackFrames snap
-        in zip [1..] frames <&> \(i, frame) ->
+        in zip [topFrameId ..] frames <&> \(i, frame) ->
           let LigoRange{..} = sfLoc frame
           in DAP.StackFrame
             { DAP.idStackFrame = i
@@ -268,6 +273,7 @@ instance HasSpecificMessages LIGO where
             }
 
   handleScopesRequest DAP.ScopesRequest{..} = do
+    lServVar <- getServerStateH
     -- We follow the implementation from morley-debugger
     snap <- zoom dsDebuggerState $ frozen curSnapshot
 
@@ -288,20 +294,51 @@ instance HasSpecificMessages LIGO where
         & getExt @(Either UnsupportedExtension)
         & either throwM pure
 
+    let valConvertManager = lsToLigoValueConverter lServVar
+
+    ligoVals <- fmap catMaybes $ forM stackItems \stackItem ->
+      runMaybeT do
+        StackItem desc michVal <- pure stackItem
+        LigoStackEntry (LigoExposedStackEntry mDecl typ) <- pure desc
+        let varName = maybe (pretty unknownVariable) pretty mDecl
+        mLigoVal <- DV.computeSTM valConvertManager $
+          PreLigoConvertInfo lang michVal typ
+        let ligoVal = maybe "computing..." id mLigoVal
+        return (varName :: Text, ligoVal :: Text)
+
     let builder =
           case isStatus snap of
             InterpretRunning (EventExpressionEvaluated (Just (SomeValue value)))
               -- We want to show $it variable only in the top-most stack frame.
               | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
-                idx <- createVariables lang stackItems
+                idx <- createLigoVariablesDummy lang ligoVals
                 -- TODO: get the type of "$it" value
                 itVar <- buildVariable lang (LigoType Nothing) value "$it"
                 insertToIndex idx [itVar]
-            _ -> createVariables lang stackItems
+            _ -> createLigoVariablesDummy lang ligoVals
 
     let (varReference, variables) = runBuilder builder
 
     dsVariables .= variables
+
+    writePostAction do
+      -- We have to request for the LIGO values conversion.
+      -- It produces a call to @ligo@ and may take time, so we spawn
+      -- a thread for this.
+      -- TODO: throwing the result away is not cool
+      void $ async do
+        computedSmthNew <- DV.runPendingComputations valConvertManager
+
+        -- Now let's ask VSCode to request for new values.
+        when computedSmthNew do
+          void . runSTMHandler $
+            pushMessage $ DAPEvent $ InvalidatedEvent $ DAP.defaultInvalidatedEvent
+              { DAP.bodyInvalidatedEvent = DAP.InvalidatedEventBody
+                { DAP.areasInvalidatedEventBody = ["variables"]
+                , DAP.threadIdInvalidatedEventBody = Nothing
+                , DAP.stackFrameIdInvalidatedEventBody = Just topFrameId
+                }
+              }
 
     -- TODO [LIGO-304]: show detailed scopes
     let theScope = DAP.defaultScope
@@ -400,6 +437,14 @@ instance HasSpecificMessages LIGO where
 
   handleSetPreviousStack = pure ()
 
+  onTerminate = do
+    lServVar <- asks heLSState
+    atomically $ writeTVar lServVar Nothing
+
+-- | Id of the top (currently active) stack frame.
+topFrameId :: Int
+topFrameId = 1
+
 handleInitializeLogger :: LigoInitializeLoggerRequest -> RIO LIGO ()
 handleInitializeLogger LigoInitializeLoggerRequest {..} = do
   let file = fileLigoInitializeLoggerRequestArguments argumentsLigoInitializeLoggerRequest
@@ -419,6 +464,11 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
 
   logMessage [int||Initializing logger for #{file} finished|]
 
+convertMichelsonValuesToLigoDummy :: [PreLigoConvertInfo] -> RIO LIGO [Text]
+convertMichelsonValuesToLigoDummy inps = liftIO do
+  threadDelay 2000000
+  return $ inps <&> \i -> pretty (plciMichVal i)
+
 handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
 handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   let LigoSetLigoBinaryPathRequestArguments{..} = argumentsLigoSetLigoBinaryPathRequest
@@ -426,7 +476,10 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
 
   let binaryPath = Debug.show @Text binaryPathMb
 
+  UnliftIO unliftIO <- askUnliftIO
+
   lServVar <- asks _rcLSState
+  toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigoDummy)
   atomically $ writeTVar lServVar $ Just LigoLanguageServerState
     { lsProgram = Nothing
     , lsCollectedRunInfo = Nothing
@@ -435,6 +488,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsBinaryPath = binaryPathMb
     , lsParsedContracts = Nothing
     , lsLambdaLocs = Nothing
+    , lsToLigoValueConverter = toLigoValueConverter
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 

@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Control.DelayedValues
       Debug
       Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI.Call
@@ -96,6 +97,7 @@ library
     , lens
     , lens-aeson
     , ligo-squirrel
+    , monad-stm
     , morley
     , morley-debugger
     , morley-prelude
@@ -107,7 +109,9 @@ library
     , semver
     , singletons
     , singletons-th
+    , some
     , stm
+    , stm-containers
     , syb
     , template-haskell
     , text
@@ -187,6 +191,7 @@ test-suite ligo-debugger-test
       Driver
       Test.Breakpoints
       Test.DebugInfo
+      Test.DelayedValues
       Test.LigoCall
       Test.Navigation
       Test.Snapshots

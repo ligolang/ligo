@@ -5,13 +5,14 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
+import AST (LIGO, Lang, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
 import AST.Scope.Common qualified as AST.Common
 import Cli (HasLigoClient, LigoIOException)
-import Control.Concurrent.STM (writeTChan)
+import Control.Concurrent.STM (throwSTM, writeTChan)
 import Control.Exception (throw)
 import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
+import Control.Monad.STM.Class (MonadSTM (..))
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
@@ -22,18 +23,21 @@ import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), HasSpecificMessages (LanguageServerStateExt),
-  RIO, RioContext (..))
+  (DAPOutputMessage (..), DAPSpecificResponse (..), HandlerEnv (..),
+  HasSpecificMessages (LanguageServerStateExt), RIO, RioContext (..))
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
 import Morley.Michelson.Typed (Contract' (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
+import Morley.Util.Constrained (Constrained (..))
+import Morley.Util.Lens (makeLensesWith, postfixLFields)
 import ParseTree (pathToSrc)
 import Parser (ParsedInfo)
 import Text.Interpolation.Nyan
 import UnliftIO.Exception (fromEither, throwIO, try)
 
+import Control.DelayedValues qualified as DelayedValues
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
@@ -70,6 +74,25 @@ onlyContractRunInfo contract = CollectedRunInfo
   , criStorageMb = Nothing
   }
 
+-- | The information for conversion of Michelson value to LIGO format.
+data PreLigoConvertInfo = PreLigoConvertInfo
+  { plciLang :: Lang
+    -- ^ LIGO dialect.
+  , plciMichVal :: T.SomeValue
+    -- ^ Michelson value.
+  , plciLigoType :: LigoType
+    -- ^ Known LIGO type of the value which the conversion will result in.
+  } deriving stock (Show, Eq)
+
+instance Hashable PreLigoConvertInfo where
+  hashWithSalt s (PreLigoConvertInfo lang (Constrained michVal) ty) = s
+    `hashWithSalt` lang
+    `hashWithSalt` pretty @(T.Value _) @Text michVal
+    -- ↑ Pretty-printer for michelson values on itself is not a reversible
+    -- function (e.g. address and contract are represented in the same way),
+    -- but if we include type, the resulting values will be unique
+    `hashWithSalt` ty
+
 -- | LIGO-debugger-specific state that we initialize before debugger session
 -- creation.
 data LigoLanguageServerState = LigoLanguageServerState
@@ -80,6 +103,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   , lsLambdaLocs :: Maybe (HashSet LigoRange)
+  , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo Text
   }
 
 instance Buildable LigoLanguageServerState where
@@ -164,9 +188,19 @@ parseValue ctxContractPath category val valueLang = runExceptT do
     & liftEither
 
 getServerState :: RIO ext (LanguageServerStateExt ext)
-getServerState = asks _rcLSState >>= readTVarIO >>= \case
-  Nothing -> throwIO $ PluginCommunicationException "Language server state is not initialized"
-  Just s -> pure s
+getServerState =
+  asks _rcLSState >>= readTVarIO >>=
+    maybe (throwIO uninitLanguageServerExc) pure
+
+-- | Get server state in handler's context
+getServerStateH :: (MonadReader (HandlerEnv ext) m, MonadSTM m) => m (LanguageServerStateExt ext)
+getServerStateH =
+  asks heLSState >>= liftSTM . readTVar >>=
+    maybe (liftSTM $ throwSTM uninitLanguageServerExc) pure
+
+uninitLanguageServerExc :: PluginCommunicationException
+uninitLanguageServerExc =
+  PluginCommunicationException "Language server state is not initialized"
 
 expectInitialized :: (MonadIO m) => Text -> m (Maybe a) -> m a
 expectInitialized errMsg maybeM = maybeM >>= \case
@@ -237,3 +271,5 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @LigoIOException e
       , cast @_ @SomeDebuggerException e'
       ]
+
+makeLensesWith postfixLFields ''LigoLanguageServerState

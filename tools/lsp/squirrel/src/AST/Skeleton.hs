@@ -76,7 +76,8 @@ type RawLigoList =
 data Lang
   = Caml
   | Js
-  deriving stock (Show, Eq, Enum, Bounded)
+  deriving stock (Show, Eq, Enum, Bounded, Generic)
+  deriving anyclass (Hashable)
 
 allLangs :: [Lang]
 allLangs = [minBound .. maxBound]

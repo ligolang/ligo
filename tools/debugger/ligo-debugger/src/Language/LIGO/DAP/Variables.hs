@@ -1,6 +1,7 @@
 -- This code is copypasted from Morley.Debugger.DAP.Variables
 module Language.LIGO.DAP.Variables
   ( createVariables
+  , createLigoVariablesDummy
   , runBuilder
   , buildVariable
   , insertToIndex
@@ -42,6 +43,11 @@ createVariables lang st = do
         _ -> pure Nothing
   let topVars = catMaybes topVarsMb
   insertVars topVars
+
+createLigoVariablesDummy :: Lang -> [(Text, Text)] -> VariableBuilder Int
+createLigoVariablesDummy lang vars = do
+  insertVars $ vars <&> \(toString -> name, toString -> val) ->
+    createVariable name val lang (LigoType Nothing) Nothing Nothing
 
 type VariableBuilder a = State (Int, Map Int [DAP.Variable]) a
 
