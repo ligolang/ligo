@@ -17,6 +17,7 @@ import modelSessionManager from "./modelSessionManager";
 import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
 import { findNonAsciiCharIndex } from "~/components/validators";
+import fileOps from "~/base-components/file-ops";
 
 function createWebSocket() {
   const url = `ws://${process.env.BACKEND_URL}`;
@@ -25,13 +26,54 @@ function createWebSocket() {
     const socket = toSocket(webSocket);
     const reader = new WebSocketMessageReader(socket);
     const writer = new WebSocketMessageWriter(socket);
-    const languageClient = createLanguageClient({
-      reader,
-      writer,
+
+    // Load all file contents and send them to the backend before initializing
+    // the language server.
+    modelSessionManager.projectManager.loadProjectFileTree().then((fileTree) => {
+      const filePromiseMap = new Map();
+      loadProjectFileContentsRecursively(fileTree, filePromiseMap).then(() => {
+        Promise.all(filePromiseMap.values()).then((contents) => {
+          const filenames = Array.from(filePromiseMap.keys());
+          const fileMap = new Map();
+          for (let i = 0; i < filenames.length; i++) {
+            const filename = filenames[i];
+            const content = contents[i];
+            fileMap.set(filenames[i], contents[i]);
+          }
+          socket.send(JSON.stringify(Object.fromEntries(fileMap)));
+
+          const languageClient = createLanguageClient({
+            reader,
+            writer,
+          });
+          languageClient.start();
+          reader.onClose(() => languageClient.stop());
+        });
+      });
     });
-    languageClient.start();
-    reader.onClose(() => languageClient.stop());
   };
+}
+
+async function loadProjectFileContentsRecursively(fileTree, filePromiseMap) {
+  if (fileTree.isLeaf) {
+    if (isLigoPath(fileTree.key)) {
+      filePromiseMap.set(fileTree.key, fileOps.readFile(fileTree.key));
+    }
+  } else {
+    for (let i = 0; i < fileTree.children.length; i++) {
+      const child = fileTree.children[i];
+      loadProjectFileContentsRecursively(child, filePromiseMap);
+    }
+  }
+}
+
+function isLigoPath(path) {
+  return (
+    path.endsWith(".mligo") ||
+    path.endsWith(".ligo") ||
+    path.endsWith(".pligo") ||
+    path.endsWith(".jsligo")
+  );
 }
 
 function createLanguageClient(transports) {
@@ -134,9 +176,9 @@ export default class MonacoEditor extends Component {
       mouseWheelZoom: true,
     });
     // install Monaco language client services
-    // MonacoServices.install();
+    MonacoServices.install();
 
-    // createWebSocket();
+    createWebSocket();
 
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent((e) => {
