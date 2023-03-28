@@ -37,6 +37,7 @@ import Parser (ParsedInfo)
 import Text.Interpolation.Nyan
 import UnliftIO.Exception (fromEither, throwIO, try)
 
+import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
@@ -103,6 +104,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   , lsLambdaLocs :: Maybe (HashSet LigoRange)
+  , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
   , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo Text
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step

@@ -23,12 +23,12 @@ import Fmt (Builder, blockListF, pretty)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
-import UnliftIO.Async (async)
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
+import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DV
 import Extension (UnsupportedExtension (..), getExt)
 
@@ -327,8 +327,10 @@ instance HasSpecificMessages LIGO where
       -- We have to request for the LIGO values conversion.
       -- It produces a call to @ligo@ and may take time, so we spawn
       -- a thread for this.
-      -- TODO: throwing the result away is not cool
-      void $ async do
+      -- We are fine with the thread's death if it gets outdated, it's better
+      -- than having 100500 @ligo@ threads running at a time.
+      logMessage "Going to compute pending variables"
+      AbortingThreadPool.runAbortableAsync (lsVarsComputeThreadPool lServVar) do
         computedSmthNew <- DV.runPendingComputations valConvertManager
 
         when computedSmthNew do
@@ -446,6 +448,9 @@ instance HasSpecificMessages LIGO where
   handleSetPreviousStack = pure ()
 
   onTerminate = do
+    lServState <- getServerStateH
+    AbortingThreadPool.close (lsVarsComputeThreadPool lServState)
+
     lServVar <- asks heLSState
     atomically $ writeTVar lServVar Nothing
 
@@ -491,6 +496,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   UnliftIO unliftIO <- askUnliftIO
 
   lServVar <- asks _rcLSState
+  varsComputeThreadPool <- AbortingThreadPool.newPool 10
   toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigoDummy)
   atomically $ writeTVar lServVar $ Just LigoLanguageServerState
     { lsProgram = Nothing
@@ -501,6 +507,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsParsedContracts = Nothing
     , lsLambdaLocs = Nothing
     , lsToLigoValueConverter = toLigoValueConverter
+    , lsVarsComputeThreadPool = varsComputeThreadPool
     , lsMoveId = 0
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]

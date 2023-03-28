@@ -12,6 +12,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Control.AbortingThreadPool
       Control.DelayedValues
       Debug
       Language.LIGO.DAP.Variables
@@ -60,6 +61,7 @@ library
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints
@@ -158,6 +160,7 @@ executable ligo-debugger
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints
@@ -189,6 +192,7 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.AbortingThreadPool
       Test.Breakpoints
       Test.DebugInfo
       Test.DelayedValues
@@ -231,6 +235,7 @@ test-suite ligo-debugger-test
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints

@@ -31,6 +31,7 @@ default-extensions:
   - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns
+  - NumDecimals
   - OverloadedStrings
   - PackageImports
   - QuantifiedConstraints
