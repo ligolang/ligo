@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\n"
+merge_request: '2455'
+title: "deprecation of mutate_ast"
+type: breaking
+            
