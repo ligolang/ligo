@@ -13,7 +13,8 @@ import Unsafe qualified
 
 import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
 import Control.Concurrent (threadDelay)
-import Control.Lens (Each (each), ix, uses, zoom, (.=), (^?!))
+import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
+import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
 import Data.Default (def)
 import Data.Map qualified as M
@@ -321,6 +322,7 @@ instance HasSpecificMessages LIGO where
 
     dsVariables .= variables
 
+    let moveIdAtUpdate = lsMoveId lServVar
     writePostAction do
       -- We have to request for the LIGO values conversion.
       -- It produces a call to @ligo@ and may take time, so we spawn
@@ -329,8 +331,14 @@ instance HasSpecificMessages LIGO where
       void $ async do
         computedSmthNew <- DV.runPendingComputations valConvertManager
 
-        -- Now let's ask VSCode to request for new values.
         when computedSmthNew do
+          logMessage "Computed LIGO values"
+
+        -- Now let's ask VSCode to request for new values.
+        -- If moveId has changed, then we have made a new step and it invokes
+        -- its own invalidation procedure, we better leave everything on it.
+        curMoveId <- lsMoveId <$> getServerState
+        when (curMoveId == moveIdAtUpdate && computedSmthNew) do
           void . runSTMHandler $
             pushMessage $ DAPEvent $ InvalidatedEvent $ DAP.defaultInvalidatedEvent
               { DAP.bodyInvalidatedEvent = DAP.InvalidatedEventBody
@@ -441,6 +449,10 @@ instance HasSpecificMessages LIGO where
     lServVar <- asks heLSState
     atomically $ writeTVar lServVar Nothing
 
+  onStep = do
+    lServVar <- asks heLSState
+    liftSTM $ modifyTVar' lServVar $ _Just . lsMoveIdL +~ 1
+
 -- | Id of the top (currently active) stack frame.
 topFrameId :: Int
 topFrameId = 1
@@ -489,6 +501,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsParsedContracts = Nothing
     , lsLambdaLocs = Nothing
     , lsToLigoValueConverter = toLigoValueConverter
+    , lsMoveId = 0
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 

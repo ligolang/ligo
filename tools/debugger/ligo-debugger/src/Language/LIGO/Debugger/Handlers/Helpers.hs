@@ -104,6 +104,9 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   , lsLambdaLocs :: Maybe (HashSet LigoRange)
   , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo Text
+  , lsMoveId :: Word
+    -- ^ The identifier of position, assigned a unique id after each step
+    -- (visiting the same snapshot twice will also result in different ids).
   }
 
 instance Buildable LigoLanguageServerState where
