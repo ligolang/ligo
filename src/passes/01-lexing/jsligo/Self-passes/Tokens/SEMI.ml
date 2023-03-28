@@ -104,6 +104,9 @@ let semicolon_insertion tokens =
   | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest ->
     let (s, _) = Token.proj_token rbrace in
     inner (r :: mk_semi s :: rbrace :: result ) rest
+  | (RPAR _ as hd) :: tl
+  | (Else _ as hd) :: tl when not (there_is_a_decl_next tl) -> 
+    inner (hd :: result) tl
   | token :: (Directive _ as t) :: rest
   | token :: (Namespace _ as t) :: rest
   | token :: (Export _ as t) :: rest

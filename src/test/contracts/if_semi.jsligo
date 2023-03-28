@@ -76,3 +76,37 @@ export const example = (x : int) : int => {
     return x;
   }
 }
+
+export const max2 = (x: int, y: int) => {
+  if (x > y) 
+
+      return x
+  
+  else
+
+    return y
+
+}
+
+export const max3 = (x: int, y: int, z: int) => {
+  if (x > y)
+    
+    if (x > z)
+
+      return x
+
+    else 
+
+      return z
+
+  else
+
+    if (y > z)
+
+      return y
+
+    else 
+
+      return z
+
+}

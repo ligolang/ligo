@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n#### For a JsLIGO file like\\n\\n\\n```ts\\nexport const foo = (b: bool) => {\\n  if (b) \\n      return 42\\n  else\\n    return 21\\n}\\n\\n```\\n#### Before\\n\\n\\n```\\n$ ligo.62 compile expression jsligo foo --init-file y.jsligo \\nFile \"y.jsligo\", line 2, characters 9-8:\\n  1 | export const foo = (b: bool) => {\\n  2 |   if (b) \n\\n  3 |       return 42\\nIll-formed conditional statement.\\nAt this point, the statement executed when the condition is true is\\nexpected.\\n\\n```\\n\\n#### After\\n\\n\\n```\\n$ ligo compile expression jsligo foo --init-file y.jsligo\\n{ IF { PUSH int 42 } { PUSH int 21 } }\\n\\n```\\n\\n"
+merge_request: '2472'
+title: "[#1718][JsLIGO]: Fix automatic semicolon insertion for if-else statements"
+type: fixed
+            
