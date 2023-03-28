@@ -47,6 +47,43 @@ const unreach_4 = (_n : int) : string => {
 }
 
 
+const unreach_5 = (x: string, y: string): string => {
+  if (x > y) 
+
+      return x
+  
+  else
+
+    return y
+
+  return "Unreachable post-return code that should trigger a warnings"
+}
+
+
+const unreach_6 = (x: string, y: string, z: string): string => {
+  if (x > y)
+    
+    if (x > z)
+
+      return x
+
+    else 
+
+      return z
+
+  else
+
+    if (y > z)
+
+      return y
+
+    else 
+
+      return z
+
+  return "Unreachable post-return code that should trigger a warnings";
+}
+
 const main = (_ : int, s : int) : [list <operation>, int] => {
   return [
    (list([]) as list <operation>),    // No operations

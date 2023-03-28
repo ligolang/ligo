@@ -4,6 +4,18 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; test "jsligo_unreachable_code.jsligo" ];
   [%expect
     {|
+    File "../../test/contracts/jsligo_unreachable_code.jsligo", line 84, characters 9-70:
+     83 |
+     84 |   return "Unreachable post-return code that should trigger a warnings";
+     85 | }
+
+    Warning: Unreachable code.
+    File "../../test/contracts/jsligo_unreachable_code.jsligo", line 59, characters 9-70:
+     58 |
+     59 |   return "Unreachable post-return code that should trigger a warnings"
+     60 | }
+
+    Warning: Unreachable code.
     File "../../test/contracts/jsligo_unreachable_code.jsligo", line 46, characters 9-70:
      45 |   return "end";
      46 |   return "Unreachable post-return code that should trigger a warnings";
