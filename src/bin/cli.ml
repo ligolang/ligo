@@ -1567,7 +1567,11 @@ let get_scope =
         ()
     in
     return_result ~return
-    @@ Api.Info.get_scope raw_options source_file display_format no_colour
+    @@ Ligo_interface.Get_scope.get_scope_cli_result
+         raw_options
+         source_file
+         display_format
+         no_colour
   in
   let summary = "return the JSON encoded environment for a given file." in
   let readme () =
@@ -2180,10 +2184,7 @@ module Lsp_server = struct
   and runs it as a task. *)
 
   module Requests = Ligo_lsp.Server.Requests
-
-  module Server = Ligo_lsp.Server.Make (struct
-    module Info = Ligo_api.Info
-  end)
+  module Server = Ligo_lsp.Server
 
   let run () =
     let s = new Server.lsp_server in

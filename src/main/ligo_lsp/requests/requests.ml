@@ -1,13 +1,11 @@
-module Make (Ligo_api : Ligo_interface.LIGO_API) = struct
-  include Definition
-  include Document_link
-  include Folding_range
-  include Formatting
-  include Hover
-  include On_doc.Make (Ligo_api)
-  include Prepare_rename
-  include Rename
-  include References
-  include Type_definition
-  module Handler = Handler
-end
+include Definition
+include Document_link
+include Folding_range
+include Formatting
+include Hover
+include On_doc
+include Prepare_rename
+include Rename
+include References
+include Type_definition
+module Handler = Handler
