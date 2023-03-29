@@ -1,15 +1,7 @@
-module Ligo_interface = Ligo_interface.Make (struct
-  module Info = Ligo_api.Info
-end)
-
 open Lsp.Types
 open Handlers
 open Common
-
-module Requests = Ligo_lsp.Server.Requests.Make (struct
-  module Info = Ligo_api.Info
-end)
-
+module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 
 type definition_test =
