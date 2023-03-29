@@ -61,7 +61,7 @@ esy-test-windows:
     - ls
     - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - $env:HOME = 'C:/Users/gitlabrunner'
-    - cd ./platform-windows-x64; npm pack; npm i -g ./ligolang-0.60.0-dev.tgz --force; cd ..
+    - cd ./platform-windows-x64; npm pack; bash -c "npm i -g ./ligolang-$(jq -r .version ../esy.json).tgz --force"; cd ..
     - bash -c "sh scripts/esy-multiplat-e2e-ci.sh"
 
 publish_npm_windows_x86:
