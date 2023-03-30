@@ -28,6 +28,7 @@ webide-define-image-tag:
     - WEBIDE_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - WEBIDE_FRONTEND_NEW_IMAGE_TAG="registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide_frontend_new:${FORMATED_CI_JOB_STARTED_AT}-${CI_COMMIT_SHORT_SHA}${NPR_ENVIRONMENT}"
     - echo "WEBIDE_NEW_IMAGE_TAG=${WEBIDE_NEW_IMAGE_TAG}" >> webide-img-tag.env
+    - echo "NPR_ENVIRONMENT=${NPR_ENVIRONMENT}" >> webide-img-tag.env
     - echo "WEBIDE_FRONTEND_NEW_IMAGE_TAG=${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >> webide-img-tag.env
   artifacts:
     reports:
