@@ -134,7 +134,12 @@ release:
   script:
     - |
       if [[ $DRY_RUN_RELEASE == "" ]]; then
-        release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb" --assets-links-name "Ligo Windows installer" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo_installer.exe"
+        release-cli create \
+          --name "Release $CI_COMMIT_TAG" \
+          --description "$(cat release-notes.md)" \
+          --assets-link '{"name": "Static Linux binary", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo"}' \
+          --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}' \
+          --assets-link '{"name": "Ligo Windows installer", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo_installer.exe"}'
       fi
     - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
 
@@ -310,6 +315,8 @@ update-bottle-reference:
         artifacts: true
       - job: bottle-ventura-m1
         artifacts: true
+      - job: build_release_env_vars
+        artifacts: true
   script:
     - ./.ci/scripts/homebrew/replace_bottle_reference.sh
   rules:
@@ -319,7 +326,7 @@ update-bottle-reference:
       when: always
   artifacts:
     paths:
-      - HomebrewFormula/ligo.rb
+      - HomebrewFormula
 
 update-ligo-bin-PKGBUILD:
   stage: pretooling
@@ -396,13 +403,13 @@ update-repository-status:
     - wget https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 -O /usr/bin/yq && chmod +x /usr/bin/yq
   script:
     - git submodule sync --recursive                       
-    - git submodule update --init --recursive --remote
+    - git submodule update --init --recursive --remote --force
     - git remote rm origin && git remote add origin "git@gitlab.com:ligolang/ligo.git"
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
-    - git add esy.json vendors/tezos-ligo HomebrewFormula/ gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
+    - git add tools/webide-new/ligo-webide-backend/Dockerfile esy.json vendors/tezos-ligo HomebrewFormula/ gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
   needs:
@@ -456,7 +463,7 @@ publish-AUR-package:
 publish-nixpkg:
   stage: push
   script:
-    - git clone "https://github.com/laucans/nixpkgs.git"
+    - git clone "https://github.com/NixOS/nixpkgs.git"
     - PRECEDENT_LIGO_VERSION_NIX=$(.ci/scripts/nix/retrieve_version.sh nixpkgs/pkgs/development/compilers/ligo/default.nix)
     - .ci/scripts/nix/update_ligo_default_nix_file.sh nixpkgs/pkgs/development/compilers/ligo/default.nix $RELEASE_VERSION
     - cd nixpkgs
