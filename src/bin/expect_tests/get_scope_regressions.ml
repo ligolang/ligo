@@ -192,14 +192,6 @@ let%expect_test _ =
       3 | let g = x
     :
     Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning.
-
-    File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
-      1 | let x = 42
-      2 | let f x = 0
-      3 | let g = x
-    :
-    Warning: unused variable "x".
     Hint: replace it by "_x" to prevent this warning. |}]
 
 let%expect_test _ =
@@ -417,3 +409,50 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-5 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "duplicate_unused_warnings.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 1, characters 20-21
+    [ s_x#2:9-12  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 16-17
+    [  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 3, characters 12-13
+    [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 21-22
+    [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 7, characters 14-15
+    [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 8, characters 12-13
+
+    Variable definitions:
+    (m#1:4-5 -> m)
+    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 1, character 8 to line 3, character 13
+    Content: |resolved: int|
+    references: []
+    (m2#6:4-6 -> m2)
+    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 4-6
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, character 9 to line 8, character 13
+    Content: |resolved: int|
+    references: []
+    (s_x#2:9-12 -> s_x)
+    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 16-17
+    Content: |resolved: int|
+    references: []
+    Type definitions:
+    Module definitions:
+    Warnings:
+    File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12:
+      1 | let m = match (Some 4) with
+      2 |   | Some s_x -> 1
+      3 |   | None -> 0
+    :
+    Warning: unused variable "s_x".
+    Hint: replace it by "_s_x" to prevent this warning. |}]
