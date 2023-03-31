@@ -509,12 +509,10 @@ ctor_arg:
 (* Export Declaration *)
 
 export_decl:
-  attributes "export" declaration {
-    let declaration = $3 $1 in
-    let kwd_export = $2 in
-    let region =
-      cover kwd_export#region (statement_to_region declaration)
-    in {region; value = (kwd_export,declaration)} }
+  attributes "export" attributes declaration {
+    let declaration = $4 ($1 @ $3)  in
+    let region = cover $2#region (statement_to_region declaration)
+    in {region; value = ($2, declaration)} }
 
 (* Block of Statements *)
 
