@@ -14,6 +14,7 @@ esy-windows:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
         - dune
       when: always
   script:
@@ -55,6 +56,7 @@ esy-test-windows:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
         - dune
       when: always
   script:
@@ -107,6 +109,7 @@ esy-macos-intel:
         - esy.json
         - esy.lock/index.json
         - ligo.opam
+        - dune
       when: always
   script:
     - mkdir -p ~/.npm
@@ -137,6 +140,7 @@ esy-test-macos-intel:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
         - dune
       when: always
   needs:
@@ -191,6 +195,7 @@ esy-macos-m1:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
         - dune
       when: always
   script:
@@ -223,6 +228,7 @@ esy-test-macos-m1:
       changes:
         - esy.json
         - esy.lock/index.json
+        - ligo.opam
         - dune
       when: always
   needs:
@@ -279,5 +285,5 @@ publish_ligojs:
       fi
     - cd ./ligo-npm
     - chmod 664 package.json
-    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json windows)
+    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json jsoo)
     - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public || status=1
