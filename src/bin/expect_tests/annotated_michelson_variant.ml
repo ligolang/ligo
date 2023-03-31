@@ -2,6 +2,14 @@ open Cli_expect
 
 let contract basename = "../../test/contracts/" ^ basename
 
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "annot_ignored.mligo" ];
+  [%expect
+    {|
+             { parameter unit ;
+               storage (pair (nat %token_id) (list address)) ;
+               code { CDR ; NIL operation ; PAIR } } |}]
+
 (*COMB*)
 let%expect_test _ =
   run_ligo_good
