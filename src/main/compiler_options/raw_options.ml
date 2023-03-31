@@ -12,6 +12,7 @@ type t =
   ; module_ : string
   ; libraries : string list
   ; project_root : string option
+  ; transpiled : bool
   ; (* Tools *)
     with_types : bool
   ; self_pass : bool
@@ -53,6 +54,7 @@ module Default_options = struct
   let module_ = ""
   let libraries = []
   let project_root = None
+  let transpiled = false
 
   (* Tools *)
   let only_ep = false
@@ -90,6 +92,7 @@ let make
     ?(module_ = Default_options.module_)
     ?(libraries = Default_options.libraries)
     ?(project_root = Default_options.project_root)
+    ?(transpiled = Default_options.transpiled)
     ?(only_ep = Default_options.only_ep)
     ?(with_types = Default_options.with_types)
     ?(self_pass = Default_options.self_pass)
@@ -122,6 +125,7 @@ let make
   ; module_
   ; libraries
   ; project_root
+  ; transpiled
   ; (* Tools *)
     only_ep
   ; with_types
