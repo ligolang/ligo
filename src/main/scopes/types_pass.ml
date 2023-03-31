@@ -285,7 +285,7 @@ module Typing_env = struct
     raise.log_error (tracer e)
 
 
-  let checking
+  let update_typing_env
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~options
       tenv
@@ -311,7 +311,7 @@ module Typing_env = struct
         tenv)
 
 
-  let checking_self_pass
+  let self_ast_typed_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
       tenv
@@ -324,16 +324,6 @@ module Typing_env = struct
     | Ok (_, ws) -> List.iter ws ~f:raise.warning
     | Error (e, ws) ->
       collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer (e, ws)
-
-
-  let update_typing_env
-      :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
-      -> options:Compiler_options.middle_end -> t -> Ast_core.declaration -> t
-    =
-   fun ~raise ~options tenv decl ->
-    let tenv = checking ~raise ~options tenv decl in
-    let () = checking_self_pass ~raise ~options tenv in
-    tenv
 
 
   let init ~(options : Compiler_options.middle_end) stdlib_decls =
@@ -373,6 +363,7 @@ let resolve
  fun ~raise ~options ~stdlib_decls prg ->
   let tenv = Typing_env.init ~options stdlib_decls in
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
+  let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
   let bindings = tenv.bindings in
   Of_Ast_core.declarations bindings prg
 
