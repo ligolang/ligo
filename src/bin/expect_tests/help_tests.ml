@@ -98,6 +98,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                syntaxes are "cameligo" and "jsligo". By default,
                                the syntax is guessed from the extension (.mligo
                                and .jsligo respectively).
+  [--transpiled]             . Disable checks that are unapplicable to
+                               transpiled contracts.
   [--views VIEWS], -v        . A list of declaration name that will be compiled
                                as on-chain views, separated by ','
   [--warn-unused-rec]        . warn about unused recursion in a recursive

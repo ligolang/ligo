@@ -122,7 +122,9 @@ let parse_and_abstract_expression_pascaligo ~raise buffer =
   imperative
 
 
-let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_imperative.program =
+let parse_and_abstract ~raise ~(meta : meta) ~(transpiled : bool) buffer file_path
+    : Ast_imperative.program
+  =
   let parse_and_abstract =
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_cameligo
@@ -131,6 +133,7 @@ let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_imperative.p
   in
   let abstracted = parse_and_abstract ~raise buffer file_path in
   let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
+  let js_style_no_shadowing = js_style_no_shadowing && not transpiled in
   let applied =
     trace ~raise self_ast_imperative_tracer
     @@ Self_ast_imperative.all_program abstracted ~js_style_no_shadowing

@@ -13,6 +13,7 @@ type frontend =
   ; libraries : string list
   ; project_root : string option
   ; no_colour : bool
+  ; transpiled : bool
   }
 
 type tools =
@@ -35,6 +36,7 @@ type middle_end =
   ; no_stdlib : bool
   ; syntax_for_errors : Syntax_types.t option
   ; no_colour : bool
+  ; transpiled : bool
   }
 
 type backend =
@@ -86,6 +88,7 @@ let make
     ; module_ = raw_options.module_
     ; project_root = raw_options.project_root
     ; no_colour = raw_options.no_colour
+    ; transpiled = raw_options.transpiled
     }
   in
   let tools =
@@ -108,6 +111,7 @@ let make
     ; no_stdlib = raw_options.no_stdlib
     ; syntax_for_errors = syntax
     ; no_colour = raw_options.no_colour
+    ; transpiled = raw_options.transpiled
     }
   in
   let backend =

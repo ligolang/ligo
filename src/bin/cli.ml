@@ -470,6 +470,15 @@ let project_root =
   flag ~doc name spec
 
 
+let transpiled =
+  let open Command.Param in
+  let name = "--transpiled" in
+  let doc =
+    "Disable checks that are unapplicable to transpiled contracts."
+  in
+  flag ~doc name no_arg
+
+
 let cache_path =
   let open Command.Param in
   let name = "--cache-path" in
@@ -535,6 +544,7 @@ let compile_file =
       constants
       file_constants
       project_root
+      transpiled
       warn_unused_rec
       ()
     =
@@ -555,6 +565,7 @@ let compile_file =
         ~constants
         ~file_constants
         ~project_root
+        ~transpiled
         ~warn_unused_rec
         ()
     in
@@ -597,6 +608,7 @@ let compile_file =
     <*> constants
     <*> file_constants
     <*> project_root
+    <*> transpiled
     <*> warn_unused_rec)
 
 
