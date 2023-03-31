@@ -471,7 +471,6 @@ publish-nixpkg:
     - git add pkgs/development/compilers/ligo/default.nix
     - git status
     - "git commit -am \"ligo: ${PRECEDENT_LIGO_VERSION_NIX} -> ${RELEASE_VERSION}\""
-    - git remote -v
     - git push -u origin master:$(../.ci/scripts/nix/generate_nixpkgs_branch_name.sh $RELEASE_VERSION)
     - ../.ci/scripts/nix/generate_pr.sh "ligolang:$(../.ci/scripts/nix/generate_nixpkgs_branch_name.sh $RELEASE_VERSION)" $PRECEDENT_LIGO_VERSION_NIX $RELEASE_VERSION $GITLAB_LIGO_PUBLIC_REPO_TOKEN
     - MESSAGE="New pull request to update ligo has been generated on https://github.com/NixOS/nixpkgs"

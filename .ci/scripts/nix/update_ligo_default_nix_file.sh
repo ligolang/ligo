@@ -13,7 +13,7 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # Replace SRI for nix
-SRI_LIGO_BINARY_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 $(nix-prefetch-url --type sha256 --unpack https://gitlab.com/ligolang/ligo/-/archive/$VERSION/ligo-$VERSION.zip))
+SRI_LIGO_BINARY_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 $(jq -r .sha256 <<< $(nix run nixpkgs#nix-prefetch-git -- --rev $VERSION --url https://gitlab.com/ligolang/ligo.git --fetch-submodules --quiet --no-deepClone)))
 echo "update distribution reference SRI_LIGO_BINARY_HASH = $SRI_LIGO_BINARY_HASH"
 
 # Idk why, all nixPkgs files are 644, so I change it temporarly to be able to edit it
