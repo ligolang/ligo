@@ -1,0 +1,13 @@
+// @foo
+export namespace D {
+  export type titi = int;
+};
+
+// @foo
+namespace E {
+  export type titi = int;
+  export const toto = 42
+};
+
+/* @no_mutation */ export
+const toto: D.titi = E.toto;
