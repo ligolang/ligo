@@ -627,9 +627,13 @@ fromLigoType st = \case
   LTCVariable variable -> fromLigoVariable variable
 
   LTCRecord record ->
-    let record' = fromLigoTable FieldProduct record in
-    let ligoLayout = fromMaybe LTree (_lttLayout record) in
-    make' (st, TRecord (ligoLayoutToLayout ligoLayout) record')
+    case tryConvertToTuple record of
+      Just tupleTypes ->
+        make' (st, TProduct (fromLigoTypeExpression <$> tupleTypes))
+      Nothing ->
+        let record' = fromLigoTable FieldProduct record in
+        let ligoLayout = fromMaybe LTree (_lttLayout record) in
+        make' (st, TRecord (ligoLayoutToLayout ligoLayout) record')
 
   LTCSum sum ->
     case fromLigoTable FieldSum sum of
@@ -658,6 +662,11 @@ fromLigoType st = \case
   LTCArrow LigoTypeArrow {..} ->
     make' (st, TArrow (fromLigoTypeExpression _ltaType1) (fromLigoTypeExpression _ltaType2))
   where
+    tryConvertToTuple :: LigoTypeTable -> Maybe [LigoTypeExpression]
+    tryConvertToTuple LigoTypeTable{..} =
+      forM [0..HM.size _lttFields - 1] \i ->
+        _ltfAssociatedType <$> _lttFields HM.!? show i
+
     ligoLayoutToLayout :: LigoLayout -> Layout
     ligoLayoutToLayout = \case
       LTree -> Tree

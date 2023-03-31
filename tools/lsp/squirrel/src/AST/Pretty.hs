@@ -563,7 +563,7 @@ instance LPP1 'Caml AST.Type where
 
     TProduct elements           -> train " *" elements
     TSum     layout   (x :| xs) ->
-      let sum' = x `indent` blockWith ("| "<.>) xs in
+      let sum' = x `indent` blockWith ("| "<.>) xs in parens
         case layout of
           Comb -> "[@layout comb] |" `indent` sum'
           Tree -> sum'
