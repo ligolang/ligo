@@ -37,14 +37,21 @@ receiveData clientId conn stdinProducer = do
     liftIO (hFlush stdinProducer)
 
 receiveFileTree :: Text -> Connection -> ConnectionM ()
-receiveFileTree prefix conn = do
-  msg :: BS.ByteString <- liftIO (WS.receiveData conn)
-  logFM DebugS (LogStr (Text.fromText (decodeUtf8 msg)))
-  case Aeson.decodeStrict msg of
-    Just (obj :: Map Text Text) ->
-      forM_ (Map.assocs obj) $ \(path, content) ->
-        writeFileWithParent (prefix <> path) content
-    Nothing -> logFM WarningS "Couldn't decode initial filetree"
+receiveFileTree prefix conn =
+  let action = do
+        logFM DebugS "Receiving file tree"
+        count :: Int <- MaybeT (Aeson.decodeStrict <$> liftIO (WS.receiveData conn))
+        forM_ [(1::Int) .. count] $ \_ -> do
+          fileInfo :: Map Text Text <-
+            MaybeT (Aeson.decodeStrict <$> liftIO (WS.receiveData conn))
+          path <- hoistMaybe (Map.lookup "path" fileInfo)
+          content <- hoistMaybe (Map.lookup "content" fileInfo)
+          logFM DebugS (LogStr . Text.fromText $ path)
+          lift $ writeFileWithParent (prefix <> path) content
+        logFM DebugS "Finished receiving file tree"
+   in runMaybeT action >>= \case
+        Nothing -> logFM WarningS "Couldn't decode initial filetree"
+        Just () -> pure ()
 
 prettyJSON :: BS.ByteString -> Text
 prettyJSON bs =

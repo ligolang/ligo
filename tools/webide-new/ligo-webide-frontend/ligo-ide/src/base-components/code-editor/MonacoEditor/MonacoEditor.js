@@ -33,14 +33,14 @@ function createWebSocket() {
       const filePromiseMap = new Map();
       loadProjectFileContentsRecursively(fileTree, filePromiseMap).then(() => {
         Promise.all(filePromiseMap.values()).then((contents) => {
-          const filenames = Array.from(filePromiseMap.keys());
-          const fileMap = new Map();
-          for (let i = 0; i < filenames.length; i++) {
-            const filename = filenames[i];
-            const content = contents[i];
-            fileMap.set(filenames[i], contents[i]);
+          const paths = Array.from(filePromiseMap.keys());
+          socket.send(paths.length);
+          for (let i = 0; i < paths.length; i++) {
+            const fileJSON = new Map();
+            fileJSON.set("path", paths[i]);
+            fileJSON.set("content", contents[i]);
+            socket.send(JSON.stringify(Object.fromEntries(fileJSON)));
           }
-          socket.send(JSON.stringify(Object.fromEntries(fileMap)));
 
           const languageClient = createLanguageClient({
             reader,
