@@ -221,6 +221,7 @@ and type_expr =
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
 | TArg    of type_var reg
+| TParameter of (module_name, dot) nsepseq reg
 
 and type_constr_arg =
   CArg      of type_expr
@@ -528,6 +529,7 @@ let type_expr_to_region = function
 | TVar    {region; _}
 | TModA   {region; _}
 | TArg    {region; _}
+| TParameter {region; _}
  -> region
 
 let list_pattern_to_region = function

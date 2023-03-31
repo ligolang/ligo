@@ -105,6 +105,7 @@ module Fold_helpers (M : Monad) = struct
       in
       let* t = bind_map_npseq obj t in
       return @@ TDisc t
+    | TParameter { value; region } -> return @@ TParameter { value; region }
     | (TVar _ | TModA _ | TInt _ | TString _) as e -> ok e
 
 

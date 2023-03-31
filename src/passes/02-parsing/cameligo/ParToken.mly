@@ -115,7 +115,8 @@
 %token <string Wrap.t> Then   "then"   [@recover.expr Token.wrap_then    $loc]
 %token <string Wrap.t> Type   "type"   [@recover.expr Token.wrap_type    $loc]
 %token <string Wrap.t> With   "with"   [@recover.expr Token.wrap_with    $loc]
-%token <string Wrap.t> Contract "contract_of" [@recover.expr Token.wrap_contract     $loc]
+%token <string Wrap.t> Contract "contract_of" [@recover.expr Token.wrap_contract $loc]
+%token <string Wrap.t> Parameter "parameter_of" [@recover.expr Token.wrap_parameter $loc]
 
 (* Virtual tokens *)
 

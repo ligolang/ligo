@@ -487,6 +487,11 @@ and pp_seq {value; _} =
      ^^ nest 2 (hardline ^^ elements) ^^ hardline
      ^^ string closing
 
+and pp_parameter {value; _} =
+  string "(parameter_of "
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident value))
+  ^^ string ")"
+
 and pp_type_expr = function
   TProd t    -> pp_cartesian t
 | TSum t     -> pp_sum_type t
@@ -499,6 +504,7 @@ and pp_type_expr = function
 | TInt i     -> pp_int i
 | TModA t    -> pp_module_access pp_type_expr t
 | TArg t     -> pp_quoted_param t
+| TParameter t -> pp_parameter t
 
 and pp_quoted_param param =
   let quoted = {param with value = "'" ^ param.value.name.value}

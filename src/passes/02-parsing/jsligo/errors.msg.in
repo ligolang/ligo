@@ -32,7 +32,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE UIdent ZWSP
 ##
-## Ends in an error in state: 526.
+## Ends in an error in state: 529.
 ##
 ## property -> property_name . COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -41,7 +41,7 @@ interactive_expr: LBRACE UIdent ZWSP
 ##
 interactive_expr: LBRACE Attr Ident ZWSP
 ##
-## Ends in an error in state: 534.
+## Ends in an error in state: 537.
 ##
 ## property -> nseq(Attr) property_name . COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -55,7 +55,7 @@ assigned to the field.
 
 interactive_expr: LBRACE UIdent COLON ZWSP
 ##
-## Ends in an error in state: 527.
+## Ends in an error in state: 530.
 ##
 ## property -> property_name COLON . expr [ SEMI RBRACE COMMA ]
 ##
@@ -64,7 +64,7 @@ interactive_expr: LBRACE UIdent COLON ZWSP
 ##
 contract: LBRACE Attr Ident COLON ZWSP
 ##
-## Ends in an error in state: 535.
+## Ends in an error in state: 538.
 ##
 ## property -> nseq(Attr) property_name COLON . expr [ SEMI RBRACE COMMA ]
 ##
@@ -92,7 +92,7 @@ At this point, field declarations are expected, separated by commas
 
 interactive_expr: Bytes SEMI
 ##
-## Ends in an error in state: 618.
+## Ends in an error in state: 621.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -103,14 +103,14 @@ interactive_expr: Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed expression.
@@ -119,7 +119,7 @@ expected.
 
 contract: Const ZWSP
 ##
-## Ends in an error in state: 394.
+## Ends in an error in state: 397.
 ##
 ## const_decl -> Const . binding_list [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -128,7 +128,7 @@ contract: Const ZWSP
 ##
 contract: Let ZWSP
 ##
-## Ends in an error in state: 304.
+## Ends in an error in state: 307.
 ##
 ## let_decl -> Let . binding_list [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -137,7 +137,7 @@ contract: Let ZWSP
 ##
 contract: Let WILD EQ Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 353.
+## Ends in an error in state: 356.
 ##
 ## nsepseq(binding_initializer,COMMA) -> binding_initializer COMMA . nsepseq(binding_initializer,COMMA) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -150,7 +150,7 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Export ZWSP
 ##
-## Ends in an error in state: 588.
+## Ends in an error in state: 591.
 ##
 ## export_decl -> Export . declaration [ SEMI RBRACE EOF ]
 ## namespace_stmt -> Export . namespace [ SEMI RBRACE EOF ]
@@ -160,7 +160,7 @@ contract: Export ZWSP
 ##
 contract: Attr Export ZWSP
 ##
-## Ends in an error in state: 597.
+## Ends in an error in state: 600.
 ##
 ## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) Export . namespace [ SEMI RBRACE EOF ]
@@ -176,7 +176,7 @@ At this point, one of the following is expected:
 
 contract: LBRACE Export ZWSP
 ##
-## Ends in an error in state: 393.
+## Ends in an error in state: 396.
 ##
 ## export_decl -> Export . declaration [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -185,7 +185,7 @@ contract: LBRACE Export ZWSP
 ##
 contract: LBRACE Attr Export ZWSP
 ##
-## Ends in an error in state: 459.
+## Ends in an error in state: 462.
 ##
 ## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -198,7 +198,7 @@ At this point, a value or type declaration is expected.
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes COLON
 ##
-## Ends in an error in state: 469.
+## Ends in an error in state: 472.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -210,18 +210,18 @@ contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes COLON
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 contract: If LPAR Bytes RPAR For LPAR Let Ident Of Ident SEMI
 ##
-## Ends in an error in state: 391.
+## Ends in an error in state: 394.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of expr . RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -234,18 +234,18 @@ contract: If LPAR Bytes RPAR For LPAR Let Ident Of Ident SEMI
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 30, spurious reduction of production member_expr -> Ident
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 contract: For LPAR Let Ident Of Ident SEMI
 ##
-## Ends in an error in state: 415.
+## Ends in an error in state: 418.
 ##
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -257,18 +257,18 @@ contract: For LPAR Let Ident Of Ident SEMI
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 30, spurious reduction of production member_expr -> Ident
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 contract: Attr For LPAR Const Ident Of Bytes COLON
 ##
-## Ends in an error in state: 425.
+## Ends in an error in state: 428.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -279,14 +279,14 @@ contract: Attr For LPAR Const Ident Of Bytes COLON
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed bounded ("for-of") loop.
@@ -295,7 +295,7 @@ a closing parenthesis ')' is expected.
 
 contract: For LPAR Let Ident Of Ident RPAR ZWSP
 ##
-## Ends in an error in state: 416.
+## Ends in an error in state: 419.
 ##
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -304,7 +304,7 @@ contract: For LPAR Let Ident Of Ident RPAR ZWSP
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident Of Ident RPAR ZWSP
 ##
-## Ends in an error in state: 392.
+## Ends in an error in state: 395.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of expr RPAR . closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
@@ -314,7 +314,7 @@ contract: If LPAR Ident RPAR For LPAR Let Ident Of Ident RPAR ZWSP
 ##
 contract: Attr For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 426.
+## Ends in an error in state: 429.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -323,7 +323,7 @@ contract: Attr For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 470.
+## Ends in an error in state: 473.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
@@ -337,7 +337,7 @@ At this point, the body of the loop is expected as a statement.
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of ZWSP
 ##
-## Ends in an error in state: 468.
+## Ends in an error in state: 471.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -347,7 +347,7 @@ contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of ZWSP
 ##
 contract: For LPAR Let Ident Of ZWSP
 ##
-## Ends in an error in state: 414.
+## Ends in an error in state: 417.
 ##
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -356,7 +356,7 @@ contract: For LPAR Let Ident Of ZWSP
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident Of ZWSP
 ##
-## Ends in an error in state: 390.
+## Ends in an error in state: 393.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of . expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -366,7 +366,7 @@ contract: If LPAR Ident RPAR For LPAR Let Ident Of ZWSP
 ##
 contract: Attr For LPAR Const Ident Of ZWSP
 ##
-## Ends in an error in state: 424.
+## Ends in an error in state: 427.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -379,7 +379,7 @@ At this point, the range of the index is expected as an expression.
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident ZWSP
 ##
-## Ends in an error in state: 467.
+## Ends in an error in state: 470.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -389,7 +389,7 @@ contract: If LPAR Bytes RPAR Attr For LPAR Const Ident ZWSP
 ##
 contract: For LPAR Let Ident ZWSP
 ##
-## Ends in an error in state: 413.
+## Ends in an error in state: 416.
 ##
 ## for_of_stmt(statement) -> For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -398,7 +398,7 @@ contract: For LPAR Let Ident ZWSP
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident ZWSP
 ##
-## Ends in an error in state: 389.
+## Ends in an error in state: 392.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident . Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -408,7 +408,7 @@ contract: If LPAR Ident RPAR For LPAR Let Ident ZWSP
 ##
 contract: Attr For LPAR Const Ident ZWSP
 ##
-## Ends in an error in state: 423.
+## Ends in an error in state: 426.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -422,7 +422,7 @@ range as an expression.
 
 contract: For LPAR Let ZWSP
 ##
-## Ends in an error in state: 412.
+## Ends in an error in state: 415.
 ##
 ## for_of_stmt(statement) -> For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -431,7 +431,7 @@ contract: For LPAR Let ZWSP
 ##
 contract: If LPAR Ident RPAR For LPAR Let ZWSP
 ##
-## Ends in an error in state: 388.
+## Ends in an error in state: 391.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR index_kind . Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -441,7 +441,7 @@ contract: If LPAR Ident RPAR For LPAR Let ZWSP
 ##
 contract: Attr For LPAR Const ZWSP
 ##
-## Ends in an error in state: 422.
+## Ends in an error in state: 425.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -450,7 +450,7 @@ contract: Attr For LPAR Const ZWSP
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR Const ZWSP
 ##
-## Ends in an error in state: 466.
+## Ends in an error in state: 469.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -464,7 +464,7 @@ At this point, the index is expected as a variable.
 
 contract: For LPAR ZWSP
 ##
-## Ends in an error in state: 411.
+## Ends in an error in state: 414.
 ##
 ## for_of_stmt(statement) -> For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -473,7 +473,7 @@ contract: For LPAR ZWSP
 ##
 contract: If LPAR Ident RPAR For LPAR ZWSP
 ##
-## Ends in an error in state: 385.
+## Ends in an error in state: 388.
 ##
 ## for_of_stmt(closed_stmt) -> For LPAR . index_kind Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -483,7 +483,7 @@ contract: If LPAR Ident RPAR For LPAR ZWSP
 ##
 contract: Attr For LPAR ZWSP
 ##
-## Ends in an error in state: 421.
+## Ends in an error in state: 424.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -492,7 +492,7 @@ contract: Attr For LPAR ZWSP
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR ZWSP
 ##
-## Ends in an error in state: 465.
+## Ends in an error in state: 468.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -509,7 +509,7 @@ followed by the index as a variable.
 
 contract: For ZWSP
 ##
-## Ends in an error in state: 410.
+## Ends in an error in state: 413.
 ##
 ## for_of_stmt(statement) -> For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -518,7 +518,7 @@ contract: For ZWSP
 ##
 contract: If LPAR Ident RPAR For ZWSP
 ##
-## Ends in an error in state: 384.
+## Ends in an error in state: 387.
 ##
 ## for_of_stmt(closed_stmt) -> For . LPAR index_kind Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -528,7 +528,7 @@ contract: If LPAR Ident RPAR For ZWSP
 ##
 contract: Attr For ZWSP
 ##
-## Ends in an error in state: 420.
+## Ends in an error in state: 423.
 ##
 ## for_of_stmt(statement) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -537,7 +537,7 @@ contract: Attr For ZWSP
 ##
 contract: If LPAR Bytes RPAR Attr For ZWSP
 ##
-## Ends in an error in state: 464.
+## Ends in an error in state: 467.
 ##
 ## for_of_stmt(closed_stmt) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR closed_stmt [ Else ]
 ## for_of_stmt(statement) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
@@ -552,7 +552,7 @@ either the keyword 'const' or 'let'.
 
 contract: If LPAR Bytes SEMI
 ##
-## Ends in an error in state: 375.
+## Ends in an error in state: 378.
 ##
 ## par(if_cond) -> LPAR if_cond . RPAR [ While WILD Verbatim UIdent Type Switch String Return MINUS Let LPAR LBRACKET LBRACE Int Import If Ident For Export Contract Const Bytes BOOL_NOT Attr ]
 ##
@@ -563,15 +563,15 @@ contract: If LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 377, spurious reduction of production if_cond -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 380, spurious reduction of production if_cond -> expr
 ##
 
 Ill-formed conditional statement.
@@ -580,7 +580,7 @@ is expected.
 
 contract: If LPAR Ident RPAR If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 382.
+## Ends in an error in state: 385.
 ##
 ## if_else_stmt(closed_stmt) -> If par(if_cond) . closed_stmt Else closed_stmt [ Else ]
 ## if_else_stmt(statement) -> If par(if_cond) . closed_stmt Else statement [ SEMI RBRACE EOF Default Case ]
@@ -591,7 +591,7 @@ contract: If LPAR Ident RPAR If LPAR Bytes RPAR ZWSP
 ##
 contract: If LPAR Ident RPAR ZWSP
 ##
-## Ends in an error in state: 378.
+## Ends in an error in state: 381.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) . closed_stmt Else statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt -> If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
@@ -601,7 +601,7 @@ contract: If LPAR Ident RPAR ZWSP
 ##
 contract: Attr If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 409.
+## Ends in an error in state: 412.
 ##
 ## if_stmt -> nseq(Attr) If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -615,7 +615,7 @@ expected.
 
 contract: If LPAR Ident RPAR If ZWSP
 ##
-## Ends in an error in state: 381.
+## Ends in an error in state: 384.
 ##
 ## if_else_stmt(closed_stmt) -> If . par(if_cond) closed_stmt Else closed_stmt [ Else ]
 ## if_else_stmt(statement) -> If . par(if_cond) closed_stmt Else statement [ SEMI RBRACE EOF Default Case ]
@@ -626,7 +626,7 @@ contract: If LPAR Ident RPAR If ZWSP
 ##
 contract: If ZWSP
 ##
-## Ends in an error in state: 373.
+## Ends in an error in state: 376.
 ##
 ## if_else_stmt(statement) -> If . par(if_cond) closed_stmt Else statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt -> If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
@@ -636,7 +636,7 @@ contract: If ZWSP
 ##
 contract: Attr If ZWSP
 ##
-## Ends in an error in state: 408.
+## Ends in an error in state: 411.
 ##
 ## if_stmt -> nseq(Attr) If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -650,7 +650,7 @@ parentheses.
 
 contract: If LPAR ZWSP
 ##
-## Ends in an error in state: 374.
+## Ends in an error in state: 377.
 ##
 ## par(if_cond) -> LPAR . if_cond RPAR [ While WILD Verbatim UIdent Type Switch String Return MINUS Let LPAR LBRACKET LBRACE Int Import If Ident For Export Contract Const Bytes BOOL_NOT Attr ]
 ##
@@ -663,16 +663,16 @@ At this point, the condition is expected as an expression.
 
 contract: Import UIdent EQ UIdent DOT ZWSP
 ##
-## Ends in an error in state: 178.
+## Ends in an error in state: 63.
 ##
-## nsepseq(module_name,DOT) -> UIdent DOT . nsepseq(module_name,DOT) [ SEMI RPAR RBRACE Else EOF Default Case ]
+## nsepseq(module_name,DOT) -> UIdent DOT . nsepseq(module_name,DOT) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## UIdent DOT
 ##
 contract: Import UIdent EQ ZWSP
 ##
-## Ends in an error in state: 357.
+## Ends in an error in state: 360.
 ##
 ## import_stmt -> Import UIdent EQ . nsepseq(module_name,DOT) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -685,7 +685,7 @@ At this point, the qualified name of the aliased module is expected.
 
 contract: Import ZWSP
 ##
-## Ends in an error in state: 355.
+## Ends in an error in state: 358.
 ##
 ## import_stmt -> Import . UIdent EQ nsepseq(module_name,DOT) [ SEMI RBRACE Else EOF Default Case ]
 ## import_stmt -> Import . TIMES As UIdent From String [ SEMI RBRACE Else EOF Default Case ]
@@ -700,7 +700,7 @@ At this point, the alias is expected as a module name.
 
 contract: Import UIdent ZWSP
 ##
-## Ends in an error in state: 356.
+## Ends in an error in state: 359.
 ##
 ## import_stmt -> Import UIdent . EQ nsepseq(module_name,DOT) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -714,7 +714,7 @@ qualified name of the aliased module
 
 contract: LBRACE Ident Default
 ##
-## Ends in an error in state: 434.
+## Ends in an error in state: 437.
 ##
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ QMARK BOOL_OR ]
 ## ternary_expr(expr_stmt) -> disj_expr_level . QMARK expr_stmt COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
@@ -726,14 +726,14 @@ contract: LBRACE Ident Default
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 516, spurious reduction of production member_expr -> Ident
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 519, spurious reduction of production member_expr -> Ident
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
 ##
 
 Ill-formed block of statements.
@@ -742,7 +742,7 @@ expected.
 
 contract: LBRACE Ident SEMI ZWSP
 ##
-## Ends in an error in state: 530.
+## Ends in an error in state: 533.
 ##
 ## nsepseq(property,object_sep) -> property object_sep . nsepseq(property,object_sep) [ RBRACE ]
 ## nseq(__anonymous_0(property,object_sep)) -> property object_sep . [ RBRACE ]
@@ -759,7 +759,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Ident RPAR LBRACE Case ZWSP
 ##
-## Ends in an error in state: 502.
+## Ends in an error in state: 505.
 ##
 ## case -> Case . expr COLON [ RBRACE Default Case ]
 ## case -> Case . expr COLON case_statements [ RBRACE Default Case ]
@@ -774,7 +774,7 @@ select the case to be executed first.
 
 contract: Switch LPAR Bytes SEMI
 ##
-## Ends in an error in state: 295.
+## Ends in an error in state: 298.
 ##
 ## par(switch_cond) -> LPAR switch_cond . RPAR [ LBRACE ]
 ##
@@ -785,15 +785,15 @@ contract: Switch LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 297, spurious reduction of production switch_cond -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 300, spurious reduction of production switch_cond -> expr
 ##
 
 Ill-formed switch statement.
@@ -802,7 +802,7 @@ At this point, if the expression is complete, a closing parenthesis
 
 contract: Switch LPAR Ident RPAR LBRACE Case Ident COLON ZWSP
 ##
-## Ends in an error in state: 504.
+## Ends in an error in state: 507.
 ##
 ## case -> Case expr COLON . [ RBRACE Default Case ]
 ## case -> Case expr COLON . case_statements [ RBRACE Default Case ]
@@ -821,7 +821,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Ident RPAR LBRACE Default COLON ZWSP
 ##
-## Ends in an error in state: 301.
+## Ends in an error in state: 304.
 ##
 ## default_case -> Default COLON . [ RBRACE ]
 ## default_case -> Default COLON . case_statements [ RBRACE ]
@@ -838,7 +838,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Case Bytes SEMI
 ##
-## Ends in an error in state: 503.
+## Ends in an error in state: 506.
 ##
 ## case -> Case expr . COLON [ RBRACE Default Case ]
 ## case -> Case expr . COLON case_statements [ RBRACE Default Case ]
@@ -850,14 +850,14 @@ contract: Switch LPAR Bytes RPAR LBRACE Case Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed switch statement.
@@ -866,7 +866,7 @@ expected.
 
 contract: Switch LPAR Ident RPAR LBRACE Default ZWSP
 ##
-## Ends in an error in state: 300.
+## Ends in an error in state: 303.
 ##
 ## default_case -> Default . COLON [ RBRACE ]
 ## default_case -> Default . COLON case_statements [ RBRACE ]
@@ -880,7 +880,7 @@ At this point, a colon ':' for the default case is expected.
 
 contract: Switch LPAR Ident RPAR LBRACE ZWSP
 ##
-## Ends in an error in state: 299.
+## Ends in an error in state: 302.
 ##
 ## braces(cases) -> LBRACE . cases RBRACE [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -893,7 +893,7 @@ At this point, a case starting with the keyword 'case' is expected.
 
 contract: Switch LPAR Ident RPAR ZWSP
 ##
-## Ends in an error in state: 298.
+## Ends in an error in state: 301.
 ##
 ## switch_stmt -> Switch par(switch_cond) . braces(cases) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -906,7 +906,7 @@ At this point, cases are expected between braces '{' '}'.
 
 contract: Switch ZWSP
 ##
-## Ends in an error in state: 173.
+## Ends in an error in state: 179.
 ##
 ## switch_stmt -> Switch . par(switch_cond) braces(cases) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -919,7 +919,7 @@ At this point, an expression between parentheses is expected.
 
 contract: Switch LPAR ZWSP
 ##
-## Ends in an error in state: 174.
+## Ends in an error in state: 180.
 ##
 ## par(switch_cond) -> LPAR . switch_cond RPAR [ LBRACE ]
 ##
@@ -932,7 +932,7 @@ At this point, the expression evaluated against the cases is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return While
 ##
-## Ends in an error in state: 498.
+## Ends in an error in state: 501.
 ##
 ## nsepseq(case_statement,SEMI) -> case_statement . [ RBRACE Default Case ]
 ## nsepseq(case_statement,SEMI) -> case_statement . SEMI nsepseq(case_statement,SEMI) [ RBRACE Default Case ]
@@ -946,10 +946,10 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 302, spurious reduction of production return_stmt -> Return
-## In state 418, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 458, spurious reduction of production statement -> base_stmt(statement)
-## In state 493, spurious reduction of production case_statement -> statement
+## In state 305, spurious reduction of production return_stmt -> Return
+## In state 421, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 461, spurious reduction of production statement -> base_stmt(statement)
+## In state 496, spurious reduction of production case_statement -> statement
 ##
 
 Ill-formed switch statement.
@@ -976,7 +976,7 @@ At this point, the first statement is expected.
 
 contract: LBRACKET ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 562.
+## Ends in an error in state: 565.
 ##
 ## array_item -> ELLIPSIS . expr [ RBRACKET COMMA ]
 ##
@@ -989,7 +989,7 @@ At this point, an expression denoting the included tuple is expected.
 
 contract: LBRACKET Ident COLON
 ##
-## Ends in an error in state: 567.
+## Ends in an error in state: 570.
 ##
 ## nsepseq(array_item,COMMA) -> array_item . [ RBRACKET ]
 ## nsepseq(array_item,COMMA) -> array_item . COMMA nsepseq(array_item,COMMA) [ RBRACKET ]
@@ -1002,15 +1002,15 @@ contract: LBRACKET Ident COLON
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 30, spurious reduction of production member_expr -> Ident
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 566, spurious reduction of production array_item -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 569, spurious reduction of production array_item -> expr
 ##
 
 Ill-formed tuple expression.
@@ -1034,7 +1034,7 @@ At this point, an expression is expected.
 
 contract: Let LBRACE Attr Ident ZWSP
 ##
-## Ends in an error in state: 342.
+## Ends in an error in state: 345.
 ##
 ## braces(property_patterns) -> LBRACE property_patterns . RBRACE [ EQ COLON ]
 ## property_patterns -> property_patterns . object_sep property_pattern [ SEMI RBRACE COMMA ]
@@ -1053,7 +1053,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident COMMA ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 345.
+## Ends in an error in state: 348.
 ##
 ## object_rest_pattern -> ELLIPSIS . Ident [ SEMI RBRACE COMMA ]
 ##
@@ -1066,7 +1066,7 @@ At this point, a variable is expected to match the remaining record.
 
 contract: Let LBRACE Ident COLON ZWSP
 ##
-## Ends in an error in state: 325.
+## Ends in an error in state: 328.
 ##
 ## property_pattern -> Ident COLON . binding_initializer [ SEMI RBRACE COMMA ]
 ##
@@ -1083,7 +1083,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 344.
+## Ends in an error in state: 347.
 ##
 ## property_patterns -> property_patterns object_sep . property_pattern [ SEMI RBRACE COMMA ]
 ## property_patterns -> property_patterns object_sep . object_rest_pattern [ SEMI RBRACE COMMA ]
@@ -1100,7 +1100,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE Ident EQ ZWSP
 ##
-## Ends in an error in state: 323.
+## Ends in an error in state: 326.
 ##
 ## property_pattern -> Ident EQ . expr [ SEMI RBRACE COMMA ]
 ##
@@ -1114,7 +1114,7 @@ expression.
 
 contract: Let LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 322.
+## Ends in an error in state: 325.
 ##
 ## property_pattern -> Ident . EQ expr [ SEMI RBRACE COMMA ]
 ## property_pattern -> Ident . COLON binding_initializer [ SEMI RBRACE COMMA ]
@@ -1135,7 +1135,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACE ZWSP
 ##
-## Ends in an error in state: 321.
+## Ends in an error in state: 324.
 ##
 ## braces(property_patterns) -> LBRACE . property_patterns RBRACE [ EQ COLON ]
 ##
@@ -1149,7 +1149,7 @@ At this point, field patterns are expected to be separated by commas
 
 contract: Let LBRACKET WILD COLON
 ##
-## Ends in an error in state: 313.
+## Ends in an error in state: 316.
 ##
 ## array_item_patterns -> array_item_patterns . COMMA array_item_pattern [ RBRACKET COMMA ]
 ## array_item_patterns -> array_item_patterns . COMMA array_rest_pattern [ RBRACKET COMMA ]
@@ -1168,7 +1168,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACKET WILD COMMA ZWSP
 ##
-## Ends in an error in state: 315.
+## Ends in an error in state: 318.
 ##
 ## array_item_patterns -> array_item_patterns COMMA . array_item_pattern [ RBRACKET COMMA ]
 ## array_item_patterns -> array_item_patterns COMMA . array_rest_pattern [ RBRACKET COMMA ]
@@ -1185,7 +1185,7 @@ At this point, one of the following is expected:
 
 contract: Let LBRACKET WILD COMMA ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 316.
+## Ends in an error in state: 319.
 ##
 ## array_rest_pattern -> ELLIPSIS . Ident [ RBRACKET COMMA ]
 ##
@@ -1198,7 +1198,7 @@ At this point, a variable is expected to match the rest of the tuple.
 
 contract: Let LBRACKET ZWSP
 ##
-## Ends in an error in state: 306.
+## Ends in an error in state: 309.
 ##
 ## array_pattern -> LBRACKET . array_item_patterns RBRACKET [ RBRACKET EQ COMMA COLON ]
 ##
@@ -1211,7 +1211,7 @@ At this point, a tuple component is expected as a pattern.
 
 contract: Let WILD COLON Ident EQ ZWSP
 ##
-## Ends in an error in state: 337.
+## Ends in an error in state: 340.
 ##
 ## binding_initializer -> binding_pattern binding_type EQ . expr [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -1224,7 +1224,7 @@ At this point, an expression is expected.
 
 contract: Let WILD COLON Ident ZWSP
 ##
-## Ends in an error in state: 336.
+## Ends in an error in state: 339.
 ##
 ## binding_initializer -> binding_pattern binding_type . EQ expr [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -1235,9 +1235,9 @@ contract: Let WILD COLON Ident ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 335, spurious reduction of production binding_type -> COLON type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 338, spurious reduction of production binding_type -> COLON type_expr
 ##
 
 Ill-formed value declaration.
@@ -1246,7 +1246,7 @@ symbol '=' is expected, followed by an expression.
 
 contract: Let WILD COLON ZWSP
 ##
-## Ends in an error in state: 332.
+## Ends in an error in state: 335.
 ##
 ## binding_type -> COLON . type_expr [ EQ ]
 ## binding_type -> COLON . type_generics type_expr [ EQ ]
@@ -1260,7 +1260,7 @@ At this point, a type expression is expected.
 
 contract: Let WILD ZWSP
 ##
-## Ends in an error in state: 329.
+## Ends in an error in state: 332.
 ##
 ## binding_initializer -> binding_pattern . EQ expr [ SEMI RBRACE Else EOF Default Case COMMA ]
 ## binding_initializer -> binding_pattern . binding_type EQ expr [ SEMI RBRACE Else EOF Default Case COMMA ]
@@ -1276,7 +1276,7 @@ At this point, one of the following is expected:
 
 contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ##
-## Ends in an error in state: 210.
+## Ends in an error in state: 213.
 ##
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK Else EOF Default Case COMMA COLON BOOL_OR ]
 ## expr -> disj_expr_level . [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -1289,13 +1289,13 @@ contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
 ##
 
 Ill-formed expression.
@@ -1305,7 +1305,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE ZWSP
 ##
-## Ends in an error in state: 587.
+## Ends in an error in state: 590.
 ##
 ## braces(stmts_or_namespace) -> LBRACE . stmts_or_namespace RBRACE [ SEMI RBRACE EOF ]
 ##
@@ -1318,7 +1318,7 @@ At this point, the first statement or namespace is expected.
 
 contract: Namespace UIdent ZWSP
 ##
-## Ends in an error in state: 586.
+## Ends in an error in state: 589.
 ##
 ## namespace -> Namespace UIdent . braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
 ##
@@ -1332,7 +1332,7 @@ statements and/or submodules.
 
 contract: Namespace ZWSP
 ##
-## Ends in an error in state: 585.
+## Ends in an error in state: 588.
 ##
 ## namespace -> Namespace . UIdent braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
 ##
@@ -1355,7 +1355,7 @@ contract: Type UIdent EQ ZWSP
 ##
 contract: Type Ident EQ ZWSP
 ##
-## Ends in an error in state: 168.
+## Ends in an error in state: 174.
 ##
 ## type_decl -> Type Ident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -1364,7 +1364,7 @@ contract: Type Ident EQ ZWSP
 ##
 contract: Type UIdent LT Ident GT EQ ZWSP
 ##
-## Ends in an error in state: 164.
+## Ends in an error in state: 170.
 ##
 ## type_decl -> Type UIdent type_params EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -1400,7 +1400,7 @@ At this point, a type parameter is expected.
 
 contract: UIdent LPAR Bytes SEMI
 ##
-## Ends in an error in state: 578.
+## Ends in an error in state: 581.
 ##
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg . [ RPAR ]
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg . COMMA nsepseq(ctor_arg,COMMA) [ RPAR ]
@@ -1412,15 +1412,15 @@ contract: UIdent LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 576, spurious reduction of production ctor_arg -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 579, spurious reduction of production ctor_arg -> expr
 ##
 
 Ill-formed instantiation of a parametric type.
@@ -1446,7 +1446,7 @@ At this point, one of the following is expected:
 
 contract: UIdent LPAR Ident COMMA ZWSP
 ##
-## Ends in an error in state: 579.
+## Ends in an error in state: 582.
 ##
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg COMMA . nsepseq(ctor_arg,COMMA) [ RPAR ]
 ##
@@ -1469,7 +1469,7 @@ contract: Type UIdent LT Ident GT While
 ##
 contract: Type UIdent LT Ident GT ZWSP ZWSP
 ##
-## Ends in an error in state: 163.
+## Ends in an error in state: 169.
 ##
 ## type_decl -> Type UIdent type_params . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -1485,8 +1485,8 @@ contract: Const Ident COLON LT UIdent GT While
 ##
 ## Ends in an error in state: 19.
 ##
-## chevrons(nsepseq(type_name,COMMA)) -> LT nsepseq(type_name,COMMA) GT . [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
-## chevrons(nsepseq(type_name,COMMA)) -> LT nsepseq(type_name,COMMA) GT . ZWSP [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
+## chevrons(nsepseq(type_name,COMMA)) -> LT nsepseq(type_name,COMMA) GT . [ WILD VBAR UIdent String Parameter LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
+## chevrons(nsepseq(type_name,COMMA)) -> LT nsepseq(type_name,COMMA) GT . ZWSP [ WILD VBAR UIdent String Parameter LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LT nsepseq(type_name,COMMA) GT
@@ -1525,7 +1525,7 @@ contract: Type UIdent ZWSP
 ##
 contract: Type Ident ZWSP
 ##
-## Ends in an error in state: 167.
+## Ends in an error in state: 173.
 ##
 ## type_decl -> Type Ident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ## type_decl -> Type Ident . type_params EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
@@ -1586,7 +1586,7 @@ At this point, the qualified name of a value is expected.
 
 contract: Ident BOOL_AND ZWSP
 ##
-## Ends in an error in state: 217.
+## Ends in an error in state: 220.
 ##
 ## bin_op(conj_expr_level,BOOL_AND,comp_expr_level) -> conj_expr_level BOOL_AND . comp_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK Else EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1595,7 +1595,7 @@ contract: Ident BOOL_AND ZWSP
 ##
 contract: Ident BOOL_OR ZWSP
 ##
-## Ends in an error in state: 267.
+## Ends in an error in state: 270.
 ##
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level BOOL_OR . conj_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK Else EOF Default Case COMMA COLON BOOL_OR ]
 ##
@@ -1604,7 +1604,7 @@ contract: Ident BOOL_OR ZWSP
 ##
 contract: Ident EQ2 ZWSP
 ##
-## Ends in an error in state: 246.
+## Ends in an error in state: 249.
 ##
 ## bin_op(comp_expr_level,EQ2,add_expr_level) -> comp_expr_level EQ2 . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1613,7 +1613,7 @@ contract: Ident EQ2 ZWSP
 ##
 contract: Ident GT While
 ##
-## Ends in an error in state: 248.
+## Ends in an error in state: 251.
 ##
 ## bin_op(comp_expr_level,gt,add_expr_level) -> comp_expr_level gt . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1624,11 +1624,11 @@ contract: Ident GT While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 243, spurious reduction of production gt -> GT
+## In state 246, spurious reduction of production gt -> GT
 ##
 contract: Bytes GT ZWSP EQ ZWSP
 ##
-## Ends in an error in state: 250.
+## Ends in an error in state: 253.
 ##
 ## bin_op(comp_expr_level,ge,add_expr_level) -> comp_expr_level ge . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1637,7 +1637,7 @@ contract: Bytes GT ZWSP EQ ZWSP
 ##
 contract: Ident LE ZWSP
 ##
-## Ends in an error in state: 241.
+## Ends in an error in state: 244.
 ##
 ## bin_op(comp_expr_level,LE,add_expr_level) -> comp_expr_level LE . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1646,7 +1646,7 @@ contract: Ident LE ZWSP
 ##
 contract: Ident LT ZWSP
 ##
-## Ends in an error in state: 239.
+## Ends in an error in state: 242.
 ##
 ## bin_op(comp_expr_level,LT,add_expr_level) -> comp_expr_level LT . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1655,7 +1655,7 @@ contract: Ident LT ZWSP
 ##
 contract: Ident MINUS ZWSP
 ##
-## Ends in an error in state: 237.
+## Ends in an error in state: 240.
 ##
 ## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1664,7 +1664,7 @@ contract: Ident MINUS ZWSP
 ##
 contract: Ident NE ZWSP
 ##
-## Ends in an error in state: 219.
+## Ends in an error in state: 222.
 ##
 ## bin_op(comp_expr_level,NE,add_expr_level) -> comp_expr_level NE . add_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK NE LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1673,7 +1673,7 @@ contract: Ident NE ZWSP
 ##
 contract: Ident PLUS ZWSP
 ##
-## Ends in an error in state: 231.
+## Ends in an error in state: 234.
 ##
 ## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1682,7 +1682,7 @@ contract: Ident PLUS ZWSP
 ##
 contract: Ident REM ZWSP
 ##
-## Ends in an error in state: 235.
+## Ends in an error in state: 238.
 ##
 ## bin_op(mult_expr_level,REM,unary_expr_level) -> mult_expr_level REM . unary_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1691,7 +1691,7 @@ contract: Ident REM ZWSP
 ##
 contract: Ident SLASH ZWSP
 ##
-## Ends in an error in state: 233.
+## Ends in an error in state: 236.
 ##
 ## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1700,7 +1700,7 @@ contract: Ident SLASH ZWSP
 ##
 contract: Ident TIMES ZWSP
 ##
-## Ends in an error in state: 198.
+## Ends in an error in state: 201.
 ##
 ## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1709,7 +1709,7 @@ contract: Ident TIMES ZWSP
 ##
 contract: BOOL_NOT ZWSP
 ##
-## Ends in an error in state: 183.
+## Ends in an error in state: 186.
 ##
 ## unary_expr_level -> BOOL_NOT . call_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
 ##
@@ -1718,7 +1718,7 @@ contract: BOOL_NOT ZWSP
 ##
 interactive_expr: ZWSP
 ##
-## Ends in an error in state: 616.
+## Ends in an error in state: 619.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -1740,7 +1740,7 @@ At this point, an expression is expected.
 
 contract: Let WILD EQ ZWSP
 ##
-## Ends in an error in state: 330.
+## Ends in an error in state: 333.
 ##
 ## binding_initializer -> binding_pattern EQ . expr [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -1753,7 +1753,7 @@ At this point, the expression to bound is expected.
 
 contract: Ident DOT ZWSP
 ##
-## Ends in an error in state: 292.
+## Ends in an error in state: 295.
 ##
 ## projection -> member_expr DOT . Ident [ TIMES SLASH SEMI RPAR REM_EQ REM RBRACKET RBRACE QMARK PLUS_EQ PLUS NE MULT_EQ MINUS_EQ MINUS LT LPAR LE LBRACKET GT Else EQ2 EQ EOF Default DOT DIV_EQ Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -1766,7 +1766,7 @@ At this point, the name of a record field is expected.
 
 contract: Bytes LBRACKET Bytes SEMI
 ##
-## Ends in an error in state: 290.
+## Ends in an error in state: 293.
 ##
 ## projection -> member_expr LBRACKET expr . RBRACKET [ TIMES SLASH SEMI RPAR REM_EQ REM RBRACKET RBRACE QMARK PLUS_EQ PLUS NE MULT_EQ MINUS_EQ MINUS LT LPAR LE LBRACKET GT Else EQ2 EQ EOF Default DOT DIV_EQ Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -1777,14 +1777,14 @@ contract: Bytes LBRACKET Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed selection in a tuple.
@@ -1792,7 +1792,7 @@ At this point, a closing bracket ']' is expected.
 
 contract: Ident LBRACKET ZWSP
 ##
-## Ends in an error in state: 189.
+## Ends in an error in state: 192.
 ##
 ## projection -> member_expr LBRACKET . expr RBRACKET [ TIMES SLASH SEMI RPAR REM_EQ REM RBRACKET RBRACE QMARK PLUS_EQ PLUS NE MULT_EQ MINUS_EQ MINUS LT LPAR LE LBRACKET GT Else EQ2 EQ EOF Default DOT DIV_EQ Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -1806,7 +1806,7 @@ first component.
 
 contract: Ident LPAR ZWSP
 ##
-## Ends in an error in state: 201.
+## Ends in an error in state: 204.
 ##
 ## par(ioption(nsepseq(fun_arg,COMMA))) -> LPAR . RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## par(ioption(nsepseq(fun_arg,COMMA))) -> LPAR . nsepseq(fun_arg,COMMA) RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
@@ -1822,7 +1822,7 @@ At this point, one of the following is expected:
 
 contract: Ident LPAR Ident COMMA ZWSP
 ##
-## Ends in an error in state: 207.
+## Ends in an error in state: 210.
 ##
 ## nsepseq(fun_arg,COMMA) -> fun_arg COMMA . nsepseq(fun_arg,COMMA) [ RPAR ]
 ##
@@ -1835,7 +1835,7 @@ At this point, an argument is expected as an expression.
 
 contract: Bytes LPAR Bytes SEMI
 ##
-## Ends in an error in state: 206.
+## Ends in an error in state: 209.
 ##
 ## nsepseq(fun_arg,COMMA) -> fun_arg . [ RPAR ]
 ## nsepseq(fun_arg,COMMA) -> fun_arg . COMMA nsepseq(fun_arg,COMMA) [ RPAR ]
@@ -1847,15 +1847,15 @@ contract: Bytes LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 209, spurious reduction of production fun_arg -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 212, spurious reduction of production fun_arg -> expr
 ##
 
 Ill-formed function call.
@@ -1865,7 +1865,7 @@ At this point, one of the following is expected:
 
 contract: Return While
 ##
-## Ends in an error in state: 609.
+## Ends in an error in state: 612.
 ##
 ## toplevel_stmts -> stmt_or_namespace . SEMI toplevel_stmts [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace . option(SEMI) [ EOF ]
@@ -1877,10 +1877,10 @@ contract: Return While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 302, spurious reduction of production return_stmt -> Return
-## In state 418, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 458, spurious reduction of production statement -> base_stmt(statement)
-## In state 594, spurious reduction of production stmt_or_namespace -> statement
+## In state 305, spurious reduction of production return_stmt -> Return
+## In state 421, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 461, spurious reduction of production statement -> base_stmt(statement)
+## In state 597, spurious reduction of production stmt_or_namespace -> statement
 ##
 
 Ill-formed top-level statement.
@@ -1892,7 +1892,7 @@ expected:
 
 contract: While LPAR Ident RPAR ZWSP
 ##
-## Ends in an error in state: 584.
+## Ends in an error in state: 587.
 ##
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -1901,7 +1901,7 @@ contract: While LPAR Ident RPAR ZWSP
 ##
 contract: If LPAR Ident RPAR While LPAR Ident RPAR ZWSP
 ##
-## Ends in an error in state: 380.
+## Ends in an error in state: 383.
 ##
 ## while_stmt(closed_stmt) -> While par(while_cond) . closed_stmt [ Else ]
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
@@ -1915,7 +1915,7 @@ At this point, the body of the loop is expected as a statement.
 
 contract: While LPAR Bytes SEMI
 ##
-## Ends in an error in state: 581.
+## Ends in an error in state: 584.
 ##
 ## par(while_cond) -> LPAR while_cond . RPAR [ While WILD Verbatim UIdent Type Switch String Return MINUS Let LPAR LBRACKET LBRACE Int Import If Ident For Export Contract Const Bytes BOOL_NOT Attr ]
 ##
@@ -1926,15 +1926,15 @@ contract: While LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 583, spurious reduction of production while_cond -> expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 586, spurious reduction of production while_cond -> expr
 ##
 
 Ill-formed unbounded ("while") loop.
@@ -1965,7 +1965,7 @@ contract: While ZWSP
 ##
 contract: If LPAR Ident RPAR While ZWSP
 ##
-## Ends in an error in state: 379.
+## Ends in an error in state: 382.
 ##
 ## while_stmt(closed_stmt) -> While . par(while_cond) closed_stmt [ Else ]
 ## while_stmt(statement) -> While . par(while_cond) statement [ SEMI RBRACE EOF Default Case ]
@@ -1988,7 +1988,7 @@ contract: ZWSP
 ##
 contract: Directive ZWSP
 ##
-## Ends in an error in state: 607.
+## Ends in an error in state: 610.
 ##
 ## toplevel_stmts -> Directive . [ EOF ]
 ## toplevel_stmts -> Directive . toplevel_stmts [ EOF ]
@@ -2002,7 +2002,7 @@ At this point, a top-level statement is expected.
 
 contract: Let Attr VBAR
 ##
-## Ends in an error in state: 310.
+## Ends in an error in state: 313.
 ##
 ## var_pattern -> nseq(Attr) . Ident [ SEMI RBRACKET RBRACE EQ COMMA COLON ]
 ##
@@ -2013,7 +2013,7 @@ contract: Let Attr VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed attributed variable in a pattern.
@@ -2022,7 +2022,7 @@ expected.
 
 contract: Attr VBAR
 ##
-## Ends in an error in state: 596.
+## Ends in an error in state: 599.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF ]
 ## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF ]
@@ -2039,11 +2039,11 @@ contract: Attr VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 contract: LBRACE Return SEMI Attr ZWSP
 ##
-## Ends in an error in state: 419.
+## Ends in an error in state: 422.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF Default Case ]
 ## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF Default Case ]
@@ -2058,7 +2058,7 @@ contract: LBRACE Return SEMI Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-defined value declaration.
@@ -2069,7 +2069,7 @@ At this point, one of the following is expected:
 
 contract: Ident EQ ZWSP
 ##
-## Ends in an error in state: 450.
+## Ends in an error in state: 453.
 ##
 ## assign_stmt -> assign_lhs EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -2092,7 +2092,7 @@ contract: LBRACKET ZWSP
 ##
 contract: LBRACKET Ident COMMA ZWSP
 ##
-## Ends in an error in state: 568.
+## Ends in an error in state: 571.
 ##
 ## nsepseq(array_item,COMMA) -> array_item COMMA . nsepseq(array_item,COMMA) [ RBRACKET ]
 ##
@@ -2107,7 +2107,7 @@ At this point, one of the following is expected:
 
 contract: Type Ident LT Ident GT ZWSP ZWSP
 ##
-## Ends in an error in state: 170.
+## Ends in an error in state: 176.
 ##
 ## type_decl -> Type Ident type_params . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2121,7 +2121,7 @@ type expression.
 
 contract: Type Ident LT Ident GT EQ ZWSP
 ##
-## Ends in an error in state: 171.
+## Ends in an error in state: 177.
 ##
 ## type_decl -> Type Ident type_params EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2136,8 +2136,8 @@ contract: Const Ident COLON LT ZWSP
 ##
 ## Ends in an error in state: 11.
 ##
-## chevrons(nsepseq(type_name,COMMA)) -> LT . nsepseq(type_name,COMMA) GT [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
-## chevrons(nsepseq(type_name,COMMA)) -> LT . nsepseq(type_name,COMMA) GT ZWSP [ WILD VBAR UIdent String LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
+## chevrons(nsepseq(type_name,COMMA)) -> LT . nsepseq(type_name,COMMA) GT [ WILD VBAR UIdent String Parameter LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
+## chevrons(nsepseq(type_name,COMMA)) -> LT . nsepseq(type_name,COMMA) GT ZWSP [ WILD VBAR UIdent String Parameter LPAR LBRACKET LBRACE Int Ident ES6FUN Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LT
@@ -2192,7 +2192,7 @@ At this point, one of the following is expected:
 
 contract: Const Ident COLON LT UIdent GT ZWSP ZWSP
 ##
-## Ends in an error in state: 333.
+## Ends in an error in state: 336.
 ##
 ## binding_type -> COLON type_generics . type_expr [ EQ ]
 ##
@@ -2205,7 +2205,7 @@ At this point, if the type generics are complete, a type expression is expected.
 
 contract: Bytes QMARK ZWSP
 ##
-## Ends in an error in state: 435.
+## Ends in an error in state: 438.
 ##
 ## ternary_expr(expr_stmt) -> disj_expr_level QMARK . expr_stmt COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -2218,7 +2218,7 @@ At this point, an expression for the truthy case is expected.
 
 contract: Import TIMES ZWSP
 ##
-## Ends in an error in state: 359.
+## Ends in an error in state: 362.
 ##
 ## import_stmt -> Import TIMES . As UIdent From String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2231,7 +2231,7 @@ At this point, the keyword 'from' is expected.
 
 contract: Import TIMES As ZWSP
 ##
-## Ends in an error in state: 360.
+## Ends in an error in state: 363.
 ##
 ## import_stmt -> Import TIMES As . UIdent From String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2245,7 +2245,7 @@ capital letter.
 
 contract: Import TIMES As UIdent ZWSP
 ##
-## Ends in an error in state: 361.
+## Ends in an error in state: 364.
 ##
 ## import_stmt -> Import TIMES As UIdent . From String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2254,7 +2254,7 @@ contract: Import TIMES As UIdent ZWSP
 ##
 contract: Import LBRACE Ident RBRACE ZWSP
 ##
-## Ends in an error in state: 370.
+## Ends in an error in state: 373.
 ##
 ## import_stmt -> Import braces(nsepseq(field_name,COMMA)) . From String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2267,7 +2267,7 @@ At this point, the keyword 'from' is expected.
 
 contract: Import TIMES As UIdent From ZWSP
 ##
-## Ends in an error in state: 362.
+## Ends in an error in state: 365.
 ##
 ## import_stmt -> Import TIMES As UIdent From . String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2276,7 +2276,7 @@ contract: Import TIMES As UIdent From ZWSP
 ##
 contract: Import LBRACE Ident RBRACE From ZWSP
 ##
-## Ends in an error in state: 371.
+## Ends in an error in state: 374.
 ##
 ## import_stmt -> Import braces(nsepseq(field_name,COMMA)) From . String [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -2289,7 +2289,7 @@ At this point, a path to another file is expected as a string.
 
 contract: Import LBRACE ZWSP
 ##
-## Ends in an error in state: 364.
+## Ends in an error in state: 367.
 ##
 ## braces(nsepseq(field_name,COMMA)) -> LBRACE . nsepseq(field_name,COMMA) RBRACE [ From ]
 ##
@@ -2298,7 +2298,7 @@ contract: Import LBRACE ZWSP
 ##
 contract: Import LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 366.
+## Ends in an error in state: 369.
 ##
 ## nsepseq(field_name,COMMA) -> Ident COMMA . nsepseq(field_name,COMMA) [ RBRACE ]
 ##
@@ -2311,7 +2311,7 @@ At this point, a value of a module is expected.
 
 contract: Import LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 368.
+## Ends in an error in state: 371.
 ##
 ## braces(nsepseq(field_name,COMMA)) -> LBRACE nsepseq(field_name,COMMA) . RBRACE [ From ]
 ##
@@ -2322,7 +2322,7 @@ contract: Import LBRACE Ident ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 365, spurious reduction of production nsepseq(field_name,COMMA) -> Ident
+## In state 368, spurious reduction of production nsepseq(field_name,COMMA) -> Ident
 ##
 
 Ill-formed import statement.
@@ -2330,7 +2330,7 @@ At this point, if all the values are complete, a closing brace '}' is expected.
 
 contract: If LPAR Bytes RPAR Attr ZWSP
 ##
-## Ends in an error in state: 407.
+## Ends in an error in state: 410.
 ##
 ## base_stmt(closed_stmt) -> nseq(Attr) . expr_stmt [ Else ]
 ## base_stmt(closed_stmt) -> nseq(Attr) . declaration [ Else ]
@@ -2348,7 +2348,7 @@ contract: If LPAR Bytes RPAR Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed export declaration.
@@ -2448,7 +2448,7 @@ interactive_expr: Bytes As VBAR LBRACKET ZWSP
 ##
 interactive_expr: Bytes As VBAR Attr LBRACKET ZWSP
 ##
-## Ends in an error in state: 111.
+## Ends in an error in state: 117.
 ##
 ## variant -> nseq(Attr) LBRACKET . String RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## variant -> nseq(Attr) LBRACKET . String COMMA ctor_params RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -2473,7 +2473,7 @@ interactive_expr: Bytes As VBAR LBRACKET String ZWSP
 ##
 interactive_expr: Bytes As VBAR Attr LBRACKET String ZWSP
 ##
-## Ends in an error in state: 112.
+## Ends in an error in state: 118.
 ##
 ## variant -> nseq(Attr) LBRACKET String . RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## variant -> nseq(Attr) LBRACKET String . COMMA ctor_params RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -2499,7 +2499,7 @@ interactive_expr: Bytes As VBAR LBRACKET String COMMA ZWSP
 ##
 interactive_expr: Bytes As VBAR Attr LBRACKET String COMMA ZWSP
 ##
-## Ends in an error in state: 114.
+## Ends in an error in state: 120.
 ##
 ## variant -> nseq(Attr) LBRACKET String COMMA . ctor_params RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2527,7 +2527,7 @@ At this point, a type argument is expected as a type expression.
 
 interactive_expr: Bytes As LPAR ZWSP
 ##
-## Ends in an error in state: 61.
+## Ends in an error in state: 66.
 ##
 ## par(type_expr) -> LPAR . type_expr RPAR [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2542,7 +2542,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As LBRACKET ZWSP
 ##
-## Ends in an error in state: 62.
+## Ends in an error in state: 67.
 ##
 ## type_tuple -> LBRACKET . type_components RBRACKET [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2555,7 +2555,7 @@ At this point, a component is expected as a type expression.
 
 interactive_expr: Bytes As LBRACE ZWSP
 ##
-## Ends in an error in state: 63.
+## Ends in an error in state: 68.
 ##
 ## object_type -> LBRACE . sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2564,7 +2564,7 @@ interactive_expr: Bytes As LBRACE ZWSP
 ##
 interactive_expr: Bytes As Attr LBRACE ZWSP
 ##
-## Ends in an error in state: 91.
+## Ends in an error in state: 97.
 ##
 ## object_type -> nseq(Attr) LBRACE . sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2577,7 +2577,7 @@ At this point, a field declaration is expected.
 
 interactive_expr: Bytes As LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 64.
+## Ends in an error in state: 69.
 ##
 ## field_decl -> Ident . [ SEMI RBRACE COMMA ]
 ## field_decl -> Ident . type_annotation [ SEMI RBRACE COMMA ]
@@ -2587,7 +2587,7 @@ interactive_expr: Bytes As LBRACE Ident ZWSP
 ##
 interactive_expr: Bytes As LBRACE Attr Ident ZWSP
 ##
-## Ends in an error in state: 96.
+## Ends in an error in state: 102.
 ##
 ## field_decl -> nseq(Attr) Ident . [ SEMI RBRACE COMMA ]
 ## field_decl -> nseq(Attr) Ident . type_annotation [ SEMI RBRACE COMMA ]
@@ -2604,7 +2604,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 95.
+## Ends in an error in state: 101.
 ##
 ## field_decl -> nseq(Attr) . Ident [ SEMI RBRACE COMMA ]
 ## field_decl -> nseq(Attr) . Ident type_annotation [ SEMI RBRACE COMMA ]
@@ -2616,7 +2616,7 @@ interactive_expr: Bytes As LBRACE Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed record type.
@@ -2624,7 +2624,7 @@ At this point, if the attribute is complete, a field name is expected.
 
 interactive_expr: ES6FUN LPAR Bytes COLON ZWSP
 ##
-## Ends in an error in state: 65.
+## Ends in an error in state: 70.
 ##
 ## type_annotation -> COLON . type_expr [ SEMI RPAR RBRACE COMMA ARROW ]
 ##
@@ -2637,7 +2637,7 @@ At this point, a type expression is expected.
 
 interactive_expr: Bytes As ES6FUN ZWSP
 ##
-## Ends in an error in state: 69.
+## Ends in an error in state: 74.
 ##
 ## fun_type -> ES6FUN . par(nsepseq(fun_param,COMMA)) ARROW type_expr [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2651,7 +2651,7 @@ expected.
 
 interactive_expr: Bytes As ES6FUN LPAR ZWSP
 ##
-## Ends in an error in state: 70.
+## Ends in an error in state: 75.
 ##
 ## par(nsepseq(fun_param,COMMA)) -> LPAR . nsepseq(fun_param,COMMA) RPAR [ ARROW ]
 ##
@@ -2664,7 +2664,7 @@ At this point, a parameter is expected.
 
 interactive_expr: Bytes As ES6FUN LPAR Ident ZWSP
 ##
-## Ends in an error in state: 71.
+## Ends in an error in state: 76.
 ##
 ## fun_param -> Ident . type_annotation [ RPAR COMMA ]
 ##
@@ -2677,7 +2677,7 @@ At this point, a colon ':' is expected, followed by a type expression.
 
 interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident While
 ##
-## Ends in an error in state: 75.
+## Ends in an error in state: 80.
 ##
 ## nsepseq(fun_param,COMMA) -> fun_param . [ RPAR ]
 ## nsepseq(fun_param,COMMA) -> fun_param . COMMA nsepseq(fun_param,COMMA) [ RPAR ]
@@ -2689,10 +2689,10 @@ interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
-## In state 72, spurious reduction of production fun_param -> Ident type_annotation
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
+## In state 77, spurious reduction of production fun_param -> Ident type_annotation
 ##
 
 Ill-formed functional type.
@@ -2703,7 +2703,7 @@ is expected:
 
 interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident COMMA ZWSP
 ##
-## Ends in an error in state: 76.
+## Ends in an error in state: 81.
 ##
 ## nsepseq(fun_param,COMMA) -> fun_param COMMA . nsepseq(fun_param,COMMA) [ RPAR ]
 ##
@@ -2716,7 +2716,7 @@ At this point, a parameter is expected as a variable.
 
 interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 79.
+## Ends in an error in state: 84.
 ##
 ## fun_type -> ES6FUN par(nsepseq(fun_param,COMMA)) ARROW . type_expr [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2729,7 +2729,7 @@ At this point, the return type is expected as a type expression.
 
 interactive_expr: Bytes As LBRACE Ident RBRACE VBAR ZWSP
 ##
-## Ends in an error in state: 89.
+## Ends in an error in state: 95.
 ##
 ## nsepseq(object_type,VBAR) -> object_type VBAR . nsepseq(object_type,VBAR) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2742,7 +2742,7 @@ At this point, another record type is expected.
 
 interactive_expr: Bytes As LBRACE Ident RBRACE VBAR Attr ZWSP
 ##
-## Ends in an error in state: 90.
+## Ends in an error in state: 96.
 ##
 ## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2753,7 +2753,7 @@ interactive_expr: Bytes As LBRACE Ident RBRACE VBAR Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed record type.
@@ -2762,7 +2762,7 @@ brace '{'.
 
 interactive_expr: Bytes As LBRACE Ident COLON Ident While
 ##
-## Ends in an error in state: 99.
+## Ends in an error in state: 105.
 ##
 ## nsepseq(field_decl,object_sep) -> field_decl . [ RBRACE ]
 ## nsepseq(field_decl,object_sep) -> field_decl . object_sep nsepseq(field_decl,object_sep) [ RBRACE ]
@@ -2776,10 +2776,10 @@ interactive_expr: Bytes As LBRACE Ident COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
-## In state 130, spurious reduction of production field_decl -> Ident type_annotation
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
+## In state 136, spurious reduction of production field_decl -> Ident type_annotation
 ##
 
 Ill-formed record type.
@@ -2789,7 +2789,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 102.
+## Ends in an error in state: 108.
 ##
 ## nsepseq(field_decl,object_sep) -> field_decl object_sep . nsepseq(field_decl,object_sep) [ RBRACE ]
 ## nseq(__anonymous_0(field_decl,object_sep)) -> field_decl object_sep . [ RBRACE ]
@@ -2806,7 +2806,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As Attr ZWSP
 ##
-## Ends in an error in state: 106.
+## Ends in an error in state: 112.
 ##
 ## core_type -> nseq(Attr) . type_tuple [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -2819,7 +2819,7 @@ interactive_expr: Bytes As Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed type expression.
@@ -2830,7 +2830,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As Attr VBAR ZWSP
 ##
-## Ends in an error in state: 107.
+## Ends in an error in state: 113.
 ##
 ## sum_type -> nseq(Attr) VBAR . nsepseq(variant,VBAR) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2839,7 +2839,7 @@ interactive_expr: Bytes As Attr VBAR ZWSP
 ##
 interactive_expr: Bytes As VBAR LBRACKET String RBRACKET VBAR ZWSP
 ##
-## Ends in an error in state: 109.
+## Ends in an error in state: 115.
 ##
 ## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2852,7 +2852,7 @@ At this point, another variant is expected as a record type.
 
 interactive_expr: Bytes As Attr VBAR Attr ZWSP
 ##
-## Ends in an error in state: 110.
+## Ends in an error in state: 116.
 ##
 ## variant -> nseq(Attr) . LBRACKET String RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## variant -> nseq(Attr) . LBRACKET String COMMA ctor_params RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -2864,7 +2864,7 @@ interactive_expr: Bytes As Attr VBAR Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed variant of a sum type.
@@ -2873,7 +2873,7 @@ expected.
 
 interactive_expr: Bytes As VBAR LBRACKET String COMMA Ident While
 ##
-## Ends in an error in state: 122.
+## Ends in an error in state: 128.
 ##
 ## nsepseq(ctor_param,COMMA) -> ctor_param . [ RBRACKET ]
 ## nsepseq(ctor_param,COMMA) -> ctor_param . COMMA nsepseq(ctor_param,COMMA) [ RBRACKET ]
@@ -2885,9 +2885,9 @@ interactive_expr: Bytes As VBAR LBRACKET String COMMA Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 115, spurious reduction of production ctor_param -> type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 121, spurious reduction of production ctor_param -> type_expr
 ##
 
 Ill-formed variant of a sum type.
@@ -2898,7 +2898,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As VBAR LBRACKET String COMMA Ident COMMA ZWSP
 ##
-## Ends in an error in state: 123.
+## Ends in an error in state: 129.
 ##
 ## nsepseq(ctor_param,COMMA) -> ctor_param COMMA . nsepseq(ctor_param,COMMA) [ RBRACKET ]
 ##
@@ -2912,7 +2912,7 @@ expression.
 
 interactive_expr: Bytes As LBRACKET Ident While
 ##
-## Ends in an error in state: 136.
+## Ends in an error in state: 142.
 ##
 ## nsepseq(type_component,COMMA) -> type_component . [ RBRACKET ]
 ## nsepseq(type_component,COMMA) -> type_component . COMMA nsepseq(type_component,COMMA) [ RBRACKET ]
@@ -2924,9 +2924,9 @@ interactive_expr: Bytes As LBRACKET Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 133, spurious reduction of production type_component -> type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 139, spurious reduction of production type_component -> type_expr
 ##
 
 Ill-formed tuple of types.
@@ -2936,7 +2936,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As LBRACKET Ident COMMA ZWSP
 ##
-## Ends in an error in state: 137.
+## Ends in an error in state: 143.
 ##
 ## nsepseq(type_component,COMMA) -> type_component COMMA . nsepseq(type_component,COMMA) [ RBRACKET ]
 ##
@@ -2949,7 +2949,7 @@ At this point, a component is expected as a type expression.
 
 interactive_expr: Bytes As LPAR Ident While
 ##
-## Ends in an error in state: 140.
+## Ends in an error in state: 146.
 ##
 ## par(type_expr) -> LPAR type_expr . RPAR [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -2960,8 +2960,8 @@ interactive_expr: Bytes As LPAR Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
 ##
 
 Ill-formed parenthesised type expression.
@@ -2969,7 +2969,7 @@ At this point, a closing parenthesis ')' is expected.
 
 interactive_expr: Bytes As Ident LT Ident While
 ##
-## Ends in an error in state: 146.
+## Ends in an error in state: 152.
 ##
 ## nsepseq(type_ctor_arg,COMMA) -> type_ctor_arg . [ GT ]
 ## nsepseq(type_ctor_arg,COMMA) -> type_ctor_arg . COMMA nsepseq(type_ctor_arg,COMMA) [ GT ]
@@ -2981,9 +2981,9 @@ interactive_expr: Bytes As Ident LT Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 142, spurious reduction of production type_ctor_arg -> type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 148, spurious reduction of production type_ctor_arg -> type_expr
 ##
 
 Ill-formed instantiation of a parametric type.
@@ -2993,7 +2993,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As Ident LT Ident COMMA ZWSP
 ##
-## Ends in an error in state: 147.
+## Ends in an error in state: 153.
 ##
 ## nsepseq(type_ctor_arg,COMMA) -> type_ctor_arg COMMA . nsepseq(type_ctor_arg,COMMA) [ GT ]
 ##
@@ -3006,7 +3006,7 @@ At this point, another type argument is expected as a type expression.
 
 interactive_expr: Bytes As UIdent DOT ZWSP
 ##
-## Ends in an error in state: 150.
+## Ends in an error in state: 156.
 ##
 ## module_access_t -> UIdent DOT . module_var_t [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -3019,7 +3019,7 @@ At this point, the qualified name of a type is expected.
 
 interactive_expr: Bytes As UIdent DOT UIdent ZWSP
 ##
-## Ends in an error in state: 151.
+## Ends in an error in state: 157.
 ##
 ## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -3036,7 +3036,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes As VBAR Attr ZWSP
 ##
-## Ends in an error in state: 159.
+## Ends in an error in state: 165.
 ##
 ## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ## variant -> nseq(Attr) . LBRACKET String RBRACKET [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
@@ -3049,7 +3049,7 @@ interactive_expr: Bytes As VBAR Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed variant or union type.
@@ -3060,7 +3060,7 @@ expected:
 
 interactive_expr: LT Ident GT WILD
 ##
-## Ends in an error in state: 191.
+## Ends in an error in state: 194.
 ##
 ## fun_expr -> type_generics . ES6FUN par(parameters) ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> type_generics . ES6FUN par(parameters) type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3075,7 +3075,7 @@ interactive_expr: LT Ident GT WILD
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 19, spurious reduction of production chevrons(nsepseq(type_name,COMMA)) -> LT nsepseq(type_name,COMMA) GT
-## In state 260, spurious reduction of production type_generics -> chevrons(nsepseq(type_name,COMMA))
+## In state 263, spurious reduction of production type_generics -> chevrons(nsepseq(type_name,COMMA))
 ##
 
 Ill-formed functional expression.
@@ -3084,7 +3084,7 @@ parameters are expected between parentheses.
 
 interactive_expr: LT Ident GT ES6FUN ZWSP
 ##
-## Ends in an error in state: 192.
+## Ends in an error in state: 195.
 ##
 ## fun_expr -> type_generics ES6FUN . par(parameters) ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> type_generics ES6FUN . par(parameters) type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3101,7 +3101,7 @@ parameters, if any;
 
 interactive_expr: LT Ident GT ES6FUN LPAR ZWSP
 ##
-## Ends in an error in state: 193.
+## Ends in an error in state: 196.
 ##
 ## fun_expr -> type_generics ES6FUN LPAR . RPAR ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> type_generics ES6FUN LPAR . RPAR type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3112,7 +3112,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR ZWSP
 ##
 interactive_expr: ES6FUN LPAR ZWSP
 ##
-## Ends in an error in state: 545.
+## Ends in an error in state: 548.
 ##
 ## fun_expr -> ES6FUN LPAR . RPAR ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN LPAR . RPAR type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3129,7 +3129,7 @@ At this point, one of the following is expected:
 
 interactive_expr: ES6FUN LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 555.
+## Ends in an error in state: 558.
 ##
 ## fun_expr -> ES6FUN par(parameters) . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN par(parameters) . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3139,7 +3139,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 546.
+## Ends in an error in state: 549.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN LPAR RPAR . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3149,7 +3149,7 @@ interactive_expr: ES6FUN LPAR RPAR ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 194.
+## Ends in an error in state: 197.
 ##
 ## fun_expr -> type_generics ES6FUN LPAR RPAR . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> type_generics ES6FUN LPAR RPAR . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3159,7 +3159,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR RPAR ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 284.
+## Ends in an error in state: 287.
 ##
 ## fun_expr -> type_generics ES6FUN par(parameters) . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> type_generics ES6FUN par(parameters) . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3175,7 +3175,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Bytes QMARK ZWSP
 ##
-## Ends in an error in state: 211.
+## Ends in an error in state: 214.
 ##
 ## ternary_expr(expr) -> disj_expr_level QMARK . expr COLON expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3188,7 +3188,7 @@ At this point, the expression in case of a true condition is expected.
 
 interactive_expr: Bytes QMARK Bytes SEMI
 ##
-## Ends in an error in state: 212.
+## Ends in an error in state: 215.
 ##
 ## ternary_expr(expr) -> disj_expr_level QMARK expr . COLON expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3199,14 +3199,14 @@ interactive_expr: Bytes QMARK Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed ternary conditional operation.
@@ -3214,7 +3214,7 @@ At this point, a colon ':' is expected, followed by an expression.
 
 interactive_expr: Bytes QMARK Bytes COLON ZWSP
 ##
-## Ends in an error in state: 213.
+## Ends in an error in state: 216.
 ##
 ## ternary_expr(expr) -> disj_expr_level QMARK expr COLON . expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3228,7 +3228,7 @@ expected.
 
 interactive_expr: Bytes As ZWSP
 ##
-## Ends in an error in state: 262.
+## Ends in an error in state: 265.
 ##
 ## as_expr -> call_expr_level As . type_expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3241,7 +3241,7 @@ At this point, a type expression is expected.
 
 interactive_expr: LT Ident GT ES6FUN LPAR RPAR COLON Ident While
 ##
-## Ends in an error in state: 273.
+## Ends in an error in state: 276.
 ##
 ## fun_expr -> type_generics ES6FUN LPAR RPAR type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3252,9 +3252,9 @@ interactive_expr: LT Ident GT ES6FUN LPAR RPAR COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
 ##
 interactive_expr: ES6FUN WILD ZWSP
 ##
@@ -3267,7 +3267,7 @@ interactive_expr: ES6FUN WILD ZWSP
 ##
 interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident RPAR ZWSP
 ##
-## Ends in an error in state: 78.
+## Ends in an error in state: 83.
 ##
 ## fun_type -> ES6FUN par(nsepseq(fun_param,COMMA)) . ARROW type_expr [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
@@ -3276,7 +3276,7 @@ interactive_expr: Bytes As ES6FUN LPAR Ident COLON Ident RPAR ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR COLON Ident While
 ##
-## Ends in an error in state: 287.
+## Ends in an error in state: 290.
 ##
 ## fun_expr -> type_generics ES6FUN par(parameters) type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3287,13 +3287,13 @@ interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
 ##
 interactive_expr: ES6FUN LPAR RPAR COLON Ident While
 ##
-## Ends in an error in state: 549.
+## Ends in an error in state: 552.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3304,13 +3304,13 @@ interactive_expr: ES6FUN LPAR RPAR COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
 ##
 interactive_expr: ES6FUN Ident ZWSP
 ##
-## Ends in an error in state: 552.
+## Ends in an error in state: 555.
 ##
 ## fun_expr -> ES6FUN Ident . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3319,7 +3319,7 @@ interactive_expr: ES6FUN Ident ZWSP
 ##
 interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident While
 ##
-## Ends in an error in state: 558.
+## Ends in an error in state: 561.
 ##
 ## fun_expr -> ES6FUN par(parameters) type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3330,9 +3330,9 @@ interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
 ##
 
 Ill-formed function expression.
@@ -3340,7 +3340,7 @@ At this point, an arrow '=>' is expected.
 
 interactive_expr: ES6FUN LPAR Bytes COLON Ident While
 ##
-## Ends in an error in state: 278.
+## Ends in an error in state: 281.
 ##
 ## nsepseq(parameter,COMMA) -> parameter . [ RPAR ]
 ## nsepseq(parameter,COMMA) -> parameter . COMMA nsepseq(parameter,COMMA) [ RPAR ]
@@ -3352,10 +3352,10 @@ interactive_expr: ES6FUN LPAR Bytes COLON Ident While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 67, spurious reduction of production core_type -> Ident
-## In state 125, spurious reduction of production type_expr -> core_type
-## In state 129, spurious reduction of production type_annotation -> COLON type_expr
-## In state 282, spurious reduction of production parameter -> expr type_annotation
+## In state 72, spurious reduction of production core_type -> Ident
+## In state 131, spurious reduction of production type_expr -> core_type
+## In state 135, spurious reduction of production type_annotation -> COLON type_expr
+## In state 285, spurious reduction of production parameter -> expr type_annotation
 ##
 
 Ill-formed functional expression.
@@ -3366,7 +3366,7 @@ following is expected:
 
 interactive_expr: ES6FUN LPAR Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 279.
+## Ends in an error in state: 282.
 ##
 ## nsepseq(parameter,COMMA) -> parameter COMMA . nsepseq(parameter,COMMA) [ RPAR ]
 ##
@@ -3379,7 +3379,7 @@ At this point, another parameter is expected.
 
 interactive_expr: ES6FUN LPAR Bytes SEMI
 ##
-## Ends in an error in state: 281.
+## Ends in an error in state: 284.
 ##
 ## parameter -> expr . [ RPAR COMMA ]
 ## parameter -> expr . type_annotation [ RPAR COMMA ]
@@ -3391,14 +3391,14 @@ interactive_expr: ES6FUN LPAR Bytes SEMI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed function parameter.
@@ -3408,7 +3408,7 @@ At this point, one of the following is expected:
 
 contract: Ident QMARK Ident LPAR RPAR While
 ##
-## Ends in an error in state: 436.
+## Ends in an error in state: 439.
 ##
 ## ternary_expr(expr_stmt) -> disj_expr_level QMARK expr_stmt . COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3419,7 +3419,7 @@ contract: Ident QMARK Ident LPAR RPAR While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 439, spurious reduction of production expr_stmt -> call_expr
+## In state 442, spurious reduction of production expr_stmt -> call_expr
 ##
 
 Ill-formed ternary conditional statement.
@@ -3427,7 +3427,7 @@ At this point, if the statement is complete, a colon ':' is expected.
 
 contract: Ident QMARK Ident DIV_EQ Bytes COLON ZWSP
 ##
-## Ends in an error in state: 437.
+## Ends in an error in state: 440.
 ##
 ## ternary_expr(expr_stmt) -> disj_expr_level QMARK expr_stmt COLON . expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3441,7 +3441,7 @@ expected.
 
 contract: Ident REM_EQ ZWSP
 ##
-## Ends in an error in state: 442.
+## Ends in an error in state: 445.
 ##
 ## assign_stmt -> assign_lhs REM_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3450,7 +3450,7 @@ contract: Ident REM_EQ ZWSP
 ##
 contract: Ident PLUS_EQ ZWSP
 ##
-## Ends in an error in state: 444.
+## Ends in an error in state: 447.
 ##
 ## assign_stmt -> assign_lhs PLUS_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3459,7 +3459,7 @@ contract: Ident PLUS_EQ ZWSP
 ##
 contract: Ident MULT_EQ ZWSP
 ##
-## Ends in an error in state: 446.
+## Ends in an error in state: 449.
 ##
 ## assign_stmt -> assign_lhs MULT_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3468,7 +3468,7 @@ contract: Ident MULT_EQ ZWSP
 ##
 contract: Ident MINUS_EQ ZWSP
 ##
-## Ends in an error in state: 448.
+## Ends in an error in state: 451.
 ##
 ## assign_stmt -> assign_lhs MINUS_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3477,7 +3477,7 @@ contract: Ident MINUS_EQ ZWSP
 ##
 contract: Ident DIV_EQ ZWSP
 ##
-## Ends in an error in state: 452.
+## Ends in an error in state: 455.
 ##
 ## assign_stmt -> assign_lhs DIV_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
@@ -3490,7 +3490,7 @@ At this point, an expression is expected.
 
 contract: If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 491.
+## Ends in an error in state: 494.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) closed_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -3499,7 +3499,7 @@ contract: If LPAR Bytes RPAR Return Else ZWSP
 ##
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 485.
+## Ends in an error in state: 488.
 ##
 ## if_else_stmt(closed_stmt) -> If par(if_cond) closed_stmt Else . closed_stmt [ Else ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
@@ -3513,7 +3513,7 @@ At this point, the statement of the 'else' branch is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return SEMI ZWSP
 ##
-## Ends in an error in state: 499.
+## Ends in an error in state: 502.
 ##
 ## nsepseq(case_statement,SEMI) -> case_statement SEMI . nsepseq(case_statement,SEMI) [ RBRACE Default Case ]
 ## nseq(__anonymous_0(case_statement,SEMI)) -> case_statement SEMI . [ RBRACE Default Case ]
@@ -3533,7 +3533,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return Default
 ##
-## Ends in an error in state: 509.
+## Ends in an error in state: 512.
 ##
 ## braces(cases) -> LBRACE cases . RBRACE [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -3544,15 +3544,15 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return Default
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 302, spurious reduction of production return_stmt -> Return
-## In state 418, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 458, spurious reduction of production statement -> base_stmt(statement)
-## In state 493, spurious reduction of production case_statement -> statement
-## In state 498, spurious reduction of production nsepseq(case_statement,SEMI) -> case_statement
-## In state 496, spurious reduction of production sep_or_term_list(case_statement,SEMI) -> nsepseq(case_statement,SEMI)
-## In state 494, spurious reduction of production case_statements -> sep_or_term_list(case_statement,SEMI)
-## In state 497, spurious reduction of production default_case -> Default COLON case_statements
-## In state 508, spurious reduction of production cases -> default_case
+## In state 305, spurious reduction of production return_stmt -> Return
+## In state 421, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 461, spurious reduction of production statement -> base_stmt(statement)
+## In state 496, spurious reduction of production case_statement -> statement
+## In state 501, spurious reduction of production nsepseq(case_statement,SEMI) -> case_statement
+## In state 499, spurious reduction of production sep_or_term_list(case_statement,SEMI) -> nsepseq(case_statement,SEMI)
+## In state 497, spurious reduction of production case_statements -> sep_or_term_list(case_statement,SEMI)
+## In state 500, spurious reduction of production default_case -> Default COLON case_statements
+## In state 511, spurious reduction of production cases -> default_case
 ##
 
 Ill-formed switch statement.
@@ -3562,7 +3562,7 @@ At this point, if the case is complete, one of the following is expected:
 
 contract: LBRACE Return While
 ##
-## Ends in an error in state: 517.
+## Ends in an error in state: 520.
 ##
 ## braces(statements) -> LBRACE statements . RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3573,12 +3573,12 @@ contract: LBRACE Return While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 302, spurious reduction of production return_stmt -> Return
-## In state 418, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 458, spurious reduction of production statement -> base_stmt(statement)
-## In state 519, spurious reduction of production nsepseq(statement,SEMI) -> statement
-## In state 542, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
-## In state 523, spurious reduction of production statements -> sep_or_term_list(statement,SEMI)
+## In state 305, spurious reduction of production return_stmt -> Return
+## In state 421, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 461, spurious reduction of production statement -> base_stmt(statement)
+## In state 522, spurious reduction of production nsepseq(statement,SEMI) -> statement
+## In state 545, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
+## In state 526, spurious reduction of production statements -> sep_or_term_list(statement,SEMI)
 ##
 
 Ill-formed block of statements.
@@ -3589,7 +3589,7 @@ expected:
 
 contract: LBRACE Return SEMI ZWSP
 ##
-## Ends in an error in state: 520.
+## Ends in an error in state: 523.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(statement,SEMI)) -> statement SEMI . [ RBRACE ]
@@ -3606,7 +3606,7 @@ At this point, one of the following is expected:
 
 contract: LBRACE ELLIPSIS Bytes COLON
 ##
-## Ends in an error in state: 529.
+## Ends in an error in state: 532.
 ##
 ## nsepseq(property,object_sep) -> property . [ RBRACE ]
 ## nsepseq(property,object_sep) -> property . object_sep nsepseq(property,object_sep) [ RBRACE ]
@@ -3620,15 +3620,15 @@ contract: LBRACE ELLIPSIS Bytes COLON
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
-## In state 561, spurious reduction of production property -> ELLIPSIS expr
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
+## In state 564, spurious reduction of production property -> ELLIPSIS expr
 ##
 
 Ill-formed record expression.
@@ -3639,7 +3639,7 @@ expected:
 
 interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 559.
+## Ends in an error in state: 562.
 ##
 ## fun_expr -> ES6FUN par(parameters) type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3648,7 +3648,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 556.
+## Ends in an error in state: 559.
 ##
 ## fun_expr -> ES6FUN par(parameters) ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3657,7 +3657,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
 interactive_expr: ES6FUN Ident ARROW ZWSP
 ##
-## Ends in an error in state: 553.
+## Ends in an error in state: 556.
 ##
 ## fun_expr -> ES6FUN Ident ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3666,7 +3666,7 @@ interactive_expr: ES6FUN Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 550.
+## Ends in an error in state: 553.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3675,7 +3675,7 @@ interactive_expr: ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 547.
+## Ends in an error in state: 550.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3684,7 +3684,7 @@ interactive_expr: ES6FUN LPAR RPAR ARROW ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 288.
+## Ends in an error in state: 291.
 ##
 ## fun_expr -> type_generics ES6FUN par(parameters) type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3693,7 +3693,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 285.
+## Ends in an error in state: 288.
 ##
 ## fun_expr -> type_generics ES6FUN par(parameters) ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3702,7 +3702,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 274.
+## Ends in an error in state: 277.
 ##
 ## fun_expr -> type_generics ES6FUN LPAR RPAR type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3711,7 +3711,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: LT Ident GT ES6FUN LPAR RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 195.
+## Ends in an error in state: 198.
 ##
 ## fun_expr -> type_generics ES6FUN LPAR RPAR ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3735,7 +3735,7 @@ At this point, the body is expected as one of the following:
 
 contract: LPAR Bytes COLON
 ##
-## Ends in an error in state: 570.
+## Ends in an error in state: 573.
 ##
 ## par(expr) -> LPAR expr . RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE LBRACKET GT Else EQ2 EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -3746,14 +3746,14 @@ contract: LPAR Bytes COLON
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 188, spurious reduction of production call_expr_level -> member_expr
-## In state 261, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 190, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 197, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 258, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 259, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 216, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 210, spurious reduction of production expr -> disj_expr_level
+## In state 191, spurious reduction of production call_expr_level -> member_expr
+## In state 264, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 193, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 200, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 261, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 262, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 219, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 213, spurious reduction of production expr -> disj_expr_level
 ##
 
 Ill-formed parenthesised type expression.
@@ -3761,7 +3761,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: Namespace UIdent LBRACE Return While
 ##
-## Ends in an error in state: 592.
+## Ends in an error in state: 595.
 ##
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . [ RBRACE ]
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . SEMI nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
@@ -3775,10 +3775,10 @@ contract: Namespace UIdent LBRACE Return While
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 302, spurious reduction of production return_stmt -> Return
-## In state 418, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 458, spurious reduction of production statement -> base_stmt(statement)
-## In state 594, spurious reduction of production stmt_or_namespace -> statement
+## In state 305, spurious reduction of production return_stmt -> Return
+## In state 421, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 461, spurious reduction of production statement -> base_stmt(statement)
+## In state 597, spurious reduction of production stmt_or_namespace -> statement
 ##
 
 Ill-formed module declaration.
@@ -3789,7 +3789,7 @@ expected:
 
 contract: Namespace UIdent LBRACE Return SEMI ZWSP
 ##
-## Ends in an error in state: 593.
+## Ends in an error in state: 596.
 ##
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace SEMI . nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace SEMI . [ RBRACE ]
@@ -3806,7 +3806,7 @@ At this point, one of the following is expected:
 
 contract: Return SEMI ZWSP
 ##
-## Ends in an error in state: 610.
+## Ends in an error in state: 613.
 ##
 ## option(SEMI) -> SEMI . [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace SEMI . toplevel_stmts [ EOF ]
@@ -3822,7 +3822,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 532.
+## Ends in an error in state: 535.
 ##
 ## property -> nseq(Attr) . property_name COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -3833,7 +3833,7 @@ interactive_expr: LBRACE Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed record expression (object).
@@ -3842,7 +3842,7 @@ name) is expected.
 
 contract: LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 540.
+## Ends in an error in state: 543.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE ]
 ## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE ]
@@ -3858,7 +3858,7 @@ contract: LBRACE Attr ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 80, spurious reduction of production nseq(Attr) -> Attr
+## In state 85, spurious reduction of production nseq(Attr) -> Attr
 ##
 
 Ill-formed statement.
@@ -3870,7 +3870,7 @@ expected:
 
 contract: Contract ZWSP
 ##
-## Ends in an error in state: 175.
+## Ends in an error in state: 181.
 ##
 ## call_expr -> Contract . LPAR nsepseq(module_name,DOT) RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -3883,7 +3883,7 @@ At this point, an opening parenthesis '(' is expected.
 
 contract: Contract LPAR ZWSP
 ##
-## Ends in an error in state: 176.
+## Ends in an error in state: 182.
 ##
 ## call_expr -> Contract LPAR . nsepseq(module_name,DOT) RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -3896,7 +3896,7 @@ At this point, the qualified name of the module is expected.
 
 contract: Contract LPAR UIdent ZWSP
 ##
-## Ends in an error in state: 180.
+## Ends in an error in state: 183.
 ##
 ## call_expr -> Contract LPAR nsepseq(module_name,DOT) . RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE GT Else EQ2 EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
@@ -3907,8 +3907,21 @@ contract: Contract LPAR UIdent ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 177, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 62, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
 ##
 
 Ill-formed contract as a module.
 At this point, a closing parenthesis ')' is expected.
+
+contract: Ident As Parameter ZWSP
+##
+## Ends in an error in state: 61.
+##
+## parameter_of_type -> Parameter . nsepseq(module_name,DOT) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
+##
+## The known suffix of the stack is as follows:
+## Parameter
+##
+
+Ill-formed parameter of a module.
+At this point, the qualified name of the module is expected.

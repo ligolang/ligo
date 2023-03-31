@@ -203,6 +203,7 @@ everything_else:
 | "namespace"       { Namespace $1 }
 | "type"            { Type $1      }
 | "contract_of"     { Contract $1  }
+| "parameter_of"    { Parameter $1 }
 | ZWSP              { ZWSP $1      }
 
 inner:

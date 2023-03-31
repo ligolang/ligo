@@ -134,7 +134,8 @@ module T =
 
     (* Contract keywords *)
 
-    | Contract of lexeme Wrap.t  (* contract_of *)
+    | Contract  of lexeme Wrap.t  (* contract_of *)
+    | Parameter of lexeme Wrap.t  (* parameter_of *)
 
     (* Virtual tokens *)
 
@@ -255,7 +256,8 @@ module T =
 
     (* Contract keywords *)
 
-    | Contract t -> t#payload
+    | Contract t  -> t#payload
+    | Parameter t -> t#payload
 
     (* Virtual tokens *)
 
@@ -326,6 +328,10 @@ module T =
 
      let mk_Contract region = Contract (wrap_contract region)
 
+     let wrap_parameter = wrap "parameter_of"
+
+     let mk_Parameter region = Parameter (wrap_parameter region)
+
     (* All keyword smart constructors *)
 
      let keywords = [
@@ -351,7 +357,8 @@ module T =
        mk_As;
        mk_Namespace;
        mk_Type;
-       mk_Contract
+       mk_Contract;
+       mk_Parameter
      ]
 
     (* All keywords *)
@@ -982,7 +989,8 @@ module T =
 
     (* Contract keywords *)
 
-    | Contract t -> t#region, "Contract"
+    | Contract t  -> t#region, "Contract"
+    | Parameter t -> t#region, "Parameter"
 
     (* Virtual tokens *)
 
