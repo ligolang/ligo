@@ -88,6 +88,7 @@ module Fold_helpers (M : Monad) = struct
       let* field = self value.field in
       let value = { value with field } in
       return @@ TModA { value; region }
+    | TParameter { value; region } -> return @@ TParameter { value; region }
     | TVar _ | TArg _ | TInt _ | TString _ -> ok @@ t
 
 

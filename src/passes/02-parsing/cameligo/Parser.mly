@@ -261,11 +261,22 @@ core_type:
 | "<int>"          {    TInt (unwrap $1) }
 | "_"              { TVar {value="_"; region=$1#region} }
 | type_name        {    TVar $1 }
+| parameter_of_type{         $1 }
 | module_access_t  {   TModA $1 }
 | type_ctor_app    {    TApp $1 }
 | record_type      { TRecord $1 }
 | type_var         {    TArg $1 }
 | par(type_expr)   {    TPar $1 }
+
+(* Parameter of contract *)
+
+parameter_of_type:
+  nsepseq(module_name,".") "parameter_of" {
+    let kwd_parameter = $2 in
+    let start = nsepseq_to_region (fun x -> x.region) $1 in
+    let region = cover start kwd_parameter#region in
+    let value  = $1 in
+    TParameter {region; value } }
 
 type_ctor_app:
   type_ctor_arg type_name {

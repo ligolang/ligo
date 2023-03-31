@@ -211,6 +211,11 @@ let rec compile_type_expression ~raise : CST.type_expr -> AST.type_expression =
       | _ -> raise.error (expected_access_to_variable (CST.type_expr_to_region ma.field))
     in
     aux [ module_name ] ma.field
+  | TParameter { region; value } ->
+    let loc = Location.lift region in
+    let module_ = List.Ne.map compile_mod_var @@ npseq_to_ne_list value in
+    let module_ = List.Ne.to_list module_ in
+    t_module_accessor ~loc module_ (Type_var.of_input_var ~loc "$parameter")
 
 
 let compile_selection (selection : CST.selection) =

@@ -775,6 +775,12 @@ and print_type_expr state = function
 | TArg t ->
     print_node state "TArg";
     print_type_var (state#pad 1 0) t
+| TParameter {value; region} ->
+    print_loc_node state "TParameter" region;
+    let binders        = Utils.nsepseq_to_list value in
+    let len            = List.length binders in
+    let apply len rank = print_ident (state#pad len rank) in
+    List.iteri ~f:(apply len) binders
 
 and print_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in

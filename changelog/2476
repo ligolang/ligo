@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nA new keyword is introduced: `parameter_of`. It can be used to obtain the type of a contract (from a module/namespace):\\n\\n\\n```\\nnamespace C {\\n  type storage = int;\\n\\n  // @entry\\n  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];\\n\\n  // @entry\\n  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];\\n};\\n\\nconst test_increment = (() => {\\n  let initial_storage = 42;\\n  let [taddr, _, _] = Test.originate_module(contract_of(C), initial_storage, 0 as tez);\\n  let contr : contract<parameter_of C> = Test.to_contract(taddr);\\n  let p : parameter_of C = Increment(1);\\n  let _ = Test.transfer_to_contract_exn(contr, p, 1 as mutez);\\n  return assert(Test.get_storage(taddr) == initial_storage + 1);\\n}) ();\\n\\n```\\n\\nAs in the case of `contract_of`, now `parameter_of` becomes reserved. To still use `parameter_of` as an identifier, `@` can be prepended.\\n\\n"
+merge_request: '2476'
+title: "Entrypoints `parameter_of`: new keyword for obtaining contract's (from module) parameter"
+type: breaking
+            

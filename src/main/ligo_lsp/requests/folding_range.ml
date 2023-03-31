@@ -47,6 +47,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | TVar _ | TString _ | TInt _ -> []
     | TModA { value; _ } -> type_expr value.field
     | TArg _ -> []
+    | TParameter { value; region } -> mk_region region :: contract value (* FIXME *)
   and type_constr_arg = function
     | CArg texp -> type_expr texp
     | CArgTuple { value; _ } -> nsepseq_concat_map value.inside ~f:type_expr
@@ -265,6 +266,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | TVar _ | TString _ | TInt _ -> []
     | TModA { value; _ } -> type_expr value.field
     | TDisc value -> nsepseq_concat_map value ~f:obj_type
+    | TParameter { value; region } -> mk_region region :: contract value (* FIXME *)
   and variant value =
     let tuple = value.tuple in
     mk_region tuple.region :: variant_comp tuple.value.inside

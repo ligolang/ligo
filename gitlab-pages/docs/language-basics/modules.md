@@ -487,15 +487,17 @@ ligo compile contract gitlab-pages/docs/language-basics/src/modules/contract.jsl
 </Syntax>
 
 To access the contract from the module, the primitive `contract_of`
-can be used. This is particularly useful for working with the testing
-framework, in conjunction with the function `Test.originate_module`:
+can be used. The type of the parameter generated for the module can be
+obtaining using the primitive `parameter_of`. This is particularly
+useful for working with the testing framework, in conjunction with the
+function `Test.originate_module`:
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=contract
 let test =
   let ta, _, _ = Test.originate_module (contract_of C) 0 0tez in
-  let c = Test.to_contract ta in
+  let c : (C parameter_of) contract = Test.to_contract ta in
   let _ = Test.transfer_to_contract_exn c (Increment 42) 0tez in
   assert (42 = Test.get_storage ta)
 ```
@@ -507,7 +509,7 @@ let test =
 ```jsligo group=contract
 const test = (() => {
   let [taddr, _, _] = Test.originate_module(contract_of(C), 0, 0 as tez);
-  let contr = Test.to_contract(taddr);
+  let contr : contract<parameter_of C> = Test.to_contract(taddr);
   let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1 as mutez);
   return assert(Test.get_storage(taddr) == 42);
 }) ();

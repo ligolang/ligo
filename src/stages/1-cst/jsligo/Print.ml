@@ -635,6 +635,12 @@ and print_type_expr state = function
     let apply len rank (v: field_decl reg ne_injection reg) =
       print_ne_injection print_field_decl (state#pad len rank) v.value    in
     List.iteri ~f:(List.length objects |> apply) objects
+| TParameter {value; region} ->
+    print_loc_node state "TParameter" region;
+    let binders        = Utils.nsepseq_to_list value in
+    let len            = List.length binders in
+    let apply len rank = print_ident (state#pad len rank) in
+    List.iteri ~f:(apply len) binders
 
 and print_type_generics state (tgenerics : CST.type_generics) =
   let inside = tgenerics.value.inside in

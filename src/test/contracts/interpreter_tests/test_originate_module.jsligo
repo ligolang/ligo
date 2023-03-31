@@ -11,7 +11,8 @@ namespace C {
 const test_increment = (() => {
   let initial_storage = 42;
   let [taddr, _, _] = Test.originate_module(contract_of(C), initial_storage, 0 as tez);
-  let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  let contr : contract<parameter_of C> = Test.to_contract(taddr);
+  let p : parameter_of C = Increment(1);
+  let _ = Test.transfer_to_contract_exn(contr, p, 1 as mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
 }) ();

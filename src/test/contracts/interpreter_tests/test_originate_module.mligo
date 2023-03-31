@@ -14,6 +14,7 @@ let test =
   let () = Test.println "Deployed the contract:" in
   let () = Test.println (Test.to_string m) in
   let () = Test.println ("With storage: " ^ Test.to_string (Test.get_storage ta)) in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract ta) (Add 42) 0tez in
+  let c : (Bar.Foo parameter_of) contract = Test.to_contract ta in
+  let _ = Test.transfer_to_contract_exn c (Add 42) 0tez in
   let () = Test.println ("Storage after call: " ^ Test.to_string (Test.get_storage ta)) in
   ()

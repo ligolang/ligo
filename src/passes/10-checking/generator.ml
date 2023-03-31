@@ -16,6 +16,11 @@ let default_views = "$views"
 let default_views_var = Value_var.of_input_var ~loc:Location.generated default_views
 let default_contract = "$contract"
 let default_contract_var = Value_var.of_input_var ~loc:Location.generated default_contract
+let default_parameter = "$parameter"
+
+let default_parameter_var =
+  Type_var.of_input_var ~loc:Location.generated default_parameter
+
 
 let program_sig_ : Signature.t -> (Signature.item list, _, _) C.t =
  fun sig_ ->
@@ -49,7 +54,7 @@ let program_sig_ : Signature.t -> (Signature.item list, _, _) C.t =
                storage_2)
       | Ok (p, s) -> return (p, s)
     in
-    let type_binder = Type_var.fresh ~name:"parameter" ~loc:Location.generated () in
+    let type_binder = default_parameter_var in
     let parameter_type_decl = Signature.S_type (type_binder, parameter_type) in
     let contract_type = Type.build_entry_type parameter_type storage_type in
     let contract_decl =
