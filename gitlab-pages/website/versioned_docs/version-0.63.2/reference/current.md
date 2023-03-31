@@ -564,10 +564,6 @@ let create_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;, 
 Construct an operation that originates a contract from a function. The
 optional argument of type `key_hash` represents a delegate.
 
-<SyntaxTitle syntax="pascaligo">
-val set_delegate : option (key_hash) -> operation
-</SyntaxTitle>
-
 <SyntaxTitle syntax="cameligo">
 val create_contract : ('param * 'storage -> operation list * 'storage) -> key_hash option -> tez -> 'storage -> (operation * address)
 </SyntaxTitle>
@@ -578,6 +574,10 @@ let create_contract = (contract: ['param, 'storage] => (list &lt;operation&gt;, 
 
 Construct an operation that originates a contract from an uncurried function. The
 optional argument of type `key_hash` represents a delegate.
+
+<SyntaxTitle syntax="pascaligo">
+val set_delegate : option (key_hash) -> operation
+</SyntaxTitle>
 
 <SyntaxTitle syntax="cameligo">
 val set_delegate : key_hash option -> operation
