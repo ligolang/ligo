@@ -217,17 +217,19 @@ attributes:
 (* Namespace Statement *)
 
 namespace_stmt:
-  "export" namespace {
-    let kwd_export = $1 in
-    let region = cover kwd_export#region (statement_to_region $2)
-    in SExport {region; value=kwd_export,$2} }
-| namespace { $1 }
+  attributes ioption("export") namespace {
+    let namespace = $3 $1 in
+    match $2 with
+      Some kwd_export ->
+        let region = cover kwd_export#region (statement_to_region namespace)
+        in SExport {region; value = (kwd_export, namespace)}
+    | None -> namespace }
 
 namespace:
   "namespace" module_name braces(stmts_or_namespace) {
-    let kwd_namespace = $1 in
-    let region = cover kwd_namespace#region $3.region
-    in SNamespace {region; value=kwd_namespace,$2,$3, [private_attribute]} }
+    let region = cover $1#region $3.region
+    in fun attrs ->
+       SNamespace {region; value=($1,$2,$3, private_attribute::attrs)} }
 
 stmts_or_namespace: (* TODO: Keep terminator *)
   sep_or_term_list(stmt_or_namespace,";") { fst $1 }

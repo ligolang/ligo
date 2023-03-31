@@ -92,7 +92,7 @@ At this point, field declarations are expected, separated by commas
 
 interactive_expr: Bytes SEMI
 ##
-## Ends in an error in state: 614.
+## Ends in an error in state: 618.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -158,6 +158,16 @@ contract: Export ZWSP
 ## The known suffix of the stack is as follows:
 ## Export
 ##
+contract: Attr Export ZWSP
+##
+## Ends in an error in state: 597.
+##
+## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE EOF ]
+## namespace_stmt -> nseq(Attr) Export . namespace [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Export
+##
 
 Ill-formed export declaration.
 At this point, one of the following is expected:
@@ -173,7 +183,7 @@ contract: LBRACE Export ZWSP
 ## The known suffix of the stack is as follows:
 ## Export
 ##
-contract: Attr Export ZWSP
+contract: LBRACE Attr Export ZWSP
 ##
 ## Ends in an error in state: 459.
 ##
@@ -1304,7 +1314,7 @@ contract: Namespace UIdent LBRACE ZWSP
 ##
 
 Ill-formed module declaration.
-At this point, the first statement or submodule is expected.
+At this point, the first statement or namespace is expected.
 
 contract: Namespace UIdent ZWSP
 ##
@@ -1708,7 +1718,7 @@ contract: BOOL_NOT ZWSP
 ##
 interactive_expr: ZWSP
 ##
-## Ends in an error in state: 612.
+## Ends in an error in state: 616.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -1855,7 +1865,7 @@ At this point, one of the following is expected:
 
 contract: Return While
 ##
-## Ends in an error in state: 605.
+## Ends in an error in state: 609.
 ##
 ## toplevel_stmts -> stmt_or_namespace . SEMI toplevel_stmts [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace . option(SEMI) [ EOF ]
@@ -1978,7 +1988,7 @@ contract: ZWSP
 ##
 contract: Directive ZWSP
 ##
-## Ends in an error in state: 603.
+## Ends in an error in state: 607.
 ##
 ## toplevel_stmts -> Directive . [ EOF ]
 ## toplevel_stmts -> Directive . toplevel_stmts [ EOF ]
@@ -2011,6 +2021,27 @@ At this point, if the attribute is complete, a variable is
 expected.
 
 contract: Attr VBAR
+##
+## Ends in an error in state: 596.
+##
+## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF ]
+## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF ]
+## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE EOF ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF ]
+## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE EOF ]
+## namespace_stmt -> nseq(Attr) . namespace [ SEMI RBRACE EOF ]
+## namespace_stmt -> nseq(Attr) . Export namespace [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 80, spurious reduction of production nseq(Attr) -> Attr
+##
+contract: LBRACE Return SEMI Attr ZWSP
 ##
 ## Ends in an error in state: 419.
 ##
@@ -3775,7 +3806,7 @@ At this point, one of the following is expected:
 
 contract: Return SEMI ZWSP
 ##
-## Ends in an error in state: 606.
+## Ends in an error in state: 610.
 ##
 ## option(SEMI) -> SEMI . [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace SEMI . toplevel_stmts [ EOF ]

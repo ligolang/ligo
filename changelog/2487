@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\n#### For a jsligo file\\n\\n\\n```ts\\n// @foo\\nexport namespace D {\\n  export type titi = int;\\n};\\n\\n// @foo\\nnamespace E {\\n  export type titi = int;\\n  export const toto = 42\\n};\\n\\n/* @no_mutation */ export\\nconst toto: D.titi = E.toto;\\n\\n```\\n\\n#### Before\\n\\n\\n```bash\\n$ ligo.62 print cst y.jsligo \\nFile \"y.jsligo\", line 2, characters 7-16:\\n  1 | // @foo\\n  2 | export namespace D {\\n  3 |   export type titi = int;\\nIll-formed export declaration.\\nAt this point, a value or type declaration is expected.\\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo print cst y.jsligo \\n<ast>\\n├ Directive (y.jsligo:1:0-14)\\n├ PP_Linemarker (1, \"y.jsligo\", None)\\n├ SExport (y.jsligo:2:0-4:1)\\n├ SNamespace (y.jsligo:2:7-4:1)\\n├ <namespace> (y.jsligo:2:7-16)\\n├ <attributes>\\n| └ <attribute>\\n|   └ private\\n...\\n\\n\\n```\\n\\n"
+merge_request: '2487'
+title: "Add support for attributes before `namespace` in jsligo parser"
+type: fixed
+            
