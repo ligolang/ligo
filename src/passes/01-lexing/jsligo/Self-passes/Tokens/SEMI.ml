@@ -49,6 +49,8 @@ let semicolon_insertion tokens =
     inner (t :: result) rest
   | (BlockCom _ as t) :: rest ->
     inner (t :: result) rest
+  | (Export _ as export) :: rest ->
+    inner (export :: result) rest
   | (RBRACE _ as rbrace) :: (LineCom _ as t)  :: rest
   | (RBRACE _ as rbrace) :: (BlockCom _ as t) :: rest ->
     if there_is_else_case_default rest then

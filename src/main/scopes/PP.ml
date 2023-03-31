@@ -3,15 +3,19 @@ open Types
 
 let scopes : Format.formatter -> scopes -> unit =
  fun f s ->
-  let s = List.sort s ~compare:(fun (l1, _) (l2, _) -> Location.compare l1 l2) in
   let pp_scope f (scope : scope) =
     let loc, defs = scope in
+    let defs =
+      List.sort defs ~compare:(fun d1 d2 ->
+          String.compare (get_def_uid d1) (get_def_uid d2))
+    in
     let pp_bindings f defs =
       List.iter defs ~f:(fun def -> Format.fprintf f "%s " (get_def_uid def))
     in
     Format.fprintf f "[ %a ] %a" pp_bindings defs Location.pp loc
   in
   let pp_scopes f = List.iter ~f:(Format.fprintf f "@[<v>%a@ @]" pp_scope) in
+  let s = List.sort s ~compare:(fun (l1, _) (l2, _) -> Location.compare l1 l2) in
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
 

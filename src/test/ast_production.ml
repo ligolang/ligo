@@ -159,6 +159,7 @@ let typed_prod =
     ; lex_file "add_semi.jsligo" (* not sure about this one *)
     ; type_file "type_shadowing.mligo"
     ; type_file "type_vars_let_fun.mligo"
+    ; type_file "export_newline.jsligo"
     ]
 
 

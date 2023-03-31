@@ -63,7 +63,6 @@ const sidebars = {
       "manpages/install",
       "manpages/ligo",
       "manpages/login",
-      "manpages/mutate ast",
       "manpages/mutate cst",
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
@@ -83,7 +82,6 @@ const sidebars = {
       "manpages/run test",
       "manpages/run test-expr",
       "manpages/transpile contract",
-      "manpages/transpile expression",
     ],
     API: [
       "reference/toplevel",

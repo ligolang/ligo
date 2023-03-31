@@ -19,9 +19,9 @@ let%expect_test _ =
     [ foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 4, characters 8-9
     [ foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 5, characters 8-9
     [ c#3:4-5 foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-11
-    [ i#9:6-7 c#3:4-5 foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 10, characters 2-3
+    [ c#3:4-5 foo_record#1:5-15 i#9:6-7  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 10, characters 2-3
     [ a#8:4-5 c#3:4-5 foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-11
-    [ j#13:6-7 a#8:4-5 c#3:4-5 foo_record#1:5-15  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
+    [ a#8:4-5 c#3:4-5 foo_record#1:5-15 j#13:6-7  ] File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
 
     Variable definitions:
     (a#8:4-5 -> a)
@@ -82,8 +82,8 @@ let%expect_test _ =
     {|
     Scopes:
     [ u#1:16-17  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, characters 10-12
-    [ b#4:11-12 toto#3:7-11 y#2:6-7 u#1:16-17  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
-    [ foo#4:6-9 toto#3:7-11 y#2:6-7 u#1:16-17  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 5, characters 2-6
+    [ b#4:11-12 toto#3:7-11 u#1:16-17 y#2:6-7  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
+    [ foo#4:6-9 toto#3:7-11 u#1:16-17 y#2:6-7  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 5, characters 2-6
     [ local_type#1:4-14  ] File "../../test/contracts/get_scope_tests/local_type.mligo", line 7, characters 8-10
 
     Variable definitions:
@@ -201,16 +201,16 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
-    [ x#6:9-10 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
-    [ x#7:9-10 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
+    [ storage#1:5-12 x#6:9-10  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
+    [ foo#6:4-7 storage#1:5-12 x#7:9-10  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
     [ bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
-    [ s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
-    [ x#10:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
-    [ x#11:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
-    [ x#12:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
-    [ x#12:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-22
-    [ x#12:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
-    [ x#12:6-7 s#9:12-13 bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#11:6-7  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-22
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
+    [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
 
     Variable definitions:
     (bar#7:4-7 -> bar)

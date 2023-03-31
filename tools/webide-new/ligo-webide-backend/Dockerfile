@@ -1,5 +1,5 @@
 FROM tezos/tezos:latest as octez-client
-FROM ligolang/ligo:0.62.0 as ligo-compiler
+FROM ligolang/ligo:0.63.2 as ligo-compiler
 FROM ubuntu:20.04 as web-ide-builder
 
 LABEL maintainer="infra@marigold.dev"
@@ -32,8 +32,8 @@ ENV LANG=C.UTF-8 \
 #
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        wget netbase ca-certificates g++ gcc libc6-dev libffi-dev libgmp-dev \
-        make xz-utils zlib1g-dev git gnupg libtinfo-dev jq && \
+    wget netbase ca-certificates g++ gcc libc6-dev libffi-dev libgmp-dev \
+    make xz-utils zlib1g-dev git gnupg libtinfo-dev jq && \
     rm -rf /var/lib/apt/lists/*
 
 #
@@ -45,11 +45,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #
 
 RUN if [ "$VARIANT" != "small" ]; then \
-        wget -qO- https://raw.githubusercontent.com/fpco/stackage/$BOOTSTRAP_COMMIT/debian-bootstrap.sh | sed "s/^GHCVER=9.0.1$/GHCVER=$GHC_VERSION/" | GHCVER=$GHC_VERSION bash; \
+    wget -qO- https://raw.githubusercontent.com/fpco/stackage/$BOOTSTRAP_COMMIT/debian-bootstrap.sh | sed "s/^GHCVER=9.0.1$/GHCVER=$GHC_VERSION/" | GHCVER=$GHC_VERSION bash; \
     fi && \
     wget -qO- https://github.com/commercialhaskell/stack/releases/download/v$STACK_VERSION/stack-$STACK_VERSION-linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C /usr/bin '*/stack' && \
     if [ "$VARIANT" = "small" ]; then \
-        stack setup --resolver ghc-$GHC_VERSION; \
+    stack setup --resolver ghc-$GHC_VERSION; \
     fi && \
     rm -rf /var/lib/apt/lists/* && \
     cd $STACK_ROOT && \
@@ -70,7 +70,7 @@ RUN mkdir /etc/stack/ && \
 #
 
 RUN stack --resolver=$LTS_SLUG --local-bin-path=/usr/bin install \
-        happy alex cpphs gtk2hs-buildtools hscolour hlint hindent && \
+    happy alex cpphs gtk2hs-buildtools hscolour hlint hindent && \
     cd $STACK_ROOT && \
     find . -type f -not -path './snapshots/*/share/*' -and -not -path "./programs/x86_64-linux/ghc-$GHC_VERSION/*" -exec rm '{}' \; && \
     find . -type d -print0 |sort -rz |xargs -0 rmdir 2>/dev/null || true
