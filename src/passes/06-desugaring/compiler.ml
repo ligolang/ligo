@@ -4,9 +4,19 @@ open Errors
 open Ligo_prim
 module I = Ast_imperative
 module O = Ast_core
+module Option = Simple_utils.Option
 
-let is_layout = String.chop_prefix ~prefix:"layout:"
-let is_michelson_annotation = String.chop_prefix ~prefix:"annot:"
+let is_layout x =
+  Option.bind_eager_or
+    (String.chop_prefix ~prefix:"layout:" x)
+    (String.chop_prefix ~prefix:"layout" x)
+
+
+let is_michelson_annotation x =
+  Option.bind_eager_or
+    (String.chop_prefix ~prefix:"annot:" x)
+    (String.chop_prefix ~prefix:"annot" x)
+
 
 let compile_row_elem_attributes : string list -> string option =
  fun attributes -> List.find_map attributes ~f:(fun attr -> is_michelson_annotation attr)

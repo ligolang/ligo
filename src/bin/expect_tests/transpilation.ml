@@ -89,3 +89,21 @@ let%expect_test _ =
     {|
     Invalid syntaxes.
     Source and destination of transpilation are the same (jsligo). |}]
+
+let contract_warn_shadowing = test "transpile_warn_shadowing.jsligo"
+
+(* Adding the [--transpiled] flag should disable the error message about shadowed variables *)
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; contract_warn_shadowing ];
+  [%expect
+    {|
+    File "../../test/contracts/transpile_warn_shadowing.jsligo", line 12, characters 10-12:
+     11 | const x = 42;
+     12 | const x = 33;
+     13 |
+
+    Cannot redeclare block-scoped variable. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; "--transpiled"; contract_warn_shadowing ];
+  [%expect {| { parameter int ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]

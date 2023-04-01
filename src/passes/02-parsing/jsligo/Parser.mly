@@ -509,12 +509,10 @@ ctor_arg:
 (* Export Declaration *)
 
 export_decl:
-  attributes "export" declaration {
-    let declaration = $3 $1 in
-    let kwd_export = $2 in
-    let region =
-      cover kwd_export#region (statement_to_region declaration)
-    in {region; value = (kwd_export,declaration)} }
+  attributes "export" attributes declaration {
+    let declaration = $4 ($1 @ $3)  in
+    let region = cover $2#region (statement_to_region declaration)
+    in {region; value = ($2, declaration)} }
 
 (* Block of Statements *)
 
@@ -808,6 +806,7 @@ core_type:
 | "<int>"               { TInt    (unwrap $1) }
 | "_"                   { TVar    {value="_"; region=$1#region} }
 | type_name             { TVar    $1 }
+| parameter_of_type     {         $1 }
 | module_access_t       { TModA   $1 }
 | union_type            {         $1 }
 | type_ctor_app         { TApp    $1 }
@@ -833,12 +832,23 @@ type_components:
 type_component:
   type_expr { $1 }
 
+(* Parameter of contract *)
+
+parameter_of_type:
+  "parameter_of" nsepseq(module_name,".") {
+    let kwd_parameter = $1 in
+    let stop          = nsepseq_to_region (fun x -> x.region) $2 in
+    let region        = cover kwd_parameter#region stop in
+    let value         = $2 in
+    TParameter {region; value } }
+
 (* Application of type arguments to type constructors *)
 
 type_ctor_app:
   type_name chevrons(type_ctor_args) {
     let region = cover $1.region $2.region
     in {region; value = $1,$2} }
+
 
 type_ctor_args:
   nsepseq(type_ctor_arg,",") { $1 }

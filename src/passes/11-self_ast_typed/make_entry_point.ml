@@ -18,6 +18,11 @@ let default_views = "$views"
 let default_views_var = Value_var.of_input_var ~loc:Location.generated default_views
 let default_contract = "$contract"
 let default_contract_var = Value_var.of_input_var ~loc:Location.generated default_contract
+let default_parameter = "$parameter"
+
+let default_parameter_var =
+  Type_var.of_input_var ~loc:Location.generated default_parameter
+
 
 let get_entries_of_module (prg : Ast_typed.module_) =
   let f d =
@@ -168,7 +173,7 @@ let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
                storage_2)
       | Ok (p, s) -> p, s
     in
-    let type_binder = Type_var.fresh ~name:"parameter" ~loc () in
+    let type_binder = default_parameter_var in
     let entrypoint_type_decl =
       Location.wrap ~loc
       @@ Ast_typed.D_type
@@ -312,7 +317,7 @@ let make_main_entrypoint ~raise
                storage_2)
       | Ok (p, s) -> p, s
     in
-    let type_binder = Type_var.fresh ~name:"parameter" ~loc () in
+    let type_binder = default_parameter_var in
     let entrypoint_type_decl =
       Location.wrap ~loc
       @@ Ast_typed.D_type

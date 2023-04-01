@@ -1,0 +1,7 @@
+
+author: nicolas.van.phan
+description: "\\n\\nFor a JsLIGO contracts with re-declared variables, like the following, with `x` re-declared :\\n\\n\\n```\\nconst x = 42;\\nconst x = 33;\\n\\nconst main = ([_action, store] : [int, int]) : [list <operation>, int] => {\\n return [\\n   (list([]) as list <operation>),    // No operations\\n   store\\n  ]\\n};\\n\\n```\\n\\nCompilation will throw the following error :\\n\\n\\n```\\n> ligo compile contract 'transpile_warn_shadowing.jsligo'\\nFile \"transpile_warn_shadowing.jsligo\", line 2, characters 10-12:\\n 11 | const x = 42;\\n 12 | const x = 33;\\n 13 | \\n\\nCannot redeclare block-scoped variable. \\n\\n```\\n\\nCompilation using the `--transpiled` flag will disable the warning.\\n\\n#### Before\\n\\n\\n```\\n> ligo compile contract 'transpile_warn_shadowing.jsligo' --transpiled\\nError parsing command line:\\n\\n  unknown flag --transpiled\\n\\nFor usage information, run\\n\\n  ligo compile contract -help\\n\\n```\\n\\n#### After\\n\\n\\n```\\n> ligo compile contract 'transpile_warn_shadowing.jsligo' --transpiled\\n{ parameter int ; storage int ; code { CDR ; NIL operation ; PAIR } }\\n\\n```\\n\\n"
+merge_request: '2460'
+title: "Disable declaration-shadowing warning on transpiled JsLIGO contracts"
+type: added
+            

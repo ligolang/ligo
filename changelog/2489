@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n\\nAttributes are now allowed after the keyword \"export\" on declarations.\\n\\n"
+merge_request: '2489'
+title: "Enable attributes after keyword \"export\" for declarations"
+type: added
+            

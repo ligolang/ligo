@@ -371,6 +371,11 @@ module Compile_type = struct
       in
       Discriminated_union.add disc_union;
       return @@ t_sum_ez_attr ~loc ~attr:[] sum
+    | TParameter { region; value } ->
+      let loc = Location.lift region in
+      let module_ = List.Ne.map compile_mod_var @@ npseq_to_ne_list value in
+      let module_ = List.Ne.to_list module_ in
+      t_module_accessor ~loc module_ (Type_var.of_input_var ~loc "$parameter")
 end
 
 open Compile_type

@@ -3,8 +3,10 @@ open Helpers
 
 type c_unit = Buffer.t
 
-let compile ~raise ~meta c_unit (source_filename : string) : Ast_imperative.program =
-  parse_and_abstract ~raise ~meta c_unit source_filename
+let compile ~raise ~meta ~transpiled c_unit (source_filename : string)
+    : Ast_imperative.program
+  =
+  parse_and_abstract ~raise ~meta ~transpiled c_unit source_filename
 
 
 let compile_expression ~raise = parse_and_abstract_expression ~raise

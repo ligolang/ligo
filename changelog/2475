@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\n"
+merge_request: '2475'
+title: "Resolve \"Ligo 0.59.0+ breaks MR 2048 (Make [@annot:] mean no annotation).\""
+type: fixed
+            

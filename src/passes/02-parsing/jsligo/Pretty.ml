@@ -399,18 +399,24 @@ and pp_seq {value; _} =
 and pp_disc value  =
   pp_nsepseq "|" pp_object_type value
 
+and pp_parameter {value; _} =
+  string "(parameter_of "
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident value))
+  ^^ string ")"
+
 and pp_type_expr: type_expr -> document = function
-  TProd   t -> pp_cartesian t
-| TSum    t -> pp_sum_type t
-| TObject t -> pp_object_type t
-| TApp    t -> pp_type_app t
-| TFun    t -> pp_fun_type t
-| TPar    t -> pp_type_par t
-| TVar    t -> pp_ident t
-| TString s -> pp_string s
-| TModA   t -> pp_module_access pp_type_expr t
-| TInt    t -> pp_int t
-| TDisc   t -> pp_disc t
+  TProd   t    -> pp_cartesian t
+| TSum    t    -> pp_sum_type t
+| TObject t    -> pp_object_type t
+| TApp    t    -> pp_type_app t
+| TFun    t    -> pp_fun_type t
+| TPar    t    -> pp_type_par t
+| TVar    t    -> pp_ident t
+| TString s    -> pp_string s
+| TModA   t    -> pp_module_access pp_type_expr t
+| TInt    t    -> pp_int t
+| TDisc   t    -> pp_disc t
+| TParameter t -> pp_parameter t
 
 and pp_module_access : type a.(a -> document) -> a module_access reg -> document
 = fun f {value; _} ->
