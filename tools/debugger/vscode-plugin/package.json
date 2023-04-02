@@ -22,7 +22,8 @@
     },
     "activationEvents": [
         "onDebugResolve:ligo",
-        "onCommand:extension.ligo-debugger.switchSteppingGranularity"
+        "onCommand:extension.ligo-debugger.switchSteppingGranularity",
+        "onCommand:extension.ligo-debugger.useLastSteppingGranularity"
     ],
 
     "icon": "logo.png",
@@ -248,6 +249,18 @@
                 "command": "extension.ligo-debugger.switchSteppingGranularity",
                 "title": "Debug: Switch stepping granularity",
                 "description": "Changes granularity used by StepIn and other buttons"
+            },
+            {
+                "command": "extension.ligo-debugger.useLastSteppingGranularity",
+                "title": "Debug: Switch to last stepping granularity",
+                "description": "Changes stepping granularity to the previously selected one"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "extension.ligo-debugger.useLastSteppingGranularity",
+                "key": "ctrl+f10",
+                "mac": "cmd+f10"
             }
         ]
     },
