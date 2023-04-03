@@ -473,9 +473,7 @@ let project_root =
 let transpiled =
   let open Command.Param in
   let name = "--transpiled" in
-  let doc =
-    "Disable checks that are unapplicable to transpiled contracts."
-  in
+  let doc = "Disable checks that are unapplicable to transpiled contracts." in
   flag ~doc name no_arg
 
 

@@ -423,7 +423,7 @@ let rec build_contract_aggregated ~raise
   let agg_views =
     match typed_views with
     | [] -> None
-    | _ -> build_aggregated_views ~raise ~options module_path typed_views
+    | _ -> build_aggregated_views ~raise ~options ~contract_type module_path typed_views
   in
   let parameter_ty, storage_ty =
     trace_option
@@ -482,7 +482,7 @@ and build_contract_meta_ligo ~raise ~options entry_point views file_name =
   entry_point, contract, views
 
 
-and build_aggregated_views ~raise
+and build_aggregated_views ~raise ~contract_type
     :  options:Compiler_options.t -> Module_var.t list -> Ast_typed.program
     -> (Value_var.t list * Ast_aggregated.expression) option
   =
@@ -490,7 +490,7 @@ and build_aggregated_views ~raise
   let contract, view_info =
     Self_ast_typed.Helpers.update_module
       module_path
-      Ast_typed.Helpers.fetch_views_in_program
+      (Ast_typed.fetch_views_in_program ~storage_ty:contract_type.storage)
       contract
   in
   match view_info with

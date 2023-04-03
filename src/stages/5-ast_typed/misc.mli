@@ -34,3 +34,25 @@ val should_uncurry_entry
      | `No of Types.type_expression * Types.type_expression
      | `Yes of Types.type_expression * Types.type_expression
      ]
+
+val fetch_views_in_program
+  :  storage_ty:Types.type_expression
+  -> Types.program
+  -> Types.program
+     * (Types.type_expression * Types.type_expression Ligo_prim.Binder.t) list
+
+val uncurry_wrap
+  :  loc:Location.t
+  -> type_:Types.type_expression
+  -> Types.expression_variable
+  -> Types.expression option
+
+val should_uncurry_view
+  :  storage_ty:Types.type_expression
+  -> Types.type_expression
+  -> [> `Bad
+     | `Bad_not_function
+     | `Bad_storage of Types.type_expression
+     | `No of Types.type_expression * Types.type_expression * Types.type_expression
+     | `Yes of Types.type_expression * Types.type_expression * Types.type_expression
+     ]

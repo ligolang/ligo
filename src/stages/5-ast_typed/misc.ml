@@ -299,6 +299,24 @@ let should_uncurry_entry entry_ty =
   | None -> `Bad
 
 
+(* We cannot really tell the difference, this is just an heuristic when we try with curried first *)
+let should_uncurry_view ~storage_ty view_ty =
+  match Combinators.get_t_arrow view_ty with
+  | Some { type1 = tin; type2 = return } ->
+    (match Combinators.get_t_arrow return with
+    | Some { type1 = storage; type2 = return }
+      when Option.is_some (assert_type_expression_eq (storage_ty, storage)) ->
+      `Yes (tin, storage, return)
+    | _ ->
+      (match Combinators.get_t_tuple tin with
+      | Some [ arg; storage ]
+        when Option.is_some (assert_type_expression_eq (storage_ty, storage)) ->
+        `No (arg, storage, return)
+      | Some [ _; storage ] -> `Bad_storage storage
+      | _ -> `Bad))
+  | None -> `Bad_not_function
+
+
 let parameter_from_entrypoints
     :  (Value_var.t * type_expression) List.Ne.t
     -> ( type_expression * type_expression
@@ -340,3 +358,116 @@ let parameter_from_entrypoints
         ~layout:Combinators.default_layout
         parameter_list
     , storage )
+
+
+(* Wrap a variable `f` of type `parameter -> storage -> return`
+   to an expression `fun (p, s) -> f p s : parameter * storage -> return` *)
+let uncurry_wrap ~loc ~type_ var =
+  let open Combinators in
+  let open Simple_utils.Option in
+  let* { type1 = input_ty; type2 = output_ty } = get_t_arrow type_ in
+  let* { type1 = storage; type2 = output_ty } = get_t_arrow output_ty in
+  (* We create a wrapper to uncurry it: *)
+  let parameter = input_ty in
+  let p_var = Value_var.fresh ~loc ~name:"parameter" () in
+  let s_var = Value_var.fresh ~loc ~name:"storage" () in
+  let ps_var = Value_var.fresh ~loc ~name:"input" () in
+  let p_binder = Binder.make p_var parameter in
+  let s_binder = Binder.make s_var storage in
+  let ps_param = Param.make ps_var (t_pair ~loc parameter storage) in
+  let p_expr = e_a_variable ~loc p_var parameter in
+  let s_expr = e_a_variable ~loc s_var storage in
+  let ps_expr = e_a_variable ~loc ps_var (t_pair ~loc parameter storage) in
+  (* main(p) *)
+  let expr =
+    e_a_application
+      ~loc
+      (e_a_variable ~loc var type_)
+      p_expr
+      (t_arrow ~loc storage output_ty ())
+  in
+  (* main(p)(s) *)
+  let expr = e_a_application ~loc expr s_expr output_ty in
+  (* match ps with (p, s) -> main(p)(s) *)
+  let expr =
+    e_a_matching
+      ~loc:Location.generated
+      ps_expr
+      [ { pattern =
+            Location.wrap
+              ~loc:Location.generated
+              Pattern.(
+                P_tuple
+                  [ Location.wrap ~loc:Location.generated @@ P_var p_binder
+                  ; Location.wrap ~loc:Location.generated @@ P_var s_binder
+                  ])
+        ; body = expr
+        }
+      ]
+      output_ty
+  in
+  (* fun ps -> match ps with (p, s) -> main(p)(s) *)
+  let expr =
+    e_a_lambda
+      ~loc
+      { binder = ps_param; output_type = output_ty; result = expr }
+      (t_pair ~loc parameter storage)
+      output_ty
+  in
+  some @@ expr
+
+
+let fetch_views_in_program ~storage_ty
+    : program -> program * (type_expression * type_expression Binder.t) list
+  =
+ fun prog ->
+  let aux declt ((prog, views) : program * _) =
+    let return () = declt :: prog, views in
+    let loc = Location.get_location declt in
+    match Location.unwrap declt with
+    | D_value ({ binder; expr; attr } as dvalue) when attr.view ->
+      let var = Binder.get_var binder in
+      (match should_uncurry_view ~storage_ty expr.type_expression with
+      | `Yes _ ->
+        let expr =
+          Option.value_exn @@ uncurry_wrap ~loc ~type_:expr.type_expression var
+        in
+        let binder = Binder.set_var binder (Value_var.fresh_like var) in
+        let binder = Binder.set_ascr binder expr.type_expression in
+        (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
+        ( (Location.wrap ~loc:declt.location @@ D_value dvalue)
+          :: (Location.wrap ~loc:declt.location @@ D_value { dvalue with binder; expr })
+          :: prog
+        , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
+          :: views )
+      | `No _ | `Bad | `Bad_not_function | `Bad_storage _ ->
+        ( (Location.wrap ~loc:declt.location @@ D_value dvalue) :: prog
+        , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
+          :: views ))
+    | D_irrefutable_match
+        ({ pattern = { wrap_content = P_var binder; _ } as pattern; expr; attr } as
+        dirref)
+      when attr.view ->
+      let var = Binder.get_var binder in
+      (match should_uncurry_view ~storage_ty expr.type_expression with
+      | `Yes _ ->
+        let expr =
+          Option.value_exn @@ uncurry_wrap ~loc ~type_:expr.type_expression var
+        in
+        let binder = Binder.set_var binder (Value_var.fresh_like var) in
+        let binder = Binder.set_ascr binder expr.type_expression in
+        let pattern = Pattern.{ pattern with wrap_content = P_var binder } in
+        (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
+        ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref)
+          :: (Location.wrap ~loc:declt.location
+             @@ D_irrefutable_match { dirref with expr; pattern })
+          :: prog
+        , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
+          :: views )
+      | `No _ | `Bad | `Bad_not_function | `Bad_storage _ ->
+        ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref) :: prog
+        , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
+          :: views ))
+    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
+  in
+  List.fold_right ~f:aux ~init:([], []) prog
