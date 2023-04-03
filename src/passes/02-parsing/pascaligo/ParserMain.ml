@@ -106,7 +106,7 @@ let () =
         match cst, Options.jsligo with
           Ok (cst, _), Some file_opt ->
              let jsligo_cst = JsLIGO.of_cst cst in
-             let doc = JsLIGOPretty.print jsligo_cst in
+             let doc = JsLIGOPretty.(print default_environment) jsligo_cst in
              let width =
                match Terminal_size.get_columns () with
                  None -> 60

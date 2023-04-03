@@ -8,6 +8,7 @@ module Trace = Simple_utils.Trace
 
 module CST    = Cst_pascaligo.CST
 module Errors = Parsing_shared.Errors
+module Pretty = Parsing_pascaligo.Pretty
 
 (* Parsing *)
 
@@ -35,13 +36,13 @@ val parse_expression : CST.expr parser
 
 (* Pretty-printing *)
 
-val pretty_print            : CST.t -> Buffer.t
-val pretty_print_expression : CST.expr -> Buffer.t
-val pretty_print_pattern    : ?cols:int -> CST.pattern -> Buffer.t
-val pretty_print_type_expr  : CST.type_expr -> Buffer.t
+val pretty_print            : Pretty.environment -> CST.t -> Buffer.t
+val pretty_print_expression : Pretty.environment -> CST.expr -> Buffer.t
+val pretty_print_pattern    : ?cols:int -> Pretty.environment -> CST.pattern -> Buffer.t
+val pretty_print_type_expr  : Pretty.environment -> CST.type_expr -> Buffer.t
 
 (* The function [pretty_print_file] reads a string buffer and assumes
    that its contents originally comes from a file. *)
 
-val pretty_print_file : (file_path -> Buffer.t) parser
+val pretty_print_file : Pretty.environment -> (file_path -> Buffer.t) parser
 val pretty_print_cst  : (file_path -> Buffer.t) parser

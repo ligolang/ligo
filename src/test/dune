@@ -8,6 +8,7 @@
   vendors_test
   contract_test
   get_scope_tests
+  pretty_printer_tests
   lsp_test)
  (libraries
   simple-utils
@@ -115,6 +116,7 @@
   (alias contract_test)
   (alias error-recovery/recovery-test)
   (alias get_scope_tests)
+  (alias pretty-printer-tests)
   (alias lsp-test)))
 
 (rule
@@ -123,6 +125,13 @@
   (run ./manual_test.exe))
  (deps
   (glob_files contracts/*)))
+
+(rule
+ (alias pretty-printer-tests)
+ (action
+  (run ./pretty_printer_tests.exe))
+ (deps
+  (source_tree contracts)))
 
 (rule
  (alias lsp-test)

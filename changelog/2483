@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nImprove the JsLIGO pretty-printer to have a more sensible output. For example suppose a code like this:\\n\\n\\n```ts\\nnamespace C {\\n    export type bar = int;\\n    export type foo = [bar, bar];\\n};\\n\\n```\\n\\nPreviously, the user might see something like this:\\n\\n\\n```ts\\nnamespace C{export type bar = int;\\n  export type foo =\\n\\n    [bar,\\n     bar]};\\n\\n```\\n\\nNow, it will be much more sensible (like the original code).\\n\\n"
+merge_request: '2483'
+title: "[#1715] Various improvements to the JsLIGO pretty printer"
+type: fixed
+            

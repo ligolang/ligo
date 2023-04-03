@@ -37,8 +37,8 @@ include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
 type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-let pretty_print_file ?preprocess ~raise buffer file_path =
-  parse_file ?preprocess ~raise buffer file_path |> pretty_print
+let pretty_print_file env ?preprocess ~raise buffer file_path =
+  parse_file ?preprocess ~raise buffer file_path |> pretty_print env
 
 let pretty_print_cst ?preprocess ~raise buffer file_path =
   let module PreprocParams =

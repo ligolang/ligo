@@ -9,28 +9,28 @@ let%expect_test _ =
     type storage = int;
 
     type parameter =
-      | ["Increment", int]
-      | ["Decrement", int]
-      | ["Reset"];
+      ["Increment", int] | ["Decrement", int] | ["Reset"];
 
-    type @return =
+    type @return = [list<operation>, storage];
 
-      [list<operation>,
-       storage];
+    const add = (store: storage, delta: int): storage =>
+      store + delta;
 
-    const add =
-      (store: storage, delta: int): storage => store + delta;
+    const sub = (store: storage, delta: int): storage =>
+      store - delta;
 
-    const sub =
-      (store: storage, delta: int): storage => store - delta;
-
-    const main =
-      (action: parameter, store: storage): @return =>
-        [list([]) as list<operation>,
-         match(action, {
-         Increment: n => add(store, n),
-          Decrement: n => sub(store, n),
-          Reset: () => 0})]; |}]
+    const main = (action: parameter, store: storage): @return =>
+      [
+        list([]) as list<operation>,
+        match(
+          action,
+          {
+            Increment: n => add(store, n),
+            Decrement: n => sub(store, n),
+            Reset: () => 0
+          }
+        )
+      ]; |}]
 
 let example_jsligo = "../../test/examples/jsligo/arithmetic-contract.jsligo"
 
