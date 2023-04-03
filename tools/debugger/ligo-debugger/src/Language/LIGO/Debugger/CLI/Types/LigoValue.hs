@@ -37,12 +37,12 @@ import Morley.Michelson.Typed (Constrained (SomeValue), SomeValue)
 
 import Language.LIGO.Debugger.CLI.Types
 
------------------------------
---- Types
------------------------------
+-------------
+--- Types ---
+-------------
 
 data LigoOrMichValue
-  = LigoValue LigoValue
+  = LigoValue LigoType LigoValue
   | MichValue SomeValue
   deriving stock (Generic, Show, Eq)
 
@@ -140,9 +140,9 @@ data LigoValueMichelson
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
------------------------------
---- Helpers
------------------------------
+---------------
+--- Helpers ---
+---------------
 
 newtype LigoValueJSON (n :: Nat) a = LigoValueJSON a
 
@@ -163,13 +163,28 @@ toTupleMaybe :: LigoValue -> Maybe [LigoValue]
 toTupleMaybe (LVRecord record) = forM [0..HM.size record - 1] \i -> HM.lookup (pretty i) record
 toTupleMaybe _ = Nothing
 
------------------------------
---- Instances
------------------------------
+getRecordOrderMb :: LigoType -> LigoValue -> Maybe [(Text, (LigoType, LigoValue))]
+getRecordOrderMb ligoType = \case
+  LVRecord record -> do
+    LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
 
------------------------------
---- FromJSON
------------------------------
+    valsAndNums <-
+      forM (toPairs record) \(k, v) -> do
+        field <- HM.lookup k _lttFields
+        let num = _ltfDeclPos field
+        let innerType = LigoType (Just $ _ltfAssociatedType field)
+        pure ((k, (innerType, v)), num)
+
+    pure $ fst <$> sortBy (comparing snd) valsAndNums
+  _ -> Nothing
+
+-----------------
+--- Instances ---
+-----------------
+
+----------------
+--- FromJSON ---
+----------------
 
 instance FromJSON LigoValue where
   parseJSON val = genericParseJSON defaultOptions
@@ -213,40 +228,63 @@ instance FromJSON LigoValueMichelson where
     , constructorTagModifier =  toUpperCase . drop 1 . toSnakeCase . drop 3
     }
 
------------------------------
---- Buildable
------------------------------
+-------------------------------------
+--- Buildable and build functions ---
+-------------------------------------
 
 instance Buildable LigoOrMichValue where
   build = \case
-    LigoValue ligoValue -> build ligoValue
+    LigoValue ligoType ligoValue -> buildLigoValue ligoType ligoValue
     MichValue mich -> build mich
 
 instance Buildable (DebugPrint LigoOrMichValue) where
   build (DebugPrint mode val) =
     case val of
       MichValue (SomeValue michValue) -> build (DebugPrint mode michValue)
-      LigoValue ligoValue -> build ligoValue
+      LigoValue ligoType ligoValue -> buildLigoValue ligoType ligoValue
 
-instance Buildable LigoValue where
-  build = \case
-    LVCt constant -> build constant
-    LVList values -> surround "[" "]" "; " values
-    val@(LVRecord record) ->
-      case toTupleMaybe val of
-        Just tuple -> surround "(" ")" ", " tuple
-        Nothing -> surround @Builder "{" "}" "; " (map (\(l, v) -> [int||#{l} = #{v}|]) (HM.toList record))
-    LVConstructor (ctor, value) -> [int||#{ctor} (#{value})|]
-    LVSet values -> surround "{" "}" " ; " values
-    LVMap keyValues -> surround @Builder "[" "]" "; " (map (\(k, v) -> [int||#{k} -> #{v}|]) keyValues)
-    LVTypedAddress address -> build address
-    LVMichelson _ -> "<internal: contract code>"
-    LVMichelsonContract _ -> "<internal: michelson contract>"
-    LVGen _ -> "<internal: generator>"
-    LVLocation _ -> "<internal: heap location>"
-    LVMutation _ -> "<internal: mutation>"
-    LVAstContract _ -> "<internal: AST contract>"
-    LVFuncVal -> "<fun>"
+buildLigoValue :: LigoType -> LigoValue -> Builder
+buildLigoValue ligoType = \case
+  LVCt constant -> build constant
+  LVList values ->
+    surround "[" "]" "; " (buildLigoValue innerTypeFromApp <$> values)
+  val@(LVRecord record) ->
+    case toTupleMaybe val of
+      Just tuple ->
+        let
+          innerTypes = maybe (repeat $ LigoType Nothing) (map (fst . snd)) (getRecordOrderMb ligoType val)
+        in surround "(" ")" ", " (zipWith buildLigoValue innerTypes tuple)
+      Nothing ->
+        let
+          buildRecord :: [(Text, (LigoType, LigoValue))] -> Builder
+          buildRecord keysAndValues =
+            surround @Builder "{" "}" "; " (map (\(l, (t, v)) -> [int||#{l} = #{buildLigoValue t v}|]) keysAndValues)
+        in
+          case getRecordOrderMb ligoType val of
+            Just order -> buildRecord order
+            Nothing -> buildRecord $ map (\(t, v) -> (t, (LigoType Nothing, v))) (HM.toList record)
+  LVConstructor (ctor, value) -> [int||#{ctor} (#{buildLigoValue innerTypeFromApp value})|]
+  LVSet values -> surround "{" "}" " ; " (buildLigoValue innerTypeFromApp <$> values)
+  LVMap keyValues ->
+    surround @Builder "[" "]" "; " (map (\(k, v) -> [int||#{buildLigoValue keyType k} -> #{buildLigoValue valueType v}|]) keyValues)
+  LVTypedAddress address -> build address
+  LVMichelson _ -> "<internal: contract code>"
+  LVMichelsonContract _ -> "<internal: michelson contract>"
+  LVGen _ -> "<internal: generator>"
+  LVLocation _ -> "<internal: heap location>"
+  LVMutation _ -> "<internal: mutation>"
+  LVAstContract _ -> "<internal: AST contract>"
+  LVFuncVal -> "<fun>"
+  where
+    typesFromApp = do
+      LTCApp LigoTypeApp{..} <- _lteTypeContent <$> unLigoType ligoType
+      pure _ltaArguments
+
+    innerTypeFromApp = LigoType (listToMaybe =<< typesFromApp)
+    (keyType, valueType) = maybe (LigoType Nothing, LigoType Nothing) (bimap LigoType LigoType)
+      case typesFromApp of
+        Just [k, v] -> pure (Just k, Just v)
+        _ -> Nothing
 
 instance Buildable LigoConstant where
   build = \case

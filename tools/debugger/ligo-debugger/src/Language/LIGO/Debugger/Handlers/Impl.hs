@@ -11,15 +11,16 @@ import Prelude hiding (try)
 import Debug qualified
 import Unsafe qualified
 
-import Cli (HasLigoClient (getLigoClientEnv), LigoClientEnv (..))
-import Control.Concurrent (threadDelay)
+import Cli
+  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
+  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
-import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
 import Data.Default (def)
+import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Data.Singletons (demote)
-import Fmt (Buildable (build), Builder, blockListF, pretty)
+import Fmt (Builder, blockListF, pretty)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
@@ -150,11 +151,17 @@ instance HasSpecificMessages LIGO where
           where
             buildOpsAndNewStorage :: (MonadThrow m) => LigoOrMichValue -> m (Builder, Builder)
             buildOpsAndNewStorage = \case
-              LigoValue ligoValue -> case toTupleMaybe ligoValue of
-                Just [LVList ops, st] -> pure
-                  ( blockListF ops
-                  , build st
-                  )
+              LigoValue ligoType ligoValue -> case toTupleMaybe ligoValue of
+                Just [LVList ops, st] -> do
+                  let (fstType, sndType) = maybe (LigoType Nothing, LigoType Nothing) (bimap LigoType LigoType) do
+                        LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
+                        let fstTyp = _ltfAssociatedType <$> HM.lookup "0" _lttFields
+                        let sndTyp = _ltfAssociatedType <$> HM.lookup "1" _lttFields
+                        pure (fstTyp, sndTyp)
+                  pure
+                    ( blockListF (buildLigoValue fstType <$> ops)
+                    , buildLigoValue sndType st
+                    )
                 _ ->
                   throwM badLastElement
               MichValue (SomeValue val) -> case val of
@@ -171,7 +178,7 @@ instance HasSpecificMessages LIGO where
 
             buildOldStorage :: (MonadThrow m) => LigoOrMichValue -> m Builder
             buildOldStorage = \case
-              LigoValue ligoValue -> pure $ build ligoValue
+              LigoValue ligoType ligoValue -> pure $ buildLigoValue ligoType ligoValue
               MichValue (SomeValue (st :: T.Value r)) ->
                 case T.valueTypeSanity st of
                   T.Dict ->

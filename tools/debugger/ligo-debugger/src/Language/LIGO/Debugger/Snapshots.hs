@@ -52,6 +52,7 @@ import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
 import Data.HashSet qualified as HS
+import Data.List (zipWith3)
 import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
 import Fmt (Buildable (..), genericF, pretty)
@@ -540,7 +541,8 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
               extractType :: LigoStackEntry u -> LigoType
               extractType entry = fromMaybe (LigoType Nothing) (entry ^? _LigoStackEntry . leseTypeL)
 
-      let typesAndValues = zip (extractTypesFromEnv env) refinedStack
+      let ligoTypes = extractTypesFromEnv env
+      let typesAndValues = zip ligoTypes refinedStack
 
       logMessage [int||
         Decompilation contract: begin
@@ -550,7 +552,12 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       |]
 
       decompiledValues <- natTransform $ decompileLigoValues typesAndValues
-      let values = zipWith (\dec michValue -> maybe (MichValue michValue) LigoValue dec) decompiledValues refinedStack
+      let values =
+            zipWith3
+              do \t dec michValue -> maybe (MichValue michValue) (LigoValue t) dec
+              ligoTypes
+              decompiledValues
+              refinedStack
 
       -- Here stripping occurs, as the second list keeps the entire stack,
       -- while the first list (@env@) - only stack related to the current
