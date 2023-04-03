@@ -277,7 +277,14 @@ export async function getEntrypoint (
 
 			if (entrypoints.length <= 1) {
 				if (entrypoints.length === 0) {
-					throw new Error("Given contract doesn't have any entrypoints");
+					var msg = "Given contract doesn't have any entrypoints."
+
+					const file = vscode.window.activeTextEditor?.document.uri.fsPath
+					if (isDefined(file) && file.endsWith(".jsligo")) {
+						msg += "\n\nMake sure your main function is declared with `const`, not `let`, and has a type appropriate for an entrypoint."
+					}
+
+					throw new Error(msg);
 				}
 				state.ref.pickedEntrypoint = entrypoints[0].label;
 				return;
