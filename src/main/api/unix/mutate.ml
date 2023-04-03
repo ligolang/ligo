@@ -45,7 +45,11 @@ let mutate_cst (raw_options : Raw_options.t) source_file display_format seed no_
       @@ Parsing.Cameligo.parse_file c_unit source_file
     in
     let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
-    let buffer = Parsing.Cameligo.pretty_print mutated_prg in
+    let buffer =
+      Parsing.Cameligo.pretty_print
+        Parsing.Cameligo.Pretty.default_environment
+        mutated_prg
+    in
     buffer
   | { syntax = JsLIGO } ->
     let module Fuzzer = Fuzz.Jsligo.Mutator (Gen) in
@@ -54,7 +58,9 @@ let mutate_cst (raw_options : Raw_options.t) source_file display_format seed no_
       @@ Parsing.Jsligo.parse_file c_unit source_file
     in
     let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
-    let buffer = Parsing.Jsligo.pretty_print mutated_prg in
+    let buffer =
+      Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_environment mutated_prg
+    in
     buffer
   | { syntax = PascaLIGO } ->
     let module Fuzzer = Fuzz.Pascaligo.Mutator (Gen) in
@@ -63,5 +69,9 @@ let mutate_cst (raw_options : Raw_options.t) source_file display_format seed no_
       @@ Parsing.Pascaligo.parse_file c_unit source_file
     in
     let _, mutated_prg = Fuzzer.mutate_module_ ?n:seed raw in
-    let buffer = Parsing.Pascaligo.pretty_print mutated_prg in
+    let buffer =
+      Parsing.Pascaligo.pretty_print
+        Parsing.Pascaligo.Pretty.default_environment
+        mutated_prg
+    in
     buffer

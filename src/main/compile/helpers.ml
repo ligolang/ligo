@@ -211,9 +211,17 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
   trace ~raise parser_tracer @@ print buffer file_path
 
 
-let pretty_print_cameligo = Parsing.Cameligo.pretty_print_file
-let pretty_print_jsligo = Parsing.Jsligo.pretty_print_file
-let pretty_print_pascaligo = Parsing.Pascaligo.pretty_print_file
+let pretty_print_cameligo =
+  Parsing.Cameligo.pretty_print_file Parsing.Cameligo.Pretty.default_environment
+
+
+let pretty_print_jsligo =
+  Parsing.Jsligo.pretty_print_file Parsing.Jsligo.Pretty.default_environment
+
+
+let pretty_print_pascaligo =
+  Parsing.Pascaligo.pretty_print_file Parsing.Pascaligo.Pretty.default_environment
+
 
 let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
   let print =

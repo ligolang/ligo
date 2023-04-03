@@ -104,8 +104,8 @@ let error_ppformat
         loc
         name
     | `Concrete_jsligo_funarg_tuple_type_mismatch (region, pattern, texpr) ->
-      let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
-      let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
+      let p = Parsing.pretty_print_pattern Parsing.Pretty.default_environment pattern |> Buffer.contents in
+      let t = Parsing.pretty_print_type_expr Parsing.Pretty.default_environment texpr |> Buffer.contents in
       Format.fprintf
         f
         "@[<hv>%a@.The tuple \"%s\" does not have the expected type \"%s\". @]"
@@ -304,8 +304,8 @@ let error_json : abs_error -> Simple_utils.Error.t =
     let content = make_content ~message ~location () in
     make ~stage ~content
   | `Concrete_jsligo_funarg_tuple_type_mismatch (region, pattern, texpr) ->
-    let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
-    let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
+    let p = Parsing.pretty_print_pattern Parsing.Pretty.default_environment pattern |> Buffer.contents in
+    let t = Parsing.pretty_print_type_expr Parsing.Pretty.default_environment texpr |> Buffer.contents in
     let message =
       Format.sprintf "The tuple \"%s\" does not have the expected type \"%s\"." p t
     in

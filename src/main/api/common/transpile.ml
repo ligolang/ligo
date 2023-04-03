@@ -30,7 +30,7 @@ let contract source_file new_syntax syntax display_format no_colour () =
         trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file c_unit source_file
       in
       let new_cst = Parsing_pascaligo.JsLIGO.of_cst old_cst in
-      Parsing.Jsligo.pretty_print new_cst
+      Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_environment new_cst
     | _ ->
       if Syntax_types.equal syntax new_syntax
       then
