@@ -14,17 +14,16 @@ import Data.Aeson
   (FromJSON (parseJSON), GFromJSON, Options (..), SumEncoding (TwoElemArray), Value (..), Zero,
   defaultOptions, genericParseJSON, withText)
 import Data.Aeson.Types (Parser)
-import Data.ByteString qualified as BS
 import Data.Char (toUpper)
 import Data.Data (Data)
 import Data.HashMap.Strict qualified as HM
+import Data.Text qualified as T
 import Data.Time.Clock.System (SystemTime (MkSystemTime), systemToUTCTime)
 import Data.Time.Format.ISO8601 (iso8601Show)
-import Fmt (Buildable (build), Builder, pretty)
+import Fmt (Buildable (build), Builder, hexF, pretty)
 import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
 import Text.Interpolation.Nyan
-import Text.Printf (printf)
 
 import AST (Lang (Caml, Js))
 import Cli.Json
@@ -32,7 +31,7 @@ import Cli.Json
   LigoTypeExpression (..), LigoTypeTable (..), guardOneElemList, toSnakeCase)
 import Cli.Json qualified as Cli
 
-import Morley.Debugger.Core (DebugPrint (DebugPrint))
+import Morley.Debugger.Core (DebugPrint (DebugPrint), DebugPrintMode (..))
 import Morley.Michelson.Typed (Constrained (SomeValue), SomeValue)
 
 import Language.LIGO.Debugger.CLI.Types
@@ -237,36 +236,83 @@ instance Buildable LigoOrMichValue where
     LigoValue ligoType ligoValue -> buildLigoValue ligoType ligoValue
     MichValue mich -> build mich
 
-instance Buildable (DebugPrint LigoOrMichValue) where
-  build (DebugPrint mode val) =
+instance Buildable (DebugPrint (Lang, LigoOrMichValue)) where
+  build (DebugPrint mode (lang, val)) =
     case val of
       MichValue (SomeValue michValue) -> build (DebugPrint mode michValue)
-      LigoValue ligoType ligoValue -> buildLigoValue ligoType ligoValue
+      LigoValue ligoType ligoValue -> buildLigoValue' lang mode ligoType ligoValue
 
-buildLigoValue :: LigoType -> LigoValue -> Builder
-buildLigoValue ligoType = \case
-  LVCt constant -> build constant
+buildLigoValue' :: Lang -> DebugPrintMode -> LigoType -> LigoValue -> Builder
+buildLigoValue' lang mode ligoType = \case
+  LVCt constant -> buildConstant' lang mode constant
   LVList values ->
-    surround "[" "]" "; " (buildLigoValue innerTypeFromApp <$> values)
+    let listWithSep sep = surround "[" "]" sep (buildLigoValue' lang mode innerTypeFromConstant <$> values) in
+    case (mode, lang) of
+      (DpmNormal, _) -> listWithSep "; "
+      (DpmEvaluated, Caml) -> listWithSep "; "
+      (DpmEvaluated, Js) -> [int||list(#{listWithSep ", "})|]
   val@(LVRecord record) ->
     case toTupleMaybe val of
       Just tuple ->
         let
           innerTypes = maybe (repeat $ LigoType Nothing) (map (fst . snd)) (getRecordOrderMb ligoType val)
-        in surround "(" ")" ", " (zipWith buildLigoValue innerTypes tuple)
+          builtTuple lb rb = surround lb rb ", " (zipWith (buildLigoValue' lang mode) innerTypes tuple)
+        in
+          case (mode, lang) of
+            (DpmNormal, _) -> builtTuple "(" ")"
+            (DpmEvaluated, Caml) -> builtTuple "(" ")"
+            (DpmEvaluated, Js) -> builtTuple "[" "]"
       Nothing ->
         let
           buildRecord :: [(Text, (LigoType, LigoValue))] -> Builder
           buildRecord keysAndValues =
-            surround @Builder "{" "}" "; " (map (\(l, (t, v)) -> [int||#{l} = #{buildLigoValue t v}|]) keysAndValues)
+            let
+              recordWithSep sep =
+                surround @Builder "{" "}" sep
+                  (map (\(l, (t, v)) -> [int||#{l} = #{buildLigoValue' lang mode t v}|]) keysAndValues)
+            in
+            case (mode, lang) of
+              (DpmNormal, _) -> recordWithSep "; "
+              (DpmEvaluated, Caml) -> recordWithSep "; "
+              (DpmEvaluated, Js) -> recordWithSep ", "
         in
           case getRecordOrderMb ligoType val of
             Just order -> buildRecord order
             Nothing -> buildRecord $ map (\(t, v) -> (t, (LigoType Nothing, v))) (HM.toList record)
-  LVConstructor (ctor, value) -> [int||#{ctor} (#{buildLigoValue innerTypeFromApp value})|]
-  LVSet values -> surround "{" "}" " ; " (buildLigoValue innerTypeFromApp <$> values)
-  LVMap keyValues ->
-    surround @Builder "[" "]" "; " (map (\(k, v) -> [int||#{buildLigoValue keyType k} -> #{buildLigoValue valueType v}|]) keyValues)
+  LVConstructor (ctor, value) ->
+    let
+      innerType = LigoType do
+        LTCSum LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
+        _ltfAssociatedType <$> HM.lookup ctor _lttFields
+    in [int||#{ctor} (#{buildLigoValue' lang mode innerType value})|]
+  LVSet values -> case mode of
+    DpmNormal -> surround "{" "}" "; " (buildLigoValue' lang mode innerTypeFromConstant <$> values)
+    DpmEvaluated -> [int||Set.literal(#{buildLigoValue' lang mode ligoType $ LVList values})|]
+  LVMap keyValues -> case mode of
+    DpmNormal ->
+      surround @Builder "[" "]" "; "
+        (map (\(k, v) -> [int||#{buildLigoValue' lang mode keyType k} -> #{buildLigoValue' lang mode valueType v}|]) keyValues)
+    DpmEvaluated ->
+      let
+        mkTuple :: (LigoValue, LigoValue) -> LigoValue
+        mkTuple (fstVal, sndVal) = LVRecord $ HM.fromList
+          [ ("0", fstVal)
+          , ("1", sndVal)
+          ]
+
+        moduleName = case typesFromConstantAndName of
+          Just (_, toString -> name)
+            | name == "map" -> "Map" :: Text
+            | name == "big_map" -> "Big_map"
+          _ -> "Map"
+
+        listType = LigoType do
+          keyTypeUnwrapped <- unLigoType keyType
+          valueTypeUnwrapped <- unLigoType valueType
+
+          pure $ mkConstantType "List" [mkPairType keyTypeUnwrapped valueTypeUnwrapped]
+
+      in [int||#{moduleName}.literal(#{buildLigoValue' lang mode listType $ LVList (mkTuple <$> keyValues)})|]
   LVTypedAddress address -> build address
   LVMichelson _ -> "<internal: contract code>"
   LVMichelsonContract _ -> "<internal: michelson contract>"
@@ -276,52 +322,72 @@ buildLigoValue ligoType = \case
   LVAstContract _ -> "<internal: AST contract>"
   LVFuncVal -> "<fun>"
   where
-    typesFromApp = do
-      LTCApp LigoTypeApp{..} <- _lteTypeContent <$> unLigoType ligoType
-      pure _ltaArguments
+    typesFromConstantAndName = do
+      LTCConstant LigoTypeConstant{..} <- _lteTypeContent <$> unLigoType ligoType
+      pure (_ltcParameters, T.toLower $ head _ltcInjection)
 
-    innerTypeFromApp = LigoType (listToMaybe =<< typesFromApp)
+    innerTypeFromConstant = LigoType (listToMaybe . fst =<< typesFromConstantAndName)
     (keyType, valueType) = maybe (LigoType Nothing, LigoType Nothing) (bimap LigoType LigoType)
-      case typesFromApp of
-        Just [k, v] -> pure (Just k, Just v)
+      case typesFromConstantAndName of
+        Just ([k, v], _) -> pure (Just k, Just v)
         _ -> Nothing
 
-instance Buildable LigoConstant where
-  build = \case
-    LCString str -> build $ Debug.show @Text str
-    LCBytes bts -> [int||0x#{buildBytes bts}|]
-    LCAddress addr -> build addr
-    LCContract contract -> build contract
-    LCNat n -> [int||#{n}n|]
-    LCTimestamp timestamp -> [int||timestamp(#{buildTimestamp timestamp})|]
-    LCKeyHash keyHash -> build keyHash
-    LCKey key -> build key
-    LCSignature sign -> build sign
-    LCBls12_381G1 bts -> build bts
-    LCBls12_381G2 bts -> build bts
-    LCBls12_381Fr bts -> build bts
-    LCChainId bts -> build bts
-    LCInt n -> build n
-    LCInt64 n -> build n
-    LCMutez n -> [int||#{n}mutez|]
-    LCBool bl -> build bl
-    LCUnit -> "()"
-    where
-      buildTimestamp :: Text -> Builder
-      buildTimestamp (readMaybe @Int64 . toString -> Just n) =
-        MkSystemTime n 0
-          & systemToUTCTime
-          & iso8601Show
-          & build
-      buildTimestamp other =
-        throw (PluginCommunicationException [int||Unexpected string in timestamp: #{other}|])
+buildLigoValue :: LigoType -> LigoValue -> Builder
+buildLigoValue = buildLigoValue' Caml DpmNormal
 
-      buildBytes :: Text -> Builder
-      buildBytes bts = bts
-        & encodeUtf8
-        & BS.unpack
-        & concatMap (printf @(Word8 -> String) "%02x")
+buildConstant' :: Lang -> DebugPrintMode -> LigoConstant -> Builder
+buildConstant' lang mode = \case
+  LCString str -> build $ Debug.show @Text str
+  LCBytes bts -> [int||0x#{buildBytes bts}|]
+  LCAddress addr -> case (mode, lang) of
+    (DpmNormal, _) -> build addr
+    (DpmEvaluated, Caml) -> [int||(#{addr} : address)|]
+    (DpmEvaluated, Js) -> [int||(#{addr} as address)|]
+  LCContract contract -> build contract
+  LCNat n -> [int||#{n}n|]
+  LCTimestamp timestamp -> case (mode, lang) of
+    (DpmNormal, _) -> [int||timestamp(#{buildTimestamp timestamp})|]
+    (DpmEvaluated, Caml) -> [int||(#{buildTimestamp timestamp} : timestamp)|]
+    (DpmEvaluated, Js) -> [int||(#{buildTimestamp timestamp} as timestamp)|]
+  LCKeyHash keyHash -> build keyHash
+  LCKey key -> case (mode, lang) of
+    (DpmNormal, _) -> build key
+    (DpmEvaluated, Caml) -> [int||("#{key}" : key)|]
+    (DpmEvaluated, Js) -> [int||("#{key}" as key)|]
+  LCSignature sign -> case (mode, lang) of
+    (DpmNormal, _) -> build sign
+    (DpmEvaluated, Caml) -> [int||("#{sign}" : signature)|]
+    (DpmEvaluated, Js) -> [int||("#{sign}" as signature)|]
+  LCBls12_381G1 bts -> [int||0x#{buildBytes bts}|]
+  LCBls12_381G2 bts -> [int||0x#{buildBytes bts}|]
+  LCBls12_381Fr bts -> [int||0x#{buildBytes bts}|]
+  LCChainId bts -> buildChainId bts
+  LCInt n -> build n
+  LCInt64 n -> build n
+  LCMutez n -> [int||#{n}mutez|]
+  LCBool bl -> build bl
+  LCUnit -> case (mode, lang) of
+    (DpmNormal, _) -> "()"
+    (DpmEvaluated, Caml) -> "()"
+    (DpmEvaluated, Js) -> "unit"
+  where
+    buildTimestamp :: Text -> Builder
+    buildTimestamp (readMaybe @Int64 . toString -> Just n) =
+      MkSystemTime n 0
+        & systemToUTCTime
+        & iso8601Show
         & build
+    buildTimestamp other =
+      throw (PluginCommunicationException [int||Unexpected string in timestamp: #{other}|])
+
+    buildBytes :: Text -> Builder
+    buildBytes bts = hexF @ByteString $ encodeUtf8 bts
+
+    buildChainId :: Text -> Builder
+    buildChainId = build . T.UnsafeChainId . encodeUtf8
+
+buildConstant :: LigoConstant -> Builder
+buildConstant = buildConstant' Caml DpmNormal
 
 instance Buildable LigoContract where
   build LigoContract{..} = [int||#{lcAddress}(#{lcEntrypoint})|]

@@ -22,7 +22,7 @@ import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
 import AST (Lang)
 import Cli.Json
-  (LigoTableField, LigoTypeApp (..), LigoTypeContent (..), LigoTypeExpression (..),
+  (LigoTableField, LigoTypeConstant (..), LigoTypeContent (..), LigoTypeExpression (..),
   LigoTypeTable (..), _ltfAssociatedType)
 
 import Language.LIGO.Debugger.CLI.Types
@@ -81,8 +81,8 @@ createVariable name varText lang typ menuContext evaluateName = DAP.defaultVaria
 buildVariable :: Lang -> LigoType -> LigoOrMichValue -> String -> VariableBuilder Variable
 buildVariable lang typ v name = do
   let
-    varText = pretty $ debugBuild DpmNormal v
-    evaluatedText = pretty $ debugBuild DpmEvaluated v
+    varText = pretty $ debugBuild DpmNormal (lang, v)
+    evaluatedText = pretty $ debugBuild DpmEvaluated (lang, v)
     menuContext = case v of
       LigoValue _ ligoVal -> case ligoVal of
         LVCt LCAddress{} -> Just "address"
@@ -104,11 +104,11 @@ buildVariable lang typ v name = do
         { DAP.variablesReferenceVariable = idx
         }
 
-getInnerTypeFromApp :: Int -> LigoType -> LigoType
-getInnerTypeFromApp i = \case
+getInnerTypeFromConstant :: Int -> LigoType -> LigoType
+getInnerTypeFromConstant i = \case
   LigoTypeResolved LigoTypeExpression
-    { _lteTypeContent = LTCApp LigoTypeApp{..}
-    } -> LigoType (_ltaArguments ^? ix i)
+    { _lteTypeContent = LTCConstant LigoTypeConstant{..}
+    } -> LigoType (_ltcParameters ^? ix i)
   _ -> LigoType Nothing
 
 getInnerFieldFromRecord :: Text -> LigoType -> Maybe LigoTableField
@@ -125,6 +125,17 @@ getInnerFieldFromRecord name = \case
 getInnerTypeFromRecord :: Text -> LigoType -> LigoType
 getInnerTypeFromRecord = LigoType ... fmap _ltfAssociatedType ... getInnerFieldFromRecord
 
+getInnerTypeFromSum :: Text -> LigoType -> LigoType
+getInnerTypeFromSum name = \case
+  LigoTypeResolved LigoTypeExpression
+    { _lteTypeContent = LTCSum
+        ( LigoTypeTable
+            { _lttFields = hm
+            }
+        )
+    } -> LigoType $ _ltfAssociatedType <$> hm HM.!? name
+  _ -> LigoType Nothing
+
 getEpAddressChildren :: Lang -> EpAddress -> [Variable]
 getEpAddressChildren lang EpAddress'{..} =
   if isDefEpName eaEntrypoint
@@ -139,11 +150,12 @@ buildSubVars lang typ = \case
   MichValue (SomeValue michValue) -> case michValue of
     VOption Nothing -> return []
     VOption (Just v) -> do
-      (:[]) <$> buildVariable lang (getInnerTypeFromApp 0 typ) (toLigoValue v) "Some"
+      -- Inner type is wrong here. It's hard to extract it here properly.
+      (:[]) <$> buildVariable lang (getInnerTypeFromConstant 0 typ) (toLigoValue v) "Some"
     VList lst -> do
-      zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . toLigoValue) lst (show <$> [1 :: Int ..])
+      zipWithM (buildVariable lang (getInnerTypeFromConstant 0 typ) . toLigoValue) lst (show <$> [1 :: Int ..])
     VSet s -> do
-      zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . toLigoValue) (toList s) (show <$> [1 :: Int ..])
+      zipWithM (buildVariable lang (getInnerTypeFromConstant 0 typ) . toLigoValue) (toList s) (show <$> [1 :: Int ..])
     VMap m -> do
       forM (toPairs m) \(k, v) -> do
         let name = pretty $ debugBuild DpmNormal k
@@ -165,7 +177,7 @@ buildSubVars lang typ = \case
           return [addr, ep]
       | otherwise -> return []
     LVList lst ->
-      let innerType = getInnerTypeFromApp 0 typ in
+      let innerType = getInnerTypeFromConstant 0 typ in
       zipWithM (buildVariable lang innerType . LigoValue innerType) lst (show <$> [1 :: Int ..])
     value@(LVRecord record) -> case toTupleMaybe value of
       Just values ->
@@ -185,17 +197,17 @@ buildSubVars lang typ = \case
               let innerType = getInnerTypeFromRecord name typ
               buildVariable lang innerType (LigoValue innerType v) (toString name)
     LVConstructor (ctor, value) ->
-      let innerType = getInnerTypeFromApp 0 typ in
+      let innerType = getInnerTypeFromSum ctor typ in
       (:[]) <$> buildVariable lang innerType (LigoValue innerType value) (toString ctor)
     LVSet s ->
-      let innerType = getInnerTypeFromApp 0 typ in
+      let innerType = getInnerTypeFromConstant 0 typ in
       zipWithM (buildVariable lang innerType . LigoValue innerType) s (show <$> [1 :: Int ..])
     LVMap m -> do
       forM m \(k, v) -> do
-        let keyType = getInnerTypeFromApp 0 typ
-        let valueType = getInnerTypeFromApp 1 typ
+        let keyType = getInnerTypeFromConstant 0 typ
+        let valueType = getInnerTypeFromConstant 1 typ
 
-        let name = pretty @_ @String $ debugBuild DpmNormal (LigoValue keyType k)
+        let name = pretty @_ @String $ debugBuild DpmNormal (lang, LigoValue keyType k)
         buildVariable lang valueType (LigoValue valueType v) name
     _ -> return []
   where
