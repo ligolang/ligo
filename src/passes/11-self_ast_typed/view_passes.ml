@@ -15,9 +15,18 @@ let check_view_type ~raise
  fun ~err_data:(main_name, view_binder) { storage = c_storage; _ } view_ty ->
   let view_loc = Value_var.get_location @@ Binder.get_var view_binder in
   let arg, v_storage, return =
-    match Ast_typed.Helpers.should_uncurry_view view_ty with
+    match Ast_typed.should_uncurry_view ~storage_ty:c_storage view_ty with
     | `Yes v | `No v -> v
-    | `Bad -> raise.error @@ bad_view_io main_name view_loc
+    | `Bad_storage v_storage ->
+      raise.error
+      @@ storage_view_contract
+           view_loc
+           main_name
+           (Binder.get_var view_binder)
+           c_storage
+           v_storage
+    | `Bad_not_function -> raise.error @@ bad_view_io main_name view_loc
+    | `Bad -> raise.error @@ bad_view_storage main_name c_storage view_loc
   in
   let () =
     trace_option

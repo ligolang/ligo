@@ -11,11 +11,20 @@ let decompile_expression = Decompiler.decompile_expression
 
 let decompile_pattern_to_string p =
   let p = Decompiler.decompile_pattern p in
-  let p = Parsing.Pascaligo.pretty_print_pattern ~cols:80 Parsing.Pascaligo.Pretty.default_environment p in
+  let p =
+    Parsing.Pascaligo.pretty_print_pattern
+      ~cols:80
+      Parsing.Pascaligo.Pretty.default_environment
+      p
+  in
   Buffer.contents p
 
 
 let decompile_type_expression_to_string t =
   let t = Decompiler.decompile_type_expr t in
-  let t = Parsing.Pascaligo.pretty_print_type_expr Parsing.Pascaligo.Pretty.default_environment t in
+  let t =
+    Parsing.Pascaligo.pretty_print_type_expr
+      Parsing.Pascaligo.Pretty.default_environment
+      t
+  in
   Buffer.contents t

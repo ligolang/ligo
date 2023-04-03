@@ -471,7 +471,7 @@ let fetch_contract_type ~raise
       let var = Binder.get_var binder in
       if Value_var.equal var main_fname
       then (
-        match uncurry_wrap ~loc ~type_:expr.type_expression var with
+        match Ast_typed.uncurry_wrap ~loc ~type_:expr.type_expression var with
         | Some expr ->
           let binder = Binder.set_var binder (Value_var.fresh_like var) in
           let binder = Binder.set_ascr binder expr.type_expression in
@@ -491,7 +491,7 @@ let fetch_contract_type ~raise
       let var = Binder.get_var binder in
       if Value_var.equal var main_fname
       then (
-        match uncurry_wrap ~loc ~type_:expr.type_expression var with
+        match Ast_typed.uncurry_wrap ~loc ~type_:expr.type_expression var with
         | Some expr ->
           let binder = Binder.set_var binder (Value_var.fresh_like var) in
           let binder = Binder.set_ascr binder expr.type_expression in
