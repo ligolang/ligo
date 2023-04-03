@@ -1,4 +1,5 @@
 open Handlers
+open Common
 module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 
@@ -19,20 +20,20 @@ let get_formatting_test ({ file_path; expected } : formatting_test)
   in
   match result, expected with
   | None, None -> ()
-  | None, Some _ -> Alcotest.fail "Could not format."
-  | Some _, None -> Alcotest.fail "Can format, but expected to fail and return None."
+  | None, Some _ -> fail "Could not format."
+  | Some _, None -> fail "Can format, but expected to fail and return None."
   | Some [ { range; newText } ], Some path_to_expected ->
-    Alcotest.check
-      Common.testable_range
+    check
+      testable_range
       "Expected a whole_file_range."
       Utils.whole_file_range
       range;
-    Alcotest.check
+    check
       Alcotest.string
       "Formatted file foes not match the expected."
       (In_channel.read_all path_to_expected)
       newText
-  | Some _, _ -> Alcotest.fail "Formatting returned multiple edits."
+  | Some _, _ -> fail "Formatting returned multiple edits."
 
 
 let test_cases =
