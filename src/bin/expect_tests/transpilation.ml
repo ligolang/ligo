@@ -1,7 +1,8 @@
 open Cli_expect
 
+(* ---------- Basic transpilation test -------------------------------------- *)
 let%expect_test _ =
-  run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "jsligo" ];
+  run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "--to-syntax" ; "jsligo" ];
   [%expect
     {|
     # 1 "../../test/contracts/example.ligo"
@@ -34,61 +35,81 @@ let%expect_test _ =
 
 let example_jsligo = "../../test/examples/jsligo/arithmetic-contract.jsligo"
 
+(* ---------- Tests for CLI options for syntax ------------------------------ *)
+
+(* Should fail since neither [--to-syntax] nor output file is provided *)
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "pascaligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; ];
+  [%expect {|
+    Transpilation target syntax is not specified.
+    Please provide it using the --to-syntax option
+    or by specifying an output file with the -o option |}]
+
+(* Should suceed since output file is explicitely provided,
+   even if [--to-syntax] is not *)
+let%expect_test _ =
+  run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "-o" ; "dest.jsligo" ];
+  [%expect {| |}]
+
+(* ---------- Tests for (un)supported syntaxes ------------------------------ *)
+
+let%expect_test _ =
+  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "--to-syntax" ; "pascaligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Source and destination of transpilation are the same (pascaligo). |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "cameligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "--to-syntax" ; "cameligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Syntactic-level transpilation from pascaligo to cameligo is not supported. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "cameligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "--to-syntax" ; "cameligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Source and destination of transpilation are the same (cameligo). |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "pascaligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "--to-syntax" ; "pascaligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Syntactic-level transpilation from cameligo to pascaligo is not supported. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "jsligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "--to-syntax" ; "jsligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Syntactic-level transpilation from cameligo to jsligo is not supported. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "cameligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "--to-syntax" ; "cameligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Syntactic-level transpilation from jsligo to cameligo is not supported. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "pascaligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "--to-syntax" ; "pascaligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Syntactic-level transpilation from jsligo to pascaligo is not supported. |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "jsligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "--to-syntax" ; "jsligo" ];
   [%expect
     {|
     Invalid syntaxes.
     Source and destination of transpilation are the same (jsligo). |}]
+
+(* ---------- Tests for warning disabling ----------------------------------- *)
 
 let contract_warn_shadowing = test "transpile_warn_shadowing.jsligo"
 

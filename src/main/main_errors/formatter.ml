@@ -128,6 +128,12 @@ let rec error_ppformat
          supported.@]"
         src_syntax
         dst_syntax
+    | `Main_transpilation_unspecified_dest_syntax ->
+      Format.fprintf
+        f
+        "@[<hv>Transpilation target syntax is not specified.@.\
+         Please provide it using the --to-syntax option@.\
+         or by specifying an output file with the -o option @]"
     | `Main_transpilation_same_source_and_dest_syntax syntax ->
       Format.fprintf
         f
@@ -604,6 +610,9 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
     [ make ~stage:"command line interpreter" ~content ]
   | `Main_transpilation_unsupported_syntaxes _ ->
     let content = make_content ~message:"Unsupported syntaxes for transpilation" () in
+    [ make ~stage:"command line interpreter" ~content ]
+  | `Main_transpilation_unspecified_dest_syntax ->
+    let content = make_content ~message:"Unspecified transpilation target syntax" () in
     [ make ~stage:"command line interpreter" ~content ]
   | `Main_transpilation_same_source_and_dest_syntax _ ->
     let content =

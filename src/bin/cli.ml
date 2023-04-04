@@ -122,6 +122,21 @@ let syntax =
   let spec = optional_with_default Default_options.syntax string in
   flag ~doc ~aliases:[ "s" ] "--syntax" spec
 
+let from_syntax =
+  let open Command.Param in
+  let doc =
+    "SYNTAX the syntax to the transpilation input."
+  in
+  let spec = optional_with_default Default_options.syntax string in
+  flag ~doc "--from-syntax" spec
+
+let to_syntax =
+  let open Command.Param in
+  let doc =
+    "SYNTAX the syntax to the transpilation output."
+  in
+  let spec = optional_with_default Default_options.syntax string in
+  flag ~doc "--to-syntax" spec
 
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
@@ -923,9 +938,9 @@ let compile_group =
 
 (** Transpile commands *)
 let transpile_contract =
-  let f source_file new_syntax syntax display_format no_colour output_file () =
+  let f source_file to_syntax from_syntax display_format no_colour output_file () =
     return_result ~return ?output_file
-    @@ Api.Transpile.contract source_file new_syntax syntax display_format no_colour
+    @@ Api.Transpile.contract source_file to_syntax from_syntax display_format no_colour output_file
   in
   let summary = "Transpile a contract to another syntax." in
   let readme () =
@@ -938,8 +953,8 @@ let transpile_contract =
     ~readme
     (f
     <$> source_file
-    <*> req_syntax
-    <*> syntax
+    <*> to_syntax
+    <*> from_syntax
     <*> display_format
     <*> no_colour
     <*> output_file)
