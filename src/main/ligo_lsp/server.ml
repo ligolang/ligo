@@ -134,13 +134,22 @@ class lsp_server =
 
     method! on_request
         : type r.  notify_back:(Server_notification.t -> unit Lwt.t)
+                  -> server_request:send_request
                   -> id:Req_id.t
                   -> r Client_request.t
                   -> r IO.t =
-      fun ~notify_back ~id (r : _ Client_request.t) ->
+      fun ~notify_back ~server_request ~id (r : _ Client_request.t) ->
         let run ~uri =
           run_handler
-            { notify_back = Normal (new notify_back ~uri ~notify_back ())
+            { notify_back =
+                Normal
+                  (new notify_back
+                     ~uri
+                     ~notify_back
+                     ~server_request
+                     ~workDoneToken:None
+                     ~partialResultToken:None
+                     ())
             ; config
             ; docs_cache = get_scope_buffers
             }
@@ -173,5 +182,5 @@ class lsp_server =
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri @@ Requests.on_req_folding_range uri
-        | _ -> super#on_request ~notify_back ~id r
+        | _ -> super#on_request ~notify_back ~server_request ~id r
   end

@@ -32,10 +32,10 @@ Features:
  """
 url {
   src:
-    "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.4.0/ipaddr-5.4.0.tbz"
+    "https://github.com/mirage/ocaml-ipaddr/releases/download/v5.5.0/ipaddr-5.5.0.tbz"
   checksum: [
-    "sha256=5a66291bf710b45f7e9550ecd562227af519d5fefe899da1b9fb1d0f51c735ea"
-    "sha512=c0c564529bceeb1263a6200f5f86c53ee38874a7cd3ba6dd4b435cb87e0247ba85b0ee46ab5f517ef81aa05f4187d2ba20d10013d3faa2763b64daf85046ae96"
+    "sha256=62890b316e035792ad29af1ad971456d10defd525b74b53db1b67fa42375c178"
+    "sha512=d9742648e3e4fe3d0bc7a5b08e62d97dab5d52b6421712c0415b345ddeb63a2a5fbb61e3083e90ae8cf05009673975e2e2ece5e15bce256ccd34cbe78d810c83"
   ]
 }
-x-commit-hash: "3c8d00a371b07bac6184bce97b37fc68cf5a8d5d"
+x-commit-hash: "234c6009a221e23a7dd4883756e6b2cc0d7c663b"

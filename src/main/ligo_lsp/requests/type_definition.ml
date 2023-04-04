@@ -1,5 +1,5 @@
-open Linol_lwt
 open Handler
+open Lsp.Types
 open Utils
 module Loc = Simple_utils.Location
 
@@ -17,7 +17,7 @@ let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option H
  fun pos uri ->
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->
-  when_some' (Definition.get_definition pos uri get_scope_info.definitions)
+  when_some' (Go_to_definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   when_some'
     (match definition with
@@ -31,7 +31,7 @@ let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option H
       @@ bind_option (Utils.position_of_location location)
       @@ fun region ->
       bind_option
-        (Definition.get_definition region uri get_scope_info.definitions)
+        (Go_to_definition.get_definition region uri get_scope_info.definitions)
         (function
           | Variable _vdef -> None
           | Module _mdef -> None

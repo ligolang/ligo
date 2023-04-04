@@ -41,7 +41,7 @@ let test_cases =
   [ { file_path = "contracts/includer.mligo"
     ; document_links =
         [ { range = Utils.interval 2 9 25
-          ; target = Some (rel_path_to_uri "contracts/included.mligo")
+          ; target = Some (to_absolute "contracts/included.mligo")
           ; tooltip = None
           ; data = None
           }
@@ -50,7 +50,7 @@ let test_cases =
   ; { file_path = "contracts/includer.jsligo"
     ; document_links =
         [ { range = Utils.interval 2 9 26
-          ; target = Some (rel_path_to_uri "contracts/included.jsligo")
+          ; target = Some (to_absolute "contracts/included.jsligo")
           ; tooltip = None
           ; data = None
           }
@@ -59,12 +59,12 @@ let test_cases =
   ; { file_path = "contracts/build/E.mligo" (* with #import *)
     ; document_links =
         [ { range = Utils.interval 0 8 17
-          ; target = Some (rel_path_to_uri "contracts/build/F.mligo")
+          ; target = Some (to_absolute "contracts/build/F.mligo")
           ; tooltip = None
           ; data = None
           }
         ; { range = Utils.interval 1 8 17
-          ; target = Some (rel_path_to_uri "contracts/build/G.mligo")
+          ; target = Some (to_absolute "contracts/build/G.mligo")
           ; tooltip = None
           ; data = None
           }
@@ -73,7 +73,7 @@ let test_cases =
   ; { file_path = "contracts/build/B.jsligo" (* with #import *)
     ; document_links =
         [ { range = Utils.interval 0 8 18
-          ; target = Some (rel_path_to_uri "contracts/build/A.jsligo")
+          ; target = Some (to_absolute "contracts/build/A.jsligo")
           ; tooltip = None
           ; data = None
           }
