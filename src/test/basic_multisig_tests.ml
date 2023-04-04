@@ -32,8 +32,9 @@ let op_list ~raise =
   let open Memory_proto_alpha.Protocol.Alpha_context in
   let open Proto_alpha_utils in
   let source =
-    Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__)
-    @@ Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG"
+    Destination.Contract
+      (Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__)
+      @@ Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG")
   in
   let destination =
     Trace.trace_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__)
@@ -67,7 +68,7 @@ let empty_payload = Ast_unified.e_unit ~loc
 let chain_id_zero =
   Ast_unified.e_bytes_raw
     ~loc
-    (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
+    (Tezos_crypto.Hashed.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)

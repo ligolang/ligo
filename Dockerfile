@@ -11,7 +11,7 @@ RUN apk update && apk upgrade && apk --no-cache add \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
   libffi-dev nodejs npm \
-  cargo py3-pip \
+  cargo py3-pip cmake  \
   && pip3 install jsonschema \
   # install opam:
   # not using install_opam.sh because it does `opam init` with `-a` and not `--disable-sandboxing`

@@ -7,8 +7,10 @@ license: "MIT"
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
-  "alcotest" {= "1.6.0" & with-test}
-  "alcotest-lwt" {= "1.6.0"}
+  "aches" {= "1.0.0"}
+  "aches-lwt" {= "1.0.0"}
+  "alcotest" {= "1.7.0" & with-test}
+  "alcotest-lwt" {= "1.7.0"}
   "angstrom" {= "0.15.0"}
   "asetmap" {= "0.8.1"}
   "asn1-combinators" {= "0.2.6"}
@@ -18,30 +20,32 @@ depends: [
   "base-bytes" {= "base"}
   "base-threads" {= "base"}
   "base-unix" {= "base"}
-  "base64" {= "3.5.0"}
+  "base64" {= "3.5.1"}
   "base_bigstring" {= "v0.15.0"}
   "base_quickcheck" {= "v0.15.0"}
   "bheap" {= "2.0.0"}
   "bigarray-compat" {= "1.1.0"}
   "bigstring" {= "0.3"}
-  "bigstringaf" {= "0.9.0"}
+  "bigstringaf" {= "0.9.1"}
   "bin_prot" {= "v0.15.0"}
   "bisect_ppx" {= "2.8.1"}
   "bls12-381" {= "5.0.0"}
+  "bls12-381-hash" {= "0.0.5"}
   "bls12-381-signature" {= "1.0.0"}
   "bos" {= "0.2.1"}
   "ca-certs" {= "0.2.3"}
   "camlp-streams" {= "5.0.1"}
-  "checkseum" {= "0.4.0"}
-  "chrome-trace" {= "3.6.1"}
+  "checkseum" {= "0.5.0"}
+  "chrome-trace" {= "3.7.0"}
   "class_group_vdf" {= "0.0.4"}
   "cmdliner" {= "1.1.0"}
   "cohttp" {= "5.0.0"}
   "cohttp-lwt" {= "5.0.0"}
   "cohttp-lwt-unix" {= "5.0.0"}
-  "conduit" {= "6.1.0"}
-  "conduit-lwt" {= "6.1.0"}
-  "conduit-lwt-unix" {= "6.1.0"}
+  "conduit" {= "6.2.0"}
+  "conduit-lwt" {= "6.2.0"}
+  "conduit-lwt-unix" {= "6.2.0"}
+  "conf-cmake" {= "1"}
   "conf-findutils" {= "1"}
   "conf-g++" {= "1.0"}
   "conf-gmp" {= "4"}
@@ -56,51 +60,51 @@ depends: [
   "cppo" {= "1.6.9"}
   "crunch" {= "3.3.1"}
   "csexp" {= "1.5.1"}
-  "cstruct" {= "6.1.1"}
-  "cstruct-lwt" {= "6.1.1"}
-  "cstruct-sexp" {= "6.1.1"}
-  "ctypes" {= "0.20.1"}
+  "cstruct" {= "6.2.0"}
+  "cstruct-lwt" {= "6.2.0"}
+  "ctypes" {= "0.20.2"}
   "ctypes_stubs_js" {= "0.1"}
-  "data-encoding" {= "0.6"}
-  "decompress" {= "1.5.1"}
-  "digestif" {= "1.1.3"}
+  "data-encoding" {= "0.7.1"}
+  "decompress" {= "1.5.2"}
+  "digestif" {= "1.1.4"}
   "domain-name" {= "0.4.0"}
-  "dune" {= "3.6.1"}
-  "dune-build-info" {= "3.6.1"}
-  "dune-configurator" {= "3.6.1"}
-  "dune-rpc" {= "3.6.1"}
+  "dune" {= "3.7.0"}
+  "dune-build-info" {= "3.7.0"}
+  "dune-configurator" {= "3.7.0"}
+  "dune-rpc" {= "3.6.2"}
   "duration" {= "0.2.1"}
-  "dyn" {= "3.6.1"}
+  "dyn" {= "3.6.2"}
   "either" {= "1.0.0"}
   "eqaf" {= "0.9"}
   "ezjsonm" {= "1.3.0"}
   "ff" {= "0.6.2"}
   "ff-sig" {= "0.6.2"}
-  "fiber" {= "3.6.1"}
+  "fiber" {= "3.6.2"}
   "fieldslib" {= "v0.15.0"}
   "fix" {= "20220121"}
   "fmt" {= "0.9.0"}
   "fpath" {= "0.7.3"}
+  "gen" {= "1.1"}
   "gmap" {= "0.3.0"}
-  "hacl-star" {= "0.4.5"}
-  "hacl-star-raw" {= "0.4.5"}
+  "hacl-star" {= "0.6.2"}
+  "hacl-star-raw" {= "0.6.2"}
   "hex" {= "1.5.0"}
   "hkdf" {= "1.0.4"}
   "index" {= "1.6.1"}
   "int_repr" {= "v0.15.0"}
   "integers" {= "0.7.0"}
   "integers_stubs_js" {= "1.0"}
-  "ipaddr" {= "5.3.1"}
-  "ipaddr-sexp" {= "5.3.1"}
-  "irmin" {= "3.5.0"}
-  "irmin-pack" {= "3.5.0"}
+  "ipaddr" {= "5.4.0"}
+  "ipaddr-sexp" {= "5.4.0"}
+  "irmin" {= "3.6.1"}
+  "irmin-pack" {= "3.6.1"}
   "jane-street-headers" {= "v0.15.0"}
-  "js_of_ocaml" {= "5.0.1"}
-  "js_of_ocaml-compiler" {= "5.0.1"}
-  "js_of_ocaml-ppx" {= "5.0.1"}
+  "js_of_ocaml" {= "5.1.1"}
+  "js_of_ocaml-compiler" {= "5.1.1"}
+  "js_of_ocaml-ppx" {= "5.1.1"}
   "json-data-encoding" {= "0.12.1"}
   "json-data-encoding-bson" {= "0.12.1"}
-  "jsonm" {= "1.0.1"}
+  "jsonm" {= "1.0.2"}
   "jsonrpc" {= "1.14.2"}
   "jst-config" {= "v0.15.1"}
   "lambda-term" {= "3.3.1"}
@@ -113,7 +117,7 @@ depends: [
   "lwt-canceler" {= "0.3"}
   "lwt_log" {= "1.1.2"}
   "lwt_react" {= "1.2.0"}
-  "macaddr" {= "5.3.1"}
+  "macaddr" {= "5.4.0"}
   "magic-mime" {= "1.3.0"}
   "mec" {= "0.1.0"}
   "menhir" {= "20211128"}
@@ -121,27 +125,25 @@ depends: [
   "menhirSdk" {= "20211128"}
   "mew" {= "0.1.0"}
   "mew_vi" {= "0.5.0"}
-  "mirage-crypto" {= "0.10.7"}
-  "mirage-crypto-ec" {= "0.10.7"}
-  "mirage-crypto-pk" {= "0.10.7"}
-  "mirage-crypto-rng" {= "0.10.7"}
-  "mirage-no-solo5" {= "1"}
-  "mirage-no-xen" {= "1"}
+  "mirage-crypto" {= "0.11.1"}
+  "mirage-crypto-ec" {= "0.11.1"}
+  "mirage-crypto-pk" {= "0.11.1"}
+  "mirage-crypto-rng" {= "0.11.1"}
   "mtime" {= "1.4.0"}
   "num" {= "1.4"}
   "ocaml" {= "4.14.0"}
   "ocaml-base-compiler" {= "4.14.0"}
   "ocaml-compiler-libs" {= "v0.12.4"}
   "ocaml-config" {= "2"}
-  "ocaml-lsp-server" {= "1.14.2"}
+  "ocaml-lsp-server" {= "1.15.1-4.14"}
   "ocaml-migrate-parsetree" {= "2.3.0"}
   "ocaml-options-vanilla" {= "1"}
   "ocaml-recovery-parser" {= "0.2.4"}
   "ocaml-syntax-shims" {= "1.0.0"}
   "ocaml-version" {= "3.5.0"}
   "ocamlbuild" {= "0.14.2"}
-  "ocamlc-loc" {= "3.6.1"}
-  "ocamlfind" {= "1.9.5"}
+  "ocamlc-loc" {= "3.6.2"}
+  "ocamlfind" {= "1.9.6"}
   "ocamlformat" {= "0.21.0"}
   "ocamlformat-rpc" {= "0.21.0"}
   "ocamlformat-rpc-lib" {= "0.21.0"}
@@ -152,12 +154,13 @@ depends: [
   "odoc" {= "2.1.1"}
   "odoc-parser" {= "1.0.1"}
   "omd" {= "1.3.2"}
-  "optint" {= "0.2.0"}
-  "ordering" {= "3.6.1"}
-  "ounit2" {= "2.2.6"}
+  "optint" {= "0.3.0"}
+  "ordering" {= "3.6.2"}
+  "ounit2" {= "2.2.7"}
   "parse-argv" {= "0.2.0"}
   "parsexp" {= "v0.15.0"}
   "pbkdf" {= "1.2.0"}
+  "polynomial" {= "0.4.0"}
   "pp" {= "1.1.2"}
   "pprint" {= "20220103"}
   "ppx_assert" {= "v0.15.0"}
@@ -166,7 +169,7 @@ depends: [
   "ppx_bin_prot" {= "v0.15.0"}
   "ppx_cold" {= "v0.15.0"}
   "ppx_compare" {= "v0.15.0"}
-  "ppx_cstruct" {= "6.1.1"}
+  "ppx_cstruct" {= "6.2.0"}
   "ppx_custom_printf" {= "v0.15.0"}
   "ppx_derivers" {= "1.2.1"}
   "ppx_deriving" {= "5.2.1"}
@@ -181,7 +184,7 @@ depends: [
   "ppx_ignore_instrumentation" {= "v0.15.0"}
   "ppx_import" {= "1.9.1"}
   "ppx_inline_test" {= "v0.15.0"}
-  "ppx_irmin" {= "3.5.0"}
+  "ppx_irmin" {= "3.6.1"}
   "ppx_jane" {= "v0.15.0"}
   "ppx_js_style" {= "v0.15.0"}
   "ppx_let" {= "v0.15.0"}
@@ -213,19 +216,19 @@ depends: [
   "re" {= "1.10.4"}
   "react" {= "1.2.2"}
   "repr" {= "0.6.0"}
-  "resto" {= "1.0"}
-  "resto-acl" {= "1.0"}
-  "resto-cohttp" {= "1.0"}
-  "resto-cohttp-client" {= "1.0"}
-  "resto-cohttp-self-serving-client" {= "1.0"}
-  "resto-cohttp-server" {= "1.0"}
-  "resto-directory" {= "1.0"}
+  "resto" {= "1.1"}
+  "resto-acl" {= "1.1"}
+  "resto-cohttp" {= "1.1"}
+  "resto-cohttp-client" {= "1.1"}
+  "resto-cohttp-self-serving-client" {= "1.1"}
+  "resto-cohttp-server" {= "1.1"}
+  "resto-directory" {= "1.1"}
   "result" {= "1.5"}
-  "ringo" {= "0.9"}
-  "ringo-lwt" {= "0.9"}
+  "ringo" {= "1.0.0"}
   "rresult" {= "0.7.0"}
   "rusage" {= "1.0.0"}
   "secp256k1-internal" {= "0.4.0"}
+  "sedlex" {= "2.5"}
   "semaphore-compat" {= "1.0.1"}
   "semver" {= "0.1.0"}
   "seq" {= "base"}
@@ -237,14 +240,14 @@ depends: [
   "stdint" {= "0.7.2"}
   "stdio" {= "v0.15.0"}
   "stdlib-shims" {= "0.3.0"}
-  "stdune" {= "3.6.1"}
+  "stdune" {= "3.6.2"}
   "stringext" {= "1.6.0"}
-  "tar" {= "2.2.2"}
-  "tar-unix" {= "2.2.2"}
+  "tar" {= "2.3.0"}
+  "tar-unix" {= "2.3.0"}
   "terminal" {= "0.2.1"}
   "terminal_size" {= "0.2.0"}
   "tezos-base" {= "dev"}
-  "tezos-bls12-381-polynomial" {= "0.1.3"}
+  "tezos-bls12-381-polynomial" {= "1.0.1"}
   "tezos-clic" {= "dev"}
   "tezos-crypto" {= "dev"}
   "tezos-error-monad" {= "dev"}
@@ -252,15 +255,15 @@ depends: [
   "tezos-hacl" {= "dev"}
   "tezos-lwt-result-stdlib" {= "dev"}
   "tezos-micheline" {= "dev"}
-  "tezos-plompiler" {= "0.1.3"}
-  "tezos-plonk" {= "0.1.3"}
+  "tezos-plompiler" {= "1.0.1"}
+  "tezos-plonk" {= "1.0.1"}
   "tezos-rpc" {= "dev"}
-  "tezos-rust-libs" {= "1.3"}
+  "tezos-rust-libs" {= "1.5"}
   "tezos-stdlib" {= "dev"}
   "tezos-stdlib-unix" {= "dev"}
   "time_now" {= "v0.15.0"}
-  "tls" {= "0.15.4"}
-  "topkg" {= "1.0.6"}
+  "tls" {= "0.17.0"}
+  "topkg" {= "1.0.7"}
   "trie" {= "1.0.0"}
   "typerep" {= "v0.15.0"}
   "tyxml" {= "4.5.0"}
@@ -272,8 +275,8 @@ depends: [
   "uutf" {= "1.0.3"}
   "variantslib" {= "v0.15.0"}
   "vector" {= "1.0.0"}
-  "x509" {= "0.16.2"}
-  "xdg" {= "3.6.1"}
+  "x509" {= "0.16.4"}
+  "xdg" {= "3.7.0"}
   "yojson" {= "2.0.2"}
   "zarith" {= "1.12"}
   "zarith_stubs_js" {= "v0.15.0"}
@@ -282,10 +285,10 @@ depends: [
 build: ["dune" "build" "-p" name "-j" jobs]
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 pin-depends: [
-  [ "tezos-014-PtKathma-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-015-PtLimaPt-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
@@ -302,10 +305,10 @@ pin-depends: [
   [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-plugin-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-plugin-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
