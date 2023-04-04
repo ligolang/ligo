@@ -1,5 +1,5 @@
-open Linol_lwt
 open Utils
+open Lsp.Types
 open Handler
 module Trace = Simple_utils.Trace
 
@@ -38,15 +38,11 @@ let extract_link_from_directive ~(relative_to_dir : string)
   = function
   | PP_Include d ->
     let range = Utils.region_to_range d#file_path.region
-    and target =
-      DocumentUri.of_path @@ Filename.concat relative_to_dir d#file_path.value
-    in
+    and target = Filename.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | PP_Import d ->
     let range = Utils.region_to_range d#file_path.region
-    and target =
-      DocumentUri.of_path @@ Filename.concat relative_to_dir d#file_path.value
-    in
+    and target = Filename.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None
 

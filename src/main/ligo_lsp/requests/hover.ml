@@ -1,5 +1,5 @@
-open Linol_lwt
 open Handler
+open Lsp.Types
 open Utils
 
 let hover_string : Syntax_types.t -> Scopes.def -> string =
@@ -19,7 +19,7 @@ let on_req_hover : Position.t -> DocumentUri.t -> Hover.t option Handler.t =
  fun pos uri ->
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->
-  when_some' (Definition.get_definition pos uri get_scope_info.definitions)
+  when_some' (Go_to_definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   when_some' (get_syntax uri)
   @@ fun syntax ->
