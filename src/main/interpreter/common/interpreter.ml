@@ -1553,7 +1553,7 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
     | Some t -> Monad.return @@ v_bls12_381_fr t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_bls12_381_fr b))
   | Literal_chain_id c ->
-    (match Tezos_crypto.Chain_id.of_b58check_opt c with
+    (match Tezos_crypto.Hashed.Chain_id.of_b58check_opt c with
     | Some t -> Monad.return @@ v_chain_id t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_chain_id c))
   | l -> Monad.fail @@ Errors.literal Location.generated l

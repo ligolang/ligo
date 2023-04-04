@@ -56,7 +56,7 @@ module Bls12_381_Fr = struct
 end
 
 module Chain_id = struct
-  include Tezos_crypto.Chain_id
+  include Tezos_crypto.Hashed.Chain_id
 
   let to_yojson (c : t) = [%to_yojson: bytes] (to_bytes c)
   let of_yojson _ = failwith "chain_id_of_yojson: not implemented"

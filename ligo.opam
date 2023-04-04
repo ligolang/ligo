@@ -67,13 +67,12 @@ depends: [
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
-  "ringo-lwt"
   "pure-splitmix"
   "resto-cohttp-self-serving-client"
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
-  "tezos-plonk" {= "0.1.3"}
+  "tezos-plonk" { >= "1.0.1" & < "2.0.0" }
   # dev dependencies (not labels as { dev } since this feature doesn't work 
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
@@ -85,15 +84,16 @@ depends: [
   "lsp" { = "1.14.2" }
   "linol" { = "0.4" }
   "linol-lwt" { = "0.4" }
+  "aches-lwt"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 pin-depends: [
-  [ "tezos-014-PtKathma-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-015-PtLimaPt-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-base-unix.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
@@ -110,10 +110,10 @@ pin-depends: [
   [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-plugin-014-PtKathma.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-protocol-plugin-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]

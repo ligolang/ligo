@@ -44,7 +44,7 @@ let string_of_signature t = Format.asprintf "%a" Tezos_crypto.Signature.pp t
 let bytes_of_bls12_381_g1 t = Bls12_381.G1.to_bytes t
 let bytes_of_bls12_381_g2 t = Bls12_381.G2.to_bytes t
 let bytes_of_bls12_381_fr t = Bls12_381.Fr.to_bytes t
-let string_of_chain_id t = Tezos_crypto.Chain_id.to_b58check t
+let string_of_chain_id t = Tezos_crypto.Hashed.Chain_id.to_b58check t
 
 module Tezos_eq = struct
   (* behavior should be equivalent to the one in the tezos codebase *)

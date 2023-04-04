@@ -52,7 +52,7 @@ let signature_of_string ~raise s =
 let chain_id_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
       Errors.generic_error Location.generated "Cannot parse chain_id")
-  @@ Tezos_crypto.Chain_id.of_b58check s
+  @@ Tezos_crypto.Hashed.Chain_id.of_b58check s
 
 
 let wrong_mini_c_value _t _v =
