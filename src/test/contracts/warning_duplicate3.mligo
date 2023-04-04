@@ -1,7 +1,7 @@
 module Foo = struct
     type t = {
-        ck : chest_key ;
-        c  : chest     ;
+        ck : nat ;
+        c  : nat;
     }
 end
 

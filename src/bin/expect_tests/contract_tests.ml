@@ -844,12 +844,10 @@ let%expect_test _ =
     [ "compile"
     ; "contract"
     ; contract "warning_duplicate3.mligo"
-    ; "--protocol"
-    ; "kathmandu"
     ];
   [%expect
     {|
-    { parameter (pair (chest %c) (chest_key %ck)) ;
+    { parameter (pair (nat %c) (nat %ck)) ;
       storage int ;
       code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
 

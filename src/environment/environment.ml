@@ -124,7 +124,6 @@ let michelson_base : (Type_var.t * type_expression) list =
 
 
 let base = basic_types @ michelson_base
-let kathmandu_types = base
 let lima_types = base
 
 let meta_ligo_types
@@ -151,4 +150,3 @@ let of_list_type : (Type_var.t * type_expression) list -> t =
 
 let default : Protocols.t -> t = function
   | Protocols.Lima -> of_list_type (meta_ligo_types lima_types)
-  | Protocols.Kathmandu -> of_list_type (meta_ligo_types kathmandu_types)

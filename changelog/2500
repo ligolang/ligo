@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\ndeprecation of protocol Kathmandu\\n\\n"
+merge_request: '2500'
+title: "Deprecate katmandu"
+type: breaking
+            

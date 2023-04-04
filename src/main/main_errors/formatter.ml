@@ -178,7 +178,7 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-        (Memory_proto_pre_alpha.Client.Michelson_v1_error_reporter.report_errors
+        (Memory_proto_alpha.Client.Michelson_v1_error_reporter.report_errors
            ~details:true
            ~show_source:true
            ?parsed:None)
