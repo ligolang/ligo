@@ -285,5 +285,5 @@ publish_ligojs:
       fi
     - cd ./ligo-npm
     - chmod 664 package.json
-    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json jsoo)
+    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json web)
     - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public || status=1
