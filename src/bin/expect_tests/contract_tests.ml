@@ -2451,7 +2451,7 @@ let%expect_test _ =
     {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }  |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -2466,7 +2466,7 @@ let%expect_test _ =
     {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
            |}]
 
 let%expect_test _ =

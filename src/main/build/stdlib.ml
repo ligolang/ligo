@@ -70,6 +70,8 @@ let get : options:Compiler_options.t -> unit -> t =
     let def str = "#define " ^ str ^ "\n" in
     match options.middle_end.protocol_version with
     | Environment.Protocols.Lima -> def "LIMA"
+    | Environment.Protocols.Mumbai -> def "LIMA"
+    (*FIXME: mumbai*)
   in
   let lib = Ligo_lib.get () in
   let curry_content_core = compile ~options (std ^ lib) in

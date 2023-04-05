@@ -47,6 +47,12 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "rollup.mligo"; "--protocol"; "lima" ];
+  [%expect
+    {|
+    { parameter tx_rollup_l2_address ;
+      storage unit ;
+      code { DROP ; PUSH string "roll up !" ; FAILWITH } } |}];
   run_ligo_good [ "compile"; "contract"; contract "min_block_time.mligo" ];
   [%expect
     {|

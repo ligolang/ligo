@@ -885,7 +885,6 @@ let init
     ?blocks_per_cycle
     n
   =
-  ignore initial_balances;
   let open Tezos_alpha_test_helpers in
   let accounts =
     Trace.trace_tzresult ~raise (fun _ ->
@@ -896,6 +895,19 @@ let init
     List.map
       ~f:(fun a -> Tezos_raw_protocol.Alpha_context.Contract.Implicit Account.(a.pkh))
       accounts
+  in
+  let initial_balances =
+    let rec aux n initial_balances =
+      match initial_balances with
+      | [] -> if n > 0 then None :: aux (n - 1) [] else []
+      | init :: initial_balances -> Some init :: aux (n - 1) initial_balances
+    in
+    aux n initial_balances
+  in
+  let accounts =
+    List.map2_exn accounts initial_balances ~f:(fun account balance ->
+        let balance = Option.map ~f:Tez.of_mutez_exn balance in
+        Account.make_bootstrap_account ?balance account)
   in
   let baker_accounts =
     List.map baker_accounts ~f:(fun (sk, pk, amt) ->
@@ -910,7 +922,6 @@ let init
         let () = Account.add_account account in
         Account.make_bootstrap_account ~balance account)
   in
-  let accounts = List.map accounts ~f:Account.make_bootstrap_account in
   let accounts = accounts @ baker_accounts in
   let raw =
     Block.genesis

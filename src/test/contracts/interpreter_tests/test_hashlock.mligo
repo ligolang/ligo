@@ -24,7 +24,7 @@ let test_commit =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let post_commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let post_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = post_commits } in
-  assert (new_storage = post_storage)
+  Test.assert (new_storage = post_storage)
 
 let test_reveal_no_commit =
   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
@@ -40,7 +40,7 @@ let test_reveal_no_commit =
   let () = Test.set_source first_committer in
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
-  | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
+  | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "You have not made a commitment to hash against yet."))
   | Fail _ -> failwith "Transaction should fail with rejection"
   
 let test_reveal_young_commit =
@@ -61,7 +61,7 @@ let test_reveal_young_commit =
   let () = Test.set_source first_committer in
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
-  | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
+  | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "It has not been 24 hours since your commit yet."))
   | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_reveal_breaks_commit =
@@ -83,7 +83,7 @@ let test_reveal_breaks_commit =
   let () = Test.set_source first_committer in
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
-  | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
+  | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This reveal does not match your commitment."))
   | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_reveal_wrong_commit =
@@ -105,7 +105,7 @@ let test_reveal_wrong_commit =
   let () = Test.set_source first_committer in
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
-  | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
+  | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "Your commitment did not match the storage hash."))
   | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_reveal_no_reuse =
@@ -127,7 +127,7 @@ let test_reveal_no_reuse =
   let () = Test.set_source first_committer in
   match Test.transfer_to_contract contr parameter 0tez with
   | Success _ -> failwith "Transaction should fail"
-  | Fail (Rejected (a, _)) -> assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
+  | Fail (Rejected (a, _)) -> Test.assert (Test.michelson_equal a (Test.eval "This contract has already been used."))
   | Fail _ -> failwith "Transaction should fail with rejection"
 
 let test_reveal =
@@ -151,4 +151,4 @@ let test_reveal =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let post_commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let post_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = post_commits } in
-  assert (new_storage = post_storage)
+  Test.assert (new_storage = post_storage)

@@ -103,3 +103,5 @@ let of_list_type : (Type_var.t * type_expression) list -> t =
 
 let default : Protocols.t -> t = function
   | Protocols.Lima -> of_list_type (meta_ligo_types lima_types)
+  | Protocols.Mumbai -> of_list_type (meta_ligo_types lima_types)
+(*FIXME: mumbai*)

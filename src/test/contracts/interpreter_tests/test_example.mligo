@@ -4,7 +4,7 @@ let check_new_origination (src :address) : address =
   let last_origs = Test.last_originations () in
   match Map.find_opt src last_origs with
     | Some new_lst -> (
-      let () = assert (List.length new_lst = 1n) in
+      let () = Test.assert (List.length new_lst = 1n) in
       match new_lst with
       | new_acc::_rst -> new_acc
       | [] -> (failwith "more than one originated account" : address)
@@ -16,8 +16,8 @@ let test =
   let src = Test.nth_bootstrap_account 1 in
 
   let (typed_addr, _code, size) = Test.originate main (None : storage) 0tez in
-  let () = assert ((None : storage) = (Test.get_storage typed_addr : storage)) in
-  let () = assert (size < 300) in
+  let () = Test.assert ((None : storage) = (Test.get_storage typed_addr : storage)) in
+  let () = Test.assert (size < 300) in
   let new_account1 = check_new_origination src in
 
   let contr = Test.to_contract typed_addr in
@@ -25,7 +25,7 @@ let test =
   let new_account2 = check_new_origination new_account1 in
   let new_storage = Test.get_storage typed_addr in
   let expected_new_storage = Some new_account2 in
-  let () = assert (new_storage = expected_new_storage) in
+  let () = Test.assert (new_storage = expected_new_storage) in
 
 
   match (Test.transfer_to_contract contr One 10tez : test_exec_result) with
@@ -35,9 +35,9 @@ let test =
     match x with
     | Rejected reject_data ->
       let (v,addr) = reject_data in
-      let () = assert (addr = new_account2) in
-      let () = assert (addr = new_account2) in
-      let () = assert (Test.michelson_equal v (Test.eval 111)) in
+      let () = Test.assert (addr = new_account2) in
+      let () = Test.assert (addr = new_account2) in
+      let () = Test.assert (Test.michelson_equal v (Test.eval 111)) in
       v
     | _ -> (failwith "contract failed for another reason" : michelson_program)
   )
@@ -62,9 +62,9 @@ let test2 =
   let tz = fun (n:nat) ->
     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
   in
-  let () = assert ((Test.get_balance bsa0) = 7600tez) in
-  let () = assert ((Test.get_balance bsa1) = 2mutez) in
-  let () = assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 2n)) in
-  let () = assert ((Test.get_balance bsa2) = 3800000tez) in
-  let () = assert ((Test.get_balance bsa3) = 3800000000000mutez) in
+  let () = Test.assert ((Test.get_balance bsa0) = 7600tez) in
+  let () = Test.assert ((Test.get_balance bsa1) = 2mutez) in
+  let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 2n)) in
+  let () = Test.assert ((Test.get_balance bsa2) = 3800000tez) in
+  let () = Test.assert ((Test.get_balance bsa3) = 3800000000000mutez) in
   ()
