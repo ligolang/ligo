@@ -575,7 +575,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value (2136n , 2331n , 2331n). |}]
+    - test exited with value (2136n , 2341n , 2341n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_implicit_account.jsligo" ];
@@ -685,14 +685,14 @@ let%expect_test _ =
     100000000000000mutez
     3799997904750mutez
     Everything at the top-level was executed.
-    - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1TDZG4vFoA2xutZMYauUnS4HVucnAGQSpZ ; spend_request = 100000000000000mutez}. |}]
+    - test exited with value {contract_balance = 3799997904750mutez ; contract_too_low = tz1hkMbkLPkvhxyqsQoBoLPqb1mruSzZx3zy ; spend_request = 100000000000000mutez}. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_inline.mligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
+    - test_x exited with value (KT1BRUZeuJogco1SAhPpq7oLVL24YhgzoYwm , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address bool)) ;
@@ -725,7 +725,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
   [%expect
     {|
-    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj
+    KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb
     [1 -> "hi"]
     Everything at the top-level was executed.
     - test_foo exited with value ().
@@ -743,7 +743,7 @@ let%expect_test _ =
   [%expect
     {|
   Everything at the top-level was executed.
-  - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
+  - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(1970-01-01T00:00:00Z)). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_get_account.mligo" ];
@@ -831,7 +831,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_key.mligo" ];
   [%expect
     {|
-    edpkuPiWEAMNmxsNYRNnjnHgpox275MR1svXTB9hbeshMUkTZwrB1P
+    edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
     - test exited with value Success (2797n). |}]
 
@@ -858,7 +858,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_to_json.mligo" ];
   [%expect
     {|
-    ["typed_address","KT1Eip4VjDintiWphUf9fAM7cCikw3NajBAG"]
+    ["typed_address","KT1JezbhJttsXiQpa3oyxqihsPc7cSvJPRQr"]
     ["record",[[["Label","bar"],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo"],["constant",["int","42"]]]]] |}]
 
 (*
@@ -1002,13 +1002,13 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path exited with value KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
   run_ligo_good [ "run"; "test"; test "test.jsligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path exited with value KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 
 let () = Caml.Sys.chdir pwd
@@ -1022,13 +1022,13 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path exited with value KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}];
   run_ligo_good [ "run"; "test"; test "test/a/b/test.jsligo" ];
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_originate_from_file_relative_path exited with value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj.
+    - test_originate_from_file_relative_path exited with value KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb.
     - test_originate_from_file_relative_path_w_r_t_imported_file exited with value true. |}]
 
 let () = Caml.Sys.chdir pwd
@@ -1180,7 +1180,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
+    KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_source2.mligo" ];
@@ -1193,7 +1193,7 @@ let%expect_test _ =
      11 |   ()
 
     The source address is not an implicit account
-    KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj |}]
+    KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types.jsligo" ];
@@ -1279,7 +1279,7 @@ let%expect_test _ =
         ^^^^^
    19 |     let () = Test.log(packed) in
 
-  Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
+  Cannot decompile value KT1Xkee2E7uiKehrW6Yk9hCUUNcK6AfpBUFb of type typed_address (unit ,
   unit) |}]
 
 let () = Caml.Sys.chdir pwd

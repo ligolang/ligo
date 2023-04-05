@@ -94,8 +94,8 @@ depends: [
   "int_repr" {= "v0.15.0"}
   "integers" {= "0.7.0"}
   "integers_stubs_js" {= "1.0"}
-  "ipaddr" {= "5.4.0"}
-  "ipaddr-sexp" {= "5.4.0"}
+  "ipaddr" {= "5.5.0"}
+  "ipaddr-sexp" {= "5.5.0"}
   "irmin" {= "3.6.1"}
   "irmin-pack" {= "3.6.1"}
   "jane-street-headers" {= "v0.15.0"}
@@ -117,7 +117,7 @@ depends: [
   "lwt-canceler" {= "0.3"}
   "lwt_log" {= "1.1.2"}
   "lwt_react" {= "1.2.0"}
-  "macaddr" {= "5.4.0"}
+  "macaddr" {= "5.5.0"}
   "magic-mime" {= "1.3.0"}
   "mec" {= "0.1.0"}
   "menhir" {= "20211128"}
@@ -169,7 +169,6 @@ depends: [
   "ppx_bin_prot" {= "v0.15.0"}
   "ppx_cold" {= "v0.15.0"}
   "ppx_compare" {= "v0.15.0"}
-  "ppx_cstruct" {= "6.2.0"}
   "ppx_custom_printf" {= "v0.15.0"}
   "ppx_derivers" {= "1.2.1"}
   "ppx_deriving" {= "5.2.1"}
@@ -242,8 +241,8 @@ depends: [
   "stdlib-shims" {= "0.3.0"}
   "stdune" {= "3.6.2"}
   "stringext" {= "1.6.0"}
-  "tar" {= "2.3.0"}
-  "tar-unix" {= "2.3.0"}
+  "tar" {= "2.4.0"}
+  "tar-unix" {= "2.4.0"}
   "terminal" {= "0.2.1"}
   "terminal_size" {= "0.2.0"}
   "tezos-base" {= "dev"}
