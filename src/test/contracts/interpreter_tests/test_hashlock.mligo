@@ -18,7 +18,7 @@ let test_commit =
   let contr = Test.to_contract typed_addr in
   let parameter = Commit salted_hash in
   let () = Test.set_source first_committer in
-  let lock_time = Tezos.get_now () + 30 + 86_400 in
+  let lock_time = Tezos.get_now () + 15 + 86_400 in
   let _ = Test.transfer_to_contract_exn contr parameter 0tez in
   let new_storage = Test.get_storage typed_addr in
   let commit = { date = lock_time ; salted_hash = salted_hash } in
