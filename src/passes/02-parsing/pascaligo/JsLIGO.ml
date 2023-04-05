@@ -418,44 +418,72 @@ and fun_expr_of
          and colon      = Token.ghost_colon in
          let e_annot    = expr, colon, param_type
          in Js.EAnnot (reg_of e_annot) in
+  let body = body_of_expr ~parameters return in
   let parameters =
     match parameters.value.inside with
       None ->
-        let unit = Token.ghost_lpar, Token.ghost_rpar
+        let unit = Token.(ghost_lpar, ghost_rpar)
         in Js.EUnit (reg_of unit)
     | Some nsepseq ->
         let nsepseq = Utils.nsepseq_map of_param_decl nsepseq in
         let nsepseq = Js.ESeq (reg_of nsepseq) in
         Js.EPar (reg_of (par_of nsepseq)) in
-  let arrow    = Token.ghost_arrow
-  and body     = body_of_expr return in
-  let fun_expr =
-    Js.{type_params; parameters; lhs_type; arrow; body}
+  let arrow    = Token.ghost_arrow in
+  let fun_expr = Js.{type_params; parameters; lhs_type; arrow; body}
   in Js.EFun (reg_of fun_expr)
 
-and body_of_expr = function
+and body_of_expr ?(parameters: parameters option) = function
   E_Block block_with ->
-    let body = statements_of_block_with block_with
+    let body = statements_of_block_with ?parameters block_with
     in Js.FunctionBody (reg_of (braces_of body))
 | expr -> Js.ExpressionBody (expr_of_expr expr)
 
-and statements_of_block_with (node: block_with reg) =
+and let_of_param_decl (node: param_decl reg) =
+  let {pattern; param_kind; _} : param_decl = node.value in
+  match param_kind with
+    `Var _ ->
+       let binders      = pattern_of_pattern pattern
+       and type_params  = None
+       and lhs_type     = None
+       and eq           = Token.ghost_eq
+       and expr         = expr_of_pattern pattern in
+       let val_binding  = Js.{binders; type_params; lhs_type; eq; expr} in
+       let val_binding  = reg_of val_binding in
+       let let_decl     = Js.{attributes = [];
+                              kwd_let    = Token.ghost_let;
+                              bindings   = val_binding, []}
+       in Some (Js.SLet (reg_of let_decl))
+  | `Const _ -> None
+
+and statements_of_block_with ?(parameters: parameters option)
+                             (node: block_with reg) =
   let {block; expr; _} = node.value in
   let {statements; _}  = block.value in
   let statements_opt   = statements_of_statements statements
   and kwd_return       = Token.ghost_return
   and expr             = Some (expr_of_expr expr) in
   match statements_opt with
-    None ->
-      let return = Js.{kwd_return; expr}
-      in Js.SReturn (reg_of return), []
+    None -> Js.SReturn (reg_of Js.{kwd_return; expr}), []
   | Some statements ->
+      let let_stmt =
+        match parameters with
+          None -> None
+        | Some parameters ->
+            match parameters.value.inside with
+              None -> None
+            | Some nsepseq ->
+                Some (Utils.nsepseq_map let_of_param_decl nsepseq) in
       let return      = Js.{kwd_return; expr} in
       let return_stmt = Js.SReturn (reg_of return) in
       let init        = return_stmt, []
       and semi        = Token.ghost_semi in
-      let folded stmt = Utils.nsepseq_cons stmt semi
-      in Utils.nsepseq_foldr folded statements init
+      let folded stmt = Utils.nsepseq_cons stmt semi in
+      let stmts       = Utils.nsepseq_foldr folded statements init in
+      let folded stmt acc =
+        match stmt with
+          None -> acc
+        | Some stmt -> Utils.nsepseq_cons stmt semi acc
+      in Utils.sepseq_foldr folded let_stmt stmts
 
 and region_of_param_kind = function
   `Var   kwd_var   -> kwd_var#region
@@ -808,15 +836,19 @@ and expr_of_E_App (node: call) =
   let fun_or_ctor, args = node.value in
   let args = args.value.inside in
   match fun_or_ctor, args with
-    E_Ctor ctor, args ->
+    E_Ctor ctor, Some args ->
       let econstr = reg_of ctor#payload in
-      let args    = Utils.sepseq_map item_of_expr args in
-      let array   = Js.EArray (reg_of (brackets_of args)) in
-      let app     = econstr, Some array
+      let args    = Utils.nsepseq_map expr_of_expr args in
+      let args    = Js.ESeq (reg_of args) in
+      let app     = econstr, Some args
+      in Js.EConstr (reg_of app)
+  | E_Ctor ctor, None ->
+      let econstr = reg_of ctor#payload in
+      let app     = econstr, None
       in Js.EConstr (reg_of app)
   | _, None ->
       let fun_expr = expr_of_expr fun_or_ctor
-      and unit     = Token.ghost_lpar, Token.ghost_rpar in
+      and unit     = Token.(ghost_lpar, ghost_rpar) in
       let unit     = Js.Unit (reg_of unit)
       in Js.ECall (reg_of (fun_expr, unit))
   | _, Some args ->
@@ -919,7 +951,7 @@ and property_of_P_App
 and property_of_P_Ctor (body: Js.body) (node: ctor) : Js.property =
   let name        = Js.EVar (reg_of node#payload)
   and type_params = None
-  and unit        = Token.ghost_lpar, Token.ghost_rpar in
+  and unit        = Token.(ghost_lpar, ghost_rpar) in
   let parameters  = Js.EUnit (reg_of unit)
   and lhs_type    = None
   and arrow       = Token.ghost_arrow in
@@ -944,8 +976,12 @@ and expr_of_E_CodeInj (node: code_inj reg) =
 (* Data constructor as expression (e.g., "C") *)
 
 and expr_of_E_Ctor (node: ctor) =
-  let constr = reg_of node#payload in
-  Js.EConstr (reg_of (constr, None))
+  if node#payload = "Unit" then
+    let unit = Token.(ghost_lpar, ghost_rpar)
+    in Js.EUnit (reg_of unit)
+  else
+    let constr = reg_of node#payload in
+    Js.EConstr (reg_of (constr, None))
 
 (* Conditional expression *)
 
@@ -959,7 +995,7 @@ and expr_of_E_Cond (node: expr conditional reg) =
     match if_not with
       Some (_, if_not) -> expr_of_expr if_not
     | None ->
-        let unit = Token.ghost_lpar, Token.ghost_rpar
+        let unit = Token.(ghost_lpar, ghost_rpar)
         in Js.EUnit (reg_of unit) in
   let ternary = Js.{condition; qmark; truthy; colon; falsy}
   in Js.ETernary (reg_of ternary)
