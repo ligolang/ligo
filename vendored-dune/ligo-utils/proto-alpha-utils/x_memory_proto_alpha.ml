@@ -120,7 +120,7 @@ let parse_michelson_ty
     ?(tezos_context = (dummy_environment ()).tezos_context)
     ?(allow_operation = true) ?(allow_contract = true) ?(allow_lazy_storage = true) ?(allow_ticket = true)
     michelson =
-  Lwt.return @@ parse_ty tezos_context ~allow_operation michelson ~legacy:false ~allow_contract ~allow_lazy_storage ~ allow_ticket >>=?? fun (ty, _) ->
+  Lwt.return @@ parse_ty tezos_context ~allow_operation michelson ~legacy:false ~allow_contract ~allow_lazy_storage ~allow_ticket >>=?? fun (ty, _) ->
   Lwt_result_syntax.return ty
 
 let strings_of_prims michelson =
