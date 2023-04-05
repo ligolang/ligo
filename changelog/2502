@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded range formatting to LSP. It can be used to format all toplevel declarations in a given range.\\n\\n"
+merge_request: '2502'
+title: "[#1655] LSP: Implement range formatting for toplevel statements"
+type: added
+            
