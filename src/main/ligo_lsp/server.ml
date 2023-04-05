@@ -120,7 +120,6 @@ class lsp_server =
         ~(notify_back : notify_back)
         (init_params : InitializeParams.t)
         : InitializeResult.t IO.t =
-      let* init_result = super#on_req_initialize ~notify_back init_params in
       (* Currently, the behaviors of these editors will be as follow:
          * Emacs: Will send [Some `Null]. In [decode_apply_settings] we handle
            this by seeting [deprecated] as [true] so this editor may launch
@@ -136,26 +135,51 @@ class lsp_server =
         | Some settings -> self#decode_apply_settings settings
       in
       client_capabilities <- init_params.capabilities;
-      IO.return init_result
+      super#on_req_initialize ~notify_back init_params
+
+    method is_request_enabled : string -> bool =
+      fun req -> not @@ List.mem req config.disabled_features
 
     (* TODO: When the document closes, we should thinking about removing the
        state associated to the file from the global hashtable state, to avoid
        leaking memory. We should also think about clearing diagnostics.
        Handle me with #1657. *)
     method on_notif_doc_did_close ~notify_back:_ _ : unit IO.t = Linol_lwt.return ()
-    method! config_hover = Some (`Bool true)
-    method config_formatting = Some (`Bool true)
-    method config_range_formatting = Some (`Bool true)
-    method! config_definition = Some (`Bool true)
-    method config_document_link_provider = Some (DocumentLinkOptions.create ())
+    method! config_hover = Some (`Bool (self#is_request_enabled "textDocument/hover"))
+
+    method config_formatting =
+      Some (`Bool (self#is_request_enabled "textDocument/formatting"))
+
+    method config_range_formatting =
+      Some (`Bool (self#is_request_enabled "textDocument/rangeFormatting"))
+
+    method! config_definition =
+      Some (`Bool (self#is_request_enabled "textDocument/definition"))
+
+    method config_document_link_provider =
+      if self#is_request_enabled "textDocument/documentLink"
+      then Some (DocumentLinkOptions.create ())
+      else None
 
     method config_rename =
-      let rename_options = RenameOptions.create ?prepareProvider:(Some true) () in
-      Some (`RenameOptions rename_options)
+      if self#is_request_enabled "textDocument/rename"
+      then (
+        let rename_options =
+          RenameOptions.create
+            ~prepareProvider:(self#is_request_enabled "textDocument/prepareRename")
+            ()
+        in
+        Some (`RenameOptions rename_options))
+      else Some (`Bool false)
 
-    method config_references = Some (`Bool true)
-    method config_type_definition = Some (`Bool true)
-    method config_folding_range = Some (`Bool true)
+    method config_references =
+      Some (`Bool (self#is_request_enabled "textDocument/references"))
+
+    method config_type_definition =
+      Some (`Bool (self#is_request_enabled "textDocument/typeDefinition"))
+
+    method config_folding_range =
+      Some (`Bool (self#is_request_enabled "textDocument/foldingRange"))
 
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with

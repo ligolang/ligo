@@ -89,3 +89,5 @@ The supported features that may be disabled are listed below:
 * `textDocument/formatting`
 * `textDocument/rangeFormatting`
 * `textDocument/codeAction`
+
+**Note**: Please restart the LIGO Language Server after changing this configuration.
