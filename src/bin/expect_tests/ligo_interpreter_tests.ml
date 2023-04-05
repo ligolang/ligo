@@ -743,7 +743,7 @@ let%expect_test _ =
   [%expect
     {|
   Everything at the top-level was executed.
-  - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(1970-01-01T00:00:00Z)). |}]
+  - test_x exited with value (timestamp(1970-01-01T00:00:00Z) , timestamp(2012-02-02T10:10:10Z)). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_get_account.mligo" ];
