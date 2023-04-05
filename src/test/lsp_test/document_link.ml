@@ -1,5 +1,6 @@
 open Linol_lwt
 open Handlers
+open Common
 module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 
@@ -30,11 +31,11 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
   in
   match links_opt with
   | Some links ->
-    Alcotest.(check (list testable_document_link))
+    check Alcotest.(list testable_document_link)
       (Format.asprintf "Document links mismatch for %s:" file_path)
       links
       document_links
-  | None -> Alcotest.fail "Expected some list of document links, got None"
+  | None -> fail "Expected some list of document links, got None"
 
 
 let test_cases =
@@ -82,4 +83,4 @@ let test_cases =
   ]
 
 
-let tests = "document link", List.map ~f:get_document_link_test test_cases
+let tests = "document_link", List.map ~f:get_document_link_test test_cases

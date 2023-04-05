@@ -1204,11 +1204,13 @@ and print_selection (node : selection) =
 
 (* EXPORTS *)
 
-let print_type_expr _state = print_type_expr
-let print_pattern   _state = print_pattern
-let print_expr      _state = print_expr
+let print_type_expr   _state = print_type_expr
+let print_pattern     _state = print_pattern
+let print_expr        _state = print_expr
+let print_declaration _state = print_declaration
 
-type cst        = CST.t
-type expr       = CST.expr
-type type_expr  = CST.type_expr
-type pattern    = CST.pattern
+type cst         = CST.t
+type expr        = CST.expr
+type type_expr   = CST.type_expr
+type pattern     = CST.pattern
+type declaration = CST.declaration

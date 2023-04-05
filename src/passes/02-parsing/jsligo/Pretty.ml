@@ -734,8 +734,10 @@ and pp_contract state {value; _} =
 let print_type_expr = pp_type_expr
 let print_pattern   = pp_pattern
 let print_expr      = pp_expr
+let print_toplevel_statement = pp_toplevel_statement
 
-type cst       = CST.t
-type expr      = CST.expr
-type type_expr = CST.type_expr
-type pattern   = CST.pattern
+type cst                = CST.t
+type expr               = CST.expr
+type type_expr          = CST.type_expr
+type pattern            = CST.pattern
+type toplevel_statement = CST.toplevel_statement

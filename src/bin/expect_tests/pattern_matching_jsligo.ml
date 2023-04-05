@@ -4,7 +4,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match1.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 18 to line 4, character 4:
+    File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 9 to line 4, character 4:
       1 | let test_foo = (x : test_exec_result) : string => {
       2 |   return match(x, {
       3 |     Fail: (_ : test_exec_error) => "",
@@ -52,7 +52,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match6.jsligo" ];
   [%expect
     {|
-  File "../../test/contracts/negative/pattern_match6.jsligo", line 7, character 33 to line 10, character 10:
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 7, character 19 to line 10, character 10:
     6 |     return match(state, {
     7 |         S1: () => (match(action, {
     8 |             A: () => S1(),

@@ -46,7 +46,7 @@ Formatting
 
 - [x] Whole document formatting
 - [ ] On-type formatting
-- [ ] Document range formatting
+- [x] Document range formatting
 
 ## Commands
 

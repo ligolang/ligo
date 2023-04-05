@@ -9,7 +9,8 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "c.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.mligo", line 5, characters 4-15:
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.mligo", line 4, character 2 to line 5, character 15:
+      3 | let s (x : t) =
       4 |   match x with
       5 |     One _ -> ()
 
@@ -195,7 +196,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "c.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.jsligo", line 4, character 11 to line 6, character 4:
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c.jsligo", line 4, character 2 to line 6, character 4:
       3 | let s = (x : t) : unit =>
       4 |   match(x, {
       5 |     Two: (_ : nat) => unit,
@@ -210,7 +211,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_missing_test "c_c.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_c.jsligo", line 9, character 30 to line 11, character 6:
+    File "../../test/contracts/negative//pattern_matching_anomalies/missing_cases/c_c.jsligo", line 9, character 21 to line 11, character 6:
       8 |   Three: ()      => unit,
       9 |   One: (c : p)   => (match(c, {
      10 |       Four: () => unit
@@ -405,7 +406,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_redundant_test "c1_c1_c2_c3.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.jsligo", line 4, character 11 to line 9, character 4:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c1_c2_c3.jsligo", line 4, character 2 to line 9, character 4:
       3 | let s = (x : t) : unit =>
       4 |   match(x, {
       5 |     One:   (a : int) => unit,
@@ -420,7 +421,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_redundant_test "c1_c2_c1_c3.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.jsligo", line 4, character 11 to line 9, character 4:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c1_c3.jsligo", line 4, character 2 to line 9, character 4:
       3 | let s = (x : t) : unit =>
       4 |   match(x, {
       5 |     One:   (a : int) => unit,
@@ -435,7 +436,7 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_redundant_test "c1_c2_c3_c1.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.jsligo", line 4, character 11 to line 9, character 4:
+    File "../../test/contracts/negative//pattern_matching_anomalies/redundant_case/c1_c2_c3_c1.jsligo", line 4, character 2 to line 9, character 4:
       3 | let s = (x : t) : unit =>
       4 |   match(x, {
       5 |     One:   (a : int) => unit,
