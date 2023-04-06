@@ -541,33 +541,37 @@ let%expect_test _ =
 
     (Bitwise#69:7-14 -> Bitwise)
     Range: File "", line 69, characters 7-14
-    Body Range: File "", line 70, character 2 to line 74, character 71
+    Body Range: File "", line 70, character 2 to line 74, character 144
     Content: Members: Variable definitions:
                       (and#70:6-10 -> and)
                       Range: File "", line 70, characters 6-10
-                      Body Range: File "", line 70, characters 62-116
+                      Body Range: File "", line 70, characters 69-144
                       Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_and (a ,
                       b)|
                       references: []
                       (xor#71:6-9 -> xor)
                       Range: File "", line 71, characters 6-9
-                      Body Range: File "", line 71, characters 2-63
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 71, characters 69-144
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_or (a ,
+                      b)|
                       references: []
                       (or#72:6-9 -> or)
                       Range: File "", line 72, characters 6-9
-                      Body Range: File "", line 72, characters 2-62
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 72, characters 69-144
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_xor (a ,
+                      b)|
                       references: []
                       (shift_left#73:6-16 -> shift_left)
                       Range: File "", line 73, characters 6-16
-                      Body Range: File "", line 73, characters 2-70
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 73, characters 69-144
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_lsl (a ,
+                      b)|
                       references: []
                       (shift_right#74:6-17 -> shift_right)
                       Range: File "", line 74, characters 6-17
-                      Body Range: File "", line 74, characters 2-71
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 74, characters 69-144
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_lsr (a ,
+                      b)|
                       references: []
                       Type definitions:
                       Module definitions:

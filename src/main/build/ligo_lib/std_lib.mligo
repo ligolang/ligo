@@ -66,11 +66,11 @@ module Tezos = struct
 end
 
 module Bitwise = struct
-  let @and (type a b) (l : a) (r : b) : (a, b) external_and = [%michelson ({| { AND } |} l r : (a, b) external_and)]
-  let xor (l : nat) (r : nat) : nat = [%external ("XOR", l, r)]
-  let @or (l : nat) (r : nat) : nat = [%external ("OR", l, r)]
-  let shift_left (l : nat) (r : nat) : nat = [%external ("LSL", l, r)]
-  let shift_right (l : nat) (r : nat) : nat = [%external ("LSR", l, r)]
+  let @and        (type a b) (l : a) (r : b) : (a, b) external_and = [%Michelson ({| { UNPAIR ; AND } |} : a * b -> (a, b) external_and)] (l, r)
+  let xor         (type a b) (l : a) (r : b) : (a, b) external_or  = [%Michelson ({| { UNPAIR ; XOR } |} : a * b -> (a, b) external_or )] (l, r)
+  let @or         (type a b) (l : a) (r : b) : (a, b) external_xor = [%Michelson ({| { UNPAIR ; OR  } |} : a * b -> (a, b) external_xor)] (l, r)
+  let shift_left  (type a b) (l : a) (r : b) : (a, b) external_lsl = [%Michelson ({| { UNPAIR ; LSL } |} : a * b -> (a, b) external_lsl)] (l, r)
+  let shift_right (type a b) (l : a) (r : b) : (a, b) external_lsr = [%Michelson ({| { UNPAIR ; LSR } |} : a * b -> (a, b) external_lsr)] (l, r)
 end
 
 module Big_map = struct

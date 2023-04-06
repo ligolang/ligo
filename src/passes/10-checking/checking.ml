@@ -917,6 +917,14 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
            Constant_typers.External_types.ediv_types parameters
          | T_construct { constructor = External ("and" | "u_and"); parameters; _ } ->
            Constant_typers.External_types.and_types parameters
+         | T_construct { constructor = External "or"; parameters; _ } ->
+           Constant_typers.External_types.or_types parameters
+         | T_construct { constructor = External "xor"; parameters; _ } ->
+           Constant_typers.External_types.xor_types parameters
+         | T_construct { constructor = External "lsl"; parameters; _ } ->
+           Constant_typers.External_types.lsl_types parameters
+         | T_construct { constructor = External "lsr"; parameters; _ } ->
+           Constant_typers.External_types.lsr_types parameters
          | _ -> return ret_type)
         ~with_:(fun _ -> return ret_type)
     in

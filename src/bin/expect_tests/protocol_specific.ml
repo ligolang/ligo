@@ -60,6 +60,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/rollup.mligo", line 1, characters 14-34:
       1 | let main (_ : tx_rollup_l2_address) (_ :  unit ) : operation list * unit =
+                        ^^^^^^^^^^^^^^^^^^^^
       2 |   (failwith "roll up !" : operation list * unit)
 
     Type "tx_rollup_l2_address" not found. |}];

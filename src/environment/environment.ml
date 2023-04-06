@@ -63,6 +63,10 @@ let michelson_base : (Type_var.t * type_expression) list =
   ; v_external_ediv ~loc, t_abstraction2 ~loc (External "ediv") star star
   ; v_external_u_ediv ~loc, t_abstraction2 ~loc (External "u_ediv") star star
   ; v_external_and ~loc, t_abstraction2 ~loc (External "and") star star
+  ; v_external_or ~loc, t_abstraction2 ~loc (External "or") star star
+  ; v_external_xor ~loc, t_abstraction2 ~loc (External "xor") star star
+  ; v_external_lsl ~loc, t_abstraction2 ~loc (External "lsl") star star
+  ; v_external_lsr ~loc, t_abstraction2 ~loc (External "lsr") star star
   ; v_external_u_and ~loc, t_abstraction2 ~loc (External "u_and") star star
   ; v_external_map_find_opt ~loc, t_abstraction2 ~loc (External "map_find_opt") star star
   ; v_external_map_add ~loc, t_abstraction3 ~loc (External "map_add") star star star

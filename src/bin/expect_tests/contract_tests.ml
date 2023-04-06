@@ -3372,3 +3372,37 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { ADD } { DROP 2 ; PUSH int 0 } } { SWAP ; SUB } ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "bytes_bitwise.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage bytes ;
+      code { DROP ;
+             PUSH nat 8 ;
+             PUSH bytes 0x06 ;
+             LSL ;
+             PUSH nat 1 ;
+             PUSH bytes 0x0006 ;
+             LSR ;
+             NIL bytes ;
+             SWAP ;
+             CONS ;
+             SWAP ;
+             CONS ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             XOR ;
+             CONS ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             OR ;
+             CONS ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             AND ;
+             CONS ;
+             CONCAT ;
+             NIL operation ;
+             PAIR } } |}]
