@@ -50,6 +50,9 @@ depends: [
   "ppx_expect"
   "ppx_import"
   "ppx_inline_test"
+  # Analytics
+  "asetmap" {= "0.8.1"}
+  "prometheus" {>= "1.2"}
   # work around tezos' failure to constrain
   "lwt" {= "5.6.1"}
   "bisect_ppx" {>= "2.3"}

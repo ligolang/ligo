@@ -1,6 +1,6 @@
 {
-  "checksum": "a693a9b8a4255203c45e3b09f56c4c54",
-  "root": "ligo-heitor-lsp-copy@link-dev:./ligo.opam",
+  "checksum": "1267a5959005f7eb6da95fa8f99ff656",
+  "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
       "id":
@@ -32,9 +32,9 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "ligo-heitor-lsp-copy@link-dev:./ligo.opam": {
-      "id": "ligo-heitor-lsp-copy@link-dev:./ligo.opam",
-      "name": "ligo-heitor-lsp-copy",
+    "ligo@link-dev:./ligo.opam": {
+      "id": "ligo@link-dev:./ligo.opam",
+      "name": "ligo",
       "version": "link-dev:./ligo.opam",
       "source": { "type": "link-dev", "path": ".", "manifest": "ligo.opam" },
       "overrides": [ "esy.json" ],
@@ -63,6 +63,7 @@
         "@opam/qcheck-alcotest@opam:0.20@695cf795",
         "@opam/qcheck@opam:0.20@a01f5c13",
         "@opam/pure-splitmix@opam:0.3@ba493865",
+        "@opam/prometheus@opam:1.2@b809dd59",
         "@opam/ppx_yojson_conv@opam:v0.15.1@4e40c023",
         "@opam/ppx_inline_test@opam:v0.15.0@ae74ce3f",
         "@opam/ppx_import@opam:1.9.1@f3f51ac5",
@@ -100,6 +101,7 @@
         "@opam/bos@opam:0.2.1@02b5c6e3",
         "@opam/bls12-381@opam:5.0.0@2bd1b933",
         "@opam/bisect_ppx@opam:2.8.1@2c7935c9",
+        "@opam/asetmap@opam:0.8.1@e9c2591a",
         "@opam/alcotest-lwt@opam:1.7.0@b5d3b247",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
@@ -121,6 +123,7 @@
         "@opam/qcheck-alcotest@opam:0.20@695cf795",
         "@opam/qcheck@opam:0.20@a01f5c13",
         "@opam/pure-splitmix@opam:0.3@ba493865",
+        "@opam/prometheus@opam:1.2@b809dd59",
         "@opam/ppx_yojson_conv@opam:v0.15.1@4e40c023",
         "@opam/ppx_inline_test@opam:v0.15.0@ae74ce3f",
         "@opam/ppx_import@opam:1.9.1@f3f51ac5",
@@ -154,6 +157,7 @@
         "@opam/bos@opam:0.2.1@02b5c6e3",
         "@opam/bls12-381@opam:5.0.0@2bd1b933",
         "@opam/bisect_ppx@opam:2.8.1@2c7935c9",
+        "@opam/asetmap@opam:0.8.1@e9c2591a",
         "@opam/alcotest-lwt@opam:1.7.0@b5d3b247",
         "@opam/alcotest@opam:1.7.0@356bdede"
       ]

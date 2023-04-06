@@ -25,6 +25,10 @@
   tezos-utils
   tezos-crypto
   ligo_api
+  cli
+  prometheus
+  prometheus_format
+  prometheus_push
   lsp_test_requests))
 
 (rule

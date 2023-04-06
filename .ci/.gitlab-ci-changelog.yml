@@ -5,6 +5,7 @@
 add-changelog-entry:
   stage: post-build-action
   extends : .nix
+  needs: []
   before_script:
     - *pip-install-ci-requirements
   script:

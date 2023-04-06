@@ -6,6 +6,7 @@
   linol
   ligo_lsp
   ligo_api
+  cli_helpers
   ligo_interface
   utils
   compiler_options

@@ -82,7 +82,10 @@ RUN cd /ligo/examples/ligojs && npm i && npm run build:webpack
 FROM esydev/esy:nightly-alpine as esy
 
 # TODO see also ligo-docker-large in nix build
-FROM alpine:3.12
+FROM alpine:3.12 as ligo
+# This variable is used for analytics to determine if th execution of the compiler is inside docker or not
+ENV DOCKER_EXECUTION=true
+
 COPY --from=esy . .
 WORKDIR /root/
 RUN chmod 755 /root # so non-root users inside container can see and execute /root/ligo
@@ -90,3 +93,7 @@ COPY --from=0 /tmp/ligo /root/ligo
 COPY --from=0 /ligo/_build/default/_doc/_html /root/doc
 COPY --from=0 /ligo/highlighting /root/highlighting
 ENTRYPOINT ["/root/ligo"]
+
+FROM ligo as ligo-ci
+# This variable is used for analytics to determine if th execution of the compiler is inside docker or not
+ENV LIGO_SKIP_ANALYTICS=true
