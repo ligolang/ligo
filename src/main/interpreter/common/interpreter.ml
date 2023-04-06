@@ -1416,14 +1416,6 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> v = Bake_until_n_cycle_end (loc, calltrace, n) in
     return @@ v
   | C_TEST_BAKE_UNTIL_N_CYCLE_END, _ -> fail @@ error_type ()
-  | C_TEST_CREATE_CHEST, [ V_Ct (C_bytes payload); V_Ct (C_nat time) ] ->
-    let chest, chest_key = Michelson_backend.create_chest payload (Z.to_int time) in
-    return @@ v_pair (V_Ct (C_bytes chest), V_Ct (C_bytes chest_key))
-  | C_TEST_CREATE_CHEST, _ -> fail @@ error_type ()
-  | C_TEST_CREATE_CHEST_KEY, [ V_Ct (C_bytes chest); V_Ct (C_nat time) ] ->
-    let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
-    return @@ v_bytes chest_key
-  | C_TEST_CREATE_CHEST_KEY, _ -> fail @@ error_type ()
   | C_TEST_GET_VOTING_POWER, [ V_Ct (C_key_hash hk) ] ->
     let>> vp = Get_voting_power (loc, calltrace, hk) in
     return vp

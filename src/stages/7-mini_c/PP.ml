@@ -55,8 +55,6 @@ and type_constant ppf (tb : type_base) : unit =
     | TB_bls12_381_g2 -> "bls12_381_g2"
     | TB_bls12_381_fr -> "bls12_381_fr"
     | TB_never -> "never"
-    | TB_chest -> "chest"
-    | TB_chest_key -> "chest_key"
     | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
     | TB_type_int _ -> "type_int"
   in

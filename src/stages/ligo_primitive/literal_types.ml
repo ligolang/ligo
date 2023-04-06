@@ -37,9 +37,6 @@ type t =
   | Ast_contract [@only_interpreter]
   | Typed_address [@only_interpreter]
   | Mutation [@only_interpreter]
-  | Chest
-  | Chest_key
-  | Chest_opening_result
   | Tx_rollup_l2_address
   | External of string
   | Gen [@only_interpreter]
@@ -83,9 +80,6 @@ let to_string = function
   | Ast_contract -> "ast_contract"
   | Typed_address -> "typed_address"
   | Mutation -> "mutation"
-  | Chest -> "chest"
-  | Chest_key -> "chest_key"
-  | Chest_opening_result -> "chest_opening_result"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
   | External s -> "external_" ^ s
   | Gen -> "pbt_gen"
@@ -128,9 +122,6 @@ let michelson_contract = Michelson_contract
 let ast_contract = Ast_contract
 let typed_address = Typed_address
 let mutation = Mutation
-let chest = Chest
-let chest_key = Chest_key
-let chest_opening_result = Chest_opening_result
 let tx_rollup_l2_address = Tx_rollup_l2_address
 let external_failwith = External "failwith"
 let external_int = External "int"
@@ -176,9 +167,6 @@ let v_michelson_contract = Type_var.of_input_var (to_string Michelson_contract)
 let v_ast_contract = Type_var.of_input_var (to_string Ast_contract)
 let v_typed_address = Type_var.of_input_var (to_string Typed_address)
 let v_mutation = Type_var.of_input_var (to_string Mutation)
-let v_chest = Type_var.of_input_var (to_string Chest)
-let v_chest_key = Type_var.of_input_var (to_string Chest_key)
-let v_chest_opening_result = Type_var.of_input_var (to_string Chest_opening_result)
 let v_tx_rollup_l2_address = Type_var.of_input_var (to_string Tx_rollup_l2_address)
 let v_external_int = Type_var.of_input_var (to_string @@ External "int")
 let v_external_ediv = Type_var.of_input_var (to_string @@ External "ediv")

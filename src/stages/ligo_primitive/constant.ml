@@ -130,8 +130,6 @@ type constant' =
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]
   | C_TEST_CAST_ADDRESS [@only_interpreter]
-  | C_TEST_CREATE_CHEST [@only_interpreter]
-  | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   | C_TEST_RANDOM [@only_interpreter]
   | C_TEST_GENERATOR_EVAL [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]

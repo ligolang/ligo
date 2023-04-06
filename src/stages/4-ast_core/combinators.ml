@@ -73,9 +73,7 @@ let t__type_ ~loc ?sugar () : type_expression = t_constant ~loc ?sugar _type_ []
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let ez_t_sum ~loc ?sugar ?layout lst =

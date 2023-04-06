@@ -22,8 +22,6 @@ type t =
   | Literal_bls12_381_g1 of bytes
   | Literal_bls12_381_g2 of bytes
   | Literal_bls12_381_fr of bytes
-  | Literal_chest of bytes
-  | Literal_chest_key of bytes
 [@@deriving eq, compare, yojson, hash, sexp]
 
 let pp_operation ppf (o : bytes) : unit = Format.fprintf ppf "%a" Hex.pp (Hex.of_bytes o)
@@ -47,8 +45,6 @@ let pp ppf (l : t) =
   | Literal_bls12_381_g1 b -> fprintf ppf "bls12_381_g1 0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_bls12_381_g2 b -> fprintf ppf "bls12_381_g2 0x%a" Hex.pp (Hex.of_bytes b)
   | Literal_bls12_381_fr b -> fprintf ppf "bls12_381_fr 0x%a" Hex.pp (Hex.of_bytes b)
-  | Literal_chest b -> fprintf ppf "chest 0x%a" Hex.pp (Hex.of_bytes b)
-  | Literal_chest_key b -> fprintf ppf "chest_key 0x%a" Hex.pp (Hex.of_bytes b)
 
 
 let assert_eq (a, b) = if equal a b then Some () else None

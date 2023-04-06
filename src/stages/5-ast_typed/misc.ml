@@ -117,12 +117,6 @@ and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option
   | Literal_bls12_381_fr a, Literal_bls12_381_fr b when Bytes.equal a b -> Some ()
   | Literal_bls12_381_fr _, Literal_bls12_381_fr _ -> None
   | Literal_bls12_381_fr _, _ -> None
-  | Literal_chest a, Literal_chest b when Bytes.equal a b -> Some ()
-  | Literal_chest _, Literal_chest _ -> None
-  | Literal_chest _, _ -> None
-  | Literal_chest_key a, Literal_chest_key b when Bytes.equal a b -> Some ()
-  | Literal_chest_key _, Literal_chest_key _ -> None
-  | Literal_chest_key _, _ -> None
 
 
 let get_entry (lst : program) (name : Value_var.t) : expression option =

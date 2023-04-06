@@ -235,8 +235,6 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
       List.map ~f:aux lst'
     in
     V_Set lst''
-  | Prim (_, "chest", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
-  | Prim (_, "chest_key", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
   (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
    *     D_operation op
    *   ) *)
@@ -409,11 +407,8 @@ let rec decompile_value
         | Ticket
         | Michelson_contract
         | Gen
-        | Chest
-        | Chest_key
         | Typed_address
         | Mutation
-        | Chest_opening_result
         | External _
         | Views
         | Tx_rollup_l2_address )

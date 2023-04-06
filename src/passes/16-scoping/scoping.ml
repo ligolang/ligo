@@ -65,8 +65,6 @@ let rec translate_type ?var : I.type_expression -> oty =
   | I.T_base I.TB_bls12_381_g2 -> T_base (nil, Prim (nil, "bls12_381_g2", [], []))
   | I.T_base I.TB_bls12_381_fr -> T_base (nil, Prim (nil, "bls12_381_fr", [], []))
   | I.T_base I.TB_never -> T_base (nil, Prim (nil, "never", [], []))
-  | I.T_base I.TB_chest -> T_base (nil, Prim (nil, "chest", [], []))
-  | I.T_base I.TB_chest_key -> T_base (nil, Prim (nil, "chest_key", [], []))
   | I.T_base I.TB_tx_rollup_l2_address -> T_base (nil, Prim (nil, "tx_rollup_l2_address", [], []))
   | I.T_base I.TB_type_int memo_size -> T_base (nil, Int (nil, memo_size))
   | I.T_ticket x -> T_ticket (nil, translate_type x)

@@ -89,9 +89,7 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let t__type_ ~loc t t' : type_expression = t_constant ~loc _type_ [ t; t' ]
@@ -122,9 +120,7 @@ let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_in
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let is_t__type_ t = Option.is_some (get_t__type_ t)
@@ -152,9 +148,7 @@ let is_t__type_ t = Option.is_some (get_t__type_ t)
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let get_t__type__exn t =
@@ -185,9 +179,7 @@ let get_t__type__exn t =
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let t_arrow param result ~loc ?source_type () : type_expression =

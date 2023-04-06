@@ -1158,35 +1158,6 @@ custom bootstrap contracts that initialize big maps.
 
 
 <SyntaxTitle syntax="pascaligo">
-val create_chest : bytes -> nat -> chest * chest_key
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val create_chest : bytes -> nat -> chest * chest_key
-</SyntaxTitle>
-
-<SyntaxTitle syntax="jsligo">
-let create_chest : bytes => nat => [chest , chest_key]
-</SyntaxTitle>
-
-Generate a locked value, the RSA parameters and encrypt the payload. Also returns the chest key
-Exposes tezos timelock library function [create_chest_and_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L197)
-
-<SyntaxTitle syntax="pascaligo">
-val create_chest_key : chest -> nat -> chest_key
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val create_chest_key : chest -> nat -> chest_key
-</SyntaxTitle>
-
-<SyntaxTitle syntax="jsligo">
-let create_chest_key : chest => nat => chest_key
-</SyntaxTitle>
-
-Unlock the value and create the time-lock proof.
-Exposes tezos timelock library function [create_chest_key](https://gitlab.com/tezos/tezos/-/blob/v11-release/src/lib_crypto/timelock.mli#L201).
-
-
-<SyntaxTitle syntax="pascaligo">
 val save_context : unit -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">

@@ -40,9 +40,6 @@ let michelson_base : (Type_var.t * type_expression) list =
   ; v_signature ~loc, t_signature ~loc ()
   ; v_key ~loc, t_key ~loc ()
   ; v_key_hash ~loc, t_key_hash ~loc ()
-  ; v_chest ~loc, t_chest ~loc ()
-  ; v_chest_key ~loc, t_chest_key ~loc ()
-  ; v_chest_opening_result ~loc, t_chest_opening_result ~loc ()
   ; v_timestamp ~loc, t_timestamp ~loc ()
   ; v_list ~loc, t_abstraction1 ~loc List star
   ; v_big_map ~loc, t_abstraction2 ~loc Big_map star star
@@ -78,6 +75,7 @@ let michelson_base : (Type_var.t * type_expression) list =
 
 let base = basic_types @ michelson_base
 let lima_types = base
+let mumbai_types = base (*TODO filter t_tx_rollup_l2_address*)
 
 let meta_ligo_types
     : (Type_var.t * type_expression) list -> (Type_var.t * type_expression) list
@@ -103,5 +101,4 @@ let of_list_type : (Type_var.t * type_expression) list -> t =
 
 let default : Protocols.t -> t = function
   | Protocols.Lima -> of_list_type (meta_ligo_types lima_types)
-  | Protocols.Mumbai -> of_list_type (meta_ligo_types lima_types)
-(*FIXME: mumbai*)
+  | Protocols.Mumbai -> of_list_type (meta_ligo_types mumbai_types)
