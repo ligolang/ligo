@@ -3,7 +3,6 @@
  (libraries
   core
   bos
-  tls
   simple-utils
   cli_helpers
   cohttp-lwt-unix
