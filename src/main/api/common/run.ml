@@ -240,7 +240,9 @@ let evaluate_call
       let imperative_param =
         Compile.Of_c_unit.compile_expression ~raise ~meta c_unit_param
       in
-      let core_param = Compile.Of_imperative.compile_expression ~raise imperative_param in
+      let core_param =
+        Compile.Of_unified.compile_expression ~raise ~options imperative_param
+      in
       let app = Compile.Of_core.apply entry_point core_param in
       let typed_app = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
       let app_aggregated =

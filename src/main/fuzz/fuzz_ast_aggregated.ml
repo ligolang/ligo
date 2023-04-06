@@ -64,8 +64,13 @@ let expression_to_string ~syntax aggregated =
   let aggregated = Reduplicate_binders.reduplicate ~raise aggregated in
   let typed = Aggregation.decompile aggregated in
   let core = Decompile.Of_typed.decompile_expression typed in
-  let imperative = Decompile.Of_core.decompile_expression core in
-  let buffer = Decompile.Of_imperative.decompile_expression imperative syntax in
+  let unified =
+    let raise =
+      Simple_utils.Trace.raise_failwith "Could not decompile in mutation fuzz"
+    in
+    Decompile.Of_core.decompile_expression ~raise ~syntax core
+  in
+  let buffer = Decompile.Of_unified.decompile_expression unified syntax in
   Buffer.contents buffer
 
 

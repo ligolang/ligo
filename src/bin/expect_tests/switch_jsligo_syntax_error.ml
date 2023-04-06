@@ -3,7 +3,7 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/empty_switch.jsligo"
     ];
   [%expect
@@ -18,7 +18,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/default_in_between.jsligo"
     ];
   [%expect
@@ -35,7 +35,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/more_than_one_default.jsligo"
     ];
   [%expect
@@ -52,7 +52,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/break_outside_case1.jsligo"
     ];
   [%expect
@@ -69,7 +69,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/break_outside_case2.jsligo"
     ];
   [%expect
@@ -84,7 +84,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/break_outside_case3.jsligo"
     ];
   [%expect
@@ -99,7 +99,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "print"
-    ; "ast-imperative"
+    ; "ast-core"
     ; "../../test/contracts/negative/switch_jsligo/break_outside_case4.jsligo"
     ];
   [%expect

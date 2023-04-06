@@ -118,12 +118,12 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract_warn_shadowing ];
   [%expect
     {|
-    File "../../test/contracts/transpile_warn_shadowing.jsligo", line 12, characters 10-12:
+    File "../../test/contracts/transpile_warn_shadowing.jsligo", line 12, characters 6-7:
      11 | const x = 42;
      12 | const x = 33;
      13 |
 
-    Cannot redeclare block-scoped variable. |}]
+    Duplicate identifier. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "--transpiled"; contract_warn_shadowing ];

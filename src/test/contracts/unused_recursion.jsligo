@@ -13,8 +13,8 @@ let coucou = (storage : t) : t => {
 
   /* parameter shadows fun_name: complex */
   let foo = (foo : ((p:int) => int)) : int => {
-    let foo = foo(0);
-    return foo;
+    let foox = foo(0);
+    return foox;
   };
   
   /* fun_name shadowed in body */

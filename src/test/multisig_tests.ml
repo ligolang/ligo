@@ -5,7 +5,7 @@ let mfile = "./contracts/multisig.mligo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
 open Ligo_prim
-open Ast_imperative
+open Ast_unified
 
 let init_storage threshold counter pkeys =
   let keys =
@@ -20,23 +20,18 @@ let init_storage threshold counter pkeys =
     [ "id", e_string ~loc "MULTISIG"
     ; "counter", e_nat ~loc counter
     ; "threshold", e_nat ~loc threshold
-    ; "auth", e_typed_list ~loc keys (t_key ~loc ())
+    ; "auth", e_list ~loc keys
     ]
 
 
-let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
+let empty_op_list = e_list ~loc []
 
-(* let empty_message = e_lambda ~loc  (Location.wrap @@ Var.of_input_var "arguments",t_unit ())
-  @@ e_annotation ~loc  empty_op_list (t_list ~loc  (t_operation ~loc  ()))
-
-let chain_id_zero =
-  e_bytes_raw ~loc  (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero) *)
 let empty_message =
   e_lambda_ez
     ~loc
     (Value_var.of_input_var ~loc "arguments")
-    ~ascr:(t_unit ~loc ())
-    (Some (t_list ~loc (t_operation ~loc ())))
+    ~ascr:(tv_unit ~loc ())
+    (Some (t_list ~loc (tv_operation ~loc ())))
     empty_op_list
 
 
@@ -56,11 +51,12 @@ let params ~raise counter msg keys is_validl f =
     let payload =
       e_tuple
         ~loc
-        [ msg
-        ; e_nat ~loc counter
-        ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
-        ; chain_id_zero
-        ]
+        (List.Ne.of_list
+           [ msg
+           ; e_nat ~loc counter
+           ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
+           ; chain_id_zero
+           ])
     in
     let signature = sign_message ~raise program payload sk in
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
@@ -68,17 +64,15 @@ let params ~raise counter msg keys is_validl f =
   let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
   e_constructor
     ~loc
-    "CheckMessage"
-    (e_record_ez
-       ~loc
-       [ "counter", e_nat ~loc counter
-       ; "message", msg
-       ; ( "signatures"
-         , e_typed_list
-             ~loc
-             signed_msgs
-             (t_pair ~loc (t_key_hash ~loc (), t_signature ~loc ())) )
-       ])
+    { constructor = Label.of_string "CheckMessage"
+    ; element =
+        e_record_ez
+          ~loc
+          [ "counter", e_nat ~loc counter
+          ; "message", msg
+          ; "signatures", e_list ~loc signed_msgs
+          ]
+    }
 
 
 (* Provide one valid signature when the threshold is two of two keys *)

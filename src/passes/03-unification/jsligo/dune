@@ -1,0 +1,11 @@
+(library
+ (name unification_jsligo)
+ (public_name ligo.unification.jsligo)
+ (libraries
+  unification_shared
+  simple-utils
+  tezos-utils
+  cst
+  parsing
+  ast_unified
+  predefined))

@@ -694,7 +694,7 @@ let assert_string_failure = (res: test_exec_result, expected: string) => {
   match (res, {
     Fail: (x: test_exec_error) => (
       match (x, {
-        Rejected: (x:[michelson_code,address]) => assert (Test.michelson_equal (x[0], expected_bis)),
+        Rejected: (x:[michelson_program,address]) => assert (Test.michelson_equal (x[0], expected_bis)),
         Balance_too_low: (_: { contract_too_low : address , contract_balance : tez , spend_request : tez }) => failwith ("contract failed for an unknown reason"),
         Other: (_:string) => failwith ("contract failed for an unknown reason")
       })),

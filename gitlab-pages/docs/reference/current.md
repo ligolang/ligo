@@ -1090,8 +1090,8 @@ type return_ = [list<operation>, storage];
 let main = (x: [parameter, storage]): return_ => {
   let [i, store] = x ;
   let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10 as nat));
-  let [_, x] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
-  return [list([]), x]
+  let [_, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
+  return [list([]), ret]
 };
 ```
 

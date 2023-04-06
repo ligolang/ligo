@@ -58,6 +58,11 @@
  (action
   (run ./test.exe))
  (deps
+  (glob_files contracts/*)
+  (glob_files contracts/deep_pattern_matching/*)
+  (glob_files contracts/vars_consts/*)
+  (glob_files contracts/positive/*)
+  (glob_files contracts/negative/*)
   (glob_files preprocessor/*)))
 
 (rule

@@ -63,17 +63,6 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unused_recursion.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
-     30 |
-     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
-     32 |   return [
-     33 |     (list([]) as list<operation>),
-     34 |     coucou(storage)
-     35 |   ];
-     36 | }
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
       2 |
       3 | let coucou = (storage : t) : t => {
@@ -89,8 +78,8 @@ let%expect_test _ =
      13 |
      14 |   /* parameter shadows fun_name: complex */
      15 |   let foo = (foo : ((p:int) => int)) : int => {
-     16 |     let foo = foo(0);
-     17 |     return foo;
+     16 |     let foox = foo(0);
+     17 |     return foox;
      18 |   };
      19 |
      20 |   /* fun_name shadowed in body */
@@ -104,6 +93,17 @@ let%expect_test _ =
      28 |   return bar(n);
      29 | }
      30 |
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
+     30 |
+     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
+     32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
 
     Toplevel let declaration are silently change to const declaration.
 
@@ -124,17 +124,6 @@ let%expect_test _ =
     [ "compile"; "contract"; contract "unused_recursion.jsligo"; "--warn-unused-rec" ];
   [%expect
     {|
-    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
-     30 |
-     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
-     32 |   return [
-     33 |     (list([]) as list<operation>),
-     34 |     coucou(storage)
-     35 |   ];
-     36 | }
-
-    Toplevel let declaration are silently change to const declaration.
-
     File "../../test/contracts/unused_recursion.jsligo", line 3, character 0 to line 29, character 1:
       2 |
       3 | let coucou = (storage : t) : t => {
@@ -150,8 +139,8 @@ let%expect_test _ =
      13 |
      14 |   /* parameter shadows fun_name: complex */
      15 |   let foo = (foo : ((p:int) => int)) : int => {
-     16 |     let foo = foo(0);
-     17 |     return foo;
+     16 |     let foox = foo(0);
+     17 |     return foox;
      18 |   };
      19 |
      20 |   /* fun_name shadowed in body */
@@ -165,6 +154,17 @@ let%expect_test _ =
      28 |   return bar(n);
      29 | }
      30 |
+
+    Toplevel let declaration are silently change to const declaration.
+
+    File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
+     30 |
+     31 | let main = (_ : unit, storage : t) : [list<operation>, t] => {
+     32 |   return [
+     33 |     (list([]) as list<operation>),
+     34 |     coucou(storage)
+     35 |   ];
+     36 | }
 
     Toplevel let declaration are silently change to const declaration.
 

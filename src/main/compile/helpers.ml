@@ -71,114 +71,81 @@ let preprocess_raw_input
 
 type file_path = string
 
+let parse_and_abstract_pascaligo
+    ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
+    buffer
+    file_path
+  =
+  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file buffer file_path in
+  Unification.Pascaligo.compile_program raw
+
+
+let parse_and_abstract_expression_pascaligo
+    ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
+    buffer
+  =
+  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_expression buffer in
+  Unification.Pascaligo.compile_expression raw
+
+
 let parse_and_abstract_cameligo ~raise buffer file_path =
   let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_file buffer file_path in
-  let imperative =
-    trace ~raise cit_cameligo_tracer @@ Tree_abstraction.Cameligo.compile_program raw
-  in
-  imperative
+  Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_expression_cameligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_expression buffer in
-  let imperative =
-    trace ~raise (Fn.compose cit_cameligo_tracer List.return)
-    @@ Tree_abstraction.Cameligo.compile_expression raw
-  in
-  imperative
+  Unification.Cameligo.compile_expression raw
 
 
 let parse_and_abstract_jsligo ~raise buffer file_path =
   let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_file buffer file_path in
-  let imperative =
-    trace ~raise cit_jsligo_tracer @@ Tree_abstraction.Jsligo.compile_program raw
-  in
-  imperative
+  Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_expression_jsligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_expression buffer in
-  let imperative =
-    trace ~raise (Fn.compose cit_jsligo_tracer List.return)
-    @@ Tree_abstraction.Jsligo.compile_expression raw
-  in
-  imperative
+  Unification.Jsligo.compile_expression raw
 
 
-let parse_and_abstract_pascaligo ~raise buffer file_path =
-  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file buffer file_path in
-  let imperative =
-    trace ~raise cit_pascaligo_tracer @@ Tree_abstraction.Pascaligo.compile_program raw
-  in
-  imperative
-
-
-let parse_and_abstract_expression_pascaligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_expression buffer in
-  let imperative =
-    trace ~raise (Fn.compose cit_pascaligo_tracer List.return)
-    @@ Tree_abstraction.Pascaligo.compile_expression raw
-  in
-  imperative
-
-
-let parse_and_abstract ~raise ~(meta : meta) ~(transpiled : bool) buffer file_path
-    : Ast_imperative.program
-  =
+let parse_and_abstract ~raise ~(meta : meta) buffer file_path : Ast_unified.program =
   let parse_and_abstract =
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_cameligo
     | JsLIGO -> parse_and_abstract_jsligo
     | PascaLIGO -> parse_and_abstract_pascaligo
   in
-  let abstracted = parse_and_abstract ~raise buffer file_path in
-  let js_style_no_shadowing = Syntax_types.equal meta.syntax JsLIGO in
-  let js_style_no_shadowing = js_style_no_shadowing && not transpiled in
-  let applied =
-    trace ~raise self_ast_imperative_tracer
-    @@ Self_ast_imperative.all_program abstracted ~js_style_no_shadowing
-  in
-  applied
+  parse_and_abstract ~raise buffer file_path
 
 
-let parse_and_abstract_expression ~raise ~(meta : meta) buffer =
+let parse_and_abstract_expression
+    ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
+    ~(meta : meta)
+    buffer
+    : Ast_unified.expr
+  =
   let parse_and_abstract =
     match meta.syntax with
     | CameLIGO -> parse_and_abstract_expression_cameligo
     | JsLIGO -> parse_and_abstract_expression_jsligo
     | PascaLIGO -> parse_and_abstract_expression_pascaligo
   in
-  let abstracted = parse_and_abstract ~raise buffer in
-  let js_style_no_shadowing = Caml.( = ) meta.syntax JsLIGO in
-  let applied =
-    trace ~raise self_ast_imperative_tracer
-    @@ Self_ast_imperative.all_expression ~js_style_no_shadowing abstracted
-  in
-  applied
+  parse_and_abstract ~raise buffer
 
 
 let parse_and_abstract_string_cameligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_string buffer in
-  let imperative =
-    trace ~raise cit_cameligo_tracer @@ Tree_abstraction.Cameligo.compile_program raw
-  in
-  imperative
+  Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_string_jsligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_string buffer in
-  let imperative =
-    trace ~raise cit_jsligo_tracer @@ Tree_abstraction.Jsligo.compile_program raw
-  in
-  imperative
+  Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_string_pascaligo ~raise buffer =
   let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_string buffer in
-  let imperative =
-    trace ~raise cit_pascaligo_tracer @@ Tree_abstraction.Pascaligo.compile_program raw
-  in
-  imperative
+  Unification.Pascaligo.compile_program raw
 
 
 let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
@@ -188,13 +155,7 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
     | JsLIGO -> parse_and_abstract_string_jsligo
     | PascaLIGO -> parse_and_abstract_string_pascaligo
   in
-  let abstracted = parse_and_abstract ~raise buffer in
-  let js_style_no_shadowing = Caml.( = ) syntax JsLIGO in
-  let applied =
-    trace ~raise self_ast_imperative_tracer
-    @@ Self_ast_imperative.all_program abstracted ~js_style_no_shadowing
-  in
-  applied
+  parse_and_abstract ~raise buffer
 
 
 let pretty_print_cameligo_cst = Parsing.Cameligo.pretty_print_cst

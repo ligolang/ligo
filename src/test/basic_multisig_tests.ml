@@ -4,7 +4,7 @@ let mfile = "./contracts/basic_multisig/multisig.mligo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
 let init_storage threshold counter pkeys =
-  let open Ast_imperative in
+  let open Ast_unified in
   let keys =
     List.map
       ~f:(fun el ->
@@ -17,7 +17,7 @@ let init_storage threshold counter pkeys =
     [ "id", e_string ~loc "MULTISIG"
     ; "counter", e_nat ~loc counter
     ; "threshold", e_nat ~loc threshold
-    ; "auth", e_typed_list ~loc keys (t_key ~loc ())
+    ; "auth", e_list ~loc keys
     ]
 
 
@@ -59,33 +59,32 @@ let op_list ~raise =
       Memory_proto_alpha.Protocol.Apply_internal_results.internal_operation_encoding
       contents
   in
-  Ast_imperative.(
-    e_typed_list ~loc [ e_literal ~loc (Literal_operation opbytes) ] (t_operation ~loc ()))
+  Ast_unified.(e_list ~loc [ e_literal ~loc (Literal_operation opbytes) ])
 
 
-let empty_payload = Ast_imperative.e_unit ~loc ()
+let empty_payload = Ast_unified.e_unit ~loc
 
 let chain_id_zero =
-  Ast_imperative.e_bytes_raw
+  Ast_unified.e_bytes_raw
     ~loc
     (Tezos_crypto.Chain_id.to_bytes Tezos_base__TzPervasives.Chain_id.zero)
 
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params ~raise counter payload keys is_validl f =
-  let open Ast_imperative in
+  let open Ast_unified in
   let prog = get_program ~raise f () in
   let aux acc (key, is_valid) =
     let _, _pk, sk = key in
     let pkh, _, _ = str_keys key in
     let msg =
-      e_tuple
-        ~loc
-        [ payload
-        ; e_nat ~loc counter
-        ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
-        ; chain_id_zero
-        ]
+      e_tuple ~loc
+      @@ List.Ne.of_list
+           [ payload
+           ; e_nat ~loc counter
+           ; e_string ~loc (if is_valid then "MULTISIG" else "XX")
+           ; chain_id_zero
+           ]
     in
     let signature = sign_message ~raise prog msg sk in
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
@@ -95,11 +94,7 @@ let params ~raise counter payload keys is_validl f =
     ~loc
     [ "counter", e_nat ~loc counter
     ; "payload", payload
-    ; ( "signatures"
-      , e_typed_list
-          ~loc
-          signed_msgs
-          (t_pair ~loc (t_key_hash ~loc (), t_signature ~loc ())) )
+    ; "signatures", e_list ~loc signed_msgs
     ]
 
 
@@ -164,7 +159,7 @@ let invalid_1_of_1 ~raise f () =
 
 (* Provide one valid signature when the threshold is one of one key *)
 let valid_1_of_1 ~raise f () =
-  let open Ast_imperative in
+  let open Ast_unified in
   let program = get_program ~raise f () in
   let op_list = op_list ~raise in
   let keys = gen_keys () in
@@ -184,7 +179,7 @@ let valid_1_of_1 ~raise f () =
 
 (* Provive two valid signatures when the threshold is two of three keys *)
 let valid_2_of_3 ~raise f () =
-  let open Ast_imperative in
+  let open Ast_unified in
   let program = get_program ~raise f () in
   let op_list = op_list ~raise in
   let param_keys = [ gen_keys (); gen_keys () ] in

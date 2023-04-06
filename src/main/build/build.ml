@@ -159,18 +159,16 @@ module Infer (Params : Params) = struct
 
   let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
    fun () file_name meta c_unit ->
-    let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
-    let module_ =
-      let syntax =
-        Syntax.of_string_opt
-          ~support_pascaligo:options.common.deprecated
-          ~raise
-          (Syntax_name "auto")
-          (Some file_name)
-      in
-      Helpers.inject_declaration ~options ~raise syntax module_
+    let syntax =
+      Syntax.of_string_opt
+        ~support_pascaligo:options.common.deprecated
+        ~raise
+        (Syntax_name "auto")
+        (Some file_name)
     in
-    module_
+    let options = Compiler_options.set_syntax options (Some syntax) in
+    let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
+    Helpers.inject_declaration ~options ~raise syntax module_
 end
 
 (*  unfortunately slow:

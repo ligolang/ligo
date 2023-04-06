@@ -317,7 +317,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {c = _; b = Bar; a = _} |}]
+    - {a = _; b = Bar; c = _} |}]
 
 let%expect_test _ =
   run_ligo_bad

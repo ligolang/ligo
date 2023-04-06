@@ -14,5 +14,7 @@
   scopes
   syntax_types
   checking
-  desugaring
+  nanopasses
+  unification
+  decompile
   ligo.preprocessing))

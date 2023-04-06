@@ -172,7 +172,8 @@ let core_prod =
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
     ; comp_file_assert
         "core_abstraction/fun_type_var.mligo"
-        "const foo : ∀ a : * . list (a) -> list (a) =\n\
+        "\n\
+         const foo : ∀ a : * . list (a) -> list (a) =\n\
         \  Λ a ->  Λ b ->  fun ( xs : list (b)) : list (b) -> xs"
     ]
 

@@ -5,11 +5,12 @@
   simple-utils
   ast_core
   ast_typed
+  nanopasses
+  unification
   predefined
   environment
   compiler_options
   main_warnings
-  desugaring
   syntax_types
   ocaml-compiler-libs.common
   simple-diff)

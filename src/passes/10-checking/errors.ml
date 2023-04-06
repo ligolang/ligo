@@ -9,6 +9,24 @@ type 'err with_loc = Location.t -> 'err
 
 let stage = "typer"
 
+let pattern_to_string p syntax =
+  let p = Untyper.untype_pattern p in
+  let syntax =
+    match syntax with
+    | Some x -> x
+    | None -> Syntax_types.CameLIGO
+  in
+  let p =
+    Nanopasses.decompile_pattern
+      ~raise:(Simple_utils.Trace.raise_failwith "couldn't decompile pattern")
+      ~syntax
+      p
+  in
+  let p = Unification.Cameligo.decompile_pattern p in
+  let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 Parsing_cameligo.Pretty.default_environment p in
+  Buffer.contents p
+
+
 let type_improve t =
   let open Type in
   let loc = t.location in
@@ -211,10 +229,7 @@ let error_ppformat
     | `Typer_pattern_missing_cases (syntax, ps, loc) ->
       let ps =
         List.fold ps ~init:"" ~f:(fun s p ->
-            let s' =
-              let p = Untyper.untype_pattern p in
-              Desugaring.Decompiler.decompile_pattern_to_string ~syntax p
-            in
+            let s' = pattern_to_string p syntax in
             s ^ "- " ^ s' ^ "\n")
       in
       Format.fprintf
@@ -568,10 +583,7 @@ let error_json : typer_error -> Simple_utils.Error.t =
   | `Typer_pattern_missing_cases (syntax, ps, loc) ->
     let ps =
       List.fold ps ~init:"" ~f:(fun s p ->
-          let s' =
-            let p = Untyper.untype_pattern p in
-            Desugaring.Decompiler.decompile_pattern_to_string ~syntax p
-          in
+          let s' = pattern_to_string p syntax in
           s ^ "- " ^ s' ^ "\n")
     in
     let message =

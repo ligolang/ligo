@@ -173,7 +173,14 @@ let pp_type_expression
     | `Core cte -> cte
     | `Typed tte -> Checking.untype_type_expression tte
   in
-  try Desugaring.Decompiler.decompile_type_expression_to_string ~syntax cte with
+  let ty_expr_to_string =
+    let raise = Simple_utils.Trace.raise_failwith "LSP" in
+    let open Simple_utils.Function in
+    Buffer.contents
+    <@ Decompile.Helpers.specialise_and_print_ty syntax
+    <@ Decompile.Of_core.decompile_ty_expr ~raise ~syntax
+  in
+  try ty_expr_to_string cte with
   | _ ->
     (match te with
     | `Core cte -> Format.asprintf "%a" Ast_core.PP.type_expression cte

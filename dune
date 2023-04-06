@@ -11,7 +11,9 @@
  (_
   (js_of_ocaml
    (compilation_mode whole_program)
-   (flags (:standard --enable effects))
-   (build_runtime_flags (:standard --enable effects)))))
+   (flags
+    (:standard --enable effects))
+   (build_runtime_flags
+    (:standard --enable effects)))))
 
 (dirs :standard \ jsoo)
