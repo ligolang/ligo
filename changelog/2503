@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nThe LIGO Language Server now supports a few new changes and fixes related to configuration, notably:\\n\\nIt's now possible to disable specific features from the Visual Studio Code extension. Check the [README](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md) for more details.Fixed an exception that would be thrown when using the language server with Emacs related to decoding `null` from the configuration.The language server now respects `Deprecated` from the Visual Studio Code configuration and emits a warning when opening a PascaLIGO file if that is not set.Configuration changes may now be done dynamically. Previously, a language server restart would be required for changes to take effect.\\n"
+merge_request: '2503'
+title: "[#1658] Support configuration: part 2"
+type: added
+            
