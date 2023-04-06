@@ -75,7 +75,11 @@ let michelson_base : (Type_var.t * type_expression) list =
 
 let base = basic_types @ michelson_base
 let lima_types = base
-let mumbai_types = base (*TODO filter t_tx_rollup_l2_address*)
+
+let mumbai_types =
+  List.filter base ~f:(fun (tv, _) ->
+      not (Type_var.equal tv (v_tx_rollup_l2_address ~loc)))
+
 
 let meta_ligo_types
     : (Type_var.t * type_expression) list -> (Type_var.t * type_expression) list
