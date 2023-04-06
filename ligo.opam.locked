@@ -3,6 +3,7 @@ name: "ligo"
 version: "~dev"
 synopsis: "A high-level language which compiles to Michelson"
 maintainer: "Galfour <contact@ligolang.org>"
+authors: ["Gabriel Alfour" "Christian Rinderknecht"]
 license: "MIT"
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"
@@ -330,10 +331,8 @@ pin-depends: [
     "linol-lwt.0.4"
     "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
   ]
-  ["lsp.1.14.2" "git+https://github.com/ocaml/ocaml-lsp.git#1.14.2"]
   [
     "ocaml-recovery-parser.0.2.4"
     "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"
   ]
 ]
-authors: ["Gabriel Alfour" "Christian Rinderknecht"]
