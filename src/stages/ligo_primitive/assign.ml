@@ -2,7 +2,7 @@ type ('e, 't) t =
   { binder : 't Binder.t
   ; expression : 'e
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
 
 let pp f g ppf { binder; expression = e } =
   Format.fprintf ppf "%a := %a" (Binder.pp g) binder f e

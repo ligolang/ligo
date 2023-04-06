@@ -169,6 +169,7 @@ type constant' =
   eq
   , compare
   , yojson
+  , sexp
   , hash
   , print_constant
   , is { tags = [ "only_interpreter"; "pure" ] }
@@ -185,9 +186,9 @@ let const_name (Const c) = c
 
 type 'e t =
   { cons_name : constant' (* this is in enum *)
-  ; arguments : 'e list
+  ; arguments : 'e list [@sexp.list]
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, map, iter, sexp]
 
 let pp f ppf { cons_name; arguments } =
   Format.fprintf

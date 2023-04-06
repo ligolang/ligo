@@ -8,9 +8,8 @@
   BuildSystem
   preprocessing
   parsing
-  tree_abstraction
-  self_ast_imperative
-  desugaring
+  unification
+  nanopasses
   checking
   self_ast_typed
   aggregation

@@ -6,4 +6,4 @@
  (libraries simple-utils tezos-micheline ligo_prim ast_expanded)
  (inline_tests)
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_expect ppx_here)))

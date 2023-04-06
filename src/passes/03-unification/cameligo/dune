@@ -1,0 +1,11 @@
+(library
+ (name unification_cameligo)
+ (public_name ligo.unification.cameligo)
+ (libraries
+  unification_shared
+  simple-utils
+  tezos-utils
+  cst
+  parsing
+  ast_unified
+  predefined))

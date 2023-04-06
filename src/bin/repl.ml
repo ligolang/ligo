@@ -198,9 +198,8 @@ let try_declaration ~raise ~raw_options state s =
         state, Defined_values_core core_prg)
       (fun ~catch:_ -> function
         | (`Parser_tracer _ : Main_errors.all)
-        | (`Cit_jsligo_tracer _ : Main_errors.all)
-        | (`Cit_cameligo_tracer _ : Main_errors.all) ->
-          try_eval ~raise ~raw_options state s
+        | (`Nanopasses_tracer (`Small_passes_unsupported_top_level_statement _) :
+            Main_errors.all) -> try_eval ~raise ~raw_options state s
         | e -> raise.error e)
   with
   | Failure _ -> raise.error `Repl_unexpected

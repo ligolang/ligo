@@ -87,26 +87,25 @@ let cst (raw_options : Raw_options.t) source_file =
       , [] ) )
 
 
-let ast (raw_options : Raw_options.t) source_file =
-  ( Ast_imperative.Formatter.program_format
+let ast_unified (raw_options : Raw_options.t) stop_before source_file =
+  ( Ast_unified.Formatter.program_format
   , fun ~raise ->
-      let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
-      in
-      let options = Compiler_options.make ~raw_options ~syntax () in
-      let meta = Compile.Of_source.extract_meta syntax in
-      let c_unit, _ =
-        Compile.Of_source.preprocess_file
-          ~raise
-          ~options:options.frontend
-          ~meta
-          source_file
-      in
-      Compile.Utils.to_imperative ~raise ~options ~meta c_unit source_file, [] )
+  let syntax =
+    Syntax.of_string_opt
+      ~raise
+      ~support_pascaligo:raw_options.deprecated
+      (Syntax_name raw_options.syntax)
+      (Some source_file)
+  in
+  let options = Compiler_options.make ~raw_options ~syntax () in
+  let meta = Compile.Of_source.extract_meta syntax in
+  let c_unit, _ =
+    Compile.Of_source.preprocess_file ~raise ~options:options.frontend ~meta source_file
+  in
+  let unified = Compile.Utils.to_unified ~raise ~meta c_unit source_file in
+  match stop_before with
+  | None -> unified,[]
+  | Some _ -> Compile.Of_unified.compile_until ~raise ~options ?stop_before unified,[])
 
 
 let ast_core (raw_options : Raw_options.t) source_file =

@@ -50,7 +50,7 @@ let%expect_test _ =
       5 | let bad_view (_ : int) (_: nat) : nat = 1n
       6 |
 
-    Invalid type for view "main#9".
+    Invalid type for view "main#11".
     Cannot find "int" as storage. |}]
 
 (* view + #import : no view expected *)

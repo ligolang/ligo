@@ -271,7 +271,7 @@ let test_print_cst ~raise:_ () =
   let _ = run_ligo [ "print"; "cst"; "contracts/build/cycle_A.mligo" ] in
   check_analytics expected_registry_output_regex expected_agg_registry_content_regex
 
-let test_print_ast_imperative ~raise:_ () =
+(* let test_print_ast_imperative ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
@@ -281,7 +281,7 @@ let test_print_ast_imperative ~raise:_ () =
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-imperative"; "contracts/build/cycle_A.mligo" ] in
-  check_analytics expected_registry_output_regex expected_agg_registry_content_regex
+  check_analytics expected_registry_output_regex expected_agg_registry_content_regex *)
 
 let test_print_ast_core ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
@@ -412,7 +412,7 @@ let main =
     ; test "print dependency_graph" test_print_dependency_graph
     ; test "print pretty" test_print_pretty
     ; test "print cst" test_print_cst
-    ; test "print ast_imperative" test_print_ast_imperative
+    (* ; test "print ast_imperative" test_print_ast_imperative *)
     ; test "print ast_core" test_print_ast_core
     (* ; test "print ast_typed" test_print_ast_typed
     ; test "print ast_aggregated" test_print_ast_aggregated

@@ -30,7 +30,7 @@ let _test = () : test_exec_error_balance_too_low => {
     Success: (n : nat) => failwith("Success"),
     Fail: (e : test_exec_error) => 
      match (e, {
-       Rejected: (x: [michelson_code, address]) => failwith("Rejected"),
+       Rejected: (x: [michelson_program, address]) => failwith("Rejected"),
        Balance_too_low : (x : test_exec_error_balance_too_low) => { Test.log(x.spend_request); Test.log(x.contract_balance); return x; },
        Other: (s: string) => failwith("Other")
      })

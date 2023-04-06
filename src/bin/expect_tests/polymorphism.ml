@@ -415,9 +415,16 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "monomorphisation_fail2.mligo" ];
   [%expect
     {|
-    File "./monomorphisation_fail2.mligo", line 1, characters 11-19:
+    File "./monomorphisation_fail2.mligo", line 2, character 2 to line 8, character 6:
       1 | let nested (type a) =
       2 |   let x (type b) =
+      3 |     let y (type c) =
+      4 |       let z =
+      5 |         (failwith("nested") : a -> b -> c)
+      6 |       in z
+      7 |     in y
+      8 |   in x
+      9 |
 
     Cannot monomorphise the expression. |}]
 

@@ -7,10 +7,6 @@
   main_errors
   simple-utils
   parsing
-  tree_abstraction
-  ast_imperative
-  self_ast_imperative
-  desugaring
   ast_core
   checking
   ast_typed

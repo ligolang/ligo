@@ -13,14 +13,9 @@ type all =
     * Type_var.t
     * Type_var.t
     * Location.t
-  | `Self_ast_imperative_warning_layout of Location.t * Label.t
+  | `Nanopasses_attribute_ignored of Location.t
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of
     Location.t * Type_var.t
-  | `Self_ast_imperative_warning_deprecated_constant of
-    Location.t
-    * Ast_imperative.expression
-    * Ast_imperative.expression
-    * Ast_imperative.type_expression
   | `Main_view_ignored of Location.t
   | `Main_entry_ignored of Location.t
   | `Michelson_typecheck_failed_with_different_protocol of
@@ -33,7 +28,6 @@ type all =
     Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
   ]
 
-let warn_layout loc lab = `Self_ast_imperative_warning_layout (loc, lab)
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
 
 let pp
@@ -137,13 +131,12 @@ let pp
         snippet_pp
         loc
         s
-    | `Self_ast_imperative_warning_layout (loc, Label s) ->
+    | `Nanopasses_attribute_ignored loc ->
       Format.fprintf
         f
-        "@[<hv>%a@ Warning: layout attribute only applying to %s, probably ignored.@.@]"
+        "@[<hv>%a@ Warning: unsupported attribute, ignored.@.@]"
         snippet_pp
         loc
-        s
     | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
       Format.fprintf
         f
@@ -154,19 +147,6 @@ let pp
         loc
         Type_var.pp
         name
-    | `Self_ast_imperative_warning_deprecated_constant (l, curr, alt, ty) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@ Warning: the constant %a is soon to be deprecated. Use instead %a : \
-         %a. @]"
-        snippet_pp
-        l
-        Ast_imperative.PP.expression
-        curr
-        Ast_imperative.PP.expression
-        alt
-        Ast_imperative.PP.type_expression
-        ty
     | `Jsligo_deprecated_failwith_no_return loc ->
       Format.fprintf
         f
@@ -302,13 +282,9 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"parsing command line parameters" ~content
-  | `Self_ast_imperative_warning_layout (location, Label s) ->
-    let message =
-      Format.sprintf
-        "Warning: layout attribute only applying to %s, probably ignored.@."
-        s
-    in
-    let content = make_content ~message ~location () in
+  | `Nanopasses_attribute_ignored loc ->
+    let message = "Warning: ignored attributes" in
+    let content = make_content ~message ~location:loc () in
     make ~stage:"typer" ~content
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (location, variable) ->
     let variable = Format.asprintf "%a" Type_var.pp variable in
@@ -319,19 +295,6 @@ let to_warning : all -> Simple_utils.Warning.t =
         variable
     in
     let content = make_content ~message ~location ~variable () in
-    make ~stage:"abstractor" ~content
-  | `Self_ast_imperative_warning_deprecated_constant (location, curr, alt, ty) ->
-    let message =
-      Format.asprintf
-        "Warning: the constant %a is soon to be deprecated. Use instead %a : %a."
-        Ast_imperative.PP.expression
-        curr
-        Ast_imperative.PP.expression
-        alt
-        Ast_imperative.PP.type_expression
-        ty
-    in
-    let content = make_content ~message ~location () in
     make ~stage:"abstractor" ~content
   | `Jsligo_deprecated_failwith_no_return location ->
     let message =

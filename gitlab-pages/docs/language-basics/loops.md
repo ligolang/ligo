@@ -87,8 +87,8 @@ numbers by means of Euclid's algorithm with using a while loop:
 
 
 ```jsligo group=a
-let gcd = (x: nat, y: nat) => {
-  let [x,y] = [x,y]; // we will modify x and y
+let gcd = (a: nat, b: nat) => {
+  let [x,y] = [a,b]; // we will modify x and y
   if (x < y) {
     const z = x;
     x = y; y = z;

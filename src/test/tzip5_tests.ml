@@ -3,7 +3,7 @@ open Test_helpers
 let mfile_FA1 = "./contracts/FA1.mligo"
 let compile_main ~raise f _s () = Test_helpers.compile_main ~raise f ()
 
-open Ast_imperative
+open Ast_unified
 
 let sender, contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
@@ -22,7 +22,6 @@ let external_contract =
 let from_ = e_address ~loc @@ addr 5
 let to_ = e_address ~loc @@ addr 2
 let sender = e_address ~loc @@ sender
-(* let external_contract = e_annotation ~loc  (e_constant ~loc  (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract ~loc  (t_nat ~loc  ())) *)
 
 let transfer ~raise f s () =
   let program = get_program ~raise f ~st:s () in
@@ -48,7 +47,7 @@ let transfer ~raise f s () =
       ]
   in
   let input = e_pair ~loc parameter storage in
-  let expected = e_pair ~loc (e_typed_list ~loc [] (t_operation ~loc ())) new_storage in
+  let expected = e_pair ~loc (e_list ~loc []) new_storage in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
   in
@@ -81,39 +80,4 @@ let transfer_not_e_balance ~raise f s () =
   expect_string_failwith ~raise ~options program "transfer" input "NotEnoughBalance"
 
 
-(* let get_balance ~raise f s () =
- *   let program = get_program ~raise f ~st:s () in
- *   let storage = e_record_ez ~loc  [
- *     ("tokens", e_big_map ~loc  [(sender, e_nat ~loc  100); (from_, e_nat ~loc  100); (to_, e_nat ~loc  100)]);
- *     ("allowances", e_big_map ~loc  [(e_record_ez ~loc  [("owner", sender); ("spender", from_)], e_nat ~loc  100)]);
- *     ("total_supply",e_nat 300);
- *   ] in
- *   let parameter = e_record_ez ~loc  [("owner", from_);("callback", external_contract)] in
- *   let input = e_pair ~loc  parameter storage in
- *   let expected = e_pair ~loc  (e_typed_list ~loc  [] (t_operation ~loc  ())) storage in
- *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
- *   expect_eq ~raise program ~options "getBalance" input expected
- * 
- * let get_total_supply ~raise f s () =
- *   let program = get_program ~raise f ~st:s () in
- *   let storage = e_record_ez ~loc  [
- *     ("tokens", e_big_map ~loc  [(sender, e_nat ~loc  100); (from_, e_nat ~loc  100); (to_, e_nat ~loc  100)]);
- *     ("allowances", e_big_map ~loc  [(e_record_ez ~loc  [("owner", sender); ("spender", from_)], e_nat ~loc  100)]);
- *     ("total_supply",e_nat 300);
- *   ] in
- *   let parameter = e_record_ez ~loc  [("callback", external_contract)] in
- *   let input = e_pair ~loc  parameter storage in
- *   let expected = e_pair ~loc  (e_typed_list ~loc  [] (t_operation ~loc  ())) storage in
- *   let options = Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ()) in
- *   expect_eq ~raise program ~options "getTotalSupply" input expected *)
-
-let main =
-  test_suite
-    "tzip-5"
-    [ test_w "compile" (compile_main mfile_FA1 "cameligo")
-      (* test_w "transfer"                          (transfer                 mfile_FA1 "cameligo");
-  test_w "transfer (not enough balance)"     (transfer_not_e_balance   mfile_FA1 "cameligo"); can't test curried entrypoint yet *)
-      (* test "getAllowance"                      (get_allowance            mfile_FA12 "cameligo");
-  test "getBalance"                        (get_balance              mfile_FA12 "cameligo");
-  test "getTotalSupply"                    (get_total_supply         mfile_FA12 "cameligo"); waiting for a dummy_contract with type nat contractt*)
-    ]
+let main = test_suite "tzip-5" [ test_w "compile" (compile_main mfile_FA1 "cameligo") ]

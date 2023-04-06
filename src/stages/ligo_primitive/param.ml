@@ -1,19 +1,19 @@
 type mutable_flag =
   | Mutable
   | Immutable
-[@@deriving eq, compare, yojson, hash]
+[@@deriving eq, compare, yojson, hash, sexp]
 
 type forced_flag =
   | Regular
   | Forced
-[@@deriving eq, compare, yojson, hash]
+[@@deriving eq, compare, yojson, hash, sexp]
 
 type 'a t =
   { binder : 'a Binder.t
   ; mut_flag : mutable_flag
   ; forced_flag : forced_flag
   }
-[@@deriving eq, compare, yojson, hash, fold, map]
+[@@deriving eq, compare, yojson, hash, fold, iter, sexp, map]
 
 let pp_mutable_flag ppf mut_flag =
   match mut_flag with

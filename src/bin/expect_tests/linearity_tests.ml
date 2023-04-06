@@ -8,7 +8,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/linearity.mligo", line 1, characters 14-39:
       1 | type foofoo = {foo : string; foo : int}
 
-    Duplicated field or variant name.
+    Repeated type variable in type.
     Hint: Change the name. |}];
   (* Checking binders linearity *)
   run_ligo_bad
@@ -35,8 +35,7 @@ let%expect_test _ =
   run_ligo_bad
     [ "run"; "interpret"; "--syntax"; "jsligo"; "(( [x,x] : [int , int] ) : int => x)" ];
   [%expect {|
-    Repeated variable in pattern.
-    Hint: Change the name. |}];
+    Duplicate identifier. |}];
   run_ligo_bad
     [ "run"
     ; "interpret"

@@ -92,7 +92,7 @@ let inject_declaration ~options ~raise
  fun syntax prg ->
   let inject_arg_declaration arg =
     let open Ast_core in
-    let expr = Ligo_compile.Utils.core_expression_string ~raise syntax arg in
+    let expr = Ligo_compile.Utils.core_expression_string ~raise ~options syntax arg in
     let attr =
       ValueAttr.
         { inline = false

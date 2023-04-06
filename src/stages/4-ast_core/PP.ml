@@ -102,9 +102,12 @@ and expression_content ppf (ec : expression_content) =
 
 and declaration ppf (d : declaration) =
   match Location.unwrap d with
-  | D_value vd -> Types.Value_decl.pp expression type_expression_option ppf vd
+  | D_value vd ->
+    if not vd.attr.hidden
+    then Types.Value_decl.pp expression type_expression_option ppf vd
   | D_irrefutable_match pd ->
-    Types.Pattern_decl.pp expression type_expression_option ppf pd
+    if not pd.attr.hidden
+    then Types.Pattern_decl.pp expression type_expression_option ppf pd
   | D_type td -> Types.Type_decl.pp type_expression ppf td
   | D_module md -> Types.Module_decl.pp module_expr ppf md
 

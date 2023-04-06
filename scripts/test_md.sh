@@ -25,5 +25,5 @@ case "$1" in
       ./test_md.sh 4    execute Markdown tests number 4"
     ;;
   ("list") test "list";;
-  (*)      test "test Markdown $1 -c" ;;
+  (*)      test "test Markdown $1" ;;
 esac

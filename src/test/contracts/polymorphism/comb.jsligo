@@ -27,8 +27,8 @@ const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, 
 
 const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, (list([]) as list<[T, U]>)])));
 
-const self_zip = <T>(xs : list<T>) : list<[T, T]> => {
-  let [xs, ys] = diag(xs);
+const self_zip = <T>(lst : list<T>) : list<[T, T]> => {
+  let [xs, ys] = diag(lst);
   return (zip(xs))(ys)
 };
 

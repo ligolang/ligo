@@ -18,8 +18,7 @@ const proxy_originate_contract =
   <vt, whole_s, vp>(mk_storage: (ticket:ticket<vt>) => whole_s) =>
   (main: ((p : vp) => (s : whole_s) => [list<operation> , whole_s])) => {
       return (p : [[vt , nat] , option<address>]) => {
-        const [p,_] = p;
-        const [v,amt] = p ;
+        const [v,amt] = p[0] ;
         const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
         const init_storage : whole_s = mk_storage (ticket) ;
         const [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;

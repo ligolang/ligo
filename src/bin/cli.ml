@@ -146,6 +146,16 @@ let to_syntax =
   let spec = optional_with_default Default_options.syntax string in
   flag ~doc "--to-syntax" spec
 
+let nanopass =
+  let open Command.Param in
+  let doc =
+    "NANOPASS the nanopass name before/after which we stop executing the nanopasses. Use \
+     NAME+ for after and NAME for before, case do not matter (only for debug prints)"
+  in
+  let spec = optional string in
+  flag ~doc ~aliases:[ "nano" ] "--nanopass" spec
+
+
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
   let doc =
@@ -2081,8 +2091,8 @@ let print_cst =
      <*> project_root)
 
 
-let print_ast =
-  let f source_file syntax display_format no_colour deprecated skip_analytics project_root () =
+let print_ast_unified =
+  let f source_file syntax nanopass display_format no_colour deprecated skip_analytics project_root () =
     let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~deprecated () in
         let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -2098,20 +2108,20 @@ let print_ast =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Print.ast raw_options source_file
+    @@  Api.Print.ast_unified raw_options nanopass source_file
   in
   let summary =
-    "print the AST with imperative construct.\n\
+    "print the unified ligo AST. Execute nanopasses if option used\n\
     \ Warning: Intended for development of LIGO and can break at any time."
   in
   let readme () =
-    "This sub-command prints the source file in the AST imperative stage, before \
-     desugaring step is applied."
+    "This sub-command prints the source file in the AST unified stage (with nanopasses)."
   in
   Command.basic ~summary ~readme
   @@ (f
      <$> source_file
      <*> syntax
+     <*> nanopass
      <*> display_format
      <*> no_colour
      <*> deprecated
@@ -2431,8 +2441,8 @@ let print_group =
      ; "pretty", pretty_print
      ; "dependency-graph", print_graph
      ; "cst", print_cst
-     ; "ast-imperative", print_ast
      ; "ast-core", print_ast_core
+     ; "ast-unified", print_ast_unified
      ; "ast-typed", print_ast_typed
      ; "ast-aggregated", print_ast_aggregated
      ; "ast-expanded", print_ast_expanded
