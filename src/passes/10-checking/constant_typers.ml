@@ -978,6 +978,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ t_bool ~loc () ^~> t_bool ~loc ()
                ; t_int ~loc () ^~> t_int ~loc ()
                ; t_nat ~loc () ^~> t_int ~loc ()
+               ; t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_AND
       , of_type
@@ -988,6 +989,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_OR
       , of_type
@@ -997,6 +999,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
                ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_XOR
       , of_type
@@ -1006,6 +1009,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
                ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_LSL
       , of_type
@@ -1014,6 +1018,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~types:
                [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_nat ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_LSR
       , of_type
@@ -1022,6 +1027,7 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~types:
                [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_nat ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
                ]) )
       (* Tests *)
     ; ( C_TEST_ADDRESS
@@ -1704,5 +1710,46 @@ module External_types = struct
       (create
          [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
          ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+         ])
+
+
+  let or_types : (Errors.typer_error, Main_warnings.all) t =
+    let open Type in
+    let open Annot.Syntax in
+    of_type
+      (create
+         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+         ])
+
+
+  let xor_types : (Errors.typer_error, Main_warnings.all) t =
+    let open Type in
+    let open Annot.Syntax in
+    of_type
+      (create
+         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+         ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+         ])
+
+
+  let lsl_types : (Errors.typer_error, Main_warnings.all) t =
+    let open Type in
+    let open Annot.Syntax in
+    of_type
+      (create
+         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+         ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
+         ])
+
+
+  let lsr_types : (Errors.typer_error, Main_warnings.all) t =
+    let open Type in
+    let open Annot.Syntax in
+    of_type
+      (create
+         [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+         ; t_bytes ~loc () ^-> t_nat ~loc () ^~> t_bytes ~loc ()
          ])
 end

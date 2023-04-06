@@ -93,6 +93,8 @@ let%expect_test _ =
     - test_top_level_recursion exited with value ().
     - test_bitwise_ops exited with value ().
     - test_bitwise_module exited with value ().
+    - test_bytes_bitwise_ops exited with value ().
+    - test_bytes_bitwise_module exited with value ().
     - test_list_concat exited with value ().
     - test_list_head_opt exited with value ().
     - test_list_tail_opt exited with value ().

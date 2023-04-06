@@ -118,7 +118,28 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_int, T_base TB_nat -> return (T_base TB_nat)
-      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
+      | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(and|u_and) application"))
+    | (External ("or"), [ param1; param2 ]) ->
+      (match (compile_type param1).type_content, (compile_type param2).type_content with
+      | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
+      | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_or application"))
+    | (External ("xor"), [ param1; param2 ]) ->
+      (match (compile_type param1).type_content, (compile_type param2).type_content with
+      | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
+      | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_xor application"))
+    | (External ("lsl"), [ param1; param2 ]) ->
+      (match (compile_type param1).type_content, (compile_type param2).type_content with
+      | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
+      | T_base TB_bytes, T_base TB_nat -> return (T_base TB_bytes)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_lsl application"))
+    | (External ("lsr"), [ param1; param2 ]) ->
+      (match (compile_type param1).type_content, (compile_type param2).type_content with
+      | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
+      | T_base TB_bytes, T_base TB_nat -> return (T_base TB_bytes)
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_lsr application"))
     | ((Michelson_or               | Sapling_transaction |
         Ticket          | Int64    | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |

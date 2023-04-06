@@ -381,29 +381,33 @@ let%expect_test _ =
     Content: Members: Variable definitions:
                       (and#69:6-10 -> and)
                       Range: File "", line 69, characters 6-10
-                      Body Range: File "", line 69, characters 11-21
+                      Body Range: File "", line 69, characters 18-28
                       Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_and (a ,
                       b)|
                       references: []
                       (or#71:6-9 -> or)
                       Range: File "", line 71, characters 6-9
-                      Body Range: File "", line 71, characters 11-12
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 71, characters 18-28
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_xor (a ,
+                      b)|
                       references: []
                       (shift_left#72:6-16 -> shift_left)
                       Range: File "", line 72, characters 6-16
-                      Body Range: File "", line 72, characters 18-19
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 72, characters 18-28
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_lsl (a ,
+                      b)|
                       references: []
                       (shift_right#73:6-17 -> shift_right)
                       Range: File "", line 73, characters 6-17
-                      Body Range: File "", line 73, characters 19-20
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 73, characters 18-28
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_lsr (a ,
+                      b)|
                       references: []
                       (xor#70:6-9 -> xor)
                       Range: File "", line 70, characters 6-9
-                      Body Range: File "", line 70, characters 11-12
-                      Content: |core: nat -> nat -> nat|
+                      Body Range: File "", line 70, characters 18-28
+                      Content: |core: ∀ a : * . ∀ b : * . a -> b -> external_or (a ,
+                      b)|
                       references: []
                       Type definitions:
                       Module definitions:
