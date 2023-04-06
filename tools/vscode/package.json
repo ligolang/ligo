@@ -102,6 +102,12 @@
                     "default": "ligo",
                     "description": "Path to the ligo binary, default one is extracted from $PATH variable."
                 },
+                "ligoLanguageServer.disabledFeatures": {
+                    "scope": "resource",
+                    "type": "array",
+                    "default": [],
+                    "markdownDescription": "Disable specific LIGO LSP features. For a list of features, see [the README.md](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md)."
+                },
                 "ligoLanguageServer.tezos_source_account": {
                     "scope": "resource",
                     "type": "string",

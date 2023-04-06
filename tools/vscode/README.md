@@ -55,3 +55,39 @@ You can restart the LSP server executing the `LIGO: LIGO Restart LSP Server` com
 LIGO Options contains various commands for building and running LIGO functions and expressions.
 
 Deploy LIGO contains options to support deploying and generating deploy scripts.
+
+## Enabling and disabling features
+
+The extension supports disabling specific LSP features. To do that, add the following in your `settings.json`:
+
+```json
+"ligoLanguageServer.disabledFeatures": [
+]
+```
+
+Inside the list, you can write the name of any capability to disable it. For example, to disable formatting:
+
+```json
+"ligoLanguageServer.disabledFeatures": [
+   "textDocument/formatting"
+]
+```
+
+The supported features that may be disabled are listed below:
+* `textDocument/definition`
+* `textDocument/typeDefinition`
+* `textDocument/references`
+* `textDocument/completion`
+* `textDocument/signatureHelp`
+* `textDocument/foldingRange`
+* `textDocument/selectionRange`
+* `textDocument/documentLink`
+* `textDocument/documentSymbol`
+* `textDocument/hover`
+* `textDocument/rename`
+* `textDocument/prepareRename`
+* `textDocument/formatting`
+* `textDocument/rangeFormatting`
+* `textDocument/codeAction`
+
+**Note**: Please restart the LIGO Language Server after changing this configuration.
