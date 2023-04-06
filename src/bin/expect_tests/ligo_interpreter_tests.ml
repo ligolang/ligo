@@ -972,7 +972,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_storage.mligo" ];
   [%expect {|
-    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1GAXjgbyNsXRj4trR23YRzQdLQV3uA2oXG ; value = 0x0202}))
+    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1K9myEXyNZH24QQTb44wHRDAXYJE8V4c2y ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "contract_with_ticket_param.mligo" ];
@@ -981,7 +981,7 @@ let%expect_test _ =
     - test_transfer_to_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "uncurried_contract_with_ticket_storage.mligo" ];
   [%expect {|
-    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1GAXjgbyNsXRj4trR23YRzQdLQV3uA2oXG ; value = 0x0202}))
+    ("unforged_ticket" , Some ({amount = 15n ; ticketer = KT1K9myEXyNZH24QQTb44wHRDAXYJE8V4c2y ; value = 0x0202}))
     Everything at the top-level was executed.
     - test_originate_contract exited with value (). |}];
   run_ligo_good [ "run"; "test"; test "uncurried_contract_with_ticket_param.mligo" ];

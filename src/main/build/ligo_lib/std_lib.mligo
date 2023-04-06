@@ -39,18 +39,9 @@ module Tezos = struct
   let get_contract_with_error (type a) (a : address) (s : string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
-#if KATHMANDU
-  let create_ticket (type a) (v : a) (n : nat) : a ticket = [%michelson ({| { TICKET } |} v n : a ticket)]
-#endif
-#if LIMA
-  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%michelson ({| { TICKET } |} v n : (a ticket) option)]
-#endif
+  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
-    [%michelson ({| { TRANSFER_TOKENS } |} a mu c : operation)]
-#if KATHMANDU
-  let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result =
-    [%michelson ({| { OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} ck c n : chest_opening_result)]
-#endif
+    [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     let _ : unit = [%external ("CHECK_CALL_VIEW_LITSTR", s)] in
     [%michelson ({| { VIEW (litstr $0) (typeopt $1) } |} (s : string) (None : b option) x a : b option)]
