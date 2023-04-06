@@ -10,12 +10,13 @@
   ligo
   ligo_init
   ligo_compile
+  analytics
   build
   repl
   install
   publish
   user
-  cli_helpers
+  ligo.cli_helpers
   daemon
   ligo_api)
  (modules command_unx cli version))

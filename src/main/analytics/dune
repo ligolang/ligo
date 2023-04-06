@@ -1,0 +1,14 @@
+(library
+ (name analytics)
+ (public_name ligo.analytics)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries core_kernel.uuid bos prometheus prometheus_push compiler_options environment syntax_types syntax)
+ (modules analytics version))
+
+(rule
+ (targets Version.ml)
+ (action
+  (with-stdout-to
+   Version.ml
+   (run "sh" "-c" "printf 'let version = \"%s\"' \"${LIGO_VERSION}\""))))

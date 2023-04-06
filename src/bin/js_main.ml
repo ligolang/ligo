@@ -35,15 +35,29 @@ let main source syntax =
       ~warn_unused_rec:true
       ()
   in
-  match
+  let value_format,f =
     Api.Compile.contract
       raw_options
       (Api.Compile.Text (source, syntax_v))
-      display_format
       michelson_format
       michelson_comments
-      ()
-  with
+  in
+  let result = Simple_utils.Trace.to_stdlib_result f in
+  let format = Simple_utils.Display.bind_format value_format Main_errors.Formatter.error_format in
+  let value, _analytics =
+    match result with
+    | Ok ((v, analytics), _w) -> Ok v, analytics
+    | Error (e, _w) -> Error e, []
+  in
+  let formatted_result =
+    Ligo_api.Api_helpers.toplevel
+      ~warning_as_error:false
+      ~display_format
+      ~no_colour:false
+      (Displayable { value; format })
+      result
+  in
+  match formatted_result with
   | Ok (a, b) ->
     print_endline a;
     print_endline b;

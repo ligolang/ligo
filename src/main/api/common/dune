@@ -11,7 +11,7 @@
   build
   interpreter
   bos
-  cli_helpers
+  analytics
   tar
   tar-unix
   decompress.gz

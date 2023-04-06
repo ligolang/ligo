@@ -10,6 +10,7 @@ depends: [
   "alcotest" {= "1.6.0" & with-test}
   "alcotest-lwt" {= "1.6.0"}
   "angstrom" {= "0.15.0"}
+  "asetmap" {= "0.8.1"}
   "asn1-combinators" {= "0.2.6"}
   "astring" {= "0.8.5"}
   "base" {= "v0.15.1"}
@@ -201,6 +202,7 @@ depends: [
   "ppx_yojson_conv_lib" {= "v0.15.0"}
   "ppxlib" {= "0.25.1"}
   "progress" {= "0.2.1"}
+  "prometheus" {= "1.2"}
   "psq" {= "0.2.1"}
   "ptime" {= "1.1.0"}
   "pure-splitmix" {= "0.3"}
