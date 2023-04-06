@@ -918,7 +918,6 @@ let init
           | None -> Tez.of_mutez_exn 4_000_000_000_000L
           | Some v -> Tez.of_mutez_exn v
         in
-        (* TODO: check if this is correct  *)
         let account = Account.{ sk; pk; pkh } in
         let () = Account.add_account account in
         Account.make_bootstrap_account ~balance account)

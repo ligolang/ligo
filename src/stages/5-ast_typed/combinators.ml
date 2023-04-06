@@ -71,8 +71,6 @@ let t__type_ ~loc ?core () : type_expression = t_constant ~loc ?core _type_ []
       , "mutation"
       , "pvss_key"
       , "baker_hash"
-      , "chest_key"
-      , "chest"
       , "tx_rollup_l2_address"
       , "michelson_contract"
       , "ast_contract"
@@ -207,16 +205,6 @@ let t_arrow param result ~loc ?s () : type_expression =
   t_arrow ~loc ?type_meta:s { type1 = param; type2 = result } ()
 
 
-let t_chest_opening_result ~loc ?core () : type_expression =
-  t_sum_ez
-    ~loc
-    ?core
-    [ "Ok_opening", t_bytes ~loc ()
-    ; "Fail_decrypt", t_unit ~loc ()
-    ; "Fail_timelock", t_unit ~loc ()
-    ]
-
-
 let get_lambda_with_type e =
   match e.expression_content, e.type_expression.type_content with
   | E_lambda l, T_arrow { type1; type2 } -> Some (l, (type1, type2))
@@ -273,8 +261,6 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
       , "key"
       , "signature"
       , "key_hash"
-      , "chest"
-      , "chest_key"
       , "michelson_program"
       , "bls12_381_g1"
       , "bls12_381_g2"

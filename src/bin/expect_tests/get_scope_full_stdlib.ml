@@ -8,11 +8,11 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 create_chest#345:6-18 create_chest_key#346:6-22 transfer_to_contract#347:6-26 transfer_to_contract_exn#352:6-30 michelson_equal#357:6-21 to_entrypoint#358:6-19 originate_contract#366:6-24 originate#367:6-15 compile_contract_with_views#374:8-35 originate_uncurried#377:6-25 originate_module#384:6-22 compile_contract_from_file#391:6-32 originate_from_file#394:6-25 mutation_test#399:6-19 mutation_test_all#411:6-23 originate_from_file_and_mutate#423:6-36 originate_from_file_and_mutate_all#443:6-40 originate_module_and_mutate#463:6-33 originate_module_and_mutate_all#485:6-37 assert#508:6-12 assert_some#509:6-17 assert_none#510:6-17 assert_with_error#512:6-23 assert_some_with_error#513:6-28 assert_none_with_error#514:6-28 Proxy_ticket#516:9-21 proxy_transfer_contract#517:19-42 proxy_originate_contract#529:19-43 proxy_address#541:12-25 init_transfer#543:8-21 transfer#550:8-16 originate_uncurried#556:8-27 originate#571:8-17  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 8-9
-    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 create_chest#345:6-18 create_chest_key#346:6-22 transfer_to_contract#347:6-26 transfer_to_contract_exn#352:6-30 michelson_equal#357:6-21 to_entrypoint#358:6-19 originate_contract#366:6-24 originate#367:6-15 compile_contract_with_views#374:8-35 originate_uncurried#377:6-25 originate_module#384:6-22 compile_contract_from_file#391:6-32 originate_from_file#394:6-25 mutation_test#399:6-19 mutation_test_all#411:6-23 originate_from_file_and_mutate#423:6-36 originate_from_file_and_mutate_all#443:6-40 originate_module_and_mutate#463:6-33 originate_module_and_mutate_all#485:6-37 assert#508:6-12 assert_some#509:6-17 assert_none#510:6-17 assert_with_error#512:6-23 assert_some_with_error#513:6-28 assert_none_with_error#514:6-28 Proxy_ticket#516:9-21 proxy_transfer_contract#517:19-42 proxy_originate_contract#529:19-43 proxy_address#541:12-25 init_transfer#543:8-21 transfer#550:8-16 originate_uncurried#556:8-27 originate#571:8-17 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 33
-    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 create_chest#345:6-18 create_chest_key#346:6-22 transfer_to_contract#347:6-26 transfer_to_contract_exn#352:6-30 michelson_equal#357:6-21 to_entrypoint#358:6-19 originate_contract#366:6-24 originate#367:6-15 compile_contract_with_views#374:8-35 originate_uncurried#377:6-25 originate_module#384:6-22 compile_contract_from_file#391:6-32 originate_from_file#394:6-25 mutation_test#399:6-19 mutation_test_all#411:6-23 originate_from_file_and_mutate#423:6-36 originate_from_file_and_mutate_all#443:6-40 originate_module_and_mutate#463:6-33 originate_module_and_mutate_all#485:6-37 assert#508:6-12 assert_some#509:6-17 assert_none#510:6-17 assert_with_error#512:6-23 assert_some_with_error#513:6-28 assert_none_with_error#514:6-28 Proxy_ticket#516:9-21 proxy_transfer_contract#517:19-42 proxy_originate_contract#529:19-43 proxy_address#541:12-25 init_transfer#543:8-21 transfer#550:8-16 originate_uncurried#556:8-27 originate#571:8-17 a#1:4-5 c#5:10-11  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 30-31
-    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 create_chest#345:6-18 create_chest_key#346:6-22 transfer_to_contract#347:6-26 transfer_to_contract_exn#352:6-30 michelson_equal#357:6-21 to_entrypoint#358:6-19 originate_contract#366:6-24 originate#367:6-15 compile_contract_with_views#374:8-35 originate_uncurried#377:6-25 originate_module#384:6-22 compile_contract_from_file#391:6-32 originate_from_file#394:6-25 mutation_test#399:6-19 mutation_test_all#411:6-23 originate_from_file_and_mutate#423:6-36 originate_from_file_and_mutate_all#443:6-40 originate_module_and_mutate#463:6-33 originate_module_and_mutate_all#485:6-37 assert#508:6-12 assert_some#509:6-17 assert_none#510:6-17 assert_with_error#512:6-23 assert_some_with_error#513:6-28 assert_none_with_error#514:6-28 Proxy_ticket#516:9-21 proxy_transfer_contract#517:19-42 proxy_originate_contract#529:19-43 proxy_address#541:12-25 init_transfer#543:8-21 transfer#550:8-16 originate_uncurried#556:8-27 originate#571:8-17 a#1:4-5 c#5:10-11 d#5:26-27  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-44
-    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 create_chest#345:6-18 create_chest_key#346:6-22 transfer_to_contract#347:6-26 transfer_to_contract_exn#352:6-30 michelson_equal#357:6-21 to_entrypoint#358:6-19 originate_contract#366:6-24 originate#367:6-15 compile_contract_with_views#374:8-35 originate_uncurried#377:6-25 originate_module#384:6-22 compile_contract_from_file#391:6-32 originate_from_file#394:6-25 mutation_test#399:6-19 mutation_test_all#411:6-23 originate_from_file_and_mutate#423:6-36 originate_from_file_and_mutate_all#443:6-40 originate_module_and_mutate#463:6-33 originate_module_and_mutate_all#485:6-37 assert#508:6-12 assert_some#509:6-17 assert_none#510:6-17 assert_with_error#512:6-23 assert_some_with_error#513:6-28 assert_none_with_error#514:6-28 Proxy_ticket#516:9-21 proxy_transfer_contract#517:19-42 proxy_originate_contract#529:19-43 proxy_address#541:12-25 init_transfer#543:8-21 transfer#550:8-16 originate_uncurried#556:8-27 originate#571:8-17 a#1:4-5 e#6:9-10  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 18-32
+    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 transfer_to_contract#345:6-26 transfer_to_contract_exn#350:6-30 michelson_equal#355:6-21 to_entrypoint#356:6-19 originate_contract#364:6-24 originate#365:6-15 compile_contract_with_views#372:8-35 originate_uncurried#375:6-25 originate_module#382:6-22 compile_contract_from_file#389:6-32 originate_from_file#392:6-25 mutation_test#397:6-19 mutation_test_all#409:6-23 originate_from_file_and_mutate#421:6-36 originate_from_file_and_mutate_all#441:6-40 originate_module_and_mutate#461:6-33 originate_module_and_mutate_all#483:6-37 assert#506:6-12 assert_some#507:6-17 assert_none#508:6-17 assert_with_error#510:6-23 assert_some_with_error#511:6-28 assert_none_with_error#512:6-28 Proxy_ticket#514:9-21 proxy_transfer_contract#515:19-42 proxy_originate_contract#527:19-43 proxy_address#539:12-25 init_transfer#541:8-21 transfer#548:8-16 originate_uncurried#554:8-27 originate#569:8-17  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 1, characters 8-9
+    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 transfer_to_contract#345:6-26 transfer_to_contract_exn#350:6-30 michelson_equal#355:6-21 to_entrypoint#356:6-19 originate_contract#364:6-24 originate#365:6-15 compile_contract_with_views#372:8-35 originate_uncurried#375:6-25 originate_module#382:6-22 compile_contract_from_file#389:6-32 originate_from_file#392:6-25 mutation_test#397:6-19 mutation_test_all#409:6-23 originate_from_file_and_mutate#421:6-36 originate_from_file_and_mutate_all#441:6-40 originate_module_and_mutate#461:6-33 originate_module_and_mutate_all#483:6-37 assert#506:6-12 assert_some#507:6-17 assert_none#508:6-17 assert_with_error#510:6-23 assert_some_with_error#511:6-28 assert_none_with_error#512:6-28 Proxy_ticket#514:9-21 proxy_transfer_contract#515:19-42 proxy_originate_contract#527:19-43 proxy_address#539:12-25 init_transfer#541:8-21 transfer#548:8-16 originate_uncurried#554:8-27 originate#569:8-17 a#1:4-5  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 4, character 2 to line 6, character 33
+    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 transfer_to_contract#345:6-26 transfer_to_contract_exn#350:6-30 michelson_equal#355:6-21 to_entrypoint#356:6-19 originate_contract#364:6-24 originate#365:6-15 compile_contract_with_views#372:8-35 originate_uncurried#375:6-25 originate_module#382:6-22 compile_contract_from_file#389:6-32 originate_from_file#392:6-25 mutation_test#397:6-19 mutation_test_all#409:6-23 originate_from_file_and_mutate#421:6-36 originate_from_file_and_mutate_all#441:6-40 originate_module_and_mutate#461:6-33 originate_module_and_mutate_all#483:6-37 assert#506:6-12 assert_some#507:6-17 assert_none#508:6-17 assert_with_error#510:6-23 assert_some_with_error#511:6-28 assert_none_with_error#512:6-28 Proxy_ticket#514:9-21 proxy_transfer_contract#515:19-42 proxy_originate_contract#527:19-43 proxy_address#539:12-25 init_transfer#541:8-21 transfer#548:8-16 originate_uncurried#554:8-27 originate#569:8-17 a#1:4-5 c#5:10-11  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 30-31
+    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 transfer_to_contract#345:6-26 transfer_to_contract_exn#350:6-30 michelson_equal#355:6-21 to_entrypoint#356:6-19 originate_contract#364:6-24 originate#365:6-15 compile_contract_with_views#372:8-35 originate_uncurried#375:6-25 originate_module#382:6-22 compile_contract_from_file#389:6-32 originate_from_file#392:6-25 mutation_test#397:6-19 mutation_test_all#409:6-23 originate_from_file_and_mutate#421:6-36 originate_from_file_and_mutate_all#441:6-40 originate_module_and_mutate#461:6-33 originate_module_and_mutate_all#483:6-37 assert#506:6-12 assert_some#507:6-17 assert_none#508:6-17 assert_with_error#510:6-23 assert_some_with_error#511:6-28 assert_none_with_error#512:6-28 Proxy_ticket#514:9-21 proxy_transfer_contract#515:19-42 proxy_originate_contract#527:19-43 proxy_address#539:12-25 init_transfer#541:8-21 transfer#548:8-16 originate_uncurried#554:8-27 originate#569:8-17 a#1:4-5 c#5:10-11 d#5:26-27  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 35-44
+    [ failwith#2:4-12 bool#4:5-9 option#5:8-14 Tezos#7:7-12 get_balance#9:6-17 get_amount#10:6-16 get_now#11:6-13 get_sender#12:6-16 get_source#13:6-16 get_level#14:6-15 get_self_address#15:6-22 get_chain_id#16:6-18 get_total_voting_power#17:6-28 get_min_block_time#18:6-24 voting_power#19:6-18 address#20:6-13 implicit_account#21:6-22 join_tickets#22:6-18 read_ticket#23:6-17 never#25:6-11 pairing_check#26:6-19 set_delegate#27:6-18 self#28:25-29 constant#31:25-33 sapling_empty_state#32:25-44 get_contract_opt#34:25-41 get_contract#36:25-37 get_contract_with_error#40:6-29 create_ticket#43:6-19 transaction#44:6-17 call_view#46:25-34 split_ticket#49:6-18 create_contract#51:25-40 create_contract_uncurried#54:25-50 get_entrypoint_opt#56:25-43 get_entrypoint#59:25-39 emit#62:25-29 sapling_verify_update#65:25-46 Bitwise#69:7-14 and#70:6-10 xor#71:6-9 or#72:6-9 shift_left#73:6-16 shift_right#74:6-17 Big_map#77:7-14 empty#78:16-21 literal#79:25-32 mem#81:6-9 add#82:6-9 remove#83:6-12 update#84:6-12 get_and_update#85:6-20 find_opt#86:6-14 find#87:6-10 Map#91:7-10 empty#92:6-11 size#93:6-10 literal#94:25-32 mem#96:6-9 add#97:6-9 remove#98:6-12 update#99:6-12 get_and_update#100:6-20 find#101:6-10 find_opt#102:6-14 iter#103:6-10 map#104:6-9 fold#105:6-10 Transpiled#109:7-17 map_find_opt#110:6-18 map_add#111:6-13 map_remove#112:6-16 Set#115:7-10 empty#116:6-11 size#117:6-10 cardinal#118:6-14 literal#119:25-32 mem#121:6-9 add#122:6-9 remove#123:6-12 update#124:6-12 iter#125:6-10 fold#126:6-10 fold_desc#127:6-15 filter_map#128:6-16 List#132:7-11 length#133:6-12 size#134:6-10 head_opt#135:6-14 tail_opt#136:6-14 map#138:6-9 iter#139:6-10 fold#140:6-10 fold_left#141:6-15 fold_right#142:6-16 cons#143:6-10 find_opt#144:6-14 filter_map#146:6-16 update#148:6-12 update_with#150:6-17 String#154:7-13 length#155:6-12 concats#156:6-13 concat#158:6-12 sub#159:6-9 Option#162:7-13 unopt#163:6-11 unopt_with_error#165:6-22 map#166:15-18 value#167:6-11 value_exn#168:6-15 is_none#169:6-13 is_some#170:6-13 Bytes#173:7-12 concats#174:6-13 pack#175:6-10 unpack#176:6-12 length#177:6-12 concat#179:6-12 sub#180:6-9 Crypto#183:7-13 blake2b#184:6-13 sha256#185:6-12 sha512#186:6-12 sha3#187:6-10 keccak#188:6-12 hash_key#189:6-14 check#190:6-11 assert#193:4-10 assert_some#194:4-15 assert_none#195:4-15 abs#196:4-7 is_nat#197:4-10 true#198:14-18 false#199:14-19 unit#200:14-18 int#201:4-7 ignore#202:4-10 curry#203:4-9 uncurry#204:4-11 assert_with_error#206:4-21 assert_some_with_error#207:4-26 assert_none_with_error#208:4-26 ediv#209:4-8 test_exec_error_balance_too_low#212:5-36 test_exec_error#215:5-20 test_exec_result#220:5-21 test_baker_policy#222:5-22 pbt_test#227:8-16 pbt_result#228:8-18 unforged_ticket#230:8-23 module_contract#232:14-29 Test#234:7-11 run#236:6-9 eval#237:6-10 compile_value#239:6-19 get_total_voting_power#240:6-28 failwith#241:6-14 to_contract#242:6-17 set_source#243:6-16 get_storage_of_address#244:6-28 get_balance#245:6-17 print#246:6-11 eprint#247:6-12 get_voting_power#248:6-22 nth_bootstrap_contract#249:6-28 nth_bootstrap_account#250:6-27 get_bootstrap_account#253:6-27 nth_bootstrap_typed_address#254:6-33 last_originations#255:6-23 random#256:6-12 new_account#259:6-17 decompile#260:6-15 bake_until_n_cycle_end#261:6-28 get_time#262:6-14 cast_address#263:6-18 register_delegate#264:6-23 register_constant#265:6-23 to_typed_address#266:6-22 constant_to_michelson_program#267:6-35 parse_michelson#268:6-21 restore_context#269:6-21 save_context#270:6-18 drop_context#271:6-18 to_string#272:6-15 to_json#273:6-13 get_storage#274:6-17 set_baker_policy#279:6-22 set_baker#280:6-15 size#281:6-10 compile_contract#282:6-22 read_contract_from_file#286:6-29 chr#287:6-9 nl#297:6-8 println#298:6-13 set_print_values#301:6-22 unset_print_values#302:6-24 PBT#304:9-12 gen#305:8-11 gen_small#306:8-17 make_test#307:8-17 run#308:8-11 get_last_events_from#322:6-26 transfer#330:6-14 transfer_exn#331:6-18 log#332:6-9 reset_state#336:6-17 reset_state_at#337:6-20 bootstrap_contract#338:6-24 mutate_value#339:6-18 save_mutation#340:6-19 sign#341:6-10 add_account#342:6-17 baker_account#343:6-19 set_big_map#344:6-17 transfer_to_contract#345:6-26 transfer_to_contract_exn#350:6-30 michelson_equal#355:6-21 to_entrypoint#356:6-19 originate_contract#364:6-24 originate#365:6-15 compile_contract_with_views#372:8-35 originate_uncurried#375:6-25 originate_module#382:6-22 compile_contract_from_file#389:6-32 originate_from_file#392:6-25 mutation_test#397:6-19 mutation_test_all#409:6-23 originate_from_file_and_mutate#421:6-36 originate_from_file_and_mutate_all#441:6-40 originate_module_and_mutate#461:6-33 originate_module_and_mutate_all#483:6-37 assert#506:6-12 assert_some#507:6-17 assert_none#508:6-17 assert_with_error#510:6-23 assert_some_with_error#511:6-28 assert_none_with_error#512:6-28 Proxy_ticket#514:9-21 proxy_transfer_contract#515:19-42 proxy_originate_contract#527:19-43 proxy_address#539:12-25 init_transfer#541:8-21 transfer#548:8-16 originate_uncurried#554:8-27 originate#569:8-17 a#1:4-5 e#6:9-10  ] File "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 18-32
 
     Variable definitions:
     (failwith#2:4-12 -> failwith)
@@ -51,7 +51,7 @@ let%expect_test _ =
     Range: File "", line 196, characters 4-7
     Body Range: File "", line 196, characters 0-62
     Content: |core: int -> nat|
-    references: File "", line 362, characters 31-34
+    references: File "", line 360, characters 31-34
     (is_nat#197:4-10 -> is_nat)
     Range: File "", line 197, characters 4-10
     Body Range: File "", line 197, characters 0-81
@@ -100,7 +100,7 @@ let%expect_test _ =
     Range: File "", line 204, characters 4-11
     Body Range: File "", line 204, characters 62-73
     Content: |core: ∀ a : * . ∀ b : * . ∀ c : * . a -> b -> c -> ( a * b ) -> c|
-    references: File "", line 368, characters 30-37
+    references: File "", line 366, characters 30-37
     (assert_with_error#206:4-21 -> assert_with_error)
     Range: File "", line 206, characters 4-21
     Body Range: File "", line 206, characters 0-76
@@ -178,9 +178,9 @@ let%expect_test _ =
       File "", line 206, characters 27-31 ,
       File "", line 227, characters 41-45 ,
       File "", line 307, characters 53-57 ,
-      File "", line 357, characters 74-78 ,
-      File "", line 508, characters 18-22 ,
-      File "", line 512, characters 29-33
+      File "", line 355, characters 74-78 ,
+      File "", line 506, characters 18-22 ,
+      File "", line 510, characters 29-33
     (option#5:8-14 -> option)
     Range: File "", line 5, characters 8-14
     Body Range: File "", line 5, characters 17-34
@@ -249,30 +249,30 @@ let%expect_test _ =
       File "", line 339, characters 63-69 ,
       File "", line 340, characters 57-63 ,
       File "", line 343, characters 48-54 ,
-      File "", line 349, characters 19-25 ,
-      File "", line 354, characters 21-27 ,
-      File "", line 392, characters 100-106 ,
-      File "", line 399, characters 74-80 ,
-      File "", line 402, characters 52-58 ,
-      File "", line 424, characters 105-111 ,
-      File "", line 430, characters 100-106 ,
-      File "", line 433, characters 52-58 ,
-      File "", line 450, characters 100-106 ,
-      File "", line 464, characters 117-123 ,
-      File "", line 475, characters 52-58 ,
-      File "", line 509, characters 34-40 ,
-      File "", line 510, characters 34-40 ,
-      File "", line 513, characters 45-51 ,
-      File "", line 514, characters 45-51 ,
-      File "", line 533, characters 30-36 ,
-      File "", line 534, characters 35-41 ,
-      File "", line 538, characters 63-69 ,
-      File "", line 560, characters 50-56 ,
-      File "", line 560, characters 85-91 ,
-      File "", line 563, characters 76-82 ,
-      File "", line 575, characters 50-56 ,
-      File "", line 575, characters 85-91 ,
-      File "", line 578, characters 76-82
+      File "", line 347, characters 19-25 ,
+      File "", line 352, characters 21-27 ,
+      File "", line 390, characters 100-106 ,
+      File "", line 397, characters 74-80 ,
+      File "", line 400, characters 52-58 ,
+      File "", line 422, characters 105-111 ,
+      File "", line 428, characters 100-106 ,
+      File "", line 431, characters 52-58 ,
+      File "", line 448, characters 100-106 ,
+      File "", line 462, characters 117-123 ,
+      File "", line 473, characters 52-58 ,
+      File "", line 507, characters 34-40 ,
+      File "", line 508, characters 34-40 ,
+      File "", line 511, characters 45-51 ,
+      File "", line 512, characters 45-51 ,
+      File "", line 531, characters 30-36 ,
+      File "", line 532, characters 35-41 ,
+      File "", line 536, characters 63-69 ,
+      File "", line 558, characters 50-56 ,
+      File "", line 558, characters 85-91 ,
+      File "", line 561, characters 76-82 ,
+      File "", line 573, characters 50-56 ,
+      File "", line 573, characters 85-91 ,
+      File "", line 576, characters 76-82
     (test_exec_error_balance_too_low#212:5-36 -> test_exec_error_balance_too_low)
     Range: File "", line 212, characters 5-36
     Body Range: File "", line 213, characters 2-79
@@ -293,8 +293,8 @@ let%expect_test _ =
     Content: : |sum[Fail -> test_exec_error , Success -> nat]|
     references:
       File "", line 330, characters 65-81 ,
-      File "", line 347, characters 73-89 ,
-      File "", line 552, characters 47-63
+      File "", line 345, characters 73-89 ,
+      File "", line 550, characters 47-63
     (test_baker_policy#222:5-22 -> test_baker_policy)
     Range: File "", line 222, characters 5-22
     Body Range: File "", line 223, character 4 to line 225, character 29
@@ -333,9 +333,9 @@ let%expect_test _ =
                                                                      's ) *
                                                     views ('s) )|
     references:
-      File "", line 384, characters 52-67 ,
-      File "", line 463, characters 65-80 ,
-      File "", line 485, characters 69-84
+      File "", line 382, characters 52-67 ,
+      File "", line 461, characters 65-80 ,
+      File "", line 483, characters 69-84
     Module definitions:
     (Tezos#7:7-12 -> Tezos)
     Range: File "", line 7, characters 7-12
@@ -464,19 +464,19 @@ let%expect_test _ =
                       Range: File "", line 40, characters 6-29
                       Body Range: File "", line 41, character 4 to line 42, character 39
                       Content: |core: ∀ a : * . address -> string -> contract (a)|
-                      references: File "", line 525, characters 39-62
+                      references: File "", line 523, characters 39-62
                       (create_ticket#43:6-19 -> create_ticket)
                       Range: File "", line 43, characters 6-19
                       Body Range: File "", line 43, characters 69-147
                       Content: |core: ∀ a : * . a -> nat -> option (ticket (a))|
                       references:
-                        File "", line 523, characters 39-52 ,
-                        File "", line 536, characters 39-52
+                        File "", line 521, characters 39-52 ,
+                        File "", line 534, characters 39-52
                       (transaction#44:6-17 -> transaction)
                       Range: File "", line 44, characters 6-17
                       Body Range: File "", line 45, characters 4-109
                       Content: |core: ∀ a : * . a -> tez -> contract (a) -> operation|
-                      references: File "", line 526, characters 21-32
+                      references: File "", line 524, characters 21-32
                       (call_view#46:25-34 -> call_view)
                       Range: File "", line 46, characters 25-34
                       Body Range: File "", line 47, character 4 to line 48, character 104
@@ -496,7 +496,7 @@ let%expect_test _ =
                                                                         s ) -> option (key_hash) -> tez -> s ->
                       ( operation *
                         address )|
-                      references: File "", line 538, characters 26-41
+                      references: File "", line 536, characters 26-41
                       (create_contract_uncurried#54:25-50 -> create_contract_uncurried)
                       Range: File "", line 54, characters 25-50
                       Body Range: File "", line 55, characters 6-50
@@ -533,11 +533,11 @@ let%expect_test _ =
     references:
       File "", line 262, characters 41-46 ,
       File "", line 323, characters 15-20 ,
+      File "", line 521, characters 33-38 ,
       File "", line 523, characters 33-38 ,
-      File "", line 525, characters 33-38 ,
-      File "", line 526, characters 15-20 ,
-      File "", line 536, characters 33-38 ,
-      File "", line 538, characters 20-25
+      File "", line 524, characters 15-20 ,
+      File "", line 534, characters 33-38 ,
+      File "", line 536, characters 20-25
 
     (Bitwise#69:7-14 -> Bitwise)
     Range: File "", line 69, characters 7-14
@@ -927,8 +927,8 @@ let%expect_test _ =
                       Body Range: File "", line 155, characters 2-57
                       Content: |core: string -> nat|
                       references:
-                        File "", line 359, characters 22-28 ,
-                        File "", line 362, characters 43-49
+                        File "", line 357, characters 22-28 ,
+                        File "", line 360, characters 43-49
                       (concats#156:6-13 -> concats)
                       Range: File "", line 156, characters 6-13
                       Body Range: File "", line 156, characters 2-71
@@ -944,16 +944,16 @@ let%expect_test _ =
                       Body Range: File "", line 159, characters 2-84
                       Content: |core: nat -> nat -> string -> string|
                       references:
-                        File "", line 360, characters 24-27 ,
-                        File "", line 362, characters 23-26
+                        File "", line 358, characters 24-27 ,
+                        File "", line 360, characters 23-26
                       Type definitions:
                       Module definitions:
 
     references:
-      File "", line 359, characters 15-21 ,
-      File "", line 360, characters 17-23 ,
-      File "", line 362, characters 16-22 ,
-      File "", line 362, characters 36-42
+      File "", line 357, characters 15-21 ,
+      File "", line 358, characters 17-23 ,
+      File "", line 360, characters 16-22 ,
+      File "", line 360, characters 36-42
 
     (Option#162:7-13 -> Option)
     Range: File "", line 162, characters 7-13
@@ -964,8 +964,8 @@ let%expect_test _ =
                       Body Range: File "", line 163, characters 42-104
                       Content: |core: ∀ a : * . option (a) -> a|
                       references:
-                        File "", line 523, characters 26-31 ,
-                        File "", line 536, characters 26-31
+                        File "", line 521, characters 26-31 ,
+                        File "", line 534, characters 26-31
                       (unopt_with_error#165:6-22 -> unopt_with_error)
                       Range: File "", line 165, characters 6-22
                       Body Range: File "", line 165, characters 66-113
@@ -1000,8 +1000,8 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "", line 523, characters 19-25 ,
-      File "", line 536, characters 19-25
+      File "", line 521, characters 19-25 ,
+      File "", line 534, characters 19-25
 
     (Bytes#173:7-12 -> Bytes)
     Range: File "", line 173, characters 7-12
@@ -1088,7 +1088,7 @@ let%expect_test _ =
 
     (Test#234:7-11 -> Test)
     Range: File "", line 234, characters 7-11
-    Body Range: File "", line 236, character 2 to line 585, character 5
+    Body Range: File "", line 236, character 2 to line 583, character 5
     Content: Members: Variable definitions:
                       (run#236:6-9 -> run)
                       Range: File "", line 236, characters 6-9
@@ -1101,13 +1101,13 @@ let%expect_test _ =
                       Content: |core: ∀ a : * . a -> michelson_program|
                       references:
                         File "", line 239, characters 59-63 ,
-                        File "", line 350, characters 32-36 ,
-                        File "", line 355, characters 34-38 ,
-                        File "", line 369, characters 12-16 ,
-                        File "", line 379, characters 12-16 ,
-                        File "", line 386, characters 12-16 ,
-                        File "", line 465, characters 12-16 ,
-                        File "", line 487, characters 12-16
+                        File "", line 348, characters 32-36 ,
+                        File "", line 353, characters 34-38 ,
+                        File "", line 367, characters 12-16 ,
+                        File "", line 377, characters 12-16 ,
+                        File "", line 384, characters 12-16 ,
+                        File "", line 463, characters 12-16 ,
+                        File "", line 485, characters 12-16
                       (compile_value#239:6-19 -> compile_value)
                       Range: File "", line 239, characters 6-19
                       Body Range: File "", line 239, characters 59-65
@@ -1123,14 +1123,14 @@ let%expect_test _ =
                       Body Range: File "", line 241, characters 40-72
                       Content: |core: ∀ a : * . ∀ b : * . a -> b|
                       references:
-                        File "", line 508, characters 51-59 ,
-                        File "", line 509, characters 74-82 ,
-                        File "", line 510, characters 89-97 ,
-                        File "", line 512, characters 68-76 ,
-                        File "", line 513, characters 98-106 ,
-                        File "", line 514, characters 113-121 ,
-                        File "", line 569, characters 16-24 ,
-                        File "", line 584, characters 16-24
+                        File "", line 506, characters 51-59 ,
+                        File "", line 507, characters 74-82 ,
+                        File "", line 508, characters 89-97 ,
+                        File "", line 510, characters 68-76 ,
+                        File "", line 511, characters 98-106 ,
+                        File "", line 512, characters 113-121 ,
+                        File "", line 567, characters 16-24 ,
+                        File "", line 582, characters 16-24
                       (to_contract#242:6-17 -> to_contract)
                       Range: File "", line 242, characters 6-17
                       Body Range: File "", line 242, characters 71-106
@@ -1139,9 +1139,9 @@ let%expect_test _ =
                       references:
                         File "", line 275, characters 25-36 ,
                         File "", line 323, characters 30-41 ,
-                        File "", line 554, characters 28-39 ,
-                        File "", line 564, characters 40-51 ,
-                        File "", line 579, characters 40-51
+                        File "", line 552, characters 28-39 ,
+                        File "", line 562, characters 40-51 ,
+                        File "", line 577, characters 40-51
                       (set_source#243:6-16 -> set_source)
                       Range: File "", line 243, characters 6-16
                       Body Range: File "", line 243, characters 2-74
@@ -1232,13 +1232,13 @@ let%expect_test _ =
                       Content: |core: ∀ a : * . ∀ b : * . address -> typed_address (a ,
                       b)|
                       references:
-                        File "", line 372, characters 35-47 ,
-                        File "", line 382, characters 35-47 ,
-                        File "", line 389, characters 35-47 ,
-                        File "", line 470, characters 37-49 ,
-                        File "", line 492, characters 37-49 ,
-                        File "", line 567, characters 22-34 ,
-                        File "", line 582, characters 22-34
+                        File "", line 370, characters 35-47 ,
+                        File "", line 380, characters 35-47 ,
+                        File "", line 387, characters 35-47 ,
+                        File "", line 468, characters 37-49 ,
+                        File "", line 490, characters 37-49 ,
+                        File "", line 565, characters 22-34 ,
+                        File "", line 580, characters 22-34
                       (register_delegate#264:6-23 -> register_delegate)
                       Range: File "", line 264, characters 6-23
                       Body Range: File "", line 264, characters 2-91
@@ -1300,8 +1300,8 @@ let%expect_test _ =
                       Content: |core: ∀ p : * . ∀ s : * . typed_address (p ,
                       s) -> s|
                       references:
-                        File "", line 565, characters 12-23 ,
-                        File "", line 580, characters 12-23
+                        File "", line 563, characters 12-23 ,
+                        File "", line 578, characters 12-23
                       (set_baker_policy#279:6-22 -> set_baker_policy)
                       Range: File "", line 279, characters 6-22
                       Body Range: File "", line 279, characters 2-91
@@ -1317,14 +1317,14 @@ let%expect_test _ =
                       Body Range: File "", line 281, characters 2-72
                       Content: |core: michelson_contract -> int|
                       references:
-                        File "", line 371, characters 12-16 ,
-                        File "", line 381, characters 12-16 ,
-                        File "", line 388, characters 12-16 ,
-                        File "", line 397, characters 12-16 ,
-                        File "", line 428, characters 14-18 ,
-                        File "", line 448, characters 14-18 ,
-                        File "", line 469, characters 14-18 ,
-                        File "", line 491, characters 14-18
+                        File "", line 369, characters 12-16 ,
+                        File "", line 379, characters 12-16 ,
+                        File "", line 386, characters 12-16 ,
+                        File "", line 395, characters 12-16 ,
+                        File "", line 426, characters 14-18 ,
+                        File "", line 446, characters 14-18 ,
+                        File "", line 467, characters 14-18 ,
+                        File "", line 489, characters 14-18
                       (compile_contract#282:6-22 -> compile_contract)
                       Range: File "", line 282, characters 6-22
                       Body Range: File "", line 283, character 4 to line 285, character 52
@@ -1332,8 +1332,8 @@ let%expect_test _ =
                       ( list (operation) *
                         s ) -> michelson_contract|
                       references:
-                        File "", line 368, characters 12-28 ,
-                        File "", line 378, characters 12-28
+                        File "", line 366, characters 12-28 ,
+                        File "", line 376, characters 12-28
                       (read_contract_from_file#286:6-29 -> read_contract_from_file)
                       Range: File "", line 286, characters 6-29
                       Body Range: File "", line 286, characters 2-115
@@ -1384,7 +1384,7 @@ let%expect_test _ =
                       Range: File "", line 332, characters 6-9
                       Body Range: File "", line 333, character 4 to line 335, character 11
                       Content: |core: ∀ a : * . a -> unit|
-                      references: File "", line 361, characters 25-28
+                      references: File "", line 359, characters 25-28
                       (reset_state#336:6-17 -> reset_state)
                       Range: File "", line 336, characters 6-17
                       Body Range: File "", line 336, characters 2-117
@@ -1408,8 +1408,8 @@ let%expect_test _ =
                       Content: |core: ∀ a : * . nat -> a -> option (( a *
                                                                         mutation ))|
                       references:
-                        File "", line 403, characters 23-35 ,
-                        File "", line 415, characters 23-35
+                        File "", line 401, characters 23-35 ,
+                        File "", line 413, characters 23-35
                       (save_mutation#340:6-19 -> save_mutation)
                       Range: File "", line 340, characters 6-19
                       Body Range: File "", line 340, characters 2-106
@@ -1436,55 +1436,45 @@ let%expect_test _ =
                       Content: |core: ∀ a : * . ∀ b : * . int -> big_map (a ,
                       b) -> unit|
                       references: []
-                      (create_chest#345:6-18 -> create_chest)
-                      Range: File "", line 345, characters 6-18
-                      Body Range: File "", line 345, characters 2-102
-                      Content: |core: bytes -> nat -> ( chest * chest_key )|
-                      references: []
-                      (create_chest_key#346:6-22 -> create_chest_key)
-                      Range: File "", line 346, characters 6-22
-                      Body Range: File "", line 346, characters 2-102
-                      Content: |core: chest -> nat -> chest_key|
-                      references: []
-                      (transfer_to_contract#347:6-26 -> transfer_to_contract)
-                      Range: File "", line 347, characters 6-26
-                      Body Range: File "", line 348, character 4 to line 351, character 61
+                      (transfer_to_contract#345:6-26 -> transfer_to_contract)
+                      Range: File "", line 345, characters 6-26
+                      Body Range: File "", line 346, character 4 to line 349, character 61
                       Content: |core: ∀ p : * . contract (p) -> p -> tez -> test_exec_result|
-                      references: File "", line 554, characters 6-26
-                      (transfer_to_contract_exn#352:6-30 -> transfer_to_contract_exn)
-                      Range: File "", line 352, characters 6-30
-                      Body Range: File "", line 353, character 6 to line 356, character 67
+                      references: File "", line 552, characters 6-26
+                      (transfer_to_contract_exn#350:6-30 -> transfer_to_contract_exn)
+                      Range: File "", line 350, characters 6-30
+                      Body Range: File "", line 351, character 6 to line 354, character 67
                       Content: |core: ∀ p : * . contract (p) -> p -> tez -> nat|
                       references:
-                        File "", line 564, characters 14-38 ,
-                        File "", line 579, characters 14-38
-                      (michelson_equal#357:6-21 -> michelson_equal)
-                      Range: File "", line 357, characters 6-21
-                      Body Range: File "", line 357, characters 2-88
+                        File "", line 562, characters 14-38 ,
+                        File "", line 577, characters 14-38
+                      (michelson_equal#355:6-21 -> michelson_equal)
+                      Range: File "", line 355, characters 6-21
+                      Body Range: File "", line 355, characters 2-88
                       Content: |core: michelson_program -> michelson_program -> bool|
                       references: []
-                      (to_entrypoint#358:6-19 -> to_entrypoint)
-                      Range: File "", line 358, characters 6-19
-                      Body Range: File "", line 359, character 4 to line 365, character 44
+                      (to_entrypoint#356:6-19 -> to_entrypoint)
+                      Range: File "", line 356, characters 6-19
+                      Body Range: File "", line 357, character 4 to line 363, character 44
                       Content: |core: ∀ a : * . ∀ b : * . ∀ c : * . string -> typed_address (a ,
                       b) -> contract (c)|
                       references: []
-                      (originate_contract#366:6-24 -> originate_contract)
-                      Range: File "", line 366, characters 6-24
-                      Body Range: File "", line 366, characters 2-135
+                      (originate_contract#364:6-24 -> originate_contract)
+                      Range: File "", line 364, characters 6-24
+                      Body Range: File "", line 364, characters 2-135
                       Content: |core: michelson_contract -> michelson_program -> tez -> address|
                       references:
-                        File "", line 370, characters 12-30 ,
-                        File "", line 380, characters 12-30 ,
-                        File "", line 387, characters 12-30 ,
-                        File "", line 396, characters 12-30 ,
-                        File "", line 427, characters 14-32 ,
-                        File "", line 447, characters 14-32 ,
-                        File "", line 468, characters 14-32 ,
-                        File "", line 490, characters 14-32
-                      (originate#367:6-15 -> originate)
-                      Range: File "", line 367, characters 6-15
-                      Body Range: File "", line 368, character 4 to line 373, character 13
+                        File "", line 368, characters 12-30 ,
+                        File "", line 378, characters 12-30 ,
+                        File "", line 385, characters 12-30 ,
+                        File "", line 394, characters 12-30 ,
+                        File "", line 425, characters 14-32 ,
+                        File "", line 445, characters 14-32 ,
+                        File "", line 466, characters 14-32 ,
+                        File "", line 488, characters 14-32
+                      (originate#365:6-15 -> originate)
+                      Range: File "", line 365, characters 6-15
+                      Body Range: File "", line 366, character 4 to line 371, character 13
                       Content: |core: ∀ p : * . ∀ s : * . p -> s -> ( list (operation) *
                                                                         s ) -> s -> tez ->
                       ( typed_address (p ,
@@ -1492,19 +1482,19 @@ let%expect_test _ =
                         michelson_contract *
                         int )|
                       references:
-                        File "", line 547, characters 32-41 ,
-                        File "", line 563, characters 32-41 ,
-                        File "", line 578, characters 32-41
-                      (compile_contract_with_views#374:8-35 -> compile_contract_with_views)
-                      Range: File "", line 374, characters 8-35
-                      Body Range: File "", line 375, character 6 to line 376, character 54
+                        File "", line 545, characters 32-41 ,
+                        File "", line 561, characters 32-41 ,
+                        File "", line 576, characters 32-41
+                      (compile_contract_with_views#372:8-35 -> compile_contract_with_views)
+                      Range: File "", line 372, characters 8-35
+                      Body Range: File "", line 373, character 6 to line 374, character 54
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
                       ( list (operation) *
                         s ) -> views (s) -> michelson_contract|
-                      references: File "", line 385, characters 12-39
-                      (originate_uncurried#377:6-25 -> originate_uncurried)
-                      Range: File "", line 377, characters 6-25
-                      Body Range: File "", line 378, character 4 to line 383, character 13
+                      references: File "", line 383, characters 12-39
+                      (originate_uncurried#375:6-25 -> originate_uncurried)
+                      Range: File "", line 375, characters 6-25
+                      Body Range: File "", line 376, character 4 to line 381, character 13
                       Content: |core: ∀ p : * . ∀ s : * . ( p * s ) ->
                       ( list (operation) *
                         s ) -> s -> tez -> ( typed_address (p ,
@@ -1512,102 +1502,102 @@ let%expect_test _ =
                                              michelson_contract *
                                              int )|
                       references: []
-                      (originate_module#384:6-22 -> originate_module)
-                      Range: File "", line 384, characters 6-22
-                      Body Range: File "", line 385, character 4 to line 390, character 13
+                      (originate_module#382:6-22 -> originate_module)
+                      Range: File "", line 382, characters 6-22
+                      Body Range: File "", line 383, character 4 to line 388, character 13
                       Content: |core: ∀ p : * . ∀ s : * . module_contract (p ,
                       s) -> s -> tez -> ( typed_address (p ,
                                           s) *
                                           michelson_contract *
                                           int )|
                       references: []
-                      (compile_contract_from_file#391:6-32 -> compile_contract_from_file)
-                      Range: File "", line 391, characters 6-32
-                      Body Range: File "", line 391, character 2 to line 393, character 52
+                      (compile_contract_from_file#389:6-32 -> compile_contract_from_file)
+                      Range: File "", line 389, characters 6-32
+                      Body Range: File "", line 389, character 2 to line 391, character 52
                       Content: |core: string -> string -> list (string) -> michelson_contract|
-                      references: File "", line 395, characters 12-38
-                      (originate_from_file#394:6-25 -> originate_from_file)
-                      Range: File "", line 394, characters 6-25
-                      Body Range: File "", line 394, character 2 to line 398, character 13
+                      references: File "", line 393, characters 12-38
+                      (originate_from_file#392:6-25 -> originate_from_file)
+                      Range: File "", line 392, characters 6-25
+                      Body Range: File "", line 392, character 2 to line 396, character 13
                       Content: |core: string -> string -> list (string) -> michelson_program -> tez ->
                       ( address *
                         michelson_contract *
                         int )|
                       references: []
-                      (mutation_test#399:6-19 -> mutation_test)
-                      Range: File "", line 399, characters 6-19
-                      Body Range: File "", line 400, character 4 to line 410, character 19
+                      (mutation_test#397:6-19 -> mutation_test)
+                      Range: File "", line 397, characters 6-19
+                      Body Range: File "", line 398, character 4 to line 408, character 19
                       Content: |core: ∀ a : * . ∀ b : * . a -> a -> b -> option (
                       ( b *
                         mutation ))|
                       references: []
-                      (mutation_test_all#411:6-23 -> mutation_test_all)
-                      Range: File "", line 411, characters 6-23
-                      Body Range: File "", line 412, character 4 to line 422, character 46
+                      (mutation_test_all#409:6-23 -> mutation_test_all)
+                      Range: File "", line 409, characters 6-23
+                      Body Range: File "", line 410, character 4 to line 420, character 46
                       Content: |core: ∀ a : * . ∀ b : * . a -> a -> b -> list (
                       ( b *
                         mutation ))|
                       references: []
-                      (originate_from_file_and_mutate#423:6-36 -> originate_from_file_and_mutate)
-                      Range: File "", line 423, characters 6-36
-                      Body Range: File "", line 425, character 4 to line 442, character 19
+                      (originate_from_file_and_mutate#421:6-36 -> originate_from_file_and_mutate)
+                      Range: File "", line 421, characters 6-36
+                      Body Range: File "", line 423, character 4 to line 440, character 19
                       Content: |core: ∀ b : * . string -> string -> list (string) -> michelson_program -> tez ->
                       ( address *
                         michelson_contract *
                         int ) -> b -> option (( b * mutation ))|
                       references: []
-                      (originate_from_file_and_mutate_all#443:6-40 -> originate_from_file_and_mutate_all)
-                      Range: File "", line 443, characters 6-40
-                      Body Range: File "", line 445, character 4 to line 462, character 46
+                      (originate_from_file_and_mutate_all#441:6-40 -> originate_from_file_and_mutate_all)
+                      Range: File "", line 441, characters 6-40
+                      Body Range: File "", line 443, character 4 to line 460, character 46
                       Content: |core: ∀ b : * . string -> string -> list (string) -> michelson_program -> tez ->
                       ( address *
                         michelson_contract *
                         int ) -> b -> list (( b * mutation ))|
                       references: []
-                      (originate_module_and_mutate#463:6-33 -> originate_module_and_mutate)
-                      Range: File "", line 463, characters 6-33
-                      Body Range: File "", line 465, character 4 to line 484, character 19
+                      (originate_module_and_mutate#461:6-33 -> originate_module_and_mutate)
+                      Range: File "", line 461, characters 6-33
+                      Body Range: File "", line 463, character 4 to line 482, character 19
                       Content: |core: ∀ p : * . ∀ s : * . ∀ b : * . module_contract (p ,
                       s) -> s -> tez -> typed_address (p ,
                       s) -> michelson_contract -> int -> b -> option (( b *
                                                                         mutation ))|
                       references: []
-                      (originate_module_and_mutate_all#485:6-37 -> originate_module_and_mutate_all)
-                      Range: File "", line 485, characters 6-37
-                      Body Range: File "", line 487, character 4 to line 506, character 46
+                      (originate_module_and_mutate_all#483:6-37 -> originate_module_and_mutate_all)
+                      Range: File "", line 483, characters 6-37
+                      Body Range: File "", line 485, character 4 to line 504, character 46
                       Content: |core: ∀ p : * . ∀ s : * . ∀ b : * . module_contract (p ,
                       s) -> s -> tez -> typed_address (p ,
                       s) -> michelson_contract -> int -> b -> list (( b *
                                                                       mutation ))|
                       references: []
-                      (assert#508:6-12 -> assert)
-                      Range: File "", line 508, characters 6-12
-                      Body Range: File "", line 508, characters 2-78
+                      (assert#506:6-12 -> assert)
+                      Range: File "", line 506, characters 6-12
+                      Body Range: File "", line 506, characters 2-78
                       Content: |core: bool -> unit|
                       references: []
-                      (assert_some#509:6-17 -> assert_some)
-                      Range: File "", line 509, characters 6-17
-                      Body Range: File "", line 509, characters 51-118
+                      (assert_some#507:6-17 -> assert_some)
+                      Range: File "", line 507, characters 6-17
+                      Body Range: File "", line 507, characters 51-118
                       Content: |core: ∀ a : * . option (a) -> unit|
                       references: []
-                      (assert_none#510:6-17 -> assert_none)
-                      Range: File "", line 510, characters 6-17
-                      Body Range: File "", line 510, characters 51-118
+                      (assert_none#508:6-17 -> assert_none)
+                      Range: File "", line 508, characters 6-17
+                      Body Range: File "", line 508, characters 51-118
                       Content: |core: ∀ a : * . option (a) -> unit|
                       references: []
-                      (assert_with_error#512:6-23 -> assert_with_error)
-                      Range: File "", line 512, characters 6-23
-                      Body Range: File "", line 512, characters 2-78
+                      (assert_with_error#510:6-23 -> assert_with_error)
+                      Range: File "", line 510, characters 6-23
+                      Body Range: File "", line 510, characters 2-78
                       Content: |unresolved|
                       references: []
-                      (assert_some_with_error#513:6-28 -> assert_some_with_error)
-                      Range: File "", line 513, characters 6-28
-                      Body Range: File "", line 513, characters 75-123
+                      (assert_some_with_error#511:6-28 -> assert_some_with_error)
+                      Range: File "", line 511, characters 6-28
+                      Body Range: File "", line 511, characters 75-123
                       Content: |core: ∀ a : * . option (a) -> string -> unit|
                       references: []
-                      (assert_none_with_error#514:6-28 -> assert_none_with_error)
-                      Range: File "", line 514, characters 6-28
-                      Body Range: File "", line 514, characters 75-123
+                      (assert_none_with_error#512:6-28 -> assert_none_with_error)
+                      Range: File "", line 512, characters 6-28
+                      Body Range: File "", line 512, characters 75-123
                       Content: |core: ∀ a : * . option (a) -> string -> unit|
                       references: []
                       Type definitions:
@@ -1641,45 +1631,45 @@ let%expect_test _ =
 
                       references: []
 
-                      (Proxy_ticket#516:9-21 -> Proxy_ticket)
-                      Range: File "", line 516, characters 9-21
-                      Body Range: File "", line 517, character 4 to line 584, character 7
+                      (Proxy_ticket#514:9-21 -> Proxy_ticket)
+                      Range: File "", line 514, characters 9-21
+                      Body Range: File "", line 515, character 4 to line 582, character 7
                       Content: Members: Variable definitions:
-                                        (proxy_transfer_contract#517:19-42 -> proxy_transfer_contract)
-                                        Range: File "", line 517, characters 19-42
-                                        Body Range: File "", line 522, character 6 to line 527, character 14
+                                        (proxy_transfer_contract#515:19-42 -> proxy_transfer_contract)
+                                        Range: File "", line 515, characters 19-42
+                                        Body Range: File "", line 520, character 6 to line 525, character 14
                                         Content: |core: ∀ vt : * . ∀ whole_p : * . ticket (vt) -> whole_p ->
                                         ( ( vt * nat ) *
                                           address ) -> unit -> ( list (operation) *
                                                                  unit )|
                                         references:
-                                          File "", line 545, characters 8-31
-                                        (proxy_originate_contract#529:19-43 -> proxy_originate_contract)
-                                        Range: File "", line 529, characters 19-43
-                                        Body Range: File "", line 535, character 6 to line 539, character 21
+                                          File "", line 543, characters 8-31
+                                        (proxy_originate_contract#527:19-43 -> proxy_originate_contract)
+                                        Range: File "", line 527, characters 19-43
+                                        Body Range: File "", line 533, character 6 to line 537, character 21
                                         Content: |core: ∀ vt : * . ∀ whole_s : * . ∀ vp : * . ticket (vt) -> whole_s -> vp -> whole_s ->
                                         ( list (operation) *
                                           whole_s ) -> ( vt * nat ) -> option (address) ->
                                         ( list (operation) *
                                           option (address) )|
                                         references:
-                                          File "", line 561, characters 8-32 ,
-                                          File "", line 576, characters 8-32
-                                        (init_transfer#543:8-21 -> init_transfer)
-                                        Range: File "", line 543, characters 8-21
-                                        Body Range: File "", line 544, character 6 to line 548, character 17
+                                          File "", line 559, characters 8-32 ,
+                                          File "", line 574, characters 8-32
+                                        (init_transfer#541:8-21 -> init_transfer)
+                                        Range: File "", line 541, characters 8-21
+                                        Body Range: File "", line 542, character 6 to line 546, character 17
                                         Content: |core: ∀ vt : * . ∀ whole_p : * . ticket (vt) -> whole_p -> proxy_address (vt)|
                                         references: []
-                                        (transfer#550:8-16 -> transfer)
-                                        Range: File "", line 550, characters 8-16
-                                        Body Range: File "", line 553, character 6 to line 554, character 84
+                                        (transfer#548:8-16 -> transfer)
+                                        Range: File "", line 548, characters 8-16
+                                        Body Range: File "", line 551, character 6 to line 552, character 84
                                         Content: |core: ∀ vt : * . proxy_address (vt) ->
                                         ( ( vt * nat ) *
                                           address ) -> test_exec_result|
                                         references: []
-                                        (originate_uncurried#556:8-27 -> originate_uncurried)
-                                        Range: File "", line 556, characters 8-27
-                                        Body Range: File "", line 560, character 6 to line 569, character 7
+                                        (originate_uncurried#554:8-27 -> originate_uncurried)
+                                        Range: File "", line 554, characters 8-27
+                                        Body Range: File "", line 558, character 6 to line 567, character 7
                                         Content: |core: ∀ vt : * . ∀ whole_s : * . ∀ vp : * .
                                         ( vt *
                                           nat ) -> ticket (vt) -> whole_s ->
@@ -1687,9 +1677,9 @@ let%expect_test _ =
                                           whole_s ) -> ( list (operation) *
                                                          whole_s ) -> address|
                                         references: []
-                                        (originate#571:8-17 -> originate)
-                                        Range: File "", line 571, characters 8-17
-                                        Body Range: File "", line 575, character 6 to line 584, character 7
+                                        (originate#569:8-17 -> originate)
+                                        Range: File "", line 569, characters 8-17
+                                        Body Range: File "", line 573, character 6 to line 582, character 7
                                         Content: |core: ∀ vt : * . ∀ whole_s : * . ∀ vp : * .
                                         ( vt *
                                           nat ) -> ticket (vt) -> whole_s -> vp -> whole_s ->
@@ -1697,16 +1687,16 @@ let%expect_test _ =
                                           whole_s ) -> address|
                                         references: []
                                         Type definitions:
-                                        (proxy_address#541:12-25 -> proxy_address)
-                                        Range: File "", line 541, characters 12-25
-                                        Body Range: File "", line 541, characters 28-71
+                                        (proxy_address#539:12-25 -> proxy_address)
+                                        Range: File "", line 539, characters 12-25
+                                        Body Range: File "", line 539, characters 28-71
                                         Content: : |funtype 'v : * . typed_address (
                                         ( ( 'v * nat ) *
                                           address ) ,
                                         unit)|
                                         references:
-                                          File "", line 543, characters 78-91 ,
-                                          File "", line 551, characters 26-39
+                                          File "", line 541, characters 78-91 ,
+                                          File "", line 549, characters 26-39
                                         Module definitions:
 
                       references: []

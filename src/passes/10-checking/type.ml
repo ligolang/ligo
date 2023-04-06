@@ -229,8 +229,6 @@ let t__type_ ~loc ?meta () : t = t_construct Literal_types._type_ [] ~loc ?meta 
       , "mutation"
       , "pvss_key"
       , "baker_hash"
-      , "chest_key"
-      , "chest"
       , "tx_rollup_l2_address"
       , "michelson_contract"
       , "ast_contract"

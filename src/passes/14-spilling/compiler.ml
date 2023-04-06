@@ -55,8 +55,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
     | (Signature,       []) -> return (T_base TB_signature)
     | (Baker_hash,      []) -> return (T_base TB_baker_hash)
     | (Pvss_key,        []) -> return (T_base TB_pvss_key)
-    | (Chest,           []) -> return (T_base TB_chest)
-    | (Chest_key,       []) -> return (T_base TB_chest_key)
     | (Tx_rollup_l2_address, []) -> return (T_base TB_tx_rollup_l2_address)
     | (Baker_operation, []) -> return (T_base TB_baker_operation)
     | (Bls12_381_g1,    []) -> return (T_base TB_bls12_381_g1)
@@ -121,7 +119,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_int, T_base TB_nat -> return (T_base TB_nat)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
-    | ((Michelson_or               | Chest_opening_result | Sapling_transaction |
+    | ((Michelson_or               | Sapling_transaction |
         Ticket          | Int64    | Sapling_state        | Michelson_contract  |
         Contract        | Map      | Big_map              | Typed_address       |
         Michelson_pair  | Set      | Mutation             | Ast_contract        |
@@ -129,16 +127,16 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
         -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
     | ((Int64      | Unit      | Baker_operation      |
       Nat          | Timestamp | Michelson_or         |
-      String       | Gen       | Chest_opening_result |
+      String       | Gen       |
       Address      | Operation | Bls12_381_fr         |
       Key_hash     | Chain_id  | Sapling_transaction  |
       Baker_hash   | Pvss_key  | Michelson_contract   |
-      Chest        | Int       | Bls12_381_g1         |
+                     Int       | Bls12_381_g1         |
       Bls12_381_g2 | Key       | Michelson_program    |
       Ticket       | Signature | Sapling_state        |
       Contract     | Map       | Big_map              |
       Set          | Tez       | Michelson_pair       |
-      Never        | Chest_key | Ast_contract         |
+      Never                    | Ast_contract         |
       Bytes        | Mutation  | Typed_address        |
       External _   | List      | Tx_rollup_l2_address |
       Views        ), _::_) -> raise.error @@ corner_case ~loc:__LOC__ (Format.asprintf "wrong constant\n%a\n" Ast_aggregated.PP.type_expression t)
