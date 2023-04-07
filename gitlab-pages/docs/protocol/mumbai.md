@@ -59,11 +59,11 @@ let test_bytes_bitwise_ops  =
 
 ```jsligo test-ligo group=test_bitwise
 const test_bytes_bitwise_module = (() => {
-  let b_and           = Bitwise.and         (0x0005, 0x0106  );
-  let b_or            = Bitwise.or          (0x0005, 0x0106  );
-  let b_xor           = Bitwise.xor         (0x0005, 0x0106  );
-  let b_shift_left    = Bitwise.shift_left  (0x06  , 8 as nat);
-  let b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat);
+  const b_and           = Bitwise.and         (0x0005, 0x0106  );
+  const b_or            = Bitwise.or          (0x0005, 0x0106  );
+  const b_xor           = Bitwise.xor         (0x0005, 0x0106  );
+  const b_shift_left    = Bitwise.shift_left  (0x06  , 8 as nat);
+  const b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat);
 
   assert (b_and         == 0x0004 &&
           b_or          == 0x0107 &&
