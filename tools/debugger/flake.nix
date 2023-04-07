@@ -33,7 +33,7 @@
         grammars = import ./../lsp/squirrel/grammar { pkgs = haskellPkgs; };
 
         ligo-debugger-package = pkgs:
-          (haskellPkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
+          (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
 
         ligo-debugger-exec = pkgs:
           (ligo-debugger-package pkgs).components.exes.ligo-debugger;
