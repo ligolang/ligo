@@ -94,3 +94,22 @@ let%expect_test _ =
 
     Invalid event tag.
     The tag must be a string literal. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "rollup_address.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH address "sr1R23ax3Gj8NDQFbQRfNnzuKEZhth5qvWVP" ;
+             CONTRACT unit ;
+             IF_NONE { PUSH string "Err" ; FAILWITH } {} ;
+             UNIT ;
+             NIL operation ;
+             DIG 2 ;
+             PUSH mutez 0 ;
+             UNIT ;
+             TRANSFER_TOKENS ;
+             CONS ;
+             PAIR } } |}]
