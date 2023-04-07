@@ -293,7 +293,6 @@ let length = Bytes.length(b);  // length = 3
 
 You can perform bitwise operation on `bytes` as follows:
 
-
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=g
@@ -359,5 +358,80 @@ const b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat); // 0x0003
 
 ### From `bytes` to `nat` and back
 
+You can case `bytes` to `nat` using the built-in `nat` function and vice-versa 
+using using the `bytes` built-in function.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=h
+(* bytes -> nat *)
+const test_bytes_nat = nat(0x1234) // 1234n
+
+(* nat -> bytes *)
+const test_nat_bytes = bytes(4660n) // 0x1234
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=h
+(* bytes -> nat *)
+let test_bytes_nat = nat 0x1234 (* 1234n *)
+
+(* nat -> bytes *)
+let test_nat_bytes = bytes 4660n (* 0x1234 *)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=h
+/* bytes -> nat */
+const test_bytes_nat = nat(0x1234) // (1234 as nat)
+
+/* nat -> bytes */
+const test_nat_bytes = bytes(4660 as nat) // 0x1234
+```
+
+</Syntax>
 
 ### From `bytes` to `int` and back
+
+You can case `bytes` to `int` using the built-in `int` function and vice-versa 
+using using the `bytes` built-in function.
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=h
+(* bytes -> int *)
+const test_bytes_int = int(0x1234) // 4660
+
+(* int -> bytes *)
+const test_int_bytes = bytes(4660) // 0x1234
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=h
+(* bytes -> int *)
+let test_bytes_int = int 0x1234 (* 4660 *)
+
+(* int -> bytes *)
+let test_int_bytes = bytes 4660 (* 0x1234 *)
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=h
+/* bytes -> int */
+const test_bytes_int = int(0x1234) // 4660
+
+/* int -> bytes */
+const test_int_bytes = bytes(4660) // 0x1234
+```
+
+</Syntax>
