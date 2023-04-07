@@ -70,7 +70,7 @@ depends: [
   "decompress" {= "1.5.2"}
   "digestif" {= "1.1.4"}
   "domain-name" {= "0.4.0"}
-  "dune" {= "3.7.0"}
+  "dune" {= "3.6.1"}
   "dune-build-info" {= "3.7.0"}
   "dune-configurator" {= "3.7.0"}
   "dune-rpc" {= "3.6.2"}
@@ -86,7 +86,6 @@ depends: [
   "fix" {= "20220121"}
   "fmt" {= "0.9.0"}
   "fpath" {= "0.7.3"}
-  "gen" {= "1.1"}
   "gmap" {= "0.3.0"}
   "hacl-star" {= "0.6.2"}
   "hacl-star-raw" {= "0.6.2"}
@@ -101,9 +100,9 @@ depends: [
   "irmin" {= "3.6.1"}
   "irmin-pack" {= "3.6.1"}
   "jane-street-headers" {= "v0.15.0"}
-  "js_of_ocaml" {= "5.1.1"}
-  "js_of_ocaml-compiler" {= "5.1.1"}
-  "js_of_ocaml-ppx" {= "5.1.1"}
+  "js_of_ocaml" {= "5.0.1"}
+  "js_of_ocaml-compiler" {= "5.0.1"}
+  "js_of_ocaml-ppx" {= "5.0.1"}
   "json-data-encoding" {= "0.12.1"}
   "json-data-encoding-bson" {= "0.12.1"}
   "jsonm" {= "1.0.2"}
@@ -232,7 +231,6 @@ depends: [
   "rresult" {= "0.7.0"}
   "rusage" {= "1.0.0"}
   "secp256k1-internal" {= "0.4.0"}
-  "sedlex" {= "2.5"}
   "semaphore-compat" {= "1.0.1"}
   "semver" {= "0.1.0"}
   "seq" {= "base"}
