@@ -469,3 +469,15 @@ let test_concats =
   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
   let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
   ()
+
+let test_bytes_nat_int_conversion =
+  let b = 0x123456 in 
+  (* bytes => nat => bytes *)
+  let () = assert (b = bytes(nat(b))) in
+  (* bytes => int => bytes *)
+  let () = assert (b = bytes(int(b))) in
+  (* int => bytes => int *)
+  let () = assert (1234 = int(bytes(1234))) in
+  (* nat => bytes => nat *)
+  let () = assert (4567n = nat(bytes(4567n))) in
+  ()

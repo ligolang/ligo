@@ -909,6 +909,10 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
            Constant_typers.External_types.map_remove_types parameters
          | T_construct { constructor = External "int"; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
+         | T_construct { constructor = External "int_lima"; parameters; _ } ->
+           Constant_typers.External_types.int_lima_types parameters
+         | T_construct { constructor = External "bytes"; parameters; _ } ->
+           Constant_typers.External_types.bytes_types parameters
          | T_construct { constructor = External ("ediv" | "u_ediv"); parameters; _ } ->
            Constant_typers.External_types.ediv_types parameters
          | T_construct { constructor = External ("and" | "u_and"); parameters; _ } ->

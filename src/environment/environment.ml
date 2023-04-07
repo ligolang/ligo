@@ -60,6 +60,8 @@ let michelson_base : (Type_var.t * type_expression) list =
   ; v_never ~loc, t_never ~loc ()
   ; v_ticket ~loc, t_abstraction1 ~loc Ticket star
   ; v_external_int ~loc, t_abstraction1 ~loc (External "int") star
+  ; v_external_int_lima ~loc, t_abstraction1 ~loc (External "int_lima") star
+  ; v_external_bytes ~loc, t_abstraction1 ~loc (External "bytes") star
   ; v_external_ediv ~loc, t_abstraction2 ~loc (External "ediv") star star
   ; v_external_u_ediv ~loc, t_abstraction2 ~loc (External "u_ediv") star star
   ; v_external_and ~loc, t_abstraction2 ~loc (External "and") star star
