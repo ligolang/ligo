@@ -91,6 +91,16 @@ debugger-test-ligo-recommended:
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
 
+debugger-test-static-debugger-binary:
+  stage: tools-check
+  rules: *debugger_mr_dev
+  needs: [debugger-build]
+  script:
+    - nix build $FLAKE_FLAGS ./tools/debugger#ligo-debugger-static
+    # 'ldd' returns non-zero exit code when binary is not dynamically linked, so || true is needed
+    # to workaround 'pipefail'
+    - (ldd ./result/bin/ligo-debugger || true) 2>&1 | grep -q "not a dynamic executable"
+
 debugger-test-ligo-minimal-supported:
   stage: push
   rules:
