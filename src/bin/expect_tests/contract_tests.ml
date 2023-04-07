@@ -3271,7 +3271,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage bytes ;
+      storage unit ;
       code { DROP ;
              PUSH nat 8 ;
              PUSH bytes 0x06 ;
@@ -3279,26 +3279,42 @@ let%expect_test _ =
              PUSH nat 1 ;
              PUSH bytes 0x0006 ;
              LSR ;
-             NIL bytes ;
+             PUSH bytes 0x0003 ;
              SWAP ;
-             CONS ;
-             SWAP ;
-             CONS ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0600 ;
+             DIG 2 ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0103 ;
              PUSH bytes 0x0106 ;
              PUSH bytes 0x0005 ;
              XOR ;
-             CONS ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0107 ;
              PUSH bytes 0x0106 ;
              PUSH bytes 0x0005 ;
              OR ;
-             CONS ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0004 ;
              PUSH bytes 0x0106 ;
              PUSH bytes 0x0005 ;
              AND ;
-             CONS ;
-             CONCAT ;
+             COMPARE ;
+             EQ ;
+             AND ;
+             AND ;
+             AND ;
+             AND ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNIT ;
              NIL operation ;
-             PAIR } } |}]
+             PAIR } } |}];
+  run_ligo_good [ "run"; "dry-run"; contract "bytes_bitwise.mligo"; "()"; "()" ];
+  [%expect {| ( LIST_EMPTY() , unit ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "bytes_int_nat_conv.mligo" ];
