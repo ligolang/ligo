@@ -841,7 +841,11 @@ let%expect_test _ =
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "warning_duplicate3.mligo" ];
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "warning_duplicate3.mligo"
+    ];
   [%expect
     {|
     { parameter (pair (nat %c) (nat %ck)) ;
