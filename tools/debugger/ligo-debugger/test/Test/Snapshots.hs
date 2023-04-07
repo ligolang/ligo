@@ -1,5 +1,3 @@
-{-# LANGUAGE NumDecimals #-}
-
 -- | Checking snapshots collection.
 module Test.Snapshots
   ( module Test.Snapshots
