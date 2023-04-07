@@ -43,9 +43,9 @@ depends: [
   "cohttp" {= "5.0.0"}
   "cohttp-lwt" {= "5.0.0"}
   "cohttp-lwt-unix" {= "5.0.0"}
-  "conduit" {= "6.2.0"}
-  "conduit-lwt" {= "6.2.0"}
-  "conduit-lwt-unix" {= "6.2.0"}
+  "conduit" {= "6.1.0"}
+  "conduit-lwt" {= "6.1.0"}
+  "conduit-lwt-unix" {= "6.1.0"}
   "conf-cmake" {= "1"}
   "conf-findutils" {= "1"}
   "conf-g++" {= "1.0"}
@@ -63,6 +63,7 @@ depends: [
   "csexp" {= "1.5.1"}
   "cstruct" {= "6.2.0"}
   "cstruct-lwt" {= "6.2.0"}
+  "cstruct-sexp" {= "6.2.0"}
   "ctypes" {= "0.20.2"}
   "ctypes_stubs_js" {= "0.1"}
   "data-encoding" {= "0.7.1"}
@@ -126,10 +127,12 @@ depends: [
   "menhirSdk" {= "20211128"}
   "mew" {= "0.1.0"}
   "mew_vi" {= "0.5.0"}
-  "mirage-crypto" {= "0.11.1"}
-  "mirage-crypto-ec" {= "0.11.1"}
-  "mirage-crypto-pk" {= "0.11.1"}
-  "mirage-crypto-rng" {= "0.11.1"}
+  "mirage-crypto" {= "0.10.7"}
+  "mirage-crypto-ec" {= "0.10.7"}
+  "mirage-crypto-pk" {= "0.10.7"}
+  "mirage-crypto-rng" {= "0.10.7"}
+  "mirage-no-solo5" {= "1"}
+  "mirage-no-xen" {= "1"}
   "mtime" {= "1.4.0"}
   "num" {= "1.4"}
   "ocaml" {= "4.14.0"}
@@ -170,6 +173,7 @@ depends: [
   "ppx_bin_prot" {= "v0.15.0"}
   "ppx_cold" {= "v0.15.0"}
   "ppx_compare" {= "v0.15.0"}
+  "ppx_cstruct" {= "6.2.0"}
   "ppx_custom_printf" {= "v0.15.0"}
   "ppx_derivers" {= "1.2.1"}
   "ppx_deriving" {= "5.2.1"}
@@ -262,7 +266,7 @@ depends: [
   "tezos-stdlib" {= "dev"}
   "tezos-stdlib-unix" {= "dev"}
   "time_now" {= "v0.15.0"}
-  "tls" {= "0.17.0"}
+  "tls" {= "0.15.4"}
   "topkg" {= "1.0.7"}
   "trie" {= "1.0.0"}
   "typerep" {= "v0.15.0"}
