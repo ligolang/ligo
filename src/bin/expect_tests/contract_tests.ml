@@ -3406,3 +3406,45 @@ let%expect_test _ =
              CONCAT ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "bytes_int_nat_conv.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH bytes 0x123456 ;
+             DUP ;
+             NAT ;
+             BYTES ;
+             DUP 2 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             DUP ;
+             INT ;
+             BYTES ;
+             SWAP ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             PUSH int 1234 ;
+             BYTES ;
+             INT ;
+             PUSH int 1234 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             PUSH nat 4567 ;
+             BYTES ;
+             NAT ;
+             PUSH nat 4567 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNIT ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "dry-run"; contract "bytes_int_nat_conv.mligo"; "()"; "()" ];
+  [%expect {| ( LIST_EMPTY() , unit ) |}]

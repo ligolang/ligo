@@ -101,8 +101,16 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_map_remove application"))
     | (External "int", [ param ]) ->
       (match (compile_type param).type_content with
-      | T_base TB_bls12_381_fr | T_base TB_nat -> return (T_base TB_int)
+      | T_base TB_bls12_381_fr | T_base TB_nat | T_base TB_bytes -> return (T_base TB_int) 
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int application"))
+    | (External "int_lima", [ param ]) ->
+      (match (compile_type param).type_content with
+      | T_base TB_bls12_381_fr | T_base TB_nat -> return (T_base TB_int) 
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int_lima application"))
+    | (External "bytes", [ param ]) ->
+      (match (compile_type param).type_content with
+      | T_base TB_int | T_base TB_nat -> return (T_base TB_bytes) 
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_bytes application"))
     | (External ("ediv" | "u_ediv"), [ param1; param2 ]) ->
       let open AST in
       let return t1 t2 = compile_type (t_option ~loc (t_pair ~loc t1 t2)) in

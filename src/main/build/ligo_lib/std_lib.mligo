@@ -197,7 +197,15 @@ let is_nat (i : int) : nat option = [%michelson ({| { ISNAT } |} i : nat option)
 [@inline] let true : bool = True
 [@inline] let false : bool = False
 [@inline] let unit : unit = [%external ("UNIT")]
-let int (type a) (v : a) : a external_int = [%michelson ({| { INT } |} v : a external_int)]
+#if MUMBAI
+let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
+#elif LIMA
+let int (type a) (v : a) : a external_int_lima = [%Michelson ({| { INT } |} : a -> a external_int_lima)] v
+#endif
+#if MUMBAI
+let nat (v : bytes) : nat = [%Michelson ({| { NAT } |} : bytes -> nat)] v
+let bytes (type a) (v : a) : a external_bytes = [%Michelson ({| { BYTES } |} : a -> a external_bytes)] v
+#endif
 let ignore (type a) (_ : a) : unit = ()
 let curry (type a b c) (f : a * b -> c) (x : a) (y : b) : c = f (x, y)
 let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1
