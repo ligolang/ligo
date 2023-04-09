@@ -1,6 +1,7 @@
-open Linol_lwt
-open Linol_lwt.Jsonrpc2
 open Lsp_helpers
+
+(* FIXME Should we use Hashtbl from Core implementing to_sexp somehow? *)
+module Hashtbl = Caml.Hashtbl
 
 (** Stores the configuration pertaining to the LIGO language server. *)
 type config =
@@ -16,8 +17,8 @@ type config =
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
 type notify_back_mockable =
-  | Normal of notify_back
-  | Mock of Jsonrpc2.Diagnostic.t list ref (* FIXME: collect logs for tests *)
+  | Normal of Linol_lwt.Jsonrpc2.notify_back
+  | Mock of Diagnostic.t list ref (* FIXME: collect logs for tests *)
 
 (** Environment available in Handler monad *)
 type handler_env =
@@ -42,9 +43,10 @@ let run_handler (env : handler_env) (r : 'a Handler.t) : 'a IO.t = un_handler r 
 
 let bind (Handler d : 'a Handler.t) (f : 'a -> 'b Handler.t) : 'b Handler.t =
   Handler
-    (fun env ->
-      let* p = d env in
-      un_handler (f p) env)
+    IO.(
+      fun env ->
+        let* p = d env in
+        un_handler (f p) env)
 
 
 let ( let@ ) = bind
@@ -116,7 +118,7 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
 
 
 (** Send diagnostics (errors, warnings) to *)
-let send_diagnostic (s : Jsonrpc2.Diagnostic.t list) : unit Handler.t =
+let send_diagnostic (s : Diagnostic.t list) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
   | Normal nb -> lift_IO (nb#send_diagnostic s)
@@ -166,7 +168,7 @@ let with_cached_doc_pure
     (f : Ligo_interface.file_data -> 'a)
     : 'a Handler.t
   =
-  let f' = return @. f in
+  let f' = return <@ f in
   with_cached_doc ?return_default_if_no_info uri default f'
 
 
@@ -184,12 +186,12 @@ let with_cst
       fun err -> send_debug_msg @@ "Unable to get CST: " ^ err)
     (uri : DocumentUri.t)
     (default : 'a)
-    (f : dialect_cst -> 'a Handler.t)
+    (f : Dialect_cst.t -> 'a Handler.t)
     : 'a Handler.t
   =
   with_cached_doc ~return_default_if_no_info:false uri default
   @@ fun { syntax; code; _ } ->
-  match get_cst ~strict syntax code with
+  match Dialect_cst.get_cst ~strict syntax code with
   | Error err ->
     let@ () = on_error err in
     return default

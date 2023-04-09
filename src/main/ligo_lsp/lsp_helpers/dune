@@ -1,6 +1,6 @@
 (library
- (name utils)
- (public_name ligo.ligo_lsp.utils)
+ (name lsp_helpers)
+ (public_name ligo.ligo_lsp.lsp_helpers)
  (flags
   (:standard -w +A-4-40-42-44-70))
  (instrumentation
@@ -17,4 +17,5 @@
   nanopasses
   unification
   decompile
+  build
   ligo.preprocessing))

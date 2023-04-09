@@ -1,5 +1,4 @@
-open Lsp.Types
-module Option = Caml.Option
+open Lsp_helpers
 
 type simple_diagnostic =
   { severity : DiagnosticSeverity.t
@@ -9,7 +8,7 @@ type simple_diagnostic =
 
 let from_simple_diagnostic : simple_diagnostic -> Diagnostic.t =
  fun { range; message; severity } ->
-  let range = Option.value ~default:Utils.dummy_range range in
+  let range = Option.value ~default:Range.dummy range in
   Diagnostic.create ?severity:(Some severity) ~message ~range ()
 
 
@@ -29,7 +28,7 @@ let get_diagnostics : Ligo_interface.get_scope_info -> simple_diagnostic list =
     let errs = Main_errors.Formatter.error_json errs in
     List.map
       ~f:(fun ({ content = { message; location; _ }; _ } : Simple_utils.Error.t) ->
-        let range = Option.bind location Utils.location_to_range in
+        let range = Option.bind location ~f:Range.of_loc in
         { range; message; severity = DiagnosticSeverity.Error })
       errs
   in
@@ -38,10 +37,7 @@ let get_diagnostics : Ligo_interface.get_scope_info -> simple_diagnostic list =
     let ({ content = { message; location; _ }; _ } : Simple_utils.Warning.t) =
       Main_warnings.to_warning warn
     in
-    { range = Utils.location_to_range location
-    ; message
-    ; severity = DiagnosticSeverity.Warning
-    }
+    { range = Range.of_loc location; message; severity = DiagnosticSeverity.Warning }
   in
   List.concat_map ~f:extract_error_information errors
   @ List.map ~f:extract_warning_information warnings

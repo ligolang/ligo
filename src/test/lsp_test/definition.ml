@@ -1,7 +1,8 @@
-open Lsp.Types
-open Handlers
-open Common
 module Requests = Ligo_lsp.Server.Requests
+open Alcotest_extras
+open Handlers
+open Lsp_helpers
+open Range.Construct
 open Requests.Handler
 
 type definition_test =
@@ -40,11 +41,11 @@ let get_definition_test
           [ Location.create ~uri:(rel_path_to_uri file_with_definition) ~range:def ])
   in
   check
-    Alcotest.(option testable_locations)
+    Alcotest.(option Locations.testable)
     (Format.asprintf
        "Definition position mismatch for: %s, %a"
        file_with_reference
-       pp_position
+       Position.pp
        reference)
     expected_definition
     actual_definition
@@ -55,42 +56,42 @@ let test_cases =
     ; file_with_reference = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:1 ~character:8
     ; file_with_definition = "contracts/lsp/simple.mligo"
-    ; definition = Some (Utils.interval 0 4 5)
+    ; definition = Some (interval 0 4 5)
     ; type_definition = false
     }
   ; { test_name = "Imported identifier"
     ; file_with_reference = "contracts/build/B.mligo"
     ; reference = Position.create ~line:6 ~character:19
     ; file_with_definition = "contracts/build/A.mligo"
-    ; definition = Some (Utils.interval 0 4 8)
+    ; definition = Some (interval 0 4 8)
     ; type_definition = false
     }
   ; { test_name = "Identifier (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:18
     ; file_with_definition = "contracts/lsp/local_module.mligo"
-    ; definition = Some (Utils.interval 2 4 5)
+    ; definition = Some (interval 2 4 5)
     ; type_definition = false
     }
   ; { test_name = "Type"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:9 ~character:8
     ; file_with_definition = "contracts/lsp/local_module.mligo"
-    ; definition = Some (Utils.interval 8 5 9)
+    ; definition = Some (interval 8 5 9)
     ; type_definition = false
     }
   ; { test_name = "Type (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:8 ~character:14
     ; file_with_definition = "contracts/lsp/local_module.mligo"
-    ; definition = Some (Utils.interval 1 5 8)
+    ; definition = Some (interval 1 5 8)
     ; type_definition = false
     }
   ; { test_name = "Local module"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:8
     ; file_with_definition = "contracts/lsp/local_module.mligo"
-    ; definition = Some (Utils.interval 0 7 8)
+    ; definition = Some (interval 0 7 8)
     ; type_definition = false
     }
   ; { test_name = "stdlib definition"

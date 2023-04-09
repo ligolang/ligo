@@ -1,7 +1,8 @@
-open Handlers
-open Linol_lwt
-open Common
 module Requests = Ligo_lsp.Server.Requests
+open Alcotest_extras
+open Handlers
+open Lsp_helpers
+open Range.Construct
 open Requests.Handler
 
 type range_formatting_test =
@@ -19,7 +20,7 @@ let get_formatting_test ({ file_path; range; expected } : range_formatting_test)
        Requests.on_req_range_formatting uri range
   in
   let mk_message s =
-    Format.asprintf "Range formatting: %s. %s, %a" s file_path pp_range range
+    Format.asprintf "Range formatting: %s. %s, %a" s file_path Range.pp range
   in
   match result, expected with
   | None, None -> ()
@@ -32,7 +33,7 @@ let get_formatting_test ({ file_path; range; expected } : range_formatting_test)
       expected_string
       newText;
     check
-      testable_range
+      Range.testable
       (mk_message "Replacement range does not match the expected")
       expected_range
       range
@@ -44,48 +45,46 @@ let test_cases_cameligo =
   without too much boilerplate *)
   let tests_no_statements =
     List.map
-      [ Utils.range (1, 0) (2, 0); Utils.interval 4 16 39; Utils.interval 6 16 39 ]
+      [ range (1, 0) (2, 0); interval 4 16 39; interval 6 16 39 ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.mligo"; range = r; expected = None })
   in
   let tests_one_directive =
     List.map
-      [ Utils.range (0, 0) (1, 0); Utils.interval 0 0 34 ]
+      [ range (0, 0) (1, 0); interval 0 0 34 ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.mligo"
         ; range = r
-        ; expected = Some ("#include \"simple.mligo\"", Utils.interval 0 0 34)
+        ; expected = Some ("#include \"simple.mligo\"", interval 0 0 34)
         })
     @ List.map
-        [ Utils.range (1, 0) (3, 0); Utils.interval 2 0 39; Utils.range (1, 0) (4, 12) ]
+        [ range (1, 0) (3, 0); interval 2 0 39; range (1, 0) (4, 12) ]
         ~f:(fun r ->
           { file_path = "contracts/lsp/format_me.mligo"
           ; range = r
-          ; expected = Some ("#import \"local_module.mligo\" \"A\"", Utils.interval 2 0 39)
+          ; expected = Some ("#import \"local_module.mligo\" \"A\"", interval 2 0 39)
           })
   in
   let tests_one_declaration =
     List.map
-      [ Utils.range (4, 0) (5, 0); Utils.interval 4 0 39 ]
+      [ range (4, 0) (5, 0); interval 4 0 39 ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.mligo"
         ; range = r
-        ; expected =
-            Some ("let format_me =\n  let x = 20 in\n  x * 2", Utils.interval 4 0 39)
+        ; expected = Some ("let format_me =\n  let x = 20 in\n  x * 2", interval 4 0 39)
         })
     @ List.map
-        [ Utils.range (5, 0) (6, 0); Utils.interval 5 0 40 ]
+        [ range (5, 0) (6, 0); interval 5 0 40 ]
         ~f:(fun r ->
           { file_path = "contracts/lsp/format_me.mligo"
           ; range = r
           ; expected =
-              Some
-                ("let format_me_2 =\n  let q = A.A.s in\n  q ^ q", Utils.interval 5 0 40)
+              Some ("let format_me_2 =\n  let q = A.A.s in\n  q ^ q", interval 5 0 40)
           })
   in
   let tests_two_declarations =
     List.map
-      [ Utils.range (4, 0) (6, 0); Utils.range (4, 0) (6, 0); Utils.range (4, 0) (7, 0) ]
+      [ range (4, 0) (6, 0); range (4, 0) (6, 0); range (4, 0) (7, 0) ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.mligo"
         ; range = r
@@ -97,16 +96,16 @@ let test_cases_cameligo =
                  let format_me_2 =\n\
                 \  let q = A.A.s in\n\
                 \  q ^ q"
-              , Utils.range (4, 0) (5, 40) )
+              , range (4, 0) (5, 40) )
         })
   in
   let test_whole_file =
     [ { file_path = "contracts/lsp/format_me.mligo"
-      ; range = Utils.whole_file_range
+      ; range = Range.whole_file
       ; expected =
           Some
             ( String.strip (In_channel.read_all "contracts/lsp/formatted.mligo")
-            , Utils.range (0, 0) (5, 40) )
+            , range (0, 0) (5, 40) )
       }
     ]
   in
@@ -120,32 +119,31 @@ let test_cases_cameligo =
 let test_cases_jsligo =
   let tests_no_statements =
     List.map
-      [ Utils.range (1, 0) (2, 0); Utils.interval 8 0 1; Utils.interval 11 0 10 ]
+      [ range (1, 0) (2, 0); interval 8 0 1; interval 11 0 10 ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.jsligo"; range = r; expected = None })
   in
   let tests_one_declaration =
     List.map
-      [ Utils.range (1, 0) (5, 0); Utils.range (2, 0) (3, 62) ]
+      [ range (1, 0) (5, 0); range (2, 0) (3, 62) ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.jsligo"
         ; range = r
         ; expected =
             Some
               ( "const increment = (b: int): int => ((a: int): int => a + 1)(b);"
-              , Utils.range (2, 0) (3, 62) )
+              , range (2, 0) (3, 62) )
         })
     @ List.map
-        [ Utils.range (4, 0) (6, 0); Utils.interval 5 0 52 ]
+        [ range (4, 0) (6, 0); interval 5 0 52 ]
         ~f:(fun r ->
           { file_path = "contracts/lsp/format_me.jsligo"
           ; range = r
           ; expected =
-              Some
-                ("const with_semicolon = [1 + 2 * 3, M.fold_test];", Utils.interval 5 0 52)
+              Some ("const with_semicolon = [1 + 2 * 3, M.fold_test];", interval 5 0 52)
           })
     @ List.map
-        [ Utils.range (6, 0) (13, 0); Utils.range (7, 0) (12, 27) ]
+        [ range (6, 0) (13, 0); range (7, 0) (12, 27) ]
         ~f:(fun r ->
           { file_path = "contracts/lsp/format_me.jsligo"
           ; range = r
@@ -153,12 +151,12 @@ let test_cases_jsligo =
               Some
                 ( "const incr_map = (l: list<int>): list<int> => List.map((i: int) => i \
                    + 1, l);"
-                , Utils.range (7, 0) (12, 27) )
+                , range (7, 0) (12, 27) )
           })
   in
   let tests_two_declarations =
     List.map
-      [ Utils.range (1, 0) (6, 0); Utils.range (2, 0) (5, 52) ]
+      [ range (1, 0) (6, 0); range (2, 0) (5, 52) ]
       ~f:(fun r ->
         { file_path = "contracts/lsp/format_me.jsligo"
         ; range = r
@@ -166,10 +164,10 @@ let test_cases_jsligo =
             Some
               ( "const increment = (b: int): int => ((a: int): int => a + 1)(b);\n\n\
                  const with_semicolon = [1 + 2 * 3, M.fold_test];"
-              , Utils.range (2, 0) (5, 52) )
+              , range (2, 0) (5, 52) )
         })
     @ List.map
-        [ Utils.range (5, 0) (13, 0); Utils.range (5, 0) (12, 27) ]
+        [ range (5, 0) (13, 0); range (5, 0) (12, 27) ]
         ~f:(fun r ->
           { file_path = "contracts/lsp/format_me.jsligo"
           ; range = r
@@ -178,16 +176,16 @@ let test_cases_jsligo =
                 ( "const with_semicolon = [1 + 2 * 3, M.fold_test];\n\n\
                    const incr_map = (l: list<int>): list<int> => List.map((i: int) => i \
                    + 1, l);"
-                , Utils.range (5, 0) (12, 27) )
+                , range (5, 0) (12, 27) )
           })
   in
   let test_whole_file =
     [ { file_path = "contracts/lsp/format_me.jsligo"
-      ; range = Utils.whole_file_range
+      ; range = Range.whole_file
       ; expected =
           Some
             ( String.strip (In_channel.read_all "contracts/lsp/formatted.jsligo")
-            , Utils.range (0, 0) (12, 27) )
+            , range (0, 0) (12, 27) )
       }
     ]
   in

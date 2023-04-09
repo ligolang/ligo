@@ -1,6 +1,5 @@
 open Handler
-open Lsp.Types
-open Utils
+open Lsp_helpers
 
 let rename_reference : string -> Range.t -> TextEdit.t =
  fun newText range -> TextEdit.create ~range ~newText
@@ -15,7 +14,7 @@ let on_req_rename : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Han
     when_some' (Go_to_definition.get_definition pos uri get_scope_info.definitions)
     @@ fun definition ->
     let references =
-      References.get_all_references (get_location definition) get_scope_buffers
+      References.get_all_references (Def.get_location definition) get_scope_buffers
     in
     let changes =
       List.map

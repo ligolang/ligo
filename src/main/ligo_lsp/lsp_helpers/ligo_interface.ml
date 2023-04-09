@@ -1,6 +1,5 @@
 module Get_scope = Get_scope
 open Get_scope
-open Utils
 open Linol_lwt
 
 type nonrec get_scope_info = get_scope_info
@@ -35,7 +34,7 @@ let doc_to_string ~(width : int) (doc : PPrint.document) : string =
   Buffer.contents buffer
 
 
-let pretty_print_cst ~(width : int) ~(dialect_cst : dialect_cst) : string =
+let pretty_print_cst ~(width : int) ~(dialect_cst : Dialect_cst.t) : string =
   let doc =
     match dialect_cst with
     | CameLIGO_cst cst ->

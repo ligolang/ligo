@@ -1,9 +1,5 @@
-(* TODO: use String, Option, Set, List & Hashtbl from Core *)
-open Linol_lwt
-module Hashtbl = Caml.Hashtbl
-module List = Caml.List
 open Handler
-module Diagnostics = Diagnostics
+open Lsp_helpers
 
 (* We define here a helper that will:
        - process a document
@@ -16,7 +12,7 @@ let on_doc : DocumentUri.t -> string -> unit Handler.t =
   let@ () = send_debug_msg @@ "Updating DOC :" ^ DocumentUri.to_string uri in
   let@ get_scope_buffers = ask_docs_cache in
   let@ syntax =
-    match Utils.get_syntax uri with
+    match DocumentUri.get_syntax uri with
     | None ->
       lift_IO
       @@ failwith
@@ -44,7 +40,7 @@ let on_doc : DocumentUri.t -> string -> unit Handler.t =
   let simple_diags = Diagnostics.get_diagnostics new_state in
   let diags =
     List.map
-      Diagnostics.from_simple_diagnostic
-      (Utils.take max_number_of_problems @@ simple_diags @ deprecation_warnings)
+      ~f:Diagnostics.from_simple_diagnostic
+      (List.take (simple_diags @ deprecation_warnings) max_number_of_problems)
   in
   send_diagnostic diags

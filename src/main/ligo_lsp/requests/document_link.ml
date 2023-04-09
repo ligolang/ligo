@@ -1,7 +1,5 @@
-open Utils
-open Lsp.Types
 open Handler
-module Trace = Simple_utils.Trace
+open Lsp_helpers
 
 (* TODO: [Directive]'s can also be inside E_raw_code (inline michelson code)
          extract those [Directive]'s later
@@ -37,11 +35,11 @@ let extract_link_from_directive ~(relative_to_dir : string)
     : Preprocessor.Directive.t -> DocumentLink.t option
   = function
   | PP_Include d ->
-    let range = Utils.region_to_range d#file_path.region
+    let range = Range.of_region d#file_path.region
     and target = Filename.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | PP_Import d ->
-    let range = Utils.region_to_range d#file_path.region
+    let range = Range.of_region d#file_path.region
     and target = Filename.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None

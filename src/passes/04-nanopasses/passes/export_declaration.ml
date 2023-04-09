@@ -13,8 +13,7 @@ let compile =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
-    | D_export exp ->
-      d_attr ~loc (Attribute.{ key = "public"; value = None }, exp)
+    | D_export exp -> d_attr ~loc (Attribute.{ key = "public"; value = None }, exp)
     | d -> make_d ~loc d
   in
   `Cata { idle_cata_pass with declaration }
