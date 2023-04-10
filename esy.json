@@ -1,5 +1,6 @@
 {
   "name": "ligolang",
+  "description": "A high-level language which compiles to Michelson",
   "version": "0.64.0-dev",
   "repository": {
     "type": "git",

@@ -7,9 +7,9 @@
  (libraries
   ;; LIGO
   lexing_shared
-  menhir_pyligo_tokens
-  lexing_pyligo_self_units
-  lexing_pyligo_self_tokens
+  mh_py_tokens
+  Lx_py_self_units
+  lx_py_self_tokens
   ;; Third party
   str
   hex))

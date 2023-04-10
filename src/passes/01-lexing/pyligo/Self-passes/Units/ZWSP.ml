@@ -8,7 +8,7 @@ module Unit   = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lexing_pyligo_self_tokens.Token
+module Token = Lx_py_self_tokens.Token
 
 (* Injection *)
 
