@@ -1937,7 +1937,7 @@ let%expect_test _ =
                         "col": "3" },
                     "stop":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",
-                        "col": "27" } } },
+                        "col": "27" } }, "source_type": "2" },
               { "location":
                   { "start":
                       { "file": "../../test/contracts/noop.mligo", "line": "6",

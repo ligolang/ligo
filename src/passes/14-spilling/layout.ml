@@ -16,14 +16,14 @@ let annotation_or_label annot label = nonempty (Option.value ~default:label anno
 (* [comb_or] creates an `or` type tree from the list of annotated types [lst] 
    `[ a ; b ; c ] => T_or (a, T_or (b,c))`
 *)
-let comb_or lst =
+let comb_or ?source_type lst =
   let ne_lst = Simple_utils.List.Ne.of_list lst in
   let rec aux lst =
     match lst with
     | last, [] -> last
     | hd, tl ->
       let rest = aux (Simple_utils.List.Ne.of_list tl) in
-      None, O.Expression.make_t (T_or (hd, rest))
+      None, O.Expression.make_t ?source_type (T_or (hd, rest))
   in
   snd (aux ne_lst)
 
@@ -73,17 +73,17 @@ let from_layout
 
 (* [t_sum] and [t_record] are the specialized version of [t_layouted_type]
    for combs *)
-let t_sum = from_layout comb_or
-let t_record = from_layout (fun lst -> O.Expression.make_t (T_tuple lst))
+let t_sum ?source_type = from_layout (comb_or ?source_type)
+let t_record ?source_type = from_layout (fun lst -> O.Expression.make_t ?source_type (T_tuple lst))
 
-let record_to_pairs ~raise return =
+let record_to_pairs ~raise ~source_type return =
   from_layout ~raise
     (fun lst ->
       let tv =
         let tys = List.map
           ~f:(fun (ann,(e:O.expression)) -> ann, e.type_expression) lst 
         in
-        O.t_tuple ~loc:Location.generated tys
+        O.t_tuple ~loc:Location.generated ~source_type tys
       in
       return ~tv @@ O.E_tuple (List.map ~f:snd lst))
 
