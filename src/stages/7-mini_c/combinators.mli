@@ -79,11 +79,16 @@ val t_pair
 
 val t_union
   :  ?loc:Location.t
+  -> source_type:Ast_typed.type_expression option
   -> type_expression annotated
   -> type_expression annotated
   -> type_expression
 
-val t_tuple : ?loc:Location.t -> type_expression annotated list -> type_expression
+val t_tuple :
+  ?loc:Location.t ->
+  source_type:Ast_typed.type_expression option ->
+  type_expression annotated list ->
+  type_expression
 
 (*
 val quote : string -> type_expression -> type_expression -> Expression.t -> anon_function
