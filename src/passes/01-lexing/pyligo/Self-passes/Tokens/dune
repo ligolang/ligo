@@ -1,7 +1,7 @@
 ;; Build of the self passes on the tokens of PyLIGO
 
 (library
- (name lexing_pyligo_self_tokens)
+ (name lx_py_self_tokens)
  (public_name ligo.lexing.pyligo.self.tokens)
  (instrumentation
   (backend bisect_ppx))
@@ -11,7 +11,7 @@
   LexerLib
   ;; LIGO
   lexing_shared
-  menhir_pyligo_tokens)
+  mh_py_tokens)
  (modules Token Self))
 
 ;; --------------------------------------------------------------------
@@ -33,8 +33,8 @@
    MenhirToken)))
 
 (library
- (name menhir_pyligo_tokens)
- (public_name ligo.lexing.menhir_pyligo_tokens)
+ (name mh_py_tokens)
+ (public_name ligo.lexing.mh_py_tokens)
  (modules MenhirToken)
  (libraries
   ;; LIGO
