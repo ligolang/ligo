@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, UndecidableInstances #-}
+{-# LANGUAGE DeriveDataTypeable, NumDecimals, UndecidableInstances #-}
 
 -- | Ligo Value representation from
 -- https://ligolang.org/assets/files/values.schema-11c1c8c46fa17d8c9eae1cf28c49a307.json
@@ -16,8 +16,10 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Char (toUpper)
 import Data.Data (Data)
+import Data.Fixed (Fixed (MkFixed))
 import Data.HashMap.Strict qualified as HM
 import Data.Text qualified as T
+import Data.Time (nominalDiffTimeToSeconds)
 import Data.Time.Clock.System (SystemTime (MkSystemTime), systemToUTCTime)
 import Data.Time.Format.ISO8601 (iso8601Show)
 import Fmt (Buildable (build), Builder, hexF, pretty)
@@ -33,6 +35,10 @@ import Cli.Json qualified as Cli
 
 import Morley.Debugger.Core (DebugPrint (DebugPrint), DebugPrintMode (..))
 import Morley.Michelson.Typed (Constrained (SomeValue), SomeValue)
+import Morley.Michelson.Typed qualified as T
+import Morley.Michelson.Untyped qualified as U
+import Morley.Tezos.Core qualified as T
+import Morley.Tezos.Crypto.BLS12381 (toMichelsonBytes)
 
 import Language.LIGO.Debugger.CLI.Types
 
@@ -114,15 +120,20 @@ data LigoConstant
   | LCKeyHash Text
   | LCKey Text
   | LCSignature Text
-  | LCBls12_381G1 Text
-  | LCBls12_381G2 Text
-  | LCBls12_381Fr Text
+  | LCBls LigoBLS12381
   | LCChainId Text
   | LCInt Text
   | LCInt64 Integer
   | LCMutez Text
   | LCBool Bool
   | LCUnit
+  deriving stock (Generic, Show, Eq, Data)
+  deriving anyclass (NFData)
+
+data LigoBLS12381
+  = LBls12381G1 ByteString
+  | LBls12381G2 ByteString
+  | LBls12381Fr ByteString
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
@@ -177,6 +188,62 @@ getRecordOrderMb ligoType = \case
     pure $ fst <$> sortBy (comparing snd) valsAndNums
   _ -> Nothing
 
+-- | Tries to decompile @Michelson@ primitive into LIGO value.
+-- On fail returns value packed into @MichValue@.
+tryDecompilePrimitive :: LigoType -> SomeValue -> LigoOrMichValue
+tryDecompilePrimitive typ sVal@(SomeValue val) = case val of
+  T.VKey pk -> mkConstant (LCKey $ pretty pk)
+  T.VUnit -> mkConstant LCUnit
+  T.VSignature sig -> mkConstant (LCSignature $ pretty sig)
+  T.VChainId chainId -> mkConstant (LCChainId $ decodeUtf8 $ T.unChainId chainId)
+  T.VContract addr (T.SomeEpc T.EntrypointCall{..}) ->
+    mkConstant
+      (LCContract $ LigoContract (pretty addr)
+      (guard (not $ U.isDefEpName epcName) >> pure (pretty epcName)))
+  T.VInt n -> mkConstant (LCInt $ pretty n)
+  T.VNat n -> mkConstant (LCNat $ pretty n)
+  T.VString str -> mkConstant (LCString $ pretty str)
+  T.VBytes bts -> mkConstant (LCBytes $ decodeUtf8 bts)
+  T.VMutez mu -> mkConstant (LCMutez $ show $ T.unMutez mu)
+  T.VBool bVal -> mkConstant (LCBool bVal)
+  T.VKeyHash ha -> mkConstant (LCKeyHash $ pretty ha)
+  T.VTimestamp (T.Timestamp (nominalDiffTimeToSeconds -> (MkFixed time))) ->
+     mkConstant (LCTimestamp $ pretty (time `div` 1e12))
+  T.VAddress T.EpAddress'{..} ->
+    mkConstant
+      (LCContract $ LigoContract (pretty eaAddress)
+      (guard (not $ U.isDefEpName eaEntrypoint) >> pure (pretty eaEntrypoint)))
+  T.VBls12381Fr bls -> mkConstant (LCBls $ LBls12381Fr $ toMichelsonBytes bls)
+  T.VBls12381G1 bls -> mkConstant (LCBls $ LBls12381G1 $ toMichelsonBytes bls)
+  T.VBls12381G2 bls -> mkConstant (LCBls $ LBls12381G2 $ toMichelsonBytes bls)
+  _ -> MichValue sVal
+  where
+    mkConstant :: LigoConstant -> LigoOrMichValue
+    mkConstant = LigoValue typ . LVCt
+
+-- | Tells could be @Michelson@ value decompiled
+-- on ours side.
+isPrimitive :: SomeValue -> Bool
+isPrimitive (SomeValue val) = case val of
+  T.VKey{} -> True
+  T.VUnit -> True
+  T.VSignature{} -> True
+  T.VChainId{} -> True
+  T.VContract{} -> True
+  T.VInt{} -> True
+  T.VNat{} -> True
+  T.VString{} -> True
+  T.VBytes{} -> True
+  T.VMutez{} -> True
+  T.VBool{} -> True
+  T.VKeyHash{} -> True
+  T.VTimestamp{} -> True
+  T.VAddress{} -> True
+  T.VBls12381Fr{} -> True
+  T.VBls12381G1{} -> True
+  T.VBls12381G2{} -> True
+  _ -> False
+
 -----------------
 --- Instances ---
 -----------------
@@ -212,6 +279,9 @@ instance FromJSON LigoMutFlag where
 -- The second one @drop 1@ removes an underscore. This is because
 -- @toSnakeCase@ function adds an underscore if string starts with a capital letter
 -- (e.g. SomeCtor -> _some_ctor).
+
+instance FromJSON LigoBLS12381 where
+  parseJSON = const empty
 
 instance FromJSON LigoConstant where
   parseJSON val = twoElemParser val <|> (LCUnit <$ guardOneElemList "unit" val)
@@ -347,8 +417,8 @@ buildConstant' lang mode = \case
   LCNat n -> [int||#{n}n|]
   LCTimestamp timestamp -> case (mode, lang) of
     (DpmNormal, _) -> [int||timestamp(#{buildTimestamp timestamp})|]
-    (DpmEvaluated, Caml) -> [int||(#{buildTimestamp timestamp} : timestamp)|]
-    (DpmEvaluated, Js) -> [int||(#{buildTimestamp timestamp} as timestamp)|]
+    (DpmEvaluated, Caml) -> [int||("#{buildTimestamp timestamp}" : timestamp)|]
+    (DpmEvaluated, Js) -> [int||("#{buildTimestamp timestamp}" as timestamp)|]
   LCKeyHash keyHash -> build keyHash
   LCKey key -> case (mode, lang) of
     (DpmNormal, _) -> build key
@@ -358,9 +428,9 @@ buildConstant' lang mode = \case
     (DpmNormal, _) -> build sign
     (DpmEvaluated, Caml) -> [int||("#{sign}" : signature)|]
     (DpmEvaluated, Js) -> [int||("#{sign}" as signature)|]
-  LCBls12_381G1 bts -> [int||0x#{buildBytes bts}|]
-  LCBls12_381G2 bts -> [int||0x#{buildBytes bts}|]
-  LCBls12_381Fr bts -> [int||0x#{buildBytes bts}|]
+  LCBls (LBls12381G1 bts) -> [int||0x#{hexF bts}|]
+  LCBls (LBls12381G2 bts) -> [int||0x#{hexF bts}|]
+  LCBls (LBls12381Fr bts) -> [int||0x#{hexF bts}|]
   LCChainId bts -> buildChainId bts
   LCInt n -> build n
   LCInt64 n -> build n
@@ -390,4 +460,6 @@ buildConstant :: LigoConstant -> Builder
 buildConstant = buildConstant' Caml DpmNormal
 
 instance Buildable LigoContract where
-  build LigoContract{..} = [int||#{lcAddress}(#{lcEntrypoint})|]
+  build LigoContract{..} = [int||#{lcAddress}#{ep}|]
+    where
+      ep = maybe ("" :: Builder) [int|m|(#{id})|] lcEntrypoint

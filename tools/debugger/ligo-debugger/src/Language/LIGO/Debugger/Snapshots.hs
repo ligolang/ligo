@@ -554,7 +554,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       decompiledValues <- natTransform $ decompileLigoValues typesAndValues
       let values =
             zipWith3
-              do \t dec michValue -> maybe (MichValue michValue) (LigoValue t) dec
+              do \t dec michValue -> maybe (tryDecompilePrimitive t michValue) (LigoValue t) dec
               ligoTypes
               decompiledValues
               refinedStack
