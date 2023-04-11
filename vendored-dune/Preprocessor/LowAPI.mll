@@ -74,7 +74,7 @@ module Make (Config : Config.S) (Options : Options.S) =
       let path =
         if String.(dir = "." || dir = "") then file
         else dir ^ "/" ^ file in
-      match Caml.Sys.file_exists path with
+      let path = match Caml.Sys.file_exists path with
       | true -> Some path
       | false ->
           match find_in_cli_paths file Options.dirs with
@@ -88,6 +88,10 @@ module Make (Config : Config.S) (Options : Options.S) =
                      match Caml.Sys.file_exists file with
                      | true -> file_opt
                      | false -> None
+      in
+      match path with
+      | None -> None
+      | Some p -> Some (Fpath.v p |> Fpath.normalize |> Fpath.to_string)
 
     (* STRING PROCESSING *)
 

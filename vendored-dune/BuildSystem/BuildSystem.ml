@@ -122,7 +122,7 @@ module Make (M : M) =
       | None -> failwith "failed to find module"
     in
     (* Add all dependency at the beginning of the file *)
-    let add_modules dep_types (file_name,(mangled_name,_,_, _deps_lst)) =
+    let add_modules (file_name,(mangled_name,_,_, _deps_lst)) =
       let module_binder = mangled_name in
       (* Get the ast_type of the module *)
       let ast_typed =
@@ -130,9 +130,9 @@ module Make (M : M) =
           Some ast -> ast
         | None -> failwith "failed to find module"
       in
-      (dep_types,(M.AST.make_module_declaration module_binder ast_typed))
+      M.AST.make_module_declaration module_binder ast_typed
     in
-    let _,header_list = List.fold_map_right ~f:add_modules ~init:(SMap.empty) @@ order_deps in
+    let header_list = List.map ~f:add_modules @@ order_deps in
     let aggregated = List.fold_left ~f:(fun c a ->  a::c) ~init:contract header_list in
     aggregated
 
