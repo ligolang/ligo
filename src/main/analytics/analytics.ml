@@ -45,7 +45,8 @@ let is_skip_analytics_through_env_var =
   match Sys.getenv "LIGO_SKIP_ANALYTICS" with
   | Some _v -> true
   | None -> false
-  
+
+
 let get_home =
   match Sys.getenv "HOME" with
   | Some v -> v
@@ -100,8 +101,9 @@ let acceptance_condition_common =
   ^ line_separator
   ^ line_separator
   ^ "Ligo only collect data necessary to improve its services and stores it in \
-     anonymized manner. Collected data can be shared through our communication channel.Data \
-     collected can be stored for up to 5 years. If you want to delete any collected \n\
+     anonymized manner. Collected data can be shared through our communication \
+     channel.Data collected can be stored for up to 5 years. If you want to delete any \
+     collected \n\
     \     data, please contact us through one of our channel, such as \
      https://discord.com/invite/9rhYaEt."
 
@@ -113,14 +115,20 @@ let acceptance_condition =
   ^
   match env with
   | Docker_non_interactive ->
-    "When running Ligo through Docker, which is non-interactive, the terms will be automatically accepted. However, it is still possible to use 'ligo analytics refuse' to refuse the terms after the execution. The result is stored in ' "
+    "When running Ligo through Docker, which is non-interactive, the terms will be \
+     automatically accepted. However, it is still possible to use 'ligo analytics \
+     refuse' to refuse the terms after the execution. The result is stored in ' "
     ^ term_acceptance_filepath
-    ^ "'. If you share this file with another person using Docker, you will also be sharing the policy. To avoid this, add '.ligo/term_acceptance' to your '.gitignore' file."
+    ^ "'. If you share this file with another person using Docker, you will also be \
+       sharing the policy. To avoid this, add '.ligo/term_acceptance' to your \
+       '.gitignore' file."
   | _ ->
     "Your response will be stored in "
     ^ term_acceptance_filepath
     ^ line_separator
-    ^ " To avoid seeing this message during CI, use the --skip-analytics flag. Alternatively, set the LIGO_SKIP_ANALYTICS environment variable to true. If your CI uses a Docker image, we recommend using the ligolang/ligo_ci image"
+    ^ " To avoid seeing this message during CI, use the --skip-analytics flag. \
+       Alternatively, set the LIGO_SKIP_ANALYTICS environment variable to true. If your \
+       CI uses a Docker image, we recommend using the ligolang/ligo_ci image"
     ^ line_separator
     ^ " . If your change your mind, use the command `ligo analytics accept` or `ligo \
        analytics deny`."
@@ -208,6 +216,7 @@ let store str filepath =
   | Error msg -> Rresult.R.pp_msg Format.err_formatter msg
   | _ -> ()
 
+
 let get_or_create_id id_store_filepath =
   if check_id_presence id_store_filepath
   then read_file id_store_filepath
@@ -234,6 +243,19 @@ let is_term_accepted () =
   if String.equal term_acceptance "accepted" then true else false
 
 
+let is_in_docker =
+  match env with
+  | Docker_non_interactive -> true
+  | Docker_interactive -> true
+  | _ -> false
+
+
+let is_dev_version =
+  (String.is_prefix Version.version ~prefix:"Rolling release"
+  || String.is_empty Version.version)
+  && not is_in_docker
+
+
 let rec accept () =
   match In_channel.input_line In_channel.stdin with
   | Some v ->
@@ -248,7 +270,11 @@ let rec accept () =
 
 
 let propose_term_acceptation ~skip_analytics =
-  if skip_analytics || is_term_already_proposed () || is_in_ci
+  if skip_analytics
+     || is_skip_analytics_through_env_var
+     || is_term_already_proposed ()
+     || is_in_ci
+     || is_dev_version
   then ()
   else (
     Format.eprintf "%s\n%!" acceptance_condition;
@@ -281,13 +307,19 @@ let set ~gauge_group ~labels ~value =
 let inc ~counter_group ~labels ~value =
   let user_id = get_user_id () in
   let repository_id = get_repository_id () in
-  let counter = Counter.labels counter_group (user_id :: repository_id :: Version.version :: labels) in
+  let counter =
+    Counter.labels counter_group (user_id :: repository_id :: Version.version :: labels)
+  in
   Counter.inc counter value;
   ()
 
 
 let push_collected_metrics ~skip_analytics =
-  if skip_analytics || (not (is_term_accepted ())) || is_in_ci || is_skip_analytics_through_env_var
+  if skip_analytics
+     || (not (is_term_accepted ()))
+     || is_in_ci
+     || is_skip_analytics_through_env_var
+     || is_dev_version
   then ()
   else (
     let p_1 () =
@@ -359,6 +391,7 @@ let get_family_by_group
   | Counter_cli_transpile _ -> `Ctr counter_cli_transpilation_group
   | Counter_cli_init _ -> `Ctr counter_cli_init_group
   | Gauge_compilation_size _ -> `Gauge gauge_compilation_size_group
+
 
 let get_labels_from_group : metric_group -> string list = function
   | Counter_cli_execution { command } -> [ command ]
