@@ -128,6 +128,8 @@ You can change the stepping granularity with a button at the lower panel:
 
 which is useful for evaluating complex expressions step-by-step.
 
+Use `Ctrl + F10` (`Cmd + F10` on Mac) to switch between the last and currently selected granularities.
+
 ## FAQ
 
 ### I've set `"entrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.

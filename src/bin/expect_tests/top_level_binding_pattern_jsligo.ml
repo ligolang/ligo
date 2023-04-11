@@ -50,12 +50,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "jsligo/nested_tuple.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/top_level_patterns/negative/jsligo/nested_tuple.jsligo", line 2, characters 6-48:
+    File "../../test/contracts/top_level_patterns/negative/jsligo/nested_tuple.jsligo", line 2, characters 26-28:
       1 | const r = [[1 as nat, 1, "H"], [2 as nat, 2, "E"], [3 as nat, 3, "Hello"]]
       2 | const [[a1, a2, a3], [b1, a2, b3], [c1, c2, c3]] = r
 
-    Repeated variable in pattern.
-    Hint: Change the name. |}]
+    Duplicate identifier. |}]
 
 (* let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "jsligo/record.jsligo" ] ;
@@ -66,12 +65,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "jsligo/tuple.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/top_level_patterns/negative/jsligo/tuple.jsligo", line 2, characters 6-15:
+    File "../../test/contracts/top_level_patterns/negative/jsligo/tuple.jsligo", line 2, characters 10-11:
       1 | const r = [1 as nat, 1, "Hello"]
       2 | const [a, a, c] = r
 
-    Repeated variable in pattern.
-    Hint: Change the name. |}]
+    Duplicate identifier. |}]
 
 (* let%expect_test _ =
   run_ligo_bad [ "compile" ; "contract" ; contract "jsligo/record_tuple.jsligo" ] ;

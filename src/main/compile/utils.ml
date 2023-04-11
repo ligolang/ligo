@@ -1,46 +1,41 @@
 module Trace = Simple_utils.Trace
 
-let to_imperative
+let to_unified
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
-    ~(options : Compiler_options.t)
     ~meta
     (c_unit : Buffer.t)
     file_path
   =
-  (* let () = ignore options in *)
-  let transpiled = options.frontend.transpiled in
-  let imperative = Of_c_unit.compile ~raise ~meta ~transpiled c_unit file_path in
-  imperative
+  Of_c_unit.compile ~raise ~meta c_unit file_path
 
 
 let to_core ~raise ~options ~meta (c_unit : Buffer.t) file_path =
-  let imperative = to_imperative ~raise ~options ~meta c_unit file_path in
-  let core = Of_imperative.compile ~raise imperative in
-  core
+  let unified = to_unified ~raise ~meta c_unit file_path in
+  Of_unified.compile ~raise ~options unified
 
 
 let type_file ~raise ~(options : Compiler_options.t) ?cform f stx : Ast_typed.program =
   let meta = Of_source.extract_meta stx in
   let c_unit, _ = Of_source.preprocess_file ~raise ~options:options.frontend ~meta f in
   let core = to_core ~raise ~options ~meta c_unit f in
-  let typed = Of_core.typecheck ~raise ~options ?cform core in
-  typed
+  Of_core.typecheck ~raise ~options ?cform core
 
 
-let core_expression_string ~raise syntax expression =
+let core_expression_string ~raise ~options syntax expression =
   let meta = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _ = Of_source.compile_string_without_preproc expression in
-  let imperative_exp = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
-  Of_imperative.compile_expression ~raise imperative_exp
+  let unified = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
+  Of_unified.compile_expression ~raise ~options unified
 
 
 let type_expression_string ~raise ~options syntax expression init_prog =
-  let core_exp = core_expression_string ~raise syntax expression in
+  let core_exp = core_expression_string ~raise ~options syntax expression in
   Of_core.compile_expression ~raise ~options ~init_prog core_exp
 
 
 let core_program_string ~raise ~options syntax expression =
   let meta = Of_source.make_meta_from_syntax syntax in
+  let options = Compiler_options.set_syntax options (Some syntax) in
   let c_unit, _ =
     Of_source.preprocess_string
       ~raise
@@ -48,9 +43,8 @@ let core_program_string ~raise ~options syntax expression =
       ~meta
       expression
   in
-  let imperative = Of_c_unit.compile_string ~raise ~meta c_unit in
-  let typed = Of_imperative.compile ~raise imperative in
-  typed
+  let unified = Of_c_unit.compile_string ~raise ~meta c_unit in
+  Of_unified.compile ~raise ~options unified
 
 
 let type_program_string ~raise ~options syntax expression =
@@ -69,8 +63,8 @@ let type_expression ~raise ~options ?annotation syntax expression init_prog =
       ~meta
       expression
   in
-  let imperative_exp = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
-  let core_exp = Of_imperative.compile_expression ~raise imperative_exp in
+  let unified = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
+  let core_exp = Of_unified.compile_expression ~raise ~options unified in
   let core_exp =
     match annotation with
     | None -> core_exp
@@ -85,8 +79,8 @@ let compile_contract_input ~raise ~options parameter storage syntax init_prog =
   let (parameter, _), (storage, _) =
     Of_source.compile_contract_input ~raise ~options ~meta parameter storage
   in
-  let imperative = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
-  let core = Of_imperative.compile_expression ~raise imperative in
+  let unified = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
+  let core = Of_unified.compile_expression ~raise ~options unified in
   let typed = Of_core.compile_expression ~raise ~options ~init_prog core in
   let aggregated =
     Of_typed.compile_expression_in_context

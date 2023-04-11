@@ -1,0 +1,6 @@
+(library
+ (name prometheus_format)
+ (public_name prometheus_format)
+ (flags
+  (:standard -warn-error "-unused-value-declaration"))
+ (libraries prometheus lwt re fmt))

@@ -26,18 +26,16 @@ let get_prepare_rename_test
   match result with
   | None ->
     if can_rename
-    then Alcotest.fail @@ error_prefix ^ "Cannot prepare rename for this reference."
+    then fail @@ error_prefix ^ "Cannot prepare rename for this reference."
     else ()
   | Some actual_range ->
     if can_rename
     then
       if Utils.is_position_in_range reference actual_range
       then ()
-      else Alcotest.fail @@ error_prefix ^ "Reference is not contained within the range."
+      else fail @@ error_prefix ^ "Reference is not contained within the range."
     else
-      Alcotest.fail
-      @@ error_prefix
-      ^ "Should not be able to rename this identifier, but we can."
+      fail @@ error_prefix ^ "Should not be able to rename this identifier, but we can."
 
 
 let test_cases =

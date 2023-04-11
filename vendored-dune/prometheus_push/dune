@@ -1,0 +1,13 @@
+(library
+ (name prometheus_push)
+ (public_name prometheus_push)
+ (flags
+  (:standard -warn-error "-unused-value-declaration"))
+ (libraries
+  cohttp-lwt
+  cohttp-lwt-unix
+  prometheus
+  prometheus_format
+  lwt
+  re
+  fmt))

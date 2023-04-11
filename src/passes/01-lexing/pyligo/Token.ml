@@ -1,1 +1,1 @@
-include Lexing_pyligo_self_tokens.Token
+include Lx_py_self_tokens.Token

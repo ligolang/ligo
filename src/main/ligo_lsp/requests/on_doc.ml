@@ -24,12 +24,12 @@ let on_doc : DocumentUri.t -> string -> unit Handler.t =
       ^ DocumentUri.to_path uri
     | Some s -> return s
   in
-  let new_state = Ligo_interface.get_scope uri contents in
+  let@ { deprecated; max_number_of_problems; _ } = ask_config in
+  let new_state = Ligo_interface.get_scope ~deprecated uri contents in
   Hashtbl.replace
     get_scope_buffers
     uri
     { get_scope_info = new_state; syntax; code = contents };
-  let@ { max_number_of_problems; _ } = ask_config in
   let deprecation_warnings =
     match syntax with
     | PascaLIGO ->

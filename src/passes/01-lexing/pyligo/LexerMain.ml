@@ -5,8 +5,8 @@
 module Config         = Preprocessing_pyligo.Config
 module PreprocParams  = Preprocessor.CLI.Make (Config)
 module Token          = Lexing_pyligo.Token
-module UnitPasses     = Lexing_pyligo_self_units.Self
-module TokenPasses    = Lexing_pyligo_self_tokens.Self
+module UnitPasses     = Lx_py_self_units.Self
+module TokenPasses    = Lx_py_self_tokens.Self
 
 (* Vendors dependencies *)
 

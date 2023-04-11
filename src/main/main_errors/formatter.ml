@@ -128,6 +128,12 @@ let rec error_ppformat
          supported.@]"
         src_syntax
         dst_syntax
+    | `Main_transpilation_unspecified_dest_syntax ->
+      Format.fprintf
+        f
+        "@[<hv>Transpilation target syntax is not specified.@.\
+         Please provide it using the --to-syntax option@.\
+         or by specifying an output file with the -o option @]"
     | `Main_transpilation_same_source_and_dest_syntax syntax ->
       Format.fprintf
         f
@@ -178,7 +184,7 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-        (Memory_proto_pre_alpha.Client.Michelson_v1_error_reporter.report_errors
+        (Memory_proto_alpha.Client.Michelson_v1_error_reporter.report_errors
            ~details:true
            ~show_source:true
            ?parsed:None)
@@ -355,23 +361,10 @@ let rec error_ppformat
         errs
     | `Preproc_tracer e ->
       Preprocessing.Errors.error_ppformat ~display_format ~no_colour f e
-    | `Parser_tracer e -> Parsing.Errors.error_ppformat ~no_colour ~display_format f e
+    | `Parser_tracer e -> Parsing.Errors.error_ppformat ~display_format ~no_colour f e
+    | `Nanopasses_tracer e ->
+      Nanopasses.Errors.error_ppformat ~display_format ~no_colour f e
     | `Pretty_tracer _e -> () (*no error in this pass*)
-    | `Cit_cameligo_tracer e ->
-      List.iter
-        ~f:(Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format ~no_colour f)
-        e
-    | `Cit_jsligo_tracer e ->
-      List.iter
-        ~f:(Tree_abstraction.Jsligo.Errors.error_ppformat ~display_format ~no_colour f)
-        e
-    | `Cit_pascaligo_tracer e ->
-      List.iter
-        ~f:(Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format ~no_colour f)
-        e
-    | `Self_ast_imperative_tracer e ->
-      Self_ast_imperative.Errors.error_ppformat ~display_format ~no_colour f e
-    | `Desugaring_tracer e -> Desugaring.Errors.error_ppformat ~display_format f e
     | `Checking_tracer e -> Checking.Errors.error_ppformat ~display_format ~no_colour f e
     | `Self_ast_typed_tracer e ->
       Self_ast_typed.Errors.error_ppformat ~display_format ~no_colour f e
@@ -605,6 +598,9 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_transpilation_unsupported_syntaxes _ ->
     let content = make_content ~message:"Unsupported syntaxes for transpilation" () in
     [ make ~stage:"command line interpreter" ~content ]
+  | `Main_transpilation_unspecified_dest_syntax ->
+    let content = make_content ~message:"Unspecified transpilation target syntax" () in
+    [ make ~stage:"command line interpreter" ~content ]
   | `Main_transpilation_same_source_and_dest_syntax _ ->
     let content =
       make_content
@@ -713,14 +709,10 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
     [ make ~stage:"top-level glue" ~content ]
   | `Preproc_tracer e -> [ Preprocessing.Errors.error_json e ]
   | `Parser_tracer e -> [ Parsing.Errors.error_json e ]
+  | `Nanopasses_tracer e -> [ Nanopasses.Errors.error_json e ]
   | `Pretty_tracer _ ->
     let content = make_content ~message:"Pretty printing tracer" () in
     [ make ~stage:"pretty" ~content ]
-  | `Cit_cameligo_tracer e -> List.map ~f:Tree_abstraction.Cameligo.Errors.error_json e
-  | `Cit_jsligo_tracer e -> List.map ~f:Tree_abstraction.Jsligo.Errors.error_json e
-  | `Cit_pascaligo_tracer e -> List.map ~f:Tree_abstraction.Pascaligo.Errors.error_json e
-  | `Self_ast_imperative_tracer e -> [ Self_ast_imperative.Errors.error_json e ]
-  | `Desugaring_tracer e -> [ Desugaring.Errors.error_json e ]
   | `Checking_tracer e -> [ Checking.Errors.error_json e ]
   | `Self_ast_typed_tracer e -> [ Self_ast_typed.Errors.error_json e ]
   | `Aggregation_tracer e -> [ Aggregation.Errors.error_json e ]

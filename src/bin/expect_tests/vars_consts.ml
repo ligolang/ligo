@@ -72,10 +72,7 @@ let%expect_test _ =
       3 |     function bar(const _ : unit) : int is x;
       4 |   } with bar
 
-    Invalid capture of non-constant variable "x", declared at
-    File "../../test/contracts/negative/vars_consts/capture_var_param.ligo", line 1, characters 17-18:
-      1 | function foo(var x : int) : int is
-      2 |   { |}]
+    Invalid capture of mutable variable "x" |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "capture_var_params.ligo" ];

@@ -41,6 +41,30 @@ let position_equal : Position.t -> Position.t -> bool =
  fun p1 p2 -> p1.line = p2.line && p1.character = p2.character
 
 
+let position_leq (p1 : Position.t) (p2 : Position.t) : bool =
+  p1.line < p2.line || (p1.line = p2.line && p1.character <= p2.character)
+
+
+(** Is the [small] range contained in the [big] one? *)
+let range_inside ~(big : Range.t) ~(small : Range.t) : bool =
+  position_leq big.start small.start && position_leq small.end_ big.end_
+
+(** Minimal range that contains both given ranges *)
+let range_cover (r1 : Range.t) (r2 : Range.t) : Range.t =
+  let position_max (p1 : Position.t) (p2 : Position.t) : Position.t =
+    if position_leq p1 p2 then p2 else p1
+  in
+  let position_min (p1 : Position.t) (p2 : Position.t) : Position.t =
+    if position_leq p1 p2 then p1 else p2
+  in
+  Range.create
+    ~start:(position_min r1.start r2.start)
+    ~end_:(position_max r1.end_ r2.end_)
+
+(** Minimal range that contains all given ranges *)
+let range_cover_nseq (ranges : Range.t Simple_utils.Utils.nseq) : Range.t =
+  let (h,t) = ranges in List.fold ~f:range_cover ~init:h t
+
 let location_to_range (l : Loc.t) : Range.t option =
   match l with
   | Virtual _ -> None
@@ -149,7 +173,14 @@ let pp_type_expression
     | `Core cte -> cte
     | `Typed tte -> Checking.untype_type_expression tte
   in
-  try Desugaring.Decompiler.decompile_type_expression_to_string ~syntax cte with
+  let ty_expr_to_string =
+    let raise = Simple_utils.Trace.raise_failwith "LSP" in
+    let open Simple_utils.Function in
+    Buffer.contents
+    <@ Decompile.Helpers.specialise_and_print_ty syntax
+    <@ Decompile.Of_core.decompile_ty_expr ~raise ~syntax
+  in
+  try ty_expr_to_string cte with
   | _ ->
     (match te with
     | `Core cte -> Format.asprintf "%a" Ast_core.PP.type_expression cte

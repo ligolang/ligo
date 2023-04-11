@@ -27,7 +27,7 @@ let t2 = (x: myt, y: myt): int => {
           Cons: (_: [int, int]) => a + b
         })
       };
-      let b = b_fn(a, b);
+      b = b_fn(a, b);
       return a + b + old_b;
     }
   })

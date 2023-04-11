@@ -4,6 +4,8 @@ module LigoIgnore = Ligo_ignore
 module RepositoryUrl = Repository_url
 module Constants = Constants
 module Semver = LigoManifest.Semver
+module Trace = Simple_utils.Trace
+module Display = Simple_utils.Display
 
 let find_project_root () =
   let pwd = Caml.Sys.getcwd in
@@ -53,13 +55,67 @@ type return =
   | Compileur_Error
   | Exception of exn
 
-let return_result
+let return_with_custom_formatter ~cli_analytics ~skip_analytics
     :  return:return ref -> ?show_warnings:bool -> ?output_file:string
     -> (unit -> ('value, _) result) -> unit
   =
  fun ~return ?(show_warnings = false) ?output_file f ->
-  try
-    match f () with
+  Analytics.propose_term_acceptation ~skip_analytics;
+  let _ =
+    try
+      match f () with
+      | Ok (v, w) ->
+        return := Done;
+        return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
+      | Error (e, w) ->
+        return := Compileur_Error;
+        return_with_warn ~show_warnings w (fun () -> return_bad e)
+    with
+    | exn -> return := Exception exn
+  in
+  Analytics.edit_metrics_values cli_analytics;
+  match !return with
+  | Done -> Analytics.push_collected_metrics ~skip_analytics
+  | Compileur_Error -> ()
+  | Exception e ->
+    let _e = Format.asprintf "exception %a" Exn.pp e in
+    ()
+
+
+let return_result ~cli_analytics ~skip_analytics
+    :  return:return ref -> ?show_warnings:bool -> ?output_file:string -> display_format:_
+    -> no_colour:bool -> warning_as_error:bool
+    -> 'value Display.format
+       * (raise:(Main_errors.all, Main_warnings.all) Trace.raise
+          -> 'value * Analytics.analytics_inputs)
+    -> unit
+  =
+ fun ~return
+     ?(show_warnings = false)
+     ?output_file
+     ~display_format
+     ~no_colour
+     ~warning_as_error
+     (value_format, f) ->
+  Analytics.propose_term_acceptation ~skip_analytics;
+  let _unit = try
+    let result = Trace.to_stdlib_result f in
+    let value, analytics =
+      match result with
+      | Ok ((v, analytics), _w) -> Ok v, analytics
+      | Error (e, _w) -> Error e, []
+    in
+    let format = Display.bind_format value_format Main_errors.Formatter.error_format in
+    let formatted_result () =
+      Ligo_api.Api_helpers.toplevel
+        ~warning_as_error
+        ~display_format
+        ~no_colour
+        (Displayable { value; format })
+        result
+    in
+    Analytics.edit_metrics_values (List.append cli_analytics analytics);
+    match formatted_result () with
     | Ok (v, w) ->
       return := Done;
       return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
@@ -67,7 +123,14 @@ let return_result
       return := Compileur_Error;
       return_with_warn ~show_warnings w (fun () -> return_bad e)
   with
-  | exn -> return := Exception exn
+  | exn ->
+    return := Exception exn
+  in
+    (* Push analytics *)
+    (match !return with
+    | Done -> Analytics.push_collected_metrics ~skip_analytics
+    | Compileur_Error -> ()
+    | Exception _ -> ())
 
 
 type command = string * string array

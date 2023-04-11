@@ -41,24 +41,3 @@ let toplevel
     match value with
     | Ok _ -> Ok (as_str, warns_str)
     | Error _ -> Error (as_str, warns_str))
-
-
-let format_result
-    :  ?warning_as_error:bool -> display_format:ex_display_format -> no_colour:bool
-    -> 'value format -> (raise:(Main_errors.all, Main_warnings.all) Trace.raise -> 'value)
-    -> _
-  =
- fun ?(warning_as_error = false) ~display_format ~no_colour value_format value ->
-  let format = bind_format value_format Main_errors.Formatter.error_format in
-  let res = Trace.to_stdlib_result @@ value in
-  let value =
-    match res with
-    | Ok (v, _w) -> Ok v
-    | Error (e, _w) -> Error e
-  in
-  toplevel
-    ~warning_as_error
-    ~display_format
-    ~no_colour
-    (Displayable { value; format })
-    res

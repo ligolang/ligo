@@ -1,5 +1,5 @@
 module T = struct
-  type t = Label of string [@@deriving eq, yojson, hash, sexp]
+  type t = Label of string [@@deriving eq, yojson, hash, sexp, iter, sexp]
 
   (* hack to order tuples correctly (tuples are currently encoded as
      records with field names equal to int_of_string of the
@@ -77,6 +77,7 @@ let range i j = List.map ~f:(fun i -> Label (string_of_int i)) @@ List.range i j
 let of_string str = Label str
 let to_string (Label str) = str
 let of_int i = string_of_int i |> of_string
+let of_z i = Z.to_string i |> of_string
 
 module Assoc = struct
   type 'a assoc = (t * 'a) list [@@deriving eq, compare, yojson, hash]

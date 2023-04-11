@@ -1,0 +1,20 @@
+opam-version: "2.0"
+version: "0.1.0"
+synopsis: "OCaml library to pushing metrics to Prometheus"
+maintainer: "laurent@marigold.dev"
+authors: "Name laurent@marigold.dev"
+homepage: "https://github.com/Laucans/prometheus-push"
+bug-reports: "https://github.com/Laucans/prometheus-push/issues"
+depends: [
+  "ocaml" {>= "4.14.0"}
+  "dune" {>= "2.7"}
+  "lwt" {>= "2.5.0"}
+  "prometheus" {>= "1.2"}
+  "prometheus_format" {>= "0.1.0"}
+  "cohttp-lwt" {>= "4.0.0"}
+  "cohttp-lwt-unix" {>= "4.0.0"}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]
+

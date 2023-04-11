@@ -26,15 +26,18 @@ module LexerAPI = Lexing_shared.TopAPI
 
 module type PRETTY =
   sig
+    type environment
+    val default_environment : environment
+
     type cst
     type expr
     type type_expr
     type pattern
 
-    val print           : cst       -> PPrint.document
-    val print_expr      : expr      -> PPrint.document
-    val print_type_expr : type_expr -> PPrint.document
-    val print_pattern   : pattern   -> PPrint.document
+    val print           : environment -> cst       -> PPrint.document
+    val print_expr      : environment -> expr      -> PPrint.document
+    val print_type_expr : environment -> type_expr -> PPrint.document
+    val print_pattern   : environment -> pattern   -> PPrint.document
   end
 
 (* PARSING *)
@@ -338,17 +341,17 @@ module MakePretty (CST    : CST)
         | Some c -> c
       in width, buffer
 
-    let pretty_print cst =
+    let pretty_print env cst =
       let width, buffer = set () in
-      let doc = Pretty.print cst in
+      let doc = Pretty.print env cst in
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
 
     (* Pretty-print an expression from its CST *)
 
-    let print_expr expr =
+    let print_expr env expr =
       let width, buffer = set () in
-      let doc = Pretty.print_expr expr in
+      let doc = Pretty.print_expr env expr in
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
 
@@ -356,9 +359,9 @@ module MakePretty (CST    : CST)
 
     (* Pretty-print a pattern from its CST *)
 
-    let print_pattern ?cols pattern =
+    let print_pattern ?cols env pattern =
       let width, buffer = set () in
-      let doc = Pretty.print_pattern pattern in
+      let doc = Pretty.print_pattern env pattern in
       let width = match cols with Some cols -> cols | None -> width in
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
@@ -367,9 +370,9 @@ module MakePretty (CST    : CST)
 
     (* Pretty-print a type expression from its CST *)
 
-    let print_type_expr type_expr =
+    let print_type_expr env type_expr =
       let width, buffer = set () in
-      let doc = Pretty.print_type_expr type_expr in
+      let doc = Pretty.print_type_expr env type_expr in
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
 

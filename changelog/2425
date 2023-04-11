@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\nfrontend: syntax unification and nanopasses (replacing old abstraction)\\n\\n"
+merge_request: '2425'
+title: "Nanopasses"
+type: performance
+            

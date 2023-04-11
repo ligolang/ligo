@@ -8,14 +8,12 @@
   main_errors
   simple-utils
   proto-alpha-utils
-  proto-pre-alpha-utils
   preprocessing
   parsing
   cst
-  tree_abstraction
-  ast_imperative
-  self_ast_imperative
-  desugaring
+  nanopasses
+  ast_unified
+  unification
   ast_core
   checking
   ast_typed

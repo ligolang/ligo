@@ -1,4 +1,7 @@
 {
+  "buildEnv": {
+    "PATH": "#{yarn-pkg-config.bin}:$PATH"
+  },
   "build": [
     [
       "bash",
@@ -12,6 +15,7 @@
     ]
   ],
   "dependencies": {
-    "esy-gmp": "*"
+    "esy-gmp": "*",
+    "yarn-pkg-config": "esy-ocaml/yarn-pkg-config#9293b15f9f0e3dcac6f86ebb1e09a2fa766289ba"
   }
 }

@@ -10,8 +10,8 @@ module Lexbuf = Simple_utils.Lexbuf
 
 module Config      = Preprocessing_pyligo.Config
 module Token       = Lexing_pyligo.Token
-module UnitPasses  = Lexing_pyligo_self_units.Self
-module TokenPasses = Lexing_pyligo_self_tokens.Self
+module UnitPasses  = Lx_py_self_units.Self
+module TokenPasses = Lx_py_self_tokens.Self
 module ParErr      = Parsing_pyligo.ParErr
 module Tree        = Cst_shared.Tree
 module CST         = Cst_pyligo.CST

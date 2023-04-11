@@ -5,10 +5,8 @@ type parameter = unit;
 const id = <P>(x : P) => {
     const id_1 = <Q>(y : Q) => {
         const id_2 = <R>(z : R) => {
-            let z = z;
             return z;
         };
-        let y = y;
         return id_2(y);
     }
     return id_1(x);
@@ -17,10 +15,8 @@ const id = <P>(x : P) => {
 const ident = <P>(x : P) => {
     const ident_1 = <P>(y : P) => {
         const ident_2 = <P>(z : P) => {
-            let z = z;
             return z;
         };
-        let y = y;
         return ident_2(y);
     }
     return ident_1(x);

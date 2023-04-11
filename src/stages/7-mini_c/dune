@@ -7,4 +7,4 @@
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_expect ppx_here)))

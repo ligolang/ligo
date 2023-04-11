@@ -133,8 +133,8 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
   let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - (1 as nat))) };
 
   // Update the storage with the refreshed taco_kind
-  let taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
-  return [list([]), taco_shop_storage];
+  let new_taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
+  return [list([]), new_taco_shop_storage];
 }
 ```
 
@@ -420,7 +420,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
   let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - (1 as nat))) };
 
   // Update the storage with the refreshed taco_kind
-  let taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
+  let new_taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
 
   let receiver : contract<unit> =
     match ((Tezos.get_contract_opt (ownerAddress) as option<contract<unit>>), {
@@ -431,7 +431,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
   let payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver);
   let operations : list<operation> = list([payoutOperation]);
 
-  return [operations, taco_shop_storage];
+  return [operations, new_taco_shop_storage];
 }
 ```
 

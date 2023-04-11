@@ -83,7 +83,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_ast
-   (run ligo print ast-imperative all_the_things.mligo)))
+   (run ligo print ast-core all_the_things.mligo)))
  (deps all_the_things.mligo))
 
 (rule
@@ -91,7 +91,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_ast
-   (run ligo print ast-imperative all_the_things.jsligo)))
+   (run ligo print ast-core all_the_things.jsligo)))
  (deps all_the_things.jsligo))
 
 (rule
@@ -99,7 +99,7 @@
  (action
   (with-stdout-to
    all_the_things.mligo_ast_pretty
-   (run ligo print ast-imperative all_the_things.mligo_output -s cameligo)))
+   (run ligo print ast-core all_the_things.mligo_output -s cameligo)))
  (deps all_the_things.mligo_output))
 
 (rule
@@ -107,7 +107,7 @@
  (action
   (with-stdout-to
    all_the_things.jsligo_ast_pretty
-   (run ligo print ast-imperative all_the_things.jsligo_output -s jsligo)))
+   (run ligo print ast-core all_the_things.jsligo_output -s jsligo)))
  (deps all_the_things.jsligo_output))
 
 (rule

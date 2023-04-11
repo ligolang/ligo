@@ -33,6 +33,7 @@ let%expect_test _ =
       login                      . [BETA] login to the LIGO package registry
       daemon                     . launch a long running LIGO process
       lsp                        . [BETA] launch a LIGO lsp server
+      analytics                  . Manage analytics
       version                    . print version information
       help                       . explain a given subcommand (perhaps recursively)
 
@@ -94,6 +95,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                              . if used, prints the output into the specified
                                file instead of stdout
   [--project-root PATH]      . The path to root of the project.
+  [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                               with environment variable LIGO_SKIP_ANALYTICS too
   [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
                                syntaxes are "cameligo" and "jsligo". By default,
                                the syntax is guessed from the extension (.mligo
@@ -110,9 +113,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [-m MODULE], --module      . the entry-point will be compiled from that
                                module.
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                               the LIGO environment (kathmandu ,
-                               lima). By default, the current protocol (lima)
-                               will be used
+                               the LIGO environment (lima). By default, the
+                               current protocol (lima) will be used
   [-help], -?                . print this help text and exit
 
 (core/src/command.ml.Exit_called (status 0)) |}]
@@ -162,6 +164,8 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--sender ADDRESS]         . the sender the Michelson interpreter transaction
                                    will use.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
@@ -176,9 +180,8 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -228,6 +231,8 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--sender ADDRESS]         . the sender the Michelson interpreter transaction
                                    will use.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
@@ -242,9 +247,8 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -274,14 +278,15 @@ let%expect_test _ =
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--project-root PATH]      . The path to root of the project.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -317,6 +322,8 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--sender ADDRESS]         . the sender the Michelson interpreter transaction
                                    will use.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
@@ -331,9 +338,8 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -369,6 +375,8 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--sender ADDRESS]         . the sender the Michelson interpreter transaction
                                    will use.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
@@ -379,9 +387,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -417,6 +424,8 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--sender ADDRESS]         . the sender the Michelson interpreter transaction
                                    will use.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--source ADDRESS]         . the source the Michelson interpreter transaction
                                    will use.
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
@@ -429,9 +438,8 @@ let%expect_test _ =
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point that will be compiled.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -473,14 +481,15 @@ let%expect_test _ =
       [--no-stdlib]              . disable stdlib inclusion.
       [--no-warn]                . disable warning messages
       [--project-root PATH]      . The path to root of the project.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (kathmandu ,
-                                   lima). By default, the current protocol (lima)
-                                   will be used
+                                   the LIGO environment (lima). By default, the
+                                   current protocol (lima) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -509,6 +518,8 @@ let%expect_test _ =
       [--only-ep]                . Only display declarations that have the type of
                                    an entrypoint
       [--project-root PATH]      . The path to root of the project.
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
       [--syntax SYNTAX], -s      . the syntax that will be used. Currently supported
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo

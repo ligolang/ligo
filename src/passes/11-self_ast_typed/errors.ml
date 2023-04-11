@@ -19,6 +19,8 @@ type self_ast_typed_error =
   | `Self_ast_typed_corner_case of string
   | `Self_ast_typed_bad_contract_io of Value_var.t * Ast_typed.expression * Location.t
   | `Self_ast_typed_bad_view_io of Value_var.t * Location.t
+  | `Self_ast_typed_bad_view_storage of
+    Value_var.t * Ast_typed.type_expression * Location.t
   | `Self_ast_typed_expected_list_operation of
     Value_var.t * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
@@ -160,6 +162,16 @@ let error_ppformat
         loc
         Value_var.pp
         entrypoint
+    | `Self_ast_typed_bad_view_storage (entrypoint, storage_ty, loc) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid type for view \"%a\".@.Cannot find \"%a\" as storage. @]"
+        snippet_pp
+        loc
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        storage_ty
     | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
       Format.fprintf
         f
@@ -341,6 +353,17 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
         "Invalid type for view \"%a\".@.An view must be a function."
         Value_var.pp
         entrypoint
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_typed_bad_view_storage (entrypoint, storage_ty, location) ->
+    let message =
+      Format.asprintf
+        "Invalid type for view \"%a\".@.Cannot find \"%a\" as storage."
+        Value_var.pp
+        entrypoint
+        Ast_typed.PP.type_expression
+        storage_ty
     in
     let content = make_content ~message ~location () in
     make ~stage ~content

@@ -4,14 +4,12 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
-  proto-pre-alpha-utils
   simple-utils
   BuildSystem
   preprocessing
   parsing
-  tree_abstraction
-  self_ast_imperative
-  desugaring
+  unification
+  nanopasses
   checking
   self_ast_typed
   aggregation

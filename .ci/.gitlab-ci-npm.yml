@@ -3,6 +3,8 @@ esy-windows:
   tags:
     - windows
   stage: build
+  allow_failure: true
+  needs: []
   variables:
     GIT_STRATEGY: clone
   rules:
@@ -44,6 +46,7 @@ esy-test-windows:
   tags:
     - windows
   stage: test
+  allow_failure: true
   needs:
     - job: esy-windows
       artifacts: true
@@ -68,6 +71,7 @@ esy-test-windows:
 
 publish_npm_windows_x86:
   stage: push
+  allow_failure: true
   needs:
     - job: esy-windows
       artifacts: true
@@ -97,6 +101,7 @@ esy-macos-intel:
     - mac
     - i7
   stage: build
+  needs: []
   variables:
     GIT_STRATEGY: clone
   rules:
@@ -184,6 +189,7 @@ esy-macos-m1:
     - mac
     - m1
   stage: build
+  needs: []
   variables:
     GIT_STRATEGY: clone
   rules:
@@ -285,5 +291,5 @@ publish_ligojs:
       fi
     - cd ./ligo-npm
     - chmod 664 package.json
-    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json jsoo)
+    - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json web)
     - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public || status=1

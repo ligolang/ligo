@@ -75,8 +75,9 @@ let parse_constant_pre ~raise code =
           (unparsing_michelson_tracer @@ List.map ~f:(fun x -> `Tezos_alpha_error x) errs)
       | [] -> map_node (fun _ -> ()) (fun x -> x) code)
   in
-  Proto_pre_alpha_utils.Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer
-  @@ Proto_pre_alpha_utils.Memory_proto_alpha.node_to_canonical code
+  Proto_alpha_utils.(
+    Trace.trace_alpha_tzresult ~raise unparsing_michelson_tracer
+    @@ Memory_proto_alpha.node_to_canonical code)
 
 
 let dummy : Stacking.meta =
@@ -182,29 +183,29 @@ let build_contract ~raise
       Trace.trace_tzresult_lwt
         ~raise
         (typecheck_contract_tracer protocol_version contract)
-        (Proto_pre_alpha_utils.Memory_proto_alpha.prims_of_strings contract)
+        (Proto_alpha_utils.Memory_proto_alpha.prims_of_strings contract)
     in
     (* Parse constants *)
     let constants = List.map ~f:(parse_constant_pre ~raise) constants in
-    let environment = Proto_pre_alpha_utils.Memory_proto_alpha.dummy_environment () in
+    let environment = Proto_alpha_utils.Memory_proto_alpha.dummy_environment () in
     (* Update the Tezos context by registering the global constants *)
     let tezos_context =
       List.fold_left constants ~init:environment.tezos_context ~f:(fun ctxt cnt ->
           let ctxt, _, _ =
-            Proto_pre_alpha_utils.Trace.trace_alpha_tzresult_lwt
+            Proto_alpha_utils.Trace.trace_alpha_tzresult_lwt
               ~raise
               (typecheck_contract_tracer protocol_version contract)
-            @@ Proto_pre_alpha_utils.Memory_proto_alpha.register_constant ctxt cnt
+            @@ Proto_alpha_utils.Memory_proto_alpha.register_constant ctxt cnt
           in
           ctxt)
     in
     let environment = { environment with tezos_context } in
     (* Type-check *)
     let (_ : (_, _) Micheline.Micheline.node) =
-      Proto_pre_alpha_utils.Trace.trace_tzresult_lwt
+      Proto_alpha_utils.Trace.trace_tzresult_lwt
         ~raise
         (typecheck_contract_tracer protocol_version contract)
-      @@ Proto_pre_alpha_utils.Memory_proto_alpha.typecheck_contract
+      @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_contract
            ~environment
            contract'
     in

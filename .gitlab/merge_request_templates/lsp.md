@@ -8,7 +8,9 @@ Resolves <!-- insert the related issue here, or none if not appliable -->.
 
 ### :white_check_mark: Checklist for the LIGO Language Server
 
-- [ ] I checked whether I need to update the `README.md` file for the [plugin](/tools/vscode/README.md) and did so if necessary
+- I checked whether I need to update the `README.md` file for the [plugin](/tools/vscode/README.md) and did so if necessary:
+    - [ ] If I implemented a new LSP request, I added it to the list of supported features that may be disabled
+    - [ ] If I implemented a new LSP method, I added it to the list of supported functionality
 - [ ] I checked that my changes work in Emacs, Vim, and Visual Studio Code
 - [ ] (Before merging) The commit history is squashed and prettified, and follows the [Serokell commit policy](https://www.notion.so/serokell/Commit-and-PR-policy-4cf98e1a910a415d86b5f2491d9af1af), or the MR is set to squash the commits
 

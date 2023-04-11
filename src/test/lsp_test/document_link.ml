@@ -1,5 +1,6 @@
 open Linol_lwt
 open Handlers
+open Common
 module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 
@@ -30,18 +31,18 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
   in
   match links_opt with
   | Some links ->
-    Alcotest.(check (list testable_document_link))
+    check Alcotest.(list testable_document_link)
       (Format.asprintf "Document links mismatch for %s:" file_path)
       links
       document_links
-  | None -> Alcotest.fail "Expected some list of document links, got None"
+  | None -> fail "Expected some list of document links, got None"
 
 
 let test_cases =
   [ { file_path = "contracts/includer.mligo"
     ; document_links =
         [ { range = Utils.interval 2 9 25
-          ; target = Some (rel_path_to_uri "contracts/included.mligo")
+          ; target = Some (to_absolute "contracts/included.mligo")
           ; tooltip = None
           ; data = None
           }
@@ -50,7 +51,7 @@ let test_cases =
   ; { file_path = "contracts/includer.jsligo"
     ; document_links =
         [ { range = Utils.interval 2 9 26
-          ; target = Some (rel_path_to_uri "contracts/included.jsligo")
+          ; target = Some (to_absolute "contracts/included.jsligo")
           ; tooltip = None
           ; data = None
           }
@@ -59,12 +60,12 @@ let test_cases =
   ; { file_path = "contracts/build/E.mligo" (* with #import *)
     ; document_links =
         [ { range = Utils.interval 0 8 17
-          ; target = Some (rel_path_to_uri "contracts/build/F.mligo")
+          ; target = Some (to_absolute "contracts/build/F.mligo")
           ; tooltip = None
           ; data = None
           }
         ; { range = Utils.interval 1 8 17
-          ; target = Some (rel_path_to_uri "contracts/build/G.mligo")
+          ; target = Some (to_absolute "contracts/build/G.mligo")
           ; tooltip = None
           ; data = None
           }
@@ -73,7 +74,7 @@ let test_cases =
   ; { file_path = "contracts/build/B.jsligo" (* with #import *)
     ; document_links =
         [ { range = Utils.interval 0 8 18
-          ; target = Some (rel_path_to_uri "contracts/build/A.jsligo")
+          ; target = Some (to_absolute "contracts/build/A.jsligo")
           ; tooltip = None
           ; data = None
           }
@@ -82,4 +83,4 @@ let test_cases =
   ]
 
 
-let tests = "document link", List.map ~f:get_document_link_test test_cases
+let tests = "document_link", List.map ~f:get_document_link_test test_cases

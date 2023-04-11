@@ -36,7 +36,9 @@ module Free_variables = struct
       else union b (self e)
     | E_literal _ -> empty
     | E_closure f ->
-      let src, _ = Option.value_exn @@ Combinators.get_t_function e.type_expression in
+      let src, _ =
+        Option.value_exn ~here:[%here] @@ Combinators.get_t_function e.type_expression
+      in
       lambda ~count_var_ref ~count_deref ~count_assign b f src
     | E_rec f ->
       rec_lambda ~count_var_ref ~count_deref ~count_assign b f e.type_expression

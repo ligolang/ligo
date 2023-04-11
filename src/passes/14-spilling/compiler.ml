@@ -163,7 +163,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
         )
       | None ->
         let fields = Label.Map.map fields ~f:(compile_type) in
-        Layout.t_sum ~raise fields layout
+        Layout.t_sum ~raise ?source_type:t.source_type fields layout
     )
   | T_record { fields ; layout } -> (
       match is_michelson_pair fields layout with
@@ -179,7 +179,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       )
       | None ->
         let fields = Label.Map.map fields ~f:(compile_type) in
-        Layout.t_record ~raise fields layout
+        Layout.t_record ~raise ?source_type:t.source_type fields layout
     )
   | T_arrow {type1;type2} -> (
       let param' = compile_type type1 in
@@ -249,10 +249,10 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
     )
   | E_record m -> (
       let (record_t : Ast_aggregated.Types.row) = trace_option ~raise (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record_opt ae.type_expression) in
-      (* Note: now returns E_tuple, not pairs, for combs *)
-      (* Layout.record_to_pairs ~raise self (fun e1 e2 -> return @@ ec_pair e1 e2) (fun es -> return @@ E_tuple es) record_t m *)
       let m = Record.map ~f:self m in
-      Layout.record_to_pairs ~raise (fun ~tv x -> return ~tv x) m record_t.layout
+      Layout.record_to_pairs
+        ~raise ~source_type:tv.source_type
+        (fun ~tv x -> return ~tv x) m record_t.layout
     )
   | E_accessor {struct_; path} -> (
       let ty' = compile_type ~raise (get_type struct_) in
@@ -789,7 +789,7 @@ and compile_recursive ~raise Recursive.{fun_name; fun_type; lambda; force_lambda
   in
   let fun_type = compile_type ~raise fun_type in
   let (input_type,output_type) = trace_option ~raise (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
-  let loop_type = t_union (None, input_type) (None, output_type) in
+  let loop_type = t_union ~source_type:None (None, input_type) (None, output_type) in
   let body = map_lambda fun_name loop_type lambda.result in
   let param = Param.map (compile_type ~raise) lambda.binder in
   let (binder, body) = make_lambda ~loc:body.location param body loop_type in

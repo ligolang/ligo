@@ -1,7 +1,4 @@
-(* TODO: use String, Option, Set, List & Hashtbl from Core *)
 open Linol_lwt
-module Hashtbl = Caml.Hashtbl
-module List = Caml.List
 open Handler
 open Utils
 

@@ -4,10 +4,10 @@ module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Row = Row.With_optional_layout
 
-type sugar_type_expression_option = Ast_imperative.type_expression option
+type sugar_type_expression_option = Ast_unified.ty_expr option
 [@@deriving eq, compare, yojson, hash]
 
-type sugar_expression_option = Ast_imperative.expression option
+type sugar_expression_option = Ast_unified.expr option
 [@@deriving eq, compare, yojson, hash]
 
 type string_option = string option
@@ -117,6 +117,9 @@ module Access_label = struct
   let pp _ = Label.pp
   let fold _ = Fun.const
   let map _ = Fun.id
+  let t_of_sexp _ = Label.t_of_sexp
+  let sexp_of_t _ = Label.sexp_of_t
+  let iter _ = Label.iter
   let fold_map _ a b = a, b
 end
 

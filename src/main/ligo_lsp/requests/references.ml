@@ -1,6 +1,5 @@
 open Ligo_interface
-open Linol_lwt
-open Linol_lwt.Jsonrpc2
+open Lsp.Types
 module Loc = Simple_utils.Location
 
 (* TODO: use Set, List & Hashtbl from Core *)
@@ -47,7 +46,7 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc uri None
   @@ fun { get_scope_info; _ } ->
-  when_some (Definition.get_definition pos uri get_scope_info.definitions)
+  when_some (Go_to_definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
   let references = get_all_references (get_location definition) get_scope_buffers in
   let@ () = send_debug_msg @@ "On references request on " ^ DocumentUri.to_path uri in

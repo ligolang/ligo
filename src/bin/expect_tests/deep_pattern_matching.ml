@@ -73,8 +73,14 @@ let%expect_test _ =
       5 |   | One 1 -> 2
       6 |   | Two -> 1
 
-    Invalid pattern.
-    Can't match on values. |}]
+    Invalid pattern matching.
+      If this is pattern matching over Booleans, then "true" or "false" is expected.
+      If this is pattern matching on a list, then one of the following is expected:
+        * an empty list pattern "[]";
+        * a cons list pattern "[head, ...tail]".
+      If this is pattern matching over variants, then a constructor of a variant is expected.
+
+      Other forms of pattern matching are not (yet) supported. |}]
 
 (* unbound variable *)
 
@@ -196,7 +202,7 @@ let%expect_test _ =
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
-    - {b = _; a = None} |}]
+    - {a = None; b = _} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pm_fail13.mligo" ];

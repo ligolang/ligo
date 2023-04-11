@@ -6,6 +6,8 @@ module Hashtbl = Caml.Hashtbl
 type config =
   { max_number_of_problems : int
   ; logging_verbosity : MessageType.t
+  ; disabled_features : string list
+  ; deprecated : bool
   }
 
 type notify_back_mockable =
@@ -137,7 +139,7 @@ let with_cached_doc
 
 
 let with_cached_doc_pure
-    ?return_default_if_no_info
+    ?(return_default_if_no_info : bool option)
     (uri : DocumentUri.t)
     (default : 'a)
     (f : Ligo_interface.file_data -> 'a)

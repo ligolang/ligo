@@ -1,11 +1,9 @@
-open Api_helpers
-
-let dump_changelog display_format no_colour () =
+let dump_changelog () =
   let value = Changelog.changelog in
-  let format = Ligo_formatter.changelog_format in
-  format_result ~display_format ~no_colour format (fun ~raise:_ -> value)
+  Ligo_formatter.changelog_format, fun ~raise:_ -> value, []
 
 
+module Api_helpers = Api_helpers
 module Compile = Compile
 module Transpile = Transpile
 module Transpile_with_ast = Transpile_with_ast

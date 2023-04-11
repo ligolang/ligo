@@ -95,12 +95,12 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
     (foo#4:6-9 -> foo)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 6-9
-    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, character 2 to line 5, character 6
     Content: |core: toto -> toto|
     references: []
     (local_type#1:4-14 -> local_type)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 1, characters 4-14
-    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 1, characters 16-17
+    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 1, character 0 to line 5, character 6
     Content: |core: unit -> int|
     references: []
     (u#1:16-17 -> u)
@@ -203,7 +203,6 @@ let%expect_test _ =
     [  ] File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
     [ storage#1:5-12 x#6:9-10  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
     [ foo#6:4-7 storage#1:5-12 x#7:9-10  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
-    [ bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#11:6-7  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
@@ -211,23 +210,24 @@ let%expect_test _ =
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-22
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
     [ bar#7:4-7 foo#6:4-7 s#9:12-13 storage#1:5-12 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+    [ bar#7:4-7 foo#6:4-7 storage#1:5-12  ] File "../../test/contracts/warning_unused.mligo", line 9, character 0 to line 13, character 39
 
     Variable definitions:
     (bar#7:4-7 -> bar)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 4-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 0-29
     Content: |resolved: int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 12, characters 10-13
     (foo#6:4-7 -> foo)
     Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 4-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 9-10
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 0-21
     Content: |resolved: int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 11, characters 10-13
     (main#9:4-8 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-8
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 10-13
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, character 0 to line 13, character 39
     Content: |resolved: ( int *
                           record[x -> int , y -> int({ name: x }, { name: y })] ) ->
     ( list (operation) *
@@ -235,8 +235,8 @@ let%expect_test _ =
     references: []
     (s#9:12-13 -> s)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 12-13
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
-    Content: |resolved: storage|
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, character 0 to line 13, character 39
+    Content: |core: storage|
     references:
       File "../../test/contracts/warning_unused.mligo", line 10, characters 10-11 ,
       File "../../test/contracts/warning_unused.mligo", line 12, characters 14-15 ,
@@ -350,7 +350,7 @@ let%expect_test _ =
     Module definitions:
     (Foo#1:7-10 -> Foo)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
-    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 0 to line 3, character 3
+    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65
     Content: Members: Variable definitions:
                       (x#2:6-7 -> x)
                       Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7

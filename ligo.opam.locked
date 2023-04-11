@@ -10,6 +10,7 @@ depends: [
   "alcotest" {= "1.6.0" & with-test}
   "alcotest-lwt" {= "1.6.0"}
   "angstrom" {= "0.15.0"}
+  "asetmap" {= "0.8.1"}
   "asn1-combinators" {= "0.2.6"}
   "astring" {= "0.8.5"}
   "base" {= "v0.15.1"}
@@ -101,14 +102,14 @@ depends: [
   "json-data-encoding" {= "0.12.1"}
   "json-data-encoding-bson" {= "0.12.1"}
   "jsonm" {= "1.0.1"}
-  "jsonrpc" {= "1.11.6"}
+  "jsonrpc" {= "1.14.2"}
   "jst-config" {= "v0.15.1"}
   "lambda-term" {= "3.3.1"}
-  "linol" {= "0.5"}
-  "linol-lwt" {= "0.5"}
+  "linol" {= "0.4"}
+  "linol-lwt" {= "0.4"}
   "logs" {= "0.7.0"}
   "lru" {= "0.3.1"}
-  "lsp" {= "1.11.6"}
+  "lsp" {= "1.14.2"}
   "lwt" {= "5.6.1"}
   "lwt-canceler" {= "0.3"}
   "lwt_log" {= "1.1.2"}
@@ -202,6 +203,7 @@ depends: [
   "ppx_yojson_conv_lib" {= "v0.15.0"}
   "ppxlib" {= "0.25.1"}
   "progress" {= "0.2.1"}
+  "prometheus" {= "1.2"}
   "psq" {= "0.2.1"}
   "ptime" {= "1.1.0"}
   "pure-splitmix" {= "0.3"}
@@ -319,9 +321,15 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
-  [ "linol.0.5" "git+https://github.com/c-cube/linol.git#5a29a9e1456a431122c51f44bc10c51f46f8d592" ]
-  [ "linol-lwt.0.5" "git+https://github.com/c-cube/linol.git#5a29a9e1456a431122c51f44bc10c51f46f8d592" ]
-  [ "lsp.1.11.6" "git+https://github.com/ocaml/ocaml-lsp.git#1.11.6" ]
+  [
+    "linol.0.4"
+    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+  ]
+  [
+    "linol-lwt.0.4"
+    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+  ]
+  ["lsp.1.14.2" "git+https://github.com/ocaml/ocaml-lsp.git#1.14.2"]
   [
     "ocaml-recovery-parser.0.2.4"
     "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"

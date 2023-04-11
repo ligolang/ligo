@@ -36,8 +36,11 @@ module type PRINTER =
 
 module type PRETTY =
   sig
+    type environment
+    val default_environment : environment
+
     type tree
-    val print : tree -> PPrint.document
+    val print : environment -> tree -> PPrint.document
   end
 
 module type WARNING =

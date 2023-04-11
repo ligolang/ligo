@@ -6,9 +6,6 @@
  (libraries
   simple-utils
   parsing
-  tree_abstraction
-  self_ast_imperative
-  desugaring
   ast_core
   checking
   ast_typed

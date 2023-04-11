@@ -127,10 +127,10 @@ let create_views_function_expr ~loc views storage_type =
   let f (view, view_type) result =
     let name = Value_var.to_name_exn view in
     let view_expr =
-      match Helpers.should_uncurry_view view_type with
-      | `Yes _ -> Option.value_exn @@ Helpers.uncurry_wrap ~loc ~type_:view_type view
+      match Ast_typed.should_uncurry_view ~storage_ty:storage_type view_type with
+      | `Yes _ -> Option.value_exn @@ Ast_typed.uncurry_wrap ~loc ~type_:view_type view
       | `No _ -> e_a_variable ~loc view view_type
-      | `Bad -> failwith "wrong view"
+      | `Bad | `Bad_not_function | `Bad_storage _ -> failwith "wrong view"
     in
     e_a_test_cons_views
       ~loc

@@ -12,20 +12,20 @@ let compile_main ~raise () =
 
 
 open Ligo_prim
-open Ast_imperative
+open Ast_unified
 
-let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
+let empty_op_list = e_list ~loc []
 
 let empty_message =
   e_lambda_ez
     ~loc
     (Value_var.of_input_var ~loc "arguments")
-    ~ascr:(t_unit ~loc ())
-    (Some (t_list ~loc (t_operation ~loc ())))
+    ~ascr:(tv_unit ~loc ())
+    (Some (t_list ~loc (tv_operation ~loc ())))
     empty_op_list
 
 
-let call msg = e_constructor ~loc "Call" msg
+let call msg = e_constructor ~loc {constructor = Label.of_string "Call" ; element = msg }
 
 let mk_time ~(raise : ('a, _) Trace.raise) st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with

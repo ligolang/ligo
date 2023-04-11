@@ -1,7 +1,7 @@
 module Var = Simple_utils.Var
 open Test_helpers
 open Ligo_prim
-open Ast_imperative
+open Ast_unified
 
 let mfile = "./contracts/pledge.mligo"
 let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
@@ -20,21 +20,21 @@ let stranger_addr, stranger_contract =
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let empty_op_list = e_typed_list ~loc [] (t_operation ~loc ())
+let empty_op_list = e_list ~loc []
 
 let empty_message =
   e_lambda_ez
     ~loc
     (Value_var.of_input_var ~loc "arguments")
-    ~ascr:(t_unit ~loc ())
-    (Some (t_list ~loc (t_operation ~loc ())))
+    ~ascr:(tv_unit ~loc ())
+    (Some (t_list ~loc (tv_operation ~loc ())))
     empty_op_list
 
 
 let pledge ~raise f () =
   let program = get_program ~raise f () in
   let storage = e_address ~loc oracle_addr in
-  let parameter = e_unit ~loc () in
+  let parameter = e_unit ~loc in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options

@@ -47,6 +47,9 @@ module Access_label = struct
   let fold _ = Fun.const
   let map _ = Fun.id
   let fold_map _ a b = a, b
+  let t_of_sexp _ = Label.t_of_sexp
+  let sexp_of_t _ = Label.sexp_of_t
+  let iter _ = Label.iter
 end
 
 module Pattern = Linear_pattern

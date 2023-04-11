@@ -1,5 +1,5 @@
-open Lsp.Types
 open Handler
+open Lsp.Types
 open Utils
 
 let rename_reference : string -> Range.t -> TextEdit.t =
@@ -12,7 +12,7 @@ let on_req_rename : string -> Position.t -> DocumentUri.t -> WorkspaceEdit.t Han
   with_cached_doc uri (WorkspaceEdit.create ())
   @@ fun { get_scope_info; _ } ->
   let@ value =
-    when_some' (Definition.get_definition pos uri get_scope_info.definitions)
+    when_some' (Go_to_definition.get_definition pos uri get_scope_info.definitions)
     @@ fun definition ->
     let references =
       References.get_all_references (get_location definition) get_scope_buffers

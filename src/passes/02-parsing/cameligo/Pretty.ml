@@ -10,12 +10,16 @@ open! PPrint
 module Option = Simple_utils.Option
 module Token  = Lexing_cameligo.Token
 
+type environment = unit
+
+let default_environment : environment = ()
+
 let pp_par printer {value; _} =
   string "(" ^^ nest 1 (printer value.inside ^^ string ")")
 
 (* The CST *)
 
-let rec print cst =
+let rec print _state cst =
     Utils.nseq_to_list cst.decl
   |> List.map ~f:pp_declaration
   |> separate_map hardline group
@@ -179,7 +183,7 @@ and pp_type_var (node : type_var reg) =
 and pp_module_decl decl =
   let {name; module_; _} = decl.value in
   string "module " ^^ pp_ident name ^^ string " =" ^^ string " struct"
-  ^^ group (nest 0 (break 1 ^^ print module_))
+  ^^ group (nest 0 (break 1 ^^ print () module_))
   ^^ string " end"
 
 and pp_module_alias decl =
@@ -450,7 +454,7 @@ and pp_mod_in {value; _} =
   let {name; module_; _} = mod_decl
   in string "module"
      ^^ prefix 2 1 (pp_ident name ^^ string " = struct")
-                   (print module_)
+                   (print () module_)
      ^^ string " end"
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
@@ -587,11 +591,14 @@ and pp_fun_type {value; _} =
 
 and pp_type_par t = pp_par pp_type_expr t
 
-let print_type_expr = pp_type_expr
-let print_pattern   = pp_pattern
-let print_expr      = pp_expr
+let print_type_expr   _state = pp_type_expr
+let print_pattern     _state = pp_pattern
+let print_expr        _state = pp_expr
+let print_declaration _state = pp_declaration
 
-type cst        = CST.t
-type expr       = CST.expr
-type type_expr  = CST.type_expr
-type pattern    = CST.pattern
+
+type cst         = CST.t
+type expr        = CST.expr
+type type_expr   = CST.type_expr
+type pattern     = CST.pattern
+type declaration = CST.declaration

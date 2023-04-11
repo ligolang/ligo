@@ -61,8 +61,7 @@ let%expect_test _ =
       code { DROP ; MIN_BLOCK_TIME ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "emit.mligo"; "--protocol"; "kathmandu" ];
+  run_ligo_good [ "compile"; "contract"; contract "emit.mligo" ];
   [%expect
     {|
     { parameter (pair int int) ;
@@ -78,8 +77,7 @@ let%expect_test _ =
              EMIT %foo (pair int int) ;
              CONS ;
              PAIR } } |}];
-  run_ligo_bad
-    [ "compile"; "contract"; bad_contract "emit.mligo"; "--protocol"; "kathmandu" ];
+  run_ligo_bad [ "compile"; "contract"; bad_contract "emit.mligo" ];
   [%expect
     {|
     File "../../test/contracts/negative/emit.mligo", line 3, characters 3-18:

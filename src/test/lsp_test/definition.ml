@@ -27,7 +27,8 @@ let get_definition_test
   let expected_definition =
     Location.create ~uri:(rel_path_to_uri file_with_definition) ~range:definition
   in
-  Alcotest.(check (option testable_locations))
+  check
+    Alcotest.(option testable_locations)
     (Format.asprintf
        "Definition position mismatch for: %s, %a"
        file_with_reference

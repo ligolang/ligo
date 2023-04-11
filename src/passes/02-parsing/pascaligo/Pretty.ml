@@ -19,6 +19,10 @@ open! PPrint
 
 (* UTILITIES *)
 
+type environment = unit
+
+let default_environment : environment = ()
+
 let unroll_D_Attr (attr, decl) =
   let rec aux attrs = function
     D_Attr { value = (attr, decl); _ } -> aux (attr :: attrs) decl
@@ -88,7 +92,7 @@ let print_chevrons : ('a -> document) -> 'a chevrons reg -> document =
 
 (* PRINTING THE CST *)
 
-let rec print cst = print_declarations cst.decl
+let rec print _state cst = print_declarations cst.decl
 
 (* DECLARATIONS (top-level) *)
 
@@ -1200,11 +1204,13 @@ and print_selection (node : selection) =
 
 (* EXPORTS *)
 
-let print_type_expr = print_type_expr
-let print_pattern   = print_pattern
-let print_expr      = print_expr
+let print_type_expr   _state = print_type_expr
+let print_pattern     _state = print_pattern
+let print_expr        _state = print_expr
+let print_declaration _state = print_declaration
 
-type cst        = CST.t
-type expr       = CST.expr
-type type_expr  = CST.type_expr
-type pattern    = CST.pattern
+type cst         = CST.t
+type expr        = CST.expr
+type type_expr   = CST.type_expr
+type pattern     = CST.pattern
+type declaration = CST.declaration

@@ -51,7 +51,12 @@ let schema_test_negative
     let options = Raw_options.make ~with_types ~protocol_version:"current" () in
     let res_str, actual_status =
       match
-        Ligo_interface.Get_scope.get_scope_cli_result options source_file json no_colour ()
+        Ligo_interface.Get_scope.get_scope_cli_result
+          options
+          source_file
+          json
+          no_colour
+          ()
       with
       | Ok (res_str, _) ->
         res_str, true (* Alcotest.fail "None errors are detected in negative test" *)

@@ -11,8 +11,8 @@ let%expect_test _ =
       1 |
       2 | let rec toto : unit -> int = fun () -> ()
 
-    Invalid type(s).
-    Expected "int", but got: "unit". |}]
+    Invalid type(s)
+    Cannot unify "unit" with "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; negative "regression_import_scope_B.mligo" ];

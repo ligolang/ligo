@@ -222,9 +222,12 @@ module Of_Ast = struct
             type_expression t scopes env)
       in *)
       let var = Binder.get_var binder in
-      let scopes = expression ~env_changed:true expr scopes env in
-      let env = Env.add_vvar var env in
-      scopes, env
+      if Value_var.is_generated var
+      then scopes, env
+      else (
+        let scopes = expression ~env_changed:true expr scopes env in
+        let env = Env.add_vvar var env in
+        scopes, env)
     | D_irrefutable_match { pattern; expr; attr = _ } ->
       let binder = Linear_pattern.binders pattern in
       let tys = List.map binder ~f:Binder.get_ascr in

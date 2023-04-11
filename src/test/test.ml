@@ -14,5 +14,6 @@ let () =
        ; Integration_tests.main
        ; Spilling_tests.main
        ; Ligo_init_tests.main
+       ; Analytics_tests.main
        ];
   ()

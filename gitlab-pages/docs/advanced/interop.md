@@ -585,7 +585,7 @@ let make_abstract_sum = (z_or: z_or): z_to_v =>
         M_right: (x_or: x_or) => {
           return match(x_or, {
             M_left: (n: unit) => X(),
-            M_right: (w_or: w_or) => {
+            M_right: (w_or: w_or_v) => {
               return match(w_or, {
                 M_left: (n: unit) => W(),
                 M_right: (n: unit) => V()
