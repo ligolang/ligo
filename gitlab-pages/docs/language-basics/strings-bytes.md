@@ -398,8 +398,8 @@ const test_nat_bytes = bytes(4660 as nat) // 0x1234
 
 ### From `bytes` to `int` and back
 
-You can case `bytes` to `int` using the built-in `int` function and vice-versa 
-using using the `bytes` built-in function.
+You can cast `bytes` to `int` using the built-in `int` function and vice-versa 
+using the `bytes` built-in function.
 
 <Syntax syntax="pascaligo">
 
