@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2516'
+title: "Testing framework: add support for untranspilation of bls12_381_g1/g2/fr"
+type: fixed
+            

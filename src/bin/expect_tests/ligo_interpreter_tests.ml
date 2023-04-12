@@ -799,6 +799,15 @@ let%expect_test _ =
     - test exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_untranspile_bls.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test_fr exited with value ().
+    - test_g1 exited with value ().
+    - test_g2 exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "get_contract.mligo" ];
   [%expect
     {|
