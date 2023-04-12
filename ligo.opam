@@ -73,6 +73,7 @@ depends: [
   "crunch"
   "class_group_vdf"
   "tezos-plonk" { >= "1.0.1" & < "2.0.0" }
+  "checkseum"
   # dev dependencies (not labels as { dev } since this feature doesn't work 
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
