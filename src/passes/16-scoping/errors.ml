@@ -14,16 +14,10 @@ type scoping_error = [
 ] [@@deriving poly_constructor { prefix = "scoping_" }]
 
 let stage = "scoping"
-let unscoping_stage = "unscoping_stage"
 let corner_case_msg () =
   "Sorry, we don't have a proper error message for this error. Please report \
    this use case so we can improve on this."
 
-let untranspilable m_type m_data =
-  let open Tezos_micheline.Micheline in
-  let m_type = root (strip_locations m_type) in
-  let m_data = root (strip_locations m_data) in
-  `Scoping_untranspilable (m_type, m_data)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> scoping_error -> unit =

@@ -89,21 +89,6 @@ let get_balance ~raise ~loc ~calltrace (ctxt : context) addr =
   @@ Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 
 
-let contract_exists
-    : context -> Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> bool
-  =
- fun ctxt contract ->
-  let info =
-    Lwt_main.run
-    @@ Tezos_raw_protocol.Alpha_services.Contract.info
-         ~normalize_types:true
-         Tezos_alpha_test_helpers.Block.rpc_ctxt
-         ctxt.raw
-         contract
-  in
-  Trace.tz_result_to_bool info
-
-
 let get_voting_power ~raise ~loc ~calltrace (ctxt : context) key_hash =
   let vp = Tezos_alpha_test_helpers.Context.get_voting_power (B ctxt.raw) key_hash in
   Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) vp
@@ -193,26 +178,6 @@ let parse_constant ~raise ~loc ~calltrace code =
       | [] -> map_node (fun _ -> ()) (fun x -> x) code)
   in
   code
-
-
-(* REMITODO: NOT STATE RELATED, move out ? *)
-let get_contract_rejection_data
-    :  state_error
-    -> (Memory_proto_alpha.Protocol.Alpha_context.Contract.t
-       * unit Tezos_utils.Michelson.michelson)
-       option
-  =
- fun errs ->
-  let open Tezos_protocol.Protocol in
-  let open Script_interpreter in
-  let open Tezos_protocol_env in
-  match errs with
-  | [ Ecoproto_error (Runtime_contract_error contract)
-    ; Ecoproto_error (Reject (_, x, _))
-    ] ->
-    let x = canonical_to_ligo x in
-    Some (Originated contract, x)
-  | _ -> None
 
 
 let set_big_map ~raise (ctxt : context) id version k_ty v_ty =

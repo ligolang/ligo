@@ -158,8 +158,6 @@ and type_inst ppf { forall; type_ } =
   fprintf ppf "%a@@{%a}" expression forall type_expression type_
 
 
-and option_inline ppf inline = if inline then fprintf ppf "[@inline]" else fprintf ppf ""
-
 and declaration ?(use_hidden = true) ppf (d : declaration) =
   match Location.unwrap d with
   | D_value vd ->
@@ -205,8 +203,6 @@ and sig_item ppf (d : sig_item) =
 and signature ppf (sig_ : signature) : unit =
   Format.fprintf ppf "@[<v>sig@[<v1>@,%a@]@,end@]" (list_sep sig_item (tag "@,")) sig_
 
-
-let module_ ppf (m : module_) = list_sep decl (tag "@,") ppf m
 
 let program ?(use_hidden = false) ppf (p : program) =
   list_sep (declaration ~use_hidden) (tag "@,") ppf p

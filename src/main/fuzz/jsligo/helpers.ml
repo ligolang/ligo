@@ -32,12 +32,6 @@ module Fold_helpers (M : Monad) = struct
     ok (hd, tl)
 
 
-  type 'a folder =
-    { e : 'a -> expr -> 'a monad
-    ; t : 'a -> type_expr -> 'a monad
-    ; d : 'a -> statement -> 'a monad
-    }
-
   type mapper =
     { e : expr -> (bool * expr) monad
     ; t : type_expr -> type_expr monad

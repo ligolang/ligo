@@ -46,15 +46,4 @@ module Make (Pattern : S) (Attr : Attr) = struct
       attr
       f
       let_result
-
-
-  let fold_map
-      :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a, 'c) t
-      -> 'acc * ('b, 'd) t
-    =
-   fun f g acc { let_binder; rhs; let_result; attributes } ->
-    let acc, let_binder = Pattern.fold_map g acc let_binder in
-    let acc, rhs = f acc rhs in
-    let acc, let_result = f acc let_result in
-    acc, { let_binder; rhs; let_result; attributes }
 end

@@ -169,17 +169,6 @@ module Command = struct
     | Add_cast :
         Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Implicit_account :
-        Tezos_protocol.Protocol.Alpha_context.public_key_hash
-        -> LT.value tezos_command
-    | Contract :
-        Location.t
-        * LT.calltrace
-        * LT.Contract.t
-        * string option
-        * Ast_aggregated.type_expression
-        -> LT.value tezos_command
-    | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value tezos_command
     | Add_account :
         Location.t
         * LT.calltrace
@@ -761,40 +750,6 @@ module Command = struct
       in
       let v = LT.V_List (List.map ~f:aux x) in
       v, ctxt
-    | Implicit_account kh ->
-      let address = Memory_proto_alpha.Protocol.Alpha_context.Contract.Implicit kh in
-      let v = LT.V_Ct (LT.C_contract { address; entrypoint = None }) in
-      v, ctxt
-    | Contract (loc, _calltrace, addr, entrypoint, value_ty) ->
-      let expr =
-        match entrypoint with
-        | None ->
-          Ast_aggregated.(
-            e_a_contract_opt ~loc (Michelson_backend.string_of_contract addr) value_ty)
-        | Some entrypoint ->
-          Ast_aggregated.(
-            e_a_contract_entrypoint_opt
-              ~loc
-              entrypoint
-              (Michelson_backend.string_of_contract addr)
-              value_ty)
-      in
-      let mich = Michelson_backend.compile_ast ~raise ~options expr in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
-      let ret_co, ret_ty =
-        Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
-      in
-      let ret =
-        Michelson_to_value.decompile_to_untyped_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ret_ty
-          ret_co
-      in
-      ret, ctxt
-    | Pairing_check l ->
-      let check = Bls12_381.Pairing.pairing_check l in
-      LC.v_bool check, ctxt
     | Add_account (loc, calltrace, sk, pk) ->
       let pkh = Tezos_protocol_env.Signature.Public_key.hash pk in
       Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;

@@ -31,14 +31,6 @@ and annotated ppf : type_expression annotated -> _ = function
   | None, a -> type_variable ppf a
 
 
-and environment_element ppf ((n, tv) : environment_element) =
-  Format.fprintf ppf "%a : %a" Value_var.pp n type_variable tv
-
-
-and environment ppf (x : environment) =
-  fprintf ppf "Env[%a]" (list_sep_d environment_element) x
-
-
 and type_constant ppf (tb : type_base) : unit =
   let s =
     match tb with
@@ -324,11 +316,6 @@ and expression_content ppf (e : expression_content) =
       body
   | E_while (cond, body) ->
     fprintf ppf "@[while %a do@ %a@ done@]" expression cond expression body
-
-
-and expression_with_type : _ -> expression -> _ =
- fun ppf e ->
-  fprintf ppf "%a : %a" expression_content e.content type_variable e.type_expression
 
 
 and function_ ppf ({ binder; body } : anon_function) =

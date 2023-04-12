@@ -7,7 +7,6 @@ module Misc = struct
   include Misc
 end
 
-module Helpers = Helpers
 include Types
 include Misc
 include Combinators

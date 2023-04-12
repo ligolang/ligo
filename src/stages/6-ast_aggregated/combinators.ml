@@ -99,22 +99,8 @@ let ez_t_record_hmm ~loc ~layout lst : type_expression =
   make_t ~loc (T_record row)
 
 
-let make_t_ez_record
-    ~loc
-    ?(layout = default_layout)
-    (lst : (string * type_expression) list)
-    : type_expression
-  =
-  let lst = List.map ~f:(fun (name, t) -> Label.of_string name, t) lst in
-  ez_t_record ~loc ~layout lst
-
-
 let t_pair ~loc a b : type_expression =
   ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
-
-
-let t_triplet ~loc a b c : type_expression =
-  ez_t_record ~loc [ Label "0", a; Label "1", b; Label "2", c ]
 
 
 let t_unforged_ticket ~loc ty : type_expression =
@@ -143,47 +129,8 @@ let t_option ~loc typ : type_expression =
   t_sum_ez ~loc [ "Some", typ; "None", t_unit ~loc () ]
 
 
-(* types specific to LIGO test framework*)
-let t_michelson_code ~loc () : type_expression =
-  t_constant ~loc Ligo_prim.Literal_types.Michelson_program []
-
-
-let t_test_exec_error ~loc () : type_expression =
-  t_sum_ez
-    ~loc
-    [ "Rejected", t_pair ~loc (t_michelson_code ~loc ()) (t_address ~loc ())
-    ; "Other", t_unit ~loc ()
-    ]
-
-
-let t_test_exec_result ~loc () : type_expression =
-  t_sum_ez
-    ~loc
-    [ "Success", t_unit ~loc ()
-    ; ( "Fail"
-      , t_sum_ez
-          ~loc
-          [ "Rejected", t_pair ~loc (t_michelson_code ~loc ()) (t_address ~loc ())
-          ; "Other", t_unit ~loc ()
-          ] )
-    ]
-
-
 let t_arrow param result ~loc ?source_type () : type_expression =
   t_arrow ~loc ?source_type { type1 = param; type2 = result } ()
-
-
-let t_shallow_closure param result ~loc () : type_expression =
-  make_t ~loc (T_arrow { type1 = param; type2 = result })
-
-
-let t_chest_opening_result ~loc () : type_expression =
-  t_sum_ez
-    ~loc
-    [ "Ok_opening", t_bytes ~loc ()
-    ; "Fail_decrypt", t_unit ~loc ()
-    ; "Fail_timelock", t_unit ~loc ()
-    ]
 
 
 let get_t_bool (t : type_expression) : unit option =
@@ -203,15 +150,6 @@ let get_t_option (t : type_expression) : type_expression option =
            || (Label.equal a l_some && Label.equal b l_none) ->
       Record.find_opt fields l_some
     | _ -> None)
-  | _ -> None
-
-
-let get_param_inj (t : type_expression)
-    : (string * Ligo_prim.Literal_types.t * type_expression list) option
-  =
-  match t.type_content with
-  | T_constant { language; injection; parameters } ->
-    Some (language, injection, parameters)
   | _ -> None
 
 
@@ -235,14 +173,6 @@ let get_t_unary_inj (t : type_expression) (v : Ligo_prim.Literal_types.t)
   =
   match get_t_inj t v with
   | Some [ a ] -> Some a
-  | _ -> None
-
-
-let get_t_binary_inj (t : type_expression) (v : Ligo_prim.Literal_types.t)
-    : (type_expression * type_expression) option
-  =
-  match get_t_inj t v with
-  | Some [ a; b ] -> Some (a, b)
   | _ -> None
 
 
@@ -275,7 +205,6 @@ let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_in
 
 
 let get_t_mutez (t : type_expression) : unit option = get_t_tez t
-let get_t_michelson_code (t : type_expression) : unit option = get_t_michelson_program t
 
 let tuple_of_record (m : _ Record.t) =
   let aux i =
@@ -283,16 +212,6 @@ let tuple_of_record (m : _ Record.t) =
     Option.bind ~f:(fun opt -> Some (opt, i + 1)) opt
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
-
-
-let t_tuple ~loc xs : type_expression =
-  ez_t_record ~loc @@ List.mapi ~f:(fun i t -> Label.of_int i, t) xs
-
-
-let get_t_tuple (t : type_expression) : type_expression list option =
-  match t.type_content with
-  | T_record struct_ -> Some (tuple_of_record struct_.fields)
-  | _ -> None
 
 
 let get_t_pair (t : type_expression) : (type_expression * type_expression) option =
@@ -341,19 +260,6 @@ let get_t_map_or_big_map (t : type_expression)
   | _ -> None
 
 
-let get_t__type__exn t =
-  match get_t__type_ t with
-  | Some x -> x
-  | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
-  [@@map _type_, ("list", "set", "map", "typed_address", "big_map", "gen")]
-
-
-let assert_t_contract (t : type_expression) : unit option =
-  match get_t_unary_inj t Ligo_prim.Literal_types.Contract with
-  | Some _ -> Some ()
-  | _ -> None
-
-
 let is_t__type_ t = Option.is_some (get_t__type_ t)
   [@@map
     _type_
@@ -383,42 +289,12 @@ let is_t_bool t =
   | _ -> false
 
 
-let assert_t_list_operation (t : type_expression) : unit option =
-  match get_t_list t with
-  | Some t' -> get_t_base_inj t' Ligo_prim.Literal_types.Operation
-  | None -> None
-
-
-let assert_t__type_ : type_expression -> unit option = fun t -> get_t__type_ t
- [@@map
-   _type_
-   , ( "int"
-     , "nat"
-     , "unit"
-     , "mutez"
-     , "key"
-     , "signature"
-     , "key_hash"
-     , "bytes"
-     , "string"
-     , "michelson_code" )]
-
-
-let assert_t__type_ : type_expression -> unit option =
- fun v -> Option.map ~f:(fun _ -> ()) @@ get_t__type_ v
- [@@map _type_, ("set", "list")]
-
-
 let ez_e_record (lst : (Label.t * expression) list) : expression_content =
   E_record (Record.of_list lst)
 
 
 let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments = [] }
   [@@map _ct_, ("none", "nil", "set_empty", "map_empty", "big_map_empty")]
-
-
-let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [ p ] }
-  [@@map _ct_, "some"]
 
 
 let e__ct_ p p' : expression_content =
@@ -453,7 +329,6 @@ let e__type_ p : expression_content = E_literal (Literal__type_ p)
 
 
 let e_unit () : expression_content = E_literal Literal_unit
-let e_pair a b : expression_content = ez_e_record [ Label.of_int 0, a; Label.of_int 1, b ]
 
 let e_bool ~loc b : expression_content =
   if b
@@ -464,8 +339,6 @@ let e_bool ~loc b : expression_content =
     E_constructor
       { constructor = Label "False"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
 
-
-let e_a_literal ~loc l t = make_e ~loc (E_literal l) t
 
 let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
   [@@map
@@ -489,15 +362,9 @@ let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
       , "chain_id" )]
 
 
-let e_a_pair ~loc a b =
-  make_e ~loc (e_pair a b) (t_pair ~loc a.type_expression b.type_expression)
-
-
 let e_a_constructor ~loc constructor element t =
   e_constructor ~loc { constructor = Label constructor; element } t
 
-
-let e_a_record_accessor ~loc struct_ path t = e_accessor ~loc { struct_; path } t
 
 let e_a_record ~loc ?(layout = default_layout) r =
   e_record
@@ -507,13 +374,6 @@ let e_a_record ~loc ?(layout = default_layout) r =
        ~loc
        ~layout
        (List.map ~f:(fun (label, expr) -> label, expr.type_expression) (Record.to_list r)))
-
-
-let ez_e_a_record ~loc ?layout r =
-  make_e
-    ~loc
-    (ez_e_record r)
-    (ez_t_record ~loc ?layout (List.map ~f:(fun (x, y) -> x, y.type_expression) r))
 
 
 (* hmm *)
@@ -533,7 +393,6 @@ let e_a_let_in ~loc let_binder rhs let_result attributes =
   e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)
 
 
-let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
 let e_a_raw_code ~loc language code t = e_raw_code ~loc { language; code } t
 let e_a_type_inst ~loc forall type_ u = e_type_inst ~loc { forall; type_ } u
 let e_a_bool ~loc b = make_e ~loc (e_bool ~loc b) (t_bool ~loc ())
@@ -556,8 +415,6 @@ let e_a_big_map_add ~loc k v tl =
   make_e ~loc (e_map_add k v tl) (t_big_map ~loc k.type_expression v.type_expression)
 
 
-let e_a_big_map_remove ~loc k tl = make_e ~loc (e_map_remove k tl) tl.type_expression
-
 let e_contract_opt ~loc a : expression_content =
   let language = "Michelson" in
   let code = Format.asprintf "{ PUSH address \"%s\" ; CONTRACT }" a in
@@ -578,43 +435,6 @@ let e_contract_entrypoint_opt ~loc e a : expression_content =
 
 let e_a_contract_entrypoint_opt ~loc e a t =
   make_e ~loc (e_contract_entrypoint_opt ~loc e a) (t_option ~loc (t_contract ~loc t))
-
-
-let get_a_int (t : expression) =
-  match t.expression_content with
-  | E_literal (Literal_int n) -> Some n
-  | _ -> None
-
-
-let get_a_string (t : expression) =
-  match t.expression_content with
-  | E_literal (Literal_string s) -> Some (Ligo_string.extract s)
-  | _ -> None
-
-
-let get_a_verbatim (t : expression) =
-  match t.expression_content with
-  | E_literal (Literal_string (Verbatim v)) -> Some v
-  | _ -> None
-
-
-let get_a_unit (t : expression) =
-  match t.expression_content with
-  | E_literal Literal_unit -> Some ()
-  | _ -> None
-
-
-let get_a_bool (t : expression) =
-  match t.expression_content with
-  | E_constructor { constructor = Label name; element }
-    when String.equal name "True"
-         && compare_expression_content element.expression_content @@ e_unit () = 0 ->
-    Some true
-  | E_constructor { constructor = Label name; element }
-    when String.equal name "False"
-         && compare_expression_content element.expression_content @@ e_unit () = 0 ->
-    Some false
-  | _ -> None
 
 
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option

@@ -175,14 +175,7 @@ type constant' =
   , is { tags = [ "only_interpreter"; "pure" ] }
   , read_constant]
 
-type deprecated =
-  { name : string
-  ; const : constant'
-  }
-
 type rich_constant = Const of constant' [@@deriving eq, compare, yojson, hash]
-
-let const_name (Const c) = c
 
 type 'e t =
   { cons_name : constant' (* this is in enum *)

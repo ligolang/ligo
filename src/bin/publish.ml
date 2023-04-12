@@ -163,12 +163,6 @@ module Attachment = struct
     ; length : int
     }
   [@@deriving to_yojson]
-
-  let make ~gzipped_tarball ~size =
-    { content_type = "application/octet-stream"
-    ; data = Base64.encode_exn (Bytes.to_string gzipped_tarball)
-    ; length = size
-    }
 end
 
 module Attachments = struct

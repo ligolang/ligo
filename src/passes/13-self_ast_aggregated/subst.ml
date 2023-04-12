@@ -161,36 +161,6 @@ let subst_binder
     fresh, subst ~body ~x ~expr)
 
 
-(* Given an implementation of substitution on an arbitary type of
-   body, implements substitution on a binder (pair of bound variable
-   and body) *)
-let subst_binders
-    : type body.
-      (body:body -> x:Value_var.t -> expr:expression -> body)
-      -> (body -> Value_var.t -> Value_var.t -> body)
-      -> body:Value_var.t list * body
-      -> x:Value_var.t
-      -> expr:expression
-      -> Value_var.t list * body
-  =
- fun subst replace ~body:(ys, body) ~x ~expr ->
-  (* if x is shadowed, binder doesn't change *)
-  if List.mem ~equal:Value_var.equal ys x
-  then ys, body (* else, if no capture, subst in binder *)
-  else (
-    let fvs = Free_variables.expression expr in
-    let f (fs, body) y =
-      if not (List.mem ~equal:Value_var.equal fvs y)
-      then y :: fs, body (* else, avoid capture and subst in binder *)
-      else (
-        let fresh = Value_var.fresh_like y in
-        let body = replace body y fresh in
-        fresh :: fs, body)
-    in
-    let ys, body = List.fold ~f ~init:([], body) ys in
-    List.rev ys, subst ~body ~x ~expr)
-
-
 (**
    Computes `body[x := expr]`.
 **)

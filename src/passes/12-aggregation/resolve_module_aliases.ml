@@ -15,23 +15,6 @@ module Aliases = struct
 
   type t = { inside : (t * Module_var.t list) MMap.t }
 
-  let rec pp ppf { inside } =
-    Format.fprintf
-      ppf
-      "%a"
-      (PP_helpers.list_sep_d (fun ppf (k, (t, v)) ->
-           Format.fprintf
-             ppf
-             "%a => (%a,%a)"
-             Module_var.pp
-             k
-             pp
-             t
-             PP_helpers.(list_sep_d Module_var.pp)
-             v))
-    @@ MMap.to_kv_list inside
-
-
   let empty = { inside = MMap.empty }
 
   let push aliases mvar mod_aliases path =

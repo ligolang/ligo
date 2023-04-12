@@ -93,62 +93,6 @@ let to_string = function
   | Views -> "views"
 
 
-let of_string = function
-  | "string" -> String
-  | "bytes" -> Bytes
-  | "int" -> Int
-  | "operation" -> Operation
-  | "nat" -> Nat
-  | "tez" -> Tez
-  | "unit" -> Unit
-  | "address" -> Address
-  | "signature" -> Signature
-  | "key" -> Key
-  | "key_hash" -> Key_hash
-  | "timestamp" -> Timestamp
-  | "chain_id" -> Chain_id
-  | "list" -> List
-  | "map" -> Map
-  | "big_map" -> Big_map
-  | "set" -> Set
-  | "contract" -> Contract
-  | "michelson_or" -> Michelson_or
-  | "michelson_pair" -> Michelson_pair
-  | "baker_hash" -> Baker_hash
-  | "pvss_key" -> Pvss_key
-  | "sapling_transaction" -> Sapling_transaction
-  | "sapling_state" -> Sapling_state
-  | "baker_operation" -> Baker_operation
-  | "bls12_381_g1" -> Bls12_381_g1
-  | "bls12_381_g2" -> Bls12_381_g2
-  | "bls12_381_fr" -> Bls12_381_fr
-  | "never" -> Never
-  | "ticket" -> Ticket
-  | "michelson_program" -> Michelson_program
-  | "michelson_contract" -> Michelson_contract
-  | "ast_contract" -> Ast_contract
-  | "typed_address" -> Typed_address
-  | "mutation" -> Mutation
-  | "chest" -> Chest
-  | "chest_key" -> Chest_key
-  | "chest_opening_result" -> Chest_opening_result
-  | "tx_rollup_l2_address" -> Tx_rollup_l2_address
-  | "external_int" -> External "int"
-  | "external_ediv" -> External "ediv"
-  | "external_u_ediv" -> External "u_ediv"
-  | "pbt_gen" -> Gen
-  | "int64" -> Int64
-  | "views" -> Views
-  | "external_and" -> External "and"
-  | "external_u_and" -> External "u_and"
-  | "external_map_find_opt" -> External "map_find_opt"
-  | "external_map_add" -> External "map_add"
-  | "external_map_remove" -> External "map_remove"
-  | "external_map_remove_value" -> External "map_remove_value"
-  | _ -> failwith "Forgot to add constant name in constant.ml?"
-
-
-let pp ppf l = Format.fprintf ppf "%s" (to_string l)
 let string = String
 let bytes = Bytes
 let int = Int

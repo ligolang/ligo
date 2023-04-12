@@ -98,39 +98,39 @@ let return_result ~cli_analytics ~skip_analytics
      ~warning_as_error
      (value_format, f) ->
   Analytics.propose_term_acceptation ~skip_analytics;
-  let _unit = try
-    let result = Trace.to_stdlib_result f in
-    let value, analytics =
-      match result with
-      | Ok ((v, analytics), _w) -> Ok v, analytics
-      | Error (e, _w) -> Error e, []
-    in
-    let format = Display.bind_format value_format Main_errors.Formatter.error_format in
-    let formatted_result () =
-      Ligo_api.Api_helpers.toplevel
-        ~warning_as_error
-        ~display_format
-        ~no_colour
-        (Displayable { value; format })
-        result
-    in
-    Analytics.edit_metrics_values (List.append cli_analytics analytics);
-    match formatted_result () with
-    | Ok (v, w) ->
-      return := Done;
-      return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
-    | Error (e, w) ->
-      return := Compileur_Error;
-      return_with_warn ~show_warnings w (fun () -> return_bad e)
-  with
-  | exn ->
-    return := Exception exn
+  let () =
+    try
+      let result = Trace.to_stdlib_result f in
+      let value, analytics =
+        match result with
+        | Ok ((v, analytics), _w) -> Ok v, analytics
+        | Error (e, _w) -> Error e, []
+      in
+      let format = Display.bind_format value_format Main_errors.Formatter.error_format in
+      let formatted_result () =
+        Ligo_api.Api_helpers.toplevel
+          ~warning_as_error
+          ~display_format
+          ~no_colour
+          (Displayable { value; format })
+          result
+      in
+      Analytics.edit_metrics_values (List.append cli_analytics analytics);
+      match formatted_result () with
+      | Ok (v, w) ->
+        return := Done;
+        return_with_warn ~show_warnings w (fun () -> return_good ?output_file v)
+      | Error (e, w) ->
+        return := Compileur_Error;
+        return_with_warn ~show_warnings w (fun () -> return_bad e)
+    with
+    | exn -> return := Exception exn
   in
-    (* Push analytics *)
-    (match !return with
-    | Done -> Analytics.push_collected_metrics ~skip_analytics
-    | Compileur_Error -> ()
-    | Exception _ -> ())
+  (* Push analytics *)
+  match !return with
+  | Done -> Analytics.push_collected_metrics ~skip_analytics
+  | Compileur_Error -> ()
+  | Exception _ -> ()
 
 
 type command = string * string array

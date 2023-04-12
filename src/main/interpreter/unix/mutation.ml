@@ -55,21 +55,6 @@ let mutate_some_value
   Option.map ~f @@ Fuzzer.some_mutate_expression ~n expr
 
 
-let mutate_all_value
-    :  raise:(interpreter_error, _) raise -> ?syntax:_ -> Location.t -> LT.value
-    -> Ast_aggregated.type_expression -> (Ast_aggregated.expression * LT.mutation) list
-  =
- fun ~raise ?syntax loc v v_type ->
-  let expr = Michelson_backend.val_to_ast ~raise ~loc v v_type in
-  let module Fuzzer = Fuzz.Ast_aggregated.Mutator in
-  let f (e, (loc, m)) =
-    let syntax = get_syntax ~raise ~support_pascaligo:true syntax loc in
-    let s = Fuzz.Ast_aggregated.expression_to_string ~syntax m in
-    e, (loc, m, s)
-  in
-  List.map ~f @@ Fuzzer.all_mutate_expression expr
-
-
 let rec value_gen
     :  raise:(interpreter_error, _) raise -> ?small:bool
     -> ?known_addresses:LT.Contract.t list -> Ast_aggregated.type_expression

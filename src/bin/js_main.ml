@@ -35,7 +35,7 @@ let main source syntax =
       ~warn_unused_rec:true
       ()
   in
-  let value_format,f =
+  let value_format, f =
     Api.Compile.contract
       raw_options
       (Api.Compile.Text (source, syntax_v))
@@ -43,7 +43,9 @@ let main source syntax =
       michelson_comments
   in
   let result = Simple_utils.Trace.to_stdlib_result f in
-  let format = Simple_utils.Display.bind_format value_format Main_errors.Formatter.error_format in
+  let format =
+    Simple_utils.Display.bind_format value_format Main_errors.Formatter.error_format
+  in
   let value, _analytics =
     match result with
     | Ok ((v, analytics), _w) -> Ok v, analytics

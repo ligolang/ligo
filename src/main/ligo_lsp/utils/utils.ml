@@ -49,6 +49,7 @@ let position_leq (p1 : Position.t) (p2 : Position.t) : bool =
 let range_inside ~(big : Range.t) ~(small : Range.t) : bool =
   position_leq big.start small.start && position_leq small.end_ big.end_
 
+
 (** Minimal range that contains both given ranges *)
 let range_cover (r1 : Range.t) (r2 : Range.t) : Range.t =
   let position_max (p1 : Position.t) (p2 : Position.t) : Position.t =
@@ -61,9 +62,12 @@ let range_cover (r1 : Range.t) (r2 : Range.t) : Range.t =
     ~start:(position_min r1.start r2.start)
     ~end_:(position_max r1.end_ r2.end_)
 
+
 (** Minimal range that contains all given ranges *)
 let range_cover_nseq (ranges : Range.t Simple_utils.Utils.nseq) : Range.t =
-  let (h,t) = ranges in List.fold ~f:range_cover ~init:h t
+  let h, t = ranges in
+  List.fold ~f:range_cover ~init:h t
+
 
 let location_to_range (l : Loc.t) : Range.t option =
   match l with

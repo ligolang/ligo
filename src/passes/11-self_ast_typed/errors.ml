@@ -45,8 +45,6 @@ type self_ast_typed_error =
   ]
 [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
 
-let expected_pair_in_contract loc = expected_pair_in loc `Contract
-let expected_pair_in_view loc = expected_pair_in loc `View
 let type_view_io_in loc got = view_io loc got `In
 let type_view_io_out loc got = view_io loc got `Out
 

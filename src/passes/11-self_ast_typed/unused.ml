@@ -16,16 +16,6 @@ module M = Simple_utils.Map.Make (V)
 (* A map recording if a variable is being used * a list of unused variables. *)
 type defuse = bool M.t * V.t list
 
-(* This function also returns the original key, as it contains the original location. *)
-let find_opt target m =
-  let aux k v x =
-    match x with
-    | None -> if V.compare target k = 0 then Some (k, v) else None
-    | Some _ -> x
-  in
-  M.fold aux m None
-
-
 let defuse_union (x, a) (y, b) = M.union (fun _ x y -> Some (x || y)) x y, a @ b
 let defuse_neutral = M.empty, []
 let defuse_unions defuse = List.fold_left ~f:defuse_union ~init:(defuse, [])
@@ -49,12 +39,6 @@ let remove_defined_var_after defuse binder f expr =
   let defuse, unused = f (M.add binder false defuse) expr in
   let unused = add_if_not_generated binder unused (M.find binder defuse) in
   replace_opt binder old_binder defuse, unused
-
-
-let add_if_unused unused binder defuse =
-  match find_opt binder defuse with
-  | None -> unused
-  | Some (_, b) -> add_if_not_generated binder unused b
 
 
 (* Return a def-use graph + a list of unused variables *)
@@ -182,13 +166,7 @@ let defuse_of_declaration defuse decl =
   List.rev unused
 
 
-let rec unused_map_module ~raise : module_ -> module_ = function
-  | m ->
-    let () = List.iter ~f:(unused_decl ~raise) m in
-    m
-
-
-and unused_declaration ~raise (decl : declaration) =
+let unused_declaration ~raise (decl : declaration) =
   let update_annotations annots = List.iter ~f:raise.Simple_utils.Trace.warning annots in
   let defuse, _ = defuse_neutral in
   let unused = defuse_of_declaration defuse decl in
@@ -196,17 +174,6 @@ and unused_declaration ~raise (decl : declaration) =
     `Self_ast_typed_warning_unused (V.get_location v, Format.asprintf "%a" V.pp v)
   in
   update_annotations @@ List.map ~f:warn_var unused
-
-
-and unused_decl ~raise x = unused_declaration ~raise x
-
-and unused_map_module_expr ~raise : module_expr -> module_expr = function
-  | m ->
-    let return module_content : module_expr = { m with module_content } in
-    (match m.module_content with
-    | M_struct x -> return @@ M_struct (unused_map_module ~raise x)
-    | M_variable _ -> m
-    | M_module_path _ -> m)
 
 
 let unused_map_program ~raise : program -> program = function

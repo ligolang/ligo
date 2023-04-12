@@ -287,30 +287,6 @@ let rec resolve_mpath
 
 
 (**
-  Folds over a module path (non-empty list of module variables).
-
-  It calls [resolve_mvar] on each var of the module path, and,
-  for each resolved module, calls [f].
-
-  If the path is fully resolved, it folds over the whole list,
-  otherwise it stops at the first unresolved variable.
-  *)
-let rec fold_mpath
-    :  Module_var.t List.Ne.t -> def list -> module_map -> init:'a
-    -> f:('a -> Module_var.t * Module_var.t * Module_var.t * def list -> 'a) -> 'a
-  =
- fun (hd, tl) defs mmap ~init ~f ->
-  let self nelist mdefs ~init = fold_mpath nelist mdefs mmap ~init ~f in
-  match resolve_mvar hd defs mmap with
-  | None -> init
-  | Some (real, m, mdefs) ->
-    let init = f init (hd, real, m, mdefs) in
-    (match tl with
-    | [] -> init
-    | hd' :: tl' -> self (hd', tl') mdefs ~init)
-
-
-(**
   Combination of both {!fold_mpath} and {!resolve_mpath} in a single list traversal.
 
   It calls {!resolve_mvar} on each of the module variable of the input list.

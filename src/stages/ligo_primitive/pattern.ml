@@ -52,14 +52,6 @@ module Make (Container : Container) = struct
    fun ~loc (label, pat) -> Location.wrap ~loc (P_variant (label, pat))
 
 
-  (* get top level ascription if any *)
-  let get_ascr : 'ty t -> 'ty option =
-   fun x ->
-    match x.wrap_content with
-    | P_var b -> Some (Binder.get_ascr b)
-    | _ -> None
-
-
   let rec pp_list g ppf pl =
     let mpp = pp g in
     match pl with

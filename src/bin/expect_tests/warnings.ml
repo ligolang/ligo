@@ -1,8 +1,6 @@
 open Cli_expect
 
 let contract = test
-let contract_resource name = test ("res/" ^ name)
-let bad_contract = bad_test
 
 (* warning unused variables example *)
 let%expect_test _ =

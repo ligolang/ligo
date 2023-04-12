@@ -98,7 +98,6 @@ module Internal () = struct
     else Format.fprintf ppf "%s" v.name
 
 
-  let _pp ppf v = Format.fprintf ppf "%s#%d" v.name v.counter
   let wildcard ~loc = { name = "_"; counter = 0; location = loc; generated = false }
 
   include Comparable.Make (T)

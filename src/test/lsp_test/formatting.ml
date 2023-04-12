@@ -23,11 +23,7 @@ let get_formatting_test ({ file_path; expected } : formatting_test)
   | None, Some _ -> fail "Could not format."
   | Some _, None -> fail "Can format, but expected to fail and return None."
   | Some [ { range; newText } ], Some path_to_expected ->
-    check
-      testable_range
-      "Expected a whole_file_range."
-      Utils.whole_file_range
-      range;
+    check testable_range "Expected a whole_file_range." Utils.whole_file_range range;
     check
       Alcotest.string
       "Formatted file does not match the expected."

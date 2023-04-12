@@ -7,15 +7,6 @@ type 'dcl t =
 
 and module_path = Var.Module_var.t Simple_utils.List.Ne.t
 
-let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t =
- fun f acc mexp ->
-  match mexp with
-  | M_struct prg ->
-    let x, prg = List.fold_map ~f ~init:acc prg in
-    x, M_struct prg
-  | M_variable _ | M_module_path _ -> acc, mexp
-
-
 let pp_module_path ppf (path : module_path) =
   Simple_utils.PP_helpers.(ne_list_sep Var.Module_var.pp (tag ".")) ppf path
 

@@ -205,9 +205,7 @@ let build_contract ~raise
       Proto_alpha_utils.Trace.trace_tzresult_lwt
         ~raise
         (typecheck_contract_tracer protocol_version contract)
-      @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_contract
-           ~environment
-           contract'
+      @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
     in
     contract)
 

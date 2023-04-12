@@ -1539,19 +1539,6 @@ let parse_code ~raise code =
   code
 
 
-let parse_and_run_michelson_func
-    ~raise
-    ~loc
-    (ctxt : Tezos_state.context)
-    code
-    func_ty
-    arg
-    arg_ty
-  =
-  let code = parse_code ~raise code in
-  run_michelson_func ~raise ~loc ctxt code func_ty arg arg_ty
-
-
 let parse_raw_michelson_code ~raise code ty =
   let open Tezos_micheline in
   let ty = compile_type ~raise ty in

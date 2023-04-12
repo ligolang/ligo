@@ -89,9 +89,6 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> 'a * matching_expr
     init, Match_record { fields; body; tv }
 
 
-let map_expression f exp = fold_map_expression (fun () expr -> true, (), f expr) () exp
-let fold_expression f init exp = fst @@ fold_map_expression f init exp
-
 module Free_variables : sig
   val expression : expression -> Value_var.t list
 end = struct

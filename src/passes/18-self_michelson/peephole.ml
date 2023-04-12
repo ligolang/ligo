@@ -128,25 +128,3 @@ let peephole (f : _ peep) (xs : _ list) : bool * _ list =
     | Some xs' ->
       aux true xs xs' in
   aux false (List.rev xs) []
-
-(* `par2` and `par` are not used currently because they result in
-   slightly worse code in example contracts, due to optimization
-   ordering differences. Hmm... *)
-
-(* Run two peeps in parallel *)
-let rec par2 (f : 'a peep) (g : 'a peep) : 'a peep =
-  match (f, g) with
-  | (No_change, g) -> g
-  | (Changed xs, _) -> Changed xs
-  | (f, No_change) -> f
-  | (_, Changed xs) -> Changed xs
-  | (Peek f, g) ->
-    Peek (fun x -> par2 (f x) g)
-  | (f, Peek g) ->
-    Peek (fun x -> par2 f (g x))
-  | (Peep f, Peep g) ->
-    Peep (fun x -> par2 (f x) (g x))
-
-(* Run list of peeps in parallel *)
-let par (fs : 'a peep list) : 'a peep =
-  List.fold_left ~f:par2 ~init:No_change fs

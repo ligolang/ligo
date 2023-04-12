@@ -65,5 +65,5 @@ let pass ~raise ~syntax =
   morph
     ~name:__MODULE__
     ~compile:(compile ~syntax)
-    ~decompile:`None (* for now ? *)
+    ~decompile
     ~reduction_check:(reduction ~raise)
