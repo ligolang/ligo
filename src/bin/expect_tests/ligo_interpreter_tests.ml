@@ -674,15 +674,12 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1X92QM6i2RhjuTMgHvYJA6nDu7udpmNU39 , { parameter unit ;
+    - test_x exited with value (KT19hFZZxPTue1oBw7cc46L1p6pJ3xTo3vRF , { parameter unit ;
       storage
         (pair (pair (big_map %metadata string bytes) (set %participants address))
               (map %secrets address bool)) ;
-      code { PUSH bool True ;
-             PUSH bool False ;
-             DIG 2 ;
-             CDR ;
-             DUP 3 ;
+      code { CDR ;
+             PUSH bool True ;
              DUP 2 ;
              CAR ;
              CDR ;
@@ -691,9 +688,9 @@ let%expect_test _ =
                     CDR ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { DUP 3 ; AND } { DROP ; DUP 4 ; AND } } ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
              DROP ;
-             DUP 3 ;
+             PUSH bool True ;
              DUP 2 ;
              CAR ;
              CDR ;
@@ -701,12 +698,10 @@ let%expect_test _ =
                     EMPTY_MAP address bool ;
                     DIG 2 ;
                     GET ;
-                    IF_NONE { DUP 3 ; AND } { DROP ; DUP 4 ; AND } } ;
-             DIG 2 ;
-             DIG 3 ;
-             DROP 3 ;
+                    IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
+             DROP ;
              NIL operation ;
-             PAIR } } , 236). |}]
+             PAIR } } , 222). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
