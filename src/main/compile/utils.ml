@@ -14,13 +14,6 @@ let to_core ~raise ~options ~meta (c_unit : Buffer.t) file_path =
   Of_unified.compile ~raise ~options unified
 
 
-let type_file ~raise ~(options : Compiler_options.t) ?cform f stx : Ast_typed.program =
-  let meta = Of_source.extract_meta stx in
-  let c_unit, _ = Of_source.preprocess_file ~raise ~options:options.frontend ~meta f in
-  let core = to_core ~raise ~options ~meta c_unit f in
-  Of_core.typecheck ~raise ~options ?cform core
-
-
 let core_expression_string ~raise ~options syntax expression =
   let meta = Of_source.make_meta_from_syntax syntax in
   let c_unit_exp, _ = Of_source.compile_string_without_preproc expression in

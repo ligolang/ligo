@@ -214,15 +214,3 @@ let list_type_declarations (m : Ast_typed.program) : Type_var.t list =
       | _ -> prev)
     ~init:[]
     m
-
-
-let list_mod_declarations (m : Ast_typed.program) : Module_var.t list =
-  List.fold_left
-    ~f:(fun prev el ->
-      let open Simple_utils.Location in
-      match el.wrap_content with
-      | D_module { module_binder; module_attr; _ } when module_attr.public ->
-        module_binder :: prev
-      | _ -> prev)
-    ~init:[]
-    m

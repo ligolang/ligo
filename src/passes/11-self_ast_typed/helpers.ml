@@ -89,68 +89,7 @@ and fold_cases : 'a folder -> 'a -> _ Match_expr.match_case list -> 'a =
   List.fold m ~init ~f:(fun init { body; _ } -> fold_expression f init body)
 
 
-and fold_module : 'a folder -> 'a -> module_ -> 'a =
- fun f init m ->
-  let aux acc x =
-    let return (d : 'a) = d in
-    match Location.unwrap x with
-    | D_value
-        { binder = _
-        ; expr
-        ; attr =
-            { inline = _
-            ; no_mutation = _
-            ; view = _
-            ; public = _
-            ; hidden = _
-            ; thunk = _
-            ; entry = _
-            }
-        } ->
-      let res = fold_expression f acc expr in
-      return @@ res
-    | D_irrefutable_match
-        { pattern = _
-        ; expr
-        ; attr =
-            { inline = _
-            ; no_mutation = _
-            ; view = _
-            ; public = _
-            ; hidden = _
-            ; thunk = _
-            ; entry = _
-            }
-        } ->
-      let res = fold_expression f acc expr in
-      return @@ res
-    | D_type _t -> return @@ acc
-    | D_module { module_binder = _; module_; module_attr = _ } ->
-      let res = fold_expression_in_module_expr f acc module_ in
-      return @@ res
-  in
-  let res = List.fold ~f:aux ~init m in
-  res
-
-
 type ty_mapper = type_expression -> unit
-
-let rec iter_type_expression : ty_mapper -> type_expression -> unit =
- fun f t ->
-  let self = iter_type_expression f in
-  let () = f t in
-  match t.type_content with
-  | T_variable _ -> ()
-  | T_constant x -> List.iter ~f:self x.parameters
-  | T_sum row | T_record row -> Row.iter self row
-  | T_arrow x ->
-    let () = self x.type1 in
-    self x.type2
-  | T_singleton _ -> ()
-  | T_abstraction x -> self x.type_
-  | T_for_all x -> self x.type_
-
-
 type 'err mapper = expression -> expression
 
 let rec map_expression : 'err mapper -> expression -> expression =
@@ -1002,7 +941,4 @@ module Declaration_mapper = struct
 
   and map_decl m d = map_declaration m d
   and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
-
-  and map_program : 'err mapper -> program -> program =
-   fun m -> List.map ~f:(map_declaration m)
 end

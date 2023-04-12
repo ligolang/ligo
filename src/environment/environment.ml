@@ -8,62 +8,15 @@ module Protocols = Protocols
 type t = program
 type signature = Ast_typed.signature
 
-let pp ppf m = PP.module_ ppf @@ m
 let loc = Location.env
-
-let add_module
-    :  ?public:unit -> ?hidden:unit -> Ligo_prim.Module_var.t -> Ast_typed.module_
-    -> signature -> t -> t
-  =
- fun ?public ?hidden module_binder module_ signature env ->
-  let module_ =
-    { module_content = Module_expr.M_struct module_; module_location = loc; signature }
-  in
-  let new_d =
-    Location.wrap ~loc
-    @@ D_module
-         { module_binder
-         ; module_
-         ; module_attr =
-             { public = Option.is_some public; hidden = Option.is_some hidden }
-         }
-  in
-  new_d :: env
-
-
 let add_declaration decl env = decl :: env
 let append env (program : program) : t = List.rev_append program env
 let fold ~f ~init (env : t) = List.fold ~f ~init (List.rev env)
-let foldi ~f ~init (env : t) = List.foldi ~f ~init (List.rev env)
 
 (* Artefact for build system *)
 type core = Ast_core.module_
 
-let add_core_module ?public ?hidden : Module_var.t -> Ast_core.module_ -> core -> core =
- fun module_binder module_ env ->
-  let module_ = Location.wrap ~loc @@ Module_expr.M_struct module_ in
-  let new_d =
-    Location.wrap ~loc
-    @@ Ast_core.D_module
-         { module_binder
-         ; module_
-         ; module_attr =
-             { public = Option.is_some public; hidden = Option.is_some hidden }
-         }
-  in
-  new_d :: env
-
-
-let to_module (env : t) : module_ = List.rev env
 let to_program (env : t) : program = List.rev env
-
-let append_core (env : core) (program : Ast_core.program) : core =
-  List.rev_append program env
-
-
-let init_core program = List.rev program
-let to_core_module env = List.rev env
-let to_core_program (env : core) : S.program = List.rev env
 
 (* This is an stdlib *)
 let star = Kind.Type

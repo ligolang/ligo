@@ -7,7 +7,6 @@ type t =
   }
 
 let empty = { content_typed = []; content_core = [] }
-let loc = Location.env
 
 module Cache = struct
   (* LanguageMap are used to cache compilation of standard libs across :

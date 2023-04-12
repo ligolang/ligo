@@ -37,7 +37,6 @@ type t =
 
 module Default_options = struct
   (* Formatter *)
-  let show_warnings = true
   let warning_as_error = false
   let no_colour = false
 
@@ -49,7 +48,6 @@ module Default_options = struct
 
   (* Frontend *)
   let syntax = "auto"
-  let dialect = "terse"
   let entry_point = []
   let module_ = ""
   let libraries = []
@@ -58,7 +56,6 @@ module Default_options = struct
 
   (* Tools *)
   let only_ep = false
-  let infer = false
   let with_types = false
   let self_pass = false
 

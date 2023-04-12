@@ -17,6 +17,5 @@ let value_gen (* TODO(prometheansacrifice) mutation for browser *)
   Obj.magic 0
 
 
-let mutate_all_value ~raise:_ ?syntax:_ _loc _v _v_type = []
 let buffer_of_mutation = Obj.magic 0
 let get_mutation_id = Obj.magic 0

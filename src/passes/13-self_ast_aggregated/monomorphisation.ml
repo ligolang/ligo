@@ -50,24 +50,6 @@ module Data = struct
     Option.value ~default:[] @@ LIMap.find_opt ev data
 
 
-  let instance_lookup_opt
-      (lid : Value_var.t)
-      (type_instances' : AST.type_expression list)
-      (type_' : AST.type_expression)
-      (data : t)
-    =
-    let aux { Instance.vid; type_instances; type_ } =
-      if AST.equal_type_expression type_ type_'
-         && List.equal
-              (fun t1 t2 -> AST.equal_type_expression t1 t2)
-              type_instances
-              type_instances'
-      then Some (vid, type_instances)
-      else None
-    in
-    List.find_map ~f:aux @@ Option.value ~default:[] (LIMap.find_opt lid data)
-
-
   let instance_add (lid : Value_var.t) (instance : Instance.t) (data : t) =
     let lid_instances =
       instance :: (Option.value ~default:[] @@ LIMap.find_opt lid data)

@@ -13,10 +13,6 @@ let x =
 this parses incorectly (the 'a binder is ignored) : See with christian
 *)
 
-let prepend_if_caml ~syntax str =
-  if Syntax_types.(equal syntax CameLIGO) then "'" ^ str else str
-
-
 let abstract_type params ty_expr =
   List.Ne.fold_right params ~init:ty_expr ~f:(fun ty_binder acc ->
       t_abstraction ~loc:(get_t_loc ty_expr) { ty_binder; kind = Type; type_ = acc })

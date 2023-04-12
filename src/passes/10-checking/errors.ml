@@ -23,7 +23,12 @@ let pattern_to_string p syntax =
       p
   in
   let p = Unification.Cameligo.decompile_pattern p in
-  let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 Parsing_cameligo.Pretty.default_environment p in
+  let p =
+    Parsing.Cameligo.pretty_print_pattern
+      ~cols:80
+      Parsing_cameligo.Pretty.default_environment
+      p
+  in
   Buffer.contents p
 
 

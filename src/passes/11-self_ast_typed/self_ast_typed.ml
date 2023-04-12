@@ -99,5 +99,4 @@ let all_view ~raise command_line_views main_name module_path contract_type prg =
   Contract_passes.remove_unused_for_views module_path prg
 
 
-let all = []
 let remove_unused_expression = Contract_passes.remove_unused_expression

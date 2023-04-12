@@ -37,6 +37,8 @@
   ligo.unix
   ligo.analytics
   ligo.api
-  re) (inline_tests (libraries ligo.api.unix))
+  re)
+ (inline_tests
+  (libraries ligo.api.unix))
  (preprocess
   (pps ppx_deriving_yojson ppx_inline_test)))

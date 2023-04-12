@@ -5,18 +5,6 @@ module Helpers = Helpers
 let map_expression = Ast_aggregated.Helpers.map_expression
 let expression_obj ~raise e = Obj_ligo.check_obj_ligo ~raise e
 
-let eta_reduce : Ast_aggregated.expression -> Ast_aggregated.expression option =
- fun e ->
-  match e.expression_content with
-  | E_lambda { binder; result = { expression_content = E_application { lamb; args }; _ } }
-    ->
-    (match Ast_aggregated.get_e_variable args with
-    | Some y when Param.is_imm binder && Value_var.equal (Param.get_var binder) y ->
-      Some lamb
-    | _ -> None)
-  | _ -> None
-
-
 let make_forced : Ast_aggregated.expression -> Ast_aggregated.expression =
   let f e =
     let open Ast_aggregated in

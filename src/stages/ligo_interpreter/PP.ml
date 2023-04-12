@@ -81,22 +81,3 @@ let rec pp_value ~no_colour : Format.formatter -> value -> unit =
     | V_Typed_address c ->
       Format.fprintf ppf "%a" Tezos_protocol.Protocol.Alpha_context.Contract.pp c
     | V_Views _ -> Format.fprintf ppf "views"
-
-
-let pp_value_expr ~no_colour : Format.formatter -> value_expr -> unit =
- fun ppf v -> Format.fprintf ppf "%a" (pp_value ~no_colour) v.eval_term
-
-
-let pp_env ~no_colour : Format.formatter -> env -> unit =
- fun ppf env ->
-  let aux : Format.formatter -> Value_var.t * env_item -> unit =
-   fun ppf -> function
-    | name, { item; no_mutation = _; inline = _ } ->
-      Format.fprintf ppf "%a -> %a" Value_var.pp name (pp_value_expr ~no_colour) item
-  in
-  Format.fprintf
-    ppf
-    "@[<v 2>%i bindings in environment:@ %a@]"
-    (List.length env)
-    (list_sep aux (tag "@ "))
-    env

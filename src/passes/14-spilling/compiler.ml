@@ -193,13 +193,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   | T_for_all _ ->
     raise.error @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
-(* probably should use result monad for conformity? but these errors
-   are supposed to be impossible *)
-let internal_error loc msg =
-  failwith
-    (Format.asprintf
-       "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
-       loc msg)
 
 let rec compile_expression ~raise (ae:AST.expression) : expression =
   let tv = compile_type ~raise ae.type_expression in

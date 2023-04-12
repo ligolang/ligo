@@ -3,8 +3,8 @@ open Prometheus_push
 
 (* Registry *)
 
-val agg_registry: PushableCollectorRegistry.t
-val registry: PushableCollectorRegistry.t
+val agg_registry : PushableCollectorRegistry.t
+val registry : PushableCollectorRegistry.t
 
 (* Types *)
 type metric_group =
@@ -38,11 +38,15 @@ type analytics_inputs = analytics_input list
 
 (* Analytics *)
 val update_term_acceptance : string -> (string * string, string * string) result
-
 val determine_syntax_label : string -> string -> string
-
 val generate_cli_metric : command:string -> analytics_input
-val generate_cli_metrics_with_syntax_and_protocol : command:string -> raw_options:Raw_options.t -> ?source_file:string -> unit -> analytics_input list
+
+val generate_cli_metrics_with_syntax_and_protocol
+  :  command:string
+  -> raw_options:Raw_options.t
+  -> ?source_file:string
+  -> unit
+  -> analytics_input list
 
 val push_collected_metrics : skip_analytics:bool -> unit
 val propose_term_acceptation : skip_analytics:bool -> unit

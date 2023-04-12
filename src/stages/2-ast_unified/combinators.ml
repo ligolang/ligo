@@ -374,10 +374,3 @@ let get_pattern_binders (p : pattern) : Variable.t list =
       }
   in
   Recursion_schemes.Catamorphism.cata_pattern ~f:folder p
-
-
-let type_of_ty_list ~loc lst =
-  match List.Ne.of_list_opt lst with
-  | None -> tv_unit ~loc ()
-  | Some (one, []) -> one
-  | Some nelst -> t_prod ~loc nelst

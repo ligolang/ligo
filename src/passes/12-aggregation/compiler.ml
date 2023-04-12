@@ -120,22 +120,16 @@ module Path : sig
   type t = Module_var.t list
 
   val empty : t
-  val equal : t -> t -> bool
   val add_to_path : t -> Module_var.t -> t
   val get_from_module_path : Module_var.t List.t -> t
   val append : t -> t -> t
-  val pp : Format.formatter -> t -> unit
 end = struct
   type t = Module_var.t list
 
   let empty = []
-  let equal p1 p2 = List.equal Module_var.equal p1 p2
   let add_to_path (p : t) s = s :: p
   let get_from_module_path lst = List.rev lst
   let append a b = a @ b
-
-  let pp ppf path =
-    Format.fprintf ppf "[%a]\n%!" (PP_helpers.list_sep_d Module_var.pp) path
 end
 
 (* Store LUTs of the path of each identifier, plus the list of declaration in a module *)
@@ -148,9 +142,7 @@ module Scope : sig
     | Module of Module_var.t
 
   val empty : t
-  val pp : Format.formatter -> t -> unit
   val find_value : t -> Value_var.t -> Path.t
-  val find_type_ : t -> Type_var.t -> Path.t
   val find_module : t -> Module_var.t -> Path.t * t
 
   val push_value
@@ -162,7 +154,6 @@ module Scope : sig
     -> t
 
   val push_func_or_case_binder : t -> Value_var.t -> t
-  val push_type_ : t -> Type_var.t -> Path.t -> t
   val push_local_type : t -> Type_var.t -> t
   val push_module : t -> Module_var.t -> Path.t -> t -> t
   val add_path_to_var : t -> Path.t -> Value_var.t -> t * Value_var.t
@@ -194,30 +185,8 @@ end = struct
     }
 
 
-  let rec pp ppf scope =
-    Format.fprintf
-      ppf
-      "{value : %a; type_ : %a; module_ : %a; name_map :%a}\n%!"
-      (PP_helpers.list_sep_d (fun ppf (a, b) ->
-           Format.fprintf ppf "(%a -> %a)" Value_var.pp a Path.pp b))
-      (ValueVMap.to_kv_list scope.value)
-      (PP_helpers.list_sep_d (fun ppf (a, b) ->
-           Format.fprintf ppf "(%a -> %a)" Type_var.pp a Path.pp b))
-      (TypeVMap.to_kv_list scope.type_)
-      (PP_helpers.list_sep_d (fun ppf (a, (b, s)) ->
-           Format.fprintf ppf "(%a -> (%a,%a)" Module_var.pp a Path.pp b pp s))
-      (ModuleVMap.to_kv_list scope.module_)
-      (PP_helpers.list_sep_d (fun ppf ((a, b), s) ->
-           Format.fprintf ppf "(%a,%a) -> %a)" Path.pp a Value_var.pp b Value_var.pp s))
-      (PathVarMap.to_kv_list scope.name_map)
-
-
   let find_value scope v =
     Option.value ~default:Path.empty (ValueVMap.find_opt v scope.value)
-
-
-  let find_type_ scope t =
-    Option.value ~default:Path.empty (TypeVMap.find_opt t scope.type_)
 
 
   let find_module scope m =
@@ -233,11 +202,6 @@ end = struct
   let push_func_or_case_binder scope (v : Value_var.t) =
     let value = ValueVMap.add v Path.empty scope.value in
     { scope with value }
-
-
-  let push_type_ scope t path =
-    let type_ = TypeVMap.add t path scope.type_ in
-    { scope with type_ }
 
 
   let push_local_type scope (v : Type_var.t) =

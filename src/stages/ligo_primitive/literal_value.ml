@@ -2,11 +2,6 @@ module Z = Simple_utils.Z
 
 type ligo_string = Simple_utils.Ligo_string.t [@@deriving eq, compare, yojson, hash, sexp]
 
-type layout =
-  | L_comb
-  | L_tree
-[@@deriving hash]
-
 let bytes_to_yojson b = `String (Bytes.to_string b)
 let hash_fold_bytes st b = Hash.fold_string st (Bytes.to_string b)
 
@@ -30,27 +25,6 @@ type t =
   | Literal_chest of bytes
   | Literal_chest_key of bytes
 [@@deriving eq, compare, yojson, hash, sexp]
-
-let to_enum = function
-  | Literal_unit -> 1
-  | Literal_int _ -> 2
-  | Literal_nat _ -> 3
-  | Literal_timestamp _ -> 4
-  | Literal_mutez _ -> 5
-  | Literal_string _ -> 6
-  | Literal_bytes _ -> 7
-  | Literal_address _ -> 8
-  | Literal_signature _ -> 9
-  | Literal_key _ -> 10
-  | Literal_key_hash _ -> 11
-  | Literal_chain_id _ -> 12
-  | Literal_operation _ -> 13
-  | Literal_bls12_381_g1 _ -> 14
-  | Literal_bls12_381_g2 _ -> 15
-  | Literal_bls12_381_fr _ -> 16
-  | Literal_chest _ -> 17
-  | Literal_chest_key _ -> 18
-
 
 let pp_operation ppf (o : bytes) : unit = Format.fprintf ppf "%a" Hex.pp (Hex.of_bytes o)
 

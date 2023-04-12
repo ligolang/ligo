@@ -5,21 +5,6 @@ module Pair = Simple_utils.Pair
 open Ligo_prim
 open Types
 
-let get_pair m =
-  match Map.find m (Label.of_int 0), Map.find m (Label.of_int 1) with
-  | Some e1, Some e2 -> Some (e1, e2)
-  | _ -> None
-
-
-let tuple_of_record (m : _ Record.t) =
-  let aux i =
-    let label = Label.of_int i in
-    let opt = Record.find_opt m label in
-    Option.bind ~f:(fun opt -> Some ((label, opt), i + 1)) opt
-  in
-  Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
-
-
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
   | Some "" -> None
@@ -27,116 +12,11 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 
-(* This function transforms a type `fun v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
-let destruct_type_abstraction (t : type_expression) =
-  let rec destruct_type_abstraction type_vars (t : type_expression) =
-    match t.type_content with
-    | T_abstraction { ty_binder; type_; _ } ->
-      destruct_type_abstraction (ty_binder :: type_vars) type_
-    | _ -> List.rev type_vars, t
-  in
-  destruct_type_abstraction [] t
-
-
-(* This function transforms a type `∀ v1 ... vn . t` into the pair `([ v1 ; .. ; vn ] , t)` *)
-let destruct_for_alls (t : type_expression) =
-  let rec destruct_for_alls type_vars (t : type_expression) =
-    match t.type_content with
-    | T_for_all { ty_binder; type_; _ } ->
-      destruct_for_alls (ty_binder :: type_vars) type_
-    | _ -> List.rev type_vars, t
-  in
-  destruct_for_alls [] t
-
-
-(* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
-let destruct_arrows_n (t : type_expression) (n : int) =
-  let rec destruct_arrows type_vars (t : type_expression) =
-    match t.type_content with
-    | T_arrow { type1; type2 } when List.length type_vars < n ->
-      destruct_arrows (type1 :: type_vars) type2
-    | _ -> List.rev type_vars, t
-  in
-  destruct_arrows [] t
-
-
-(* This function transforms a type `t1 -> ... -> tn -> t` into the pair `([ t1 ; .. ; tn ] , t)` *)
-let destruct_arrows (t : type_expression) =
-  let rec destruct_arrows type_vars (t : type_expression) =
-    match t.type_content with
-    | T_arrow { type1; type2 } -> destruct_arrows (type1 :: type_vars) type2
-    | _ -> List.rev type_vars, t
-  in
-  destruct_arrows [] t
-
-
-let destruct_tuple (t : type_expression) =
-  match t.type_content with
-  | T_record row when Row.is_tuple row -> Row.to_tuple row
-  | _ -> [ t ]
-
-
-let destruct_tuples (t : type_expression list) = List.concat_map ~f:destruct_tuple t
-
-(* This function takes an expression l and a list of arguments [e1; ...; en] and constructs `l e1 ... en`,
-   but it checks that types make sense (i.e. l has a function type with enough arguments) *)
-let build_applications_opt (lamb : expression) (args : expression list) =
-  let rec aux lamb' (args : expression list) (t : type_expression) =
-    match args, t.type_content with
-    | arg :: args', T_arrow { type1 = _; type2 } ->
-      let loc = Location.cover lamb'.location arg.location in
-      aux
-        (Combinators.make_e ~loc (E_application { lamb = lamb'; args = arg }) type2)
-        args'
-        type2
-    | [], _ -> Some { lamb' with type_expression = t }
-    | _, _ -> None
-  in
-  aux lamb args lamb.type_expression
-
-
-(* This function re-builds a term prefixed with E_type_abstraction:
-   given an expression e and a list of type variables [t1; ...; tn],
-   it constructs an expression /\ t1 . ... . /\ tn . e *)
-let rec build_type_abstractions e = function
-  | [] -> e
-  | abs_var :: abs_vars ->
-    let e = build_type_abstractions e abs_vars in
-    { e with
-      expression_content = E_type_abstraction { type_binder = abs_var; result = e }
-    ; type_expression =
-        Combinators.t_for_all ~loc:e.location abs_var Type e.type_expression
-    }
-
-
 (* These tables are used during inference / for substitution *)
 module TMap = Simple_utils.Map.Make (Type_var)
 
 (* Free type variables in a type *)
 module VarSet = Caml.Set.Make (Type_var)
-
-let rec get_fv_type_expression : type_expression -> VarSet.t =
- fun u ->
-  let self = get_fv_type_expression in
-  match u.type_content with
-  | T_variable v -> VarSet.singleton v
-  | T_arrow { type1; type2 } ->
-    let type1 = self type1 in
-    let type2 = self type2 in
-    VarSet.union type1 type2
-  | T_abstraction { ty_binder; kind = _; type_ } ->
-    let type_ = self type_ in
-    VarSet.remove ty_binder type_
-  | T_for_all { ty_binder; kind = _; type_ } ->
-    let type_ = self type_ in
-    VarSet.remove ty_binder type_
-  | T_constant { language = _; injection = _; parameters } ->
-    let parameters = List.map ~f:self parameters in
-    List.fold_right ~f:VarSet.union ~init:VarSet.empty parameters
-  | T_sum row | T_record row ->
-    Row.fold (fun var_set type_ -> VarSet.union var_set (self type_)) VarSet.empty row
-  | _ -> VarSet.empty
-
 
 (* Substitutes a type variable `v` for a type `t` in the type `u`. In
    principle, variables could be captured. But in case a binder
@@ -175,44 +55,6 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
     { u with type_content = T_sum row }
   | T_record row ->
     let row = Row.map (self v t) row in
-    { u with type_content = T_record row }
-  | _ -> u
-
-
-(* Substitution as `subst_type`, but does not capture variables in
-   `t`, by using `fv` = free variables of `t`. *)
-let subst_no_capture_type v t (u : type_expression) =
-  let fv = get_fv_type_expression t in
-  subst_type ~fv v t u
-
-
-(* Parallel substitution, it takes a map of variables pointing to
-   expressions. Variables can be captured. *)
-let rec psubst_type t (u : type_expression) =
-  let self = psubst_type t in
-  match u.type_content with
-  | T_variable v' ->
-    (match TMap.find_opt v' t with
-    | Some t -> t
-    | None -> u)
-  | T_arrow { type1; type2 } ->
-    let type1 = self type1 in
-    let type2 = self type2 in
-    { u with type_content = T_arrow { type1; type2 } }
-  | T_abstraction { ty_binder; kind; type_ } when not (TMap.mem ty_binder t) ->
-    let type_ = self type_ in
-    { u with type_content = T_abstraction { ty_binder; kind; type_ } }
-  | T_for_all { ty_binder; kind; type_ } when not (TMap.mem ty_binder t) ->
-    let type_ = self type_ in
-    { u with type_content = T_for_all { ty_binder; kind; type_ } }
-  | T_constant { language; injection; parameters } ->
-    let parameters = List.map ~f:self parameters in
-    { u with type_content = T_constant { language; injection; parameters } }
-  | T_sum row ->
-    let row = Row.map self row in
-    { u with type_content = T_sum row }
-  | T_record row ->
-    let row = Row.map self row in
     { u with type_content = T_record row }
   | _ -> u
 
@@ -394,20 +236,6 @@ module IdMap = struct
     type key
     type 'a t
     type 'a kvi_list = (key * 'a * int) list
-
-    val empty : 'a t
-    val add : 'a t -> key -> 'a -> 'a t
-
-    (* In case of merge conflict between two values with same keys, this merge function keeps the value with the highest id.
-        This follows the principle that this map always keeps the latest value in case of conflict *)
-    val merge : 'a t -> 'a t -> 'a t
-
-    (* Converts the map into an unsorted (key * value * id) 3-uple *)
-    val to_kvi_list : 'a t -> (key * 'a * int) list
-
-    (* Converts the kvi_list into a id-sorted kv_list *)
-    val sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list
-    val to_kv_list : 'a t -> (key * 'a) list
   end
   (* of module type S *)
 
@@ -424,107 +252,10 @@ module IdMap = struct
 
     type 'a t = 'a id_wrapped Map.t
     type 'a kvi_list = (key * 'a * int) list
-
-    let empty = Map.empty
-
-    let add : 'a t -> key -> 'a -> 'a t =
-     fun map key value ->
-      global_id := !global_id + 1;
-      let id = !global_id in
-      let id_value = { id; value } in
-      Map.add key id_value map
-
-
-    let merge : 'a t -> 'a t -> 'a t =
-     fun m1 m2 ->
-      let merger
-          : key -> 'a id_wrapped option -> 'a id_wrapped option -> 'a id_wrapped option
-        =
-       fun _ v1 v2 ->
-        match v1, v2 with
-        | None, None -> None
-        | Some v, None -> Some v
-        | None, Some v -> Some v
-        | Some v1, Some v2 -> if v1.id > v2.id then Some v1 else Some v2
-      in
-      Map.merge merger m1 m2
-
-
-    let to_kvi_list : 'a t -> (key * 'a * int) list =
-     fun map ->
-      List.map ~f:(fun (key, value) -> key, value.value, value.id) @@ Map.to_kv_list map
-
-
-    let sort_to_kv_list : (key * 'a * int) list -> (key * 'a) list =
-     fun list ->
-      let sorted_list =
-        List.sort list ~compare:(fun (_, _, id1) (_, _, id2) -> Int.compare id2 id1)
-      in
-      List.map ~f:(fun (k, v, _) -> k, v) sorted_list
-
-
-    let to_kv_list : 'a t -> (key * 'a) list =
-     fun map -> sort_to_kv_list @@ to_kvi_list map
   end
   (* of module IdMap.Make*)
 end
 (* of module IdMap *)
-
-(*
-    Add the shadowed t_sum types nested in the fetched types.
-
-    After using [get_modules_types], we have the ctxt types, i.e. all types declared current scope and submodules.
-    There is no shadowed type in ctxt types (since ctxt is a map, shadowed types are removed when adding the shadower).
-    However we want shadowed types when they are nested in another type :
-      type a = Foo of int | Bar of string
-      type a = a list
-    Here, we want [Foo of int | Bar of string] to be found
-    But we want to add nested t_sum types _only_ if they are shadowed, we don't want to add them in that case for example :
-      type foo_variant = Foo of int | Bar of string
-      type foo_record = { foo : foo_variant ; bar : foo_variant}
-    Because [foo_variant] would appear three times in the list instead of one.
-
-    NOTE : We could append nested types on top of the [module_types] list we have so far,
-    but having a final list with all nested-types before toplevel types triggers some errors.
-
-    NOTE : We can't just do a final id-sort of the list to have everything in declarartion order
-    because the fetched nested types don't have id, only the ones retrieved from the ctxt do.
-
-    So, if we have ctxt types :
-      [t1; t2; t3]
-    After adding the shadowed t_sums, we want the final list :
-      [t1; tsum_shadowed_by_t1; t2; tsum_shadowed_by_t2; t3; tsum_shadowed_by_t3]
-
-    NOTE : When [fold_type_expression] is used on t1, it will add tsum types nested in t1,
-    but it might also add t1 (or not), we don't know.
-    However, we want to make sure t1 is in the final list *exactly once*.
-      - If it's not here, we'll lose a type and have incorrect "type [t1] not found" errors
-      - If it's here more than once, we'll have a false "warning, [t1] inferred but could also be of type [t1]"
-    To ensure [t1] appears once exactly, we tweak the fold function by passing a [is_top] boolean
-    to ensure it will fold over all nested type in [t1] but not the toplevel one (i.e. [t1]),
-    we then add [t1] manually to the list.
-*)
-let add_shadowed_nested_t_sum tsum_list (tv, te) =
-  let add_if_shadowed_t_sum
-      :  Type_var.t -> (Type_var.t * type_expression) list * bool -> type_expression
-      -> (Type_var.t * type_expression) list * bool
-    =
-   fun shadower_tv (accu, is_top) te ->
-    let ret x = x, false in
-    match te.type_content, te.orig_var with
-    | T_sum _, Some tv ->
-      if Type_var.equal tv shadower_tv && not is_top
-      then ret ((tv, te) :: accu)
-      else ret accu
-    | T_sum _, None ->
-      ret accu (* TODO : What should we do with those sum types with no binder ? *)
-    | _ -> ret accu
-  in
-  let (nested_t_sums, _) : (Type_var.t * type_expression) list * bool =
-    fold_type_expression te ~init:(tsum_list, true) ~f:(add_if_shadowed_t_sum tv)
-  in
-  (tv, te) :: nested_t_sums
-
 
 (* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
 let get_views : program -> (Value_var.t * Location.t) list =

@@ -31,10 +31,7 @@ let get_folding_range_test ({ file_path; folding_ranges } : folding_range_test)
   in
   match folds_opt with
   | Some actual_folds ->
-    should_match_list
-      testable_folding_range
-      ~actual:actual_folds
-      ~expected:folding_ranges
+    should_match_list testable_folding_range ~actual:actual_folds ~expected:folding_ranges
   | None -> fail "Expected some list of folding ranges, got None"
 
 

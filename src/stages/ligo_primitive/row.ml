@@ -56,14 +56,6 @@ struct
   let iter : 'a. ('a -> unit) -> 'a t -> unit = fun f { fields; _ } -> Map.iter fields ~f
   let fold g init t = Map.fold t.fields ~init ~f:(fun ~key:_ ~data acc -> g acc data)
 
-  let fold_map : ('acc -> 'a -> 'acc * 'b) -> 'acc -> 'a t -> 'acc * 'b t =
-   fun g acc { fields; layout } ->
-    let acc, fields =
-      Label.Map.fold_map fields ~init:acc ~f:(fun ~key:_ ~data:field acc -> g acc field)
-    in
-    acc, { fields; layout }
-
-
   module PP = struct
     open Simple_utils.PP_helpers
 
@@ -91,10 +83,6 @@ struct
 
     let record_type type_expression layout ppf record =
       Format.fprintf ppf "%a" (tuple_or_record_type type_expression layout) record
-
-
-    let tuple_type type_expression ppf tuple =
-      Format.fprintf ppf "(%a)" (list_sep type_expression (tag " , ")) tuple
   end
 end
 
@@ -152,8 +140,7 @@ module With_layout = struct
     aux layout value
 
 
-  (* extract nice description of record value expressed as pairs (as
-     in Michelson) *)
+  (* extract nice description of record value expressed as pairs (as in Michelson) *)
   let extract_record (row : 'a t) (value : 'v) (get_pair : 'v -> ('v * 'v) option)
       : (Label.t * 'v * 'a) list
     =

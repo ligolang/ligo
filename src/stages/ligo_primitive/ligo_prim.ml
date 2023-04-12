@@ -39,18 +39,12 @@ module Update (Path : Access_path.S) = Update.Make (Path)
 (* Sugar *)
 module Conditional = Conditional
 module Sequence = Sequence
-module Skip = Skip
 
 (* Imperative loops *)
 module For_loop = For_loop
 module For_each_loop = For_each_loop
 module While_loop = While_loop
 module Assign = Assign
-
-(* Containers *)
-module Map_expr = Map_expr
-module Set_expr = Set_expr
-module List_expr = List_expr
 
 (* Module language *)
 module Module_var = Var.Module_var

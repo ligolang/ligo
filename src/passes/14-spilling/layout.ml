@@ -6,13 +6,6 @@ module I = Ast_expanded
 module O = Mini_c
 include Layout
 
-let nonempty = function
-  | "" -> None
-  | s -> Some s
-
-
-let annotation_or_label annot label = nonempty (Option.value ~default:label annot)
-
 (* [comb_or] creates an `or` type tree from the list of annotated types [lst] 
    `[ a ; b ; c ] => T_or (a, T_or (b,c))`
 *)
@@ -87,26 +80,6 @@ let record_to_pairs ~raise ~source_type return =
       in
       return ~tv @@ O.E_tuple (List.map ~f:snd lst))
 
-
-let is_field = function
-  | Field _ -> true
-  | Inner _ -> false
-
-
-let is_comb layout =
-  match layout with
-  | Field _ -> false
-  | Inner layouts -> List.for_all layouts ~f:is_field
-
-
-let to_tuple t =
-  assert (is_comb t);
-  match t with
-  | Inner layouts ->
-    List.map layouts ~f:(function
-        | Field field -> field
-        | Inner _ -> assert false)
-  | Field _ -> assert false
 
 (* [explode_row] [row] [binders] [matchee] returns all the let bindings necessary
   to destruct [matchee] of a given layout (define in [row])

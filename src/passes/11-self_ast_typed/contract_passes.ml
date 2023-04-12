@@ -22,17 +22,6 @@ let empty_env =
   { env = MVarMap.empty; used_var = VVarSet.empty; used_mut_var = VVarSet.empty }
 
 
-let rec pp_env ppf env =
-  Format.fprintf
-    ppf
-    "{env: %a;used_var: %a}"
-    (Simple_utils.PP_helpers.list_sep_d (fun ppf (k, v) ->
-         Format.fprintf ppf "(%a,%a)" Module_var.pp k pp_env v))
-    (MVarMap.to_kv_list env.env)
-    (Simple_utils.PP_helpers.list_sep_d Value_var.pp)
-    (VVarSet.elements env.used_var)
-
-
 (* Detect and remove unesed declaration *)
 let rec merge_env
     { env = x1; used_var = y1; used_mut_var = z1 }

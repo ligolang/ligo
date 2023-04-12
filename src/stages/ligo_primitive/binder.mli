@@ -15,5 +15,3 @@ val get_ascr : 'a t -> 'a
 val set_ascr : 'a t -> 'b -> 'b t
 val get_loc : 'a t -> Simple_utils.Location.t
 val apply : (Var.Value_var.t -> 'b) -> 'a t -> 'b
-val equal_var : 'a t -> 'b t -> bool
-val compare_var : 'a t -> 'b t -> int

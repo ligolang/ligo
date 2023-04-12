@@ -12,9 +12,3 @@ let pp f g ppf ({ type_operator; arguments } : ('a, 'b) t) : unit =
     type_operator
     Simple_utils.PP_helpers.(list_sep_d_par g)
     arguments
-
-
-let fold_map : ('acc -> 'b -> 'acc * 'c) -> 'acc -> ('a, 'b) t -> 'acc * ('a, 'c) t =
- fun g acc { type_operator; arguments } ->
-  let acc, arguments = List.fold_map ~f:g ~init:acc arguments in
-  acc, { type_operator; arguments }

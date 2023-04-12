@@ -26,7 +26,6 @@ let labels t = Map.keys t
 let values t = Map.data t
 let find = Label.Map.find_exn
 let find_opt = Label.Map.find
-let update = Map.update
 let cardinal m = Map.count m ~f:(fun _ -> true) (* ?? *)
 let mem = Map.mem
 let set = Map.set (* ?? *)
@@ -86,6 +85,3 @@ module PP = struct
 end
 
 let pp f ppf r = Format.fprintf ppf "%a" (PP.tuple_or_record_sep_expr f) r
-
-let pp_tuple f ppf t =
-  Format.fprintf ppf "(@[<h>%a@])" Simple_utils.PP_helpers.(list_sep f (tag " , ")) t

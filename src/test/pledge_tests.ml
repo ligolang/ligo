@@ -4,7 +4,6 @@ open Ligo_prim
 open Ast_unified
 
 let mfile = "./contracts/pledge.mligo"
-let compile_main ~raise f () = Test_helpers.compile_main ~raise f ()
 
 let oracle_addr, oracle_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
@@ -13,11 +12,10 @@ let oracle_addr, oracle_contract =
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let stranger_addr, stranger_contract =
+let stranger_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth_exn (test_environment ()).identities 1 in
-  let kt = id.implicit_contract in
-  Protocol.Alpha_context.Contract.to_b58check kt, kt
+  id.implicit_contract
 
 
 let empty_op_list = e_list ~loc []

@@ -6,17 +6,6 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module VarSet = Caml.Set.Make (Variable)
 
-let get_var_pattern pattern =
-  let rec aux pattern =
-    match get_p_typed pattern with
-    | Some (_, pattern) ->
-      (* if _ignored is Some <ty>, emit a warning ?*)
-      aux pattern
-    | None -> get_p_var pattern
-  in
-  aux pattern
-
-
 let rec dig ~f e =
   match get_e_type_abstraction e with
   | Some { type_binder; result } ->

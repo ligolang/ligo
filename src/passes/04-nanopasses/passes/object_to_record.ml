@@ -6,11 +6,6 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
-let is_field = function
-  | Object_.Property_rest _ -> false
-  | _ -> true
-
-
 let label_of_var x =
   let loc = Variable.get_location x in
   Location.wrap ~loc @@ Label.of_string (Variable.to_name_exn x)

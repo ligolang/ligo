@@ -23,16 +23,4 @@ module Make (Pattern : Pattern.S) = struct
       matchee
       Simple_utils.PP_helpers.(list_sep (pp_match_case f g) (tag "@ "))
       cases
-
-
-  let fold_map_match_case f g acc { pattern; body } =
-    let acc, pattern = Pattern.fold_map g acc pattern in
-    let acc, body = f acc body in
-    acc, { pattern; body }
-
-
-  let fold_map f g acc { matchee; cases } =
-    let acc, matchee = f acc matchee in
-    let acc, cases = List.fold_map ~f:(fold_map_match_case f g) ~init:acc cases in
-    acc, { matchee; cases }
 end

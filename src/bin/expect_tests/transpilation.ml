@@ -33,7 +33,6 @@ let%expect_test _ =
         )
       ]; |}]
 
-let example_jsligo = "../../test/examples/jsligo/arithmetic-contract.jsligo"
 
 (* ---------- Tests for CLI options for syntax ------------------------------ *)
 
