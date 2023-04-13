@@ -343,7 +343,7 @@ data LigoLayout
   = LTree
   | LComb
   deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData)
+  deriving anyclass (NFData, Hashable)
 
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]

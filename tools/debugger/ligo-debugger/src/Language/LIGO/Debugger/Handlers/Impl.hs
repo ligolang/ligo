@@ -4,6 +4,7 @@ module Language.LIGO.Debugger.Handlers.Impl
 
     -- * Helpers
   , initDebuggerState
+  , convertMichelsonValuesToLigo
   ) where
 
 import Prelude hiding (try)
@@ -15,12 +16,14 @@ import Cli
   (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
   LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
+import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
 import Data.Default (def)
 import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Data.Singletons (demote)
 import Fmt (Builder, blockListF, pretty)
+import GHC.Conc (unsafeIOToSTM)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
@@ -30,6 +33,7 @@ import UnliftIO.STM (modifyTVar)
 
 import Cli qualified as LSP.Cli
 import Control.AbortingThreadPool qualified as AbortingThreadPool
+import Control.DelayedValues (Manager (mComputation))
 import Control.DelayedValues qualified as DV
 import Extension (UnsupportedExtension (..), getExt)
 
@@ -67,6 +71,7 @@ import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -120,8 +125,23 @@ instance HasSpecificMessages LIGO where
       writeTerminatedEvent = do
         InterpretSnapshot{..} <- zoom dsDebuggerState $ frozen curSnapshot
         let someValues = head isStackFrames ^.. sfStackL . each . siValueL
+        let types = head isStackFrames ^.. sfStackL . each . siLigoDescL
+              <&> \case
+                LigoStackEntry LigoExposedStackEntry{..} -> leseType
+                _ -> LigoType Nothing
 
-        (opsText, storeText, oldStoreText) <- case someValues of
+        let convertInfos = zipWith PreLigoConvertInfo someValues types
+
+        lServVar <- getServerStateH @LIGO
+        let DV.Manager{..} = lsToLigoValueConverter lServVar
+
+        -- @writeTerminatedEvent@ would be executed only once (on last snapshot)
+        -- So, we can call this heavy computation in a synchronous way.
+        -- Moreover, this STM computation is one-threaded. Thus means that
+        -- we shouldn't be afraid of restarting transactions.
+        decompiled <- liftSTM $ unsafeIOToSTM (mComputation convertInfos)
+
+        (opsText, storeText, oldStoreText) <- case decompiled of
           [someValue, someStorage] -> do
             (ops, store) <- buildOpsAndNewStorage someValue
             oldStore <- buildOldStorage someStorage
@@ -164,7 +184,7 @@ instance HasSpecificMessages LIGO where
                     )
                 _ ->
                   throwM badLastElement
-              MichValue (SomeValue val) -> case val of
+              MichValue _ (SomeValue val) -> case val of
                 (T.VPair (T.VList ops, r :: T.Value r)) ->
                   case T.valueTypeSanity r of
                     T.Dict ->
@@ -175,19 +195,22 @@ instance HasSpecificMessages LIGO where
                           )
                         _ -> throwM invalidStorage
                 _ -> throwM badLastElement
+              _ -> throwM notComputed
 
             buildOldStorage :: (MonadThrow m) => LigoOrMichValue -> m Builder
             buildOldStorage = \case
               LigoValue ligoType ligoValue -> pure $ buildLigoValue ligoType ligoValue
-              MichValue (SomeValue (st :: T.Value r)) ->
+              MichValue _ (SomeValue (st :: T.Value r)) ->
                 case T.valueTypeSanity st of
                   T.Dict ->
                     case T.checkOpPresence (T.sing @r) of
                       T.OpAbsent -> pure $ printDocB False $ renderDoc doesntNeedParens st
                       _ -> throwM invalidStorage
+              _ -> throwM notComputed
 
             invalidStorage = ImpossibleHappened "Invalid storage type"
             badLastElement = ImpossibleHappened "Expected the last element to be a pair of operations and storage"
+            notComputed = ImpossibleHappened "Expected value to be computed"
 
       writeStoppedEvent reason label = do
         let hitBreakpointIds = case reason of
@@ -332,21 +355,28 @@ instance HasSpecificMessages LIGO where
         StackItem desc michVal <- pure stackItem
         LigoStackEntry (LigoExposedStackEntry mDecl typ) <- pure desc
         let varName = maybe (pretty unknownVariable) pretty mDecl
+
+        whenJust (tryDecompilePrimitive michVal) \dec -> do
+          DV.putComputed
+            valConvertManager
+            (PreLigoConvertInfo michVal typ)
+            (LigoValue typ dec)
+
         mLigoVal <- DV.computeSTM valConvertManager $
-          PreLigoConvertInfo lang michVal typ
-        let ligoVal = maybe "computing..." id mLigoVal
-        return (varName :: Text, ligoVal :: Text)
+          PreLigoConvertInfo michVal typ
+        let ligoVal = maybe ToBeComputed id mLigoVal
+        return (varName :: Text, ligoVal)
 
     let builder =
           case isStatus snap of
             InterpretRunning (EventExpressionEvaluated (Just value))
               -- We want to show $it variable only in the top-most stack frame.
               | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
-                idx <- createLigoVariablesDummy lang ligoVals
+                idx <- createVariables lang ligoVals
                 -- TODO: get the type of "$it" value and show it ligo-formatted
-                itVar <- buildVariable lang (LigoType Nothing) (MichValue value) "$it"
+                itVar <- buildVariable lang (MichValue (LigoType Nothing) value) "$it"
                 insertToIndex idx [itVar]
-            _ -> createLigoVariablesDummy lang ligoVals
+            _ -> createVariables lang ligoVals
 
     let (varReference, variables) = runBuilder builder
 
@@ -511,10 +541,25 @@ handleInitializeLogger LigoInitializeLoggerRequest {..} = do
 
   logMessage [int||Initializing logger for #{file} finished|]
 
-convertMichelsonValuesToLigoDummy :: [PreLigoConvertInfo] -> RIO LIGO [Text]
-convertMichelsonValuesToLigoDummy inps = liftIO do
-  threadDelay 2000000
-  return $ inps <&> \i -> pretty (plciMichVal i)
+convertMichelsonValuesToLigo :: (HasLigoClient m) => (String -> m ()) -> [PreLigoConvertInfo] -> m [LigoOrMichValue]
+convertMichelsonValuesToLigo logger inps = do
+  let typesAndValues = inps
+        <&> \(PreLigoConvertInfo val typ) -> (typ, val)
+
+  decompiledValues <- decompileLigoValues typesAndValues
+
+  logger [int||
+    Decompilation contract: begin
+    #{generateDecompilation typesAndValues}
+
+    the end.
+  |]
+
+  pure $
+    zipWith
+      do \(t, michValue) dec -> maybe (MichValue t michValue) (LigoValue t) dec
+      typesAndValues
+      decompiledValues
 
 handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
 handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
@@ -527,7 +572,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
 
   lServVar <- asks _rcLSState
   varsComputeThreadPool <- AbortingThreadPool.newPool 10
-  toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigoDummy)
+  toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigo logMessage)
   atomically $ writeTVar lServVar $ Just LigoLanguageServerState
     { lsProgram = Nothing
     , lsCollectedRunInfo = Nothing
@@ -808,7 +853,6 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         parsedContracts
         (unlifter . logMessage)
         lambdaLocs
-        unlifter
 
   let ds = initDebuggerState his allLocs
 

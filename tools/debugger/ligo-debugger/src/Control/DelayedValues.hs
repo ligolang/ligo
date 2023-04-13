@@ -1,6 +1,7 @@
 module Control.DelayedValues
-  ( Manager
+  ( Manager (..)
   , newManager
+  , putComputed
   , compute
   , computeSTM
   , runPendingComputations
@@ -36,6 +37,11 @@ newManager mComputation = do
   mCache <- liftIO STM.Map.newIO
   mPending <- newTVarIO mempty
   return Manager{..}
+
+-- | If some value could be computed fast you can use this function
+-- to put its result instantly.
+putComputed :: (MonadSTM m) => Manager i o -> i -> o -> m ()
+putComputed Manager{..} i o = liftSTM $ STM.Map.insert o i mCache
 
 -- | Version of 'compute' that can be run within an STM transaction.
 computeSTM :: MonadSTM m => Manager i o -> i -> m (Maybe o)

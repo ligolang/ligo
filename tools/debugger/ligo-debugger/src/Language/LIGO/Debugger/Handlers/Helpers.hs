@@ -5,7 +5,7 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import AST (LIGO, Lang, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
+import AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
 import AST.Scope.Common qualified as AST.Common
 import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (throwSTM, writeTChan)
@@ -41,6 +41,7 @@ import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
@@ -77,17 +78,14 @@ onlyContractRunInfo contract = CollectedRunInfo
 
 -- | The information for conversion of Michelson value to LIGO format.
 data PreLigoConvertInfo = PreLigoConvertInfo
-  { plciLang :: Lang
-    -- ^ LIGO dialect.
-  , plciMichVal :: T.SomeValue
+  { plciMichVal :: T.SomeValue
     -- ^ Michelson value.
   , plciLigoType :: LigoType
     -- ^ Known LIGO type of the value which the conversion will result in.
   } deriving stock (Show, Eq)
 
 instance Hashable PreLigoConvertInfo where
-  hashWithSalt s (PreLigoConvertInfo lang (Constrained michVal) ty) = s
-    `hashWithSalt` lang
+  hashWithSalt s (PreLigoConvertInfo (Constrained michVal) ty) = s
     `hashWithSalt` pretty @(T.Value _) @Text michVal
     -- ↑ Pretty-printer for michelson values on itself is not a reversible
     -- function (e.g. address and contract are represented in the same way),
@@ -105,7 +103,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   , lsLambdaLocs :: Maybe (HashSet LigoRange)
   , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
-  , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo Text
+  , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step
     -- (visiting the same snapshot twice will also result in different ids).

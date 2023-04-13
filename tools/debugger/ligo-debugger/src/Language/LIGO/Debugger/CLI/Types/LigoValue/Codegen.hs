@@ -16,7 +16,6 @@ import Duplo (Cofree ((:<)), fastMake, layer, match)
 import Parser (Info)
 
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
 
 {-
 
@@ -164,7 +163,7 @@ replaceLigoType (i :< fs) = (i :< fmap replaceLigoType fs)
 
 -- | Generate a contract that decompiles one Michelson value.
 generateDecompilation' :: LigoType -> T.SomeValue -> Builder
-generateDecompilation' ligoType sVal@(T.SomeValue (val :: T.Value t)) = case ligoType of
+generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType of
   LigoType (Just expr) ->
     let
       replacedTypeNode = LTFResolved expr
@@ -175,7 +174,7 @@ generateDecompilation' ligoType sVal@(T.SomeValue (val :: T.Value t)) = case lig
       replacedVal = replaceOps (sing @t) val
       typ = show @Builder $ lppDialect Caml replacedTypeNode
     in
-      if not isType || isPrimitive sVal
+      if not isType
       then noDecompilation
       else
         [int||

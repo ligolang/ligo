@@ -48,7 +48,10 @@ import Language.LIGO.Debugger.CLI.Types
 
 data LigoOrMichValue
   = LigoValue LigoType LigoValue
-  | MichValue SomeValue
+  | MichValue LigoType SomeValue
+  | ToBeComputed
+    -- ^ Since we compute @LIGO@ values in async manner
+    -- we can use this stub if value isn't available yet.
   deriving stock (Generic, Show, Eq)
 
 data LigoValue
@@ -189,9 +192,8 @@ getRecordOrderMb ligoType = \case
   _ -> Nothing
 
 -- | Tries to decompile @Michelson@ primitive into LIGO value.
--- On fail returns value packed into @MichValue@.
-tryDecompilePrimitive :: LigoType -> SomeValue -> LigoOrMichValue
-tryDecompilePrimitive typ sVal@(SomeValue val) = case val of
+tryDecompilePrimitive :: SomeValue -> Maybe LigoValue
+tryDecompilePrimitive (SomeValue val) = case val of
   T.VKey pk -> mkConstant (LCKey $ pretty pk)
   T.VUnit -> mkConstant LCUnit
   T.VSignature sig -> mkConstant (LCSignature $ pretty sig)
@@ -216,33 +218,16 @@ tryDecompilePrimitive typ sVal@(SomeValue val) = case val of
   T.VBls12381Fr bls -> mkConstant (LCBls $ LBls12381Fr $ toMichelsonBytes bls)
   T.VBls12381G1 bls -> mkConstant (LCBls $ LBls12381G1 $ toMichelsonBytes bls)
   T.VBls12381G2 bls -> mkConstant (LCBls $ LBls12381G2 $ toMichelsonBytes bls)
-  _ -> MichValue sVal
+  _ -> Nothing
   where
-    mkConstant :: LigoConstant -> LigoOrMichValue
-    mkConstant = LigoValue typ . LVCt
+    mkConstant :: LigoConstant -> Maybe LigoValue
+    mkConstant = Just . LVCt
 
--- | Tells could be @Michelson@ value decompiled
--- on ours side.
-isPrimitive :: SomeValue -> Bool
-isPrimitive (SomeValue val) = case val of
-  T.VKey{} -> True
-  T.VUnit -> True
-  T.VSignature{} -> True
-  T.VChainId{} -> True
-  T.VContract{} -> True
-  T.VInt{} -> True
-  T.VNat{} -> True
-  T.VString{} -> True
-  T.VBytes{} -> True
-  T.VMutez{} -> True
-  T.VBool{} -> True
-  T.VKeyHash{} -> True
-  T.VTimestamp{} -> True
-  T.VAddress{} -> True
-  T.VBls12381Fr{} -> True
-  T.VBls12381G1{} -> True
-  T.VBls12381G2{} -> True
-  _ -> False
+getLigoType :: LigoOrMichValue -> LigoType
+getLigoType = \case
+  LigoValue typ _ -> typ
+  MichValue typ _ -> typ
+  ToBeComputed -> LigoType Nothing
 
 -----------------
 --- Instances ---
@@ -304,13 +289,15 @@ instance FromJSON LigoValueMichelson where
 instance Buildable LigoOrMichValue where
   build = \case
     LigoValue ligoType ligoValue -> buildLigoValue ligoType ligoValue
-    MichValue mich -> build mich
+    MichValue _ mich -> build mich
+    ToBeComputed -> "computing..."
 
 instance Buildable (DebugPrint (Lang, LigoOrMichValue)) where
   build (DebugPrint mode (lang, val)) =
     case val of
-      MichValue (SomeValue michValue) -> build (DebugPrint mode michValue)
+      MichValue _ (SomeValue michValue) -> build (DebugPrint mode michValue)
       LigoValue ligoType ligoValue -> buildLigoValue' lang mode ligoType ligoValue
+      ToBeComputed -> build ToBeComputed
 
 buildLigoValue' :: Lang -> DebugPrintMode -> LigoType -> LigoValue -> Builder
 buildLigoValue' lang mode ligoType = \case
