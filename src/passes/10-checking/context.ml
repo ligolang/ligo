@@ -511,9 +511,7 @@ module Apply = struct
       | _ -> false
     in
     (* Only do something if there are texists_eq or lexists_eq *)
-    if List.for_all ~f:no_exists_eq ctx
-    then sig_
-    else List.map sig_ ~f:(sig_item ctx)
+    if List.for_all ~f:no_exists_eq ctx then sig_ else List.map sig_ ~f:(sig_item ctx)
 end
 
 let equal_item : item -> item -> bool =

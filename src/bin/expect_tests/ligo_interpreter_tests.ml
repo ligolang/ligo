@@ -947,6 +947,11 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_increment exited with value (). |test}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_originate_single_view.mligo" ];
+  [%expect
+    {test| |test}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 
