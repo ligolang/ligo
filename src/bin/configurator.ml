@@ -6,5 +6,5 @@ let () =
         "win32-flags.sexp"
         Caml.(
           if C.ocaml_config_var_exn (C.create "") "os_type" = "Win32"
-          then ["-cclib"; "-lole32"; "-cclib"; "-luserenv"; "-cclib"; "-lbcrypt"]
+          then [ "-cclib"; "-lole32"; "-cclib"; "-luserenv"; "-cclib"; "-lbcrypt" ]
           else []))

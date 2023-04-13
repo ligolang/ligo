@@ -188,8 +188,14 @@ let get_operation (v : value) =
 
 let t_unit ?loc () : type_expression = Expression.make_t ?loc @@ T_base TB_unit
 let t_pair ?loc x y : type_expression = Expression.make_t ?loc @@ T_tuple [ x; y ]
-let t_union ?loc ~source_type x y : type_expression = Expression.make_t ?loc ?source_type @@ T_or (x, y)
-let t_tuple ?loc ~source_type xs : type_expression = Expression.make_t ?loc ?source_type @@ T_tuple xs
+
+let t_union ?loc ~source_type x y : type_expression =
+  Expression.make_t ?loc ?source_type @@ T_or (x, y)
+
+
+let t_tuple ?loc ~source_type xs : type_expression =
+  Expression.make_t ?loc ?source_type @@ T_tuple xs
+
 
 let e_proj ?loc exp ty index field_count : expression =
   Expression.make ?loc (E_proj (exp, index, field_count)) ty

@@ -307,15 +307,32 @@ let build_ast
   @@ Self_ast_aggregated.all_contract parameter storage aggregated_exp
 
 
-let compile_contract_ast ~raise ~options ~tezos_context main views =
+let compile_contract_ast_none ~raise ~options ~tezos_context main =
+  let open Ligo_compile in
+  let expanded = Of_aggregated.compile_expression ~raise main in
+  let mini_c = Of_expanded.compile_expression ~raise expanded in
+  let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
+  let contract =
+    Ligo_compile.Of_michelson.build_contract
+      ~raise
+      ~has_env_comments:false
+      ~protocol_version:options.middle_end.protocol_version
+      ~disable_typecheck:false
+      ~tezos_context
+      main_michelson
+      []
+  in
+  Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
+
+
+let compile_contract_ast_single ~raise ~options ~tezos_context main views =
   let open Ligo_compile in
   let expanded = Of_aggregated.compile_expression ~raise main in
   let mini_c = Of_expanded.compile_expression ~raise expanded in
   let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
   let views =
     match views with
-    | None -> []
-    | Some (view_names, aggregated) ->
+    | view_names, aggregated ->
       let mini_c =
         let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
         Of_expanded.compile_expression ~raise expanded
@@ -355,6 +372,38 @@ let compile_contract_ast ~raise ~options ~tezos_context main views =
       in
       michelsons
   in
+  let contract =
+    Ligo_compile.Of_michelson.build_contract
+      ~raise
+      ~has_env_comments:false
+      ~protocol_version:options.middle_end.protocol_version
+      ~disable_typecheck:false
+      ~tezos_context
+      main_michelson
+      views
+  in
+  Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
+
+
+let compile_contract_ast_multi ~raise ~options ~tezos_context main views =
+  let open Ligo_compile in
+  let expanded = Of_aggregated.compile_expression ~raise main in
+  let mini_c = Of_expanded.compile_expression ~raise expanded in
+  let main_michelson = Of_mini_c.compile_contract ~raise ~options mini_c in
+  let f (view_name, aggregated) =
+    let mini_c =
+      let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+      Of_expanded.compile_expression ~raise expanded
+    in
+    let mini_c =
+      trace ~raise Main_errors.self_mini_c_tracer
+      @@ Self_mini_c.all_expression options mini_c
+    in
+    let michelson = Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c in
+    let () = Ligo_compile.Of_michelson.check_view_restrictions ~raise [ michelson ] in
+    view_name, michelson
+  in
+  let views = List.map ~f views in
   let contract =
     Ligo_compile.Of_michelson.build_contract
       ~raise

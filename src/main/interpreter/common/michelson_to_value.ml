@@ -172,9 +172,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) -> V_Ct (C_key (key_of_string ~raise n))
   | Prim (_, "key", [], _), Bytes (_, b) -> V_Ct (C_key (key_of_bytes ~raise b))
-  | Prim (_, "bls12_381_g1", [], _), Bytes (_, b) -> V_Ct (C_bls12_381_g1 (bls12_381_g1_of_bytes ~raise b))
-  | Prim (_, "bls12_381_g2", [], _), Bytes (_, b) -> V_Ct (C_bls12_381_g2 (bls12_381_g2_of_bytes ~raise b))
-  | Prim (_, "bls12_381_fr", [], _), Bytes (_, b) -> V_Ct (C_bls12_381_fr (bls12_381_fr_of_bytes ~raise b))
+  | Prim (_, "bls12_381_g1", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_g1 (bls12_381_g1_of_bytes ~raise b))
+  | Prim (_, "bls12_381_g2", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_g2 (bls12_381_g2_of_bytes ~raise b))
+  | Prim (_, "bls12_381_fr", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_fr (bls12_381_fr_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
     V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) -> V_Ct (C_timestamp n)
