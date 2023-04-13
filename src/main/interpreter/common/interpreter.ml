@@ -1478,6 +1478,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_INT64_TO_INT, [ V_Ct (C_int64 n) ] -> return @@ V_Ct (C_int (Z.of_int64 n))
   | C_TEST_INT64_TO_INT, _ -> fail @@ error_type ()
   | C_CHECK_ENTRYPOINT, _ -> return @@ v_unit ()
+  | C_CHECK_CALL_VIEW_LITSTR, _ -> return @@ v_unit ()
   | (C_CHECK_SELF | C_CHECK_EMIT_EVENT), _ ->
     fail @@ Errors.generic_error loc "Check should not be present in testing mode."
   | C_TEST_SET_PRINT_VALUES, [ V_Ct (C_bool b) ] ->

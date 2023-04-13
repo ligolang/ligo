@@ -118,3 +118,16 @@ let emit_event_typing ~raise : expression -> expression =
     in
     Ast_aggregated.e_a_unit ~loc:e.location ()
   | _ -> e
+
+
+let litstr_check ~raise : expression -> expression =
+ fun e ->
+  match e.expression_content with
+  | E_constant { cons_name = C_CHECK_CALL_VIEW_LITSTR; arguments = [ litstr ] } ->
+    let (_ : string) =
+      match litstr.expression_content with
+      | E_literal (Literal_string ep) -> Ligo_string.extract ep
+      | _ -> raise.error @@ Errors.call_view_not_litstr litstr.location
+    in
+    Ast_aggregated.e_a_unit ~loc:e.location ()
+  | _ -> e

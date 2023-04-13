@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2508'
+title: "Fix: add proper error message for `Tezos.call_view` with non-literal string as name"
+type: fixed
+            
