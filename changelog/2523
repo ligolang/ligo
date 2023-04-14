@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\nfix a bug where controlflow within if clauses was rejected\\n\\n"
+merge_request: '2523'
+title: "unification: don't emit sub blocks in test clauses"
+type: fixed
+            
