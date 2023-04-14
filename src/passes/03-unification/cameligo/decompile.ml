@@ -3,18 +3,6 @@ module AST = Ast_unified
 open Simple_utils
 open Lexing_cameligo.Token
 
-let list_to_nsepseq (lst : 'a list) (sep : 's) : ('a, 's) Utils.nsepseq =
-  match lst with
-  | [] -> failwith ("ne list" ^ __LOC__)
-  | hd :: tl -> hd, List.map ~f:(fun e -> sep, e) tl
-
-
-let list_to_sepseq (lst : 'a list) (sep : 's) : ('a, 's) Utils.sepseq =
-  match lst with
-  | [] -> None
-  | _ -> Some (list_to_nsepseq lst sep)
-
-
 let rec folder =
   let todo _ = failwith ("TODO" ^ __LOC__) in
   AST.Catamorphism.
@@ -117,14 +105,19 @@ and pattern : (CST.pattern, unit) AST.pattern_ -> CST.pattern =
   | P_list (List lst) ->
     let compound = Some bracket_compound in
     let terminator = Some ghost_semi in
-    let elements = list_to_sepseq lst ghost_semi in
+    let elements = Utils.list_to_sepseq lst ghost_semi in
     PList (PListComp (w CST.{ compound; terminator; elements }))
   | P_list (Cons (l, r)) -> PList (PCons (w (l, ghost_cons, r)))
   | P_variant (l, p_opt) ->
     let constr = w @@ AST.Label.to_string l in
     PConstr (w (constr, p_opt))
   | P_tuple lst ->
-    let lst = list_to_nsepseq lst ghost_comma in
+    let lst = Utils.list_to_nsepseq_opt lst ghost_comma in
+    let lst =
+      match lst with
+      | None -> failwith "Impossible"
+      | Some lst -> lst
+    in
     PPar (w CST.{ lpar = ghost_lpar; inside = PTuple (w lst); rpar = ghost_rpar })
   | P_pun_record lst ->
     let compound = Some braces_compound in
@@ -147,7 +140,13 @@ and pattern : (CST.pattern, unit) AST.pattern_ -> CST.pattern =
                             CST.{ variable = w @@ AST.Label.to_string l; attributes = [] })
                    })
       in
-      list_to_nsepseq lst ghost_semi
+      let lst = Utils.list_to_nsepseq_opt lst ghost_semi in
+      let lst =
+        match lst with
+        | None -> failwith "Impossible"
+        | Some lst -> lst
+      in
+      lst
     in
     PRecord (w CST.{ compound; terminator; ne_elements; attributes = [] })
   | p when AST.pattern_is_not_initial p -> assert false

@@ -14,7 +14,6 @@ let w_split (x : 'a Lexing_shared.Wrap.t) : 'a * Location.t =
 let w_fst x = fst (w_split x)
 let w_snd x = snd (w_split x)
 
-
 (* Define equivalences between Ast_unified & CST 'sub-languages' *)
 module type EQUIVALENCES = sig
   type expr
@@ -51,6 +50,7 @@ module Folding (X : EQUIVALENCES) = struct
 
   type program = (X.program, X.program_entry) Ast_unified.program_
 end
+
 (* define types of unification function (for each sub-lang) *)
 module type UNIF = sig
   module Eq : EQUIVALENCES

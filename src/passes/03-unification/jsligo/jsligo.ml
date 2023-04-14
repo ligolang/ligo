@@ -1,6 +1,5 @@
 module CST = Cst.Jsligo
 module AST = Ast_unified
-
 open Unification_shared.Helpers.Make_unification (Compile)
 
 let compile_expression = compile_expression

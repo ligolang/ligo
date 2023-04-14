@@ -1098,6 +1098,41 @@ failure and mutation involved will be added to the list to be
 returned.
 
 <SyntaxTitle syntax="pascaligo">
+val originate_module_and_mutate&lt;b, p, s&gt; : module_contract (p, s) -> s -> tez -> (typed_address (p, s) -> michelson_contract -> int -> b) -> option (b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_module_and_mutate : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> michelson_contract -> int -> b) -> ('b * mutation) option
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let originate_module_and_mutate : (contract: module_contract&lt;&apos;p, &apos;s&gt;, init: &apos;s, balance: tez, (tester: (originated_address: typed_address&lt;&apos;p, &apos;s&gt;, code: michelson_contract, size: int) => &apos;b)) => option&lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a contract as a module/namespace, an initial storage and
+balance, it will originate mutants of the contract and pass the result
+to the function (last argument). On the first case of non failure when
+running the function on a mutation, the value and mutation involved
+will be returned.
+
+<SyntaxTitle syntax="pascaligo">
+val originate_module_and_mutate_all&lt;b, p, s&gt; : module_contract (p, s) -> s -> tez -> (typed_address (p, s) -> michelson_contract -> int -> b) -> list (b * mutation)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val originate_module_and_mutate_all : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> michelson_contract -> int -> b) -> ('b * mutation) list
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let originate_module_and_mutate_all : (contract: module_contract&lt;&apos;p, &apos;s&gt;, init: &apos;s, balance: tez, (tester: (originated_address: typed_address&lt;&apos;p, &apos;s&gt;, code: michelson_contract, size: int) => &apos;b)) => list&lt;[&apos;b, mutation]&gt;
+</SyntaxTitle>
+
+Given a contract as a module/namespace, an initial storage and
+balance, it will originate mutants of the contract and pass the result
+to the function (last argument). In case no failure arises when
+running the function on a mutation, the failure and mutation involved
+will be added to the list to be returned.
+
+
+<SyntaxTitle syntax="pascaligo">
 val save_mutation : string -> mutation -> option (string)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
