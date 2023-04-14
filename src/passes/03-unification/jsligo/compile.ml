@@ -71,7 +71,7 @@ module TODO_do_in_parsing = struct
     (path, field), is_open
 
 
-  let clause_block compile_statement (x : I.statement) =
+  let control_flow_clause compile_statement (x : I.statement) =
     (* if the statement is a block containing a single instruction,
        we do not want to emit a ClauseBlock, but a ClauseInstr *)
     let single_stmt_block (x : I.statement) =
@@ -84,7 +84,7 @@ module TODO_do_in_parsing = struct
         (match Location.unwrap @@ compile_statement one with
         | S_instr i -> O.Test_clause.ClauseInstr i
         | _ -> O.Test_clause.ClauseBlock (single_stmt_block x))
-      | _ -> O.Test_clause.ClauseBlock (single_stmt_block x))
+      | _ -> O.Test_clause.ClauseBlock inside)
     | S_instr i -> O.Test_clause.ClauseInstr i
     | _ -> O.Test_clause.ClauseBlock (single_stmt_block x)
 
@@ -527,8 +527,8 @@ and instruction : Eq.instruction -> Folding.instruction =
   | SCond c ->
     let c = c.value in
     let I.{ ifso; ifnot; test; _ } = c in
-    let ifso = TODO_do_in_parsing.clause_block statement ifso in
-    let ifnot = Option.map ifnot ~f:(TODO_do_in_parsing.clause_block statement <@ snd) in
+    let ifso = TODO_do_in_parsing.control_flow_clause statement ifso in
+    let ifnot = Option.map ifnot ~f:(TODO_do_in_parsing.control_flow_clause statement <@ snd) in
     return @@ I_cond { test = test.inside; ifso; ifnot }
   | SReturn s -> return @@ I_return s.value.expr
   | SSwitch s ->
