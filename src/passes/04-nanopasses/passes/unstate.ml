@@ -330,6 +330,9 @@ let compile ~raise =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
+    | E_match_block m ->
+      let m = Case.map Fun.id Fun.id (block_to_expression ~raise) m in
+      e_match ~loc m
     | E_block_poly_fun ({ body; _ } as block_fun) ->
       let body = block_to_expression ~raise body in
       e_poly_fun ~loc { block_fun with body }
@@ -354,7 +357,8 @@ let reduction ~raise =
   ; block = (fun _ -> fail ())
   ; expr =
       (function
-      | { wrap_content = E_block_poly_fun _; _ } -> fail ()
+      | { wrap_content = E_match_block _; _ }
+      | { wrap_content = E_block_poly_fun _; _ }
       | { wrap_content = E_block_with _; _ } -> fail ()
       | _ -> ())
   }
