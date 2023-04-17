@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nFix a bug in jsligo matching\\n\\n"
+merge_request: '2530'
+title: "Bugfix: jsligo match"
+type: fixed
+            

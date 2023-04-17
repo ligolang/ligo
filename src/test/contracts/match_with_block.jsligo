@@ -1,0 +1,13 @@
+const match_with_block = () => {
+  // the first case is a function (holding an expression as body)
+  // the second case is a "block function"
+  let x = 1 ;
+  return
+    match(Some(1) ,{
+      None : () => failwith(1),
+      Some : (org) => {
+        x = x + 1 ;
+        return x
+      }
+    });
+};
