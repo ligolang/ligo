@@ -71,8 +71,9 @@ and expr : (CST.expr, unit, CST.pattern, unit, unit) AST.expression_ -> CST.expr
     | _ -> failwith "Impossible")
   | E_literal Literal_unit -> CST.EUnit (w (ghost_lpar, ghost_rpar))
   | E_literal (Literal_int x) -> CST.EArith (Int (w (Z.to_string x, x)))
-  | E_literal (Literal_nat x) -> CST.EArith (Int (w (Z.to_string x, x)))
+  | E_literal (Literal_nat x) -> CST.EAnnot (w @@ (CST.EArith (Int (w (Z.to_string x,x))), ghost_as, CST.TVar (w "nat")))
   | E_literal (Literal_string x) -> CST.EString (String (w @@ Ligo_string.extract x))
+  | E_literal (Literal_mutez x) -> CST.EAnnot (w @@ (CST.EArith (Int (w (Z.to_string x,x))), ghost_as, CST.TVar (w "tez")))
   | _ ->
     failwith
       (Format.asprintf

@@ -72,6 +72,7 @@ and expr : (CST.expr, unit, CST.pattern, unit, unit) AST.expression_ -> CST.expr
   | E_literal Literal_unit -> CST.EUnit (w (ghost_lpar, ghost_rpar))
   | E_literal (Literal_int x) -> CST.EArith (Int (w (Z.to_string x, x)))
   | E_literal (Literal_nat x) -> CST.EArith (Nat (w (Z.to_string x, x)))
+  | E_literal (Literal_mutez x) -> CST.EArith (Mutez (w (Z.to_string x, Z.to_int64 x)))
   | _ ->
     failwith
       (Format.asprintf
