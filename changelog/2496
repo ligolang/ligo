@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nAdditional fix: dry-run sub-command has been fixed to work with `@entry` in top-level.\\n\\n"
+merge_request: '2496'
+title: "CLI: enable `dry-run` to use @entry"
+type: fixed
+            
