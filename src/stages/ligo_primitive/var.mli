@@ -19,6 +19,7 @@ module type VAR = sig
   val get_location : t -> Location.t
   val set_location : Location.t -> t -> t
   val is_generated : t -> bool
+  val is_ignored : t -> bool
 
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit

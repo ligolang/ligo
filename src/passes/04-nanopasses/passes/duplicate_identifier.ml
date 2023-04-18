@@ -8,8 +8,8 @@ let check_for_duplicated ~raise b =
   List.iter b ~f:(fun bound ->
       let dups = List.find_a_dup ~compare:Variable.compare (List.rev bound) in
       match dups with
-      | Some v -> raise.error (duplicate_identifier v)
-      | None -> ())
+      | Some v when not (Variable.is_ignored v) -> raise.error (duplicate_identifier v)
+      | _ -> ())
 
 
 let compile ~raise ~enable =
