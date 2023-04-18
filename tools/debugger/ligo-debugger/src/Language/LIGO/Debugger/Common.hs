@@ -39,8 +39,8 @@ import Fmt (Buildable (..), pretty)
 import Text.Interpolation.Nyan
 
 import AST
-  (Binding, CaseOrDefaultStm, Ctor, Expr, LIGO, NameDecl, Pattern, QualifiedName,
-  SomeLIGO (SomeLIGO), findNodeAtPoint)
+  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
+  QualifiedName, SomeLIGO (SomeLIGO), Verbatim, findNodeAtPoint)
 import AST qualified
 import Duplo (layer, leq, spineTo)
 import Extension (getExt)
@@ -263,6 +263,9 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       | Just{} <- layer @Ctor node = True
       | Just{} <- layer @AST.Name node = True
       | Just{} <- layer @QualifiedName node = True
+      | Just{} <- layer @Constant node = True
+      | Just{} <- layer @ModuleAccess node = True
+      | Just{} <- layer @Verbatim node = True
       | otherwise = False
 
     isNewScope :: LIGO ParsedInfo -> LIGO ParsedInfo -> Bool
@@ -274,7 +277,9 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       -- Branch in @SwitchStm@ in JsLIGO
       | Just AST.Case{} <- layer info = True
       | Just AST.SwitchStm{} <- layer info = True
-      | Just{} <- layer @CaseOrDefaultStm info = True
+      | Just branch <- layer @CaseOrDefaultStm info = case branch of
+          AST.CaseStm _ body -> any (flip containsNode child) body
+          AST.DefaultStm{} -> True
       | Just (AST.WhileLoop _ body) <- layer info = containsNode body child
       | Just (AST.ForOfLoop _ _ body) <- layer info = containsNode body child
       | Just (AST.BFunction _ _ _ _ _ body) <- layer info = containsNode body child

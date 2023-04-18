@@ -90,6 +90,23 @@ test_Seq_node_doesn't_have_location =
       runData
       (dumpAllSnapshotsWithStep doStep)
 
+test_constant_as_statement :: TestTree
+test_constant_as_statement =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "constant_as_statement.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GStmt)
+  in goldenTestWithSnapshots
+      "Constant recognized as statement"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
 test_top_level_function_with_preprocessor_don't_have_locations :: TestTree
 test_top_level_function_with_preprocessor_don't_have_locations =
   let
