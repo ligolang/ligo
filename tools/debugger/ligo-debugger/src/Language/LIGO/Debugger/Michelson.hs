@@ -254,8 +254,13 @@ instrReplaceRules :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta
 instrReplaceRules = \case
   U.EMPTY_BIG_MAP typeAnn varAnn tyKey tyValue ->
     pure $ MPrimEx $ U.EMPTY_MAP typeAnn varAnn tyKey tyValue
-  U.SELF varAnn fieldAnn -> do
-    let epName = U.epNameFromSelfAnn fieldAnn
+  U.SELF varAnn rawLigoAnn -> do
+    -- LIGO compiles `self` with default entrypoint to `SELF @default`,
+    -- not just `SELF`, and Morley does not work with that well
+    -- (`EpName ""` and `EpName "default"` are treated as different
+    -- entrypoints)
+    let michAnn = if rawLigoAnn == [U.annQ|default|] then U.noAnn else rawLigoAnn
+    let epName = U.epNameFromSelfAnn michAnn
     ty <- do
       tyMb <- view $ at epName
       maybe
@@ -269,7 +274,7 @@ instrReplaceRules = \case
     pure $
       MSeqEx $ MPrimEx <$>
         [ U.SELF_ADDRESS varAnn
-        , U.CONTRACT varAnn fieldAnn ty
+        , U.CONTRACT varAnn michAnn ty
         , U.IF_NONE
             do
               MPrimEx <$>
