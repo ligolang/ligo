@@ -109,7 +109,7 @@ Inductive ty : Set :=
 | T_operation : meta -> ty
 .
 
-Context {with_var_names : list ty -> meta -> meta}.
+Context {with_var_names : list bool -> list ty -> meta -> meta}.
 Context {lit micheline : Set}.
 Context {lit_code : meta -> lit -> list micheline}.
 Context {global_constant : meta -> string -> list micheline}.
@@ -1011,7 +1011,7 @@ compile_binds
   | Binds l az e =>
       let env' := az ++ env in
       let r' := repeat true (length az) ++ r in
-      app [I_SEQ (with_var_names env' null) []]
+      app [I_SEQ (with_var_names r' env' null) []]
           (app (compile_expr r' env' e)
                [I_DIP null [I_DROP null (length az)]])
   end.
