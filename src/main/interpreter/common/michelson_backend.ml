@@ -1510,6 +1510,16 @@ let rec compile_value ~raise ~options ~loc
             ty)
 
 
+let compile_type_to_mcode ~raise
+    : Ast_aggregated.type_expression -> Ligo_interpreter.Types.mcode
+  =
+ fun ty ->
+  let expr_ty = Ligo_compile.Of_expanded.compile_type ~raise ty in
+  let expr_ty = Ligo_compile.Of_mini_c.compile_type expr_ty in
+  let expr_ty = clean_location_with () expr_ty in
+  expr_ty
+
+
 let compile_value ~raise ~options ~loc
     :  Ligo_interpreter.Types.value -> Ast_aggregated.type_expression
     -> Ligo_interpreter.Types.typed_michelson_code
@@ -1542,6 +1552,64 @@ let run_michelson_func
   let func =
     match code with
     | Seq (_, s) -> Tezos_utils.Michelson.(seq ([ i_push arg_ty arg ] @ s))
+    | _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
+  in
+  match
+    Ligo_run.Of_michelson.run_expression
+      ~raise
+      ~legacy:true
+      ~options:run_options
+      func
+      result_ty_
+  with
+  | Success (ty, value) ->
+    let v =
+      Michelson_to_value.decompile_to_untyped_value
+        ~raise
+        ~bigmaps:ctxt.transduced.bigmaps
+        ty
+        value
+    in
+    Result.return
+    @@ Michelson_to_value.decompile_value
+         ~raise
+         ~bigmaps:ctxt.transduced.bigmaps
+         v
+         result_ty
+  | Fail f -> Result.fail f
+
+
+let run_michelson_func_
+    ~raise
+    ~options
+    ~loc
+    (ctxt : Tezos_state.context)
+    (code : (unit, string) Tezos_micheline.Micheline.node)
+    result_ty
+    args
+  =
+  let open Ligo_interpreter.Types in
+  let run_options = make_options ~raise (Some ctxt) in
+  let args =
+    List.map
+      ~f:(fun (arg, arg_ty) ->
+        let { micheline_repr = { code = arg; code_ty = arg_ty }; _ } =
+          compile_value ~raise ~options ~loc arg arg_ty
+        in
+        arg, arg_ty)
+      args
+  in
+  let result_ty_ = compile_type ~raise result_ty in
+  let args =
+    List.fold_right
+      ~f:(fun (arg, arg_ty) pushes -> Tezos_utils.Michelson.i_push arg_ty arg :: pushes)
+      ~init:[]
+      args
+  in
+  let args = List.rev args in
+  let func =
+    match code with
+    | Seq (_, s) -> Tezos_utils.Michelson.(seq (args @ s))
     | _ -> raise.error (Errors.generic_error Location.generated "Could not parse")
   in
   match

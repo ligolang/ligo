@@ -334,14 +334,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_from_file.mligo" ];
   [%expect
     {|
-    File "./test_mutate_from_file.mligo", line 7, characters 11-65:
-      6 |   let _ = Test.transfer_exn a (Test.eval 1) 0tez in
-      7 |   let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
-      8 |   ()
-
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
     Everything at the top-level was executed.
     - tester exited with value <fun>.
     - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 58-63:
@@ -354,14 +346,6 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_mutate_module.mligo" ];
   [%expect
     {|
-    File "./test_mutate_module.mligo", line 10, characters 11-42:
-      9 |   let _ = Test.transfer_to_contract_exn c (Add 1) 0tez in
-     10 |   let () = assert (Test.get_storage a = 1) in
-     11 |   ()
-
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
     Everything at the top-level was executed.
     - test exited with value [(() , Mutation at: File "contract_under_test/module_adder.mligo", line 1, characters 66-71:
       1 | [@entry] let add (p : int) (k : int) : operation list * int = [], p + k
@@ -1058,15 +1042,10 @@ let%expect_test _ =
       1 | let test : unit =
       2 |   failwith "I am failing"
 
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
-    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
-      1 | let test : unit =
-      2 |   failwith "I am failing"
-
     An uncaught error occured:
-    Failwith: "I am failing" |}]
+    Failwith: "I am failing"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25 |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_failure2.mligo" ];
@@ -1076,16 +1055,10 @@ let%expect_test _ =
       1 | let test =
       2 |     assert false
 
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
-    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
-      1 | let test =
-      2 |     assert false
-
     An uncaught error occured:
     Failwith: "failed assertion"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 ,
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16 |}]
 
 let%expect_test _ =
@@ -1117,17 +1090,10 @@ let%expect_test _ =
       3 |     (failwith "negative" : int)
       4 |   else
 
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
-    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
-      2 |   if x < 0 then
-      3 |     (failwith "negative" : int)
-      4 |   else
-
     An uncaught error occured:
     Failwith: "negative"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 5, characters 4-13 ,
@@ -1159,15 +1125,10 @@ let%expect_test _ =
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
 
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
-    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
-     17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
-     18 |                                     failwith "Some mutation also passes the tests!"
-
     An uncaught error occured:
     Failwith: "Some mutation also passes the tests!"
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83
     Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
       2 |     if rounds > 0 then
       3 |         my_rec_fun (rounds - 1)
@@ -1298,15 +1259,8 @@ let%expect_test _ =
      15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
      16 |   ()
 
-    You are using Michelson failwith primitive (loaded from standard library).
-    Consider using `Test.failwith` for throwing a testing framework failure.
-
-    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
-     14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
-     15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
-     16 |   ()
-
     An uncaught error occured:
     Failwith: "foo"
     Trace:
+    File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 ,
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66 |}]
