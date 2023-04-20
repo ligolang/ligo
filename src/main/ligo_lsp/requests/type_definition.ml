@@ -39,5 +39,8 @@ let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option H
     | Type tdef -> Some tdef.range
     | Module _mdef -> None)
   @@ function
-  | File region -> return @@ Some (`Location [ region_to_location region ])
+  | File region ->
+    return
+    (* stdlib ranges have an empty file name. They have no type definition location. *)
+    @@ Option.some_if String.(region#file <> "") (`Location [ region_to_location region ])
   | Virtual _ -> return None

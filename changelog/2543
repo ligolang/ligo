@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nThe LSP previously allowed the users to try to see the definition of things defined in the stdlib. However, the stdlib is not available on the user's computer, so there is nothing to show.\\n\\nTo make things worse, the user could try to rename stdlib definitions and the LSP would try (but only rename local usages, not the definition).\\n\\nFor now, these operations are disallowed.\\n\\n"
+merge_request: '2543'
+title: "Draft: [#1694] Disallow looking for defs from stdlib in rename/definition/type"
+type: fixed
+            
