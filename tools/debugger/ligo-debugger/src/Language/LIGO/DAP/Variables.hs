@@ -26,6 +26,7 @@ import Cli.Json
   _ltfAssociatedType)
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
@@ -35,11 +36,11 @@ import Language.LIGO.Debugger.Snapshots (StackItem (StackItem))
 createVariables :: (SingI u) => Lang -> [StackItem u] -> VariableBuilder Int
 createVariables lang st = do
   topVarsMb <-
-    forM st \(StackItem desc (SomeValue v)) -> do
+    forM st \(StackItem desc ligoOrMichValue) -> do
       case desc of
         LigoStackEntry LigoExposedStackEntry{..} -> do
           let name = maybe (pretty unknownVariable) pretty leseDeclaration
-          Just <$> buildVariable lang leseType v name
+          Just <$> buildVariable lang leseType ligoOrMichValue name
         _ -> pure Nothing
   let topVars = catMaybes topVarsMb
   insertVars topVars
@@ -77,15 +78,20 @@ createVariable name varText lang typ menuContext evaluateName = DAP.defaultVaria
   , DAP.evaluateNameVariable = evaluateName
   }
 
-buildVariable :: forall t. Lang -> LigoType -> Value t -> String -> VariableBuilder Variable
+buildVariable :: Lang -> LigoType -> LigoOrMichValue -> String -> VariableBuilder Variable
 buildVariable lang typ v name = do
   let
     varText = pretty $ debugBuild DpmNormal v
     evaluatedText = pretty $ debugBuild DpmEvaluated v
     menuContext = case v of
-      VAddress  {} -> Just "address"
-      VContract {} -> Just "contract"
-      _            -> Nothing
+      LigoValue ligoVal -> case ligoVal of
+        LVCt LCAddress{} -> Just "address"
+        LVCt LCContract{} -> Just "contract"
+        _ -> Nothing
+      MichValue (SomeValue michValue) -> case michValue of
+        VAddress  {} -> Just "address"
+        VContract {} -> Just "contract"
+        _            -> Nothing
     var = createVariable name varText lang typ menuContext (Just evaluatedText)
 
   subVars <- buildSubVars lang typ v
@@ -125,25 +131,53 @@ getEpAddressChildren lang EpAddress'{..} =
     addr = createVariable "address" (pretty eaAddress) lang (LigoType Nothing) Nothing Nothing
     ep = createVariable "entrypoint" (pretty eaEntrypoint) lang (LigoType Nothing) Nothing Nothing
 
-buildSubVars :: Lang -> LigoType -> Value t -> VariableBuilder [Variable]
+buildSubVars :: Lang -> LigoType -> LigoOrMichValue -> VariableBuilder [Variable]
 buildSubVars lang typ = \case
-  VOption Nothing -> return []
-  VOption (Just v) -> do
-    (:[]) <$> buildVariable lang (getInnerTypeFromApp 0 typ) v "Some"
-  VList lst -> do
-    zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ)) lst (show <$> [1 :: Int ..])
-  VSet s -> do
-    zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ)) (toList s) (show <$> [1 :: Int ..])
-  VMap m -> do
-    forM (toPairs m) \(k, v) -> do
-      let name = pretty $ debugBuild DpmNormal k
-      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
-  VBigMap _id m -> do
-    forM (toPairs m) \(k, v) -> do
-      let name = pretty $ debugBuild DpmNormal k
-      buildVariable lang (getInnerTypeFromRecord name typ) v (toString name)
-  VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
-    pure $ getEpAddressChildren lang EpAddress'{..}
-  VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
-  -- Other value types do not have nested structure
-  _ -> return []
+  MichValue (SomeValue michValue) -> case michValue of
+    VOption Nothing -> return []
+    VOption (Just v) -> do
+      (:[]) <$> buildVariable lang (getInnerTypeFromApp 0 typ) (toLigoValue v) "Some"
+    VList lst -> do
+      zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . toLigoValue) lst (show <$> [1 :: Int ..])
+    VSet s -> do
+      zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . toLigoValue) (toList s) (show <$> [1 :: Int ..])
+    VMap m -> do
+      forM (toPairs m) \(k, v) -> do
+        let name = pretty $ debugBuild DpmNormal k
+        buildVariable lang (getInnerTypeFromRecord name typ) (toLigoValue v) (toString name)
+    VBigMap _id m -> do
+      forM (toPairs m) \(k, v) -> do
+        let name = pretty $ debugBuild DpmNormal k
+        buildVariable lang (getInnerTypeFromRecord name typ) (toLigoValue v) (toString name)
+    VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
+      pure $ getEpAddressChildren lang EpAddress'{..}
+    VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
+    -- Other value types do not have nested structure
+    _ -> return []
+  LigoValue ligoValue -> case ligoValue of
+    LVCt (LCContract LigoContract{..})
+      | Just entrypoint <- lcEntrypoint -> do
+          let addr = createVariable "address" (toString lcAddress) lang (LigoType Nothing) Nothing Nothing
+          let ep = createVariable "entrypoint" (toString entrypoint) lang (LigoType Nothing) Nothing Nothing
+          return [addr, ep]
+      | otherwise -> return []
+    LVList lst -> zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . LigoValue) lst (show <$> [1 :: Int ..])
+    value@(LVRecord record) -> case toTupleMaybe value of
+      Just values ->
+        zipWithM
+          do \val n -> buildVariable lang (getInnerTypeFromRecord n typ) (LigoValue val) (toString n)
+          values
+          (show <$> [1 :: Int ..])
+      Nothing -> do
+        forM (toPairs record) \(name, v) -> do
+          buildVariable lang (getInnerTypeFromRecord name typ) (LigoValue v) (toString name)
+    LVConstructor (ctor, value) -> (:[]) <$> buildVariable lang (getInnerTypeFromApp 0 typ) (LigoValue value) (toString ctor)
+    LVSet s -> zipWithM (buildVariable lang (getInnerTypeFromApp 0 typ) . LigoValue) s (show <$> [1 :: Int ..])
+    LVMap m -> do
+      forM m \(k, v) -> do
+        let name = pretty $ debugBuild DpmNormal (LigoValue k)
+        buildVariable lang (getInnerTypeFromRecord name typ) (LigoValue v) (toString name)
+    _ -> return []
+  where
+    toLigoValue :: (SingI t) => Value t -> LigoOrMichValue
+    toLigoValue = MichValue . SomeValue

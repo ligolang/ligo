@@ -19,7 +19,7 @@ import Data.Char (toLower)
 import Data.Default (def)
 import Data.Map qualified as M
 import Data.Singletons (demote)
-import Fmt (Builder, blockListF, pretty)
+import Fmt (Buildable (build), Builder, blockListF, pretty)
 import System.FilePath (takeFileName, (<.>), (</>))
 import Text.Interpolation.Nyan
 import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
@@ -65,6 +65,7 @@ import Morley.Tezos.Core (tz)
 import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -120,7 +121,10 @@ instance HasSpecificMessages LIGO where
         let someValues = head isStackFrames ^.. sfStackL . each . siValueL
 
         (opsText, storeText, oldStoreText) <- case someValues of
-          [someValue, someStorage] -> buildStoreOps someValue someStorage
+          [someValue, someStorage] -> do
+            (ops, store) <- buildOpsAndNewStorage someValue
+            oldStore <- buildOldStorage someStorage
+            pure (ops, store, oldStore)
           _ -> throwM $ ImpossibleHappened [int||
             Expected the stack to only have 2 elements, but its length is \
             #{length someValues}.
@@ -144,20 +148,39 @@ instance HasSpecificMessages LIGO where
           }
         pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
           where
-            buildStoreOps :: MonadThrow m => T.SomeValue -> T.SomeValue -> m (Builder, Builder, Builder)
-            buildStoreOps (SomeValue val) (SomeValue (st :: T.Value r')) = case val of
-              (T.VPair (T.VList ops, r :: T.Value r)) ->
-                case (T.valueTypeSanity r, T.valueTypeSanity st) of
-                  (T.Dict, T.Dict) ->
-                    case (T.checkOpPresence (T.sing @r), T.checkOpPresence (T.sing @r')) of
-                      (T.OpAbsent, T.OpAbsent) -> pure
-                        ( blockListF ops
-                        , printDocB False $ renderDoc doesntNeedParens r
-                        , printDocB False $ renderDoc doesntNeedParens st
-                        )
-                      _ -> throwM $ ImpossibleHappened "Invalid storage type"
+            buildOpsAndNewStorage :: (MonadThrow m) => LigoOrMichValue -> m (Builder, Builder)
+            buildOpsAndNewStorage = \case
+              LigoValue ligoValue -> case toTupleMaybe ligoValue of
+                Just [LVList ops, st] -> pure
+                  ( blockListF ops
+                  , build st
+                  )
+                _ ->
+                  throwM badLastElement
+              MichValue (SomeValue val) -> case val of
+                (T.VPair (T.VList ops, r :: T.Value r)) ->
+                  case T.valueTypeSanity r of
+                    T.Dict ->
+                      case T.checkOpPresence (T.sing @r) of
+                        T.OpAbsent -> pure
+                          ( blockListF ops
+                          , printDocB False $ renderDoc doesntNeedParens r
+                          )
+                        _ -> throwM invalidStorage
+                _ -> throwM badLastElement
 
-              _ -> throwM $ ImpossibleHappened "Expected the last element to be a pair of operations and storage"
+            buildOldStorage :: (MonadThrow m) => LigoOrMichValue -> m Builder
+            buildOldStorage = \case
+              LigoValue ligoValue -> pure $ build ligoValue
+              MichValue (SomeValue (st :: T.Value r)) ->
+                case T.valueTypeSanity st of
+                  T.Dict ->
+                    case T.checkOpPresence (T.sing @r) of
+                      T.OpAbsent -> pure $ printDocB False $ renderDoc doesntNeedParens st
+                      _ -> throwM invalidStorage
+
+            invalidStorage = ImpossibleHappened "Invalid storage type"
+            badLastElement = ImpossibleHappened "Expected the last element to be a pair of operations and storage"
 
       writeStoppedEvent reason label = do
         let hitBreakpointIds = case reason of
@@ -309,12 +332,12 @@ instance HasSpecificMessages LIGO where
 
     let builder =
           case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just (SomeValue value)))
+            InterpretRunning (EventExpressionEvaluated (Just value))
               -- We want to show $it variable only in the top-most stack frame.
               | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
                 idx <- createLigoVariablesDummy lang ligoVals
-                -- TODO: get the type of "$it" value
-                itVar <- buildVariable lang (LigoType Nothing) value "$it"
+                -- TODO: get the type of "$it" value and show it ligo-formatted
+                itVar <- buildVariable lang (LigoType Nothing) (MichValue value) "$it"
                 insertToIndex idx [itVar]
             _ -> createLigoVariablesDummy lang ligoVals
 
@@ -778,6 +801,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         parsedContracts
         (unlifter . logMessage)
         lambdaLocs
+        unlifter
 
   let ds = initDebuggerState his allLocs
 
