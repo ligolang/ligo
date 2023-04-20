@@ -75,6 +75,7 @@ module Free_variables = struct
     | E_proj (expr, _i, _n) -> self expr
     | E_update (expr, _i, update, _n) -> unions [ self expr; self update ]
     | E_raw_michelson _ -> empty
+    | E_inline_michelson (_, arguments) -> unions @@ List.map ~f:self arguments
     | E_global_constant (_hash, args) -> unions (List.map ~f:self args)
     (* the code is not allowed to have any free variables ... but
        maybe it still could if they are going to be inlined? *)

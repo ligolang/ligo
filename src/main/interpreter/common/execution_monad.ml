@@ -135,8 +135,7 @@ module Command = struct
         * LT.calltrace
         * (execution_trace, string) Tezos_micheline.Micheline.node
         * Ast_aggregated.type_expression
-        * LT.value
-        * Ast_aggregated.type_expression
+        * (LT.value * Ast_aggregated.type_expression) list
         -> LT.value tezos_command
     | Compile_contract : Location.t * LT.value * LT.value -> LT.value tezos_command
     | Compile_ast_contract : Location.t * LT.value -> LT.value tezos_command
@@ -501,17 +500,16 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_value ~raise ~options ~loc v expr_ty in
       LT.V_Michelson (Ty_code value), ctxt
-    | Run_Michelson (loc, calltrace, func, result_ty, value, value_ty) ->
+    | Run_Michelson (loc, calltrace, func, result_ty, arguments) ->
       (match
-         Michelson_backend.run_michelson_func
+         Michelson_backend.run_michelson_func_
            ~raise
            ~options
            ~loc
            ctxt
            func
            result_ty
-           value
-           value_ty
+           arguments
        with
       | Ok v -> v, ctxt
       | Error data ->

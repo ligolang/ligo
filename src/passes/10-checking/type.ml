@@ -388,6 +388,12 @@ let get_t_pair (t : t) : (t * t) option =
   | _ -> None
 
 
+let rec get_arrows_result t =
+  match t.content with
+  | T_arrow { type1 = _; type2 } -> get_arrows_result type2
+  | _ -> t
+
+
 module Type_var_name_tbl : sig
   type t
 
