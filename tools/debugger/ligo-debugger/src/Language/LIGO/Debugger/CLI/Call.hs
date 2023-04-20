@@ -2,6 +2,7 @@ module Language.LIGO.Debugger.CLI.Call
   ( compileLigoContractDebug
   , compileLigoExpression
   , getAvailableEntrypoints
+  , decompileLigoValues
 
     -- * Versions
   , LSP.Version (..)
@@ -23,16 +24,19 @@ import Data.Text qualified as T
 import Fmt (Buildable, build, pretty)
 import System.FilePath ((</>))
 import Text.Interpolation.Nyan
-import UnliftIO (MonadUnliftIO)
+import UnliftIO (MonadUnliftIO, hFlush, withSystemTempFile)
 import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
 import Cli (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
 import Cli qualified as LSP
 
 import Morley.Michelson.Parser qualified as MP
+import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as MU
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
 import Language.LIGO.Debugger.Error
 import Util
 
@@ -104,6 +108,25 @@ getAvailableEntrypoints file = withMapLigoExc $
         do throwIO $ LigoDecodeException "decoding list declarations" txt
         pure
         do parseEntrypointsList txt
+
+-- | Tries to decompile Michelson values with @LigoType@s in @LIGO@ ones.
+decompileLigoValues :: forall m. (HasLigoClient m) => [(LigoType, T.SomeValue)] -> m [Maybe LigoValue]
+decompileLigoValues typesAndValues = withMapLigoExc do
+  withSystemTempFile "ligoValue.mligo" \path handle -> do
+    let contractCode = generateDecompilation typesAndValues
+
+    hPutStrLn handle (pretty @_ @Text contractCode)
+    hFlush handle
+
+    callLigoBS Nothing
+      [ "run", "test"
+      , LSP.strArg path
+      ] Nothing
+    >>= decodeOutput
+  where
+    decodeOutput :: LByteString -> m [Maybe LigoValue]
+    decodeOutput = either (throwIO . LigoDecodeException "decoding ligo decompile" . toText) pure
+      . Aeson.eitherDecode
 
 -- Versions
 ----------------------------------------------------------------------------
