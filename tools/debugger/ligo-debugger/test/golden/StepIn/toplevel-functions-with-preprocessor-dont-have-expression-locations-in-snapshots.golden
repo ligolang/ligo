@@ -6,10 +6,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo:9:2-9:41
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of { 1: int; 0: unit; }
+          siLigoDesc: elem ? of unit * int
           siValue: Pair Unit 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -25,7 +25,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -41,7 +41,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -57,7 +57,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -73,7 +73,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -89,7 +89,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -105,7 +105,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -118,7 +118,7 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo:5:2-5:7
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of { 1: int; 0: int; }
+          siLigoDesc: elem ? of int * int
           siValue: Pair 0 42
         ]
     , StackFrame:
@@ -129,7 +129,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -156,7 +156,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -172,7 +172,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -188,7 +188,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -204,7 +204,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]
@@ -220,7 +220,7 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of { 1: int; 0: int; } -> int
+          siLigoDesc: elem foo of int * int -> int
           siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         ]
     ]

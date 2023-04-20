@@ -202,7 +202,7 @@ dumpAllSnapshotsWithStep
      , MonadReader GoldenActionContext m, MonadIO m
      , HasCallStack
      )
-  => m MovementResult
+  => m (MovementResult a)
   -> m ()
 dumpAllSnapshotsWithStep step = go (1000 :: Int)
   where

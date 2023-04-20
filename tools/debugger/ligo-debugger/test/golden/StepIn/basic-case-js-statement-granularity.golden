@@ -6,7 +6,7 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo:11:4-11:20
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of { 1: int; 0: unit; }
+          siLigoDesc: elem ? of unit * int
           siValue: Pair Unit 0
         , StackItem:
           siLigoDesc: elem g of unit -> int

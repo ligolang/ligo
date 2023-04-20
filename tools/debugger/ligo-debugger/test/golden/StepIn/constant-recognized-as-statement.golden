@@ -56,7 +56,7 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo:14:2-17:16
       sfStack:
         [StackItem:
-          siLigoDesc: elem some_int of Some of int | None of unit
+          siLigoDesc: elem some_int of (Some of (int) | None of (unit))
           siValue: Some 993
         , StackItem:
           siLigoDesc: elem s of int
@@ -84,7 +84,7 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo:15:10-15:18
       sfStack:
         [StackItem:
-          siLigoDesc: elem some_int of Some of int | None of unit
+          siLigoDesc: elem some_int of (Some of (int) | None of (unit))
           siValue: Some 993
         , StackItem:
           siLigoDesc: elem s of int

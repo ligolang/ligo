@@ -1,5 +1,3 @@
-{-# LANGUAGE NumDecimals #-}
-
 -- | Checking snapshots collection.
 module Test.Snapshots
   ( module Test.Snapshots
@@ -8,12 +6,14 @@ module Test.Snapshots
 import Unsafe qualified
 
 import AST (scanContracts)
-import Cli.Json (LigoTypeContent (LTCSingleton), LigoTypeLiteralValue (LTLVInt))
+import Cli.Json
+  (LigoLayout (LComb, LTree), LigoTypeContent (LTCSingleton), LigoTypeLiteralValue (LTLVInt))
 import Control.Category ((>>>))
 import Control.Lens (Each (each), has, ix, makeLensesWith, toListOf, (?~), (^?!))
 import Control.Monad.Writer (listen)
 import Data.Coerce (coerce)
 import Data.Default (Default (def))
+import Data.HashMap.Strict qualified as HM
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -43,7 +43,10 @@ import Lorentz.Value (mt)
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
@@ -81,7 +84,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward false
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -325,13 +328,11 @@ test_Snapshots = testGroup "Snapshots collection"
         let stopAtFile
               :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
               => FilePath
-              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
             stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
-              let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
-              case locMb of
-                Just loc -> pure $ lrFile loc == filePath
-                Nothing -> pure False
+              Just loc <- pure $ snap ^? isStackFramesL . ix 0 . sfLocL
+              guard $ lrFile loc == filePath
 
         liftIO $ step "Go to nested contract"
         _ <- moveTill Forward $ stopAtFile nestedFile
@@ -428,8 +429,8 @@ test_Snapshots = testGroup "Snapshots collection"
               curSnapshot >>= \case
                 InterpretSnapshot
                   { isStatus = InterpretRunning EventFacedStatement
-                  } -> pure True
-                _ -> pure False
+                  } -> pass
+                _ -> empty
 
         let goAndCheckLinePosition pos = do
               stepNextLine
@@ -560,7 +561,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   InterpretRunning EventFacedStatement -> True
                   _ -> False
 
-            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward false
 
             ( snaps
                 <&> do \InterpretSnapshot{..} ->
@@ -656,7 +657,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
       step [int||Going through all execution history|]
       testWithSnapshotsImpl logger runData do
-        void $ moveTill Forward $ FrozenPredicate $ pure False
+        void $ moveTill Forward false
 
       unlessM (readIORef anyWritten) do
         assertFailure [int||No logs we're dumped during snapshot collection|]
@@ -678,12 +679,12 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue False)
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
 
           srcLocAtGt <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
@@ -691,7 +692,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping back"
           void . moveTill Backward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ has statusExpressionEvaluatedP status
+            guard $ has statusExpressionEvaluatedP status
 
 
           status <- isStatus <$> frozen curSnapshot
@@ -752,17 +753,17 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue (3 :: Integer))
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
           srcLocAtDiv <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
           liftIO $ step "jumping to the previously computed value"
           void . moveTill Backward $ FrozenPredicate do
-            has statusExpressionEvaluatedP . isStatus <$> curSnapshot
+            hoistMaybe . preview statusExpressionEvaluatedP . isStatus =<< curSnapshot
 
           srcLocAtBack <- sfLoc . head . isStackFrames <$> frozen curSnapshot
           liftIO $ assertBool
@@ -872,7 +873,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let stackFramesCheck :: ([[Text]] -> Bool) -> HistoryReplayM (InterpretSnapshot u) IO ()
           stackFramesCheck namesCheck = do
             (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <-
-              listen $ moveTill Forward (FrozenPredicate $ pure False)
+              listen $ moveTill Forward false
             liftIO $
               assertBool
                 [int||Expected to have only one stack frame \
@@ -903,9 +904,9 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
+        moveTill Forward do
           goesBetween (SrcLoc 8 0) (SrcLoc 12 0)
-          && matchesSrcType (MSFile nestedFile)
+          matchesSrcType (MSFile nestedFile)
 
         -- Skip "lst" and "sum(...)"" statements
         replicateM_ 2 do
@@ -1131,7 +1132,7 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ moveTill Forward $
           goesAfter (SrcLoc 5 0)
 
-        moveTill Forward $ FrozenPredicate $ pure False
+        moveTill Forward false
 
         liftIO $ step [int||Check that failed location is known|]
         checkSnapshot \case
@@ -1166,7 +1167,7 @@ test_Snapshots = testGroup "Snapshots collection"
           -- Skip arguments
           void $ move Forward
 
-          let expectedType = LigoTypeResolved $ mkRecordType
+          let expectedType = LigoTypeResolved $ mkRecordType LTree
                 [ ("a", intType')
                 , ("b", mkSimpleConstantType "nat")
                 , ("c", mkSimpleConstantType "string")
@@ -1197,7 +1198,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          let expectedType = LigoTypeResolved $ mkSumType
+          let expectedType = LigoTypeResolved $ mkSumType LTree
                 [ ("Variant1", intType')
                 , ("Variant2", unitType')
                 ]
@@ -1295,10 +1296,10 @@ test_Snapshots = testGroup "Snapshots collection"
             isAtLine 15
 
           let expectedComplexType = LigoTypeResolved
-                $ mkRecordType
+                $ mkRecordType LTree
                     [ ("simple_field", mkSimpleConstantType "String")
                     , ("complex_field"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("inner_field1", intType')
                           , ("inner_field2", intType')
                           ]
@@ -1330,15 +1331,15 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           let expectedType = LigoTypeResolved
-                $ mkSumType
+                $ mkSumType LTree
                     [ ( "A"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("a1", intType')
                           , ("a2", mkSimpleConstantType "String")
                           ]
                       )
                     , ( "B"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("b1", mkSimpleConstantType "String")
                           , ("b2", intType')
                           ]
@@ -1568,7 +1569,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           let combedType = LigoTypeResolved
-                $ mkRecordType
+                $ mkRecordType LComb
                     [ ("a", intType')
                     , ("b", mkSimpleConstantType "Nat")
                     , ("c", mkSimpleConstantType "String")
@@ -1862,6 +1863,50 @@ test_Snapshots = testGroup "Snapshots collection"
                 } :| _
             } -> pass
           snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Decompile values in snapshot" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "complex_value_decompilation.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        liftIO $ step "Go to some line"
+        void $ moveTill Forward
+          $ goesAfter (SrcLoc 19 0)
+
+        snap <- frozen curSnapshot
+
+        let stackItems = sfStack $ head $ isStackFrames snap
+
+        liftIO $ step "Extract values and types"
+        convertInfos <- fmap catMaybes $ forM stackItems \stackItem ->
+          runMaybeT do
+            StackItem desc michVal <- pure stackItem
+            LigoStackEntry (LigoExposedStackEntry _ typ) <- pure desc
+            pure $ PreLigoConvertInfo michVal typ
+
+        let expected =
+              [ LVConstructor
+                  ( "Go"
+                  , LVRecord $ HM.fromList
+                      [ ("ch", LVCt $ LCChainId "\0\0\0\0")
+                      , ("state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
+                      , ("s", LVCt $ LCString "large")
+                      ]
+                  )
+              , LVCt $ LCInt "0"
+              , LVCt $ LCString "<fun>"
+              ]
+
+        liftIO $ step "Decompile"
+        actual <-
+          liftIO (convertMichelsonValuesToLigo dummyLoggingFunction convertInfos)
+            <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
+
+        expected @?= actual
   ]
 
 -- | Special options for checking contract.

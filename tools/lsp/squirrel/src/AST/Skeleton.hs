@@ -16,7 +16,7 @@ module AST.Skeleton
   , cameLIGOKeywords, jsLIGOKeywords
   , Name (..), QualifiedName (..), Pattern (..), RecordFieldPattern (..)
   , Constant (..), FieldAssignment (..), Alt (..), Expr (..), TField (..)
-  , Variant (..), Type (..), Binding (..), RawContract (..), TypeName (..)
+  , Variant (..), Layout (..), Type (..), Binding (..), RawContract (..), TypeName (..)
   , TypeVariableName (..), FieldName (..), Verbatim (..), Error (..), Ctor (..)
   , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
   , ModuleAccess (..), Attr (..), QuotedTypeParams (..), CaseOrDefaultStm (..)
@@ -30,6 +30,7 @@ module AST.Skeleton
 import Prelude hiding (Alt, Product, Type)
 
 import Control.Lens.Lens (lens)
+import Data.Default (Default (def))
 import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet qualified as HashSet
 import Text.Show qualified
@@ -76,7 +77,8 @@ type RawLigoList =
 data Lang
   = Caml
   | Js
-  deriving stock (Show, Eq, Enum, Bounded)
+  deriving stock (Show, Eq, Enum, Bounded, Generic)
+  deriving anyclass (Hashable)
 
 allLangs :: [Lang]
 allLangs = [minBound .. maxBound]
@@ -133,16 +135,21 @@ data QuotedTypeParams it
 -- @rec@ keywords. In JsLIGO, functions are always recursive.
 type IsRec = Bool
 
+data Layout
+  = Tree
+  | Comb
+  deriving stock (Generic, Eq, Show)
+
 data Type it
-  = TArrow    it it    -- ^ (Type) (Type)
-  | TRecord   [it]     -- ^ [TField]
-  | TSum      (NonEmpty it) -- ^ [Variant]
-  | TProduct  [it]     -- ^ [Type]
-  | TApply    it [it]  -- ^ (Name) [Type]
-  | TString   it       -- ^ (TString)
+  = TArrow    it     it            -- ^ (Type) (Type)
+  | TRecord   Layout [it]          -- ^ [TField]
+  | TSum      Layout (NonEmpty it) -- ^ [Variant]
+  | TProduct  [it]                 -- ^ [Type]
+  | TApply    it     [it]          -- ^ (Name) [Type]
+  | TString   it                   -- ^ (TString)
   | TWildcard
-  | TVariable it       -- ^ (TypeVariableName)
-  | TParen    it       -- ^ (Type)
+  | TVariable it                   -- ^ (TypeVariableName)
+  | TParen    it                   -- ^ (Type)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it
@@ -404,8 +411,8 @@ instance Eq1 QuotedTypeParams where
 
 instance Eq1 Type where
   liftEq f (TArrow a b) (TArrow c d) = f a c && f b d
-  liftEq f (TRecord xs) (TRecord ys) = liftEqList f xs ys
-  liftEq f (TSum xs) (TSum ys) = liftEqNonEmpty f xs ys
+  liftEq f (TRecord _ xs) (TRecord _ ys) = liftEqList f xs ys
+  liftEq f (TSum _ xs) (TSum _ ys) = liftEqNonEmpty f xs ys
   liftEq f (TProduct xs) (TProduct ys) = liftEqList f xs ys
   liftEq f (TString x) (TString y) = f x y
   liftEq _ TWildcard TWildcard = True
@@ -448,3 +455,6 @@ instance Eq1 CaseOrDefaultStm where
   liftEq f (DefaultStm s) (DefaultStm s') =
     liftEq f s s'
   liftEq _ _ _ = False
+
+instance Default Layout where
+  def = Tree

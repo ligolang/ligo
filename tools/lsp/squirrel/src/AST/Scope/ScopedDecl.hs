@@ -37,7 +37,7 @@ import Data.Sum (inject)
 import Duplo.Tree (Cofree ((:<)), Element)
 
 import AST.Pretty (Doc, Pretty (pp), lppDialect, sexpr, (<+>))
-import AST.Skeleton (LIGO, Lang, RawLigoList)
+import AST.Skeleton (LIGO, Lang, Layout, RawLigoList)
 import AST.Skeleton qualified as LIGO
 import Parser (fillInfo)
 import Product (Product (Nil))
@@ -87,8 +87,8 @@ data TypeDeclSpecifics init = TypeDeclSpecifics
   deriving stock (Eq, Show)
 
 data Type
-  = RecordType [TypeField]
-  | VariantType (NonEmpty TypeConstructor)
+  = RecordType Layout [TypeField]
+  | VariantType Layout (NonEmpty TypeConstructor)
   | TupleType [TypeDeclSpecifics Type]
   | ApplyType Type [Type]
   | AliasType Text
@@ -201,8 +201,8 @@ instance IsLIGO init => IsLIGO (TypeDeclSpecifics init) where
   toLIGO tspec = toLIGO (_tdsInit tspec)
 
 instance IsLIGO Type where
-  toLIGO (RecordType fields) = node (LIGO.TRecord (map toLIGO fields))
-  toLIGO (VariantType cons) = node (LIGO.TSum (toLIGO <$> cons))
+  toLIGO (RecordType layout fields) = node (LIGO.TRecord layout (map toLIGO fields))
+  toLIGO (VariantType layout cons) = node (LIGO.TSum layout (toLIGO <$> cons))
   toLIGO (TupleType typs) = node (LIGO.TProduct (map toLIGO typs))
   toLIGO (AliasType typ) = node (LIGO.TypeName typ)
   toLIGO (ApplyType name types) = node (LIGO.TApply (toLIGO name) (map toLIGO types))
@@ -302,6 +302,6 @@ accessField tspec (Left num) = do
   tupleTspecs <- tspec ^? tdsInit . _TupleType
   safeIndex tupleTspecs num
 accessField tspec (Right text) = do
-  typeFields <- tspec ^? tdsInit . _RecordType
+  typeFields <- tspec ^? tdsInit . _RecordType . _2
   fitting <- find ((text ==) . _tfName) typeFields
   _tfTspec fitting

@@ -471,8 +471,8 @@ instance HasGo Variant where
 instance HasGo Skeleton.Type where
   walk' _ = \case
     TArrow typ1 typ2 -> walk typ1 >> walk typ2 >> pure Nothing
-    TRecord fields' -> mapM_ walk fields' >> pure Nothing
-    TSum variants -> mapM_ walk variants >> pure Nothing
+    TRecord _ fields' -> mapM_ walk fields' >> pure Nothing
+    TSum _ variants -> mapM_ walk variants >> pure Nothing
     TProduct types -> mapM_ walk types >> pure Nothing
     TApply name types -> walk name >> mapM_ walk types >> pure Nothing
     TString {} -> pure Nothing
@@ -664,10 +664,10 @@ instance HasGo Binding where
             withScope pr (walk p)
           (subforest, fromMaybe [] -> subRefs) <-
             fmap NE.unzip $ withScopes (declRef:paramRefs) $ case expr of
-              (layer -> Just (TSum variants)) -> do
+              (layer -> Just (TSum _ variants)) -> do
                 (sts, concat -> refs) <- unzip <$> wither scopeVariant (toList variants)
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
-              (layer -> Just (TRecord fields)) -> do
+              (layer -> Just (TRecord _ fields)) -> do
                 (sts, concat -> refs) <- unzip <$> wither scopeTField fields
                 pure $ Just ((Set.empty, getRange r) :< sts, refs)
               (layer -> Just (ModuleAccess path field)) ->

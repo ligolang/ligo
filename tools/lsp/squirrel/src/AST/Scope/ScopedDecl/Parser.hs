@@ -75,9 +75,9 @@ parseApplyType node = runMaybeT do
 
 parseRecordType :: PPableLIGO info => LIGO info -> Parser (Maybe Type)
 parseRecordType node = runMaybeT do
-  LIGO.TRecord fieldNodes <- hoistMaybe $ layer node
+  LIGO.TRecord layout fieldNodes <- hoistMaybe $ layer node
   typeFields <- lift $ wither parseTypeField fieldNodes
-  pure (RecordType typeFields)
+  pure (RecordType layout typeFields)
 
 parseTypeField :: PPableLIGO info => LIGO info -> Parser (Maybe TypeField)
 parseTypeField node = runMaybeT do
@@ -88,9 +88,9 @@ parseTypeField node = runMaybeT do
 
 parseVariantType :: PPableLIGO info => LIGO info -> Parser (Maybe Type)
 parseVariantType node = runMaybeT do
-  LIGO.TSum conNodes <- hoistMaybe $ layer node
+  LIGO.TSum layout conNodes <- hoistMaybe $ layer node
   cons <- MaybeT $ fmap nonEmpty $ wither parseTypeConstructor $ toList conNodes
-  pure (VariantType cons)
+  pure (VariantType layout cons)
 
 parseTypeConstructor :: PPableLIGO info => LIGO info -> Parser (Maybe TypeConstructor)
 parseTypeConstructor node = runMaybeT do

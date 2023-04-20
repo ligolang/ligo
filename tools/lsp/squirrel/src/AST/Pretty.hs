@@ -175,15 +175,15 @@ instance Pretty1 QuotedTypeParams where
 
 instance Pretty1 AST.Type where
   pp1 = \case
-    TArrow    dom codom -> sop dom "->" [codom]
-    TRecord   fields    -> sexpr "RECORD" fields
-    TSum      variants  -> sexpr "SUM" (toList variants)
-    TProduct  elements  -> sexpr "PROD" elements
-    TApply    f xs      -> sop f "$" xs
-    TString   t         -> sexpr "TSTRING" [pp t]
-    TWildcard           -> "_"
-    TVariable v         -> sexpr "'" [v]
-    TParen    t         -> sexpr "par" [t]
+    TArrow    dom      codom  -> sop dom "->" [codom]
+    TRecord   _        fields -> sexpr "RECORD" fields
+    TSum _    variants        -> sexpr "SUM" (toList variants)
+    TProduct  elements        -> sexpr "PROD" elements
+    TApply    f        xs     -> sop f "$" xs
+    TString   t               -> sexpr "TSTRING" [pp t]
+    TWildcard                 -> "_"
+    TVariable v               -> sexpr "'" [v]
+    TParen    t               -> sexpr "par" [t]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -404,11 +404,21 @@ prettyTyVarsJs tys = "<" <.> train ", " tys <.> ">"
 
 instance LPP1 'Js AST.Type where
   lpp1 = \case
-    TArrow    dom codom -> dom <+> "=>" <+> codom
-    TRecord   fields    -> "{" `indent` blockWith (<.> ",") fields `above` "}"
-    TProduct  [element] -> element
-    TProduct  elements  -> tupleJsLIGO elements
-    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
+    TArrow  dom    codom  -> dom <+> "=>" <+> codom
+    TRecord layout fields ->
+      let record = "{" `indent` blockWith (<.> ",") fields `above` "}" in
+        case layout of
+          Tree -> record
+          Comb -> "/* @layout comb */" `indent` record
+
+    TProduct  [element]           -> element
+    TProduct  elements            -> tupleJsLIGO elements
+    TSum      layout    (x :| xs) ->
+      let sum' = x `indent` blockWith ("| "<.>) xs in
+        case layout of
+          Tree -> sum'
+          Comb -> "/* @layout comb */ |" `indent` sum'
+
     TApply    f xs      -> f <+> tuple xs
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -544,10 +554,20 @@ prettyTyVarsCaml tys = parens ("type" <+> train ", " tys)
 
 instance LPP1 'Caml AST.Type where
   lpp1 = \case
-    TArrow    dom codom -> dom <+> "->" <+> codom
-    TRecord   fields    -> "{" `indent` blockWith (<.> ";") fields `above` "}"
-    TProduct  elements  -> train " *" elements
-    TSum      (x :| xs) -> x `indent` blockWith ("| "<.>) xs
+    TArrow  dom    codom  -> dom <+> "->" <+> codom
+    TRecord layout fields ->
+      let record = "{" `indent` blockWith (<.> ";") fields `above` "}" in
+        case layout of
+          Comb -> "[@layout comb]" `indent` record
+          Tree -> record
+
+    TProduct elements           -> train " *" elements
+    TSum     layout   (x :| xs) ->
+      let sum' = x `indent` blockWith ("| "<.>) xs in parens
+        case layout of
+          Comb -> "[@layout comb] |" `indent` sum'
+          Tree -> sum'
+
     TApply    f xs      -> tupleCameLIGO xs <+> f
     TString   t         -> "\"" <.> lpp t <.> "\""
     TWildcard           -> "_"
@@ -586,7 +606,7 @@ instance LPP1 'Caml QuotedTypeParams where
 instance LPP1 'Caml Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
     Variant ctor mTy -> case mTy of
-      Just ty -> ctor <+> "of" <+> pp ty
+      Just ty -> ctor <+> "of" <+> parens (pp ty)
       Nothing -> ctor
 
 instance LPP1 'Caml Expr where
