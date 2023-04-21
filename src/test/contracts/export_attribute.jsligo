@@ -1,0 +1,7 @@
+namespace Foo {
+
+  //@entry
+  export const bar = (_: unit, n: int) : [list<operation>, int] => [list([]), n];
+
+};
+

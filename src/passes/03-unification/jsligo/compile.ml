@@ -528,7 +528,9 @@ and instruction : Eq.instruction -> Folding.instruction =
     let c = c.value in
     let I.{ ifso; ifnot; test; _ } = c in
     let ifso = TODO_do_in_parsing.control_flow_clause statement ifso in
-    let ifnot = Option.map ifnot ~f:(TODO_do_in_parsing.control_flow_clause statement <@ snd) in
+    let ifnot =
+      Option.map ifnot ~f:(TODO_do_in_parsing.control_flow_clause statement <@ snd)
+    in
     return @@ I_cond { test = test.inside; ifso; ifnot }
   | SReturn s -> return @@ I_return s.value.expr
   | SSwitch s ->

@@ -1,8 +1,3 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -p git dpkg -i bash
-
-# shellcheck shell=bash
-
 #!/bin/bash
 cd "$( dirname "${BASH_SOURCE[0]}" )"/..
 

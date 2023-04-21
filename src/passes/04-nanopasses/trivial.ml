@@ -72,6 +72,7 @@ end = struct
     | { key = "no_mutation"; value = None } -> { o_attr with no_mutation = true }
     | { key = "view"; value = None } -> { o_attr with view = true }
     | { key = "private"; value = None } -> { o_attr with public = false }
+    | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
@@ -88,6 +89,7 @@ end = struct
     | { key = "no_mutation"; value = None } -> { o_attr with no_mutation = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "private"; value = None } -> { o_attr with public = false }
+    | { key = "public"; value = None } -> { o_attr with public = true }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       O.ValueAttr.default_attributes
@@ -99,6 +101,7 @@ end = struct
    fun loc o_attr i_attr ->
     match i_attr with
     | { key = "private"; value = None } -> { o_attr with public = false }
+    | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
