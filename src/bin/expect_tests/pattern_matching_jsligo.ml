@@ -8,8 +8,7 @@ let%expect_test _ =
     ; "--init-file"
     ; test "match_with_block.jsligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     2 |}]
 
 let%expect_test _ =
