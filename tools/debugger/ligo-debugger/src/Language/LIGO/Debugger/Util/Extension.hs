@@ -10,8 +10,8 @@ module Language.LIGO.Debugger.Util.Extension
   ) where
 
 import Control.Monad.Except (MonadError (throwError))
-import Data.String.Interpolate (i)
 import System.FilePath
+import Text.Interpolation.Nyan
 
 import Language.LIGO.Debugger.Util.AST.Skeleton (Lang (..))
 
@@ -25,7 +25,7 @@ newtype UnsupportedExtension = UnsupportedExtension String
 
 instance Exception UnsupportedExtension where
   displayException (UnsupportedExtension ext) =
-    [i|Unsupported extension has been met: "#{ext}"|]
+    [int||Unsupported extension has been met: "#{ext}"|]
 
 -- TODO: 'lsp' uses the 'Glob' package to deal with globs, but it doesn't
 -- support braced globs such as "{,m,re}ligo" even though the LSP spec allows

@@ -32,6 +32,8 @@ import Language.LSP.Types qualified as LSP
 
 import Control.Lens (makeLenses)
 import Data.ByteString qualified as BS
+import Debug qualified
+import Fmt (Buildable (build))
 
 import Duplo.Lattice
 import Duplo.Pretty
@@ -70,6 +72,10 @@ instance Pretty Range where
     <.> int (fromIntegral @LSP.UInt @Int lc) <.> "-"
     <.> int (fromIntegral @LSP.UInt @Int rl) <.> ":"
     <.> int (fromIntegral @LSP.UInt @Int rc)
+
+-- TODO: replace @Pretty@ instance with @Buildable@
+instance Buildable Range where
+  build = Debug.show . pp
 
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.

@@ -84,7 +84,6 @@ library:
     - free
     - hashable
     - hedgehog
-    - interpolate
     - lens
     - lens-aeson
     - lsp-types
@@ -223,10 +222,11 @@ tests:
       - duplo
       - filepath
       - hspec-expectations
-      - interpolate
       - lens
       - ligo-debugger
       - lsp-types
+      - nyan-interpolation
+      - nyan-interpolation-core
       - QuickCheck
       - tasty
       - tasty-hunit

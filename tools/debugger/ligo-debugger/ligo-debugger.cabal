@@ -127,7 +127,6 @@ library
     , free
     , hashable
     , hedgehog
-    , interpolate
     , lens
     , lens-aeson
     , lsp-types
@@ -395,11 +394,12 @@ test-suite lsp-test
     , duplo
     , filepath
     , hspec-expectations
-    , interpolate
     , lens
     , ligo-debugger
     , lsp-types
     , morley-prelude
+    , nyan-interpolation
+    , nyan-interpolation-core
     , tasty
     , tasty-hunit
     , tasty-quickcheck

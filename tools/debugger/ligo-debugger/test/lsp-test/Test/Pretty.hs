@@ -3,9 +3,9 @@ module Test.Pretty
   , unit_pretty_sum_type_mligo
   ) where
 
-import Data.String.Interpolate (i)
 import Data.Text (strip)
 import System.FilePath ((</>))
+import Text.Interpolation.Nyan
 
 import Test.Common.Util (renderNoLineLengthLimit)
 import Test.Common.Util qualified as Common
@@ -25,9 +25,9 @@ checkPretty fp expected = do
   strip (renderNoLineLengthLimit $ lppDialect lang code) `shouldBe` expected
 
 unit_pretty_sum_type_jsligo :: Assertion
-unit_pretty_sum_type_jsligo = checkPretty "sum-type.jsligo" $ toText
-  [i|type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"]|]
+unit_pretty_sum_type_jsligo = checkPretty "sum-type.jsligo"
+  [int||type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"]|]
 
 unit_pretty_sum_type_mligo :: Assertion
-unit_pretty_sum_type_mligo = checkPretty "sum-type.mligo" $ toText
-  [i|type parameter = (Increment of (int) | Decrement of (int) | Reset)|]
+unit_pretty_sum_type_mligo = checkPretty "sum-type.mligo"
+  [int||type parameter = (Increment of (int) | Decrement of (int) | Reset)|]

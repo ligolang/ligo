@@ -32,12 +32,12 @@ import Prelude hiding (Product)
 
 import Control.Exception (throwIO)
 import Control.Monad.RWS hiding (Product)
-import Data.String.Interpolate (i)
 import Data.Text qualified as Text
 import Language.LSP.Types qualified as J
+import Text.Interpolation.Nyan
 import Unsafe qualified
 
-import Duplo.Pretty
+import Duplo.Pretty hiding (int)
 import Duplo.Tree
 
 import Language.LIGO.Debugger.Util.AST.Skeleton (Error (..), SomeLIGO, getLIGO)
@@ -138,7 +138,7 @@ data FieldDecodeException = FieldDecodeException
 
 instance Exception FieldDecodeException where
   displayException FieldDecodeException{ufeFieldName, ufeNodeType, ufeNodeRange, ufeReason} =
-    [i|Cannot decode field `#{ufeFieldName}` with `#{ufeNodeType}` (at #{ufeNodeRange}). Reason: #{reason}.|]
+    [int||Cannot decode field `#{ufeFieldName}` with `#{ufeNodeType}` (at #{ufeNodeRange}). Reason: #{reason}.|]
     where
       reason :: String
       reason = case ufeReason of

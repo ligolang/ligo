@@ -57,6 +57,7 @@ import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
 import Data.Vector qualified as V
 import Debug qualified (show)
+import Fmt (Buildable (build))
 import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
 import Language.LSP.Types qualified as J
@@ -535,6 +536,10 @@ instance Pretty LigoError where
         Just at' -> " at" <+> pp (fromLigoRangeOrDef at') <.> ":\n"
     , pp msg
     ]
+
+-- TODO: replace @Pretty@ instance with @Buildable@
+instance Buildable LigoError where
+  build = Debug.show . pp
 
 ----------------------------------------------------------------------------
 -- Helpers

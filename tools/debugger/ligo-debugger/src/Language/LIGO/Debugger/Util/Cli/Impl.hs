@@ -26,16 +26,15 @@ import Data.Aeson
 import Data.Aeson.Types (parseEither)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
-import Data.String.Interpolate (i)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Debug qualified
-import Duplo.Pretty (pp)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode (..))
 import System.FilePath (isPathSeparator, takeDirectory, takeFileName, (</>))
 import System.IO (hFlush, hGetChar)
 import System.Process.ByteString.Lazy qualified as PExtras
+import Text.Interpolation.Nyan
 import UnliftIO.Directory (canonicalizePath, doesFileExist)
 import UnliftIO.Exception qualified as UnliftIO (handle, throwIO, try)
 import UnliftIO.Pool (Pool)
@@ -129,7 +128,7 @@ data SomeLigoException where
 deriving stock instance Show SomeLigoException
 
 instance Exception SomeLigoException where
-  displayException (SomeLigoException a) = [i|Error (LIGO): #{displayException a}|]
+  displayException (SomeLigoException a) = [int||Error (LIGO): #{displayException a}|]
 
   fromException e =
     asum
@@ -145,66 +144,66 @@ instance Exception SomeLigoException where
 
 instance Exception LigoClientFailureException where
   displayException LigoClientFailureException {..} =
-    [i|LIGO binary failed with
-#{stdOut}
-#{stdErr}
-#{causedBy}|]
+    [int||LIGO binary failed with
+    #{stdOut}
+    #{stdErr}
+    #{causedBy}|]
     where
-      causedBy = maybe ("" :: String) (\file -> [i|Caused by: #{file}|]) cfeFile
+      causedBy = maybe ("" :: String) (\file -> [int||Caused by: #{file}|]) cfeFile
 
       stdOut
         | Text.null cfeStdout = "" :: String
-        | otherwise = [i|Stdout: #{cfeStdout}|]
+        | otherwise = [int||Stdout: #{cfeStdout}|]
 
       stdErr
         | Text.null cfeStderr = "" :: String
-        | otherwise = [i|Stderr: #{cfeStderr}|]
+        | otherwise = [int||Stderr: #{cfeStderr}|]
 
 instance Exception LigoDecodedExpectedClientFailureException where
   displayException LigoDecodedExpectedClientFailureException {..} =
-    [i|LIGO binary produced expected error which we successfully decoded as:
-#{pp $ toList decfeErrorsDecoded}
-With warnings
-#{pp $ toList decfeWarningsDecoded}
-Caused by: #{decfeFile}|]
+    [int||LIGO binary produced expected error which we successfully decoded as:
+    #{toList decfeErrorsDecoded}
+    With warnings
+    #{toList decfeWarningsDecoded}
+    Caused by: #{decfeFile}|]
 
 instance Exception LigoErrorNodeParseErrorException where
   displayException LigoErrorNodeParseErrorException {..} =
-    [i|LIGO binary produced an error JSON which we were unable to decode:
-#{lnpeError}
-Caused by: #{lnpeFile}
-JSON output dumped:
-#{lnpeOutput}|]
+    [int||LIGO binary produced an error JSON which we were unable to decode:
+    #{lnpeError}
+    Caused by: #{lnpeFile}
+    JSON output dumped:
+    #{lnpeOutput}|]
 
 instance Exception LigoMalformedJSONException where
   displayException LigoMalformedJSONException {..} =
-    [i|LIGO binary produced a malformed JSON:
-#{lmjeError}
-Caused by: #{lmjeFile}
-JSON output dumped:
-#{lmjeOutput}|]
+    [int||LIGO binary produced a malformed JSON:
+    #{lmjeError}
+    Caused by: #{lmjeFile}
+    JSON output dumped:
+    #{lmjeOutput}|]
 
 instance Exception LigoDefinitionParseErrorException where
   displayException LigoDefinitionParseErrorException {..} =
-    [i|LIGO binary produced a definition output which we consider malformed:
-#{ldpeError}
-Caused by: #{ldpeFile}
-JSON output dumped:
-#{ldpeOutput}|]
+    [int||LIGO binary produced a definition output which we consider malformed:
+    #{ldpeError}
+    Caused by: #{ldpeFile}
+    JSON output dumped:
+    #{ldpeOutput}|]
 
 instance Exception LigoPreprocessFailedException where
   displayException LigoPreprocessFailedException {..} =
-    [i|LIGO failed to preprocess contract with: #{pfeMessage}
-Caused by: #{pfeFile}|]
+    [int||LIGO failed to preprocess contract with: #{pfeMessage}
+    Caused by: #{pfeFile}|]
 
 instance Exception LigoFormatFailedException where
   displayException LigoFormatFailedException {..} =
-    [i|LIGO failed to format contract with: #{ffeMessage}
-Caused by: #{ffeFile}|]
+    [int||LIGO failed to format contract with: #{ffeMessage}
+    Caused by: #{ffeFile}|]
 
 instance Exception LigoIOException where
   displayException LigoIOException {..} =
-    [i|LIGO executable run failed: #{lieDescription}|]
+    [int||LIGO executable run failed: #{lieDescription}|]
 
 ----------------------------------------------------------------------------
 -- Execution
