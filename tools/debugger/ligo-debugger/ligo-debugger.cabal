@@ -152,10 +152,8 @@ library
     , template-haskell
     , temporary
     , text
-    , th-compat
     , th-utilities
     , time
-    , timestats
     , transformers
     , tree-sitter
     , unliftio

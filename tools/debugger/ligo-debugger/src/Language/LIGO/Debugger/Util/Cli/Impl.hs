@@ -30,7 +30,6 @@ import Data.String.Interpolate (i)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Debug qualified
-import Debug.TimeStats qualified as TimeStats
 import Duplo.Pretty (pp)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode (..))
@@ -233,7 +232,7 @@ strArg = LigoCliArg . protect . toString
       _ -> arg
 
 callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m LByteString
-callLigoBS _rootDir args conM = TimeStats.measureM "callLigoBS" do
+callLigoBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
     let raw = maybe "" (BSL.fromStrict . encodeUtf8 . srcText) conM
@@ -264,7 +263,7 @@ callLigoBS _rootDir args conM = TimeStats.measureM "callLigoBS" do
 -- to LIGO, otherwise it will use an unused process handle from the process
 -- pool.
 callLigo :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
-callLigo rootDir args conM = TimeStats.measureM "callLigo" $ do
+callLigo rootDir args conM = do
   LigoClientEnv{..} <- getLigoClientEnv
   let fpM = srcPath <$> conM
   -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there is
@@ -327,7 +326,7 @@ withLigo
   -> (Source -> Value -> m a)  -- ^ Given the source file after calling LIGO and its decoded JSON value, what to do to return the final value.
   -> m a
 withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) getArgs decode =
-  TimeStats.measureM "withLigo" $ withTempDirTemplate \tempDir ->
+  withTempDirTemplate \tempDir ->
     withTempFile tempDir (takeFileName fp) \tempFp hnd -> do
       -- Create temporary file and call LIGO with it.
       liftIO (Text.hPutStr hnd contents *> hClose hnd)
@@ -346,7 +345,7 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
     withTempDirTemplate = case tempDirTemplate of
       GenerateDir template -> withTempDirectory rootDir template
       UseDir path -> ($ path)
-withLigo src@(Source fp False _) _ getArgs decode = TimeStats.measureM "withLigo" $
+withLigo src@(Source fp False _) _ getArgs decode =
   UnliftIO.try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
     Left LigoClientFailureException{cfeStderr} ->
       handleLigoMessages fp cfeStderr
