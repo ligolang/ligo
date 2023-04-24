@@ -1,5 +1,3 @@
-#include "./gitlab-pages/docs/advanced/src/proxy_ticket.jsligo"
-
 type param = [ int , ticket<string>]
 
 const main = ( [p,_] : [param , [string , address]] ) : [list<operation> , [string , address]] => {
