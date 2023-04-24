@@ -5,9 +5,6 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
-import AST.Scope.Common qualified as AST.Common
-import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (throwSTM, writeTChan)
 import Control.Exception (throw)
 import Control.Lens (Each (each))
@@ -18,7 +15,9 @@ import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
-import Log (runNoLoggingT)
+import Text.Interpolation.Nyan
+import UnliftIO.Exception (fromEither, throwIO, try)
+
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
@@ -32,19 +31,23 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Morley.Util.Constrained (Constrained (..))
 import Morley.Util.Lens (makeLensesWith, postfixLFields)
-import ParseTree (pathToSrc)
-import Parser (ParsedInfo)
-import Text.Interpolation.Nyan
-import UnliftIO.Exception (fromEither, throwIO, try)
 
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
+
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Debugger.Util.AST
+  (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
+import Language.LIGO.Debugger.Util.AST.Common qualified as AST.Common
+import Language.LIGO.Debugger.Util.Cli (HasLigoClient, LigoIOException)
+import Language.LIGO.Debugger.Util.Log (runNoLoggingT)
+import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
+import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
 
 -- | Type which caches all things that we need for
 -- launching the contract.

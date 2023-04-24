@@ -30,7 +30,7 @@
 
         pkgs = import nixpkgs nixpkgsArgs;
 
-        grammars = import ./../lsp/squirrel/grammar { pkgs = haskellPkgs; };
+        grammars = import ./ligo-debugger/grammar { pkgs = haskellPkgs; };
 
         ligo-debugger-package = pkgs:
           (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; }).ligo-debugger;
@@ -39,6 +39,7 @@
           (ligo-debugger-package pkgs).components.exes.ligo-debugger;
         ligo-debugger-components = ligo-debugger-package (haskellPkgs);
         ligo-debugger-test = (ligo-debugger-package haskellPkgs).components.tests.ligo-debugger-test;
+        lsp-test = (ligo-debugger-package haskellPkgs).components.tests.lsp-test;
         archOut = {
           devShells = {
             default = pkgs.mkShell rec {
@@ -68,6 +69,7 @@
           inherit ligo-debugger-components;
           tests = {
             inherit ligo-debugger-test;
+            inherit lsp-test;
           };
         };
       in archOut);

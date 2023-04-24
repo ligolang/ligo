@@ -11,8 +11,8 @@ import Fmt (Buildable (..), pretty)
 import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
-import Cli.Impl qualified as LSP
-import Extension qualified as LSP
+import Language.LIGO.Debugger.Util.Cli.Impl qualified as LSP
+import Language.LIGO.Debugger.Util.Extension qualified as LSP
 
 -- | Exceptions allowed in debugger logic.
 class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where

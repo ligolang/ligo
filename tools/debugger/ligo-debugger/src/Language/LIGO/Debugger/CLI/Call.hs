@@ -27,9 +27,6 @@ import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, hFlush, withSystemTempFile)
 import UnliftIO.Exception (fromEither, mapExceptionM, throwIO)
 
-import Cli (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
-import Cli qualified as LSP
-
 import Morley.Michelson.Parser qualified as MP
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as MU
@@ -38,6 +35,10 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Util.Cli
+  (HasLigoClient, LigoClientFailureException (..), callLigo, callLigoBS)
+import Language.LIGO.Debugger.Util.Cli qualified as LSP
+
 import Util
 
 withMapLigoExc :: (MonadUnliftIO m) => m a -> m a

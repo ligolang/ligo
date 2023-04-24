@@ -58,11 +58,6 @@ import Fmt (Buildable (..), genericF, pretty)
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
 
-import AST (LIGO)
-import Duplo (leq)
-import Parser (ParsedInfo)
-import Range (HasRange (getRange), Range (..))
-
 import Morley.Debugger.Core.Common (fromCanonicalLoc)
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
@@ -79,9 +74,14 @@ import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
 
+import Duplo (leq)
+
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
+import Language.LIGO.Debugger.Util.AST (LIGO)
+import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
+import Language.LIGO.Debugger.Util.Range (HasRange (getRange), Range (..))
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem

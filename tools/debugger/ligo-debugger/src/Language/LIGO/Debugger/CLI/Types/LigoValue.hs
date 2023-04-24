@@ -27,12 +27,6 @@ import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
 import Text.Interpolation.Nyan
 
-import AST (Lang (Caml, Js))
-import Cli.Json
-  (LigoTableField (..), LigoTypeConstant (..), LigoTypeContent (LTCConstant, LTCRecord, LTCSum),
-  LigoTypeExpression (..), LigoTypeTable (..), guardOneElemList, toSnakeCase)
-import Cli.Json qualified as Cli
-
 import Morley.Debugger.Core (DebugPrint (DebugPrint), DebugPrintMode (..))
 import Morley.Michelson.Typed (Constrained (SomeValue), SomeValue)
 import Morley.Michelson.Typed qualified as T
@@ -41,6 +35,11 @@ import Morley.Tezos.Core qualified as T
 import Morley.Tezos.Crypto.BLS12381 (toMichelsonBytes)
 
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.Util.AST (Lang (Caml, Js))
+import Language.LIGO.Debugger.Util.Cli.Json
+  (LigoTableField (..), LigoTypeConstant (..), LigoTypeContent (LTCConstant, LTCRecord, LTCSum),
+  LigoTypeExpression (..), LigoTypeTable (..), guardOneElemList, toSnakeCase)
+import Language.LIGO.Debugger.Util.Cli.Json qualified as Cli
 
 -------------
 --- Types ---

@@ -1,6 +1,6 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -29,6 +29,26 @@ library
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
+      Language.LIGO.Debugger.Util.AST
+      Language.LIGO.Debugger.Util.AST.Common
+      Language.LIGO.Debugger.Util.AST.Includes
+      Language.LIGO.Debugger.Util.AST.Parser
+      Language.LIGO.Debugger.Util.AST.Parser.Camligo
+      Language.LIGO.Debugger.Util.AST.Parser.Jsligo
+      Language.LIGO.Debugger.Util.AST.Pretty
+      Language.LIGO.Debugger.Util.AST.Skeleton
+      Language.LIGO.Debugger.Util.Cli
+      Language.LIGO.Debugger.Util.Cli.Impl
+      Language.LIGO.Debugger.Util.Cli.Json
+      Language.LIGO.Debugger.Util.Cli.Types
+      Language.LIGO.Debugger.Util.Diagnostic
+      Language.LIGO.Debugger.Util.Extension
+      Language.LIGO.Debugger.Util.Log
+      Language.LIGO.Debugger.Util.Parser
+      Language.LIGO.Debugger.Util.ParseTree
+      Language.LIGO.Debugger.Util.Product
+      Language.LIGO.Debugger.Util.Range
+      Language.LIGO.Debugger.Util.Util
       Util
   other-modules:
       Paths_ligo_debugger
@@ -81,6 +101,14 @@ library
       TypeOperators
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages
+  include-dirs:
+      grammar/camligo/src
+      grammar/jsligo/src
+  c-sources:
+      grammar/camligo/src/parser.c
+      grammar/camligo/src/scanner.c
+      grammar/jsligo/src/parser.c
+      grammar/jsligo/src/scanner.c
   build-depends:
       aeson
     , ansi-terminal
@@ -94,13 +122,17 @@ library
     , directory
     , dlist
     , duplo
+    , fastsum
     , filepath
     , fmt
+    , free
     , hashable
     , hedgehog
+    , interpolate
+    , katip
     , lens
     , lens-aeson
-    , ligo-squirrel
+    , lsp-types
     , monad-stm
     , morley
     , morley-debugger
@@ -109,6 +141,8 @@ library
     , nyan-interpolation
     , nyan-interpolation-core
     , process
+    , process-extras
+    , regex-tdfa
     , scientific
     , semver
     , singletons
@@ -118,14 +152,22 @@ library
     , stm-containers
     , syb
     , template-haskell
+    , temporary
     , text
+    , th-compat
     , th-utilities
     , time
+    , timestats
+    , transformers
+    , tree-sitter
     , unliftio
+    , unliftio-core
+    , unliftio-pool
     , unordered-containers
     , vector
     , vinyl
     , with-utf8
+    , witherable
   default-language: Haskell2010
 
 executable ligo-debugger
@@ -207,10 +249,8 @@ test-suite ligo-debugger-test
       Test.Util.Options
       Test.Variables
       Paths_ligo_debugger
-  autogen-modules:
-      Paths_ligo_debugger
   hs-source-dirs:
-      test
+      test/debugger
   default-extensions:
       AllowAmbiguousTypes
       ApplicativeDo
@@ -272,7 +312,6 @@ test-suite ligo-debugger-test
     , hedgehog
     , lens
     , ligo-debugger
-    , ligo-squirrel
     , lorentz
     , morley
     , morley-debugger
@@ -285,6 +324,89 @@ test-suite ligo-debugger-test
     , tasty-golden
     , tasty-hedgehog
     , tasty-hunit-compat
+    , text
+    , unliftio
+    , unordered-containers
+  default-language: Haskell2010
+
+test-suite lsp-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Driver
+      Test.Pretty
+      Test.Common.Diagnostics
+      Test.Common.FixedExpectations
+      Test.Common.Tasty
+      Test.Common.Util
+      Paths_ligo_debugger
+  hs-source-dirs:
+      test/lsp-test/
+      test/test-common/
+  default-extensions:
+      AllowAmbiguousTypes
+      ApplicativeDo
+      BangPatterns
+      BlockArguments
+      ConstraintKinds
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DeriveFoldable
+      DeriveFunctor
+      DeriveGeneric
+      DeriveTraversable
+      DerivingStrategies
+      DerivingVia
+      EmptyCase
+      FlexibleContexts
+      FlexibleInstances
+      FunctionalDependencies
+      GADTs
+      GeneralisedNewtypeDeriving
+      ImportQualifiedPost
+      LambdaCase
+      MagicHash
+      MultiParamTypeClasses
+      MultiWayIf
+      NamedFieldPuns
+      NumDecimals
+      OverloadedStrings
+      PackageImports
+      QuantifiedConstraints
+      QuasiQuotes
+      PatternSynonyms
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      StandaloneDeriving
+      StrictData
+      TemplateHaskell
+      TupleSections
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+      ViewPatterns
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
+  build-tool-depends:
+      tasty-discover:tasty-discover
+  build-depends:
+      HUnit
+    , QuickCheck
+    , algebraic-graphs
+    , base-noprelude
+    , directory
+    , duplo
+    , filepath
+    , hspec-expectations
+    , lens
+    , ligo-debugger
+    , lsp-types
+    , morley-prelude
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , template-haskell
     , text
     , unliftio
     , unordered-containers

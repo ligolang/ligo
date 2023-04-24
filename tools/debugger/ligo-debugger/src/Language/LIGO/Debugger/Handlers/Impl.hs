@@ -12,9 +12,6 @@ import Prelude hiding (try)
 import Debug qualified
 import Unsafe qualified
 
-import Cli
-  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
-  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
 import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
@@ -31,11 +28,9 @@ import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
-import Cli qualified as LSP.Cli
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues (Manager (mComputation))
 import Control.DelayedValues qualified as DV
-import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
@@ -79,6 +74,11 @@ import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import Language.LIGO.Debugger.Util.Cli
+  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
+  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
+import Language.LIGO.Debugger.Util.Cli qualified as LSP.Cli
+import Language.LIGO.Debugger.Util.Extension (UnsupportedExtension (..), getExt)
 
 data LIGO
 

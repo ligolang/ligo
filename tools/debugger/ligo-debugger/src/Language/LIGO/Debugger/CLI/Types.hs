@@ -41,15 +41,16 @@ import Morley.Micheline.Expression qualified as Micheline
 import Morley.Util.Lens
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
-import AST (Lang (..), Type, TypeName, lppDialect)
-import Cli.Json
-  (LigoLayout (LTree), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
-  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
-  LigoTypeFull (LTFResolved), LigoTypeTable (LigoTypeTable), fromLigoTypeFull)
-import Cli.Json qualified as Cli
 import Duplo (layer)
 
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Util.AST (Lang (..), lppDialect)
+import Language.LIGO.Debugger.Util.AST qualified as AST
+import Language.LIGO.Debugger.Util.Cli.Json
+  (LigoLayout (LTree), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
+  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
+  LigoTypeFull (LTFResolved), LigoTypeTable (LigoTypeTable), fromLigoTypeFull)
+import Language.LIGO.Debugger.Util.Cli.Json qualified as Cli
 
 -- | Sometimes numbers are carries as strings in order to fit into
 -- common limits for sure.

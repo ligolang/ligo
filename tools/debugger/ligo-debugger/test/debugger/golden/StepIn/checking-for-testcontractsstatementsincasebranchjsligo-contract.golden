@@ -1,0 +1,91 @@
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo:2:2-2:12
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem ? of string * int
+          siValue: Pair "Variant1" 0
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo:3:9-3:10
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s2 of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem p of string
+          siValue: "Variant1"
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo:5:6-5:17
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem ? of (True of (unit) | False of (unit))
+          siValue: True
+        , StackItem:
+          siLigoDesc: elem ? of (True of (unit) | False of (unit))
+          siValue: False
+        , StackItem:
+          siLigoDesc: elem ? of (True of (unit) | False of (unit))
+          siValue: False
+        , StackItem:
+          siLigoDesc: elem s2 of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem p of string
+          siValue: "Variant1"
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo:12:2-12:48
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s2 of int
+          siValue: 42
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo:12:9-12:48
+      sfStack:
+        [StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: Pair { } 42
+        , StackItem:
+          siLigoDesc: <hidden elem>
+          siValue: 0
+        ]
+    ]

@@ -33,8 +33,10 @@ include:
   - unset TERM
   - export LIGO_BINARY_PATH=$PWD/ligo
   - cd ./tools/debugger
-  - nix build $FLAKE_FLAGS .#tests.x86_64-linux.ligo-debugger-test
-  - cd ligo-debugger && ../result/bin/ligo-debugger-test $LIGO_TEST_FLAGS
+  - nix build $FLAKE_FLAGS .#tests.x86_64-linux.ligo-debugger-test .#tests.x86_64-linux.lsp-test
+  - cd ligo-debugger
+  - ../result/bin/ligo-debugger-test $LIGO_TEST_FLAGS
+  - ../result-1/bin/lsp-test
 
 debugger-danger-instant-checks:
   stage: tools-precheck

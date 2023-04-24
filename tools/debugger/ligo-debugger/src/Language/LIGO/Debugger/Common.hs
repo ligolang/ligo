@@ -38,16 +38,6 @@ import Data.Vinyl (Rec (RNil, (:&)))
 import Fmt (Buildable (..), pretty)
 import Text.Interpolation.Nyan
 
-import AST
-  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
-  QualifiedName, SomeLIGO (SomeLIGO), Verbatim, findNodeAtPoint)
-import AST qualified
-import Duplo (layer, leq, spineTo)
-import Extension (getExt)
-import Parser (ParsedInfo)
-import Product (Contains)
-import Range (Range (..), getRange)
-
 import Morley.Debugger.Core.Common (SrcLoc (..))
 import Morley.Debugger.Core.Navigate (SourceLocation, SourceLocation' (..))
 import Morley.Debugger.Core.Snapshots ()
@@ -61,8 +51,17 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (KindedAddress (ImplicitAddress), ta)
 import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 
+import Duplo (layer, leq, spineTo)
+
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Util.AST
+  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
+  QualifiedName, Verbatim)
+import Language.LIGO.Debugger.Util.AST qualified as AST
+import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
+import Language.LIGO.Debugger.Util.Product (Contains)
+import Language.LIGO.Debugger.Util.Range (Range (..), getRange)
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
@@ -84,6 +83,11 @@ spineAtPoint
   :: Contains Range xs
   => Range -> LIGO xs -> [LIGO xs]
 spineAtPoint pos = spineTo (\i -> pos `leq` getRange i)
+
+findNodeAtPoint
+  :: Contains Range xs
+  => Range -> LIGO xs -> Maybe (LIGO xs)
+findNodeAtPoint pos = listToMaybe . spineAtPoint pos
 
 getStatementLocs :: HasCallStack => Set SourceLocation -> HashMap FilePath (LIGO ParsedInfo) -> Set SourceLocation
 getStatementLocs locs parsedContracts =
@@ -383,8 +387,7 @@ getMetaMbAndUnwrap = \case
 isLocationForFunctionCall :: LigoRange -> HashMap FilePath (LIGO ParsedInfo) -> Bool
 isLocationForFunctionCall ligoRange parsedContracts = isJust do
   contract <- parsedContracts !? lrFile ligoRange
-  lang <- rightToMaybe $ getExt (lrFile ligoRange)
-  node <- findNodeAtPoint (ligoRangeToRange ligoRange) (SomeLIGO lang contract)
+  node <- findNodeAtPoint (ligoRangeToRange ligoRange) contract
 
   AST.Apply{} <- layer node
   pass

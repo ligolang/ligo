@@ -78,13 +78,17 @@ library:
     - directory
     - dlist
     - duplo
+    - fastsum
     - filepath
     - fmt
+    - free
     - hashable
     - hedgehog
+    - interpolate
+    - katip
     - lens
     - lens-aeson
-    - ligo-squirrel
+    - lsp-types
     - monad-stm
     - morley
     - morley-debugger
@@ -92,6 +96,8 @@ library:
     - nyan-interpolation
     - nyan-interpolation-core
     - process
+    - process-extras
+    - regex-tdfa
     - scientific
     - semver
     - singletons
@@ -101,17 +107,35 @@ library:
     - stm-containers
     - syb
     - template-haskell
+    - temporary
+    - th-compat
     - th-utilities
     - time
+    - timestats
     - text
+    - transformers
+    - tree-sitter
     - unliftio
+    - unliftio-core
+    - unliftio-pool
     - unordered-containers
     - vector
     - vinyl
     - with-utf8
+    - witherable
 
   source-dirs:
     - src/
+
+  include-dirs:
+    - grammar/camligo/src
+    - grammar/jsligo/src
+
+  c-sources:
+    - grammar/camligo/src/parser.c
+    - grammar/camligo/src/scanner.c
+    - grammar/jsligo/src/parser.c
+    - grammar/jsligo/src/scanner.c
 
   generated-other-modules:
     - Paths_ligo_debugger
@@ -154,7 +178,6 @@ tests:
       - hedgehog
       - lens
       - ligo-debugger
-      - ligo-squirrel
       - lorentz
       - nyan-interpolation
       - nyan-interpolation-core
@@ -172,7 +195,7 @@ tests:
       - tasty-hunit-compat
 
     source-dirs:
-      - test
+      - test/debugger
 
     ghc-options:
       - -threaded
@@ -181,3 +204,39 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     build-tools: tasty-discover:tasty-discover
+
+  lsp-test:
+    main: Main.hs
+
+    source-dirs:
+      - test/lsp-test/
+      - test/test-common/
+
+    ghc-options:
+      - -Wno-incomplete-uni-patterns
+      - -threaded
+      - -eventlog
+      - -rtsopts
+      - '"-with-rtsopts=-N -A64m -AL256m"'
+
+    dependencies:
+      - algebraic-graphs
+      - HUnit
+      - directory
+      - duplo
+      - filepath
+      - hspec-expectations
+      - lens
+      - ligo-debugger
+      - lsp-types
+      - QuickCheck
+      - tasty
+      - tasty-hunit
+      - tasty-quickcheck
+      - template-haskell
+      - text
+      - unliftio
+      - unordered-containers
+
+    build-tools:
+      - tasty-discover:tasty-discover

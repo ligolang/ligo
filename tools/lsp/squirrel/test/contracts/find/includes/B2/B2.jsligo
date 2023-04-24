@@ -1,3 +1,0 @@
-#include "../B3.jsligo"
-
-const b2 = b3 * 3
