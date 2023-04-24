@@ -14,6 +14,7 @@ let%expect_test _ =
     {test|
 File "../../test/lexer/LexerLib/unterminated_comment.mligo", line 1, characters 0-2:
   1 | (* not closed
+      ^^
 The comment starting here is not closed.
 Hint: Close it with "*)".
 |test}];
@@ -23,6 +24,7 @@ Hint: Close it with "*)".
     {test|
 File "../../test/lexer/LexerLib/unterminated_comment.jsligo", line 1, characters 0-2:
   1 | /* not closed
+      ^^
 The comment starting here is not closed.
 Hint: Close it with "*/".
 |test}];
@@ -33,6 +35,7 @@ Hint: Close it with "*/".
     {test|
 File "../../test/lexer/LexerLib/unterminated_string.mligo", line 1, characters 0-1:
   1 | "open
+      ^
 A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
 |test}];
@@ -42,6 +45,7 @@ Hint: Remove it or close the string before.
     {test|
 File "../../test/lexer/LexerLib/unterminated_string.jsligo", line 1, characters 0-1:
   1 | "open
+      ^
 A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
 |test}];
@@ -51,6 +55,7 @@ Hint: Remove it or close the string before.
     {test|
 File "../../test/lexer/LexerLib/broken_string.mligo", line 1, characters 8-9:
   1 | let a = "broken
+              ^
   2 | over
 A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
@@ -60,6 +65,7 @@ Hint: Remove it or close the string before.
     {test|
 File "../../test/lexer/LexerLib/broken_string.jsligo", line 1, characters 19-20:
   1 | const a : string = "broken
+                         ^
   2 | over
 A string cannot be interrupted by a line break.
 Hint: Remove it or close the string before.
@@ -74,6 +80,7 @@ Hint: Remove it or close the string before.
     {test|
 File "../../test/lexer/LexerLib/invalid_character_in_string.mligo", line 1, characters 9-10:
   1 | let z = "\t";
+               ^^
 Invalid character "\\t" in string.
 Hint: Use non-control characters 7-bit ASCII.
 |test}];
@@ -86,6 +93,7 @@ Hint: Use non-control characters 7-bit ASCII.
     {test|
 File "../../test/lexer/LexerLib/invalid_character_in_string.jsligo", line 1, characters 11-12:
   1 | const z = "\t";
+                 ^^
 Invalid character "\\t" in string.
 Hint: Use non-control characters 7-bit ASCII.
 |test}];
@@ -96,6 +104,7 @@ Hint: Use non-control characters 7-bit ASCII.
     {test|
 File "../../test/lexer/LexerLib/undefined_escape_sequence.mligo", line 1, characters 1-3:
   1 | "\\z"
+       ^^^
 Undefined escape sequence.
 Hint: Remove or replace the sequence.
 |test}];
@@ -108,6 +117,7 @@ Hint: Remove or replace the sequence.
     {test|
 File "../../test/lexer/LexerLib/undefined_escape_sequence.jsligo", line 1, characters 1-3:
   1 | "\\z"
+       ^^^
 Undefined escape sequence.
 Hint: Remove or replace the sequence.
 |test}];
@@ -121,6 +131,7 @@ Hint: Remove or replace the sequence.
     {test|
 File "../../test/lexer/LexerLib/undefined_linemarker_argument.mligo", line 1, characters 42-43:
   1 | # 1 "undefined_linemarker_argument.mligo" WRONG
+                                                ^
 Invalid flag.
 Hint: 1 or 2 are allowed.
 |test}];
@@ -137,6 +148,7 @@ Hint: 1 or 2 are allowed.
     {test|
 File "../../test/lexer/Lexing/unexpected_character.mligo", line 1, characters 17-18:
   1 | let x : string = \239\191\189\239\191\189\239\191\189;
+                       ^^^^
 Unexpected character '\239'.
 |test}];
   (* Non-canonical zero *)
@@ -146,6 +158,7 @@ Unexpected character '\239'.
     {test|
 File "../../test/lexer/Lexing/non_canonical_zero.mligo", line 1, characters 14-17:
   1 | let n : nat = 000
+                    ^^^
 Non-canonical zero.
 Hint: Use 0.
 |test}];
@@ -155,6 +168,7 @@ Hint: Use 0.
     {test|
 File "../../test/lexer/Lexing/invalid_symbol.mligo", line 1, characters 10-13:
   1 | let b = 1 ... 10;
+                ^^^
   2 |
 Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
@@ -164,6 +178,7 @@ Hint: Check the LIGO syntax you use.
     {test|
 File "../../test/lexer/Lexing/invalid_symbol.jsligo", line 1, characters 16-17:
   1 | const b = 1 # 10;
+                      ^
 File name expected in a string literal.
 |test}];
   (* Wrong nat syntax *)
@@ -173,6 +188,7 @@ File name expected in a string literal.
     {test|
 File "../../test/lexer/Lexing/wrong_nat_syntax.jsligo", line 1, characters 14-16:
   1 | let x : nat = 0n;
+                    ^^
 Wrong nat syntax.
 Example: "12334 as nat".
 |test}];
@@ -183,6 +199,7 @@ Example: "12334 as nat".
     {test|
 File "../../test/lexer/Lexing/wrong_mutez_syntax.jsligo", line 1, characters 14-20:
   1 | let x : tez = 5mutez;
+                    ^^^^^^
 Wrong mutez syntax.
 Example: "1234 as mutez".
 |test}];
@@ -194,6 +211,7 @@ Example: "1234 as mutez".
 File "../../test/lexer/Lexing/wrong_lang_syntax.jsligo", line 2, characters 2-13:
   1 | let michelson_add = (n : (nat, nat)) : nat =>
   2 |   [%Michelson ({| { UNPAIR ; ADD } |} : ((nat, nat) => nat)) ](n);
+        ^^^^^^^^^^^
 Wrong code injection syntax.
 Example: "(Michelson `{UNPAIR; ADD}` as ((n: [nat, nat]) => nat))".
 |test}];
@@ -204,6 +222,7 @@ Example: "(Michelson `{UNPAIR; ADD}` as ((n: [nat, nat]) => nat))".
     {test|
 File "../../test/lexer/Lexing/unterminated_verbatim.mligo", line 1, characters 17-19:
   1 | let s : string = {|
+                       ^^
 Unterminated verbatim.
 Hint: Close with "|}".
 |test}];
@@ -213,6 +232,7 @@ Hint: Close with "|}".
     {test|
 File "../../test/lexer/Lexing/overflow_mutez.mligo", line 1, characters 14-38:
   1 | let m : tez = 9223372036854775808mutez (* 2^63 *)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
 Mutez amount too large.
 Note: From 0 to 2^63-1=9_223_372_036_854_775_807.
 |test}];
@@ -222,6 +242,7 @@ Note: From 0 to 2^63-1=9_223_372_036_854_775_807.
     {test|
 File "../../test/lexer/Lexing/underflow_mutez.mligo", line 1, characters 14-32:
   1 | let x : tez = 0.000_000_000_1tez
+                    ^^^^^^^^^^^^^^^^^^
 Mutez amount not an integer.
 |test}];
   (* 3. Errors from Style.ml: They can be specific to a given
@@ -234,6 +255,7 @@ Mutez amount not an integer.
     {test|
 File "../../test/lexer/Style/odd_lengthed_bytes.mligo", line 1, character 20:
   1 | let x : bytes = 0xABC
+                          ^
 The length of the byte sequence is an odd number.
 Hint: Add or remove a digit.
 |test}];
@@ -243,6 +265,7 @@ Hint: Add or remove a digit.
     {test|
 File "../../test/lexer/Style/missing_break.mligo", line 1, character 17:
   1 | let a : int = 300zennies
+                       ^
 Missing break.
 Hint: Insert some space.
 |test}]

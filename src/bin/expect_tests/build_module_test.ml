@@ -149,6 +149,7 @@ let%expect_test _ =
     File "../../test/contracts/build/type_B.mligo", line 5, characters 5-6:
       4 | \tlet s = s + 1 in
       5 | \tlet p = p ^ "titi" in
+                ^
       6 | \t([] : operation list), s
     :
     Warning: unused variable "p".
@@ -201,5 +202,6 @@ let%expect_test _ =
     File "../../test/contracts/build/module_scoping_bug.mligo", line 24, characters 8-13:
      23 |
      24 | let x = B.A.a
+                  ^^^^^
 
      Module "B.A" not found. |}]

@@ -65,6 +65,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/parametric_types1.mligo", line 1, characters 20-28:
       1 | type fail_big_map = bool map
+                              ^^^^^^^^
 
     Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
@@ -75,6 +76,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/parametric_types2.mligo", line 2, characters 11-27:
       1 | type 'a foo = 'a * 'a
       2 | type bar = (int,string) foo
+                     ^^^^^^^^^^^^^^^^
 
     Type foo is applied to a wrong number of arguments, expected: 1 got: 2 |}]
 
@@ -85,6 +87,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/parametric_types3.mligo", line 2, characters 11-18:
       1 | type ('a,'b,'c) foo = 'a * 'b * 'c
       2 | type bar = int foo
+                     ^^^^^^^
 
     Type foo is applied to a wrong number of arguments, expected: 3 got: 1 |}]
 
@@ -94,6 +97,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-20:
       1 | type x = option list
+                   ^^^^^^^^^^^
 
     Invalid type
     Ill formed type "option".Hint: you might be missing some type arguments. |}]
@@ -104,6 +108,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/parametric_types5.mligo", line 1, characters 0-26:
       1 | type ('a,'a) foo = 'a * 'a
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Repeated type variable in type.
     Hint: Change the name. |}]

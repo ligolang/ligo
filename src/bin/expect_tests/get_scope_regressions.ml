@@ -134,12 +134,14 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-32:
      12 |
      13 | let alice_admin : bool = alice.i
+                                   ^^^^^^^
 
     Invalid record field "i" in record.
     Warnings:
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 0-32:
      12 |
      13 | let alice_admin : bool = alice.i
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Toplevel let declaration are silently change to const declaration. |}]
 
@@ -188,6 +190,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
       1 | let x = 42
       2 | let f x = 0
+                ^
       3 | let g = x
     :
     Warning: unused variable "x".
@@ -451,6 +454,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12:
       1 | let m = match (Some 4) with
       2 |   | Some s_x -> 1
+                   ^^^
       3 |   | None -> 0
     :
     Warning: unused variable "s_x".
