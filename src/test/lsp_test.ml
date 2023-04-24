@@ -11,4 +11,5 @@ let _main =
     ; Folding_range.tests
     ; Formatting.tests
     ; Range_formatting.tests
+    ; References.tests
     ]
