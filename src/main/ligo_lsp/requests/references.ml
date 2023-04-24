@@ -3,7 +3,7 @@ open Lsp.Types
 module Loc = Simple_utils.Location
 
 (* TODO: use Set, List & Hashtbl from Core *)
-module LSet = Caml.Set.Make (Loc)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 module Hashtbl = Caml.Hashtbl
 module List = Caml.List
 open Handler

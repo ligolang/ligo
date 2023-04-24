@@ -1,7 +1,7 @@
 module Requests = Requests
 
 (* TODO: use String, Option, Set, List & Hashtbl from Core *)
-module LSet = Caml.Set.Make (Simple_utils.Location)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 module List = Caml.List
 module Option = Caml.Option
 

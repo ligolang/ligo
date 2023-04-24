@@ -1,7 +1,7 @@
 open Simple_utils
 open Ligo_prim
 open Types
-module LMap = Simple_utils.Map.Make (Location)
+module LMap = Simple_utils.Map.Make (Location_ordered)
 module Pattern = Ast_typed.Pattern
 
 type t = type_case LMap.t
