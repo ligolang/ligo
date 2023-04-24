@@ -338,6 +338,7 @@ let%expect_test _ =
     - tester exited with value <fun>.
     - test exited with value [(() , Mutation at: File "adder.mligo", line 1, characters 58-63:
       1 | let main (p : int) (k : int) : operation list * int = [], p + k
+                                                                    ^^^^^
 
     Replacing by: p - k.
     )]. |}]
@@ -349,6 +350,7 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test exited with value [(() , Mutation at: File "contract_under_test/module_adder.mligo", line 1, characters 66-71:
       1 | [@entry] let add (p : int) (k : int) : operation list * int = [], p + k
+                                                                            ^^^^^
 
     Replacing by: p - k.
     )]. |}]
@@ -359,6 +361,7 @@ let%expect_test _ =
     {|
     [(() , Mutation at: File "contract_under_test/module_adder.mligo", line 1, characters 66-71:
       1 | [@entry] let add (p : int) (k : int) : operation list * int = [], p + k
+                                                                            ^^^^^
 
     Replacing by: p - k.
     )]
@@ -1018,6 +1021,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_capture_meta_type.mligo", line 12, characters 26-27:
      11 |
      12 | let f = fun (_ : unit) -> v.x
+                                    ^
      13 |
 
     Invalid usage of a Test type: typed_address (unit ,
@@ -1030,6 +1034,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_random.mligo", line 6, characters 46-58:
       5 |   (* We generate the property *)
       6 |   let test = PBT.make_test (PBT.gen_small : ((int contract) list) pbt_gen) (fun (xs : (int contract) list) -> List.length xs = 42n) in
+                                                        ^^^^^^^^^^^^
       7 |   (* And run it *)
 
     Generator for type contract (int) is not implemented. For now, only unit, string, bytes, address, int, nat, tez, records, sums, lists, sets, maps and big_maps can be generated. |}]
@@ -1041,6 +1046,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_failure1.mligo", line 2, characters 2-25:
       1 | let test : unit =
       2 |   failwith "I am failing"
+            ^^^^^^^^^^^^^^^^^^^^^^^
 
     An uncaught error occured:
     Failwith: "I am failing"
@@ -1054,6 +1060,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_failure2.mligo", line 2, characters 4-16:
       1 | let test =
       2 |     assert false
+              ^^^^^^^^^^^^
 
     An uncaught error occured:
     Failwith: "failed assertion"
@@ -1067,6 +1074,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative//interpreter_tests/bad_balances_reset.mligo", line 1, characters 11-48:
       1 | let test = Test.reset_state 2n [4000tez;4000tez]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
      baker account initial balance must at least reach 6000 tez |}]
 
@@ -1077,6 +1085,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 3, characters 17-18:
       2 |   let f = (fun (_ : unit) (_ : unit) -> ()) in
       3 |   Test.originate f () 0tez
+                           ^
 
     Invalid type(s)
     Cannot unify "unit" with "( list (operation) * unit )". |}]
@@ -1088,6 +1097,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace.mligo", line 3, characters 4-31:
       2 |   if x < 0 then
       3 |     (failwith "negative" : int)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
       4 |   else
 
     An uncaught error occured:
@@ -1109,6 +1119,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_trace2.mligo", line 6, characters 10-88:
       5 | let make_call (contr : unit contract) =
       6 |   let _ = Test.get_storage_of_address ("KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL" : address) in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       7 |   Test.transfer_to_contract_exn contr () 10tez
 
     An uncaught error occured:
@@ -1124,6 +1135,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 18, characters 36-83:
      17 |     | Some (_, mutation) -> let () = Test.log(mutation) in
      18 |                                     failwith "Some mutation also passes the tests!"
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     An uncaught error occured:
     Failwith: "Some mutation also passes the tests!"
@@ -1132,6 +1144,7 @@ let%expect_test _ =
     Mutation at: File "../../test/contracts/negative//interpreter_tests/test_mutation_loop.mligo", line 3, characters 29-30:
       2 |     if rounds > 0 then
       3 |         my_rec_fun (rounds - 1)
+                                       ^
       4 |     else
 
     Replacing by: 2. |}]
@@ -1143,6 +1156,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_source1.mligo", line 10, characters 18-45:
       9 |   let () = Test.set_source addr in
      10 |   let (_, _, _) = Test.originate main () 0tez in
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
      11 |   ()
 
     The source address is not an implicit account
@@ -1155,6 +1169,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_source2.mligo", line 10, characters 10-52:
       9 |   let () = Test.set_source addr in
      10 |   let _ = Test.transfer_exn addr (Test.eval ()) 0tez in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      11 |   ()
 
     The source address is not an implicit account
@@ -1167,6 +1182,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_run_types.jsligo", line 2, characters 26-44:
       1 | const foo = (x: {field: int}): {field: int} => {return x};
       2 | const bar = Test.run(foo, {property: "toto"});
+                                    ^^^^^^^^^^^^^^^^^^
       3 |
 
     Mismatching record labels. Expected record of type "record[field -> int]". |}]
@@ -1178,6 +1194,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_run_types2.jsligo", line 2, characters 26-32:
       1 | const foo = (x:  {b:int}):  {b:int} => {return x};
       2 | const bar = Test.run(foo, "toto");
+                                    ^^^^^^
 
     Invalid type(s)
     Cannot unify "string" with "record[b -> int]". |}]
@@ -1189,6 +1206,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_run_types3.jsligo", line 2, characters 26-41:
       1 | const foo = (x: int): int => {return x};
       2 | const bar = Test.run(foo, {field: "toto"});
+                                    ^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "record[field -> string]" with "int". |}]
@@ -1200,6 +1218,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_decompile.mligo", line 3, characters 2-29:
       2 |   let x = Test.eval 4n in
       3 |   (Test.decompile x : string)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     This Michelson value has assigned type 'nat', which does not coincide with expected type 'string'. |}]
 
@@ -1210,6 +1229,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_register_delegate.mligo", line 19, characters 19-46:
      18 |   let () = Test.set_baker a in
      19 |   let (ta, _, _) = Test.originate main 41 5tez in
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
      20 |
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
@@ -1228,10 +1248,15 @@ let%expect_test _ =
   File "typed_addr_in_bytes_pack.mligo", line 14, character 17 to line 18, character 5:
    13 |     let r = originate_record () in
    14 |     let packed = Bytes.pack (fun() ->
+                         ^^^^^^^^^^^^^^^^^^^^^
    15 |         match (Tezos.get_entrypoint_opt "%transfer" r.addr : unit contract option) with
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    16 |           Some(c) -> let op = Tezos.transaction () 0mutez c in [op]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    17 |         | None ->  ([] : operation list)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    18 |     ) in
+        ^^^^^
    19 |     let () = Test.log(packed) in
 
   Cannot decompile value KT1KAUcMCQs7Q4mxLzoUZVH9yCCLETERrDtj of type typed_address (unit ,
@@ -1246,6 +1271,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/test_michelson_non_func.mligo", line 2, characters 16-55:
       1 | let test =
       2 |   let x : int = [%Michelson ({|{ PUSH int 1 }|} : int)] in
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       3 |   begin
 
     Embedded raw code can only have a functional type |test}]
@@ -1257,6 +1283,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//interpreter_tests/get_contract.mligo", line 15, characters 10-66:
      14 |   let _ = (Tezos.get_contract a : (parameter contract)) in
      15 |   let _ = (Tezos.get_contract_with_error a "foo" : (int contract)) in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      16 |   ()
 
     An uncaught error occured:

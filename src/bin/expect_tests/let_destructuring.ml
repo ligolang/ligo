@@ -35,6 +35,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/let_destructuring.mligo", line 4, characters 6-23:
       3 | let t1 =
       4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
+                ^^^^^^^^^^^^^^^^^
       5 |   (a,b)
 
     Pattern not of the expected type "foo". |}];

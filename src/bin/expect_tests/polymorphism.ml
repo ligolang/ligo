@@ -259,6 +259,7 @@ let%expect_test _ =
     {|
     File "./annotate2.mligo", line 1, characters 11-13:
       1 | let f (x : _a) = x
+                     ^^
 
     Type "_a" not found. |}]
 
@@ -275,6 +276,7 @@ let%expect_test _ =
     {|
     File "./annotate_arrow.mligo", line 1, characters 0-36:
       1 | let f (_:unit) (_:nat option) = None
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Cannot monomorphise the expression.
     The inferred type was "unit -> ∀ a . option (nat) -> option (a)".
@@ -287,6 +289,7 @@ let%expect_test _ =
     File "./constants.mligo", line 5, characters 14-45:
       4 |
       5 | let m = merge (Map.empty : (int, string) foo)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "string" with "int". |}]
@@ -350,6 +353,7 @@ let%expect_test _ =
     File "./unresolved/contract.mligo", line 6, characters 29-31:
       5 |     let b                = List.length ys in
       6 |     [], (a + b + List.length [])
+                                       ^^
 
     Underspecified type "^a".
     Please add additional annotations.
@@ -362,6 +366,7 @@ let%expect_test _ =
     File "./unresolved/contract2.mligo", line 4, characters 13-15:
       3 | let main (_ : int list) (_ : nat) : (operation list * nat) =
       4 |     [], (one [])
+                       ^^
 
     Underspecified type "^a".
     Please add additional annotations.
@@ -373,6 +378,7 @@ let%expect_test _ =
     {xxx|
     File "./unresolved/storage.mligo", line 1, characters 20-22:
       1 | let s = List.length []
+                              ^^
       2 |
 
     Underspecified type "^a".
@@ -385,6 +391,7 @@ let%expect_test _ =
     {xxx|
     File "./unresolved/parameter.mligo", line 1, characters 8-10:
       1 | let p = []
+                  ^^
       2 |
 
     Underspecified type "list (^a)".
@@ -405,6 +412,7 @@ let%expect_test _ =
     {|
     File "./monomorphisation_fail.mligo", line 1, characters 0-28:
       1 | let f (_ : unit) s = ([], s)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 |
 
     Cannot monomorphise the expression.
@@ -418,12 +426,19 @@ let%expect_test _ =
     File "./monomorphisation_fail2.mligo", line 2, character 2 to line 8, character 6:
       1 | let nested (type a) =
       2 |   let x (type b) =
+            ^^^^^^^^^^^^^^^^
       3 |     let y (type c) =
+          ^^^^^^^^^^^^^^^^^^^^
       4 |       let z =
+          ^^^^^^^^^^^^^
       5 |         (failwith("nested") : a -> b -> c)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       6 |       in z
+          ^^^^^^^^^^
       7 |     in y
+          ^^^^^^^^
       8 |   in x
+          ^^^^^^
       9 |
 
     Cannot monomorphise the expression. |}]

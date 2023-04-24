@@ -64,6 +64,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15:
      12 | let b =
      13 |   let j = c.boo in
+                    ^^^^^
      14 |   j
 
     Invalid record field "boo" in record.
@@ -131,6 +132,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/local_type.mligo", line 5, characters 2-6:
       4 |   let foo (b : toto) : toto = b in
       5 |   titi
+            ^^^^
       6 |
 
     Variable "titi" not found.
@@ -154,6 +156,7 @@ let%expect_test _ =
     Errors:
     File "../../test/contracts/get_scope_tests/errors/syntax_error.mligo", line 1, characters 0-4:
       1 | letx : int = 0
+          ^^^^
     Ill-formed contract.
     At this point, if the declaration is complete, one of the following is
     expected:
@@ -185,6 +188,7 @@ let%expect_test _ =
     Errors:
     File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 14-21:
       1 | let x : int = "Hello"
+                        ^^^^^^^
 
     Invalid type(s).
     Expected "int", but got: "string". |}];
@@ -282,6 +286,7 @@ let%expect_test _ =
     File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
      10 |   let x = s.x + 3 in
      11 |   let x = foo x in
+                ^
      12 |   let x = bar s.x in
     :
     Warning: unused variable "x".
@@ -320,6 +325,7 @@ let%expect_test _ =
     Warnings:
     File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
       1 | let x = Tezos.create_ticket 42n 42n
+              ^
       2 | let x = (x, x)
     :
     Warning: variable "x" cannot be used more than once. |}];
@@ -370,6 +376,7 @@ let%expect_test _ =
     File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65:
       1 | module Foo = struct
       2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       3 | end
     :
     Warning: variable "Foo.x" cannot be used more than once. |}]

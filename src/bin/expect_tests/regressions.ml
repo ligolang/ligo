@@ -10,6 +10,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/regression_typecheking_recursive_function.mligo", line 2, characters 39-41:
       1 |
       2 | let rec toto : unit -> int = fun () -> ()
+                                                 ^^
 
     Invalid type(s)
     Cannot unify "unit" with "int". |}]
@@ -21,6 +22,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/regression_import_scope_B.mligo", line 2, characters 8-11:
       1 |
       2 | let b = A.a
+                  ^^^
       3 |
 
      Module "A" not found. |}]
