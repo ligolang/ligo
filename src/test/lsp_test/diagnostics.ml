@@ -73,7 +73,7 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
           ; message =
-              "Toplevel let declaration are silently change to const declaration.@"
+              "Toplevel let declaration is silently changed to const declaration."
           ; range = Some (Utils.interval 0 0 10)
           }
         ; { severity = DiagnosticSeverity.Warning

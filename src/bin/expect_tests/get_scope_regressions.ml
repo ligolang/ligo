@@ -143,7 +143,7 @@ let%expect_test _ =
      13 | let alice_admin : bool = alice.i
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Toplevel let declaration are silently change to const declaration. |}]
+    Toplevel let declaration is silently changed to const declaration. |}]
 
 let%expect_test _ =
   run_ligo_good

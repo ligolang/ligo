@@ -961,7 +961,7 @@ let%expect_test _ =
      15 | };
           ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
@@ -1172,14 +1172,14 @@ let%expect_test _ =
                 ^^^^^^^^^^^
         3 | }
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 0-15:
         4 |
         5 | let a = Bar.foo;
             ^^^^^^^^^^^^^^^
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       Internal error: Entrypoint main does not exist |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_namespace.jsligo" ];
@@ -1191,7 +1191,7 @@ let%expect_test _ =
                     ^^^^^^^^^
         4 |     }
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       Internal error: Entrypoint main does not exist |}]
 
@@ -2623,7 +2623,7 @@ File "../../test/contracts/extend_builtin.jsligo", line 2, characters 9-19:
                ^^^^^^^^^^
   3 |   export let f = (x  : int) : int => x + 2;
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 File "../../test/contracts/extend_builtin.jsligo", line 3, characters 9-42:
   2 |   export let x = 42;
@@ -2631,14 +2631,14 @@ File "../../test/contracts/extend_builtin.jsligo", line 3, characters 9-42:
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   4 | }
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 File "../../test/contracts/extend_builtin.jsligo", line 6, characters 0-24:
   5 |
   6 | let y = Tezos.f(Tezos.x);
       ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 44 |}]
 
