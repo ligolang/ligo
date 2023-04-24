@@ -85,7 +85,6 @@ library:
     - hashable
     - hedgehog
     - interpolate
-    - katip
     - lens
     - lens-aeson
     - lsp-types
@@ -226,6 +225,7 @@ tests:
       - duplo
       - filepath
       - hspec-expectations
+      - interpolate
       - lens
       - ligo-debugger
       - lsp-types

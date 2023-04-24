@@ -26,12 +26,13 @@ import Data.Aeson
 import Data.Aeson.Types (parseEither)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
+import Data.String.Interpolate (i)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Debug qualified
-import Duplo.Pretty (Doc, pp, vcat)
+import Debug.TimeStats qualified as TimeStats
+import Duplo.Pretty (pp)
 import GHC.IO.Exception qualified as IOException
-import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import System.Exit (ExitCode (..))
 import System.FilePath (isPathSeparator, takeDirectory, takeFileName, (</>))
 import System.IO (hFlush, hGetChar)
@@ -41,18 +42,14 @@ import UnliftIO.Exception qualified as UnliftIO (handle, throwIO, try)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Pool qualified as Pool
 import UnliftIO.Process
-  (CreateProcess (..), getProcessExitCode, proc,
-  readCreateProcessWithExitCode)
+  (CreateProcess (..), getProcessExitCode, proc, readCreateProcessWithExitCode)
 import UnliftIO.Temporary (withTempDirectory, withTempFile)
 
 import Language.LIGO.Debugger.Util.AST.Includes (extractIncludes)
 import Language.LIGO.Debugger.Util.Cli.Json
 import Language.LIGO.Debugger.Util.Cli.Types
-import Debug.TimeStats qualified as TimeStats
-import Language.LIGO.Debugger.Util.Log (Log, i)
-import Language.LIGO.Debugger.Util.Log qualified as Log
-import Language.LIGO.Debugger.Util.Parser (LineMarker (lmFile))
 import Language.LIGO.Debugger.Util.ParseTree (Source (..))
+import Language.LIGO.Debugger.Util.Parser (LineMarker (lmFile))
 import Language.LIGO.Debugger.Util.Util (lazyBytesToText)
 
 ----------------------------------------------------------------------------
@@ -311,11 +308,6 @@ newtype Version = Version
 instance ToJSON Version where
   toJSON (Version ver) = object ["version" .= ver]
 
-deriving anyclass instance ToObject Version
-
-instance LogItem Version where
-  payloadKeys = const $ const AllKeys
-
 parseValue :: FromJSON a => Value -> Either String a
 parseValue = parseEither parseJSON
 
@@ -328,7 +320,7 @@ parseValue = parseEither parseJSON
 -- the caller of this function to ensure that the dirty field of the 'Source' is
 -- accurate.
 withLigo
-  :: (HasLigoClient m, Log m)
+  :: (HasLigoClient m)
   => Source  -- ^ The source file that will be given to LIGO.
   -> TempSettings  -- ^ The temporary directory that should be used in case the file is dirty.
   -> (FilePath -> [LigoCliArg])  -- ^ A function that should return the command line arguments for the provided file which will be used to call LIGO.
@@ -338,7 +330,6 @@ withLigo src@(Source fp True contents) (TempSettings rootDir tempDirTemplate) ge
   TimeStats.measureM "withLigo" $ withTempDirTemplate \tempDir ->
     withTempFile tempDir (takeFileName fp) \tempFp hnd -> do
       -- Create temporary file and call LIGO with it.
-      $(Log.debug) [Log.i|Using temporary directory for dirty file.|]
       liftIO (Text.hPutStr hnd contents *> hClose hnd)
       UnliftIO.try (callLigoBS (Just rootDir) (getArgs tempFp) (Just src)) >>= \case
         -- LIGO produced output in stderr, or exited with non-zero exit code.
@@ -395,15 +386,9 @@ getLigoVersionRaw =
 -- ```
 -- ligo --version
 -- ```
-getLigoVersionSafe :: (HasLigoClient m, Log m) => m (Maybe Version)
-getLigoVersionSafe = Log.addNamespace "getLigoVersion" do
-  mbVersion <- UnliftIO.try getLigoVersionRaw
-  case mbVersion of
-    Left (SomeException e) -> do
-      $Log.err [i|Couldn't get LIGO version with: #{e}|]
-      pure Nothing
-    Right version ->
-      pure $ Just version
+getLigoVersionSafe :: (HasLigoClient m) => m (Maybe Version)
+getLigoVersionSafe = do
+  rightToMaybe <$> UnliftIO.try @_ @SomeException getLigoVersionRaw
 
 findProjectRoot :: FilePath -> IO (Maybe FilePath)
 findProjectRoot currentDirectory = do
@@ -430,12 +415,11 @@ projectRootToCliArg = maybe [] (\projectRoot -> ["--project-root", strArg projec
 -- ligo print preprocessed ${temp_file_name} --lib ${contract_dir} --format json
 -- ```
 preprocess
-  :: (HasLigoClient m, Log m)
+  :: (HasLigoClient m)
   => TempSettings
   -> Source
   -> m Source
-preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext source do
-  $Log.debug [i|preprocessing the following source:\n#{fp}|]
+preprocess tempSettings source = do
   maybeProjectRoot <- liftIO $ findProjectRoot dir
   withLigo source tempSettings
     (\tempFp ->
@@ -447,7 +431,6 @@ preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext 
     (\(Source tempFp isDirty _) json ->
       case parseValue json of
         Left err -> do
-          $Log.err [i|Unable to preprocess source with: #{err}|]
           UnliftIO.throwIO $ LigoPreprocessFailedException (toText err) fp
         Right newContract ->
           bool pure (fixMarkers tempFp) isDirty $ Source fp isDirty newContract)
@@ -455,68 +438,28 @@ preprocess tempSettings source = Log.addNamespace "preprocess" $ Log.addContext 
     fp = srcPath source
     dir = takeDirectory fp
 
--- | Get ligo definitions from raw source.
--- getLigoDefinitions
---   :: (HasLigoClient m, Log m)
---   => TempSettings
---   -> Source
---   -> m LigoDefinitions
--- getLigoDefinitions tempSettings source = Log.addNamespace "getLigoDefinitions" $ Log.addContext source do
---   $Log.debug [i|parsing the following source:\n#{fp}|]
---   maybeProjectRoot <- liftIO $ findProjectRoot dir
---   withLigo source tempSettings
---     (\tempFp ->
---       [ "info", "get-scope", strArg tempFp
---       , "--format", "json"
---       , "--with-types"
---       , "--lib", strArg dir
---       ] ++ projectRootToCliArg maybeProjectRoot
---     )
---     (\(Source tempFp isDirty output) json -> do
---       json' <- bool
---         pure
---         (traverseJsonText (fmap srcText . fixMarkers tempFp . Source fp isDirty))
---         isDirty
---         json
---       case parseValue json' of
---         Left err -> do
---           $Log.err [i|Unable to parse ligo definitions with: #{err}|]
---           UnliftIO.throwIO $ LigoDefinitionParseErrorException (toText err) output fp
---         Right definitions -> pure definitions)
---   where
---     fp = srcPath source
---     dir = takeDirectory fp
-
-prettyErrors :: [LigoError] -> Doc
-prettyErrors = vcat . intersperse "\n" . map pp
-
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
-handleLigoErrors :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoErrors path encodedErr = Log.addNamespace "handleLigoErrors" do
+handleLigoErrors :: (HasLigoClient m) => FilePath -> Text -> m a
+handleLigoErrors path encodedErr = do
   case eitherDecodeStrict' @(NonEmpty LigoError) $ encodeUtf8 encodedErr of
     Left err -> do
-      $Log.err [i|LIGO errors decoding failure: #{err}|]
       UnliftIO.throwIO $ LigoErrorNodeParseErrorException (toText err) encodedErr path
     Right decodedErrors -> do
-      $Log.err
-        [i|LIGO errors decoding successful with:\n#{prettyErrors $ toList decodedErrors}|]
       UnliftIO.throwIO $
         LigoDecodedExpectedClientFailureException decodedErrors [] path
 
 -- | Like 'handleLigoError', but used for the case when multiple LIGO errors may
 -- happen. On a decode failure, attempts to decode as a single LIGO error
 -- instead.
-handleLigoMessages :: (HasLigoClient m, Log m) => FilePath -> Text -> m a
-handleLigoMessages path encodedErr = Log.addNamespace "handleLigoMessages" do
+handleLigoMessages :: (HasLigoClient m) => FilePath -> Text -> m a
+handleLigoMessages path encodedErr = do
   case eitherDecodeStrict' @LigoMessages $ encodeUtf8 encodedErr of
     Left _ ->
       -- It's possible LIGO has output a list of errors instead. Try to decode
       -- it:
       handleLigoErrors path encodedErr
     Right (LigoMessages decodedErrors decodedWarnings) -> do
-      $Log.err
-        [i|LIGO errors decoding successful with:\n#{prettyErrors $ toList decodedErrors <> decodedWarnings}|]
       UnliftIO.throwIO $
         LigoDecodedExpectedClientFailureException decodedErrors decodedWarnings path
 
@@ -527,7 +470,7 @@ handleLigoMessages path encodedErr = Log.addNamespace "handleLigoMessages" do
 -- | A datatype that automatically manages a @LigoProcess@ lifecycle,
 -- for debugging.
 newtype WithLigoDebug a = WithLigoDebug
-  { runWithLigoDebug :: Pool LigoProcess -> Log.NoLoggingT IO a
+  { runWithLigoDebug :: Pool LigoProcess -> IO a
   } deriving stock (Functor)
 
 instance Applicative WithLigoDebug where
@@ -541,7 +484,7 @@ instance Monad WithLigoDebug where
     a ligo >>= \x -> runWithLigoDebug (k x) ligo
 
 instance MonadIO WithLigoDebug where
-  liftIO = WithLigoDebug . const . lift
+  liftIO = WithLigoDebug . const
 
 instance MonadUnliftIO WithLigoDebug where
   withRunInIO inner = WithLigoDebug \ligo ->

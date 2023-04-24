@@ -19,8 +19,6 @@ import UnliftIO.Exception as UnliftIO (catch, throwIO)
 import UnliftIO.Pool (Pool)
 import UnliftIO.Process (ProcessHandle)
 
-import Language.LIGO.Debugger.Util.Log (LogT, NoLoggingT)
-
 data LigoProcess = LigoProcess
   { -- | LIGO process handle
     _lpLigo :: ProcessHandle
@@ -61,12 +59,6 @@ instance HasLigoClient IO where
     pure def
       { _lceClientPath
       }
-
-instance HasLigoClient m => HasLigoClient (LogT m) where
-  getLigoClientEnv = lift getLigoClientEnv
-
-instance HasLigoClient m => HasLigoClient (NoLoggingT m) where
-  getLigoClientEnv = lift getLigoClientEnv
 
 data TempDir
   = GenerateDir String

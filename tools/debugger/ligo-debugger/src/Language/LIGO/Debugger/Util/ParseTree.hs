@@ -29,7 +29,6 @@ import Foreign.Marshal.Alloc (alloca)
 import Foreign.Marshal.Array (allocaArray)
 import Foreign.Ptr (nullPtr)
 import Foreign.Storable (peek, peekElemOff, poke)
-import Katip (LogItem (..), PayloadSelection (AllKeys), ToObject)
 import Text.Show
 import TreeSitter.Language
 import TreeSitter.Node
@@ -39,8 +38,6 @@ import TreeSitter.Tree hiding (Tree)
 import Duplo.Tree
 
 import Language.LIGO.Debugger.Util.Extension
-import Language.LIGO.Debugger.Util.Log (Log)
-import Language.LIGO.Debugger.Util.Log qualified as Log
 import Language.LIGO.Debugger.Util.Range
 
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
@@ -55,24 +52,18 @@ data Source = Source
 instance ToJSON Source where
   toJSON src = object ["srcPath" .= srcPath src]
 
-instance ToObject Source
-
-instance LogItem Source where
-  payloadKeys = const $ const AllKeys
-
 instance Show Source where
   show = Text.Show.show . srcPath
 
 -- | Reads the provided file path and checks whether it contains valid UTF-8
 -- string, logging an error message in case and returning a leniently decoded
 -- string in this situation.
-pathToSrc :: Log m => FilePath -> m Source
+pathToSrc :: MonadIO m => FilePath -> m Source
 pathToSrc p = do
   raw <- liftIO $ BS.readFile p
   -- Is it valid UTF-8?
   fmap (Source p False) $ decodeUtf8' raw & \case
-    Left exception -> do
-      $Log.err [Log.i|LIGO expects UTF-8 encoded data, but #{p} has invalid data. #{displayException exception}.|]
+    Left _ -> do
       -- Leniently decode the data so we can continue working even with invalid
       -- data. Note that this case means we'll decode the file two times; this
       -- is fine, as invalid data should be very uncommon.
@@ -109,20 +100,16 @@ instance Show1 ParseTree where
 data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
-toParseTree :: (MonadIO m, Log m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect (Source fp _ input) = Log.addNamespace "toParseTree" do
-  $Log.debug [Log.i|Reading #{fp}|]
+toParseTree :: (MonadIO m) => Lang -> Source -> m SomeRawTree
+toParseTree dialect (Source fp _ input) = do
   let language = case dialect of
         Caml -> tree_sitter_CameLigo
         Js   -> tree_sitter_JsLigo
 
-  res <- liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
+  liftIO $ SomeRawTree dialect <$> withParser language \parser -> do
     let src = Text.encodeUtf8 input
     withParseTree parser src \tree ->
       withRootNode tree (peek >=> go src)
-
-  $Log.debug [Log.i|Done reading #{fp}|]
-  pure res
   where
     go :: ByteString -> Node -> IO RawTree
     go src node = do

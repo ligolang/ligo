@@ -45,7 +45,6 @@ import Language.LIGO.Debugger.Util.AST
   (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
 import Language.LIGO.Debugger.Util.AST.Common qualified as AST.Common
 import Language.LIGO.Debugger.Util.Cli (HasLigoClient, LigoIOException)
-import Language.LIGO.Debugger.Util.Log (runNoLoggingT)
 import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
 import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
 
@@ -242,7 +241,7 @@ getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaL
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do
-  parsedInfos <- runNoLoggingT do
+  parsedInfos <- do
     forM allFiles
       $   pathToSrc
           -- This shouldn't happen because vscode saves all files before debugging.

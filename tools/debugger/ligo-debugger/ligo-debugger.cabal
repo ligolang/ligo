@@ -43,7 +43,6 @@ library
       Language.LIGO.Debugger.Util.Cli.Types
       Language.LIGO.Debugger.Util.Diagnostic
       Language.LIGO.Debugger.Util.Extension
-      Language.LIGO.Debugger.Util.Log
       Language.LIGO.Debugger.Util.Parser
       Language.LIGO.Debugger.Util.ParseTree
       Language.LIGO.Debugger.Util.Product
@@ -129,7 +128,6 @@ library
     , hashable
     , hedgehog
     , interpolate
-    , katip
     , lens
     , lens-aeson
     , lsp-types
@@ -399,6 +397,7 @@ test-suite lsp-test
     , duplo
     , filepath
     , hspec-expectations
+    , interpolate
     , lens
     , ligo-debugger
     , lsp-types

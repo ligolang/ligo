@@ -4,7 +4,6 @@ module Language.LIGO.Debugger.Util.AST.Parser
   , parse
   , loadPreprocessed
   , parsePreprocessed
-  -- , parseContracts
   , scanContracts
   ) where
 
@@ -13,7 +12,6 @@ import Text.Regex.TDFA ((=~))
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
 import UnliftIO.Exception (Handler (..), catches, fromEither)
 
--- import AST.Includes (includesGraph)
 import Language.LIGO.Debugger.Util.AST.Common (ContractInfo, addLigoErrsToMsg, pattern FindContract)
 import Language.LIGO.Debugger.Util.AST.Parser.Camligo qualified as Caml
 import Language.LIGO.Debugger.Util.AST.Parser.Jsligo qualified as Js
@@ -23,14 +21,12 @@ import Language.LIGO.Debugger.Util.Cli
   SomeLigoException (..), TempSettings (..), fromLigoErrorToMsg, preprocess)
 import Language.LIGO.Debugger.Util.Diagnostic (Message)
 import Language.LIGO.Debugger.Util.Extension
-import Language.LIGO.Debugger.Util.Log (Log, i)
-import Language.LIGO.Debugger.Util.Log qualified as Log
 import Language.LIGO.Debugger.Util.ParseTree (Source (..), toParseTree)
 import Language.LIGO.Debugger.Util.Parser (parseLineMarkerText, runParserM)
 
 type ParserCallback m contract = Source -> m contract
 
-parse :: Log m => ParserCallback m ContractInfo
+parse :: MonadIO m => ParserCallback m ContractInfo
 parse src = do
   (recogniser, dialect) <- fromEither $ onExt ElimExt
     { eeCaml = (Caml.recognise,   Caml)
@@ -40,7 +36,7 @@ parse src = do
   uncurry (FindContract src) <$> runParserM (recogniser tree)
 
 loadPreprocessed
-  :: (HasLigoClient m, Log m)
+  :: (HasLigoClient m)
   => TempSettings
   -> Source
   -> m (Source, [Message])
@@ -51,8 +47,7 @@ loadPreprocessed tempSettings src = do
       ((, []) <$> preprocess tempSettings src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
-        , Handler \(e :: LigoIOException) -> do
-          $Log.err [i|#{displayException e}|]
+        , Handler \(_ :: LigoIOException) -> do
           pure (src', [])
         , Handler \(_ :: SomeLigoException) ->
           pure (src', [])
@@ -71,7 +66,7 @@ loadPreprocessed tempSettings src = do
       in
       (src{srcText = unlines $ map fst prepreprocessed}, shouldPreprocess)
 
-parsePreprocessed :: (HasLigoClient m, Log m) => TempSettings -> Source -> m ContractInfo
+parsePreprocessed :: (HasLigoClient m) => TempSettings -> Source -> m ContractInfo
 parsePreprocessed tempSettings src = do
   (src', msgs) <- loadPreprocessed tempSettings src
   addLigoErrsToMsg msgs <$> parse src'

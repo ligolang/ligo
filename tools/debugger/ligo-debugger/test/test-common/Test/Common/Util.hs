@@ -21,7 +21,6 @@ import Language.LIGO.Debugger.Util.AST.Parser (parsePreprocessed)
 import Language.LIGO.Debugger.Util.AST.Skeleton (SomeLIGO)
 import Language.LIGO.Debugger.Util.Cli.Types (TempDir (..), TempSettings (..))
 import Language.LIGO.Debugger.Util.Extension (supportedExtensions)
-import Language.LIGO.Debugger.Util.Log (NoLoggingT (..))
 import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
 import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
 
@@ -45,7 +44,7 @@ readContract filepath = do
   pure (contractTree ppRanges)
 
 readContractWithMessages :: FilePath -> IO ContractInfo
-readContractWithMessages filepath = runNoLoggingT $ do
+readContractWithMessages filepath = do
   src <- pathToSrc filepath
   let temp = TempSettings (takeDirectory filepath) $ GenerateDir tempTemplate
   parsePreprocessed temp src
