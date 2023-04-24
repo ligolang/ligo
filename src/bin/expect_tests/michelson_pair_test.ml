@@ -50,7 +50,7 @@ let%expect_test _ =
      11 | };
           ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     File "../../test/contracts/michelson_pair_tree.jsligo", line 8, characters 27-32:
       7 |

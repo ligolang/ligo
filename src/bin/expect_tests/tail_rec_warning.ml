@@ -124,7 +124,7 @@ let%expect_test _ =
           ^
      30 |
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
@@ -141,7 +141,7 @@ let%expect_test _ =
      36 | }
           ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;
@@ -218,7 +218,7 @@ let%expect_test _ =
           ^
      30 |
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     File "../../test/contracts/unused_recursion.jsligo", line 31, character 0 to line 36, character 1:
      30 |
@@ -235,7 +235,7 @@ let%expect_test _ =
      36 | }
           ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     { parameter unit ;
       storage (pair (int %bar) (int %foo)) ;

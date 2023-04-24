@@ -224,7 +224,7 @@ let%expect_test _ =
           ^
       8 |
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     File "../../test/contracts/negative/error_typer_1.jsligo", line 9, character 0 to line 12, character 1:
       8 |
@@ -237,7 +237,7 @@ let%expect_test _ =
      12 | }
           ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     File "../../test/contracts/negative/error_typer_1.jsligo", line 10, characters 31-60:
       9 | let main = (param : action, oldStorage : storage) : [list<operation>, storage] => {
