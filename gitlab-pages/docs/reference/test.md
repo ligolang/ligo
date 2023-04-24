@@ -1362,3 +1362,9 @@ let get_last_events_from: typed_address &lt;&apos;p,&apos;s&gt; => string => lis
 Returns the list of all the event payloads emited with a given tag by
 a given address. Any call to this function must be annotated with the
 expected payload type.
+
+### Proxy_ticket
+
+Helper functions for working with tickets in the LIGO Testing framework.
+
+Find the complete API reference [here](./proxy_ticket.md) 
