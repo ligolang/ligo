@@ -4,7 +4,7 @@ open Utils
 module Loc = Simple_utils.Location
 
 (* TODO: use Set from Core *)
-module LSet = Caml.Set.Make (Loc)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
   match vdef.t with

@@ -4,7 +4,7 @@ open Ligo_prim
 open Simple_utils
 open Env
 module LSet = Types.LSet
-module LMap = Map.Make (Location)
+module LMap = Map.Make (Location_ordered)
 module Trace = Simple_utils.Trace
 module AST = Ast_core
 

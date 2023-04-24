@@ -3,7 +3,7 @@ open Linol_lwt.Jsonrpc2
 module Loc = Simple_utils.Location
 module Region = Simple_utils.Region
 module Pos = Simple_utils.Pos
-module LSet = Caml.Set.Make (Loc)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 module Hashtbl = Caml.Hashtbl
 
 let ( @. ) f g x = f (g x)
