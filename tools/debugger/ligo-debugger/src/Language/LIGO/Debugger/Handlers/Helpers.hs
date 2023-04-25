@@ -47,6 +47,7 @@ import Language.LIGO.Debugger.Util.AST.Common qualified as AST.Common
 import Language.LIGO.Debugger.Util.Cli (HasLigoClient, LigoIOException)
 import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
 import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
+import Language.LIGO.Debugger.Util.Range
 
 -- | Type which caches all things that we need for
 -- launching the contract.
@@ -103,7 +104,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
-  , lsLambdaLocs :: Maybe (HashSet LigoRange)
+  , lsLambdaLocs :: Maybe (HashSet Range)
   , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
   , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue
   , lsMoveId :: Word
@@ -236,7 +237,7 @@ getParsedContracts =
 
 getLambdaLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (HashSet LigoRange)
+  => RIO ext (HashSet Range)
 getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))

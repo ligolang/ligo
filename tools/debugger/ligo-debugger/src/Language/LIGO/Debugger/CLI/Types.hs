@@ -12,7 +12,7 @@ import Control.Lens.Prism (_Just)
 import Data.Aeson (FromJSON (..), Value (..), withObject, (.:!), (.:))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap qualified as Aeson
-import Data.Aeson.Lens (key, nth, values)
+import Data.Aeson.Lens (key, values)
 import Data.Aeson.Parser (scientific)
 import Data.Aeson.Types qualified as Aeson
 import Data.Attoparsec.ByteString (parseOnly)
@@ -22,7 +22,6 @@ import Data.Default (Default (..))
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as L
 import Data.List.NonEmpty (singleton)
-import Data.Scientific qualified as Sci
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
@@ -51,77 +50,8 @@ import Language.LIGO.Debugger.Util.Cli.Json
   LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
   LigoTypeFull (LTFResolved), LigoTypeTable (LigoTypeTable), fromLigoTypeFull)
 import Language.LIGO.Debugger.Util.Cli.Json qualified as Cli
-
--- | Sometimes numbers are carries as strings in order to fit into
--- common limits for sure.
-newtype TextualNumber a = TextualNumber a
-  deriving stock Functor
-  deriving newtype NFData
-
-instance Integral a => FromJSON (TextualNumber a) where
-  parseJSON = \case
-    Aeson.String t -> do
-      i <- readMaybe @Integer (toString t)
-        & maybe (fail "expected a number") pure
-      fromIntegralNoOverflow i
-        & either (fail . displayException) (pure . TextualNumber)
-    Aeson.Number n -> do
-      unless (Sci.isInteger n) $
-        fail "Expected an integer number"
-      let i :: Integer = round n
-      fromIntegralNoOverflow i
-        & either (fail . displayException) (pure . TextualNumber)
-    other -> Aeson.unexpected other
-
--- | Position in a file.
-data LigoPosition = LigoPosition
-  { lpLine :: Int
-    -- ^ 1-indexed line number
-  , lpCol  :: Int
-    -- ^ 0-indexed column number
-  } deriving stock (Show, Eq, Ord, Generic, Data)
-    deriving anyclass (NFData, Hashable)
-
-instance Buildable LigoPosition where
-  build (LigoPosition line col) = [int||#{line}:#{col}|]
-
-instance FromJSON LigoPosition where
-  parseJSON v = do
-    startByte <- maybe (fail "Error parsing LIGO position") pure (v ^? nth 1 . key "start" . key "byte")
-    flip (withObject "startByte") startByte $ \obj -> do
-      lpLine <- obj .: "pos_lnum"
-      column1 <- obj .: "pos_cnum"
-      column0 <- obj .: "pos_bol"
-      let lpCol = column1 - column0
-      pure LigoPosition {..}
-
--- | Some LIGO location range.
-data LigoRange = LigoRange
-  { lrFile  :: FilePath
-  , lrStart :: LigoPosition
-  , lrEnd   :: LigoPosition
-  } deriving stock (Show, Eq, Ord, Generic, Data)
-    deriving anyclass (NFData, Hashable)
-
-makeLensesWith postfixLFields ''LigoRange
-
-instance Buildable LigoRange where
-  build (LigoRange file start end) = [int||#{file}:#{start}-#{end}|]
-
-instance FromJSON LigoRange where
-  parseJSON = withObject "LIGO location range" \o -> do
-    (file, startPos) <- parseLoc =<< o .: "start"
-    (file', endPos) <- parseLoc =<< o .: "stop"
-    when (file /= file') $
-      fail "Can't handle a range spanning through multiple files"
-    return $ LigoRange file startPos endPos
-    where
-      parseLoc = withObject "location" \o -> do
-        file <- o .: "file"
-        TextualNumber line <- o .: "line"
-        TextualNumber col  <- o .: "col"
-        when (line < 1) $ fail "Line number is zero"
-        return (file, LigoPosition line col)
+import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Debugger.Util.Util
 
 -- | Type marker, which stores information about
 -- hashes presence in variable names.
@@ -413,7 +343,7 @@ stripSuffixHashLigoStackEntry = \case
 
 -- | All the information provided for specific point of a Michelson program.
 data LigoIndexedInfo u = LigoIndexedInfo
-  { liiLocation    :: Maybe LigoRange
+  { liiLocation    :: Maybe Range
     {- ^ Info about some expression (or sub-expression).
 
       For instance, if I have
@@ -474,7 +404,7 @@ instance FromJSON (LigoIndexedInfo u) where
 pattern LigoEmptyLocationInfo :: LigoIndexedInfo u
 pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing
 
-pattern LigoMereLocInfo :: LigoRange -> LigoIndexedInfo u
+pattern LigoMereLocInfo :: Range -> LigoIndexedInfo u
 pattern LigoMereLocInfo loc = LigoIndexedInfo
   { liiLocation = Just loc
   , liiEnvironment = Nothing

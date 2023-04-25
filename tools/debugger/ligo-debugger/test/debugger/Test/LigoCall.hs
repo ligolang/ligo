@@ -26,20 +26,21 @@ import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Util.Cli.Json (LigoLayout (LComb, LTree))
+import Language.LIGO.Debugger.Util.Range
 
 test_Compilation :: TestTree
 test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
+      let (a, b) <-> (c, d) = Range (LigoPosition a b) (LigoPosition c d) file
       res <- compileLigoContractDebug "main" file
       take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
-        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]

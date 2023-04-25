@@ -1,9 +1,10 @@
 {- | Continuous location inside the source and utilities.
 -}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveDataTypeable, UndecidableInstances #-}
 
 module Language.LIGO.Debugger.Util.Range
   ( HasRange(..)
+  , LigoPosition (..)
   , Range(..)
   , PreprocessedRange(..)
   , cutOut
@@ -17,6 +18,8 @@ module Language.LIGO.Debugger.Util.Range
   , rStart
   , rFinish
   , rFile
+  , lpLine
+  , lpCol
   , rangeLines
   , startLine
   , finishLine
@@ -24,39 +27,54 @@ module Language.LIGO.Debugger.Util.Range
   where
 
 import Control.Lens (makeLenses)
+import Data.Aeson (FromJSON (parseJSON), withObject, (.:))
 import Data.ByteString qualified as BS
+import Data.Data (Data)
 import Debug qualified
 import Fmt (Buildable (build))
 
 import Duplo.Lattice
 import Duplo.Pretty
 
+import Language.LIGO.Debugger.Util.Util (TextualNumber (TextualNumber))
+
 point :: Int -> Int -> Range
-point l c = Range (l, c, 0) (l, c, 0) ""
+point l c = Range (LigoPosition l c) (LigoPosition l c) ""
 
 -- | Construct a range spanning a single line `line` from a column
 -- `colSt` (inclusively) to `colFin` (exclusively).
 interval :: Int -> Int -> Int -> Range
-interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
+interval line colSt colFin = Range (LigoPosition line colSt) (LigoPosition line colFin) ""
+
+-- | Position in a file.
+data LigoPosition = LigoPosition
+  { _lpLine :: Int
+    -- ^ 1-indexed line number
+  , _lpCol :: Int
+    -- ^ 1-indexed column number
+  } deriving stock (Eq, Ord, Generic, Data)
+    deriving anyclass (NFData, Hashable)
 
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).
 data Range = Range
-  { _rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
-  , _rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
+  { _rStart  :: LigoPosition  -- ^ [Start: line, col, byte-offset...
+  , _rFinish :: LigoPosition  -- ^ ... End: line, col, byte-offset).
   , _rFile   :: FilePath
   }
+  deriving stock (Generic, Data)
   deriving (Show) via PP Range
+  deriving anyclass (NFData, Hashable)
 
 rangeLines :: Traversal' Range Int
-rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
+rangeLines f (Range (LigoPosition sl sc) (LigoPosition fl fc) file) =
   Range
-    <$> ((,,) <$> f sl <*> pure sc <*> pure so)
-    <*> ((,,) <$> f fl <*> pure fc <*> pure fo)
+    <$> (LigoPosition <$> f sl <*> pure sc)
+    <*> (LigoPosition <$> f fl <*> pure fc)
     <*> pure file
 
 instance Pretty Range where
-  pp (Range (ll, lc, _) (rl, rc, _) f) =
+  pp (Range (LigoPosition ll lc) (LigoPosition rl rc) f) =
     text f <.> "@"
     <.> int ll <.> ":"
     <.> int lc <.> "-"
@@ -66,6 +84,21 @@ instance Pretty Range where
 -- TODO: replace @Pretty@ instance with @Buildable@
 instance Buildable Range where
   build = Debug.show . pp
+
+instance FromJSON Range where
+  parseJSON = withObject "LIGO location range" \o -> do
+    (file, startPos) <- parseLoc =<< o .: "start"
+    (file', endPos) <- parseLoc =<< o .: "stop"
+    when (file /= file') $
+      fail "Can't handle a range spanning through multiple files"
+    return $ Range startPos endPos file
+    where
+      parseLoc = withObject "location" \o -> do
+        file <- o .: "file"
+        TextualNumber line <- o .: "line"
+        TextualNumber col  <- o .: "col"
+        when (line < 1) $ fail "Line number is zero"
+        return (file, LigoPosition line (col + 1))
 
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.
@@ -81,11 +114,11 @@ instance HasRange Range where
   getRange = id
 
 -- | Extract textual representation of given range.
-cutOut :: Range -> ByteString -> Text
-cutOut (Range (_, _, s) (_, _, f) _) bs =
+cutOut :: Int -> Int -> ByteString -> Text
+cutOut startOffset finishOffset bs =
   decodeUtf8
-    $ BS.take (fromIntegral (f - s))
-    $ BS.drop (fromIntegral  s)
+    $ BS.take (finishOffset - startOffset)
+    $ BS.drop startOffset
       bs
 
 excluding :: Range -> Range -> Range
@@ -102,7 +135,9 @@ merged (Range s _ _) (Range _ f t) = Range s f t
 -- enough for both of them to be considered equal, since ranges are exclusive in
 -- their end points.
 intersects :: Range -> Range -> Bool
-intersects (Range (ll1, lc1, _) (ll2, lc2, _) lf) (Range (rl1, rc1, _) (rl2, rc2, _) rf)
+intersects
+  (Range (LigoPosition ll1 lc1) (LigoPosition ll2 lc2) lf)
+  (Range (LigoPosition rl1 rc1) (LigoPosition rl2 rc2) rf)
   -- Different files never intersect.
   | lf /= rf = False
   -- If l's start is before or at r's start, it intersects iff its end is after
@@ -115,26 +150,29 @@ intersects (Range (ll1, lc1, _) (ll2, lc2, _) lf) (Range (rl1, rc1, _) (rl2, rc2
 
 -- | Inclusion order
 instance Lattice Range where
-  Range (ll1, lc1, _) (ll2, lc2, _) _
-    `leq` Range (rl1, rc1, _) (rl2, rc2, _) _ =
+  Range (LigoPosition ll1 lc1) (LigoPosition ll2 lc2) _
+    `leq` Range (LigoPosition rl1 rc1) (LigoPosition rl2 rc2) _ =
     (rl1 < ll1 || rl1 == ll1 && rc1 <= lc1) &&
     (rl2 > ll2 || rl2 == ll2 && rc2 >= lc2)
 
 instance Eq Range where
-  Range (l, c, _) (r, d, _) f == Range (l1, c1, _) (r1, d1, _) f1 =
+  Range (LigoPosition l c) (LigoPosition r d) f
+    == Range (LigoPosition l1 c1) (LigoPosition r1 d1) f1 =
     (l, c, r, d, f) == (l1, c1, r1, d1, f1)
 
 -- | Lexicographic order
 instance Ord Range where
-  Range (l, c, _) (r, d, _) f `compare` Range (l1, c1, _) (r1, d1, _) f1 =
+  Range (LigoPosition l c) (LigoPosition r d) f
+    `compare` Range (LigoPosition l1 c1) (LigoPosition r1 d1) f1 =
     compare l l1 <> compare c c1 <> compare r r1 <> compare d d1 <> compare f f1
 
+makeLenses ''LigoPosition
 makeLenses ''Range
 
 startLine :: Lens' Range Int
-startLine = rStart . _1
+startLine = rStart . lpLine
 {-# INLINE startLine #-}
 
 finishLine :: Lens' Range Int
-finishLine = rFinish . _1
+finishLine = rFinish . lpLine
 {-# INLINE finishLine #-}

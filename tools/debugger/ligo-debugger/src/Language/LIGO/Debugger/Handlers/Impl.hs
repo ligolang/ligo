@@ -79,6 +79,7 @@ import Language.LIGO.Debugger.Util.Cli
   LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Language.LIGO.Debugger.Util.Cli qualified as LSP.Cli
 import Language.LIGO.Debugger.Util.Extension (UnsupportedExtension (..), getExt)
+import Language.LIGO.Debugger.Util.Range
 
 data LIGO
 
@@ -309,20 +310,20 @@ instance HasSpecificMessages LIGO where
       toDAPStackFrames snap =
         let frames = toList $ isStackFrames snap
         in zip [topFrameId ..] frames <&> \(i, frame) ->
-          let LigoRange{..} = sfLoc frame
+          let Range{..} = sfLoc frame
           in DAP.StackFrame
             { DAP.idStackFrame = i
             , DAP.nameStackFrame = toString $ sfName frame
             , DAP.sourceStackFrame = DAP.defaultSource
-              { DAP.nameSource = Just $ takeFileName lrFile
-              , DAP.pathSource = lrFile
+              { DAP.nameSource = Just $ takeFileName _rFile
+              , DAP.pathSource = _rFile
               }
               -- TODO: use `IsSourceLoc` conversion capability
               -- Once morley-debugger#44 is merged
-            , DAP.lineStackFrame = Unsafe.fromIntegral $ lpLine lrStart
-            , DAP.columnStackFrame = Unsafe.fromIntegral $ lpCol lrStart + 1
-            , DAP.endLineStackFrame = Unsafe.fromIntegral $ lpLine lrEnd
-            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ lpCol lrEnd + 1
+            , DAP.lineStackFrame = Unsafe.fromIntegral $ _lpLine _rStart
+            , DAP.columnStackFrame = Unsafe.fromIntegral $ _lpCol _rStart
+            , DAP.endLineStackFrame = Unsafe.fromIntegral $ _lpLine _rFinish
+            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ _lpCol _rFinish
             , DAP.canRestartStackFrame = False
             }
 
@@ -344,7 +345,7 @@ instance HasSpecificMessages LIGO where
     -- But some variables can come from, for example, a @CameLIGO@ contract
     -- and the other ones from a @PascaLIGO@ one.
     lang <-
-      currentStackFrame ^. sfLocL . lrFileL
+      currentStackFrame ^. sfLocL . rFile
         & getExt @(Either UnsupportedExtension)
         & either throwM pure
 

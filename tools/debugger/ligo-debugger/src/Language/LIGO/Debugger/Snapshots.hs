@@ -81,7 +81,8 @@ import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
 import Language.LIGO.Debugger.Util.AST (LIGO)
 import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
-import Language.LIGO.Debugger.Util.Range (HasRange (getRange), Range (..))
+import Language.LIGO.Debugger.Util.Range
+  (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
@@ -104,7 +105,7 @@ instance (SingI u) => Buildable (StackItem u) where
 data StackFrame u = StackFrame
   { sfName :: Text
     -- ^ Stack frame name.
-  , sfLoc :: LigoRange
+  , sfLoc :: Range
     -- ^ Source location related to the current snapshot
     -- (and referred by 'sfInstrNo').
   , sfStack :: [StackItem u]
@@ -201,7 +202,7 @@ instance (SingI u) => Buildable (InterpretSnapshot u) where
 instance NavigableSnapshot (InterpretSnapshot u) where
   getExecutedPosition = do
     locRange <- sfLoc . head . isStackFrames <$> curSnapshot
-    return . Just $ ligoRangeToSourceLocation locRange
+    return . Just $ rangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
     moveRaw Backward >>= \case
       HitBoundary -> return Nothing
@@ -227,13 +228,13 @@ data CollectorState m = CollectorState
     -- We can pick @[operation] * storage@ value from it.
   , csParsedFiles :: HashMap FilePath (LIGO ParsedInfo)
     -- ^ Parsed contracts.
-  , csRecordedStatementRanges :: HashSet LigoRange
+  , csRecordedStatementRanges :: HashSet Range
     -- ^ Ranges of recorded statement snapshots.
-  , csRecordedExpressionRanges :: HashSet LigoRange
+  , csRecordedExpressionRanges :: HashSet Range
     -- ^ Ranges of recorded expression snapshots.
     -- Note that these ranges refer only to snapshots, that
     -- have @EventExpressionPreview@ event.
-  , csRecordedExpressionEvaluatedRanges :: HashSet LigoRange
+  , csRecordedExpressionEvaluatedRanges :: HashSet Range
     -- ^ Ranges of recorded expression snapshots that have
     -- @EventExpressionEvaluated@ event.
   , csLoggingFunction :: String -> m ()
@@ -241,11 +242,11 @@ data CollectorState m = CollectorState
   , csMainFunctionName :: Name 'Unique
     -- ^ Name of main entrypoint.
     -- We need to store it in order not to create an extra stack frame.
-  , csLastRangeMb :: Maybe LigoRange
+  , csLastRangeMb :: Maybe Range
     -- ^ Last range. We can use it to get
     -- the latest position where some
     -- failure occurred.
-  , csLambdaLocs :: HashSet LigoRange
+  , csLambdaLocs :: HashSet Range
     -- ^ Locations for lambdas. We need them to ignore statements recording
     -- in cases when some location is present in this set and it is not
     -- associated with @LAMBDA@ instruction.
@@ -328,7 +329,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
     michFailureHandler err = use csLastRangeMbL >>= \case
       Nothing -> throwError err
-      Just (ligoPositionToSrcLoc . lrStart -> lastSrcLoc)
+      Just (ligoPositionToSrcLoc . _rStart -> lastSrcLoc)
         -> throwError err { mfwsErrorSrcPos = ErrorSrcPos $ fromCanonicalLoc lastSrcLoc }
 
     -- What is done upon executing instruction.
@@ -510,7 +511,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     -- location, but that's a sanity check: if an event is not associated with
     -- some location, then it is likely not worth recording.
     recordSnapshot
-      :: LigoRange
+      :: Range
       -> InterpretEvent
       -> CollectingEvalOp m ()
     recordSnapshot loc event = do
@@ -537,12 +538,12 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       csLastRangeMbL ?= loc
       lift $ C.yield newSnap
 
-    getStatements :: Instr i o -> LigoRange -> CollectingEvalOp m [LigoRange]
-    getStatements instr ligoRange = do
+    getStatements :: Instr i o -> Range -> CollectingEvalOp m [Range]
+    getStatements instr range@Range{..} = do
       {-
         Here we need to clarify some implementation moments.
 
-        For each @ligoRange@ we're trying to find the nearest scope
+        For each @range@ we're trying to find the nearest scope
         (like function call or loop). With loops everything seems straightforward
         but for functions we're doing one trick.
 
@@ -569,21 +570,19 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
               Nested (LAMBDA{} :# _) -> True
               _ -> False
 
-      let range@Range{..} = ligoRangeToRange ligoRange
-
       parsedLigo <-
         fromMaybe
           (error [int||File #{_rFile} is not parsed for some reason|])
           <$> use (csParsedFilesL . at _rFile)
 
-      isLambdaLoc <- HS.member ligoRange <$> use csLambdaLocsL
+      isLambdaLoc <- HS.member range <$> use csLambdaLocsL
 
       if isLambdaLoc && not isLambda
       then pure []
       else do
         let statements = filterAndReverseStatements isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
 
-        pure $ rangeToLigoRange . getRange <$> statements
+        pure $ getRange <$> statements
       where
         -- Here we're looking for statements and the nearest scope locations.
         -- These statements are filtered by strict inclusivity of their ranges to this scope.
@@ -610,7 +609,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                 decide :: Bool -> LIGO ParsedInfo -> (Bool -> Bool -> State Range [LIGO ParsedInfo]) -> State Range [LIGO ParsedInfo]
                 decide isOnSuccess x cont
                   | ignore = cont isLambdaLoc ignore
-                  | getRange x /= ligoRangeToRange ligoRange && isScopeForStatements isLambdaLoc x
+                  | getRange x /= range && isScopeForStatements isLambdaLoc x
                       = put (getRange x) >> cont isLambdaLoc True
                   | otherwise =
                       let
@@ -692,7 +691,7 @@ collectInterpretSnapshots
   -> ContractEnv
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
-  -> HashSet LigoRange
+  -> HashSet Range
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger lambdaLocs =
   runCollectInterpretSnapshots
@@ -708,10 +707,10 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       , csStackFrames = one StackFrame
           { sfName = entrypoint
           , sfStack = []
-          , sfLoc = LigoRange
-            { lrFile = mainFile
-            , lrStart = LigoPosition 1 0
-            , lrEnd = LigoPosition 1 0
+          , sfLoc = Range
+            { _rFile = mainFile
+            , _rStart = LigoPosition 1 1
+            , _rFinish = LigoPosition 1 1
             }
           }
       , csLastRecordedSnapshot = Nothing
@@ -736,7 +735,7 @@ collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore e
       where
         -- Note that this dfs is implemented in such a way that
         -- it applies actions in bottom-up manner.
-        recursionImpl :: CtorEffectsApp $ State (Maybe LigoRange)
+        recursionImpl :: CtorEffectsApp $ State (Maybe Range)
         recursionImpl = CtorEffectsApp "Strip duplicates" $ flip \mkNewInstr -> \case
           ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) _ -> case liiLocation embeddedMeta of
             Just loc ->

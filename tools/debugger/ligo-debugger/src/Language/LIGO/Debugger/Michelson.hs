@@ -49,6 +49,7 @@ import Morley.Tezos.Crypto (encodeBase58Check)
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Util.Range
 
 -- | Untyped Michelson instruction with meta embedded.
 data OpWithMeta meta
@@ -343,7 +344,7 @@ readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet LigoRange)
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range)
 readLigoMapper ligoMapper typeRules instrRules = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
@@ -354,7 +355,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   extendedContract@(SomeContract extContract) <-
     fromUntypedToTyped uContract isRedundantIndexedInfo typeRules instrRules
 
-  let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . lrFileL
+  let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . rFile
         -- We want to remove duplicates
         & unstableNub
         & filter (not . isLigoStdLib)
@@ -370,7 +371,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   return $! force (exprLocs, extendedContract, allFiles, lambdaLocs)
 
   where
-    getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [LigoRange])
+    getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [Range])
     getSourceLocations = bimap DL.toList DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
       ConcreteMeta (liiLocation @'Unique -> Just loc) instr
         -> let lambdaRange =

@@ -142,23 +142,21 @@ toParseTree dialect (Source fp _ input) = do
               | start2D == finish2D = ("ERROR", Nothing)
               | otherwise = (toText ty, Nothing)
             range = Range
-              { _rStart  =
-                  ( fromIntegral $ pointRow    start2D + 1
-                  , fromIntegral $ pointColumn start2D + 1
-                  , fromIntegral $ nodeStartByte node
-                  )
-              , _rFinish =
-                  ( fromIntegral $ pointRow    finish2D + 1
-                  , fromIntegral $ pointColumn finish2D + 1
-                  , fromIntegral $ nodeEndByte node
-                  )
+              { _rStart  = LigoPosition
+                  ( fromIntegral $ pointRow    start2D + 1 )
+                  ( fromIntegral $ pointColumn start2D + 1 )
+              , _rFinish = LigoPosition
+                  ( fromIntegral $ pointRow    finish2D + 1 )
+                  ( fromIntegral $ pointColumn finish2D + 1 )
               , _rFile = fp
               }
+            startOffset = fromIntegral $ nodeStartByte node
+            finishOffset = fromIntegral $ nodeEndByte node
 
           pure $ fastMake
             (range, "")
             ParseTree
               { ptName     = ParseTreeNode name info
               , ptChildren = nodes
-              , ptSource   = cutOut range src
+              , ptSource   = cutOut startOffset finishOffset src
               }

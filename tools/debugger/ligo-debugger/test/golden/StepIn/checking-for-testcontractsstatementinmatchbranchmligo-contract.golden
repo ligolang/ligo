@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:2:2-2:17
+      sfLoc: test/contracts/statement-in-match-branch.mligo@2:3-2:18
       sfStack:
         [StackItem:
           siLigoDesc: elem s of int
@@ -16,7 +16,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:2:10-2:17
+      sfLoc: test/contracts/statement-in-match-branch.mligo@2:11-2:18
       sfStack:
         [StackItem:
           siLigoDesc: elem s of int
@@ -29,23 +29,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:3:2-6:15
-      sfStack:
-        [StackItem:
-          siLigoDesc: elem a of (Some of (int) | None of (unit))
-          siValue: Some 42
-        , StackItem:
-          siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
-InterpretSnapshot:
-  isStatus: running / faced statement
-  isStackFrames:
-    [StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:4:10-4:11
+      sfLoc: test/contracts/statement-in-match-branch.mligo@3:3-6:16
       sfStack:
         [StackItem:
           siLigoDesc: elem a of (Some of (int) | None of (unit))
@@ -61,7 +45,23 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:5:16-5:21
+      sfLoc: test/contracts/statement-in-match-branch.mligo@4:11-4:12
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem a of (Some of (int) | None of (unit))
+          siValue: Some 42
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statement-in-match-branch.mligo@5:17-5:22
       sfStack:
         [StackItem:
           siLigoDesc: elem x of int
@@ -77,7 +77,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:7:5-7:31
+      sfLoc: test/contracts/statement-in-match-branch.mligo@7:6-7:32
       sfStack:
         [StackItem:
           siLigoDesc: elem b of int
@@ -90,7 +90,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo:7:6-7:30
+      sfLoc: test/contracts/statement-in-match-branch.mligo@7:7-7:31
       sfStack:
         [StackItem:
           siLigoDesc: <hidden elem>

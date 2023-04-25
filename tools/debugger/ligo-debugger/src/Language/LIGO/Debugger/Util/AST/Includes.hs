@@ -27,8 +27,8 @@ import Language.LIGO.Debugger.Util.Parser
   (Info, LineMarker (..), LineMarkerType (..), ParsedInfo, parseLineMarkerText)
 import Language.LIGO.Debugger.Util.Product (Contains, Product (..), getElem, modElem, putElem)
 import Language.LIGO.Debugger.Util.Range
-  (PreprocessedRange (..), Range (..), finishLine, getRange, rFile, rFinish, rStart, rangeLines,
-  startLine)
+  (LigoPosition (LigoPosition), PreprocessedRange (..), Range (..), finishLine, getRange, lpLine,
+  rFile, rFinish, rStart, rangeLines, startLine)
 
 data ExtractionDepth
   = DirectInclusions
@@ -89,7 +89,7 @@ extractIncludes contents = do
 
     getFileName :: Int -> [Text] -> Maybe LineMarker
     getFileName (fromIntegral -> l) [parseLineMarkerText -> Just (fp, ty, f)] =
-      Just $ LineMarker fp ty f $ Range (l, 0, 0) (l + 1, 0, 0) fp
+      Just $ LineMarker fp ty f $ Range (LigoPosition l 0) (LigoPosition (l + 1) 0) fp
     getFileName _ _ = Nothing
 
 getMarkerInfos
@@ -192,7 +192,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
         prev = IntMap.lookupLE (range ^. startLine . to fromIntegral) markers
         range = getRange i
 
-    adjustSide :: Lens' Range (Int, Int, Int)
+    adjustSide :: Lens' Range LigoPosition
                -> IntMap MarkerInfo
                -> Range
                -> Range
@@ -210,10 +210,10 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
               else
                 -- Adjust the range so it reflects its range before
                 -- preprocessing.
-                (side . _1) -~ rangeOffset marker
+                (side . lpLine) -~ rangeOffset marker
          in newRange
       where
-        prev = IntMap.lookupLE (range ^. side . _1 . to fromIntegral) markers
+        prev = IntMap.lookupLE (range ^. side . lpLine . to fromIntegral) markers
 
     adjustRange :: IntMap MarkerInfo -> Range -> Range
     adjustRange markers = adjustSide rFinish markers

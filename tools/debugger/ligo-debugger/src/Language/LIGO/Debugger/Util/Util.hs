@@ -8,16 +8,20 @@ module Language.LIGO.Debugger.Util.Util
   , lazyBytesToText
   , textToLazyBytes
   , (<<&>>)
+  , TextualNumber (..)
 
   -- * Debugging utilities
   , validate
   ) where
 
+import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as Key
 import Data.Aeson.KeyMap qualified as KM
+import Data.Aeson.Types qualified as Aeson
 import Data.Bitraversable (bitraverse)
 import Data.Map.Internal qualified as MI
+import Data.Scientific qualified as Sci
 import Data.Text.Lazy.Encoding qualified as TL
 
 import Duplo.Lattice
@@ -91,3 +95,25 @@ lazyBytesToText = toText . TL.decodeUtf8
 -- | Encodes strict @Text@ to lazy @ByteString@.
 textToLazyBytes :: Text -> LByteString
 textToLazyBytes = TL.encodeUtf8 . fromStrict
+
+
+-- | Sometimes numbers are carries as strings in order to fit into
+-- common limits for sure.
+newtype TextualNumber a = TextualNumber a
+  deriving stock Functor
+  deriving newtype NFData
+
+instance Integral a => FromJSON (TextualNumber a) where
+  parseJSON = \case
+    Aeson.String t -> do
+      i <- readMaybe @Integer (toString t)
+        & maybe (fail "expected a number") pure
+      fromIntegralNoOverflow i
+        & either (fail . displayException) (pure . TextualNumber)
+    Aeson.Number n -> do
+      unless (Sci.isInteger n) $
+        fail "Expected an integer number"
+      let i :: Integer = round n
+      fromIntegralNoOverflow i
+        & either (fail . displayException) (pure . TextualNumber)
+    other -> Aeson.unexpected other
