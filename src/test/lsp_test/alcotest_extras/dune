@@ -1,0 +1,4 @@
+(library
+ (name alcotest_extras)
+ (public_name ligo.lsp_test.alcotest_extras)
+ (libraries core alcotest))

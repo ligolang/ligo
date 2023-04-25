@@ -1,6 +1,5 @@
-module Loc = Simple_utils.Location
-open Lsp.Types
 open Handler
+open Lsp_helpers
 
 let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t option =
  fun pos uri defs ->
@@ -9,15 +8,15 @@ let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t o
   >>= fun def ->
   Option.some_if
     String.(
-      match Utils.get_location def with
+      match Def.get_location def with
       (* stdlib ranges have an empty file name. We don't wish to rename them. *)
       | File loc -> loc#file <> ""
       | Virtual _ -> false)
     def
   >>= fun def ->
-  let loc = Utils.get_location def in
+  let loc = Def.get_location def in
   let refs = References.get_references uri loc defs in
-  List.find ~f:(Utils.is_position_in_range pos) refs
+  List.find ~f:(Range.contains_position pos) refs
 
 
 let on_req_prepare_rename : Position.t -> DocumentUri.t -> Range.t option Handler.t =

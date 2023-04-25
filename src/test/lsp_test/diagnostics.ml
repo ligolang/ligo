@@ -1,22 +1,15 @@
-open Lsp.Types
 module Requests = Ligo_lsp.Server.Requests
-module Diagnostics = Requests.Diagnostics
-open Common
+open Alcotest_extras
 open Handlers
+open Lsp_helpers
+open Range.Construct
 
 type diagnostics_test =
   { test_name : string
   ; file_path : string
-  ; diagnostics : Diagnostics.simple_diagnostic list
+  ; diagnostics : Requests.simple_diagnostic list
   ; max_number_of_problems : int option
   }
-
-let pp_diagnostic = pp_with_yojson Lsp.Types.Diagnostic.yojson_of_t
-let eq_diagnostic = Caml.( = )
-
-let testable_diagnostic : Diagnostic.t Alcotest.testable =
-  Alcotest.testable pp_diagnostic eq_diagnostic
-
 
 let get_diagnostics_test
     ({ test_name; file_path; diagnostics; max_number_of_problems } : diagnostics_test)
@@ -33,9 +26,9 @@ let get_diagnostics_test
   in
   should_match_list
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
-    testable_diagnostic
+    Diagnostic.testable
     ~actual:actual_diagnostics
-    ~expected:(List.map ~f:Diagnostics.from_simple_diagnostic diagnostics)
+    ~expected:(List.map ~f:Requests.from_simple_diagnostic diagnostics)
 
 
 let test_cases =
@@ -44,11 +37,11 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s)\nCannot unify int with string."
-          ; range = Some (Utils.interval 2 19 27)
+          ; range = Some (interval 2 19 27)
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Variable \"foo\" not found. "
-          ; range = Some (Utils.interval 5 31 34)
+          ; range = Some (interval 5 31 34)
           }
         ]
     ; max_number_of_problems = None
@@ -63,7 +56,7 @@ let test_cases =
                expected:\n\
               \  * another declaration;\n\
               \  * the end of the file.\n"
-          ; range = Some (Utils.interval 0 10 11)
+          ; range = Some (interval 0 10 11)
           }
         ]
     ; max_number_of_problems = None
@@ -72,16 +65,15 @@ let test_cases =
     ; file_path = "contracts/lsp/warnings.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
-          ; message =
-              "Toplevel let declaration is silently changed to const declaration."
-          ; range = Some (Utils.interval 0 0 10)
+          ; message = "Toplevel let declaration is silently changed to const declaration."
+          ; range = Some (interval 0 0 10)
           }
         ; { severity = DiagnosticSeverity.Warning
           ; message =
               "\n\
                Warning: unused variable \"x\".\n\
                Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; range = Some (Utils.interval 2 10 11)
+          ; range = Some (interval 2 10 11)
           }
         ]
     ; max_number_of_problems = None
@@ -92,11 +84,11 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Error
           ; message =
               "Ill-formed expression.\nAt this point, an expression is expected.\n"
-          ; range = Some (Utils.interval 4 15 18)
+          ; range = Some (interval 4 15 18)
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
-          ; range = Some (Utils.interval 2 19 21)
+          ; range = Some (interval 2 19 21)
           }
         ; { severity = DiagnosticSeverity.Error
           ; message =
@@ -105,7 +97,7 @@ let test_cases =
                  error recovery do not exist, also the number here can
                  be changed after any changes in LIGO, maybe we want to
                  rewrite that test so it would not require promotion too often*)
-          ; range = Some (Utils.point 4 13)
+          ; range = Some (point 4 13)
           }
         ]
     ; max_number_of_problems = None
@@ -123,14 +115,14 @@ let test_cases =
               "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \
                \"ttop2\" but could be of type \"ttop\".\n\
                Hint: You might want to add a type annotation. \n"
-          ; range = Some (Utils.interval 64 14 23)
+          ; range = Some (interval 64 14 23)
           }
         ; { severity = DiagnosticSeverity.Warning
           ; message =
               "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ttop\" \
                but could be of type \"ta\".\n\
                Hint: You might want to add a type annotation. \n"
-          ; range = Some (Utils.interval 65 14 21)
+          ; range = Some (interval 65 14 21)
           }
         ]
     ; max_number_of_problems = Some 2

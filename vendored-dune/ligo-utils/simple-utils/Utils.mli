@@ -89,15 +89,6 @@ val highlight : string -> unit
 
 val error_yojson_format : string -> ('a, string) result
 
-(* Working with optional values *)
-
-module Option :
-  sig
-    val apply     : ('a -> 'b) -> 'a option -> 'b option
-    val rev_apply : ('a -> 'a) option -> 'a -> 'a
-    val to_string : string option -> string
-  end
-
 (* An extension to the standard module [String] *)
 
 module String :

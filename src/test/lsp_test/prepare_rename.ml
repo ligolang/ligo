@@ -1,8 +1,8 @@
-open Lsp.Types
 module Requests = Ligo_lsp.Server.Requests
-open Requests.Handler
-open Common
+open Alcotest_extras
 open Handlers
+open Lsp_helpers
+open Requests.Handler
 
 type prepare_rename_test =
   { test_name : string
@@ -22,7 +22,7 @@ let get_prepare_rename_test
     @@ let@ uri = open_file (to_absolute file_path) in
        Requests.on_req_prepare_rename reference uri
   in
-  let error_prefix = Format.asprintf "In %s, %a: " file_path pp_position reference in
+  let error_prefix = Format.asprintf "In %s, %a: " file_path Position.pp reference in
   match result with
   | None ->
     if can_rename
@@ -31,7 +31,7 @@ let get_prepare_rename_test
   | Some actual_range ->
     if can_rename
     then
-      if Utils.is_position_in_range reference actual_range
+      if Range.contains_position reference actual_range
       then ()
       else fail @@ error_prefix ^ "Reference is not contained within the range."
     else

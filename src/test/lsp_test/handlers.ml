@@ -1,7 +1,6 @@
 module Requests = Ligo_lsp.Server.Requests
-open Linol_lwt
 open Requests.Handler
-open Utils
+open Lsp_helpers
 
 let default_test_config : config =
   { max_number_of_problems = Int.max_value
@@ -12,7 +11,7 @@ let default_test_config : config =
 
 
 let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
-    : 'a * Jsonrpc2.Diagnostic.t list
+    : 'a * Diagnostic.t list
   =
   let mocked_notify_back = ref [] in
   let result =
@@ -31,4 +30,4 @@ let open_file (file_path : string) : DocumentUri.t Handler.t =
 
 
 let to_absolute : string -> string = Filename.concat @@ Ligo_unix.getcwd ()
-let rel_path_to_uri : string -> DocumentUri.t = DocumentUri.of_path @. to_absolute
+let rel_path_to_uri : string -> DocumentUri.t = DocumentUri.of_path <@ to_absolute

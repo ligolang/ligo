@@ -120,25 +120,6 @@ let list_to_sepseq (lst : 'a list) (sep : 's) : ('a, 's) sepseq =
   | [] -> None
   | _ -> list_to_nsepseq_opt lst sep
 
-(* Optional values *)
-
-module Option =
-  struct
-    let apply f x =
-      match x with
-        Some y -> Some (f y)
-      |   None -> None
-
-    let rev_apply x y =
-      match x with
-        Some f -> f y
-      |   None -> y
-
-    let to_string = function
-      Some x -> x
-    |   None -> ""
-  end
-
 (* Modules based on [String], like sets and maps. *)
 
 module String =

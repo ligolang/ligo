@@ -1,8 +1,0 @@
-(library
- (name ligo_interface)
- (public_name ligo.ligo_lsp.interface)
- (flags
-  (:standard -w +A-4-40-44-42-70))
- (instrumentation
-  (backend bisect_ppx))
- (libraries lsp compiler_options build scopes checking utils))
