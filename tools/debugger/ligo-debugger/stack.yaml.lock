@@ -291,27 +291,6 @@ packages:
     git: https://github.com/serokell/duplo.git
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
 - completed:
-    hackage: lsp-types-1.6.0.0@sha256:06be28f931eff0b58bc7210f0567ae07713f98735b5a8fb8a6b7adde43d7c782,5690
-    pantry-tree:
-      size: 4909
-      sha256: 0b790822bcac982b9bf3b4e249c1395d5f76a4c0cb1287eee5a5613f74a8eafd
-  original:
-    hackage: lsp-types-1.6.0.0
-- completed:
-    hackage: lsp-1.6.0.0@sha256:2b95e406cc85ffa95406ae8ad7d16b82283a6ca2fcb7ea5308a4ef3e6d6e68e6,4397
-    pantry-tree:
-      size: 1044
-      sha256: 43a82c501ec3074d888f2bf4960e4b447028c1537abbca4cf65e74944604bf62
-  original:
-    hackage: lsp-1.6.0.0
-- completed:
-    hackage: lsp-test-0.14.1.0@sha256:a535014ed008a6584cd3c59d31435d046aa3d346ce9a36a4f6e006586e29b4a4,4852
-    pantry-tree:
-      size: 1559
-      sha256: a720cfe18e3575e8d32f7937912340601c2f7e8b2aa9b8cc91346ed531983793
-  original:
-    hackage: lsp-test-0.14.1.0
-- completed:
     name: text-rope
     version: '0.2'
     git: https://github.com/Bodigrim/text-rope

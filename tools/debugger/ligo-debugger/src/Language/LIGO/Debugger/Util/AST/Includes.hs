@@ -10,15 +10,14 @@ import Control.Lens (to, (+~), (-~))
 import Control.Monad.RWS.Strict (RWS, RWST, execRWS, execRWST, tell)
 import Data.DList (DList)
 import Data.DList qualified as DList (toList)
+import Data.Foldable qualified as Foldable
 import Data.IntMap.Strict qualified as IntMap
 import Duplo.Tree (Cofree ((:<)))
-import Language.LSP.Types qualified as J
 import System.FilePath (takeDirectory, (</>))
 import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
 import Witherable (imapMaybe)
 
-import Data.Foldable qualified as Foldable
 import Language.LIGO.Debugger.Util.AST.Common
   (ContractInfo, ParsedContractInfo, pattern FindContract)
 import Language.LIGO.Debugger.Util.AST.Skeleton (LIGO, SomeLIGO (..))
@@ -104,7 +103,7 @@ getMarkerInfos directIncludes pwd markers =
 
 -- | Gets the amount of lines between the "new" line after preprocessing and the
 -- "old" line before preprocessing.
-rangeOffset :: LineMarker -> J.UInt
+rangeOffset :: LineMarker -> Int
 rangeOffset LineMarker{lmLine, lmLoc} = lmLoc ^. finishLine - lmLine
 
 collectMarkerInfos
@@ -193,7 +192,7 @@ extractIncludedFiles directIncludes (FindContract file (SomeLIGO dialect ligo) m
         prev = IntMap.lookupLE (range ^. startLine . to fromIntegral) markers
         range = getRange i
 
-    adjustSide :: Lens' Range (J.UInt, J.UInt, J.UInt)
+    adjustSide :: Lens' Range (Int, Int, Int)
                -> IntMap MarkerInfo
                -> Range
                -> Range

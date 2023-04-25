@@ -5,7 +5,6 @@ module Test.Common.Diagnostics
   , treeDoesNotContainNameTest
   ) where
 
-import Language.LSP.Types qualified as J
 import System.FilePath ((</>))
 import UnliftIO.Directory (makeAbsolute)
 
@@ -98,5 +97,5 @@ treeDoesNotContainNameTest = do
     , dtFilteredMsgs = msgGroup
     }
 
-mkRange :: (J.UInt, J.UInt) -> (J.UInt, J.UInt) -> FilePath -> Range
+mkRange :: (Int, Int) -> (Int, Int) -> FilePath -> Range
 mkRange (a, b) (c, d) = Range (a, b, 0) (c, d, 0)

@@ -1,8 +1,6 @@
 module Language.LIGO.Debugger.Util.Util
   ( foldMapM
   , safeIndex
-  , toUri
-  , toLocation
   , unionOrd
   , findKey
   , mapJsonText
@@ -21,12 +19,9 @@ import Data.Aeson.KeyMap qualified as KM
 import Data.Bitraversable (bitraverse)
 import Data.Map.Internal qualified as MI
 import Data.Text.Lazy.Encoding qualified as TL
-import Language.LSP.Types qualified as J
 
 import Duplo.Lattice
 import Duplo.Tree
-
-import Language.LIGO.Debugger.Util.Range
 
 foldMapM :: (Foldable t, Monad m, Monoid b) => (a -> m b) -> t a -> m b
 foldMapM f = foldlM folder mempty
@@ -37,12 +32,6 @@ safeIndex :: (Eq t, Num t) => [a] -> t -> Maybe a
 safeIndex [] _ = Nothing
 safeIndex (x : _) 0 = Just x
 safeIndex (_ : xs) n = safeIndex xs (n - 1)
-
-toUri :: Range -> J.Uri
-toUri = J.filePathToUri . _rFile
-
-toLocation :: Range -> J.Location
-toLocation = J.Location <$> toUri <*> toLspRange
 
 -- | Takes the union of two lists, leaving no duplicates using the provided 'Ord'
 -- instance.  O((m + n) log (m + n)) complexity.

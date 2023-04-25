@@ -1,6 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveDataTypeable, UndecidableInstances #-}
 -- | ligo version: 0.59.0
 -- | The definition of type as is represented in ligo JSON output
 
@@ -43,15 +41,12 @@ module Language.LIGO.Debugger.Util.Cli.Json
   ) where
 
 import Prelude hiding (Element, Product (..), sum)
-import Unsafe qualified
 
 import Control.Lens (_head)
 import Data.Aeson.KeyMap (toAscList)
 import Data.Aeson.Types hiding (Error)
 import Data.Char (isUpper, toLower)
-import Data.Data
-  (ConstrRep (IntConstr), Data, constrRep, dataTypeOf, gunfold, mkIntType, mkIntegralConstr,
-  toConstr)
+import Data.Data (Data)
 import Data.Foldable qualified (toList)
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
@@ -60,7 +55,6 @@ import Debug qualified (show)
 import Fmt (Buildable (build))
 import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
-import Language.LSP.Types qualified as J
 
 import Duplo.Lattice (leq)
 import Duplo.Pretty (Pretty (..), text, (<+>), (<.>))
@@ -429,8 +423,8 @@ data LigoFileRange = LigoFileRange
 -- ```
 data LigoRangeInner = LigoRangeInner
   { _lriByte     :: LigoByte
-  , _lriPointNum :: J.UInt
-  , _lriPointBol :: J.UInt
+  , _lriPointNum :: Int
+  , _lriPointBol :: Int
   }
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
@@ -442,9 +436,9 @@ data LigoRangeInner = LigoRangeInner
 -- ```
 data LigoByte = LigoByte
   { _lbPosFname :: FilePath
-  , _lbPosLnum  :: J.UInt
-  , _lbPosBol   :: J.UInt
-  , _lbPosCnum  :: J.UInt
+  , _lbPosLnum  :: Int
+  , _lbPosBol   :: Int
+  , _lbPosCnum  :: Int
   }
   deriving stock (Eq, Generic, Show, Data)
   deriving anyclass (NFData, Hashable)
@@ -453,15 +447,6 @@ data LigoByte = LigoByte
 ----------------------------------------------------------------------------
 -- Instances
 ----------------------------------------------------------------------------
-
--- We need this instance to derive @Data@ for types
--- that contain this @UInt@.
-instance Data J.UInt where
-  gunfold _ z c = case constrRep c of
-    IntConstr x -> z (Unsafe.fromIntegral x)
-    _ -> error "Expected IntConstr in gunfold"
-  toConstr val = mkIntegralConstr (dataTypeOf val) val
-  dataTypeOf _ = mkIntType "UInt"
 
 newtype LigoJSON (n :: Nat) a = LigoJSON a
 

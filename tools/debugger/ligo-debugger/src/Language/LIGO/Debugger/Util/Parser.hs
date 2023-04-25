@@ -33,7 +33,6 @@ import Prelude hiding (Product)
 import Control.Exception (throwIO)
 import Control.Monad.RWS hiding (Product)
 import Data.Text qualified as Text
-import Language.LSP.Types qualified as J
 import Text.Interpolation.Nyan
 import Unsafe qualified
 
@@ -99,11 +98,11 @@ data LineMarkerType
 data LineMarker = LineMarker
   { lmFile :: FilePath  -- ^ The file that was included.
   , lmFlag :: LineMarkerType  -- ^ The "parsed" flag of the line marker.
-  , lmLine :: J.UInt  -- ^ The line number that should be used after the inclusion.
+  , lmLine :: Int  -- ^ The line number that should be used after the inclusion.
   , lmLoc  :: Range  -- ^ The location in the preprocessed file where the line marker was added.
   } deriving stock (Eq, Show)
 
-parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, J.UInt)
+parseLineMarkerText :: Text -> Maybe (FilePath, LineMarkerType, Int)
 parseLineMarkerText marker = do
   "#" : lineStr : fileText : flags <- Just $ words marker
   line <- readMaybe $ toString lineStr

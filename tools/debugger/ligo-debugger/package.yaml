@@ -86,7 +86,6 @@ library:
     - hedgehog
     - lens
     - lens-aeson
-    - lsp-types
     - monad-stm
     - morley
     - morley-debugger
@@ -224,7 +223,6 @@ tests:
       - hspec-expectations
       - lens
       - ligo-debugger
-      - lsp-types
       - nyan-interpolation
       - nyan-interpolation-core
       - QuickCheck

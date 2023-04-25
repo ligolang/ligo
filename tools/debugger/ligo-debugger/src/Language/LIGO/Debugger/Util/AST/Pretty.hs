@@ -24,7 +24,6 @@ import Duplo.Pretty as DPretty
   (Doc, Modifies (..), PP (PP), Pretty (..), Pretty1 (..), above, brackets, empty, fsep, hsep,
   indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
-import Language.LSP.Types qualified as J
 
 import Language.LIGO.Debugger.Util.AST.Skeleton hiding (Type)
 import Language.LIGO.Debugger.Util.AST.Skeleton qualified as AST
@@ -330,13 +329,9 @@ instance Pretty1 CaseOrDefaultStm where
     DefaultStm s -> sexpr "default" [pp s]
 
 -- Orphans
-type instance PrettyShow J.UInt = ()
-type instance PrettyShow (J.SMethod _) = ()
+type instance PrettyShow Int = ()
 type instance PrettyShow Doc = ()
 type instance PrettyShow Range = ()
-
-instance Pretty J.UInt where
-  pp = pp . show @Text
 
 ----------------------------------------------------------------------------
 -- Common

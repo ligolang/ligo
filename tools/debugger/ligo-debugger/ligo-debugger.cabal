@@ -129,7 +129,6 @@ library
     , hedgehog
     , lens
     , lens-aeson
-    , lsp-types
     , monad-stm
     , morley
     , morley-debugger
@@ -396,7 +395,6 @@ test-suite lsp-test
     , hspec-expectations
     , lens
     , ligo-debugger
-    , lsp-types
     , morley-prelude
     , nyan-interpolation
     , nyan-interpolation-core

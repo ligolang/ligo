@@ -10,13 +10,8 @@ module Language.LIGO.Debugger.Util.Range
   , excluding
   , intersects
   , interval
-  , fromLspPosition
-  , fromLspPositionUri
-  , fromLspRange
-  , fromLspRangeUri
   , merged
   , point
-  , toLspRange
 
     -- * Lenses
   , rStart
@@ -28,8 +23,6 @@ module Language.LIGO.Debugger.Util.Range
   )
   where
 
-import Language.LSP.Types qualified as LSP
-
 import Control.Lens (makeLenses)
 import Data.ByteString qualified as BS
 import Debug qualified
@@ -38,40 +31,37 @@ import Fmt (Buildable (build))
 import Duplo.Lattice
 import Duplo.Pretty
 
-point :: LSP.UInt -> LSP.UInt -> Range
+point :: Int -> Int -> Range
 point l c = Range (l, c, 0) (l, c, 0) ""
 
 -- | Construct a range spanning a single line `line` from a column
 -- `colSt` (inclusively) to `colFin` (exclusively).
-interval :: LSP.UInt -> LSP.UInt -> LSP.UInt -> Range
+interval :: Int -> Int -> Int -> Range
 interval line colSt colFin = Range (line, colSt, 0) (line, colFin, 0) ""
 
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).
 data Range = Range
-  { _rStart  :: (LSP.UInt, LSP.UInt, LSP.UInt)  -- ^ [Start: line, col, byte-offset...
-  , _rFinish :: (LSP.UInt, LSP.UInt, LSP.UInt)  -- ^ ... End: line, col, byte-offset).
+  { _rStart  :: (Int, Int, Int)  -- ^ [Start: line, col, byte-offset...
+  , _rFinish :: (Int, Int, Int)  -- ^ ... End: line, col, byte-offset).
   , _rFile   :: FilePath
   }
   deriving (Show) via PP Range
 
-rangeLines :: Traversal' Range LSP.UInt
+rangeLines :: Traversal' Range Int
 rangeLines f (Range (sl, sc, so) (fl, fc, fo) file) =
   Range
     <$> ((,,) <$> f sl <*> pure sc <*> pure so)
     <*> ((,,) <$> f fl <*> pure fc <*> pure fo)
     <*> pure file
 
--- @UInt" is a newtype over @Int#@, so it can be converted to/from `Int` safely
-type instance IntBaseType LSP.UInt = IntBaseType Int
-
 instance Pretty Range where
   pp (Range (ll, lc, _) (rl, rc, _) f) =
     text f <.> "@"
-    <.> int (fromIntegral @LSP.UInt @Int ll) <.> ":"
-    <.> int (fromIntegral @LSP.UInt @Int lc) <.> "-"
-    <.> int (fromIntegral @LSP.UInt @Int rl) <.> ":"
-    <.> int (fromIntegral @LSP.UInt @Int rc)
+    <.> int ll <.> ":"
+    <.> int lc <.> "-"
+    <.> int rl <.> ":"
+    <.> int rc
 
 -- TODO: replace @Pretty@ instance with @Buildable@
 instance Buildable Range where
@@ -89,35 +79,6 @@ class HasRange a where
 
 instance HasRange Range where
   getRange = id
-
--- | Convert `squirrel` range to `haskell-lsp` range.
--- Note that we consider the first line to be at position 1.
-toLspRange :: Range -> LSP.Range
-toLspRange Range
-  { _rStart  = (rsl, rsc, _)
-  , _rFinish = (rfl, rfc, _)
-  } = LSP.Range
-  { LSP._start = LSP.Position{ LSP._line = rsl - 1, LSP._character = rsc - 1 }
-  , LSP._end   = LSP.Position{ LSP._line = rfl - 1, LSP._character = rfc - 1 }
-  }
-
-fromLspPosition :: LSP.Position -> Range
-fromLspPosition (LSP.Position l c) = point (l + 1) (c + 1)
-
-fromLspPositionUri :: LSP.Position -> LSP.Uri -> Range
-fromLspPositionUri position uri = (fromLspPosition position) {_rFile = fromMaybe "" $ LSP.uriToFilePath uri}
-
-fromLspRange :: LSP.Range -> Range
-fromLspRange
-  (LSP.Range
-    (fromLspPosition -> s)
-    (fromLspPosition -> e)) = merged s e
-
-fromLspRangeUri :: LSP.Range -> LSP.Uri -> Range
-fromLspRangeUri
-  (LSP.Range
-    (fromLspPosition -> s)
-    (fromLspPosition -> e)) uri = (merged s e) {_rFile = fromMaybe "" $ LSP.uriToFilePath uri}
 
 -- | Extract textual representation of given range.
 cutOut :: Range -> ByteString -> Text
@@ -170,10 +131,10 @@ instance Ord Range where
 
 makeLenses ''Range
 
-startLine :: Lens' Range LSP.UInt
+startLine :: Lens' Range Int
 startLine = rStart . _1
 {-# INLINE startLine #-}
 
-finishLine :: Lens' Range LSP.UInt
+finishLine :: Lens' Range Int
 finishLine = rFinish . _1
 {-# INLINE finishLine #-}
