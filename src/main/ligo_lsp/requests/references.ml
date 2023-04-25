@@ -1,40 +1,57 @@
+(* TODO: use Set, List & Hashtbl from Core *)
+module SMap = Caml.Map.Make (String)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
+module Hashtbl = Caml.Hashtbl
 open Handler
 open Lsp_helpers
 open Ligo_interface
 
-let get_references : DocumentUri.t -> Loc.t -> Scopes.def list -> Range.t list =
- fun uri location defs ->
+module RSet = Caml.Set.Make (struct
+  include Range
+
+  let compare = Caml.compare
+end)
+
+let get_references : Loc.t -> Scopes.def Seq.t -> Region.t Seq.t =
+ fun location defs ->
   defs
-  |> List.filter_map ~f:(fun def ->
+  |> Seq.concat_map (fun def ->
          if Loc.equal (Def.get_location def) location
-         then Some (LSet.elements @@ Def.get_references_of_file uri def)
-         else None)
-  |> List.concat
-  |> List.filter_map ~f:(function
-         | Loc.File region -> Some (Range.of_region region)
+         then LSet.to_seq @@ Def.references_getter def
+         else Seq.empty)
+  |> Seq.filter_map (function
+         | Loc.File region -> Some region
          | Loc.Virtual _ -> None)
+
+
+let partition_references : Region.t Seq.t -> RSet.t SMap.t =
+  Seq.fold_left
+    (fun acc reg ->
+      let range = Range.of_region reg in
+      SMap.update
+        reg#file
+        (function
+          | None -> Some (RSet.singleton range)
+          | Some ranges -> Some (RSet.add range ranges))
+        acc)
+    SMap.empty
 
 
 let get_all_references
     : Loc.t -> (DocumentUri.t, file_data) Hashtbl.t -> (DocumentUri.t * Range.t list) list
   =
  fun location get_scope_buffers ->
-  let go (file, { get_scope_info; _ }) =
+  let go { get_scope_info; _ } =
     let defs = get_scope_info.definitions in
-    match get_references file location defs with
-    | [] -> None
-    | l -> Some (file, l)
-  in
-  let filter_map res value =
-    let value = go value in
-    match value with
-    | None -> res
-    | Some ref -> ref :: res
+    get_references location @@ Caml.List.to_seq defs
   in
   get_scope_buffers
-  |> Hashtbl.to_seq
+  |> Hashtbl.to_seq_values
+  |> Seq.concat_map go
+  |> partition_references
+  |> SMap.to_seq
+  |> Seq.map (fun (file, refs) -> DocumentUri.of_path file, RSet.elements refs)
   |> Caml.List.of_seq
-  |> List.fold_left ~f:filter_map ~init:[]
 
 
 let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Handler.t =

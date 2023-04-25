@@ -10,15 +10,16 @@ let get_location : Scopes.def -> Loc.t = function
   | Module mdef -> mdef.range
 
 
+let references_getter : Scopes.def -> LSet.t =
+ fun def ->
+  match def with
+  | Variable vdef -> LSet.add vdef.range vdef.references
+  | Type tdef -> LSet.add tdef.range tdef.references
+  | Module mdef -> LSet.add mdef.range mdef.references
+
+
 let get_references_of_file : Document_uri.t -> Scopes.def -> LSet.t =
-  let references_getter : Scopes.def -> LSet.t =
-   fun def ->
-    match def with
-    | Variable vdef -> LSet.add vdef.range vdef.references
-    | Type tdef -> LSet.add tdef.range tdef.references
-    | Module mdef -> LSet.add mdef.range mdef.references
-  in
-  fun uri def -> LSet.filter (Document_uri.matches_loc uri) @@ references_getter def
+ fun uri def -> LSet.filter (Document_uri.matches_loc uri) @@ references_getter def
 
 
 let is_reference : Position.t -> Document_uri.t -> Scopes.def -> bool =
