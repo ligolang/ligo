@@ -21,8 +21,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import Language.LIGO.DAP.Variables (createVariables, runBuilder)
-import Language.LIGO.Debugger.CLI.Types (LigoType (..), Name, NameType (Concise), unknownVariable)
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Util.AST (Lang (Caml))
 
 mkDummyValue :: LigoOrMichValue -> Maybe (Name 'Concise) -> (Text, LigoOrMichValue)

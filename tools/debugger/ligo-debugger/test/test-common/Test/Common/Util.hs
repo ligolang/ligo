@@ -15,11 +15,11 @@ import Duplo.Pretty (Doc, Style (..), renderStyle, style)
 import System.Directory (listDirectory)
 import System.FilePath (takeDirectory, (</>))
 
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Util.AST.Common
 import Language.LIGO.Debugger.Util.AST.Includes (insertPreprocessorRanges)
 import Language.LIGO.Debugger.Util.AST.Parser (parsePreprocessed)
 import Language.LIGO.Debugger.Util.AST.Skeleton (SomeLIGO)
-import Language.LIGO.Debugger.Util.Cli.Types (TempDir (..), TempSettings (..))
 import Language.LIGO.Debugger.Util.Extension (supportedExtensions)
 import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
 import Language.LIGO.Debugger.Util.Parser (ParsedInfo)

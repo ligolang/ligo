@@ -46,7 +46,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (mformatAddress)
 import Morley.Tezos.Crypto (encodeBase58Check)
 
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Util.Range

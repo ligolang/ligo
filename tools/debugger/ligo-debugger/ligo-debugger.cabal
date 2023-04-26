@@ -16,7 +16,10 @@ library
       Control.DelayedValues
       Debug
       Language.LIGO.DAP.Variables
+      Language.LIGO.Debugger.CLI
       Language.LIGO.Debugger.CLI.Call
+      Language.LIGO.Debugger.CLI.Exception
+      Language.LIGO.Debugger.CLI.Helpers
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.CLI.Types.LigoValue
       Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
@@ -37,10 +40,6 @@ library
       Language.LIGO.Debugger.Util.AST.Parser.Jsligo
       Language.LIGO.Debugger.Util.AST.Pretty
       Language.LIGO.Debugger.Util.AST.Skeleton
-      Language.LIGO.Debugger.Util.Cli
-      Language.LIGO.Debugger.Util.Cli.Impl
-      Language.LIGO.Debugger.Util.Cli.Json
-      Language.LIGO.Debugger.Util.Cli.Types
       Language.LIGO.Debugger.Util.Diagnostic
       Language.LIGO.Debugger.Util.Extension
       Language.LIGO.Debugger.Util.Parser

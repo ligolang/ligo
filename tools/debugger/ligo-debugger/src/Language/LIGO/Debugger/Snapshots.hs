@@ -76,7 +76,7 @@ import Morley.Util.Lens (postfixLFields)
 
 import Duplo (leq)
 
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
 import Language.LIGO.Debugger.Util.AST (LIGO)

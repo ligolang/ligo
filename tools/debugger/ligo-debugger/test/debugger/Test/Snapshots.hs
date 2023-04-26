@@ -38,9 +38,7 @@ import Lorentz (MText)
 import Lorentz qualified as L
 import Lorentz.Value (mt)
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
@@ -48,8 +46,6 @@ import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
 import Language.LIGO.Debugger.Util.AST (scanContracts)
-import Language.LIGO.Debugger.Util.Cli.Json
-  (LigoLayout (LComb, LTree), LigoTypeContent (LTCSingleton), LigoTypeLiteralValue (LTLVInt))
 import Language.LIGO.Debugger.Util.Range
 
 test_Snapshots :: TestTree

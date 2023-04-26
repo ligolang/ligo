@@ -22,10 +22,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core
   (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote)
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
-import Language.LIGO.Debugger.Util.Cli.Json (LigoLayout (LComb, LTree))
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Util.Range
 
 test_Compilation :: TestTree

@@ -51,7 +51,7 @@ import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 
 import Duplo (layer, leq, spineTo)
 
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Util.AST
   (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,

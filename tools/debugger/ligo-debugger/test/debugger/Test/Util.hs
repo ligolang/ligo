@@ -92,9 +92,7 @@ import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl
@@ -102,7 +100,6 @@ import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
 import Language.LIGO.Debugger.Util.AST.Skeleton qualified as LSP
-import Language.LIGO.Debugger.Util.Cli.Json (LigoLayout (LTree), LigoTypeExpression (..))
 
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"

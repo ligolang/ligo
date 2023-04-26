@@ -12,13 +12,11 @@ import Text.Regex.TDFA ((=~))
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
 import UnliftIO.Exception (Handler (..), catches, fromEither)
 
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Util.AST.Common (ContractInfo, addLigoErrsToMsg, pattern FindContract)
 import Language.LIGO.Debugger.Util.AST.Parser.Camligo qualified as Caml
 import Language.LIGO.Debugger.Util.AST.Parser.Jsligo qualified as Js
 import Language.LIGO.Debugger.Util.AST.Skeleton
-import Language.LIGO.Debugger.Util.Cli
-  (HasLigoClient, LigoDecodedExpectedClientFailureException (..), LigoIOException,
-  SomeLigoException (..), TempSettings (..), fromLigoErrorToMsg, preprocess)
 import Language.LIGO.Debugger.Util.Diagnostic (Message)
 import Language.LIGO.Debugger.Util.Extension
 import Language.LIGO.Debugger.Util.ParseTree (Source (..), toParseTree)

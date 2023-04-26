@@ -34,12 +34,10 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core qualified as T
 import Morley.Tezos.Crypto.BLS12381 (toMichelsonBytes)
 
+import Language.LIGO.Debugger.CLI.Exception
+import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Util.AST (Lang (Caml, Js))
-import Language.LIGO.Debugger.Util.Cli.Json
-  (LigoTableField (..), LigoTypeConstant (..), LigoTypeContent (LTCConstant, LTCRecord, LTCSum),
-  LigoTypeExpression (..), LigoTypeTable (..), guardOneElemList, toSnakeCase)
-import Language.LIGO.Debugger.Util.Cli.Json qualified as Cli
+import Language.LIGO.Debugger.Util.AST.Skeleton (Lang (Caml, Js))
 
 -------------
 --- Types ---
@@ -95,12 +93,12 @@ data LigoEnvItem = LigoEnvItem
 -- This type is unused now but may be
 -- useful at some moment of time.
 data LigoFuncVal = LigoFuncVal
-  { lfvRecName :: Maybe Cli.LigoVariable
+  { lfvRecName :: Maybe LigoVar
   , lfvOrigLambda :: Value
   , lfvBody :: Value
-  , lfvArgBinder :: Cli.LigoVariable
+  , lfvArgBinder :: LigoVar
   , lfvArgMutFlag :: LigoMutFlag
-  , lfvEnv :: [(Cli.LigoVariable, LigoEnvItem)]
+  , lfvEnv :: [(LigoVar, LigoEnvItem)]
   } deriving stock (Generic, Show, Eq, Data)
     deriving anyclass (NFData)
     deriving (FromJSON) via LigoValueJSON 3 LigoFuncVal

@@ -63,10 +63,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core (tz)
 
 import Language.LIGO.DAP.Variables
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
-import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -74,10 +71,6 @@ import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
-import Language.LIGO.Debugger.Util.Cli
-  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
-  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
-import Language.LIGO.Debugger.Util.Cli qualified as LSP.Cli
 import Language.LIGO.Debugger.Util.Extension (UnsupportedExtension (..), getExt)
 import Language.LIGO.Debugger.Util.Range
 
@@ -589,7 +582,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
   rawVersion <- getLigoVersion
-  logMessage [int||Ligo version: #{LSP.Cli.getVersion rawVersion}|]
+  logMessage [int||Ligo version: #{getVersion rawVersion}|]
 
   -- Pro-actively check that ligo version is supported
   runMaybeT do
