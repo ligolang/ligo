@@ -104,13 +104,14 @@
  (libraries core dune-configurator))
 
 (rule
- (targets win32-flags.sexp)
+ (targets platform-specific-compiler-flags.sexp platform-specific-linker-flags.sexp)
  (action
   (run ./configurator.exe)))
 
 (executable
  (name runligo)
  (public_name ligo)
+ (link_flags (:include platform-specific-linker-flags.sexp))
  (instrumentation
   (backend bisect_ppx))
  (libraries
@@ -124,7 +125,7 @@
  (flags
   -open
   Core
-  (:include win32-flags.sexp))
+  (:include platform-specific-compiler-flags.sexp))
  (modules runligo)
  (package ligo))
 
