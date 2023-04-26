@@ -7,7 +7,7 @@ open Errors
   in Jsligo, parameters in arrow types have name, we simply drop it
   `(foo:int) => (bar:string) => nat` |-> `int -> string -> nat`
 
-  TODO XXX CREATE ISSUE: we could remember them somehow in the future
+  TODO #1811: we need to remember them somehow (e.g. save as attributes) to make [decompile] correct
   *)
 
 include Flag.No_arg ()

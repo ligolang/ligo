@@ -19,4 +19,5 @@ let rec folder =
 
 and decompile_program p = AST.Catamorphism.cata_program ~f:folder p
 and decompile_expression e = AST.Catamorphism.cata_expr ~f:folder e
+and decompile_type_expression e = AST.Catamorphism.cata_ty_expr ~f:folder e
 and decompile_pattern p = AST.Catamorphism.cata_pattern ~f:folder p

@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Row = Ligo_prim.Row.With_optional_layout
 open Simple_utils
 open Simple_utils.Trace
 
@@ -568,12 +569,32 @@ end = struct
            ; field = element
            ; field_as_open = false
            }
+    | T_sum _ when is_some (I.get_t_bool ty) ->
+      ret @@ T_var (O.Ty_variable.of_input_var ~loc "bool")
+    | T_sum { fields; layout = _ } when is_some (I.get_t_option ty) ->
+      let constr = I.make_t ~loc (T_variable (O.Ty_variable.of_input_var ~loc "option"))
+      and arg = Ligo_prim.Label.Map.find_exn fields (Label "Some") in
+      ret
+      @@ T_app
+           { constr
+           ; type_args =
+               List.Ne.singleton arg
+               (* XXX for some reason matching on [I.get_t_option ty] transforms "int option" 
+                        to "a option" so we have manual matching here instead *)
+           }
     | T_sum { fields; layout } ->
       ignore layout;
       (* TODO .. ? how ? *)
       ignore conv_row_attr;
       ret @@ T_sum_raw (conv_fields fields)
       (* ret @@ T_attr (attr, I.make_t ~loc @@ T_record { recc with layout = None }) *)
+    | T_record row when Row.is_tuple row ->
+      let t =
+        match Row.to_tuple row with
+        | [] -> invariant "empty record"
+        | a :: b -> a, b
+      in
+      ret @@ T_prod t
     | T_record { fields; layout } ->
       ignore layout;
       (* TODO .. ? how ? *)
