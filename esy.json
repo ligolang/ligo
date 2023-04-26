@@ -43,6 +43,9 @@
     },
     "license": "MIT",
     "dependencies": {
+      "ligo-win32-ntdll-stubs": "*",
+      "@opam/tezos-016-PtMumbai-test-helpers": "*",
+      "@opam/tezos-015-PtLimaPt-test-helpers": "*",
       "@opam/tezos-base": "*",
       "@opam/tezos-hacl": "*",
       "@opam/tezos-micheline": "*",
@@ -59,6 +62,9 @@
       "esy-libffi": "*"
     },
     "resolutions": {
+      "@opam/tezos-015-PtLimaPt-test-helpers": "./vendors/tezos-ligo",
+      "@opam/tezos-016-PtMumbai-test-helpers": "./vendors/tezos-ligo",
+      "@opam/tezos-test-helpers": "./vendors/tezos-ligo",
       "ligo-win32-ntdll-stubs": "link:./vendors/win32-ntdll-stubs",
       "@opam/tezos-rust-libs": {
         "version": "opam:1.5",

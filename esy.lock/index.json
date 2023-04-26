@@ -1,5 +1,5 @@
 {
-  "checksum": "2b57e3af9ebdc5577212790e707264ae",
+  "checksum": "ba97772705f9349d3dfbc9b62e5f4230",
   "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
@@ -48,6 +48,7 @@
       "source": { "type": "link-dev", "path": ".", "manifest": "ligo.opam" },
       "overrides": [ "esy.json" ],
       "dependencies": [
+        "ligo-win32-ntdll-stubs@link:vendors/win32-ntdll-stubs",
         "esy-libffi@3.3.1@d41d8cd9", "esy-libev@4.33.1@d41d8cd9",
         "esy-gmp@6.2.1001@d41d8cd9", "@opam/yojson@opam:2.0.2@eb65f292",
         "@opam/tls@opam:0.17.0@f26ddd36",
@@ -60,6 +61,8 @@
         "@opam/tezos-client-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-clic@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/tezos-016-PtMumbai-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-015-PtLimaPt-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/terminal_size@opam:0.2.0@42e21df4",
         "@opam/tar-unix@opam:2.4.0@f1083ea4",
         "@opam/tar@opam:2.4.0@1188e7a8",
@@ -880,6 +883,35 @@
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
         "@opam/dune@opam:3.7.1@e0adc71a",
         "@opam/data-encoding@opam:0.7.1@1ff2c6b3"
+      ]
+    },
+    "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9": {
+      "id": "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+      "name": "@opam/tezos-test-helpers",
+      "version": "path:vendors/tezos-ligo",
+      "source": {
+        "type": "install",
+        "source": [ "path:vendors/tezos-ligo" ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.14.0@d41d8cd9", "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/pure-splitmix@opam:0.3@ba493865",
+        "@opam/lwt@opam:5.6.1@2a9902ab", "@opam/fmt@opam:0.9.0@87213963",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/data-encoding@opam:0.7.1@1ff2c6b3",
+        "@opam/alcotest@opam:1.7.0@356bdede",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.14.0@d41d8cd9", "@opam/uri@opam:4.2.0@9c45eeb8",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/pure-splitmix@opam:0.3@ba493865",
+        "@opam/lwt@opam:5.6.1@2a9902ab", "@opam/fmt@opam:0.9.0@87213963",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/data-encoding@opam:0.7.1@1ff2c6b3",
+        "@opam/alcotest@opam:1.7.0@356bdede"
       ]
     },
     "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9": {
@@ -2363,6 +2395,96 @@
         "@opam/ezjsonm@opam:1.3.0@7e3d4a08",
         "@opam/dune@opam:3.7.1@e0adc71a",
         "@opam/data-encoding@opam:0.7.1@1ff2c6b3"
+      ]
+    },
+    "@opam/tezos-016-PtMumbai-test-helpers@path:vendors/tezos-ligo@d41d8cd9": {
+      "id":
+        "@opam/tezos-016-PtMumbai-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+      "name": "@opam/tezos-016-PtMumbai-test-helpers",
+      "version": "path:vendors/tezos-ligo",
+      "source": {
+        "type": "install",
+        "source": [ "path:vendors/tezos-ligo" ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-shell-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-plugin-016-PtMumbai@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-environment@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-016-PtMumbai@path:vendors/tezos-ligo@60724f32",
+        "@opam/tezos-plompiler@opam:1.0.1@9374984e",
+        "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-crypto-dal@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-client-016-PtMumbai@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/alcotest-lwt@opam:1.7.0@b5d3b247",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-shell-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-plugin-016-PtMumbai@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-environment@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-016-PtMumbai@path:vendors/tezos-ligo@60724f32",
+        "@opam/tezos-plompiler@opam:1.0.1@9374984e",
+        "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-crypto-dal@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-client-016-PtMumbai@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/alcotest-lwt@opam:1.7.0@b5d3b247"
+      ]
+    },
+    "@opam/tezos-015-PtLimaPt-test-helpers@path:vendors/tezos-ligo@d41d8cd9": {
+      "id":
+        "@opam/tezos-015-PtLimaPt-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+      "name": "@opam/tezos-015-PtLimaPt-test-helpers",
+      "version": "path:vendors/tezos-ligo",
+      "source": {
+        "type": "install",
+        "source": [ "path:vendors/tezos-ligo" ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-shell-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-plugin-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-environment@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-015-PtLimaPt@path:vendors/tezos-ligo@d0cf7213",
+        "@opam/tezos-plompiler@opam:1.0.1@9374984e",
+        "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-client-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/alcotest-lwt@opam:1.7.0@b5d3b247",
+        "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tezos-test-helpers@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-shell-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-plugin-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-environment@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-protocol-015-PtLimaPt@path:vendors/tezos-ligo@d0cf7213",
+        "@opam/tezos-plompiler@opam:1.0.1@9374984e",
+        "@opam/tezos-micheline@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-client-015-PtLimaPt@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/qcheck-alcotest@opam:0.20@695cf795",
+        "@opam/dune@opam:3.7.1@e0adc71a",
+        "@opam/alcotest-lwt@opam:1.7.0@b5d3b247"
       ]
     },
     "@opam/terminal_size@opam:0.2.0@42e21df4": {
