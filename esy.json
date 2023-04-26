@@ -75,6 +75,12 @@
         }
       },
       "esy-rustup": "esy-packages/esy-rustup:esy.json#3872ef2eaefb6c2207bd7cb4386d073a27381bfe",
+      "@opam/tzsh-s": {
+        "source": "no-source:",
+        "override": {
+          "build": ["true"]
+        }
+      },
       "@opam/ocaml-lsp-server": {
         "source": "no-source:",
         "override": {
@@ -146,7 +152,6 @@
       "@opam/tz-rpc-cli": {
         "source": "./vendors/tezos-ligo",
         "override": {
-          "buildsInSource": "_build",
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
@@ -157,7 +162,6 @@
       "@opam/tz-rpc-cli-unix": {
         "source": "./vendors/tezos-ligo",
         "override": {
-          "buildsInSource": "_build",
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
@@ -217,7 +221,6 @@
       "@opam/tzsh-s": {
         "source": "./vendors/tezos-ligo",
         "override": {
-          "buildsInSource": "_build",
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
@@ -228,7 +231,6 @@
       "@opam/tz-cli-b": {
         "source": "./vendors/tezos-ligo",
         "override": {
-          "buildsInSource": "_build",
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
