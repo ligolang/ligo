@@ -149,8 +149,26 @@
       "@opam/tezos-stdlib-unix": "./vendors/tezos-ligo",
       "@opam/tezos-stdlib": "./vendors/tezos-ligo",
       "@opam/tezos-context": "./vendors/tezos-ligo",
-      "@opam/tezos-rpc-http-client": "./vendors/tezos-ligo",
-      "@opam/tezos-rpc-http-client-unix": "./vendors/tezos-ligo",
+      "@opam/tezos-rpc-http-client": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "build": [
+            "rm -rf vendors",
+            "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
+            "dune build -p tezos-rpc-http-client"
+          ]
+        }
+      },
+      "@opam/tezos-rpc-http-client-unix": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "build": [
+            "rm -rf vendors",
+            "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
+            "dune build -p tezos-rpc-http-client-unix"
+          ]
+        }
+      },
       "@opam/tezos-webassembly-interpreter": "./vendors/tezos-ligo",
       "@opam/tezos-lazy-containers": "./vendors/tezos-ligo",
       "@opam/tezos-version": "./vendors/tezos-ligo",
@@ -200,8 +218,26 @@
         }
       },
       "@opam/tezos-client-015-PtLimaPt": "./vendors/tezos-ligo",
-      "@opam/tezos-shell-services": "./vendors/tezos-ligo",
-      "@opam/tezos-client-base": "./vendors/tezos-ligo",
+      "@opam/tezos-shell-services": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "build": [
+            "rm -rf vendors",
+            "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
+            "dune build -p tezos-shell-services"
+          ]
+        }
+      },
+      "@opam/tezos-client-base": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "build": [
+            "rm -rf vendors",
+            "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
+            "dune build -p tezos-client-base"
+          ]
+        }
+      },
       "@opam/tezos-signer-services": "./vendors/tezos-ligo",
       "@opam/tezos-signer-backends": "./vendors/tezos-ligo",
       "@opam/tezos-client-commands": "./vendors/tezos-ligo",
