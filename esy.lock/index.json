@@ -1227,9 +1227,9 @@
         "@opam/dune@opam:3.7.1@e0adc71a"
       ]
     },
-    "@opam/tezos-signer-services@path:vendors/tezos-ligo@d41d8cd9": {
-      "id": "@opam/tezos-signer-services@path:vendors/tezos-ligo@d41d8cd9",
-      "name": "@opam/tezos-signer-services",
+    "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9": {
+      "id": "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
+      "name": "@opam/tz-sig-s",
       "version": "path:vendors/tezos-ligo",
       "source": {
         "type": "install",
@@ -1268,7 +1268,7 @@
         "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
         "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-signer-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc-http@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-clic@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
@@ -1284,7 +1284,7 @@
         "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
         "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-signer-services@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc-http@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-clic@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
