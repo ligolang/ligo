@@ -75,7 +75,7 @@
         }
       },
       "esy-rustup": "esy-packages/esy-rustup:esy.json#3872ef2eaefb6c2207bd7cb4386d073a27381bfe",
-      "@opam/tezos-shell-services": {
+      "@opam/tzsh-s": {
         "source": "no-source:",
         "override": {
           "build": ["true"]
@@ -149,23 +149,23 @@
       "@opam/tezos-stdlib-unix": "./vendors/tezos-ligo",
       "@opam/tezos-stdlib": "./vendors/tezos-ligo",
       "@opam/tezos-context": "./vendors/tezos-ligo",
-      "@opam/tezos-rpc-http-client": {
+      "@opam/tz-rpc-cli": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
-            "dune build -p tezos-rpc-http-client"
+            "dune build -p tz-rpc-cli"
           ]
         }
       },
-      "@opam/tezos-rpc-http-client-unix": {
+      "@opam/tz-rpc-cli-unix": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
-            "dune build -p tezos-rpc-http-client-unix"
+            "dune build -p tz-rpc-cli-unix"
           ]
         }
       },
@@ -218,23 +218,23 @@
         }
       },
       "@opam/tezos-client-015-PtLimaPt": "./vendors/tezos-ligo",
-      "@opam/tezos-shell-services": {
+      "@opam/tzsh-s": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
-            "dune build -p tezos-shell-services"
+            "dune build -p tzsh-s"
           ]
         }
       },
-      "@opam/tezos-client-base": {
+      "@opam/tz-cli-b": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
             "rm -rf src/proto_015_PtLimaPt/lib_protocol/test",
-            "dune build -p tezos-client-base"
+            "dune build -p tz-cli-b"
           ]
         }
       },
@@ -242,7 +242,7 @@
       "@opam/tezos-signer-backends": "./vendors/tezos-ligo",
       "@opam/tezos-client-commands": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-commands": "./vendors/tezos-ligo",
-      "@opam/tezos-client-base-unix": "./vendors/tezos-ligo",
+      "@opam/tz-cli-b-unix": "./vendors/tezos-ligo",
       "@opam/tzp2p-s": "./vendors/tezos-ligo",
       "@opam/tezos-scoru-wasm": "./vendors/tezos-ligo",
       "@opam/tezos-proxy": "./vendors/tezos-ligo",
