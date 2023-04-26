@@ -101,7 +101,14 @@
       "esy-openssl": "ManasJayanth/esy-openssl#05feaf76bbd56cde53c30a1dfe3c6353f8ab895b",
       "@opam/ocp-indent": "OCamlPro/ocp-indent:ocp-indent.opam#7c4d434132cebc15a8213c8be9e7323692eb0a2b",
       "@opam/ocaml-recovery-parser": "serokell/ocaml-recovery-parser:ocaml-recovery-parser.opam#e05c872d1a0e8074940d995b57556121eddbf0f2",
-      "@opam/tezos-base": "./vendors/tezos-ligo",
+      "@opam/tezos-base": {
+        "source": "./vendors/tezos-ligo",
+        "override": {
+          "dependencies": {
+            "ligo-win32-ntdll-stubs": "*"
+          }
+        }
+      },
       "@opam/tezos-clic": "./vendors/tezos-ligo",
       "@opam/tezos-crypto": "./vendors/tezos-ligo",
       "@opam/tezos-error-monad": "./vendors/tezos-ligo",
@@ -118,6 +125,7 @@
             "DYLD_LIBRARY_PATH": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}"
           },
           "dependencies": {
+            "ligo-win32-ntdll-stubs": "*",
             "@opam/dune-configurator": "*",
             "@opam/hacl-star-raw": "*"
           }
