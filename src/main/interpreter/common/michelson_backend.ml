@@ -44,7 +44,7 @@ let string_of_signature t = Format.asprintf "%a" Tezos_crypto.Signature.pp t
 let bytes_of_bls12_381_g1 t = Bls12_381.G1.to_bytes t
 let bytes_of_bls12_381_g2 t = Bls12_381.G2.to_bytes t
 let bytes_of_bls12_381_fr t = Bls12_381.Fr.to_bytes t
-let string_of_chain_id t = Tezos_crypto.Chain_id.to_b58check t
+let string_of_chain_id t = Tezos_crypto.Hashed.Chain_id.to_b58check t
 
 module Tezos_eq = struct
   (* behavior should be equivalent to the one in the tezos codebase *)
@@ -117,23 +117,6 @@ module Tezos_eq = struct
     with
     | Z.Overflow -> None
 end
-
-let create_chest_key (chest : bytes) (time : int) : bytes =
-  let open Tezos_crypto in
-  let chest = Data_encoding.Binary.of_bytes_exn Timelock.chest_encoding chest in
-  Data_encoding.Binary.to_bytes_exn Timelock.chest_key_encoding
-  @@ Timelock.create_chest_key chest ~time
-
-
-let create_chest (payload : Bytes.t) (time : int) : _ =
-  let open Tezos_crypto in
-  let chest, chest_key = Timelock.create_chest_and_chest_key ~payload ~time in
-  let chest_key_bytes =
-    Data_encoding.Binary.to_bytes_exn Timelock.chest_key_encoding chest_key
-  in
-  let chest_bytes = Data_encoding.Binary.to_bytes_exn Timelock.chest_encoding chest in
-  chest_bytes, chest_key_bytes
-
 
 let clean_location_with v x =
   let open Tezos_micheline.Micheline in
@@ -542,19 +525,13 @@ let rec val_to_ast ~raise ~loc
     (match get_t_bytes ty with
     | Some () -> e_a_bytes ~loc b
     | None ->
-      (match get_t_chest ty with
-      | Some () -> e_a_chest ~loc b
-      | None ->
-        (match get_t_chest_key ty with
-        | Some () -> e_a_chest_key ~loc b
-        | None ->
-          raise.error
-            (Errors.generic_error
-               loc
-               (Format.asprintf
-                  "Expected bytes, chest, or chest_key but got %a"
-                  Ast_aggregated.PP.type_expression
-                  ty)))))
+      raise.error
+        (Errors.generic_error
+           loc
+           (Format.asprintf
+              "Expected bytes but got %a"
+              Ast_aggregated.PP.type_expression
+              ty)))
   | V_Ct (C_address a) when is_t_address ty ->
     let () =
       trace_option
@@ -999,19 +976,13 @@ let rec compile_value ~raise ~options ~loc
     (match get_t_bytes ty with
     | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
     | None ->
-      (match get_t_chest ty with
-      | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
-      | None ->
-        (match get_t_chest_key ty with
-        | Some () -> Tezos_micheline.Micheline.Bytes ((), b)
-        | None ->
-          raise.error
-            (Errors.generic_error
-               loc
-               (Format.asprintf
-                  "Expected bytes, chest, or chest_key but got %a"
-                  Ast_aggregated.PP.type_expression
-                  ty)))))
+      raise.error
+        (Errors.generic_error
+           loc
+           (Format.asprintf
+              "Expected bytes but got %a"
+              Ast_aggregated.PP.type_expression
+              ty)))
   | V_Ct (C_int x) ->
     let () =
       trace_option

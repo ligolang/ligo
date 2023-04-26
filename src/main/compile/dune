@@ -8,6 +8,7 @@
   main_errors
   simple-utils
   proto-alpha-utils
+  proto-pre-alpha-utils
   preprocessing
   parsing
   cst

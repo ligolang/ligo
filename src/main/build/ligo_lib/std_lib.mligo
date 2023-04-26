@@ -39,18 +39,9 @@ module Tezos = struct
   let get_contract_with_error (type a) (a : address) (s : string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
-#if KATHMANDU
-  let create_ticket (type a) (v : a) (n : nat) : a ticket = [%michelson ({| { TICKET } |} v n : a ticket)]
-#endif
-#if LIMA
-  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%michelson ({| { TICKET } |} v n : (a ticket) option)]
-#endif
+  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
-    [%michelson ({| { TRANSFER_TOKENS } |} a mu c : operation)]
-#if KATHMANDU
-  let open_chest (ck : chest_key) (c : chest) (n : nat) : chest_opening_result =
-    [%michelson ({| { OPEN_CHEST ; IF_LEFT { RIGHT (or unit unit) } { IF { PUSH unit Unit ; LEFT unit ; LEFT bytes } { PUSH unit Unit ; RIGHT unit ; LEFT bytes } } } |} ck c n : chest_opening_result)]
-#endif
+    [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     let _ : unit = [%external ("CHECK_CALL_VIEW_LITSTR", s)] in
     [%michelson ({| { VIEW (litstr $0) (typeopt $1) } |} (s : string) (None : b option) x a : b option)]
@@ -75,11 +66,11 @@ module Tezos = struct
 end
 
 module Bitwise = struct
-  let @and (type a b) (l : a) (r : b) : (a, b) external_and = [%michelson ({| { AND } |} l r : (a, b) external_and)]
-  let xor (l : nat) (r : nat) : nat = [%external ("XOR", l, r)]
-  let @or (l : nat) (r : nat) : nat = [%external ("OR", l, r)]
-  let shift_left (l : nat) (r : nat) : nat = [%external ("LSL", l, r)]
-  let shift_right (l : nat) (r : nat) : nat = [%external ("LSR", l, r)]
+  let @and        (type a b) (l : a) (r : b) : (a, b) external_and = [%Michelson ({| { UNPAIR ; AND } |} : a * b -> (a, b) external_and)] (l, r)
+  let xor         (type a b) (l : a) (r : b) : (a, b) external_or  = [%Michelson ({| { UNPAIR ; XOR } |} : a * b -> (a, b) external_or )] (l, r)
+  let @or         (type a b) (l : a) (r : b) : (a, b) external_xor = [%Michelson ({| { UNPAIR ; OR  } |} : a * b -> (a, b) external_xor)] (l, r)
+  let shift_left  (type a b) (l : a) (r : b) : (a, b) external_lsl = [%Michelson ({| { UNPAIR ; LSL } |} : a * b -> (a, b) external_lsl)] (l, r)
+  let shift_right (type a b) (l : a) (r : b) : (a, b) external_lsr = [%Michelson ({| { UNPAIR ; LSR } |} : a * b -> (a, b) external_lsr)] (l, r)
 end
 
 module Big_map = struct
@@ -206,7 +197,15 @@ let is_nat (i : int) : nat option = [%michelson ({| { ISNAT } |} i : nat option)
 [@inline] let true : bool = True
 [@inline] let false : bool = False
 [@inline] let unit : unit = [%external ("UNIT")]
-let int (type a) (v : a) : a external_int = [%michelson ({| { INT } |} v : a external_int)]
+#if MUMBAI
+let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
+#elif LIMA
+let int (type a) (v : a) : a external_int_lima = [%Michelson ({| { INT } |} : a -> a external_int_lima)] v
+#endif
+#if MUMBAI
+let nat (v : bytes) : nat = [%Michelson ({| { NAT } |} : bytes -> nat)] v
+let bytes (type a) (v : a) : a external_bytes = [%Michelson ({| { BYTES } |} : a -> a external_bytes)] v
+#endif
 let ignore (type a) (_ : a) : unit = ()
 let curry (type a b c) (f : a * b -> c) (x : a) (y : b) : c = f (x, y)
 let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1
@@ -350,8 +349,6 @@ module Test = struct
   let add_account (s : string) (k : key) : unit = [%external ("TEST_ADD_ACCOUNT", s, k)]
   let baker_account (p : string * key) (o : tez option) : unit = [%external ("TEST_BAKER_ACCOUNT", p, o)]
   let set_big_map (type a b) (i : int) (m : (a, b) big_map) : unit = [%external ("TEST_SET_BIG_MAP", i, m)]
-  let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
-  let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
   let transfer_to_contract (type p) (c : p contract) (s : p) (t : tez) : test_exec_result =
     let a : address = [%external ("TEST_ADDRESS", c)] in
     let e : string option = [%external ("TEST_GET_ENTRYPOINT", c)] in

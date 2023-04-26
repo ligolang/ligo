@@ -121,7 +121,6 @@ release:
     - docker_extract
     - changelog
     - initialize-git
-    - esy-windows
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs

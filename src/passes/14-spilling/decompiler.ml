@@ -192,8 +192,8 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         Bls12_381_fr    | Address              | Key             | Chain_id | Signature         | Ast_contract       |
         Map             | Big_map              | Set             | Int64    | Baker_hash        | Pvss_key           |
         Sapling_state   | Sapling_transaction  | Baker_operation | Never    | Michelson_program | Michelson_contract |
-        Gen             | String               | Typed_address   | Mutation | List              | Chest              |
-        Chest_key       | Chest_opening_result | Int             | Key_hash | Ticket            | Timestamp          |
+        Gen             | String               | Typed_address   | Mutation | List              | 
+                                                 Int             | Key_hash | Ticket            | Timestamp          |
         Operation       | Tx_rollup_l2_address | External _      | Views), _) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.error @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"

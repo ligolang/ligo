@@ -73,7 +73,7 @@ let signature_of_string ~raise s =
 let chain_id_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
       Errors.generic_error Location.generated "Cannot parse chain_id")
-  @@ Tezos_crypto.Chain_id.of_b58check s
+  @@ Tezos_crypto.Hashed.Chain_id.of_b58check s
 
 
 let wrong_mini_c_value _t _v =
@@ -262,8 +262,6 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
       List.map ~f:aux lst'
     in
     V_Set lst''
-  | Prim (_, "chest", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
-  | Prim (_, "chest_key", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
   (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
    *     D_operation op
    *   ) *)
@@ -436,11 +434,8 @@ let rec decompile_value
         | Ticket
         | Michelson_contract
         | Gen
-        | Chest
-        | Chest_key
         | Typed_address
         | Mutation
-        | Chest_opening_result
         | External _
         | Views
         | Tx_rollup_l2_address )

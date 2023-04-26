@@ -7,8 +7,6 @@ description: Lima changes
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-> Note: those feature are enabled when using the `--protocol lima` flag in LIGO CLI
-
 ## API
 
 ### Deprecation

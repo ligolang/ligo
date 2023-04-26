@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nUpgrade LIGO to use the Mumbai protocol\\n\\n#### Additions\\nAdd support for bitwise operators on `bytes`Add support for `byest-nat` & `bytes-int` conversionThe protocol supports working with `txr1` & `scr1` addresses\\n#### Deprecation\\nThe type `tx_rollup_l2_address` has been disabled in the Mumbai protocol\\n#### Example\\n\\n\\n```ocaml\\n[@entry] let main (_ : unit) (_ : bytes) : operation list * bytes =\\n  let b = bytes 123n in\\n  [], b land 0xffff\\n\\nlet test =\\n  let (taddr, _, _) = Test.originate main 0xffff 0tez in\\n  let contr = Test.to_contract taddr in\\n  let _ = Test.transfer_to_contract_exn contr () 1mutez in\\n  assert (Test.get_storage taddr = 0xffff land bytes 123n)\\n\\n```\\n\\n#### Compilation\\n\\n\\n```bash\\n$ ligo compile contract x.mligo \\n{ parameter unit ;\\n  storage bytes ;\\n  code { DROP ;\\n         PUSH nat 123 ;\\n         BYTES ;\\n         PUSH bytes 0xffff ;\\n         AND ;\\n         NIL operation ;\\n         PAIR } }\\n\\n```\\n\\n#### Tests\\n\\n\\n```bash\\n$ ligo run test x.mligo \\nEverything at the top-level was executed.\\n- test exited with value ().\\n\\n```\\n\\n"
+merge_request: '2505'
+title: "Upgrade to protocol Mumbai"
+type: added
+            
