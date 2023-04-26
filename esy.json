@@ -236,7 +236,7 @@
           ]
         }
       },
-      "@opam/tz-sig-s": "./vendors/tezos-ligo",
+      "@opam/tezos-signer-services": "./vendors/tezos-ligo",
       "@opam/tezos-signer-backends": "./vendors/tezos-ligo",
       "@opam/tezos-client-commands": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-commands": "./vendors/tezos-ligo",

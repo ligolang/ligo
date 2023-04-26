@@ -124,7 +124,7 @@ pin-depends: [
   [ "tezos-sapling.dev" "./vendors/tezos-ligo/opam" ]
   [ "tzsh-s.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-sig-s.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-stdlib.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
