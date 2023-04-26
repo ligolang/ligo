@@ -40,9 +40,6 @@ let michelson_base : (Type_var.t * type_expression) list =
   ; v_signature ~loc, t_signature ~loc ()
   ; v_key ~loc, t_key ~loc ()
   ; v_key_hash ~loc, t_key_hash ~loc ()
-  ; v_chest ~loc, t_chest ~loc ()
-  ; v_chest_key ~loc, t_chest_key ~loc ()
-  ; v_chest_opening_result ~loc, t_chest_opening_result ~loc ()
   ; v_timestamp ~loc, t_timestamp ~loc ()
   ; v_list ~loc, t_abstraction1 ~loc List star
   ; v_big_map ~loc, t_abstraction2 ~loc Big_map star star
@@ -63,9 +60,15 @@ let michelson_base : (Type_var.t * type_expression) list =
   ; v_never ~loc, t_never ~loc ()
   ; v_ticket ~loc, t_abstraction1 ~loc Ticket star
   ; v_external_int ~loc, t_abstraction1 ~loc (External "int") star
+  ; v_external_int_lima ~loc, t_abstraction1 ~loc (External "int_lima") star
+  ; v_external_bytes ~loc, t_abstraction1 ~loc (External "bytes") star
   ; v_external_ediv ~loc, t_abstraction2 ~loc (External "ediv") star star
   ; v_external_u_ediv ~loc, t_abstraction2 ~loc (External "u_ediv") star star
   ; v_external_and ~loc, t_abstraction2 ~loc (External "and") star star
+  ; v_external_or ~loc, t_abstraction2 ~loc (External "or") star star
+  ; v_external_xor ~loc, t_abstraction2 ~loc (External "xor") star star
+  ; v_external_lsl ~loc, t_abstraction2 ~loc (External "lsl") star star
+  ; v_external_lsr ~loc, t_abstraction2 ~loc (External "lsr") star star
   ; v_external_u_and ~loc, t_abstraction2 ~loc (External "u_and") star star
   ; v_external_map_find_opt ~loc, t_abstraction2 ~loc (External "map_find_opt") star star
   ; v_external_map_add ~loc, t_abstraction3 ~loc (External "map_add") star star star
@@ -78,6 +81,11 @@ let michelson_base : (Type_var.t * type_expression) list =
 
 let base = basic_types @ michelson_base
 let lima_types = base
+
+let mumbai_types =
+  List.filter base ~f:(fun (tv, _) ->
+      not (Type_var.equal tv (v_tx_rollup_l2_address ~loc)))
+
 
 let meta_ligo_types
     : (Type_var.t * type_expression) list -> (Type_var.t * type_expression) list
@@ -103,3 +111,4 @@ let of_list_type : (Type_var.t * type_expression) list -> t =
 
 let default : Protocols.t -> t = function
   | Protocols.Lima -> of_list_type (meta_ligo_types lima_types)
+  | Protocols.Mumbai -> of_list_type (meta_ligo_types mumbai_types)

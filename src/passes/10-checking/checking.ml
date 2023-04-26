@@ -224,10 +224,6 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
   | Literal_bls12_381_g1 _ -> const Type.t_bls12_381_g1
   | Literal_bls12_381_g2 _ -> const Type.t_bls12_381_g2
   | Literal_bls12_381_fr _ -> const Type.t_bls12_381_fr
-  | Literal_chest _ | Literal_chest_key _ ->
-    raise
-      (corner_case
-         "chest / chest_key are not allowed in the syntax (only tests need this type)")
 
 
 let rec check_expression (expr : I.expression) (type_ : Type.t)
@@ -917,10 +913,22 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
            Constant_typers.External_types.map_remove_types parameters
          | T_construct { constructor = External "int"; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
+         | T_construct { constructor = External "int_lima"; parameters; _ } ->
+           Constant_typers.External_types.int_lima_types parameters
+         | T_construct { constructor = External "bytes"; parameters; _ } ->
+           Constant_typers.External_types.bytes_types parameters
          | T_construct { constructor = External ("ediv" | "u_ediv"); parameters; _ } ->
            Constant_typers.External_types.ediv_types parameters
          | T_construct { constructor = External ("and" | "u_and"); parameters; _ } ->
            Constant_typers.External_types.and_types parameters
+         | T_construct { constructor = External "or"; parameters; _ } ->
+           Constant_typers.External_types.or_types parameters
+         | T_construct { constructor = External "xor"; parameters; _ } ->
+           Constant_typers.External_types.xor_types parameters
+         | T_construct { constructor = External "lsl"; parameters; _ } ->
+           Constant_typers.External_types.lsl_types parameters
+         | T_construct { constructor = External "lsr"; parameters; _ } ->
+           Constant_typers.External_types.lsr_types parameters
          | _ -> return ret_type)
         ~with_:(fun _ -> return ret_type)
     in

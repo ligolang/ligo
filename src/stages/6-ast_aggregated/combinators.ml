@@ -67,9 +67,7 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
       , "never"
       , "mutation"
       , "pvss_key"
-      , "baker_hash"
-      , "chest_key"
-      , "chest" )]
+      , "baker_hash" )]
 
 
 let t__type_ ~loc t : type_expression = t_constant ~loc _type_ [ t ]
@@ -190,8 +188,6 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
       , "key"
       , "signature"
       , "key_hash"
-      , "chest"
-      , "chest_key"
       , "michelson_program"
       , "bls12_381_g1"
       , "bls12_381_g2"
@@ -323,9 +319,7 @@ let e__type_ p : expression_content = E_literal (Literal__type_ p)
       , "operation"
       , "bls12_381_g1"
       , "bls12_381_g2"
-      , "bls12_381_fr"
-      , "chest"
-      , "chest_key" )]
+      , "bls12_381_fr" )]
 
 
 let e_unit () : expression_content = E_literal Literal_unit
@@ -357,8 +351,6 @@ let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
       , "bls12_381_g1"
       , "bls12_381_g2"
       , "bls12_381_fr"
-      , "chest"
-      , "chest_key"
       , "chain_id" )]
 
 

@@ -77,8 +77,6 @@ let literal_type_prim (l : Literal_value.t) : string =
   | Literal_bls12_381_g1 _ -> "bls12_381_g1"
   | Literal_bls12_381_g2 _ -> "bls12_381_g2"
   | Literal_bls12_381_fr _ -> "bls12_381_fr"
-  | Literal_chest _ -> "chest"
-  | Literal_chest_key _ -> "chest_key"
 
 let literal_type (l : Literal_value.t) : (meta, string) node =
   Prim (null, literal_type_prim l, [], [])
@@ -101,8 +99,6 @@ let literal_value (l : Literal_value.t) : (meta, string) node =
   | Literal_bls12_381_g1 x -> Bytes (null, x)
   | Literal_bls12_381_g2 x -> Bytes (null, x)
   | Literal_bls12_381_fr x -> Bytes (null, x)
-  | Literal_chest x -> Bytes (null, x)
-  | Literal_chest_key x -> Bytes (null, x)
 
 let literal_code (meta : meta) (l : Literal_value.t) : (meta, string) node list =
   [Prim (meta, "PUSH", [literal_type l; literal_value l], [])]

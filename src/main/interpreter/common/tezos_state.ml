@@ -19,7 +19,7 @@ type bootstrap_contract =
   * Ast_aggregated.type_expression
   * Ast_aggregated.type_expression
 
-type baker_account = string * Signature.Public_key.t * int64 option
+type baker_account = string * Tezos_crypto.Signature.Public_key.t * int64 option
 type block = Tezos_alpha_test_helpers.Block.t
 
 type last_originations =
@@ -264,8 +264,7 @@ let get_alpha_context ~raise ctxt =
 
 
 let unwrap_baker ~raise ~loc ~calltrace
-    :  Memory_proto_alpha.Protocol.Alpha_context.Contract.t
-    -> Tezos_crypto.Signature.Public_key_hash.t
+    : Memory_proto_alpha.Protocol.Alpha_context.Contract.t -> _
   =
  fun x -> implicit_account ~raise ~loc ~calltrace "The baker is not an implicit account" x
 
@@ -325,7 +324,8 @@ let extract_origination_from_result
       } ->
     let aux (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
-      | Internal_operation_result ({ source; _ }, Applied (IOrigination_result x)) ->
+      | Internal_operation_result
+          ({ source = Contract source; _ }, Applied (IOrigination_result x)) ->
         let originated_contracts =
           List.map ~f:(contract_of_hash ~raise) x.originated_contracts
         in
@@ -360,7 +360,7 @@ let extract_event_from_result
     let aux acc (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
       | Internal_operation_result
-          ( { operation = Event { tag; payload; ty }; source; _ }
+          ( { operation = Event { tag; payload; ty }; source = Contract source; _ }
           , Applied (IEvent_result _) ) ->
         ( source
         , Entrypoint_repr.to_string tag
@@ -741,27 +741,29 @@ let add_account ~raise ~loc ~calltrace sk pk pkh : unit =
   Account.add_account account
 
 
-let get_account ~raise ~loc ~calltrace mc : string * Signature.public_key =
+let get_account ~raise ~loc ~calltrace mc : string * Tezos_crypto.Signature.public_key =
   let open Tezos_alpha_test_helpers in
   let account =
     Trace.trace_tzresult_lwt ~raise (fun _ ->
         Errors.generic_error ~calltrace loc "Cannot find account")
     @@ Account.find mc
   in
-  let sk = Signature.Secret_key.to_b58check account.sk in
+  let sk = Tezos_crypto.Signature.Secret_key.to_b58check account.sk in
   let pk = account.pk in
   sk, pk
 
 
-let new_account : unit -> string * Signature.public_key =
+let new_account : unit -> string * Tezos_crypto.Signature.public_key =
  fun () ->
   let open Tezos_alpha_test_helpers.Account in
   let account = new_account () in
-  let sk = Signature.Secret_key.to_b58check account.sk in
+  let sk = Tezos_crypto.Signature.Secret_key.to_b58check account.sk in
   sk, account.pk
 
 
-let sign_message ~raise ~loc ~calltrace (packed_payload : bytes) sk : Signature.t =
+let sign_message ~raise ~loc ~calltrace (packed_payload : bytes) sk
+    : Tezos_crypto.Signature.t
+  =
   let open Tezos_crypto in
   let sk =
     Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace)
@@ -850,7 +852,7 @@ let get_bootstrapped_contract ~raise (n : int) =
     let open Memory_proto_alpha.Protocol.Origination_nonce in
     let initial =
       initial
-        (Tezos_crypto.Operation_hash.hash_bytes
+        (Tezos_crypto.Hashed.Operation_hash.hash_bytes
            [ Bytes.of_string "Un festival de GADT." ])
     in
     foldnat incr initial n
@@ -863,6 +865,9 @@ let get_bootstrapped_contract ~raise (n : int) =
 
 
 let init
+    ~raise
+    ?(calltrace = [])
+    ?(loc = Location.generated)
     ?rng_state
     ?commitments
     ?(initial_balances = [])
@@ -882,24 +887,41 @@ let init
     n
   =
   let open Tezos_alpha_test_helpers in
-  let accounts = Account.generate_accounts ?rng_state ~initial_balances n in
+  let accounts =
+    Trace.trace_tzresult ~raise (fun _ ->
+        Errors.generic_error ~calltrace loc "Cannot parse secret key")
+    @@ Account.generate_accounts ?rng_state n
+  in
   let contracts =
     List.map
-      ~f:(fun (a, _, _) ->
-        Tezos_raw_protocol.Alpha_context.Contract.Implicit Account.(a.pkh))
+      ~f:(fun a -> Tezos_raw_protocol.Alpha_context.Contract.Implicit Account.(a.pkh))
       accounts
+  in
+  let initial_balances =
+    let rec aux n initial_balances =
+      match initial_balances with
+      | [] -> if n > 0 then None :: aux (n - 1) [] else []
+      | init :: initial_balances -> Some init :: aux (n - 1) initial_balances
+    in
+    aux n initial_balances
+  in
+  let accounts =
+    List.map2_exn accounts initial_balances ~f:(fun account balance ->
+        let balance = Option.map ~f:Tez.of_mutez_exn balance in
+        Account.make_bootstrap_account ?balance account)
   in
   let baker_accounts =
     List.map baker_accounts ~f:(fun (sk, pk, amt) ->
-        let pkh = Signature.Public_key.hash pk in
-        let amt =
+        let pkh = Tezos_crypto.Signature.Public_key.hash pk in
+        let balance =
           match amt with
           | None -> Tez.of_mutez_exn 4_000_000_000_000L
           | Some v -> Tez.of_mutez_exn v
         in
-        Account.{ sk; pk; pkh }, amt, None)
+        let account = Account.{ sk; pk; pkh } in
+        let () = Account.add_account account in
+        Account.make_bootstrap_account ~balance account)
   in
-  let () = List.iter baker_accounts ~f:(fun (acc, _, _) -> Account.(add_account acc)) in
   let accounts = accounts @ baker_accounts in
   let raw =
     Block.genesis
@@ -926,9 +948,9 @@ let init_ctxt
     ?(loc = Location.generated)
     ?(calltrace = [])
     ?(initial_balances = [])
-    ?initial_timestamp
     ?(baker_accounts = [])
     ?(n = 2)
+    ?initial_timestamp
     protocol_version
     bootstrapped_contracts
   =
@@ -973,6 +995,9 @@ let init_ctxt
   in
   let r, acclst =
     init
+      ~raise
+      ~calltrace
+      ~loc
       ~rng_state
       ~level:(Int32.of_int_exn 0)
       ~initial_balances

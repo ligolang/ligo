@@ -900,7 +900,11 @@ let%expect_test _ =
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "warning_duplicate3.mligo" ];
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; contract "warning_duplicate3.mligo"
+    ];
   [%expect
     {|
     { parameter (pair (nat %c) (nat %ck)) ;
@@ -3372,3 +3376,95 @@ let%expect_test _ =
              IF_LEFT { IF_LEFT { ADD } { DROP 2 ; PUSH int 0 } } { SWAP ; SUB } ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "bytes_bitwise.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH nat 8 ;
+             PUSH bytes 0x06 ;
+             LSL ;
+             PUSH nat 1 ;
+             PUSH bytes 0x0006 ;
+             LSR ;
+             PUSH bytes 0x0003 ;
+             SWAP ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0600 ;
+             DIG 2 ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0103 ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             XOR ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0107 ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             OR ;
+             COMPARE ;
+             EQ ;
+             PUSH bytes 0x0004 ;
+             PUSH bytes 0x0106 ;
+             PUSH bytes 0x0005 ;
+             AND ;
+             COMPARE ;
+             EQ ;
+             AND ;
+             AND ;
+             AND ;
+             AND ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNIT ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "dry-run"; contract "bytes_bitwise.mligo"; "()"; "()" ];
+  [%expect {| ( LIST_EMPTY() , unit ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "bytes_int_nat_conv.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             PUSH bytes 0x123456 ;
+             DUP ;
+             NAT ;
+             BYTES ;
+             DUP 2 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             DUP ;
+             INT ;
+             BYTES ;
+             SWAP ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             PUSH int 1234 ;
+             BYTES ;
+             INT ;
+             PUSH int 1234 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             PUSH nat 4567 ;
+             BYTES ;
+             NAT ;
+             PUSH nat 4567 ;
+             COMPARE ;
+             EQ ;
+             IF {} { PUSH string "failed assertion" ; FAILWITH } ;
+             UNIT ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "dry-run"; contract "bytes_int_nat_conv.mligo"; "()"; "()" ];
+  [%expect {| ( LIST_EMPTY() , unit ) |}]

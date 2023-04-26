@@ -263,6 +263,32 @@ let test_bitwise_module =
             b_shift_left  = 28n &&
             b_shift_right = 3n   )
 
+let test_bytes_bitwise_ops  =
+  let b_and         = 0x0005 land 0x0106 in
+  let b_or          = 0x0005 lor  0x0106 in
+  let b_xor         = 0x0005 lxor 0x0106 in
+  let b_shift_left  = 0x06   lsl  8n     in
+  let b_shift_right = 0x0006 lsr  1n     in
+
+  assert (b_and         = 0x0004 &&
+          b_or          = 0x0107 &&
+          b_xor         = 0x0103 &&
+          b_shift_left  = 0x0600 &&
+          b_shift_right = 0x0003  )
+
+let test_bytes_bitwise_module =
+  let b_and           = Bitwise.and         0x0005 0x0106 in
+  let b_or            = Bitwise.or          0x0005 0x0106 in
+  let b_xor           = Bitwise.xor         0x0005 0x0106 in
+  let b_shift_left    = Bitwise.shift_left  0x06   8n     in
+  let b_shift_right   = Bitwise.shift_right 0x0006 1n     in
+
+  assert (b_and         = 0x0004 &&
+          b_or          = 0x0107 &&
+          b_xor         = 0x0103 &&
+          b_shift_left  = 0x0600 &&
+          b_shift_right = 0x0003  )
+
 let concat (xs : nat list) (ys : nat list) =
   List.fold_right (fun (x,ys : (nat * nat list)) -> x :: ys) xs ys
 
@@ -442,4 +468,16 @@ let test_concats =
   let () = assert (Bytes.concats [] = Bytes.sub 0n 0n (0x00 : bytes)) in
   let () = assert (Test.run (fun () -> String.concats ss) () = Test.eval (String.concats ss)) in
   let () = assert (Test.run (fun () -> Bytes.concats bs) () = Test.eval (Bytes.concats bs)) in
+  ()
+
+let test_bytes_nat_int_conversion =
+  let b = 0x123456 in 
+  (* bytes => nat => bytes *)
+  let () = assert (b = bytes(nat(b))) in
+  (* bytes => int => bytes *)
+  let () = assert (b = bytes(int(b))) in
+  (* int => bytes => int *)
+  let () = assert (1234 = int(bytes(1234))) in
+  (* nat => bytes => nat *)
+  let () = assert (4567n = nat(bytes(4567n))) in
   ()
