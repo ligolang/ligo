@@ -1,7 +1,7 @@
 module Name = struct let name = "alpha" end
 module Proto = Tezos_protocol_015_PtLimaPt
 module Alpha_environment = Tp_environment_015_PtLimaPt
-module Raw_protocol = Tezos_raw_protocol_015_PtLimaPt
+module Raw_protocol = Trp_015_PtLimaPt
 module Parameters = Tp015_parameters
 module Client = Tezos_client_015_PtLimaPt
 module Test_helpers = Tz015_test_helpers
