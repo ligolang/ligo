@@ -75,6 +75,12 @@
         }
       },
       "esy-rustup": "esy-packages/esy-rustup:esy.json#3872ef2eaefb6c2207bd7cb4386d073a27381bfe",
+      "@opam/tezos-shell-services": {
+        "source": "no-source:",
+        "override": {
+          "build": ["true"]
+        }
+      },
       "@opam/ocaml-lsp-server": {
         "source": "no-source:",
         "override": {
@@ -201,7 +207,7 @@
       "@opam/tezos-client-commands": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-commands": "./vendors/tezos-ligo",
       "@opam/tezos-client-base-unix": "./vendors/tezos-ligo",
-      "@opam/tezos-p2p-services": "./vendors/tezos-ligo",
+      "@opam/tzp2p-s": "./vendors/tezos-ligo",
       "@opam/tezos-scoru-wasm": "./vendors/tezos-ligo",
       "@opam/tezos-proxy": "./vendors/tezos-ligo",
       "@opam/tezos-protocol-environment": "./vendors/tezos-ligo",

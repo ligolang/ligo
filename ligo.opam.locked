@@ -306,7 +306,7 @@ pin-depends: [
   [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-mockup-registration.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tzp2p-s.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
