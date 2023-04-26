@@ -59,6 +59,15 @@
       "esy-libffi": "*"
     },
     "resolutions": {
+      "ligo-win32-ntdll-stubs": "link:./vendors/win32-ntdll-stubs",
+      "@opam/tezos-rust-libs": {
+        "version": "opam:1.5",
+        "override": {
+          "buildEnv": {
+            "CC": "#{os == 'windows' ? 'x86_64-w64-mingw32-gcc': 'cc'}"
+          }
+        }
+      },
       "esy-rustup": "esy-packages/esy-rustup:esy.json#3872ef2eaefb6c2207bd7cb4386d073a27381bfe",
       "@opam/ocaml-lsp-server": {
         "source": "no-source:",
@@ -150,7 +159,8 @@
             "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-protocol-015-PtLimaPt"
           ],
           "dependencies": {
-            "@opam/hacl-star-raw": "*"
+            "@opam/hacl-star-raw": "*",
+            "ligo-win32-ntdll-stubs": "*"
           }
         }
       },
