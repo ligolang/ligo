@@ -1,5 +1,4 @@
 esy-windows:
-  extends: .submodule-clone
   tags:
     - windows
   stage: build
@@ -20,6 +19,7 @@ esy-windows:
         - dune
       when: always
   script:
+    - git submodule update --init --recursive
     - git config http.postBuffer 1048576000
     - npm i -g @esy-nightly/esy --force
     - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
