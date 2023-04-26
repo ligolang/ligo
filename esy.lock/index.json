@@ -1,5 +1,5 @@
 {
-  "checksum": "9d3542c0491644bf4254b468cf8c4eff",
+  "checksum": "35e29f70df68845912fb55086cca16db",
   "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
@@ -686,6 +686,30 @@
         "@opam/dune@opam:3.7.1@e0adc71a"
       ]
     },
+    "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9": {
+      "id": "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
+      "name": "@opam/tz-sig-s",
+      "version": "path:vendors/tezos-ligo",
+      "source": {
+        "type": "install",
+        "source": [ "path:vendors/tezos-ligo" ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
+        "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/dune@opam:3.7.1@e0adc71a", "@esy-ocaml/substs@0.0.1@d41d8cd9"
+      ],
+      "devDependencies": [
+        "ocaml@4.14.0@d41d8cd9",
+        "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
+        "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
+        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
+        "@opam/dune@opam:3.7.1@e0adc71a"
+      ]
+    },
     "@opam/tz-rpc-cli-unix@path:vendors/tezos-ligo@833c9616": {
       "id": "@opam/tz-rpc-cli-unix@path:vendors/tezos-ligo@833c9616",
       "name": "@opam/tz-rpc-cli-unix",
@@ -1227,30 +1251,6 @@
         "@opam/dune@opam:3.7.1@e0adc71a"
       ]
     },
-    "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9": {
-      "id": "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
-      "name": "@opam/tz-sig-s",
-      "version": "path:vendors/tezos-ligo",
-      "source": {
-        "type": "install",
-        "source": [ "path:vendors/tezos-ligo" ]
-      },
-      "overrides": [],
-      "dependencies": [
-        "ocaml@4.14.0@d41d8cd9",
-        "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
-        "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
-        "@opam/dune@opam:3.7.1@e0adc71a", "@esy-ocaml/substs@0.0.1@d41d8cd9"
-      ],
-      "devDependencies": [
-        "ocaml@4.14.0@d41d8cd9",
-        "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
-        "@opam/tezos-rpc@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
-        "@opam/dune@opam:3.7.1@e0adc71a"
-      ]
-    },
     "@opam/tezos-signer-backends@path:vendors/tezos-ligo@d41d8cd9": {
       "id": "@opam/tezos-signer-backends@path:vendors/tezos-ligo@d41d8cd9",
       "name": "@opam/tezos-signer-backends",
@@ -1263,12 +1263,12 @@
       "dependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/uri@opam:4.2.0@9c45eeb8",
         "@opam/tzsh-s@path:vendors/tezos-ligo@aaca5cee",
+        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tz-rpc-cli-unix@path:vendors/tezos-ligo@833c9616",
         "@opam/tz-rpc-cli@path:vendors/tezos-ligo@dc2a53b0",
         "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
         "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc-http@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-clic@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
@@ -1279,12 +1279,12 @@
       "devDependencies": [
         "ocaml@4.14.0@d41d8cd9", "@opam/uri@opam:4.2.0@9c45eeb8",
         "@opam/tzsh-s@path:vendors/tezos-ligo@aaca5cee",
+        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tz-rpc-cli-unix@path:vendors/tezos-ligo@833c9616",
         "@opam/tz-rpc-cli@path:vendors/tezos-ligo@dc2a53b0",
         "@opam/tz-cli-b@path:vendors/tezos-ligo@7bb963ec",
         "@opam/tezos-stdlib-unix@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-stdlib@path:vendors/tezos-ligo@d41d8cd9",
-        "@opam/tz-sig-s@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-rpc-http@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-clic@path:vendors/tezos-ligo@d41d8cd9",
         "@opam/tezos-base@path:vendors/tezos-ligo@aab7ba5b",
