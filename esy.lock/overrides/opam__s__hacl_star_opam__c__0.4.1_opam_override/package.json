@@ -5,7 +5,7 @@
       "-c",
       "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
     ],
-    "bash ./build.sh #{yarn-pkg-config.bin}"
+    "dune build -p hacl-star -j8"
   ],
   "dependencies": {
     "esy-gmp": "*",
