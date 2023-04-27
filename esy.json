@@ -62,9 +62,6 @@
       "esy-libffi": "*"
     },
     "resolutions": {
-      "@opam/menhir": "opam:20220210",
-      "@opam/menhirLib": "opam:20220210",
-      "@opam/menhirSdk": "opam:20220210",
       "@opam/tz-015-test-helpers": "./vendors/tezos-ligo",
       "@opam/tz-016-test-helpers": "./vendors/tezos-ligo",
       "@opam/tezos-test-helpers": "./vendors/tezos-ligo",
