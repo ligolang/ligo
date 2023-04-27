@@ -7,10 +7,10 @@ import Data.Text (strip)
 import System.FilePath ((</>))
 import Text.Interpolation.Nyan
 
-import Test.Common.Util (renderNoLineLengthLimit)
-import Test.Common.Util qualified as Common
 import Test.HUnit (Assertion)
 import Test.Hspec.Expectations (shouldBe)
+import Test.Util (renderNoLineLengthLimit)
+import Test.Util qualified as Common
 
 import Language.LIGO.AST (SomeLIGO (..), contractTree, lppDialect, parse)
 import Language.LIGO.ParseTree (pathToSrc)

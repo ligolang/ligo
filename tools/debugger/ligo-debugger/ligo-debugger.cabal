@@ -234,6 +234,7 @@ test-suite ligo-debugger-test
       Test.DelayedValues
       Test.LigoCall
       Test.Navigation
+      Test.Pretty
       Test.Snapshots
       Test.Util
       Test.Util.Golden
@@ -241,7 +242,7 @@ test-suite ligo-debugger-test
       Test.Variables
       Paths_ligo_debugger
   hs-source-dirs:
-      test/debugger
+      test
   default-extensions:
       AllowAmbiguousTypes
       ApplicativeDo
@@ -298,9 +299,11 @@ test-suite ligo-debugger-test
     , data-default
     , dir-traverse
     , directory
+    , duplo
     , filepath
     , fmt
     , hedgehog
+    , hspec-expectations
     , lens
     , ligo-debugger
     , lorentz
@@ -315,90 +318,6 @@ test-suite ligo-debugger-test
     , tasty-golden
     , tasty-hedgehog
     , tasty-hunit-compat
-    , text
-    , unliftio
-    , unordered-containers
-  default-language: Haskell2010
-
-test-suite lsp-test
-  type: exitcode-stdio-1.0
-  main-is: Main.hs
-  other-modules:
-      Driver
-      Test.Pretty
-      Test.Common.Diagnostics
-      Test.Common.FixedExpectations
-      Test.Common.Tasty
-      Test.Common.Util
-      Paths_ligo_debugger
-  hs-source-dirs:
-      test/lsp-test/
-      test/test-common/
-  default-extensions:
-      AllowAmbiguousTypes
-      ApplicativeDo
-      BangPatterns
-      BlockArguments
-      ConstraintKinds
-      DataKinds
-      DefaultSignatures
-      DeriveAnyClass
-      DeriveFoldable
-      DeriveFunctor
-      DeriveGeneric
-      DeriveTraversable
-      DerivingStrategies
-      DerivingVia
-      EmptyCase
-      FlexibleContexts
-      FlexibleInstances
-      FunctionalDependencies
-      GADTs
-      GeneralisedNewtypeDeriving
-      ImportQualifiedPost
-      LambdaCase
-      MagicHash
-      MultiParamTypeClasses
-      MultiWayIf
-      NamedFieldPuns
-      NumDecimals
-      OverloadedStrings
-      PackageImports
-      QuantifiedConstraints
-      QuasiQuotes
-      PatternSynonyms
-      RankNTypes
-      RecordWildCards
-      ScopedTypeVariables
-      StandaloneDeriving
-      StrictData
-      TemplateHaskell
-      TupleSections
-      TypeApplications
-      TypeFamilies
-      TypeOperators
-      ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-incomplete-uni-patterns -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
-  build-tool-depends:
-      tasty-discover:tasty-discover
-  build-depends:
-      HUnit
-    , QuickCheck
-    , algebraic-graphs
-    , base-noprelude
-    , directory
-    , duplo
-    , filepath
-    , hspec-expectations
-    , lens
-    , ligo-debugger
-    , morley-prelude
-    , nyan-interpolation
-    , nyan-interpolation-core
-    , tasty
-    , tasty-hunit
-    , tasty-quickcheck
-    , template-haskell
     , text
     , unliftio
     , unordered-containers

@@ -167,9 +167,11 @@ tests:
       - Diff
       - dir-traverse
       - directory
+      - duplo
       - filepath
       - fmt
       - hedgehog
+      - hspec-expectations
       - lens
       - ligo-debugger
       - lorentz
@@ -189,7 +191,7 @@ tests:
       - tasty-hunit-compat
 
     source-dirs:
-      - test/debugger
+      - test
 
     ghc-options:
       - -threaded
@@ -198,40 +200,3 @@ tests:
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
     build-tools: tasty-discover:tasty-discover
-
-  lsp-test:
-    main: Main.hs
-
-    source-dirs:
-      - test/lsp-test/
-      - test/test-common/
-
-    ghc-options:
-      - -Wno-incomplete-uni-patterns
-      - -threaded
-      - -eventlog
-      - -rtsopts
-      - '"-with-rtsopts=-N -A64m -AL256m"'
-
-    dependencies:
-      - algebraic-graphs
-      - HUnit
-      - directory
-      - duplo
-      - filepath
-      - hspec-expectations
-      - lens
-      - ligo-debugger
-      - nyan-interpolation
-      - nyan-interpolation-core
-      - QuickCheck
-      - tasty
-      - tasty-hunit
-      - tasty-quickcheck
-      - template-haskell
-      - text
-      - unliftio
-      - unordered-containers
-
-    build-tools:
-      - tasty-discover:tasty-discover
