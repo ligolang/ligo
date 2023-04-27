@@ -2,7 +2,7 @@
   (name memory_proto_alpha)
   (public_name tezos-memory-proto-alpha)
   (libraries
-    tezos-protocol-environment
+    tpe
     tezos-protocol-016-PtMumbai
     tezos-protocol-016-PtMumbai.parameters
     tezos-protocol-016-PtMumbai.environment

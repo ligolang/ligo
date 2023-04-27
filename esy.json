@@ -204,7 +204,7 @@
       "@opam/tezos-p2p-services": "./vendors/tezos-ligo",
       "@opam/tezos-scoru-wasm": "./vendors/tezos-ligo",
       "@opam/tezos-proxy": "./vendors/tezos-ligo",
-      "@opam/tezos-protocol-environment": "./vendors/tezos-ligo",
+      "@opam/tpe": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-proxy": "./vendors/tezos-ligo",
       "@opam/tezos-protocol-plugin-016-PtMumbai": "./vendors/tezos-ligo",
       "@opam/tezos-client-016-PtMumbai": "./vendors/tezos-ligo"

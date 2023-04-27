@@ -114,7 +114,7 @@ pin-depends: [
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-protocol-environment.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-protocol-plugin-015-PtLimaPt.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
