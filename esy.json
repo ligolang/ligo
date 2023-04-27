@@ -1,7 +1,7 @@
 {
   "name": "ligolang",
   "description": "A high-level language which compiles to Michelson",
-  "version": "0.64.0-dev",
+  "version": "0.65.0-dev",
   "repository": {
     "type": "git",
     "url": "https://gitlab.com/ligolang/ligo.git"
@@ -9,7 +9,9 @@
   "esy": {
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "release": {
-      "bin": ["ligo"],
+      "bin": [
+        "ligo"
+      ],
       "includePackages": [
         "root",
         "esy-libev",
@@ -23,9 +25,12 @@
   },
   "source": "./ligo.opam",
   "override": {
-    "build": ["dune build -p ligo", "chmod -R a+w #{self.target_dir}"],
+    "build": [
+      "dune build -p ligo",
+      "chmod -R a+w #{self.target_dir}"
+    ],
     "buildEnv": {
-      "LIGO_VERSION": "0.64.1",
+      "LIGO_VERSION": "0.65.0",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
     "exportedEnv": {
@@ -166,7 +171,14 @@
               "#{@opam/octez-protocol-compiler.lib}/tezos-protocol-compiler/final_protocol_versions",
               "015-PtLimaPt"
             ],
-            ["dune", "build", "-p", "tezos-protocol-015-PtLimaPt", "-j", "4"]
+            [
+              "dune",
+              "build",
+              "-p",
+              "tezos-protocol-015-PtLimaPt",
+              "-j",
+              "4"
+            ]
           ]
         }
       },
@@ -273,34 +285,57 @@
           },
           "buildsInSource": true,
           "build": [
-            ["sh", "-exc", "cd raw && ./configure"],
-            ["make", "-C", "raw"]
+            [
+              "sh",
+              "-exc",
+              "cd raw && ./configure"
+            ],
+            [
+              "make",
+              "-C",
+              "raw"
+            ]
           ],
-          "install": [["make", "-C", "raw", "install-hacl-star-raw"]]
+          "install": [
+            [
+              "make",
+              "-C",
+              "raw",
+              "install-hacl-star-raw"
+            ]
+          ]
         }
       },
       "@opam/expect_test_helpers_core": {
         "version": "opam:v0.15.0",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/ocamlformat-rpc": {
         "source": "no-source:",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/ocaml-lsp-server": {
         "source": "no-source:",
         "override": {
-          "build": ["true"]
+          "build": [
+            "true"
+          ]
         }
       },
       "@opam/conf-rust": {
         "source": "no-source:",
         "override": {
-          "build": ["true"],
+          "build": [
+            "true"
+          ],
           "dependencies": {
             "esy-rustup": "*"
           }
@@ -309,7 +344,9 @@
       "@opam/conf-rust-2021": {
         "source": "no-source:",
         "override": {
-          "build": ["true"],
+          "build": [
+            "true"
+          ],
           "dependencies": {
             "esy-rustup": "*"
           }

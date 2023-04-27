@@ -66,7 +66,6 @@ const sidebars = {
       "manpages/mutate cst",
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
-      "manpages/print ast-imperative",
       "manpages/print ast-typed",
       "manpages/print cst",
       "manpages/print dependency-graph",
