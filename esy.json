@@ -44,13 +44,13 @@
     "license": "MIT",
     "dependencies": {
       "ligo-win32-ntdll-stubs": "*",
-      "@opam/tezos-016-PtMumbai-test-helpers": "*",
-      "@opam/tezos-015-PtLimaPt-test-helpers": "*",
+      "@opam/tz-016-test-helpers": "*",
+      "@opam/tz-015-test-helpers": "*",
       "@opam/tezos-base": "*",
       "@opam/tezos-hacl": "*",
       "@opam/tezos-micheline": "*",
-      "@opam/tezos-client-015-PtLimaPt": "*",
-      "@opam/tezos-client-016-PtMumbai": "*",
+      "@opam/tc-015": "*",
+      "@opam/tc-016": "*",
       "@opam/lwt_log": "*",
       "@opam/secp256k1-internal": "*",
       "@opam/bls12-381-signature": "*",
@@ -65,8 +65,8 @@
       "@opam/menhir": "opam:20220210",
       "@opam/menhirLib": "opam:20220210",
       "@opam/menhirSdk": "opam:20220210",
-      "@opam/tezos-015-PtLimaPt-test-helpers": "./vendors/tezos-ligo",
-      "@opam/tezos-016-PtMumbai-test-helpers": "./vendors/tezos-ligo",
+      "@opam/tz-015-test-helpers": "./vendors/tezos-ligo",
+      "@opam/tz-016-test-helpers": "./vendors/tezos-ligo",
       "@opam/tezos-test-helpers": "./vendors/tezos-ligo",
       "ligo-win32-ntdll-stubs": "link:./vendors/win32-ntdll-stubs",
       "@opam/tezos-rust-libs": {
@@ -140,25 +140,25 @@
           }
         }
       },
-      "@opam/tezos-lwt-result-stdlib": "./vendors/tezos-ligo",
+      "@opam/tz-lwtres-std": "./vendors/tezos-ligo",
       "@opam/tezos-micheline": "./vendors/tezos-ligo",
       "@opam/tezos-rpc": "./vendors/tezos-ligo",
       "@opam/tezos-stdlib-unix": "./vendors/tezos-ligo",
       "@opam/tezos-stdlib": "./vendors/tezos-ligo",
       "@opam/tezos-context": "./vendors/tezos-ligo",
       "@opam/tezos-rpc-http-client": "./vendors/tezos-ligo",
-      "@opam/tezos-rpc-http-client-unix": "./vendors/tezos-ligo",
-      "@opam/tezos-webassembly-interpreter": "./vendors/tezos-ligo",
+      "@opam/tz-rpc-h-c-ux": "./vendors/tezos-ligo",
+      "@opam/tz-wasm-in": "./vendors/tezos-ligo",
       "@opam/tezos-lazy-containers": "./vendors/tezos-ligo",
       "@opam/tezos-version": "./vendors/tezos-ligo",
       "@opam/tezos-tree-encoding": "./vendors/tezos-ligo",
-      "@opam/tezos-smart-rollup-016-PtMumbai": "./vendors/tezos-ligo",
-      "@opam/tezos-protocol-016-PtMumbai": {
+      "@opam/tz-scr-016": "./vendors/tezos-ligo",
+      "@opam/tp-015": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
-            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-protocol-016-PtMumbai"
+            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tp-015"
           ],
           "dependencies": {
             "@opam/hacl-star-raw": "*"
@@ -167,13 +167,13 @@
       },
       "@opam/tezos-rpc-http": "./vendors/tezos-ligo",
       "@opam/tezos-rpc-http": "./vendors/tezos-ligo",
-      "@opam/tezos-protocol-plugin-015-PtLimaPt": "./vendors/tezos-ligo",
-      "@opam/tezos-protocol-015-PtLimaPt": {
+      "@opam/tp-plugin-015": "./vendors/tezos-ligo",
+      "@opam/tp-016": {
         "source": "./vendors/tezos-ligo",
         "override": {
           "build": [
             "rm -rf vendors",
-            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tezos-protocol-015-PtLimaPt"
+            "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tp-016"
           ],
           "dependencies": {
             "@opam/hacl-star-raw": "*",
@@ -182,7 +182,7 @@
         }
       },
       "@opam/tezos-p2p": "./vendors/tezos-ligo",
-      "@opam/tezos-mockup-registration": "./vendors/tezos-ligo",
+      "@opam/tz-mock-reg": "./vendors/tezos-ligo",
       "@opam/tezos-mockup": "./vendors/tezos-ligo",
       "@opam/tezos-crypto-dal": "./vendors/tezos-ligo",
       "@opam/tezos-sapling": {
@@ -196,21 +196,21 @@
           }
         }
       },
-      "@opam/tezos-client-015-PtLimaPt": "./vendors/tezos-ligo",
+      "@opam/tc-015": "./vendors/tezos-ligo",
       "@opam/tezos-shell-services": "./vendors/tezos-ligo",
       "@opam/tezos-client-base": "./vendors/tezos-ligo",
       "@opam/tezos-signer-services": "./vendors/tezos-ligo",
       "@opam/tezos-signer-backends": "./vendors/tezos-ligo",
       "@opam/tezos-client-commands": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-commands": "./vendors/tezos-ligo",
-      "@opam/tezos-client-base-unix": "./vendors/tezos-ligo",
+      "@opam/tz-b-c-ux": "./vendors/tezos-ligo",
       "@opam/tezos-p2p-services": "./vendors/tezos-ligo",
       "@opam/tezos-scoru-wasm": "./vendors/tezos-ligo",
       "@opam/tezos-proxy": "./vendors/tezos-ligo",
       "@opam/tpe": "./vendors/tezos-ligo",
       "@opam/tezos-mockup-proxy": "./vendors/tezos-ligo",
-      "@opam/tezos-protocol-plugin-016-PtMumbai": "./vendors/tezos-ligo",
-      "@opam/tezos-client-016-PtMumbai": "./vendors/tezos-ligo"
+      "@opam/tp-plugin-016": "./vendors/tezos-ligo",
+      "@opam/tc-016": "./vendors/tezos-ligo"
     }
   }
 }
