@@ -98,20 +98,8 @@
    (:standard -ccopt -static -cclib "-lgmp"))))
 
 (executable
- (name configurator)
- (modules configurator)
- (flags (:standard))
- (libraries core dune-configurator))
-
-(rule
- (targets platform-specific-compiler-flags.sexp platform-specific-linker-flags.sexp)
- (action
-  (run ./configurator.exe)))
-
-(executable
  (name runligo)
  (public_name ligo)
- (link_flags (:include platform-specific-linker-flags.sexp))
  (instrumentation
   (backend bisect_ppx))
  (libraries
@@ -122,10 +110,7 @@
   ligo.main_interpreter.unix
   ligo.api.unix
   cli)
- (flags
-  -open
-  Core
-  (:include platform-specific-compiler-flags.sexp))
+ (flags -open Core)
  (modules runligo)
  (package ligo))
 
