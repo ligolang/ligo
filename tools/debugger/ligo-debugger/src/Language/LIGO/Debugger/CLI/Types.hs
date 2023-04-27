@@ -47,15 +47,14 @@ import Morley.Util.Lens
 import Duplo
   (Apply, Cofree ((:<)), Comonad (extract), Element, Lattice (leq), Tree, inject, layer, text)
 
+import Language.LIGO.AST.Pretty
+import Language.LIGO.AST.Skeleton hiding (Name)
+import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
-import Language.LIGO.Debugger.Util.AST.Pretty
-import Language.LIGO.Debugger.Util.AST.Skeleton hiding (Name)
-import Language.LIGO.Debugger.Util.AST.Skeleton qualified as AST
-import Language.LIGO.Debugger.Util.Diagnostic
-import Language.LIGO.Debugger.Util.Parser
-import Language.LIGO.Debugger.Util.Product
-import Language.LIGO.Debugger.Util.Range
-import Language.LIGO.Debugger.Util.Util
+import Language.LIGO.Diagnostic
+import Language.LIGO.Parser
+import Language.LIGO.Product
+import Language.LIGO.Range
 
 ----------------------------------------------------------------------------
 -- Types
@@ -772,8 +771,8 @@ mbFromLigoRange
   )
   | startFilePath /= endFilePath = error "start file of a range does not equal to its end file"
   | otherwise = Just Range
-      { _rStart = LigoPosition startLn (startNum - startBol + 1) 0
-      , _rFinish = LigoPosition endLn (endNum - endBol + 1) 0
+      { _rStart = LigoPosition startLn (startNum - startBol + 1)
+      , _rFinish = LigoPosition endLn (endNum - endBol + 1)
       , _rFile = startFilePath
       }
 

@@ -52,12 +52,6 @@ data LigoPreprocessFailedException = LigoPreprocessFailedException
   } deriving anyclass (LigoException)
     deriving stock (Show)
 
-data LigoFormatFailedException = LigoFormatFailedException
-  { ffeMessage :: Text -- ^ Successfully decoded ligo error
-  , ffeFile :: FilePath -- ^ File that caused the error
-  } deriving anyclass (LigoException)
-    deriving stock (Show)
-
 -- | Starting @ligo@ executable failed - some system error.
 --
 -- Likely LIGO isn't installed or was not found.
@@ -112,7 +106,6 @@ instance Exception SomeLigoException where
       , SomeLigoException <$> fromException @LigoMalformedJSONException                e
       , SomeLigoException <$> fromException @LigoDefinitionParseErrorException         e
       , SomeLigoException <$> fromException @LigoPreprocessFailedException             e
-      , SomeLigoException <$> fromException @LigoFormatFailedException                 e
       , SomeLigoException <$> fromException @LigoIOException                           e
       ]
 
@@ -169,11 +162,6 @@ instance Exception LigoPreprocessFailedException where
   displayException LigoPreprocessFailedException {..} =
     [int||LIGO failed to preprocess contract with: #{pfeMessage}
     Caused by: #{pfeFile}|]
-
-instance Exception LigoFormatFailedException where
-  displayException LigoFormatFailedException {..} =
-    [int||LIGO failed to format contract with: #{ffeMessage}
-    Caused by: #{ffeFile}|]
 
 instance Exception LigoIOException where
   displayException LigoIOException {..} =

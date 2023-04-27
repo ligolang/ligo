@@ -41,7 +41,7 @@ import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Interpolation.Nyan
 
 import UnliftIO (MonadUnliftIO, hFlush, handle, throwIO, try, withSystemTempFile)
-import UnliftIO.Directory (canonicalizePath, doesFileExist)
+import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (fromEither, mapExceptionM)
 import UnliftIO.Process (readCreateProcessWithExitCode)
 

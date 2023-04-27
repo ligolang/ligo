@@ -3,7 +3,7 @@
 
      All datatypes here are strict.
 -}
-module Language.LIGO.Debugger.Util.ParseTree
+module Language.LIGO.ParseTree
   ( -- * Tree/Forest
     ParseTree (..)
   , ParseTreeNode (..)
@@ -37,8 +37,8 @@ import TreeSitter.Tree hiding (Tree)
 
 import Duplo.Tree
 
-import Language.LIGO.Debugger.Util.Extension
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Extension
+import Language.LIGO.Range
 
 foreign import ccall unsafe tree_sitter_CameLigo   :: Ptr Language
 foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language

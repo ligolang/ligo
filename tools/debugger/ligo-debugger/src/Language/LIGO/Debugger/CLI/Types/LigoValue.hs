@@ -34,10 +34,10 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core qualified as T
 import Morley.Tezos.Crypto.BLS12381 (toMichelsonBytes)
 
+import Language.LIGO.AST.Skeleton (Lang (Caml, Js))
 import Language.LIGO.Debugger.CLI.Exception
 import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Util.AST.Skeleton (Lang (Caml, Js))
 
 -------------
 --- Types ---

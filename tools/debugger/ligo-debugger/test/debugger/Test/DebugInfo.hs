@@ -18,14 +18,14 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
 import Morley.Util.PeanoNatural (toPeanoNatural')
 
+import Language.LIGO.AST (LIGO)
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Michelson
-import Language.LIGO.Debugger.Util.AST (LIGO)
-import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 

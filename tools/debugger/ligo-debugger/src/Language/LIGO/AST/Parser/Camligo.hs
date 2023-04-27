@@ -1,18 +1,17 @@
 -- TODO: recogniser does not recognize maps and bigmaps properly
 
-module Language.LIGO.Debugger.Util.AST.Parser.Camligo
+module Language.LIGO.AST.Parser.Camligo
   ( recognise
   ) where
 
 import Data.Default (def)
 import Prelude hiding (Alt)
 
-import Language.LIGO.Debugger.Util.AST.Skeleton
-
 import Duplo.Tree
 
-import Language.LIGO.Debugger.Util.ParseTree
-import Language.LIGO.Debugger.Util.Parser
+import Language.LIGO.AST.Skeleton
+import Language.LIGO.ParseTree
+import Language.LIGO.Parser
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

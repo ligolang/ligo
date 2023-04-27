@@ -71,8 +71,8 @@ import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
-import Language.LIGO.Debugger.Util.Extension (UnsupportedExtension (..), getExt)
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Extension (UnsupportedExtension (..), getExt)
+import Language.LIGO.Range
 
 data LIGO
 

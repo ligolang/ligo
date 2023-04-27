@@ -76,13 +76,12 @@ import Morley.Util.Lens (postfixLFields)
 
 import Duplo (leq)
 
+import Language.LIGO.AST (LIGO)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
-import Language.LIGO.Debugger.Util.AST (LIGO)
-import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
-import Language.LIGO.Debugger.Util.Range
-  (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem

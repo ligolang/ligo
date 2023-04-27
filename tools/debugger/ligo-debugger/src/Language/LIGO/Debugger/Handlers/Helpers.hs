@@ -34,16 +34,15 @@ import Morley.Util.Lens (makeLensesWith, postfixLFields)
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
 
+import Language.LIGO.AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
+import Language.LIGO.AST.Common qualified as AST.Common
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
-import Language.LIGO.Debugger.Util.AST
-  (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
-import Language.LIGO.Debugger.Util.AST.Common qualified as AST.Common
-import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
-import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.ParseTree (pathToSrc)
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range
 
 -- | Type which caches all things that we need for
 -- launching the contract.

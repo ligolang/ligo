@@ -51,15 +51,15 @@ import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 
 import Duplo (layer, leq, spineTo)
 
-import Language.LIGO.Debugger.CLI
-import Language.LIGO.Debugger.Error
-import Language.LIGO.Debugger.Util.AST
+import Language.LIGO.AST
   (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
   QualifiedName, Verbatim)
-import Language.LIGO.Debugger.Util.AST qualified as AST
-import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
-import Language.LIGO.Debugger.Util.Product (Contains)
-import Language.LIGO.Debugger.Util.Range (LigoPosition (..), Range (..), getRange)
+import Language.LIGO.AST qualified as AST
+import Language.LIGO.Debugger.CLI
+import Language.LIGO.Debugger.Error
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Product (Contains)
+import Language.LIGO.Range (LigoPosition (..), Range (..), getRange)
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.

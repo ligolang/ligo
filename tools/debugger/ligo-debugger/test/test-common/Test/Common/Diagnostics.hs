@@ -8,8 +8,8 @@ module Test.Common.Diagnostics
 import System.FilePath ((</>))
 import UnliftIO.Directory (makeAbsolute)
 
-import Language.LIGO.Debugger.Util.Diagnostic (Message (..), MessageDetail (..), Severity (..))
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Diagnostic (Message (..), MessageDetail (..), Severity (..))
+import Language.LIGO.Range
 
 import Test.Common.Util qualified as Util
 

@@ -23,7 +23,7 @@ import Morley.Tezos.Core
   (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote)
 
 import Language.LIGO.Debugger.CLI
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Range
 
 test_Compilation :: TestTree
 test_Compilation = testGroup "Getting debug info"

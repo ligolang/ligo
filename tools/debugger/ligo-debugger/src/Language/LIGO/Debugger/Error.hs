@@ -12,7 +12,7 @@ import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
 import Language.LIGO.Debugger.CLI.Exception
-import Language.LIGO.Debugger.Util.Extension
+import Language.LIGO.Extension
 
 -- | Exceptions allowed in debugger logic.
 class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where

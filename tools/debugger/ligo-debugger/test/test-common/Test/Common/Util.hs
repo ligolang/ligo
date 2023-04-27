@@ -15,13 +15,13 @@ import Duplo.Pretty (Doc, Style (..), renderStyle, style)
 import System.Directory (listDirectory)
 import System.FilePath ((</>))
 
-import Language.LIGO.Debugger.Util.AST.Common
-import Language.LIGO.Debugger.Util.AST.Includes (insertPreprocessorRanges)
-import Language.LIGO.Debugger.Util.AST.Parser (parsePreprocessed)
-import Language.LIGO.Debugger.Util.AST.Skeleton (SomeLIGO)
-import Language.LIGO.Debugger.Util.Extension (supportedExtensions)
-import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
-import Language.LIGO.Debugger.Util.Parser (ParsedInfo)
+import Language.LIGO.AST.Common
+import Language.LIGO.AST.Includes (insertPreprocessorRanges)
+import Language.LIGO.AST.Parser (parsePreprocessed)
+import Language.LIGO.AST.Skeleton (SomeLIGO)
+import Language.LIGO.Extension (supportedExtensions)
+import Language.LIGO.ParseTree (pathToSrc)
+import Language.LIGO.Parser (ParsedInfo)
 
 tempTemplate :: String
 tempTemplate = ".ligo-test"

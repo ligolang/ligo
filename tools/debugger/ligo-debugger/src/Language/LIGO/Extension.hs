@@ -1,4 +1,4 @@
-module Language.LIGO.Debugger.Util.Extension
+module Language.LIGO.Extension
   ( ElimExt (..)
   , Lang (..)
   , UnsupportedExtension (..)
@@ -13,7 +13,7 @@ import Control.Monad.Except (MonadError (throwError))
 import System.FilePath
 import Text.Interpolation.Nyan
 
-import Language.LIGO.Debugger.Util.AST.Skeleton (Lang (..))
+import Language.LIGO.AST.Skeleton (Lang (..))
 
 data ElimExt a = ElimExt
   { eeCaml :: a

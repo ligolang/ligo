@@ -5,7 +5,7 @@
 
 {-# LANGUAGE DeriveGeneric, DuplicateRecordFields, UndecidableInstances #-}
 
-module Language.LIGO.Debugger.Util.AST.Skeleton
+module Language.LIGO.AST.Skeleton
   ( SomeLIGO (..)
   , LIGO
   , Tree'
@@ -38,8 +38,8 @@ import Text.Show qualified
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
-import Language.LIGO.Debugger.Util.Diagnostic (MessageDetail (..))
-import Language.LIGO.Debugger.Util.Product (Product)
+import Language.LIGO.Diagnostic (MessageDetail (..))
+import Language.LIGO.Product (Product)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
 

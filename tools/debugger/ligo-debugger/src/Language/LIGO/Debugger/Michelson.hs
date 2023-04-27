@@ -49,7 +49,7 @@ import Morley.Tezos.Crypto (encodeBase58Check)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Range
 
 -- | Untyped Michelson instruction with meta embedded.
 data OpWithMeta meta

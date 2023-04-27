@@ -12,11 +12,11 @@ import Morley.Michelson.Typed qualified as T
 
 import Duplo (Cofree ((:<)), fastMake, layer, match)
 
+import Language.LIGO.AST.Pretty
+import Language.LIGO.AST.Skeleton
+import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.Util.AST.Pretty
-import Language.LIGO.Debugger.Util.AST.Skeleton
-import Language.LIGO.Debugger.Util.AST.Skeleton qualified as AST
-import Language.LIGO.Debugger.Util.Parser (Info)
+import Language.LIGO.Parser (Info)
 
 {-
 

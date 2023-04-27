@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
 
-module Language.LIGO.Debugger.Util.AST.Includes
+module Language.LIGO.AST.Includes
   ( insertPreprocessorRanges
   , extractIncludes
   ) where
@@ -18,15 +18,14 @@ import Text.Regex.TDFA (Regex, getAllTextMatches, makeRegexM, match)
 import UnliftIO.Directory (canonicalizePath)
 import Witherable (imapMaybe)
 
-import Language.LIGO.Debugger.Util.AST.Common
-  (ContractInfo, ParsedContractInfo, pattern FindContract)
-import Language.LIGO.Debugger.Util.AST.Skeleton (LIGO, SomeLIGO (..))
-import Language.LIGO.Debugger.Util.Diagnostic (Message (..))
-import Language.LIGO.Debugger.Util.ParseTree (Source (..))
-import Language.LIGO.Debugger.Util.Parser
+import Language.LIGO.AST.Common (ContractInfo, ParsedContractInfo, pattern FindContract)
+import Language.LIGO.AST.Skeleton (LIGO, SomeLIGO (..))
+import Language.LIGO.Diagnostic (Message (..))
+import Language.LIGO.ParseTree (Source (..))
+import Language.LIGO.Parser
   (Info, LineMarker (..), LineMarkerType (..), ParsedInfo, parseLineMarkerText)
-import Language.LIGO.Debugger.Util.Product (Contains, Product (..), getElem, modElem, putElem)
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Product (Contains, Product (..), getElem, modElem, putElem)
+import Language.LIGO.Range
   (LigoPosition (LigoPosition), PreprocessedRange (..), Range (..), finishLine, getRange, lpLine,
   rFile, rFinish, rStart, rangeLines, startLine)
 

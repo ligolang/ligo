@@ -1,4 +1,4 @@
-module Language.LIGO.Debugger.Util.Diagnostic
+module Language.LIGO.Diagnostic
   ( Message (..)
   , MessageDetail (..)
   , Severity (..)
@@ -10,7 +10,7 @@ import Data.List.NonEmpty qualified as NE
 import Data.Map.Strict qualified as Map
 import Duplo.Pretty (Pretty (..))
 
-import Language.LIGO.Debugger.Util.Range (HasRange (..), Range (..), merged)
+import Language.LIGO.Range (HasRange (..), Range (..), merged)
 
 -- | Represents some diagnostic (error, warning, etc) that may be contained
 -- together with some node.

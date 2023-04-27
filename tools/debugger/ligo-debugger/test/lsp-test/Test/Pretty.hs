@@ -12,8 +12,8 @@ import Test.Common.Util qualified as Common
 import Test.HUnit (Assertion)
 import Test.Hspec.Expectations (shouldBe)
 
-import Language.LIGO.Debugger.Util.AST (SomeLIGO (..), contractTree, lppDialect, parse)
-import Language.LIGO.Debugger.Util.ParseTree (pathToSrc)
+import Language.LIGO.AST (SomeLIGO (..), contractTree, lppDialect, parse)
+import Language.LIGO.ParseTree (pathToSrc)
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "pretty"

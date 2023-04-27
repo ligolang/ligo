@@ -3,7 +3,7 @@
   The heterogeneous list.
 -}
 
-module Language.LIGO.Debugger.Util.Product
+module Language.LIGO.Product
   ( Product (..)
   , Contains (..)
   , (:=) (..)
@@ -20,7 +20,7 @@ import Duplo.Lattice (Lattice (..))
 import Duplo.Pretty
 import Duplo.Tree (Apply, Tree, extract)
 
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Range
 
 -- | `Product xs` contains elements of each of the types from the `xs` list.
 data Product xs where

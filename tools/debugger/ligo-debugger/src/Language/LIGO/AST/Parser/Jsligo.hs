@@ -1,19 +1,18 @@
 -- | Parser for a Jsligo contract.
-module Language.LIGO.Debugger.Util.AST.Parser.Jsligo
+module Language.LIGO.AST.Parser.Jsligo
   ( recognise
   ) where
 
 import Data.Default (Default (def))
 import Prelude hiding (Alt)
 
-import Language.LIGO.Debugger.Util.AST.Skeleton
-
 import Duplo.Tree
 
 import Data.Text qualified as T
 
-import Language.LIGO.Debugger.Util.ParseTree
-import Language.LIGO.Debugger.Util.Parser
+import Language.LIGO.AST.Skeleton
+import Language.LIGO.ParseTree
+import Language.LIGO.Parser
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)

@@ -20,9 +20,9 @@ import Test.HUnit ((@?=))
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
+import Language.LIGO.AST (Lang (Caml))
 import Language.LIGO.DAP.Variables (createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI
-import Language.LIGO.Debugger.Util.AST (Lang (Caml))
 
 mkDummyValue :: LigoOrMichValue -> Maybe (Name 'Concise) -> (Text, LigoOrMichValue)
 mkDummyValue v nameMb =

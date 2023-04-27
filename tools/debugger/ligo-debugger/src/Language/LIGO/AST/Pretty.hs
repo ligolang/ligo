@@ -1,11 +1,10 @@
-{-# LANGUAGE PolyKinds #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE PolyKinds, UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- | Pretty printers for all 4 dialects and core s-expressions
 -- and their corresponding `Show` instances for @AST.Skeleton@ types.
 
-module Language.LIGO.Debugger.Util.AST.Pretty
+module Language.LIGO.AST.Pretty
   ( module DPretty
   , LPP (..)
   , PPableLIGO
@@ -25,11 +24,11 @@ import Duplo.Pretty as DPretty
   indent, parens, ppToText, punctuate, ($+$), (<+>), (<.>))
 import Duplo.Tree (Tree)
 
-import Language.LIGO.Debugger.Util.AST.Skeleton hiding (Type)
-import Language.LIGO.Debugger.Util.AST.Skeleton qualified as AST
-import Language.LIGO.Debugger.Util.Parser (LineMarker (..), LineMarkerType (..))
-import Language.LIGO.Debugger.Util.Product (Contains)
-import Language.LIGO.Debugger.Util.Range (Range)
+import Language.LIGO.AST.Skeleton hiding (Type)
+import Language.LIGO.AST.Skeleton qualified as AST
+import Language.LIGO.Parser (LineMarker (..), LineMarkerType (..))
+import Language.LIGO.Product (Contains)
+import Language.LIGO.Range (Range)
 
 ----------------------------------------------------------------------------
 -- Internal

@@ -19,8 +19,8 @@ import Morley.Michelson.Typed
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
 import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
+import Language.LIGO.AST (Lang)
 import Language.LIGO.Debugger.CLI
-import Language.LIGO.Debugger.Util.AST (Lang)
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --

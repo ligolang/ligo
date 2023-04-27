@@ -2,7 +2,7 @@
 -}
 {-# LANGUAGE DeriveDataTypeable, UndecidableInstances #-}
 
-module Language.LIGO.Debugger.Util.Range
+module Language.LIGO.Range
   ( HasRange(..)
   , LigoPosition (..)
   , Range(..)
@@ -36,7 +36,7 @@ import Fmt (Buildable (build))
 import Duplo.Lattice
 import Duplo.Pretty
 
-import Language.LIGO.Debugger.Util.Util (TextualNumber (TextualNumber))
+import Util
 
 point :: Int -> Int -> Range
 point l c = Range (LigoPosition l c) (LigoPosition l c) ""

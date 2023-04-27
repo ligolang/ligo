@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -Wno-redundant-constraints #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.LIGO.Debugger.Util.AST.Common
+module Language.LIGO.AST.Common
   ( ParsedContract (..)
   , FindFilepath (..)
 
@@ -30,10 +30,10 @@ import Control.Lens (makeLenses)
 
 import Duplo.Pretty
 
-import Language.LIGO.Debugger.Util.AST.Skeleton
-import Language.LIGO.Debugger.Util.Diagnostic (Message)
-import Language.LIGO.Debugger.Util.ParseTree
-import Language.LIGO.Debugger.Util.Parser (Info, ParsedInfo)
+import Language.LIGO.AST.Skeleton
+import Language.LIGO.Diagnostic (Message)
+import Language.LIGO.ParseTree
+import Language.LIGO.Parser (Info, ParsedInfo)
 
 -- TODO: Many of these datatypes don't make sense to be defined here. Consider
 -- moving into different or new modules.

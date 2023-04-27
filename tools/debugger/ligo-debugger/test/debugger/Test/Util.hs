@@ -6,9 +6,9 @@ module Test.Util
   , (<.>)
   , contractsDir
   , hasLigoExtension
-  , LSP.Lang (..)
-  , LSP.allLangs
-  , LSP.langExtension
+  , AST.Lang (..)
+  , AST.allLangs
+  , AST.langExtension
   , pattern SomeLorentzValue
 
     -- * Test utilities
@@ -92,6 +92,7 @@ import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
 
+import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -99,7 +100,6 @@ import Language.LIGO.Debugger.Handlers.Impl
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
-import Language.LIGO.Debugger.Util.AST.Skeleton qualified as LSP
 
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"

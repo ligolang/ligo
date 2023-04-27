@@ -1,4 +1,4 @@
-module Language.LIGO.Debugger.Util.AST.Parser
+module Language.LIGO.AST.Parser
   ( Source (..)
   , ParserCallback
   , parse
@@ -12,15 +12,15 @@ import Text.Regex.TDFA ((=~))
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
 import UnliftIO.Exception (Handler (..), catches, fromEither)
 
+import Language.LIGO.AST.Common (ContractInfo, addLigoErrsToMsg, pattern FindContract)
+import Language.LIGO.AST.Parser.Camligo qualified as Caml
+import Language.LIGO.AST.Parser.Jsligo qualified as Js
+import Language.LIGO.AST.Skeleton
 import Language.LIGO.Debugger.CLI
-import Language.LIGO.Debugger.Util.AST.Common (ContractInfo, addLigoErrsToMsg, pattern FindContract)
-import Language.LIGO.Debugger.Util.AST.Parser.Camligo qualified as Caml
-import Language.LIGO.Debugger.Util.AST.Parser.Jsligo qualified as Js
-import Language.LIGO.Debugger.Util.AST.Skeleton
-import Language.LIGO.Debugger.Util.Diagnostic (Message)
-import Language.LIGO.Debugger.Util.Extension
-import Language.LIGO.Debugger.Util.ParseTree (Source (..), toParseTree)
-import Language.LIGO.Debugger.Util.Parser (parseLineMarkerText, runParserM)
+import Language.LIGO.Diagnostic (Message)
+import Language.LIGO.Extension
+import Language.LIGO.ParseTree (Source (..), toParseTree)
+import Language.LIGO.Parser (parseLineMarkerText, runParserM)
 
 type ParserCallback m contract = Source -> m contract
 
@@ -44,8 +44,6 @@ loadPreprocessed src = do
       ((, []) <$> preprocess src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
-        , Handler \(_ :: LigoIOException) -> do
-          pure (src', [])
         , Handler \(_ :: SomeLigoException) ->
           pure (src', [])
         ]

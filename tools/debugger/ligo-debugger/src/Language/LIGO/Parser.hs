@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Language.LIGO.Debugger.Util.Parser
+module Language.LIGO.Parser
   ( ParserM
   , LineMarkerType (..)
   , LineMarker (..)
@@ -39,11 +39,11 @@ import Unsafe qualified
 import Duplo.Pretty hiding (int)
 import Duplo.Tree
 
-import Language.LIGO.Debugger.Util.AST.Skeleton (Error (..), SomeLIGO, getLIGO)
-import Language.LIGO.Debugger.Util.Diagnostic (Message (..), MessageDetail (..), Severity (..))
-import Language.LIGO.Debugger.Util.ParseTree
-import Language.LIGO.Debugger.Util.Product
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.AST.Skeleton (Error (..), SomeLIGO, getLIGO)
+import Language.LIGO.Diagnostic (Message (..), MessageDetail (..), Severity (..))
+import Language.LIGO.ParseTree
+import Language.LIGO.Product
+import Language.LIGO.Range
 
 {-
   Comment grabber has 2 buffers: 1 and 2.

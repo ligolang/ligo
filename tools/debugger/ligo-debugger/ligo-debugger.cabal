@@ -15,6 +15,14 @@ library
       Control.AbortingThreadPool
       Control.DelayedValues
       Debug
+      Language.LIGO.AST
+      Language.LIGO.AST.Common
+      Language.LIGO.AST.Includes
+      Language.LIGO.AST.Parser
+      Language.LIGO.AST.Parser.Camligo
+      Language.LIGO.AST.Parser.Jsligo
+      Language.LIGO.AST.Pretty
+      Language.LIGO.AST.Skeleton
       Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI
       Language.LIGO.Debugger.CLI.Call
@@ -32,21 +40,12 @@ library
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
-      Language.LIGO.Debugger.Util.AST
-      Language.LIGO.Debugger.Util.AST.Common
-      Language.LIGO.Debugger.Util.AST.Includes
-      Language.LIGO.Debugger.Util.AST.Parser
-      Language.LIGO.Debugger.Util.AST.Parser.Camligo
-      Language.LIGO.Debugger.Util.AST.Parser.Jsligo
-      Language.LIGO.Debugger.Util.AST.Pretty
-      Language.LIGO.Debugger.Util.AST.Skeleton
-      Language.LIGO.Debugger.Util.Diagnostic
-      Language.LIGO.Debugger.Util.Extension
-      Language.LIGO.Debugger.Util.Parser
-      Language.LIGO.Debugger.Util.ParseTree
-      Language.LIGO.Debugger.Util.Product
-      Language.LIGO.Debugger.Util.Range
-      Language.LIGO.Debugger.Util.Util
+      Language.LIGO.Diagnostic
+      Language.LIGO.Extension
+      Language.LIGO.Parser
+      Language.LIGO.ParseTree
+      Language.LIGO.Product
+      Language.LIGO.Range
       Util
   other-modules:
       Paths_ligo_debugger

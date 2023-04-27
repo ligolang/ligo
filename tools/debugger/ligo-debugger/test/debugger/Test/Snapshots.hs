@@ -38,6 +38,7 @@ import Lorentz (MText)
 import Lorentz qualified as L
 import Lorentz.Value (mt)
 
+import Language.LIGO.AST (scanContracts)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -45,8 +46,7 @@ import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
-import Language.LIGO.Debugger.Util.AST (scanContracts)
-import Language.LIGO.Debugger.Util.Range
+import Language.LIGO.Range
 
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
