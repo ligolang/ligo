@@ -36,7 +36,7 @@ let test_cases =
     ; file_path = "contracts/negative/error_typer_1.mligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
-          ; message = "Invalid type(s)\nCannot unify int with string."
+          ; message = "Invalid type(s)\nCannot unify \"int\" with \"string\"."
           ; range = Some (interval 2 19 27)
           }
         ; { severity = DiagnosticSeverity.Error
@@ -126,6 +126,19 @@ let test_cases =
           }
         ]
     ; max_number_of_problems = Some 2
+    }
+  ; { test_name = "Polymorphic Type error"
+    ; file_path = "contracts/lsp/poly_type_error.mligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Error
+          ; message =
+              "Invalid type(s)\n\
+               Cannot unify \"int\" with \"( ^a * ^b ) -> ^a\".\n\
+               Hint: \"^b\", \"^a\" represent placeholder type(s).\n"
+          ; range = Some (interval 0 21 22)
+          }
+        ]
+    ; max_number_of_problems = None
     }
   ]
 
