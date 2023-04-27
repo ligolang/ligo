@@ -84,7 +84,7 @@ instance HasLigoClient (RIO LIGO) where
       getClientEnv :: Maybe LigoLanguageServerState -> IO LigoClientEnv
       getClientEnv = \case
         Just lServ -> do
-          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ <*> Just Nothing
+          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ
           maybe getLigoClientEnv pure maybeEnv
         Nothing -> getLigoClientEnv
 

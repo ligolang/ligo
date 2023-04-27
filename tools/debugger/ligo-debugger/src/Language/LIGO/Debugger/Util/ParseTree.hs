@@ -45,7 +45,6 @@ foreign import ccall unsafe tree_sitter_JsLigo     :: Ptr Language
 
 data Source = Source
   { srcPath :: FilePath
-  , srcIsDirty :: Bool
   , srcText :: Text
   } deriving stock (Eq, Ord)
 
@@ -62,7 +61,7 @@ pathToSrc :: MonadIO m => FilePath -> m Source
 pathToSrc p = do
   raw <- liftIO $ BS.readFile p
   -- Is it valid UTF-8?
-  fmap (Source p False) $ decodeUtf8' raw & \case
+  fmap (Source p) $ decodeUtf8' raw & \case
     Left _ -> do
       -- Leniently decode the data so we can continue working even with invalid
       -- data. Note that this case means we'll decode the file two times; this
@@ -101,7 +100,7 @@ data SomeRawTree = SomeRawTree Lang RawTree
   deriving stock (Show)
 
 toParseTree :: (MonadIO m) => Lang -> Source -> m SomeRawTree
-toParseTree dialect (Source fp _ input) = do
+toParseTree dialect (Source fp input) = do
   let language = case dialect of
         Caml -> tree_sitter_CameLigo
         Js   -> tree_sitter_JsLigo

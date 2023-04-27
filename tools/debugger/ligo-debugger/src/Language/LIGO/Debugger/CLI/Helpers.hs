@@ -2,11 +2,8 @@
 
 -- | All the types needed for cli to work.
 module Language.LIGO.Debugger.CLI.Helpers
-  ( LigoProcess (..)
-  , LigoClientEnv (..)
+  ( LigoClientEnv (..)
   , HasLigoClient(..)
-  , TempDir (..)
-  , TempSettings (..)
   , NameType (..)
   , SNameType (..)
   , UniqueSym0
@@ -14,7 +11,6 @@ module Language.LIGO.Debugger.CLI.Helpers
   , Name (..)
   , LigoJSON (..)
   , ligoBinaryPath
-  , debugTempSettings
   , compareUniqueNames
   , toSnakeCase
   ) where
@@ -35,32 +31,15 @@ import GHC.Generics (Generic (Rep))
 import GHC.TypeLits (Nat)
 import System.Environment (getEnv)
 import System.IO.Error (isDoesNotExistError)
-import System.IO.Temp (getCanonicalTemporaryDirectory)
 import Text.Interpolation.Nyan
-import UnliftIO.Directory (getCurrentDirectory)
 import UnliftIO.Exception as UnliftIO (catch, throwIO)
-import UnliftIO.Pool (Pool)
-import UnliftIO.Process (ProcessHandle)
 
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
-data LigoProcess = LigoProcess
-  { -- | LIGO process handle
-    _lpLigo :: ProcessHandle
-  , -- | Write handle
-    _lpStdin :: Handle
-  , -- | Read handle
-    _lpStdout :: Handle
-  , -- | Error handle
-    _lpStderr :: Handle
-  }
-
 -- | Environment passed throughout the ligo interaction
-data LigoClientEnv = LigoClientEnv
+newtype LigoClientEnv = LigoClientEnv
   { -- | LIGO binary path
     _lceClientPath :: FilePath
-  , -- | Information regarding LIGO processes
-    _lceLigoProcesses :: Maybe (Pool LigoProcess)
   }
 
 -- | Attempts to get the environment variable 'LIGO_BINARY_PATH'. If such
@@ -72,7 +51,7 @@ ligoBinaryPath = getEnv "LIGO_BINARY_PATH" `UnliftIO.catch` \e ->
   else throwIO e
 
 instance Default LigoClientEnv where
-  def = LigoClientEnv{_lceClientPath = "ligo", _lceLigoProcesses = Nothing}
+  def = LigoClientEnv{_lceClientPath = "ligo"}
 
 class MonadUnliftIO m => HasLigoClient m where
   getLigoClientEnv :: m LigoClientEnv
@@ -84,26 +63,6 @@ instance HasLigoClient IO where
     pure def
       { _lceClientPath
       }
-
-data TempDir
-  = GenerateDir String
-  -- ^ Generate a new temporary directory using the given name template.
-  | UseDir FilePath
-  -- ^ Use an existing directory.
-
-data TempSettings = TempSettings
-  { tsProjectPath :: FilePath
-    -- ^ The absolute path to the root directory where indexing occurs.
-  , tsTemporaryDir :: TempDir
-    -- ^ The name template or path for the temporary directory.
-  }
-
--- | Returns a @TempSettings@ using the current directory for the project path
--- and the canonical temporory directory for writing to the disk.
--- For debugging.
-debugTempSettings :: IO TempSettings
-debugTempSettings =
-  TempSettings <$> getCurrentDirectory <*> fmap UseDir getCanonicalTemporaryDirectory
 
 -- | Type marker, which stores information about
 -- hashes presence in variable names.

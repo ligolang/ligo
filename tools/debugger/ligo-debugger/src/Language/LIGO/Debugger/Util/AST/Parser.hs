@@ -35,14 +35,13 @@ parse src = do
 
 loadPreprocessed
   :: (HasLigoClient m)
-  => TempSettings
-  -> Source
+  => Source
   -> m (Source, [Message])
-loadPreprocessed tempSettings src = do
+loadPreprocessed src = do
   let (src', needsPreprocessing) = prePreprocess $ srcText src
   if needsPreprocessing
     then
-      ((, []) <$> preprocess tempSettings src') `catches`
+      ((, []) <$> preprocess src') `catches`
         [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
           pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
         , Handler \(_ :: LigoIOException) -> do
@@ -64,9 +63,9 @@ loadPreprocessed tempSettings src = do
       in
       (src{srcText = unlines $ map fst prepreprocessed}, shouldPreprocess)
 
-parsePreprocessed :: (HasLigoClient m) => TempSettings -> Source -> m ContractInfo
-parsePreprocessed tempSettings src = do
-  (src', msgs) <- loadPreprocessed tempSettings src
+parsePreprocessed :: (HasLigoClient m) => Source -> m ContractInfo
+parsePreprocessed src = do
+  (src', msgs) <- loadPreprocessed src
   addLigoErrsToMsg msgs <$> parse src'
 
 -- | Scan the whole directory for LIGO contracts.

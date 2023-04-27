@@ -6,7 +6,6 @@ module Language.LIGO.Debugger.Handlers.Helpers
 import Prelude hiding (try)
 
 import Control.Concurrent.STM (throwSTM, writeTChan)
-import Control.Exception (throw)
 import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
 import Control.Monad.STM.Class (MonadSTM (..))
@@ -242,10 +241,7 @@ parseContracts allFiles = do
   parsedInfos <- do
     forM allFiles
       $   pathToSrc
-          -- This shouldn't happen because vscode saves all files before debugging.
-          -- Also, @pathToSrc@ reads file from a disk and sets @isDirty = false@.
-          -- So, we have another layer of safety.
-      >=> parsePreprocessed (throw $ ImpossibleHappened "Debugging started on dirty file")
+      >=> parsePreprocessed
       >=> insertPreprocessorRanges
 
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
