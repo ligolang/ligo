@@ -1963,3 +1963,57 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-5 |}]
+
+(* Unresponsive "go-to-definition" VSCode extension command
+   cause by [Location.compare] behaviour w.r.t. LSet / LMap
+   (https://gitlab.com/ligolang/ligo/-/merge_requests/2532)
+*)
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "min_repr_2532/main.mligo"
+    ; "--format"
+    ; "json"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  let () =
+    let open Yojson.Safe in
+    from_string [%expect.output]
+    |> Util.member "definitions"
+    |> Util.member "types"
+    |> Util.member "parameter#4:5-14"
+    |> Util.member "references"
+    |> pretty_to_string
+    |> print_endline
+  in
+  [%expect
+    {|
+      [
+        [
+          "File",
+          {
+            "start": {
+              "byte": {
+                "pos_fname": "../../test/contracts/get_scope_tests/min_repr_2532/main.mligo",
+                "pos_lnum": 3,
+                "pos_bol": 1,
+                "pos_cnum": 25
+              },
+              "point_num": 163,
+              "point_bol": 138
+            },
+            "stop": {
+              "byte": {
+                "pos_fname": "../../test/contracts/get_scope_tests/min_repr_2532/main.mligo",
+                "pos_lnum": 3,
+                "pos_bol": 1,
+                "pos_cnum": 34
+              },
+              "point_num": 172,
+              "point_bol": 138
+            }
+          }
+        ]
+      ] |}]

@@ -2697,6 +2697,20 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}]
 
+(* check compiling view call for a non-literal *)
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; bad_contract "call_view_not_litstr.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/call_view_not_litstr.mligo", line 2, characters 16-122:
+      1 | let main ((s, _) : string * unit) : operation list * unit =
+      2 |   let u = match (Tezos.call_view s (Tezos.get_sender ()) ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit option) with
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      3 |     | Some x -> x
+
+    Invalid argument.
+    View name must be a string literal. |}]
+
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "shadowed_sum_type.mligo" ];
   [%expect

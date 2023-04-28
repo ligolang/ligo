@@ -347,6 +347,31 @@ let%expect_test _ =
     )]. |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_mutate_module.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value [(() , Mutation at: File "contract_under_test/module_adder.mligo", line 1, characters 66-71:
+      1 | [@entry] let add (p : int) (k : int) : operation list * int = [], p + k
+                                                                            ^^^^^
+
+    Replacing by: p - k.
+    )]. |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_mutate_module.jsligo" ];
+  [%expect
+    {|
+    [(() , Mutation at: File "contract_under_test/module_adder.mligo", line 1, characters 66-71:
+      1 | [@entry] let add (p : int) (k : int) : operation list * int = [], p + k
+                                                                            ^^^^^
+
+    Replacing by: p - k.
+    )]
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "iteration.jsligo" ];
   [%expect
     {|
@@ -788,6 +813,15 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_untranspile_bls.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test_fr exited with value ().
+    - test_g1 exited with value ().
+    - test_g2 exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "get_contract.mligo" ];

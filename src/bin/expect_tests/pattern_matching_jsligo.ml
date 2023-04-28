@@ -1,6 +1,17 @@
 open Cli_expect
 
 let%expect_test _ =
+  run_ligo_good
+    [ "run"
+    ; "interpret"
+    ; "match_with_block()"
+    ; "--init-file"
+    ; test "match_with_block.jsligo"
+    ];
+  [%expect {|
+    2 |}]
+
+let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match1.jsligo"; "--test" ];
   [%expect
     {|

@@ -5,7 +5,8 @@ let contract = test
 (* warning unused variables example *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_unused.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
      10 |   let x = s.x + 3 in
      11 |   let x = foo x in
@@ -128,27 +129,30 @@ let%expect_test _ =
 (* some check about the warnings of the E_constructor cases *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_ambiguous_ctor.mligo" ];
-  [%expect{|
-    File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 66-69:
-      8 | (* here we expect a warning because both A constructor have the same parameter type *)
-      9 | let main = fun (() : unit) (_: union_b) -> ([]: operation list) , A 1
-                                                                            ^^^
+  [%expect
+    {|
+  File "../../test/contracts/warning_ambiguous_ctor.mligo", line 9, characters 66-69:
+    8 | (* here we expect a warning because both A constructor have the same parameter type *)
+    9 | let main = fun (() : unit) (_: union_b) -> ([]: operation list) , A 1
+                                                                          ^^^
 
-    Warning: The type of "A(1)" is ambiguous: Inferred type is "union_b" but could be of type "union_a".
-    Hint: You might want to add a type annotation.
+  Warning: The type of "A(1)" is ambiguous: Inferred type is "union_b" but could be of type "union_a".
+  Hint: You might want to add a type annotation.
 
-    { parameter unit ;
-      storage (or (int %a) (nat %b)) ;
-      code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
+  { parameter unit ;
+    storage (or (int %a) (nat %b)) ;
+    code { DROP ; PUSH int 1 ; LEFT nat ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile"; "contract"; contract "not_ambiguous_ctor.mligo" ];
-  [%expect{|
-    { parameter unit ;
-      storage (or (nat %a) (nat %b)) ;
-      code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
+  [%expect
+    {|
+  { parameter unit ;
+    storage (or (nat %a) (nat %b)) ;
+    code { DROP ; PUSH nat 1 ; LEFT nat ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_sum_types.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/warning_sum_types.mligo", line 65, characters 14-23:
      64 |
      65 | let warn_me = TopTop 42
@@ -254,7 +258,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_sum_types_shadowed.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage int ;
       code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]
