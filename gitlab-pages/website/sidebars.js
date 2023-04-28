@@ -50,6 +50,8 @@ const sidebars = {
     "Sub-Commands": [
       "manpages/changelog",
       "manpages/add-user",
+      "manpages/analytics accept",
+      "manpages/analytics deny",
       "manpages/compile constant",
       "manpages/compile contract",
       "manpages/compile expression",
@@ -66,8 +68,9 @@ const sidebars = {
       "manpages/mutate cst",
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
-      "manpages/print ast-imperative",
       "manpages/print ast-typed",
+      "manpages/print ast-expanded",
+      "manpages/print ast-unified",
       "manpages/print cst",
       "manpages/print dependency-graph",
       "manpages/print mini-c",
@@ -82,6 +85,8 @@ const sidebars = {
       "manpages/run test",
       "manpages/run test-expr",
       "manpages/transpile contract",
+      "manpages/transpile-with-ast contract",
+      "manpages/transpile-with-ast expression",
     ],
     API: [
       "reference/toplevel",
@@ -185,6 +190,7 @@ const sidebars = {
       "faq/catch-error-view",
       "faq/cameligo-ocaml-syntax-diff",
       "faq/tezos-now-advance-time",
+      "faq/transpile-pascaligo-to-jsligo",
     ],
   },
 };

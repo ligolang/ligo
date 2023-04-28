@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nIntroduce a new  way of doing list concatenation in JsLIGO:\\n\\n```\\nconst xs = list([1, 2, 3]);\\nconst ys = list([4, 5]);\\nconst zs = list([...xs, ...ys]);\\n\\n```\\n\\n"
+merge_request: '2560'
+title: "JsLIGO: list concatenation helper"
+type: added
+            

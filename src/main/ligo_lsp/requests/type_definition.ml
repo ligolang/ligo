@@ -1,10 +1,6 @@
+open Lsp_helpers
 open Handler
-open Lsp.Types
-open Utils
 module Loc = Simple_utils.Location
-
-(* TODO: use Set from Core *)
-module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 let get_type (vdef : Scopes.Types.vdef) : Ast_core.type_expression option =
   match vdef.t with
@@ -22,25 +18,26 @@ let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option H
   when_some'
     (match definition with
     | Variable vdef ->
-      bind_option (get_type vdef)
-      @@ fun type_expression ->
+      let open Option.Monad_infix in
+      get_type vdef
+      >>= fun type_expression ->
       Option.some
       @@
       let location = type_expression.location in
-      Option.value ~default:location
-      @@ bind_option (Utils.position_of_location location)
-      @@ fun region ->
-      bind_option
-        (Go_to_definition.get_definition region uri get_scope_info.definitions)
-        (function
-          | Variable _vdef -> None
-          | Module _mdef -> None
-          | Type tdef -> Some tdef.range)
+      Option.value
+        ~default:location
+        (Position.from_location location
+        >>= fun region ->
+        Go_to_definition.get_definition region uri get_scope_info.definitions
+        >>= function
+        | Variable _vdef -> None
+        | Module _mdef -> None
+        | Type tdef -> Some tdef.range)
     | Type tdef -> Some tdef.range
     | Module _mdef -> None)
   @@ function
   | File region ->
     return
     (* stdlib ranges have an empty file name. They have no type definition location. *)
-    @@ Option.some_if String.(region#file <> "") (`Location [ region_to_location region ])
+    @@ Option.some_if String.(region#file <> "") (`Location [ Location.of_region region ])
   | Virtual _ -> return None

@@ -15,7 +15,7 @@ class LIGO_CLASS_PLACEHOLDER < Formula
   # bottle ventura
   end
 
-  build_dependencies = %w[opam rust hidapi pkg-config gnu-sed]
+  build_dependencies = %w[opam rust hidapi pkg-config gnu-sed cmake gcc]
   build_dependencies.each do |dependency|
     depends_on dependency => :build
   end

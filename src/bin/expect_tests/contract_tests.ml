@@ -8,6 +8,26 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "jsligo_list_concat.jsligo" ];
+  [%expect
+    {|
+    { parameter (list int) ;
+      storage (list int) ;
+      code { UNPAIR ;
+             NIL int ;
+             SWAP ;
+             ITER { CONS } ;
+             ITER { CONS } ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "export_attribute.jsligo"; "-m"; "Foo" ];
+  [%expect
+    {|
+    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"

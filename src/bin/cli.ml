@@ -1887,7 +1887,7 @@ let get_scope =
         ()
     in
     return_with_custom_formatter ~skip_analytics:false ~cli_analytics ~return
-    @@ Ligo_interface.Get_scope.get_scope_cli_result
+    @@ Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
          raw_options
          source_file
          display_format

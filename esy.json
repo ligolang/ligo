@@ -1,6 +1,7 @@
 {
   "name": "ligolang",
-  "version": "0.62.0-dev",
+  "description": "A high-level language which compiles to Michelson",
+  "version": "0.65.0-dev",
   "repository": {
     "type": "git",
     "url": "https://gitlab.com/ligolang/ligo.git"
@@ -24,7 +25,7 @@
   "override": {
     "build": ["dune build -p ligo", "chmod -R a+w #{self.target_dir}"],
     "buildEnv": {
-      "LIGO_VERSION": "0.62.0",
+      "LIGO_VERSION": "0.65.0",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
     "exportedEnv": {

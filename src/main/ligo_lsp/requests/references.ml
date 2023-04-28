@@ -1,44 +1,57 @@
-open Ligo_interface
-open Lsp.Types
-module Loc = Simple_utils.Location
-
 (* TODO: use Set, List & Hashtbl from Core *)
+module SMap = Caml.Map.Make (String)
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 module Hashtbl = Caml.Hashtbl
-module List = Caml.List
 open Handler
-open Utils
+open Lsp_helpers
+open Ligo_interface
 
-let get_references : DocumentUri.t -> Loc.t -> Scopes.def list -> Range.t list =
- fun uri location defs ->
+module RSet = Caml.Set.Make (struct
+  include Range
+
+  let compare = Caml.compare
+end)
+
+let get_references : Loc.t -> Scopes.def Seq.t -> Region.t Seq.t =
+ fun location defs ->
   defs
-  |> List.filter_map (fun def ->
-         if Loc.equal (get_location def) location
-         then Some (LSet.elements @@ get_references_of_file uri def)
-         else None)
-  |> List.flatten
-  |> List.filter_map (function
-         | Loc.File region -> Some (region_to_range region)
+  |> Seq.concat_map (fun def ->
+         if Loc.equal (Def.get_location def) location
+         then LSet.to_seq @@ Def.references_getter def
+         else Seq.empty)
+  |> Seq.filter_map (function
+         | Loc.File region -> Some region
          | Loc.Virtual _ -> None)
+
+
+let partition_references : Region.t Seq.t -> RSet.t SMap.t =
+  Seq.fold_left
+    (fun acc reg ->
+      let range = Range.of_region reg in
+      SMap.update
+        reg#file
+        (function
+          | None -> Some (RSet.singleton range)
+          | Some ranges -> Some (RSet.add range ranges))
+        acc)
+    SMap.empty
 
 
 let get_all_references
     : Loc.t -> (DocumentUri.t, file_data) Hashtbl.t -> (DocumentUri.t * Range.t list) list
   =
  fun location get_scope_buffers ->
-  let go (file, { get_scope_info; _ }) =
+  let go { get_scope_info; _ } =
     let defs = get_scope_info.definitions in
-    match get_references file location defs with
-    | [] -> None
-    | l -> Some (file, l)
+    get_references location @@ Caml.List.to_seq defs
   in
-  let filter_map res value =
-    let value = go value in
-    match value with
-    | None -> res
-    | Some ref -> ref :: res
-  in
-  get_scope_buffers |> Hashtbl.to_seq |> List.of_seq |> List.fold_left filter_map []
+  get_scope_buffers
+  |> Hashtbl.to_seq_values
+  |> Seq.concat_map go
+  |> partition_references
+  |> SMap.to_seq
+  |> Seq.map (fun (file, refs) -> DocumentUri.of_path file, RSet.elements refs)
+  |> Caml.List.of_seq
 
 
 let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Handler.t =
@@ -48,18 +61,18 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
   @@ fun { get_scope_info; _ } ->
   when_some (Go_to_definition.get_definition pos uri get_scope_info.definitions)
   @@ fun definition ->
-  let references = get_all_references (get_location definition) get_scope_buffers in
+  let references = get_all_references (Def.get_location definition) get_scope_buffers in
   let@ () = send_debug_msg @@ "On references request on " ^ DocumentUri.to_path uri in
   let show_reference (uri, ranges) =
     DocumentUri.to_path uri
     ^ "\n"
     ^ String.concat ~sep:"\n"
-    @@ List.map range_to_string ranges
+    @@ List.map ~f:Range.to_string ranges
   in
   let@ () =
-    send_debug_msg @@ String.concat ~sep:"\n" @@ List.map show_reference references
+    send_debug_msg @@ String.concat ~sep:"\n" @@ List.map ~f:show_reference references
   in
   references
-  |> List.concat_map (fun (file, ranges) ->
-         List.map (fun range -> Location.create ~uri:file ~range) ranges)
+  |> List.concat_map ~f:(fun (file, ranges) ->
+         List.map ~f:(fun range -> Location.create ~uri:file ~range) ranges)
   |> return

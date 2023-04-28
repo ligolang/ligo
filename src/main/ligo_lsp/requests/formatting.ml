@@ -1,6 +1,5 @@
-open Linol_lwt
 open Handler
-open Utils
+open Lsp_helpers
 
 (* FIXME: add a configuration field for width, so user can choose max line size *)
 let on_req_formatting : DocumentUri.t -> TextEdit.t list option Handler.t =
@@ -12,4 +11,4 @@ let on_req_formatting : DocumentUri.t -> TextEdit.t list option Handler.t =
   with_cst ~strict:true ~on_error uri None
   @@ fun cst ->
   let result = Ligo_interface.pretty_print_cst ~width:80 ~dialect_cst:cst in
-  return @@ Some [ TextEdit.create ~newText:result ~range:whole_file_range ]
+  return @@ Some [ TextEdit.create ~newText:result ~range:Range.whole_file ]
