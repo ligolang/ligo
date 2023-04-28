@@ -36,7 +36,7 @@ depends: [
   "bos" {= "0.2.1"}
   "ca-certs" {= "0.2.3"}
   "camlp-streams" {= "5.0.1"}
-  "checkseum" {= "0.5.0"}
+  "checkseum" {= "0.5.1"}
   "chrome-trace" {= "3.7.0"}
   "class_group_vdf" {= "0.0.4"}
   "cmdliner" {= "1.1.0"}
@@ -255,7 +255,6 @@ depends: [
   "tezos-error-monad" {= "dev"}
   "tezos-event-logging" {= "dev"}
   "tezos-hacl" {= "dev"}
-  "tz-lwtres-std" {= "dev"}
   "tezos-micheline" {= "dev"}
   "tezos-plompiler" {= "1.0.1"}
   "tezos-plonk" {= "1.0.1"}
@@ -269,6 +268,7 @@ depends: [
   "trie" {= "1.0.0"}
   "typerep" {= "v0.15.0"}
   "tyxml" {= "4.5.0"}
+  "tz-lwtres-std" {= "dev"}
   "uchar" {= "0.0.2"}
   "uri" {= "4.2.0"}
   "uri-sexp" {= "4.2.0"}
