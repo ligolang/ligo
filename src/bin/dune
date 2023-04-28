@@ -100,8 +100,6 @@
 (executable
  (name runligo)
  (public_name ligo)
- (link_flags
-  (:include platform-specific-linker-flags.sexp))
  (instrumentation
   (backend bisect_ppx))
  (libraries
