@@ -287,7 +287,6 @@ depends: [
 build: ["dune" "build" "-p" name "-j" jobs]
 dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
 pin-depends: [
-  [ "tz-015-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
   [ "tc-015.dev" "./vendors/tezos-ligo/opam" ]
