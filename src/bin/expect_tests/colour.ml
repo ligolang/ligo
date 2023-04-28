@@ -46,6 +46,7 @@ let%expect_test _ =
       File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
         5 | let main (p : unit) (s : storage) : return =
         6 |   let x : nat = 1 + 2 + 3 (* int *) in
+                            ^^^^^^^^^
         7 |   [],s
 
       Invalid type(s)
@@ -85,6 +86,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/colour_test.mligo", line 3, characters 12-31:
       2 | let test1 = Test.assert (1 = 1)
       3 | let test2 = Test.assert (1 = 2)
+                      ^^^^^^^^^^^^^^^^^^^
 
     Test failed with "failed assertion"
     Trace:
@@ -124,6 +126,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/colour.mligo", line 6, characters 16-25:
       5 | let main (p : unit) (s : storage) : return =
       6 |   let x : nat = 1 + 2 + 3 (* int *) in
+                          ^^^^^^^^^
       7 |   [],s
 
     Invalid type(s)

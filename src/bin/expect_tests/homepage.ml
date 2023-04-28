@@ -21,7 +21,7 @@ let%expect_test _ =
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; base "cameligo.mligo" ];
+  run_ligo_good [ "compile"; "contract"; base "cameligo.mligo"; "-m"; "IncDec" ];
   [%expect
     {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
@@ -32,7 +32,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo" ];
+  run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo"; "-m"; "IncDec" ];
   [%expect
     {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;

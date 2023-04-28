@@ -25,6 +25,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/const.mligo", line 1, characters 31-32:
       1 | let const = fun (type a b) (a, b : a * b) : a -> a
+                                         ^
       2 |
     :
     Warning: unused variable "b".
@@ -221,6 +222,7 @@ let%expect_test _ =
 File "../../test/contracts/ticket_builder.mligo", line 28, characters 28-34:
  27 |       begin
  28 |         let ((ticketer, _), ticket) = (Tezos.read_ticket ticket : (address * (unit * nat)) * unit ticket) in
+                                  ^^^^^^
  29 |         assert (ticketer = Tezos.get_self_address ());
 :
 Warning: unused variable "ticket".
@@ -275,6 +277,7 @@ let%expect_test _ =
       File "../../test/contracts/implicit.mligo", line 2, characters 6-7:
         1 | let main2 (p : key_hash) (s : unit) =
         2 |   let c : unit contract = Tezos.implicit_account p
+                  ^
         3 |   in ([] : operation list), unit
       :
       Warning: unused variable "c".
@@ -282,6 +285,7 @@ let%expect_test _ =
 
       File "../../test/contracts/implicit.mligo", line 1, characters 26-27:
         1 | let main2 (p : key_hash) (s : unit) =
+                                      ^
         2 |   let c : unit contract = Tezos.implicit_account p
       :
       Warning: unused variable "s".
@@ -298,7 +302,9 @@ let%expect_test _ =
     File "../../test/contracts/negative/capture_big_map.mligo", line 12, character 2 to line 13, character 17:
      11 |
      12 |   let supply (ledger:l) (_:nat) =
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |     ledger.supply
+          ^^^^^^^^^^^^^^^^^
      14 |
 
     Invalid capturing, term captures the type big_map (address ,
@@ -351,6 +357,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 4, characters 7-8:
       3 |   let amt : tez = Tezos.get_amount () in
       4 |   fun (x : unit) -> amt
+                 ^
       5 |
     :
     Warning: unused variable "x".
@@ -359,6 +366,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 2, characters 8-9:
       1 | (* should return a constant function *)
       2 | let f1 (x : unit) : unit -> tez =
+                  ^
       3 |   let amt : tez = Tezos.get_amount () in
     :
     Warning: unused variable "x".
@@ -367,6 +375,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 8, characters 7-8:
       7 | let f2 (x : unit) : unit -> tez =
       8 |   fun (x : unit) -> Tezos.get_amount ()
+                 ^
       9 |
     :
     Warning: unused variable "x".
@@ -375,6 +384,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 7, characters 8-9:
       6 | (* should return an impure function *)
       7 | let f2 (x : unit) : unit -> tez =
+                  ^
       8 |   fun (x : unit) -> Tezos.get_amount ()
     :
     Warning: unused variable "x".
@@ -383,6 +393,7 @@ let%expect_test _ =
     File "../../test/contracts/amount_lambda.mligo", line 10, characters 21-22:
       9 |
      10 | let main (b : bool) (s : (unit -> tez)) : operation list * (unit -> tez) =
+                               ^
      11 |   (([] : operation list), (if b then f1 () else f2 ()))
     :
     Warning: unused variable "s".
@@ -407,6 +418,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
+                    ^^
       2 |   if true
     :
     Warning: unused variable "ps".
@@ -426,6 +438,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
+                    ^^
       2 |   if true
     :
     Warning: unused variable "ps".
@@ -449,11 +462,13 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 16-23:
       1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
+                          ^^^^^^^
       2 |
 
     This type is used inside:
     File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 15-28:
       1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
+                         ^^^^^^^^^^^^^
       2 |
 
     The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
@@ -466,11 +481,13 @@ let%expect_test _ =
     File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 17-24:
       2 |
       3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
+                           ^^^^^^^
 
     This type is used inside:
     File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 16-32:
       2 |
       3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
+                          ^^^^^^^^^^^^^^^^
 
     The ticket constructor needs a comparable type argument, but it was given a non-comparable one. |}]
 
@@ -509,10 +526,15 @@ let%expect_test _ =
 File "../../test/contracts/negative/create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8:
   3 | let main (_ : string) (store : string) : return =
   4 |   let toto : operation * address = Tezos.create_contract
+                                         ^^^^^^^^^^^^^^^^^^^^^
   5 |     (fun (_p : nat) (_s : string) -> (([] : operation list), store))
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   6 |     (None: key_hash option)
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   7 |     300tz
+      ^^^^^^^^^^
   8 |     "un"
+      ^^^^^^^^
   9 |   in
 
 Not all free variables could be inlined in Tezos.create_contract usage: gen#34. |}];
@@ -522,6 +544,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract_var.mligo", line 7, characters 20-21:
       6 |   let toto : operation * address = Tezos.create_contract
       7 |     (fun (p : nat) (s : int) -> (([] : operation list), a))
+                              ^
       8 |     (None: key_hash option)
     :
     Warning: unused variable "s".
@@ -530,6 +553,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract_var.mligo", line 7, characters 10-11:
       6 |   let toto : operation * address = Tezos.create_contract
       7 |     (fun (p : nat) (s : int) -> (([] : operation list), a))
+                    ^
       8 |     (None: key_hash option)
     :
     Warning: unused variable "p".
@@ -538,6 +562,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract_var.mligo", line 5, characters 10-16:
       4 |
       5 | let main (action : string) (store : string) : return =
+                    ^^^^^^
       6 |   let toto : operation * address = Tezos.create_contract
     :
     Warning: unused variable "action".
@@ -566,6 +591,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 20-21:
       7 |   let toto : operation * address = Tezos.create_contract
       8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+                              ^
       9 |     (None: key_hash option)
     :
     Warning: unused variable "s".
@@ -574,6 +600,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 8, characters 10-11:
       7 |   let toto : operation * address = Tezos.create_contract
       8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+                    ^
       9 |     (None: key_hash option)
     :
     Warning: unused variable "p".
@@ -582,6 +609,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 3, characters 10-16:
       2 |
       3 | let main (action : string) (store : string) : return =
+                    ^^^^^^
       4 |   module Foo = struct
     :
     Warning: unused variable "action".
@@ -590,10 +618,15 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 7, character 35 to line 11, character 8:
       6 |   end in
       7 |   let toto : operation * address = Tezos.create_contract
+                                             ^^^^^^^^^^^^^^^^^^^^^
       8 |     (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |     (None: key_hash option)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      10 |     300tz
+          ^^^^^^^^^^
      11 |     "un"
+          ^^^^^^^^
      12 |   in
 
     Not all free variables could be inlined in Tezos.create_contract usage: gen#35. |}];
@@ -603,6 +636,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 30-31:
       4 |
       5 | let dummy_contract (p : nat) (s : int) : return =
+                                        ^
       6 |  (([] : operation list), foo)
     :
     Warning: unused variable "s".
@@ -611,6 +645,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 20-21:
       4 |
       5 | let dummy_contract (p : nat) (s : int) : return =
+                              ^
       6 |  (([] : operation list), foo)
     :
     Warning: unused variable "p".
@@ -619,6 +654,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 11-15:
       8 | let main (action : int) (store : int) : return =
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+                     ^^^^
      10 |   let toto : operation list = [ op ] in
     :
     Warning: unused variable "addr".
@@ -627,6 +663,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 25-30:
       7 |
       8 | let main (action : int) (store : int) : return =
+                                   ^^^^^
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
     :
     Warning: unused variable "store".
@@ -635,6 +672,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 8, characters 10-16:
       7 |
       8 | let main (action : int) (store : int) : return =
+                    ^^^^^^
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
     :
     Warning: unused variable "action".
@@ -643,6 +681,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 9, characters 19-89:
       8 | let main (action : int) (store : int) : return =
       9 |   let (op, addr) = Tezos.create_contract dummy_contract ((None: key_hash option)) 300tz 1 in
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      10 |   let toto : operation list = [ op ] in
 
     Not all free variables could be inlined in Tezos.create_contract usage: foo#46. |}];
@@ -652,6 +691,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract.mligo", line 5, characters 20-21:
       4 |   let toto : operation * address = Tezos.create_contract
       5 |     (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+                              ^
       6 |     (None: key_hash option)
     :
     Warning: unused variable "s".
@@ -660,6 +700,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract.mligo", line 5, characters 10-11:
       4 |   let toto : operation * address = Tezos.create_contract
       5 |     (fun (p : nat) (s : string) -> (([] : operation list), "one"))
+                    ^
       6 |     (None: key_hash option)
     :
     Warning: unused variable "p".
@@ -668,6 +709,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#34. 
     File "../../test/contracts/create_contract.mligo", line 3, characters 10-16:
       2 |
       3 | let main (action : string) (store : string) : return =
+                    ^^^^^^
       4 |   let toto : operation * address = Tezos.create_contract
     :
     Warning: unused variable "action".
@@ -698,6 +740,7 @@ let%expect_test _ =
 File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-16:
   3 |
   4 | let main (action : parameter) (store : storage) : storage =
+                ^^^^^^
   5 |   store + 1
 :
 Warning: unused variable "action".
@@ -706,6 +749,7 @@ Hint: replace it by "_action" to prevent this warning.
 File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 4-8:
   3 |
   4 | let main (action : parameter) (store : storage) : storage =
+          ^^^^
   5 |   store + 1
 
 Invalid type for entrypoint "main".
@@ -716,6 +760,7 @@ An entrypoint must of type "parameter * storage -> operation list * storage". |}
 File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-16:
   4 |
   5 | let main (action : parameter) (store : storage) : return =
+                ^^^^^^
   6 |   ("bad",store + 1)
 :
 Warning: unused variable "action".
@@ -724,7 +769,9 @@ Hint: replace it by "_action" to prevent this warning.
 File "../../test/contracts/negative/bad_contract2.mligo", line 5, character 0 to line 6, character 19:
   4 |
   5 | let main (action : parameter) (store : storage) : return =
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   6 |   ("bad",store + 1)
+      ^^^^^^^^^^^^^^^^^^^
 
 Invalid type for entrypoint "main".
 An entrypoint must of type "parameter * storage -> operation list * storage".
@@ -735,6 +782,7 @@ We expected a list of operations but we got string |}];
 File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 10-16:
   4 |
   5 | let main (action, store : parameter * storage) : return =
+                ^^^^^^
   6 |   (([]: operation list),"bad")
 :
 Warning: unused variable "action".
@@ -743,6 +791,7 @@ Hint: replace it by "_action" to prevent this warning.
 File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 18-23:
   4 |
   5 | let main (action, store : parameter * storage) : return =
+                        ^^^^^
   6 |   (([]: operation list),"bad")
 :
 Warning: unused variable "store".
@@ -751,7 +800,9 @@ Hint: replace it by "_store" to prevent this warning.
 File "../../test/contracts/negative/bad_contract3.mligo", line 5, character 0 to line 6, character 30:
   4 |
   5 | let main (action, store : parameter * storage) : return =
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   6 |   (([]: operation list),"bad")
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Invalid type for entrypoint "main".
 The storage type "int" of the function parameter must be the same as the storage type "string" of the return value. |}]
@@ -762,6 +813,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/duplicate_record_field.mligo", line 1, characters 9-34:
       1 | type r = { foo : int ; foo : int }
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
       2 |
 
     Repeated type variable in type.
@@ -831,6 +883,7 @@ let%expect_test _ =
     File "../../test/contracts/edo_combs.mligo", line 10, characters 22-23:
       9 |
      10 | let main (p : param) (s : int) : operation list * int =
+                                ^
      11 |   let { x = x; y = y; z = z; w = w } = p in
     :
     Warning: unused variable "s".
@@ -890,15 +943,23 @@ let%expect_test _ =
     File "../../test/contracts/never.jsligo", line 8, character 0 to line 15, character 1:
       7 |
       8 | let main = (action : parameter, store : storage) : [list<operation>, storage] => {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |   return [
+          ^^^^^^^^^^
      10 |    (list([]) as list <operation>),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      11 |    (match (action, {
+          ^^^^^^^^^^^^^^^^^^^^
      12 |     Increment: (n : int) => store + n,
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |     Extend: (k : never) => (Tezos.never(k) as storage)}))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      14 |   ]
+          ^^^
      15 | };
+          ^
 
-    Toplevel let declaration are silently change to const declaration.
+    Toplevel let declaration is silently changed to const declaration.
 
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
@@ -932,6 +993,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/error_self_annotations.mligo", line 6, characters 10-44:
       5 | let main (_ : param) (_ : unit) : operation list * unit =
       6 |   let c = (Tezos.self("%a") : unit contract) in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       7 |   let op = Tezos.transaction () 0mutez c in
 
     Invalid entrypoint value.
@@ -945,8 +1007,11 @@ let%expect_test _ =
     File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 2, character 10 to line 4, character 85:
       1 | let main (_ : unit) (_ : unit) : operation list * unit =
       2 |   let v = (Tezos.get_entrypoint_opt
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
       3 |            "foo"
+          ^^^^^^^^^^^^^^^^
       4 |            ("tz1fakefakefakefakefakefakefakcphLA5" : address) : unit contract option) in
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       5 |   let u : unit = match v with
 
     Invalid entrypoint "foo". One of the following patterns is expected:
@@ -962,11 +1027,17 @@ let%expect_test _ =
     File "../../test/contracts/negative/compile_test.mligo", line 12, character 0 to line 17, character 22:
      11 |    the smart contract parameter. *)
      12 | let main (action : parameter) (store : storage) : return =
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |  ([] : operation list),    // No operations
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      14 |  (match action with
+          ^^^^^^^^^^^^^^^^^^^
      15 |    Increment (n) -> let _ = Test.log "foo" in add store n
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      16 |  | Decrement (n) -> sub store n
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      17 |  | Reset         -> 0)
+          ^^^^^^^^^^^^^^^^^^^^^^
      18 | let _test () =
 
     Invalid usage of a Test primitive: cannot be translated to Michelson. |}]
@@ -1002,6 +1073,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/negative/bad_annotation_unpack.mligo", line 1, characters 9-42:
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "option (^a)" with "string".
@@ -1033,6 +1105,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/reuse_variable_name_top.jsligo", line 2, characters 4-7:
       1 | let dog = 1;
       2 | let dog = true;
+              ^^^
 
     Duplicate identifier. |}]
 
@@ -1043,6 +1116,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/reuse_variable_name_block.jsligo", line 3, characters 8-9:
       2 |     let x = 2;
       3 |     let x = 2;
+                  ^
       4 |     return x;
 
     Duplicate identifier. |}]
@@ -1093,15 +1167,17 @@ let%expect_test _ =
       File "../../test/contracts/negative/modules_export_const.jsligo", line 2, characters 4-15:
         1 | namespace Bar {
         2 |     let foo = 2
+                ^^^^^^^^^^^
         3 | }
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 0-15:
         4 |
         5 | let a = Bar.foo;
+            ^^^^^^^^^^^^^^^
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       Internal error: Entrypoint main does not exist |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_namespace.jsligo" ];
@@ -1110,9 +1186,10 @@ let%expect_test _ =
       File "../../test/contracts/negative/modules_export_namespace.jsligo", line 3, characters 8-17:
         2 |     namespace Foo {
         3 |         let a = 2;
+                    ^^^^^^^^^
         4 |     }
 
-      Toplevel let declaration are silently change to const declaration.
+      Toplevel let declaration is silently changed to const declaration.
 
       Internal error: Entrypoint main does not exist |}]
 
@@ -2541,22 +2618,25 @@ let%expect_test _ =
 File "../../test/contracts/extend_builtin.jsligo", line 2, characters 9-19:
   1 | namespace Tezos {
   2 |   export let x = 42;
+               ^^^^^^^^^^
   3 |   export let f = (x  : int) : int => x + 2;
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 File "../../test/contracts/extend_builtin.jsligo", line 3, characters 9-42:
   2 |   export let x = 42;
   3 |   export let f = (x  : int) : int => x + 2;
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   4 | }
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 File "../../test/contracts/extend_builtin.jsligo", line 6, characters 0-24:
   5 |
   6 | let y = Tezos.f(Tezos.x);
+      ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Toplevel let declaration are silently change to const declaration.
+Toplevel let declaration is silently changed to const declaration.
 
 44 |}]
 
@@ -2604,6 +2684,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/shadowed_sum_type.mligo", line 13, characters 8-12:
      12 |
      13 | let x = A 42
+                  ^^^^
      14 |
 
     Constructor "A" not found.
@@ -2616,6 +2697,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/bad_contract_return_type.mligo", line 5, characters 14-23:
       4 |
       5 | let main (_ : parameter) (s : storage) : _return =
+                        ^^^^^^^^^
       6 |     [], s, 1tez
 
     Type "parameter" not found.
@@ -2669,6 +2751,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/bytes_literals.jsligo", line 2, characters 12-23:
       1 | const shame = () => {
       2 |   const x = bytes `foo` as nat;
+                      ^^^^^^^^^^^
       3 |   return x
 
     Invalid type(s).
@@ -2707,6 +2790,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/emit_bad_tag.mligo", line 2, characters 3-31:
       1 | let main (_ : unit) (_ : string) : operation list * string =
       2 |   [Tezos.emit "%hello world" 12], "bye"
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid entrypoint "%hello world". One of the following patterns is expected:
     * "%bar" is expected for entrypoint "Bar"
@@ -2742,7 +2826,9 @@ let%expect_test _ =
     File "../../test/contracts/negative/annotated_storage_and_parameter.mligo", line 4, character 0 to line 5, character 8:
       3 |
       4 | let main (_p : parameter) (s : storage) : operation list * storage =
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       5 |  ([], s)
+          ^^^^^^^^
 
     Invalid type for entrypoint "main".
     The parameter type "funtype 'a : * . list ('a)" of the entrypoint function must not contain polymorphic variables. |}]
@@ -2754,6 +2840,7 @@ let%expect_test _ =
     File "../../test/contracts/disc_union_vbar.jsligo", line 16, characters 11-21:
      15 |     let planetType = p.planetType;
      16 |     switch(planetType.kind) {
+                     ^^^^^^^^^^
      17 |     case "Tellurian":
     :
     Warning: unused variable "planetType".
@@ -2762,6 +2849,7 @@ let%expect_test _ =
     File "../../test/contracts/disc_union_vbar.jsligo", line 16, characters 11-21:
      15 |     let planetType = p.planetType;
      16 |     switch(planetType.kind) {
+                     ^^^^^^^^^^
      17 |     case "Tellurian":
     :
     Warning: unused variable "planetType".
@@ -2770,6 +2858,7 @@ let%expect_test _ =
     File "../../test/contracts/disc_union_vbar.jsligo", line 16, characters 11-21:
      15 |     let planetType = p.planetType;
      16 |     switch(planetType.kind) {
+                     ^^^^^^^^^^
      17 |     case "Tellurian":
     :
     Warning: unused variable "planetType".
@@ -2858,6 +2947,7 @@ let%expect_test _ =
     File "../../test/contracts/entrypoint_in_module.mligo", line 20, characters 14-17:
      19 |    | Reset         -> 0)
      20 |   [@view] let foo (i : int) (store : storage) : int = i + store
+                        ^^^
      21 |   let bar (i : int) (store : storage) : int = 1 + i + store
 
     Warning: This view will be ignored, command line option override [
@@ -2936,6 +3026,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 8, characters 6-12:
       7 | // @entry
       8 | const unique = (_ : organization, _ : storage) => {
+                ^^^^^^
       9 |     return failwith("You need to be part of Tezos organization to activate an organization");
 
     Invalid type for entrypoint "unique".

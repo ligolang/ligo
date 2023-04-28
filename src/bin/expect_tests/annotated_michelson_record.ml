@@ -16,6 +16,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -24,6 +25,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -32,6 +34,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -40,6 +43,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -60,6 +64,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                             ^^^^^^
      34 |   let o = store.foo in
     :
     Warning: unused variable "action".
@@ -68,6 +73,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                    ^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "store".
@@ -76,6 +82,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                               ^^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "action".
@@ -84,6 +91,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
      40 |
      41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                              ^^^^^^
      42 |   ([] : operation list), store
     :
     Warning: unused variable "action".
@@ -110,6 +118,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                             ^^^^^^
      34 |   let o = store.foo in
     :
     Warning: unused variable "action".
@@ -118,6 +127,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                    ^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "store".
@@ -126,6 +136,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                               ^^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "action".
@@ -134,6 +145,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
      40 |
      41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                              ^^^^^^
      42 |   ([] : operation list), store
     :
     Warning: unused variable "action".
@@ -159,6 +171,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                             ^^^^^^
      34 |   let o = store.foo in
     :
     Warning: unused variable "action".
@@ -167,6 +180,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                    ^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "store".
@@ -175,6 +189,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                               ^^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "action".
@@ -183,6 +198,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
      40 |
      41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                              ^^^^^^
      42 |   ([] : operation list), store
     :
     Warning: unused variable "action".
@@ -203,6 +219,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                             ^^^^^^
      34 |   let o = store.foo in
     :
     Warning: unused variable "action".
@@ -211,6 +228,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                    ^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "store".
@@ -219,6 +237,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                               ^^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "action".
@@ -227,6 +246,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
      40 |
      41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                              ^^^^^^
      42 |   ([] : operation list), store
     :
     Warning: unused variable "action".
@@ -247,6 +267,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 33, characters 19-25:
      32 |
      33 | let main_comb_two (action : parameter) (store : comb_two ) : op_list * comb_two =
+                             ^^^^^^
      34 |   let o = store.foo in
     :
     Warning: unused variable "action".
@@ -255,6 +276,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 42-47:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                                                    ^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "store".
@@ -263,6 +285,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 38, characters 21-27:
      37 |
      38 | let main_comb_three (action : parameter) (store : comb_three ) : op_list * comb_three =
+                               ^^^^^^
      39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
     :
     Warning: unused variable "action".
@@ -271,6 +294,7 @@ let%expect_test _ =
     File "../../test/contracts/annotated_michelson_record_comb.mligo", line 41, characters 20-26:
      40 |
      41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                              ^^^^^^
      42 |   ([] : operation list), store
     :
     Warning: unused variable "action".
@@ -293,6 +317,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -301,6 +326,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -309,6 +335,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -317,6 +344,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -337,6 +365,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -345,6 +374,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -353,6 +383,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -361,6 +392,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -388,6 +420,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -396,6 +429,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -404,6 +438,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -412,6 +447,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -438,6 +474,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -446,6 +483,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -454,6 +492,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -462,6 +501,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -482,6 +522,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -490,6 +531,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -498,6 +540,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -506,6 +549,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".
@@ -526,6 +570,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 33, characters 19-25:
               32 |
               33 | let main_comb_two (action : parameter) (store : comb_two) : op_list * comb_two =
+                                      ^^^^^^
               34 |   let o = store.foo in
              :
              Warning: unused variable "action".
@@ -534,6 +579,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 42-47:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                                             ^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "store".
@@ -542,6 +588,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 38, characters 21-27:
               37 |
               38 | let main_comb_three (action : parameter) (store : comb_three) : op_list * comb_three =
+                                        ^^^^^^
               39 |   ([] : operation list), { a = 1 ; b = "" ; c = 1n }
              :
              Warning: unused variable "action".
@@ -550,6 +597,7 @@ let%expect_test _ =
              File "../../test/contracts/annotated_michelson_record_tree.mligo", line 41, characters 20-26:
               40 |
               41 | let main_comb_five (action : parameter) (store : comb_five) : op_list * comb_five =
+                                       ^^^^^^
               42 |   ([] : operation list), store
              :
              Warning: unused variable "action".

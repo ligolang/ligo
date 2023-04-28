@@ -10,6 +10,7 @@ let%expect_test _ =
     File "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 22-23:
      11 |
      12 | let main (p : bls_l) (s : bool) : operation list * bool =
+                                ^
      13 |  (([] : operation list), Tezos.pairing_check p)
     :
     Warning: unused variable "s".
@@ -31,6 +32,7 @@ let%expect_test _ =
     File "../../test/contracts/sapling.mligo", line 8, characters 27-32:
       7 |
       8 | let main (tr : parameter) (store : storage) : return =
+                                     ^^^^^
       9 |  ([] : operation list),
     :
     Warning: unused variable "store".
@@ -58,6 +60,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/rollup.mligo", line 1, characters 14-34:
       1 | let main (_ : tx_rollup_l2_address) (_ :  unit ) : operation list * unit =
+                        ^^^^^^^^^^^^^^^^^^^^
       2 |   (failwith "roll up !" : operation list * unit)
 
     Type "tx_rollup_l2_address" not found. |}];
@@ -91,6 +94,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/emit.mligo", line 3, characters 3-18:
       2 |   let x = "%lol" in
       3 |   [Tezos.emit x 12],x
+             ^^^^^^^^^^^^^^^
 
     Invalid event tag.
     The tag must be a string literal. |}]

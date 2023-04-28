@@ -120,6 +120,7 @@ let%expect_test _ =
     File "../../test/contracts/transpile_warn_shadowing.jsligo", line 12, characters 6-7:
      11 | const x = 42;
      12 | const x = 33;
+                ^
      13 |
 
     Duplicate identifier. |}]
