@@ -35,6 +35,7 @@
     -short-paths
     -keep-locs
     -open Core
+    (:include platform-specific-linker-flags.sexp)
     (:include platform-specific-compiler-flags.sexp))))
  (static
   (link_flags (:include platform-specific-linker-flags.sexp))
@@ -45,4 +46,5 @@
     -short-paths
     -keep-locs
     -open Core
+    (:include platform-specific-linker-flags.sexp)
     (:include platform-specific-compiler-flags.sexp)))))
