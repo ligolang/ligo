@@ -19,7 +19,9 @@ import Data.Attoparsec.ByteString (parseOnly)
 import Data.Char (isDigit)
 import Data.Data (Data)
 import Data.Default (Default (..))
+import Data.HashMap.Strict qualified as HM
 import Data.List qualified as L
+import Data.List.NonEmpty (singleton)
 import Data.Scientific qualified as Sci
 import Data.Singletons.TH (SingI (..), genSingletons)
 import Data.Text qualified as T
@@ -40,7 +42,11 @@ import Morley.Util.Lens
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
 import AST (Lang (..), Type, TypeName, lppDialect)
-import Cli.Json (LigoTypeExpression, LigoTypeFull (LTFResolved), fromLigoTypeFull)
+import Cli.Json
+  (LigoLayout (LTree), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
+  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
+  LigoTypeFull (LTFResolved), LigoTypeTable (LigoTypeTable), fromLigoTypeFull)
+import Cli.Json qualified as Cli
 import Duplo (layer)
 
 import Language.LIGO.Debugger.Error
@@ -243,10 +249,72 @@ instance Buildable LigoTypeRef where
 
 newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
   deriving stock (Data)
-  deriving newtype (Show, Generic, NFData)
+  deriving newtype (Show, Generic, NFData, Hashable)
 
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
 pattern LigoTypeResolved typ = LigoType (Just typ)
+
+mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
+mkTypeExpression content = LigoTypeExpression
+  { _lteTypeContent = content
+  , _lteLocation = Cli.LRVirtual "dummy"
+  , _lteSugar = Nothing
+  , _lteTypeMeta = Nothing
+  , _lteOrigVar = Nothing
+  }
+
+mkConstantType :: Text -> [LigoTypeExpression] -> LigoTypeExpression
+mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
+  LigoTypeConstant
+    { _ltcParameters = parameters
+    , _ltcLanguage = "Michelson"
+    , _ltcInjection = singleton typeName
+    }
+
+mkArrowType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
+  LigoTypeArrow
+    { _ltaType2 = codomain
+    , _ltaType1 = domain
+    }
+
+(~>) :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+(~>) = mkArrowType
+
+infixr 2 ~>
+
+mkTypeTable :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeTable
+mkTypeTable layout keyValues = keyValues
+  & zipWith (\i (str, expr) -> (str, (i, expr))) [0..]
+  & map (second $ uncurry mkTableField)
+  & HM.fromList
+  & flip LigoTypeTable (Just layout)
+  where
+    mkTableField :: Int -> LigoTypeExpression -> LigoTableField
+    mkTableField declPos expr = LigoTableField
+      { _ltfDeclPos = declPos
+      , _lrfMichelsonAnnotation = Null
+      , _ltfAssociatedType = expr
+      }
+
+mkRecordType :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeExpression
+mkRecordType layout keyValues = mkTypeTable layout keyValues
+  & LTCRecord
+  & mkTypeExpression
+
+mkSumType :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeExpression
+mkSumType layout keyValues = mkTypeTable layout keyValues
+  & LTCSum
+  & mkTypeExpression
+
+mkSimpleConstantType :: Text -> LigoTypeExpression
+mkSimpleConstantType typ = mkConstantType typ []
+
+mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
+mkPairType fstElem sndElem = mkRecordType LTree
+  [ ("0", fstElem)
+  , ("1", sndElem)
+  ]
 
 -- | Prettify @LigoType@ in provided dialect.
 buildType :: Lang -> LigoType -> Builder

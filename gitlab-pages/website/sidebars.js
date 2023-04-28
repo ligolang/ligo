@@ -96,6 +96,7 @@ const sidebars = {
       "reference/option-reference",
       "reference/current-reference",
       "reference/test",
+      "reference/proxy-ticket-reference",
     ],
     "Protocol Upgrades": [
       "protocol/hangzhou",

@@ -453,6 +453,15 @@ let get_type_abstractions (e : expression) =
   aux [] e
 
 
+let rec get_e_applications t =
+  match get_e_application t with
+  | Some { lamb; args } ->
+    (match get_e_applications lamb with
+    | [] -> [ lamb; args ]
+    | apps -> apps @ [ args ])
+  | None -> []
+
+
 (* This function re-builds a term prefixed with E_type_abstraction:
    given an expression e and a list of type variables [t1; ...; tn],
    it constructs an expression /\ t1 . ... . /\ tn . e *)
@@ -534,4 +543,10 @@ let context_apply (p : context) (e : expression) : expression =
 let get_e_tuple t =
   match t with
   | E_record r -> Some (List.map ~f:snd @@ Record.tuple_of_record r)
+  | _ -> None
+
+
+let get_e_string t =
+  match t with
+  | E_literal (Literal_string s) -> Some Ligo_string.(extract s)
   | _ -> None

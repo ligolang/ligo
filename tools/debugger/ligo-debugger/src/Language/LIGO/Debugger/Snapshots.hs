@@ -374,6 +374,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             |]
 
           csActiveStackFrameL . sfStackL .= stackHere
+
       Nothing -> pass
 
     -- What is done right after the instruction is executed.
@@ -520,7 +521,6 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
         |]
 
       csActiveStackFrameL . sfLocL .= loc
-
       isStackFrames <- use csStackFramesL
 
       let newSnap = InterpretSnapshot

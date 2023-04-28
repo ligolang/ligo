@@ -67,9 +67,6 @@ module Test.Util
   ) where
 
 import Control.Lens (each)
-import Data.Aeson (Value (Null))
-import Data.HashMap.Strict qualified as HM
-import Data.List.NonEmpty (singleton)
 import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
@@ -96,13 +93,11 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
 
 import AST.Skeleton qualified as LSP
-import Cli.Json
-  (LigoRange (LRVirtual), LigoTableField (..), LigoTypeArrow (..), LigoTypeConstant (..),
-  LigoTypeContent (LTCArrow, LTCConstant, LTCRecord, LTCSum), LigoTypeExpression (..),
-  LigoTypeTable (LigoTypeTable), _ltcInjection, _ltcParameters)
+import Cli.Json (LigoLayout (LTree), LigoTypeExpression (..))
 
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl
@@ -156,6 +151,9 @@ instance (Buildable (TestBuildable a), Buildable (TestBuildable b)) =>
       )
      |]
 
+instance Buildable (TestBuildable LigoValue) where
+  build (TB ligoValue) = buildLigoValue (LigoType Nothing) ligoValue
+
 (@?=)
   :: (Eq a, Buildable (TestBuildable a), MonadIO m, HasCallStack)
   => a -> a -> m ()
@@ -204,30 +202,33 @@ infixl 0 @?==
 
 compareWithCurLocation
   :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
-  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
-compareWithCurLocation oldSrcLoc = FrozenPredicate $
-  getExecutedPosition >>= maybe (pure False) (pure . (/= oldSrcLoc))
+  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
+compareWithCurLocation oldSrcLoc = FrozenPredicate do
+  Just pos <- getExecutedPosition
+  guard (pos /= oldSrcLoc)
 
 goesAfter
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> FrozenPredicate (DebuggerState is) m
-goesAfter loc = FrozenPredicate $ fromMaybe False <$>
-  ((\(SourceLocation _ startPos _) -> startPos >= loc) <<$>> getExecutedPosition)
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m ()
+goesAfter loc = FrozenPredicate do
+  Just (SourceLocation _ startPos _) <- getExecutedPosition
+  guard (startPos >= loc)
 
 goesBefore
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> FrozenPredicate (DebuggerState is) m
-goesBefore loc = FrozenPredicate $ fromMaybe False <$>
-  ((\(SourceLocation _ _ endPos) -> endPos <= loc) <<$>> getExecutedPosition)
+  => SrcLoc -> FrozenPredicate (DebuggerState is) m ()
+goesBefore loc = FrozenPredicate do
+  Just (SourceLocation _ _ endPos) <- getExecutedPosition
+  guard (endPos <= loc)
 
 goesBetween
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => SrcLoc -> SrcLoc -> FrozenPredicate (DebuggerState is) m
+  => SrcLoc -> SrcLoc -> FrozenPredicate (DebuggerState is) m ()
 goesBetween left right = goesAfter left && goesBefore right
 
 isAtLine
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
-  => Word -> FrozenPredicate (DebuggerState is) m
+  => Word -> FrozenPredicate (DebuggerState is) m ()
 isAtLine line =
   goesBetween
     (SrcLoc line 0)
@@ -236,16 +237,16 @@ isAtLine line =
 goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToNextBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
-  void $ case oldSrcLocMb of
-    Just oldSrcLoc -> moveTill Forward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
-    Nothing -> continueUntilBreakpoint NextBreak
+  case oldSrcLocMb of
+    Just oldSrcLoc -> void $ moveTill Forward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
+    Nothing -> void $ continueUntilBreakpoint NextBreak
 
 goToPreviousBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
 goToPreviousBreakpoint = do
   oldSrcLocMb <- frozen getExecutedPosition
-  void $ case oldSrcLocMb of
-    Just oldSrcLoc -> moveTill Backward (isAtBreakpoint && compareWithCurLocation oldSrcLoc)
-    Nothing -> reverseContinue NextBreak
+  case oldSrcLocMb of
+    Just oldSrcLoc -> void $ moveTill Backward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
+    Nothing -> void $ reverseContinue NextBreak
 
 data ContractRunData =
   forall param st.
@@ -402,68 +403,8 @@ genStepGranularity = Gen.frequency do
     GStmt -> 3
   return (weight, pure gran)
 
-mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
-mkTypeExpression content = LigoTypeExpression
-  { _lteTypeContent = content
-  , _lteLocation = LRVirtual "dummy"
-  , _lteSugar = Nothing
-  , _lteTypeMeta = Nothing
-  , _lteOrigVar = Nothing
-  }
-
-mkConstantType :: Text -> [LigoTypeExpression] -> LigoTypeExpression
-mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
-  LigoTypeConstant
-    { _ltcParameters = parameters
-    , _ltcLanguage = "Michelson"
-    , _ltcInjection = singleton typeName
-    }
-
-mkArrowType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
-mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
-  LigoTypeArrow
-    { _ltaType2 = codomain
-    , _ltaType1 = domain
-    }
-
-(~>) :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
-(~>) = mkArrowType
-
-infixr 2 ~>
-
-mkTypeTable :: [(Text, LigoTypeExpression)] -> LigoTypeTable
-mkTypeTable keyValues = map (second mkTableField) keyValues
-  & HM.fromList
-  & flip LigoTypeTable Null
-  where
-    mkTableField :: LigoTypeExpression -> LigoTableField
-    mkTableField expr = LigoTableField
-      { _ltfDeclPos = 0
-      , _lrfMichelsonAnnotation = Null
-      , _ltfAssociatedType = expr
-      }
-
-mkRecordType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
-mkRecordType keyValues = mkTypeTable keyValues
-  & LTCRecord
-  & mkTypeExpression
-
-mkSumType :: [(Text, LigoTypeExpression)] -> LigoTypeExpression
-mkSumType keyValues = mkTypeTable keyValues
-  & LTCSum
-  & mkTypeExpression
-
-mkSimpleConstantType :: Text -> LigoTypeExpression
-mkSimpleConstantType typ = mkConstantType typ []
-
-mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
-mkPairType fstElem sndElem = mkRecordType
-  [ ("0", fstElem)
-  , ("1", sndElem)
-  ]
-
 mkOptionType :: LigoTypeExpression -> LigoTypeExpression
-mkOptionType typ = mkSumType
+mkOptionType typ = mkSumType LTree
   [ ("Some", typ)
   , ("None", unitType')
   ]

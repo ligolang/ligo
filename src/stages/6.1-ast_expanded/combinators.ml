@@ -218,6 +218,15 @@ let get_a_string (t : expression) =
   | _ -> None
 
 
+let rec get_e_applications t =
+  match get_e_application t with
+  | Some { lamb; args } ->
+    (match get_e_applications lamb with
+    | [] -> [ lamb; args ]
+    | apps -> apps @ [ args ])
+  | None -> []
+
+
 let e_a_variable v ty = e_variable v ty
 
 let get_t_option (t : type_expression) : type_expression option =

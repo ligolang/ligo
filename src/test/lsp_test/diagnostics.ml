@@ -73,7 +73,7 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
           ; message =
-              "Toplevel let declaration are silently change to const declaration.@"
+              "Toplevel let declaration is silently changed to const declaration."
           ; range = Some (Utils.interval 0 0 10)
           }
         ; { severity = DiagnosticSeverity.Warning
@@ -100,7 +100,7 @@ let test_cases =
           }
         ; { severity = DiagnosticSeverity.Error
           ; message =
-              "Variable \"_#57\" not found. "
+              "Variable \"_#78\" not found. "
               (* FIXME 1689 - we shoul not report that things added by
                  error recovery do not exist, also the number here can
                  be changed after any changes in LIGO, maybe we want to

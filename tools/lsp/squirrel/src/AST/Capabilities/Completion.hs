@@ -194,7 +194,7 @@ completeFieldTypeAware scope pos tree@(SomeLIGO dialect nested) = do
   let accessors = map parseAccessor finished
   firstTspec <- toTspec (typeDefinitionOf (getRange qnSource) tree)
   finalTspec <- foldM accessAndDereference firstTspec accessors
-  finalFields <- finalTspec ^? tdsInit . _RecordType
+  (_, finalFields) <- finalTspec ^? tdsInit . _RecordType
   pure (map mkCompletion finalFields)
   where
     covers = spineTo (leq pos . getRange) nested
@@ -277,8 +277,8 @@ completionKind ScopedDecl {_sdName, _sdSpec} = case _sdSpec of
 -- tuples are not there. We improvised some of them for now.
 completeFromTSpec :: TypeDeclSpecifics Type -> CompletionItemKind
 completeFromTSpec TypeDeclSpecifics {_tdsInit} = case _tdsInit of
-  RecordType _ -> CiStruct
-  VariantType _ -> CiEnum
+  RecordType _ _ -> CiStruct
+  VariantType _ _ -> CiEnum
   TupleType _ -> CiStruct
   ApplyType _ _ -> CiFunction
   AliasType _ -> CiVariable

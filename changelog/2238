@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2238'
+title: "Emit `E_inline_michelson` directly from `%michelson`"
+type: added
+            

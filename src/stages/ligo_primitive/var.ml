@@ -19,6 +19,7 @@ module type VAR = sig
   val get_location : t -> Location.t
   val set_location : Location.t -> t -> t
   val is_generated : t -> bool
+  val is_ignored : t -> bool
 
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit
@@ -99,6 +100,7 @@ module Internal () = struct
 
 
   let wildcard ~loc = { name = "_"; counter = 0; location = loc; generated = false }
+  let is_ignored { name; _ } = String.is_prefix ~prefix:"_" name
 
   include Comparable.Make (T)
 end

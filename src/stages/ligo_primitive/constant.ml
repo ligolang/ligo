@@ -98,6 +98,7 @@ type constant' =
   | C_CHECK_SELF
   | C_CHECK_EMIT_EVENT
   | C_CHECK_ENTRYPOINT
+  | C_CHECK_CALL_VIEW_LITSTR
   (* Tests - ligo interpreter only *)
   | C_TEST_ADDRESS [@only_interpreter]
   | C_TEST_SIZE [@only_interpreter]

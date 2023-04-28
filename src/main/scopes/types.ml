@@ -16,7 +16,7 @@ let get_mod_binder_name : Module_var.t -> string =
 
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-module LSet = Caml.Set.Make (Location)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 type type_case =
   | Core of Ast_core.type_expression

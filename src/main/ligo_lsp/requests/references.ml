@@ -3,7 +3,7 @@ open Lsp.Types
 module Loc = Simple_utils.Location
 
 (* TODO: use Set, List & Hashtbl from Core *)
-module LSet = Caml.Set.Make (Loc)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 module Hashtbl = Caml.Hashtbl
 module List = Caml.List
 open Handler
@@ -60,7 +60,6 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
     send_debug_msg @@ String.concat ~sep:"\n" @@ List.map show_reference references
   in
   references
-  |> List.map (fun (file, ranges) ->
+  |> List.concat_map (fun (file, ranges) ->
          List.map (fun range -> Location.create ~uri:file ~range) ranges)
-  |> List.flatten
   |> return

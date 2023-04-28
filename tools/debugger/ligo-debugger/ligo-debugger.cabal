@@ -12,10 +12,14 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Control.AbortingThreadPool
+      Control.DelayedValues
       Debug
       Language.LIGO.DAP.Variables
       Language.LIGO.Debugger.CLI.Call
       Language.LIGO.Debugger.CLI.Types
+      Language.LIGO.Debugger.CLI.Types.LigoValue
+      Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
       Language.LIGO.Debugger.Common
       Language.LIGO.Debugger.Error
       Language.LIGO.Debugger.Functions
@@ -59,6 +63,7 @@ library
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints
@@ -96,6 +101,7 @@ library
     , lens
     , lens-aeson
     , ligo-squirrel
+    , monad-stm
     , morley
     , morley-debugger
     , morley-prelude
@@ -107,11 +113,14 @@ library
     , semver
     , singletons
     , singletons-th
+    , some
     , stm
+    , stm-containers
     , syb
     , template-haskell
     , text
     , th-utilities
+    , time
     , unliftio
     , unordered-containers
     , vector
@@ -154,6 +163,7 @@ executable ligo-debugger
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints
@@ -185,8 +195,10 @@ test-suite ligo-debugger-test
   main-is: Main.hs
   other-modules:
       Driver
+      Test.AbortingThreadPool
       Test.Breakpoints
       Test.DebugInfo
+      Test.DelayedValues
       Test.LigoCall
       Test.Navigation
       Test.Snapshots
@@ -226,6 +238,7 @@ test-suite ligo-debugger-test
       MultiParamTypeClasses
       MultiWayIf
       NamedFieldPuns
+      NumDecimals
       OverloadedStrings
       PackageImports
       QuantifiedConstraints

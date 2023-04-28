@@ -96,6 +96,7 @@ let all_aggregated_expression ~raise e =
   let e = map_expression (Contract_passes.entrypoint_typing ~raise) e in
   let e = map_expression (Contract_passes.emit_event_typing ~raise) e in
   let e = map_expression (Contract_passes.self_literal_typing ~raise) e in
+  let e = map_expression (Contract_passes.litstr_check ~raise) e in
   e
 
 

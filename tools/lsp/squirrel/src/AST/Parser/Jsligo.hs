@@ -3,6 +3,7 @@ module AST.Parser.Jsligo
   ( recognise
   ) where
 
+import Data.Default (Default (def))
 import Prelude hiding (Alt)
 
 import AST.Skeleton
@@ -11,8 +12,8 @@ import Duplo.Tree
 
 import Data.Text qualified as T
 
-import Parser
 import ParseTree
+import Parser
 
 recognise :: SomeRawTree -> ParserM (SomeLIGO Info)
 recognise (SomeRawTree dialect rawTree)
@@ -200,10 +201,10 @@ recognise (SomeRawTree dialect rawTree)
         "string_type"      -> TString        <$> field  "value"
         "fun_type"         -> TArrow         <$> field  "domain"     <*> field  "codomain"
         "app_type"         -> TApply         <$> field  "functor"    <*> fields "argument"
-        "record_type"      -> TRecord        <$> fields "field_decl"
+        "record_type"      -> TRecord def    <$> fields "field_decl"
         "tuple_type"       -> TProduct       <$> fields "element"
-        "sum_type"         -> TSum           <$> fields1 "variant"
-        "disc_union_type"  -> TSum           <$> fields1 "variant"
+        "sum_type"         -> TSum def       <$> fields1 "variant"
+        "disc_union_type"  -> TSum def       <$> fields1 "variant"
         "TypeWildcard"     -> pure TWildcard
         "var_type"         -> TVariable      <$> field  "name"
         "domain"           -> TProduct       <$> fields "type"

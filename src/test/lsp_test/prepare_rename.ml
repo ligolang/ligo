@@ -49,12 +49,11 @@ let test_cases =
     ; reference = Position.create ~line:1 ~character:8
     ; can_rename = true
     }
-    (* FIXME #1694 should not allow to rename assert
   ; { test_name = "Identifier from stdlib"
     ; file_path = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:5 ~character:8
     ; can_rename = false
-    } *)
+    }
   ; { test_name = "Number"
     ; file_path = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:8
@@ -75,12 +74,11 @@ let test_cases =
     ; reference = Position.create ~line:1 ~character:11
     ; can_rename = false
     }
-    (* FIXME #1694 should not allow to rename bool
   ; { test_name = "Type from stdlib"
     ; file_path = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:28
     ; can_rename = false
-    } *)
+    }
   ; { test_name = "Keyword"
     ; file_path = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:0

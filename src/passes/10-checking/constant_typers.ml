@@ -768,6 +768,10 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_string ~loc () ^~> t_unit ~loc () ])
       )
+    ; ( C_CHECK_CALL_VIEW_LITSTR
+      , of_type
+          (create ~mode_annot:[ Checked ] ~types:[ t_string ~loc () ^~> t_unit ~loc () ])
+      )
     ; ( C_CHECK_SELF
       , of_type
           (for_all "a"

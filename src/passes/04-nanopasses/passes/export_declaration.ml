@@ -14,9 +14,7 @@ let compile =
     let loc = Location.get_location e in
     match Location.unwrap e with
     | D_export exp ->
-      (match get_d_attr exp with
-      | None -> exp
-      | Some (_, d) -> d)
+      d_attr ~loc (Attribute.{ key = "public"; value = None }, exp)
     | d -> make_d ~loc d
   in
   `Cata { idle_cata_pass with declaration }

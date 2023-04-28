@@ -59,7 +59,7 @@
 open Ligo_prim
 open Simple_utils
 module LSet = Types.LSet
-module LMap = Map.Make (Location)
+module LMap = Map.Make (Location_ordered)
 
 (******************************************************************************)
 

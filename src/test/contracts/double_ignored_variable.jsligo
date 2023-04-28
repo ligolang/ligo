@@ -1,0 +1,1 @@
+let f = () => { let _ = 1 ; let _ = 2 ; return 42}

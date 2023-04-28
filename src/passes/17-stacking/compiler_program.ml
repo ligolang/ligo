@@ -43,8 +43,21 @@ let get_ty_meta : oty -> meta = fun x ->
   | T_key_hash meta -> meta
   | T_operation meta -> meta
 
-let with_var_names (env : oty list) (m : meta) : meta =
-  { m with env = List.map ~f:(fun ty -> (get_ty_meta ty).binder) env }
+(* returns a list `ret` such that `select r ret = env` by inserting
+   None entries, probably should do this in Coq instead but
+   whatever *)
+let rec unselect (r : bool list) (env : 'a option list) : 'a option list =
+  match r with
+  | [] -> []
+  | false :: r ->
+    None :: unselect r env
+  | true :: r ->
+    (match env with
+     | [] -> None :: unselect r []
+     | x :: env -> x :: unselect r env)
+
+let with_var_names (r : bool list) (env : oty list) (m : meta) : meta =
+  { m with env = unselect r (List.map ~f:(fun ty -> (get_ty_meta ty).binder) env) }
 
 let compile_binds env expr =
   Ligo_coq_ocaml.Compiler.compile_binds

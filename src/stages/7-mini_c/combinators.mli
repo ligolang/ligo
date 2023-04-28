@@ -58,11 +58,11 @@ val t_union
   -> type_expression annotated
   -> type_expression
 
-val t_tuple :
-  ?loc:Location.t ->
-  source_type:Ast_typed.type_expression option ->
-  type_expression annotated list ->
-  type_expression
+val t_tuple
+  :  ?loc:Location.t
+  -> source_type:Ast_typed.type_expression option
+  -> type_expression annotated list
+  -> type_expression
 
 val e_let_in
   :  ?loc:Location.t

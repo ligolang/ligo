@@ -7,85 +7,55 @@ module Location = Simple_utils.Location
 (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
     JavaScript and TypeScript don't have native pattern matching. *)
 
-let block_to_expr : block -> expr =
- fun block ->
-  let last_s, stmts = Simple_utils.List.Ne.rev (get_b block) in
-  let last =
-    let loc = get_s_loc last_s in
-    match get_s last_s with
-    | S_instr x ->
-      (match get_i x with
-      | I_return x -> Option.value_map ~default:(e_unit ~loc) ~f:Fun.id x
-      (* see https://tezos-dev.slack.com/archives/GMHV0U3Q9/p1670852612146059 *)
-      | I_expr x -> x
-      | _ -> e_unit ~loc)
-    | _ -> e_unit ~loc
-  in
-  let body =
-    let loc =
-      List.fold
-        ~init:(get_s_loc last_s)
-        ~f:(fun acc x -> Location.cover acc (get_s_loc x))
-        (last_s :: stmts)
-    in
-    match List.rev stmts with
-    | [] -> last
-    | hd :: tl -> e_block_with ~loc { block = block_of_statements (hd, tl); expr = last }
-  in
-  body
+let expr_in_block : expr -> block =
+ fun body ->
+  let loc = get_e_loc body in
+  block_of_statements (List.Ne.singleton @@ s_instr ~loc (i_return ~loc (Some body)))
 
 
 let object_to_matching_clause ~raise
-    : expr Object_.property -> (pattern, expr) Case.clause
+    : expr Object_.property -> (pattern, block) Case.clause
   =
-  let tocase
-      ctor
-      (parameters : pattern Param.t list)
-      (ret_type : ty_expr option)
-      (body : expr)
-      : (pattern, expr) Case.clause
-    =
+  let pattern_of_params : Variable.t -> pattern Param.t list -> ty_expr option -> pattern =
+   fun ctor parameters ret_type ->
     ignore ret_type;
     (* TODO: we ignore the types here.. emit a warning ?*)
-    let pattern =
-      let loc = Variable.get_location ctor in
-      let params =
-        match parameters with
-        | [] -> None
-        | [ p ] -> Some p.pattern
-        | _ -> Some (p_tuple ~loc (List.map ~f:(fun x -> x.pattern) parameters))
-      in
-      p_variant
-        ~loc:(Variable.get_location ctor)
-        (Label.of_string (Variable.to_name_exn ctor))
-        params
+    let loc = Variable.get_location ctor in
+    let params =
+      match parameters with
+      | [] -> None
+      | [ p ] -> Some p.pattern
+      | _ -> Some (p_tuple ~loc (List.map ~f:(fun x -> x.pattern) parameters))
     in
-    { pattern; rhs = body }
+    p_variant
+      ~loc:(Variable.get_location ctor)
+      (Label.of_string (Variable.to_name_exn ctor))
+      params
   in
   function
   | Property (name, value) ->
     (match get_e name, get_e value with
     | E_variable ctor, E_poly_fun { parameters; ret_type; body; type_params = None } ->
-      tocase ctor parameters ret_type body
+      { pattern = pattern_of_params ctor parameters ret_type; rhs = expr_in_block body }
     | E_variable ctor, E_block_poly_fun { parameters; ret_type; body; type_params = None }
-      -> tocase ctor parameters ret_type (block_to_expr body)
+      -> { pattern = pattern_of_params ctor parameters ret_type; rhs = body }
     | _, _ -> raise.error (invalid_case name))
   | Punned_property e | Property_rest e ->
     raise.error (unsupported_match_object_property e)
 
 
-let list_to_matching_clause ~raise : expr -> (pattern, expr) Case.clause =
+let list_to_matching_clause ~raise : expr -> (pattern, block) Case.clause =
  fun e ->
   match get_e e with
   | E_poly_fun { parameters = [ { pattern; _ } ]; ret_type; body; type_params = None } ->
     ignore ret_type;
-    { pattern; rhs = body }
+    let rhs = expr_in_block body in
+    { pattern; rhs }
   | E_block_poly_fun
       { parameters = [ { pattern; _ } ]; ret_type; body; type_params = None } ->
     ignore ret_type;
     (* TODO: warning here, this type is ignored *)
-    let rhs = block_to_expr body in
-    { pattern; rhs }
+    { pattern; rhs = body }
   | _ -> raise.error (invalid_list_pattern_match (get_e_loc e))
 
 
@@ -100,12 +70,12 @@ let compile ~raise ~syntax =
       (match get_e f, get_e cases with
       | E_variable v, E_object args when Variable.is_name v "match" ->
         let cases = Simple_utils.List.Ne.map (object_to_matching_clause ~raise) args in
-        e_match ~loc { expr = matchee; cases }
+        e_match_block ~loc { expr = matchee; cases }
       | E_variable v, E_list args when Variable.is_name v "match" ->
         let cases = List.map ~f:(list_to_matching_clause ~raise) args in
         (match cases with
         | [] -> raise.error (invalid_list_pattern_match loc)
-        | hd :: tl -> e_match ~loc { expr = matchee; cases = hd, tl })
+        | hd :: tl -> e_match_block ~loc { expr = matchee; cases = hd, tl })
       | _ -> same)
     | _ -> same
   in

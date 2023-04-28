@@ -308,7 +308,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_type_in of ('self, 'ty_expr) Type_in.t (* type t = int in let x : t = 42 *)
   | E_mod_in of ('self, 'mod_expr) Mod_in.t (* module M = struct let x = 42 end in M.x *)
   | E_raw_code of 'self Raw_code.t
-  | E_block_with of ('self, 'block) Block_with.t (* { tata ; toto } with whatev *)
+  | E_block_with of ('self, 'block) Block_with.t (* { let x = 1 ; x := 2 } with x *)
   | E_struct_assign_chainable of
       'self Assign_chainable.structural (* x := y ; which has the type of x/y *)
   | E_let_mut_in of ('pattern, 'self, 'ty_expr) Let_binding.t (* let mut x = 1 *)
@@ -333,6 +333,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_record_access of 'self Record_access.t [@not_initial]
   | E_module_access of (Mod_variable.t Simple_utils.List.Ne.t, Variable.t) Mod_access.t
       [@not_initial]
+  | E_match_block of ('self, 'pattern, 'block) Case.t [@not_initial]
 [@@deriving
   map
   , fold

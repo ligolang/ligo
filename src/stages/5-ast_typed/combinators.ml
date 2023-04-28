@@ -422,7 +422,24 @@ let ez_e_a_record ~loc ?layout r =
 
 let e_a_variable ~loc v ty = e_variable ~loc v ty
 let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
+
+let e_a_application_exn ~loc lamb args =
+  let Arrow.{ type1 = _; type2 } = get_t_arrow_exn lamb.type_expression in
+  e_application ~loc { lamb; args } type2
+
+
 let e_a_lambda ~loc l in_ty out_ty = e_lambda ~loc l (t_arrow ~loc in_ty out_ty ())
+
+let rec e_a_applications ~loc lamb args : expression =
+  match args with
+  | [] -> lamb
+  | args :: argss -> e_a_application_exn ~loc (e_a_applications ~loc lamb argss) args
+
+
+let e_a_applications ~loc lamb args : expression =
+  e_a_applications ~loc lamb (List.rev args)
+
+
 let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
 
 let e_a_test_nil_views ~loc s =
