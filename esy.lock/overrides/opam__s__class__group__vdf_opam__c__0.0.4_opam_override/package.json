@@ -5,13 +5,10 @@
       "-c",
       "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
     ],
-    [
-      "bash",
-      "-c",
-      "dune build -p class_group_vdf || dune build -p class_group_vdf"
-    ]
+    "bash ./build.sh #{yarn-pkg-config.bin}"
   ],
   "dependencies": {
-    "esy-gmp": "*"
+    "esy-gmp": "*",
+    "yarn-pkg-config": "*"
   }
 }

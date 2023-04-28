@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "Fix windows & macos builds.\\nNow LIGO with the tezos protocol Mumbai is available on Windows & MacOS\\n\\n"
+merge_request: '2535'
+title: "Mumbai protocol: fix Windows and Macos CI"
+type: added
+            
