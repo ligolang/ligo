@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tezos_protocol_environment_015_PtLimaPt
+module Proto_env = Tp_environment_015_PtLimaPt
 open Error_monad
 open Protocol
 
@@ -91,11 +91,11 @@ module Context_init = struct
     let proto_params =
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
-    let* ctxt = Tezos_protocol_environment.(
+    let* ctxt = Tp_environment.(
       Context.add Memory_context.empty ["version"] (MBytes.of_string "genesis")
       )
     in
-    let* ctxt = Tezos_protocol_environment.Context.(
+    let* ctxt = Tp_environment.Context.(
       add ctxt protocol_param_key proto_params
       )
     in
@@ -116,7 +116,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.Parametric.t = Tezos_protocol_015_PtLimaPt_parameters.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.Parametric.t = Tp_015_params.Default_parameters.constants_test in
     let* () = check_constants_consistency constants in
     let hash =
       Alpha_environment.Block_hash.of_b58check_exn "BLockGenesisGenesisGenesisGenesisGenesisCCCCCeZiLHU"

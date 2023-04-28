@@ -12,7 +12,7 @@ stages:
   - tools-build                     # build projects from 'tools'
   - tools-check                     # run tests for projects from 'tools'
   - tooling                         # build miscellaneous tooling-related things (website, changelog..)
-  # - test                            # e2e tests
+  - test                            # e2e tests
   - push                            # deploy docker images, pages, releases (tag)
   - deploy                          # deploy web IDE, website preview
   - release                         # Manage branch matching ^release/*
@@ -23,7 +23,7 @@ include:
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
   # Manage NPM build
-  # - '/.ci/.gitlab-ci-npm.yml'
+  - '/.ci/.gitlab-ci-npm.yml'
   # Manage pipeline related to webide
   - '/.ci/.gitlab-ci-webide.yml'
   # CI jobs for projects from 'tools'
@@ -76,7 +76,6 @@ to_dos:
 
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
-  extends: .submodule-clone
   stage: build
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"  &&  $TRIGGER_DOC_UPDATE != null'
@@ -91,6 +90,7 @@ docker_build:
     - job: changelog
       artifacts: true
   script:
+    - git submodule update --init --recursive # because of a gitlab caching issue
     # Because JSOO artifacts are only present in ligo-builder stage.
     # ligo-builder stage is discarded during the creation of ligo image for consumers
     # so that we can offer them a leaner image with just necessary ligo tools

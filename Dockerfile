@@ -29,8 +29,8 @@ RUN opam update \
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
-COPY vendors /ligo/vendors
 COPY vendored-dune /ligo/vendored-dune
+COPY vendors /ligo/vendors
 
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh

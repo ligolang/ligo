@@ -1,0 +1,8 @@
+{
+  "build": [
+    "true"
+  ],
+  "dependencies": {
+    "esy-rustup": "*"
+  }
+}
