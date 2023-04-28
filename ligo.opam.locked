@@ -87,8 +87,8 @@ depends: [
   "fmt" {= "0.9.0"}
   "fpath" {= "0.7.3"}
   "gmap" {= "0.3.0"}
-  "hacl-star" {= "0.6.2"}
-  "hacl-star-raw" {= "0.6.2"}
+  "hacl-star" {= "0.4.1"}
+  "hacl-star-raw" {= "0.4.1"}
   "hex" {= "1.5.0"}
   "hkdf" {= "1.0.4"}
   "index" {= "1.6.1"}
