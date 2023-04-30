@@ -7,5 +7,5 @@
   (:parser ../../../../passes/02-parsing/jsligo/ParserMain.exe))
  (action
   (progn
-   (run %{script} *.jsligo %{parser})
+   (run %{script} '*.jsligo' ../../../../passes/02-parsing/jsligo/ParserMain.exe)
    (diff? results.csv.expected results.csv))))
