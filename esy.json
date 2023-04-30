@@ -12,6 +12,7 @@
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
     "build": ["dune build -p ligo", "chmod -R a+w #{self.target_dir}"],
     "buildEnv": {
+      "PATH": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : esy-libffi.lib : esy-libev.lib : $PATH}",
       "LIGO_VERSION": "0.65.0",
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
     },
