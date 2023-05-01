@@ -1,1 +1,0 @@
-const id = (i : int) : int => i

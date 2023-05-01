@@ -4,7 +4,7 @@ InterpretSnapshot:
   isStackFrames:
     [StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo:13:3-13:28
+      sfLoc: test/contracts/functions-visiting.mligo@13:4-13:29
       sfStack:
         [StackItem:
           siLigoDesc: <hidden elem>

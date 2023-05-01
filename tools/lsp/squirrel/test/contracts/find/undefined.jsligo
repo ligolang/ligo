@@ -1,3 +1,0 @@
-let undefined : <T> T = failwith("undefined") as T;
-
-const main = (_ : [unit, unit]) : [list<operation>, unit] => undefined

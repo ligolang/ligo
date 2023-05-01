@@ -6,9 +6,9 @@ module Test.Util
   , (<.>)
   , contractsDir
   , hasLigoExtension
-  , LSP.Lang (..)
-  , LSP.allLangs
-  , LSP.langExtension
+  , AST.Lang (..)
+  , AST.allLangs
+  , AST.langExtension
   , pattern SomeLorentzValue
 
     -- * Test utilities
@@ -27,6 +27,7 @@ module Test.Util
   , HUnit.assertBool
   , getStackFrameNames
   , getVariableNamesFromStackFrame
+  , renderNoLineLengthLimit
     -- * Generators
   , genStepGranularity
     -- * Helpers for breakpoints
@@ -92,12 +93,10 @@ import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Typeable
 
-import AST.Skeleton qualified as LSP
-import Cli.Json (LigoLayout (LTree), LigoTypeExpression (..))
+import Duplo hiding (int, (<.>))
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.AST.Skeleton qualified as AST
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl
@@ -114,6 +113,9 @@ hasLigoExtension file =
     [ ".mligo"
     , ".jsligo"
     ]
+
+renderNoLineLengthLimit :: Doc -> Text
+renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}
 
 newtype ShowThroughBuild a = STB
   { unSTB :: a

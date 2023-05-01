@@ -1,4 +1,0 @@
-let hello = ([a, b] : [int, int]) => {
-  const [foo, bar] = [a, b];
-  return bar
-};

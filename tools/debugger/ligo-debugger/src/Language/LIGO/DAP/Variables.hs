@@ -19,13 +19,8 @@ import Morley.Michelson.Typed
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
 import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 
-import AST (Lang)
-import Cli.Json
-  (LigoTableField, LigoTypeConstant (..), LigoTypeContent (..), LigoTypeExpression (..),
-  LigoTypeTable (..), _ltfAssociatedType)
-
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.AST (Lang)
+import Language.LIGO.Debugger.CLI
 
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --

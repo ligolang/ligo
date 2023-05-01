@@ -27,12 +27,6 @@ import GHC.Generics (Rep)
 import GHC.TypeLits (Nat)
 import Text.Interpolation.Nyan
 
-import AST (Lang (Caml, Js))
-import Cli.Json
-  (LigoTableField (..), LigoTypeConstant (..), LigoTypeContent (LTCConstant, LTCRecord, LTCSum),
-  LigoTypeExpression (..), LigoTypeTable (..), guardOneElemList, toSnakeCase)
-import Cli.Json qualified as Cli
-
 import Morley.Debugger.Core (DebugPrint (DebugPrint), DebugPrintMode (..))
 import Morley.Michelson.Typed (Constrained (SomeValue), SomeValue)
 import Morley.Michelson.Typed qualified as T
@@ -40,6 +34,9 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core qualified as T
 import Morley.Tezos.Crypto.BLS12381 (toMichelsonBytes)
 
+import Language.LIGO.AST.Skeleton (Lang (Caml, Js))
+import Language.LIGO.Debugger.CLI.Exception
+import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Debugger.CLI.Types
 
 -------------
@@ -96,12 +93,12 @@ data LigoEnvItem = LigoEnvItem
 -- This type is unused now but may be
 -- useful at some moment of time.
 data LigoFuncVal = LigoFuncVal
-  { lfvRecName :: Maybe Cli.LigoVariable
+  { lfvRecName :: Maybe LigoVar
   , lfvOrigLambda :: Value
   , lfvBody :: Value
-  , lfvArgBinder :: Cli.LigoVariable
+  , lfvArgBinder :: LigoVar
   , lfvArgMutFlag :: LigoMutFlag
-  , lfvEnv :: [(Cli.LigoVariable, LigoEnvItem)]
+  , lfvEnv :: [(LigoVar, LigoEnvItem)]
   } deriving stock (Generic, Show, Eq, Data)
     deriving anyclass (NFData)
     deriving (FromJSON) via LigoValueJSON 3 LigoFuncVal

@@ -1,9 +1,0 @@
-const foo = (input: int): int =>
-    input > 1000 ? 1000
-  : input > 100  ? 100
-  : input > 0    ? 0 : 2
-
-const is_zero = (input: nat): string =>
-    (input * 2 + 1) / 2 as int ? "not" + "zero"
-  : (input * 2 + 1) / 2 as int ? "not" + "zero"
-  : "definetley" + "zero"

@@ -11,8 +11,8 @@ import Fmt (Buildable (..), pretty)
 import Fmt.Internal.Core (FromBuilder)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
-import Cli.Impl qualified as LSP
-import Extension qualified as LSP
+import Language.LIGO.Debugger.CLI.Exception
+import Language.LIGO.Extension
 
 -- | Exceptions allowed in debugger logic.
 class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
@@ -92,18 +92,38 @@ instance DebuggerException ImpossibleHappened where
   shouldInterruptDebuggingSession = True
 
 ----------------------------------------------------------------------------
--- Instances for LSP types
+-- Instances for exceptions
 ----------------------------------------------------------------------------
 
-instance DebuggerException LSP.LigoIOException where
-  type ExceptionTag LSP.LigoIOException = "LIGO-IO"
+instance DebuggerException LigoIOException where
+  type ExceptionTag LigoIOException = "LIGO-IO"
   debuggerExceptionType _ =
     -- This is usually some "ligo executable not found in path", i.e.
     -- something to be fixed by the user
     UserException
   shouldInterruptDebuggingSession = False
 
-instance DebuggerException LSP.UnsupportedExtension where
-  type ExceptionTag LSP.UnsupportedExtension = "UnsupportedExtension"
+instance DebuggerException UnsupportedExtension where
+  type ExceptionTag UnsupportedExtension = "UnsupportedExtension"
   debuggerExceptionType _ = MidLigoLayerException
+  shouldInterruptDebuggingSession = False
+
+instance DebuggerException LigoDecodeException where
+  type ExceptionTag LigoDecodeException = "LigoDecode"
+  debuggerExceptionType _ = MidLigoLayerException
+  shouldInterruptDebuggingSession = False
+
+instance DebuggerException ConfigurationException where
+  type ExceptionTag ConfigurationException = "Configuration"
+  debuggerExceptionType _ = UserException
+  shouldInterruptDebuggingSession = False
+
+instance DebuggerException PluginCommunicationException where
+  type ExceptionTag PluginCommunicationException = "PluginComminication"
+  debuggerExceptionType _ = MidPluginLayerException
+  shouldInterruptDebuggingSession = True
+
+instance DebuggerException LigoCallException where
+  type ExceptionTag LigoCallException = "LigoCall"
+  debuggerExceptionType _ = LigoLayerException
   shouldInterruptDebuggingSession = False

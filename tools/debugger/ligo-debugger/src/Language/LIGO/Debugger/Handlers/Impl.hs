@@ -12,9 +12,6 @@ import Prelude hiding (try)
 import Debug qualified
 import Unsafe qualified
 
-import Cli
-  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
-  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
 import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
@@ -31,11 +28,9 @@ import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
-import Cli qualified as LSP.Cli
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues (Manager (mComputation))
 import Control.DelayedValues qualified as DV
-import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
@@ -68,10 +63,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core (tz)
 
 import Language.LIGO.DAP.Variables
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
-import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -79,6 +71,8 @@ import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import Language.LIGO.Extension (UnsupportedExtension (..), getExt)
+import Language.LIGO.Range
 
 data LIGO
 
@@ -90,7 +84,7 @@ instance HasLigoClient (RIO LIGO) where
       getClientEnv :: Maybe LigoLanguageServerState -> IO LigoClientEnv
       getClientEnv = \case
         Just lServ -> do
-          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ <*> Just Nothing
+          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ
           maybe getLigoClientEnv pure maybeEnv
         Nothing -> getLigoClientEnv
 
@@ -309,20 +303,20 @@ instance HasSpecificMessages LIGO where
       toDAPStackFrames snap =
         let frames = toList $ isStackFrames snap
         in zip [topFrameId ..] frames <&> \(i, frame) ->
-          let LigoRange{..} = sfLoc frame
+          let Range{..} = sfLoc frame
           in DAP.StackFrame
             { DAP.idStackFrame = i
             , DAP.nameStackFrame = toString $ sfName frame
             , DAP.sourceStackFrame = DAP.defaultSource
-              { DAP.nameSource = Just $ takeFileName lrFile
-              , DAP.pathSource = lrFile
+              { DAP.nameSource = Just $ takeFileName _rFile
+              , DAP.pathSource = _rFile
               }
               -- TODO: use `IsSourceLoc` conversion capability
               -- Once morley-debugger#44 is merged
-            , DAP.lineStackFrame = Unsafe.fromIntegral $ lpLine lrStart
-            , DAP.columnStackFrame = Unsafe.fromIntegral $ lpCol lrStart + 1
-            , DAP.endLineStackFrame = Unsafe.fromIntegral $ lpLine lrEnd
-            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ lpCol lrEnd + 1
+            , DAP.lineStackFrame = Unsafe.fromIntegral $ _lpLine _rStart
+            , DAP.columnStackFrame = Unsafe.fromIntegral $ _lpCol _rStart
+            , DAP.endLineStackFrame = Unsafe.fromIntegral $ _lpLine _rFinish
+            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ _lpCol _rFinish
             , DAP.canRestartStackFrame = False
             }
 
@@ -344,7 +338,7 @@ instance HasSpecificMessages LIGO where
     -- But some variables can come from, for example, a @CameLIGO@ contract
     -- and the other ones from a @PascaLIGO@ one.
     lang <-
-      currentStackFrame ^. sfLocL . lrFileL
+      currentStackFrame ^. sfLocL . rFile
         & getExt @(Either UnsupportedExtension)
         & either throwM pure
 
@@ -588,7 +582,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
   rawVersion <- getLigoVersion
-  logMessage [int||Ligo version: #{LSP.Cli.getVersion rawVersion}|]
+  logMessage [int||Ligo version: #{getVersion rawVersion}|]
 
   -- Pro-actively check that ligo version is supported
   runMaybeT do

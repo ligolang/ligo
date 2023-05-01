@@ -1,6 +1,6 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -15,8 +15,19 @@ library
       Control.AbortingThreadPool
       Control.DelayedValues
       Debug
+      Language.LIGO.AST
+      Language.LIGO.AST.Common
+      Language.LIGO.AST.Includes
+      Language.LIGO.AST.Parser
+      Language.LIGO.AST.Parser.Camligo
+      Language.LIGO.AST.Parser.Jsligo
+      Language.LIGO.AST.Pretty
+      Language.LIGO.AST.Skeleton
       Language.LIGO.DAP.Variables
+      Language.LIGO.Debugger.CLI
       Language.LIGO.Debugger.CLI.Call
+      Language.LIGO.Debugger.CLI.Exception
+      Language.LIGO.Debugger.CLI.Helpers
       Language.LIGO.Debugger.CLI.Types
       Language.LIGO.Debugger.CLI.Types.LigoValue
       Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
@@ -29,6 +40,12 @@ library
       Language.LIGO.Debugger.Michelson
       Language.LIGO.Debugger.Navigate
       Language.LIGO.Debugger.Snapshots
+      Language.LIGO.Diagnostic
+      Language.LIGO.Extension
+      Language.LIGO.Parser
+      Language.LIGO.ParseTree
+      Language.LIGO.Product
+      Language.LIGO.Range
       Util
   other-modules:
       Paths_ligo_debugger
@@ -81,6 +98,14 @@ library
       TypeOperators
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages
+  include-dirs:
+      grammar/camligo/src
+      grammar/jsligo/src
+  c-sources:
+      grammar/camligo/src/parser.c
+      grammar/camligo/src/scanner.c
+      grammar/jsligo/src/parser.c
+      grammar/jsligo/src/scanner.c
   build-depends:
       aeson
     , ansi-terminal
@@ -94,13 +119,14 @@ library
     , directory
     , dlist
     , duplo
+    , fastsum
     , filepath
     , fmt
+    , free
     , hashable
     , hedgehog
     , lens
     , lens-aeson
-    , ligo-squirrel
     , monad-stm
     , morley
     , morley-debugger
@@ -109,6 +135,8 @@ library
     , nyan-interpolation
     , nyan-interpolation-core
     , process
+    , process-extras
+    , regex-tdfa
     , scientific
     , semver
     , singletons
@@ -118,14 +146,19 @@ library
     , stm-containers
     , syb
     , template-haskell
+    , temporary
     , text
     , th-utilities
     , time
+    , transformers
+    , tree-sitter
     , unliftio
+    , unliftio-core
     , unordered-containers
     , vector
     , vinyl
     , with-utf8
+    , witherable
   default-language: Haskell2010
 
 executable ligo-debugger
@@ -201,13 +234,12 @@ test-suite ligo-debugger-test
       Test.DelayedValues
       Test.LigoCall
       Test.Navigation
+      Test.Pretty
       Test.Snapshots
       Test.Util
       Test.Util.Golden
       Test.Util.Options
       Test.Variables
-      Paths_ligo_debugger
-  autogen-modules:
       Paths_ligo_debugger
   hs-source-dirs:
       test
@@ -267,12 +299,13 @@ test-suite ligo-debugger-test
     , data-default
     , dir-traverse
     , directory
+    , duplo
     , filepath
     , fmt
     , hedgehog
+    , hspec-expectations
     , lens
     , ligo-debugger
-    , ligo-squirrel
     , lorentz
     , morley
     , morley-debugger
