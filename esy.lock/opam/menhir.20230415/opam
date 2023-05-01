@@ -8,12 +8,12 @@ authors: [
 homepage: "http://gitlab.inria.fr/fpottier/menhir"
 dev-repo: "git+https://gitlab.inria.fr/fpottier/menhir.git"
 bug-reports: "https://gitlab.inria.fr/fpottier/menhir/-/issues"
-license: "LGPL-2.0-only WITH OCaml-LGPL-linking-exception"
+license: "GPL-2.0-only"
 build: [
   ["dune" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "ocaml" {>= "4.03.0" & < "5.0"}
+  "ocaml" {>= "4.03.0"}
   "dune" {>= "2.8.0"}
   "menhirLib" {= version}
   "menhirSdk" {= version}
@@ -21,9 +21,9 @@ depends: [
 synopsis: "An LR(1) parser generator"
 url {
   src:
-    "https://gitlab.inria.fr/fpottier/menhir/-/archive/20211128/archive.tar.gz"
+    "https://gitlab.inria.fr/fpottier/menhir/-/archive/20230415/archive.tar.gz"
   checksum: [
-    "md5=015354590ebce7911b073beae57e7731"
-    "sha512=76f998c114a29b390f05e7b62e396d6957e748be3bb7fe918893ab3471a7a907764de4610e392916553113df0c6b09aa570425dcf86c6a3e9e17b0ae36f3fe2b"
+    "md5=7c4b51e1b666711af04f7832ebc90618"
+    "sha512=aa8a34c173d9a82d3503919de8377f1b8c9ff721882486f0b5ae2bdb9b22ee7f5ba8f6ef25e00fbb35704fac9fc3bda71908512ed4cbd345d9dc29d6ede149b2"
   ]
 }
