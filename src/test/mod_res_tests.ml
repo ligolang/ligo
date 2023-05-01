@@ -36,10 +36,9 @@ let working_project ~raise:_ () =
       List.equal
         Fpath.equal
         (inclusion_paths |> List.map ~f:(fun (ModRes.Path p) -> fpathify p))
-        ModRes.
-          [ relative ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147"
-          ; relative ".ligo/source/i/ligo_set_helpers__1.0.2__5cd724a1"
-          ])
+        [ relative ".ligo/source/i/ligo_list_helpers__1.0.0__bf074147"
+        ; relative ".ligo/source/i/ligo_set_helpers__1.0.2__5cd724a1"
+        ])
   in
   let list_helpers_path =
     ModRes.find_external_file ~file:"ligo-list-helpers/list.mligo" ~inclusion_paths
@@ -74,13 +73,12 @@ let complex_project ~raise:_ () =
       List.equal
         Fpath.equal
         (base_inclusion_paths |> List.map ~f:(fun (ModRes.Path p) -> fpathify p))
-        ModRes.
-          [ relative ".ligo/source/i/ligo__test__1__1.0.0__a381d5ee"
-          ; relative ".ligo/source/i/ligo_foo__1.0.6__2355cc08"
-          ; relative ".ligo/source/i/ligo_list_helpers__1.0.1__6233bebd"
-          ; relative ".ligo/source/i/ligo_test__2__1.0.0__d841d05a"
-          ; relative ".ligo/source/i/webpack__5.68.0__95002730"
-          ])
+        [ relative ".ligo/source/i/ligo__test__1__1.0.0__a381d5ee"
+        ; relative ".ligo/source/i/ligo_foo__1.0.6__2355cc08"
+        ; relative ".ligo/source/i/ligo_list_helpers__1.0.1__6233bebd"
+        ; relative ".ligo/source/i/ligo_test__2__1.0.0__d841d05a"
+        ; relative ".ligo/source/i/webpack__5.68.0__95002730"
+        ])
   in
   let list_helpers_path =
     ModRes.find_external_file
