@@ -5,6 +5,7 @@
   (backend bisect_ppx))
  (libraries ast_unified ast_core passes compiler_options main_warnings)
  (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix)
   (flags (-stop-on-error)))
  (preprocess
   (pps ppx_deriving.map ppx_sexp_conv ppx_expect ppx_poly_constructor)))
