@@ -317,7 +317,8 @@ module Michelson_formatter = struct
           ]
       else json
     in
-    Format.fprintf ppf "%a" Data_encoding.Json.pp json
+    Format.fprintf ppf "%s"
+      (Data_encoding.Json.to_string ~minify:true json)
 
 
   let result_ppformat
