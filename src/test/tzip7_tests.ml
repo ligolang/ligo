@@ -12,17 +12,9 @@ let sender, contract =
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let external_contract =
-  let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 4 in
-  let kh = id.public_key_hash in
-  Tezos_utils.Signature.Public_key_hash.to_string kh
-
-
 let from_ = e_address ~loc @@ addr 5
 let to_ = e_address ~loc @@ addr 2
 let sender = e_address ~loc @@ sender
-(* let external_contract = e_annotation ~loc  (e_constant ~loc  (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract ~loc  (t_nat ~loc  ())) *)
 
 let transfer ~raise f s () =
   let program = get_program ~raise f ~st:s () in

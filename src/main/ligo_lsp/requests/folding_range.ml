@@ -1,7 +1,5 @@
-open Lsp.Types
-module Region = Simple_utils.Region
+open Lsp_helpers
 open Simple_utils.Utils
-module Option = Caml.Option
 
 let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t =
  fun kind reg ->
@@ -23,7 +21,6 @@ let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
 
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->
-  let open Utils in
   let open! Cst.Cameligo in
   (* General *)
   let rec declaration_list value = nseq_concat_map value.decl ~f:declaration
@@ -53,7 +50,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | CArgTuple { value; _ } -> nsepseq_concat_map value.inside ~f:type_expr
   and variant { value; region } =
     mk_region region
-    :: value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.arg
+    :: Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.arg
   (* Expression *)
   and expr = function
     | ECase { value; region } -> mk_region region :: case value
@@ -63,7 +60,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | EArith value -> arith_expr value
     | EString value -> string_expr value
     | EList value -> list_expr value
-    | EConstr { value; _ } -> value_map ~f:expr ~default:[] (snd value)
+    | EConstr { value; _ } -> Option.value_map ~f:expr ~default:[] (snd value)
     | ERecord { value; region } ->
       mk_region region
       :: nsepseq_concat_map value.ne_elements ~f:(fun value -> field_assign value.value)
@@ -95,7 +92,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   and cond_expr value =
     expr value.test
     @ expr value.ifso
-    @ value_map ~f:(fun (_, exp) -> expr exp) ~default:[] value.ifnot
+    @ Option.value_map ~f:(fun (_, exp) -> expr exp) ~default:[] value.ifnot
   and annot_expr (exp, _colon, texp) = expr exp @ type_expr texp
   and bin_op value = expr value.arg1 @ expr value.arg2
   and logic_expr = function
@@ -127,7 +124,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | Int _ | Nat _ | Mutez _ -> []
   and fun_expr value =
     nseq_concat_map value.binders ~f:pattern
-    @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
+    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
     @ expr value.body
   and string_expr = function
     | Cat { value; _ } -> bin_op value
@@ -146,7 +143,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   and field_decl value = type_expr value.field_type
   (* Pattern *)
   and pattern = function
-    | PConstr { value; _ } -> value_map ~f:pattern ~default:[] (snd value)
+    | PConstr { value; _ } -> Option.value_map ~f:pattern ~default:[] (snd value)
     | PList value -> list_pattern value
     | PTuple { value; _ } -> nsepseq_concat_map ~f:pattern value
     | PPar { value; region } -> mk_region region :: pattern value.inside
@@ -169,7 +166,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   and let_decl (_, _, value, _) = let_binding value
   and let_binding value =
     nseq_concat_map value.binders ~f:pattern
-    @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
+    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
     @ expr value.let_rhs
   and declaration = function
     | Let { value; region } -> mk_region region :: let_decl value
@@ -187,7 +184,6 @@ let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
 
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
-  let open Utils in
   let open! Cst.Jsligo in
   (* General *)
   let rec statement_list value = nseq_concat_map value.statements ~f:toplevel_statement
@@ -205,7 +201,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | SExpr (_attrs, value) -> expr value
     | SCond { value; region } -> mk_region region :: cond_statement value
     | SReturn { value; region } ->
-      mk_region region :: value_map ~f:expr ~default:[] value.expr
+      mk_region region :: Option.value_map ~f:expr ~default:[] value.expr
     | SLet { value; region } -> mk_region region :: let_decl value
     | SConst { value; region } -> mk_region region :: const_decl value
     | SType { value; region } -> mk_region region :: type_decl value
@@ -222,14 +218,15 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   and cond_statement value =
     expr value.test.inside
     @ statement value.ifso
-    @ value_map ~f:(fun (_, value) -> statement value) ~default:[] value.ifnot
+    @ Option.value_map ~f:(fun (_, value) -> statement value) ~default:[] value.ifnot
   and while_statement value = expr value.expr @ statement value.statement
   and switch value = expr value.expr @ nseq_concat_map value.cases ~f:switch_case
   (* FIXME: LIGO doesn't provide range for switch case *)
   and switch_case = function
     | Switch_case value ->
-      expr value.expr @ value_map ~f:statements ~default:[] value.statements
-    | Switch_default_case value -> value_map ~f:statements ~default:[] value.statements
+      expr value.expr @ Option.value_map ~f:statements ~default:[] value.statements
+    | Switch_default_case value ->
+      Option.value_map ~f:statements ~default:[] value.statements
   and import = function
     | Import_rename _ | Import_all_as _ | Import_selected _ -> []
   and contract _ = []
@@ -246,7 +243,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   and val_binding { value; region } =
     mk_region region
     :: (pattern value.binders
-       @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
+       @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
        @ expr value.expr)
   (* Type expression *)
   and type_expr = function
@@ -271,7 +268,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     let tuple = value.tuple in
     mk_region tuple.region :: variant_comp tuple.value.inside
   and variant_comp value =
-    value_map
+    Option.value_map
       ~f:(fun (_, texp) -> nsepseq_concat_map ~f:type_expr texp)
       ~default:[]
       value.params
@@ -294,7 +291,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | EString value -> string_expr value
     | EProj { value; _ } -> expr value.expr
     | EAssign (left, _op, right) -> expr left @ expr right
-    | EConstr { value; _ } -> value_map ~f:expr ~default:[] (snd value)
+    | EConstr { value; _ } -> Option.value_map ~f:expr ~default:[] (snd value)
     | EAnnot { value; _ } -> annot_expr value
     | ECodeInj { value; region } -> mk_region region :: expr value.code
     | ETernary { value; region } ->
@@ -303,7 +300,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | EVar _ | EBytes _ | EUnit _ -> []
   and fun_expr value =
     expr value.parameters
-    @ value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
+    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
     @ body value.body
   and bin_op value = expr value.arg1 @ expr value.arg2
   and logic_expr = function
@@ -354,6 +351,6 @@ let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t
  fun uri ->
   Handler.with_cst uri None
   @@ function
-  | Utils.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
-  | Utils.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
-  | Utils.PascaLIGO_cst cst -> Handler.return @@ folding_range_pascaligo cst
+  | Dialect_cst.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
+  | Dialect_cst.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
+  | Dialect_cst.PascaLIGO_cst cst -> Handler.return @@ folding_range_pascaligo cst

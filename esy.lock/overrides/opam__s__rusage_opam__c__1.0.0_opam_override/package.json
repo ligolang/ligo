@@ -1,0 +1,10 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0001-Adds-win32-guards.patch' : 'true' }"
+    ],
+    "dune build -p rusage -j 4"
+  ]
+}

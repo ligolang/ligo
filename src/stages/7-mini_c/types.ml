@@ -46,8 +46,6 @@ and type_base =
   | TB_bls12_381_g2
   | TB_bls12_381_fr
   | TB_never
-  | TB_chest
-  | TB_chest_key
   | TB_tx_rollup_l2_address
   | TB_type_int of Z.t
 
@@ -109,7 +107,8 @@ and expression_content =
   | E_proj of expression * int * int
   (* E_update (record, index, update, field_count): field_count as for E_proj *)
   | E_update of expression * int * expression * int
-  | E_raw_michelson of
+  | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
+  | E_inline_michelson of
       ((Location.t, string) Tezos_micheline.Micheline.node list * expression list)
   (* E_global_constant (hash, args) *)
   | E_global_constant of string * expression list

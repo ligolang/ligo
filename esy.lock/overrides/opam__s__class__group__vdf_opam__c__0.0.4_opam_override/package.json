@@ -1,21 +1,14 @@
 {
-  "buildEnv": {
-    "PATH": "#{yarn-pkg-config.bin}:$PATH"
-  },
   "build": [
     [
       "bash",
       "-c",
       "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
     ],
-    [
-      "bash",
-      "-c",
-      "dune build -p class_group_vdf || dune build -p class_group_vdf"
-    ]
+    "bash ./build.sh #{yarn-pkg-config.bin}"
   ],
   "dependencies": {
     "esy-gmp": "*",
-    "yarn-pkg-config": "esy-ocaml/yarn-pkg-config#9293b15f9f0e3dcac6f86ebb1e09a2fa766289ba"
+    "yarn-pkg-config": "*"
   }
 }

@@ -98,6 +98,7 @@ type constant' =
   | C_CHECK_SELF
   | C_CHECK_EMIT_EVENT
   | C_CHECK_ENTRYPOINT
+  | C_CHECK_CALL_VIEW_LITSTR
   (* Tests - ligo interpreter only *)
   | C_TEST_ADDRESS [@only_interpreter]
   | C_TEST_SIZE [@only_interpreter]
@@ -130,8 +131,6 @@ type constant' =
   | C_TEST_NTH_BOOTSTRAP_TYPED_ADDRESS [@only_interpreter]
   | C_TEST_SET_BIG_MAP [@only_interpreter]
   | C_TEST_CAST_ADDRESS [@only_interpreter]
-  | C_TEST_CREATE_CHEST [@only_interpreter]
-  | C_TEST_CREATE_CHEST_KEY [@only_interpreter]
   | C_TEST_RANDOM [@only_interpreter]
   | C_TEST_GENERATOR_EVAL [@only_interpreter]
   | C_TEST_ADD_ACCOUNT [@only_interpreter]
@@ -175,14 +174,7 @@ type constant' =
   , is { tags = [ "only_interpreter"; "pure" ] }
   , read_constant]
 
-type deprecated =
-  { name : string
-  ; const : constant'
-  }
-
 type rich_constant = Const of constant' [@@deriving eq, compare, yojson, hash]
-
-let const_name (Const c) = c
 
 type 'e t =
   { cons_name : constant' (* this is in enum *)

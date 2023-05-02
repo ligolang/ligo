@@ -38,6 +38,7 @@
   ligo.analytics
   ligo.api
   re)
- (inline_tests (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix))
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix))
  (preprocess
   (pps ppx_deriving_yojson ppx_inline_test)))

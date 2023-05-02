@@ -498,7 +498,20 @@ module Apply = struct
     | S_module (mvar, sig') -> S_module (mvar, sig_ ctx sig')
 
 
-  and sig_ ctx (sig_ : Signature.t) : Signature.t = List.map sig_ ~f:(sig_item ctx)
+  and sig_ ctx (sig_ : Signature.t) : Signature.t =
+    let no_exists_eq = function
+      | C_value _
+      | C_type _
+      | C_type_var _
+      | C_module _
+      | C_texists_var _
+      | C_lexists_var _
+      | C_pos _
+      | C_mut_lock _ -> true
+      | _ -> false
+    in
+    (* Only do something if there are texists_eq or lexists_eq *)
+    if List.for_all ~f:no_exists_eq ctx then sig_ else List.map sig_ ~f:(sig_item ctx)
 end
 
 let equal_item : item -> item -> bool =

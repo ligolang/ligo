@@ -1,23 +1,13 @@
-open Linol_lwt
-open Handlers
-open Common
 module Requests = Ligo_lsp.Server.Requests
+open Alcotest_extras
+open Handlers
+open Lsp_helpers
 open Requests.Handler
 
 type folding_range_test =
   { file_path : string
   ; folding_ranges : FoldingRange.t list
   }
-
-let eq_folding_range : FoldingRange.t -> FoldingRange.t -> bool = Caml.( = )
-
-let pp_folding_range : FoldingRange.t Fmt.t =
- fun formatter fold -> Yojson.Safe.pretty_print formatter @@ FoldingRange.yojson_of_t fold
-
-
-let testable_folding_range : FoldingRange.t Alcotest.testable =
-  Alcotest.testable pp_folding_range eq_folding_range
-
 
 let get_folding_range_test ({ file_path; folding_ranges } : folding_range_test)
     : unit Alcotest.test_case
@@ -31,10 +21,7 @@ let get_folding_range_test ({ file_path; folding_ranges } : folding_range_test)
   in
   match folds_opt with
   | Some actual_folds ->
-    should_match_list
-      testable_folding_range
-      ~actual:actual_folds
-      ~expected:folding_ranges
+    should_match_list FoldingRange.testable ~actual:actual_folds ~expected:folding_ranges
   | None -> fail "Expected some list of folding ranges, got None"
 
 

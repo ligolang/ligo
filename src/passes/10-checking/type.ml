@@ -91,23 +91,6 @@ and free_vars_row row =
   Row.fold (fun fvs row_elem -> Set.union (free_vars row_elem) fvs) Type_var.Set.empty row
 
 
-let rec orig_vars t =
-  let module Set = Type_var.Set in
-  Set.union (Set.of_list (Option.to_list t.orig_var))
-  @@
-  match t.content with
-  | T_variable _ | T_exists _ | T_singleton _ -> Set.empty
-  | T_construct { parameters; _ } -> parameters |> List.map ~f:orig_vars |> Set.union_list
-  | T_sum row | T_record row -> orig_vars_row row
-  | T_arrow arr -> arr |> Arrow.map orig_vars |> Arrow.fold Set.union Set.empty
-  | T_for_all abs | T_abstraction abs ->
-    abs |> Abstraction.map orig_vars |> Abstraction.fold Set.union Set.empty
-
-
-and orig_vars_row row =
-  Row.fold (fun ovs row_elem -> Set.union (orig_vars row_elem) ovs) Type_var.Set.empty row
-
-
 let rec subst ?(free_vars = Type_var.Set.empty) t ~tvar ~type_ =
   let subst t = subst t ~free_vars ~tvar ~type_ in
   let subst_abstraction abs = subst_abstraction abs ~free_vars ~tvar ~type_ in
@@ -246,8 +229,6 @@ let t__type_ ~loc ?meta () : t = t_construct Literal_types._type_ [] ~loc ?meta 
       , "mutation"
       , "pvss_key"
       , "baker_hash"
-      , "chest_key"
-      , "chest"
       , "tx_rollup_l2_address"
       , "michelson_contract"
       , "ast_contract"
@@ -403,6 +384,12 @@ let get_t_pair (t : t) : (t * t) option =
     | [ t1; t2 ] -> Some (t1, t2)
     | _ -> None)
   | _ -> None
+
+
+let rec get_arrows_result t =
+  match t.content with
+  | T_arrow { type1 = _; type2 } -> get_arrows_result type2
+  | _ -> t
 
 
 module Type_var_name_tbl : sig
@@ -588,21 +575,6 @@ let pp =
 
 
 (* Helpers for generators *)
-
-let get_entry_form ty =
-  let equal_t = equal in
-  let open Simple_utils.Option in
-  let* { type1; type2 } = get_t_arrow ty in
-  let* parameter, storage = get_t_pair type1 in
-  let* op_list, storage' = get_t_pair type2 in
-  let* op = get_t_list op_list in
-  let* () =
-    if equal_t (t_operation ~loc:Location.generated ()) op then return () else None
-  in
-  let* () = if equal_t storage storage' then return () else None in
-  return (parameter, storage)
-
-
 let build_entry_type p_ty s_ty =
   let loc = Location.generated in
   t_arrow

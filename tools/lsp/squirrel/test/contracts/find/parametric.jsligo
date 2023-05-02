@@ -1,4 +1,0 @@
-const id: <a>((a: a) => a) = (a: a) => (a as a);
-
-const main = (_ : [unit, unit]) : [list<operation>, unit] =>
-  [list([]), id(unit)];

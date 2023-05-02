@@ -31,7 +31,7 @@ import UnliftIO.Exception (handle, throwIO)
 import Morley.Debugger.Core.Navigate
   (HistoryReplay, HistoryReplayM, MovementResult (..), curSnapshot, frozen)
 
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Snapshots
 
 import Test.Util
@@ -202,7 +202,7 @@ dumpAllSnapshotsWithStep
      , MonadReader GoldenActionContext m, MonadIO m
      , HasCallStack
      )
-  => m MovementResult
+  => m (MovementResult a)
   -> m ()
 dumpAllSnapshotsWithStep step = go (1000 :: Int)
   where

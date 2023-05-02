@@ -23,7 +23,12 @@ let pattern_to_string p syntax =
       p
   in
   let p = Unification.Cameligo.decompile_pattern p in
-  let p = Parsing.Cameligo.pretty_print_pattern ~cols:80 Parsing_cameligo.Pretty.default_environment p in
+  let p =
+    Parsing.Cameligo.pretty_print_pattern
+      ~cols:80
+      Parsing_cameligo.Pretty.default_environment
+      p
+  in
   Buffer.contents p
 
 
@@ -149,106 +154,81 @@ type typer_error =
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
-let error_ppformat
-    :  display_format:string display_format -> no_colour:bool -> Format.formatter
-    -> typer_error -> unit
-  =
- fun ~display_format ~no_colour f a ->
+let extract_loc_and_message : typer_error -> Location.t * string =
+ fun a ->
   (* Create a fresh name table for printing types in errors *)
   Type.Type_var_name_tbl.Exists.clear ();
   let name_tbl = Type.Type_var_name_tbl.create () in
   let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
-  let snippet_pp = Snippet.pp ~no_colour in
-  match display_format with
-  | Human_readable | Dev ->
-    (match a with
-    | `Typer_mut_var_captured (var, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid capture of mutable variable \"%a\"@]"
-        snippet_pp
-        loc
+  match a with
+  | `Typer_mut_var_captured (var, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid capture of mutable variable \"%a\"@]"
         Value_var.pp
-        var
-    | `Typer_ill_formed_type (type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type@.Ill formed type \"%a\".Hint: you might be missing some \
-         type arguments.%a@]"
-        snippet_pp
-        loc
+        var )
+  | `Typer_ill_formed_type (type_, loc) ->
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type@.Ill formed type \"%a\".Hint: you might be missing some type \
+         arguments.%a@]"
         pp_type
         type_
         (pp_texists_hint ())
-        [ type_ ]
-    | `Typer_record_mismatch (_record, type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Mismatching record labels. Expected record of type \"%a\".%a@]"
-        snippet_pp
-        loc
+        [ type_ ] )
+  | `Typer_record_mismatch (_record, type_, loc) ->
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Mismatching record labels. Expected record of type \"%a\".%a@]"
         pp_type
         type_
         (pp_texists_hint ~requires_annotations:true ())
-        [ type_ ]
-    | `Typer_cannot_subtype (type1, type2, loc) ->
-      let type1 = type_improve type1 in
-      let type2 = type_improve type2 in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Expected \"%a\", but received \"%a\". Types are not compatitable.%a@]"
-        snippet_pp
-        loc
+        [ type_ ] )
+  | `Typer_cannot_subtype (type1, type2, loc) ->
+    let type1 = type_improve type1 in
+    let type2 = type_improve type2 in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Expected \"%a\", but received \"%a\". Types are not compatitable.%a@]"
         pp_type
         type2
         pp_type
         type1
         (pp_texists_hint ())
-        [ type1; type2 ]
-    | `Typer_corner_case (desc, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.A type system corner case occurred:@.%s@]"
-        snippet_pp
-        loc
-        desc
-    | `Typer_occurs_check_failed (tvar, type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.The type variable \"^%s\" occurs inside \"%a\".%a@]"
-        snippet_pp
-        loc
+        [ type1; type2 ] )
+  | `Typer_corner_case (desc, loc) ->
+    loc, Format.asprintf "@[<hv>A type system corner case occurred:@.%s@]" desc
+  | `Typer_occurs_check_failed (tvar, type_, loc) ->
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>The type variable \"^%s\" occurs inside \"%a\".%a@]"
         (Type.Type_var_name_tbl.Exists.name_of tvar)
         pp_type
         type_
         (pp_texists_hint ())
-        [ type_ ]
-    | `Typer_pattern_missing_cases (syntax, ps, loc) ->
-      let ps =
-        List.fold ps ~init:"" ~f:(fun s p ->
-            let s' = pattern_to_string p syntax in
-            s ^ "- " ^ s' ^ "\n")
-      in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Error : this pattern-matching is not exhaustive.@.Here are examples \
-         of cases that are not matched:@.%s@]"
-        snippet_pp
-        loc
-        ps
-    | `Typer_pattern_redundant_case loc ->
-      Format.fprintf f "@[<hv>%a@.Error : this match case is unused.@]" snippet_pp loc
-    | `Typer_cannot_unify (no_color, type1, type2, loc) ->
-      let type1 = type_improve type1 in
-      let type2 = type_improve type2 in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\".%a%a@]"
-        snippet_pp
-        loc
+        [ type_ ] )
+  | `Typer_pattern_missing_cases (syntax, ps, loc) ->
+    let ps =
+      List.fold ps ~init:"" ~f:(fun s p ->
+          let s' = pattern_to_string p syntax in
+          s ^ "- " ^ s' ^ "\n")
+    in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Error : this pattern-matching is not exhaustive.@.Here are examples of \
+         cases that are not matched:@.%s@]"
+        ps )
+  | `Typer_pattern_redundant_case loc ->
+    loc, Format.asprintf "@[<hv>Error : this match case is unused.@]"
+  | `Typer_cannot_unify (no_color, type1, type2, loc) ->
+    let type1 = type_improve type1 in
+    let type2 = type_improve type2 in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type(s)@.Cannot unify \"%a\" with \"%a\".%a%a@]"
         pp_type
         type1
         pp_type
@@ -256,438 +236,74 @@ let error_ppformat
         (Typediff.pp ~no_color ~tbl:name_tbl)
         (Typediff.diff type1 type2)
         (pp_texists_hint ())
-        [ type1; type2 ]
-    | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
-      let type1 = type_improve type1 in
-      let type2 = type_improve type2 in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing \
-         layouts \"%a\" and \"%a\".%a@]"
-        snippet_pp
-        loc
-        pp_type
-        type1
-        pp_type
-        type2
-        Type.pp_layout
-        layout1
-        Type.pp_layout
-        layout2
-        (pp_texists_hint ())
-        [ type1; type2 ]
-    | `Typer_bad_constructor (label, type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a.Expected constructor \"%a\" in expected sum type \"%a\".%a@]"
-        snippet_pp
-        loc
-        Label.pp
-        label
-        pp_type
-        type_
-        (pp_texists_hint ~requires_annotations:true ())
-        [ type_ ]
-    | `Typer_pattern_do_not_match loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Pattern do not match returned expression.@]"
-        snippet_pp
-        loc
-    | `Typer_unbound_module_variable (mv, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Module \"%a\" not found. @]"
-        snippet_pp
-        loc
-        Module_var.pp
-        mv
-    | `Typer_unbound_type_variable (tv, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Type \"%s\" not found. @]"
-        snippet_pp
-        loc
-        (Type.Type_var_name_tbl.name_of name_tbl tv)
-    | `Typer_unbound_texists_var (tvar, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Existential variable \"^%s\" not found. @]"
-        snippet_pp
-        loc
-        (Type.Type_var_name_tbl.Exists.name_of tvar)
-    | `Typer_unbound_variable (v, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Variable \"%a\" not found. @]"
-        snippet_pp
-        loc
-        Value_var.pp
-        v
-    | `Typer_unbound_mut_variable (v, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Mutable variable \"%a\" not found. @]"
-        snippet_pp
-        loc
-        Value_var.pp
-        v
-    | `Typer_mismatching_for_each_collection_type (collection_type, type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Expected collection of type \"%a\", but recieved collection of type \
-         \"%a\".%a@]"
-        snippet_pp
-        loc
-        For_each_loop.pp_collect_type
-        collection_type
-        pp_type
-        type_
-        (pp_texists_hint ~requires_annotations:true ())
-        [ type_ ]
-    | `Typer_mismatching_for_each_binder_arity (expected_arity, recieved_arity, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Expected for each loop to bind %d variables, but loop binds %d \
-         variables.@]"
-        snippet_pp
-        loc
-        expected_arity
-        recieved_arity
-    | `Typer_unbound_constructor (c, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Constructor \"%a\" not found. @]"
-        snippet_pp
-        loc
-        Label.pp
-        c
-    | `Typer_type_app_wrong_arity (op_opt, e, a, loc) ->
-      let aux : Format.formatter -> Type_var.t option -> unit =
-       fun ppf operator_opt ->
-        match operator_opt with
-        | Some v -> Format.fprintf ppf " %a" Type_var.pp v
-        | None -> ()
-      in
-      Format.fprintf
-        f
-        "@[<hv>%a@ Type%a is applied to a wrong number of arguments, expected: %i got: \
-         %i@]"
-        snippet_pp
-        loc
-        aux
-        op_opt
-        e
-        a
-    | `Typer_michelson_or_no_annotation (c, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must \
-         be annotated with a variant type. @]"
-        snippet_pp
-        loc
-        Label.pp
-        c
-    | `Typer_should_be_a_function_type (lamb_type, _args, loc) ->
-      let lamb_type = type_improve lamb_type in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type.@.Expected a function type, but got \"%a\".%a@]"
-        snippet_pp
-        loc
-        pp_type
-        lamb_type
-        (pp_texists_hint ~requires_annotations:true ())
-        [ lamb_type ]
-    | `Typer_bad_record_access (field, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid record field \"%a\" in record.@]"
-        snippet_pp
-        loc
-        Label.pp
-        field
-    | `Typer_not_annotated l ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Can't infer the type of this value, please add a type annotation.@]"
-        snippet_pp
-        l
-    | `Typer_comparator_composed (_a, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid arguments.@.Only composed types of not more than two element \
-         are allowed to be compared.@]"
-        snippet_pp
-        loc
-    | `Typer_assert_equal (expected, actual, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\".@]"
-        snippet_pp
-        loc
-        Ast_typed.PP.type_expression_orig
-        expected
-        Ast_typed.PP.type_expression_orig
-        actual
-    | `Typer_expected_record (type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid argument.@.Expected a record, but got an argument of type \
-         \"%a\".%a@]"
-        snippet_pp
-        loc
-        pp_type
-        type_
-        (pp_texists_hint ~requires_annotations:true ())
-        [ type_ ]
-    | `Typer_uncomparable_types (type1, type2, loc) ->
-      let type1 = type_improve type1 in
-      let type2 = type_improve type2 in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid arguments.@.These types cannot be compared: \"%a\" and \
-         \"%a\".%a@]"
-        snippet_pp
-        loc
-        pp_type
-        type1
-        pp_type
-        type2
-        (pp_texists_hint ())
-        [ type1; type2 ]
-    | `Typer_pattern_do_not_conform_type (pat, type_, _loc) ->
-      let type_ = type_improve type_ in
-      let pf ppf value =
-        match pat.location with
-        | Virtual _ ->
-          Format.fprintf
-            ppf
-            "%a "
-            (Ast_core.Pattern.pp Ast_core.PP.type_expression_option)
-            value
-        | File _ -> ()
-      in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Pattern %anot of the expected type \"%a\".%a@]"
-        snippet_pp
-        pat.location
-        pf
-        pat
-        pp_type
-        type_
-        (pp_texists_hint ~requires_annotations:true ())
-        [ type_ ]
-    | `Typer_mut_is_polymorphic (type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Mutable binding has the polymorphic type \"%a\"@.Hint: Add an \
-         annotation.%a@]"
-        snippet_pp
-        loc
-        pp_type
-        type_
-        (pp_texists_hint ())
-        [ type_ ]
-    | `Typer_unbound_module (path, loc) ->
-      let rec pp_path ppf path =
-        match path with
-        | [] -> failwith "Empty path"
-        | [ mvar ] -> Format.fprintf ppf "%a" Module_var.pp mvar
-        | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
-      in
-      Format.fprintf f "@[<hv>%a@. Module \"%a\" not found.@]" snippet_pp loc pp_path path
-    | `Typer_cannot_decode_texists (type_, loc) ->
-      let type_ = type_improve type_ in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Underspecified type \"%a\".@.Please add additional annotations.%a@]"
-        snippet_pp
-        loc
-        pp_type
-        type_
-        (pp_texists_hint ())
-        [ type_ ]
-    | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
-      let lit_type = type_improve lit_type in
-      let expected_type = type_improve expected_type in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type(s).@.Expected \"%a\", but got: \"%a\".%a@]"
-        snippet_pp
-        loc
-        pp_type
-        expected_type
-        pp_type
-        lit_type
-        (pp_texists_hint ~requires_annotations:true ())
-        [ expected_type; lit_type ])
-
-
-let error_json : typer_error -> Simple_utils.Error.t =
- fun err ->
-  let open Simple_utils.Error in
-  match err with
-  | `Typer_mut_var_captured (var, loc) ->
-    let message =
-      Format.asprintf "@[Invalid capture of mutable variable \"%a\"@]" Value_var.pp var
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_ill_formed_type (type_, loc) ->
-    let message =
-      Format.asprintf "@[Invalid type@.Ill formed type %a.@]" Type.pp (type_improve type_)
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_record_mismatch (_record, type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Mismatching record labels. Expected record of type %a.@]"
-        Type.pp
-        type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_cannot_subtype (type1, type2, loc) ->
-    let message =
-      Format.asprintf
-        "@[Expected %a, but received %a. Types are not compatitable.@]"
-        Type.pp
-        type2
-        Type.pp
-        type1
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_corner_case (desc, loc) ->
-    let message = Format.asprintf "@[A type system corner case occurred:@.%s@]" desc in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_occurs_check_failed (tvar, type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[The type variable ^%a occurs inside %a.@]"
-        Type_var.pp
-        tvar
-        Type.pp
-        type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_pattern_missing_cases (syntax, ps, loc) ->
-    let ps =
-      List.fold ps ~init:"" ~f:(fun s p ->
-          let s' = pattern_to_string p syntax in
-          s ^ "- " ^ s' ^ "\n")
-    in
-    let message =
-      Format.asprintf
-        "@[Error : this pattern-matching is not exhaustive.@.Here are examples of cases \
-         that are not matched:@.%s@]"
-        ps
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_pattern_redundant_case loc ->
-    let message = Format.asprintf "@[Error: this match case is unused.@]" in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_cannot_unify (_, type1, type2, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid type(s)@.Cannot unify %a with %a.@]"
-        Type.pp
-        type1
-        Type.pp
-        type2
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        [ type1; type2 ] )
   | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid type(s)@.Cannot unify %a with %a due to differing layouts (%a and \
-         %a).@]"
-        Type.pp
+    let type1 = type_improve type1 in
+    let type2 = type_improve type2 in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing layouts \
+         \"%a\" and \"%a\".%a@]"
+        pp_type
         type1
-        Type.pp
+        pp_type
         type2
         Type.pp_layout
         layout1
         Type.pp_layout
         layout2
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ())
+        [ type1; type2 ] )
   | `Typer_bad_constructor (label, type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Expected constructor %a in expected sum type %a.]"
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Expected constructor \"%a\" in expected sum type \"%a\".%a@]"
         Label.pp
         label
-        Type.pp
+        pp_type
         type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ] )
   | `Typer_pattern_do_not_match loc ->
-    let message = Format.asprintf "@[Pattern do not match returned expression.@]" in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Pattern do not match returned expression.@]"
   | `Typer_unbound_module_variable (mv, loc) ->
-    let message = Format.asprintf "@[Module \"%a\" not found. @]" Module_var.pp mv in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Module \"%a\" not found. @]" Module_var.pp mv
   | `Typer_unbound_type_variable (tv, loc) ->
-    let message = Format.asprintf "@[Type \"%a\" not found. @]" Type_var.pp tv in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    ( loc
+    , Format.asprintf
+        "@[<hv>Type \"%s\" not found. @]"
+        (Type.Type_var_name_tbl.name_of name_tbl tv) )
   | `Typer_unbound_texists_var (tvar, loc) ->
-    let message =
-      Format.asprintf "@[Existential variable \"^%a\" not found. @]" Type_var.pp tvar
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    ( loc
+    , Format.asprintf
+        "@[<hv>Existential variable \"^%s\" not found. @]"
+        (Type.Type_var_name_tbl.Exists.name_of tvar) )
   | `Typer_unbound_variable (v, loc) ->
-    let message = Format.asprintf "@[Variable \"%a\" not found. @]" Value_var.pp v in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Variable \"%a\" not found. @]" Value_var.pp v
   | `Typer_unbound_mut_variable (v, loc) ->
-    let message =
-      Format.asprintf "@[Mutable variable \"%a\" not found. @]" Value_var.pp v
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Mutable variable \"%a\" not found. @]" Value_var.pp v
   | `Typer_mismatching_for_each_collection_type (collection_type, type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Expected collection of type \"%a\", but recieved collection of type %a.@]"
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Expected collection of type \"%a\", but recieved collection of type \
+         \"%a\".%a@]"
         For_each_loop.pp_collect_type
         collection_type
-        Type.pp
+        pp_type
         type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ] )
   | `Typer_mismatching_for_each_binder_arity (expected_arity, recieved_arity, loc) ->
-    let message =
-      Format.asprintf
-        "@[Expected for each loop to bind %d variables, but loop binds %d variables.@]"
+    ( loc
+    , Format.asprintf
+        "@[<hv>Expected for each loop to bind %d variables, but loop binds %d \
+         variables.@]"
         expected_arity
-        recieved_arity
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        recieved_arity )
   | `Typer_unbound_constructor (c, loc) ->
-    let message = Format.asprintf "@[Constructor \"%a\" not found. @]" Label.pp c in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Constructor \"%a\" not found. @]" Label.pp c
   | `Typer_type_app_wrong_arity (op_opt, e, a, loc) ->
     let aux : Format.formatter -> Type_var.t option -> unit =
      fun ppf operator_opt ->
@@ -695,88 +311,72 @@ let error_json : typer_error -> Simple_utils.Error.t =
       | Some v -> Format.fprintf ppf " %a" Type_var.pp v
       | None -> ()
     in
-    let message =
-      Format.asprintf
-        "@[Type %a is applied to a wrong number of arguments, expected: %i got: %i@]"
+    ( loc
+    , Format.asprintf
+        "@[<hv>Type%a is applied to a wrong number of arguments, expected: %i got: %i@]"
         aux
         op_opt
         e
-        a
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        a )
   | `Typer_michelson_or_no_annotation (c, loc) ->
-    let message =
-      Format.asprintf
-        "@[Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be \
+    ( loc
+    , Format.asprintf
+        "@[<hv>Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be \
          annotated with a variant type. @]"
         Label.pp
-        c
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        c )
   | `Typer_should_be_a_function_type (lamb_type, _args, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid type.@.Expected a function type, but got \"%a\". @]"
-        Type.pp
-        (type_improve lamb_type)
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    let lamb_type = type_improve lamb_type in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type.@.Expected a function type, but got \"%a\".%a@]"
+        pp_type
+        lamb_type
+        (pp_texists_hint ~requires_annotations:true ())
+        [ lamb_type ] )
   | `Typer_bad_record_access (field, loc) ->
-    let message =
-      Format.asprintf "@[Invalid record field \"%a\" in record. @]" Label.pp field
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv>Invalid record field \"%a\" in record.@]" Label.pp field
   | `Typer_not_annotated loc ->
-    let message =
-      Format.asprintf
-        "@[Can't infer the type of this value, please add a type annotation.@]"
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    ( loc
+    , Format.asprintf
+        "@[<hv>Can't infer the type of this value, please add a type annotation.@]" )
   | `Typer_comparator_composed (_a, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid arguments.@.Only composed types of not more than two element are \
-         allowed to be compared. @]"
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid arguments.@.Only composed types of not more than two element are \
+         allowed to be compared.@]" )
   | `Typer_assert_equal (expected, actual, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type(s).@.Expected: \"%a\", but got: \"%a\".@]"
         Ast_typed.PP.type_expression_orig
         expected
         Ast_typed.PP.type_expression_orig
-        actual
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        actual )
   | `Typer_expected_record (type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid argument.@.Expected a record, but got an argument of type \"%a\". @]"
-        Type.pp
-        (type_improve type_)
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid argument.@.Expected a record, but got an argument of type \
+         \"%a\".%a@]"
+        pp_type
+        type_
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ] )
   | `Typer_uncomparable_types (type1, type2, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\". @]"
-        Type.pp
-        (type_improve type1)
-        Type.pp
-        (type_improve type2)
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_pattern_do_not_conform_type (pat, type_, loc) ->
+    let type1 = type_improve type1 in
+    let type2 = type_improve type2 in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\".%a@]"
+        pp_type
+        type1
+        pp_type
+        type2
+        (pp_texists_hint ())
+        [ type1; type2 ] )
+  | `Typer_pattern_do_not_conform_type (pat, type_, _) ->
+    let type_ = type_improve type_ in
     let pf ppf value =
       match pat.location with
       | Virtual _ ->
@@ -787,25 +387,25 @@ let error_json : typer_error -> Simple_utils.Error.t =
           value
       | File _ -> ()
     in
-    let message =
-      Format.asprintf
-        "@[Pattern %anot of the expected type %a @]"
+    ( pat.location
+    , Format.asprintf
+        "@[<hv>Pattern %anot of the expected type \"%a\".%a@]"
         pf
         pat
-        Type.pp
-        (type_improve type_)
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
-  | `Typer_mut_is_polymorphic (type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Mutable binding has the polymorphic type %a@.Hint: Add an annotation.@]"
-        Type.pp
+        pp_type
         type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ~requires_annotations:true ())
+        [ type_ ] )
+  | `Typer_mut_is_polymorphic (type_, loc) ->
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Mutable binding has the polymorphic type \"%a\"@.Hint: Add an \
+         annotation.%a@]"
+        pp_type
+        type_
+        (pp_texists_hint ())
+        [ type_ ] )
   | `Typer_unbound_module (path, loc) ->
     let rec pp_path ppf path =
       match path with
@@ -813,26 +413,44 @@ let error_json : typer_error -> Simple_utils.Error.t =
       | [ mvar ] -> Format.fprintf ppf "%a" Module_var.pp mvar
       | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
-    let message = Format.asprintf "@[Module \"%a\" not found.@]" pp_path path in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+    loc, Format.asprintf "@[<hv> Module \"%a\" not found.@]" pp_path path
   | `Typer_cannot_decode_texists (type_, loc) ->
-    let message =
-      Format.asprintf
-        "@[Underspecified type %a.@.Please add additional annotations.@]"
-        Type.pp
+    let type_ = type_improve type_ in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Underspecified type \"%a\".@.Please add additional annotations.%a@]"
+        pp_type
         type_
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ())
+        [ type_ ] )
   | `Typer_literal_type_mismatch (lit_type, expected_type, loc) ->
-    let message =
-      Format.asprintf
-        "@[Invalid type(s).@.Expected \"%a\", but got: \"%a\".@]"
-        Type.pp
+    let lit_type = type_improve lit_type in
+    let expected_type = type_improve expected_type in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Invalid type(s).@.Expected \"%a\", but got: \"%a\".%a@]"
+        pp_type
         expected_type
-        Type.pp
+        pp_type
         lit_type
-    in
-    let content = make_content ~message ~location:loc () in
-    make ~stage ~content
+        (pp_texists_hint ~requires_annotations:true ())
+        [ expected_type; lit_type ] )
+
+
+let error_ppformat
+    :  display_format:string display_format -> no_colour:bool -> Format.formatter
+    -> typer_error -> unit
+  =
+ fun ~display_format ~no_colour f a ->
+  let snippet_pp = Snippet.pp ~no_colour in
+  let loc, msg = extract_loc_and_message a in
+  match display_format with
+  | Human_readable | Dev -> Format.fprintf f "@[<hv>%a@.%s@]" snippet_pp loc msg
+
+
+let error_json : typer_error -> Simple_utils.Error.t =
+ fun err ->
+  let open Simple_utils.Error in
+  let location, message = extract_loc_and_message err in
+  let content = make_content ~message ~location () in
+  make ~stage ~content

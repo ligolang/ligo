@@ -159,7 +159,7 @@ let pp
     | `Jsligo_deprecated_toplevel_let loc ->
       Format.fprintf
         f
-        "@[<hv>%a@.Toplevel let declaration are silently change to const declaration.@.@]"
+        "@[<hv>%a@.Toplevel let declaration is silently changed to const declaration.@.@]"
         snippet_pp
         loc
     | `Jsligo_unreachable_code loc ->
@@ -307,7 +307,7 @@ let to_warning : all -> Simple_utils.Warning.t =
     make ~stage:"abstractor" ~content
   | `Jsligo_deprecated_toplevel_let location ->
     let message =
-      Format.sprintf "Toplevel let declaration are silently change to const declaration.@"
+      Format.sprintf "Toplevel let declaration is silently changed to const declaration."
     in
     let content = make_content ~message ~location () in
     make ~stage:"abstractor" ~content

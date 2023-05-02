@@ -1,7 +1,6 @@
 open Cli_expect
 
 let contract basename = "../../test/contracts/" ^ basename
-let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 (* avoid pretty printing *)
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
@@ -19,6 +18,7 @@ let%expect_test _ =
     File "../../test/contracts/double_michelson_or.mligo", line 8, characters 6-9:
       7 |   let foo = (M_right ("one") : storage) in
       8 |   let bar = (M_right 1 : foobar) in
+                ^^^
       9 |   (([] : operation list), (foo: storage))
     :
     Warning: unused variable "bar".
@@ -27,6 +27,7 @@ let%expect_test _ =
     File "../../test/contracts/double_michelson_or.mligo", line 6, characters 26-31:
       5 |
       6 | let main (action : unit) (store : storage) : return =
+                                    ^^^^^
       7 |   let foo = (M_right ("one") : storage) in
     :
     Warning: unused variable "store".
@@ -35,6 +36,7 @@ let%expect_test _ =
     File "../../test/contracts/double_michelson_or.mligo", line 6, characters 10-16:
       5 |
       6 | let main (action : unit) (store : storage) : return =
+                    ^^^^^^
       7 |   let foo = (M_right ("one") : storage) in
     :
     Warning: unused variable "action".

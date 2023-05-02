@@ -10,12 +10,12 @@ open Ligo_prim
 open Types
 
 let ( type_content
-    , type_injection
-    , bool
-    , option
+    , _type_injection
+    , _bool
+    , _option
     , type_expression
-    , type_content_orig
-    , type_expression_orig
+    , _type_content_orig
+    , _type_expression_orig
     , type_expression_annot )
   =
   Ast_aggregated.PP.(
@@ -69,10 +69,6 @@ and expression_content ppf (ec : expression_content) =
 
 and type_inst ppf { forall; type_ } =
   Format.fprintf ppf "%a@@{%a}" expression forall type_expression_annot type_
-
-
-and option_inline ppf inline =
-  Format.(if inline then fprintf ppf "[@inline]" else fprintf ppf "")
 
 
 and matching_variant_case f ppf { constructor = c; pattern; body } =

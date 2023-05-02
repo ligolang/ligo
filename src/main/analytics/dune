@@ -3,7 +3,15 @@
  (public_name ligo.analytics)
  (instrumentation
   (backend bisect_ppx))
- (libraries core_kernel.uuid bos prometheus prometheus_push compiler_options environment syntax_types syntax)
+ (libraries
+  core_kernel.uuid
+  bos
+  prometheus
+  prometheus_push
+  compiler_options
+  environment
+  syntax_types
+  syntax)
  (modules analytics version))
 
 (rule

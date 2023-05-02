@@ -1,0 +1,8 @@
+--- ./dune
++++ ./dune
+@@ -13,4 +13,4 @@
+ 
+ (rule (targets config.h) (deps)
+  (action
+-  (bash "cp $(ocamlfind query hacl-star-raw)/config.h .")))
++  (system "cp %{lib:hacl-star-raw:config.h} .")))

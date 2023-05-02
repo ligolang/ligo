@@ -8,7 +8,6 @@ module Option = Simple_utils.Option
 open AST (* Brings types and combinators functions *)
 
 module TODO_do_in_parsing = struct
-  let _r_split = r_split (* could compute Location directly in Parser *)
   let var ~loc (var : string) = Ligo_prim.Value_var.of_input_var ~loc var
   let tvar ~loc (var : string) = Ligo_prim.Type_var.of_input_var ~loc var
   let mvar ~loc (var : string) = Ligo_prim.Module_var.of_input_var ~loc var
@@ -93,7 +92,6 @@ module TODO_unify_in_cst = struct
 
 
   let compile_rows = Non_linear_rows.make
-  let _compile_disc_rows = Non_linear_disc_rows.make
 
   let type_operator ~loc v =
     (* could be a type expr ? or we could emit a type variable expression ? *)
@@ -615,17 +613,6 @@ let rec compile_expression : CST.expr -> AST.expr =
         (nsepseq_to_nseq lst)
     in
     e_contract ~loc lst
-
-
-and compile_seq_expr : (CST.expr, _) nsepseq option -> AST.expr =
- fun x ->
-  let lst =
-    Option.value_map ~default:[] ~f:(List.map ~f:compile_expression <@ nsepseq_to_list) x
-  in
-  e_sequence
-    ~loc:
-      (List.fold ~init:Location.generated ~f:Location.cover (List.map ~f:get_e_loc lst))
-    lst
 
 
 and compile_declaration : CST.declaration -> AST.declaration =

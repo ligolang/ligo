@@ -31,14 +31,6 @@ and annotated ppf : type_expression annotated -> _ = function
   | None, a -> type_variable ppf a
 
 
-and environment_element ppf ((n, tv) : environment_element) =
-  Format.fprintf ppf "%a : %a" Value_var.pp n type_variable tv
-
-
-and environment ppf (x : environment) =
-  fprintf ppf "Env[%a]" (list_sep_d environment_element) x
-
-
 and type_constant ppf (tb : type_base) : unit =
   let s =
     match tb with
@@ -63,8 +55,6 @@ and type_constant ppf (tb : type_base) : unit =
     | TB_bls12_381_g2 -> "bls12_381_g2"
     | TB_bls12_381_fr -> "bls12_381_fr"
     | TB_never -> "never"
-    | TB_chest -> "chest"
-    | TB_chest_key -> "chest_key"
     | TB_tx_rollup_l2_address -> "tx_rollup_l2_address"
     | TB_type_int _ -> "type_int"
   in
@@ -255,7 +245,13 @@ and expression_content ppf (e : expression_content) =
       name
       expression
       body
-  | E_raw_michelson (code, _) ->
+  | E_raw_michelson code ->
+    let open Tezos_micheline in
+    let code = Micheline.Seq (Location.generated, code) in
+    let code = Micheline.strip_locations code in
+    let code = Micheline_printer.printable (fun prim -> prim) code in
+    fprintf ppf "%a" Micheline_printer.print_expr code
+  | E_inline_michelson (code, _) ->
     let open Tezos_micheline in
     let code = Micheline.Seq (Location.generated, code) in
     let code = Micheline.strip_locations code in
@@ -324,11 +320,6 @@ and expression_content ppf (e : expression_content) =
       body
   | E_while (cond, body) ->
     fprintf ppf "@[while %a do@ %a@ done@]" expression cond expression body
-
-
-and expression_with_type : _ -> expression -> _ =
- fun ppf e ->
-  fprintf ppf "%a : %a" expression_content e.content type_variable e.type_expression
 
 
 and function_ ppf ({ binder; body } : anon_function) =

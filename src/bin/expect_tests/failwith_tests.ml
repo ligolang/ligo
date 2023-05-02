@@ -8,6 +8,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 10-12:
       1 | let main (ps : unit * unit) : operation list * unit =
+                    ^^
       2 |   if true
     :
     Warning: unused variable "ps".

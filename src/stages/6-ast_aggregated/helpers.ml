@@ -140,8 +140,6 @@ let rec assert_type_expression_eq
   | T_for_all _, _ -> None
 
 
-and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
-
 and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option =
   if Literal_value.equal a b then Some () else None
 

@@ -3,7 +3,6 @@ open Ast_unified
 
 let e_some element = e_constructor { constructor = Label.of_string "Some"; element }
 let get_program = get_program "./contracts/id.mligo"
-let compile_main ~raise () = Test_helpers.compile_main ~raise "./contracts/id.mligo" ()
 
 let first_owner, first_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in

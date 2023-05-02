@@ -68,21 +68,26 @@ module Make (Config : Config.S) (Options : Options.S) =
        the [inclusion_paths] with the help of module [ModRes]. *)
 
     let find dir file inclusion_paths =
-      let path = file in
-      match Simple_utils.File.exists ~dir path with
-      | Some path -> Some path
-      | None ->
-          match find_in_cli_paths file Options.dirs with
-            Some _ as some -> some
-          | None ->
-              let file_opt =
-                ModRes.find_external_file ~file ~inclusion_paths
-              in match file_opt with
-                   None -> None
-                 | Some file ->
-                     match Simple_utils.File.exists file with
-                     | Some path -> file_opt
-                     | None -> None
+      let path =
+        match Simple_utils.File.exists ~dir file with
+        | Some path -> Some path
+        | None ->
+            match find_in_cli_paths file Options.dirs with
+              Some _ as some -> some
+            | None ->
+                let file_opt =
+                  ModRes.find_external_file ~file ~inclusion_paths
+                in
+                match file_opt with
+                  None -> None
+                | Some file ->
+                   match Simple_utils.File.exists file with
+                   | Some path -> file_opt
+                   | None -> None
+      in
+      match path with
+      | None -> None
+      | Some p -> Some (Fpath.v p |> Fpath.normalize |> Fpath.to_string)
 
     (* STRING PROCESSING *)
 

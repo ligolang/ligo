@@ -6,13 +6,10 @@ module type Monad = sig
 
   val return : 'a -> 'a t
   val get_one : ?n:int -> 'a t -> (Location.t * Ast_typed.expression) list * 'a
-  val get_list : ?n:int -> 'a t -> ((Location.t * Ast_typed.expression) list * 'a) list
   val oneof : 'a t list -> 'a t
   val mutate_int : int -> int t
   val mutate_nat : int -> int t
   val mutate_string : string -> string t
-  val location : Location.t -> Ast_typed.expression -> unit t
-  val frequency : (int * 'a t) list -> 'a t
   val ( let* ) : 'a t -> ('a -> 'b t) -> 'b t
 end
 
@@ -39,16 +36,11 @@ module Rnd : Monad = struct
     Gen.generate1 ~rand x
 
 
-  let get_list ?(n = 100) (l : 'a t) = Gen.generate ~n l
   let oneof (l : 'a t list) : 'a t = Gen.oneof l
-  let frequency (l : (int * 'a t) list) : 'a t = Gen.frequency l
   let mutate_int z = Gen.oneof [ Gen.return ([], z) ] (* ; Gen.small_int *)
   let mutate_nat n = Gen.oneof [ Gen.return ([], n) ] (* n; Gen.big_nat *)
   let mutate_string s = Gen.oneof [ Gen.return ([], s) ]
   (* [Gen.return s; Gen.map String.escaped (Gen.small_string ~gen:Gen.printable)] *)
-
-  let location (loc : Location.t) (e : Ast_typed.expression) : unit t =
-    Gen.return ([ loc, e ], ())
 end
 
 module Lst : Monad = struct
@@ -64,27 +56,14 @@ module Lst : Monad = struct
 
 
   let get_one ?(n = 0) l = Option.value (List.nth l n) ~default:(List.last_exn l)
-
-  let get_list ?n l =
-    let n = Option.value n ~default:(List.length l) in
-    List.take l n
-
-
   let oneof l = List.concat l
   let mutate_int n = [ [], n ]
   let mutate_nat n = [ [], n ]
   let mutate_string s = [ [], s ]
-  let location (loc : Location.t) (e : Ast_typed.expression) : unit t = [ [ loc, e ], () ]
-  let frequency l = List.concat @@ List.map ~f:snd l
 end
 
 module Monad_context (M : Monad) = struct
   include M
-
-  let bind_location (x : _ Location.wrap) =
-    let* wrap_content = x.wrap_content in
-    return { x with wrap_content }
-
 
   let rec bind_list = function
     | [] -> return []
@@ -103,40 +82,6 @@ module Monad_context (M : Monad) = struct
       return (Some x)
 
 
-  let bind_map_location f x = bind_location (Location.map f x)
-
-  let bind_and (a, b) =
-    let* a in
-    let* b in
-    return (a, b)
-
-
-  let bind_and3 (a, b, c) =
-    let* a in
-    let* b in
-    let* c in
-    return (a, b, c)
-
-
-  let bind_pair = bind_and
-  let bind_map_pair f (a, b) = bind_pair (f a, f b)
-
-  let bind_fold_list f init lst =
-    let aux x y =
-      let* x in
-      f x y
-    in
-    List.fold_left ~f:aux ~init:(return init) lst
-
-
-  let bind_fold_ne_list f init lst =
-    let aux x y =
-      let* x in
-      f x y
-    in
-    Simple_utils.List.Ne.fold_left ~f:aux ~init:(return init) lst
-
-
   let bind_ne_list (hd, tl) =
     let* hd in
     let* tl = bind_list tl in
@@ -152,24 +97,10 @@ module Monad_context (M : Monad) = struct
     return (f x)
 
 
-  let perhaps_oneof x l =
-    let l = List.map ~f:(fun x -> 1, map (fun x -> x, true) x) l in
-    let l = ((2 * List.length l) + 10, return (x, false)) :: l in
-    frequency l
-
-
   let ( let+ ) x f = map f x
 
   let ( and+ ) x y =
     let* x in
     let* y in
     return @@ (x, y)
-
-
-  let rec traverse_list f = function
-    | [] -> return []
-    | x :: xs ->
-      let+ x = f x
-      and+ xs = traverse_list f xs in
-      x :: xs
 end

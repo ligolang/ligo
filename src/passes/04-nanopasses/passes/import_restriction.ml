@@ -44,4 +44,4 @@ let pass ~raise =
     ~name:__MODULE__
     ~compile:(compile ~raise)
     ~decompile:`None
-    ~reduction_check:Iter.defaults
+    ~reduction_check:(reduction ~raise)

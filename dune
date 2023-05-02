@@ -17,3 +17,5 @@
     (:standard --enable effects)))))
 
 (dirs :standard \ jsoo)
+
+(copy_files vendors/tezos-ligo/*.sexp)

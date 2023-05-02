@@ -131,9 +131,8 @@ let rec error_ppformat
     | `Main_transpilation_unspecified_dest_syntax ->
       Format.fprintf
         f
-        "@[<hv>Transpilation target syntax is not specified.@.\
-         Please provide it using the --to-syntax option@.\
-         or by specifying an output file with the -o option @]"
+        "@[<hv>Transpilation target syntax is not specified.@.Please provide it using \
+         the --to-syntax option@.or by specifying an output file with the -o option @]"
     | `Main_transpilation_same_source_and_dest_syntax syntax ->
       Format.fprintf
         f
@@ -184,7 +183,7 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-        (Memory_proto_alpha.Client.Michelson_v1_error_reporter.report_errors
+        (Memory_proto_pre_alpha.Client.Michelson_v1_error_reporter.report_errors
            ~details:true
            ~show_source:true
            ?parsed:None)

@@ -43,6 +43,27 @@ let key_of_bytes ~raise s =
   @@ Tezos_crypto.Signature.Public_key.of_bytes_without_validation s
 
 
+let bls12_381_g1_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option
+    ~raise
+    (Errors.generic_error Location.generated "Cannot parse bls12_381_g1")
+  @@ Bls12_381_G1.of_bytes_opt s
+
+
+let bls12_381_g2_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option
+    ~raise
+    (Errors.generic_error Location.generated "Cannot parse bls12_381_g2")
+  @@ Bls12_381_G2.of_bytes_opt s
+
+
+let bls12_381_fr_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_option
+    ~raise
+    (Errors.generic_error Location.generated "Cannot parse bls12_381_fr")
+  @@ Bls12_381_Fr.of_bytes_opt s
+
+
 let signature_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
       Errors.generic_error Location.generated "Cannot parse signature")
@@ -52,7 +73,7 @@ let signature_of_string ~raise s =
 let chain_id_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
       Errors.generic_error Location.generated "Cannot parse chain_id")
-  @@ Tezos_crypto.Chain_id.of_b58check s
+  @@ Tezos_crypto.Hashed.Chain_id.of_b58check s
 
 
 let wrong_mini_c_value _t _v =
@@ -151,6 +172,12 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Ct (C_key_hash (key_hash_of_bytes ~raise b))
   | Prim (_, "key", [], _), String (_, n) -> V_Ct (C_key (key_of_string ~raise n))
   | Prim (_, "key", [], _), Bytes (_, b) -> V_Ct (C_key (key_of_bytes ~raise b))
+  | Prim (_, "bls12_381_g1", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_g1 (bls12_381_g1_of_bytes ~raise b))
+  | Prim (_, "bls12_381_g2", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_g2 (bls12_381_g2_of_bytes ~raise b))
+  | Prim (_, "bls12_381_fr", [], _), Bytes (_, b) ->
+    V_Ct (C_bls12_381_fr (bls12_381_fr_of_bytes ~raise b))
   | Prim (_, "signature", [], _), String (_, n) ->
     V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) -> V_Ct (C_timestamp n)
@@ -235,8 +262,6 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
       List.map ~f:aux lst'
     in
     V_Set lst''
-  | Prim (_, "chest", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
-  | Prim (_, "chest_key", [], _), Bytes (_, v) -> V_Ct (C_bytes v)
   (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
    *     D_operation op
    *   ) *)
@@ -409,11 +434,8 @@ let rec decompile_value
         | Ticket
         | Michelson_contract
         | Gen
-        | Chest
-        | Chest_key
         | Typed_address
         | Mutation
-        | Chest_opening_result
         | External _
         | Views
         | Tx_rollup_l2_address )

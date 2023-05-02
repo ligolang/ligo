@@ -1,8 +1,6 @@
 module Stdlib = Stdlib
 module Source_input = BuildSystem.Source_input
 
-val loc : Stdlib.Location.t
-
 module type Params = sig
   val raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   val options : Compiler_options.t
@@ -11,21 +9,12 @@ module type Params = sig
 end
 
 module M : functor (Params : Params) -> sig
-  val raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
-  val options : Compiler_options.t
-  val std_lib : Stdlib.t
-  val top_level_syntax : Syntax_types.t
-
   type file_name = Source_input.file_name
   type raw_input = Source_input.raw_input
   type code_input = Source_input.code_input
   type module_name = string
   type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
-
-  val preprocess
-    :  code_input
-    -> compilation_unit * meta_data * (module_name * module_name) list
 
   module AST : sig
     type declaration = Ast_typed.declaration
@@ -33,30 +22,10 @@ module M : functor (Params : Params) -> sig
     type t = Ast_typed.program
     type environment = Environment.t
     type sig_environment = Environment.signature
-
-    val add_ast_to_env : t -> environment -> environment
-
-    val add_module_to_env
-      :  module_name
-      -> environment
-      -> sig_environment
-      -> environment
-      -> environment
-
-    val init_env : environment
-    val make_module_declaration : module_name -> t -> signature -> declaration
   end
-
-  val lib_ast : unit -> AST.t
-  val compile : AST.environment -> module_name -> meta_data -> compilation_unit -> AST.t
 end
 
 module Infer : functor (Params : Params) -> sig
-  val raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
-  val options : Compiler_options.t
-  val std_lib : Stdlib.t
-  val top_level_syntax : Syntax_types.t
-
   type file_name = Source_input.file_name
   type raw_input = Source_input.raw_input
   type code_input = Source_input.code_input
@@ -64,29 +33,12 @@ module Infer : functor (Params : Params) -> sig
   type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
 
-  val preprocess
-    :  code_input
-    -> compilation_unit * meta_data * (module_name * module_name) list
-
   module AST : sig
     type declaration = Ast_core.declaration
     type t = Ast_core.program
     type environment = unit
-
-    val add_ast_to_env : t -> environment -> environment
-    val add_module_to_env : module_name -> environment -> environment -> environment
-    val init_env : environment
-    val make_module_declaration : module_name -> t -> declaration
   end
-
-  val lib_ast : unit -> AST.t
-  val compile : AST.environment -> module_name -> meta_data -> compilation_unit -> AST.t
 end
-
-type expression_mini_c =
-  { expression : Mini_c.expression
-  ; ast_type : Ast_aggregated.type_expression
-  }
 
 type expression_michelson =
   { expression : Stacking.compiled_expression

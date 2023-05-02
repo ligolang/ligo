@@ -15,22 +15,11 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ _useless#2:20-28 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
-    [ do_nothing#2:6-16 s#1:17-18  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 2-27
+    [ s#1:17-18 _useless#2:20-28  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
+    [ s#1:17-18 do_nothing#2:6-16  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 2-27
     [ iter_op#1:6-13  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
 
     Variable definitions:
-    (_useless#2:20-28 -> _useless)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 20-28
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
-    Content: |core: int|
-    references: []
-    (do_nothing#2:6-16 -> do_nothing)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 6-16
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 19-48
-    Content: |resolved: int -> unit|
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 13-23
     (iter_op#1:6-13 -> iter_op)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, characters 6-13
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, character 16 to line 4, character 1
@@ -43,6 +32,17 @@ let%expect_test _ =
     Content: |core: list (int)|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 25-26
+    (do_nothing#2:6-16 -> do_nothing)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 6-16
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 19-48
+    Content: |resolved: int -> unit|
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 13-23
+    (_useless#2:20-28 -> _useless)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 20-28
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
+    Content: |core: int|
+    references: []
     (test#6:6-10 -> test)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 6-10
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
@@ -66,15 +66,9 @@ let%expect_test _ =
     Scopes:
     [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-23
     [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
-    [ c#2:6-7 p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
+    [ p#1:10-11 c#2:6-7  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
 
     Variable definitions:
-    (c#2:6-7 -> c)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 6-7
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
-    Content: |core: contract (unit)|
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 16-17
     (main#1:4-8 -> main)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-8
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, character 0 to line 3, character 17
@@ -86,6 +80,12 @@ let%expect_test _ =
     Content: |core: key_hash|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 50-51
+    (c#2:6-7 -> c)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
+    Content: |core: contract (unit)|
+    references:
+      File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 16-17
     Type definitions:
     Module definitions: |}]
 
@@ -107,8 +107,8 @@ let%expect_test _ =
     [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 8, characters 13-21
     [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 9, characters 13-17
     [ user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 10, characters 13-20
-    [ alice#7:6-11 user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 18-22
-    [ alice#7:6-11 user#1:5-9  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-30
+    [ user#1:5-9 alice#7:6-11  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 18-22
+    [ user#1:5-9 alice#7:6-11  ] File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-30
 
     Variable definitions:
     (alice#7:6-11 -> alice)
@@ -134,14 +134,16 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-32:
      12 |
      13 | let alice_admin : bool = alice.i
+                                   ^^^^^^^
 
     Invalid record field "i" in record.
     Warnings:
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 0-32:
      12 |
      13 | let alice_admin : bool = alice.i
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Toplevel let declaration are silently change to const declaration. |}]
+    Toplevel let declaration is silently changed to const declaration. |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -158,29 +160,29 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 8-10
     [ x#2:6-7  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
-    [ f#2:4-5 x#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    [ x#1:4-5 f#2:4-5  ] File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
 
     Variable definitions:
-    (f#2:4-5 -> f)
-    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 0-11
-    Content: |resolved: ∀ gen#7 : * . gen#7 -> int|
-    references: []
-    (g#3:4-5 -> g)
-    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
-    Content: |resolved: int|
-    references: []
     (x#1:4-5 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 1, characters 8-10
     Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    (f#2:4-5 -> f)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 0-11
+    Content: |resolved: ∀ gen#7 : * . gen#7 -> int|
+    references: []
     (x#2:6-7 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
     Content: |resolved: gen#7|
+    references: []
+    (g#3:4-5 -> g)
+    Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    Content: |resolved: int|
     references: []
     Type definitions:
     Module definitions:
@@ -188,6 +190,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
       1 | let x = 42
       2 | let f x = 0
+                ^
       3 | let g = x
     :
     Warning: unused variable "x".
@@ -207,7 +210,7 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 19-20
-    [ A#2:7-8 B#3:11-12 D#9:11-12 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
+    [ A#2:7-8 B#3:11-12 toto#4:12-16 D#9:11-12  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
 
     Variable definitions:
     Type definitions:
@@ -275,8 +278,8 @@ let%expect_test _ =
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 16-19
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
-    [ A#1:7-8 C#3:11-12 D#8:7-8 titi#2:9-13 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
-    [ A#1:7-8 C#3:11-12 D#8:7-8 E#11:11-12 titi#2:9-13 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
+    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
+    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8 E#11:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
 
     Variable definitions:
     (toto#10:4-8 -> toto)
@@ -349,8 +352,8 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 1, characters 11-14
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
-    [ A#2:11-12 C#3:15-16 F#8:15-16 toto#4:16-20  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
-    [ A#2:11-12 C#3:15-16 E#7:11-12 F#8:15-16 toto#4:16-20 toto#9:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
+    [ A#2:11-12 C#3:15-16 toto#4:16-20 F#8:15-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
+    [ A#2:11-12 C#3:15-16 toto#4:16-20 E#7:11-12 F#8:15-16 toto#9:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
 
     Variable definitions:
     (toto#1:4-8 -> toto)
@@ -435,14 +438,14 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 1, character 8 to line 3, character 13
     Content: |resolved: int|
     references: []
-    (m2#6:4-6 -> m2)
-    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 4-6
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, character 9 to line 8, character 13
-    Content: |resolved: int|
-    references: []
     (s_x#2:9-12 -> s_x)
     Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12
     Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 16-17
+    Content: |resolved: int|
+    references: []
+    (m2#6:4-6 -> m2)
+    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 4-6
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, character 9 to line 8, character 13
     Content: |resolved: int|
     references: []
     Type definitions:
@@ -451,6 +454,7 @@ let%expect_test _ =
     File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12:
       1 | let m = match (Some 4) with
       2 |   | Some s_x -> 1
+                   ^^^
       3 |   | None -> 0
     :
     Warning: unused variable "s_x".

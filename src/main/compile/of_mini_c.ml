@@ -118,6 +118,3 @@ let compile_expression ~raise
   in
   let expr_ty = compile_type e.type_expression in
   ({ expr_ty; expr } : Program.compiled_expression)
-
-
-let pretty_print program = Mini_c.PP.expression program

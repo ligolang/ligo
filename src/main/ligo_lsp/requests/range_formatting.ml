@@ -1,11 +1,9 @@
-open Linol_lwt
-open Handler
-open Utils
-module Region = Simple_utils.Region
 module Nseq = Simple_utils.Utils
 module CameLIGO_pretty = Parsing.Cameligo.Pretty
 module PascaLIGO_pretty = Parsing.Pascaligo.Pretty
 module JsLIGO_pretty = Parsing.Jsligo.Pretty
+open Handler
+open Lsp_helpers
 
 (* Currently we just select all toplevel cst nodes in given range and replace "sub-cst"
    by pretty printer result *)
@@ -27,14 +25,14 @@ let range_formatting
     (range : Range.t)
     : TextEdit.t list option
   =
-  let f decl = range_inside ~small:(range_of_decl decl) ~big:range in
+  let f decl = Range.inside ~small:(range_of_decl decl) ~big:range in
   match List.filter ~f @@ Nseq.nseq_to_list decls with
   | [] -> None
   | d :: ds as declarations_in_range ->
     (* We should create one TextEdit instead of multiple (i.e. one for each declaration)
        because we want to have exactly one empty line between pretty-printed declarations,
        so range formatting with [whole_file_range] is equivalent to formatting *)
-    let covering_interval = range_cover_nseq (Nseq.nseq_map range_of_decl (d, ds)) in
+    let covering_interval = Range.cover_nseq (Nseq.nseq_map range_of_decl (d, ds)) in
     let content =
       let open PPrint in
       declarations_in_range
@@ -62,22 +60,25 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
     match cst with
     | CameLIGO_cst cst ->
       range_formatting
-        { range_of_decl = region_to_range @. Cst_cameligo.CST.declaration_to_region
-        ; print_decl = CameLIGO_pretty.print_declaration CameLIGO_pretty.default_environment
+        { range_of_decl = Range.of_region <@ Cst_cameligo.CST.declaration_to_region
+        ; print_decl =
+            CameLIGO_pretty.print_declaration CameLIGO_pretty.default_environment
         }
         cst.decl
         range
     | PascaLIGO_cst cst ->
       range_formatting
-        { range_of_decl = region_to_range @. Cst_pascaligo.CST.region_of_S_Decl
-        ; print_decl = PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_environment
+        { range_of_decl = Range.of_region <@ Cst_pascaligo.CST.region_of_S_Decl
+        ; print_decl =
+            PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_environment
         }
         cst.decl
         range
     | JsLIGO_cst cst ->
       range_formatting
-        { range_of_decl = region_to_range @. Cst_jsligo.CST.toplevel_statement_to_region
-        ; print_decl = JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_environment
+        { range_of_decl = Range.of_region <@ Cst_jsligo.CST.toplevel_statement_to_region
+        ; print_decl =
+            JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_environment
         }
         cst.statements
         range
@@ -96,6 +97,6 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
     @@ "Range formatting: returned replace for ranges "
     ^ String.concat
         ~sep:", "
-        (List.map ~f:(fun x -> range_to_string @@ x.range) edits_list)
+        (List.map ~f:(fun x -> Range.to_string @@ x.range) edits_list)
   in
   return edits

@@ -5,16 +5,6 @@ type ('e, 'dcl) t =
   }
 [@@deriving eq, compare, yojson, hash, fold, map]
 
-let fold_map
-    :  ('acc -> 'a -> 'acc * 'b) -> ('acc -> 'c -> 'acc * 'd) -> 'acc -> ('a, 'c) t
-    -> 'acc * ('b, 'd) t
-  =
- fun f h acc { module_binder; rhs; let_result } ->
-  let acc, rhs = h acc rhs in
-  let acc, let_result = f acc let_result in
-  acc, { module_binder; rhs; let_result }
-
-
 let pp f h ppf { module_binder; rhs; let_result } =
   Format.fprintf
     ppf

@@ -68,6 +68,10 @@ val sepseq_to_list  : ('a,'b)  sepseq -> 'a list
 val nsepseq_to_nseq : ('a,'b) nsepseq -> 'a nseq
 val nsepseq_of_nseq : sep:'b -> 'a nseq -> ('a,'b) nsepseq
 
+(* Convertions of lists *)
+
+val list_to_nsepseq_opt : 'a list -> 's -> ('a, 's) nsepseq option
+val list_to_sepseq : 'a list -> 's -> ('a, 's) sepseq
 
 (* Effectful symbol generator *)
 
@@ -84,15 +88,6 @@ val highlight : string -> unit
 (* When failing to parse a specifed JSON format *)
 
 val error_yojson_format : string -> ('a, string) result
-
-(* Working with optional values *)
-
-module Option :
-  sig
-    val apply     : ('a -> 'b) -> 'a option -> 'b option
-    val rev_apply : ('a -> 'a) option -> 'a -> 'a
-    val to_string : string option -> string
-  end
 
 (* An extension to the standard module [String] *)
 

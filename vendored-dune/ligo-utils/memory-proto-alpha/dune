@@ -2,8 +2,9 @@
   (name memory_proto_alpha)
   (public_name tezos-memory-proto-alpha)
   (libraries
-    tezos-protocol-environment
-    tezos-protocol-015-PtLimaPt
-    tezos-protocol-015-PtLimaPt.parameters
-    tezos-client-015-PtLimaPt
-    tz015-test-helpers))
+    tpe
+    tp-016
+    tp-016.parameters
+    tp-016.environment
+    tc-016
+    tz-016-test-helpers))

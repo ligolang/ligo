@@ -54,41 +54,11 @@ let v_set : value list -> value = fun xs -> V_Set xs
 let v_map : (value * value) list -> value = fun xs -> V_Map xs
 let v_views : (string * func_val) list -> value = fun xs -> V_Views xs
 
-let extract_pair : value -> (value * value) option =
- fun p ->
-  match p with
-  | V_Record lmap ->
-    let fst = Record.find lmap (Label.of_int 0) in
-    let snd = Record.find lmap (Label.of_int 1) in
-    Some (fst, snd)
-  | _ -> None
-
-
-let extract_fold_while_result : value -> (bool * value) option =
- fun p ->
-  match extract_pair p with
-  | Some (V_Ct (C_bool a), b) -> Some (a, b)
-  | _ -> None
-
-
 let is_true : value -> bool =
  fun b ->
   match b with
   | V_Ct (C_bool true) -> true
   | _ -> false
-
-
-let is_bool : value -> bool =
- fun b ->
-  match b with
-  | V_Ct (C_bool _) -> true
-  | _ -> false
-
-
-let counter_of_address : string -> int =
- fun addr ->
-  try int_of_string addr with
-  | Failure _ -> -1
 
 
 let get_address : value -> Tezos_protocol.Protocol.Alpha_context.Contract.t option
@@ -221,27 +191,6 @@ let get_func : value -> func_val option =
  fun value ->
   match value with
   | V_Func_val v -> Some v
-  | _ -> None
-
-
-let get_bls12_381_g1 : value -> Bls12_381.G1.t option =
- fun value ->
-  match value with
-  | V_Ct (C_bls12_381_g1 v) -> Some v
-  | _ -> None
-
-
-let get_bls12_381_g2 : value -> Bls12_381.G2.t option =
- fun value ->
-  match value with
-  | V_Ct (C_bls12_381_g2 v) -> Some v
-  | _ -> None
-
-
-let get_bls12_381_fr : value -> Bls12_381.Fr.t option =
- fun value ->
-  match value with
-  | V_Ct (C_bls12_381_fr v) -> Some v
   | _ -> None
 
 
@@ -447,10 +396,6 @@ let rec compare_value (v : value) (v' : value) : int =
       | V_Location _
       | V_Typed_address _
       | V_Views _ ) ) -> Int.compare (tag_value v) (tag_value v')
-
-
-let equal_constant_val (c : constant_val) (c' : constant_val) : bool =
-  Int.equal (compare_constant_val c c') 0
 
 
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0

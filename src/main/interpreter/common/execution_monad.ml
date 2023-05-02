@@ -135,8 +135,7 @@ module Command = struct
         * LT.calltrace
         * (execution_trace, string) Tezos_micheline.Micheline.node
         * Ast_aggregated.type_expression
-        * LT.value
-        * Ast_aggregated.type_expression
+        * (LT.value * Ast_aggregated.type_expression) list
         -> LT.value tezos_command
     | Compile_contract : Location.t * LT.value * LT.value -> LT.value tezos_command
     | Compile_ast_contract : Location.t * LT.value -> LT.value tezos_command
@@ -169,17 +168,6 @@ module Command = struct
     | Add_cast :
         Location.t * LT.Contract.t * Ast_aggregated.type_expression
         -> unit tezos_command
-    | Implicit_account :
-        Tezos_protocol.Protocol.Alpha_context.public_key_hash
-        -> LT.value tezos_command
-    | Contract :
-        Location.t
-        * LT.calltrace
-        * LT.Contract.t
-        * string option
-        * Ast_aggregated.type_expression
-        -> LT.value tezos_command
-    | Pairing_check : (Bls12_381.G1.t * Bls12_381.G2.t) list -> LT.value tezos_command
     | Add_account :
         Location.t
         * LT.calltrace
@@ -435,6 +423,11 @@ module Command = struct
           [ entry_point ]
           views
       in
+      let views =
+        match views with
+        | None -> `None
+        | Some views -> `Single views
+      in
       LT.V_Ast_contract { main; views }, ctxt
     | Read_contract_from_file (loc, calltrace, source_file) ->
       (try
@@ -507,17 +500,16 @@ module Command = struct
     | Eval (loc, v, expr_ty) ->
       let value = Michelson_backend.compile_value ~raise ~options ~loc v expr_ty in
       LT.V_Michelson (Ty_code value), ctxt
-    | Run_Michelson (loc, calltrace, func, result_ty, value, value_ty) ->
+    | Run_Michelson (loc, calltrace, func, result_ty, arguments) ->
       (match
-         Michelson_backend.run_michelson_func
+         Michelson_backend.run_michelson_func_
            ~raise
            ~options
            ~loc
            ctxt
            func
            result_ty
-           value
-           value_ty
+           arguments
        with
       | Ok v -> v, ctxt
       | Error data ->
@@ -563,15 +555,10 @@ module Command = struct
       in
       let views =
         match vs with
-        | LT.V_Views [] -> None
+        | LT.V_Views [] -> `None
         | LT.V_Views vs ->
-          let f (s, f) (vs, k) =
+          let f (s, f) =
             let v = Value_var.of_input_var ~loc s in
-            let open Ast_aggregated in
-            let p =
-              Location.wrap ~loc
-              @@ Pattern.P_var (Binder.make v f.LT.orig_lambda.type_expression)
-            in
             let expr =
               Michelson_backend.val_to_ast
                 ~raise
@@ -579,17 +566,9 @@ module Command = struct
                 (V_Func_val f)
                 f.orig_lambda.type_expression
             in
-            let k result =
-              e_a_let_in ~loc p expr (k result) ValueAttr.default_attributes
-            in
-            (v, f.orig_lambda.type_expression) :: vs, k
+            v, expr
           in
-          let vs, k = List.fold_right vs ~f ~init:([], fun x -> x) in
-          let es = List.map vs ~f:(fun (v, t) -> Ast_aggregated.e_a_variable ~loc v t) in
-          let record = Record.record_of_tuple es in
-          let tuple = Ast_aggregated.e_a_record ~loc record in
-          let vs = List.map vs ~f:fst in
-          Some (vs, k tuple)
+          `Multi (List.map ~f vs)
         | _ ->
           raise.error @@ Errors.generic_error loc "Views doe not reduce to a view value?"
       in
@@ -597,9 +576,24 @@ module Command = struct
     | Compile_ast_contract (loc, v) ->
       let contract =
         match v with
-        | LT.V_Ast_contract { main = ast_aggregated; views } ->
+        | LT.V_Ast_contract { main = ast_aggregated; views = `None } ->
           let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
-          Michelson_backend.compile_contract_ast
+          Michelson_backend.compile_contract_ast_none
+            ~raise
+            ~options
+            ~tezos_context
+            ast_aggregated
+        | LT.V_Ast_contract { main = ast_aggregated; views = `Single views } ->
+          let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
+          Michelson_backend.compile_contract_ast_single
+            ~raise
+            ~options
+            ~tezos_context
+            ast_aggregated
+            views
+        | LT.V_Ast_contract { main = ast_aggregated; views = `Multi views } ->
+          let tezos_context = Tezos_state.get_alpha_context ~raise ctxt in
+          Michelson_backend.compile_contract_ast_multi
             ~raise
             ~options
             ~tezos_context
@@ -761,40 +755,6 @@ module Command = struct
       in
       let v = LT.V_List (List.map ~f:aux x) in
       v, ctxt
-    | Implicit_account kh ->
-      let address = Memory_proto_alpha.Protocol.Alpha_context.Contract.Implicit kh in
-      let v = LT.V_Ct (LT.C_contract { address; entrypoint = None }) in
-      v, ctxt
-    | Contract (loc, _calltrace, addr, entrypoint, value_ty) ->
-      let expr =
-        match entrypoint with
-        | None ->
-          Ast_aggregated.(
-            e_a_contract_opt ~loc (Michelson_backend.string_of_contract addr) value_ty)
-        | Some entrypoint ->
-          Ast_aggregated.(
-            e_a_contract_entrypoint_opt
-              ~loc
-              entrypoint
-              (Michelson_backend.string_of_contract addr)
-              value_ty)
-      in
-      let mich = Michelson_backend.compile_ast ~raise ~options expr in
-      let run_options = Michelson_backend.make_options ~raise (Some ctxt) in
-      let ret_co, ret_ty =
-        Michelson_backend.run_expression_unwrap ~raise ~run_options ~loc mich
-      in
-      let ret =
-        Michelson_to_value.decompile_to_untyped_value
-          ~raise
-          ~bigmaps:ctxt.transduced.bigmaps
-          ret_ty
-          ret_co
-      in
-      ret, ctxt
-    | Pairing_check l ->
-      let check = Bls12_381.Pairing.pairing_check l in
-      LC.v_bool check, ctxt
     | Add_account (loc, calltrace, sk, pk) ->
       let pkh = Tezos_protocol_env.Signature.Public_key.hash pk in
       Tezos_state.add_account ~raise ~loc ~calltrace sk pk pkh;

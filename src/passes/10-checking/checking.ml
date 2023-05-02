@@ -9,12 +9,8 @@ module O = Ast_typed
 module C = Computation
 module E = Elaboration
 
-(* 
-let debug = false
-let assertions = false *)
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression
-let untype_program = Untyper.untype_program
 
 let assert_type_expression_eq ~raise (loc : Location.t) (type1, type2) : unit =
   trace_option ~raise (assert_equal type1 type2 loc)
@@ -228,10 +224,6 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
   | Literal_bls12_381_g1 _ -> const Type.t_bls12_381_g1
   | Literal_bls12_381_g2 _ -> const Type.t_bls12_381_g2
   | Literal_bls12_381_fr _ -> const Type.t_bls12_381_fr
-  | Literal_chest _ | Literal_chest_key _ ->
-    raise
-      (corner_case
-         "chest / chest_key are not allowed in the syntax (only tests need this type)")
 
 
 let rec check_expression (expr : I.expression) (type_ : Type.t)
@@ -447,42 +439,46 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     in
     let%bind let_result = lift let_result res_type in
     return (res_type, let_result)
-  | E_raw_code { language; code = { expression_content; _ } }
-    when Option.is_some (I.get_e_tuple expression_content) ->
-    let%bind loc = loc () in
-    let exprs = Option.value_exn ~here:[%here] @@ I.get_e_tuple expression_content in
-    let%bind code, args =
-      match exprs with
-      | [] -> raise (corner_case "expected non-empty tuple in %Michelson")
-      | code :: args -> return (code, args)
-    in
-    let%bind code, code_type =
+  | E_raw_code { language = "michelson"; code } ->
+    let%bind code, result_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
     in
-    let%bind code_type = evaluate_type_with_default_layout code_type in
-    (* TODO: Shouldn't [code] have the type of [string]? *)
-    let%bind _, code = infer code in
-    let%bind args =
-      args
-      |> List.map ~f:(fun arg ->
-             let%bind arg, arg_type =
-               raise_opt ~error:not_annotated
-               @@ I.get_e_ascription arg.I.expression_content
-             in
-             let%bind _, arg = infer arg in
-             let%bind arg_type = evaluate_type_with_default_layout arg_type in
-             lift arg arg_type)
-      |> all
+    let vals = I.get_e_applications code.expression_content in
+    let vals =
+      match vals with
+      | [] -> [ code ]
+      | vals -> vals
     in
+    let code = List.hd_exn vals in
+    let args = List.tl_exn vals in
+    let%bind args =
+      List.fold_right
+        ~f:(fun expr result ->
+          let%bind list = result in
+          let%bind expr_type, expr = infer expr in
+          let list = (expr_type, expr) :: list in
+          return list)
+        ~init:(return [])
+        args
+    in
+    let%bind _, code = infer code in
+    let%bind loc = loc () in
+    let%bind result_type = evaluate_type_with_default_layout result_type in
+    let rec build_func_type args =
+      match args with
+      | [] -> result_type
+      | (arg_type, _) :: args -> Type.t_arrow ~loc arg_type (build_func_type args) ()
+    in
+    let func_type = build_func_type args in
     const
       E.(
-        let%bind code = code in
-        let%bind args = all args in
-        let%bind code_type = decode code_type in
-        let tuple = O.e_a_record ~loc @@ Record.record_of_tuple (code :: args) in
-        return
-        @@ O.E_raw_code { language; code = { tuple with type_expression = code_type } })
-      code_type
+        let%bind code = code
+        and code_type = decode func_type
+        and args = all @@ List.map ~f:snd args in
+        let code = { code with type_expression = code_type } in
+        let code = O.e_a_applications ~loc code args in
+        return @@ O.E_raw_code { language = "michelson"; code })
+      result_type
   | E_raw_code { language; code } ->
     let%bind code, code_type =
       raise_opt ~error:not_annotated @@ I.get_e_ascription code.expression_content
@@ -917,10 +913,22 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
            Constant_typers.External_types.map_remove_types parameters
          | T_construct { constructor = External "int"; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
+         | T_construct { constructor = External "int_lima"; parameters; _ } ->
+           Constant_typers.External_types.int_lima_types parameters
+         | T_construct { constructor = External "bytes"; parameters; _ } ->
+           Constant_typers.External_types.bytes_types parameters
          | T_construct { constructor = External ("ediv" | "u_ediv"); parameters; _ } ->
            Constant_typers.External_types.ediv_types parameters
          | T_construct { constructor = External ("and" | "u_and"); parameters; _ } ->
            Constant_typers.External_types.and_types parameters
+         | T_construct { constructor = External "or"; parameters; _ } ->
+           Constant_typers.External_types.or_types parameters
+         | T_construct { constructor = External "xor"; parameters; _ } ->
+           Constant_typers.External_types.xor_types parameters
+         | T_construct { constructor = External "lsl"; parameters; _ } ->
+           Constant_typers.External_types.lsl_types parameters
+         | T_construct { constructor = External "lsr"; parameters; _ } ->
+           Constant_typers.External_types.lsr_types parameters
          | _ -> return ret_type)
         ~with_:(fun _ -> return ret_type)
     in

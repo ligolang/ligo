@@ -7,7 +7,7 @@
   ligo_lsp
   ligo_api
   cli_helpers
-  ligo_interface
-  utils
+  lsp_helpers
+  alcotest_extras
   compiler_options
   syntax_types))

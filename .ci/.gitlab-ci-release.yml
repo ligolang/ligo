@@ -121,7 +121,6 @@ release:
     - docker_extract
     - changelog
     - initialize-git
-    - esy-windows
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -251,7 +250,7 @@ bottle-ventura-i7:
     - job: build_release_env_vars
       artifacts: true
   script:
-    - brew install --build-bottle ./HomebrewFormula/ligo.rb
+    - brew install --build-bottle ./HomebrewFormula/ligo.rb --verbose
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \
@@ -285,7 +284,7 @@ bottle-ventura-m1:
     - job: build_release_env_vars
       artifacts: true
   script:
-    - brew install --build-bottle ./HomebrewFormula/ligo.rb
+    - brew install --build-bottle ./HomebrewFormula/ligo.rb --verbose
     - BOTTLE_INFO=$(brew bottle --no-rebuild --force-core-tap ./HomebrewFormula/ligo.rb | grep sha256)
     - |
       curl --header "PRIVATE-TOKEN: ${TOKEN_API}" \

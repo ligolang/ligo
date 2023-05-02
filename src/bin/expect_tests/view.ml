@@ -30,6 +30,7 @@ let%expect_test _ =
     File "../../test/contracts/view.mligo", line 3, characters 12-14:
       2 |
       3 | [@view] let v1 (n : int) (s: int) : int = s + n + 1
+                      ^^
       4 | let v2 (_ : int) (s: int) : int = s + 2
 
     Warning: This view will be ignored, command line option override [
@@ -48,6 +49,7 @@ let%expect_test _ =
     File "../../test/contracts/view.mligo", line 5, characters 4-12:
       4 | let v2 (_ : int) (s: int) : int = s + 2
       5 | let bad_view (_ : int) (_: nat) : nat = 1n
+              ^^^^^^^^
       6 |
 
     Invalid type for view "main#11".
@@ -88,6 +90,7 @@ let%expect_test _ =
     File "../../test/contracts/view_restrictions.mligo", line 7, characters 10-70:
       6 | let bad_view1 (n : int) (s : int) : int =
       7 |   let _ = Tezos.create_contract main (None : key_hash option) 0mutez 2 in
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       8 |   s + n + 1
 
     View rule violated:
@@ -149,6 +152,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/views_shadow.mligo", line 3, characters 12-14:
       2 |
       3 | [@view] let v1 (n : int) (s: int) : int = s + n + 1
+                      ^^
       4 | let v1 (n : int) (s: int) : int = s + n + 111111
 
     This declaration holds an annotation and is later shadowed. |}]
@@ -160,6 +164,7 @@ let%expect_test _ =
     File "../../test/contracts/negative/views_shadow_top_pat.mligo", line 3, characters 12-14:
       2 |
       3 | [@view] let v1 = fun (n : int) (s : int) : int -> s + n + 1
+                      ^^
       4 | let v1 = fun (n : int) (s: int) : int -> s + n + 111111
 
     This declaration holds an annotation and is later shadowed. |}]

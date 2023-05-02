@@ -30,7 +30,8 @@ let all_expression ~raise ~warn_unused_rec init =
   List.fold ~f:( |> ) (all_expression_passes ~raise ~warn_unused_rec) ~init
 
 
-let all_contract ~raise entrypoints module_path (prg : Ast_typed.program) =
+let all_contract ~raise ?(remove = true) entrypoints module_path (prg : Ast_typed.program)
+  =
   let module_ = Helpers.get_module module_path prg in
   let module_ =
     match entrypoints with
@@ -52,7 +53,7 @@ let all_contract ~raise entrypoints module_path (prg : Ast_typed.program) =
     @@ contract_passes ~raise
   in
   let prg = List.fold ~f:(fun x f -> snd @@ f x) all_p ~init:prg in
-  let prg = Contract_passes.remove_unused ~raise data prg in
+  let prg = if remove then Contract_passes.remove_unused ~raise data prg else prg in
   (main_name, contract_type), prg
 
 
@@ -99,5 +100,4 @@ let all_view ~raise command_line_views main_name module_path contract_type prg =
   Contract_passes.remove_unused_for_views module_path prg
 
 
-let all = []
 let remove_unused_expression = Contract_passes.remove_unused_expression

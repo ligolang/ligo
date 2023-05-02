@@ -19,6 +19,7 @@ type self_ast_aggregated_error =
   | `Self_ast_aggregated_bad_format_entrypoint_ann of string * Location.t
   | `Self_ast_aggregated_entrypoint_ann_not_literal of Location.t
   | `Self_ast_aggregated_emit_tag_not_literal of Location.t
+  | `Self_ast_aggregated_call_view_not_litstr of Location.t
   | `Self_ast_aggregated_unmatched_entrypoint of Location.t
   | `Self_ast_aggregated_corner_case of string
   | `Self_ast_aggregated_bad_single_arity of
@@ -133,6 +134,12 @@ let error_ppformat
          literal. @]"
         snippet_pp
         loc
+    | `Self_ast_aggregated_call_view_not_litstr loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid argument.@.View name must be a string literal. @]"
+        snippet_pp
+        loc
     | `Self_ast_aggregated_emit_tag_not_literal loc ->
       Format.fprintf
         f
@@ -235,6 +242,12 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
     let message =
       Format.sprintf
         "Invalid entrypoint value.@.The entrypoint value must be a string literal."
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_call_view_not_litstr location ->
+    let message =
+      Format.sprintf "Invalid argument.@.View name must be a string literal."
     in
     let content = make_content ~message ~location () in
     make ~stage ~content

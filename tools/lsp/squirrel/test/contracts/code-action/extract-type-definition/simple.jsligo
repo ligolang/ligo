@@ -1,5 +1,0 @@
-const f = (i : [int, nat]) : nat => 3 as nat;
-const g = (i : [nat, nat]) : int => {
-  const s : nat = 3 as nat;
-  return 3;
-};

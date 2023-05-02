@@ -3,8 +3,8 @@
   (public_name proto-alpha-utils)
   (libraries
     tezos-error-monad
-    tezos-protocol-015-PtLimaPt
-    tezos-client-015-PtLimaPt
+    tp-016
+    tc-016
     tezos-memory-proto-alpha
     data-encoding
     simple-utils

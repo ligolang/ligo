@@ -4,8 +4,6 @@ open Ligo_prim
 module Free_variables = struct
   type bindings = (Value_var.t * type_expression) list
 
-  let eq (v1, _t1) (v2, _t2) = Value_var.equal v1 v2
-
   let mem : bindings -> Value_var.t -> bool =
    fun bs -> bs |> List.map ~f:fst |> List.mem ~equal:Value_var.equal
 
@@ -19,7 +17,6 @@ module Free_variables = struct
   let union : bindings -> bindings -> bindings = ( @ )
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : (Value_var.t * type_expression) list -> bindings = fun x -> x
 
   let rec expression ~count_var_ref ~count_deref ~count_assign
       : bindings -> expression -> bindings
@@ -78,6 +75,7 @@ module Free_variables = struct
     | E_proj (expr, _i, _n) -> self expr
     | E_update (expr, _i, update, _n) -> unions [ self expr; self update ]
     | E_raw_michelson _ -> empty
+    | E_inline_michelson (_, arguments) -> unions @@ List.map ~f:self arguments
     | E_global_constant (_hash, args) -> unions (List.map ~f:self args)
     (* the code is not allowed to have any free variables ... but
        maybe it still could if they are going to be inlined? *)

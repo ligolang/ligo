@@ -23,8 +23,6 @@ let empty_message =
     empty_op_list
 
 
-let call element = e_constructor ~loc { constructor = Label.of_string "Call"; element }
-
 let mk_time ~raise st =
   match Memory_proto_alpha.Protocol.Script_timestamp.of_string st with
   | Some s -> s

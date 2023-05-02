@@ -113,8 +113,9 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [-m MODULE], --module      . the entry-point will be compiled from that
                                module.
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                               the LIGO environment (lima). By default, the
-                               current protocol (lima) will be used
+                               the LIGO environment (lima ,
+                               mumbai). By default, the current protocol
+                               (mumbai) will be used
   [-help], -?                . print this help text and exit
 
 (core/src/command.ml.Exit_called (status 0)) |}]
@@ -180,8 +181,9 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -247,8 +249,9 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -285,8 +288,9 @@ let%expect_test _ =
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -338,8 +342,9 @@ let%expect_test _ =
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -387,8 +392,9 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -438,8 +444,9 @@ let%expect_test _ =
       [-e ENTRY-POINT], --entry-point
                                  . the entry-point that will be compiled.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -488,8 +495,9 @@ let%expect_test _ =
       [--werror]                 . treat warnings as errors
       [--without-run]            . disable running of compiled expression.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
-                                   the LIGO environment (lima). By default, the
-                                   current protocol (lima) will be used
+                                   the LIGO environment (lima ,
+                                   mumbai). By default, the current protocol
+                                   (mumbai) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]

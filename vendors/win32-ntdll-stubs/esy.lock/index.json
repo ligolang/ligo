@@ -1,0 +1,19 @@
+{
+  "checksum": "0cc961f41dbf4ff5ab5654751a4ba36e",
+  "root": "win32-ntdll-stubs@link-dev:./package.json",
+  "node": {
+    "win32-ntdll-stubs@link-dev:./package.json": {
+      "id": "win32-ntdll-stubs@link-dev:./package.json",
+      "name": "win32-ntdll-stubs",
+      "version": "link-dev:./package.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}

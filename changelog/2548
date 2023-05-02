@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed a bug where references would not be found sometimes in included/imported files. For example, suppose we have two contracts:\\n\\n`included.mligo`:\\n\\n\\n```ocaml\\nlet x = 1\\n\\n```\\n\\n`includer/includer.mligo`:\\n\\n\\n```ocaml\\n#include \"../included.mligo\"\\nlet y = x\\n\\n```\\n\\nThen opening `includer/includer.mligo` and looking for references of `x` would only find it in this file unless `included.mligo` has been opened previously. It will now find it in both.\\n\\nNote that this fix does not allow \"back-includes\" yet; looking for `x` in `included.mligo` will find it in `includer/includer.mligo` if and only if that file has been previously opened as well.\\n\\n"
+merge_request: '2548'
+title: "[#1701] Fix searching of references in other files"
+type: fixed
+            

@@ -56,7 +56,7 @@ module Bls12_381_Fr = struct
 end
 
 module Chain_id = struct
-  include Tezos_crypto.Chain_id
+  include Tezos_crypto.Hashed.Chain_id
 
   let to_yojson (c : t) = [%to_yojson: bytes] (to_bytes c)
   let of_yojson _ = failwith "chain_id_of_yojson: not implemented"
@@ -164,7 +164,11 @@ and value =
   | V_Michelson_contract of mcode [@name "contract_code"]
   | V_Ast_contract of
       { main : Ast_aggregated.expression
-      ; views : (Value_var.t list * Ast_aggregated.expression) option
+      ; views :
+          [ `None
+          | `Single of Value_var.t list * Ast_aggregated.expression
+          | `Multi of (Value_var.t * Ast_aggregated.expression) list
+          ]
       } [@name "ast_contract"]
   | V_Mutation of mutation [@name "mutation"]
   | V_Func_val of func_val [@name "function"]

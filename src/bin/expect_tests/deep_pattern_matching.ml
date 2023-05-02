@@ -13,6 +13,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail17.mligo", line 15, characters 42-43:
      14 |     (* testing that subtitution is stoping on resursive definitions *)
      15 |     let rec a (b : int) : int =let x = fo a in b + 1 in
+                                                    ^
      16 |     (a 1) + (fo b)
 
     Invalid type(s)
@@ -26,6 +27,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail16.mligo", line 6, characters 4-25:
       5 |   match action with
       6 |   | {one = _ ; three = _} -> 0
+              ^^^^^^^^^^^^^^^^^^^^^
 
     Pattern not of the expected type "parameter". |}]
 
@@ -37,8 +39,11 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail15.mligo", line 7, character 2 to line 9, character 25:
       6 | let main (action : parameter) : int =
       7 |   match action with
+            ^^^^^^^^^^^^^^^^^
       8 |   | Increment (n, m) -> 0
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |   | Reset            -> 0
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "( ^a * ^b )" with "( int * int * int )".
@@ -58,6 +63,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail14.mligo", line 2, characters 11-14:
       1 | let main (_ : unit) (_ : unit) : operation list * unit =
       2 |   let () = 42n in
+                     ^^^
       3 |   (([] : operation list), ())
 
     Invalid type(s).
@@ -71,6 +77,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail10.mligo", line 5, characters 8-9:
       4 |   match x with
       5 |   | One 1 -> 2
+                  ^
       6 |   | Two -> 1
 
     Invalid pattern matching.
@@ -91,6 +98,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail9.mligo", line 6, characters 11-12:
       5 |   | One a -> 2
       6 |   | Two -> a
+                     ^
 
     Variable "a" not found. |}]
 
@@ -102,9 +110,13 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail1.mligo", line 5, character 2 to line 8, character 44:
       4 | let t = fun (x: myt * myt) ->
       5 |   match x with
+            ^^^^^^^^^^^^
       6 |   | Nil , {a = a ; b = b ; c = c} -> 1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       7 |   | xs  , Nil -> 2
+          ^^^^^^^^^^^^^^^^^^
       8 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
@@ -117,9 +129,13 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail2.mligo", line 4, character 2 to line 7, character 44:
       3 | let t = fun (x: myt * myt) ->
       4 |   match x with
+            ^^^^^^^^^^^^
       5 |   | Nil , (a,b,c) -> 1
+          ^^^^^^^^^^^^^^^^^^^^^^
       6 |   | xs  , Nil -> 2
+          ^^^^^^^^^^^^^^^^^^
       7 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Invalid type(s)
     Cannot unify "( ^a * ^b * ^c )" with "myt".
@@ -132,6 +148,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail5.mligo", line 5, characters 4-15:
       4 |   match x with
       5 |   | Some_fake x -> x
+              ^^^^^^^^^^^
       6 |   | None_fake -> 1
 
     Pattern not of the expected type "option (int)". |}]
@@ -145,6 +162,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail7.mligo", line 6, characters 9-10:
       5 |   | A -> "hey"
       6 |   | B -> 2
+                   ^
 
     Invalid type(s)
     Cannot unify "int" with "string". |}]
@@ -156,6 +174,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail8.mligo", line 19, characters 22-31:
      18 |         f (b+1)
      19 |       | Cons (a,b) -> "invalid"
+                                ^^^^^^^^^
      20 |     in
 
     Invalid type(s)
@@ -169,8 +188,11 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
       3 | let t = fun (x: myt * ( int * int * int)) ->
       4 |   match x with
+            ^^^^^^^^^^^^
       5 |   | xs , (a,b,c) -> 1
+          ^^^^^^^^^^^^^^^^^^^^^
       6 |   | xs , (c,b,a) -> 2
+          ^^^^^^^^^^^^^^^^^^^^^
 
     Error : this match case is unused. |}]
 
@@ -183,8 +205,11 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.mligo", line 2, character 2 to line 4, character 11:
       1 | let t12 = fun (x : int list) ->
       2 |   match x with
+            ^^^^^^^^^^^^
       3 |   | hd::(hd2::tl) -> hd + hd2
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       4 |   | [] -> 0
+          ^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -197,8 +222,11 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.mligo", line 4, character 2 to line 6, character 40:
       3 | let t13 = fun (x:recordi) ->
       4 |   match x with
+            ^^^^^^^^^^^^
       5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       6 |   | { a = Some (hd::tl) ; b = [] } -> hd
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -211,6 +239,7 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail13.mligo", line 7, characters 5-14:
       6 |    | Increment n -> s +1
       7 |    | Decrement -> s -1
+               ^^^^^^^^^
       8 |  in ([] : operation list), stor
 
     Pattern not of the expected type "nat". |}]
@@ -222,8 +251,11 @@ let%expect_test _ =
     File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.mligo", line 4, character 2 to line 6, character 18:
       3 | let t = fun (x: myt * myt) ->
       4 |   match x with
+            ^^^^^^^^^^^^
       5 |   | Nil , ys  -> 1
+          ^^^^^^^^^^^^^^^^^^
       6 |   | xs  , Nil -> 2
+          ^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -545,10 +577,15 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/edge_case_V.mligo", line 6, character 7 to line 10, character 20:
       5 | let main (p : p) (_ : int) : operation list * int =
       6 |   [], (match p with
+                 ^^^^^^^^^^^^^
       7 |     A,A,A,_,_,_ -> 1
+          ^^^^^^^^^^^^^^^^^^^^
       8 |   | B,_,_,A,A,_ -> 2
+          ^^^^^^^^^^^^^^^^^^^^
       9 |   | _,B,_,B,_,A -> 3
+          ^^^^^^^^^^^^^^^^^^^^
      10 |   | _,_,B,_,B,B -> 4)
+          ^^^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -561,11 +598,17 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/edge_case_S.mligo", line 6, character 7 to line 11, character 31:
       5 | let main (p : p) (_ : int) : operation list * int =
       6 |   [], (match p with
+                 ^^^^^^^^^^^^
       7 |     A, A, _, _, _, _, _, _ -> 1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       8 |   | _, _, A, A, _, _, _, _ -> 2
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |   | _, _, _, _, A, A, _, _ -> 3
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      10 |   | _, _, _, _, _, _, A, A -> 4
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      11 |   | A, B, A, B, A, B, A, B -> 5)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -578,6 +621,7 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 28-33:
       7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
       8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+                                      ^^^^^
     :
     Warning: unused variable "mynat".
     Hint: replace it by "_mynat" to prevent this warning.
@@ -585,6 +629,7 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 14-17:
       7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
       8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+                        ^^^
     :
     Warning: unused variable "myt".
     Hint: replace it by "_myt" to prevent this warning.
@@ -592,6 +637,7 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
       6 |   match p with
       7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+                        ^^^
       8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
     :
     Warning: unused variable "myt".
@@ -600,6 +646,7 @@ let%expect_test _ =
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 32-33:
       4 |
       5 | let main = fun (p : parameter) (s: storage) ->
+                                          ^
       6 |   match p with
     :
     Warning: unused variable "s".

@@ -168,6 +168,8 @@ let core_prod =
     "Ast-core productions"
     [ comp_file "vars_consts/multiple_vars.jsligo"
     ; comp_file "letin.mligo"
+    ; comp_file "double_ignored_variable.jsligo"
+    ; comp_file "clauseblock.jsligo"
     ; comp_file "polymorphism/annotate.mligo"
     ; comp_file "deep_pattern_matching/list_pattern.mligo"
     ; comp_file_assert

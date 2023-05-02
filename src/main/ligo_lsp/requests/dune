@@ -5,4 +5,4 @@
   (:standard -w +A-4-40-42-44-70))
  (instrumentation
   (backend bisect_ppx))
- (libraries lsp linol ligo_interface utils compiler_options checking))
+ (libraries lsp linol lsp_helpers compiler_options checking))

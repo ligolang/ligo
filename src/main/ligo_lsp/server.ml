@@ -1,14 +1,6 @@
+(* We export the request implementations for testing them *)
 module Requests = Requests
-
-(* TODO: use String, Option, Set, List & Hashtbl from Core *)
-module LSet = Caml.Set.Make (Simple_utils.Location)
-module List = Caml.List
-module Option = Caml.Option
-
-(* TODO: create Types /importmodule to do `open Types` instead *)
-open Linol_lwt
-open Linol_lwt.Jsonrpc2
-open Lsp
+open Lsp_helpers
 open Requests.Handler
 
 (* one env per document *)
@@ -38,7 +30,7 @@ let default_config : config =
 
 class lsp_server =
   object (self)
-    inherit server as super
+    inherit Linol_lwt.Jsonrpc2.server as super
     val mutable config : config = default_config
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
@@ -51,7 +43,7 @@ class lsp_server =
          let@ () =
            if not deprecated
            then (
-             match Utils.get_syntax document.uri with
+             match DocumentUri.get_syntax document.uri with
              | None -> return ()
              | Some PascaLIGO ->
                send_message
@@ -108,7 +100,7 @@ class lsp_server =
                ligo_language_server
                |> member "disabledFeatures"
                |> to_option to_list
-               |> Utils.value_map ~f:(List.map to_string) ~default:[]
+               |> Option.value_map ~f:(List.map ~f:to_string) ~default:[]
            ; deprecated =
                ligo_language_server
                |> member "deprecated"
@@ -117,7 +109,7 @@ class lsp_server =
            }
 
     method! on_req_initialize
-        ~(notify_back : notify_back)
+        ~(notify_back : Linol_lwt.Jsonrpc2.notify_back)
         (init_params : InitializeParams.t)
         : InitializeResult.t IO.t =
       (* Currently, the behaviors of these editors will be as follow:
@@ -138,7 +130,7 @@ class lsp_server =
       super#on_req_initialize ~notify_back init_params
 
     method is_request_enabled : string -> bool =
-      fun req -> not @@ List.mem req config.disabled_features
+      fun req -> not @@ List.mem config.disabled_features ~equal:String.equal req
 
     (* TODO: When the document closes, we should thinking about removing the
        state associated to the file from the global hashtable state, to avoid
@@ -195,7 +187,9 @@ class lsp_server =
       }
 
     method! on_notification_unhandled
-        : notify_back:notify_back -> Client_notification.t -> unit IO.t =
+        : notify_back:Linol_lwt.Jsonrpc2.notify_back -> Client_notification.t -> unit IO.t
+        =
+      let open IO in
       fun ~notify_back -> function
         | Client_notification.Initialized ->
           (match client_capabilities.workspace with
@@ -256,27 +250,27 @@ class lsp_server =
                                   Format.fprintf ppf "%s" (Yojson.Safe.to_string json)))
                              configs)
                       in
-                      IO.return (List.iter self#decode_apply_ligo_language_server configs))
+                      IO.return
+                        (List.iter ~f:self#decode_apply_ligo_language_server configs))
               in
               IO.return ()))
         | n -> super#on_notification_unhandled ~notify_back n
 
     method! on_request
         : type r.  notify_back:(Server_notification.t -> unit IO.t)
-                  -> server_request:send_request
+                  -> server_request:Linol_lwt.Jsonrpc2.send_request
                   -> id:Req_id.t
                   -> r Client_request.t
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : _ Client_request.t) ->
         let run ~uri ~default =
           let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
-          if List.mem method_ config.disabled_features
-          then Fun.const @@ IO.return default
-          else
+          if self#is_request_enabled method_
+          then
             run_handler
               { notify_back =
                   Normal
-                    (new notify_back
+                    (new Linol_lwt.Jsonrpc2.notify_back
                        ~uri
                        ~notify_back
                        ~server_request
@@ -286,6 +280,7 @@ class lsp_server =
               ; config
               ; docs_cache = get_scope_buffers
               }
+          else Fun.const @@ IO.return default
         in
         match r with
         | Client_request.TextDocumentFormatting { textDocument; _ } ->

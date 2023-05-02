@@ -18,6 +18,3 @@ let pp f ppf { module_path; element } =
 
 
 let make_el element = { module_path = []; element }
-let make module_path element = { module_path; element }
-let get_el { module_path = _; element } = element
-let get_path { module_path; element = _ } = module_path

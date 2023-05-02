@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nFixes the difference in error messages between CLI & LSP dianostics.\\nNow the type error messages will be consistent across CLI & LSP.\\n\\n"
+merge_request: '2559'
+title: "[#1755] Fix Polymorphism errors look strange in LSP"
+type: fixed
+            

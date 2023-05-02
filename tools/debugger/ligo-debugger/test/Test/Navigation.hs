@@ -15,7 +15,7 @@ import Test.Tasty.Hedgehog (testProperty)
 import Text.Interpolation.Nyan
 
 import Morley.Debugger.Core
-  (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition),
+  (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition), PausedReason (..),
   SourceLocation' (..), SrcLoc (..), curSnapshot, frozen, getCurMethodBlockLevel,
   getFutureSnapshotsNum, moveTill, switchBreakpoint)
 import Morley.Debugger.DAP.Types (StepCommand' (..))
@@ -86,6 +86,23 @@ test_Seq_node_doesn't_have_location =
     doStep = processLigoStep (CStepIn GExpExt)
   in goldenTestWithSnapshots
       "seq nodes dont have expression locations in snapshots"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
+test_constant_as_statement :: TestTree
+test_constant_as_statement =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "constant_as_statement.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GStmt)
+  in goldenTestWithSnapshots
+      "Constant recognized as statement"
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)
@@ -316,7 +333,7 @@ test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
         -- Do a step over...
         do
           moveRes <- processLigoStep (CNext dir granularity)
-          unless (moveRes == MovedSuccessfully) $
+          unless (moveRes == MovedSuccessfully PlainPaused) $
             -- We started at the end of the tape, this case is not interesting
             liftProp discard
 

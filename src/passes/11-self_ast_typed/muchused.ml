@@ -29,8 +29,6 @@ let rec is_dup (t : type_expression) =
           ( Never
           | Int
           | Nat
-          | Chest
-          | Chest_key
           | Unit
           | String
           | Bytes
@@ -83,7 +81,6 @@ let rec is_dup (t : type_expression) =
           | Pvss_key
           | Baker_operation
           | Ticket
-          | Chest_opening_result
           | Baker_hash )
       ; _
       } -> false

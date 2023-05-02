@@ -122,14 +122,6 @@ and type_inst ppf { forall; type_ } =
   Format.fprintf ppf "%a@@{%a}" expression forall type_expression type_
 
 
-and option_inline ppf inline =
-  Format.(if inline then fprintf ppf "[@inline]" else fprintf ppf "")
-
-
-let program ppf : program -> unit =
- fun (prg, exp) -> Format.fprintf ppf "%a" expression Combinators.(context_apply prg exp)
-
-
 module With_name_tbl = struct
   module Type_var_name_tbl : sig
     type t
@@ -138,7 +130,6 @@ module With_name_tbl = struct
     val create : unit -> t
 
     (** [clear t] clears the table [t]. *)
-    val clear : t -> unit
 
     (** [name_of t tvar] returns the human readable name of [tvar]. *)
     val name_of : t -> Type_var.t -> string
@@ -157,12 +148,6 @@ module With_name_tbl = struct
       ; names = Hash_set.create (module String)
       ; name_counter = 0
       }
-
-
-    let clear t =
-      Hashtbl.clear t.name_tbl;
-      Hash_set.clear t.names;
-      t.name_counter <- 0
 
 
     let is_used t name = Hash_set.mem t.names name
@@ -242,12 +227,6 @@ module With_name_tbl = struct
       : unit
     =
     Format.fprintf ppf "∀ %s . %a" (name_of_tvar ty_binder) (pp ~name_of_tvar) type_
-
-
-  and pp_type_abs ~name_of_tvar ppf ({ ty_binder; kind = _; type_ } : _ Abstraction.t)
-      : unit
-    =
-    Format.fprintf ppf "funtype %s . %a" (name_of_tvar ty_binder) (pp ~name_of_tvar) type_
 
 
   and option ~name_of_tvar ppf t : unit =

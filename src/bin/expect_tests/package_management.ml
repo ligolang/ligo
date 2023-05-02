@@ -15,7 +15,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value KT1QkWPtJibiG3npjQ1xUJRnsVn2YBp2DzAR(None). |}]
+    - test exited with value KT1CSXzoZ4oBwAiJ1PPkJgDzWMCEtN45J61t(None). |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -40,6 +40,7 @@ let%expect_test _ =
     {|
     File "originate_contract/main.mligo", line 1, characters 0-30:
       1 | #import "tezos-ligo-fa2" "FA2"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 |
     File "tezos-ligo-fa2" not found. |}]
 
@@ -420,6 +421,7 @@ let%expect_test _ =
     {|
     File "main.mligo", line 1, characters 0-36:
       1 | #import "ligo-breathalyzer" "Breath"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 |
     File "ligo-breathalyzer" not found. |}];
   Caml.Sys.chdir pwd;
@@ -436,6 +438,7 @@ let%expect_test _ =
     {|
     File "main.mligo", line 1, characters 0-29:
       1 | #import "@ligo/bigarray" "BA"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 |
     File "@ligo/bigarray" not found. |}]
 

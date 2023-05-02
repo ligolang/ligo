@@ -98,17 +98,6 @@
    (:standard -ccopt -static -cclib "-lgmp"))))
 
 (executable
- (name configurator)
- (modules configurator)
- (flags (:standard))
- (libraries core dune-configurator))
-
-(rule
- (targets win32-flags.sexp)
- (action
-  (run ./configurator.exe)))
-
-(executable
  (name runligo)
  (public_name ligo)
  (instrumentation
@@ -121,10 +110,7 @@
   ligo.main_interpreter.unix
   ligo.api.unix
   cli)
- (flags
-  -open
-  Core
-  (:include win32-flags.sexp))
+ (flags -open Core)
  (modules runligo)
  (package ligo))
 

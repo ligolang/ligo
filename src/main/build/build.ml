@@ -18,7 +18,6 @@ module M (Params : Params) = struct
   let raise = Params.raise
   let options = Params.options
   let std_lib = Params.std_lib
-  let top_level_syntax = Params.top_level_syntax
 
   type file_name = Source_input.file_name
   type raw_input = Source_input.raw_input
@@ -73,63 +72,7 @@ module M (Params : Params) = struct
     type t = Ast_typed.program
     type sig_environment = Environment.signature
     type environment = Environment.t
-
-    let add_ast_to_env : t -> environment -> environment =
-     fun ast env -> Environment.append env ast
-
-
-    let add_module_to_env
-        : module_name -> environment -> sig_environment -> environment -> environment
-      =
-     fun module_name ast_typed_env sig_env env ->
-      let module_name = Module_var.of_input_var ~loc module_name in
-      Environment.add_module
-        ~public:()
-        module_name
-        (Environment.to_module ast_typed_env)
-        sig_env
-        env
-
-
-    let init_env : environment =
-      let type_env = options.middle_end.init_env in
-      Environment.append type_env std_lib.content_typed
-
-
-    let make_module_declaration : module_name -> t -> signature -> declaration =
-     fun module_binder ast_typed signature ->
-      let module_ =
-        Ast_typed.
-          { module_content = Module_expr.M_struct ast_typed
-          ; module_location = loc
-          ; signature
-          }
-      in
-      let module_binder = Module_var.of_input_var ~loc module_binder in
-      Location.wrap
-        ~loc
-        Ast_typed.(
-          D_module
-            { module_binder; module_; module_attr = { public = true; hidden = true } })
   end
-
-  let lib_ast : unit -> AST.t = fun () -> std_lib.content_typed
-
-  let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
-   fun env file_name meta c_unit ->
-    let options = Compiler_options.set_init_env options env in
-    let core_c_unit = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
-    let ast_core =
-      let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:options.common.deprecated
-          (Syntax_name "auto")
-          (Some file_name)
-      in
-      Helpers.inject_declaration ~options ~raise syntax core_c_unit
-    in
-    Ligo_compile.Of_core.typecheck ~raise ~options ast_core
 end
 
 module Infer (Params : Params) = struct
@@ -329,11 +272,6 @@ let qualified_typed_with_signature ~raise
   Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ?cform prg
 
 
-type expression_mini_c =
-  { expression : Mini_c.expression
-  ; ast_type : Ast_aggregated.type_expression
-  }
-
 type expression_michelson =
   { expression : Stacking.compiled_expression
   ; ast_type : Ast_aggregated.type_expression
@@ -354,6 +292,7 @@ let build_expression ~raise
   let typed_exp =
     Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg
   in
+  let typed_exp, init_prg = Self_ast_typed.remove_unused_expression typed_exp init_prg in
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise

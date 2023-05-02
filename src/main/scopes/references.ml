@@ -2,7 +2,7 @@ open Ligo_prim
 open Simple_utils
 module AST = Ast_core
 module LSet = Types.LSet
-module LMap = Map.Make (Location)
+module LMap = Map.Make (Location_ordered)
 open Env
 
 (* --------------------------- Module usage --------------------------------- *)
@@ -24,6 +24,17 @@ type module_usages = module_usage list
 module References = struct
   type references = LSet.t LMap.t
   type t = references
+
+  let[@warning "-32"] pp : Format.formatter -> t -> unit =
+   fun ppf refs ->
+    let pp_refs_set ppf refs_set =
+      LSet.iter (fun ref_loc -> Format.fprintf ppf "%a,\n" Location.pp ref_loc) refs_set
+    in
+    LMap.iter
+      (fun loc refs_set ->
+        Format.fprintf ppf "%a -> [ %a ] \n" Location.pp loc pp_refs_set refs_set)
+      refs
+
 
   (** Updates the references map, adding [usgae_loc] to the list of locations mentioning [def]. *)
   let add_def_usage : def:def -> usage_loc:Location.t -> references -> references =

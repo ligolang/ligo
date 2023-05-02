@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2540'
+title: "Bug: mixing `export` with attributes"
+type: fixed
+            

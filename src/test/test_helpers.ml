@@ -226,25 +226,6 @@ let str_keys (raw_pkh, raw_pk, raw_sk) =
   pkh_str, pk_str, sk_str
 
 
-let sha_256_hash pl =
-  let open Proto_alpha_utils.Memory_proto_alpha.Alpha_environment in
-  Raw_hashes.sha256 pl
-
-
-let typed_program_to_michelson ~raise (program, env) =
-  ignore env;
-  let aggregated =
-    Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end program
-  in
-  let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-  let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
-  let michelson = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
-  let michelson =
-    Ligo_compile.Of_michelson.build_contract ~disable_typecheck:false michelson
-  in
-  michelson
-
-
 let typed_program_with_imperative_input_to_michelson
     ~raise
     (program : Ast_typed.program)
@@ -523,44 +504,6 @@ let expect_eq_evaluate ~raise (program : Ast_typed.program) entry_point expected
   expect_evaluate ~raise program entry_point expecter
 
 
-let expect_n_aux ~raise ?options lst program entry_point make_input make_expecter =
-  let aux n =
-    let input = make_input n in
-    let expecter = make_expecter n in
-    trace ~raise (test_expect_n_tracer n)
-    @@
-    let result = expect ?options program entry_point input expecter in
-    result
-  in
-  let _ = List.map ~f:aux lst in
-  ()
-
-
-let expect_n_aux_twice ~raise ?options lst program entry_point make_input make_expecter =
-  let aux n =
-    let input1, input2 = make_input n in
-    let expecter = make_expecter n in
-    trace ~raise (test_expect_n_tracer n)
-    @@
-    let result = expect_twice ?options program entry_point input1 input2 expecter in
-    result
-  in
-  let _ = List.map ~f:aux lst in
-  ()
-
-
-let expect_eq_n_trace_aux ~raise ?options lst program entry_point make_input make_expected
-  =
-  let aux n =
-    let input = make_input n in
-    let expected = make_expected n in
-    trace ~raise (test_expect_n_tracer n)
-    @@ expect_eq ?options program entry_point input expected
-  in
-  let _ = List.map ~f:aux lst in
-  ()
-
-
 let expect_eq_n_trace_aux_twice
     ~raise
     ?options
@@ -577,44 +520,6 @@ let expect_eq_n_trace_aux_twice
     @@ expect_eq_twice ?options program entry_point input1 input2 expected
   in
   let _ = List.map ~f:aux lst in
-  ()
-
-
-let expect_eq_exp_trace_aux
-    ~raise
-    ?options
-    explst
-    program
-    entry_point
-    make_input
-    make_expected
-  =
-  let aux exp =
-    let input = make_input exp in
-    let expected = make_expected exp in
-    trace ~raise (test_expect_exp_tracer exp)
-    @@ expect_eq ?options program entry_point input expected
-  in
-  let _ = List.map ~f:aux explst in
-  ()
-
-
-let expect_failwith_exp_trace_aux
-    ~raise
-    ?options
-    explst
-    program
-    entry_point
-    make_input
-    make_expected_failwith
-  =
-  let aux exp =
-    let input = make_input exp in
-    let expected = make_expected_failwith exp in
-    trace ~raise (test_expect_exp_tracer exp)
-    @@ expect_string_failwith ?options program entry_point input expected
-  in
-  let _ = List.map ~f:aux explst in
   ()
 
 
@@ -644,12 +549,9 @@ let expect_eq_n_aux_twice ~raise ?options lst program entry_point make_input mak
 let expect_eq_n ?options = expect_eq_n_aux ?options [ 0; 1; 2; 42; 163; -1 ]
 let expect_eq_n_twice ?options = expect_eq_n_aux_twice ?options [ 0; 1; 2; 42; 163; -1 ]
 let expect_eq_n_pos ?options = expect_eq_n_aux ?options [ 0; 1; 2; 42; 163 ]
-let expect_eq_n_strict_pos ?options = expect_eq_n_aux ?options [ 2; 42; 163 ]
 let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [ 0; 1; 2; 10 ]
 let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [ 1; 2; 10 ]
 let expect_eq_n_pos_mid = expect_eq_n_aux [ 0; 1; 2; 10; 33 ]
-let expect_n_pos_small ?options = expect_n_aux ?options [ 0; 2; 10 ]
-let expect_n_strict_pos_small ?options = expect_n_aux ?options [ 2; 10 ]
 
 let expect_eq_b ~raise program entry_point make_expected =
   let open Ast_unified in

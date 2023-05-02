@@ -107,24 +107,18 @@ let sepseq_to_list = function
 
 let nsepseq_to_nseq (hd, tl) = hd, (List.map ~f:snd tl)
 
-(* Optional values *)
+(* Convertions of lists *)
 
-module Option =
-  struct
-    let apply f x =
-      match x with
-        Some y -> Some (f y)
-      |   None -> None
+let list_to_nsepseq_opt (lst : 'a list) (sep : 's) : ('a, 's) nsepseq option =
+  match lst with
+  | [] -> None
+  | hd :: tl -> Some (hd, List.map ~f:(fun e -> sep, e) tl)
 
-    let rev_apply x y =
-      match x with
-        Some f -> f y
-      |   None -> y
 
-    let to_string = function
-      Some x -> x
-    |   None -> ""
-  end
+let list_to_sepseq (lst : 'a list) (sep : 's) : ('a, 's) sepseq =
+  match lst with
+  | [] -> None
+  | _ -> list_to_nsepseq_opt lst sep
 
 (* Modules based on [String], like sets and maps. *)
 

@@ -1,3 +1,0 @@
-#include "ignore_me.jsligo"
-
-const included : string = "don't " ^ ignored

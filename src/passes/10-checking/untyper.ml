@@ -246,6 +246,3 @@ and untype_declaration =
 
 and untype_decl : O.decl -> I.decl = fun d -> Location.map untype_declaration d
 and untype_module : O.module_ -> I.module_ = fun p -> List.map ~f:untype_decl p
-
-and untype_program : O.program -> I.program =
- fun p -> List.map ~f:(Location.map untype_declaration) p

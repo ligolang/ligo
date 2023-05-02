@@ -16,7 +16,7 @@ let get_mod_binder_name : Module_var.t -> string =
 
 module Location = Simple_utils.Location
 module List = Simple_utils.List
-module LSet = Caml.Set.Make (Location)
+module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 type type_case =
   | Core of Ast_core.type_expression
@@ -103,104 +103,14 @@ let get_body_range = function
   | Module m -> m.body_range
 
 
-let get_def_type = function
-  | Type t -> t.def_type
-  | Variable v -> v.def_type
-  | Module m -> m.def_type
-
-
-let add_references_to_def : def -> LSet.t -> def =
- fun def references ->
-  match def with
-  | Variable vdef ->
-    Variable { vdef with references = LSet.union vdef.references references }
-  | Type tdef -> Type { tdef with references = LSet.union tdef.references references }
-  | Module mdef -> Module { mdef with references = LSet.union mdef.references references }
-
-
-let get_references = function
-  | Type t -> t.references
-  | Variable v -> v.references
-  | Module m -> m.references
-
-
 let make_def_id name (loc : Location.t) =
   match loc with
   | File region -> name ^ "#" ^ region#compact ~file:false `Point
   | Virtual v -> name ^ "#" ^ v
 
 
-let make_v_def : string -> type_case -> def_type -> Location.t -> Location.t -> def =
- fun name t def_type range body_range ->
-  let uid = make_def_id name range in
-  Variable { name; range; body_range; t; uid; references = LSet.empty; def_type }
-
-
-let make_t_def : string -> def_type -> Location.t -> Ast_core.type_expression -> def =
- fun name def_type loc te ->
-  let uid = make_def_id name loc in
-  Type
-    { name
-    ; range = loc
-    ; body_range = te.location
-    ; uid
-    ; content = te
-    ; def_type
-    ; references = LSet.empty
-    }
-
-
-let make_m_def
-    : range:Location.t -> body_range:Location.t -> string -> def_type -> def list -> def
-  =
- fun ~range ~body_range name def_type members ->
-  let uid = make_def_id name range in
-  let mod_case = Def members in
-  Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
-
-
-let make_m_alias_def
-    :  range:Location.t -> body_range:Location.t -> string -> def_type -> string list
-    -> def
-  =
- fun ~range ~body_range name def_type alias ->
-  let uid = make_def_id name range in
-  let mod_case = Alias alias in
-  Module { name; range; body_range; mod_case; uid; references = LSet.empty; def_type }
-
-
-let filter_local_defs : def list -> [ `Global of def list ] * [ `Local of def list ] =
- fun defs ->
-  let gdefs, ldefs =
-    List.partition_tf ~f:(fun def -> Caml.(get_def_type def = Global)) defs
-  in
-  `Global gdefs, `Local ldefs
-
-
-let rec ignore_local_defs : def list -> def list =
- fun defs ->
-  match defs with
-  | [] -> []
-  | Variable def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
-  | Type def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
-  | Module def :: defs when Caml.(def.def_type = Local) -> ignore_local_defs defs
-  | Module ({ mod_case = Def def; _ } as mdef) :: defs ->
-    Module { mdef with mod_case = Def (ignore_local_defs def) } :: ignore_local_defs defs
-  | def :: defs -> def :: ignore_local_defs defs
-
-
 type scope = Location.t * def list
 type scopes = scope list
-
-let add_defs_to_scope : def list -> scope -> scope =
- fun defs scope ->
-  let loc, scope_defs = scope in
-  loc, scope_defs @ defs
-
-
-let add_defs_to_scopes : def list -> scopes -> scopes =
- fun defs scopes -> List.map scopes ~f:(add_defs_to_scope defs)
-
 
 let rec flatten_defs defs =
   match defs with

@@ -1,5 +1,3 @@
-{-# LANGUAGE NumDecimals #-}
-
 -- | Checking snapshots collection.
 module Test.Snapshots
   ( module Test.Snapshots
@@ -7,13 +5,12 @@ module Test.Snapshots
 
 import Unsafe qualified
 
-import AST (scanContracts)
-import Cli.Json (LigoTypeContent (LTCSingleton), LigoTypeLiteralValue (LTLVInt))
 import Control.Category ((>>>))
 import Control.Lens (Each (each), has, ix, makeLensesWith, toListOf, (?~), (^?!))
 import Control.Monad.Writer (listen)
 import Data.Coerce (coerce)
 import Data.Default (Default (def))
+import Data.HashMap.Strict qualified as HM
 import Data.List.NonEmpty qualified as NE
 import Data.Map qualified as M
 import Fmt (pretty)
@@ -41,12 +38,15 @@ import Lorentz (MText)
 import Lorentz qualified as L
 import Lorentz.Value (mt)
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.AST (scanContracts)
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
+import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import Language.LIGO.Range
 
 test_Snapshots :: TestTree
 test_Snapshots = testGroup "Snapshots collection"
@@ -65,7 +65,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
                 { sfName = "main"
-                , sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 17)
+                , sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 18) file'
                 , sfStack =
                   [ StackItem
                     { siLigoDesc = LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable "s")) typ)
@@ -81,7 +81,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Only in this test we have to check all the snapshots quite thoroughly,
         -- so here getting all the remaining snapshots and checking them.
-        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+        (_, tsAfterInstrs -> restSnapshots) <- listen $ moveTill Forward false
 
         ( restSnapshots <&> \InterpretSnapshot{..} ->
             ( isStatus
@@ -125,28 +125,28 @@ test_Snapshots = testGroup "Snapshots collection"
           [ ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
-              ( LigoRange file (LigoPosition 2 11) (LigoPosition 2 17)
+              ( Range (LigoPosition 2 12) (LigoPosition 2 18) file
               , stackWithS
               )
             )
 
           , ( InterpretRunning EventFacedStatement
             , one
-              ( LigoRange file (LigoPosition 3 2) (LigoPosition 3 29)
+              ( Range (LigoPosition 3 3) (LigoPosition 3 30) file
               , stackWithS2
               )
             )
 
           , ( InterpretRunning (EventExpressionPreview GeneralExpression)
             , one
-              ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 28)
+              ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
               , stackWithS2
               )
             )
 
           , ( InterpretRunning (EventExpressionPreview GeneralExpression)
             , one
-              ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 24)
+              ( Range (LigoPosition 3 4) (LigoPosition 3 25) file
               , stackWithS2
               )
             )
@@ -154,7 +154,7 @@ test_Snapshots = testGroup "Snapshots collection"
           , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue ([] :: [T.Operation])
             , one
-              ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 24)
+              ( Range (LigoPosition 3 4) (LigoPosition 3 25) file
               , stackWithS2
               )
             )
@@ -162,14 +162,14 @@ test_Snapshots = testGroup "Snapshots collection"
           , ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue ([] :: [T.Operation], 42 :: Integer)
             , one
-              ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 28)
+              ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
               , stackWithS2
               )
             )
 
            , ( InterpretTerminatedOk
             , one
-              ( LigoRange file (LigoPosition 3 3) (LigoPosition 3 28)
+              ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
               , lastStack
               )
             )
@@ -190,7 +190,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
                 { sfName = "not_main"
-                , sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 17)
+                , sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 18) _
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -210,7 +210,7 @@ test_Snapshots = testGroup "Snapshots collection"
             InterpretSnapshot
               { isStatus = InterpretRunning EventFacedStatement
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 17)
+                  { sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 18) _
                   , sfStack =
                     [ StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
@@ -236,7 +236,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 4 17)
+                { sfLoc = Range (LigoPosition 2 3) (LigoPosition 4 18) _
                 } :| []
             } -> pass
           sp -> unexpectedSnapshot sp
@@ -325,20 +325,18 @@ test_Snapshots = testGroup "Snapshots collection"
         let stopAtFile
               :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
               => FilePath
-              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m
+              -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
             stopAtFile filePath = FrozenPredicate do
               snap <- curSnapshot
-              let locMb = snap ^? isStackFramesL . ix 0 . sfLocL
-              case locMb of
-                Just loc -> pure $ lrFile loc == filePath
-                Nothing -> pure False
+              Just loc <- pure $ snap ^? isStackFramesL . ix 0 . sfLocL
+              guard $ _rFile loc == filePath
 
         liftIO $ step "Go to nested contract"
         _ <- moveTill Forward $ stopAtFile nestedFile
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 15 5) (LigoPosition 15 10)
+                { sfLoc = Range (LigoPosition 15 6) (LigoPosition 15 11) file'
                 } :| _
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -348,7 +346,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 6 13) (LigoPosition 6 26)
+                { sfLoc = Range (LigoPosition 6 14) (LigoPosition 6 27) file'
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -358,7 +356,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 19)
+                { sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 20) file'
                 } :| _
             } | file' == nestedFile2 -> pass
           sp -> unexpectedSnapshot sp
@@ -368,7 +366,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 19 68) (LigoPosition 19 88)
+                { sfLoc = Range (LigoPosition 19 69) (LigoPosition 19 89) file'
                 } :| _
             } | file' == nestedFile -> pass
           sp -> unexpectedSnapshot sp
@@ -378,7 +376,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 10 55) (LigoPosition 10 80)
+                { sfLoc = Range (LigoPosition 10 56) (LigoPosition 10 81) file'
                 } :| []
             } | file' == file -> pass
           sp -> unexpectedSnapshot sp
@@ -428,8 +426,8 @@ test_Snapshots = testGroup "Snapshots collection"
               curSnapshot >>= \case
                 InterpretSnapshot
                   { isStatus = InterpretRunning EventFacedStatement
-                  } -> pure True
-                _ -> pure False
+                  } -> pass
+                _ -> empty
 
         let goAndCheckLinePosition pos = do
               stepNextLine
@@ -549,7 +547,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 6 2) (LigoPosition 6 44)
+                { sfLoc = Range (LigoPosition 6 3) (LigoPosition 6 45) file'
                 } :| []
             } | file' == file -> pass
           snap -> unexpectedSnapshot snap
@@ -560,7 +558,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   InterpretRunning EventFacedStatement -> True
                   _ -> False
 
-            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward (FrozenPredicate $ pure False)
+            (_, filter snapPred . tsAllVisited -> snaps) <- listen $ moveTill Forward false
 
             ( snaps
                 <&> do \InterpretSnapshot{..} ->
@@ -579,14 +577,14 @@ test_Snapshots = testGroup "Snapshots collection"
       step [int||Checking locations for #{file}|]
       checkLocations
         runData
-        [ LigoRange file (LigoPosition 9 2) (LigoPosition 9 15)
-        , LigoRange file (LigoPosition 10 2) (LigoPosition 10 19)
-        , LigoRange file (LigoPosition 4 5) (LigoPosition 4 15)
-        , LigoRange file (LigoPosition 6 7) (LigoPosition 6 9)
-        , LigoRange file (LigoPosition 11 2) (LigoPosition 11 23)
-        , LigoRange file (LigoPosition 1 35) (LigoPosition 1 40)
-        , LigoRange file (LigoPosition 11 27) (LigoPosition 11 43)
-        , LigoRange file (LigoPosition 12 2) (LigoPosition 12 36)
+        [ Range (LigoPosition 9 3) (LigoPosition 9 16) file
+        , Range (LigoPosition 10 3) (LigoPosition 10 20) file
+        , Range (LigoPosition 4 6) (LigoPosition 4 16) file
+        , Range (LigoPosition 6 8) (LigoPosition 6 10) file
+        , Range (LigoPosition 11 3) (LigoPosition 11 24) file
+        , Range (LigoPosition 1 36) (LigoPosition 1 41) file
+        , Range (LigoPosition 11 28) (LigoPosition 11 44) file
+        , Range (LigoPosition 12 3) (LigoPosition 12 37) file
         ]
 
       let file2 = contractsDir </> "statement-visiting.jsligo"
@@ -600,19 +598,19 @@ test_Snapshots = testGroup "Snapshots collection"
       step [int||Checking locations for #{file2}|]
       checkLocations
         runData2 $
-          [ LigoRange file2 (LigoPosition 2 2) (LigoPosition 2 19)
-          , LigoRange file2 (LigoPosition 4 2) (LigoPosition 4 17)
+          [ Range (LigoPosition 2 3) (LigoPosition 2 20) file2
+          , Range (LigoPosition 4 3) (LigoPosition 4 18) file2
           ] ++
           concat
             ( replicate 4
-              [ LigoRange file2 (LigoPosition 6 4) (LigoPosition 6 27)
+              [ Range (LigoPosition 6 5) (LigoPosition 6 28) file2
               -- TODO: these 2 next statements have the wrong order.
               -- Wait for #1685 and check it again
-              , LigoRange file2 (LigoPosition 8 4) (LigoPosition 8 13)
-              , LigoRange file2 (LigoPosition 7 4) (LigoPosition 7 21)
+              , Range (LigoPosition 8 5) (LigoPosition 8 14) file2
+              , Range (LigoPosition 7 5) (LigoPosition 7 22) file2
               ]
             )
-          ++ [LigoRange file2 (LigoPosition 11 2) (LigoPosition 11 45)]
+          ++ [Range (LigoPosition 11 3) (LigoPosition 11 46) file2]
 
   , testCaseSteps "Execution history is lazy" \step -> do
       let file = contractsDir </> "infinite_contract.mligo"
@@ -656,7 +654,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
       step [int||Going through all execution history|]
       testWithSnapshotsImpl logger runData do
-        void $ moveTill Forward $ FrozenPredicate $ pure False
+        void $ moveTill Forward false
 
       unlessM (readIORef anyWritten) do
         assertFailure [int||No logs we're dumped during snapshot collection|]
@@ -678,12 +676,12 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue False)
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
 
           srcLocAtGt <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
@@ -691,7 +689,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping back"
           void . moveTill Backward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ has statusExpressionEvaluatedP status
+            guard $ has statusExpressionEvaluatedP status
 
 
           status <- isStatus <$> frozen curSnapshot
@@ -752,17 +750,17 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO $ step "jumping to GT"
           moveRes <- moveTill Forward $ FrozenPredicate do
             status <- isStatus <$> curSnapshot
-            return $ preview statusExpressionEvaluatedP status
+            guard $ preview statusExpressionEvaluatedP status
                   == Just (SomeLorentzValue (3 :: Integer))
 
           liftIO $ assertBool
             "Didn't find the necessary snapshot"
-            (moveRes == MovedSuccessfully)
+            (moveRes == MovedSuccessfully ())
           srcLocAtDiv <- sfLoc . head . isStackFrames <$> frozen curSnapshot
 
           liftIO $ step "jumping to the previously computed value"
           void . moveTill Backward $ FrozenPredicate do
-            has statusExpressionEvaluatedP . isStatus <$> curSnapshot
+            hoistMaybe . preview statusExpressionEvaluatedP . isStatus =<< curSnapshot
 
           srcLocAtBack <- sfLoc . head . isStackFrames <$> frozen curSnapshot
           liftIO $ assertBool
@@ -872,7 +870,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let stackFramesCheck :: ([[Text]] -> Bool) -> HistoryReplayM (InterpretSnapshot u) IO ()
           stackFramesCheck namesCheck = do
             (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <-
-              listen $ moveTill Forward (FrozenPredicate $ pure False)
+              listen $ moveTill Forward false
             liftIO $
               assertBool
                 [int||Expected to have only one stack frame \
@@ -903,9 +901,9 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
-        moveTill Forward $
+        moveTill Forward do
           goesBetween (SrcLoc 8 0) (SrcLoc 12 0)
-          && matchesSrcType (MSFile nestedFile)
+          matchesSrcType (MSFile nestedFile)
 
         -- Skip "lst" and "sum(...)"" statements
         replicateM_ 2 do
@@ -916,7 +914,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStackFrames = stackFrame@StackFrame
                 { sfName = "sum"
-                , sfLoc = LigoRange file' _ _
+                , sfLoc = Range _ _ file'
                 } :| _
             } | file' == nestedFile -> getVariableNamesFromStackFrame stackFrame @~=? ["l", "x", "acc"]
           snap -> unexpectedSnapshot snap
@@ -928,7 +926,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStackFrames = stackFrame@StackFrame
                 { sfName = "strange"
-                , sfLoc = LigoRange file' _ _
+                , sfLoc = Range _ _ file'
                 } :| _
             } | file' == nestedFile2 ->
                   getVariableNamesFromStackFrame stackFrame @~=? ["acc", "c", "b", "a", "i"]
@@ -1099,7 +1097,7 @@ test_Snapshots = testGroup "Snapshots collection"
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 2 2) (LigoPosition 2 12)
+                { sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 13) _
                 } :| []
             , isStatus = InterpretRunning EventFacedStatement
             } -> pass
@@ -1113,7 +1111,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { isStackFrames = StackFrame
                 { sfLoc = loc
                 } :| []
-            } | loc /= LigoRange file (LigoPosition 2 11) (LigoPosition 2 12) -- position of constant
+            } | loc /= Range (LigoPosition 2 12) (LigoPosition 2 13) file -- position of constant
             -> pass
           snap -> unexpectedSnapshot snap
 
@@ -1131,13 +1129,13 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ moveTill Forward $
           goesAfter (SrcLoc 5 0)
 
-        moveTill Forward $ FrozenPredicate $ pure False
+        moveTill Forward false
 
         liftIO $ step [int||Check that failed location is known|]
         checkSnapshot \case
           InterpretSnapshot
             { isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 1 37) (LigoPosition 1 52)
+                { sfLoc = Range (LigoPosition 1 38) (LigoPosition 1 53) _
                 , sfName = "failwith"
                 } :|
                   StackFrame
@@ -1166,7 +1164,7 @@ test_Snapshots = testGroup "Snapshots collection"
           -- Skip arguments
           void $ move Forward
 
-          let expectedType = LigoTypeResolved $ mkRecordType
+          let expectedType = LigoTypeResolved $ mkRecordType LTree
                 [ ("a", intType')
                 , ("b", mkSimpleConstantType "nat")
                 , ("c", mkSimpleConstantType "string")
@@ -1197,7 +1195,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         testWithSnapshots runData do
-          let expectedType = LigoTypeResolved $ mkSumType
+          let expectedType = LigoTypeResolved $ mkSumType LTree
                 [ ("Variant1", intType')
                 , ("Variant2", unitType')
                 ]
@@ -1295,10 +1293,10 @@ test_Snapshots = testGroup "Snapshots collection"
             isAtLine 15
 
           let expectedComplexType = LigoTypeResolved
-                $ mkRecordType
+                $ mkRecordType LTree
                     [ ("simple_field", mkSimpleConstantType "String")
                     , ("complex_field"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("inner_field1", intType')
                           , ("inner_field2", intType')
                           ]
@@ -1330,15 +1328,15 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           let expectedType = LigoTypeResolved
-                $ mkSumType
+                $ mkSumType LTree
                     [ ( "A"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("a1", intType')
                           , ("a2", mkSimpleConstantType "String")
                           ]
                       )
                     , ( "B"
-                      , mkRecordType
+                      , mkRecordType LTree
                           [ ("b1", mkSimpleConstantType "String")
                           , ("b2", intType')
                           ]
@@ -1568,7 +1566,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         testWithSnapshots runData do
           let combedType = LigoTypeResolved
-                $ mkRecordType
+                $ mkRecordType LComb
                     [ ("a", intType')
                     , ("b", mkSimpleConstantType "Nat")
                     , ("c", mkSimpleConstantType "String")
@@ -1610,7 +1608,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 2 12) (LigoPosition 2 20)
+                  { sfLoc = Range (LigoPosition 2 13) (LigoPosition 2 21) _
                   } :| _
               } -> pass
           snap -> unexpectedSnapshot snap
@@ -1626,7 +1624,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 3 11) (LigoPosition 3 22)
+                  { sfLoc = Range (LigoPosition 3 12) (LigoPosition 3 23) _
                   } :| _
               } -> pass
           snap -> unexpectedSnapshot snap
@@ -1642,7 +1640,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 9 12) (LigoPosition 9 63)
+                  { sfLoc = Range (LigoPosition 9 13) (LigoPosition 9 64) _
                   } :| _
               } -> pass
           snap -> unexpectedSnapshot snap
@@ -1656,7 +1654,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
               { isStatus = InterpretRunning EventExpressionPreview{}
               , isStackFrames = StackFrame
-                  { sfLoc = LigoRange _ (LigoPosition 9 23) (LigoPosition 9 50)
+                  { sfLoc = Range (LigoPosition 9 24) (LigoPosition 9 51) _
                   } :| _
               } -> pass
           snap -> unexpectedSnapshot snap
@@ -1665,7 +1663,7 @@ test_Snapshots = testGroup "Snapshots collection"
         void $ move Forward
 
         replicateM_ 3 do
-          let loc = LigoRange file (LigoPosition 9 41) (LigoPosition 9 50)
+          let loc = Range (LigoPosition 9 42) (LigoPosition 9 51) file
 
           liftIO $ step "Aux function body in \"fold\" is statement"
           checkSnapshot \case
@@ -1705,7 +1703,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 2 2) (LigoPosition 2 17)
+                { sfLoc = Range (LigoPosition 2 3) (LigoPosition 2 18) file'
                 } :| _
             } | file' == file -> pass
           snap -> unexpectedSnapshot snap
@@ -1717,16 +1715,16 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionPreview{}
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange file' (LigoPosition 2 15) (LigoPosition 2 17)
+                { sfLoc = Range (LigoPosition 2 16) (LigoPosition 2 18) file'
                 } :| _
             } | file' == file -> assertFailure "Unit is evaluated"
           _ -> pass
 
   , testGroup "Statement locations"
     let
-      getStatementLocations :: ContractRunData -> IO [LigoRange]
+      getStatementLocations :: ContractRunData -> IO [Range]
       getStatementLocations runData = do
-        let getLocations :: NonEmpty (InterpretSnapshot u) -> [LigoRange]
+        let getLocations :: NonEmpty (InterpretSnapshot u) -> [Range]
             getLocations =
                   NE.filter
                     do \InterpretSnapshot{..} -> isStatus == InterpretRunning EventFacedStatement
@@ -1745,7 +1743,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData) @@?
-          (  elem (LigoRange file (LigoPosition 2 2) (LigoPosition 2 28))
+          (  elem (Range (LigoPosition 2 3) (LigoPosition 2 29) file)
           )
 
     , testCase "Last statement in let-in" do
@@ -1758,8 +1756,8 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData) @@?
-          (  elem (LigoRange file (LigoPosition 4 2) (LigoPosition 4 32))
-          && (not ... elem) (LigoRange file (LigoPosition 3 2) (LigoPosition 4 32))
+          (  elem (Range (LigoPosition 4 3) (LigoPosition 4 33) file)
+          && (not ... elem) (Range (LigoPosition 3 3) (LigoPosition 4 33) file)
           )
 
     , testCase "Statement in match branch" do
@@ -1772,7 +1770,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData) @@?
-          (  elem (LigoRange file (LigoPosition 5 16) (LigoPosition 5 21))
+          (  elem (Range (LigoPosition 5 17) (LigoPosition 5 22) file)
           )
 
     , testCase "Statements in if" do
@@ -1785,8 +1783,8 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData1) @@?
-          (  elem (LigoRange file (LigoPosition 2 13) (LigoPosition 2 19))
-          && elem (LigoRange file (LigoPosition 2 37) (LigoPosition 2 43))
+          (  elem (Range (LigoPosition 2 14) (LigoPosition 2 20) file)
+          && elem (Range (LigoPosition 2 38) (LigoPosition 2 44) file)
           )
 
         let runData2 = ContractRunData
@@ -1797,8 +1795,8 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData2) @@?
-          (  elem (LigoRange file (LigoPosition 2 13) (LigoPosition 2 19))
-          && elem (LigoRange file (LigoPosition 2 25) (LigoPosition 2 31))
+          (  elem (Range (LigoPosition 2 14) (LigoPosition 2 20) file)
+          && elem (Range (LigoPosition 2 26) (LigoPosition 2 32) file)
           )
 
     , testCase "Statements in case branch" do
@@ -1811,7 +1809,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData1) @@?
-          (  elem (LigoRange file (LigoPosition 5 6) (LigoPosition 5 17))
+          (  elem (Range (LigoPosition 5 7) (LigoPosition 5 18) file)
           )
 
         let runData2 = ContractRunData
@@ -1822,7 +1820,7 @@ test_Snapshots = testGroup "Snapshots collection"
               }
 
         (getStatementLocations runData2) @@?
-          (  elem (LigoRange file (LigoPosition 8 6) (LigoPosition 8 17))
+          (  elem (Range (LigoPosition 8 7) (LigoPosition 8 18) file)
           )
     ]
 
@@ -1843,7 +1841,7 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventFacedStatement
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 1 35) (LigoPosition 1 40)
+                { sfLoc = Range (LigoPosition 1 36) (LigoPosition 1 41) _
                 } :| _
             } -> pass
           snap -> unexpectedSnapshot snap
@@ -1858,10 +1856,54 @@ test_Snapshots = testGroup "Snapshots collection"
           InterpretSnapshot
             { isStatus = InterpretRunning EventExpressionEvaluated{}
             , isStackFrames = StackFrame
-                { sfLoc = LigoRange _ (LigoPosition 1 35) (LigoPosition 1 40)
+                { sfLoc = Range (LigoPosition 1 36) (LigoPosition 1 41) _
                 } :| _
             } -> pass
           snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Decompile values in snapshot" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "complex_value_decompilation.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        liftIO $ step "Go to some line"
+        void $ moveTill Forward
+          $ goesAfter (SrcLoc 19 0)
+
+        snap <- frozen curSnapshot
+
+        let stackItems = sfStack $ head $ isStackFrames snap
+
+        liftIO $ step "Extract values and types"
+        convertInfos <- fmap catMaybes $ forM stackItems \stackItem ->
+          runMaybeT do
+            StackItem desc michVal <- pure stackItem
+            LigoStackEntry (LigoExposedStackEntry _ typ) <- pure desc
+            pure $ PreLigoConvertInfo michVal typ
+
+        let expected =
+              [ LVConstructor
+                  ( "Go"
+                  , LVRecord $ HM.fromList
+                      [ ("ch", LVCt $ LCChainId "\0\0\0\0")
+                      , ("state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
+                      , ("s", LVCt $ LCString "large")
+                      ]
+                  )
+              , LVCt $ LCInt "0"
+              , LVCt $ LCString "<fun>"
+              ]
+
+        liftIO $ step "Decompile"
+        actual <-
+          liftIO (convertMichelsonValuesToLigo dummyLoggingFunction convertInfos)
+            <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
+
+        expected @?= actual
   ]
 
 -- | Special options for checking contract.
@@ -1944,4 +1986,6 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       , "module_contracts" </> "imported2.jsligo" -- this file doesn't have any entrypoint
       , "malformed.mligo" -- incorrect contract
       , "dupped-ticket.mligo" -- illegal intentionally
+      , "pretty" </> "sum-type.mligo" -- this file doesn't have any entrypoint
+      , "pretty" </> "sum-type.jsligo" -- this file doesn't have any entrypoint
       ]

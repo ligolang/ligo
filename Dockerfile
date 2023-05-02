@@ -11,7 +11,7 @@ RUN apk update && apk upgrade && apk --no-cache add \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
   libffi-dev nodejs npm \
-  cargo py3-pip \
+  cargo py3-pip cmake  \
   && pip3 install jsonschema \
   # install opam:
   # not using install_opam.sh because it does `opam init` with `-a` and not `--disable-sandboxing`
@@ -29,8 +29,8 @@ RUN opam update \
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
-COPY vendors /ligo/vendors
 COPY vendored-dune /ligo/vendored-dune
+COPY vendors /ligo/vendors
 
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh
@@ -38,6 +38,7 @@ RUN opam update && sh scripts/install_opam_deps.sh
 COPY gitlab-pages /ligo/gitlab-pages
 # Install LIGO
 COPY dune dune-project ligo_unix.ml /ligo/
+COPY configurator /ligo/configurator
 COPY src /ligo/src
 COPY scripts/version.sh /ligo/scripts/version.sh
 
