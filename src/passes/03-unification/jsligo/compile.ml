@@ -7,7 +7,7 @@ module I = Cst.Jsligo
 
 let ghost : string I.wrap = I.Wrap.ghost ""
 
-module TODO_unify_in_cst = struct
+module TODO_do_in_parsing = struct
   let conv_attr attr_reg =
     let (key, value), _loc = w_split attr_reg in
     let f = function
@@ -24,9 +24,7 @@ module TODO_unify_in_cst = struct
 
 
   let weird_attr _ = ()
-end
 
-module TODO_do_in_parsing = struct
   let labelize_pattern p =
     match p with
     (* would be better to emit a label/string directly ? *)
@@ -194,7 +192,7 @@ let rec expr : Eq.expr -> Folding.expr =
     in
     return @@ E_call (expr, args)
   | EConstr { value = ctor, arg_opt; _ } ->
-    let element = TODO_unify_in_cst.constructor_element arg_opt in
+    let element = TODO_do_in_parsing.constructor_element arg_opt in
     return @@ E_constructor { constructor = O.Label.of_string ctor.value; element }
   | EArray { value = items; _ } ->
     let items =
@@ -297,7 +295,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     match attributes with
     | [] -> return @@ no_attr
     | hd :: tl ->
-      let hd = TODO_unify_in_cst.conv_attr hd in
+      let hd = TODO_do_in_parsing.conv_attr hd in
       return @@ O.T_attr (hd, attr tl)
   in
   match t with
@@ -325,7 +323,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       in
       ( TODO_do_in_parsing.labelize (r_fst constr)
       , ty
-      , TODO_unify_in_cst.conv_attrs attributes )
+      , TODO_do_in_parsing.conv_attrs attributes )
     in
     return_attr
       attributes
@@ -343,7 +341,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       let destruct I.{ field_name; field_type; attributes; _ } =
         ( TODO_do_in_parsing.labelize (r_fst field_name)
         , Some field_type
-        , TODO_unify_in_cst.conv_attrs attributes )
+        , TODO_do_in_parsing.conv_attrs attributes )
       in
       let lst = List.map ~f:(destruct <@ r_fst) @@ nsepseq_to_list ne_elements in
       O.Non_linear_rows.make lst
@@ -399,7 +397,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
         in
         ( () (* , t_record_raw ~loc (Non_linear_rows.make lst) *)
         , I.TObject obj
-        , TODO_unify_in_cst.conv_attrs attributes )
+        , TODO_do_in_parsing.conv_attrs attributes )
       in
       let lst = List.map ~f:destruct_obj (nsepseq_to_list t) in
       O.Non_linear_disc_rows.make lst
@@ -425,7 +423,7 @@ let rec pattern : Eq.pattern -> Folding.pattern =
       (match attributes with
       | [] -> return @@ P_var (TODO_do_in_parsing.var variable)
       | hd :: tl ->
-        let attr = TODO_unify_in_cst.conv_attr hd in
+        let attr = TODO_do_in_parsing.conv_attr hd in
         let p = { p with value = { p.value with attributes = tl } } in
         return @@ P_attr (attr, pattern_of_pattern @@ I.PVar p))
     | PObject o ->
@@ -522,7 +520,7 @@ and instruction : Eq.instruction -> Folding.instruction =
   match i with
   | SBlock s -> return @@ O.I_block s.value.inside
   | SExpr (attr, expr) ->
-    TODO_unify_in_cst.weird_attr attr;
+    TODO_do_in_parsing.weird_attr attr;
     return @@ I_expr expr
   | SCond c ->
     let c = c.value in
@@ -582,7 +580,7 @@ and declaration : Eq.declaration -> Folding.declaration =
     match attributes with
     | [] -> return @@ no_attr
     | hd :: tl ->
-      let hd = TODO_unify_in_cst.conv_attr hd in
+      let hd = TODO_do_in_parsing.conv_attr hd in
       return @@ O.D_attr (hd, attr tl)
   in
   match d with

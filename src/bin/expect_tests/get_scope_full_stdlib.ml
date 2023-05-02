@@ -331,7 +331,7 @@ let%expect_test _ =
       File "", line 326, characters 68-78
     (unforged_ticket#238:8-23 -> unforged_ticket)
     Range: File "", line 238, characters 8-23
-    Body Range: File "", line 238, characters 26-40
+    Body Range: File "", line 238, characters 41-91
     Content: : |funtype 's : * . record[amount -> nat ,
                                         ticketer -> address ,
                                         value -> 's({ name: ticketer }, { name: value }, { name: amount })]|
@@ -349,7 +349,7 @@ let%expect_test _ =
     Module definitions:
     (Tezos#7:7-12 -> Tezos)
     Range: File "", line 7, characters 7-12
-    Body Range: File "", line 9, character 2 to line 65, character 20
+    Body Range: File "", line 9, character 2 to line 65, character 264
     Content: Members: Variable definitions:
                       (get_balance#9:6-17 -> get_balance)
                       Range: File "", line 9, characters 6-17
@@ -590,7 +590,7 @@ let%expect_test _ =
 
     (Big_map#77:7-14 -> Big_map)
     Range: File "", line 77, characters 7-14
-    Body Range: File "", line 78, character 2 to line 87, character 87
+    Body Range: File "", line 78, character 12 to line 87, character 87
     Content: Members: Variable definitions:
                       (empty#78:16-21 -> empty)
                       Range: File "", line 78, characters 16-21
@@ -1647,7 +1647,7 @@ let%expect_test _ =
 
                       (Proxy_ticket#522:9-21 -> Proxy_ticket)
                       Range: File "", line 522, characters 9-21
-                      Body Range: File "", line 523, character 4 to line 590, character 7
+                      Body Range: File "", line 523, character 15 to line 590, character 7
                       Content: Members: Variable definitions:
                                         (proxy_transfer_contract#523:19-42 -> proxy_transfer_contract)
                                         Range: File "", line 523, characters 19-42
