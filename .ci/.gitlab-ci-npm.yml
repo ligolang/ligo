@@ -27,6 +27,7 @@ esy-windows:
     - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
     - esy i
     - bash -c "esy release || esy release || esy release"
+    - bash -c "patch -p1 -R < 001-tezos-deps-via-esy.patch" # So that dune runtest doesn't run tezos tests
     - esy b dune runtest
     - rm -Recurse -Force _esy
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
