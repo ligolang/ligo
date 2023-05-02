@@ -40,14 +40,33 @@ let extract_link_from_directive ~(relative_to_dir : string)
     Option.some @@ DocumentLink.create ~range ~target ()
   | PP_Import d ->
     let range = Range.of_region d#file_path.region
-    and target = Filename.concat relative_to_dir d#file_path.value in
+    and target = Filename.concat relative_to_dir d#file_path.value
+    in
+    let target =
+      if Sys.unix then target else
+        target
+        |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
+        |> Str.global_replace (Str.regexp "\\\\") "/"
+        |> Str.global_replace (Str.regexp "\\") "/"
+        |> Caml.String.lowercase_ascii
+    in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None
 
 
 let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option handler =
-  let@ () = send_debug_msg @@ "On document_link:" ^ DocumentUri.to_path uri in
-  let dir = Filename.dirname (DocumentUri.to_path uri) in
+  let path =
+    if Sys.unix then
+      DocumentUri.to_path uri
+    else
+      DocumentUri.to_path uri
+      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
+      |> Str.global_replace (Str.regexp "\\\\") "/"
+      |> Str.global_replace (Str.regexp "\\") "/"
+      |> Caml.String.lowercase_ascii
+  in
+  let@ () = send_debug_msg @@ "On document_link:" ^ path in
+  let dir = Filename.dirname path in
   let@ directives_opt =
     with_cst uri None
     @@ function

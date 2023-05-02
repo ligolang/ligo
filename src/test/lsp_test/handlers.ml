@@ -29,5 +29,29 @@ let open_file (file_path : string) : DocumentUri.t Handler.t =
   return uri
 
 
-let to_absolute : string -> string = Filename.concat @@ Ligo_unix.getcwd ()
-let rel_path_to_uri : string -> DocumentUri.t = DocumentUri.of_path <@ to_absolute
+let to_absolute : string -> string =
+  fun p ->
+  let abs_path = Filename.concat (Ligo_unix.getcwd ()) p
+  in
+  if Sys.unix then
+    abs_path
+  else
+    abs_path
+    |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
+    |> Str.global_replace (Str.regexp "\\\\") "/"
+    |> Str.global_replace (Str.regexp "\\") "/"
+    |> Caml.String.lowercase_ascii
+
+let rel_path_to_uri : string -> DocumentUri.t = fun rel_path ->
+  let abs_path = to_absolute rel_path in
+  let abs_path =
+    if Sys.unix then
+      abs_path
+    else
+      abs_path
+      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
+      |> Str.global_replace (Str.regexp "\\\\") "/"
+      |> Str.global_replace (Str.regexp "\\") "/"
+      |> Caml.String.lowercase_ascii
+  in
+  DocumentUri.of_path abs_path

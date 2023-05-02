@@ -7,4 +7,15 @@ let testable : t Alcotest.testable = Alcotest.testable pp eq
 
 let of_region : Region.t -> t =
  fun region ->
-  create ~uri:(Lsp.Types.DocumentUri.of_path region#file) ~range:(Range.of_region region)
+  let uri =
+    if Sys.unix
+    then Lsp.Types.DocumentUri.of_path region#file
+    else
+      region#file
+      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
+      |> Str.global_replace (Str.regexp "\\\\") "/"
+      |> Str.global_replace (Str.regexp "//") "/"
+      |> Caml.String.lowercase_ascii
+      |> Lsp.Types.DocumentUri.of_path
+  in
+  create ~uri ~range:(Range.of_region region)

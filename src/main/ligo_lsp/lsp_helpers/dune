@@ -11,6 +11,7 @@
   lsp
   compiler_options
   simple-utils
+  yojson
   scopes
   syntax_types
   checking
