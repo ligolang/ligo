@@ -2,7 +2,6 @@ esy-windows:
   tags:
     - windows
   stage: build
-  allow_failure: true
   needs: []
   variables:
     GIT_STRATEGY: clone
