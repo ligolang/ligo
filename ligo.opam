@@ -15,7 +15,7 @@ depends: [
   "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
   # Tooling
   "js_of_ocaml"
-  "js_of_ocaml-ppx"
+  "js_of_ocaml-lwt"
   "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "3.6.1" }
@@ -33,6 +33,7 @@ depends: [
   "yojson"
   "ocaml-recovery-parser" { = "0.2.4" }
   "semver"
+  "uri"
   "tls"
   "decompress"
   "tar"
@@ -44,6 +45,7 @@ depends: [
   "tezos-crypto"
   "tezos-micheline"
   # PPXs
+  "js_of_ocaml-ppx"
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_yojson_conv"

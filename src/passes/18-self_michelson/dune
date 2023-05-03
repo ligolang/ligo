@@ -6,4 +6,5 @@
  (libraries simple-utils environment tezos-hacl proto-alpha-utils)
  (preprocess
   (pps ppx_expect))
- (inline_tests))
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri)))

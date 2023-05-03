@@ -11,10 +11,12 @@ module Source_input = struct
   type raw_input_lsp = { file : file_name ; code : string }
   type code_input = 
     From_file of file_name 
+  | HTTP of Uri.t
   | Raw of raw_input 
   | Raw_input_lsp of raw_input_lsp
   let id_of_code_input : code_input -> file_name = function
     From_file file_name -> file_name
+  | HTTP uri -> Filename.basename @@ Uri.to_string uri
   | Raw { id ; code = _  } -> id
   | Raw_input_lsp { file ; code = _ } -> file
 end
@@ -71,7 +73,15 @@ module Make (M : M) =
           else G.add_edge dep_g acc id
         in
         let dep_g,vertices =
-          let deps = List.map ~f:(fun (x,y) -> Source_input.From_file x, y) deps in
+          let f (x, y) =
+            let dependency_code_input =
+              match Caml.Sys.backend_type with
+              | Other "js_of_ocaml" -> Source_input.HTTP (Uri.of_string x)
+              | _ -> Source_input.From_file x
+            in
+            dependency_code_input, y
+          in
+          let deps = List.map ~f deps in
           List.fold ~f:(dfs id) ~init:(dep_g,vertices) deps
         in
         (dep_g,vertices)
@@ -144,10 +154,15 @@ module Make (M : M) =
 
   let add_deps_to_env (asts_typed : (ast * env) SMap.t) (_file_name, (_meta,_c_unit,deps)) =
     let aux (file_name,module_name) =
+      let file_name =
+        match Caml.Sys.backend_type with
+        | Other "js_of_ocaml" -> Filename.basename file_name (* Because HTTP URIs could be deepers *)
+        | _ -> file_name
+      in
       let ast_typed =
         match (SMap.find_opt file_name asts_typed) with
           Some (ast) -> ast
-        | None -> failwith "File typed before dependency. The build system is broken, contact the devs"
+        | None -> failwith ("Failed for " ^ file_name ^ " File typed before dependency. The build system is broken, contact the devs")
       in
       (module_name, ast_typed)
     in

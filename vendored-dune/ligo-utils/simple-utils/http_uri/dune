@@ -1,0 +1,5 @@
+(library
+ (name simple_utils_http_uri)
+ (public_name simple-utils.http_uri)
+ (libraries uri)
+ (virtual_modules simple_utils_http_uri))

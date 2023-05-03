@@ -4,8 +4,9 @@ description:
   "Js_of_ocaml is a compiler from OCaml bytecode to JavaScript. It makes it possible to run pure OCaml programs in JavaScript environment like browsers and Node.js"
 maintainer: ["Ocsigen team <dev@ocsigen.org>"]
 authors: ["Ocsigen team <dev@ocsigen.org>"]
-license:
-  "GPL-2.0-or-later AND LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception"
+license: [
+  "GPL-2.0-or-later" "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception"
+]
 homepage: "https://ocsigen.org/js_of_ocaml/latest/manual/overview"
 doc: "https://ocsigen.org/js_of_ocaml/latest/manual/overview"
 bug-reports: "https://github.com/ocsigen/js_of_ocaml/issues"
@@ -35,10 +36,10 @@ build: [
 ]
 url {
   src:
-    "https://github.com/ocsigen/js_of_ocaml/releases/download/5.1.1/js_of_ocaml-5.1.1.tbz"
+    "https://github.com/ocsigen/js_of_ocaml/releases/download/5.2.0/js_of_ocaml-5.2.0.tbz"
   checksum: [
-    "sha256=0feb4418d2e491d50f3cffd0f7bc94c8ac02531149a467d8966f89581f7e5ede"
-    "sha512=8e031336678dd0ebb53bc5460c123538e4a968153f8b724dab1520f98fce1e105f9dc287a6576644d527bfafc181d4d071f25cc73240ff1b512c3cccdc864fe2"
+    "sha256=650ab0a4ffa6a505716b73adb293428fa7bfd6a0293349bf186123338a7fceb5"
+    "sha512=f1b12ed23ffd653fc1199f208d7ba61ea3d15c81baecf5d195893ae3422dd09670d077467c2e6d910b400b96000ed6261d5ee820acc0ed1b316715fd1da0b323"
   ]
 }
-x-commit-hash: "d7a67d3fba9cc45ae83ef4c58b17a8f44c41bccf"
+x-commit-hash: "3b3f66ba0f2755ff96c5f0a5ae41d2fb2fb1f8ea"

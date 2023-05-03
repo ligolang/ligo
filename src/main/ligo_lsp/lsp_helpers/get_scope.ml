@@ -27,6 +27,7 @@ let get_scope_raw
     | From_file file_name -> file_name
     | Raw { id; _ } -> id
     | Raw_input_lsp { file; _ } -> file
+    | HTTP uri -> Simple_utils.Http_uri.get_filename uri
   in
   let syntax =
     Syntax.of_string_opt
@@ -50,6 +51,7 @@ let get_scope_raw
     | Raw file -> Build.qualified_core_from_string ~raise ~options file
     | Raw_input_lsp { file; code } ->
       Build.qualified_core_from_raw_input ~raise ~options file code
+    | HTTP uri -> Build.qualified_core ~raise ~options (Build.Source_input.HTTP uri)
   in
   let lib =
     (* We need stdlib for [Build.Stdlib.get],

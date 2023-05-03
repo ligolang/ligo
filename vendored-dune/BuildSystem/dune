@@ -2,7 +2,7 @@
  (name BuildSystem)
  (public_name BuildSystem)
  (wrapped true)
- (libraries simple-utils ocamlgraph)
+ (libraries uri simple-utils ocamlgraph)
  (preprocess
   (pps
    bisect_ppx

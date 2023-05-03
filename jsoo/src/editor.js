@@ -6,8 +6,7 @@ export function initialize() {
   let ligoEditor = new EditorView({
     state: EditorState.create({
       extensions: [basicSetup, javascript()],
-      doc: `
-
+      doc: `#import "./foo.jsligo" "Foo"
 type storage = int;
 
 type parameter =

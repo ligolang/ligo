@@ -1,6 +1,7 @@
 (library
  (name main_errors_test)
  (libraries simple-utils main_errors cst ast_typed)
- (inline_tests)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess
   (pps ppx_expect)))
