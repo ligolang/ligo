@@ -40,9 +40,7 @@ let%expect_test _ =
       lsp                        . [BETA] launch a LIGO lsp server
       analytics                  . Manage analytics
       version                    . print version information
-      help                       . explain a given subcommand (perhaps recursively)
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      help                       . explain a given subcommand (perhaps recursively) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "-help" ];
@@ -122,9 +120,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                the LIGO environment (lima ,
                                mumbai). By default, the current protocol
                                (mumbai) will be used
-  [-help], -?                . print this help text and exit
-
-(core/src/command.ml.Exit_called (status 0)) |}]
+  [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; "-help" ];
@@ -191,9 +187,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; "-help" ];
@@ -260,9 +254,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "constant"; "-help" ];
@@ -300,9 +292,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; "-help" ];
@@ -355,9 +345,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; "-help" ];
@@ -406,9 +394,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-expr"; "-help" ];
@@ -459,9 +445,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "expression"; "-help" ];
@@ -511,9 +495,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (mumbai) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "list-declarations"; "-help" ];
@@ -546,6 +528,4 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
