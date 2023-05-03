@@ -19,6 +19,8 @@ let run_ligo args =
   let result = Cli.run ~argv () in
   result
 
+let replace_extraneous_slashes = Str.global_replace (Str.regexp "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\") "/"
+
 
 let run_ligo_good args =
   let () =
