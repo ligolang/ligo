@@ -4,10 +4,10 @@ FROM ubuntu:20.04 as web-ide-builder
 
 LABEL maintainer="infra@marigold.dev"
 LABEL stage=webide-new-builder
-ARG GHC_VERSION=0.64.3
+ARG GHC_VERSION=9.0.2
 ARG LTS_SLUG=lts-19.0
-ARG PID1_VERSION=0.64.3.0
-ARG STACK_VERSION=0.64.3
+ARG PID1_VERSION=0.1.2.0
+ARG STACK_VERSION=2.7.3
 ARG CUDA_VERSION=10.0
 ARG JVM_PATH=/usr/lib/jvm/java-8-openjdk-amd64
 ARG LLVM_PATH=/usr/lib/llvm-9
@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #
 
 RUN if [ "$VARIANT" != "small" ]; then \
-    wget -qO- https://raw.githubusercontent.com/fpco/stackage/$BOOTSTRAP_COMMIT/debian-bootstrap.sh | sed "s/^GHCVER=0.64.3$/GHCVER=$GHC_VERSION/" | GHCVER=$GHC_VERSION bash; \
+    wget -qO- https://raw.githubusercontent.com/fpco/stackage/$BOOTSTRAP_COMMIT/debian-bootstrap.sh | sed "s/^GHCVER=9.0.1$/GHCVER=$GHC_VERSION/" | GHCVER=$GHC_VERSION bash; \
     fi && \
     wget -qO- https://github.com/commercialhaskell/stack/releases/download/v$STACK_VERSION/stack-$STACK_VERSION-linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C /usr/bin '*/stack' && \
     if [ "$VARIANT" = "small" ]; then \
