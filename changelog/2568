@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\n"
+merge_request: '2568'
+title: "Testing framework: set gas_limit to maximum for all operations"
+type: fixed
+            
