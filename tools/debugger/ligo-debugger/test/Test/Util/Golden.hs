@@ -1,9 +1,6 @@
 -- | Golden tests functionality.
 module Test.Util.Golden
-  ( goldenTestWithSnapshotsImpl
-  , goldenTestWithSnapshots
-  , goldenTestWithSnapshotsLogging
-  , dumpComment
+  ( goldenTestWithSnapshots
   , dumpCurSnapshot
   , dumpAllSnapshotsWithStep
   ) where
@@ -166,15 +163,15 @@ gonnaWriteGoldenFile file = do
   atomicModifyIORef writtenGoldenFiles \files ->
     (Set.insert file files, Set.member file files)
 
-goldenTestWithSnapshots, goldenTestWithSnapshotsLogging
+goldenTestWithSnapshots, _goldenTestWithSnapshotsLogging
   :: TestName
   -> FilePath
   -> ContractRunData
   -> ReaderT GoldenActionContext (HistoryReplayM (InterpretSnapshot 'Unique) IO) ()
   -> TestTree
 goldenTestWithSnapshots = goldenTestWithSnapshotsImpl dummyLoggingFunction
-goldenTestWithSnapshotsLogging = goldenTestWithSnapshotsImpl putStrLn
-{-# WARNING goldenTestWithSnapshotsLogging "'goldenTestWithSnapshotsLogging' remains in code" #-}
+_goldenTestWithSnapshotsLogging = goldenTestWithSnapshotsImpl putStrLn
+{-# WARNING _goldenTestWithSnapshotsLogging "'goldenTestWithSnapshotsLogging' remains in code" #-}
 
 -- | A little fun, here it seems justified.
 instance (a ~ (), MonadIO m) => FromBuilder (ReaderT GoldenActionContext m a) where

@@ -1,6 +1,8 @@
 -- | Reading debug info from ligo debug output.
 module Test.DebugInfo
-  ( module Test.DebugInfo
+  ( test_SourceMapper
+  , test_Errors
+  , test_Function_call_locations
   ) where
 
 import Control.Lens (_Empty, hasn't)
