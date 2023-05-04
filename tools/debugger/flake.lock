@@ -186,6 +186,21 @@
         "type": "indirect"
       }
     },
+    "haskell-nix-weeder": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1592887493,
+        "narHash": "sha256-gKZh2jrn8b9VC23ZXWfd6wOgXG+pHeTKDLJ/uHaztN4=",
+        "owner": "serokell",
+        "repo": "haskell-nix-weeder",
+        "rev": "a959fce7499df473e13336959cba77fbc87f3b7f",
+        "type": "github"
+      },
+      "original": {
+        "id": "haskell-nix-weeder",
+        "type": "indirect"
+      }
+    },
     "hpc-coveralls": {
       "flake": false,
       "locked": {
@@ -341,6 +356,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-legacy": {
+      "locked": {
+        "lastModified": 1631273642,
+        "narHash": "sha256-LeD8U6LijyPHgr5ECLk7cobb4EkgPyPJJjxcYNi8noo=",
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "1714a2ead1a18678afa3cbf75dff3f024c579061",
+        "type": "github"
+      },
+      "original": {
+        "owner": "serokell",
+        "repo": "nixpkgs",
+        "rev": "1714a2ead1a18678afa3cbf75dff3f024c579061",
+        "type": "github"
+      }
+    },
     "nixpkgs-regression": {
       "locked": {
         "lastModified": 1643052045,
@@ -407,7 +438,9 @@
       "inputs": {
         "hackage": "hackage",
         "haskell-nix": "haskell-nix",
+        "haskell-nix-weeder": "haskell-nix-weeder",
         "nixpkgs": "nixpkgs_2",
+        "nixpkgs-legacy": "nixpkgs-legacy",
         "utils": "utils"
       }
     },
