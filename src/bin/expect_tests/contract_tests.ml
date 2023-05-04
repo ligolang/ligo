@@ -914,11 +914,7 @@ let%expect_test _ =
       code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"
-    ; "contract"
-    ; contract "warning_duplicate3.mligo"
-    ];
+  run_ligo_good [ "compile"; "contract"; contract "warning_duplicate3.mligo" ];
   [%expect
     {|
     { parameter (pair (nat %c) (nat %ck)) ;
@@ -2335,6 +2331,72 @@ let%expect_test _ =
     [ "compile"; "storage"; contract "entrypoint_in_module.mligo"; "5"; "-m"; "C" ];
   [%expect {|
     5 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "parameter"; contract "top_level_entry.mligo"; "42"; "-e"; "increment" ];
+  [%expect {|
+      42 |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "top_level_entry.mligo"
+    ; "Increment 42"
+    ; "-e"
+    ; "increment,decrement"
+    ];
+  [%expect {|
+      (Right 42) |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "top_level_entry.mligo"
+    ; "Decrement 21"
+    ; "-e"
+    ; "increment,decrement,reset"
+    ];
+  [%expect {|
+      (Left (Left 21)) |}];
+  run_ligo_good
+    [ "compile"; "storage"; contract "top_level_entry.mligo"; "42"; "-e"; "increment" ];
+  [%expect {|
+      42 |}];
+  run_ligo_good
+    [ "compile"
+    ; "storage"
+    ; contract "top_level_entry.mligo"
+    ; "42"
+    ; "-e"
+    ; "increment,decrement"
+    ];
+  [%expect {|
+  42 |}];
+  run_ligo_good
+    [ "compile"
+    ; "storage"
+    ; contract "top_level_entry.mligo"
+    ; "42"
+    ; "-e"
+    ; "increment,decrement,reset"
+    ];
+  [%expect {|
+      42 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "parameter"; contract "two_contracts.mligo"; "()" ];
+  [%expect {|
+      Unit |}];
+  run_ligo_good [ "compile"; "storage"; contract "two_contracts.mligo"; "false" ];
+  [%expect {|
+      False |}];
+  run_ligo_good
+    [ "compile"; "parameter"; contract "two_contracts.mligo"; "\"Hello\""; "-e"; "ep2" ];
+  [%expect {|
+      "Hello" |}];
+  run_ligo_good
+    [ "compile"; "storage"; contract "two_contracts.mligo"; "42 * 2"; "-e"; "ep2" ];
+  [%expect {|
+      84 |}]
 
 let%expect_test _ =
   run_ligo_good

@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nThe CLI option `-e` for passing entrypoint has been fixed `ligo compile parameter` & `ligo compile storage`\\n\\n#### Example\\n\\n\\n```ocaml\\nlet main (_ : unit) (_ : unit) : operation list * unit = [], ()\\n\\nlet ep2 (_ : string) (s : int) : operation list * int = [], s\\n\\n\\n```\\n#### Before\\n\\n\\n```bash\\n$ ligo.64 compile parameter x.mligo '\"Hello\"' -e ep2\\nInvalid command line argument. \\nThe provided parameter does not have the correct type for the given entrypoint.\\nFile \"x.mligo\", line 1, characters 0-63:\\n  1 | let main (_ : unit) (_ : unit) : operation list * unit = [], ()\\n  2 | \\n\\nInvalid type(s).\\nExpected: \"unit\", but got: \"string\".\\n\\n$ ligo.64 compile storage x.mligo '1' -e ep2\\nInvalid command line argument. \\nThe provided storage does not have the correct type for the contract.\\nFile \"x.mligo\", line 1, characters 0-63:\\n  1 | let main (_ : unit) (_ : unit) : operation list * unit = [], ()\\n  2 | \\n\\nInvalid type(s).\\nExpected: \"unit\", but got: \"int\".\\n\\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo compile parameter x.mligo '\"Hello\"' -e ep2\\n\"Hello\"\\n\\n$ _build/install/default/bin/ligo compile storage x.mligo '1' -e ep2\\n1\\n\\n\\n```\\n\\n"
+merge_request: '2570'
+title: "Fix CLI option `-e` for `compile parameter` & `compile storage`"
+type: fixed
+            
