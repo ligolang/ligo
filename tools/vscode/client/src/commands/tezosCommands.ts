@@ -41,11 +41,12 @@ type ContractAndStorage = {
 async function askForContractAndStorage(
   client: LanguageClient,
   format: string,
+  prevEntrypoint = undefined,
   prevStorage = undefined,
 ): Promise<ContractAndStorage> {
   const code = await executeCompileContract(
     client,
-    undefined,
+    prevEntrypoint,
     format,
     false,
   )
@@ -115,7 +116,12 @@ export async function executeDeploy(client: LanguageClient): Promise<void> {
 
 export async function executeGenerateDeployScript(client: LanguageClient): Promise<void> {
   const { code: codeJson, storage: storageJson } = await askForContractAndStorage(client, 'json')
-  const { code, storage } = await askForContractAndStorage(client, 'text', storageJson.storage)
+  const { code, storage } = await askForContractAndStorage(
+    client,
+    'text',
+    codeJson.entrypoint,
+    storageJson.storage,
+  )
 
   const network = await askForNetwork()
 
