@@ -12,22 +12,23 @@ import {
 import { getLastContractPath, ligoOutput } from './common';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
-const currentlyActiveProtocol = 'mumbainet'
-const Tezos = (network: string) => {
-  switch (network) {
-    case 'mainnet':
-      return new TezosToolkit('https://mainnet.api.tez.ie');
-    case currentlyActiveProtocol:
-      return new TezosToolkit(`https://${currentlyActiveProtocol}.ecadinfra.com`);
-    default:
-      vscode.window.showWarningMessage(`Currently extension does not support deployment on ${network} testnet`)
-      return new TezosToolkit('empty');
+
+const mainnet = 'mainnet'
+const currentlyActiveNetworks = ['mumbainet', 'ghostnet']
+
+const Tezos = (network: string): TezosToolkit | undefined => {
+  if (network === mainnet) {
+    return new TezosToolkit(`https://${mainnet}.api.tez.ie`)
+  } else if (currentlyActiveNetworks.includes(network)) {
+    return new TezosToolkit(`https://${network}.ecadinfra.com`)
+  } else {
+    return undefined
   }
 }
 
 async function askForNetwork(): Promise<string> {
   return createQuickPickBox(
-    [currentlyActiveProtocol],
+    currentlyActiveNetworks,
     'Network',
     'Choose a network to deploy contract to',
   );
@@ -62,13 +63,19 @@ async function askForContractAndStorage(
   return { code, storage }
 }
 
-export async function fetchRandomPrivateKey(network: string): Promise<string> {
+export async function fetchRandomPrivateKey(network: string): Promise<string | undefined> {
   const URL = `https://api.tez.ie/keys/${network}/`;
   const response = await fetch(URL, {
     method: 'POST',
     headers: { Authorization: AUTHORIZATION_HEADER },
   });
-  return response.text();
+
+  const status = response.status;
+  if (status === 200) {
+    return response.text()
+  } else {
+    return undefined
+  }
 }
 
 export async function executeDeploy(client: LanguageClient): Promise<void> {
@@ -135,12 +142,28 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
       title: 'Generating deploy script. It might take some time',
     },
     async (progress) => {
+      const showUnsupportedMessage = () =>
+        vscode.window.showWarningMessage(
+          `Currently, the extension does not support deployment on the ${network} testnet`
+        )
+
       const TezosNetwork = Tezos(network)
+      if (!TezosNetwork) {
+        showUnsupportedMessage()
+        return
+      }
+
       progress.report({
         message: 'Generating key',
       })
 
-      await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
+      const randomPrivateKey = await fetchRandomPrivateKey(network)
+      if (!randomPrivateKey) {
+        showUnsupportedMessage()
+        return
+      }
+
+      await importKey(TezosNetwork, randomPrivateKey);
       progress.report({
         message: 'Key generated, calculating burn-cap cost',
       })
