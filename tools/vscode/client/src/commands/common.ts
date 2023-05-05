@@ -76,18 +76,23 @@ export type ContractFileData = {
 }
 
 export function getLastContractPath() {
-  if (!vscode.window.activeTextEditor) {
+  const activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
+  if (!activeEditor) {
     throw new ex.NoContractPathException(undefined)
   }
 
-  let path = vscode.window.activeTextEditor.document.uri.fsPath;
-  const ext = extname(path);
+  let path = activeEditor.document.fileName;
+  let ext = extname(path);
 
+  // `vscode.window.activeTextEditor` may return output panels. This is known
+  // and won't be fixed, see: https://github.com/Microsoft/vscode/issues/58869
   if (!extensions.includes(ext)) {
     if (!lastContractPath) {
       throw new ex.NoContractPathException(path)
     }
+
     path = lastContractPath;
+    ext = extname(lastContractPath);
   }
 
   lastContractPath = path;
@@ -108,7 +113,7 @@ function findPackage(dirname: string): Maybe<string> {
 
 export async function executeCommand(
   binary: BinaryInfo,
-  command,
+  command: any,
   client: LanguageClient,
   commandArgs = CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
   showOutput = true,
@@ -116,18 +121,18 @@ export async function executeCommand(
   const contractInfo = getLastContractPath()
   const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
 
-  let finalCommand = command;
   if (commandArgs & CommandRequiredArguments.Path) {
-    finalCommand = finalCommand(contractInfo.path)
+
+    command = command(contractInfo.path)
   }
   if (commandArgs & CommandRequiredArguments.Ext) {
-    finalCommand = finalCommand(extToDialect(contractInfo.ext))
+    command = command(extToDialect(contractInfo.ext))
   }
   if (commandArgs & CommandRequiredArguments.ProjectRoot) {
-    finalCommand = finalCommand(findPackage(dirname(contractInfo.path)))
+    command = command(findPackage(dirname(contractInfo.path)))
   }
   try {
-    if (finalCommand.includes(undefined)) {
+    if (command.includes(undefined)) {
       throw new ex.UserInterruptionException()
     }
 
@@ -138,7 +143,7 @@ export async function executeCommand(
     const indexDirectory: string | null = await client.sendRequest(requestType, null)
     */
     const indexDirectory: string | null = null
-    const result = execFileSync(ligoPath, finalCommand, { cwd: indexDirectory }).toString()
+    const result = execFileSync(ligoPath, command, { cwd: indexDirectory }).toString()
 
     if (showOutput) {
       ligoOutput.appendLine(result)
