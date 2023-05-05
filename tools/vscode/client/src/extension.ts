@@ -12,6 +12,7 @@ import {
 } from 'vscode-languageclient/node';
 
 import { registerCommands } from './command'
+import { ligoBinaryInfo } from './commands/ligoCommands'
 import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
@@ -23,9 +24,9 @@ let client: LanguageClient;
 let ligoOptionButton: vscode.StatusBarItem;
 let deployOptionButton: vscode.StatusBarItem;
 
-// Hides compilation button in case current active text editor is not .(m/re)ligo file
+// Hides compilation button in case current active text editor is not .{m,js,p,}ligo file
 // If currently active text window is not an opened file (terminal, explorer, etc.)
-// button will remain in it's previous state
+// button will remain in its previous state.
 function updateLigoButton(button: vscode.StatusBarItem) {
   if (!vscode.window.activeTextEditor) {
     button.hide()
