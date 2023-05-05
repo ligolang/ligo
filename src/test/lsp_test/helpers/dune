@@ -1,0 +1,4 @@
+(library
+ (name lsp_test_helpers)
+ (public_name ligo.lsp_test.helpers)
+ (libraries ligo_api))

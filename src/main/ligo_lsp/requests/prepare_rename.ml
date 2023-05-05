@@ -7,13 +7,11 @@ let prepare_rename : Position.t -> DocumentUri.t -> Scopes.def list -> Range.t o
   Go_to_definition.get_definition pos uri defs
   >>= fun def ->
   Option.some_if
-    String.(
-      match Def.get_location def with
-      (* stdlib ranges have an empty file name. We don't wish to rename them. *)
-      | File loc -> loc#file <> ""
-      | Virtual _ -> false)
-    def
-  >>= fun def ->
+    (match Def.get_location def with
+    | File reg -> not Helpers_file.(is_stdlib reg#file || is_packaged reg#file)
+    | Virtual _ -> false)
+    ()
+  >>= fun () ->
   let loc = Def.get_location def in
   let regs = References.get_references loc @@ Caml.List.to_seq defs in
   Seq.find_map

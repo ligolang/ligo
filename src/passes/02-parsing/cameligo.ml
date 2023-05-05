@@ -37,16 +37,16 @@ include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
 type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-let pretty_print_file env ?preprocess ~raise buffer file_path =
-  parse_file ?preprocess ~raise buffer file_path |> pretty_print env
+let pretty_print_file env ?preprocess ?project_root ~raise buffer file_path =
+  parse_file ?preprocess ?project_root ~raise buffer file_path |> pretty_print env
 
-let pretty_print_cst ?preprocess ~raise buffer file_path =
+let pretty_print_cst ?preprocess ?project_root ~raise buffer file_path =
   let module PreprocParams =
     Preprocessor.CLI.MakeDefault (Config) in
   let module LexerParams =
     LexerLib.CLI.MakeDefault (PreprocParams) in
   let module Options = LexerParams.Options in
-  let tree   = parse_file ?preprocess ~raise buffer file_path in
+  let tree   = parse_file ?preprocess ?project_root ~raise buffer file_path in
   let buffer = Buffer.create 59 in
   let state  = Tree.mk_state
                  ~buffer

@@ -14,7 +14,7 @@ let parsing_error_to_string (err : Parsing.Errors.t) : string =
   message
 
 
-let get_cst ~(strict : bool) (syntax : Syntax_types.t) (code : string)
+let get_cst ~(strict : bool) ~(file : string) (syntax : Syntax_types.t) (code : string)
     : (t, string) result
   =
   let buffer = Caml.Buffer.of_seq (Caml.String.to_seq code) in
@@ -28,13 +28,18 @@ let get_cst ~(strict : bool) (syntax : Syntax_types.t) (code : string)
     ; fast_fail = false
     }
   in
+  (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
+  let project_root = Filename.dirname file in
+  let preprocess = false in
   try
+    let open Parsing in
     match syntax with
     | CameLIGO ->
-      Ok (CameLIGO_cst (Parsing.Cameligo.parse_string ~preprocess:false ~raise buffer))
+      Ok (CameLIGO_cst (Cameligo.parse_file ~preprocess ~project_root ~raise buffer file))
     | JsLIGO ->
-      Ok (JsLIGO_cst (Parsing.Jsligo.parse_string ~preprocess:false ~raise buffer))
+      Ok (JsLIGO_cst (Jsligo.parse_file ~preprocess ~project_root ~raise buffer file))
     | PascaLIGO ->
-      Ok (PascaLIGO_cst (Parsing.Pascaligo.parse_string ~preprocess:false ~raise buffer))
+      Ok
+        (PascaLIGO_cst (Pascaligo.parse_file ~preprocess ~project_root ~raise buffer file))
   with
   | Fatal_cst_error err -> Error err
