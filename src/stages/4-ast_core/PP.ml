@@ -31,6 +31,7 @@ and type_content : formatter -> type_content -> unit =
  fun ppf te ->
   match te with
   | T_variable tv -> Type_var.pp ppf tv
+  | T_constant (t, _) -> string ppf (Literal_types.to_string t)
   | T_sum row -> Row.PP.sum_type type_expression layout ppf row
   | T_record row -> Row.PP.record_type type_expression layout ppf row
   | T_arrow a -> Arrow.pp type_expression ppf a

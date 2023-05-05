@@ -14,6 +14,7 @@ type string_option = string option
 
 type type_content =
   | T_variable of Type_var.t
+  | T_constant of Literal_types.t * int
   | T_sum of row
   | T_record of row
   | T_arrow of ty_expr Arrow.t

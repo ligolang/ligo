@@ -351,7 +351,7 @@ let welcome_msg =
 let make_initial_state syntax protocol dry_run_opts project_root options =
   let lib = Build.Stdlib.get ~options in
   let top_level = Build.Stdlib.select_lib_typed syntax lib in
-  let env = Environment.append (Environment.default protocol) top_level in
+  let env = Environment.(append empty top_level) in
   { env
   ; top_level
   ; syntax

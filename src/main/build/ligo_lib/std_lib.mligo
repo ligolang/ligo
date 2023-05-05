@@ -1,3 +1,57 @@
+(* basic types *)
+type string = "%constant:string"
+type bytes = "%constant:bytes"
+type int = "%constant:int"
+type nat = "%constant:nat"
+type unit = "%constant:unit"
+
+(* michelson base *)
+type operation = "%constant:operation"
+type tez = "%constant:tez"
+type address = "%constant:address"
+type signature = "%constant:signature"
+type key = "%constant:key"
+type key_hash = "%constant:key_hash"
+type timestamp = "%constant:timestamp"
+type list = "%constant:list"
+type big_map = "%constant:big_map"
+type map = "%constant:map"
+type set = "%constant:set"
+type contract = "%constant:contract"
+type michelson_or = "%constant:michelson_or"
+type michelson_pair = "%constant:michelson_pair"
+type chain_id = "%constant:chain_id"
+type baker_hash = "%constant:baker_hash"
+type pvss_key = "%constant:pvss_key"
+type sapling_state = "%constant:sapling_state"
+type sapling_transaction = "%constant:sapling_transaction"
+type baker_operation = "%constant:baker_operation"
+type bls12_381_g1 = "%constant:bls12_381_g1"
+type bls12_381_g2 = "%constant:bls12_381_g2"
+type bls12_381_fr = "%constant:bls12_381_fr"
+type never = "%constant:never"
+type ticket = "%constant:ticket"
+
+(* external "custom" typers *)
+type external_bytes = "%constant:external_bytes"
+type external_int = "%constant:external_int"
+type external_int_lima = "%constant:external_int_lima"
+type external_ediv = "%constant:external_ediv"
+type external_and = "%constant:external_and"
+type external_or = "%constant:external_or"
+type external_xor = "%constant:external_xor"
+type external_lsl = "%constant:external_lsl"
+type external_lsr = "%constant:external_lsr"
+type external_map_find_opt = "%constant:external_map_find_opt"
+type external_map_add = "%constant:external_map_add"
+type external_map_remove = "%constant:external_map_remove"
+type external_map_remove_value = "%constant:external_map_remove_value"
+
+(* protocol dependent types *)
+#if LIMA
+type tx_rollup_l2_address = "%constant:tx_rollup_l2_address"
+#endif
+
 let failwith (type a b) (x : a) = [%michelson ({| { FAILWITH } |} x : b)]
 
 type bool = True | False
@@ -140,7 +194,7 @@ module List = struct
   let fold_left (type a b) (f : b * a -> b) (i : b) (xs : a list) : b = [%external ("LIST_FOLD_LEFT", f, i, xs)]
   let fold_right (type a b) (f : a * b -> b) (xs : a list) (i : b) : b = [%external ("LIST_FOLD_RIGHT", f, xs, i)]
   let cons (type a) (x : a) (xs : a list) : a list = [%external ("CONS", x, xs)]
-  let find_opt (type a) (f : a -> bool) (xs : a list) : a option = 
+  let find_opt (type a) (f : a -> bool) (xs : a list) : a option =
     fold_right (fun (a : a * a option) -> if f a.0 then Some a.0 else a.1) xs None
   let filter_map (type a b) (f : a -> b option) (xs : a list) : b list =
     fold_right (fun (a : a * b list) -> match f a.0 with | None -> a.1 | Some b -> (b :: a.1)) xs []
@@ -215,6 +269,14 @@ let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v
 let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
 let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%michelson ({| { EDIV } |} l r : (a, b) external_ediv)]
 
+type michelson_program = "%constant:michelson_program"
+type typed_address = "%constant:typed_address"
+type mutation = "%constant:mutation"
+type michelson_contract = "%constant:michelson_contract"
+type ast_contract = "%constant:ast_contract"
+type pbt_gen = "%constant:pbt_gen"
+type int64 = "%constant:int64"
+type views = "%constant:views"
 
 type test_exec_error_balance_too_low =
   { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
@@ -554,7 +616,7 @@ module Test = struct
 
     let transfer (type vt)
         (taddr_proxy : vt proxy_address)
-        (info        : (vt * nat) * address) : test_exec_result = 
+        (info        : (vt * nat) * address) : test_exec_result =
       let ticket_info, dst_addr = info in
       transfer_to_contract (to_contract taddr_proxy) (ticket_info , dst_addr) 1mutez
 

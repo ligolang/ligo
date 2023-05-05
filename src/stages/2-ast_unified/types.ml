@@ -87,6 +87,7 @@ and 'self ty_expr_ = 'self type_expression_
 and 'self type_expression_content_ =
   | T_attr of Attribute.t * 'self
   | T_var of Ty_variable.t
+  | T_constant of string
   | T_prod of 'self Simple_utils.List.Ne.t
   | T_app of ('self, 'self) Type_app.t
   | T_fun of 'self Arrow.t

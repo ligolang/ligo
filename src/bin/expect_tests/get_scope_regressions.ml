@@ -172,12 +172,12 @@ let%expect_test _ =
     (f#2:4-5 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 0-11
-    Content: |resolved: ∀ gen#7 : * . gen#7 -> int|
+    Content: |resolved: ∀ gen#3 : * . gen#3 -> int|
     references: []
     (x#2:6-7 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
-    Content: |resolved: gen#7|
+    Content: |resolved: gen#3|
     references: []
     (g#3:4-5 -> g)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5

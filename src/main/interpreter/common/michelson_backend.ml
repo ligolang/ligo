@@ -463,7 +463,7 @@ let rec val_to_ast ~raise ~loc
               Ast_aggregated.PP.type_expression
               ty))
         (match ty.type_content with
-        | T_constant { injection = Int | External "int"; _ } -> Some ()
+        | T_constant { injection = Int | External Int; _ } -> Some ()
         | _ -> None)
     in
     e_a_int ~loc x
