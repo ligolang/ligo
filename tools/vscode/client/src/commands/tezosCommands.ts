@@ -12,7 +12,7 @@ import {
 import { getLastContractPath, ligoOutput } from './common';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
-const currentlyActiveProtocol = 'jakartanet'
+const currentlyActiveProtocol = 'mumbainet'
 const Tezos = (network: string) => {
   switch (network) {
     case 'mainnet':
@@ -39,8 +39,8 @@ type ContractAndStorage = {
 }
 
 async function askForContractAndStorage(
-  client,
-  format,
+  client: LanguageClient,
+  format: string,
   prevStorage = undefined,
 ): Promise<ContractAndStorage> {
   const code = await executeCompileContract(
@@ -139,10 +139,6 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
         message: 'Key generated, calculating burn-cap cost',
       })
 
-      ligoOutput.appendLine(codeJson.result)
-      ligoOutput.appendLine(storageJson.result)
-      ligoOutput.show()
-
       const estimate = await TezosNetwork.estimate.originate({
         code: JSON.parse(codeJson.result),
         init: JSON.parse(storageJson.result),
@@ -152,7 +148,7 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
 
       ligoOutput.appendLine(`Generated deploy script for '${name}' contract:`);
       const res = [
-        'tezos-client',
+        'octez-client',
         'originate',
         'contract',
         name,
@@ -165,7 +161,7 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
         '--init',
         storage.result,
         '--burn-cap',
-        estimate.burnFeeMutez / 1000000,
+        estimate.burnFeeMutez / 1_000_000,
       ]
 
       ligoOutput.appendLine(res.join(' '))
