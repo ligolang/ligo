@@ -306,6 +306,10 @@ end = struct
     match Location.unwrap t with
     | T_attr (_, ty) -> ty
     | T_var v -> ret @@ T_variable v
+    | T_constant t ->
+      (match Ligo_prim.Literal_types.of_string_opt t with
+      | Some t -> ret @@ T_constant (t, Ligo_prim.Literal_types.to_arity t)
+      | None -> invariant @@ Format.asprintf "Type constant %s is unknown." t)
     | T_module_app { constr = { module_path; field; _ }; type_args } ->
       ret
       @@ T_app
@@ -537,6 +541,7 @@ end = struct
     in
     match ty.type_content with
     | T_variable v -> ret @@ T_var v
+    | T_constant (t, _) -> ret @@ T_constant (Ligo_prim.Literal_types.to_string t)
     | T_app { type_operator; arguments } ->
       ignore type_operator.module_path;
       (* TODO *)

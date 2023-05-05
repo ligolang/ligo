@@ -4,7 +4,7 @@ open Main_errors
 open Ast_unified
 
 let e_constructor l element = e_constructor { constructor = Label.of_string l; element }
-let init_env = Environment.default Environment.Protocols.current
+let init_env = Environment.empty
 let type_file f = type_file f options
 
 (*

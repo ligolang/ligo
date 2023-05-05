@@ -1,5 +1,38 @@
 open Var
 
+module External = struct
+  type t =
+  | Bytes
+  | Int
+  | Int_lima
+  | Ediv
+  | And
+  | Or
+  | Xor
+  | Lsl
+  | Lsr
+  | Map_find_opt
+  | Map_add
+  | Map_remove
+  | Map_remove_value
+  [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
+
+  let to_string = function
+    | Bytes -> "bytes"
+    | Int -> "int"
+    | Int_lima -> "int_lima"
+    | Ediv -> "ediv"
+    | And -> "and"
+    | Or -> "or"
+    | Xor -> "xor"
+    | Lsl -> "lsl"
+    | Lsr -> "lsr"
+    | Map_find_opt -> "map_find_opt"
+    | Map_add -> "map_add"
+    | Map_remove -> "map_remove"
+    | Map_remove_value -> "map_remove_value"
+end
+
 (* type constants *)
 type t =
   | String
@@ -38,7 +71,7 @@ type t =
   | Typed_address [@only_interpreter]
   | Mutation [@only_interpreter]
   | Tx_rollup_l2_address
-  | External of string
+  | External of External.t
   | Gen [@only_interpreter]
   | Int64 [@only_interpreter]
   | Views [@only_interpreter]
@@ -81,11 +114,119 @@ let to_string = function
   | Typed_address -> "typed_address"
   | Mutation -> "mutation"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
-  | External s -> "external_" ^ s
+  | External s -> "external_" ^ External.to_string s
   | Gen -> "pbt_gen"
   | Int64 -> "int64"
   | Views -> "views"
 
+let of_string_opt = function
+  | "string" -> Some String
+  | "bytes" -> Some Bytes
+  | "int" -> Some Int
+  | "operation" -> Some Operation
+  | "nat" -> Some Nat
+  | "tez" -> Some Tez
+  | "unit" -> Some Unit
+  | "address" -> Some Address
+  | "signature" -> Some Signature
+  | "key" -> Some Key
+  | "key_hash" -> Some Key_hash
+  | "timestamp" -> Some Timestamp
+  | "chain_id" -> Some Chain_id
+  | "list" -> Some List
+  | "map" -> Some Map
+  | "big_map" -> Some Big_map
+  | "set" -> Some Set
+  | "contract" -> Some Contract
+  | "michelson_or" -> Some Michelson_or
+  | "michelson_pair" -> Some Michelson_pair
+  | "baker_hash" -> Some Baker_hash
+  | "pvss_key" -> Some Pvss_key
+  | "sapling_transaction" -> Some Sapling_transaction
+  | "sapling_state" -> Some Sapling_state
+  | "baker_operation" -> Some Baker_operation
+  | "bls12_381_g1" -> Some Bls12_381_g1
+  | "bls12_381_g2" -> Some Bls12_381_g2
+  | "bls12_381_fr" -> Some Bls12_381_fr
+  | "never" -> Some Never
+  | "ticket" -> Some Ticket
+  | "michelson_program" -> Some Michelson_program
+  | "michelson_contract" -> Some Michelson_contract
+  | "ast_contract" -> Some Ast_contract
+  | "typed_address" -> Some Typed_address
+  | "mutation" -> Some Mutation
+  | "tx_rollup_l2_address" -> Some Tx_rollup_l2_address
+  | "pbt_gen" -> Some Gen
+  | "int64" -> Some Int64
+  | "views" -> Some Views
+  | "external_bytes" -> Some (External Bytes)
+  | "external_int" -> Some (External Int)
+  | "external_int_lima" -> Some (External Int_lima)
+  | "external_ediv" -> Some (External Ediv)
+  | "external_and" -> Some (External And)
+  | "external_or" -> Some (External Or)
+  | "external_xor" -> Some (External Xor)
+  | "external_lsl" -> Some (External Lsl)
+  | "external_lsr" -> Some (External Lsr)
+  | "external_map_find_opt" -> Some (External Map_find_opt)
+  | "external_map_add" -> Some (External Map_add)
+  | "external_map_remove" -> Some (External Map_remove)
+  | "external_map_remove_value" -> Some (External Map_remove_value)
+  | _ -> None
+
+let to_arity = function
+  | String -> 0
+  | Bytes -> 0
+  | Int -> 0
+  | Operation -> 0
+  | Nat -> 0
+  | Tez -> 0
+  | Unit -> 0
+  | Address -> 0
+  | Signature -> 0
+  | Key -> 0
+  | Key_hash -> 0
+  | Timestamp -> 0
+  | Chain_id -> 0
+  | List -> 1
+  | Map -> 2
+  | Big_map -> 2
+  | Set -> 1
+  | Contract -> 1
+  | Michelson_or -> 2
+  | Michelson_pair -> 2
+  | Baker_hash -> 0
+  | Pvss_key -> 0
+  | Sapling_transaction -> 1
+  | Sapling_state -> 1
+  | Baker_operation -> 0
+  | Bls12_381_g1 -> 0
+  | Bls12_381_g2 -> 0
+  | Bls12_381_fr -> 0
+  | Never -> 0
+  | Ticket -> 1
+  | Michelson_program -> 0
+  | Michelson_contract -> 0
+  | Ast_contract -> 0
+  | Typed_address -> 2
+  | Mutation -> 0
+  | Tx_rollup_l2_address -> 0
+  | External Bytes -> 1
+  | External Int -> 1
+  | External Int_lima -> 1
+  | External Ediv -> 2
+  | External And -> 2
+  | External Or -> 2
+  | External Xor -> 2
+  | External Lsl -> 2
+  | External Lsr -> 2
+  | External Map_find_opt -> 2
+  | External Map_add -> 3
+  | External Map_remove -> 2
+  | External Map_remove_value -> 2
+  | Gen -> 1
+  | Int64 -> 0
+  | Views -> 1
 
 let string = String
 let bytes = Bytes
@@ -123,10 +264,8 @@ let ast_contract = Ast_contract
 let typed_address = Typed_address
 let mutation = Mutation
 let tx_rollup_l2_address = Tx_rollup_l2_address
-let external_failwith = External "failwith"
-let external_int = External "int"
-let external_ediv = External "ediv"
-let external_u_ediv = External "u_ediv"
+let external_int = External Int
+let external_ediv = External Ediv
 let gen = Gen
 let int64 = Int64
 let views = Views
@@ -168,23 +307,20 @@ let v_ast_contract = Type_var.of_input_var (to_string Ast_contract)
 let v_typed_address = Type_var.of_input_var (to_string Typed_address)
 let v_mutation = Type_var.of_input_var (to_string Mutation)
 let v_tx_rollup_l2_address = Type_var.of_input_var (to_string Tx_rollup_l2_address)
-let v_external_int = Type_var.of_input_var (to_string @@ External "int")
-let v_external_int_lima = Type_var.of_input_var (to_string @@ External "int_lima")
-let v_external_bytes = Type_var.of_input_var (to_string @@ External "bytes")
-let v_external_ediv = Type_var.of_input_var (to_string @@ External "ediv")
-let v_external_u_ediv = Type_var.of_input_var (to_string @@ External "u_ediv")
-let v_external_and = Type_var.of_input_var (to_string @@ External "and")
-let v_external_or = Type_var.of_input_var (to_string @@ External "or")
-let v_external_xor = Type_var.of_input_var (to_string @@ External "xor")
-let v_external_lsl = Type_var.of_input_var (to_string @@ External "lsl")
-let v_external_lsr = Type_var.of_input_var (to_string @@ External "lsr")
-let v_external_u_and = Type_var.of_input_var (to_string @@ External "u_and")
-let v_external_map_find_opt = Type_var.of_input_var (to_string @@ External "map_find_opt")
-let v_external_map_add = Type_var.of_input_var (to_string @@ External "map_add")
-let v_external_map_remove = Type_var.of_input_var (to_string @@ External "map_remove")
-
+let v_external_int = Type_var.of_input_var (to_string @@ External Int)
+let v_external_int_lima = Type_var.of_input_var (to_string @@ External Int_lima)
+let v_external_bytes = Type_var.of_input_var (to_string @@ External Bytes)
+let v_external_ediv = Type_var.of_input_var (to_string @@ External Ediv)
+let v_external_and = Type_var.of_input_var (to_string @@ External And)
+let v_external_or = Type_var.of_input_var (to_string @@ External Or)
+let v_external_xor = Type_var.of_input_var (to_string @@ External Xor)
+let v_external_lsl = Type_var.of_input_var (to_string @@ External Lsl)
+let v_external_lsr = Type_var.of_input_var (to_string @@ External Lsr)
+let v_external_map_find_opt = Type_var.of_input_var (to_string @@ External Map_find_opt)
+let v_external_map_add = Type_var.of_input_var (to_string @@ External Map_add)
+let v_external_map_remove = Type_var.of_input_var (to_string @@ External Map_remove)
 let v_external_map_remove_value =
-  Type_var.of_input_var (to_string @@ External "map_remove_value")
+  Type_var.of_input_var (to_string @@ External Map_remove_value)
 
 
 let v_gen = Type_var.of_input_var (to_string @@ Gen)

@@ -27,6 +27,7 @@ let passes
   ; Import_restriction.pass ~raise
   ; External_hack.pass
   ; Linearity.pass ~raise
+  ; T_constant.pass
   ; T_arg.pass
   ; Type_abstraction_declaration.pass ~raise
   ; Constructor_application.pass ~raise ~syntax

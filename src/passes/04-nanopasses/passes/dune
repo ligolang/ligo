@@ -9,6 +9,7 @@
   errors
   unit_test_helpers
   single_switch_block
+  t_constant
   t_arg
   type_abstraction_declaration
   compute_layout

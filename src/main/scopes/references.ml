@@ -325,6 +325,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
  fun te refs env ->
   match te.type_content with
   | T_variable tv -> References.add_tvar tv env refs
+  | T_constant _ -> refs (* FIXME *)
   | T_module_accessor { module_path; element } ->
     let refs, _, _ =
       resolve_module_alias_and_update_mvar_references

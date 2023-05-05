@@ -6,8 +6,8 @@ type signature
 
 val add_declaration : Ast_typed.decl -> t -> t
 val append : t -> Ast_typed.program -> t
-val default : Protocols.t -> t
 val fold : f:('a -> Ast_typed.decl -> 'a) -> init:'a -> t -> 'a
+val empty : t
 
 (* Code smell that comes from a bad design of the buildsystem *)
 type core
