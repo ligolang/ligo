@@ -3,7 +3,17 @@
 -- | Tests on navigation through the snapshots and
 -- responding to stepping commands.
 module Test.Navigation
-  ( module Test.Navigation
+  ( test_StepIn_golden
+  , test_Seq_node_doesn't_have_location
+  , test_constant_as_statement
+  , test_top_level_function_with_preprocessor_don't_have_locations
+  , test_values_inside_switch_and_match_with_are_statements
+  , test_local_function_assignments_are_statements
+  , test_Next_golden
+  , test_StepOut_golden
+  , test_Continue_golden
+  , test_StepBackReversed
+  , test_ContinueReversed
   ) where
 
 import Fmt (pretty)

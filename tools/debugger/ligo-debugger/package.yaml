@@ -75,7 +75,6 @@ library:
     - conduit-extra
     - containers
     - data-default
-    - directory
     - dlist
     - duplo
     - fastsum
@@ -83,7 +82,6 @@ library:
     - fmt
     - free
     - hashable
-    - hedgehog
     - lens
     - lens-aeson
     - monad-stm
@@ -99,12 +97,10 @@ library:
     - semver
     - singletons
     - singletons-th
-    - some
     - stm
     - stm-containers
     - syb
     - template-haskell
-    - temporary
     - th-utilities
     - time
     - text
@@ -115,7 +111,6 @@ library:
     - unordered-containers
     - vector
     - vinyl
-    - with-utf8
     - witherable
 
   source-dirs:
@@ -161,11 +156,9 @@ tests:
     main: Main.hs
 
     dependencies:
-      - aeson
       - containers
       - data-default
       - Diff
-      - dir-traverse
       - directory
       - duplo
       - filepath

@@ -5,21 +5,16 @@ module Test.Util
     (</>)
   , (<.>)
   , contractsDir
-  , hasLigoExtension
   , AST.Lang (..)
   , AST.allLangs
   , AST.langExtension
   , pattern SomeLorentzValue
 
     -- * Test utilities
-  , ShowThroughBuild (..)
-  , TestBuildable (..)
-  , rmode'tb
   , (@?=)
   , (@@?=)
   , (@?)
   , (@@?)
-  , (@?==)
   , (@~=?)
   , HUnit.testCase
   , HUnit.testCaseSteps
@@ -34,17 +29,14 @@ module Test.Util
   , goToNextBreakpoint
   , goToPreviousBreakpoint
   , goesAfter
-  , goesBefore
   , goesBetween
   , isAtLine
     -- * Snapshot unilities
   , ContractRunData (..)
   , mkSnapshotsFor
-  , mkSnapshotsForLogging
   , withSnapshots
   , testWithSnapshotsImpl
   , testWithSnapshots
-  , testWithSnapshotsLogging
   , checkSnapshot
   , unexpectedSnapshot
     -- * Lower-lever interface
@@ -64,7 +56,6 @@ module Test.Util
   , intType'
   , unitType'
   , intType
-  , unitType
   ) where
 
 import Control.Lens (each)
@@ -73,7 +64,7 @@ import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
-import System.FilePath (takeExtension, (<.>), (</>))
+import System.FilePath ((<.>), (</>))
 import Test.HUnit (Assertion)
 import Test.HUnit.Lang qualified as HUnit
 import Test.Tasty.HUnit qualified as HUnit
@@ -106,13 +97,6 @@ import Language.LIGO.Debugger.Snapshots
 
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"
-
-hasLigoExtension :: FilePath -> Bool
-hasLigoExtension file =
-  takeExtension file `elem`
-    [ ".mligo"
-    , ".jsligo"
-    ]
 
 renderNoLineLengthLimit :: Doc -> Text
 renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}
@@ -184,14 +168,6 @@ infix 1 @?
   => m a -> (a -> Bool) -> m ()
 (@@?) am p = am >>= \a -> a @? p
 infix 1 @@?
-
-(@?==)
-  :: (MonadIO m, MonadReader r m, Eq a, Buildable (TestBuildable a), HasCallStack)
-  => Lens' r a -> a -> m ()
-len @?== expected = do
-  actual <- view len
-  actual @?= expected
-infixl 0 @?==
 
 -- | Check that the first list is permutation of the second one.
 (@~=?)
@@ -325,11 +301,11 @@ mkSnapshotsFor = mkSnapshotsForImpl dummyLoggingFunction
 
 -- | Same as @mkSnapshotsFor@ but prints
 -- snapshots collection logs into the console.
-{-# WARNING mkSnapshotsForLogging "'mkSnapshotsForLogging' remains in code" #-}
-mkSnapshotsForLogging
+{-# WARNING _mkSnapshotsForLogging "'mkSnapshotsForLogging' remains in code" #-}
+_mkSnapshotsForLogging
   :: HasCallStack
   => ContractRunData -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique))
-mkSnapshotsForLogging = mkSnapshotsForImpl putStrLn
+_mkSnapshotsForLogging = mkSnapshotsForImpl putStrLn
 
 withSnapshots
   :: (Monad m)
@@ -354,12 +330,12 @@ testWithSnapshots
   -> Assertion
 testWithSnapshots = testWithSnapshotsImpl dummyLoggingFunction
 
-{-# WARNING testWithSnapshotsLogging "'testWithSnapshotsLogging' remains in code" #-}
-testWithSnapshotsLogging
+{-# WARNING _testWithSnapshotsLogging "'testWithSnapshotsLogging' remains in code" #-}
+_testWithSnapshotsLogging
   :: ContractRunData
   -> HistoryReplayM (InterpretSnapshot 'Unique) IO ()
   -> Assertion
-testWithSnapshotsLogging = testWithSnapshotsImpl putStrLn
+_testWithSnapshotsLogging = testWithSnapshotsImpl putStrLn
 
 checkSnapshot
   :: (MonadState (DebuggerState (InterpretSnapshot 'Unique)) m, MonadIO m)
@@ -419,6 +395,3 @@ unitType' = mkSimpleConstantType "Unit"
 
 intType :: LigoType
 intType = LigoTypeResolved intType'
-
-unitType :: LigoType
-unitType = LigoTypeResolved unitType'

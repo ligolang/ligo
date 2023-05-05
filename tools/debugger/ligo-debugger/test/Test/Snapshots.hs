@@ -1,12 +1,13 @@
 -- | Checking snapshots collection.
 module Test.Snapshots
-  ( module Test.Snapshots
+  ( test_Snapshots
+  , test_Contracts_are_sensible
   ) where
 
 import Unsafe qualified
 
 import Control.Category ((>>>))
-import Control.Lens (Each (each), has, ix, makeLensesWith, toListOf, (?~), (^?!))
+import Control.Lens (Each (each), has, ix, lens, toListOf, (?~), (^?!))
 import Control.Monad.Writer (listen)
 import Data.Coerce (coerce)
 import Data.Default (Default (def))
@@ -32,7 +33,6 @@ import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
-import Morley.Util.Lens (postfixLFields)
 
 import Lorentz (MText)
 import Lorentz qualified as L
@@ -1912,7 +1912,16 @@ data CheckingOptions = CheckingOptions
   , coCheckSourceLocations :: Bool
   , coCheckEntrypointsList :: Bool
   } deriving stock (Show)
-makeLensesWith postfixLFields ''CheckingOptions
+
+coEntrypointL :: Lens' CheckingOptions (Maybe String)
+coEntrypointL = lens
+  do \CheckingOptions{..} -> coEntrypoint
+  do \(CheckingOptions _ locs eps) ep -> CheckingOptions ep locs eps
+
+coCheckSourceLocationsL :: Lens' CheckingOptions Bool
+coCheckSourceLocationsL = lens
+  do \CheckingOptions{..} -> coCheckSourceLocations
+  do \(CheckingOptions ep _ eps) locs -> CheckingOptions ep locs eps
 
 instance Default CheckingOptions where
   def =

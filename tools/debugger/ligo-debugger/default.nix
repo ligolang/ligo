@@ -1,4 +1,4 @@
-{ config, lib, pkgs, haskell-nix, stackProject, haskellLib, grammars, ... }:
+{ config, lib, pkgs, haskell-nix, stackProject, haskellLib, grammars, weeder-hacks, ... }:
 let
   name = "ligo-debugger";
   ligo-bin = pkgs.runCommand "ligo-bin" {} ''
@@ -14,6 +14,13 @@ in stackProject {
   modules = [
     ({ ... }: {
       packages.${name} = {
+        # needed for weeder
+        ghcOptions = [
+          "-Werror"
+          "-ddump-to-file" "-ddump-hi"
+        ];
+        postInstall = weeder-hacks.collect-dump-hi-files;
+
         preBuild = ''
           rm -rf grammar
           cp -r ${grammars} grammar
