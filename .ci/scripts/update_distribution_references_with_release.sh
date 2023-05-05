@@ -11,7 +11,7 @@ DISTRIBUTION_URL_PATTERN_BINARY_NEXT="https://ligolang.org/bin/linux/ligo"
 
 DISTRIBUTION_URL_GITLAB_ARTIFACT_REGEX_PATTERN_RELEASE="(.*https://gitlab\.com/ligolang/ligo/-/jobs/)[0-9]{10}(/artifacts/raw\/(ligo\.deb|ligo))"
 
-VERSION_REGEX_PATTERN="[0-9]+\.[0-9]+\.[0-9]+"
+VERSION_REGEX_PATTERN="ligo:[0-9]+\.[0-9]+\.[0-9]+"
 
 DEB_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo.deb"
 BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$1/artifacts/raw/ligo"
@@ -43,7 +43,7 @@ do
     "${SED_IN_PLACE_COMMAND[@]}" "s#$DISTRIBUTION_URL_PATTERN_DEB_NEXT#$DEB_GITLAB_ARTIFACT_URL#" $filepath
     "${SED_IN_PLACE_COMMAND[@]}" "s#$DISTRIBUTION_URL_PATTERN_BINARY_NEXT#$BINARY_GITLAB_ARTIFACT_URL#" $filepath
 
-    "${SED_IN_PLACE_COMMAND[@]}" -E "s|$VERSION_REGEX_PATTERN|$CURRENT_VERSION|g" $filepath
+    "${SED_IN_PLACE_COMMAND[@]}" -E "s|$VERSION_REGEX_PATTERN|ligo:$CURRENT_VERSION|g" $filepath
 done
 
 

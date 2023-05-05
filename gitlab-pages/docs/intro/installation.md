@@ -107,7 +107,7 @@ npm i -g ligolang@windows-beta
 
 ### via GUI installer
 
-You can download the installer from [here hosted on our Gitlab](https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_windows/current/ligo_installer_beta.exe).
+You can download the installer from [here hosted on our Gitlab](https://gitlab.com/ligolang/ligo/-/jobs/4227093625/artifacts/raw/ligo_installer.exe?inline=false).
 
 #### Prerequisite
 
