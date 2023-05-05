@@ -762,7 +762,9 @@ and linemarker state = parse
     let from_raw_input =
       fun (file, input) ->
         try
-          (from_lexbuf <@ Lexing.from_string) input
+          let lexbuf = Lexing.from_string input in
+          Lexbuf.reset_file file lexbuf;
+          from_lexbuf lexbuf
         with Sys_error msg ->
           let error  = Error.Failed_opening (file, msg) in
           let msg    = Error.to_string error in

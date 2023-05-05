@@ -191,7 +191,8 @@ let with_cst
   =
   with_cached_doc ~return_default_if_no_info:false uri default
   @@ fun { syntax; code; _ } ->
-  match Dialect_cst.get_cst ~strict syntax code with
+  let file = DocumentUri.to_path uri in
+  match Dialect_cst.get_cst ~strict ~file syntax code with
   | Error err ->
     let@ () = on_error err in
     return default

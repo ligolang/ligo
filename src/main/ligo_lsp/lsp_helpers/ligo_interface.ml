@@ -17,11 +17,14 @@ let get_scope : deprecated:bool -> DocumentUri.t -> string -> get_scope_info =
   let file = DocumentUri.to_path uri in
   (* #include - Pass lib or dirs *)
   let dir_name = Filename.dirname file in
+  (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
+  let project_root = Some dir_name in
   let compiler_options =
     Compiler_options.Raw_options.make
       ~with_types:true
       ~libraries:[ dir_name ]
       ~deprecated
+      ~project_root
       ()
   in
   unfold_get_scope

@@ -308,7 +308,7 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
    record of type [lock_file]. For example, here is an esy lock file:
 
   {
-    "checksum": "<some hash>"
+    "checksum": "<some hash>",
     "root": "ligo-main@link-dev:./esy.json",
     "node": {
       "ligo-main@link-dev:./esy.json": {

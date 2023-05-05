@@ -18,6 +18,6 @@ let on_req_definition : Position.t -> DocumentUri.t -> Locations.t option Handle
   | File region ->
     (* stdlib ranges have an empty file name. They have no definition location. *)
     Option.some_if
-      String.(region#file <> "")
+      (not (Helpers_file.is_stdlib region#file))
       (`Location [ Location.of_region region ])
   | Virtual _ -> None

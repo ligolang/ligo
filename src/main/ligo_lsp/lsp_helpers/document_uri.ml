@@ -3,7 +3,7 @@ include Lsp.Types.DocumentUri
 
 let eq = Caml.( = )
 
-(** Checks if uri refers to location's filepath. 
+(** Checks if uri refers to location's filepath.
   Note: this function does not normalise filepaths
   so you may want to do this on its arguments *)
 let matches_loc : t -> Loc.t -> bool =
