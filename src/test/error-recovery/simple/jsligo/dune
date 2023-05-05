@@ -7,5 +7,5 @@
    ../../../../passes/02-parsing/jsligo/ParserMain.exe)
  (action
   (progn
-   (run bash %{script} '*.jsligo' ../../../../passes/02-parsing/jsligo/ParserMain.exe)
+   (run bash %{script} --dialect=jsligo --test-type=simple --dune-workspace=%{workspace_root})
    (diff? results.csv.expected results.csv))))

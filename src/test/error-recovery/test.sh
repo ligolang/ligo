@@ -10,13 +10,21 @@ diff_lines () {
     fi
 }
 
+print_usage () {
+    echo "Examples of usage:"
+    echo "  ./test.sh '*.mligo' ParserMain.exe                   # calculate results.csv for all files"
+    echo "  ./test.sh test.jsligo ../../jsligo/ParserMain.exe -v # run calculation on the given file and print diff"
+    echo "  ./test.sh 'test1.mligo test2.mligo' ParserMain.exe   # calculate results.csv only for two files"
+    echo "  ./test.sh test.jsligo ../../jsligo/ParserMain.exe -v # run calculation on the given file and print diff"
+    echo "  ./test.sh 'test1.mligo test2.mligo' ParserMain.exe   # calculate results.csv only for two files"
+    echo "  ./test.sh cameligo <dune-workspace-root> simple      # calculate results.csv for simple error-recovery tests"
+    echo "  ./test.sh cameligo <dune-workspace-root> fuzzing     # calculate results.csv for fuzzing error-recovery tests"
+}
+
 LC_ALL=C
 
 if [[ $# -eq 0 ]] || [[ $# -eq 1 ]] ; then
-    echo "Examples of usage:"
-    echo "  ./test.sh '*.mligo' ParserMain.exe                        # calculate results.csv for all files"
-    echo "  ./test.sh test.jsligo ../../jsligo/ParserMain.exe -v      # run calculation on the given file and print diff"
-    echo "  ./test.sh 'test1.mligo test2.mligo' ParserMain.exe        # calculate results.csv only for two files"
+    print_usage;
     exit 1
 fi
 
@@ -24,7 +32,94 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-PARSER=$2
+# process command line options
+while test $# -ge 1
+do
+case "$1" in
+    -h* | --help)
+	print_usage;
+        exit 0 ;;
+    --test-type=*)
+	TEST_TYPE=`echo $1 | sed 's/.*=//'`;
+	if [ -z "$TEST_TYPE" ]
+	then
+	    echo "No TEST_TYPE passed. Valid options are: fuzzing or simple"
+	    exit 1;
+	fi
+	case "$TEST_TYPE" in
+	    fuzzing)
+		;;
+	    simple)
+		;;
+	    *)
+		echo "Unrecognised test type '$TEST_TYPE'. Valid options are: fuzzing or simple"
+		exit 1;
+		;;
+	esac
+	shift;
+	;;
+    --dune-workspace=*)
+	DUNE_WORKSPACE_ROOT=`echo $1 | sed 's/.*=//'`;
+	if [ -z "$DUNE_WORKSPACE_ROOT" ];
+	then
+	    echo "Dune workspace root was not passed"
+	    exit 1;
+	fi
+
+	if [ ! -d "$DUNE_WORKSPACE_ROOT" ];
+	then
+	    echo "Dune workspace root, $DUNE_WORKSPACE_ROOT, doesn't exist. Please pass a valid one"
+	    exit 1;
+	fi
+	shift;
+	;;
+    --dialect=*)
+	DIALECT=`echo $1 | sed 's/.*=//'`;
+	if [ -z "$DIALECT" ]
+	then
+	    echo "No dialect passed. Valid dialects are: cameligo or jsligo"
+	    exit 1;
+	fi
+	case "$DIALECT" in
+	    cameligo)
+		LIGO_FILE_EXT="mligo";
+		;;
+	    jsligo)
+		LIGO_FILE_EXT="jsligo";
+		;;
+	    *)
+		echo "Unrecognised ligo dialect '$DIALECT'. Valid dialects are: cameligo or jsligo"
+		exit 1;
+		;;
+	esac
+	shift;
+	;;
+    *)
+	LIGO_FILES=$1
+	PARSER=$2
+	break;
+	;;
+    esac
+done
+
+if [ -z "$LIGO_FILES" ]
+then
+
+    case "$(uname -s)" in
+	Darwin*)
+	    LIGO_FILES=$(find $DUNE_WORKSPACE_ROOT/src/test/error-recovery/$TEST_TYPE/$DIALECT -name "*.$LIGO_FILE_EXT" -type f -exec basename {} + | sort | uniq)
+	    ;;
+	*)
+	    LIGO_FILES=$(find $DUNE_WORKSPACE_ROOT/src/test/error-recovery/$TEST_TYPE/$DIALECT -name "*.$LIGO_FILE_EXT" -type f -printf "%f\n" | sort | uniq)
+	    ;;
+    esac
+fi
+
+if [ -z "$PARSER" ]
+then
+    PARSER="$DUNE_WORKSPACE_ROOT/src/passes/02-parsing/$DIALECT/ParserMain.exe"
+fi
+
 RESULTS=results.csv
 
 mkdir -p recovered
@@ -32,7 +127,7 @@ mkdir -p original_generated
 
 echo "STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS" > $RESULTS
 
-for f in $1; do
+for f in $LIGO_FILES; do
     CURRENT_FILE_ERROR=0
     # enable trap to catch all nonzero exit code
     trap 'CURRENT_FILE_ERROR=1' ERR

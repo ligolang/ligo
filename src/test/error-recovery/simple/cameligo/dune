@@ -7,5 +7,5 @@
    ../../../../passes/02-parsing/cameligo/ParserMain.exe)
  (action
   (progn
-   (run bash %{script} '*.mligo' ../../../../passes/02-parsing/cameligo/ParserMain.exe)
+   (run bash %{script} --dialect=cameligo --test-type=simple --dune-workspace=%{workspace_root})
    (diff? results.csv.expected results.csv))))
