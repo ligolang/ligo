@@ -19,6 +19,7 @@ import type TerminalButton from "../components/TerminalButton";
 import { RefreshData } from "~/base-components/filetree/types";
 import { GistContent } from "~/base-components/file-ops/GistFs";
 import MonacoEditor from "~/base-components/code-editor/MonacoEditor/MonacoEditor";
+import { findNonAsciiCharIndex } from "~/components/validators";
 
 export type RawGistProjectType = {
   type: "rawgist";
@@ -163,6 +164,17 @@ export default class ProjectManager {
       for (const key of Object.keys(projectData.obj)) {
         try {
           await fileOps.writeFile(`${data.path}/${key}`, projectData.obj[key].content);
+          const nonAscii = findNonAsciiCharIndex(projectData.obj[key].content);
+          if (nonAscii !== -1) {
+            notification.error(
+              "Non ASCII character.",
+              `In file ${data.path}/${key} on line ${nonAscii.additionColumn + 1} column ${
+                nonAscii.additionIndex + 1
+              } you are using a non ASCII character: ${
+                projectData.obj[key].content[nonAscii.index]
+              }. Please make sure all the symbols correspond to ASCII chart. Otherwise you may have problems with your project.`
+            );
+          }
         } catch (error) {
           console.error(error);
         }

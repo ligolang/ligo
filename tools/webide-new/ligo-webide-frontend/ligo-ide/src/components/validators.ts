@@ -58,3 +58,22 @@ export const validInt = (value: string) => {
 
 export const validFileFolderName = (v: string) =>
   invalidFileFilderChars.test(v) && "File and folder named should not include '/' and U+2215 '∕'";
+
+export function findNonAsciiCharIndex(str: string) {
+  // eslint-disable-next-line no-control-regex
+  const nonAsciiRegex = /[^\x00-\x7F]/;
+  const newlineRegex = /[\r\n]+/;
+  let additionIndex = 0;
+  let additionColumn = 0;
+  for (let i = 0; i < str.length; i++) {
+    if (nonAsciiRegex.test(str.charAt(i))) {
+      return { additionIndex, additionColumn, index: i };
+    }
+    additionIndex += 1;
+    if (newlineRegex.test(str.charAt(i))) {
+      additionColumn += 1;
+      additionIndex = 0;
+    }
+  }
+  return -1;
+}

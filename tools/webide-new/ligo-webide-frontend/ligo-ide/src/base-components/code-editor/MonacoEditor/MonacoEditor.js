@@ -11,10 +11,12 @@ import {
   MonacoServices,
 } from "monaco-languageclient";
 import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from "vscode-ws-jsonrpc";
+import notification from "~/base-components/notification";
 
 import modelSessionManager from "./modelSessionManager";
 import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
+import { findNonAsciiCharIndex } from "~/components/validators";
 
 function createWebSocket() {
   const url = `ws://${process.env.BACKEND_URL}`;
@@ -137,8 +139,24 @@ export default class MonacoEditor extends Component {
     // createWebSocket();
 
     modelSessionManager.editor = monacoEditor;
-    monacoEditor.onDidChangeModelContent(() => {
+    monacoEditor.onDidChangeModelContent((e) => {
       this.props.modelSession.saved = false;
+      const nonAsciiInChange = e.changes.find((change) => {
+        return findNonAsciiCharIndex(change.text) !== -1;
+      });
+      if (nonAsciiInChange !== undefined) {
+        const { additionIndex, additionColumn, index } = findNonAsciiCharIndex(
+          nonAsciiInChange.text
+        );
+        notification.error(
+          "Non ASCII character.",
+          `On line ${nonAsciiInChange.range.startLineNumber + additionColumn} column ${
+            nonAsciiInChange.range.startColumn + additionIndex
+          } you are using a non ASCII character: ${
+            nonAsciiInChange.text[index]
+          }. Please make sure all the symbols correspond to ASCII chart. Otherwise you may have problems with your project.`
+        );
+      }
       modelSessionManager.saveCurrentFile();
     });
     monacoEditor.onDidChangeCursorPosition(({ position }) => {
