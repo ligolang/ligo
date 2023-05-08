@@ -49,12 +49,12 @@ import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesReques
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos), ceContracts,
-  mfwsFailed)
+  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos),
+  RemainingSteps (RemainingSteps), ceContracts, ceMaxSteps, mfwsFailed)
 import Morley.Michelson.Parser.Types (MichelsonSource)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
 import Morley.Michelson.Runtime (ContractState (..))
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummySelf)
+import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummySelf, dummyMaxSteps)
 import Morley.Michelson.Typed
   (Constrained (SomeValue), Contract, Contract' (..), ContractCode' (unContractCode),
   SomeContract (..))
@@ -456,7 +456,7 @@ instance HasSpecificMessages LIGO where
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
-    SetLigoBinaryPathRequest req -> handleSetLigoBinaryPath req
+    SetLigoConfigRequest req -> handleSetLigoConfig req
     SetProgramPathRequest req -> handleSetProgramPath req
     ValidateEntrypointRequest req -> handleValidateEntrypoint req
     GetContractMetadataRequest req -> handleGetContractMetadata req
@@ -555,10 +555,12 @@ convertMichelsonValuesToLigo logger inps = do
       typesAndValues
       decompiledValues
 
-handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
-handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
-  let LigoSetLigoBinaryPathRequestArguments{..} = argumentsLigoSetLigoBinaryPathRequest
-  let binaryPathMb = binaryPathLigoSetLigoBinaryPathRequestArguments
+handleSetLigoConfig :: LigoSetLigoConfigRequest -> RIO LIGO ()
+handleSetLigoConfig LigoSetLigoConfigRequest {..} = do
+  let LigoSetLigoConfigRequestArguments{..} = argumentsLigoSetLigoConfigRequest
+  let binaryPathMb = binaryPathLigoSetLigoConfigRequestArguments
+
+  let maxStepsMb = RemainingSteps <$> maxStepsLigoSetLigoConfigRequestArguments
 
   let binaryPath = Debug.show @Text binaryPathMb
 
@@ -578,6 +580,7 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsToLigoValueConverter = toLigoValueConverter
     , lsVarsComputeThreadPool = varsComputeThreadPool
     , lsMoveId = 0
+    , lsMaxSteps = maxStepsMb
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
@@ -590,10 +593,10 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     VersionUnsupported <- pure $ isSupportedVersion ligoVer
     throwIO $ UnsupportedLigoVersionException ligoVer
 
-  writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
-    { seqLigoSetLigoBinaryPathResponse = 0
-    , request_seqLigoSetLigoBinaryPathResponse = seqLigoSetLigoBinaryPathRequest
-    , successLigoSetLigoBinaryPathResponse = True
+  writeResponse $ ExtraResponse $ SetLigoConfigResponse LigoSetLigoConfigResponse
+    { seqLigoSetLigoConfigResponse = 0
+    , request_seqLigoSetLigoConfigResponse = seqLigoSetLigoConfigRequest
+    , successLigoSetLigoConfigResponse = True
     }
 
 handleSetProgramPath :: LigoSetProgramPathRequest -> RIO LIGO ()
@@ -831,6 +834,8 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
   logMessage [int||Contract state: #{contractState}|]
 
+  maxStepsMb <- getMaxStepsMb
+
   his <-
     withRunInIO \unlifter ->
       collectInterpretSnapshots
@@ -843,10 +848,14 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         -- We're adding our own contract in order to use
         -- @{ SELF_ADDRESS; CONTRACT }@ replacement
         -- (we need to have this contract state to use @CONTRACT@ instruction).
-        dummyContractEnv { ceContracts = M.fromList [(dummySelf, contractState)] }
+        dummyContractEnv
+          { ceContracts = M.fromList [(dummySelf, contractState)]
+          , ceMaxSteps = fromMaybe dummyMaxSteps maxStepsMb
+          }
         parsedContracts
         (unlifter . logMessage)
         lambdaLocs
+        (isJust maxStepsMb)
 
   let ds = initDebuggerState his allLocs
 

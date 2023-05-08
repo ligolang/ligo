@@ -23,6 +23,7 @@ import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSpecificResponse (..), HandlerEnv (..),
   HasSpecificMessages (LanguageServerStateExt), RIO, RioContext (..))
+import Morley.Michelson.Interpret (RemainingSteps)
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
 import Morley.Michelson.Typed (Contract' (..))
@@ -105,6 +106,9 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step
     -- (visiting the same snapshot twice will also result in different ids).
+  , lsMaxSteps :: Maybe RemainingSteps
+    -- ^ Max amount of steps that the debugger will do.
+    -- If it is @Nothing@ then max steps is infinite.
   }
 
 instance Buildable LigoLanguageServerState where
@@ -234,6 +238,11 @@ getLambdaLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => RIO ext (HashSet Range)
 getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
+
+getMaxStepsMb
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (Maybe RemainingSteps)
+getMaxStepsMb = lsMaxSteps <$> getServerState
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do

@@ -25,11 +25,15 @@ import Text.Interpolation.Nyan
 import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
-  (DebuggerState (..), Direction (..), FrozenPredicate (FrozenPredicate), HistoryReplayM,
-  MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation),
-  SrcLoc (..), curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
+  (DebuggerFailure (DebuggerInfiniteLoop), DebuggerState (..), Direction (..),
+  FrozenPredicate (FrozenPredicate), HistoryReplayM, MovementResult (..),
+  NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation), SrcLoc (..),
+  curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
+import Morley.Michelson.Interpret
+  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
@@ -653,7 +657,7 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       step [int||Going through all execution history|]
-      testWithSnapshotsImpl logger runData do
+      testWithSnapshotsImpl logger Nothing runData do
         void $ moveTill Forward false
 
       unlessM (readIORef anyWritten) do
@@ -1904,6 +1908,28 @@ test_Snapshots = testGroup "Snapshots collection"
             <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
         expected @?= actual
+
+  , testCaseSteps "Check max steps" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "simple-ops.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshotsImpl dummyLoggingFunction (Just 5) runData do
+        void $ moveTill Forward false
+
+        liftIO $ step "Check infinite loop exception"
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretFailed
+                ( MichelsonFailureWithStack
+                    (MichelsonExt DebuggerInfiniteLoop)
+                    (ErrorSrcPos (SrcPos (Pos 2) (Pos 11)))
+                )
+            } -> pass
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.

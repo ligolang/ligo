@@ -63,12 +63,15 @@ import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
-import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
+import Morley.Debugger.Core.Snapshots
+  (DebuggerFailure (DebuggerInfiniteLoop), InterpretHistory (..))
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos, mfwsFailed),
-  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, mkInitStack, runInstrImpl)
+  MichelsonFailed (MichelsonExt, MichelsonFailedWith),
+  MichelsonFailureWithStack (MichelsonFailureWithStack, mfwsErrorSrcPos, mfwsFailed),
+  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, isRemainingSteps, mkInitStack,
+  runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
@@ -249,6 +252,9 @@ data CollectorState m = CollectorState
     -- ^ Locations for lambdas. We need them to ignore statements recording
     -- in cases when some location is present in this set and it is not
     -- associated with @LAMBDA@ instruction.
+  , csCheckStepsAmount :: Bool
+    -- ^ We have a max steps field in the settings. If it's blank
+    -- then we perform an infinite amount of steps.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -514,6 +520,17 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       -> InterpretEvent
       -> CollectingEvalOp m ()
     recordSnapshot loc event = do
+      whenM (use csCheckStepsAmountL) do
+        rs <- isRemainingSteps <$> getInterpreterState
+        if rs == 0
+        then throwError
+          $ MichelsonFailureWithStack
+              (MichelsonExt DebuggerInfiniteLoop)
+              -- We can set there a dummy location.
+              -- @michFailureHandler@ will handle it properly.
+              (ErrorSrcPos (SrcPos (Pos 0) (Pos 0)))
+        else modifyInterpreterState \s -> s{ isRemainingSteps = rs - 1 }
+
       logMessage
         [int||
           Recording location #{loc}
@@ -691,63 +708,76 @@ collectInterpretSnapshots
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
   -> HashSet Range
+  -> Bool -- ^ should we track steps amount
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger lambdaLocs =
-  runCollectInterpretSnapshots
-    (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
-    env
-    collSt
-    initStore
-  where
-    initStack = mkInitStack (liftCallArg epc param) initStore
-    initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
-    collSt = CollectorState
-      { csInterpreterState = initSt
-      , csStackFrames = one StackFrame
-          { sfName = entrypoint
-          , sfStack = []
-          , sfLoc = Range
-            { _rFile = mainFile
-            , _rStart = LigoPosition 1 1
-            , _rFinish = LigoPosition 1 1
+collectInterpretSnapshots
+  mainFile
+  entrypoint
+  Contract{..}
+  epc
+  param
+  initStore
+  env
+  parsedContracts
+  logger
+  lambdaLocs
+  trackMaxSteps =
+    runCollectInterpretSnapshots
+      (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
+      env
+      collSt
+      initStore
+    where
+      initStack = mkInitStack (liftCallArg epc param) initStore
+      initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
+      collSt = CollectorState
+        { csInterpreterState = initSt
+        , csStackFrames = one StackFrame
+            { sfName = entrypoint
+            , sfStack = []
+            , sfLoc = Range
+              { _rFile = mainFile
+              , _rStart = LigoPosition 1 1
+              , _rFinish = LigoPosition 1 1
+              }
             }
-          }
-      , csLastRecordedSnapshot = Nothing
-      , csParsedFiles = parsedContracts
-      , csRecordedStatementRanges = HS.empty
-      , csRecordedExpressionRanges = HS.empty
-      , csRecordedExpressionEvaluatedRanges = HS.empty
-      , csLoggingFunction = logger
-      , csMainFunctionName = Name entrypoint
-      , csLastRangeMb = Nothing
-      , csLambdaLocs = lambdaLocs
-      }
+        , csLastRecordedSnapshot = Nothing
+        , csParsedFiles = parsedContracts
+        , csRecordedStatementRanges = HS.empty
+        , csRecordedExpressionRanges = HS.empty
+        , csRecordedExpressionEvaluatedRanges = HS.empty
+        , csLoggingFunction = logger
+        , csMainFunctionName = Name entrypoint
+        , csLastRangeMb = Nothing
+        , csLambdaLocs = lambdaLocs
+        , csCheckStepsAmount = trackMaxSteps
+        }
 
-    -- Strip duplicate locations.
-    --
-    -- In practice it happens that LIGO produces snapshots for intermediate
-    -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
-    -- both having the same @location@ meta; we don't want the user to
-    -- see that.
-    stripDuplicates :: forall i o. Instr i o -> Instr i o
-    stripDuplicates = evaluatingState Nothing . dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl }
-      where
-        -- Note that this dfs is implemented in such a way that
-        -- it applies actions in bottom-up manner.
-        recursionImpl :: CtorEffectsApp $ State (Maybe Range)
-        recursionImpl = CtorEffectsApp "Strip duplicates" $ flip \mkNewInstr -> \case
-          ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) _ -> case liiLocation embeddedMeta of
-            Just loc ->
-              ifM ((== Just loc) <$> get)
-                do
-                  -- @mkNewInstr@ will return meta-wrapped instruction after traversal.
-                  -- We in this branch we should replace location meta with @Nothing@.
-                  mkNewInstr >>= \case
-                    ConcreteMeta (_ :: EmbeddedLigoMeta) inner'
-                      -> pure $ Meta (SomeMeta $ embeddedMeta & liiLocationL .~ Nothing) inner'
-                    other -> pure other
-                do
-                  put (Just loc)
-                  mkNewInstr
+      -- Strip duplicate locations.
+      --
+      -- In practice it happens that LIGO produces snapshots for intermediate
+      -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
+      -- both having the same @location@ meta; we don't want the user to
+      -- see that.
+      stripDuplicates :: forall i o. Instr i o -> Instr i o
+      stripDuplicates = evaluatingState Nothing . dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl }
+        where
+          -- Note that this dfs is implemented in such a way that
+          -- it applies actions in bottom-up manner.
+          recursionImpl :: CtorEffectsApp $ State (Maybe Range)
+          recursionImpl = CtorEffectsApp "Strip duplicates" $ flip \mkNewInstr -> \case
+            ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) _ -> case liiLocation embeddedMeta of
+              Just loc ->
+                ifM ((== Just loc) <$> get)
+                  do
+                    -- @mkNewInstr@ will return meta-wrapped instruction after traversal.
+                    -- We in this branch we should replace location meta with @Nothing@.
+                    mkNewInstr >>= \case
+                      ConcreteMeta (_ :: EmbeddedLigoMeta) inner'
+                        -> pure $ Meta (SomeMeta $ embeddedMeta & liiLocationL .~ Nothing) inner'
+                      other -> pure other
+                  do
+                    put (Just loc)
+                    mkNewInstr
+              _ -> mkNewInstr
             _ -> mkNewInstr
-          _ -> mkNewInstr

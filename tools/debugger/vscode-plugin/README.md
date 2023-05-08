@@ -154,3 +154,7 @@ However, some reorderings can be safely illiminated. We try to handle such cases
 ### I see many instances of the same function/value in the variables pane
 
 It's okay. At this moment debugger doesn't support polymorphic types in the variables pane, so, you'll see all monomorphed variants that are used in your contract.
+
+### Debugger says that my contract has an infinite loop but it doesn't
+
+By default the debugger will do 1000 steps and after that will assume that a contract has an infinite loop. You can change the max steps value in the settings. By _step_ we mean step in `expression (pre + post)` granularity.

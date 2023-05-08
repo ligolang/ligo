@@ -113,7 +113,7 @@ goldenTestWithSnapshotsImpl logger testName goldenFolder runData logicFunc = do
     action = handle (throwIO . UnhandledHUnitException) do
       outputVar <- newIORef mempty
       let write = liftIO . modifyIORef outputVar . (:)
-      testWithSnapshotsImpl logger runData $
+      testWithSnapshotsImpl logger Nothing runData $
         usingReaderT (GoldenActionContext write) logicFunc
       recordedOutput <- readIORef outputVar
       return $
