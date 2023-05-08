@@ -155,8 +155,8 @@ for f in $LIGO_FILES; do
     $PARSER --pretty -- original/"$f" > original_generated/formatted_"$f"
 
     # compare string representation of CST
-    $PARSER --cst -- original/"$f"                | sed 's/([^()]*)$//' > original_generated/"$f".cst
-    $PARSER --recovery --cst -- "$f" 2> /dev/null | sed 's/([^()]*)$//' > recovered/"$f".cst
+    $PARSER --cst -- original/"$f"                | sed 's/([^()]*)//' > original_generated/"$f".cst
+    $PARSER --recovery --cst -- "$f" 2> /dev/null | sed 's/([^()]*)//' > recovered/"$f".cst
 
     # compare list of symbols (nodes of CST)
     cat original_generated/"$f".cst  | sed 's/^\([-|` ]\)*//' > original_generated/"$f".cst_symbols
