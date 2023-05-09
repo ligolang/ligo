@@ -80,7 +80,7 @@ import Morley.Debugger.Core.Navigate
   (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
   HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
   SourceLocation' (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
-import Morley.Michelson.Interpret (ContractEnv (ceMaxSteps), RemainingSteps)
+import Morley.Michelson.Interpret (ContractEnv' (ceMaxSteps), RemainingSteps)
 import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummyMaxSteps)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
