@@ -500,7 +500,7 @@ instance HasSpecificMessages LIGO where
 
   handleSetPreviousStack = pure ()
 
-  onTerminate _restart = do
+  onTerminate restart = unless restart do
     lServState <- getServerStateH
     AbortingThreadPool.close (lsVarsComputeThreadPool lServState)
 
