@@ -2,9 +2,9 @@ import Immutable, { List } from "immutable";
 
 export { redux as projects } from "~/base-components/workspace";
 export { redux as keypairs } from "~/base-components/keypair";
-export { redux as customNetworks } from "~/ligo-components/eth-network";
+export { redux as customNetworks } from "~/ligo-components/ligo-network";
 export { redux as gistToken } from "~/base-components/file-ops";
-export { redux as protocol } from "~/ligo-components/eth-compiler";
+export { redux as protocol } from "~/ligo-components/ligo-compiler";
 
 export const version = {
   default: Immutable.fromJS({}),

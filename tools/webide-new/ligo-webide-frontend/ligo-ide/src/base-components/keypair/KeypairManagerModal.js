@@ -11,7 +11,7 @@ import {
 } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
-import FaucetButton from "~/ligo-components/eth-explorer/buttons/FaucetButton";
+import FaucetButton from "~/ligo-components/ligo-explorer/buttons/FaucetButton";
 
 import keypairManager from "./keypairManager";
 
@@ -191,7 +191,7 @@ export default class KeypairManagerModal extends PureComponent {
 
   renderKeypairRow = (keypair) => {
     const validAddress = keypair?.address?.replaceAll(/[^-_a-zA-Z0-9]/g, "-");
-    const { networkManager } = require("~/ligo-components/eth-network");
+    const { networkManager } = require("~/ligo-components/ligo-network");
     const address = validAddress;
     return (
       <tr key={`key-${validAddress}`} className="hover-flex">

@@ -3,17 +3,17 @@ import React, { PureComponent } from "react";
 import { List } from "immutable";
 import redux, { connect } from "~/base-components/redux";
 
-import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
-import { networkManager } from "~/ligo-components/eth-network";
+import headerActions, { Header, NavGuard } from "~/ligo-components/ligo-header";
+import { networkManager } from "~/ligo-components/ligo-network";
 import { actions } from "~/base-components/workspace";
 import keypairManager from "~/base-components/keypair";
 
-import EthSdk from "~/ligo-components/eth-sdk";
+import LigoSdk from "~/ligo-components/ligo-sdk";
 
-keypairManager.kp = EthSdk.kp;
+keypairManager.kp = LigoSdk.kp;
 
-networkManager.addSdk(EthSdk, EthSdk.networks);
-networkManager.addSdk(EthSdk, EthSdk.customNetworks);
+networkManager.addSdk(LigoSdk, LigoSdk.networks);
+networkManager.addSdk(LigoSdk, LigoSdk.customNetworks);
 
 function networkCustomGroupData(networkMap) {
   return Object.keys(networkMap)
@@ -32,7 +32,7 @@ function networkCustomGroupData(networkMap) {
 }
 
 const customeNetworkGroup = networkCustomGroupData(redux.getState()?.customNetworks.toJS());
-if (customeNetworkGroup.length > 0) networkManager.addSdk(EthSdk, customeNetworkGroup);
+if (customeNetworkGroup.length > 0) networkManager.addSdk(LigoSdk, customeNetworkGroup);
 
 class HeaderWithRedux extends PureComponent {
   state = {
@@ -75,7 +75,7 @@ class HeaderWithRedux extends PureComponent {
   async refresh() {
     const customeRefreshNetworkGroup = networkCustomGroupData(this.props.customNetworks.toJS());
     if (JSON.stringify(customeRefreshNetworkGroup) !== JSON.stringify(customeNetworkGroup))
-      networkManager.addSdk(EthSdk, customeRefreshNetworkGroup);
+      networkManager.addSdk(LigoSdk, customeRefreshNetworkGroup);
   }
 
   setNetwork(options) {

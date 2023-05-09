@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Modal, DebouncedFormGroup } from "~/base-components/ui-components";
 import notification from "~/base-components/notification";
 import { WebIdeApi } from "~/components/api/api";
-import { CompilerManager } from "~/ligo-components/eth-compiler";
+import { CompilerManager } from "~/ligo-components/ligo-compiler";
 import { validName } from "~/components/validators";
 
 interface DeployScriptModalProps {

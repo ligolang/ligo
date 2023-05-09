@@ -74,7 +74,7 @@ export class KeypairManager {
   async loadAllKeypairs() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, global-require, @typescript-eslint/no-var-requires
-      const { networkManager } = require("~/ligo-components/eth-network");
+      const { networkManager } = require("~/ligo-components/ligo-network");
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const networkId: string = networkManager?.network?.id;
       const sorted = KeypairManager.getKeypairFromRedux(networkId);

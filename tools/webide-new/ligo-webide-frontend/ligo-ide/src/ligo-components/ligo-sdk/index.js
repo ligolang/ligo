@@ -3,16 +3,16 @@ import makeSdk from "./makeSdk";
 import kp from "./kp";
 import networks, { customNetworks } from "./networks";
 
-import EthersClient from "./EthersClient";
-import EthTxManager from "./EthTxManager";
+import LigoClient from "./LigoClient";
+import LigoTxManager from "./LigoTxManager";
 
 export default makeSdk({
   kp,
   networks,
   customNetworks,
-  Client: EthersClient,
-  TxManager: EthTxManager,
+  Client: LigoClient,
+  TxManager: LigoTxManager,
 });
 
-export { makeSdk, kp, EthersClient, EthTxManager };
+export { makeSdk, kp, LigoClient, LigoTxManager };
 export { default as BrowserExtension } from "./BrowserExtension";
