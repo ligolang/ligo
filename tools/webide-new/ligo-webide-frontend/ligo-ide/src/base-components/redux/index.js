@@ -22,7 +22,7 @@ class Redux {
     this.actions = null;
   }
 
-  init(config, updateStore) {
+  init(config) {
     const { actions, reducers, persists } = configureRedux(config);
     // console.info('[Redux] store to persist', persists)
 
@@ -42,12 +42,6 @@ class Redux {
 
     return new Promise((resolve) => {
       const persistor = persistStore(this.store, null, () => {
-        // update store due to app update
-        updateStore({
-          persistor,
-          store: this.store,
-          actions: this.actions,
-        });
         resolve(this.getState());
       });
       // persistor.purge();

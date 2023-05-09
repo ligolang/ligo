@@ -54,7 +54,6 @@ class NavLinkLeft extends PureComponent {
           route={route}
           selected={selected.id || ""}
           list={dropdown}
-          // onToggle={this.onToggle}
           onClickItem={this.onClickItem}
           icon={icon}
           disable={disable}

@@ -9,9 +9,6 @@ BaseUserHomepage.defaultProps = {
 class UserHomepage extends BaseUserHomepage {
   componentDidMount(props) {
     super.componentDidMount(props);
-    if (process.env.DEPLOY === "bsn") {
-      this.updateNetwork();
-    }
   }
 
   async updateNetwork() {

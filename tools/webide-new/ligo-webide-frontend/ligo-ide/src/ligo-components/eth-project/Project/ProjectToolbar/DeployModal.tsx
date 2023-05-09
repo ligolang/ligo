@@ -22,6 +22,33 @@ const DeployModal: React.FC<DeployModalProps> = ({
   signer,
   projectManager,
 }: DeployModalProps): React.ReactElement | null => {
+  const txOptionsList = [
+    {
+      name: "gasLimit",
+      alias: "gas",
+      className: "col-4",
+      label: "Gas Limit",
+      icon: "fas fa-burn",
+      placeholder: "gas limit",
+      default: "",
+    },
+    {
+      name: "storageLimit",
+      className: "col-4",
+      label: "Storage Limit",
+      icon: "fas fa-database",
+      placeholder: "storage limit",
+      default: "",
+    },
+    {
+      name: "fee",
+      className: "col-4",
+      label: "Fee (suggested)",
+      icon: "fas fa-dollar-sign",
+      placeholder: "fee",
+      default: "",
+    },
+  ];
   const [storage, setStorage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [result, setResult] = useState<string>("");
@@ -29,8 +56,7 @@ const DeployModal: React.FC<DeployModalProps> = ({
   const [selectedSigner, setSelectedSigner] = useState<string>("");
   const [delegateAddress, setDelegateAddress] = useState<string>("");
   const [txOptions, setTxOptions] = useState<{ [name: string]: string } | undefined>(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    networkManager.sdk?.utils.txOptions?.list.reduce(
+    txOptionsList.reduce(
       (a: { [name: string]: string }, opt: { name: string }) => ({ ...a, [opt.name]: "" }),
       {}
     )
@@ -198,8 +224,7 @@ const DeployModal: React.FC<DeployModalProps> = ({
           setSelectedSigner("");
           setDelegateAddress("");
           setTxOptions(
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-            networkManager.sdk?.utils.txOptions?.list.reduce(
+            txOptionsList.reduce(
               (a: { [name: string]: string }, opt: { name: string }) => ({ ...a, [opt.name]: "" }),
               {}
             )
@@ -294,23 +319,26 @@ const DeployModal: React.FC<DeployModalProps> = ({
         invalid={delegateAddress !== "" && !!validAddress(delegateAddress)}
       />
       <div className="row">
-        {/* eslint-disable */}
-        {networkManager.sdk?.utils.txOptions?.list.map((option: any) => (
+        {txOptionsList.map((option) => (
           <ActionParamFormGroup
             key={`deploy-param-${option.name}`}
             className={option.className}
             label={option.label}
             icon={option.icon}
             value={txOptions ? txOptions[option.name] : ""}
-            onChange={(v: string) => setTxOptions({...txOptions, [option.name]: v })}
+            onChange={(v: string) => setTxOptions({ ...txOptions, [option.name]: v })}
             placeholder={option.placeholder}
             size=""
             type=""
-            feedback={(txOptions && txOptions[option.name]) && validInt(txOptions[option.name]) && "Invalid integer"}
-            invalid={(txOptions && txOptions[option.name]) && !!validInt(txOptions[option.name])}
+            feedback={
+              txOptions &&
+              txOptions[option.name] &&
+              validInt(txOptions[option.name]) &&
+              "Invalid integer"
+            }
+            invalid={txOptions && txOptions[option.name] && !!validInt(txOptions[option.name])}
           />
         ))}
-        {/* eslint-enable */}
       </div>
       {result && (
         <p>

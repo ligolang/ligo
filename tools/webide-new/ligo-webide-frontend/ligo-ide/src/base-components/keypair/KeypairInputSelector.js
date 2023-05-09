@@ -4,7 +4,6 @@ import { DropdownInput, Badge } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import keypairManager from "./keypairManager";
-import { utils } from "~/ligo-components/eth-sdk";
 
 export default class KeypairInputSelector extends PureComponent {
   constructor(props) {

@@ -8,32 +8,16 @@ import {
   CenterScreen,
 } from "~/base-components/ui-components";
 
-import platform from "~/base-components/platform";
 import redux, { connect } from "~/base-components/redux";
-import { HttpIpcChannel } from "~/base-components/ipc";
 import { actions } from "~/base-components/workspace";
-// import UserProfile from './UserProfile'
 import ProjectList from "./ProjectList";
-
-const userChannel = new HttpIpcChannel("user");
-const projectChannel = new HttpIpcChannel("project");
-// const {
-//   PROJECT_GITHUB_REPO
-// } = process.env
-
-// const tutorialModalInfo = {
-//   header: 'Welcome to Black IDE',
-//   description: `Black IDE is a graphic IDE for developing smart contracts on the Ethereum blockchian. New here ? Don't worry.
-//   Here is an instruction for a quick scan and details of each features.`,
-//   nextPage: `${PROJECT_GITHUB_REPO}/blob/master/README.md`
-// }
 
 class UserHomepage extends PureComponent {
   state = {
     notfound: false,
     loading: true,
     user: null,
-    remote: platform.isWeb,
+    remote: true,
     projects: null,
   };
 
@@ -57,12 +41,7 @@ class UserHomepage extends PureComponent {
     }
   }
 
-  checkIsNewUser() {
-    // if (!localStorage.getItem("hasMark") && this.isSelf() && false) {
-    //   localStorage.setItem("hasMark", "true");
-    //   this.modal.current.showModal();
-    // }
-  }
+  checkIsNewUser() {}
 
   getProjectList = async (username) => {
     if (username === "local") {
@@ -72,51 +51,15 @@ class UserHomepage extends PureComponent {
         user: null,
         projects: null,
       });
-      return;
     }
-
-    this.setState({ loading: true, notfound: false, projects: null });
-
-    let user;
-    if (!this.isSelf()) {
-      try {
-        user = await userChannel.invoke(username);
-      } catch (e) {
-        this.setState({ loading: false, notfound: true, user: username });
-        return;
-      }
-    }
-
-    let projects;
-    try {
-      const res = await projectChannel.invoke("get", username);
-      projects = res.map((p) => ({
-        remote: true,
-        id: p.name,
-        name: p.name,
-        author: username,
-        path: `${username}/${p.name}`,
-      }));
-
-      if (this.isSelf()) {
-        redux.dispatch("UPDATE_REMOTE_PROJECT_LIST", projects);
-      }
-    } catch (error) {
-      console.warn(error);
-    }
-
-    this.setState({ loading: false, user, projects });
   };
 
   isSelf = () => {
     const { profile, match } = this.props;
-    return false; // platform.isDesktop || match.params.username === profile.get('username')
+    return false;
   };
 
   renderCreateButton = () => {
-    // if (!this.isSelf()) {
-    //   return null
-    // }
     return (
       <Button color="warning" onClick={() => actions.newProject(this.state.remote)}>
         <i className="fas fa-plus mr-1" />
@@ -126,9 +69,6 @@ class UserHomepage extends PureComponent {
   };
 
   renderOpenButton = () => {
-    // if (!this.isSelf()) {
-    //   return null
-    // }
     return (
       <Button color="warning" className="border-left-gray" onClick={() => actions.openProject()}>
         <i className="fas fa-folder-plus mr-1" />
@@ -138,19 +78,6 @@ class UserHomepage extends PureComponent {
   };
 
   renderProjectListOptions = () => {
-    if (platform.isDesktop && this.props.profile?.get("username")) {
-      return (
-        <ButtonOptions
-          className="mb-0"
-          options={[
-            { key: "local", text: "Local", icon: "fas fa-desktop mr-1" },
-            { key: "cloud", text: "Cloud", icon: "fas fa-cloud mr-1" },
-          ]}
-          selected={this.state.remote ? "cloud" : "local"}
-          onSelect={(key) => this.setState({ remote: key === "cloud" })}
-        />
-      );
-    }
     return (
       <ButtonGroup>
         <h4 color="primary">
@@ -162,8 +89,6 @@ class UserHomepage extends PureComponent {
   };
 
   renderActionButtons = () => {
-    // if (true) {
-    // if (platform.isDesktop) {
     if (!this.state.remote) {
       return (
         <ButtonGroup>
@@ -173,8 +98,6 @@ class UserHomepage extends PureComponent {
       );
     }
     return this.renderCreateButton();
-    // }
-    // return this.renderCreateButton();
   };
 
   render() {
@@ -210,7 +133,6 @@ class UserHomepage extends PureComponent {
     return (
       <div className="d-flex w-100 h-100" style={{ overflow: "auto" }}>
         <div className="container py-5">
-          {/* <UserProfile profile={this.isSelf() ? profile.toJS() : user} /> */}
           <div className="d-flex flex-row justify-content-between my-3">
             {this.renderProjectListOptions()}
             {this.renderActionButtons()}

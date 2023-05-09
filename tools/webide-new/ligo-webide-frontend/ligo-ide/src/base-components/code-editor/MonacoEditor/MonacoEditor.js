@@ -63,7 +63,7 @@ export default class MonacoEditor extends Component {
   };
 
   componentDidMount() {
-    monaco.editor.defineTheme("obsidians", theme);
+    monaco.editor.defineTheme("ligoide", theme);
 
     this.throttledLayoutEditor = throttle(this.layoutEditor, 500);
     this.monacoEditor = this.createEditorWith(this.props.modelSession.model);
@@ -73,7 +73,6 @@ export default class MonacoEditor extends Component {
     this.props.addLanguagesCallback(this.monacoEditor);
 
     this.throttledLayoutEditor();
-    // api.bridge.send('languageClient.create')
 
     if (modelSessionManager.projectManager.onEditorReady) {
       modelSessionManager.projectManager.onEditorReady(this.monacoEditor, this);
@@ -139,17 +138,13 @@ export default class MonacoEditor extends Component {
 
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent(() => {
-      // this.props.onChange();
       this.props.modelSession.saved = false;
-      // modelSessionManager.projectManager.onFileChanged();
       modelSessionManager.saveCurrentFile();
     });
     monacoEditor.onDidChangeCursorPosition(({ position }) => {
       actions.updatePosition([position.lineNumber, position.column]);
     });
-    monacoEditor.onDidBlurEditorWidget(() => {
-      // monacoEditor.focus()
-    });
+    monacoEditor.onDidBlurEditorWidget(() => {});
     monacoEditor.onMouseDown(() => {
       monacoEditor.focus();
     });

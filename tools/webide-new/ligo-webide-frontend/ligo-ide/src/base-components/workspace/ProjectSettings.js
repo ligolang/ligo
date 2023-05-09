@@ -80,10 +80,6 @@ export default class ProjectSettings {
       this.channel.trigger(`settings:${key}`, value);
       await this.writeSettings(settings);
     }
-
-    if (key === "compilers.solc") {
-      this.projectManager.lint();
-    }
   }
 
   trimSettings = (rawSettings = {}) => {

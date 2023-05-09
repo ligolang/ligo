@@ -63,17 +63,7 @@ export default class MonacoEditorContainer extends PureComponent {
     return modelSession;
   }
 
-  renameFile = async (path, saveAsPath) => {
-    // if (this.sessions[saveAsPath]) {
-    //   // this.sessions[saveAsPath].
-    // } else {
-    //   this.sessions[saveAsPath] = await this.modelSessionFromFile(saveAsPath, this.props.readOnly)
-    //   if (this.sessions[path]) {
-    //     this.sessions[saveAsPath].viewState = this.sessions[path].viewState
-    //   }
-    //   this.setState({ modelSession: this.sessions[saveAsPath] }, () => modelSessionManager.closeModelSession(path))
-    // }
-  };
+  renameFile = async (path, saveAsPath) => {};
 
   quickCommand() {
     this.editor && this.editor.quickCommand();

@@ -115,23 +115,4 @@ export const addLigoLanguages = async (editor: monaco.editor.ICodeEditor) => {
   await wireTmGrammars(monaco, mligoRegistry, mligoGrammars, editor);
   await wireTmGrammars(monaco, jsligoRegistry, jsligoGrammars, editor);
   await wireTmGrammars(monaco, tzRegistry, tzGrammars, editor);
-
-  //   monaco.languages.registerDocumentFormattingEditProvider("solidity", {
-  //     async provideDocumentFormattingEdits(model) {
-  //       const code = model.getValue();
-
-  //       const formatted = prettier.format(code, {
-  //         parser: "solidity-parse",
-  //         plugins: [solidityPlugin],
-  //         tabWidth: 2,
-  //       });
-
-  //       return [
-  //         {
-  //           range: model.getFullModelRange(),
-  //           text: formatted,
-  //         },
-  //       ];
-  //     },
-  //   });
 };

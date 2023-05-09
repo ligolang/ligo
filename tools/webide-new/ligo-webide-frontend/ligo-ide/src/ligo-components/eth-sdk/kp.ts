@@ -41,10 +41,4 @@ export default {
       prefix.edsk2
     );
   },
-  walletFrom() {
-    // if (secret.startsWith("0x")) {
-    //   return new ethers.Wallet(secret);
-    // }
-    // return ethers.Wallet.fromMnemonic(secret);
-  },
 };

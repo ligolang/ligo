@@ -1,5 +1,4 @@
 import pathHelper from "path-browserify";
-import moment from "moment";
 import * as monaco from "monaco-editor";
 import fileOps, { FileInfo, FolderInfo } from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
@@ -11,9 +10,7 @@ import { getExamples } from "./examples";
 
 import redux from "~/base-components/redux";
 
-import { networkManager } from "~/ligo-components/eth-network";
 import compilerManager from "~/ligo-components/eth-compiler";
-import queue from "~/ligo-components/eth-queue";
 
 import ProjectSettings from "../ProjectSettings";
 
@@ -84,10 +81,6 @@ export default class ProjectManager {
     ProjectManager.channel.on("refresh-directory", callback);
   }
 
-  // TODO: using Function as a type is not a great solution.
-  // Each event has its own callback which should be possible to type.
-  // Right now it is not really understandable what events we need
-  // so in future it should be possible to type callbacks and remove eslint-disable.
   // eslint-disable-next-line @typescript-eslint/ban-types
   static effect(evt: string, callback: Function) {
     return () => {
@@ -659,344 +652,17 @@ export default class ProjectManager {
   lint() {}
 
   async compile(sourceFile?: string, finalCall?: () => void) {
-    const settings = await this.checkSettings();
-
     await this.project.saveAll();
     this.toggleTerminal(true);
 
     try {
-      await compilerManager.build(settings, this, sourceFile);
+      await compilerManager.build(this);
     } catch {
       if (finalCall) {
         finalCall();
       }
       return false;
     }
-    // if (result?.decorations) {
-    //   modelSessionManager.updateDecorations(result.decorations);
-    // }
-    // if (result?.errors) {
-    //   if (finalCall) {
-    //     finalCall();
-    //   }
-    //   return false;
-    // }
-
-    // if (finalCall) {
-    //   finalCall();
-    // }
     return true;
   }
-
-  // TODO: a great part of code was disabled for eslint, filled with
-  // all ts autofixes and ts-ignore flags. The problem is that we do not
-  // use this code right now and moreover if one day we will return to it
-  // it will be rewrited. So, right now there is no reason to type and
-  // pretty it.
-  /* eslint-disable */
-  async deploy(contractFileNode: { pathInProject: string; path: string }) {
-    if (!networkManager.sdk) {
-      notification.error(
-        "Cannot Deploy",
-        "No connected network. Please start a local network or switch to a remote network."
-      );
-      return;
-    }
-
-    let contracts;
-    if (contractFileNode) {
-      contractFileNode.pathInProject = this.pathInProject(contractFileNode.path);
-      contracts = [contractFileNode];
-    } else {
-      try {
-        contracts = await this.getMainContract(); // TODO this is not real getMainContract for this function as deploy is not implemented yet (old version of deploy function is used here)
-      } catch {
-        notification.error(
-          "Cannot Deploy",
-          "Cannot locate the built folder. Please make sure you have built the project successfully."
-        );
-        return;
-      }
-    }
-
-    if (!contracts.length) {
-      notification.error(
-        "Cannot Deploy",
-        "No built contracts found. Please make sure you have built the project successfully."
-      );
-      return;
-    }
-
-    this.deployButton.getDeploymentParameters(
-      {
-        contractFileNode: contractFileNode || (await this.getDefaultContractFileNode()),
-        contracts,
-      },
-      (contractObj: any, allParameters: any) => this.pushDeployment(contractObj, allParameters),
-      (contractObj: any, allParameters: any) => this.estimate(contractObj, allParameters)
-    );
-  }
-
-  async getDefaultContractFileNode() {
-    const settings = await this.checkSettings();
-    // @ts-ignore
-    if (!settings?.deploy) {
-      return;
-    }
-    // @ts-ignore
-    const filePath = this.pathForProjectFile(settings.deploy);
-    const pathInProject = this.pathInProject(filePath);
-    return { path: filePath, pathInProject };
-  }
-
-  async readProjectAbis() {
-    const contracts = await this.getMainContract(); // TODO this is not real getMainContract for this function as readProjectAbis is not implemented yet (old version of readProjectAbis function is used here)
-    const abis = await Promise.all(
-      contracts.map((contract) =>
-        fileOps
-          // @ts-ignore
-          .readFile(contract.path)
-          .then((content) => ({
-            // @ts-ignore
-            contractPath: contract.path,
-            // @ts-ignore
-            pathInProject: this.pathInProject(contract.path),
-            content: JSON.parse(content),
-          }))
-          .catch(() => null)
-      )
-    );
-    // @ts-ignore
-    return abis.filter(Boolean).map(({ contractPath, pathInProject, content }) => {
-      const name = content.contractName || pathHelper.parse(contractPath).name;
-      return {
-        contractPath,
-        pathInProject,
-        name,
-        abi: content?.abi,
-        content,
-      };
-    });
-  }
-
-  checkSdkAndSigner(allParameters: { signer: any }) {
-    if (!networkManager.sdk) {
-      notification.error(
-        "No Network",
-        "No connected network. Please start a local network or switch to a remote network."
-      );
-      return true;
-    }
-
-    if (!allParameters.signer) {
-      notification.error(
-        "Deployment Error",
-        "No signer specified. Please select one to sign the deployment transaction."
-      );
-      return true;
-    }
-
-    return false;
-  }
-
-  validateDeployment(contractObj: {
-    bytecode: any;
-    evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
-    deployedBytecode: any;
-    abi: any;
-  }) {
-    let bytecode = contractObj.bytecode || contractObj.evm?.bytecode?.object;
-    let deployedBytecode =
-      contractObj.deployedBytecode || contractObj.evm?.deployedBytecode?.object;
-
-    if (!deployedBytecode) {
-      notification.error(
-        "Deployment Error",
-        "Invalid <b>deployedBytecode</b> and <b>evm.deployedBytecode.object</b> fields in the built contract JSON. Please make sure you selected a correct built contract JSON file."
-      );
-      return;
-    }
-    if (!deployedBytecode) {
-      notification.error(
-        "Deployment Error",
-        "Invalid <b>bytecode</b> and <b>evm.bytecode.object</b> fields in the built contract JSON. Please make sure you selected a correct built contract JSON file."
-      );
-      return;
-    }
-    if (!bytecode.startsWith("0x")) {
-      bytecode = `0x${bytecode}`;
-    }
-    if (!deployedBytecode.startsWith("0x")) {
-      deployedBytecode = `0x${deployedBytecode}`;
-    }
-    return {
-      abi: contractObj.abi,
-      bytecode,
-      deployedBytecode,
-    };
-  }
-
-  async estimate(
-    contractObj: {
-      bytecode: any;
-      evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
-      deployedBytecode: any;
-      abi: any;
-    },
-    allParameters: { signer?: any; amount?: any; parameters?: any }
-  ) {
-    // @ts-ignore
-    if (this.checkSdkAndSigner(allParameters)) {
-      return;
-    }
-    const deploy = this.validateDeployment(contractObj);
-    if (!deploy) {
-      return;
-    }
-
-    const { amount, parameters } = allParameters;
-
-    this.deployButton.setState({ pending: "Estimating..." });
-
-    let result;
-    try {
-      const tx = await networkManager.sdk.getDeployTransaction(
-        {
-          abi: deploy.abi,
-          bytecode: deploy.bytecode,
-          // @ts-ignore
-          options: deploy.options,
-          parameters: parameters.array,
-          amount,
-        },
-        {
-          from: allParameters.signer,
-        }
-      );
-      result = await networkManager.sdk.estimate(tx);
-    } catch (e) {
-      console.warn(e);
-      // @ts-ignore
-      notification.error("Estimate Failed", e.reason || e.message);
-      this.deployButton.setState({ pending: false });
-      return;
-    }
-
-    this.deployButton.setState({ pending: false });
-
-    return result;
-  }
-
-  async pushDeployment(
-    contractObj: {
-      bytecode: any;
-      evm: { bytecode: { object: any }; deployedBytecode: { object: any } };
-      deployedBytecode: any;
-      abi: any;
-    },
-    allParameters: {
-      [x: string]: any;
-      signer?: any;
-      contractName?: any;
-      amount?: any;
-      parameters?: any;
-    }
-  ) {
-    // @ts-ignore
-    if (this.checkSdkAndSigner(allParameters)) {
-      return;
-    }
-    const deploy = this.validateDeployment(contractObj);
-    if (!deploy) {
-      return;
-    }
-
-    this.deployButton.setState({ pending: "Deploying...", result: "" });
-
-    const { networkId } = networkManager.sdk;
-    const { contractName, amount, parameters, ...override } = allParameters;
-    const codeHash = networkManager.sdk.utils.sign.sha3(deploy.deployedBytecode);
-
-    let result;
-    try {
-      const tx = await networkManager.sdk.getDeployTransaction(
-        {
-          abi: deploy.abi,
-          bytecode: deploy.bytecode,
-          // @ts-ignore
-          options: deploy.options,
-          parameters: parameters.array,
-          amount,
-        },
-        {
-          from: allParameters.signer,
-          ...override,
-        }
-      );
-
-      result = await new Promise((resolve, reject) => {
-        queue
-          .add(
-            () => networkManager.sdk.sendTransaction(tx),
-            {
-              title: "Deploy a Contract",
-              name: "Deploy",
-              contractName,
-              signer: allParameters.signer,
-              abi: deploy.abi,
-              value: networkManager.sdk.utils.unit.toValue(amount || "0"),
-              params: parameters.obj,
-              ...override,
-              modalWhenExecuted: true,
-            },
-            {
-              pushing: () => this.deployButton.closeModal(),
-              // @ts-ignore
-              executed: ({ tx, receipt, abi }) => {
-                resolve({
-                  network: networkId,
-                  codeHash,
-                  ...parameters,
-                  tx,
-                  receipt,
-                  abi,
-                });
-                return true;
-              },
-              "failed-timeout": reject,
-              failed: reject,
-            }
-          )
-          .catch(reject);
-      });
-    } catch (e) {
-      console.warn(e);
-      // @ts-ignore
-      notification.error("Deploy Failed", e.reason || e.message);
-      this.deployButton.setState({ pending: false });
-      return;
-    }
-
-    this.deployButton.setState({ pending: false });
-    notification.success("Deploy Successful");
-
-    redux.dispatch("ABI_ADD", {
-      // @ts-ignore
-      ...deploy.options,
-      name: contractName,
-      // @ts-ignore
-      codeHash: result.codeHash,
-      abi: JSON.stringify(deploy.abi),
-    });
-
-    const deployResultPath = pathHelper.join(
-      this.projectRoot,
-      "deploys",
-      // @ts-ignore
-      `${result.network}_${moment().format("YYYYMMDD_HHmmss")}.json`
-    );
-    // @ts-ignore
-    await this.writeFile(deployResultPath, JSON.stringify(result, null, 2));
-  }
-  /* eslint-enable */
 }
