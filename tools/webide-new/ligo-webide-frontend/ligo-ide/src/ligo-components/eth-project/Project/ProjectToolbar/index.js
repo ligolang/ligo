@@ -29,6 +29,7 @@ export default class ProjectToolbar extends PureComponent {
       currentTab: "",
       expressionManagerType: "",
       tzFilePath: "",
+      mainFilePath: "",
       isPreDeploy: false,
     };
   }
@@ -44,7 +45,7 @@ export default class ProjectToolbar extends PureComponent {
     }
     const deployPath = this.context.projectSettings?.get("deploy") || "";
     if (!(await fileOps.exists(this.context.projectManager.pathForProjectFile(deployPath)))) {
-      this.setState({ isPreDeploy: true });
+      this.setState({ isPreDeploy: true, tzFilePath: deployPath });
       this.compileModalOpen(true);
     } else {
       this.deployModalRef.current.openModal();
@@ -56,8 +57,8 @@ export default class ProjectToolbar extends PureComponent {
       this.compileContract(this.context.projectManager);
       return;
     }
-    const tzFilePath = this.context.projectSettings?.get("main") || "";
-    this.setState({ tzFilePath });
+    const mainFilePath = this.context.projectSettings?.get("main") || "";
+    this.setState({ mainFilePath });
     this.compileModalRef.current.openModal();
   };
 
@@ -138,6 +139,7 @@ export default class ProjectToolbar extends PureComponent {
         <CompileModal
           modalRef={this.compileModalRef}
           tzFilePath={this.state.tzFilePath}
+          mainFilePath={this.state.mainFilePath}
           onCompile={(doNotShow) => this.compileContract(projectManager, doNotShow)}
           isPreDeploy={this.state.isPreDeploy}
         />

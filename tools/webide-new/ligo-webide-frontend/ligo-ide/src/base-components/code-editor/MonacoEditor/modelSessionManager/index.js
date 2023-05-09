@@ -178,12 +178,7 @@ class ModelSessionManager {
     }
     if (tab.remote) {
       const basename = pathHelper.basename(tab.path);
-      return (
-        <span key="cloud-icon">
-          <i className="fas fa-cloud small text-muted mr-1" />
-          {basename}
-        </span>
-      );
+      return <span key="cloud-icon">{basename}</span>;
     }
     return pathHelper.basename(tab.path);
   }

@@ -52,7 +52,7 @@ export default function (props) {
           <CacheRoute
             exact
             path="/:username"
-            className="p-relative w-100 h-100"
+            className="p-relative w-100 h-100 customHeight"
             component={UserHomepage}
           />
           <CacheRoute

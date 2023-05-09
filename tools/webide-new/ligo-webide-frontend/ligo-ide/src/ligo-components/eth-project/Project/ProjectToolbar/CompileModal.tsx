@@ -4,6 +4,7 @@ import { Input, Label, Modal } from "~/base-components/ui-components";
 interface CompileModalProps {
   modalRef: React.RefObject<Modal>;
   tzFilePath: string;
+  mainFilePath: string;
   onCompile: any;
   isPreDeploy: boolean;
 }
@@ -11,6 +12,7 @@ interface CompileModalProps {
 const CompileModal: React.FC<CompileModalProps> = ({
   modalRef,
   tzFilePath,
+  mainFilePath,
   onCompile,
   isPreDeploy,
 }) => {
@@ -31,13 +33,14 @@ const CompileModal: React.FC<CompileModalProps> = ({
     >
       {isPreDeploy ? (
         <div>
-          You are going to deploy <kbd>{tzFilePath}</kbd> contract but it is not compiled. Please
-          compile it before deploying.
+          You are going to deploy <kbd>{tzFilePath}</kbd> contract but it doesn&apos;t exist. Your
+          main file is <kbd>{mainFilePath}</kbd>. Please check config or compile main file to
+          deploy.
         </div>
       ) : (
         <>
           <div>
-            You are going to compile <kbd>{tzFilePath}</kbd> contract. If you want to use another
+            You are going to compile <kbd>{mainFilePath}</kbd> contract. If you want to use another
             contract, please change it in config.
           </div>
           <br />
