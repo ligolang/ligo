@@ -10,7 +10,7 @@ import WorkspaceContext from "./WorkspaceContext";
 import ProjectLoading from "./components/ProjectLoading";
 import ProjectInvalid from "./components/ProjectInvalid";
 import ProjectManager from "./ProjectManager/ProjectManager";
-import { CompilerManager } from "~/ligo-components/eth-compiler";
+import { CompilerManager } from "~/ligo-components/ligo-compiler";
 
 import actions from "./actions";
 

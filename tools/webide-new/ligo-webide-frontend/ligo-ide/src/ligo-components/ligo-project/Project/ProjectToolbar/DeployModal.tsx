@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Button, Modal } from "~/base-components/ui-components";
 import { KeypairInputSelector } from "~/base-components/keypair";
-import { networkManager } from "~/ligo-components/eth-network";
+import { networkManager } from "~/ligo-components/ligo-network";
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
 import { WebIdeApi } from "~/components/api/api";
-import { ActionParamFormGroup } from "~/ligo-components/eth-contract";
+import { ActionParamFormGroup } from "~/ligo-components/ligo-contract";
 import { actions } from "~/base-components/workspace";
 import { validAddress, validInt } from "~/components/validators";
 

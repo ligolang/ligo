@@ -5,10 +5,10 @@ let
   package = buildYarnPackage {
     GIT_PROXY = git-proxy;
     inherit src;
-    # some files in ./src/ligo-components/eth-project/Project/languages/syntaxes are symlinks
+    # some files in ./src/ligo-components/ligo-project/Project/languages/syntaxes are symlinks
     # from some adjacent file tree, so they have to be copied explicitly
     postUnpack = ''
-      cp --remove-destination ${ligo-syntaxes}/*.json $sourceRoot/src/ligo-components/eth-project/Project/languages/syntaxes
+      cp --remove-destination ${ligo-syntaxes}/*.json $sourceRoot/src/ligo-components/ligo-project/Project/languages/syntaxes
     '';
     integreties = builtins.fromJSON (builtins.readFile ./integreties.json);
     buildInputs = [ python3 pkg-config libsecret ];

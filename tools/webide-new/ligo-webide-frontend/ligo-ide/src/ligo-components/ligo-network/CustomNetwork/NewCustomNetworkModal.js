@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 
 import { Modal, DebouncedFormGroup, FormGroup, Label } from "~/base-components/ui-components";
-import headerActions from "~/ligo-components/eth-header";
+import headerActions from "~/ligo-components/ligo-header";
 import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 

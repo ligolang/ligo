@@ -8,9 +8,9 @@ import {
   NewProjectModal,
   RenameProjectModal,
 } from "~/base-components/workspace";
-import { networkManager } from "~/ligo-components/eth-network";
+import { networkManager } from "~/ligo-components/ligo-network";
 
-import { default as CustomNetworkModal } from "~/ligo-components/eth-network/CustomNetwork/CustomNetworkModal";
+import { default as CustomNetworkModal } from "~/ligo-components/ligo-network/CustomNetwork/CustomNetworkModal";
 
 export default class Header extends PureComponent {
   constructor(props) {

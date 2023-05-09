@@ -7,7 +7,7 @@ import DeployScriptModal from "./DeployScriptModal";
 import DeployModal from "./DeployModal";
 import CompileModal from "./CompileModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
-import { networkManager } from "~/ligo-components/eth-network";
+import { networkManager } from "~/ligo-components/ligo-network";
 import notification from "~/base-components/notification";
 
 import fileOps from "~/base-components/file-ops";

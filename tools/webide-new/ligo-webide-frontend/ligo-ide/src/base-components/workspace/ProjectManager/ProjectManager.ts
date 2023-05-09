@@ -10,7 +10,7 @@ import { getExamples } from "./examples";
 
 import redux from "~/base-components/redux";
 
-import compilerManager from "~/ligo-components/eth-compiler";
+import compilerManager from "~/ligo-components/ligo-compiler";
 
 import ProjectSettings from "../ProjectSettings";
 

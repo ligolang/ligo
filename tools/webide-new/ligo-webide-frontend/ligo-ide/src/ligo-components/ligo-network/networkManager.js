@@ -1,9 +1,9 @@
 import { getCachingKeys, dropByCacheKey } from "react-router-cache-route";
 import { BeaconWallet } from "@taquito/beacon-wallet";
-import headerActions from "~/ligo-components/eth-header";
+import headerActions from "~/ligo-components/ligo-header";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
-import { BrowserExtension } from "~/ligo-components/eth-sdk";
+import { BrowserExtension } from "~/ligo-components/ligo-sdk";
 
 class NetworkManager {
   constructor() {
@@ -79,7 +79,7 @@ class NetworkManager {
     if (this.browserExtension && network.chainId && this.isWallet) {
       const chain = await this.browserExtension.getChain();
       if (!chain || `${chain.name}+${chain.rpcUrl}` !== network.chainId) {
-        await this.browserExtension.ethereum.requestPermissions({
+        await this.browserExtension.tezos.requestPermissions({
           network: {
             name: network.fullName,
             rpcUrl: network.url,
@@ -181,7 +181,7 @@ class NetworkManager {
           id: "custom",
           name: "Custom",
           notification: "Switched to <b>Custom</b> network.",
-          symbol: "ETH",
+          symbol: "XTZ",
           url: "",
         },
       ])

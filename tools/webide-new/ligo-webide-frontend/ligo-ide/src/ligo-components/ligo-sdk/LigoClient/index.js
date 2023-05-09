@@ -1,7 +1,7 @@
 import { TezosToolkit } from "@taquito/taquito";
 import redux from "~/base-components/redux";
 
-export default class EthersClient {
+export default class LigoClient {
   constructor(option, browserExtension) {
     const { networkId = "", chainId, url } = option;
     this.networkId = networkId;

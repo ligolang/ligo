@@ -1,5 +1,5 @@
 import React, { PureComponent } from "react";
-import headerActions from "~/ligo-components/eth-header";
+import headerActions from "~/ligo-components/ligo-header";
 
 import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";

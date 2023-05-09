@@ -2,7 +2,7 @@ import { importKey } from "@taquito/signer";
 import keypairManager from "~/base-components/keypair";
 import kp from "../kp";
 
-export default class EthTxManager {
+export default class LigoTxManager {
   constructor(client) {
     this.client = client;
   }

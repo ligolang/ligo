@@ -4,8 +4,8 @@ import CacheRoute from "react-router-cache-route";
 import { useSelector } from "react-redux";
 
 import { actions, TerminalButton } from "~/base-components/workspace";
-import ProtocolSelector from "~/ligo-components/eth-compiler/bottombar/ProtocolSelector";
-import LigoVersion from "~/ligo-components/eth-compiler/bottombar/LigoVersion";
+import ProtocolSelector from "~/ligo-components/ligo-compiler/bottombar/ProtocolSelector";
+import LigoVersion from "~/ligo-components/ligo-compiler/bottombar/LigoVersion";
 
 const BottomBar = forwardRef((_, ref) => {
   actions.bottomBarRef = ref;

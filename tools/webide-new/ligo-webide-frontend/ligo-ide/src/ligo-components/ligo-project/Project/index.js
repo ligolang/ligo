@@ -7,7 +7,7 @@ import {
   modelSessionManager,
   defaultModeDetector,
 } from "~/base-components/code-editor";
-import compilerManager, { CompilerTerminal } from "~/ligo-components/eth-compiler";
+import compilerManager, { CompilerTerminal } from "~/ligo-components/ligo-compiler";
 
 import ProjectToolbar from "./ProjectToolbar";
 import ProjectSettingsTab from "./ProjectSettingsTab";
