@@ -5,7 +5,6 @@ import { Modal, DebouncedFormGroup, ButtonOptions, Label } from "~/base-componen
 import notification from "~/base-components/notification";
 
 import keypairManager from "./keypairManager";
-import { keypairNameValidator } from "./helper";
 import { validName } from "~/components/validators";
 
 export default class ImportKeypairModal extends PureComponent {

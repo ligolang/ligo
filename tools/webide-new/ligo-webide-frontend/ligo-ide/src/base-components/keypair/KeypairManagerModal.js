@@ -1,6 +1,5 @@
 import React, { PureComponent } from "react";
 
-import { utils } from "~/ligo-components/eth-sdk";
 import {
   Modal,
   ButtonOptions,

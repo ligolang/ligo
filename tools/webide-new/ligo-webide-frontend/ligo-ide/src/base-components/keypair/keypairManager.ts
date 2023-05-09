@@ -1,5 +1,3 @@
-import React from "react";
-// import { HttpIpcChannel } from "~/base-components/ipc";
 import redux from "~/base-components/redux";
 import notification from "~/base-components/notification";
 
@@ -12,10 +10,8 @@ type Keypair = {
 type KpType = {
   newKeypair(secretType: "privkey" | "mnemonic"): Promise<Keypair>;
   importKeypair(secretParam: string): Promise<Keypair>;
-  walletFrom(): void;
 };
 
-// TODO: use it in Redux
 type ReduxKeypair = {
   address: string;
   name: string;
@@ -24,26 +20,18 @@ type ReduxKeypair = {
 };
 
 export class KeypairManager {
-  // channel: HttpIpcChannel;
-
   eventTarget: EventTarget;
 
   _kp: KpType | null;
 
   keypairNames: { [address: string]: string };
 
-  signReqModal: React.RefObject<unknown>;
-
   constructor() {
-    // this.channel = new HttpIpcChannel("keypair");
     this.eventTarget = new EventTarget();
     // eslint-disable-next-line no-underscore-dangle
     this._kp = null;
 
     this.keypairNames = {};
-
-    this.signReqModal = React.createRef();
-    // this.channel.on("signTransaction", this.signTransaction.bind(this));
   }
 
   set kp(kp) {
@@ -64,8 +52,6 @@ export class KeypairManager {
   }
 
   static getKeypairFromRedux(networkId: string) {
-    // TODO: use it in Redux
-
     /* eslint-disable */
     const keypairsState = redux.getState().keypairs;
     const formatjs: ReduxKeypair[] = Object.values(keypairsState.toJS());
@@ -189,15 +175,6 @@ export class KeypairManager {
     }
     return keypair[key];
   }
-
-  // async signTransaction(id, tx) {
-  //   try {
-  //     const modified = await this.signReqModal.current?.openModal(tx);
-  //     this.channel.invoke("callback", id, null, modified);
-  //   } catch {
-  //     this.channel.invoke("callback", id, "User rejected the transaction.");
-  //   }
-  // }
 }
 
 export default new KeypairManager();

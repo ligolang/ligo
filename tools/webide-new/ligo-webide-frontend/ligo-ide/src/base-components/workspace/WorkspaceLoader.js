@@ -2,7 +2,6 @@ import React, { PureComponent } from "react";
 
 import { Base64 } from "js-base64";
 import { Button } from "~/base-components/ui-components";
-import platform from "~/base-components/platform";
 import redux from "~/base-components/redux";
 
 import Workspace from "./components/Workspace";
@@ -81,15 +80,6 @@ export class WorkspaceLoader extends PureComponent {
   };
 
   renderInvalidProject = (projectRoot) => {
-    if (platform.isDesktop) {
-      return (
-        <ProjectInvalid projectRoot={projectRoot || "(undefined)"}>
-          <Button color="secondary" onClick={() => this.removeProject(projectRoot)}>
-            Remove
-          </Button>
-        </ProjectInvalid>
-      );
-    }
     return <ProjectInvalid projectRoot={projectRoot || "(undefined)"} />;
   };
 

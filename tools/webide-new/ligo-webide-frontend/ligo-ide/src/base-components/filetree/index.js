@@ -6,7 +6,6 @@ import { Menu, Item, useContextMenu, Separator } from "react-contexify";
 import "react-contexify/dist/ReactContexify.min.css";
 import PropTypes from "prop-types";
 import { useHotkeys } from "react-hotkeys-hook";
-import StatusTitle from "./statusTitle";
 import { travelTree, updateErrorInfo, findChildren, findInTree, mapTree, sortFile } from "./helper";
 import { modelSessionManager } from "~/base-components/code-editor";
 import { ProjectManager } from "~/base-components/workspace/ProjectManager";
@@ -200,30 +199,7 @@ const FileTree = forwardRef(({ projectManager, onSelect, initialPath, contextMen
     removePersist();
   };
 
-  const renderTitle = (curNode, errorNode) => {
-    const matchedValue = errorNode[curNode.name];
-    if (!matchedValue) return;
-    matchedValue.type === "default"
-      ? (curNode.title = curNode.name)
-      : (curNode.title = (
-          <StatusTitle
-            title={curNode.name}
-            isLeaf={matchedValue.isLeaf}
-            showType={matchedValue.type}
-            count={matchedValue.count}
-          />
-        ));
-  };
-
-  const updateTitle = (treeData) => {
-    // TODO: it should work some day
-    // const rawDecoration = modelSessionManager.decorationMap;
-    // const hasError = Object.keys(rawDecoration).length !== 0;
-    // if (!hasError) return;
-    // const errorNode = updateErrorInfo(rawDecoration, treeData.key);
-    // travelTree(treeData, renderTitle, errorNode);
-    // setTreeData([treeData]);
-  };
+  const updateTitle = (treeData) => {};
 
   const refreshDirectory = async (data) => {
     if (data.type === "newFile" || data.type === "newDirectory") {

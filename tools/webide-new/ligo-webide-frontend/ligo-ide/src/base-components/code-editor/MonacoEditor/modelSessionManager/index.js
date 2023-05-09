@@ -259,10 +259,7 @@ class ModelSessionManager {
     if (!this.sessions[filePath]) {
       throw new Error(`File "${filePath}" is not open in the current workspace.`);
     }
-    // this._editorContainer.fileSaving(filePath)
     const content = await fileOps.readFile(filePath);
-    // this.sessions[filePath].saved = true
-    // this._editorContainer.fileSaved(filePath)
     this.sessions[filePath].refreshValue(content);
   }
 

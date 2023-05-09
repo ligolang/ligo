@@ -265,7 +265,7 @@ export default class Terminal extends PureComponent {
 
     return (
       <div
-        className={classnames("d-flex flex-column w-100 obsidians-terminal bg2", className)}
+        className={classnames("d-flex flex-column w-100 ligoide-terminal bg2", className)}
         style={{ height }}
       >
         {Toolbar}

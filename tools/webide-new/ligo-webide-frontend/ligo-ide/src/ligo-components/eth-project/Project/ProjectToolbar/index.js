@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 
 import { WorkspaceContext } from "~/base-components/workspace";
-import { ToolbarButton, DropdownToolbarButton } from "~/base-components/ui-components";
+import { ToolbarButton } from "~/base-components/ui-components";
 import keypairManager from "~/base-components/keypair";
 import DeployScriptModal from "./DeployScriptModal";
 import DeployModal from "./DeployModal";
@@ -10,8 +10,6 @@ import ExpressionManagerModal from "./ExpressionManagerModal";
 import { networkManager } from "~/ligo-components/eth-network";
 import notification from "~/base-components/notification";
 
-import DeployButton from "./DeployButton";
-import SignRequestModal from "./SignRequestModal";
 import fileOps from "~/base-components/file-ops";
 
 export default class ProjectToolbar extends PureComponent {
@@ -135,7 +133,6 @@ export default class ProjectToolbar extends PureComponent {
           onClick={() => projectManager.openProjectSettings()}
           isExpanded={isExpanded}
         />
-        <SignRequestModal ref={keypairManager.signReqModal} />
         <CompileModal
           modalRef={this.compileModalRef}
           tzFilePath={this.state.tzFilePath}

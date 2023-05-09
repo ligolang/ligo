@@ -20,8 +20,6 @@ export const registerHandlers = ({ newFile, newFolder, rename, deleteFile, openF
 const contextMenu = [
   { text: "New File", onClick: (node) => handlers.newFile(node) },
   { text: "New Folder", onClick: (node) => handlers.newFolder(node) },
-  // null,
-  // { text: 'Download' },
   null,
   { text: "Copy Path", onClick: copyPath },
   null,

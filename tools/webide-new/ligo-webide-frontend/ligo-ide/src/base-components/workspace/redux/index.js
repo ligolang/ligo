@@ -87,18 +87,5 @@ export default {
     UPDATE_REMOTE_PROJECT_LIST: {
       reducer: (state, { payload }) => state.set("remote", Immutable.fromJS(payload)),
     },
-    // UPDATE_PROJECT_PATH: {
-    //   reducer: (state, { payload }) => {
-    //     const index = findIndex(state, payload.id, 'local')
-    //     if (index === -1) {
-    //       return state
-    //     }
-    //     return state
-    //       .setIn(['local', index, 'id'], btoa(payload.newPath))
-    //       .setIn(['local', index, 'path'], payload.newPath)
-    //       .setIn(['local', index, 'name'], path.parse(payload.newPath).base)
-    //       .update('local', data => data.filter((d, i) => i === index || d.get('path') !== payload.newPath))
-    //   }
-    // },
   },
 };

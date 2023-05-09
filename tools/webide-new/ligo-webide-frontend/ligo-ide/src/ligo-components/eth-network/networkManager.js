@@ -1,6 +1,5 @@
 import { getCachingKeys, dropByCacheKey } from "react-router-cache-route";
 import { BeaconWallet } from "@taquito/beacon-wallet";
-import platform from "~/base-components/platform";
 import headerActions from "~/ligo-components/eth-header";
 import notification from "~/base-components/notification";
 import redux from "~/base-components/redux";
@@ -62,39 +61,6 @@ class NetworkManager {
     return sdksdk;
   }
 
-  async updateSdk(params) {
-    this._sdk = this.newSdk({ ...this.network, ...params });
-    await new Promise((resolve) => {
-      const h = setInterval(() => {
-        if (!this.sdk) {
-          clearInterval(h);
-          return;
-        }
-        this.sdk
-          .getStatus()
-          .then(() => {
-            clearInterval(h);
-            resolve();
-          })
-          .catch(() => null);
-      }, 1000);
-    });
-  }
-
-  async disposeSdk(params) {
-    this._sdk && this._sdk.dispose();
-    if (this.networkId === "dev") {
-      this._sdk = null;
-    }
-    if (this.onSdkDisposedCallback) {
-      this.onSdkDisposedCallback();
-    }
-  }
-
-  onSdkDisposed(callback) {
-    this.onSdkDisposedCallback = callback;
-  }
-
   hasDuplicatedNetwork(rpcUrl) {
     return !this.networks.every((net) => net.url !== rpcUrl);
   }
@@ -122,55 +88,12 @@ class NetworkManager {
         });
         const acc = await this.browserExtension.currentAccount;
         redux.dispatch("UPDATE_UI_STATE", { signer: acc });
-        // try {
-        //   await window.ethereum.request({
-        //     method: "wallet_switchEthereumChain",
-        //     params: [
-        //       {
-        //         chainId: hexChainId,
-        //       },
-        //     ],
-        //   });
-        // } catch (e) {
-        //   if (e.code === 4902) {
-        //     await window.ethereum.request({
-        //       method: "wallet_addEthereumChain",
-        //       params: [
-        //         {
-        //           chainId: hexChainId,
-        //           chainName: network.fullName,
-        //           rpcUrls: [network.url],
-        //         },
-        //       ],
-        //     });
-        //     await window.ethereum.request({
-        //       method: "wallet_switchEthereumChain",
-        //       params: [
-        //         {
-        //           chainId: hexChainId,
-        //         },
-        //       ],
-        //     });
-        //   }
-        // }
       }
     }
-    // if (this.browserExtension && !force) {
-    //   if (redux.getState().network) {
-    //     notification.info(`Please use ${this.browserExtension.name} to switch the network.`);
-    //   }
-    //   return;
-    // }
+
     if (!network || (network.id === redux.getState().network && this._sdk)) {
       return;
     }
-    // if (process.env.DEPLOY === "bsn" && network.projectKey) {
-    //   notification.warning(
-    //     `${network.name}`,
-    //     `The current network ${network.name} enables a project key, please turn it off in the BSN portal.`,
-    //     5
-    //   );
-    // }
     const cachingKeys = getCachingKeys();
     cachingKeys
       .filter((key) => key.startsWith("contract-") || key.startsWith("account-"))

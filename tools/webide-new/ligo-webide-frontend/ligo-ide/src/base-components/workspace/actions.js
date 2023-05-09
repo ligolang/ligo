@@ -86,7 +86,6 @@ export class ProjectActions {
     this.bottomBarRef.current.updatePosition(pos);
   }
 
-  // TODO remove project from local storage
   async removeProject({ id, name, type }) {
     const selected = redux.getState().projects.get("selected");
     if (selected && selected.get("id") === id) {

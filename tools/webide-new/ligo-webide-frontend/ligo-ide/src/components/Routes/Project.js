@@ -30,7 +30,7 @@ class ProjectWithProps extends PureComponent {
 
     return (
       <WorkspaceLoader
-        theme="obsidians"
+        theme="ligoide"
         projectRoot={projectRoot}
         type={type}
         signer={uiState.get("signer")}

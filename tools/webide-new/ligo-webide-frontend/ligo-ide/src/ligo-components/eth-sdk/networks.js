@@ -37,6 +37,6 @@ export const customNetworks = [
     icon: "fas fa-edit",
     notification: "Switched to <b>Custom</b> network.",
     url: "",
-    symbol: "ETH",
+    symbol: "XTZ",
   },
 ];

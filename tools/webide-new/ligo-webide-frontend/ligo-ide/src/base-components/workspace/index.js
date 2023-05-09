@@ -3,7 +3,6 @@ import "./styles.scss";
 export { WorkspaceLoader } from "./WorkspaceLoader";
 export { default as WorkspaceContext } from "./WorkspaceContext";
 
-export { default as TutorialModal } from "./components/TutorialModal";
 export { default as NewProjectModal } from "./components/NewProjectModal";
 export { default as RenameProjectModal } from "./components/RenameProjectModal";
 export { default as OpenProjectModal } from "./components/OpenProjectModal";

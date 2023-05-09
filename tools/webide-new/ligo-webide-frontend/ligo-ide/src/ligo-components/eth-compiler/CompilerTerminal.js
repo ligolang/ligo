@@ -5,7 +5,6 @@ import { Tabs, TabContent, TabPane } from "~/base-components/ui-components";
 import Terminal from "~/base-components/terminal";
 
 import { CompilerManager } from "./compilerManager";
-import TruffleTerminal from "./TruffleTerminal";
 
 export default class CompilerTerminal extends PureComponent {
   constructor(props) {
@@ -18,36 +17,19 @@ export default class CompilerTerminal extends PureComponent {
     this.tabs = React.createRef();
 
     this.initialTabs = [];
-    if (props.projectManager.remote) {
-      this.initialTabs.push({
-        key: "terminal",
-        text: (
-          <span key="compiler-terminal">
-            <i className="fas fa-hammer mr-1" />
-            Compiler
-          </span>
-        ),
-        clickCallback: () => {
-          CompilerManager.terminal.inputRef.current.focus();
-        },
-      });
-    } else {
-      this.initialTabs.push({
-        key: "terminal",
-        text: (
-          <span key="compiler-terminal">
-            <i className="fas fa-folder-open mr-1" />
-            Project
-          </span>
-        ),
-        clickCallback: () => {
-          CompilerManager.terminal.inputRef.current.focus();
-        },
-      });
-      if (process.env.PROJECT === "eth") {
-        // this.initialTabs.push({ key: 'truffle', text: <span key='compiler-truffle'><i className='fas fa-cookie mr-1' />Truffle</span> })
-      }
-    }
+
+    this.initialTabs.push({
+      key: "terminal",
+      text: (
+        <span key="compiler-terminal">
+          <i className="fas fa-folder-open mr-1" />
+          Project
+        </span>
+      ),
+      clickCallback: () => {
+        CompilerManager.terminal.inputRef.current.focus();
+      },
+    });
   }
 
   switchCompilerConsole = (key) => {
@@ -89,9 +71,6 @@ export default class CompilerTerminal extends PureComponent {
               logId="compiler-terminal"
               input={!projectManager.remote}
             />
-          </TabPane>
-          <TabPane className="h-100 w-100" tabId="truffle">
-            <TruffleTerminal active={active && activeTab === "truffle"} cwd={cwd} />
           </TabPane>
         </TabContent>
       </Tabs>
