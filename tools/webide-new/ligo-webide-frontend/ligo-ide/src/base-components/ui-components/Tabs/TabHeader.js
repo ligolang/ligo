@@ -52,7 +52,6 @@ const cardTarget = {
   },
   drop(props, monitor) {
     if (monitor.canDrop()) {
-      props.onSelectTab(props.tab);
     }
   },
 };

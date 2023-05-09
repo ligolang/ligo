@@ -58,7 +58,7 @@ const DeployModal: React.FC<DeployModalProps> = ({
         })
         .catch((e) => {
           if (e instanceof Error) {
-            notification.error("Deployment error", e.message);
+            notification.warning("Deployment warning", e.message);
           } else {
             console.error(e);
           }

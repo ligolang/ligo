@@ -96,9 +96,6 @@ const ExpressionManagerModal = ({
     )
       .then((resp) => setResult(resp.data))
       .catch((e: Error) => {
-        modalRef.current?.closeModal().catch((me: Error) => {
-          console.error(me);
-        });
         notification.error(
           managerType === "dryRun" ? "Dry Run Error" : "Compile Expression Error",
           e.message

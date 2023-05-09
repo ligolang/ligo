@@ -121,7 +121,7 @@ export default class MonacoEditor extends Component {
       fontFamily: editorConfig.fontFamily || "Hack",
       fontSize: editorConfig.fontSize || "13px",
       fontLigatures: Boolean(editorConfig.ligatures),
-      scrollBeyondLastLine: false,
+      scrollBeyondLastLine: true,
       glyphMargin: true,
       readOnly,
       domReadOnly: readOnly,

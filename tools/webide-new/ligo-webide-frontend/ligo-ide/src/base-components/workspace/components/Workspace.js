@@ -223,7 +223,6 @@ export default class Workspace extends Component {
             this.throttledDispatchResizeEvent();
           }}
           onDragFinished={this.onDragTerminal}
-          style={{ overflow: undefined }}
         >
           <CodeEditorCollection
             ref={this.codeEditor}
