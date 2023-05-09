@@ -205,3 +205,47 @@ let%expect_test _ =
                   ^^^^^
 
      Module "B.A" not found. |}]
+
+let pwd = Caml.Sys.getcwd ()
+let () = Caml.Sys.chdir "../../test/contracts/build/"
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "contract"
+    ; "test_libraries/src/main.mligo"
+    ; "--library"
+    ; "test_libraries/lib/parameter,test_libraries/lib/storage"
+    ];
+  [%expect
+    {|
+    { parameter (or (or (nat %a) (int %b)) (or (string %c) (bool %d))) ;
+      storage nat ;
+      code { UNPAIR ;
+             IF_LEFT
+               { IF_LEFT { ADD } { DROP } }
+               { IF_LEFT { DROP } { DROP } } ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; "test_libraries/src/main.mligo"
+    ; "Parameter.initial_parameter ()"
+    ; "--library"
+    ; "test_libraries/lib/parameter,test_libraries/lib/storage"
+    ];
+  [%expect {|
+    (Right (Left "Hello")) |}];
+  run_ligo_good
+    [ "compile"
+    ; "storage"
+    ; "test_libraries/src/main.mligo"
+    ; "Storage.initial_storage ()"
+    ; "--library"
+    ; "test_libraries/lib/parameter,test_libraries/lib/storage"
+    ];
+  [%expect {|
+    42 |}]
+
+let () = Caml.Sys.chdir pwd
