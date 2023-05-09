@@ -248,7 +248,7 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       AST.ForOfLoop{} -> False
       AST.Seq{} -> False
       AST.Lambda{} -> True
-      AST.RecordUpd{} -> False
+      AST.RecordUpd{} -> True
       AST.CodeInj{} -> False
       AST.Paren e -> couldBeLastInSomeScope e
     couldBeLastInSomeScope node
