@@ -3,7 +3,7 @@ module Helpers = Ligo_compile.Helpers
 module Trace = Simple_utils.Trace
 module Raw_options = Compiler_options.Raw_options
 
-let contract source_file new_syntax syntax =
+let contract source_file new_syntax syntax libraries =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
       let syntax =
@@ -13,7 +13,9 @@ let contract source_file new_syntax syntax =
           (Syntax_name syntax)
           (Some source_file)
       in
-      let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
+      let options =
+        Compiler_options.make ~raw_options:(Raw_options.make ~libraries ()) ~syntax ()
+      in
       let meta = Compile.Of_source.extract_meta syntax in
       let c_unit, _ =
         Compile.Of_source.preprocess_file
@@ -33,14 +35,16 @@ let contract source_file new_syntax syntax =
       Decompile.Of_unified.decompile unified new_syntax, [] )
 
 
-let expression expression new_syntax syntax =
+let expression expression new_syntax syntax libraries =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
       (* Compiling chain *)
       let syntax =
         Syntax.of_string_opt ~raise ~support_pascaligo:true (Syntax_name syntax) None
       in
-      let options = Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax () in
+      let options =
+        Compiler_options.make ~raw_options:(Raw_options.make ~libraries ()) ~syntax ()
+      in
       let meta = Compile.Of_source.make_meta syntax in
       let c_unit_expr, _ =
         Compile.Of_source.preprocess_string

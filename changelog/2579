@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nThe `--library` CLI option is now supported in all relevant LIGO commands\\n\\n"
+merge_request: '2579'
+title: "Add `--library` CLI option to commands"
+type: added
+            
