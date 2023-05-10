@@ -1,18 +1,24 @@
 module Errors = Passes.Errors
+module Selector = Passes.Pass_type.Selector
 
-(* [nanopasses_program_until] only execute the pass list until it reaches the [stop_before]
-   pass (it usually correspond to the module name of that pass)
+(* [execute_nanopasses] only execute the pass list until it reaches the [stop_before]
+   pass (corresponds to the module name of that pass)
+   [disable_initial_check] disable the pass responsible to prevent initial nodes
+   to be present in the initial value
 *)
-val nanopasses_program_until
+val execute_nanopasses
   :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
+  -> sort:'a Selector.t
   -> ?stop_before:string
-  -> Ast_unified.program
-  -> Ast_unified.program
+  -> ?disable_initial_check:bool
+  -> 'a
+  -> 'a
 
 val compile_program
   :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
+  -> ?stop_before:string
   -> Ast_unified.program
   -> Ast_core.program
 

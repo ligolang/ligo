@@ -5,9 +5,12 @@ open Errors
 module Location = Simple_utils.Location
 
 (* note: As we do not support typed pattern in the checker yet.
-   this pass aims to only restrict them to typed variable pattern
-   The type is ignored when non-propagatable
-*)
+  this pass aims to only restrict them to typed variable pattern
+  The type is ignored when non-propagatable
+  *)
+include Flag.No_arg ()
+
+let name = __MODULE__
 
 let annot_if_pvar : ty_expr -> pattern -> pattern =
  fun ty p ->
@@ -16,7 +19,7 @@ let annot_if_pvar : ty_expr -> pattern -> pattern =
   | None -> p
 
 
-let compile =
+let compile ~raise:_ =
   let pattern : _ pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -61,10 +64,10 @@ let compile =
       | _ -> p')
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
-let decompile =
+let decompile ~raise:_ =
   let pattern : _ pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -78,7 +81,7 @@ let decompile =
       p_typed ~loc ty pvar
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
 let reduction ~raise =
@@ -88,7 +91,3 @@ let reduction ~raise =
       | { wrap_content = P_typed _; _ } -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
-
-
-let pass ~raise =
-  morph ~name:__MODULE__ ~compile ~decompile ~reduction_check:(reduction ~raise)

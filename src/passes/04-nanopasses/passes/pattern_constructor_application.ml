@@ -1,3 +1,10 @@
+open Ast_unified
+open Pass_type
+open Simple_utils.Trace
+open Simple_utils
+open Errors
+module Location = Simple_utils.Location
+
 (**
   The goal of this pass is to do :
   {[
@@ -24,15 +31,14 @@
     for such a pass. And the absence of [P_ctor] is checked directly
     in this pass' reduction check.
 *)
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
 
-open Ast_unified
-open Pass_type
-open Simple_utils.Trace
-open Simple_utils
-open Errors
-module Location = Simple_utils.Location
+let name = __MODULE__
 
-let compile ~syntax =
+let compile ~raise:_ =
+  let syntax = get_flag () in
   let pattern : _ pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -49,10 +55,10 @@ let compile ~syntax =
       | _ -> failwith "impossible: parsing invariant")
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
-let decompile =
+let decompile ~raise:_ =
   let pattern : _ pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -60,7 +66,7 @@ let decompile =
     | P_variant (constructor, p_opt) -> p_app ~loc (p_ctor ~loc constructor) p_opt
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
 let reduction ~raise =
@@ -71,11 +77,3 @@ let reduction ~raise =
         raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
-
-
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~syntax)
-    ~decompile
-    ~reduction_check:(reduction ~raise)

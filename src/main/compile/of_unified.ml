@@ -8,7 +8,8 @@ let compile ~raise ~options (p : program) : Ast_core.program =
 
 
 let compile_until ~raise ~options ?stop_before (p : program) : Ast_unified.program =
-  trace ~raise nanopasses_tracer @@ nanopasses_program_until ~options ?stop_before p
+  trace ~raise nanopasses_tracer
+  @@ execute_nanopasses ~options ~sort:Selector.program ?stop_before p
 
 
 let compile_expression

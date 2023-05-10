@@ -1,3 +1,8 @@
+open Ast_unified
+open Pass_type
+open Simple_utils.Trace
+open Errors
+module Location = Simple_utils.Location
 (*
   After the [Constructor_application] pass,
   there are sill remaining [E_constr]/[P_ctor],
@@ -8,13 +13,11 @@
   [E_constr] should be completely removed after this pass.
 *)
 
-open Ast_unified
-open Pass_type
-open Simple_utils.Trace
-open Errors
-module Location = Simple_utils.Location
+let name = __MODULE__
 
-let compile =
+include Flag.No_arg ()
+
+let compile ~raise:_ =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -31,10 +34,10 @@ let compile =
     | P_ctor constructor -> p_variant ~loc constructor None
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with expr; pattern }
+  Fold { idle_fold with expr; pattern }
 
 
-let decompile =
+let decompile ~raise:_ =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -52,7 +55,7 @@ let decompile =
     | P_variant (x, None) -> p_ctor ~loc x
     | p -> make_p ~loc p
   in
-  `Cata { idle_cata_pass with expr; pattern }
+  Fold { idle_fold with expr; pattern }
 
 
 let reduction ~raise =
@@ -66,7 +69,3 @@ let reduction ~raise =
       | { wrap_content = P_ctor _; _ } -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
-
-
-let pass ~raise =
-  morph ~name:__MODULE__ ~compile ~decompile ~reduction_check:(reduction ~raise)

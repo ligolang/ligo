@@ -81,9 +81,7 @@ and expr : (CST.expr, unit, CST.pattern, unit, unit) AST.expression_ -> CST.expr
       | Verbatim v -> Verbatim (ghost_verbatim v))
   | E_literal (Literal_mutez x) ->
     CST.EAnnot
-      (w
-      @@ (CST.EArith (Int (ghost_int x)), ghost_as, CST.TVar (ghost_ident "tez"))
-      )
+      (w @@ (CST.EArith (Int (ghost_int x)), ghost_as, CST.TVar (ghost_ident "tez")))
   | _ ->
     failwith
       (Format.asprintf

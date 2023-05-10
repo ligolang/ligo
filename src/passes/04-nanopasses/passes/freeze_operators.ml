@@ -3,6 +3,12 @@ open Ast_unified
 open Pass_type
 open Errors
 
+(* morph binary and unary operators/keywords to ligo internal constants 
+  each syntax has its own set of keywords *)
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
+
 let todo_error operator =
   failwith
     (Format.asprintf
@@ -92,7 +98,8 @@ let get_operator_of_constant mapping ~syntax k : Operators.op option =
   List.Assoc.find m ~equal:Ligo_prim.Constant.equal_constant' k
 
 
-let compile ~syntax =
+let compile ~raise:_ =
+  let syntax = get_flag () in
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -110,7 +117,7 @@ let compile ~syntax =
       | None -> todo_error operator)
     | x -> make_e ~loc x
   in
-  `Cata { idle_cata_pass with expr = pass_expr }
+  Fold { idle_fold with expr = pass_expr }
 
 
 let reduction ~raise =
@@ -123,15 +130,16 @@ let reduction ~raise =
   }
 
 
-let decompile ~syntax =
+let decompile ~raise:_ =
+  let syntax = get_flag () in
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
     | E_constant { cons_name = C_SUB; arguments = [ left; right ] } ->
       (* temporary:
-        until after protocol lima (emit C_POLYMORPHIC_SUB in fuzz_ast_aggregated.ml)
-      *)
+          until after protocol lima (emit C_POLYMORPHIC_SUB in fuzz_ast_aggregated.ml)
+        *)
       (match get_operator_of_constant mapping_binop ~syntax C_POLYMORPHIC_SUB with
       | Some c -> e_binary_op ~loc { operator = Location.wrap ~loc c; left; right }
       | None -> make_e ~loc e.wrap_content)
@@ -145,54 +153,22 @@ let decompile ~syntax =
       | None -> make_e ~loc e.wrap_content)
     | x -> make_e ~loc x
   in
-  `Cata { idle_cata_pass with expr = pass_expr }
+  Fold { idle_fold with expr = pass_expr }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~syntax)
-    ~decompile:(decompile ~syntax)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
 
+open Unit_test_helpers.Expr
 
-open Unit_test_helpers
+let flag_bef = !flag
+let () = flag := Some (true, PascaLIGO)
 
 let%expect_test "compile" =
-  {|
-  ((PE_declaration
-    (D_const (
-      (pattern (P_var x))
-      (let_rhs
-        (E_binary_op ((operator SLASH) (left (E_variable x)) (right (E_variable y)))))))))
-  |}
-  |-> pass ~raise ~syntax:PascaLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_const
-       ((pattern (P_var x))
-        (let_rhs
-         (E_constant
-          ((cons_name C_DIV) (arguments ((E_variable x) (E_variable y))))))))))
-    |}]
+  {| (E_binary_op ((operator SLASH) (left (EXPR1)) (right (EXPR2)))) |} |-> compile;
+  [%expect {| (E_constant ((cons_name C_DIV) (arguments ((EXPR1) (EXPR2))))) |}]
 
 let%expect_test "decompile" =
-  {|
-  ((PE_declaration
-  (D_const
-    ((pattern (P_var x))
-      (let_rhs
-        (E_constant
-          ((cons_name C_DIV) (arguments ((E_variable x) (E_variable y)))))))))) 
-  |}
-  <-| pass ~raise ~syntax:PascaLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_const
-       ((pattern (P_var x))
-        (let_rhs
-         (E_binary_op
-          ((operator SLASH) (left (E_variable x)) (right (E_variable y)))))))))
-    |}]
+  {| (E_constant ((cons_name C_DIV) (arguments ((EXPR1) (EXPR2))))) |} |-> decompile;
+  [%expect {| (E_binary_op ((operator SLASH) (left (EXPR1)) (right (EXPR2)))) |}]
+
+let () = flag := flag_bef

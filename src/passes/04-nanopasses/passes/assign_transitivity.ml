@@ -3,6 +3,7 @@ open Pass_type
 open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let computation ~loc v r op =
   let open Assign_chainable in
@@ -29,7 +30,7 @@ let computation ~loc v r op =
   assign res
 
 
-let compile =
+let compile ~raise:_ =
   let expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -39,7 +40,7 @@ let compile =
       let_unit_in assignment returned
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -52,9 +53,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

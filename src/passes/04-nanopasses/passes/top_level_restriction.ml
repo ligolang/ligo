@@ -5,6 +5,13 @@ open Simple_utils.Function
 open Errors
 module Location = Simple_utils.Location
 
+(* Restrictions at top-level :
+   - variable declaration (warning)
+   - statement (error) *)
+let name = __MODULE__
+
+include Flag.No_arg ()
+
 let rec silent_let_to_const ~raise d =
   let loc = get_d_loc d in
   match get_d d with
@@ -27,12 +34,8 @@ let compile ~raise =
   let program : _ program_ -> program =
     make_prg <@ List.map ~f:(program_entry <@ get_pe)
   in
-  `Cata { idle_cata_pass with program_entry; program }
+  Fold { idle_fold with program_entry; program }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:Iter.defaults
+let decompile ~raise:_ = Nothing
+let reduction ~raise:_ = Iter.defaults

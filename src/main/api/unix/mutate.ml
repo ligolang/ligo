@@ -10,11 +10,9 @@ module Raw_options = Compiler_options.Raw_options
   then `Generator_random
   else raise.error @@ Main_errors.main_invalid_generator_name s *)
 
-
 let mutate_cst (raw_options : Raw_options.t) source_file seed =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
-
       (* let generator = generator_to_variant ~raise raw_options.generator in
       let get_module =
         match generator with
@@ -80,9 +78,7 @@ let mutate_cst (raw_options : Raw_options.t) source_file seed =
             Parsing.Pascaligo.Pretty.default_environment
             mutated_prg
         in *)
-
-        ignore (raw_options, source_file, seed, raise);
-        let buffer = Buffer.create 50 in
-        Buffer.add_string buffer "Fuzzing disabled";
-
-        buffer, [] )
+      ignore (raw_options, source_file, seed, raise);
+      let buffer = Buffer.create 50 in
+      Buffer.add_string buffer "Fuzzing disabled";
+      buffer, [] )

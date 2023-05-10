@@ -1,20 +1,17 @@
-(* 
-Certain types should translate directly to specific Michelson types
-and thus have their own AST node. (e.g. michelson_or, sapling_state).
-
-This pass transforms :
-  T_app ( "michelson_or" | "michelson_pair" | "sapling_state" | "sapling_transaction" )
-Into a dedicated node :
-  T_Michelson_pair | T_Michelson_pair | T_Sapling_state | T_Sapling_transaction
-
-needs  : - t_app_pascaligo -->
-*)
-
 open Ast_unified
 open Pass_type
 open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
+
+(* 
+    Certain types should translate directly to specific Michelson types
+    and thus have their own AST node. (e.g. michelson_or, michelson_pair).
+  *)
+
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
 
 let t_michelson_or ~loc (l : ty_expr) l_ann (r : ty_expr) r_ann =
   t_sum_raw
@@ -29,7 +26,8 @@ let t_michelson_pair ~loc l l_ann r r_ann =
     (Non_linear_rows.make [ Label "0", Some l, [ l_ann ]; Label "1", Some r, [ r_ann ] ])
 
 
-let compile ~raise ~syntax =
+let compile ~raise =
+  let syntax = get_flag () in
   let pass_ty : ty_expr ty_expr_ -> ty_expr =
    fun t ->
     let loc = t.location in
@@ -65,7 +63,7 @@ let compile ~raise ~syntax =
       | _ -> return_self ())
     | _ -> return_self ()
   in
-  `Cata { idle_cata_pass with ty_expr = pass_ty }
+  Fold { idle_fold with ty_expr = pass_ty }
 
 
 let reduction ~raise =
@@ -78,8 +76,6 @@ let reduction ~raise =
       | T_var tv ->
         if Ty_variable.is_name tv "michelson_or"
            || Ty_variable.is_name tv "michelson_pair"
-           (* || Ty_variable.is_name tv "sapling_state"
-           || Ty_variable.is_name tv "sapling_transaction" *)
         then raise.error (wrong_reduction __MODULE__)
         else ()
       | _ -> ())
@@ -88,135 +84,70 @@ let reduction ~raise =
   { Iter.defaults with ty_expr }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
 
+open Unit_test_helpers.Ty_expr
 
-open Unit_test_helpers
+let flag_bef = !flag
+let () = flag := Some (true, PascaLIGO)
 
 let%expect_test "compile_michelson_pair" =
   {|
-  ((PE_declaration
-    (D_type
-      ((name t_string)
-        (type_expr
-          (T_app
-            ((constr (T_var michelson_pair))
-              (type_args
-                ((T_var int) (T_string w) (T_var nat) (T_string v))))))))))
+      (T_app
+        ((constr (T_var michelson_pair))
+         (type_args
+           ((TY_EXPR1) (T_string w) (TY_EXPR2) (T_string v)))))
   |}
-  |-> pass ~raise ~syntax:Syntax_types.CameLIGO;
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_type
-       ((name t_string)
-        (type_expr
-         (T_record_raw
-          (((Label 0)
-            ((associated_type ((T_var int)))
-             (attributes (((key annot) (value (w))))) (decl_pos 0)))
-           ((Label 1)
-            ((associated_type ((T_var nat)))
-             (attributes (((key annot) (value (v))))) (decl_pos 1)))))))))) |}]
+        (T_record_raw
+         (((Label 0)
+           ((associated_type ((TY_EXPR1))) (attributes (((key annot) (value w))))
+            (decl_pos 0)))
+          ((Label 1)
+           ((associated_type ((TY_EXPR2))) (attributes (((key annot) (value v))))
+            (decl_pos 1))))) |}]
 
 let%expect_test "compile_michelson_or" =
   {|
-  ((PE_declaration
-     (D_type
-       ((name t_string)
-         (type_expr
-           (T_app
-             ((constr (T_var michelson_or))
-               (type_args
-                 ((T_var int) (T_string w) (T_var nat) (T_string v))))))))))
+      (T_app
+        ((constr (T_var michelson_or))
+         (type_args
+           ((TY_EXPR1) (T_string w) (TY_EXPR2) (T_string v)))))
   |}
-  |-> pass ~raise ~syntax:Syntax_types.CameLIGO;
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_type
-       ((name t_string)
-        (type_expr
-         (T_sum_raw
-          (((Label M_left)
-            ((associated_type ((T_var int)))
-             (attributes (((key annot) (value (w))))) (decl_pos 0)))
-           ((Label M_right)
-            ((associated_type ((T_var nat)))
-             (attributes (((key annot) (value (v))))) (decl_pos 1)))))))))) |}]
-
-let%expect_test "compile_sapling_state" =
-  {|
-  ((PE_declaration
-  (D_type
-    ((name my_sapling)
-      (type_expr
-        (T_app
-          ((constr (T_var sapling_state))
-            (type_args ((T_int 8 8))))))))))
-  |}
-  |-> pass ~raise ~syntax:Syntax_types.CameLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_type
-       ((name my_sapling)
-        (type_expr
-         (T_app ((constr (T_var sapling_state)) (type_args ((T_int 8 8)))))))))) |}]
-
-let%expect_test "compile_sapling_transaction" =
-  {|
-  ((PE_declaration
-     (D_type
-       ((name my_sapling)
-         (type_expr
-           (T_app
-             ((constr (T_var sapling_transaction))
-               (type_args ((T_int 12 12))))))))))
-  |}
-  |-> pass ~raise ~syntax:Syntax_types.CameLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_type
-       ((name my_sapling)
-        (type_expr
-         (T_app
-          ((constr (T_var sapling_transaction)) (type_args ((T_int 12 12)))))))))) |}]
+        (T_sum_raw
+         (((Label M_left)
+           ((associated_type ((TY_EXPR1))) (attributes (((key annot) (value w))))
+            (decl_pos 0)))
+          ((Label M_right)
+           ((associated_type ((TY_EXPR2))) (attributes (((key annot) (value v))))
+            (decl_pos 1))))) |}]
 
 let%expect_test "compile_michelson_or_wrong_arity" =
   {|
-  ((PE_declaration
-     (D_type
-       ((name t_string)
-         (type_expr
-           (T_app
-             ((constr (T_var michelson_or))
-               (type_args
-                 ((T_string w) (T_var nat) (T_string v))))))))))
+    (T_app
+      ((constr (T_var michelson_or))
+       (type_args ((T_string w) (TY_EXPR) (T_string v)))))
   |}
-  |->! pass ~syntax:Syntax_types.CameLIGO;
+  |->! compile;
   [%expect
     {|
-    Err : (Small_passes_michelson_type_wrong_arity
-              (michelson_or (T_var michelson_or))) |}]
+        Err : (Small_passes_michelson_type_wrong_arity
+                  (michelson_or (T_var michelson_or))) |}]
 
 let%expect_test "compile_michelson_or_type_wrong" =
   {|
-  ((PE_declaration
-     (D_type
-       ((name t_string)
-         (type_expr
-           (T_app
-             ((constr (T_var michelson_or))
-               (type_args
-                 ((T_var int) (T_var tez) (T_var nat) (T_string v))))))))))
+    (T_app
+      ((constr (T_var michelson_or))
+       (type_args ((T_var int) (TY_EXPR1) (TY_EXPR2) (T_string v)))))
   |}
-  |->! pass ~syntax:Syntax_types.CameLIGO;
+  |->! compile;
   [%expect
     {| Err : (Small_passes_michelson_type_wrong (michelson_or (T_var michelson_or))) |}]
+
+let () = flag := flag_bef

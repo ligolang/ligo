@@ -2,19 +2,19 @@ open Var
 
 module External = struct
   type t =
-  | Bytes
-  | Int
-  | Int_lima
-  | Ediv
-  | And
-  | Or
-  | Xor
-  | Lsl
-  | Lsr
-  | Map_find_opt
-  | Map_add
-  | Map_remove
-  | Map_remove_value
+    | Bytes
+    | Int
+    | Int_lima
+    | Ediv
+    | And
+    | Or
+    | Xor
+    | Lsl
+    | Lsr
+    | Map_find_opt
+    | Map_add
+    | Map_remove
+    | Map_remove_value
   [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
 
   let to_string = function
@@ -119,6 +119,7 @@ let to_string = function
   | Int64 -> "int64"
   | Views -> "views"
 
+
 let of_string_opt = function
   | "string" -> Some String
   | "bytes" -> Some Bytes
@@ -174,6 +175,7 @@ let of_string_opt = function
   | "external_map_remove_value" -> Some (External Map_remove_value)
   | _ -> None
 
+
 let to_arity = function
   | String -> 0
   | Bytes -> 0
@@ -227,6 +229,7 @@ let to_arity = function
   | Gen -> 1
   | Int64 -> 0
   | Views -> 1
+
 
 let string = String
 let bytes = Bytes
@@ -319,6 +322,7 @@ let v_external_lsr = Type_var.of_input_var (to_string @@ External Lsr)
 let v_external_map_find_opt = Type_var.of_input_var (to_string @@ External Map_find_opt)
 let v_external_map_add = Type_var.of_input_var (to_string @@ External Map_add)
 let v_external_map_remove = Type_var.of_input_var (to_string @@ External Map_remove)
+
 let v_external_map_remove_value =
   Type_var.of_input_var (to_string @@ External Map_remove_value)
 

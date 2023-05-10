@@ -3,6 +3,7 @@ open Pass_type
 open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let compile ~raise =
   let declaration : _ declaration_ -> declaration =
@@ -27,7 +28,7 @@ let compile ~raise =
         d_module ~loc { name = alias; mod_expr })
     | d -> make_d ~loc d
   in
-  `Cata { idle_cata_pass with declaration }
+  Fold { idle_fold with declaration }
 
 
 let reduction ~raise =
@@ -39,9 +40,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing

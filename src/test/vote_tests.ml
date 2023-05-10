@@ -20,7 +20,9 @@ let init_storage name =
 
 let yea =
   let element =
-    e_applied_constructor ~loc { constructor = Label.of_string "Yea"; element = e_unit ~loc }
+    e_applied_constructor
+      ~loc
+      { constructor = Label.of_string "Yea"; element = e_unit ~loc }
   in
   e_applied_constructor ~loc { constructor = Label.of_string "Vote"; element }
 

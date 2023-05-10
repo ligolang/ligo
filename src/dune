@@ -8,13 +8,16 @@
  (libraries Preprocessor simple-utils tezos-micheline ligo_main))
 
 (rule
- (targets platform-specific-compiler-flags.sexp platform-specific-linker-flags.sexp)
+ (targets
+  platform-specific-compiler-flags.sexp
+  platform-specific-linker-flags.sexp)
  (action
   (run ../configurator/configurator.exe)))
 
 (env
  (dev
-  (link_flags (:include platform-specific-linker-flags.sexp))
+  (link_flags
+   (:include platform-specific-linker-flags.sexp))
   (flags
    (:standard
     -w
@@ -23,28 +26,33 @@
     -strict-formats
     -short-paths
     -keep-locs
-    -open Core
+    -open
+    Core
     (:include platform-specific-linker-flags.sexp)
     (:include platform-specific-compiler-flags.sexp))))
  (release
-  (link_flags (:include platform-specific-linker-flags.sexp))
+  (link_flags
+   (:include platform-specific-linker-flags.sexp))
   (flags
    (:standard
     -strict-sequence
     -strict-formats
     -short-paths
     -keep-locs
-    -open Core
+    -open
+    Core
     (:include platform-specific-linker-flags.sexp)
     (:include platform-specific-compiler-flags.sexp))))
  (static
-  (link_flags (:include platform-specific-linker-flags.sexp))
+  (link_flags
+   (:include platform-specific-linker-flags.sexp))
   (flags
    (:standard
     -strict-sequence
     -strict-formats
     -short-paths
     -keep-locs
-    -open Core
+    -open
+    Core
     (:include platform-specific-linker-flags.sexp)
     (:include platform-specific-compiler-flags.sexp)))))

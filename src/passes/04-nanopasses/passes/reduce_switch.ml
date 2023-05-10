@@ -5,6 +5,7 @@ open Simple_utils.Function
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 type group =
   { case_values : expr list
@@ -222,7 +223,7 @@ let reduce_clause : _ Test_clause.t -> _ Test_clause.t = function
     | None -> ClauseInstr i)
 
 
-let compile =
+let compile ~raise:_ =
   let block : _ block_ -> block =
    fun block ->
     let loc = Location.get_location block in
@@ -257,7 +258,7 @@ let compile =
     in
     make_b ~loc (List.Ne.of_list (List.Ne.concat expanded))
   in
-  `Cata { idle_cata_pass with block }
+  Fold { idle_fold with block }
 
 
 let reduction ~raise =
@@ -269,5 +270,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph ~name:__MODULE__ ~compile ~decompile:`None ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing

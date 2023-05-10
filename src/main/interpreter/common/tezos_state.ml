@@ -620,7 +620,9 @@ let bake_ops
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
     @@ Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw
   in
-  let aux incr op = Lwt_main.run @@ Incremental.add_operation ~check_size:false incr (op incr) in
+  let aux incr op =
+    Lwt_main.run @@ Incremental.add_operation ~check_size:false incr (op incr)
+  in
   match List.fold_result ~f:aux ~init:incr operation with
   | Ok incr ->
     let last_operations = get_last_operations_result incr in

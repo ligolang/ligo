@@ -6,6 +6,12 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module VarSet = Caml.Set.Make (Variable)
 
+(* automatically detect recursive declaration and expression *)
+
+include Flag.No_arg ()
+
+let name = __MODULE__
+
 let rec dig ~f e =
   match get_e_type_abstraction e with
   | Some { type_binder; result } ->
@@ -48,7 +54,7 @@ let mono_binder_opt pattern =
   | _ -> None
 
 
-let compile ~raise ~syntax =
+let compile ~raise =
   let expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -99,16 +105,8 @@ let compile ~raise ~syntax =
       d_var ~loc { type_params = None; pattern; rhs_type; let_rhs }
     | _ -> ignore
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr; declaration }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr; declaration }
 
 
-let reduction = Iter.defaults
-
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None (* for now .. *)
-    ~reduction_check:reduction
+let reduction ~raise:_ = Iter.defaults
+let decompile ~raise:_ = Nothing (* for now .. *)
