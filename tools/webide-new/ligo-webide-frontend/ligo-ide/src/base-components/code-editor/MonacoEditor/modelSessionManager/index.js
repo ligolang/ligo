@@ -3,6 +3,7 @@ import * as monaco from "monaco-editor";
 import pathHelper from "path-browserify";
 import fileOps from "~/base-components/file-ops";
 import notification from "~/base-components/notification";
+import { findNonAsciiCharIndex } from "~/components/validators";
 
 import MonacoEditorModelSession from "./MonacoEditorModelSession";
 
@@ -209,6 +210,17 @@ class ModelSessionManager {
         let content = "";
         try {
           content = await fileOps.readFile(filePath);
+          const nonAscii = findNonAsciiCharIndex(content);
+          if (nonAscii !== -1) {
+            notification.error(
+              "Non ASCII character.",
+              `On line ${nonAscii.additionColumn + 1} column ${
+                nonAscii.additionIndex + 1
+              } you are using a non ASCII character: ${
+                content[nonAscii.index]
+              }. Please make sure all the symbols correspond to ASCII chart. Otherwise you may have problems with your project.`
+            );
+          }
         } catch (e) {
           console.warn(e);
         }
