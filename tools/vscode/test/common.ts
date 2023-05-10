@@ -1,5 +1,4 @@
 import * as path from 'path'
-import * as vscode from 'vscode'
 import { execSync } from 'child_process';
 
 export enum Dialect {
@@ -39,4 +38,8 @@ export const contractsDir: string = process.env.CONTRACTS_DIR || path.join(__dir
 
 export function installLigoLibrary(path: string) {
   execSync("ligo install", { cwd: path, timeout: 50000 });
+}
+
+export function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
 }

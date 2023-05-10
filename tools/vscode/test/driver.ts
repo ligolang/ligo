@@ -12,6 +12,8 @@ const args: TestSettings = parse<TestSettings>({
   extensionDevelopmentPath: { type: String, optional: true },
   extensionTestsPath: { type: String, optional: true },
   vscodeExecutablePath: { type: String, optional: true },
+}, {
+  partial: true
 });
 
 (async () => {

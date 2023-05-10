@@ -4,6 +4,7 @@ client/out/
 ligo-vscode-*.vsix
 node_modules/
 .vscode-test/
+test-resources/
 
 # nix build results
 result

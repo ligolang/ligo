@@ -3,7 +3,7 @@ import * as assert from 'assert'
 import * as path from 'path'
 import * as vscode from 'vscode'
 
-import { contractsDir, installLigoLibrary } from '../common'
+import { contractsDir, delay, installLigoLibrary } from '../common'
 
 const check = (shouldCompile: boolean) => (result) => {
   if (shouldCompile) {
@@ -14,28 +14,24 @@ const check = (shouldCompile: boolean) => (result) => {
   }
 }
 
-function delay(ms: number) {
-  return new Promise( resolve => setTimeout(resolve, ms) );
-}
-
-async function acceptEntrypoint() {
+async function acceptQuickPick() {
   // Wait for `showQuickPick` to appear
-  await delay(1000);
+  await delay(1000)
   // Accept quickPick select
-  vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem');
+  vscode.commands.executeCommand('workbench.action.acceptSelectedQuickOpenItem')
 }
 
 function compileFileWithLibary(file: string, shouldCompile: boolean) {
   test(`Contract ${file} should ${shouldCompile ? "" : "not"} compile`, async () => {
-    const uri = await vscode.Uri.file(file);
+    const uri = vscode.Uri.file(file);
     const doc = await vscode.workspace.openTextDocument(uri);
     await vscode.window.showTextDocument(doc);
     let result = vscode.commands.executeCommand('ligo.compileContract', uri);
 
     return Promise.all<any>([
-      acceptEntrypoint(),
-			result.then(check(shouldCompile))
-		]);
+      acceptQuickPick(),
+      result.then(check(shouldCompile)),
+    ]);
   }).timeout(50000)
 }
 

@@ -9,3 +9,4 @@ client/src/**
 client/out/test/**
 node_modules/**
 test/**
+test-resources/
