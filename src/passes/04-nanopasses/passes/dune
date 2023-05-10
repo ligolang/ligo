@@ -33,6 +33,8 @@
   top_level_restriction
   contract_hack
   constructor_application
+  standalone_constructor_removal
+  pattern_constructor_application
   object_to_record
   array_to_tuple
   let_syntax

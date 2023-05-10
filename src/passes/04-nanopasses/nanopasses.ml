@@ -31,6 +31,8 @@ let passes
   ; T_arg.pass
   ; Type_abstraction_declaration.pass ~raise
   ; Constructor_application.pass ~raise ~syntax
+  ; Pattern_constructor_application.pass ~raise ~syntax
+  ; Standalone_constructor_removal.pass ~raise
   ; Named_fun.pass ~raise
   ; E_rev_app.pass ~raise
   ; Freeze_operators.pass ~raise ~syntax

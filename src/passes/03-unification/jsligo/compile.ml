@@ -29,8 +29,8 @@ module TODO_do_in_parsing = struct
     match p with
     (* would be better to emit a label/string directly ? *)
     | I.PVar var ->
-      Location.wrap ~loc:(r_snd var) @@ O.Label.of_string var.value.variable.value
-    | _ -> failwith "impossible??"
+      Location.wrap ~loc:(r_snd var) @@ O.Label.of_string @@ var.value.variable#payload
+    | _ -> failwith "labelize_pattern: impossible??"
 
 
   let unused_node () = failwith "unused node, can we clean ?"
@@ -87,9 +87,9 @@ module TODO_do_in_parsing = struct
     | _ -> O.Test_clause.ClauseBlock (single_stmt_block x)
 
 
-  let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(r_snd x) (r_fst x)
-  let var x = Ligo_prim.Value_var.of_input_var ~loc:(r_snd x) (r_fst x)
-  let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(r_snd x) (r_fst x)
+  let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(Location.File x#region) x#payload
+  let var x = Ligo_prim.Value_var.of_input_var ~loc:(Location.File x#region) x#payload
+  let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(Location.File x#region) x#payload
 end
 
 module Eq = struct
@@ -142,12 +142,14 @@ let rec expr : Eq.expr -> Folding.expr =
   | EVar var -> return @@ O.E_variable (TODO_do_in_parsing.var var)
   | EPar par -> expr par.value.inside
   | EUnit _ -> return @@ E_literal Literal_unit
-  | EBytes { value = _, b; _ } -> return @@ E_literal (Literal_bytes (Hex.to_bytes b))
+  | EBytes b ->
+    let _lexeme, b = b#payload in
+    return @@ E_literal (Literal_bytes (Hex.to_bytes b))
   | EString str ->
     let str =
       match str with
-      | String str -> Simple_utils.Ligo_string.Standard str.value
-      | Verbatim str -> Simple_utils.Ligo_string.Verbatim str.value
+      | String str -> Simple_utils.Ligo_string.Standard str#payload
+      | Verbatim str -> Simple_utils.Ligo_string.Verbatim str#payload
     in
     return @@ E_literal (Literal_string str)
   | EArith arth ->
@@ -160,7 +162,7 @@ let rec expr : Eq.expr -> Folding.expr =
     | Div slash -> compile_bin_op SLASH slash
     | Mod mod_ -> compile_bin_op PRCENT mod_
     | Neg minus -> compile_unary_op MINUS minus
-    | Int i -> E_literal (Literal_int (snd i.value)))
+    | Int i -> E_literal (Literal_int (snd i#payload)))
   | ELogic logic ->
     (match logic with
     | BoolExpr be ->
@@ -193,7 +195,7 @@ let rec expr : Eq.expr -> Folding.expr =
     return @@ E_call (expr, args)
   | EConstr { value = ctor, arg_opt; _ } ->
     let element = TODO_do_in_parsing.constructor_element arg_opt in
-    return @@ E_constructor { constructor = O.Label.of_string ctor.value; element }
+    return @@ E_applied_constructor { constructor = O.Label.of_string ctor#payload; element }
   | EArray { value = items; _ } ->
     let items =
       let translate_array_item : I.array_item -> _ AST.Array_repr.item = function
@@ -220,7 +222,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let path : _ O.Selection.t =
       match selection with
       | FieldName name ->
-        let name = r_fst (r_fst name).value in
+        let name = (r_fst name).value#payload in
         FieldName (O.Label.of_string name)
       | Component comp ->
         let comp = (r_fst comp).inside in
@@ -321,7 +323,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
               I.TProd { inside; attributes = [] })
           params
       in
-      ( TODO_do_in_parsing.labelize (r_fst constr)
+      ( TODO_do_in_parsing.labelize constr#payload
       , ty
       , TODO_do_in_parsing.conv_attrs attributes )
     in
@@ -339,7 +341,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | TObject { value = { ne_elements; attributes; _ } as v; region } ->
     let fields =
       let destruct I.{ field_name; field_type; attributes; _ } =
-        ( TODO_do_in_parsing.labelize (r_fst field_name)
+        ( TODO_do_in_parsing.labelize field_name#payload
         , Some field_type
         , TODO_do_in_parsing.conv_attrs attributes )
       in
@@ -366,9 +368,9 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     return @@ T_named_fun (fun_type_args, type_expr)
   | TPar t -> ty_expr (r_fst t).inside
   | TVar t -> return @@ T_var (TODO_do_in_parsing.tvar t)
-  | TString t -> return @@ T_string t.value
+  | TString t -> return @@ T_string t#payload
   | TInt t ->
-    let s, z = t.value in
+    let s, z = t#payload in
     return @@ T_int (s, z)
   | TModA { value = { module_name; field; _ }; _ } ->
     let module_path = TODO_do_in_parsing.mvar module_name in
@@ -417,7 +419,7 @@ let rec pattern : Eq.pattern -> Folding.pattern =
     | PConstr _p -> TODO_do_in_parsing.unused_node ()
     | PAssign _p -> TODO_do_in_parsing.unused_node ()
     | PDestruct _p -> TODO_do_in_parsing.unused_node ()
-    | PRest p -> return @@ O.P_rest (TODO_do_in_parsing.labelize p.value.rest.value)
+    | PRest p -> return @@ O.P_rest (TODO_do_in_parsing.labelize p.value.rest#payload)
     | PVar p ->
       let I.{ variable; attributes } = r_fst p in
       (match attributes with
@@ -464,10 +466,10 @@ let rec pattern : Eq.pattern -> Folding.pattern =
       let lst = nsepseq_to_list obj.value.inside in
       let aux : I.property -> (_, _) O.Field.t = function
         | Punned_property { value = EVar v; _ } ->
-          let loc = r_snd v in
-          Punned (Location.wrap ~loc @@ O.Label.of_string v.value)
+          let loc = Location.File v#region in
+          Punned (Location.wrap ~loc @@ O.Label.of_string v#payload)
         | Property { value = { name = EVar v; value; _ }; _ } ->
-          Complete (O.Label.of_string v.value, pattern_of_expr value)
+          Complete (O.Label.of_string v#payload, pattern_of_expr value)
         | _ -> failwith "unrecognized pattern"
       in
       return @@ P_pun_record (List.map ~f:aux lst)
@@ -604,13 +606,13 @@ and declaration : Eq.declaration -> Folding.declaration =
         O.Import.Import_rename { alias; module_path }
       | Import_all_as s ->
         let alias = TODO_do_in_parsing.mvar s.alias in
-        let module_str = r_fst s.module_path in
+        let module_str = s.module_path#payload in
         O.Import.Import_all_as { alias; module_str }
       | Import_selected { imported; module_path; _ } ->
         let imported =
           List.Ne.map TODO_do_in_parsing.var (nsepseq_to_nseq (r_fst imported).inside)
         in
-        let module_str = r_fst module_path in
+        let module_str = module_path#payload in
         O.Import.Import_selected { imported; module_str }
     in
     return @@ D_import import

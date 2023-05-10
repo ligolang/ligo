@@ -149,7 +149,7 @@ type t = {
   eof  : eof
 }
 
-and ast = t
+and cst = t
 
 (* DECLARATIONS (top-level) *)
 
@@ -542,7 +542,7 @@ and typed_pattern = {
 and expr =
   E_Add       of plus bin_op reg                (* x + y           *)
 | E_And       of kwd_and bin_op reg             (* x and y         *)
-| E_App       of call                           (* Foo (x,y)       *)
+| E_App       of call                           (* f (x)   Foo ()  *)
 | E_Attr      of (attribute * expr)             (* [@a] (x,y)      *)
 | E_BigMap    of binding reg compound reg
 | E_Block     of block_with reg
@@ -550,9 +550,9 @@ and expr =
 | E_Case      of expr case reg
 | E_Cat       of caret bin_op reg               (* "Hello" ^ world *)
 | E_CodeInj   of code_inj reg
-| E_Ctor      of ctor                           (* C               *)
 | E_Cond      of expr conditional reg
 | E_Cons      of sharp bin_op reg               (* head :: tail    *)
+| E_Ctor      of ctor                           (* C               *)
 | E_Div       of slash bin_op reg               (* x / y           *)
 | E_Equal     of equal bin_op reg               (* x = y           *)
 | E_Fun       of fun_expr reg                   (* fun x -> x      *)

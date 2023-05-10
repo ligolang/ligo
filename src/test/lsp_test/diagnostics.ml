@@ -52,8 +52,7 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Error
           ; message =
               "Ill-formed contract.\n\
-               At this point, if the declaration is complete, one of the following is\n\
-               expected:\n\
+               At this point, if the current declaration is complete, one of the\nfollowing is expected:\n\
               \  * another declaration;\n\
               \  * the end of the file.\n"
           ; range = Some (interval 0 10 11)

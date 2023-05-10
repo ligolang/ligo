@@ -480,15 +480,15 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "not_comparable.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 16-23:
+    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 16-19:
       1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
-                          ^^^^^^^
+                          ^^^
       2 |
 
     This type is used inside:
-    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 15-28:
+    File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 15-24:
       1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
-                         ^^^^^^^^^^^^^
+                         ^^^^^^^^^
       2 |
 
     The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
@@ -498,16 +498,16 @@ let%expect_test _ =
     [ "compile"; "contract"; bad_contract "not_comparable.mligo"; "-e"; "main2" ];
   [%expect
     {|
-    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 17-24:
+    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 17-20:
       2 |
       3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
-                           ^^^^^^^
+                           ^^^
 
     This type is used inside:
-    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 16-32:
+    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 16-25:
       2 |
       3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
-                          ^^^^^^^^^^^^^^^^
+                          ^^^^^^^^^
 
     The ticket constructor needs a comparable type argument, but it was given a non-comparable one. |}]
 
