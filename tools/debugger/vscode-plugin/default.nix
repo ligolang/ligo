@@ -13,7 +13,7 @@ in yarn2nix-moretea.mkYarnPackage {
     cp -L ${../../..}/tools/debugger/vscode-plugin/LICENSE.md deps/$pname/LICENSE.md
 
     mkdir -p deps/$pname/bin
-    cp ${ligo-debugger}/bin/ligo-debugger deps/$pname/bin
+    cp -Lr ${ligo-debugger}/bin/. deps/$pname/bin
   '';
 
   postBuild = ''

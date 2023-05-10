@@ -57,6 +57,28 @@
           sha256 = "0gfvhw7n8g2274k74g8gnv1y19alr1yig618capiyaix6i9wnmpa";
         } {};
 
+        ligo-debugger-static = ligo-debugger-exec (haskellPkgs.pkgsCross.musl64);
+        # darwin ligo-debugger binary with all .dylib dependencies bundled
+        ligo-debugger-darwin = self.packages.x86_64-darwin.ligo-debugger.overrideAttrs (_: {
+          # otherwise, binary is linked with libraries from /nix/store
+          postInstall = ''
+            mkdir -p $out/lib
+            ${../scripts/relink-mac-binary.sh} $out/bin/ligo-debugger ../lib
+          '';
+        });
+        ligo-debugger-crossplatform-dispatcher = pkgs.writeTextFile {
+          name = "ligo-debugger";
+          text = ''
+            #!/usr/bin/env bash
+            "$(dirname "''${BASH_SOURCE[0]}")/$(uname)/bin/ligo-debugger" $@
+          '';
+          executable = true;
+        };
+        ligo-debugger-crossplatform = pkgs.linkFarm "ligo-debugger-crossplatform" [
+          { name = "bin/ligo-debugger"; path = ligo-debugger-crossplatform-dispatcher; }
+          { name = "bin/Linux"; path = ligo-debugger-static; }
+          { name = "bin/Darwin"; path = ligo-debugger-darwin; }
+        ];
         archOut = {
           devShells = {
             default = pkgs.mkShell rec {
@@ -77,11 +99,10 @@
             };
 
             ligo-debugger = ligo-debugger-exec (haskellPkgs);
-            ligo-debugger-static = ligo-debugger-exec (haskellPkgs.pkgsCross.musl64);
+            inherit ligo-debugger-static ligo-debugger-darwin;
 
             ligo-debugger-extension = pkgs.callPackage ./vscode-plugin {
-              # Since we are shipping it, we want to have a portable binary
-              ligo-debugger = archOut.packages.ligo-debugger-static;
+              ligo-debugger = ligo-debugger-crossplatform;
             };
 
             ligo-debugger-extension-nix = pkgs.callPackage ./vscode-plugin {
