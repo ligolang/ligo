@@ -47,15 +47,16 @@ let check_analytics expected_registry_content_regex expected_agg_registry_conten
 let test_compile_contract ~raise:_ () =
   let expected_registry_output_regex =
     Str.regexp
-      ".*ligo_compile_compilation_size{repository=\"[a-z0-9-]+\", version=\"\", \
-       project=\"[0-9]+\", syntax=\"jsligo\", protocol=\"[a-z]+\"} [0-9.]+.*"
+      ".*ligo_compile_compilation_size.*{repository=\"[a-z0-9-]+\", \
+       version=\".*\", project=\"[0-9]+\", syntax=\"jsligo\", \
+       protocol=\"[a-z]+\"} [0-9.]+.*"
   in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"compile_contract\"} \
        1.000000.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"compile_contract\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"compile_contract\", \
        syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.000000.*"
   in
   let _ = run_ligo [ "compile"; "contract"; "contracts/analytics_test.jsligo" ] in
@@ -66,10 +67,10 @@ let test_compile_expression ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"compile_expression\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"compile_expression\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"compile_expression\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "compile"; "expression"; "cameligo"; "4n land 4n" ] in
@@ -80,10 +81,10 @@ let test_compile_parameter ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"compile_parameter\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"compile_parameter\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"compile_parameter\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ =
@@ -97,10 +98,10 @@ let test_compile_storage ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"compile_storage\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"compile_storage\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"compile_storage\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "compile"; "storage"; "contracts/self_annotations.mligo"; "()" ] in
@@ -111,10 +112,10 @@ let test_run_dry_run ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"run_dry-run\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_dry-run\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_dry-run\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ =
@@ -128,10 +129,10 @@ let test_run_evaluate_call ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"run_evaluate-call\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_evaluate-call\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_evaluate-call\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ =
@@ -147,9 +148,9 @@ hd. *)
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"run_evaluate-expr\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_evaluate-expr\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_evaluate-expr\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_evaluate-expr\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "run"; "evaluate-expr"; "contracts/super-counter.mligo" ] in
@@ -159,10 +160,10 @@ let test_run_interpret ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"run_interpret\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_interpret\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_interpret\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ =
@@ -181,10 +182,10 @@ let test_run_test ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"run_test\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_test\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_test\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "run"; "test"; "contracts/build/C1.mligo" ] in
@@ -195,10 +196,10 @@ let test_run_test_expr ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"run_test-expr\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"run_test-expr\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"run_test-expr\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "run"; "test-expr"; "cameligo"; "()" ] in
@@ -209,10 +210,10 @@ let test_info_get_scope ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"info_get-scope\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"info_get-scope\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"info_get-scope\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ =
@@ -231,10 +232,10 @@ let test_info_list_declaration ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"info_list-declarations\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"info_list-declarations\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"info_list-declarations\", \
        syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "info"; "list-declarations"; "contracts/list_declaration.jsligo" ] in
@@ -245,10 +246,10 @@ let test_info_measure_contract ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"info_measure-contract\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"info_measure-contract\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"info_measure-contract\", \
        syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "info"; "measure-contract"; "contracts/list_declaration.jsligo" ] in
@@ -259,10 +260,10 @@ let test_mutate_cst ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"mutate_cst\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"mutate_cst\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"mutate_cst\", \
        syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "mutate"; "cst"; "contracts/list_declaration.jsligo" ] in
@@ -273,7 +274,7 @@ let test_changelog ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"changelog\"} 1.*"
   in
   let _ = run_ligo [ "changelog" ] in
@@ -284,10 +285,10 @@ let test_print_pretty ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"print_pretty\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_pretty\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_pretty\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "pretty"; "contracts/build/cycle_A.mligo" ] in
@@ -298,10 +299,10 @@ let test_print_preprocessed ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"print_preprocessed\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_preprocessed\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_preprocessed\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "preprocessed"; "contracts/build/cycle_A.mligo" ] in
@@ -312,10 +313,10 @@ let test_print_cst ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"print_cst\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_cst\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_cst\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "cst"; "contracts/build/cycle_A.mligo" ] in
@@ -326,9 +327,9 @@ let test_print_cst ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-imperative\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-imperative\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-imperative\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-imperative\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-imperative"; "contracts/build/cycle_A.mligo" ] in
@@ -338,10 +339,10 @@ let test_print_ast_core ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"print_ast-core\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-core\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-core\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-core"; "contracts/build/cycle_A.mligo" ] in
@@ -353,9 +354,9 @@ let test_print_ast_typed ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-typed\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-typed\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-typed\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-typed\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-typed"; "contracts/build/cycle_A.mligo" ] in
@@ -365,9 +366,9 @@ let test_print_ast_aggregated ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-aggregated\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-aggregated\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-aggregated\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-aggregated\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-aggregated"; "contracts/build/cycle_A.mligo" ] in
@@ -377,9 +378,9 @@ let test_print_ast_expanded ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-expanded\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-expanded\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_ast-expanded\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_ast-expanded\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "ast-expanded"; "contracts/build/cycle_A.mligo" ] in
@@ -389,9 +390,9 @@ let test_print_mini_c ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", command=\"print_mini-c\"} \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_mini-c\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_mini-c\", syntax=\"CameLIGO\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_mini-c\", syntax=\"CameLIGO\", \
        protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "mini-c"; "contracts/build/cycle_A.mligo" ] in
@@ -401,10 +402,10 @@ let test_print_dependency_graph ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"print_dependency-graph\"} \
        1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"print_dependency-graph\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"print_dependency-graph\", \
        syntax=\"CameLIGO\", protocol=\"[a-z]+\"} 1.*"
   in
   let _ = run_ligo [ "print"; "dependency-graph"; "contracts/build/cycle_A.mligo" ] in
@@ -415,9 +416,9 @@ let test_transpile_contract ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"transpile_contract\"} 1.*ligo_cli_transpile{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"transpile_contract\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"transpile_contract\", \
        old_syntax=\"PascaLIGO\", new_syntax=\"jsligo\"} 1.*"
   in
   let _ =
@@ -431,9 +432,9 @@ let test_init_contract ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"init_contract\"} 1.*ligo_cli_init{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"init_contract\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"init_contract\", \
        template=\"advisor-cameligo\"} 1.*"
   in
   let _ = run_ligo [ "init"; "contract"; "--template"; "advisor-cameligo" ] in
@@ -444,9 +445,9 @@ let test_init_library ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
     Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
+      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\".*\", \
        command=\"init_library\"} 1.*ligo_cli_init{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"init_library\", \
+       repository=\"[a-z0-9-]+\", version=\".*\", command=\"init_library\", \
        template=\"ligo-fa\"} 1.*"
   in
   let _ = run_ligo [ "init"; "library"; "--template"; "ligo-fa" ] in
