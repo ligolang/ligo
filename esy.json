@@ -2,7 +2,7 @@
   "name": "ligolang",
   "description": "A high-level language which compiles to Michelson",
   "license": "MIT",
-  "version": "0.66.0-dev",
+  "version": "0.67.0-dev",
   "repository": {
     "type": "git",
     "url": "https://gitlab.com/ligolang/ligo.git"
@@ -250,7 +250,7 @@
   },
   "override": {
     "buildEnv": {
-      "LIGO_VERSION": "0.66.0"
+      "LIGO_VERSION": "0.67.0"
     }
   }
 }
