@@ -9,6 +9,7 @@ module Test.Navigation
   , test_top_level_function_with_preprocessor_don't_have_locations
   , test_values_inside_switch_and_match_with_are_statements
   , test_local_function_assignments_are_statements
+  , test_record_update_is_statement
   , test_Next_golden
   , test_StepOut_golden
   , test_Continue_golden
@@ -171,6 +172,23 @@ test_local_function_assignments_are_statements =
     doStep = processLigoStep (CStepIn GStmt)
   in goldenTestWithSnapshots
       "local function assignments are statements"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
+test_record_update_is_statement :: TestTree
+test_record_update_is_statement =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "record-update-is-statement.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = ((0 :: Integer, [mt|"str"|]), False)
+      }
+
+    doStep = processLigoStep (CStepIn GStmt)
+  in goldenTestWithSnapshots
+      "record update is statement"
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)
