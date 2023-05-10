@@ -22,171 +22,222 @@ let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->
   let open! Cst.Cameligo in
+
   (* General *)
-  let rec declaration_list value = nseq_concat_map value.decl ~f:declaration
-  (* Module *)
-  and module_alias _ = []
+
+  let rec declaration_nseq decls = nseq_concat_map decls ~f:declaration
+
   (* Contract *)
+
   and contract _ = []
+
   (* Type expression *)
+
   and type_expr = function
-    | TProd { value; _ } -> nsepseq_concat_map value ~f:type_expr
-    | TSum { value; region } ->
-      mk_region region :: nsepseq_concat_map value.variants ~f:variant
-    | TRecord { value; region } ->
-      mk_region region
-      :: nsepseq_concat_map value.ne_elements ~f:(fun value -> field_decl value.value)
-    | TApp { value; region } -> mk_region region :: type_constr_arg (snd value)
-    | TFun { value; _ } ->
+    T_App { value; region } ->
+      let ctor, arg = value in
+      mk_region region :: type_expr ctor @ type_ctor_arg arg
+  | T_Arg {region; _} -> [mk_region region]
+  | T_Attr (_, texpr) -> type_expr texpr
+  | T_Cart { value; _ } ->
+      let fst_cmp, times, rest = value in
+      let seq = Utils.nsepseq_cons fst_cmp times rest
+      in nsepseq_concat_map ~f:type_expr seq
+  | T_Fun { value; _ } ->
       let left, _arrow, right = value in
       type_expr left @ type_expr right
-    | TPar { value; region } -> mk_region region :: type_expr value.inside
-    | TVar _ | TString _ | TInt _ -> []
-    | TModA { value; _ } -> type_expr value.field
-    | TArg _ -> []
-    | TParameter { value; region } -> mk_region region :: contract value (* FIXME *)
-  and type_constr_arg = function
-    | CArg texp -> type_expr texp
-    | CArgTuple { value; _ } -> nsepseq_concat_map value.inside ~f:type_expr
+  | T_Int _ -> []
+  | T_ModPath { value; _ } -> type_expr value.field
+  | T_Par { value; region } -> mk_region region :: type_expr value.inside
+  | T_Record { value; region } ->
+      mk_region region
+      :: sepseq_concat_map value.inside
+           ~f:(fun value -> field_decl value.value)
+  | T_String _ -> []
+  | T_Variant{ value; region } ->
+      mk_region region :: nsepseq_concat_map value.variants ~f:variant
+  | T_Var _ -> []
+  | T_Parameter { value; region } -> mk_region region :: contract value (* FIXME *)
+
+  and type_ctor_arg = function
+    | TC_Single texp -> type_expr texp
+    | TC_Tuple { value; _ } -> nsepseq_concat_map value.inside ~f:type_expr
+
   and variant { value; region } =
     mk_region region
-    :: Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.arg
+    :: Option.value_map ~f:(type_expr <@ snd) ~default:[] value.ctor_args
+
   (* Expression *)
+
   and expr = function
-    | ECase { value; region } -> mk_region region :: case value
-    | ECond { value; region } -> mk_region region :: cond_expr value
-    | EAnnot { value; _ } -> annot_expr value.inside
-    | ELogic value -> logic_expr value
-    | EArith value -> arith_expr value
-    | EString value -> string_expr value
-    | EList value -> list_expr value
-    | EConstr { value; _ } -> Option.value_map ~f:expr ~default:[] (snd value)
-    | ERecord { value; region } ->
-      mk_region region
-      :: nsepseq_concat_map value.ne_elements ~f:(fun value -> field_assign value.value)
-    | EProj _ -> []
-    | EModA { value; _ } -> expr value.field
-    | EUpdate { value; region } ->
-      mk_region region
-      :: nsepseq_concat_map value.updates.value.ne_elements ~f:(fun value ->
-             field_path_assignment value.value)
-    | ECall { value; _ } -> expr (fst value) @ nseq_concat_map (snd value) ~f:expr
-    | ETuple { value; _ } -> nsepseq_concat_map value ~f:expr
-    | EPar { value; region } -> mk_region region :: expr value.inside
-    (* FIXME: LIGO provides no body ranges for the definition of a ... in ... *)
-    | ELetIn { value; _ } -> let_binding value.binding @ expr value.body
-    | ETypeIn { value; _ } -> type_decl value.type_decl @ expr value.body
-    | EModIn { value; _ } -> module_decl value.mod_decl @ expr value.body
-    | EModAlias { value; _ } -> module_alias value.mod_alias @ expr value.body
-    | EFun { value; region } -> mk_region region :: fun_expr value
-    | ESeq { value; region } ->
-      mk_region region :: sepseq_concat_map value.elements ~f:expr
-    | ECodeInj { value; region } -> mk_region region :: expr value.code
-    | ERevApp { value; _ } -> bin_op value
-    | EContract { value; region } -> mk_region region :: contract value (* FIXME *)
-    | EVar _ | EBytes _ | EUnit _ -> []
-  and case value = expr value.expr @ cases value.cases
-  and cases { value; _ } = nsepseq_concat_map value ~f:case_clause
-  and case_clause { value; region } =
+    | E_Add { value; _ } -> bin_op value
+    | E_And { value; _ } -> bin_op value
+    | E_App { value; _ } -> expr (fst value) @ nseq_concat_map (snd value) ~f:expr
+    | E_Attr (_, e)      -> expr e
+    | E_Bytes _ -> []
+    | E_Cat { value; _ } -> bin_op value
+    | E_CodeInj { value; region } -> mk_region region :: expr value.code
+    | E_Cond { value; region } -> mk_region region :: cond_expr value
+    | E_Cons { value; _ } -> bin_op value
+    | E_Contract { value; region } -> mk_region region :: contract value (* FIXME *)
+    | E_Ctor _ -> []
+    | E_Div { value; _ } -> bin_op value
+    | E_Equal { value; _ } -> bin_op value
+    | E_Fun { value; region } -> mk_region region :: fun_expr value
+    | E_Geq { value; _ } -> bin_op value
+    | E_Gt { value; _ } -> bin_op value
+    | E_Int _  -> []
+    | E_Land { value; _ } -> bin_op value
+    | E_Leq { value; _ } -> bin_op value
+    | E_LetIn { value; _ } -> let_binding value.binding @ expr value.body
+    | E_List {value; _} -> sepseq_concat_map ~f:expr value.inside
+    | E_Lor { value; _ } -> bin_op value
+    | E_Lsl { value; _ } -> bin_op value
+    | E_Lsr { value; _ } -> bin_op value
+    | E_Lt { value; _ } -> bin_op value
+    | E_Lxor { value; _ } -> bin_op value
+    | E_Match { value; region} -> mk_region region :: match_expr value
+    | E_Mod { value; _ } -> bin_op value
+    | E_ModIn { value; _ } -> module_decl value.mod_decl @ expr value.body
+    | E_ModPath { value; _ } -> expr value.field
+    | E_Mult { value; _ } -> bin_op value
+    | E_Mutez _ -> []
+    | E_Nat _ -> []
+    | E_Neg { value; _ } -> expr value.arg
+    | E_Neq { value; _ } -> bin_op value
+    | E_Not { value; _ } -> expr value.arg
+    | E_Or { value; _ } -> bin_op value
+    | E_Par { value; region } -> mk_region region :: expr value.inside
+    | E_Proj _ -> []
+    | E_Record { value; region } ->
+        mk_region region :: sepseq_concat_map value.inside ~f:field_assign
+    | E_Sub { value; _ } -> bin_op value
+    | E_String _ -> []
+    | E_Tuple { value; _ } -> nsepseq_concat_map ~f:expr value
+    | E_Typed { value; _ } -> typed_expr value.inside
+    | E_TypeIn { value; _ } -> type_decl value.type_decl @ expr value.body
+    | E_Unit _ -> []
+    | E_Update { value; region } ->
+        mk_region region :: nsepseq_concat_map value.inside.updates
+                               ~f:field_path_assignment
+    | E_Var _ -> []
+    | E_Verbatim _ -> []
+    | E_Seq { value; region } ->
+        mk_region region :: sepseq_concat_map value.elements ~f:expr
+    | E_RevApp { value; _ } -> bin_op value
+
+  and match_expr value = expr value.subject @ clauses value.clauses
+
+  and clauses { value; _ } = nsepseq_concat_map value ~f:match_clause
+
+  and match_clause { value; region } =
     mk_region region :: (pattern value.pattern @ expr value.rhs)
+
   and cond_expr value =
     expr value.test
-    @ expr value.ifso
-    @ Option.value_map ~f:(fun (_, exp) -> expr exp) ~default:[] value.ifnot
-  and annot_expr (exp, _colon, texp) = expr exp @ type_expr texp
+    @ expr value.if_so
+    @ Option.value_map ~f:(expr <@ snd) ~default:[] value.if_not
+
+  and typed_expr (e, annot) = expr e @ type_annotation annot
+
   and bin_op value = expr value.arg1 @ expr value.arg2
-  and logic_expr = function
-    | BoolExpr value -> bool_expr value
-    | CompExpr value -> comp_expr value
-  and bool_expr = function
-    | Or { value; _ } -> bin_op value
-    | And { value; _ } -> bin_op value
-    | Not { value; _ } -> expr value.arg
-  and comp_expr = function
-    | Lt { value; _ } -> bin_op value
-    | Leq { value; _ } -> bin_op value
-    | Gt { value; _ } -> bin_op value
-    | Geq { value; _ } -> bin_op value
-    | Equal { value; _ } -> bin_op value
-    | Neq { value; _ } -> bin_op value
-  and arith_expr = function
-    | Add { value; _ } -> bin_op value
-    | Sub { value; _ } -> bin_op value
-    | Mult { value; _ } -> bin_op value
-    | Div { value; _ } -> bin_op value
-    | Mod { value; _ } -> bin_op value
-    | Land { value; _ } -> bin_op value
-    | Lor { value; _ } -> bin_op value
-    | Lxor { value; _ } -> bin_op value
-    | Lsl { value; _ } -> bin_op value
-    | Lsr { value; _ } -> bin_op value
-    | Neg { value; _ } -> expr value.arg
-    | Int _ | Nat _ | Mutez _ -> []
+
   and fun_expr value =
     nseq_concat_map value.binders ~f:pattern
-    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
+    @ type_annotation_opt value.rhs_type
     @ expr value.body
-  and string_expr = function
-    | Cat { value; _ } -> bin_op value
-    | String _ | Verbatim _ -> []
-  and list_expr = function
-    | ECons { value; _ } -> bin_op value
-    | EListComp { value; _ } -> sepseq_concat_map value.elements ~f:expr
+
   and field_assign = function
-    | Property value -> field_assign_property value
-    | Punned_property _ -> []
-  and field_assign_property value = expr value.field_expr
+    | Complete { region; value } -> mk_region region :: expr value.field_rhs
+    | Punned _ -> []
+
   and field_path_assignment = function
-    | Path_property value -> field_path_assignment_property value
-    | Path_punned_property _ -> []
-  and field_path_assignment_property value = expr value.field_expr
-  and field_decl value = type_expr value.field_type
+    | Complete { region; value } ->
+        mk_region region :: full_field_path_assignment value
+    | Punned _ -> []
+
+  and full_field_path_assignment value = expr value.field_rhs
+
+  and field_decl value = type_annotation_opt value.field_type
+
+  and type_annotation_opt (ta : type_annotation option) =
+    Option.value_map ~default:[] ~f:type_annotation ta
+
+  and type_annotation (_, texpr) = type_expr texpr
+
   (* Pattern *)
+
   and pattern = function
-    | PConstr { value; _ } -> Option.value_map ~f:pattern ~default:[] (snd value)
-    | PList value -> list_pattern value
-    | PTuple { value; _ } -> nsepseq_concat_map ~f:pattern value
-    | PPar { value; region } -> mk_region region :: pattern value.inside
-    | PRecord { value; region } ->
-      mk_region region
-      :: nsepseq_concat_map ~f:(fun value -> field_pattern value.value) value.ne_elements
-    | PTyped { value; _ } -> typed_pattern value
-    | PUnit _ | PVar _ | PInt _ | PNat _ | PBytes _ | PString _ | PVerbatim _ -> []
-  and list_pattern = function
-    | PListComp { value; region } ->
-      mk_region region :: sepseq_concat_map ~f:pattern value.elements
-    | PCons { value; _ } ->
-      let left, _cons, right = value in
-      pattern left @ pattern right
-  and field_pattern value = pattern value.pattern
-  and typed_pattern value = pattern value.pattern @ type_expr value.type_expr
-  (* Declaration *)
+    | P_App { value; _ } -> Option.value_map ~f:pattern ~default:[] (snd value)
+    | P_Attr (_, p) -> pattern p
+    | P_Bytes _ -> []
+    | P_Cons { value; _ } ->
+        let left, _cons, right = value in
+        pattern left @ pattern right
+    | P_Ctor _ -> []
+    | P_Int _  -> []
+    | P_List {region; value} ->
+        mk_region region :: sepseq_concat_map ~f:pattern value.inside
+    | P_ModPath {value; _} -> pattern value.field
+    | P_Mutez _ -> []
+    | P_Nat _ -> []
+    | P_Par { value; region } -> mk_region region :: pattern value.inside
+    | P_Record { value; region } ->
+        mk_region region :: sepseq_concat_map value.inside ~f:field_pattern
+    | P_String _ -> []
+    | P_Tuple { value; _ } -> nsepseq_concat_map ~f:pattern value
+    | P_Typed { value; _ } -> typed_pattern value
+    | P_Var _ -> []
+    | P_Verbatim _ -> []
+    | P_Unit _ -> []
+
+  and field_pattern = function
+    | Complete { region; value } -> mk_region region :: pattern value.field_rhs
+    | Punned _ -> []
+
+  and typed_pattern (p, annot) = pattern p @ type_annotation annot
+
   and type_decl value = type_expr value.type_expr
-  and module_decl value = declaration_list value.module_
-  and let_decl (_, _, value, _) = let_binding value
+
+  and module_decl value = module_expr value.module_expr
+
+  and module_expr = function
+    | M_Body {value; _} -> module_body value
+    | M_Path _ -> []
+    | M_Var _ -> []
+
+  and module_body value =
+    List.fold_right ~f:(fun decl ranges -> declaration decl @ ranges )
+      ~init:[] value.declarations
+
+  and let_decl (_, _, value) = let_binding value
+
   and let_binding value =
     nseq_concat_map value.binders ~f:pattern
-    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.rhs_type
+    @ Option.value_map ~f:(fun (_, texp) -> type_expr texp)
+                       ~default:[] value.rhs_type
     @ expr value.let_rhs
+
   and declaration = function
-    | Let { value; region } -> mk_region region :: let_decl value
-    | TypeDecl { value; region } -> mk_region region :: type_decl value
-    | ModuleDecl { value; region } -> mk_region region :: module_decl value
-    | ModuleAlias { value; region } -> mk_region region :: module_alias value
-    | Directive _ -> []
-  in
-  Some (declaration_list cst)
+    | D_Attr {value; _} -> declaration (snd value)
+    | D_Directive _ -> []
+    | D_Let { value; region } -> mk_region region :: let_decl value
+    | D_Module { value; region } -> mk_region region :: module_decl value
+    | D_Type { value; region } -> mk_region region :: type_decl value
+
+  in Some (declaration_nseq cst.decl)
 
 
 let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
- fun _cst -> None (* TODO: #1691 *)
+  fun _cst -> None (* TODO: #1691 *)
 
 
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
   let open! Cst.Jsligo in
   (* General *)
-  let rec statement_list value = nseq_concat_map value.statements ~f:toplevel_statement
+  let rec statement_list (value: Cst.Jsligo.t) =
+    nseq_concat_map value.statements ~f:toplevel_statement
   and arguments = function
     | Multiple { value; region } ->
       mk_region region :: nsepseq_concat_map value.inside ~f:expr
@@ -338,7 +389,9 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | Punned_property { value; _ } -> expr value
     | Property { value; _ } -> expr value.name @ expr value.value
     | Property_rest { value; _ } -> expr value.expr
+
   (* Declaration *)
+
   and let_decl value =
     nsepseq_concat_map value.bindings ~f:(fun value -> val_binding value)
   and const_decl value =

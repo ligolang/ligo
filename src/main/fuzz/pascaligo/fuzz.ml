@@ -1,4 +1,4 @@
-open Helpers
+(* open Helpers
 open Cst.Pascaligo
 include Fuzz_shared.Monad
 open Lexing_shared
@@ -84,4 +84,4 @@ module Mutator (M : Monad) = struct
     let rndmod_ = map_declarations mutate_mapper mod_.decl in
     let x, ds = get_one ?n rndmod_ in
     x, { mod_ with decl = ds }
-end
+end *)

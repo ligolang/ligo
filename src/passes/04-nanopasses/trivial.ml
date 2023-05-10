@@ -260,7 +260,7 @@ end = struct
       in
       ret @@ E_for_each { fe_binder; collection; collection_type = Any; fe_body = block }
     | E_constant x -> ret @@ E_constant x
-    | E_constructor x -> ret @@ E_constructor x
+    | E_applied_constructor x -> ret @@ E_constructor x
     | E_simple_let_in { binder; rhs; let_result } ->
       ret
       @@ E_let_in

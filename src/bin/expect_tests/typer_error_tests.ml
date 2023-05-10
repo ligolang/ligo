@@ -319,10 +319,10 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-62:
+    File "../../test/contracts/negative/will_be_ignored.mligo", line 7, characters 47-55:
       6 |      let receiver : contract =
       7 |       match (Tezos.get_contract_opt(s.owner) : contract option) with
-                                                         ^^^^^^^^^^^^^^^
+                                                         ^^^^^^^^
       8 |         Some (contract) -> contract
 
     Invalid type

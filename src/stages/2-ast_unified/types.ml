@@ -138,6 +138,8 @@ and ('self, 'ty_expr) pattern_content_ =
   | P_rest of Label.t
   | P_attr of Attribute.t * 'self
   | P_mod_access of (Mod_variable.t Simple_utils.List.Ne.t, 'self) Mod_access.t
+  | P_app of 'self * 'self option
+  | P_ctor of Label.t
   | P_var_typed of 'ty_expr * Variable.t [@not_initial]
 [@@deriving
   map
@@ -296,7 +298,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
       ('block, 'ty_expr, 'pattern) Poly_fun.t (* <A>(x: A) => { ... } ) *)
   | E_constr of Label.t
   | E_ctor_app of ('self * 'self Simple_utils.List.Ne.t option)
-  | E_constructor of 'self Constructor.t (* MyCtor (42, 43, 44), PascaLigo only *)
+  | E_applied_constructor of 'self Constructor.t (* MyCtor (42, 43, 44), PascaLigo only *)
   | E_call of 'self * 'self list Location.wrap (* f (x, y) ; f x y *)
   | E_match of ('self, 'pattern, 'self) Case.t (* match e with | A -> ... | B -> ... *)
   | E_annot of ('self * 'ty_expr) (* 42 : int *)

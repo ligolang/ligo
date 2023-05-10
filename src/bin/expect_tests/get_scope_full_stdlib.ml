@@ -1259,7 +1259,7 @@ let%expect_test _ =
       File "", line 620, characters 47-63
     (test_baker_policy#292:5-22 -> test_baker_policy)
     Range: File "", line 292, characters 5-22
-    Body Range: File "", line 293, character 4 to line 295, character 29
+    Body Range: File "", line 293, character 4 to line 295, character 24
     Content: : |sum[By_account -> address ,
                     By_round -> int ,
                     Excluding -> list (address)]|
@@ -1290,7 +1290,7 @@ let%expect_test _ =
     references: []
     (module_contract#302:14-29 -> module_contract)
     Range: File "", line 302, characters 14-29
-    Body Range: File "", line 302, characters 32-75
+    Body Range: File "", line 302, characters 32-69
     Content: : |funtype 'p : * . funtype 's : * . ( ( 'p * 's ) -> ( list (operation) *
                                                                      's ) *
                                                     views ('s) )|
@@ -1301,7 +1301,7 @@ let%expect_test _ =
     Module definitions:
     (Tezos#61:7-12 -> Tezos)
     Range: File "", line 61, characters 7-12
-    Body Range: File "", line 63, character 2 to line 119, character 264
+    Body Range: File "", line 61, character 15 to line 121, character 3
     Content: Members: Variable definitions:
                       (get_balance#63:6-17 -> get_balance)
                       Range: File "", line 63, characters 6-17
@@ -1503,7 +1503,7 @@ let%expect_test _ =
 
     (Bitwise#123:7-14 -> Bitwise)
     Range: File "", line 123, characters 7-14
-    Body Range: File "", line 124, character 2 to line 128, character 144
+    Body Range: File "", line 123, character 17 to line 129, character 3
     Content: Members: Variable definitions:
                       (and#124:6-10 -> and)
                       Range: File "", line 124, characters 6-10
@@ -1542,7 +1542,7 @@ let%expect_test _ =
 
     (Big_map#131:7-14 -> Big_map)
     Range: File "", line 131, characters 7-14
-    Body Range: File "", line 132, character 12 to line 141, character 87
+    Body Range: File "", line 131, character 17 to line 143, character 3
     Content: Members: Variable definitions:
                       (empty#132:16-21 -> empty)
                       Range: File "", line 132, characters 16-21
@@ -1608,7 +1608,7 @@ let%expect_test _ =
 
     (Map#145:7-10 -> Map)
     Range: File "", line 145, characters 7-10
-    Body Range: File "", line 146, character 2 to line 159, character 111
+    Body Range: File "", line 145, character 13 to line 161, character 3
     Content: Members: Variable definitions:
                       (empty#146:6-11 -> empty)
                       Range: File "", line 146, characters 6-11
@@ -1703,7 +1703,7 @@ let%expect_test _ =
 
     (Transpiled#163:7-17 -> Transpiled)
     Range: File "", line 163, characters 7-17
-    Body Range: File "", line 164, character 2 to line 166, character 218
+    Body Range: File "", line 163, character 20 to line 167, character 3
     Content: Members: Variable definitions:
                       (map_find_opt#164:6-18 -> map_find_opt)
                       Range: File "", line 164, characters 6-18
@@ -1731,7 +1731,7 @@ let%expect_test _ =
 
     (Set#169:7-10 -> Set)
     Range: File "", line 169, characters 7-10
-    Body Range: File "", line 170, character 2 to line 183, character 110
+    Body Range: File "", line 169, character 13 to line 184, character 3
     Content: Members: Variable definitions:
                       (empty#170:6-11 -> empty)
                       Range: File "", line 170, characters 6-11
@@ -1800,7 +1800,7 @@ let%expect_test _ =
 
     (List#186:7-11 -> List)
     Range: File "", line 186, characters 7-11
-    Body Range: File "", line 187, character 2 to line 205, character 48
+    Body Range: File "", line 186, character 14 to line 206, character 3
     Content: Members: Variable definitions:
                       (length#187:6-12 -> length)
                       Range: File "", line 187, characters 6-12
@@ -1886,7 +1886,7 @@ let%expect_test _ =
 
     (String#208:7-13 -> String)
     Range: File "", line 208, characters 7-13
-    Body Range: File "", line 209, character 2 to line 213, character 84
+    Body Range: File "", line 208, character 16 to line 214, character 3
     Content: Members: Variable definitions:
                       (length#209:6-12 -> length)
                       Range: File "", line 209, characters 6-12
@@ -1923,7 +1923,7 @@ let%expect_test _ =
 
     (Option#216:7-13 -> Option)
     Range: File "", line 216, characters 7-13
-    Body Range: File "", line 217, character 2 to line 224, character 77
+    Body Range: File "", line 216, character 16 to line 225, character 3
     Content: Members: Variable definitions:
                       (unopt#217:6-11 -> unopt)
                       Range: File "", line 217, characters 6-11
@@ -1971,7 +1971,7 @@ let%expect_test _ =
 
     (Bytes#227:7-12 -> Bytes)
     Range: File "", line 227, characters 7-12
-    Body Range: File "", line 228, character 2 to line 234, character 82
+    Body Range: File "", line 227, character 15 to line 235, character 3
     Content: Members: Variable definitions:
                       (concats#228:6-13 -> concats)
                       Range: File "", line 228, characters 6-13
@@ -2010,7 +2010,7 @@ let%expect_test _ =
 
     (Crypto#237:7-13 -> Crypto)
     Range: File "", line 237, characters 7-13
-    Body Range: File "", line 238, character 2 to line 244, character 112
+    Body Range: File "", line 237, character 16 to line 245, character 3
     Content: Members: Variable definitions:
                       (blake2b#238:6-13 -> blake2b)
                       Range: File "", line 238, characters 6-13
@@ -2054,7 +2054,7 @@ let%expect_test _ =
 
     (Test#304:7-11 -> Test)
     Range: File "", line 304, characters 7-11
-    Body Range: File "", line 306, character 2 to line 653, character 5
+    Body Range: File "", line 304, character 14 to line 654, character 3
     Content: Members: Variable definitions:
                       (run#306:6-9 -> run)
                       Range: File "", line 306, characters 6-9
@@ -2570,7 +2570,7 @@ let%expect_test _ =
                       Module definitions:
                       (PBT#374:9-12 -> PBT)
                       Range: File "", line 374, characters 9-12
-                      Body Range: File "", line 375, character 4 to line 389, character 7
+                      Body Range: File "", line 374, character 15 to line 390, character 5
                       Content: Members: Variable definitions:
                                         (gen#375:8-11 -> gen)
                                         Range: File "", line 375, characters 8-11
@@ -2599,7 +2599,7 @@ let%expect_test _ =
 
                       (Proxy_ticket#584:9-21 -> Proxy_ticket)
                       Range: File "", line 584, characters 9-21
-                      Body Range: File "", line 585, character 15 to line 652, character 7
+                      Body Range: File "", line 584, character 24 to line 653, character 5
                       Content: Members: Variable definitions:
                                         (proxy_transfer_contract#585:19-42 -> proxy_transfer_contract)
                                         Range: File "", line 585, characters 19-42
@@ -2655,7 +2655,7 @@ let%expect_test _ =
                                         Type definitions:
                                         (proxy_address#609:12-25 -> proxy_address)
                                         Range: File "", line 609, characters 12-25
-                                        Body Range: File "", line 609, characters 28-71
+                                        Body Range: File "", line 609, characters 28-57
                                         Content: : |funtype 'v : * . typed_address (
                                         ( ( 'v * nat ) *
                                           address ) ,

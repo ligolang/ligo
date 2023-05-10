@@ -90,7 +90,7 @@ let%expect_test _ =
 
   Error : this pattern-matching is not exhaustive.
   Here are examples of cases that are not matched:
-  - C |}]
+  - C () |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match7.jsligo"; "--no-color" ];

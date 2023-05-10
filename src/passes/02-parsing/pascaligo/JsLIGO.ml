@@ -149,7 +149,9 @@ let js_keywords =
 
 let mk_var (variable: lexeme wrap) =
   let v = variable#payload in
-  reg_of (if SSet.mem v js_keywords then "@" ^ v else v)
+  let v = if SSet.mem v js_keywords then "@" ^ v else v
+  in Wrap.ghost v
+
 
 (* CST *)
 
@@ -228,7 +230,7 @@ and add_attribute_to_SLet (attr: attribute) (node: Js.let_decl reg) =
 
 and add_attribute_to_SNamespace
     (attr: attribute)
-    (node: Js.namespace_statement) =
+    (node: Js.namespace_statement reg) =
   let kwd_namespace, module_name, statements, attributes = node.value in
   let attributes = attr :: attributes in
   let namespace  = kwd_namespace, module_name, statements, attributes
@@ -521,7 +523,7 @@ and statement_of_D_Module (node: module_decl reg) : Js.statement =
 and namespace_of_M_Body
     kwd_namespace (name: module_name) (m: module_body reg) =
   let declarations  = m.value.declarations in
-  let module_name   = reg_of name#payload
+  let module_name   = Wrap.ghost name#payload
   and attributes    = []
   and first_decl,
       other_decls   = declarations in
@@ -535,13 +537,9 @@ and namespace_of_M_Body
   in Js.SNamespace (reg_of namespace)
 
 and import_of_M_Path
-    kwd_import (name: module_name) (m: module_name module_path reg) =
-  let name_of name = reg_of name#payload in
-  let alias        = name_of name
-  and {module_path; field; _} = m.value in
-  let module_path  = Utils.nsepseq_map name_of module_path
-  and field        = name_of field
-  and dot          = Token.ghost_dot
+    kwd_import (alias: module_name) (m: module_name module_path reg) =
+  let {module_path; field; _} = m.value in
+  let dot          = Token.ghost_dot
   and equal        = Token.ghost_eq in
   let first_mod,
       other_mods   = module_path in
@@ -554,15 +552,12 @@ and import_of_M_Path
   in Js.SImport import
 
 and import_of_M_Var
-    kwd_import (name: module_name) (m: module_name) =
-  let name_of name = reg_of name#payload in
-  let alias        = name_of name
-  and equal        = Token.ghost_eq
-  and module_path  = name_of m, [] in
-  let import       =
-    Js.Import_rename {kwd_import; alias; equal; module_path} in
-  let import       = reg_of import
-  in Js.SImport import
+    kwd_import (alias: module_name) (m: module_name) =
+  let equal       = Token.ghost_eq
+  and module_path = m, [] in
+  let import      =
+    Js.Import_rename {kwd_import; alias; equal; module_path}
+  in Js.SImport (reg_of import)
 
 (* Type declaration *)
 
@@ -663,7 +658,7 @@ and of_T_Cart (node: cartesian) =
 
 and of_T_Fun (node: (type_expr * arrow * type_expr) reg) =
   let domain, _, codomain = node.value in
-  let name          = reg_of (Utils.gen_sym ())
+  let name          = Wrap.ghost (Utils.gen_sym ())
   and colon         = Token.ghost_colon
   and type_expr     = type_expr_of_type_expr domain in
   let fun_type_arg  = Js.{name; colon; type_expr} in
@@ -673,20 +668,16 @@ and of_T_Fun (node: (type_expr * arrow * type_expr) reg) =
 
 (* Integer literal in types (e.g. "42") *)
 
-and of_T_Int (node: (lexeme * Z.t) wrap) =
-  Js.TInt Region.{region = node#region; value = node#payload}
+and of_T_Int (node: (lexeme * Z.t) wrap) = Js.TInt node
 
 (* Qualified types (e.g. "A.B.(x * y)") *)
 
 and of_T_ModPath (node: type_expr module_path reg) =
   let {module_path; selector; field} = node.value in
   match module_path with
-    only_module, [] ->
-      let region      = only_module#region
-      and value       = only_module#payload in
-      let module_name = Region.{value; region}
-      and field       = type_expr_of_type_expr field in
-      let access      = Js.{module_name; selector; field}
+    module_name, [] ->
+      let field  = type_expr_of_type_expr field in
+      let access = Js.{module_name; selector; field}
       in Js.TModA (reg_of access)
   | _ -> deep_module_paths_not_transpiled node.region
 
@@ -723,8 +714,7 @@ and field_decls_of_field_decls (node: field_decl reg) : Js.field_decl reg =
 
 (* String literal in types (e.g. "foo") *)
 
-and of_T_String (node: lexeme wrap) =
-  Js.TString Region.{region = node#region; value = node#payload}
+and of_T_String (node: lexeme wrap) = Js.TString node
 
 (* Sum types (e.g. "[@a] A | B of t") *)
 
@@ -741,7 +731,7 @@ and of_T_Sum (node: sum_type reg) : Js.type_expr =
 and variant_of_variant (node: variant reg) : Js.variant reg =
   let node         = node.value in
   let attributes   = node.attributes
-  and constr       = reg_of node.ctor#payload
+  and constr       = node.ctor
   and params       = params_of_ctor_args node.ctor_args in
   let variant_comp = Js.{constr; params} in
   let tuple        = reg_of @@ brackets_of variant_comp
@@ -837,13 +827,13 @@ and expr_of_E_App (node: call) =
   let args = args.value.inside in
   match fun_or_ctor, args with
     E_Ctor ctor, Some args ->
-      let econstr = reg_of ctor#payload in
+      let econstr = Wrap.ghost ctor#payload in
       let args    = Utils.nsepseq_map expr_of_expr args in
       let args    = Js.ESeq (reg_of args) in
       let app     = econstr, Some args
       in Js.EConstr (reg_of app)
   | E_Ctor ctor, None ->
-      let econstr = reg_of ctor#payload in
+      let econstr = Wrap.ghost ctor#payload in
       let app     = econstr, None
       in Js.EConstr (reg_of app)
   | _, None ->
@@ -880,8 +870,7 @@ and expr_of_E_Block (node: block_with reg) =
 
 (* Bytes as expression (e.g. "0xFFFA") *)
 
-and expr_of_E_Bytes (node: (lexeme * Hex.t) wrap) =
-  Js.EBytes (reg_of node#payload)
+and expr_of_E_Bytes (node: (lexeme * Hex.t) wrap) = Js.EBytes node
 
 (* Case expression *)
 (*
@@ -904,7 +893,7 @@ match (action, {
 
 and expr_of_E_Case (node: expr case reg) =
   let {expr; cases; _} = node.value in
-  let fun_name  = Js.EVar (reg_of "match")
+  let fun_name  = Js.EVar (Wrap.ghost "match")
   and obj_expr  = obj_of_cases body_of_expr cases
   and comma     = Token.ghost_comma
   and subject   = expr_of_expr expr in
@@ -934,7 +923,7 @@ and property_of_P_App
   match node.value with
     P_Ctor p, None -> property_of_P_Ctor body p
   | P_Ctor p, Some tuple ->
-      let name        = Js.EVar (reg_of p#payload)
+      let name        = Js.EVar p
       and type_params = None in
       let parameters  = tuple.value.inside in
       let parameters  = Utils.nsepseq_map expr_of_pattern parameters in
@@ -949,7 +938,7 @@ and property_of_P_App
   | pattern, _ -> pattern_not_transpiled pattern
 
 and property_of_P_Ctor (body: Js.body) (node: ctor) : Js.property =
-  let name        = Js.EVar (reg_of node#payload)
+  let name        = Js.EVar node
   and type_params = None
   and unit        = Token.(ghost_lpar, ghost_rpar) in
   let parameters  = Js.EUnit (reg_of unit)
@@ -980,8 +969,8 @@ and expr_of_E_Ctor (node: ctor) =
     let unit = Token.(ghost_lpar, ghost_rpar)
     in Js.EUnit (reg_of unit)
   else
-    let constr = reg_of node#payload in
-    Js.EConstr (reg_of (constr, None))
+    let constr = Wrap.ghost node#payload
+    in Js.EConstr (reg_of (constr, None))
 
 (* Conditional expression *)
 
@@ -1019,7 +1008,7 @@ and expr_of_E_Cons (node: sharp bin_op reg) =
   let e_array     = brackets_of array_items in
   let e_array     = Js.EArray (reg_of e_array) in
   let arg         = Js.Multiple (reg_of (par_of (e_array,[]))) in
-  let list        = Js.EVar (reg_of "list")
+  let list        = Js.EVar (Wrap.ghost "list")
   in Js.ECall (reg_of (list, arg))
 
 (* Integer division (e.g. "x / y") *)
@@ -1052,8 +1041,7 @@ and expr_of_E_Gt (node: gt bin_op reg) =
 
 (* Integers as expressions (e.g. "42") *)
 
-and expr_of_E_Int (node: (lexeme * Z.t) wrap) =
-  Js.(EArith (Int (reg_of node#payload)))
+and expr_of_E_Int (node: (lexeme * Z.t) wrap) = Js.(EArith (Int node))
 
 (* Lower or Equal then (e.g., "x <= y") *)
 
@@ -1071,7 +1059,7 @@ and expr_of_E_List (node: expr compound reg) =
       let e_array     = brackets_of array_items in
       let e_array     = Js.EArray (reg_of e_array) in
       let arg         = Js.Multiple (reg_of (par_of (e_array,[]))) in
-      let list        = Js.EVar (reg_of "list")
+      let list        = Js.EVar (Wrap.ghost "list")
       in Js.ECall (reg_of (list, arg))
 
 (* Lower than (e.g. "x < y") *)
@@ -1087,9 +1075,9 @@ and expr_of_E_Map (node: binding reg compound reg) =
 and expr_of_map (kind: string) (node: binding reg compound reg) =
   match node.value.elements with
     None ->
-      let module_name = reg_of kind
+      let module_name = Wrap.ghost kind
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "empty") in
+      and field       = Js.EVar (Wrap.ghost "empty") in
       let access      = Js.{module_name; selector; field}
       in Js.EModA (reg_of access)
   | Some elems ->
@@ -1099,12 +1087,12 @@ and expr_of_map (kind: string) (node: binding reg compound reg) =
       in
       let e_array     = Js.EArray (reg_of e_array) in
       let list_args   = Js.Multiple (reg_of (par_of (e_array,[]))) in
-      let list        = Js.EVar (reg_of "list") in
+      let list        = Js.EVar (Wrap.ghost "list") in
       let list_call   = Js.ECall (reg_of (list, list_args))
       in
-      let module_name = reg_of "Map"
+      let module_name = Wrap.ghost "Map"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "literal") in
+      and field       = Js.EVar (Wrap.ghost "literal") in
       let map_literal = Js.{module_name; selector; field} in
       let map_literal = Js.EModA (reg_of map_literal)
       in
@@ -1133,9 +1121,9 @@ and expr_of_E_MapLookup (node: map_lookup reg) =
   | index, [] ->
       let map          = expr_of_expr map in
       let index        = expr_of_expr index in
-      let module_name  = reg_of "Transpiled"
+      let module_name  = Wrap.ghost "Transpiled"
       and selector     = Token.ghost_dot
-      and field        = Js.EVar (reg_of "map_find_opt") in
+      and field        = Js.EVar (Wrap.ghost "map_find_opt") in
       let map_find_opt = Js.{module_name; selector; field} in
       let map_find_opt = Js.EModA (reg_of map_find_opt) in
       let comma        = Token.ghost_comma in
@@ -1153,8 +1141,6 @@ and expr_of_E_Mod (node: kwd_mod bin_op reg) =
 and expr_of_E_ModPath (node: expr module_path reg) =
   let {module_path; field; _} = node.value in
   let rev_path = Utils.nsepseq_rev module_path in
-  let rev_path =
-    Utils.nsepseq_map (fun n -> reg_of n#payload) rev_path in
   let module_name,
       rev_path = rev_path in
   let selector = Token.ghost_dot in
@@ -1175,10 +1161,10 @@ and expr_of_E_Mult (node: times bin_op reg) =
 and expr_of_E_Mutez (node: (lexeme * Int64.t) wrap) =
   let lexeme, int64 = node#payload in
   let int           = Z.of_int64 int64 in
-  let int           = reg_of (lexeme, int) in
-  let expr          = Js.EArith (Js.Int int)
+  let int           = Wrap.ghost (lexeme, int) in
+  let expr          = Js.(EArith (Int int))
   and kwd_as        = Token.ghost_as
-  and type_expr     = Js.TVar (reg_of "mutez") in
+  and type_expr     = Js.TVar (Wrap.ghost "mutez") in
   let e_annot       = expr, kwd_as, type_expr in
   let e_annot       = Js.EAnnot (reg_of e_annot)
   in Js.EPar (reg_of (par_of e_annot))
@@ -1186,10 +1172,9 @@ and expr_of_E_Mutez (node: (lexeme * Int64.t) wrap) =
 (* Naturals as expressions (e.g. "4n") *)
 
 and expr_of_E_Nat (node: (lexeme * Z.t) wrap) =
-  let int       = reg_of node#payload in
-  let expr      = Js.EArith (Js.Int int)
+  let expr      = Js.(EArith (Int node))
   and kwd_as    = Token.ghost_as
-  and type_expr = Js.TVar (reg_of "nat") in
+  and type_expr = Js.TVar (Wrap.ghost "nat") in
   let e_annot   = expr, kwd_as, type_expr in
   let e_annot   = Js.EAnnot (reg_of e_annot)
   in Js.EPar (reg_of (par_of e_annot))
@@ -1217,7 +1202,7 @@ and expr_of_E_Nil (node: kwd_nil) =
 and expr_of_nil () =
   let arg  = Js.EArray (reg_of (brackets_of None)) in
   let arg  = Js.Multiple (reg_of (par_of (arg,[]))) in
-  let list = Js.EVar (reg_of "list")
+  let list = Js.EVar (Wrap.ghost "list")
   in Js.ECall (reg_of (list, arg))
 
 (* Logical negation (e.g. "not x") *)
@@ -1269,9 +1254,9 @@ and expr_of_E_Record (node: record_expr) =
 and expr_of_E_Set (node: expr compound reg) =
   match node.value.elements with
     None ->
-      let module_name = reg_of "Set"
+      let module_name = Wrap.ghost "Set"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "empty") in
+      and field       = Js.EVar (Wrap.ghost "empty") in
       let access      = Js.{module_name; selector; field}
       in Js.EModA (reg_of access)
   | Some elems ->
@@ -1279,12 +1264,12 @@ and expr_of_E_Set (node: expr compound reg) =
       let e_array     = brackets_of (Some array_items) in
       let e_array     = Js.EArray (reg_of e_array) in
       let list_args   = Js.Multiple (reg_of (par_of (e_array,[]))) in
-      let list        = Js.EVar (reg_of "list") in
+      let list        = Js.EVar (Wrap.ghost "list") in
       let list_call   = Js.ECall (reg_of (list, list_args))
       in
-      let module_name = reg_of "Set"
+      let module_name = Wrap.ghost "Set"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "literal") in
+      and field       = Js.EVar (Wrap.ghost "literal") in
       let set_literal = Js.{module_name; selector; field} in
       let set_literal = Js.EModA (reg_of set_literal)
       in
@@ -1298,9 +1283,9 @@ and expr_of_E_SetMem (node: set_membership reg) =
   let {set; element; _} = node.value in
   let set          = expr_of_expr set
   and elem         = expr_of_expr element
-  and module_name  = reg_of "Set"
+  and module_name  = Wrap.ghost "Set"
   and selector     = Token.ghost_dot
-  and field        = Js.EVar (reg_of "mem") in
+  and field        = Js.EVar (Wrap.ghost "mem") in
   let set_mem      = Js.{module_name; selector; field} in
   let set_mem      = Js.EModA (reg_of set_mem) in
   let comma        = Token.ghost_comma in
@@ -1310,8 +1295,7 @@ and expr_of_E_SetMem (node: set_membership reg) =
 
 (* String literals as expressions (e.g. "foo") *)
 
-and expr_of_E_String (node: lexeme wrap) =
-  Js.(EString (String (reg_of node#payload)))
+and expr_of_E_String (node: lexeme wrap) = Js.(EString (String node))
 
 (* Subtraction (e.g. "a - b") *)
 
@@ -1411,8 +1395,7 @@ and expr_of_E_Var (node: variable) = Js.EVar (mk_var node)
 
 (* Verbatim string as expressions (e.g. "{|foo|}") *)
 
-and expr_of_E_Verbatim (node: lexeme wrap) =
-  Js.(EString (Verbatim (reg_of node#payload)))
+and expr_of_E_Verbatim (node: lexeme wrap) = Js.(EString (Verbatim node))
 
 (* STATEMENTS *)
 
@@ -1500,9 +1483,9 @@ and statement_of_I_Assign (node: assignment reg) =
         E_Var _ | E_Proj _ -> (
           match keys with
             key, [] ->
-              let module_name = reg_of "Transpiled"
+              let module_name = Wrap.ghost "Transpiled"
               and selector    = Token.ghost_dot
-              and field       = Js.EVar (reg_of "map_add") in
+              and field       = Js.EVar (Wrap.ghost "map_add") in
               let map_add     = Js.{module_name; selector; field} in
               let map_add     = Js.EModA (reg_of map_add)
               in
@@ -1558,7 +1541,7 @@ and statement_of_I_Case (node: test_clause case reg) =
           in reg_of (braces_of (return, []))
     in Js.FunctionBody stmts
   in
-  let fun_name    = Js.EVar (reg_of "match")
+  let fun_name    = Js.EVar (Wrap.ghost "match")
   and obj_expr    = obj_of_cases mk_body cases
   and comma       = Token.ghost_comma
   and subject     = expr_of_expr expr in
@@ -1567,7 +1550,7 @@ and statement_of_I_Case (node: test_clause case reg) =
   let match_call  = Js.ECall (reg_of (fun_name, arguments))
   in
   let kwd_const   = Token.ghost_const in
-  let variable    = reg_of "_" in
+  let variable    = Wrap.ghost "_" in
   let var_pattern = Js.{variable; attributes=[]} in
   let binders     = Js.PVar (reg_of var_pattern)
   and type_params = None
@@ -1661,7 +1644,7 @@ and statement_of_ForMap (node: for_map reg) =
       and type_params   = None
       and lhs_type      = None
       and eq            = Token.ghost_eq
-      and expr          = Js.EVar (reg_of "generated") in
+      and expr          = Js.EVar (Wrap.ghost "generated") in
       let val_binding   = Js.{binders; type_params; lhs_type; eq; expr} in
       let binding       = reg_of val_binding in
       let bindings      = binding, [] in
@@ -1672,7 +1655,7 @@ and statement_of_ForMap (node: for_map reg) =
       let statement     = Js.SBlock (reg_of (braces_of statements))
       and kwd_for       = Token.ghost_for
       and lpar          = Token.ghost_lpar
-      and index         = reg_of "generated" (* Hopefully no collision *)
+      and index         = Wrap.ghost "generated" (* Hopefully no collision *)
       and index_kind    = `Let Token.ghost_let
       and kwd_of        = Token.ghost_of
       and expr          = expr_of_expr collection
@@ -1714,9 +1697,9 @@ and statement_of_I_Patch (node: patch reg) =
       match bindings.value.elements with
         None -> None
       | Some bindings ->
-          let module_name = reg_of "Map"
+          let module_name = Wrap.ghost "Map"
           and selector    = Token.ghost_dot
-          and field       = Js.EVar (reg_of "add") in
+          and field       = Js.EVar (Wrap.ghost "add") in
           let map_add     = Js.{module_name; selector; field} in
           let map_add     = Js.EModA (reg_of map_add) in
           let comma       = Token.ghost_comma in
@@ -1741,9 +1724,9 @@ and statement_of_I_Patch (node: patch reg) =
       match elms.value.elements with
           None -> None
       | Some elms ->
-          let module_name = reg_of "Set"
+          let module_name = Wrap.ghost "Set"
           and selector    = Token.ghost_dot
-          and field       = Js.EVar (reg_of "add") in
+          and field       = Js.EVar (Wrap.ghost "add") in
           let set_add     = Js.{module_name; selector; field} in
           let set_add     = Js.EModA (reg_of set_add) in
           let comma       = Token.ghost_comma in
@@ -1779,9 +1762,9 @@ and statement_of_I_Remove (node: removal reg) =
   and op         = reg_of Js.Eq in
   match remove_kind with
     `Set _ ->
-      let module_name = reg_of "Set"
+      let module_name = Wrap.ghost "Set"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "remove") in
+      and field       = Js.EVar (Wrap.ghost "remove") in
       let set_remove  = Js.{module_name; selector; field} in
       let set_remove  = Js.EModA (reg_of set_remove)
       in
@@ -1792,9 +1775,9 @@ and statement_of_I_Remove (node: removal reg) =
       let e_assign    = Js.EAssign (collection, op, remove_call)
       in Js.SExpr ([], e_assign)
   | `Map _ ->
-      let module_name = reg_of "Transpiled"
+      let module_name = Wrap.ghost "Transpiled"
       and selector    = Token.ghost_dot
-      and field       = Js.EVar (reg_of "map_remove") in
+      and field       = Js.EVar (Wrap.ghost "map_remove") in
       let map_remove  = Js.{module_name; selector; field} in
       let map_remove  = Js.EModA (reg_of map_remove) in
       let comma       = Token.ghost_comma in

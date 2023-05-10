@@ -4,6 +4,9 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
+module Utils  = Simple_utils.Utils
+
+let (<@) = Utils.(<@)
 
 (* Local dependencies *)
 
@@ -48,69 +51,96 @@ let mk_state ?(buffer = Buffer.create 131) ~offsets mode =
         pad_node = pad_node ^ if rank = arity - 1 then "  " else "| ">}
   end
 
-(* Printing nodes *)
+let to_buffer (state: state) = state#buffer
+
+(* ROOTS (labels at the root node) *)
+
+type root = string
+
+(* PRINTERS *)
 
 type 'a printer = state -> 'a -> unit
+
+(* PRINTING NODES (trees without children) *)
 
 let compact state (region : Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-let print_node ?region state label =
+let make_node ?region state root =
   let node =
     match region with
-      None -> sprintf "%s%s\n" state#pad_path label
+      None -> sprintf "%s%s\n" state#pad_path root
     | Some region ->
         let region = compact state region in
-        sprintf "%s%s (%s)\n" state#pad_path label region
+        sprintf "%s%s (%s)\n" state#pad_path root region
   in Buffer.add_string state#buffer node
 
-let print_literal state (wrap : string Wrap.t) =
-  print_node ~region:wrap#region state wrap#payload
+let make_literal state (wrap : string Wrap.t) =
+  make_node ~region:wrap#region state wrap#payload
 
-let print_literal_wo_reg state (wrap : string Wrap.t) =
-  print_node state wrap#payload
+let make_literal_wo_reg state (wrap : string Wrap.t) =
+  make_node state wrap#payload
 
-(* Making subtrees (children) from general values ([mk_child]),
-   optional values ([mk_child_opt]) or list values
-   ([mk_child_list]). The type of a subtree ("child") is a ['a
-   option], with the interpretation that [None] means "no subtree
-   printed". In the case of a list, the empty list is interpreted as
-   meaning "no subtree printed." *)
+(* PRINTING GENERAL TREES *)
 
 type child = (state -> unit) option
+
+let make_forest state children = (* DO NOT EXPORT *)
+  let children     = List.filter_map ~f:(fun x -> x) children in
+  let arity        = List.length children in
+  let f rank print = print (state#pad arity rank)
+  in List.iteri ~f children
+
+let make_tree ?region state root children =
+  make_node   state ?region root;
+  make_forest state children
+
+let make = make_tree
+
+(* MAKING SUBTREES (children) *)
 
 let mk_child print child = Some (fun state -> print state child)
 
 let mk_child_opt print = function
-  None -> None
+  None       -> None
 | Some value -> mk_child print value
 
-let mk_child_list print_list = function
-  [] -> None
-| l -> mk_child print_list l
+let mk_children_list print ?root = function
+  []   -> []
+| list ->
+    let children = List.map ~f:(mk_child print) list in
+    match root with
+      None      -> children
+    | Some root -> [Some (fun state -> make_tree state root children)]
 
-(* Printing trees (root + subtrees). The call [print_tree state label
-   ?region children] prints a node whose label is [label] and optional
-   region is [region], and whose subtrees are [children]. The latter
-   is a list of optional values, with the interpretation of [None] as
-   meaning "no subtree printed". *)
+let mk_children_nsepseq print ?root =
+  mk_children_list print ?root <@ Utils.nsepseq_to_list
 
-type label = string
+let mk_children_sepseq print ?root =
+  mk_children_list print ?root <@ Utils.sepseq_to_list
 
-let print_tree ?region state label children =
-  let () = print_node state ?region label in
-  let children = List.filter_map ~f:(fun x -> x) children in
-  let arity = List.length children in
-  let f rank print = print (state#pad arity rank)
-  in List.iteri ~f children
+let mk_children_nseq print ?root =
+  mk_children_list print ?root <@ Utils.nseq_to_list
 
-let print = print_tree
+(* PRINTING UNARY TREES *)
 
-(* A special case of tree occurs often: the unary tree, that is, a
-   tree with exactly one subtree. *)
+let make_unary ?region state root print node =
+  make_tree state root ?region [mk_child print node]
 
-let print_unary ?region state label print_sub node =
-  print_tree state label ?region [mk_child print_sub node]
+(* PRINTING LISTS AND SEQUENCES *)
+
+let of_list ?region state root print list =
+  let children = List.map ~f:(mk_child print) list
+  in make_tree ?region state root children
+
+let of_nsepseq ?region state root print =
+  of_list ?region state root print <@ Utils.nsepseq_to_list
+
+let of_sepseq ?region state root print =
+  of_list ?region state root print <@ Utils.sepseq_to_list
+
+let of_nseq ?region state root print =
+  of_list ?region state root print <@ Utils.nseq_to_list
 
 (* PRINTING LEAVES *)
 
@@ -118,29 +148,28 @@ type lexeme = string
 
 (* Strings *)
 
-let print_string state (wrap : string Wrap.t) =
+let make_string state (wrap : string Wrap.t) =
   let region = compact state wrap#region in
   let node   = sprintf "%s%S (%s)\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
 
 (* Verbatim strings *)
 
-let print_verbatim state (wrap : string Wrap.t) =
+let make_verbatim state (wrap : string Wrap.t) =
   let region = compact state wrap#region in
   let node   = sprintf "%s{|%s|} (%s)\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
 
 (* Numbers *)
 
-let print_num to_string label state (wrap : 'a Wrap.t) =
+let make_num to_string root state (wrap : 'a Wrap.t) =
   let lexeme, num = wrap#payload in
   let children = [
-    mk_child (print_node ~region:wrap#region) lexeme;
-    mk_child print_node (to_string num)
-  ]
-  in print_tree state label children
+    mk_child (make_node ~region:wrap#region) lexeme;
+    mk_child make_node                       (to_string num)]
+  in make_tree state root children
 
-let print_int   = print_num Z.to_string
-let print_nat   = print_int
-let print_bytes = print_num Hex.show
-let print_mutez = print_num Int64.to_string
+let make_int   = make_num Z.to_string
+let make_nat   = make_int
+let make_bytes = make_num Hex.show
+let make_mutez = make_num Int64.to_string

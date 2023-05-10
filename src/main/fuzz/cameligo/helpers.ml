@@ -1,4 +1,4 @@
-include Fuzz_shared.Monad
+(* include Fuzz_shared.Monad
 open Cst.Cameligo
 
 module Fold_helpers (M : Monad) = struct
@@ -34,7 +34,7 @@ module Fold_helpers (M : Monad) = struct
     let* t = f.t t in
     let return = ok in
     match t with
-    | TProd { value; region } ->
+    | T_Prod { value; region } ->
       let* value = bind_map_npseq self value in
       return @@ TProd { value; region }
     | TSum { value; region } ->
@@ -393,4 +393,4 @@ module Fold_helpers (M : Monad) = struct
    fun f { decl; eof } ->
     let self = map_declaration f in
     map (fun decl -> { decl; eof }) @@ bind_map_ne_list self @@ decl
-end
+end *)

@@ -1,4 +1,4 @@
-open Helpers
+(* open Helpers
 open Cst.Jsligo
 include Fuzz_shared.Monad
 
@@ -79,4 +79,4 @@ module Mutator (M : Monad) = struct
   let mutate_module_ ?n (mod_ : Cst.Jsligo.t) =
     let rndmod_ = map_module mutate_mapper mod_ in
     get_one ?n rndmod_
-end
+end *)

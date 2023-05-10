@@ -158,8 +158,8 @@ let%expect_test _ =
       1 | letx : int = 0
           ^^^^
     Ill-formed contract.
-    At this point, if the declaration is complete, one of the following is
-    expected:
+    At this point, if the current declaration is complete, one of the
+    following is expected:
       * another declaration;
       * the end of the file. |}];
   run_ligo_good
@@ -212,7 +212,7 @@ let%expect_test _ =
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#11:6-7  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-22
+    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-17
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
 
@@ -341,7 +341,7 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-20
+    [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-13
     [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
     [ Foo#1:7-10 x#2:6-7  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14
     [ Foo#1:7-10 x#2:6-7  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-21
@@ -356,7 +356,7 @@ let%expect_test _ =
     Module definitions:
     (Foo#1:7-10 -> Foo)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
-    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65
+    Body Range: File "../../test/contracts/warning_duplicate.mligo", line 1, character 13 to line 3, character 3
     Content: Members: Variable definitions:
                       (x#2:6-7 -> x)
                       Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7

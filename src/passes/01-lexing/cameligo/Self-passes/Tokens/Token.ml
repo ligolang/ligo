@@ -80,6 +80,11 @@ module T =
     | BOOL_AND of lexeme Wrap.t  (* && *)
     | QUOTE    of lexeme Wrap.t  (* '  *)
     | REV_APP  of lexeme Wrap.t  (* |> *)
+    | PLUS_EQ  of lexeme Wrap.t  (* += *)
+    | MINUS_EQ of lexeme Wrap.t  (* -= *)
+    | TIMES_EQ of lexeme Wrap.t  (* *= *)
+    | SLASH_EQ of lexeme Wrap.t  (* /= *)
+    | VBAR_EQ  of lexeme Wrap.t  (* |= *)
 
     (* Keywords *)
 
@@ -174,6 +179,11 @@ module T =
     | BOOL_AND t
     | QUOTE    t
     | REV_APP  t
+    | PLUS_EQ  t
+    | MINUS_EQ t
+    | TIMES_EQ t
+    | SLASH_EQ t
+    | VBAR_EQ  t
 
     (* Keywords *)
 
@@ -391,6 +401,11 @@ module T =
     let wrap_bool_and = wrap "&&"
     let wrap_quote    = wrap "'"
     let wrap_rev_app  = wrap "|>"
+    let wrap_plus_eq  = wrap "+="
+    let wrap_minus_eq = wrap "-="
+    let wrap_times_eq = wrap "*="
+    let wrap_slash_eq = wrap "/="
+    let wrap_vbar_eq  = wrap "|="
 
     (* Smart constructors *)
 
@@ -735,6 +750,11 @@ module T =
     | BOOL_AND t -> t#region, "BOOL_AND"
     | QUOTE    t -> t#region, "QUOTE"
     | REV_APP  t -> t#region, "REV_APP"
+    | PLUS_EQ  t -> t#region, "PLUS_EQ"
+    | MINUS_EQ t -> t#region, "MINUS_EQ"
+    | TIMES_EQ t -> t#region, "TIMES_EQ"
+    | SLASH_EQ t -> t#region, "SLASH_EQ"
+    | VBAR_EQ  t -> t#region, "VBAR_EQ"
 
     (* Keywords *)
 

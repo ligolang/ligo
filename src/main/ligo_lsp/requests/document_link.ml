@@ -9,7 +9,7 @@ let extract_directives_cameligo (cst : Parsing.Cameligo.CST.t)
     : Preprocessor.Directive.t list
   =
   List.filter_map ~f:(function
-      | Cst_cameligo.CST.Directive d -> Some d
+      | Cst_cameligo.CST.D_Directive d -> Some d
       | _ -> None)
   @@ Simple_utils.Utils.nseq_to_list cst.decl
 
