@@ -6,9 +6,10 @@ open Simple_utils
 open Errors
 module Location = Simple_utils.Location
 
-(*
-  warns about unreachable code and restrict returns in unsupported instructions (loops)
-*)
+(* warns about unreachable code and restrict returns in unsupported instructions (loops) *)
+include Flag.No_arg ()
+
+let name = __MODULE__
 
 let is_s_return_or_break : statement -> bool =
  fun s ->
@@ -73,12 +74,8 @@ let compile ~raise =
       else make_e ~loc e
     | { wrap_content; location = loc } -> make_e ~loc wrap_content
   in
-  `Cata { idle_cata_pass with instruction; block; expr }
+  Fold { idle_fold with instruction; block; expr }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:Iter.defaults
+let decompile ~raise:_ = Nothing
+let reduction ~raise:_ = Iter.defaults

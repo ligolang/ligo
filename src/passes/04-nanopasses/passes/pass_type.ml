@@ -1,50 +1,92 @@
 open Ast_unified
-
-(* it's preferable to use the defined recursion schemes for code transformations
-   but  *)
-type 'a code_transformation = 'a -> 'a
-
-(* to dynamically check if reduction happened.
-  , the second rhs of the pair allows for combination of reductions checks
-*)
-type 'a dyn_reduction_check = Iter.iter * (Iter.iter -> 'a -> unit)
-
-type 'a sub_pass =
-  { forward : 'a code_transformation
-  ; forward_check : 'a dyn_reduction_check
-  ; backward : 'a code_transformation
-  }
+open Simple_utils.Trace
+include Morphing
 
 type pass =
   { name : string
-  ; expression : expr sub_pass
-  ; program : program sub_pass
-  ; pattern : pattern sub_pass
+  ; morphing : morphing
   }
 
-let expr_selector x = x.expression
-let program_selector x = x.program
-let pattern_selector x = x.pattern
+type raise_t = (Errors.t, Main_warnings.all) raise
+
+module type T = sig
+  type flag_arg
+
+  val flag : (bool * flag_arg) option ref
+  val set_flag : enable:bool -> flag_arg -> unit
+  val is_enabled : unit -> bool
+  val name : string
+  val reduction : raise:raise_t -> Iter.iter
+  val compile : raise:raise_t -> Morphing.pass_kind
+  val decompile : raise:raise_t -> Morphing.pass_kind
+end
+
+module Selector : sig
+  (* select a specific sort transformation from a pass *)
+  type 'a t
+
+  val select : 'a t -> morphing -> 'a sub_pass
+  val expr : expr t
+  val program : program t
+  val block : block t
+  val pattern : pattern t
+  val ty_expr : ty_expr t
+  val declaration : declaration t
+  val instruction : instruction t
+end = struct
+  type 'a t = morphing -> 'a sub_pass
+
+  let select (selector : 'a t) (p : morphing) = selector p
+  let block x = x.block
+  let expr x = x.expression
+  let program x = x.program
+  let pattern x = x.pattern
+  let ty_expr x = x.ty_expr
+  let declaration x = x.declaration
+  let instruction x = x.instruction
+end
+
+let process_name =
+  (* we use __MODULE__ .. can be a bit incovenient as a name to use with CLI so we process it a bit *)
+  let open Simple_utils.Function in
+  String.lowercase <@ String.substr_replace_all ~pattern:"Passes__" ~with_:""
+
+
+let pass_of_module ~raise (module P : T) : pass * bool =
+  let name = process_name P.name in
+  let morphing =
+    Morphing.morph
+      ~compile:(P.compile ~raise)
+      ~decompile:(P.decompile ~raise)
+      ~reduction:(P.reduction ~raise)
+  in
+  { name; morphing }, P.is_enabled ()
+
+
+(* returns the pass name at which nanopass execution should stop and
+   a boolean to know if it is included or not
+  e.g. :
+  "my_pass" --> "my_pass", false
+  "my_pass+" --> "my_pass", true
+*)
+let partial_pass_execution_from_name stop =
+  match String.lsplit2 stop ~on:'+' with
+  | Some (name, "") -> true, String.lowercase name
+  | _ -> false, String.lowercase stop
+
 
 let rec select_passes included name passes =
   match passes with
   | [] -> []
-  | hd :: tl ->
-    if String.equal name hd.name
-    then if included then [ hd ] else []
-    else hd :: select_passes included name tl
+  | pass :: tl ->
+    if String.equal name (fst pass).name
+    then if included then [ pass ] else []
+    else pass :: select_passes included name tl
 
 
-let compile_with_passes : type a. a sub_pass list -> a -> a =
- fun passes prg ->
-  let combine_checks : a dyn_reduction_check list -> a -> unit =
-   fun checks ->
-    let iters = List.map ~f:fst checks in
-    let combined_iter = Iter.combine_iteration iters in
-    match checks with
-    | [] -> fun _ -> ()
-    | (_, f) :: _ -> f combined_iter
-  in
+(* executes a pass and check combined reductions *)
+let compile_with_passes : type a. a -> a sub_pass list -> a =
+ fun prg passes ->
   let f : a * a dyn_reduction_check list -> a sub_pass -> a * a dyn_reduction_check list =
    fun (prg, checks) pass ->
     let prg = pass.forward prg in
@@ -57,186 +99,42 @@ let compile_with_passes : type a. a sub_pass list -> a -> a =
   prg
 
 
-let decompile_with_passes : type a. a sub_pass list -> a -> a =
- fun passes prg -> List.fold passes ~init:prg ~f:(fun prg pass -> pass.backward prg)
+let filter_before (passes : (pass * bool) list) stop_before =
+  let included, stop = partial_pass_execution_from_name stop_before in
+  if not (List.exists passes ~f:(fun (pass, _) -> String.equal stop pass.name))
+  then failwith "No pass with the specified name";
+  if List.exists passes ~f:(fun (pass, enabled) ->
+         String.equal stop pass.name && not enabled)
+  then failwith "A pass exist with the specified name but isn't enabled";
+  select_passes included stop passes
 
 
-let nanopasses_until
-    : type a. pass list -> ?stop_before:_ -> selector:(pass -> a sub_pass) -> a -> a
+let decompile_passes
+    : type a.
+      raise:raise_t -> ?stop_before:_ -> sort:a Selector.t -> (module T) list -> a -> a
   =
- fun passes ?stop_before ~selector prg ->
-  let passes =
-    Option.value_map stop_before ~default:passes ~f:(fun n ->
-        let included, n =
-          match String.lsplit2 n ~on:'+' with
-          | Some (name, "") -> true, name
-          | _ -> false, n
-        in
-        let n = String.lowercase n in
-        if not (List.exists passes ~f:(fun p -> String.equal n p.name))
-        then failwith "No pass with the specified name";
-        select_passes included n passes)
-  in
-  compile_with_passes (List.map ~f:selector passes) prg
+ fun ~raise ?stop_before ~sort passes value ->
+  passes
+  |> List.rev
+  |> List.map ~f:(pass_of_module ~raise)
+  |> fun default ->
+  Option.value_map stop_before ~default ~f:(filter_before default)
+  |> List.filter_map ~f:(fun (pass, enabled) -> if enabled then Some pass else None)
+  |> List.map ~f:(fun (p : pass) -> p.morphing)
+  |> List.map ~f:(Selector.select sort)
+  |> List.fold ~init:value ~f:(fun prg pass -> pass.backward prg)
 
 
-type cata_pass =
-  ( expr
-  , ty_expr
-  , pattern
-  , statement
-  , block
-  , mod_expr
-  , instruction
-  , declaration
-  , program_entry
-  , program )
-  Ast_unified.Catamorphism.fold
-
-let idle_cata_pass : cata_pass =
-  { expr = (fun x -> { fp = x })
-  ; ty_expr = (fun x -> { fp = x })
-  ; pattern = (fun x -> { fp = x })
-  ; statement = (fun x -> { fp = x })
-  ; block = (fun x -> { fp = x })
-  ; mod_expr = (fun x -> { fp = x })
-  ; instruction = (fun x -> { fp = x })
-  ; declaration = (fun x -> { fp = x })
-  ; program_entry = (fun x -> { fp = x })
-  ; program = (fun x -> { fp = x })
-  }
-
-
-type 'a pass_unfold =
-  ( expr * 'a
-  , ty_expr * 'a
-  , pattern * 'a
-  , statement * 'a
-  , block * 'a
-  , mod_expr * 'a
-  , instruction * 'a
-  , declaration * 'a
-  , program_entry * 'a
-  , program * 'a )
-  Ast_unified.Anamorphism.unfold
-
-type 'a pass_fold =
-  ( expr * 'a
-  , ty_expr * 'a
-  , pattern * 'a
-  , statement * 'a
-  , block * 'a
-  , mod_expr * 'a
-  , instruction * 'a
-  , declaration * 'a
-  , program_entry * 'a
-  , program * 'a )
-  Ast_unified.Catamorphism.fold
-
-let default_unfold : 'a pass_unfold =
-  let prop acc x = x, acc in
-  { expr =
-      (fun (x, acc) ->
-        map_expr_ (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) x.fp)
-  ; ty_expr = (fun (x, acc) -> map_ty_expr_ (prop acc) x.fp)
-  ; pattern = (fun (x, acc) -> map_pattern_ (prop acc) (prop acc) x.fp)
-  ; statement = (fun (x, acc) -> map_statement_ (prop acc) (prop acc) (prop acc) x.fp)
-  ; block = (fun (x, acc) -> map_block_ (prop acc) (prop acc) x.fp)
-  ; mod_expr = (fun (x, acc) -> map_mod_expr_ (prop acc) (prop acc) x.fp)
-  ; instruction =
-      (fun (x, acc) ->
-        map_instruction_ (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) x.fp)
-  ; declaration =
-      (fun (x, acc) ->
-        map_declaration_ (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) x.fp)
-  ; program_entry =
-      (fun (x, acc) -> map_program_entry_ (prop acc) (prop acc) (prop acc) x.fp)
-  ; program = (fun (x, acc) -> map_program_ (prop acc) (prop acc) x.fp)
-  }
-
-
-let default_fold plus init : 'a pass_fold =
-  let p acc (_, el) = plus acc el in
-  { expr =
-      (fun x -> { fp = map_expr_ fst fst fst fst fst x }, fold_expr_ p p p p p init x)
-  ; ty_expr = (fun x -> { fp = map_ty_expr_ fst x }, fold_ty_expr_ p init x)
-  ; pattern = (fun x -> { fp = map_pattern_ fst fst x }, fold_pattern_ p p init x)
-  ; statement =
-      (fun x -> { fp = map_statement_ fst fst fst x }, fold_statement_ p p p init x)
-  ; block = (fun x -> { fp = map_block_ fst fst x }, fold_block_ p p init x)
-  ; mod_expr = (fun x -> { fp = map_mod_expr_ fst fst x }, fold_mod_expr_ p p init x)
-  ; instruction =
-      (fun x ->
-        ( { fp = map_instruction_ fst fst fst fst fst x }
-        , fold_instruction_ p p p p p init x ))
-  ; declaration =
-      (fun x ->
-        ( { fp = map_declaration_ fst fst fst fst fst x }
-        , fold_declaration_ p p p p p init x ))
-  ; program_entry =
-      (fun x ->
-        { fp = map_program_entry_ fst fst fst x }, fold_program_entry_ p p p init x)
-  ; program = (fun x -> { fp = map_program_ fst fst x }, fold_program_ p p init x)
-  }
-
-
-type 'a pass_kind =
-  [ `Cata of cata_pass
-  | `Hylo of 'a pass_fold * 'a pass_unfold
-  | `Check of Iter.iter
-  | `None
-  ]
-
-let morph
-    ~name
-    ~(compile : 'a pass_kind)
-    ~(decompile : 'a pass_kind)
-    ~(reduction_check : Ast_unified.Iter.iter)
-    : pass
+let compile_passes
+    : type a.
+      raise:raise_t -> ?stop_before:_ -> sort:a Selector.t -> (module T) list -> a -> a
   =
-  let mk_morph pass_kind (catapass, (cata, ana), check) value =
-    match pass_kind with
-    | `Cata pass -> catapass ~f:pass value
-    | `Hylo (fold, unfold) -> ana ~f:unfold (cata ~f:fold value)
-    | `Check pass ->
-      check ~f:pass value;
-      value
-    | `None -> value
-  in
-  let mk_sub_pass
-      : type v.
-        (f:cata_pass -> v -> v)
-        * ((f:'a pass_fold -> v -> v * 'a) * (f:'a pass_unfold -> v * 'a -> v))
-        * (f:Iter.iter -> v -> unit)
-        -> v sub_pass
-    =
-   fun (cata, ana, check) ->
-    { forward = mk_morph compile (cata, ana, check)
-    ; forward_check = (reduction_check, fun f v -> check ~f v)
-    ; backward = mk_morph decompile (cata, ana, check)
-    }
-  in
-  let expression =
-    mk_sub_pass
-      ( Catamorphism.cata_expr
-      , (Catamorphism.cata_expr, Anamorphism.ana_expr)
-      , Iter.iter_expr )
-  in
-  let program =
-    mk_sub_pass
-      ( Catamorphism.cata_program
-      , (Catamorphism.cata_program, Anamorphism.ana_program)
-      , Iter.iter_program )
-  in
-  let pattern =
-    mk_sub_pass
-      ( Catamorphism.cata_pattern
-      , (Catamorphism.cata_pattern, Anamorphism.ana_pattern)
-      , Iter.iter_pattern )
-  in
-  let process_name =
-    (* we use __MODULE__ .. can be a bit incovenient as a name to use with CLI so we process it a bit *)
-    let open Simple_utils.Function in
-    String.lowercase <@ String.substr_replace_all ~pattern:"Passes__" ~with_:""
-  in
-  { name = process_name name; expression; program; pattern }
+ fun ~raise ?stop_before ~sort passes prg ->
+  passes
+  |> List.map ~f:(pass_of_module ~raise)
+  |> fun default ->
+  Option.value_map stop_before ~default ~f:(filter_before default)
+  |> List.filter_map ~f:(fun (pass, enabled) -> if enabled then Some pass else None)
+  |> List.map ~f:(fun (p : pass) -> p.morphing)
+  |> List.map ~f:(Selector.select sort)
+  |> compile_with_passes prg

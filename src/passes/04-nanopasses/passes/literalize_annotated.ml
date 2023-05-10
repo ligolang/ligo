@@ -6,7 +6,10 @@ module Location = Simple_utils.Location
 open Ligo_prim.Literal_types
 module Ligo_string = Simple_utils.Ligo_string
 open Tezos_crypto
+
 (* TODO: for decompilation, might be good to build a map Timestamp <-> (fun _ -> e_timestamp _) *)
+
+include Flag.No_arg ()
 
 let is_ty_var ty str =
   match get_t_var ty with
@@ -101,12 +104,9 @@ let compile ~raise =
       | _ -> make_e ~loc e)
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:Iter.defaults
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
+let reduction ~raise:_ = Iter.defaults

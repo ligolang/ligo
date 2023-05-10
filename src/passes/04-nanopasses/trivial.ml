@@ -27,6 +27,11 @@ module To_core : sig
     :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
     -> Ast_unified.expr
     -> Ast_core.expression
+
+  val type_expression
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_unified.ty_expr
+    -> Ast_core.type_expression
 end = struct
   module O = Ast_core
   module I = Ast_unified
@@ -52,6 +57,7 @@ end = struct
 
   and expression ~raise e = I.Catamorphism.cata_expr ~f:(folder ~raise) e
   and program ~raise p = I.Catamorphism.cata_program ~f:(folder ~raise) p
+  and type_expression ~raise p = I.Catamorphism.cata_ty_expr ~f:(folder ~raise) p
 
   and dummy_top_level () =
     (* directive are translated as let _ = () *)
@@ -417,8 +423,10 @@ end = struct
 end
 
 module From_core : sig
+  val program : Ast_core.program -> Ast_unified.program
   val pattern : Ast_core.type_expression option Ast_core.Pattern.t -> Ast_unified.pattern
   val expression : Ast_core.expression -> Ast_unified.expr
+  val type_expression : Ast_core.type_expression -> Ast_unified.ty_expr
 end = struct
   module I = Ast_core
   module O = Ast_unified
@@ -442,8 +450,10 @@ end = struct
       }
 
 
+  and program p = Ast_unified.Anamorphism.ana_program ~f:unfolder p
   and expression e = Ast_unified.Anamorphism.ana_expr ~f:unfolder e
   and pattern p = Ast_unified.Anamorphism.ana_pattern ~f:unfolder p
+  and type_expression t = Ast_unified.Anamorphism.ana_ty_expr ~f:unfolder t
 
   and conv_row_attr : string option -> O.Attribute.t list = function
     | None -> []

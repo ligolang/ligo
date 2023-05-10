@@ -311,17 +311,25 @@ let t__type_ ~loc t1 t2 : ty_expr =
 
 
 let e_none ~loc =
-  e_applied_constructor ~loc { constructor = Label.of_string "None"; element = e_unit ~loc }
+  e_applied_constructor
+    ~loc
+    { constructor = Label.of_string "None"; element = e_unit ~loc }
 
 
-let e_some element = e_applied_constructor { constructor = Label.of_string "Some"; element }
+let e_some element =
+  e_applied_constructor { constructor = Label.of_string "Some"; element }
+
 
 let e_bool ~loc b =
   let e_true_ctor ~loc =
-    e_applied_constructor ~loc { constructor = Label.of_string "True"; element = e_unit ~loc }
+    e_applied_constructor
+      ~loc
+      { constructor = Label.of_string "True"; element = e_unit ~loc }
   in
   let e_false_ctor ~loc =
-    e_applied_constructor ~loc { constructor = Label.of_string "False"; element = e_unit ~loc }
+    e_applied_constructor
+      ~loc
+      { constructor = Label.of_string "False"; element = e_unit ~loc }
   in
   if b then e_true_ctor ~loc else e_false_ctor ~loc
 

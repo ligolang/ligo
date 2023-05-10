@@ -14,6 +14,7 @@ module List = Simple_utils.List
 
   In essence, discriminating functions binding from a regular binding (match)
 *)
+include Flag.No_arg ()
 
 let type_lhs_to_rhs : ty_expr option -> pattern -> ty_expr option =
  fun ty_opt pattern ->
@@ -156,7 +157,7 @@ let compile ~raise =
       d_const ~loc { type_params = None; pattern; rhs_type; let_rhs }
     | d -> make_d ~loc d
   in
-  `Cata { idle_cata_pass with expr; declaration }
+  Fold { idle_fold with expr; declaration }
 
 
 let reduction ~raise =
@@ -177,9 +178,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

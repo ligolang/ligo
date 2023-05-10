@@ -4,16 +4,27 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
+(* handle TS pattern to build lists from a function (cons, and literals) *)
+let name = __MODULE__
+
+include Flag.No_arg ()
+
 let array_to_list ~raise ~loc (arguments : expr Array_repr.t) =
   match arguments with
   | [ Expr_entry hd; Rest_entry tl ] ->
     e_constant ~loc { cons_name = C_CONS; arguments = [ hd; tl ] }
   | [ Rest_entry ls; Rest_entry rs ] ->
     let p = Variable.fresh ~loc () in
-    let l = e_record_access ~loc { struct_ = e_variable p ~loc ; label = Label.of_int 0 } in
-    let r = e_record_access ~loc { struct_ = e_variable p ~loc ; label = Label.of_int 1 } in
-    let result = e_constant ~loc { cons_name = C_CONS; arguments = [ l ; r ] } in
-    let lambda = Lambda.{ binder = Ligo_prim.Param.make p None ; output_type = None ; result } in
+    let l =
+      e_record_access ~loc { struct_ = e_variable p ~loc; label = Label.of_int 0 }
+    in
+    let r =
+      e_record_access ~loc { struct_ = e_variable p ~loc; label = Label.of_int 1 }
+    in
+    let result = e_constant ~loc { cons_name = C_CONS; arguments = [ l; r ] } in
+    let lambda =
+      Lambda.{ binder = Ligo_prim.Param.make p None; output_type = None; result }
+    in
     let f = e_lambda ~loc lambda in
     e_constant ~loc { cons_name = C_LIST_FOLD_RIGHT; arguments = [ f; ls; rs ] }
   | _ ->
@@ -25,7 +36,7 @@ let array_to_list ~raise ~loc (arguments : expr Array_repr.t) =
     e_list ~loc arguments
 
 
-let compile ~raise ~syntax =
+let compile ~raise =
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -38,27 +49,22 @@ let compile ~raise ~syntax =
       | _ -> same)
     | _ -> same
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr = pass_expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise ~syntax =
+let reduction ~raise =
   let fail () = raise.error (wrong_reduction __MODULE__) in
-  if Syntax_types.equal syntax JsLIGO
-  then
-    { Iter.defaults with
-      expr =
-        (function
-        | { wrap_content = E_call (f, _); _ }
-          when Option.value_map ~default:false (get_e_variable f) ~f:(fun x ->
-                   Variable.is_name x "list") -> fail ()
-        | _ -> ())
-    }
-  else Iter.defaults
+  { Iter.defaults with
+    expr =
+      (function
+      | { wrap_content = E_call (f, _); _ }
+        when Option.value_map ~default:false (get_e_variable f) ~f:(fun x ->
+                 Variable.is_name x "list") -> fail ()
+      | _ -> ())
+  }
 
 
-let decompile ~syntax =
+let decompile ~raise:_ =
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -79,114 +85,52 @@ let decompile ~syntax =
       e_call ~loc list_var args
     | _ -> same
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr = pass_expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr = pass_expr }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:(decompile ~syntax)
-    ~reduction_check:(reduction ~raise ~syntax)
+open Unit_test_helpers.Expr
 
-
-open Unit_test_helpers
-
-let%expect_test "compile_cons" =
+let%expect_test _ =
   {|
-  ((PE_declaration
-     (D_const
-       ((pattern (P_var x))
-         (let_rhs
-           (E_call (E_variable list)
-             ((E_array
-                ((Expr_entry (E_variable hd)) (Rest_entry (E_variable tl)))))))))))
+    (E_call
+      (E_variable list)
+      ((E_array ((Expr_entry (EXPR1)) (Rest_entry (EXPR2))))))
   |}
-  |-> pass ~raise ~syntax:JsLIGO;
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_const
-       ((pattern (P_var x))
-        (let_rhs
-         (E_constant
-          ((cons_name C_CONS) (arguments ((E_variable hd) (E_variable tl))))))))))
+      (E_constant ((cons_name C_CONS) (arguments ((EXPR1) (EXPR2)))))
     |}]
 
-let%expect_test "compile_list" =
+let%expect_test _ =
   {|
-  ((PE_declaration
-     (D_const
-       ((pattern (P_var x))
-         (let_rhs
-           (E_call (E_variable list)
-             ((E_array
-                ((Expr_entry (E_variable a)) (Expr_entry (E_variable b)) (Expr_entry (E_variable c)))))))))))
+    (E_call (E_variable list)
+      ((E_array
+        ((Expr_entry (EXPR1)) (Expr_entry (EXPR2)) (Expr_entry (EXPR3))))))
   |}
-  |-> pass ~raise ~syntax:JsLIGO;
+  |-> compile;
+  [%expect {| (E_list ((EXPR1) (EXPR2) (EXPR3))) |}]
+
+let%expect_test _ =
+  {|
+    (E_call (E_variable list)
+      ((E_array
+        ((Expr_entry (EXPR1)) (Rest_entry (EXPR2)) (Rest_entry (EXPR3))))))
+  |}
+  |->! compile;
+  [%expect {| Err : (Small_passes_array_rest_not_supported (E_variable #EXPR2)) |}]
+
+let%expect_test _ =
+  {| (E_constant ((cons_name C_CONS) (arguments ((EXPR1) (EXPR2))))) |} |-> decompile;
   [%expect
     {|
-  ((PE_declaration
-    (D_const
-     ((pattern (P_var x))
-      (let_rhs (E_list ((E_variable a) (E_variable b) (E_variable c))))))))
-  |}]
+      (E_call (E_variable list)
+       ((E_array ((Expr_entry (EXPR1)) (Rest_entry (EXPR2)))))) |}]
 
-let%expect_test "compile_fail" =
-  {|
-  ((PE_declaration
-     (D_const
-       ((pattern (P_var x))
-         (let_rhs
-           (E_call (E_variable list)
-             ((E_array
-                ((Expr_entry (E_variable hd)) (Rest_entry (E_variable tl1)) (Rest_entry (E_variable tl2)))))))))))
-  |}
-  |->! pass ~syntax:JsLIGO;
-  [%expect {|
-  Err : (Small_passes_array_rest_not_supported (E_variable tl1))
-  |}]
-
-let%expect_test "decompile_cons" =
-  {|
-  ((PE_declaration
-    (D_const
-      ((pattern (P_var x))
-        (let_rhs
-          (E_constant
-            ((cons_name C_CONS) (arguments ((E_variable hd) (E_variable tl))))))))))
-  |}
-  <-| pass ~raise ~syntax:JsLIGO;
+let%expect_test _ =
+  {| (E_list ((EXPR1) (EXPR2) (EXPR3))) |} |-> decompile;
   [%expect
     {|
-      ((PE_declaration
-        (D_const
-         ((pattern (P_var x))
-          (let_rhs
-           (E_call (E_variable list)
-            ((E_array ((Expr_entry (E_variable hd)) (Rest_entry (E_variable tl)))))))))))
-
+      (E_call (E_variable list)
+       ((E_array ((Expr_entry (EXPR1)) (Expr_entry (EXPR2)) (Expr_entry (EXPR3))))))
     |}]
-
-let%expect_test "decompile_list" =
-  {|
-  ((PE_declaration
-     (D_const
-       ((pattern (P_var x))
-         (let_rhs (E_list ((E_variable a) (E_variable b) (E_variable c))))))))
-  |}
-  <-| pass ~raise ~syntax:JsLIGO;
-  [%expect
-    {|
-      ((PE_declaration
-        (D_const
-         ((pattern (P_var x))
-          (let_rhs
-           (E_call (E_variable list)
-            ((E_array
-              ((Expr_entry (E_variable a)) (Expr_entry (E_variable b))
-               (Expr_entry (E_variable c)))))))))))
-
-  |}]

@@ -4,6 +4,9 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
+(* Throw errors on currently unsupported patterns (literals, rests) *)
+include Flag.No_arg ()
+
 let compile ~raise =
   let pattern : _ pattern_ -> pattern = function
     | { wrap_content = P_unit; location = loc } ->
@@ -15,12 +18,9 @@ let compile ~raise =
     | { wrap_content = P_rest _; _ } as p -> raise.error (unsupported_pattern_type p)
     | e -> make_p ~loc:(Location.get_location e) (Location.unwrap e)
   in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:Iter.defaults
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
+let reduction ~raise:_ = Iter.defaults

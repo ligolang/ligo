@@ -2,9 +2,15 @@ open Ast_unified
 open Pass_type
 open Simple_utils.Trace
 open Errors
+open Unit_test_helpers
 module Location = Simple_utils.Location
 
-let compile =
+(* handles unpunning of record pattern, associating the field to a variable of the same name *)
+include Flag.No_arg ()
+
+let name = __MODULE__
+
+let compile ~raise:_ =
   let pattern : _ pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -23,31 +29,7 @@ let compile =
       p_pun_record ~loc fields
     | e -> make_p ~loc e
   in
-  `Cata { idle_cata_pass with pattern }
-
-
-let decompile =
-  let pattern : _ pattern_ -> pattern =
-   fun p ->
-    let loc = Location.get_location p in
-    match Location.unwrap p with
-    | P_pun_record fields ->
-      let open Field in
-      let fields =
-        List.map fields ~f:(function
-            | Complete (label, p) as c ->
-              (match get_p_var p with
-              | Some v ->
-                if Variable.is_name v (Label.to_string label)
-                then Punned (Location.wrap ~loc:(get_p_loc p) label)
-                else c
-              | None -> c)
-            | Punned label -> Punned label)
-      in
-      p_pun_record ~loc fields
-    | e -> make_p ~loc e
-  in
-  `Cata { idle_cata_pass with pattern }
+  Fold { idle_fold with pattern }
 
 
 let reduction ~raise =
@@ -60,5 +42,14 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph ~name:__MODULE__ ~compile ~decompile ~reduction_check:(reduction ~raise)
+let decompile ~raise:_ = Nothing
+
+let%expect_test _ =
+  Pattern.(
+    {|
+      (P_pun_record
+        ((Punned (Label a)) (Punned (Label b)))) |} |-> compile;
+    [%expect
+      {|
+      (P_pun_record
+       ((Complete ((Label a) (P_var a))) (Complete ((Label b) (P_var b)))))|}])

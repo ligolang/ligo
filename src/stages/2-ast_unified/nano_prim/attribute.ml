@@ -1,6 +1,6 @@
 type t =
   { key : string
-  ; value : string option
+  ; value : string option [@sexp.option]
   }
 [@@deriving yojson, iter, fold, sexp, eq, compare, hash]
 

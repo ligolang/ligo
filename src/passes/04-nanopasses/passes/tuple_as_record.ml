@@ -3,8 +3,11 @@ open Pass_type
 open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
-let compile =
+let name = __MODULE__
+
+let compile ~raise:_ =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -34,7 +37,7 @@ let compile =
       t_record_raw ~loc rows
     | ty -> make_t ~loc ty
   in
-  `Cata { idle_cata_pass with expr; ty_expr }
+  Fold { idle_fold with expr; ty_expr }
 
 
 let reduction ~raise =
@@ -50,9 +53,4 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let decompile ~raise:_ = Nothing

@@ -1,6 +1,6 @@
 type ('expr, 'block) case =
-  | Switch_case of 'expr * 'block option
-  | Switch_default_case of 'block option
+  | Switch_case of 'expr * 'block option [@sexp.option]
+  | Switch_default_case of 'block option [@sexp.option]
 
 and ('expr, 'block) t =
   { switchee : 'expr

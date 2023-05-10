@@ -2,7 +2,6 @@ open Ast_unified
 open Pass_type
 open Simple_utils.Trace
 open Errors
-open Syntax_types
 
 (* 
 This pass handles the special cases of type annotation in JsLIGO.
@@ -13,9 +12,9 @@ These are the cases where a E_annot remain a E_annot
 2. The second case is type annotation of code injection.
   
 *)
+include Flag.No_arg ()
 
-let compile ~raise ~syntax =
-  let () = ignore raise in
+let compile ~raise:_ =
   (* TODO : Retrict pass to JsLIGO syntax *)
   let pass_expr : (expr, ty_expr, pattern, block, mod_expr) expr_ -> expr =
    fun expr ->
@@ -42,9 +41,7 @@ let compile ~raise ~syntax =
       | _ -> unchanged ())
     | _ -> unchanged ()
   in
-  match syntax with
-  | JsLIGO -> `Cata { idle_cata_pass with expr = pass_expr }
-  | _ -> `Cata idle_cata_pass
+  Fold { idle_fold with expr = pass_expr }
 
 
 let reduction ~raise =
@@ -65,107 +62,36 @@ let reduction ~raise =
   { Iter.defaults with expr }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
 
-
-open Unit_test_helpers
+open Unit_test_helpers.Expr
 
 let%expect_test "number_42_as_nat" =
-  {|
-  ((PE_declaration
-    (D_var (
-      (pattern (P_var y))
-      (let_rhs (
-        E_annot (
-          (E_literal (Literal_int 42))
-          (T_var nat)
-        )
-      ))
-    ))
-  ))
-  |}
-  |-> pass ~raise ~syntax:JsLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_var ((pattern (P_var y)) (let_rhs (E_literal (Literal_nat 42))))))) |}]
+  {| (E_annot ((E_literal (Literal_int 42)) (T_var nat))) |} |-> compile;
+  [%expect {| (E_literal (Literal_nat 42)) |}]
 
 let%expect_test "number_42_as_mutez" =
-  {|
-  ((PE_declaration
-    (D_var (
-      (pattern (P_var y))
-      (let_rhs (
-        E_annot (
-          (E_literal (Literal_int 42))
-          (T_var mutez)
-        )
-      ))
-    ))
-  ))
-  |}
-  |-> pass ~raise ~syntax:JsLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_var ((pattern (P_var y)) (let_rhs (E_literal (Literal_mutez 42))))))) |}]
+  {| (E_annot ((E_literal (Literal_int 42)) (T_var mutez))) |} |-> compile;
+  [%expect {| (E_literal (Literal_mutez 42))  |}]
 
 let%expect_test "number_42_as_tez" =
-  {|
-  ((PE_declaration
-    (D_var (
-      (pattern (P_var y))
-      (let_rhs (
-        E_annot (
-          (E_literal (Literal_int 42))
-          (T_var tez)
-        )
-      ))
-    ))
-  ))
-  |}
-  |-> pass ~raise ~syntax:JsLIGO;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_var
-       ((pattern (P_var y)) (let_rhs (E_literal (Literal_mutez 42000000))))))) |}]
+  {| ( E_annot ((E_literal (Literal_int 42)) (T_var tez))) |} |-> compile;
+  [%expect {|(E_literal (Literal_mutez 42000000)) |}]
 
 let%expect_test "code_inj" =
   {|
-  ((PE_declaration
-    (D_var (
-      (pattern (P_var y))
-      (let_rhs
-        (E_annot (
-          (E_raw_code (
-            (language Michelson)
-            (code (E_literal (Literal_string (Verbatim "{ UNPAIR ; ADD }") )))
-          ))
-          (T_fun (
-            (T_prod ((T_var nat) (T_var nat)))
-            (T_var nat)
-          ))
-        ))
-      )
-    ))
-  ))
-  |}
-  |-> pass ~raise ~syntax:JsLIGO;
+    (E_annot
+      ((E_raw_code ((language Michelson)
+        (code (E_literal (Literal_string (Verbatim "{ UNPAIR ; ADD }") )))))
+        (TY_EXPR)))
+      |}
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_var
-       ((pattern (P_var y))
-        (let_rhs
-         (E_raw_code
-          ((language Michelson)
-           (code
-            (E_annot
-             ((E_literal (Literal_string (Verbatim "{ UNPAIR ; ADD }")))
-              (T_fun ((T_prod ((T_var nat) (T_var nat))) (T_var nat))))))))))))) |}]
+      (E_raw_code
+       ((language Michelson)
+        (code
+         (E_annot
+          ((E_literal (Literal_string (Verbatim "{ UNPAIR ; ADD }"))) (TY_EXPR))))))
+    |}]

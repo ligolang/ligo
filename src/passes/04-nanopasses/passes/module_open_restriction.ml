@@ -4,8 +4,8 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
-(* Pascaligo allows for more powerful contstructs like A.B.( <expr> ) where other syntax would not
-   This pass is here to restrict the former *)
+(* Throw an error upon module openening that can't be converted to module access *)
+include Flag.No_arg ()
 
 let rec dig_proj_until_var ~raise ~f proj =
   match get_e_proj proj with
@@ -79,7 +79,7 @@ let compile ~raise =
         | _ -> raise.error (unsupported_module_access (`Type field))))
     | t -> make_t ~loc t
   in
-  `Cata { idle_cata_pass with expr; ty_expr }
+  Fold { idle_fold with expr; ty_expr }
 
 
 let reduction ~raise =
@@ -97,9 +97,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
