@@ -109,6 +109,8 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsMaxSteps :: Maybe RemainingSteps
     -- ^ Max amount of steps that the debugger will do.
     -- If it is @Nothing@ then max steps is infinite.
+  , lsEntrypointType :: Maybe LigoType
+    -- ^ the type of the @main@ method.
   }
 
 instance Buildable LigoLanguageServerState where
@@ -243,6 +245,11 @@ getMaxStepsMb
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => RIO ext (Maybe RemainingSteps)
 getMaxStepsMb = lsMaxSteps <$> getServerState
+
+getEntrypointType
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext LigoType
+getEntrypointType = "Entrypoint type is not initialized" `expectInitialized` (lsEntrypointType <$> getServerState)
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do

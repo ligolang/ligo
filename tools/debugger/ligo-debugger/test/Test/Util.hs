@@ -39,6 +39,7 @@ module Test.Util
   , testWithSnapshots
   , checkSnapshot
   , unexpectedSnapshot
+  , extractConvertInfos
     -- * Lower-lever interface
   , mkSnapshotsForImpl
   , dummyLoggingFunction
@@ -252,7 +253,7 @@ mkSnapshotsForImpl
 mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
   ligoMapper <- compileLigoContractDebug entrypoint file
-  (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles, lambdaLocs) <-
+  (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles, lambdaLocs, entrypointType) <-
     case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
       Right v -> pure v
       Left err -> HUnit.assertFailure $ pretty err
@@ -295,6 +296,7 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
       logger
       lambdaLocs
       (isJust maxStepsMb)
+      entrypointType
 
   return (allLocs, his)
 
@@ -401,3 +403,11 @@ unitType' = mkSimpleConstantType "Unit"
 
 intType :: LigoType
 intType = LigoTypeResolved intType'
+
+extractConvertInfos :: InterpretSnapshot u -> [PreLigoConvertInfo]
+extractConvertInfos snap =
+  let stackItems = sfStack $ head $ isStackFrames snap in
+  catMaybes $ flip map stackItems \stackItem -> do
+    StackItem desc michVal <- pure stackItem
+    LigoStackEntry (LigoExposedStackEntry _ typ) <- pure desc
+    pure $ PreLigoConvertInfo michVal typ

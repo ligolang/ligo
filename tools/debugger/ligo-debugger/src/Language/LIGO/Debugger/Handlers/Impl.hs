@@ -581,6 +581,7 @@ handleSetLigoConfig LigoSetLigoConfigRequest {..} = do
     , lsVarsComputeThreadPool = varsComputeThreadPool
     , lsMoveId = 0
     , lsMaxSteps = maxStepsMb
+    , lsEntrypointType = Nothing
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
@@ -666,7 +667,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     Right ligoDebugInfo -> do
       logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-      (exprLocs, someContract, allFiles, lambdaLocs) <-
+      (exprLocs, someContract, allFiles, lambdaLocs, entrypointType) <-
         readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
         & either (throwIO . MichelsonDecodeException) pure
 
@@ -689,6 +690,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
           , lsAllLocs = Just allLocs
           , lsParsedContracts = Just parsedContracts
           , lsLambdaLocs = Just lambdaLocs
+          , lsEntrypointType = Just entrypointType
           }
 
         lServerState <- getServerState
@@ -835,6 +837,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   logMessage [int||Contract state: #{contractState}|]
 
   maxStepsMb <- getMaxStepsMb
+  entrypointType <- getEntrypointType
 
   his <-
     withRunInIO \unlifter ->
@@ -856,6 +859,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         (unlifter . logMessage)
         lambdaLocs
         (isJust maxStepsMb)
+        entrypointType
 
   let ds = initDebuggerState his allLocs
 
