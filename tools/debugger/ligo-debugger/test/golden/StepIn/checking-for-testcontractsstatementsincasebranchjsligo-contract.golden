@@ -82,10 +82,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/statements-in-case-branch.jsligo@12:10-12:49
       sfStack:
         [StackItem:
-          siLigoDesc: <hidden elem>
+          siLigoDesc: elem ? of operation list * int
           siValue: Pair { } 42
         , StackItem:
-          siLigoDesc: <hidden elem>
+          siLigoDesc: elem ? of int
           siValue: 0
         ]
     ]

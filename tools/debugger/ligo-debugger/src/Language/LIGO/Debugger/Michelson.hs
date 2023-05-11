@@ -340,14 +340,26 @@ preprocessContract con@U.Contract{..} typesRules instrRules =
 --    wrappers that carry the debug info.
 -- 3. All contract filepaths that would be used in debugging session.
 -- 4. All locations that are related to lambdas.
+-- 5. LIGO type of entrypoint.
 readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range)
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range, LigoType)
 readLigoMapper ligoMapper typeRules instrRules = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
+
+  -- At this moment entrypoint type appears as
+  -- the first element in the last environment meta.
+  let entrypointType = ligoMapper
+        & lmLocations
+        & foldMap
+            do \LigoIndexedInfo{..} -> case liiEnvironment of
+                Just (LigoStackEntry LigoExposedStackEntry{..} : _) -> Last $ Just leseType
+                _ -> Last Nothing
+        & getLast
+        & fromMaybe (LigoType Nothing)
 
   uContract <-
     expressionToUntypedContract extendedExpression
@@ -368,7 +380,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs)
+  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs, entrypointType)
 
   where
     getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [Range])
