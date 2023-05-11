@@ -265,8 +265,8 @@ end
 
 module Typing_env = struct
   type nonrec t =
-    { (* type_env is the global typing environment required by the typer *)
-      type_env : Environment.t
+    { (* type_env is the global typing signature required by the typer *)
+      type_env : Ast_typed.signature
     ; (* bindings is Map from [Location.t] -> [Types.type_case] *)
       bindings : t
     ; (* Top-level declaration tree used for ast-typed-self-passes *)
@@ -302,7 +302,7 @@ module Typing_env = struct
         let bindings =
           Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
         in
-        let type_env = Environment.add_declaration decl tenv.type_env in
+        let type_env = tenv.type_env @ Ast_typed.Misc.to_signature [decl] in
         let decls = tenv.decls @ [ decl ] in
         let () = List.iter ws ~f:raise.warning in
         { type_env; bindings; decls }
@@ -326,8 +326,8 @@ module Typing_env = struct
       collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer (e, ws)
 
 
-  let init ~(options : Compiler_options.middle_end) stdlib_decls =
-    let type_env = Environment.append options.init_env stdlib_decls in
+  let init stdlib_decls =
+    let type_env = Ast_typed.Misc.to_signature stdlib_decls in
     { type_env; bindings = LMap.empty; decls = stdlib_decls }
 end
 
@@ -361,7 +361,7 @@ let resolve
     -> Ast_core.program -> t
   =
  fun ~raise ~options ~stdlib_decls prg ->
-  let tenv = Typing_env.init ~options stdlib_decls in
+  let tenv = Typing_env.init stdlib_decls in
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
   let bindings = tenv.bindings in

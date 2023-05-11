@@ -9,7 +9,7 @@ val build_entry_type : type_expression -> type_expression -> type_expression
 val parameter_from_entrypoints
   :  (Ligo_prim.Value_var.t * type_expression) Simple_utils.List.Ne.t
   -> ( type_expression * type_expression
-     , [> `Not_entry_point_form of Types.type_expression
+     , [> `Not_entry_point_form of Types.expression_variable * Types.type_expression
        | `Storage_does_not_match of
          Ligo_prim.Value_var.t
          * Types.type_expression
@@ -46,3 +46,5 @@ val should_uncurry_view
      | `No of Types.type_expression * Types.type_expression * Types.type_expression
      | `Yes of Types.type_expression * Types.type_expression * Types.type_expression
      ]
+
+val to_signature : program -> signature

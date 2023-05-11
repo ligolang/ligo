@@ -64,47 +64,134 @@ module M (Params : Params) = struct
           code
     in
     c_unit, meta, deps
+end
 
+module Separate (Params : Params) = struct
+  include M (Params)
 
   module AST = struct
-    type declaration = Ast_typed.declaration
-    type signature = Ast_typed.signature
     type t = Ast_typed.program
-    type sig_environment = Environment.signature
-    type environment = Environment.t
+
+    let link t1 t2 = t1 @ t2
+
+    type interface = Ast_typed.signature
+
+    let link_interface t1 t2 = t1 @ t2
+
+    type environment = Ast_typed.signature
+
+    let init_env : environment = []
+
+    let add_module_to_environment : module_name -> interface -> environment -> environment
+      =
+     fun module_binder module_intf env ->
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      env @ [ S_module (module_binder, module_intf) ]
+
+
+    let add_interface_to_environment : interface -> environment -> environment =
+     fun intf env -> List.fold intf ~init:env ~f:(fun env decl -> env @ [ decl ])
+
+
+    let make_module_in_ast : module_name -> t -> interface -> t -> t =
+     fun module_binder module_ast module_intf ast ->
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      Location.wrap
+        ~loc
+        Ast_typed.(
+          D_module
+            { module_binder
+            ; module_ =
+                { module_content = Module_expr.M_struct module_ast
+                ; signature = module_intf
+                ; module_location = loc
+                }
+            ; module_attr = { public = true; hidden = true }
+            })
+      :: ast
+
+
+    let make_module_in_interface : module_name -> interface -> interface -> interface =
+     fun module_binder module_intf ast ->
+      let module_binder = Module_var.of_input_var ~loc module_binder in
+      S_module (module_binder, module_intf) :: ast
   end
+
+  let lib_ast : unit -> AST.t = fun () -> std_lib.content_typed
+
+  let lib_interface : unit -> AST.interface =
+   fun () -> Ast_typed.Misc.to_signature (lib_ast ())
+
+
+  let compile
+      :  AST.environment -> file_name -> meta_data -> compilation_unit
+      -> AST.t * AST.environment
+    =
+   fun env file_name meta c_unit ->
+    let syntax =
+      Syntax.of_string_opt
+        ~support_pascaligo:options.common.deprecated
+        ~raise
+        (Syntax_name "auto")
+        (Some file_name)
+    in
+    let options = Compiler_options.set_syntax options (Some syntax) in
+    let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
+    let module_ = Helpers.inject_declaration ~options ~raise syntax module_ in
+    let module_, signature =
+      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context:env module_
+    in
+    module_, signature
 end
 
 module Infer (Params : Params) = struct
   include M (Params)
 
   module AST = struct
-    type declaration = Ast_core.declaration
     type t = Ast_core.program
+
+    let link t1 t2 = t1 @ t2
+
+    type interface = unit list
+
+    let link_interface t1 t2 = t1 @ t2
+
     type environment = unit
-
-    let add_ast_to_env : t -> environment -> environment = fun _ () -> ()
-
-    let add_module_to_env : module_name -> environment -> environment -> environment =
-     fun _ () () -> ()
-
 
     let init_env : environment = ()
 
-    let make_module_declaration : module_name -> t -> declaration =
-     fun module_binder ast_typed ->
-      let module_ = Location.wrap ~loc (Module_expr.M_struct ast_typed) in
+    let add_module_to_environment : module_name -> interface -> environment -> environment
+      =
+     fun _ _ () -> ()
+
+
+    let add_interface_to_environment : interface -> environment -> environment =
+     fun _ () -> ()
+
+
+    let make_module_in_ast : module_name -> t -> interface -> t -> t =
+     fun module_binder module_ast _module_intf ast ->
+      let module_ = Location.wrap ~loc (Module_expr.M_struct module_ast) in
       let module_binder = Module_var.of_input_var ~loc module_binder in
       Location.wrap
         ~loc
         Ast_core.(
           D_module
             { module_binder; module_; module_attr = { public = true; hidden = true } })
+      :: ast
+
+
+    let make_module_in_interface : module_name -> interface -> interface -> interface =
+     fun _module_binder _ intf -> intf
   end
 
   let lib_ast : unit -> AST.t = fun () -> std_lib.content_core
+  let lib_interface : unit -> AST.interface = fun () -> []
 
-  let compile : AST.environment -> file_name -> meta_data -> compilation_unit -> AST.t =
+  let compile
+      :  AST.environment -> file_name -> meta_data -> compilation_unit
+      -> AST.t * AST.interface
+    =
    fun () file_name meta c_unit ->
     let syntax =
       Syntax.of_string_opt
@@ -115,12 +202,10 @@ module Infer (Params : Params) = struct
     in
     let options = Compiler_options.set_syntax options (Some syntax) in
     let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
-    Helpers.inject_declaration ~options ~raise syntax module_
+    Helpers.inject_declaration ~options ~raise syntax module_, []
 end
 
-(*  unfortunately slow:
-  module Build_typed(Params : Params) = BuildSystem.Make(M(Params))
-*)
+module Build_typed (Params : Params) = BuildSystem.Make (Separate (Params))
 module Build_core (Params : Params) = BuildSystem.Make (Infer (Params))
 
 let get_top_level_syntax ~options ?filename () : Syntax_types.t =
@@ -184,7 +269,10 @@ let qualified_core ~raise
       | From_file filename -> get_top_level_syntax ~options ~filename ()
       | Raw _ -> Syntax_types.CameLIGO
   end) in
-  trace ~raise build_error_tracer @@ from_result (compile_qualified source)
+  let ast, _ =
+    trace ~raise build_error_tracer @@ from_result (compile_qualified source)
+  in
+  ast
 
 
 let qualified_core_from_string ~raise
@@ -198,8 +286,11 @@ let qualified_core_from_string ~raise
     let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:input.id ()
   end) in
-  trace ~raise build_error_tracer
-  @@ from_result (compile_qualified (Source_input.Raw input))
+  let ast, _ =
+    trace ~raise build_error_tracer
+    @@ from_result (compile_qualified (Source_input.Raw input))
+  in
+  ast
 
 
 let qualified_core_from_raw_input ~raise
@@ -213,25 +304,33 @@ let qualified_core_from_raw_input ~raise
     let std_lib = std_lib
     let top_level_syntax = get_top_level_syntax ~options ~filename:file ()
   end) in
-  trace ~raise build_error_tracer
-  @@ from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
+  let ast, _ =
+    trace ~raise build_error_tracer
+    @@ from_result (compile_qualified (Source_input.Raw_input_lsp { file; code }))
+  in
+  ast
 
 
 let qualified_typed ~raise
-    :  options:Compiler_options.t -> ?cform:Ligo_compile.Of_core.form
-    -> Source_input.code_input -> Ast_typed.program
+    : options:Compiler_options.t -> Source_input.code_input -> Ast_typed.program
   =
- fun ~options ?cform source ->
-  (* let std_lib = Stdlib.get ~options in
-    let open Build_typed(struct
-      let raise = raise
-      let options = options
-      let std_lib = std_lib
-      let top_level_syntax = get_top_level_syntax ~options ~filename ()
-    end) in
-    let prg = trace ~raise build_error_tracer @@ from_result (compile_qualified (Source_input.From_file filename)) in *)
-  let prg = qualified_core ~raise ~options source in
-  Ligo_compile.Of_core.typecheck ~raise ~options ?cform prg
+ fun ~options source ->
+  let open Build_typed (struct
+    let raise = raise
+    let options = options
+    let std_lib = Stdlib.get ~options
+
+    let top_level_syntax =
+      match source with
+      | HTTP uri -> get_top_level_syntax ~options ~filename:(Http_uri.get_filename uri) ()
+      | Raw_input_lsp _ -> Syntax_types.CameLIGO
+      | From_file filename -> get_top_level_syntax ~options ~filename ()
+      | Raw _ -> Syntax_types.CameLIGO
+  end) in
+  let ast, _ =
+    trace ~raise build_error_tracer @@ from_result (compile_qualified source)
+  in
+  ast
 
 
 let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typed.program
@@ -251,25 +350,18 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
     | None -> "from_build"
   in
   let s = Source_input.Raw { code; id } in
-  let x = trace ~raise build_error_tracer @@ from_result (compile_qualified s) in
-  Ligo_compile.Of_core.typecheck ~raise ~options x
+  let ast, _ = trace ~raise build_error_tracer @@ from_result (compile_qualified s) in
+  Ligo_compile.Of_core.typecheck ~raise ~options ast
 
 
 let qualified_typed_with_signature ~raise
-    :  options:Compiler_options.t -> ?cform:Ligo_compile.Of_core.form
-    -> Source_input.code_input -> Ast_typed.program * Ast_typed.signature
+    :  options:Compiler_options.t -> Source_input.code_input
+    -> Ast_typed.program * Ast_typed.signature
   =
- fun ~options ?cform source ->
-  (* let std_lib = Stdlib.get ~options in
-    let open Build_typed(struct
-      let raise = raise
-      let options = options
-      let std_lib = std_lib
-      let top_level_syntax = get_top_level_syntax ~options ~filename ()
-    end) in
-    let prg = trace ~raise build_error_tracer @@ from_result (compile_qualified (Source_input.From_file filename)) in *)
-  let prg = qualified_core ~raise ~options source in
-  Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ?cform prg
+ fun ~options source ->
+  let prg = qualified_typed ~raise ~options source in
+  let signature = Ast_typed.Misc.to_signature prg in
+  prg, signature
 
 
 type expression_michelson =
@@ -290,7 +382,12 @@ let build_expression ~raise
     Option.value_map file_name_opt ~f ~default
   in
   let typed_exp =
-    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg
+    Ligo_compile.Utils.type_expression
+      ~raise
+      ~options
+      syntax
+      expression
+      (Ast_typed.Misc.to_signature init_prg)
   in
   let typed_exp, init_prg = Self_ast_typed.remove_unused_expression typed_exp init_prg in
   let aggregated =

@@ -150,13 +150,8 @@ let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
   | Some entries ->
     let parameter_type, storage_type =
       match Ast_typed.Misc.parameter_from_entrypoints entries with
-      | Error (`Not_entry_point_form ep_type) ->
-        raise.error
-          (corner_case
-          @@ Format.asprintf
-               "Not an entrypoint form: %a"
-               Ast_typed.PP.type_expression
-               ep_type)
+      | Error (`Not_entry_point_form (ep, ep_type)) ->
+        raise.error (bad_contract_io ep ep_type ep_type.location)
       | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
         raise.error
           (corner_case
@@ -256,7 +251,7 @@ let make_main_module_expr ~raise (module_content : Ast_typed.module_content) =
   | _ -> module_content
 
 
-let make_main_module ~raise (program : Ast_typed.program) =
+let make_main_module ~raise (prg : Ast_typed.program) =
   let f d =
     match Location.unwrap d with
     | Ast_typed.D_module
@@ -273,7 +268,8 @@ let make_main_module ~raise (program : Ast_typed.program) =
            }
     | _ -> d
   in
-  Helpers.Declaration_mapper.map_module f program
+  let prg = Helpers.Declaration_mapper.map_module f prg in
+  prg @ program ~raise prg
 
 
 let make_main_entrypoint ~raise
@@ -294,13 +290,8 @@ let make_main_entrypoint ~raise
     in
     let parameter_type, storage_type =
       match Ast_typed.Misc.parameter_from_entrypoints entries with
-      | Error (`Not_entry_point_form ep_type) ->
-        raise.error
-          (corner_case
-          @@ Format.asprintf
-               "Not an entrypoint form: %a"
-               Ast_typed.PP.type_expression
-               ep_type)
+      | Error (`Not_entry_point_form (ep, ep_type)) ->
+        raise.error (bad_contract_io ep ep_type ep_type.location)
       | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
         raise.error
           (corner_case
