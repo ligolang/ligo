@@ -213,7 +213,7 @@ let should_uncurry_view ~storage_ty view_ty =
 let parameter_from_entrypoints
     :  (Value_var.t * type_expression) List.Ne.t
     -> ( type_expression * type_expression
-       , [> `Not_entry_point_form of Types.type_expression
+       , [> `Not_entry_point_form of Types.expression_variable * Types.type_expression
          | `Storage_does_not_match of
            Value_var.t * Types.type_expression * Value_var.t * Types.type_expression
          ] )
@@ -225,7 +225,7 @@ let parameter_from_entrypoints
     match should_uncurry_entry entrypoint_type with
     | `Yes (parameter, storage) | `No (parameter, storage) ->
       Result.Ok (parameter, storage)
-    | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+    | `Bad -> Result.Error (`Not_entry_point_form (entrypoint, entrypoint_type))
   in
   let* parameter_list =
     List.fold_result
@@ -235,7 +235,7 @@ let parameter_from_entrypoints
           match should_uncurry_entry ep_type with
           | `Yes (parameter, storage) | `No (parameter, storage) ->
             Result.Ok (parameter, storage)
-          | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+          | `Bad -> Result.Error (`Not_entry_point_form (ep, entrypoint_type))
         in
         let* () =
           Result.of_option
@@ -364,3 +364,17 @@ let fetch_views_in_program ~storage_ty
     | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
   in
   List.fold_right ~f:aux ~init:([], []) prog
+
+
+let to_signature (program : program) : signature =
+  List.fold program ~init:[] ~f:(fun ctx decl ->
+      match Location.unwrap decl with
+      | D_irrefutable_match { pattern; expr = _; attr = { view; entry; _ } } ->
+        List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
+            ctx @ [ S_value (Binder.get_var x, Binder.get_ascr x, { view; entry }) ])
+      | D_value { binder; expr; attr = { view; entry; _ } } ->
+        ctx @ [ S_value (Binder.get_var binder, expr.type_expression, { view; entry }) ]
+      | D_type { type_binder; type_expr; type_attr = _ } ->
+        ctx @ [ S_type (type_binder, type_expr) ]
+      | D_module { module_binder; module_; module_attr = _ } ->
+        ctx @ [ S_module (module_binder, module_.signature) ])

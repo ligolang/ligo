@@ -61,7 +61,12 @@ let test_expression (raw_options : Raw_options.t) expr source_file =
         Option.value_map source_file ~f ~default
       in
       let typed =
-        Ligo_compile.Utils.type_expression ~raise ~options syntax expr init_prg
+        Ligo_compile.Utils.type_expression
+          ~raise
+          ~options
+          syntax
+          expr
+          (Ast_typed.Misc.to_signature init_prg)
       in
       let b, v = Interpreter.eval_expression ~raise ~steps ~options init_prg typed in
       (b, [ "eval", v ]), [] )
@@ -245,7 +250,13 @@ let evaluate_call
         Compile.Of_unified.compile_expression ~raise ~options imperative_param
       in
       let app = Compile.Of_core.apply entry_point core_param in
-      let typed_app = Compile.Of_core.compile_expression ~raise ~options ~init_prog app in
+      let typed_app =
+        Compile.Of_core.compile_expression
+          ~raise
+          ~options
+          ~context:(Ast_typed.Misc.to_signature init_prog)
+          app
+      in
       let app_aggregated =
         Compile.Of_typed.compile_expression_in_context
           ~raise

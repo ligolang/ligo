@@ -15,13 +15,20 @@ module M : functor (Params : Params) -> sig
   type module_name = string
   type compilation_unit = Buffer.t
   type meta_data = Ligo_compile.Helpers.meta
+end
+
+module Separate : functor (Params : Params) -> sig
+  type file_name = Source_input.file_name
+  type raw_input = Source_input.raw_input
+  type code_input = Source_input.code_input
+  type module_name = string
+  type compilation_unit = Buffer.t
+  type meta_data = Ligo_compile.Helpers.meta
 
   module AST : sig
-    type declaration = Ast_typed.declaration
-    type signature = Ast_typed.signature
     type t = Ast_typed.program
-    type environment = Environment.t
-    type sig_environment = Environment.signature
+    type interface = Ast_typed.signature
+    type environment = Ast_typed.signature
   end
 end
 
@@ -34,8 +41,8 @@ module Infer : functor (Params : Params) -> sig
   type meta_data = Ligo_compile.Helpers.meta
 
   module AST : sig
-    type declaration = Ast_core.declaration
     type t = Ast_core.program
+    type interface = unit list
     type environment = unit
   end
 end
@@ -58,14 +65,12 @@ type contract_michelson =
 val qualified_typed
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
-  -> ?cform:Ligo_compile.Of_core.form
   -> Source_input.code_input
   -> Ast_typed.program
 
 val qualified_typed_with_signature
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
-  -> ?cform:Ligo_compile.Of_core.form
   -> Source_input.code_input
   -> Ast_typed.program * Ast_typed.signature
 

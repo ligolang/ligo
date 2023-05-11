@@ -227,6 +227,7 @@ let typed_contract_and_expression
          (Ligo_compile.Of_core.Contract { entrypoints = entry_point; module_path })
          typed_prg
   in
+  let app_typed_sig = Ast_typed.Misc.to_signature app_typed_prg in
   let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = storage_ty } =
     contract_type
   in
@@ -244,7 +245,7 @@ let typed_contract_and_expression
           ~annotation
           syntax
           expression
-          app_typed_prg)
+          app_typed_sig)
       (fun ~catch:_ _ ->
         let typed_param =
           Ligo_compile.Utils.type_expression
@@ -252,7 +253,7 @@ let typed_contract_and_expression
             ~options
             syntax
             expression
-            app_typed_prg
+            app_typed_sig
         in
         let () =
           Ligo_compile.Of_typed.assert_equal_contract_type

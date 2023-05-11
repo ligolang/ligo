@@ -2428,11 +2428,14 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "entrypoint_no_type.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 8, characters 6-12:
+    File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 8, character 15 to line 10, character 1:
       7 | // @entry
       8 | const unique = (_ : organization, _ : storage) => {
-                ^^^^^^
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |     return failwith("You need to be part of Tezos organization to activate an organization");
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     10 | };
+          ^
 
     Invalid type for entrypoint "unique".
     An entrypoint must of type "parameter * storage -> operation list * storage". |}]

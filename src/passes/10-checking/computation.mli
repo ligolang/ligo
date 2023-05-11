@@ -418,6 +418,6 @@ val run_elab
   -> raise:(Errors.typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
-  -> ?env:Environment.t
+  -> ?env:Ast_typed.signature
   -> unit
   -> 'a

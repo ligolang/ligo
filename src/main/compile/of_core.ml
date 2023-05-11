@@ -38,15 +38,13 @@ let typecheck_with_signature
     ~raise
     ~(options : Compiler_options.t)
     ?(cform : form option)
+    ?(context : Ast_typed.signature option)
     (p : Ast_core.program)
     : Ast_typed.program * Ast_typed.signature
   =
   let typed, signature =
     trace ~raise checking_tracer
-    @@ Checking.type_program_with_signature
-         ~options:options.middle_end
-         ~env:options.middle_end.init_env
-         p
+    @@ Checking.type_program_with_signature ~options:options.middle_end ?env:context p
   in
   let typed =
     trace ~raise self_ast_typed_tracer
@@ -70,15 +68,13 @@ let typecheck
     ~raise
     ~(options : Compiler_options.t)
     ?(cform : form option)
+    ?(context : Ast_typed.signature option)
     (p : Ast_core.program)
     : Ast_typed.program
   =
   let typed =
     trace ~raise checking_tracer
-    @@ Checking.type_program
-         ~options:options.middle_end
-         ~env:options.middle_end.init_env
-         p
+    @@ Checking.type_program ~options:options.middle_end ?env:context p
   in
   let typed =
     trace ~raise self_ast_typed_tracer
@@ -101,15 +97,13 @@ let typecheck
 let compile_expression
     ~raise
     ~(options : Compiler_options.t)
-    ~(init_prog : Ast_typed.program)
+    ~(context : Ast_typed.signature)
     (expr : Ast_core.expression)
     : Ast_typed.expression
   =
-  let Compiler_options.{ init_env; _ } = options.middle_end in
-  let env = Environment.append init_env init_prog in
   let typed =
     trace ~raise checking_tracer
-    @@ Checking.type_expression ~options:options.middle_end ~env expr
+    @@ Checking.type_expression ~options:options.middle_end ~env:context expr
   in
   let applied =
     trace ~raise self_ast_typed_tracer
