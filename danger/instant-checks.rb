@@ -18,13 +18,22 @@ else
 
 # Clean commits history
 if git.commits.any? { |c| c.subject =~ /^Merge branch/ }
-  fail 'Please, no merge commits. Rebase for the win.'
+  # This is a warning because `add-changelog-entry` job
+  # produces merge commit.
+  warn('Please, no merge commits. Rebase for the win.')
 end
 
 # Proper commit style
 # Note: we do not use commit_lint plugin because it triggers on fixup commits
 git.commits.each { |commit|
-  if commit.fixup? || commit.wip?
+  # If any of these substrings is included into commit message,
+  # we are fine with issue tag absence.
+  exclusions = [
+    # In lower-case
+    "changelog"
+  ]
+
+  if commit.fixup? || commit.wip? || exclusions.any? { |exc| commit.subject.downcase.include?(exc) }
     next
   end
 
@@ -33,15 +42,7 @@ git.commits.each { |commit|
   subject_ticked = commit.subject_ticked
 
   unless has_valid_issue_tags(subject)
-    # If any of these substrings is included into commit message,
-    # we are fine with issue tag absence.
-    exclusions = [
-      # In lower-case
-      "changelog"
-    ]
-    if exclusions.none? { |exc| subject.downcase.include?(exc) }
-      warn("In #{commit.sha} message lacks issue id: #{subject_ticked}.")
-    end
+    warn("In #{commit.sha} message lacks issue id: #{subject_ticked}.")
   end
 
   if subject_payload.start_with?(" ")
@@ -61,12 +62,6 @@ git.commits.each { |commit|
   end
 
   if commit.message_body.empty?
-    # If any of these substrings is included into commit message,
-    # we are fine with commit description absence.
-    exclusions = [
-      # In lower-case
-      "changelog"
-    ]
     unless commit.chore? || exclusions.any? { |exc| subject.downcase.include?(exc) }
       fail("Commit #{commit.sha} lacks description :unamused:")
     end
