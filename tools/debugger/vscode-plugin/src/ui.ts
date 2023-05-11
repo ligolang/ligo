@@ -452,7 +452,7 @@ export async function getParameterOrStorage(
 		);
 
 	if (isDefined(result.value) && isDefined(result.currentSwitch.lang)) {
-		rememberedVal.value[1] = result.currentSwitch.lang;
+		rememberedVal.value = [result.value, result.currentSwitch.lang];
 		return [result.value, result.currentSwitch.lang];
 	}
 }
