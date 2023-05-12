@@ -605,6 +605,9 @@ handleSetProgramPath LigoSetProgramPathRequest{..} = do
   let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
   let programPath = programLigoSetProgramPathRequestArguments
 
+  getExt programPath
+    & either throwIO (void . pure)
+
   EntrypointsList{..} <- getAvailableEntrypoints programPath
 
   lServVar <- asks _rcLSState

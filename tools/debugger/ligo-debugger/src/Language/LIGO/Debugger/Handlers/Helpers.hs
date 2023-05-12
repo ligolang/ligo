@@ -41,6 +41,7 @@ import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Extension
 import Language.LIGO.ParseTree (pathToSrc)
 import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range
@@ -279,6 +280,7 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @ConfigurationException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @UnsupportedExtension e
       , SomeDebuggerException <$> fromException @ReplacementException e
       , SomeDebuggerException <$> fromException @PluginCommunicationException e
       , SomeDebuggerException <$> fromException @ImpossibleHappened e
