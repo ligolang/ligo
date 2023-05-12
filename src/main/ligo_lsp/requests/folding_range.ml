@@ -61,6 +61,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | E_Add { value; _ } -> bin_op value
     | E_And { value; _ } -> bin_op value
     | E_App { value; _ } -> expr (fst value) @ nseq_concat_map (snd value) ~f:expr
+    | E_Assign { value; _ } -> expr value.expr
     | E_Attr (_, e) -> expr e
     | E_Bytes _ -> []
     | E_Cat { value; _ } -> bin_op value
@@ -71,6 +72,8 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | E_Ctor _ -> []
     | E_Div { value; _ } -> bin_op value
     | E_Equal { value; _ } -> bin_op value
+    | E_For { value; region } -> mk_region region :: for_loop value
+    | E_ForIn { value; region } -> mk_region region :: for_in_loop value
     | E_Fun { value; region } -> mk_region region :: fun_expr value
     | E_Geq { value; _ } -> bin_op value
     | E_Gt { value; _ } -> bin_op value
@@ -78,6 +81,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | E_Land { value; _ } -> bin_op value
     | E_Leq { value; _ } -> bin_op value
     | E_LetIn { value; _ } -> let_binding value.binding @ expr value.body
+    | E_LetMutIn { value; _ } -> let_binding value.binding @ expr value.body
     | E_List { value; _ } -> sepseq_concat_map ~f:expr value.inside
     | E_Lor { value; _ } -> bin_op value
     | E_Lsl { value; _ } -> bin_op value
@@ -112,6 +116,8 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | E_Seq { value; region } ->
       mk_region region :: sepseq_concat_map value.elements ~f:expr
     | E_RevApp { value; _ } -> bin_op value
+    | E_While { value; region } -> mk_region region :: while_loop value
+
   and match_expr value = expr value.subject @ clauses value.clauses
   and clauses { value; _ } = nsepseq_concat_map value ~f:match_clause
   and match_clause { value; region } =
@@ -187,6 +193,12 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | D_Let { value; region } -> mk_region region :: let_decl value
     | D_Module { value; region } -> mk_region region :: module_decl value
     | D_Type { value; region } -> mk_region region :: type_decl value
+  and while_loop value = expr value.cond @ loop_body value.body
+  and for_loop value = expr value.bound1 @ expr value.bound2 @ loop_body value.body
+  and for_in_loop value =
+    pattern value.pattern @ expr value.collection @ loop_body value.body
+  and loop_body { value ; _ } =
+    Option.value_map ~f:(nsepseq_concat_map ~f:expr) ~default:[] value.seq_expr
   in
   Some (declaration_nseq cst.decl)
 

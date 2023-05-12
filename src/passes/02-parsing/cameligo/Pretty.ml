@@ -118,7 +118,7 @@ and print_D_Directive (node : Directive.t) =
   let comments  = Directive.get_comments node in
   let comments  = List.map ~f:(fun x -> x.value) comments in
   let directive = string (Directive.to_lexeme node).Region.value in
-  if List.is_empty comments then directive else 
+  if List.is_empty comments then directive else
     let comments  = separate_map hardline string comments in
     comments ^/^ directive
 
@@ -539,6 +539,7 @@ and print_expr = function
   E_Add      e -> print_E_Add      e
 | E_And      e -> print_E_And      e
 | E_App      e -> print_E_App      e
+| E_Assign   e -> print_E_Assign   e
 | E_Attr     e -> print_E_Attr     e
 | E_Bytes    e -> print_E_Bytes    e
 | E_Cat      e -> print_E_Cat      e
@@ -549,6 +550,8 @@ and print_expr = function
 | E_Ctor     e -> print_E_Ctor     e
 | E_Div      e -> print_E_Div      e
 | E_Equal    e -> print_E_Equal    e
+| E_For      e -> print_E_For      e
+| E_ForIn    e -> print_E_ForIn    e
 | E_Fun      e -> print_E_Fun      e
 | E_Geq      e -> print_E_Geq      e
 | E_Gt       e -> print_E_Gt       e
@@ -556,6 +559,7 @@ and print_expr = function
 | E_Land     e -> print_E_Land     e
 | E_Leq      e -> print_E_Leq      e
 | E_LetIn    e -> print_E_LetIn    e
+| E_LetMutIn e -> print_E_LetMutIn e
 | E_List     e -> print_E_List     e
 | E_Lor      e -> print_E_Lor      e
 | E_Lsl      e -> print_E_Lsl      e
@@ -587,6 +591,7 @@ and print_expr = function
 | E_Verbatim e -> print_E_Verbatim e
 | E_Seq      e -> print_E_Seq      e
 | E_RevApp   e -> print_E_RevApp   e
+| E_While    e -> print_E_While    e
 
 (* Addition *)
 
@@ -608,6 +613,12 @@ and print_E_App (node : (expr * expr Utils.nseq) reg) =
   let fun_or_ctor, args = node.value in
   let args = print_nseq print_expr args in
   group (print_expr fun_or_ctor ^^ nest 2 (break 1 ^^ args))
+
+(* Mutable assignment expressions *)
+
+and print_E_Assign (node : assign reg) =
+  let {binder; expr; _} = node.value in
+  prefix 2 1 (print_ident binder ^^ string " :=") (print_expr expr)
 
 (* Attributes expressions *)
 
@@ -665,6 +676,54 @@ and print_E_Div (node : slash bin_op reg) = print_bin_op node
 
 and print_E_Equal (node : equal bin_op reg) = print_bin_op node
 
+(* For loop *)
+
+and print_E_For (node : for_loop reg) =
+  let {index; bound1; bound2; direction; body; _} = node.value in
+  string "for "
+  ^^ pp_index index
+  ^^ string " = "
+  ^^ print_expr bound1
+  ^^ space
+  ^^ pp_direction direction
+  ^^ space
+  ^^ print_expr bound2
+  ^^ space
+  ^^ pp_loop_body body
+
+and pp_direction = function
+  | Upto _ -> string "to"
+  | Downto _ -> string "downto"
+
+and pp_index index = print_ident index
+
+and pp_loop_body (node : loop_body reg) =
+  let {seq_expr; _} = node.value in
+  let seq_expr =
+    match seq_expr with
+    | Some exprs ->
+        separate_map
+          (string ";" ^^ hardline)
+          print_expr
+          (Utils.nsepseq_to_list exprs)
+    | None -> empty
+  in
+  string "do"
+  ^^ nest 2 (hardline ^^ seq_expr) ^^ hardline
+  ^^ string "done"
+
+(* ForIn loop *)
+
+and print_E_ForIn (node : for_in_loop reg) =
+  let {pattern; collection; body; _} = node.value in
+  string "for "
+  ^^ print_pattern pattern
+  ^^ string " in "
+  ^^ print_expr collection
+  ^^ space
+  ^^ pp_loop_body body
+
+
 (* Function expressions *)
 
 and print_E_Fun (node : fun_expr reg) =
@@ -703,6 +762,14 @@ and print_E_LetIn (node : let_in reg) =
     match kwd_rec with
         None -> string "let "
     | Some _ -> string "let rec "
+  in let_str ^^ print_let_binding binding
+     ^^ string " in" ^^ hardline ^^ group (print_expr body)
+
+(* Mutable value definition *)
+
+and print_E_LetMutIn (node : let_mut_in reg) =
+  let {binding; body; _} = node.value in
+  let let_str = string "let mut "
   in let_str ^^ print_let_binding binding
      ^^ string " in" ^^ hardline ^^ group (print_expr body)
 
@@ -901,6 +968,15 @@ and print_E_Var (node : variable) = print_ident node
 (* Verbatim string expressions *)
 
 and print_E_Verbatim (node : lexeme wrap) = print_verbatim node
+
+(* While loop *)
+
+and print_E_While (node : while_loop reg) =
+  let {cond; body; _} = node.value in
+  string "while "
+  ^^ print_expr cond
+  ^^ space
+  ^^ pp_loop_body body
 
 (* Sequence expressions *)
 

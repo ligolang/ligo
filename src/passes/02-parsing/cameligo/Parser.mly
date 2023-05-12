@@ -75,6 +75,8 @@ let hook_T_Attr = hook @@ fun a t -> T_Attr (a,t)
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce nsepseq(disj_expr_level,COMMA)
 %on_error_reduce bin_op(disj_expr_level,Or,conj_expr_level)
+%on_error_reduce ass_expr_level
+%on_error_reduce tuple_expr_level
 %on_error_reduce disj_expr_level
 %on_error_reduce conj_expr_level
 %on_error_reduce base_expr(closed_expr)
@@ -691,21 +693,35 @@ base_cond:
 
 base_expr(right_expr):
   attributes right_opened_expr(right_expr) { hook_E_Attr $1 $2 }
-| tuple_expr
-| disj_expr_level { $1 } (* Next stratum *)
+| ass_expr_level { $1 }
+| while_expr { $1 }
+| for_expr { $1 }
 
 right_opened_expr(right_expr):
   let_in_expr(right_expr)
+| let_mut_in_expr(right_expr)
 | local_type_decl(right_expr)
 | local_module_decl(right_expr)
 | fun_expr(right_expr) { $1 }
 
+(* Mutable value assignment *)
+
+ass_expr_level:
+  variable ":=" ass_expr_level {
+    let start  = $1#region in
+    let stop   = expr_to_region $3 in
+    let region = cover start stop
+    and value  = {binder=$1; ass=$2; expr=$3}
+    in E_Assign {region; value} }
+| tuple_expr_level { $1 }
+
 (* Tuple expression *)
 
-tuple_expr:
+tuple_expr_level:
   tuple(disj_expr_level) {
     let region = nsepseq_to_region expr_to_region $1
     in E_Tuple {region; value=$1} }
+| disj_expr_level { $1 }
 
 (* Conditional expression *)
 
@@ -780,6 +796,14 @@ let_in_expr(right_expr):
     and value  = {kwd_let=$1; kwd_rec=$2; binding=$3; kwd_in=$4; body=$5}
     in E_LetIn {region; value} }
 
+(* Mutable value declaration *)
+
+let_mut_in_expr(right_expr):
+  "let" "mut" let_binding "in" right_expr {
+    let region = cover $1#region (expr_to_region $5)
+    and value  = {kwd_let=$1; kwd_mut=$2; binding=$3; kwd_in=$4; body=$5}
+    in E_LetMutIn {region; value} }
+
 (* Local type declaration *)
 
 local_type_decl(right_expr):
@@ -804,6 +828,70 @@ fun_expr(right_expr):
     and value  = {kwd_fun=$1; type_params=$2; binders=$3;
                   rhs_type=$4; arrow=$5; body=$6}
     in E_Fun {region; value} }
+
+
+(* For loops *)
+
+for_expr:
+  for_int_expr
+| for_in_expr { $1 }
+
+for_int_expr:
+  "for" index "=" expr direction expr block { 
+    let kwd_for  = $1 in
+    let equal    = $3 in
+    let stop     = $7.region in
+    let region   = cover kwd_for#region stop in
+    let value    = {kwd_for;
+                    index     = $2;
+                    equal;
+                    bound1    = $4;
+                    direction = $5;
+                    bound2    = $6;
+                    body      = $7}
+    in E_For {region; value} }
+
+index:
+  variable { $1 }
+
+direction:
+  "upto"   { Upto $1 }
+| "downto" { Downto $1 }
+
+block:
+  "do" ioption(series) "done" { 
+    let kwd_do    = $1 in
+    let kwd_done  = $3 in
+    let value     = {kwd_do;
+                     seq_expr = $2;
+                     kwd_done} in
+    let region    = cover kwd_do#region
+			  kwd_done#region
+    in {region; value} }
+
+for_in_expr:
+  "for" pattern "in" expr block { 
+    let kwd_for  = $1 in
+    let kwd_in   = $3 in
+    let stop     = $5.region in
+    let region   = cover kwd_for#region stop in
+    let value    = {kwd_for;
+                    pattern     = $2;
+                    kwd_in;
+                    collection  = $4;
+                    body        = $5}
+    in E_ForIn {region; value} }
+
+
+while_expr:
+  "while" expr block { 
+    let kwd_while = $1 in
+    let stop      = $3.region in
+    let region    = cover kwd_while#region stop in
+    let value     = {kwd_while;
+                     cond = $2;
+                     body = $3}
+    in E_While {region; value} }
 
 %inline
 ret_type:
@@ -1045,8 +1133,7 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence
-| tuple_expr { $1 }
+| let_in_sequence { $1 }
 
 let_in_sequence:
   attributes "let" ioption("rec") let_binding "in" series {
@@ -1059,4 +1146,4 @@ let_in_sequence:
     in hook_E_Attr $1 let_in }
 
 seq_expr:
-  disj_expr_level | if_then_else(seq_expr) { $1 }
+  ass_expr_level | for_expr | while_expr | if_then_else(seq_expr) { $1 }

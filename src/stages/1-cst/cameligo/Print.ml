@@ -499,6 +499,7 @@ and print_expr state = function
   E_Add      e -> print_E_Add      state e
 | E_And      e -> print_E_And      state e
 | E_App      e -> print_E_App      state e
+| E_Assign   e -> print_E_Assign   state e
 | E_Attr     e -> print_E_Attr     state e
 | E_Bytes    e -> print_E_Bytes    state e
 | E_Cat      e -> print_E_Cat      state e
@@ -509,6 +510,8 @@ and print_expr state = function
 | E_Cons     e -> print_E_Cons     state e
 | E_Div      e -> print_E_Div      state e
 | E_Equal    e -> print_E_Equal    state e
+| E_For      e -> print_E_For      state e
+| E_ForIn    e -> print_E_ForIn    state e
 | E_Fun      e -> print_E_Fun      state e
 | E_Geq      e -> print_E_Geq      state e
 | E_Gt       e -> print_E_Gt       state e
@@ -516,6 +519,7 @@ and print_expr state = function
 | E_Land     e -> print_E_Land     state e
 | E_Leq      e -> print_E_Leq      state e
 | E_LetIn    e -> print_E_LetIn    state e
+| E_LetMutIn e -> print_E_LetMutIn state e
 | E_List     e -> print_E_List     state e
 | E_Lor      e -> print_E_Lor      state e
 | E_Lsl      e -> print_E_Lsl      state e
@@ -547,6 +551,7 @@ and print_expr state = function
 | E_Verbatim e -> print_E_Verbatim state e
 | E_Seq      e -> print_E_Seq      state e
 | E_RevApp   e -> print_E_RevApp   state e
+| E_While    e -> print_E_While    state e
 
 (* Arithmetic addition *)
 
@@ -579,6 +584,15 @@ and print_E_App state (node : (expr * expr nseq) reg) =
     mk_child mk_func fun_ctor;
     mk_child mk_args args]
   in Tree.make state "E_App" ~region children
+
+(* Mutable value assignement *)
+
+and print_E_Assign state (node : assign reg) =
+  let Region.{value; region} = node in
+  let {binder; expr; _} = value in
+  let children =
+    Tree.(mk_child make_literal binder) :: [Tree.mk_child print_expr expr] in
+  Tree.make ~region state "E_Assign" children
 
 (* Attributed expressions *)
 
@@ -657,6 +671,32 @@ and print_E_Div state (node : slash bin_op reg) =
 and print_E_Equal state (node : equal bin_op reg) =
   print_bin_op state "E_Equal" node
 
+(* For loops *)
+
+and print_E_For state (node : for_loop reg) =
+  let Region.{value; region} = node in
+  let {index; bound1; bound2; body; _} = value in
+  let children = Tree.[
+      mk_child make_literal index;
+      mk_child print_expr bound1;
+      mk_child print_expr bound2;
+      mk_child print_loop_body body] in
+  Tree.make ~region state "E_For" children
+
+and print_E_ForIn state (node : for_in_loop reg) =
+  let Region.{value; region} = node in
+  let {pattern; collection; body; _} = value in
+  let children = Tree.[
+      mk_child print_pattern pattern;
+      mk_child print_expr collection;
+      mk_child print_loop_body body] in
+  Tree.make ~region state "E_ForIn" children
+
+and print_loop_body state (node : loop_body reg) =
+  let Region.{value; region} = node in
+  let {seq_expr; _} = value in
+  Tree.of_sepseq ~region state "<body>" print_expr seq_expr
+
 (* Functional expressions *)
 
 and print_E_Fun state (node : fun_expr reg) =
@@ -709,6 +749,16 @@ and print_E_LetIn state (node : let_in reg) =
 
 and print_body state (node : expr) =
   Tree.make_unary state "<body>" print_expr node
+
+(* Mutable value definition *)
+
+and print_E_LetMutIn state (node : let_mut_in reg) =
+  let Region.{value; region} = node in
+  let {binding; body; _} = value in
+  let binding_children = mk_children_binding binding in
+  let children =
+    binding_children @ [Tree.mk_child print_body body] in
+  Tree.make ~region state "E_LetMutIn" children
 
 (* Expression lists *)
 
@@ -937,6 +987,16 @@ and print_E_Seq state (node : sequence_expr reg) =
 
 and print_E_RevApp state (node : rev_app bin_op reg) =
   print_bin_op state "E_RevApp" node
+
+(* While loop *)
+
+and print_E_While state (node : while_loop reg) =
+  let Region.{value; region} = node in
+  let {cond; body; _} = value in
+  let children = Tree.[
+      mk_child print_expr cond;
+      mk_child print_loop_body body] in
+  Tree.make ~region state "E_While" children
 
 (* PRINTING (client-slide) *)
 
