@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed handling of unsupported extensions. Previously you could see an unhandled error message. Now, if you try debugging an unexpected file, you'll get a proper error message.\\n\\n"
+merge_request: '2590'
+title: "[#1768] Handle unsupported extension exception properly"
+type: fixed
+            
