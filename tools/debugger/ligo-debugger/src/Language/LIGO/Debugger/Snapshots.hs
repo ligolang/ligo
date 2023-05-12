@@ -51,6 +51,7 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
+import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
 import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
@@ -638,8 +639,9 @@ runCollectInterpretSnapshots
   -> ContractEnv
   -> CollectorState m
   -> Value st
+  -> LigoType
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-runCollectInterpretSnapshots act env initSt initStorage =
+runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointTypeMb) =
   -- This should be safe because we yield at least one snapshot in the end
   InterpretHistory . fromList <$>
   lazyConsume do
@@ -662,6 +664,14 @@ runCollectInterpretSnapshots act env initSt initStorage =
           }
 
       Right _ -> do
+        let opsAndStorageTypeMb = do
+              LTCArrow LigoTypeArrow{..} <- _lteTypeContent <$> entrypointTypeMb
+              pure _ltaType2
+
+        let storageTypeMb = do
+              LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> opsAndStorageTypeMb
+              _ltfAssociatedType <$> _lttFields HM.!? "1"
+
         let isStackFrames = either error id do
               lastSnap <-
                 maybeToRight
@@ -671,11 +681,11 @@ runCollectInterpretSnapshots act env initSt initStorage =
               case isStatus lastSnap of
                 InterpretRunning (EventExpressionEvaluated (Just val)) -> do
                   let stackItemWithOpsAndStorage = StackItem
-                        { siLigoDesc = LigoHiddenStackEntry
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType opsAndStorageTypeMb)
                         , siValue = val
                         }
                   let oldStorage = StackItem
-                        { siLigoDesc = LigoHiddenStackEntry
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType storageTypeMb)
                         , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
                         }
                   pure
@@ -709,6 +719,7 @@ collectInterpretSnapshots
   -> (String -> m ())
   -> HashSet Range
   -> Bool -- ^ should we track steps amount
+  -> LigoType -- ^ type of an entrypoint
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile
@@ -721,12 +732,14 @@ collectInterpretSnapshots
   parsedContracts
   logger
   lambdaLocs
-  trackMaxSteps =
+  trackMaxSteps
+  entrypointType =
     runCollectInterpretSnapshots
       (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
       collSt
       initStore
+      entrypointType
     where
       initStack = mkInitStack (liftCallArg epc param) initStore
       initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env

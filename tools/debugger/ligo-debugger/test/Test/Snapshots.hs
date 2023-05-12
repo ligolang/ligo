@@ -45,7 +45,6 @@ import Lorentz.Value (mt)
 import Language.LIGO.AST (scanContracts)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
-import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
@@ -1880,14 +1879,8 @@ test_Snapshots = testGroup "Snapshots collection"
 
         snap <- frozen curSnapshot
 
-        let stackItems = sfStack $ head $ isStackFrames snap
-
         liftIO $ step "Extract values and types"
-        convertInfos <- fmap catMaybes $ forM stackItems \stackItem ->
-          runMaybeT do
-            StackItem desc michVal <- pure stackItem
-            LigoStackEntry (LigoExposedStackEntry _ typ) <- pure desc
-            pure $ PreLigoConvertInfo michVal typ
+        let convertInfos = extractConvertInfos snap
 
         let expected =
               [ LVConstructor
@@ -1930,6 +1923,38 @@ test_Snapshots = testGroup "Snapshots collection"
                 )
             } -> pass
           snap -> unexpectedSnapshot snap
+
+  , testCaseSteps "Check new storage in LIGO format" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "complex-storage.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = ((0 :: Integer, 0 :: Natural), [mt|!|])
+            }
+
+      testWithSnapshots runData do
+        liftIO $ step "Go to last snapshot"
+        void $ moveTill Forward false
+
+        snap <- frozen curSnapshot
+
+        liftIO $ step "Extract new storage convert info"
+        let storageConvertInfo = extractConvertInfos snap Unsafe.!! 1
+
+        let expected =
+              [ LVRecord $ HM.fromList
+                  [ ("a", LVCt $ LCInt "0")
+                  , ("b", LVCt $ LCNat "0")
+                  , ("c", LVCt $ LCString "!")
+                  ]
+              ]
+
+        liftIO $ step "Decompile"
+        actual <-
+          liftIO (convertMichelsonValuesToLigo dummyLoggingFunction [storageConvertInfo])
+            <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
+
+        expected @?= actual
   ]
 
 -- | Special options for checking contract.
@@ -1971,7 +1996,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
 
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
-      (locations, _, _, _) <-
+      (locations, _, _, _, _) <-
         case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
