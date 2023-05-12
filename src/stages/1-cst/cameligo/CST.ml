@@ -56,6 +56,13 @@ type kwd_then   = lexeme wrap
 type kwd_true   = lexeme wrap
 type kwd_type   = lexeme wrap
 type kwd_with   = lexeme wrap
+type kwd_mut    = lexeme wrap
+type kwd_for    = lexeme wrap
+type kwd_while  = lexeme wrap
+type kwd_upto   = lexeme wrap
+type kwd_downto = lexeme wrap
+type kwd_do     = lexeme wrap
+type kwd_done   = lexeme wrap
 
 (* Symbols *)
 
@@ -63,6 +70,7 @@ type kwd_with   = lexeme wrap
    modify some, please make sure they remain in order. *)
 
 type arrow    = lexeme wrap  (* -> *)
+type ass      = lexeme wrap  (* := *)
 type append   = lexeme wrap  (* @  *)
 type bool_or  = lexeme wrap  (* || *)
 type bool_and = lexeme wrap  (* && *)
@@ -323,6 +331,7 @@ and expr =
   E_Add      of plus bin_op reg          (* x + y               *)
 | E_And      of bool_and bin_op reg      (* x && y              *)
 | E_App      of (expr * expr nseq) reg   (* f x y     C (x,y)   *)
+| E_Assign   of assign reg               (* x := e *)
 | E_Attr     of (attribute * expr)       (* [@a] e              *)
 | E_Bytes    of (lexeme * Hex.t) wrap    (* 0xFFFA              *)
 | E_Cat      of caret bin_op reg         (* "Hello" ^ world     *)
@@ -333,6 +342,8 @@ and expr =
 | E_Ctor     of ctor                     (* C                   *)
 | E_Div      of slash bin_op reg         (* x / y               *)
 | E_Equal    of equal bin_op reg         (* x = y               *)
+| E_For      of for_loop reg             (* for x = e1 upto e2 do e3 done *)
+| E_ForIn    of for_in_loop reg          (* for x in e1 do e2 done *)
 | E_Fun      of fun_expr reg             (* fun x -> x          *)
 | E_Geq      of geq bin_op reg           (* x >= y              *)
 | E_Gt       of gt bin_op reg            (* x > y               *)
@@ -340,6 +351,7 @@ and expr =
 | E_Land     of kwd_land bin_op reg      (* x land y            *)
 | E_Leq      of leq bin_op reg           (* x <= y              *)
 | E_LetIn    of let_in reg               (* let x = e1 in e2    *)
+| E_LetMutIn of let_mut_in reg           (* let mut x = e1 in e2 *)
 | E_List     of expr list_               (* [f x; 5]            *)
 | E_Lor      of kwd_lor bin_op reg       (* x lor y             *)
 | E_Lsl      of kwd_lsl bin_op reg       (* x lsl y             *)
@@ -371,6 +383,7 @@ and expr =
 | E_Verbatim of lexeme wrap              (* {|foo|}             *)
 | E_Seq      of sequence_expr reg        (* x; 3                *)
 | E_RevApp   of rev_app bin_op reg       (* y |> f |> g x       *)
+| E_While    of while_loop reg           (* while e1 do e2 done *)
 
 (* Binary and unary arithmetic operators *)
 
@@ -454,6 +467,24 @@ and let_in = {
   body    : expr
 }
 
+(* Mutable value definition *)
+
+and let_mut_in = {
+  kwd_let : kwd_let;
+  kwd_mut : kwd_mut;
+  binding : let_binding;
+  kwd_in  : kwd_in;
+  body    : expr
+}
+
+(* Mutable value assignement *)
+
+and assign = {
+  binder : variable;
+  ass    : ass;
+  expr   : expr
+}
+
 (* Local type definition *)
 
 and type_in = {
@@ -499,6 +530,40 @@ and code_inj = {
   language : language;
   code     : expr;
   rbracket : rbracket
+}
+
+and for_loop = {
+  kwd_for   : kwd_for;
+  index     : variable;
+  equal     : equal;
+  bound1    : expr;
+  direction : direction;
+  bound2    : expr;
+  body      : loop_body reg
+}
+
+and while_loop = {
+  kwd_while : kwd_while;
+  cond      : expr;
+  body      : loop_body reg
+}
+
+and for_in_loop = {
+  kwd_for     : kwd_for;
+  pattern     : pattern;
+  kwd_in      : kwd_in;
+  collection  : expr;
+  body        : loop_body reg
+}
+
+and direction = 
+  | Upto of kwd_upto
+  | Downto of kwd_downto
+
+and loop_body = {
+  kwd_do    : kwd_do;
+  seq_expr  : (expr, semi) nsepseq option;
+  kwd_done  : kwd_done
 }
 
 (* PROJECTING REGIONS *)
@@ -573,6 +638,8 @@ let rec expr_to_region = function
 | E_Int      e -> e#region
 | E_Land     {region; _}
 | E_LetIn    {region; _}
+| E_LetMutIn {region; _}
+| E_Assign   {region; _}
 | E_Leq      {region; _}
 | E_List     {region; _}
 | E_Lor      {region; _}
@@ -605,6 +672,9 @@ let rec expr_to_region = function
 | E_Verbatim e -> e#region
 | E_Seq      {region; _}
 | E_RevApp   {region; _} -> region
+| E_While    {region; _}
+| E_For      {region; _}
+| E_ForIn    {region; _} -> region
 
 let selection_to_region = function
   FieldName v -> v#region

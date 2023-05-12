@@ -326,7 +326,7 @@ module Context = struct
   let get_imm var : _ t = lift_ctx (fun ctx -> Context.get_imm ctx var)
   let get_imm_exn var ~error : _ t = get_imm var >>= raise_opt ~error
   let get_mut var : _ t = lift_ctx (fun ctx -> Context.get_mut ctx var)
-  let get_mut_exn var ~error : _ t = get_mut var >>= raise_opt ~error
+  let get_mut_exn var ~error : _ t = get_mut var >>= raise_result ~error
   let get_type_var tvar : _ t = lift_ctx (fun ctx -> Context.get_type_var ctx tvar)
   let get_type_var_exn tvar ~error = get_type_var tvar >>= raise_opt ~error
   let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)

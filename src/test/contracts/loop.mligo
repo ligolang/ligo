@@ -1,4 +1,4 @@
-(* Test functional iterators in CameLIGO *)
+(* Test functional and imperative iterators in CameLIGO *)
 
 let rec aux_simple (i : int) : int =
   if i < 100 then aux_simple (i + 1) else i
@@ -17,7 +17,7 @@ let counter (n : int) : int =
       aggregate {counter = prev.counter + 1;
                    sum = prev.counter + prev.sum}
     else
-      prev.sum 
+      prev.sum
   in
   aggregate initial
 
@@ -32,3 +32,19 @@ let counter_nest (_n : int) : int =
   let initial : sum_aggregator = {counter=0; sum=0} in
   let out = aux_nest initial
   in out
+
+let testmap =
+  Map.literal (
+    [ 0, 1
+    ; 1, 2
+    ; 2, 4
+    ])
+
+let entries (x : (int, int) map) =
+  let mut lst = [] in
+  begin
+    for kv in x do
+      lst := kv :: lst
+    done;
+    lst
+  end

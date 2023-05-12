@@ -53,6 +53,7 @@ module T =
     (* Symbols *)
 
     | ARROW    of lexeme Wrap.t  (* -> *)
+    | ASS      of lexeme Wrap.t  (* := *)
     | CONS     of lexeme Wrap.t  (* :: *)
     | CARET    of lexeme Wrap.t  (* ^  *)
     | MINUS    of lexeme Wrap.t  (* -  *)
@@ -89,8 +90,12 @@ module T =
     (* Keywords *)
 
     | Begin     of lexeme Wrap.t  (* begin  *)
+    | Do        of lexeme Wrap.t  (* do     *)
+    | Done      of lexeme Wrap.t  (* done   *)
+    | Downto    of lexeme Wrap.t  (* downto *)
     | Else      of lexeme Wrap.t  (* else   *)
     | End       of lexeme Wrap.t  (* end    *)
+    | For       of lexeme Wrap.t  (* for    *)
     | Fun       of lexeme Wrap.t  (* fun    *)
     | If        of lexeme Wrap.t  (* if     *)
     | In        of lexeme Wrap.t  (* in     *)
@@ -103,6 +108,7 @@ module T =
     | Match     of lexeme Wrap.t  (* match  *)
     | Mod       of lexeme Wrap.t  (* mod    *)
     | Module    of lexeme Wrap.t  (* module *)
+    | Mut       of lexeme Wrap.t  (* mut    *)
     | Not       of lexeme Wrap.t  (* not    *)
     | Of        of lexeme Wrap.t  (* of     *)
     | Or        of lexeme Wrap.t  (* or     *)
@@ -110,6 +116,8 @@ module T =
     | Struct    of lexeme Wrap.t  (* struct *)
     | Then      of lexeme Wrap.t  (* then   *)
     | Type      of lexeme Wrap.t  (* type   *)
+    | Upto      of lexeme Wrap.t  (* upto   *)
+    | While     of lexeme Wrap.t  (* while  *)
     | With      of lexeme Wrap.t  (* with   *)
     | Contract  of lexeme Wrap.t  (* contract_of *)
     | Parameter of lexeme Wrap.t  (* parameter_of *)
@@ -152,6 +160,7 @@ module T =
     (* Symbols *)
 
     | ARROW    t
+    | ASS      t
     | CONS     t
     | CARET    t
     | MINUS    t
@@ -188,8 +197,12 @@ module T =
     (* Keywords *)
 
     | Begin  t
+    | Do     t
+    | Done   t
+    | Downto t
     | Else   t
     | End    t
+    | For    t
     | Fun    t
     | If     t
     | In     t
@@ -202,6 +215,7 @@ module T =
     | Match  t
     | Mod    t
     | Module t
+    | Mut    t
     | Not    t
     | Of     t
     | Or     t
@@ -209,6 +223,8 @@ module T =
     | Struct t
     | Then   t
     | Type   t
+    | Upto   t
+    | While  t
     | With   t
     | Contract t
     | Parameter t -> t#payload
@@ -225,8 +241,12 @@ module T =
     (* KEYWORDS *)
 
     let wrap_begin  = wrap "begin"
+    let wrap_do     = wrap "do"
+    let wrap_done   = wrap "done"
+    let wrap_downto = wrap "downto"
     let wrap_else   = wrap "else"
     let wrap_end    = wrap "end"
+    let wrap_for    = wrap "for"
     let wrap_fun    = wrap "fun"
     let wrap_rec    = wrap "rec"
     let wrap_if     = wrap "if"
@@ -234,6 +254,7 @@ module T =
     let wrap_let    = wrap "let"
     let wrap_match  = wrap "match"
     let wrap_mod    = wrap "mod"
+    let wrap_mut    = wrap "mut"
     let wrap_land   = wrap "land"
     let wrap_lor    = wrap "lor"
     let wrap_lxor   = wrap "lxor"
@@ -246,6 +267,8 @@ module T =
     let wrap_struct = wrap "struct"
     let wrap_then   = wrap "then"
     let wrap_type   = wrap "type"
+    let wrap_upto   = wrap "upto"
+    let wrap_while  = wrap "while"
     let wrap_with   = wrap "with"
     let wrap_contract   = wrap "contract_of"
     let wrap_parameter  = wrap "parameter_of"
@@ -253,8 +276,12 @@ module T =
     (* Smart constructors *)
 
     let mk_Begin  region = Begin  (wrap_begin  region)
+    let mk_Do     region = Do     (wrap_do     region)
+    let mk_Done   region = Done   (wrap_done   region)
+    let mk_Downto region = Downto (wrap_downto region)
     let mk_Else   region = Else   (wrap_else   region)
     let mk_End    region = End    (wrap_end    region)
+    let mk_For    region = For    (wrap_for    region)
     let mk_Fun    region = Fun    (wrap_fun    region)
     let mk_If     region = If     (wrap_if     region)
     let mk_In     region = In     (wrap_in     region)
@@ -267,6 +294,7 @@ module T =
     let mk_Match  region = Match  (wrap_match  region)
     let mk_Mod    region = Mod    (wrap_mod    region)
     let mk_Module region = Module (wrap_module region)
+    let mk_Mut    region = Mut    (wrap_mut    region)
     let mk_Not    region = Not    (wrap_not    region)
     let mk_Of     region = Of     (wrap_of     region)
     let mk_Or     region = Or     (wrap_or     region)
@@ -274,6 +302,8 @@ module T =
     let mk_Struct region = Struct (wrap_struct region)
     let mk_Then   region = Then   (wrap_then   region)
     let mk_Type   region = Type   (wrap_type   region)
+    let mk_Upto   region = Upto   (wrap_upto   region)
+    let mk_While  region = While  (wrap_while  region)
     let mk_With   region = With   (wrap_with   region)
     let mk_Contract region = Contract (wrap_contract region)
     let mk_Parameter region = Parameter (wrap_parameter region)
@@ -282,8 +312,12 @@ module T =
 
     let keywords = [
       mk_Begin;
+      mk_Do;
+      mk_Done;
+      mk_Downto;
       mk_Else;
       mk_End;
+      mk_For;
       mk_Fun;
       mk_If;
       mk_In;
@@ -296,6 +330,7 @@ module T =
       mk_Match;
       mk_Mod;
       mk_Module;
+      mk_Mut;
       mk_Not;
       mk_Of;
       mk_Or;
@@ -303,6 +338,8 @@ module T =
       mk_Struct;
       mk_Then;
       mk_Type;
+      mk_Upto;
+      mk_While;
       mk_With;
       mk_Contract;
       mk_Parameter
@@ -322,8 +359,12 @@ module T =
     (* Ghost keywords *)
 
     let ghost_begin  = wrap_begin  Region.ghost
+    let ghost_do     = wrap_do     Region.ghost
+    let ghost_done   = wrap_done   Region.ghost
+    let ghost_downto = wrap_downto Region.ghost
     let ghost_else   = wrap_else   Region.ghost
     let ghost_end    = wrap_end    Region.ghost
+    let ghost_for    = wrap_for    Region.ghost
     let ghost_fun    = wrap_fun    Region.ghost
     let ghost_if     = wrap_if     Region.ghost
     let ghost_in     = wrap_in     Region.ghost
@@ -336,6 +377,7 @@ module T =
     let ghost_match  = wrap_match  Region.ghost
     let ghost_mod    = wrap_mod    Region.ghost
     let ghost_module = wrap_module Region.ghost
+    let ghost_mut    = wrap_mut    Region.ghost
     let ghost_not    = wrap_not    Region.ghost
     let ghost_of     = wrap_of     Region.ghost
     let ghost_or     = wrap_or     Region.ghost
@@ -343,12 +385,18 @@ module T =
     let ghost_struct = wrap_struct Region.ghost
     let ghost_then   = wrap_then   Region.ghost
     let ghost_type   = wrap_type   Region.ghost
+    let ghost_upto   = wrap_upto   Region.ghost
+    let ghost_while  = wrap_while  Region.ghost
     let ghost_with   = wrap_with   Region.ghost
 
     let ghost_Begin  = Begin  ghost_begin
+    let ghost_Do     = Do     ghost_do
+    let ghost_Done   = Done   ghost_done
+    let ghost_Downto = Downto ghost_downto
     let ghost_Else   = Else   ghost_else
     let ghost_End    = End    ghost_end
     let ghost_Fun    = Fun    ghost_fun
+    let ghost_For    = For    ghost_for
     let ghost_If     = If     ghost_if
     let ghost_In     = In     ghost_in
     let ghost_Land   = Land   ghost_land
@@ -360,6 +408,7 @@ module T =
     let ghost_Match  = Match  ghost_match
     let ghost_Mod    = Mod    ghost_mod
     let ghost_Module = Module ghost_module
+    let ghost_Mut    = Mut    ghost_mut
     let ghost_Not    = Not    ghost_not
     let ghost_Of     = Of     ghost_of
     let ghost_Or     = Or     ghost_or
@@ -367,12 +416,15 @@ module T =
     let ghost_Struct = Struct ghost_struct
     let ghost_Then   = Then   ghost_then
     let ghost_Type   = Type   ghost_type
+    let ghost_Upto   = Upto   ghost_upto
+    let ghost_While  = While  ghost_while
     let ghost_With   = With   ghost_with
 
 
     (* SYMBOLS *)
 
     let wrap_arrow    = wrap "->"
+    let wrap_ass      = wrap ":="
     let wrap_cons     = wrap "::"
     let wrap_caret    = wrap "^"
     let wrap_minus    = wrap "-"
@@ -410,6 +462,7 @@ module T =
     (* Smart constructors *)
 
     let mk_ARROW    region = ARROW    (wrap_arrow    region)
+    let mk_ASS      region = ASS      (wrap_ass      region)
     let mk_CONS     region = CONS     (wrap_cons     region)
     let mk_CARET    region = CARET    (wrap_caret    region)
     let mk_MINUS    region = MINUS    (wrap_minus    region)
@@ -442,6 +495,7 @@ module T =
 
     let symbols = [
       mk_ARROW;
+      mk_ASS;
       mk_CONS;
       mk_CARET;
       mk_MINUS;
@@ -485,6 +539,7 @@ module T =
     (* Ghost symbols *)
 
     let ghost_arrow    = wrap_arrow    Region.ghost
+    let ghost_ass      = wrap_arrow    Region.ghost
     let ghost_cons     = wrap_cons     Region.ghost
     let ghost_caret    = wrap_caret    Region.ghost
     let ghost_minus    = wrap_caret    Region.ghost
@@ -514,7 +569,8 @@ module T =
     let ghost_quote    = wrap_quote    Region.ghost
     let ghost_rev_app  = wrap_rev_app  Region.ghost
 
-    let ghost_ARROW    = ARROW    ghost_semi
+    let ghost_ARROW    = ARROW    ghost_arrow
+    let ghost_ASS      = ASS      ghost_ass
     let ghost_CONS     = CONS     ghost_cons
     let ghost_CARET    = CARET    ghost_caret
     let ghost_MINUS    = MINUS    ghost_minus
@@ -618,6 +674,7 @@ module T =
     (* Symbols *)
 
     | "ARROW"    -> ghost_arrow#payload
+    | "ASS"      -> ghost_ass#payload
     | "CONS"     -> ghost_cons#payload
     | "CARET"    -> ghost_caret#payload
     | "MINUS"    -> ghost_minus#payload
@@ -649,8 +706,12 @@ module T =
     (* Keywords *)
 
     | "Begin"  -> ghost_begin#payload
+    | "Do"     -> ghost_do#payload
+    | "Done"   -> ghost_done#payload
+    | "Downto" -> ghost_downto#payload
     | "Else"   -> ghost_else#payload
     | "End"    -> ghost_end#payload
+    | "For"    -> ghost_for#payload
     | "Fun"    -> ghost_fun#payload
     | "If"     -> ghost_if#payload
     | "In"     -> ghost_in#payload
@@ -663,6 +724,7 @@ module T =
     | "Match"  -> ghost_match#payload
     | "Mod"    -> ghost_mod#payload
     | "Module" -> ghost_module#payload
+    | "Mut"    -> ghost_mut#payload
     | "Not"    -> ghost_not#payload
     | "Of"     -> ghost_of#payload
     | "Or"     -> ghost_or#payload
@@ -670,6 +732,8 @@ module T =
     | "Struct" -> ghost_struct#payload
     | "Then"   -> ghost_then#payload
     | "Type"   -> ghost_type#payload
+    | "Upto"   -> ghost_upto#payload
+    | "While"  -> ghost_while#payload
     | "With"   -> ghost_with#payload
 
     (* Virtual tokens *)
@@ -723,6 +787,7 @@ module T =
     (* Symbols *)
 
     | ARROW    t -> t#region, "ARROW"
+    | ASS      t -> t#region, "ASS"
     | CONS     t -> t#region, "CONS"
     | CARET    t -> t#region, "CARET"
     | MINUS    t -> t#region, "MINUS"
@@ -759,8 +824,12 @@ module T =
     (* Keywords *)
 
     | Begin  t -> t#region, "Begin"
+    | Do     t -> t#region, "Do"
+    | Done   t -> t#region, "Done"
+    | Downto t -> t#region, "Downto"
     | Else   t -> t#region, "Else"
     | End    t -> t#region, "End"
+    | For    t -> t#region, "For"
     | Fun    t -> t#region, "Fun"
     | If     t -> t#region, "If"
     | In     t -> t#region, "In"
@@ -773,6 +842,7 @@ module T =
     | Match  t -> t#region, "Match"
     | Mod    t -> t#region, "Mod"
     | Module t -> t#region, "Module"
+    | Mut    t -> t#region, "Mut"
     | Not    t -> t#region, "Not"
     | Of     t -> t#region, "Of"
     | Or     t -> t#region, "Or"
@@ -780,6 +850,8 @@ module T =
     | Struct t -> t#region, "Struct"
     | Then   t -> t#region, "Then"
     | Type   t -> t#region, "Type"
+    | Upto   t -> t#region, "Upto"
+    | While  t -> t#region, "While"
     | With   t -> t#region, "With"
     | Contract t -> t#region, "Contract"
     | Parameter t -> t#region, "Parameter"
