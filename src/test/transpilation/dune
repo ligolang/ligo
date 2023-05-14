@@ -3,9 +3,8 @@
 (rule
  (targets all_the_things.mligo_output)
  (action
-  (with-stdout-to
-   all_the_things.mligo_output
-   (run ligo "print" "pretty" "all_the_things.mligo")))
+  (ignore-stdout
+   (run bash -c "ligo print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
  (deps all_the_things.mligo))
 
 (rule
@@ -49,9 +48,8 @@
 (rule
  (targets all_the_things.mligo_output2)
  (action
-  (with-stdout-to
-   all_the_things.mligo_output2
-   (run ligo print pretty all_the_things.mligo_output -s cameligo)))
+  (ignore-stdout
+   (run bash -c "ligo print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
  (deps all_the_things.mligo_output))
 
 (rule
