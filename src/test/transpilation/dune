@@ -4,8 +4,8 @@
  (targets all_the_things.mligo_output)
  (action
   (ignore-stdout
-   (run bash -c "ligo print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
- (deps all_the_things.mligo))
+   (run bash -c "../../bin/runligo.exe print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
+ (deps ../../bin/runligo.exe all_the_things.mligo))
 
 (rule
  (targets all_the_things.jsligo_output)
@@ -49,8 +49,8 @@
  (targets all_the_things.mligo_output2)
  (action
   (ignore-stdout
-   (run bash -c "ligo print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
- (deps all_the_things.mligo_output))
+   (run bash -c "../../bin/runligo.exe print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
+ (deps ../../bin/runligo.exe all_the_things.mligo_output))
 
 (rule
  (targets all_the_things.jsligo_output2)
