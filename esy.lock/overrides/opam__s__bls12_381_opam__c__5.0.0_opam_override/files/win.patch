@@ -1,0 +1,86 @@
+From: Manas Jayanth <3097018+ManasJayanth@users.noreply.github.com>
+Subject: [PATCH] Fix build setup for Windows
+
+---
+ src/build_blst.sh | 31 ++++++++++++++++++++++---------
+ src/dune          | 18 +++++++++++++++++-
+ 2 files changed, 39 insertions(+), 10 deletions(-)
+
+diff --git a/src/build_blst.sh b/src/build_blst.sh
+index dbf8fbb0..68f99209 100755
+--- a/src/build_blst.sh
++++ b/src/build_blst.sh
+@@ -14,13 +14,26 @@
+ # decide to use ADX or not. Useful if you build binaries for archs not
+ # supporting ADX on a arch supporting ADX.
+ cd libblst
+-if [ $(uname --machine) = "s390x" ]; then
+-    echo "()" > ../c_flags_blst.sexp
+-    ./build.sh -shared -Wno-missing-braces -D__BLST_NO_ASM__
+-elif [ -n "${BLST_PORTABLE}" ]; then
+-    echo "(-D__BLST_PORTABLE__)" > ../c_flags_blst.sexp
+-    ./build.sh -shared -Wno-missing-braces -D__BLST_PORTABLE__
+-else
++
++build_for_unix() {
++  if [ $(uname --machine) = "s390x" ]; then
++      echo "()" > ../c_flags_blst.sexp
++      ./build.sh -shared -Wno-missing-braces -D__BLST_NO_ASM__
++  elif [ -n "${BLST_PORTABLE}" ]; then
++      echo "(-D__BLST_PORTABLE__)" > ../c_flags_blst.sexp
++      ./build.sh -shared -Wno-missing-braces -D__BLST_PORTABLE__
++  else
++      echo "()" > ../c_flags_blst.sexp
++      ./build.sh -shared -Wno-missing-braces
++  fi
++}
++
++case "$(uname -s)" in
++CYGWIN*|MINGW32*|MSYS*)
+     echo "()" > ../c_flags_blst.sexp
+-    ./build.sh -shared -Wno-missing-braces
+-fi
++    ./build.sh flavour=mingw64 CC=x86_64-w64-mingw32-gcc "-shared"
++        ;;
++*)
++    build_for_unix
++esac
++
+diff --git a/src/dune b/src/dune
+index d1c0811a..f8557129 100644
+--- a/src/dune
++++ b/src/dune
+@@ -30,6 +30,8 @@
+ (data_only_dirs libblst)
+ 
+ (rule
++ (enabled_if
++  (<> %{ocaml-config:system} mingw64))
+  (deps
+   (source_tree libblst)
+   build_blst.sh
+@@ -51,6 +53,24 @@
+      (run cp libblst/libblst.dylib dllblst.so))))))
+ 
+ (rule
++ (enabled_if
++  (= %{ocaml-config:system} mingw64))
++ (deps
++  (source_tree libblst)
++  build_blst.sh
++  bindings/blst_extended.c
++  bindings/blst_extended.h)
++ (targets libblst.a dllblst.dll c_flags_blst.sexp)
++ (action
++  (no-infer
++   (progn
++    (run cp bindings/blst_extended.c libblst/src/blst_extended.c)
++    (run cp bindings/blst_extended.h libblst/bindings/blst_extended.h)
++    (run sh ./build_blst.sh)
++    (run cp libblst/libblst.a libblst.a)
++    (run cp libblst/blst.dll dllblst.dll)))))
++
++(rule
+  (deps
+   (source_tree libblst)
+   needed-wasm-names

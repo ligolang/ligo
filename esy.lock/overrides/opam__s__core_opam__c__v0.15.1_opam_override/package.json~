@@ -1,0 +1,25 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0001-Disable-Unix-APIs-on-Windows.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < 0002-Disable-global-invocations-of-Unix-APIs.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch --ignore-whitespace -p1 < 0003-Quote-win32-paths-lock_file_blocking.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch --ignore-whitespace -p1 < 0004-Home-Path.patch' : 'true' }"
+    ],
+    "dune build -p core -j 4"
+  ]
+}

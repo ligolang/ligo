@@ -1,0 +1,14 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
+    ],
+    "bash ./build.sh #{yarn-pkg-config.bin}"
+  ],
+  "dependencies": {
+    "esy-gmp": "*",
+    "yarn-pkg-config": "*"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < win.patch' : 'true' }"
+    ],
+    "dune build -p bls12-381 -j 4"
+  ]
+}
