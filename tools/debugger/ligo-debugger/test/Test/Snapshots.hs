@@ -26,19 +26,20 @@ import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
   (DebuggerFailure (DebuggerInfiniteLoop), DebuggerState (..), Direction (..),
-  FrozenPredicate (FrozenPredicate), HistoryReplayM, MovementResult (..),
-  NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation), SrcLoc (..),
-  curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
+  FinalStack (ContractFinalStack), FrozenPredicate (FrozenPredicate), HistoryReplayM,
+  MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation),
+  SrcLoc (..), curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack))
+  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack),
+  StkEl (StkEl))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
 
-import Lorentz (MText)
+import Lorentz (MText, Rec (RNil, (:&)))
 import Lorentz qualified as L
 import Lorentz.Value (mt)
 
@@ -124,6 +125,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (0 :: Integer)
                 )
               ]
+            contractOut = StkEl $ T.toVal ([] :: [T.Operation], 42 :: Integer)
           in
           [ ( InterpretRunning . EventExpressionEvaluated . Just $
                 SomeLorentzValue (42 :: Integer)
@@ -170,7 +172,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-           , ( InterpretTerminatedOk
+           , ( InterpretTerminatedOk $ ContractFinalStack (contractOut :& RNil)
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
               , lastStack
