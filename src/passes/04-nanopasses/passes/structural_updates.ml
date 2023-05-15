@@ -15,6 +15,9 @@ module Location = Simple_utils.Location
   m := (match MAP_FIND_OPT m "foo" with | Some r -> MAP_ADD "foo" {r with x = baz} m | None -> m
   ```
 *)
+let name = __MODULE__
+
+include Flag.No_arg ()
 
 let label_of_access =
   let open Selection in
@@ -25,16 +28,16 @@ let label_of_access =
 
 
 (*
-  `path_of_lvalue [lvalue]` extracts the path and the left-end-side out of an expression to be used in an assignment.
-  The path is extracted as an access list, and can be used to construct the right side of the assigment
-    - ((r.x).y).z         |-> (r, [x;y;z])
-    - (m.["foo"]).["bar"] |-> (m, ["foo";"bar"])
-
-  Restrictions on [lvalue]:
-    - the left-most accessed element must be a variable (e.g. `{ x = 1 ; y = 2}.x = 2` is rejected)
-    - module access are forbidden (we do not support effects on module declarations)
-    - any expression that is not a record/map/variable access is rejected
-*)
+    `path_of_lvalue [lvalue]` extracts the path and the left-end-side out of an expression to be used in an assignment.
+    The path is extracted as an access list, and can be used to construct the right side of the assigment
+      - ((r.x).y).z         |-> (r, [x;y;z])
+      - (m.["foo"]).["bar"] |-> (m, ["foo";"bar"])
+  
+    Restrictions on [lvalue]:
+      - the left-most accessed element must be a variable (e.g. `{ x = 1 ; y = 2}.x = 2` is rejected)
+      - module access are forbidden (we do not support effects on module declarations)
+      - any expression that is not a record/map/variable access is rejected
+  *)
 let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
  fun expr ->
   let rec aux (lhs : expr) (cpath : expr Selection.t list) =
@@ -53,21 +56,21 @@ let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
 
 
 (*
-  `compile_assignment [~loc] [~last_proj_update] [~lhs] [~path] [~default_rhs]` build the assignment of [lhs] accessed by [path].
-
-  This function is used in case of patches (`patch <X> with <Y>`) ; assignments (`<X> := <Y>`) or removals (`remove <X> from <Y>`).
-
-  The produced assignment will only update [lhs] if all the accessed map element in [path] are already present, i.e. we match
-  on all the elements in [path] : `match Map.find_opt .. with | None -> <lhs> -> Some -> ...`.
-
-  [default_rhs] is used as a default assigned value when path is empty, if the path isn't empty [last_proj_update] will be used as follow:
-    - Internally, compile_assignment accumulate a "context" (updator: expression -> expression) building the whole access expression on
-      the right-end side while processing [path]
-    - when all elements of path have been processed, [last_proj_update] is executed on top of `updator` to build the final structure
-    ```
-      v := match MAP_FIND_OPT ("x",v) with | Some <last_accessed_element> -> <last_proj_update last_accessed_element> | None -> v
-    ```
-*)
+    `compile_assignment [~loc] [~last_proj_update] [~lhs] [~path] [~default_rhs]` build the assignment of [lhs] accessed by [path].
+  
+    This function is used in case of patches (`patch <X> with <Y>`) ; assignments (`<X> := <Y>`) or removals (`remove <X> from <Y>`).
+  
+    The produced assignment will only update [lhs] if all the accessed map element in [path] are already present, i.e. we match
+    on all the elements in [path] : `match Map.find_opt .. with | None -> <lhs> -> Some -> ...`.
+  
+    [default_rhs] is used as a default assigned value when path is empty, if the path isn't empty [last_proj_update] will be used as follow:
+      - Internally, compile_assignment accumulate a "context" (updator: expression -> expression) building the whole access expression on
+        the right-end side while processing [path]
+      - when all elements of path have been processed, [last_proj_update] is executed on top of `updator` to build the final structure
+      ```
+        v := match MAP_FIND_OPT ("x",v) with | Some <last_accessed_element> -> <last_proj_update last_accessed_element> | None -> v
+      ```
+  *)
 let build_update ~loc ~last_proj_update ~init lhs path =
   let rec aux : expr * (expr -> expr) -> expr Selection.t list -> expr =
    fun (last_proj, updator) lst ->
@@ -252,7 +255,7 @@ let compile ~raise =
       wrapping upd
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with instruction; expr }
+  Fold { idle_fold with instruction; expr }
 
 
 let reduction ~raise =
@@ -270,85 +273,47 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let decompile ~raise:_ = Nothing
 
-
-open Unit_test_helpers
+open Unit_test_helpers.Instruction
 
 let%expect_test "compile" =
   {|
-  ((PE_declaration
-    (D_const
-      ((pattern (P_var x))
-        (let_rhs
-          (E_block_with
-            ((block
-                ((S_instr
-                  (I_struct_assign
-                    ((lhs_expr
-                        (E_proj
-                          ((struct_
-                            (E_map_lookup
-                              ((map (E_variable m))
-                                (keys
-                                  ((E_literal
-                                      (Literal_string (Standard foo))))))))
-                            (path (FieldName (Label bar))))))
-                      (rhs_expr (E_variable baz)))))))
-              (expr (E_variable m)))))))))
+    (I_struct_assign
+      ((lhs_expr
+        (E_proj
+          ((struct_ (E_map_lookup ((map (E_variable m)) (keys ((EXPR1))))))
+           (path (FieldName (Label bar))))))
+       (rhs_expr (EXPR2))))
   |}
-  |-> pass ~raise;
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_const
-       ((pattern (P_var x))
-        (let_rhs
-         (E_block_with
-          ((block
-            ((S_instr
-              (I_assign m
-               (E_match
-                ((expr
-                  (E_constant
-                   ((cons_name C_MAP_FIND_OPT)
-                    (arguments
-                     ((E_literal (Literal_string (Standard foo))) (E_variable m))))))
-                 (cases
-                  (((pattern (P_variant (Label Some) ((P_var gen))))
-                    (rhs
-                     (E_constant
-                      ((cons_name C_MAP_ADD)
-                       (arguments
-                        ((E_literal (Literal_string (Standard foo)))
-                         (E_record_update
-                          ((struct_ (E_variable gen)) (label (Label bar))
-                           (update (E_variable baz))))
-                         (E_variable m)))))))
-                   ((pattern (P_variant (Label None) ())) (rhs (E_variable m)))))))))))
-           (expr (E_variable m)))))))))
+    (I_assign m
+     (E_match
+      ((expr
+        (E_constant
+         ((cons_name C_MAP_FIND_OPT) (arguments ((EXPR1) (E_variable m))))))
+       (cases
+        (((pattern (P_variant (Label Some) ((P_var gen))))
+          (rhs
+           (E_constant
+            ((cons_name C_MAP_ADD)
+             (arguments
+              ((EXPR1)
+               (E_record_update
+                ((struct_ (E_variable gen)) (label (Label bar)) (update (EXPR2))))
+               (E_variable m)))))))
+         ((pattern (P_variant (Label None) ())) (rhs (E_variable m))))))))
 |}]
 
 let%expect_test "compile_wrong_lvalue" =
   {|
-  ((PE_declaration
-    (D_const
-      ((pattern (P_var x))
-        (let_rhs
-          (E_block_with
-            ((block
-                ((S_instr
-                  (I_struct_assign
-                    ((lhs_expr (E_tuple ((E_variable wrong))))
-                     (rhs_expr (E_variable baz)))))))
-              (expr (E_variable m)))))))))
+    (I_struct_assign
+      ((lhs_expr (E_tuple ((EXPR))))
+       (rhs_expr (EXPR))))
   |}
-  |->! pass;
+  |->! compile;
   [%expect {|
-    Err : (Small_passes_wrong_lvalue (E_tuple ((E_variable wrong))))
+    Err : (Small_passes_wrong_lvalue (E_tuple ((E_variable #EXPR))))
     |}]

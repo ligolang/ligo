@@ -1,10 +1,9 @@
 open Ast_unified
 open Pass_type
 open Simple_utils.Trace
-
-(* open Simple_utils *)
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let label_of_var x =
   let loc = Variable.get_location x in
@@ -48,7 +47,7 @@ let field_update_of_property ~raise : expr Object_.property -> expr Update.field
   | Property_rest x -> raise.error @@ unsupported_rest_property x
 
 
-let compile ~raise ~syntax =
+let compile ~raise =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -61,9 +60,7 @@ let compile ~raise ~syntax =
       e_record_pun ~loc (List.Ne.to_list fields)
     | e -> make_e ~loc e
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -75,9 +72,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None (* TODO*)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* TODO*)

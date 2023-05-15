@@ -113,7 +113,7 @@ generateDeployScript request = do
 
   let morleyConfig :: MorleyClientConfig
       morleyConfig = MorleyClientConfig
-        { mccEndpointUrl = Just (BaseUrl Https "lima.testnet.tezos.serokell.team" 443 "")
+        { mccEndpointUrl = Just (BaseUrl Https "ghostnet.tezos.marigold.dev" 443 "")
         , mccTezosClientPath = octezClientPath
         , mccMbTezosClientDataDir = Nothing
         , mccVerbosity = 0

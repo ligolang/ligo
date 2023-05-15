@@ -7,6 +7,8 @@ module Location = Simple_utils.Location
 (* REMITODO : create E_fun and e_poly_recursive which do not hold type_params ? *)
 (* REMITODO : t_forall on ret_type if any *)
 
+include Flag.No_arg ()
+
 let fun_type_from_parameters ~raise parameters ret_type body =
   let param_types_opt =
     List.map parameters ~f:(fun Param.{ pattern; _ } ->
@@ -72,7 +74,7 @@ let compile ~raise =
         }
     | d -> make_d ~loc d
   in
-  `Cata { idle_cata_pass with expr; declaration }
+  Fold { idle_fold with expr; declaration }
 
 
 let reduction ~raise =
@@ -92,9 +94,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

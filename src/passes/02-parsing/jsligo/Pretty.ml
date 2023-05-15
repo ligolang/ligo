@@ -86,8 +86,8 @@ let is_enclosed_type = function
   TPar _ | TProd _ | TObject _ -> true
 | _ -> false
 
-let rec print state cst =
-  Utils.nseq_to_list cst.statements
+let rec print state (node : CST.t) =
+  Utils.nseq_to_list node.statements
 |> List.map ~f:(pp_toplevel_statement state)
 |> separate_map hardline group
 
@@ -133,7 +133,7 @@ and pp_for_of state {value; _} =
   string "for" ^^ space
   ^^ pp_par_like_document state (
        pp_index_kind value.index_kind ^^ space
-    ^^ string value.index.value
+    ^^ string value.index#payload
     ^^ space ^^ string "of" ^^ space
     ^^ pp_expr state value.expr)
   ^^ space ^^ pp_statement state value.statement
@@ -151,19 +151,18 @@ and pp_import state (node : CST.import Region.reg) =
   let {value; _} : CST.import Region.reg = node in
   match value with
     Import_rename value ->
-    string "import" ^^ space ^^ string value.alias.value
-    ^^ space ^^ equals ^^ space
-    ^^ pp_nsepseq dot (fun a -> string a.Region.value) value.module_path
+      string "import" ^^ space ^^ string value.alias#payload
+      ^^ space ^^ equals ^^ space
+      ^^ pp_nsepseq dot (fun a -> string a#payload) value.module_path
   | Import_all_as value ->
-    string "import" ^^ space ^^ star ^^ space ^^ string "as" ^^ space ^^ string value.alias.value
-    ^^ space ^^ string "from" ^^ space
-    ^^ pp_string value.module_path
+      string "import" ^^ space ^^ star ^^ space ^^ string "as" ^^ space
+      ^^ string value.alias#payload ^^ space ^^ string "from" ^^ space
+      ^^ pp_string value.module_path
   | Import_selected value ->
-    let pp_idents = pp_nsepseq (comma ^^ break 1) pp_ident in
-    string "import" ^^ space ^^
-    pp_braces state pp_idents value.imported ^^
-    space ^^ string "from" ^^ space
-    ^^ pp_string value.module_path
+      let pp_idents = pp_nsepseq (comma ^^ break 1) pp_ident in
+      string "import" ^^ space ^^
+      pp_braces state pp_idents value.imported ^^
+      space ^^ string "from" ^^ space ^^ pp_string value.module_path
 
 and pp_export state {value = (_, statement); _} =
   string "export" ^^ space ^^ pp_statement state statement
@@ -178,7 +177,7 @@ and pp_namespace state ?top {value = (_, name, statements, attributes); _} =
   let attributes = filter_private attributes in
   let pp_statements = pp_nsepseq (semi ^^ break 1) (pp_statement state) in
   (if List.is_empty attributes then empty else pp_attributes state attributes)
-  ^/^ string "namespace" ^^ space ^^ string name.value
+  ^/^ string "namespace" ^^ space ^^ string name#payload
   ^^ (if ((top && is_private) || not top) then empty else string "export" ^^ space)
   ^^ space ^^ pp_braces state ~force_hardline:true pp_statements statements
 
@@ -283,7 +282,7 @@ and pp_type state {value; _} =
   let ({attributes; name; params; type_expr; _}: type_decl) = value in
   let attributes  = filter_private attributes in
   let lhs =
-    string "type" ^^ space ^^ string name.value
+    string "type" ^^ space ^^ string name#payload
     ^^ pp_type_params state params
   in
   let rhs = group (pp_type_expr state type_expr) in
@@ -300,15 +299,14 @@ and pp_type_params state = function
   None -> empty
 | Some value -> pp_chevrons state (pp_nsepseq (comma ^^ break 1) pp_ident) value
 
-and pp_ident (node : string Region.reg) = string node.value
+and pp_ident (node : variable) = string node#payload
 
 and pp_string s = dquotes (pp_ident s)
 
 and pp_verbatim s = bquotes (pp_ident s)
 
-and pp_bytes (byte: (string * Hex.t) reg) =
-  let _, hex = byte.Region.value
-  in string ("0x" ^ Hex.show hex)
+and pp_bytes (node: (string * Hex.t) wrap)  =
+  string ("0x" ^ Hex.show (snd node#payload))
 
 and pp_expr state = function
   EFun     e -> pp_fun state e
@@ -362,7 +360,7 @@ and pp_array_item state = function
 
 and pp_constr_expr state {value; _} =
   let constr, arg = value in
-  let constr = string constr.value in
+  let constr = string constr#payload in
   constr ^^ group (
     Option.value_map
       ~default:(string "()")
@@ -454,8 +452,8 @@ and pp_arith_expr state = function
 | Neg   e -> pp_un_op state '-' e
 | Int   e -> pp_int e
 
-and pp_int {value; _} =
-  string (Z.to_string (snd value))
+and pp_int (node : (lexeme * Z.t) wrap) =
+  string (Z.to_string (snd node#payload))
 
 and pp_par_expr state value = pp_par_like_document state (pp_expr state value.inside)
 
@@ -642,7 +640,7 @@ and pp_field_decl state {value; _} =
   let name = if List.is_empty attributes then pp_ident field_name
              else attr ^/^ pp_ident field_name in
   match field_type with
-    TVar v when String.equal v.value field_name.value -> name
+    TVar v when String.equal v#payload field_name#payload -> name
   | _ ->
       let t_expr = pp_type_expr state field_type in
       group (name ^^ colon ^^ space ^^ group t_expr)

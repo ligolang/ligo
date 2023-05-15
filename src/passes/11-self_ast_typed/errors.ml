@@ -17,7 +17,8 @@ type self_ast_typed_error =
   | `Self_ast_typed_unmatched_entrypoint of Location.t
   | `Self_ast_typed_nested_bigmap of Location.t
   | `Self_ast_typed_corner_case of string
-  | `Self_ast_typed_bad_contract_io of Value_var.t * Ast_typed.expression * Location.t
+  | `Self_ast_typed_bad_contract_io of
+    Value_var.t * Ast_typed.type_expression * Location.t
   | `Self_ast_typed_bad_view_io of Value_var.t * Location.t
   | `Self_ast_typed_bad_view_storage of
     Value_var.t * Ast_typed.type_expression * Location.t

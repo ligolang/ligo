@@ -39,5 +39,7 @@ let on_req_type_definition : Position.t -> DocumentUri.t -> Locations.t option H
   | File region ->
     return
     (* stdlib ranges have an empty file name. They have no type definition location. *)
-    @@ Option.some_if String.(region#file <> "") (`Location [ Location.of_region region ])
+    @@ Option.some_if
+         (not (Helpers_file.is_stdlib region#file))
+         (`Location [ Location.of_region region ])
   | Virtual _ -> return None

@@ -29,10 +29,7 @@ function generateAnnotation({ type, text, row = 1, column = 1, length = 0 }) {
     options: {
       isWholeLine: true,
       minimap: type !== "note",
-      // className: EditorSession.decos.classNames[type],
       glyphMarginClassName: decos.glyphMarginClassNames[type],
-      // hoverMessage: { value: text }
-      // glyphMarginHoverMessage: { value: d.type }
     },
   };
 }
@@ -69,10 +66,6 @@ export default class MonacoEditorModelSession {
         filePath = filePath.replace(/^\/private/, "private");
         this._model.uri.path = this._model.uri.path.replace(/^\/private/, "private");
       }
-    } else if (process.env.OS_IS_WINDOWS) {
-      filePath = pathHelper.normalize(filePath.substr(1));
-      const [root, others] = filePath.split(":");
-      filePath = `${root.toUpperCase()}:${others}`;
     }
     return filePath;
   }
@@ -189,41 +182,16 @@ export default class MonacoEditorModelSession {
       return;
     }
 
-    // const textLines = text.split('\n')
-    // if (textLines.length === 4 || textLines.length === 3) {
-    //   const [spaces, tildes] = textLines[2].split('^')
-
-    // let startColumn = column
-    // let endColumn = column + tildes.length
-    // if (tildes.length === 1) {
-    //   const wordAtPosition = this._model.getWordAtPosition({ lineNumber: row, column })
-    //   if (wordAtPosition) {
-    //     startColumn = wordAtPosition.startColumn
-    //     endColumn = wordAtPosition.endColumn
-    //   }
-    // }
-
     if (typeof row === "number") {
       if (length) {
         return {
-          // code: 'code',
-          // source: 'source',
           severity: SEVERITIES[type],
           message: text,
           startLineNumber: row,
           startColumn: column,
           endLineNumber: row,
           endColumn: column + length,
-          relatedInformation: [
-            // {
-            //   resource: monaco.Uri.file(filePath),
-            //   message: text,
-            //   startLineNumber: row,
-            //   startColumn: column,
-            //   endLineNumber: row,
-            //   endColumn: column + length,
-            // }
-          ],
+          relatedInformation: [],
         };
       }
       const word = this.model.getWordAtPosition({ column, lineNumber: row });

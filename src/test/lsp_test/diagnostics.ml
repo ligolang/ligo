@@ -52,8 +52,8 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Error
           ; message =
               "Ill-formed contract.\n\
-               At this point, if the declaration is complete, one of the following is\n\
-               expected:\n\
+               At this point, if the current declaration is complete, one of the\n\
+               following is expected:\n\
               \  * another declaration;\n\
               \  * the end of the file.\n"
           ; range = Some (interval 0 10 11)
@@ -92,8 +92,8 @@ let test_cases =
           }
         ; { severity = DiagnosticSeverity.Error
           ; message =
-              "Variable \"_#78\" not found. "
-              (* FIXME 1689 - we shoul not report that things added by
+              "Variable \"_#153\" not found. "
+              (* FIXME 1689 - we should not report that things added by
                  error recovery do not exist, also the number here can
                  be changed after any changes in LIGO, maybe we want to
                  rewrite that test so it would not require promotion too often*)
@@ -138,6 +138,11 @@ let test_cases =
           ; range = Some (interval 0 21 22)
           }
         ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "No diagnostics for imported package."
+    ; file_path = "contracts/lsp/registry.jsligo"
+    ; diagnostics = []
     ; max_number_of_problems = None
     }
   ]

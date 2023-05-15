@@ -340,5 +340,7 @@ let all_expression ~raise options e =
   let e = Uncurry.uncurry_expression e in
   let e = all_expression ~raise options e in
   let e = create_contract ~raise e in
-  let e = Check_apply.capture_expression ~raise e in
+  let e = if options.backend.disable_michelson_typechecking
+          then e
+          else Check_apply.capture_expression ~raise e in
   e

@@ -4,7 +4,7 @@
     "description": "VSCode debugger extension for LIGO.",
     "author": "Serokell",
     "license": "MIT",
-    "version": "0.0.9",
+    "version": "0.1.0",
     "repository": {
         "type": "git",
         "url": "https://gitlab.com/ligolang/ligo"
@@ -38,6 +38,14 @@
                     "type": "string",
                     "default": "ligo",
                     "description": "Path to the ligo binary, default one is extracted from $PATH variable."
+                },
+                "ligoDebugger.maxSteps": {
+                    "scope": "resource",
+                    "type": ["integer", "null"],
+                    "default": 1000,
+                    "minimum": 1,
+                    "maximum": 18446744073709551615,
+                    "description": "Maximum number of steps in contract. Leave it blank if you want an infinite amount of steps."
                 }
             }
         },

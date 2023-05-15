@@ -4,7 +4,8 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries mini_c tezos-hacl compiler_options)
- (inline_tests)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess
   (pps ppx_expect ppx_poly_constructor))
  (flags

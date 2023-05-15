@@ -11,6 +11,7 @@
   mini_c
   environment
   tezos-hacl)
- (inline_tests)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess
   (pps ppx_inline_test ppx_expect ppx_poly_constructor)))

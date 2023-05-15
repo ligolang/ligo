@@ -3,6 +3,7 @@ open Pass_type
 open Simple_utils
 open Ligo_prim.Constant
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let destruct_args ((str, args) : expr List.Ne.t) : (string * expr list) option =
   match get_e_literal str with
@@ -10,7 +11,7 @@ let destruct_args ((str, args) : expr List.Ne.t) : (string * expr list) option =
   | _ -> None
 
 
-let compile =
+let compile ~raise:_ =
   let expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -32,12 +33,9 @@ let compile =
       | _ -> make_e ~loc e)
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
-let pass =
-  morph
-    ~name:__MODULE__
-    ~compile
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:Iter.defaults
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)
+let reduction ~raise:_ = Iter.defaults

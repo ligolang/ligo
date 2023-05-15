@@ -12,9 +12,6 @@ import Prelude hiding (try)
 import Debug qualified
 import Unsafe qualified
 
-import Cli
-  (HasLigoClient (getLigoClientEnv), LigoClientEnv (..), LigoTableField (_ltfAssociatedType),
-  LigoTypeContent (LTCRecord), LigoTypeExpression (_lteTypeContent), LigoTypeTable (..))
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
 import Control.Monad.STM.Class (liftSTM)
 import Data.Char (toLower)
@@ -31,11 +28,9 @@ import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
 
-import Cli qualified as LSP.Cli
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues (Manager (mComputation))
 import Control.DelayedValues qualified as DV
-import Extension (UnsupportedExtension (..), getExt)
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
@@ -54,12 +49,12 @@ import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesReques
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos), ceContracts,
-  mfwsFailed)
+  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos),
+  RemainingSteps (RemainingSteps), ceContracts, ceMaxSteps, mfwsFailed)
 import Morley.Michelson.Parser.Types (MichelsonSource)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
 import Morley.Michelson.Runtime (ContractState (..))
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummySelf)
+import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummySelf, dummyMaxSteps)
 import Morley.Michelson.Typed
   (Constrained (SomeValue), Contract, Contract' (..), ContractCode' (unContractCode),
   SomeContract (..))
@@ -68,10 +63,7 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core (tz)
 
 import Language.LIGO.DAP.Variables
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
-import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Helpers
@@ -79,6 +71,8 @@ import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import Language.LIGO.Extension (UnsupportedExtension (..), getExt)
+import Language.LIGO.Range
 
 data LIGO
 
@@ -90,7 +84,7 @@ instance HasLigoClient (RIO LIGO) where
       getClientEnv :: Maybe LigoLanguageServerState -> IO LigoClientEnv
       getClientEnv = \case
         Just lServ -> do
-          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ <*> Just Nothing
+          let maybeEnv = LigoClientEnv <$> lsBinaryPath lServ
           maybe getLigoClientEnv pure maybeEnv
         Nothing -> getLigoClientEnv
 
@@ -309,20 +303,20 @@ instance HasSpecificMessages LIGO where
       toDAPStackFrames snap =
         let frames = toList $ isStackFrames snap
         in zip [topFrameId ..] frames <&> \(i, frame) ->
-          let LigoRange{..} = sfLoc frame
+          let Range{..} = sfLoc frame
           in DAP.StackFrame
             { DAP.idStackFrame = i
             , DAP.nameStackFrame = toString $ sfName frame
             , DAP.sourceStackFrame = DAP.defaultSource
-              { DAP.nameSource = Just $ takeFileName lrFile
-              , DAP.pathSource = lrFile
+              { DAP.nameSource = Just $ takeFileName _rFile
+              , DAP.pathSource = _rFile
               }
               -- TODO: use `IsSourceLoc` conversion capability
               -- Once morley-debugger#44 is merged
-            , DAP.lineStackFrame = Unsafe.fromIntegral $ lpLine lrStart
-            , DAP.columnStackFrame = Unsafe.fromIntegral $ lpCol lrStart + 1
-            , DAP.endLineStackFrame = Unsafe.fromIntegral $ lpLine lrEnd
-            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ lpCol lrEnd + 1
+            , DAP.lineStackFrame = Unsafe.fromIntegral $ _lpLine _rStart
+            , DAP.columnStackFrame = Unsafe.fromIntegral $ _lpCol _rStart
+            , DAP.endLineStackFrame = Unsafe.fromIntegral $ _lpLine _rFinish
+            , DAP.endColumnStackFrame = Unsafe.fromIntegral $ _lpCol _rFinish
             , DAP.canRestartStackFrame = False
             }
 
@@ -344,7 +338,7 @@ instance HasSpecificMessages LIGO where
     -- But some variables can come from, for example, a @CameLIGO@ contract
     -- and the other ones from a @PascaLIGO@ one.
     lang <-
-      currentStackFrame ^. sfLocL . lrFileL
+      currentStackFrame ^. sfLocL . rFile
         & getExt @(Either UnsupportedExtension)
         & either throwM pure
 
@@ -462,7 +456,7 @@ instance HasSpecificMessages LIGO where
 
   handleRequestExt = \case
     InitializeLoggerRequest req -> handleInitializeLogger req
-    SetLigoBinaryPathRequest req -> handleSetLigoBinaryPath req
+    SetLigoConfigRequest req -> handleSetLigoConfig req
     SetProgramPathRequest req -> handleSetProgramPath req
     ValidateEntrypointRequest req -> handleValidateEntrypoint req
     GetContractMetadataRequest req -> handleGetContractMetadata req
@@ -561,10 +555,12 @@ convertMichelsonValuesToLigo logger inps = do
       typesAndValues
       decompiledValues
 
-handleSetLigoBinaryPath :: LigoSetLigoBinaryPathRequest -> RIO LIGO ()
-handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
-  let LigoSetLigoBinaryPathRequestArguments{..} = argumentsLigoSetLigoBinaryPathRequest
-  let binaryPathMb = binaryPathLigoSetLigoBinaryPathRequestArguments
+handleSetLigoConfig :: LigoSetLigoConfigRequest -> RIO LIGO ()
+handleSetLigoConfig LigoSetLigoConfigRequest {..} = do
+  let LigoSetLigoConfigRequestArguments{..} = argumentsLigoSetLigoConfigRequest
+  let binaryPathMb = binaryPathLigoSetLigoConfigRequestArguments
+
+  let maxStepsMb = RemainingSteps <$> maxStepsLigoSetLigoConfigRequestArguments
 
   let binaryPath = Debug.show @Text binaryPathMb
 
@@ -584,11 +580,13 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     , lsToLigoValueConverter = toLigoValueConverter
     , lsVarsComputeThreadPool = varsComputeThreadPool
     , lsMoveId = 0
+    , lsMaxSteps = maxStepsMb
+    , lsEntrypointType = Nothing
     }
   logMessage [int||Set LIGO binary path: #{binaryPath}|]
 
   rawVersion <- getLigoVersion
-  logMessage [int||Ligo version: #{LSP.Cli.getVersion rawVersion}|]
+  logMessage [int||Ligo version: #{getVersion rawVersion}|]
 
   -- Pro-actively check that ligo version is supported
   runMaybeT do
@@ -596,16 +594,19 @@ handleSetLigoBinaryPath LigoSetLigoBinaryPathRequest {..} = do
     VersionUnsupported <- pure $ isSupportedVersion ligoVer
     throwIO $ UnsupportedLigoVersionException ligoVer
 
-  writeResponse $ ExtraResponse $ SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
-    { seqLigoSetLigoBinaryPathResponse = 0
-    , request_seqLigoSetLigoBinaryPathResponse = seqLigoSetLigoBinaryPathRequest
-    , successLigoSetLigoBinaryPathResponse = True
+  writeResponse $ ExtraResponse $ SetLigoConfigResponse LigoSetLigoConfigResponse
+    { seqLigoSetLigoConfigResponse = 0
+    , request_seqLigoSetLigoConfigResponse = seqLigoSetLigoConfigRequest
+    , successLigoSetLigoConfigResponse = True
     }
 
 handleSetProgramPath :: LigoSetProgramPathRequest -> RIO LIGO ()
 handleSetProgramPath LigoSetProgramPathRequest{..} = do
   let LigoSetProgramPathRequestArguments{..} = argumentsLigoSetProgramPathRequest
   let programPath = programLigoSetProgramPathRequestArguments
+
+  getExt programPath
+    & either throwIO (void . pure)
 
   EntrypointsList{..} <- getAvailableEntrypoints programPath
 
@@ -669,7 +670,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
     Right ligoDebugInfo -> do
       logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-      (exprLocs, someContract, allFiles, lambdaLocs) <-
+      (exprLocs, someContract, allFiles, lambdaLocs, entrypointType) <-
         readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
         & either (throwIO . MichelsonDecodeException) pure
 
@@ -692,6 +693,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
           , lsAllLocs = Just allLocs
           , lsParsedContracts = Just parsedContracts
           , lsLambdaLocs = Just lambdaLocs
+          , lsEntrypointType = Just entrypointType
           }
 
         lServerState <- getServerState
@@ -837,6 +839,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
   logMessage [int||Contract state: #{contractState}|]
 
+  maxStepsMb <- getMaxStepsMb
+  entrypointType <- getEntrypointType
+
   his <-
     withRunInIO \unlifter ->
       collectInterpretSnapshots
@@ -849,10 +854,15 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         -- We're adding our own contract in order to use
         -- @{ SELF_ADDRESS; CONTRACT }@ replacement
         -- (we need to have this contract state to use @CONTRACT@ instruction).
-        dummyContractEnv { ceContracts = M.fromList [(dummySelf, contractState)] }
+        dummyContractEnv
+          { ceContracts = M.fromList [(dummySelf, contractState)]
+          , ceMaxSteps = fromMaybe dummyMaxSteps maxStepsMb
+          }
         parsedContracts
         (unlifter . logMessage)
         lambdaLocs
+        (isJust maxStepsMb)
+        entrypointType
 
   let ds = initDebuggerState his allLocs
 

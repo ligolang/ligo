@@ -16,7 +16,7 @@ type file_path = string
 
 type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-type 'a parser = ?preprocess:bool -> raise:raise -> Buffer.t -> 'a
+type 'a parser = ?preprocess:bool -> ?project_root:file_path -> raise:raise -> Buffer.t -> 'a
 
 (* All functions read a string buffer but they differ in the way they
    interpret it: [from_file] assumes that its contents comes

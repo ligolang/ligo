@@ -4,7 +4,12 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
-let compile ~syntax =
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
+
+let compile ~raise:_ =
+  let syntax = get_flag () in
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -27,7 +32,7 @@ let compile ~syntax =
       else map_access
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -39,9 +44,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~syntax)
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

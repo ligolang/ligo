@@ -81,6 +81,9 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                              . A file with a JSON list of strings with Michelson
                                code. Those Michelson values will be registered
                                as global constants in the context.
+  [--library LIBS], -l       . A comma-separated list of paths to directories
+                               where to search for files to be included by the
+                               preprocessor
   [--michelson-comments COMMENT_TYPE] ...
                              . Selects kinds of comments to be added to the
                                Michelson output. Currently 'location' and 'env'
@@ -154,6 +157,9 @@ let%expect_test _ =
                                  . A file with a JSON list of strings with Michelson
                                    code. Those Michelson values will be registered
                                    as global constants in the context.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
@@ -221,6 +227,9 @@ let%expect_test _ =
                                  . A file with a JSON list of strings with Michelson
                                    code. Those Michelson values will be registered
                                    as global constants in the context.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
@@ -279,6 +288,9 @@ let%expect_test _ =
                                    meanwhile.
       [--init-file FILENAME]     . the path to the smart contract file to be used
                                    for context initialization.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--project-root PATH]      . The path to root of the project.
@@ -319,6 +331,9 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
@@ -372,6 +387,9 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
@@ -421,6 +439,9 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
@@ -477,6 +498,9 @@ let%expect_test _ =
                                    as global constants in the context.
       [--init-file FILENAME]     . the path to the smart contract file to be used
                                    for context initialization.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
@@ -518,6 +542,9 @@ let%expect_test _ =
                                    lacks details (we are still tweaking it), please
                                    contact us and use another format in the
                                    meanwhile.
+      [--library LIBS], -l       . A comma-separated list of paths to directories
+                                   where to search for files to be included by the
+                                   preprocessor
       [--no-color]               . disable coloring in CLI output
       [--only-ep]                . Only display declarations that have the type of
                                    an entrypoint

@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with remembering parameter/storage on the debugger's start. Before this remembering was not persisted. For example:\\nRemembered parameter is `a`.Change it to `b`.Run again. Parameter is `b`.Reopen workspace.Parameter is `a`.\\nNow we remember the last parameter/storage.\\n\\n"
+merge_request: '2585'
+title: "[#1773] Fix parameter/storage remembering"
+type: fixed
+            

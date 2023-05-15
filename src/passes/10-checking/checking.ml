@@ -93,6 +93,33 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
      with
     | `Type type_ -> lift type_
     | `Type_var _kind -> const @@ T_variable tvar)
+  | T_constant (constructor, arity) ->
+    let rec ty_binders (n : int) =
+      match n with
+      | 0 -> return @@ []
+      | n ->
+        let%bind ty_binder = fresh_type_var () in
+        let%bind rec_ty_binders = ty_binders (n - 1) in
+        return @@ (ty_binder :: rec_ty_binders)
+    in
+    let%bind ty_binders = ty_binders arity in
+    let%bind loc = loc () in
+    let parameters =
+      List.map ~f:(fun t -> Type.make_t ~loc (T_variable t) None) ty_binders
+    in
+    let kind = Kind.Type in
+    let%bind app =
+      const @@ T_construct { language = "Michelson"; constructor; parameters }
+    in
+    let%bind type_, () =
+      def_type_var
+        (List.map ~f:(fun ty_binder -> ty_binder, kind) ty_binders)
+        ~on_exit:Lift_type
+        ~in_:(return @@ (app, ()))
+    in
+    List.fold_right ty_binders ~init:(return type_) ~f:(fun ty_binder type_ ->
+        let%bind type_ = type_ in
+        const @@ T_abstraction { ty_binder; kind; type_ })
   | T_app { type_operator = { module_path; element = type_operator }; arguments } ->
     (* TODO: Remove strong normalization (GA) *)
     (* 1. Find the type of the operator *)
@@ -650,7 +677,9 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
     let%bind type_ =
       let var = Binder.get_var binder in
       set_loc (Value_var.get_location var)
-      @@ Context.get_mut_exn var ~error:(unbound_mut_variable var)
+      @@ Context.get_mut_exn var ~error:(function
+             | `Not_found -> unbound_mut_variable var
+             | `Mut_var_captured -> mut_var_captured var)
     in
     let%bind type_ = Context.tapply type_ in
     let%bind expression = check expression type_ in
@@ -905,29 +934,29 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
       try_
         (let%bind ret_type = Context.tapply ret_type in
          match ret_type.content with
-         | T_construct { constructor = External "map_find_opt"; parameters; _ } ->
+         | T_construct { constructor = External Map_find_opt; parameters; _ } ->
            Constant_typers.External_types.map_find_opt_types parameters
-         | T_construct { constructor = External "map_add"; parameters; _ } ->
+         | T_construct { constructor = External Map_add; parameters; _ } ->
            Constant_typers.External_types.map_add_types parameters
-         | T_construct { constructor = External "map_remove"; parameters; _ } ->
+         | T_construct { constructor = External Map_remove; parameters; _ } ->
            Constant_typers.External_types.map_remove_types parameters
-         | T_construct { constructor = External "int"; parameters; _ } ->
+         | T_construct { constructor = External Int; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
-         | T_construct { constructor = External "int_lima"; parameters; _ } ->
+         | T_construct { constructor = External Int_lima; parameters; _ } ->
            Constant_typers.External_types.int_lima_types parameters
-         | T_construct { constructor = External "bytes"; parameters; _ } ->
+         | T_construct { constructor = External Bytes; parameters; _ } ->
            Constant_typers.External_types.bytes_types parameters
-         | T_construct { constructor = External ("ediv" | "u_ediv"); parameters; _ } ->
+         | T_construct { constructor = External Ediv; parameters; _ } ->
            Constant_typers.External_types.ediv_types parameters
-         | T_construct { constructor = External ("and" | "u_and"); parameters; _ } ->
+         | T_construct { constructor = External And; parameters; _ } ->
            Constant_typers.External_types.and_types parameters
-         | T_construct { constructor = External "or"; parameters; _ } ->
+         | T_construct { constructor = External Or; parameters; _ } ->
            Constant_typers.External_types.or_types parameters
-         | T_construct { constructor = External "xor"; parameters; _ } ->
+         | T_construct { constructor = External Xor; parameters; _ } ->
            Constant_typers.External_types.xor_types parameters
-         | T_construct { constructor = External "lsl"; parameters; _ } ->
+         | T_construct { constructor = External Lsl; parameters; _ } ->
            Constant_typers.External_types.lsl_types parameters
-         | T_construct { constructor = External "lsr"; parameters; _ } ->
+         | T_construct { constructor = External Lsr; parameters; _ } ->
            Constant_typers.External_types.lsr_types parameters
          | _ -> return ret_type)
         ~with_:(fun _ -> return ret_type)

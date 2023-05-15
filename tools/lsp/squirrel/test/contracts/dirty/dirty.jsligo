@@ -1,4 +1,0 @@
-const main = ([_, s]: [never, unit]): [list<operation>, unit] => {
-    const dirty = false;
-    return [(list([]) as list<operation>), s];
-}

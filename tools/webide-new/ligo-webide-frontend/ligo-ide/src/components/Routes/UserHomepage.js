@@ -1,6 +1,6 @@
 import { BaseUserHomepage } from "~/base-components/user";
 import { connect } from "~/base-components/redux";
-import { networkManager } from "~/ligo-components/eth-network";
+import { networkManager } from "~/ligo-components/ligo-network";
 
 BaseUserHomepage.defaultProps = {
   enableTutorial: false,
@@ -9,9 +9,6 @@ BaseUserHomepage.defaultProps = {
 class UserHomepage extends BaseUserHomepage {
   componentDidMount(props) {
     super.componentDidMount(props);
-    if (process.env.DEPLOY === "bsn") {
-      this.updateNetwork();
-    }
   }
 
   async updateNetwork() {

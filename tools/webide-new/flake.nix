@@ -101,28 +101,6 @@
 
         };
       };
-    deploy = let
-      webide-profile = (import nixpkgs { localSystem = "x86_64-linux"; }).linkFarm "webide-profile" [
-        { name = "backend"; path = self.packages.x86_64-linux.backend; }
-        { name = "frontend"; path = self.packages.x86_64-linux.frontend; }
-        { name = "tezos-client"; path = self.packages.x86_64-linux.tezos-client; }
-        { name = "ligo"; path = self.packages.x86_64-linux.ligo-bin; }
-      ];
-    in {
-      sshOpts = [ "-p 17788" ];
-      nodes.webide = {
-        # TODO: perhaps it should be moved to a dedicated server
-        hostname = "tejat-prior.gemini.serokell.team";
-        user = "deploy";
-        profiles = {
-          # restart backend service and check that front page returns 200
-          webide.path = deploy-rs.lib.x86_64-linux.activate.custom
-            webide-profile ''sudo /run/current-system/sw/bin/nixos-container run ligo-webide-thing -- bash -c \
-              'systemctl restart ligo-webide.service; curl --silent --show-error --fail http://127.0.0.1:80 > /dev/null'
-            '';
-        };
-      };
-    };
   } // (flake-utils.lib.eachSystem [ "x86_64-linux" ] (system :
     let
       haskellPkgs = haskell-nix.legacyPackages."${system}";
@@ -171,11 +149,6 @@
           diff -q ${backend-generated-openapi} ${frontend.src}/src/components/api/generated
           touch $out
         '';
-      } // deploy-rs.lib.${system}.deployChecks self.deploy;
-      devShell = pkgs.mkShell {
-        buildInputs = [
-          deploy-rs.defaultPackage.${system}
-        ];
       };
     }
   ));

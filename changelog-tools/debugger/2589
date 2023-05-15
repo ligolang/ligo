@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with values printed as Michelson ones after debugging session. Previously they were printed like this\\n\\n```\\nPair (Pair 0 0) \"!\"\\n\\n```\\nNow they're printed like\\n\\n```ocaml\\n{a = 0; b = 0n; c = \"!\"}\\n\\n```\\n\\n"
+merge_request: '2589'
+title: "[#1767] Print values in LIGO format after debug"
+type: fixed
+            

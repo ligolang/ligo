@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { Menu, Item, useContextMenu, Separator } from "react-contexify";
 import { v4 as uuidv4 } from "uuid";
-import { networkManager } from "~/ligo-components/eth-network";
+import { networkManager } from "~/ligo-components/ligo-network";
 
 import {
   ButtonDropdown,

@@ -4,6 +4,7 @@ open Simple_utils.Trace
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let unlinear_pattern pattern : bool =
   let binders = get_pattern_binders { fp = pattern } in
@@ -35,12 +36,9 @@ let compile ~raise =
       then raise.error (non_linear_type (`Ty ty))
     | _ -> ()
   in
-  `Check { Iter.defaults with pattern; ty_expr; declaration }
+  Check { Iter.defaults with pattern; ty_expr; declaration }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:Iter.defaults
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
+let reduction ~raise:_ = Iter.defaults

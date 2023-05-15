@@ -4,11 +4,15 @@
  (instrumentation
   (backend bisect_ppx))
  (modules
-  map_lookup
   pass_type
+  flag
+  morphing
+  ; nanopasses:
+  map_lookup
   errors
   unit_test_helpers
   single_switch_block
+  t_constant
   t_arg
   type_abstraction_declaration
   compute_layout
@@ -20,7 +24,7 @@
   match_as_function
   hack_literalize_jsligo
   t_app_michelson_types
-  e_rev_app
+  reverse_application
   reduce_switch
   structural_updates
   returns
@@ -32,6 +36,8 @@
   top_level_restriction
   contract_hack
   constructor_application
+  standalone_constructor_removal
+  pattern_constructor_application
   object_to_record
   array_to_tuple
   let_syntax
@@ -52,10 +58,23 @@
   literalize_annotated
   detect_recursive
   restrict_projections
+  special_unit_constructor
   unpuning
   disc_union_types)
- (libraries ast_unified syntax_types tezos-crypto tezos-base)
+ (libraries
+  ast_unified
+  syntax_types
+  tezos-crypto
+  tezos-base
+  compiler_options
+  main_warnings)
  (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix)
   (flags (-stop-on-error)))
  (preprocess
-  (pps ppx_deriving.map ppx_sexp_conv ppx_expect ppx_poly_constructor)))
+  (pps
+   ppx_map
+   ppx_deriving.map
+   ppx_sexp_conv
+   ppx_expect
+   ppx_poly_constructor)))

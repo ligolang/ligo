@@ -46,9 +46,10 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (mformatAddress)
 import Morley.Tezos.Crypto (encodeBase58Check)
 
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Range
 
 -- | Untyped Michelson instruction with meta embedded.
 data OpWithMeta meta
@@ -339,14 +340,26 @@ preprocessContract con@U.Contract{..} typesRules instrRules =
 --    wrappers that carry the debug info.
 -- 3. All contract filepaths that would be used in debugging session.
 -- 4. All locations that are related to lambdas.
+-- 5. LIGO type of entrypoint.
 readLigoMapper
   :: LigoMapper 'Unique
   -> (U.T -> U.T)
   -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet LigoRange)
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range, LigoType)
 readLigoMapper ligoMapper typeRules instrRules = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
+
+  -- At this moment entrypoint type appears as
+  -- the first element in the last environment meta.
+  let entrypointType = ligoMapper
+        & lmLocations
+        & foldMap
+            do \LigoIndexedInfo{..} -> case liiEnvironment of
+                Just (LigoStackEntry LigoExposedStackEntry{..} : _) -> Last $ Just leseType
+                _ -> Last Nothing
+        & getLast
+        & fromMaybe (LigoType Nothing)
 
   uContract <-
     expressionToUntypedContract extendedExpression
@@ -354,7 +367,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   extendedContract@(SomeContract extContract) <-
     fromUntypedToTyped uContract isRedundantIndexedInfo typeRules instrRules
 
-  let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . lrFileL
+  let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . rFile
         -- We want to remove duplicates
         & unstableNub
         & filter (not . isLigoStdLib)
@@ -367,10 +380,10 @@ readLigoMapper ligoMapper typeRules instrRules = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs)
+  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs, entrypointType)
 
   where
-    getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [LigoRange])
+    getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [Range])
     getSourceLocations = bimap DL.toList DL.toList . dfsFoldInstr def { dsGoToValues = True } \case
       ConcreteMeta (liiLocation @'Unique -> Just loc) instr
         -> let lambdaRange =

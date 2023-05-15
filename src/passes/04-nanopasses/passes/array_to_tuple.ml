@@ -1,12 +1,11 @@
 open Ast_unified
 open Pass_type
 open Simple_utils.Trace
-
-(* open Simple_utils *)
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
-let compile ~syntax ~raise =
+let compile ~raise =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -22,9 +21,7 @@ let compile ~syntax ~raise =
         e_tuple ~loc (List.Ne.map f (hd, tl)))
     | e -> make_e ~loc e
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -36,9 +33,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None (* TODO *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* TODO *)

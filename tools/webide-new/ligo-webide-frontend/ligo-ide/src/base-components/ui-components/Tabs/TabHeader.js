@@ -6,7 +6,6 @@ import { DragSource, DropTarget, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Menu, Item, useContextMenu, Separator } from "react-contexify";
 import throttle from "lodash/throttle";
-import platform from "~/base-components/platform";
 
 const Types = {
   TAB: "tab",
@@ -52,7 +51,6 @@ const cardTarget = {
   },
   drop(props, monitor) {
     if (monitor.canDrop()) {
-      props.onSelectTab(props.tab);
     }
   },
 };
@@ -354,7 +352,7 @@ export default class TabHeader extends Component {
             <div
               onDoubleClick={onNewTab}
               className={classnames("flex-grow-1", {
-                "border-bottom-tab": tabs.length !== 0 || platform.isDesktop,
+                "border-bottom-tab": tabs.length !== 0,
               })}
             />
             {ToolButtons.map((btn, index) => {

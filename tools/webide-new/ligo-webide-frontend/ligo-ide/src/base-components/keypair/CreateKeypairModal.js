@@ -17,7 +17,6 @@ import {
 import notification from "~/base-components/notification";
 
 import keypairManager, { KeypairManager } from "./keypairManager";
-import { keypairNameValidator } from "./helper";
 import { validName } from "~/components/validators";
 
 export default class CreateKeypairModal extends PureComponent {

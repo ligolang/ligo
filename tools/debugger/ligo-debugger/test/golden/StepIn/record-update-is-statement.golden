@@ -1,0 +1,70 @@
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/record-update-is-statement.mligo@10:3-13:16
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siValue: Pair (Pair 0 "\"str\"") False
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/record-update-is-statement.mligo@11:11-11:18
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siValue: Pair (Pair 0 "\"str\"") False
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/record-update-is-statement.mligo@12:17-12:36
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem s of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siValue: Pair (Pair 0 "\"str\"") False
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/record-update-is-statement.mligo@15:3-15:38
+      sfStack:
+        [StackItem:
+          siLigoDesc: elem newStorage of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siValue: Pair (Pair 0 "\"str\"") True
+        ]
+    ]
+
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [StackFrame:
+      sfName: main
+      sfLoc: test/contracts/record-update-is-statement.mligo@15:4-15:37
+      sfStack:
+        [StackItem:
+          siLigoDesc:
+            elem ? of operation list * { a: int;
+                                 b: string; c: (True of (unit) | False of (unit));
+                             }
+          siValue: { { }; Pair 0 "\"str\""; True }
+        , StackItem:
+          siLigoDesc: elem ? of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siValue: Pair (Pair 0 "\"str\"") False
+        ]
+    ]

@@ -7,7 +7,9 @@ open Simple_utils.Ligo_string
 
 (* projection in Jsligo have different behaviors: x["a"] is a record access , and no map access is supported *)
 
-let compile ~raise ~syntax =
+include Flag.No_arg ()
+
+let compile ~raise =
   let pass_expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -21,27 +23,18 @@ let compile ~raise ~syntax =
       | _ -> raise.error (unsupported_projection ({ fp = e } : expr)))
     | _ -> make_e ~loc e.wrap_content
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr = pass_expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr = pass_expr }
 
 
-let reduction ~raise ~syntax =
-  if Syntax_types.equal syntax JsLIGO
-  then
-    { Iter.defaults with
-      expr =
-        (function
-        | { wrap_content = E_proj { path = Selection.Component_expr _; _ }; _ } ->
-          raise.error (wrong_reduction __MODULE__)
-        | _ -> ())
-    }
-  else Iter.defaults
+let reduction ~raise =
+  { Iter.defaults with
+    expr =
+      (function
+      | { wrap_content = E_proj { path = Selection.Component_expr _; _ }; _ } ->
+        raise.error (wrong_reduction __MODULE__)
+      | _ -> ())
+  }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise ~syntax)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing

@@ -4,7 +4,6 @@ import { DropdownInput, Badge } from "~/base-components/ui-components";
 
 import notification from "~/base-components/notification";
 import keypairManager from "./keypairManager";
-import { utils } from "~/ligo-components/eth-sdk";
 
 export default class KeypairInputSelector extends PureComponent {
   constructor(props) {
@@ -15,7 +14,7 @@ export default class KeypairInputSelector extends PureComponent {
       extraOptions: [],
     };
     this.initKeyPair();
-    const { networkManager } = require("~/ligo-components/eth-network");
+    const { networkManager } = require("~/ligo-components/ligo-network");
     this.networkManager = networkManager;
     this.findPlaceholder = this.findPlaceholder.bind(this);
     this.findExtraOptions = this.findExtraOptions.bind(this);

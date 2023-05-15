@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nWhen trying to import packages downloaded from the LIGO registry, the LSP would show that the file was not found. This behavior has been fixed.\\n\\nCurrently, the project root is set as the directory of the currently opened file. This will be resolved in a later issue.\\n\\n"
+merge_request: '2557'
+title: "[#1741] Set --project-root in files"
+type: fixed
+            

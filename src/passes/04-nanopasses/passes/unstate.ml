@@ -4,6 +4,7 @@ open Simple_utils.Trace
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 (* Note 1: interesting, this pass is too verbose because we can't just morph blocks to expressions .. 
    which would only be possible if we had "real" nanopass (as in, one type for each intermediary AST)
@@ -11,6 +12,8 @@ module Location = Simple_utils.Location
   Note 2: the following is a translation of the old code in abstractors (modified to take AST unified as input)
   re-implementing at some point is necessary (see unsupported_control_flow)
 *)
+
+let name = __MODULE__
 
 module Statement_result = struct
   (* a statement result is the temporary representation of a statement, awaiting to be morphed into an expression *)
@@ -346,7 +349,7 @@ let compile ~raise =
       { fp = { res.fp with location = loc } }
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -364,9 +367,4 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let decompile ~raise:_ = Nothing

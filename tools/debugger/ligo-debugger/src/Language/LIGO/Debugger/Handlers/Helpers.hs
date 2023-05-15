@@ -5,11 +5,7 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
-import AST.Scope.Common qualified as AST.Common
-import Cli (HasLigoClient, LigoIOException)
 import Control.Concurrent.STM (throwSTM, writeTChan)
-import Control.Exception (throw)
 import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError)
 import Control.Monad.STM.Class (MonadSTM (..))
@@ -18,13 +14,16 @@ import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
 import Data.Typeable (cast)
 import Fmt (Buildable (..), pretty)
-import Log (runNoLoggingT)
+import Text.Interpolation.Nyan
+import UnliftIO.Exception (fromEither, throwIO, try)
+
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
   (DAPOutputMessage (..), DAPSpecificResponse (..), HandlerEnv (..),
   HasSpecificMessages (LanguageServerStateExt), RIO, RioContext (..))
+import Morley.Michelson.Interpret (RemainingSteps)
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
 import Morley.Michelson.Typed (Contract' (..))
@@ -32,19 +31,20 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
 import Morley.Util.Constrained (Constrained (..))
 import Morley.Util.Lens (makeLensesWith, postfixLFields)
-import ParseTree (pathToSrc)
-import Parser (ParsedInfo)
-import Text.Interpolation.Nyan
-import UnliftIO.Exception (fromEither, throwIO, try)
 
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+
+import Language.LIGO.AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
+import Language.LIGO.AST.Common qualified as AST.Common
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Extension
+import Language.LIGO.ParseTree (pathToSrc)
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range
 
 -- | Type which caches all things that we need for
 -- launching the contract.
@@ -101,12 +101,17 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
-  , lsLambdaLocs :: Maybe (HashSet LigoRange)
+  , lsLambdaLocs :: Maybe (HashSet Range)
   , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
   , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step
     -- (visiting the same snapshot twice will also result in different ids).
+  , lsMaxSteps :: Maybe RemainingSteps
+    -- ^ Max amount of steps that the debugger will do.
+    -- If it is @Nothing@ then max steps is infinite.
+  , lsEntrypointType :: Maybe LigoType
+    -- ^ the type of the @main@ method.
   }
 
 instance Buildable LigoLanguageServerState where
@@ -234,18 +239,25 @@ getParsedContracts =
 
 getLambdaLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (HashSet LigoRange)
+  => RIO ext (HashSet Range)
 getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
+
+getMaxStepsMb
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext (Maybe RemainingSteps)
+getMaxStepsMb = lsMaxSteps <$> getServerState
+
+getEntrypointType
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext LigoType
+getEntrypointType = "Entrypoint type is not initialized" `expectInitialized` (lsEntrypointType <$> getServerState)
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do
-  parsedInfos <- runNoLoggingT do
+  parsedInfos <- do
     forM allFiles
       $   pathToSrc
-          -- This shouldn't happen because vscode saves all files before debugging.
-          -- Also, @pathToSrc@ reads file from a disk and sets @isDirty = false@.
-          -- So, we have another layer of safety.
-      >=> parsePreprocessed (throw $ ImpossibleHappened "Debugging started on dirty file")
+      >=> parsePreprocessed
       >=> insertPreprocessorRanges
 
   let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
@@ -268,6 +280,7 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @MichelsonDecodeException e
       , SomeDebuggerException <$> fromException @ConfigurationException e
       , SomeDebuggerException <$> fromException @UnsupportedLigoVersionException e
+      , SomeDebuggerException <$> fromException @UnsupportedExtension e
       , SomeDebuggerException <$> fromException @ReplacementException e
       , SomeDebuggerException <$> fromException @PluginCommunicationException e
       , SomeDebuggerException <$> fromException @ImpossibleHappened e

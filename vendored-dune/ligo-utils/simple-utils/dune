@@ -4,6 +4,8 @@
  (name simple_utils)
  (public_name simple-utils)
  (libraries
+  simple-utils.file
+  simple-utils.http_uri
   ;; Third party
   core
   yojson

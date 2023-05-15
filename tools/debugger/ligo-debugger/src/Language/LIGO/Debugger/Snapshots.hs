@@ -51,6 +51,7 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
+import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
 import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
@@ -58,30 +59,33 @@ import Fmt (Buildable (..), genericF, pretty)
 import Text.Interpolation.Nyan
 import UnliftIO (MonadUnliftIO, throwIO)
 
-import AST (LIGO)
-import Duplo (leq)
-import Parser (ParsedInfo)
-import Range (HasRange (getRange), Range (..))
-
 import Morley.Debugger.Core.Common (fromCanonicalLoc)
 import Morley.Debugger.Core.Navigate
   (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
   NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
-import Morley.Debugger.Core.Snapshots (DebuggerFailure, InterpretHistory (..))
-import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos))
+import Morley.Debugger.Core.Snapshots
+  (DebuggerFailure (DebuggerInfiniteLoop), InterpretHistory (..))
+import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos, mfwsFailed),
-  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, mkInitStack, runInstrImpl)
+  MichelsonFailed (MichelsonExt, MichelsonFailedWith),
+  MichelsonFailureWithStack (MichelsonFailureWithStack, mfwsErrorSrcPos, mfwsFailed),
+  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, isRemainingSteps, mkInitStack,
+  runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
 
-import Language.LIGO.Debugger.CLI.Types
+import Duplo (leq)
+
+import Language.LIGO.AST (LIGO)
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
@@ -104,7 +108,7 @@ instance (SingI u) => Buildable (StackItem u) where
 data StackFrame u = StackFrame
   { sfName :: Text
     -- ^ Stack frame name.
-  , sfLoc :: LigoRange
+  , sfLoc :: Range
     -- ^ Source location related to the current snapshot
     -- (and referred by 'sfInstrNo').
   , sfStack :: [StackItem u]
@@ -201,7 +205,7 @@ instance (SingI u) => Buildable (InterpretSnapshot u) where
 instance NavigableSnapshot (InterpretSnapshot u) where
   getExecutedPosition = do
     locRange <- sfLoc . head . isStackFrames <$> curSnapshot
-    return . Just $ ligoRangeToSourceLocation locRange
+    return . Just $ rangeToSourceLocation locRange
   getLastExecutedPosition = unfreezeLocally do
     moveRaw Backward >>= \case
       HitBoundary -> return Nothing
@@ -227,13 +231,13 @@ data CollectorState m = CollectorState
     -- We can pick @[operation] * storage@ value from it.
   , csParsedFiles :: HashMap FilePath (LIGO ParsedInfo)
     -- ^ Parsed contracts.
-  , csRecordedStatementRanges :: HashSet LigoRange
+  , csRecordedStatementRanges :: HashSet Range
     -- ^ Ranges of recorded statement snapshots.
-  , csRecordedExpressionRanges :: HashSet LigoRange
+  , csRecordedExpressionRanges :: HashSet Range
     -- ^ Ranges of recorded expression snapshots.
     -- Note that these ranges refer only to snapshots, that
     -- have @EventExpressionPreview@ event.
-  , csRecordedExpressionEvaluatedRanges :: HashSet LigoRange
+  , csRecordedExpressionEvaluatedRanges :: HashSet Range
     -- ^ Ranges of recorded expression snapshots that have
     -- @EventExpressionEvaluated@ event.
   , csLoggingFunction :: String -> m ()
@@ -241,14 +245,17 @@ data CollectorState m = CollectorState
   , csMainFunctionName :: Name 'Unique
     -- ^ Name of main entrypoint.
     -- We need to store it in order not to create an extra stack frame.
-  , csLastRangeMb :: Maybe LigoRange
+  , csLastRangeMb :: Maybe Range
     -- ^ Last range. We can use it to get
     -- the latest position where some
     -- failure occurred.
-  , csLambdaLocs :: HashSet LigoRange
+  , csLambdaLocs :: HashSet Range
     -- ^ Locations for lambdas. We need them to ignore statements recording
     -- in cases when some location is present in this set and it is not
     -- associated with @LAMBDA@ instruction.
+  , csCheckStepsAmount :: Bool
+    -- ^ We have a max steps field in the settings. If it's blank
+    -- then we perform an infinite amount of steps.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -328,7 +335,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
     michFailureHandler err = use csLastRangeMbL >>= \case
       Nothing -> throwError err
-      Just (ligoPositionToSrcLoc . lrStart -> lastSrcLoc)
+      Just (ligoPositionToSrcLoc . _rStart -> lastSrcLoc)
         -> throwError err { mfwsErrorSrcPos = ErrorSrcPos $ fromCanonicalLoc lastSrcLoc }
 
     -- What is done upon executing instruction.
@@ -510,10 +517,21 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     -- location, but that's a sanity check: if an event is not associated with
     -- some location, then it is likely not worth recording.
     recordSnapshot
-      :: LigoRange
+      :: Range
       -> InterpretEvent
       -> CollectingEvalOp m ()
     recordSnapshot loc event = do
+      whenM (use csCheckStepsAmountL) do
+        rs <- isRemainingSteps <$> getInterpreterState
+        if rs == 0
+        then throwError
+          $ MichelsonFailureWithStack
+              (MichelsonExt DebuggerInfiniteLoop)
+              -- We can set there a dummy location.
+              -- @michFailureHandler@ will handle it properly.
+              (ErrorSrcPos (SrcPos (Pos 0) (Pos 0)))
+        else modifyInterpreterState \s -> s{ isRemainingSteps = rs - 1 }
+
       logMessage
         [int||
           Recording location #{loc}
@@ -537,12 +555,12 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       csLastRangeMbL ?= loc
       lift $ C.yield newSnap
 
-    getStatements :: Instr i o -> LigoRange -> CollectingEvalOp m [LigoRange]
-    getStatements instr ligoRange = do
+    getStatements :: Instr i o -> Range -> CollectingEvalOp m [Range]
+    getStatements instr range@Range{..} = do
       {-
         Here we need to clarify some implementation moments.
 
-        For each @ligoRange@ we're trying to find the nearest scope
+        For each @range@ we're trying to find the nearest scope
         (like function call or loop). With loops everything seems straightforward
         but for functions we're doing one trick.
 
@@ -569,21 +587,19 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
               Nested (LAMBDA{} :# _) -> True
               _ -> False
 
-      let range@Range{..} = ligoRangeToRange ligoRange
-
       parsedLigo <-
         fromMaybe
           (error [int||File #{_rFile} is not parsed for some reason|])
           <$> use (csParsedFilesL . at _rFile)
 
-      isLambdaLoc <- HS.member ligoRange <$> use csLambdaLocsL
+      isLambdaLoc <- HS.member range <$> use csLambdaLocsL
 
       if isLambdaLoc && not isLambda
       then pure []
       else do
         let statements = filterAndReverseStatements isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
 
-        pure $ rangeToLigoRange . getRange <$> statements
+        pure $ getRange <$> statements
       where
         -- Here we're looking for statements and the nearest scope locations.
         -- These statements are filtered by strict inclusivity of their ranges to this scope.
@@ -610,7 +626,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                 decide :: Bool -> LIGO ParsedInfo -> (Bool -> Bool -> State Range [LIGO ParsedInfo]) -> State Range [LIGO ParsedInfo]
                 decide isOnSuccess x cont
                   | ignore = cont isLambdaLoc ignore
-                  | getRange x /= ligoRangeToRange ligoRange && isScopeForStatements isLambdaLoc x
+                  | getRange x /= range && isScopeForStatements isLambdaLoc x
                       = put (getRange x) >> cont isLambdaLoc True
                   | otherwise =
                       let
@@ -623,8 +639,9 @@ runCollectInterpretSnapshots
   -> ContractEnv
   -> CollectorState m
   -> Value st
+  -> LigoType
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-runCollectInterpretSnapshots act env initSt initStorage =
+runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointTypeMb) =
   -- This should be safe because we yield at least one snapshot in the end
   InterpretHistory . fromList <$>
   lazyConsume do
@@ -647,6 +664,14 @@ runCollectInterpretSnapshots act env initSt initStorage =
           }
 
       Right _ -> do
+        let opsAndStorageTypeMb = do
+              LTCArrow LigoTypeArrow{..} <- _lteTypeContent <$> entrypointTypeMb
+              pure _ltaType2
+
+        let storageTypeMb = do
+              LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> opsAndStorageTypeMb
+              _ltfAssociatedType <$> _lttFields HM.!? "1"
+
         let isStackFrames = either error id do
               lastSnap <-
                 maybeToRight
@@ -656,11 +681,11 @@ runCollectInterpretSnapshots act env initSt initStorage =
               case isStatus lastSnap of
                 InterpretRunning (EventExpressionEvaluated (Just val)) -> do
                   let stackItemWithOpsAndStorage = StackItem
-                        { siLigoDesc = LigoHiddenStackEntry
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType opsAndStorageTypeMb)
                         , siValue = val
                         }
                   let oldStorage = StackItem
-                        { siLigoDesc = LigoHiddenStackEntry
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType storageTypeMb)
                         , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
                         }
                   pure
@@ -692,64 +717,80 @@ collectInterpretSnapshots
   -> ContractEnv
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
-  -> HashSet LigoRange
+  -> HashSet Range
+  -> Bool -- ^ should we track steps amount
+  -> LigoType -- ^ type of an entrypoint
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-collectInterpretSnapshots mainFile entrypoint Contract{..} epc param initStore env parsedContracts logger lambdaLocs =
-  runCollectInterpretSnapshots
-    (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
-    env
-    collSt
-    initStore
-  where
-    initStack = mkInitStack (liftCallArg epc param) initStore
-    initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
-    collSt = CollectorState
-      { csInterpreterState = initSt
-      , csStackFrames = one StackFrame
-          { sfName = entrypoint
-          , sfStack = []
-          , sfLoc = LigoRange
-            { lrFile = mainFile
-            , lrStart = LigoPosition 1 0
-            , lrEnd = LigoPosition 1 0
+collectInterpretSnapshots
+  mainFile
+  entrypoint
+  Contract{..}
+  epc
+  param
+  initStore
+  env
+  parsedContracts
+  logger
+  lambdaLocs
+  trackMaxSteps
+  entrypointType =
+    runCollectInterpretSnapshots
+      (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
+      env
+      collSt
+      initStore
+      entrypointType
+    where
+      initStack = mkInitStack (liftCallArg epc param) initStore
+      initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
+      collSt = CollectorState
+        { csInterpreterState = initSt
+        , csStackFrames = one StackFrame
+            { sfName = entrypoint
+            , sfStack = []
+            , sfLoc = Range
+              { _rFile = mainFile
+              , _rStart = LigoPosition 1 1
+              , _rFinish = LigoPosition 1 1
+              }
             }
-          }
-      , csLastRecordedSnapshot = Nothing
-      , csParsedFiles = parsedContracts
-      , csRecordedStatementRanges = HS.empty
-      , csRecordedExpressionRanges = HS.empty
-      , csRecordedExpressionEvaluatedRanges = HS.empty
-      , csLoggingFunction = logger
-      , csMainFunctionName = Name entrypoint
-      , csLastRangeMb = Nothing
-      , csLambdaLocs = lambdaLocs
-      }
+        , csLastRecordedSnapshot = Nothing
+        , csParsedFiles = parsedContracts
+        , csRecordedStatementRanges = HS.empty
+        , csRecordedExpressionRanges = HS.empty
+        , csRecordedExpressionEvaluatedRanges = HS.empty
+        , csLoggingFunction = logger
+        , csMainFunctionName = Name entrypoint
+        , csLastRangeMb = Nothing
+        , csLambdaLocs = lambdaLocs
+        , csCheckStepsAmount = trackMaxSteps
+        }
 
-    -- Strip duplicate locations.
-    --
-    -- In practice it happens that LIGO produces snapshots for intermediate
-    -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
-    -- both having the same @location@ meta; we don't want the user to
-    -- see that.
-    stripDuplicates :: forall i o. Instr i o -> Instr i o
-    stripDuplicates = evaluatingState Nothing . dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl }
-      where
-        -- Note that this dfs is implemented in such a way that
-        -- it applies actions in bottom-up manner.
-        recursionImpl :: CtorEffectsApp $ State (Maybe LigoRange)
-        recursionImpl = CtorEffectsApp "Strip duplicates" $ flip \mkNewInstr -> \case
-          ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) _ -> case liiLocation embeddedMeta of
-            Just loc ->
-              ifM ((== Just loc) <$> get)
-                do
-                  -- @mkNewInstr@ will return meta-wrapped instruction after traversal.
-                  -- We in this branch we should replace location meta with @Nothing@.
-                  mkNewInstr >>= \case
-                    ConcreteMeta (_ :: EmbeddedLigoMeta) inner'
-                      -> pure $ Meta (SomeMeta $ embeddedMeta & liiLocationL .~ Nothing) inner'
-                    other -> pure other
-                do
-                  put (Just loc)
-                  mkNewInstr
+      -- Strip duplicate locations.
+      --
+      -- In practice it happens that LIGO produces snapshots for intermediate
+      -- computations. For instance, @a > 10@ will translate to @COMPARE; GT@,
+      -- both having the same @location@ meta; we don't want the user to
+      -- see that.
+      stripDuplicates :: forall i o. Instr i o -> Instr i o
+      stripDuplicates = evaluatingState Nothing . dfsTraverseInstr def{ dsGoToValues = True, dsCtorEffectsApp = recursionImpl }
+        where
+          -- Note that this dfs is implemented in such a way that
+          -- it applies actions in bottom-up manner.
+          recursionImpl :: CtorEffectsApp $ State (Maybe Range)
+          recursionImpl = CtorEffectsApp "Strip duplicates" $ flip \mkNewInstr -> \case
+            ConcreteMeta (embeddedMeta :: EmbeddedLigoMeta) _ -> case liiLocation embeddedMeta of
+              Just loc ->
+                ifM ((== Just loc) <$> get)
+                  do
+                    -- @mkNewInstr@ will return meta-wrapped instruction after traversal.
+                    -- We in this branch we should replace location meta with @Nothing@.
+                    mkNewInstr >>= \case
+                      ConcreteMeta (_ :: EmbeddedLigoMeta) inner'
+                        -> pure $ Meta (SomeMeta $ embeddedMeta & liiLocationL .~ Nothing) inner'
+                      other -> pure other
+                  do
+                    put (Just loc)
+                    mkNewInstr
+              _ -> mkNewInstr
             _ -> mkNewInstr
-          _ -> mkNewInstr

@@ -15,8 +15,6 @@ import Test.Util.Options (minor)
 import UnliftIO.Exception (try)
 import Unsafe qualified
 
-import Cli.Json (LigoLayout (LComb, LTree))
-
 import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (MText, mt)
 import Morley.Michelson.Typed qualified as T
@@ -24,23 +22,22 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Core
   (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote)
 
-import Language.LIGO.Debugger.CLI.Call
-import Language.LIGO.Debugger.CLI.Types
-import Language.LIGO.Debugger.CLI.Types.LigoValue
+import Language.LIGO.Debugger.CLI
+import Language.LIGO.Range
 
 test_Compilation :: TestTree
 test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
-      let (a, b) <-> (c, d) = LigoRange file (LigoPosition a b) (LigoPosition c d)
+      let (a, b) <-> (c, d) = Range (LigoPosition a b) (LigoPosition c d) file
       res <- compileLigoContractDebug "main" file
       take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
-        , [ LigoMereLocInfo ((1, 0) <-> (4, 29)) ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]

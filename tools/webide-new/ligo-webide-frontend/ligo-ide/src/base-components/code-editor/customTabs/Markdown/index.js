@@ -12,10 +12,6 @@ import modelSessionManager from "../../MonacoEditor/modelSessionManager";
 
 import "./styles.scss";
 
-// import ShareButton from './ShareButton'
-// import StarButton from './StarButton'
-// import ForkButton from './ForkButton'
-
 export default class Markdown extends Component {
   state = {
     isPublic: false,
@@ -28,22 +24,7 @@ export default class Markdown extends Component {
     this.setState({
       isPublic: modelSessionManager.projectManager.prefix === "public",
     });
-    // this.getAvatar(this.props)
   }
-
-  // getAvatar = async (props) => {
-  //   this.setState({ avatar: '' })
-
-  //   const projectAuthor = props.eosProject.projectAuthor
-  //   if (projectAuthor) {
-  //     const user = await api.server.loadUser(projectAuthor)
-  //     if (user) {
-  //       this.setState({ avatar: user.avatar })
-  //     }
-  //   } else {
-  //     this.setState({ avatar: props.profile.get('avatar') })
-  //   }
-  // }
 
   get filePath() {
     return this.props.modelSession.filePath;
@@ -181,23 +162,7 @@ export default class Markdown extends Component {
           padding: 0,
         }}
       >
-        <div className="flex-row-center mx-2">
-          {/* <div
-            className='rounded bg-secondary'
-            style={{ width: '24px', height: '24px', overflow: 'hidden' }}
-          >
-            <Link to={`/${projectAuthor}`}>
-              <img
-                style={{ display: 'block', width: '24px', height: '24px' }}
-                src={this.state.avatar}
-              />
-            </Link>
-          </div>
-          <ol className='breadcrumb mb-0 ml-2 p-0'>
-            <BreadcrumbItem><Link to={`/${projectAuthor}`}>{projectAuthor}</Link></BreadcrumbItem>
-            <BreadcrumbItem active>{projectName}</BreadcrumbItem>
-          </ol> */}
-        </div>
+        <div className="flex-row-center mx-2" />
 
         <div
           style={{
@@ -206,12 +171,6 @@ export default class Markdown extends Component {
             alignItems: "center",
           }}
         >
-          {/* <ShareButton eosProject={this.props.eosProject} />
-          <StarButton eosProject={this.props.eosProject} />
-          <ForkButton
-            eosProject={this.props.eosProject}
-            profile={this.props.profile}
-          /> */}
           {this.renderSwitchToEditorBtn()}
         </div>
       </div>

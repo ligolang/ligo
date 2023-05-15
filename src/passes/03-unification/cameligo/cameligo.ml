@@ -1,8 +1,9 @@
 module CST = Cst.Cameligo
 module AST = Ast_unified
+open Unification_shared.Helpers.Make_unification (Compile)
 
-let compile_expression = Compile.compile_expression
-let compile_program = Compile.compile_program
+let compile_expression = compile_expression
+let compile_program = compile_program
 let decompile_program = Decompile.decompile_program
 let decompile_pattern = Decompile.decompile_pattern
 let decompile_expression = Decompile.decompile_expression

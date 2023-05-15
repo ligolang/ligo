@@ -2,6 +2,8 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import LightningFS from "@isomorphic-git/lightning-fs";
+import { findNonAsciiCharIndex } from "~/components/validators";
+import notification from "~/base-components/notification";
 import { fileSystem } from "./fileSystem";
 
 export type ExtendedFs = {
@@ -94,7 +96,33 @@ export class indexedDBFileSystem extends fileSystem {
         const fs = new IndexedDBStorage("LigoIdeFileSystem");
         fs.init("LigoIdeFileSystem");
         this.fs = fs.extended;
-        this.fsCallBack = fs;
+        this.fsCallBack = {
+          ...fs,
+          promises: {
+            ...fs.promises,
+            writeFile: async (
+              filepath: string,
+              data: string | Uint8Array,
+              options?: string | LightningFS.WriteFileOptions | undefined
+            ) => {
+              if (!filepath.includes("/.git/") && !filepath.includes("/.gitignore")) {
+                const stringData = typeof data === "string" ? data : new TextDecoder().decode(data);
+                const nonAscii = findNonAsciiCharIndex(stringData);
+                if (nonAscii !== -1) {
+                  notification.error(
+                    "Non ASCII character.",
+                    `In file ${filepath} on line ${nonAscii.additionColumn + 1} column ${
+                      nonAscii.additionIndex + 1
+                    } you are using a non ASCII character: ${
+                      stringData[nonAscii.index]
+                    }. Please make sure all the symbols correspond to ASCII chart. Otherwise you may have problems with your project.`
+                  );
+                }
+              }
+              return fs.promises.writeFile(filepath, data, options);
+            },
+          },
+        };
         this.loaded = true;
         resolve(true);
       } catch (e) {

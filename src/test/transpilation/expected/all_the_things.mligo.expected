@@ -3,29 +3,45 @@ type tokens = (address, nat) big_map
 type allowances = (address * address, nat) big_map
 
 type storage =
-  {tokens : tokens;
+  {
+   tokens : tokens;
    allowances : allowances;
-   total_amount : nat}
+   total_amount : nat
+  }
 
 type transfer =
-  {address_from : address;
+  {
+   address_from : address;
    address_to : address;
-   value : nat}
+   value : nat
+  }
 
-type approve = {spender : address; value : nat}
+type approve =
+  {
+   spender : address;
+   value : nat
+  }
 
 type getAllowance =
-  {owner : address;
+  {
+   owner : address;
    spender : address;
-   callback : nat contract}
+   callback : nat contract
+  }
 
-type getBalance = {owner : address; callback : nat contract}
+type getBalance =
+  {
+   owner : address;
+   callback : nat contract
+  }
 
 type getTotalSupply = {callback : nat contract}
 
 type action =
-  Transfer of transfer | Approve of approve
-| GetAllowance of getAllowance | GetBalance of getBalance
+  Transfer of transfer
+| Approve of approve
+| GetAllowance of getAllowance
+| GetBalance of getBalance
 | GetTotalSupply of getTotalSupply
 
 let transfer (p, s : transfer * storage)
@@ -73,7 +89,8 @@ let transfer (p, s : transfer * storage)
         new_tokens in
     ([] : operation list),
     {s with
-      tokens = new_tokens; allowances = new_allowances}
+     tokens = new_tokens;
+     allowances = new_allowances}
 
 let approve (p, s : approve * storage)
 : operation list * storage =
@@ -96,7 +113,7 @@ let approve (p, s : approve * storage)
         s.allowances in
     ([] : operation list),
     {s with
-      allowances = new_allowances}
+     allowances = new_allowances}
 
 let getAllowance (p, s : getAllowance * storage)
 : operation list * storage =
@@ -136,7 +153,9 @@ let main (p : key_hash) =
   Tezos.address c
 
 let check_ (p : unit) : int =
-  if Tezos.get_amount () = 100000000mutez then 42 else 0
+  if Tezos.get_amount () = 100000000mutez
+  then 42
+  else 0
 
 let f1 (x : unit) : unit -> tez =
   let amt : tez = Current.amount in
@@ -151,22 +170,28 @@ let main (b, s : bool * (unit -> tez))
 
 type comb_two =
   [@layout comb]
-  {[@annot anbfoo] foo : int;
-   [@annot anabar] bar : string}
+  {
+   [@annot anbfoo] foo : int;
+   [@annot anabar] bar : string
+  }
 
 type comb_three =
   [@layout comb]
-  {[@annot ana] a : int;
+  {
+   [@annot ana] a : int;
    [@annot anb] b : string;
-   [@annot anc] c : nat}
+   [@annot anc] c : nat
+  }
 
 type comb_five =
   [@layout comb]
-  {[@annot an_One] one : int;
+  {
+   [@annot an_One] one : int;
    [@annot an_Two] two : string;
    [@annot an_Three] three : bool;
    [@annot an_Four] four : nat;
-   [@annot an_Five] five : int}
+   [@annot an_Five] five : int
+  }
 
 type parameter = unit
 
@@ -180,35 +205,51 @@ let main_comb_two (action, store : parameter * comb_two)
 
 let main_comb_three (action, store : parameter * comb_three)
 : op_list * comb_three =
-  ([] : operation list), {a = 1; b = ""; c = 1n}
+  ([] : operation list),
+  {
+   a = 1;
+   b = "";
+   c = 1n
+  }
 
 let main_comb_five (action, store : parameter * comb_five)
-: op_list * comb_five =
-  ([] : operation list), store
+: op_list * comb_five = ([] : operation list), store
 
 let r : comb_five =
-  {one = 1; two = ""; three = true; four = 1n; five = 2}
+  {
+   one = 1;
+   two = "";
+   three = true;
+   four = 1n;
+   five = 2
+  }
 
 let accesses = r.one, r.two, r.three, r.four, r.five
 
 type comb_two =
   [@layout tree]
-  {[@annot anfoo] foo : int;
-   [@annot anbar] bar : string}
+  {
+   [@annot anfoo] foo : int;
+   [@annot anbar] bar : string
+  }
 
 type comb_three =
   [@layout tree]
-  {[@annot ana] a : int;
+  {
+   [@annot ana] a : int;
    [@annot anb] b : string;
-   [@annot anc] c : nat}
+   [@annot anc] c : nat
+  }
 
 type comb_five =
   [@layout tree]
-  {[@annot an_One] one : int;
+  {
+   [@annot an_One] one : int;
    [@annot an_Two] two : string;
    [@annot an_Three] three : bool;
    [@annot an_Four] four : nat;
-   [@annot an_Five] five : int}
+   [@annot an_Five] five : int
+  }
 
 type parameter = unit
 
@@ -222,27 +263,34 @@ let main_comb_two (action, store : parameter * comb_two)
 
 let main_comb_three (action, store : parameter * comb_three)
 : op_list * comb_three =
-  ([] : operation list), {a = 1; b = ""; c = 1n}
+  ([] : operation list),
+  {
+   a = 1;
+   b = "";
+   c = 1n
+  }
 
 let main_comb_five (action, store : parameter * comb_five)
-: op_list * comb_five =
-  ([] : operation list), store
+: op_list * comb_five = ([] : operation list), store
 
 type comb_two =
-[@layout comb]
-| [@annot anbfoo] Foo of int | [@annot anabar] Bar of string
+  [@layout comb]
+  | [@annot anbfoo] Foo of int
+  | [@annot anabar] Bar of string
 
 type comb_three =
-[@layout comb]
-| [@annot ana] A of int | [@annot anb] B of string
-| [@annot anc] C of nat
+  [@layout comb]
+  | [@annot ana] A of int
+  | [@annot anb] B of string
+  | [@annot anc] C of nat
 
 type comb_five =
-[@layout comb]
-| [@annot an_One] One of int | [@annot an_Two] Two of string
-| [@annot an_Three] Three of bool
-| [@annot an_Four] Four of nat
-| [@annot an_Five] Five of int
+  [@layout comb]
+  | [@annot an_One] One of int
+  | [@annot an_Two] Two of string
+  | [@annot an_Three] Three of bool
+  | [@annot an_Four] Four of nat
+  | [@annot an_Five] Five of int
 
 type parameter = unit
 
@@ -273,20 +321,23 @@ let main_comb_five (action, store : parameter * comb_five)
   ([] : operation list), o
 
 type comb_two =
-[@layout tree]
-| [@annot anbfoo] Foo of int | [@annot anabar] Bar of string
+  [@layout tree]
+  | [@annot anbfoo] Foo of int
+  | [@annot anabar] Bar of string
 
 type comb_three =
-[@layout tree]
-| [@annot ana] A of int | [@annot anb] B of string
-| [@annot anc] C of nat
+  [@layout tree]
+  | [@annot ana] A of int
+  | [@annot anb] B of string
+  | [@annot anc] C of nat
 
 type comb_five =
-[@layout tree]
-| [@annot an_One] One of int | [@annot an_Two] Two of string
-| [@annot an_Three] Three of bool
-| [@annot an_Four] Four of nat
-| [@annot an_Five] Five of int
+  [@layout tree]
+  | [@annot an_One] One of int
+  | [@annot an_Two] Two of string
+  | [@annot an_Three] Three of bool
+  | [@annot an_Four] Four of nat
+  | [@annot an_Five] Five of int
 
 type parameter = unit
 
@@ -445,8 +496,8 @@ let id_address (p : address) : address option =
   (Bytes.unpack packed : address option)
 
 let check_signature
-  (pk, signed, msg : key * signature * bytes) : bool =
-  Crypto.check pk signed msg
+  (pk, signed, msg : key * signature * bytes)
+: bool = Crypto.check pk signed msg
 
 let example : bool =
   Crypto.check
@@ -494,7 +545,9 @@ let comb_record (a : comb_record) = a < a
 type integer = int
 
 let main (i : int) =
-  if (i = 2 : bool) then (42 : int) else (0 : integer)
+  if (i = 2 : bool)
+  then (42 : int)
+  else (0 : integer)
 
 let main (i : int) =
   let result = 0 in
@@ -518,8 +571,8 @@ type return = operation list * string
 let main (action, store : string * string) : return =
   let toto : operation * address =
     Tezos.create_contract
-      (fun (p, s : nat * string) ->
-         (([] : operation list), "one"))
+      (fun (p, s : nat * string) -> (([] : operation list),
+          "one"))
       (None : key_hash option)
       300000000mutez
       "un" in
@@ -550,7 +603,9 @@ let main (action, store : unit * storage) : return =
   let bar = (M_right 1 : foobar) in
   (([] : operation list), (foo : storage))
 
-type foo = Bar of int | Baz
+type foo =
+  Bar of int
+| Baz
 
 let main (f : foo) : int =
   match f with
@@ -573,8 +628,7 @@ let main (p, store : unit * storage)
   let n =
     (fun (f : int * int -> int)
          (x : int)
-         (y : int) ->
-       f (y, x))
+         (y : int) -> f (y, x))
       (fun (x : int) (y : int) -> x + y)
       0
       1 in
@@ -597,8 +651,7 @@ let main (p, s : unit * storage) : operation list * storage =
   let n =
     (fun (f : int -> int -> int)
          (x : int)
-         (y : int) ->
-       f y (x + y))
+         (y : int) -> f y (x + y))
       (fun (x : int) (y : int) -> x + y)
       0
       1 in
@@ -619,7 +672,11 @@ let foobar (i : int) : int = foo i + bar i
 
 type storage = {challenge : string}
 
-type param = {new_challenge : string; attempt : string}
+type param =
+  {
+   new_challenge : string;
+   attempt : string
+  }
 
 type return = operation list * storage
 
@@ -635,23 +692,39 @@ let attempt (p, store : param * storage) : return =
   let store : storage = {challenge = p.new_challenge} in
   ([] : operation list), store
 
-type commit = {date : timestamp; salted_hash : bytes}
+type commit =
+  {
+   date : timestamp;
+   salted_hash : bytes
+  }
 
 type commit_set = (address, commit) big_map
 
 type storage =
-  {hashed : bytes; unused : bool; commits : commit_set}
+  {
+   hashed : bytes;
+   unused : bool;
+   commits : commit_set
+  }
 
 type reveal =
-  {hashable : bytes; message : unit -> operation list}
+  {
+   hashable : bytes;
+   message : unit -> operation list
+  }
 
-type parameter = Commit of bytes | Reveal of reveal
+type parameter =
+  Commit of bytes
+| Reveal of reveal
 
 type return = operation list * storage
 
 let commit (p, s : bytes * storage) : return =
   let commit : commit =
-    {date = Tezos.get_now () + 86400; salted_hash = p} in
+    {
+     date = Tezos.get_now () + 86400;
+     salted_hash = p
+    } in
   let updated_map : commit_set =
     Big_map.update
       Tezos.get_sender
@@ -743,27 +816,44 @@ let foobar5 (i : int) : int =
 type id = int
 
 type id_details =
-  {owner : address; controller : address; profile : bytes}
+  {
+   owner : address;
+   controller : address;
+   profile : bytes
+  }
 
 type buy =
-  {profile : bytes; initial_controller : address option}
+  {
+   profile : bytes;
+   initial_controller : address option
+  }
 
-type update_owner = {id : id; new_owner : address}
+type update_owner =
+  {
+   id : id;
+   new_owner : address
+  }
 
 type update_details =
-  {id : id;
+  {
+   id : id;
    new_profile : bytes option;
-   new_controller : address option}
+   new_controller : address option
+  }
 
 type action =
-  Buy of buy | Update_owner of update_owner
-| Update_details of update_details | Skip
+  Buy of buy
+| Update_owner of update_owner
+| Update_details of update_details
+| Skip
 
 type storage =
-  {identities : (id, id_details) big_map;
+  {
+   identities : (id, id_details) big_map;
    next_id : int;
    name_price : tez;
-   skip_price : tez}
+   skip_price : tez
+  }
 
 type return = operation list * storage
 
@@ -781,14 +871,17 @@ let buy (parameter, storage : buy * storage) =
       Some addr -> addr
     | None -> sender in
   let new_id_details : id_details =
-    {owner = sender;
+    {
+     owner = sender;
      controller = controller;
-     profile = profile} in
+     profile = profile
+    } in
   let updated_identities : (id, id_details) big_map =
     Big_map.update new_id (Some new_id_details) identities in
   ([] : operation list),
   {storage with
-    identities = updated_identities; next_id = new_id + 1}
+   identities = updated_identities;
+   next_id = new_id + 1}
 
 let update_owner
   (parameter, storage : update_owner * storage) =
@@ -810,14 +903,16 @@ let update_owner
       then ()
       else failwith "You are not the owner of this ID." in
     let updated_id_details : id_details =
-      {owner = new_owner;
+      {
+       owner = new_owner;
        controller = current_id_details.controller;
-       profile = current_id_details.profile} in
+       profile = current_id_details.profile
+      } in
     let updated_identities =
       Big_map.update id (Some updated_id_details) identities in
     ([] : operation list),
     {storage with
-      identities = updated_identities}
+     identities = updated_identities}
 
 let update_details
   (parameter, storage : update_details * storage) =
@@ -852,14 +947,16 @@ let update_details
         None -> current_id_details.controller
       | Some new_controller -> new_controller in
     let updated_id_details : id_details =
-      {owner = owner;
+      {
+       owner = owner;
        controller = controller;
-       profile = profile} in
+       profile = profile
+      } in
     let updated_identities : (id, id_details) big_map =
       Big_map.update id (Some updated_id_details) identities in
     ([] : operation list),
     {storage with
-      identities = updated_identities}
+     identities = updated_identities}
 
 let skip (p, storage : unit * storage) =
   let void : unit =
@@ -868,7 +965,7 @@ let skip (p, storage : unit * storage) =
     else failwith "Incorrect amount paid." in
   ([] : operation list),
   {storage with
-    next_id = storage.next_id + 1}
+   next_id = storage.next_id + 1}
 
 let main (action, storage : action * storage) : return =
   match action with
@@ -892,7 +989,9 @@ let bar : int = foo
 
 type storage = int
 
-type parameter = Increment of int | Decrement of int
+type parameter =
+  Increment of int
+| Decrement of int
 
 type return = operation list * storage
 
@@ -922,8 +1021,7 @@ let higher_order1 =
 let higher_order2 =
   let a = 2 in
   let foo =
-    fun (i : int) ->
-      let b = 2 in
+    fun (i : int) -> let b = 2 in
       let bar = fun (i : int) -> i + a + b in
       bar i in
   (foo 1 = 5)
@@ -942,26 +1040,49 @@ let higher_order4 =
 
 let concats = (0x70 ^ 0x70 = 0x7070)
 
-type foo_record = {a : string; b : string}
+type foo_record =
+  {
+   a : string;
+   b : string
+  }
 
 let record_concat =
-  let ab : foo_record = {a = "a"; b = "b"} in
+  let ab : foo_record =
+    {
+     a = "a";
+     b = "b"
+    } in
   (ab.a ^ ab.b = "ab")
 
 let record_patch =
-  let ab : foo_record = {a = "a"; b = "b"} in
+  let ab : foo_record =
+    {
+     a = "a";
+     b = "b"
+    } in
   let res = {ab with b = "c"} in
   (res.b = "c")
 
-type bar_record = {f : int -> int; arg : int}
+type bar_record =
+  {
+   f : int -> int;
+   arg : int
+  }
 
 let record_lambda =
   let a = 1 in
   let foo : int -> int = fun (i : int) -> a + i * 2 in
-  let farg : bar_record = {f = foo; arg = 2} in
+  let farg : bar_record =
+    {
+     f = foo;
+     arg = 2
+    } in
   (farg.f farg.arg = 5)
 
-type foo_variant = Foo | Bar of int | Baz of string
+type foo_variant =
+  Foo
+| Bar of int
+| Baz of string
 
 let variant_match =
   let a = Bar 1 in
@@ -984,7 +1105,7 @@ let list_match =
 
 let tuple_proj =
   let a, b = true, false in
-  a || b
+  a or b
 
 let list_const =
   let a = [1; 2; 3; 4] in
@@ -1096,9 +1217,17 @@ type storage = unit
 let main (a, s : unit * storage) =
   (fun (f : unit -> unit) -> f ()) (fun (_ : unit) -> unit)
 
-type foo = {a : int; b : nat}
+type foo =
+  {
+   a : int;
+   b : nat
+  }
 
-type bar = {c : int * nat; d : foo}
+type bar =
+  {
+   c : int * nat;
+   d : foo
+  }
 
 let t1 =
   let (a, b, c, d) = (1, 2, 3, 4) in
@@ -1118,21 +1247,60 @@ let t4 =
   (a + c + e + g, b + d + f)
 
 let t5 : nat =
-  let {a = a; b = b} = {a = 1; b = 1n} in
+  let {
+   a = a;
+   b = b
+  } =
+    {
+     a = 1;
+     b = 1n
+    } in
   b
 
 let t6 =
-  let x : foo = {a = 1; b = 2n} in
-  let ({a = a; b = b}, (c, d)) = (x, (1, 1)) in
+  let x : foo =
+    {
+     a = 1;
+     b = 2n
+    } in
+  let ({
+    a = a;
+    b = b
+   }, (c, d)) = (x, (1, 1)) in
   (a + c + d, b)
 
 let t7 =
-  let ({c = (a, b); d = {a = c; b = d}}) =
-    {c = (1, 2n); d = {a = 1; b = 1n}} in
+  let ({
+    c = (a, b);
+    d =
+      {
+       a = c;
+       b = d
+      }
+   }) =
+    {
+     c = (1, 2n);
+     d =
+       {
+        a = 1;
+        b = 1n
+       }
+    } in
   (a + c, b + d)
 
 let t8 =
-  let (x, (y, {a = a; b = b})) = (1, (1n, {a = 1; b = 1n})) in
+  let (x,
+   (y,
+    {
+     a = a;
+     b = b
+    })) =
+    (1,
+     (1n,
+      {
+       a = 1;
+       b = 1n
+      })) in
   (x + a, y + b)
 
 let sum (p : int * int) : int =
@@ -1166,8 +1334,7 @@ let (a : int), (b : int), (c : int), (d : int), (e : int) =
   big_tuple
 
 let correct_values_big_tuple (p : unit)
-: int * int * int * int * int =
-  a, b, c, d, e
+: int * int * int * int * int = a, b, c, d, e
 
 let different_types : int * string = 10, "hello"
 
@@ -1181,7 +1348,13 @@ type storage = int * int
 let main (n : int * storage) : operation list * storage =
   let x : int * int =
     let x : int = 7 in
-    x + n.0, n.1.0 + n.1.1 in
+    x + n.0,
+    n.
+    1.
+    0
+    + n.
+      1.
+      1 in
   ([] : operation list), x
 
 let f0 (a : string) = true
@@ -1244,27 +1417,39 @@ let iter_op (s : int list) : unit =
   List.iter do_nothing s
 
 let local_type (u : unit) : int =
-  type toto = int in
-  let titi : toto = 1 in
-  let titi = titi + 2 in
-  titi
+  type toto =
+    int in
+    let titi : toto = 1 in
+    let titi = titi + 2 in
+    titi
 
 let rec aux_simple (i : int) : int =
-  if i < 100 then aux_simple (i + 1) else i
+  if i < 100
+  then aux_simple (i + 1)
+  else i
 
 let counter_simple (n : int) : int = aux_simple n
 
-type sum_aggregator = {counter : int; sum : int}
+type sum_aggregator =
+  {
+   counter : int;
+   sum : int
+  }
 
 let counter (n : int) : int =
-  let initial : sum_aggregator = {counter = 0; sum = 0} in
+  let initial : sum_aggregator =
+    {
+     counter = 0;
+     sum = 0
+    } in
   let rec aggregate : sum_aggregator -> int =
-    fun (prev : sum_aggregator) ->
-      if prev.counter <= n
+    fun (prev : sum_aggregator) -> if prev.counter <= n
       then
         aggregate
-          {counter = prev.counter + 1;
-           sum = prev.counter + prev.sum}
+          {
+           counter = prev.counter + 1;
+           sum = prev.counter + prev.sum
+          }
       else prev.sum in
   aggregate initial
 
@@ -1272,11 +1457,19 @@ let rec aux_nest (prev : sum_aggregator) : int =
   if prev.counter < 100
   then
     let sum = prev.sum + (aux_simple prev.counter) in
-    aux_nest {counter = prev.counter + 1; sum = sum}
+    aux_nest
+      {
+       counter = prev.counter + 1;
+       sum = sum
+      }
   else prev.sum
 
 let counter_nest (n : int) : int =
-  let initial : sum_aggregator = {counter = 0; sum = 0} in
+  let initial : sum_aggregator =
+    {
+     counter = 0;
+     sum = 0
+    } in
   let out = aux_nest initial in
   out
 
@@ -1337,7 +1530,9 @@ let deep_op (m : foobar) : foobar =
 
 type storage = int
 
-type parameter = Add of int | Sub of int
+type parameter =
+  Add of int
+| Sub of int
 
 type return = operation list * storage
 
@@ -1366,7 +1561,9 @@ let match_option (i : int option) : int =
 
 type storage = int
 
-type parameter = Increment of int | Decrement of int
+type parameter =
+  Increment of int
+| Decrement of int
 
 type return = operation list * storage
 
@@ -1381,21 +1578,28 @@ let main (action, store : parameter * storage) : return =
     | Decrement n -> sub store n in
   ([] : operation list), store
 
-type t3 = {foo : int; bar : nat; baz : string}
+type t3 =
+  {
+   foo : int;
+   bar : nat;
+   baz : string
+  }
 
 type param_r = t3 michelson_pair_right_comb
 
 type param_l = t3 michelson_pair_left_comb
 
 let main_r (action, store : param_r * unit)
-: (operation list * unit) =
-  ([] : operation list), unit
+: (operation list * unit) = ([] : operation list), unit
 
 let main_l (action, store : param_l * unit)
-: (operation list * unit) =
-  ([] : operation list), unit
+: (operation list * unit) = ([] : operation list), unit
 
-type foo = {bar : string; baz : nat}
+type foo =
+  {
+   bar : string;
+   baz : nat
+  }
 
 let main2 (pm, s : union1_michelson * nat) =
   let p = union1_from_michelson pm in
@@ -1404,9 +1608,15 @@ let main2 (pm, s : union1_michelson * nat) =
   | Choice2 f -> ([] : operation list), f.baz
 
 type st4 =
-  Foo4 of int | Bar4 of nat | Baz4 of string | Boz4 of bool
+  Foo4 of int
+| Bar4 of nat
+| Baz4 of string
+| Boz4 of bool
 
-type st3 = Foo3 of int | Bar3 of nat | Baz3 of string
+type st3 =
+  Foo3 of int
+| Bar3 of nat
+| Baz3 of string
 
 type tr3 = (string, "baz4", bool, "boz4") michelson_or
 
@@ -1454,8 +1664,8 @@ let abcde_curried
   (b : int)
   (c : int)
   (d : int)
-  (e : int) : int =
-  c + e + 3
+  (e : int)
+: int = c + e + 3
 
 let abcde (x : int * int * int * int * int) : int =
   abcde_curried x.0 x.1 x.2 x.3 x.4
@@ -1469,19 +1679,23 @@ type authorized_keys = key list
 type id = string
 
 type storage =
-  {id : id;
+  {
+   id : id;
    counter : counter;
    threshold : threshold;
-   auth : authorized_keys}
+   auth : authorized_keys
+  }
 
 type message = unit -> operation list
 
 type signatures = (key_hash * signature) list
 
 type check_message_pt =
-  {counter : counter;
+  {
+   counter : counter;
    message : message;
-   signatures : signatures}
+   signatures : signatures
+  }
 
 type return = operation list * storage
 
@@ -1499,10 +1713,10 @@ let check_message (param, s : check_message_pt * storage)
       let valid : nat = 0n in
       let keys : authorized_keys = s.auth in
       let aux =
-        fun (vk, pkh_sig :
-             (nat * authorized_keys) *
-             (key_hash * signature)) ->
-          let valid, keys = vk in
+        fun (vk, pkh_sig
+             : (nat * authorized_keys) *
+               (key_hash * signature)) -> let valid, keys =
+            vk in
           match keys with
             [] -> vk
           | key :: keys ->
@@ -1563,13 +1777,31 @@ let main (p, s : bls_l * bool_option)
 : operation list * bool_option =
   (([] : operation list), pairing_check p)
 
-type foobar = {foo : int; bar : int}
+type foobar =
+  {
+   foo : int;
+   bar : int
+  }
 
-let fb : foobar = {foo = 0; bar = 0}
+let fb : foobar =
+  {
+   foo = 0;
+   bar = 0
+  }
 
-type abc = {a : int; b : int; c : int}
+type abc =
+  {
+   a : int;
+   b : int;
+   c : int
+  }
 
-let abc : abc = {a = 42; b = 142; c = 242}
+let abc : abc =
+  {
+   a = 42;
+   b = 142;
+   c = 242
+  }
 
 let a : int = abc.a
 
@@ -1579,29 +1811,51 @@ let c : int = abc.c
 
 let projection (r : foobar) : int = r.foo + r.bar
 
-let modify (r : foobar) : foobar = {foo = 256; bar = r.bar}
+let modify (r : foobar) : foobar =
+  {
+   foo = 256;
+   bar = r.bar
+  }
 
 let modify_abc (r : abc) : abc =
   let c = 42 in
-  {r with b = 2048; c = c}
+  {r with
+   b = 2048;
+   c = c}
 
 type big_record =
-  {a : int; b : int; c : int; d : int; e : int}
+  {
+   a : int;
+   b : int;
+   c : int;
+   d : int;
+   e : int
+  }
 
 let br : big_record =
-  {a = 23; b = 23; c = 23; d = 23; e = 23}
+  {
+   a = 23;
+   b = 23;
+   c = 23;
+   d = 23;
+   e = 23
+  }
 
 type double_record = {inner : abc}
 
 let modify_inner (r : double_record) : double_record =
   {r with
-    inner.b = 2048}
+   inner.b = 2048}
 
 let rec sum ((n, acc) : int * int) : int =
-  if (n < 1) then acc else sum (n - 1, acc + n)
+  if (n < 1)
+  then acc
+  else sum (n - 1, acc + n)
 
 let rec fibo ((n, n_1, n_0) : int * int * int) : int =
-  if (n < 2) then n_1 else fibo (n - 1, n_1 + n_0, n_1)
+  if (n < 2)
+  then n_1
+  else fibo (n - 1, n_1 + n_0, n_1)
 
 type ss = 8 sapling_state
 
@@ -1671,7 +1925,9 @@ let main (ps : unit * unit) : operation list * unit =
     (failwith "This contract still always fails"
      : operation list * unit)
 
-type parameter = Increment of int | Decrement of int
+type parameter =
+  Increment of int
+| Decrement of int
 
 type storage = int
 
@@ -1702,11 +1958,14 @@ let add_more_tez : tez =
 
 type mint_parameter =
   [@layout comb]
-  {destination : unit ticket contract;
-   amount : nat}
+  {
+   destination : unit ticket contract;
+   amount : nat
+  }
 
 type parameter =
-  Burn of unit ticket | Mint of mint_parameter
+  Burn of unit ticket
+| Mint of mint_parameter
 
 type storage = [@layout comb] {admin : address}
 
@@ -1736,24 +1995,32 @@ let main (arg : parameter * storage)
 
 type send_parameter =
   [@layout comb]
-  {destination : unit ticket contract;
+  {
+   destination : unit ticket contract;
    amount : nat;
-   ticketer : address}
+   ticketer : address
+  }
 
 type parameter =
-  Receive of unit ticket | Send of send_parameter
+  Receive of unit ticket
+| Send of send_parameter
 
 type storage =
   [@layout comb]
-  {manager : address;
-   tickets : (address, unit ticket) big_map}
+  {
+   manager : address;
+   tickets : (address, unit ticket) big_map
+  }
 
 let main (arg : parameter * storage)
 : operation list * storage =
   begin
     assert (Tezos.get_amount () = 0mutez);
     let (p, storage) = arg in
-    let {manager = manager; tickets = tickets} = storage in
+    let {
+     manager = manager;
+     tickets = tickets
+    } = storage in
     (match p with
        Receive ticket ->
          let ((ticketer, _), ticket) =
@@ -1779,7 +2046,10 @@ let main (arg : parameter * storage)
              (Some ticket)
              tickets in
          (([] : operation list),
-          {manager = manager; tickets = tickets})
+          {
+           manager = manager;
+           tickets = tickets
+          })
      | Send send ->
          begin
            assert (Tezos.get_sender () = manager);
@@ -1822,16 +2092,21 @@ let main (arg : parameter * storage)
                          0mutez
                          send.destination in
                      ([op],
-                      {manager = manager; tickets = tickets})))
+                      {
+                       manager = manager;
+                       tickets = tickets
+                      })))
          end)
   end
 
 type parameter = unit
 
 type storage =
-  {next_use : timestamp;
+  {
+   next_use : timestamp;
    interval : int;
-   execute : unit -> operation list}
+   execute : unit -> operation list
+  }
 
 type return = operation list * storage
 
@@ -1841,7 +2116,7 @@ let main (action, store : parameter * storage) : return =
   then
     let store : storage =
       {store with
-        next_use = my_now + store.interval} in
+       next_use = my_now + store.interval} in
     store.execute (), store
   else
     (failwith
@@ -1897,7 +2172,10 @@ let hello, ten, world, fifty_n = test_t_2
 
 let type_tuple_d_2 (p : unit) = hello ^ world
 
-type foobar = Foo of int | Bar of bool | Kee of nat
+type foobar =
+  Foo of int
+| Bar of bool
+| Kee of nat
 
 let foo : foobar = Foo 42
 
@@ -1906,32 +2184,42 @@ let bar : foobar = Bar true
 let kee : foobar = Kee 23n
 
 type storage =
-  {title : string;
+  {
+   title : string;
    yea : nat;
    nay : nat;
    voters : address set;
    start_time : timestamp;
-   finish_time : timestamp}
+   finish_time : timestamp
+  }
 
 type return = operation list * storage
 
-type vote = Yea | Nay
+type vote =
+  Yea
+| Nay
 
 type reset =
-  {title : string;
+  {
+   title : string;
    start_time : timestamp;
-   finish_time : timestamp}
+   finish_time : timestamp
+  }
 
-type parameter = Vote of vote | Reset of reset
+type parameter =
+  Vote of vote
+| Reset of reset
 
 let reset (reset, _ : reset * storage) : return =
   ([] : operation list),
-  {title = reset.title;
+  {
+   title = reset.title;
    yea = 0n;
    nay = 0n;
    voters = (Set.empty : address set);
    start_time = reset.start_time;
-   finish_time = reset.finish_time}
+   finish_time = reset.finish_time
+  }
 
 let vote (vote, store : vote * storage) : return =
   let my_now = Tezos.get_now () in
@@ -1942,7 +2230,7 @@ let vote (vote, store : vote * storage) : return =
     | Nay -> {store with nay = store.nay + 1n} in
   ([] : operation list),
   {store with
-    voters = Set.add addr store.voters}
+   voters = Set.add addr store.voters}
 
 let main (action, store : parameter * storage) : return =
   match action with
@@ -1951,7 +2239,9 @@ let main (action, store : parameter * storage) : return =
 
 type storage = int
 
-type parameter = Increment of int | Decrement of int
+type parameter =
+  Increment of int
+| Decrement of int
 
 let add (a, b : int * int) : int = a + b
 

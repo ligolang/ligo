@@ -63,9 +63,9 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types1.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/parametric_types1.mligo", line 1, characters 20-28:
+    File "../../test/contracts/negative/parametric_types1.mligo", line 1, characters 20-24:
       1 | type fail_big_map = bool map
-                              ^^^^^^^^
+                              ^^^^
 
     Type map is applied to a wrong number of arguments, expected: 2 got: 1 |}]
 
@@ -73,10 +73,10 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types2.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/parametric_types2.mligo", line 2, characters 11-27:
+    File "../../test/contracts/negative/parametric_types2.mligo", line 2, characters 11-23:
       1 | type 'a foo = 'a * 'a
       2 | type bar = (int,string) foo
-                     ^^^^^^^^^^^^^^^^
+                     ^^^^^^^^^^^^
 
     Type foo is applied to a wrong number of arguments, expected: 1 got: 2 |}]
 
@@ -84,10 +84,10 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types3.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/parametric_types3.mligo", line 2, characters 11-18:
+    File "../../test/contracts/negative/parametric_types3.mligo", line 2, characters 11-14:
       1 | type ('a,'b,'c) foo = 'a * 'b * 'c
       2 | type bar = int foo
-                     ^^^^^^^
+                     ^^^
 
     Type foo is applied to a wrong number of arguments, expected: 3 got: 1 |}]
 
@@ -95,9 +95,9 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types4.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-20:
+    File "../../test/contracts/negative/parametric_types4.mligo", line 1, characters 9-15:
       1 | type x = option list
-                   ^^^^^^^^^^^
+                   ^^^^^^
 
     Invalid type
     Ill formed type "option".Hint: you might be missing some type arguments. |}]

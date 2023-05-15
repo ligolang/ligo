@@ -1,3 +1,0 @@
-{
-  "build": "dune build -p tar-unix -j 4"
-}

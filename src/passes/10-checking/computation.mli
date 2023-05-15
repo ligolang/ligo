@@ -133,9 +133,9 @@ module Context : sig
 
   (** [get_mut var] returns the type of the mutable variable [var].
       Returning [None] if not found in the current context. *)
-  val get_mut : Value_var.t -> (Type.t option, 'err, 'wrn) t
+  val get_mut : Value_var.t -> ((Type.t, [ `Mut_var_captured | `Not_found ]) result, 'err, 'wrn) t
 
-  val get_mut_exn : Value_var.t -> error:'err Errors.with_loc -> (Type.t, 'err, 'wrn) t
+  val get_mut_exn : Value_var.t -> error:([ `Mut_var_captured | `Not_found ] -> 'err Errors.with_loc) -> (Type.t, 'err, 'wrn) t
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context.
@@ -418,6 +418,6 @@ val run_elab
   -> raise:(Errors.typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
-  -> ?env:Environment.t
+  -> ?env:Ast_typed.signature
   -> unit
   -> 'a

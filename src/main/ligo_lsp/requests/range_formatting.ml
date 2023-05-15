@@ -48,55 +48,62 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
   =
  fun uri range ->
   let@ () = send_debug_msg @@ "Formatting request on " ^ DocumentUri.to_path uri in
-  let on_error _err =
-    send_message ~type_:Error
-    @@ "Can not apply range formatting on a file with syntax errors"
-  in
-  with_cst ~strict:true ~on_error uri None
-  @@ fun cst ->
-  let@ edits =
-    return
-    @@
-    match cst with
-    | CameLIGO_cst cst ->
-      range_formatting
-        { range_of_decl = Range.of_region <@ Cst_cameligo.CST.declaration_to_region
-        ; print_decl =
-            CameLIGO_pretty.print_declaration CameLIGO_pretty.default_environment
-        }
-        cst.decl
-        range
-    | PascaLIGO_cst cst ->
-      range_formatting
-        { range_of_decl = Range.of_region <@ Cst_pascaligo.CST.region_of_S_Decl
-        ; print_decl =
-            PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_environment
-        }
-        cst.decl
-        range
-    | JsLIGO_cst cst ->
-      range_formatting
-        { range_of_decl = Range.of_region <@ Cst_jsligo.CST.toplevel_statement_to_region
-        ; print_decl =
-            JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_environment
-        }
-        cst.statements
-        range
-  in
-  let@ () =
-    when_
-      (Option.is_none edits)
-      (send_message ~type_:Warning
-      @@ "Range formatting: currently can format only toplevel declarations, none \
-          selected by given range")
-  in
-  let@ () =
-    when_some_ edits
-    @@ fun edits_list ->
-    send_debug_msg
-    @@ "Range formatting: returned replace for ranges "
-    ^ String.concat
-        ~sep:", "
-        (List.map ~f:(fun x -> Range.to_string @@ x.range) edits_list)
-  in
-  return edits
+  if Helpers_file.is_packaged (DocumentUri.to_path uri)
+  then
+    let@ () =
+      send_message ~type_:Error @@ "Can not format a file from an imported package."
+    in
+    return None
+  else (
+    let on_error _err =
+      send_message ~type_:Error
+      @@ "Can not apply range formatting on a file with syntax errors"
+    in
+    with_cst ~strict:true ~on_error uri None
+    @@ fun cst ->
+    let@ edits =
+      return
+      @@
+      match cst with
+      | CameLIGO_cst cst ->
+        range_formatting
+          { range_of_decl = Range.of_region <@ Cst_cameligo.CST.declaration_to_region
+          ; print_decl =
+              CameLIGO_pretty.print_declaration CameLIGO_pretty.default_environment
+          }
+          cst.decl
+          range
+      | PascaLIGO_cst cst ->
+        range_formatting
+          { range_of_decl = Range.of_region <@ Cst_pascaligo.CST.region_of_S_Decl
+          ; print_decl =
+              PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_environment
+          }
+          cst.decl
+          range
+      | JsLIGO_cst cst ->
+        range_formatting
+          { range_of_decl = Range.of_region <@ Cst_jsligo.CST.toplevel_statement_to_region
+          ; print_decl =
+              JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_environment
+          }
+          cst.statements
+          range
+    in
+    let@ () =
+      when_
+        (Option.is_none edits)
+        (send_message ~type_:Warning
+        @@ "Range formatting: currently can format only toplevel declarations, none \
+            selected by given range")
+    in
+    let@ () =
+      when_some_ edits
+      @@ fun edits_list ->
+      send_debug_msg
+      @@ "Range formatting: returned replace for ranges "
+      ^ String.concat
+          ~sep:", "
+          (List.map ~f:(fun x -> Range.to_string @@ x.range) edits_list)
+    in
+    return edits)

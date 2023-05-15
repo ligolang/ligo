@@ -1,11 +1,9 @@
-# LIGO Debugger (Early Alpha Preview)
+# LIGO Debugger
 
 A Visual Studio Code extension that provides LIGO debugging capability.
 
-**Note**: This package is in a very early alpha version, released as a preview.
-Bugs are to be expected!
-
-In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode`).
+**Note**: This is an MVP release of the debugger, which may still contain some bugs.
+In the future, this package will be deprecated and joined with the LIGO Language Server (`ligo-vscode` in the [Marketplace](https://marketplace.visualstudio.com/items?itemName=ligolang-publish.ligo-vscode) and [Open VSX](https://open-vsx.org/extension/ligolang-publish/ligo-vscode)).
 
 ## Connecting the `ligo` executable
 
@@ -19,9 +17,17 @@ Also, if you prefer using `ligo` from the docker image then you can specify a pa
 #!/bin/sh
 docker run --rm -v $(pwd):$(pwd) -w $(pwd) ligolang/ligo:{ligo-version} "$@"
 ```
-where `{ligo-version}` is your preferred `ligo` version (e.g. `0.50.0`).
+where `{ligo-version}` is your preferred `ligo` version (e.g. `0.59.0`).
 
 At this moment running `ligo` from docker is slow, so, it's better to use static binary.
+
+For MacOS users, you might need to build LIGO from the repository.
+
+1. Install the LIGO Debugger VS Code extension.
+2. Clone the LIGO repo from https://gitlab.com/ligolang/ligo/-/tree/0.59.0?ref_type=tags and checkout the 0.59.0 branch.
+3. Follow the [INSTALL.md](https://gitlab.com/ligolang/ligo/-/blob/0.59.0/INSTALL.md). In there, you will find the instructions and dependencies to build LIGO.
+4. After running `make build`, you will be able to find LIGO in `_build/install/default/bin/ligo`. Copy this to somewhere easy to find.
+5. In the VS Code settings, set the path to LIGO binary to the one where LIGO is. Alternatively, you can put `ligo` in your `PATH`.
 
 ## Functionality support
 
@@ -29,7 +35,7 @@ What is supported as part of MVP:
 * Contracts using the common functionality;
 * Convenient supply of endpoint / parameter / storage with last value remembering and two input modes;
 * All stepping commands (including `Step Back`) with statement and expression granularities;
-* Basic variables display;
+* Display of variables, including records, constructors, lists, and combinations of them;
 * Stack frames display;
 * Breakpoints (but not guaranteed to work properly in all the cases at the moment).
 
@@ -154,3 +160,7 @@ However, some reorderings can be safely illiminated. We try to handle such cases
 ### I see many instances of the same function/value in the variables pane
 
 It's okay. At this moment debugger doesn't support polymorphic types in the variables pane, so, you'll see all monomorphed variants that are used in your contract.
+
+### Debugger says that my contract has an infinite loop but it doesn't
+
+By default the debugger will do 1000 steps and after that will assume that a contract has an infinite loop. You can change the max steps value in the settings. By _step_ we mean step in `expression (pre + post)` granularity.

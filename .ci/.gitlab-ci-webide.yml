@@ -87,7 +87,7 @@ webide-new-backend-build-and-push-backend:
       when: always
   script:
     - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker push "${WEBIDE_NEW_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
@@ -110,7 +110,7 @@ webide-new-frontend-build-and-push:
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
       -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker push "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}"
   after_script:
     - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}" >/dev/null 2>&1 || true
@@ -128,7 +128,7 @@ webide-new-release-backend-build-and-push:
       when: always
   script:
     - docker build tools/webide-new/ligo-webide-backend -t ${WEBIDE_NEW_IMAGE_TAG}-release
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker push "${WEBIDE_NEW_IMAGE_TAG}-release"
   after_script:
     - docker image rm "${WEBIDE_NEW_IMAGE_TAG}-release" >/dev/null 2>&1 || true
@@ -152,7 +152,7 @@ webide-new-release-frontend-build-and-push:
       -f tools/webide-new/ligo-webide-frontend/ligo-ide/Dockerfile 
       tools/webide-new/ligo-webide-frontend/ligo-ide 
       -t ${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release
-    - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
+    - echo "${CI_JOB_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
     - docker push "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release"
   after_script:
     - docker image rm "${WEBIDE_FRONTEND_NEW_IMAGE_TAG}-release" >/dev/null 2>&1 || true

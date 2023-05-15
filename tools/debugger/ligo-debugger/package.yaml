@@ -75,16 +75,15 @@ library:
     - conduit-extra
     - containers
     - data-default
-    - directory
     - dlist
     - duplo
+    - fastsum
     - filepath
     - fmt
+    - free
     - hashable
-    - hedgehog
     - lens
     - lens-aeson
-    - ligo-squirrel
     - monad-stm
     - morley
     - morley-debugger
@@ -92,11 +91,12 @@ library:
     - nyan-interpolation
     - nyan-interpolation-core
     - process
+    - process-extras
+    - regex-tdfa
     - scientific
     - semver
     - singletons
     - singletons-th
-    - some
     - stm
     - stm-containers
     - syb
@@ -104,14 +104,27 @@ library:
     - th-utilities
     - time
     - text
+    - transformers
+    - tree-sitter
     - unliftio
+    - unliftio-core
     - unordered-containers
     - vector
     - vinyl
-    - with-utf8
+    - witherable
 
   source-dirs:
     - src/
+
+  include-dirs:
+    - grammar/camligo/src
+    - grammar/jsligo/src
+
+  c-sources:
+    - grammar/camligo/src/parser.c
+    - grammar/camligo/src/scanner.c
+    - grammar/jsligo/src/parser.c
+    - grammar/jsligo/src/scanner.c
 
   generated-other-modules:
     - Paths_ligo_debugger
@@ -143,18 +156,17 @@ tests:
     main: Main.hs
 
     dependencies:
-      - aeson
       - containers
       - data-default
       - Diff
-      - dir-traverse
       - directory
+      - duplo
       - filepath
       - fmt
       - hedgehog
+      - hspec-expectations
       - lens
       - ligo-debugger
-      - ligo-squirrel
       - lorentz
       - nyan-interpolation
       - nyan-interpolation-core

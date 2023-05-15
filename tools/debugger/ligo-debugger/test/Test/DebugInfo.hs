@@ -1,14 +1,14 @@
 -- | Reading debug info from ligo debug output.
 module Test.DebugInfo
-  ( module Test.DebugInfo
+  ( test_SourceMapper
+  , test_Errors
+  , test_Function_call_locations
   ) where
 
-import AST (LIGO)
 import Control.Lens (_Empty, hasn't)
 import Data.Default (def)
 import Data.Set qualified as Set
 import Fmt (Buildable (..), pretty)
-import Parser (ParsedInfo)
 import Test.HUnit (Assertion)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
@@ -20,11 +20,14 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
 import Morley.Util.PeanoNatural (toPeanoNatural')
 
+import Language.LIGO.AST (LIGO)
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Michelson
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Range
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
 
@@ -52,7 +55,7 @@ collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unCo
 buildSourceMapper
   :: FilePath
   -> String
-  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet LigoRange)
+  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet Range, LigoType)
 buildSourceMapper file entrypoint = do
   ligoMapper <- compileLigoContractDebug entrypoint file
   case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
@@ -72,7 +75,7 @@ test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
 
-      (exprLocs, T.SomeContract contract, allFiles, _) <- buildSourceMapper file "main"
+      (exprLocs, T.SomeContract contract, allFiles, _, _) <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
@@ -124,11 +127,11 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
+            (Range (LigoPosition 2 12) (LigoPosition 2 18) file)
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 2 11) (LigoPosition 2 17))
+            (Range (LigoPosition 2 12) (LigoPosition 2 18) file)
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.PUSH @'T.TInt (T.VInt 42))
@@ -141,11 +144,11 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 18))
+            (Range (LigoPosition 3 12) (LigoPosition 3 19) file)
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 18))
+            (Range (LigoPosition 3 12) (LigoPosition 3 19) file)
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @2)
@@ -154,11 +157,11 @@ test_SourceMapper = testGroup "Reading source mapper"
                 )
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 22))
+            (Range (LigoPosition 3 12) (LigoPosition 3 23) file)
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 3 11) (LigoPosition 3 22))
+            (Range (LigoPosition 3 12) (LigoPosition 3 23) file)
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.PUSH @'T.TInt (T.VInt 2))
@@ -176,19 +179,19 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 24))
+            (Range (LigoPosition 4 4) (LigoPosition 4 25) file)
             ?- SomeInstr (T.NIL @'T.TOperation)
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 24))
+            (Range (LigoPosition 4 4) (LigoPosition 4 25) file)
             ?- SomeInstr (T.Nested $ T.NIL @'T.TOperation)
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 28))
+            (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
             ?- SomeInstr T.PAIR
 
         , LigoMereLocInfo
-            (LigoRange file (LigoPosition 4 3) (LigoPosition 4 28))
+            (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested T.Nop
@@ -227,16 +230,16 @@ test_SourceMapper = testGroup "Reading source mapper"
 
   , testCase "metas are not shifted in `if` blocks" do
       let file = contractsDir </> "if.mligo"
-      (_, T.SomeContract contract, allFiles, _) <- buildSourceMapper file "main"
+      (_, T.SomeContract contract, allFiles, _, _) <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
       forM_ @_ @_ @() (collectContractMetas parsedContracts contract)
         \(LigoIndexedInfo{..}, SomeInstr instr) -> case instr of
           T.MUL -> liiLocation @?= Just
-            do LigoRange file (LigoPosition 2 26) (LigoPosition 2 31)
+            do Range (LigoPosition 2 27) (LigoPosition 2 32) file
           T.CAR -> liiLocation @?= Just
-            do LigoRange file (LigoPosition 2 37) (LigoPosition 2 42)
+            do Range (LigoPosition 2 38) (LigoPosition 2 43) file
           _ -> pass
 
   ]
@@ -256,16 +259,16 @@ test_Function_call_locations :: TestTree
 test_Function_call_locations = testGroup "Function call locations"
   let
     makeSourceLocation :: FilePath -> (Word, Word) -> (Word, Word) -> SourceLocation
-    makeSourceLocation filepath (startLine, startCol) (endLine, endCol) =
+    makeSourceLocation filepath (startL, startCol) (endLine, endCol) =
       SourceLocation
         (MSFile filepath)
-        (SrcLoc (startLine - 1) startCol)
+        (SrcLoc (startL - 1) startCol)
         (SrcLoc (endLine - 1) endCol)
 
     checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
     checkLocations contractName expectedLocs = do
       let file = contractsDir </> contractName
-      (Set.map (ligoRangeToSourceLocation . eslLigoRange) -> locs, _, _, _) <- buildSourceMapper file "main"
+      (Set.map (rangeToSourceLocation . eslRange) -> locs, _, _, _, _) <- buildSourceMapper file "main"
 
       forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
         if Set.member loc locs

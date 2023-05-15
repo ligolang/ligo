@@ -3,8 +3,10 @@ open Test_helpers
 open Main_errors
 open Ast_unified
 
-let e_constructor l element = e_constructor { constructor = Label.of_string l; element }
-let init_env = Environment.default Environment.Protocols.current
+let e_constructor l element =
+  e_applied_constructor { constructor = Label.of_string l; element }
+
+
 let type_file f = type_file f options
 
 (*
@@ -943,6 +945,18 @@ let loop_mligo ~raise () : unit =
     let expected = e_int ~loc 10000 in
     expect_eq ~raise program "counter_nest" input expected
   in
+  let () =
+    let input = e_variable_ez ~loc "testmap" in
+    let expected =
+      e_list
+        ~loc
+        [ e_pair ~loc (e_int ~loc 2) (e_int ~loc 4)
+        ; e_pair ~loc (e_int ~loc 1) (e_int ~loc 2)
+        ; e_pair ~loc (e_int ~loc 0) (e_int ~loc 1)
+        ]
+    in
+    expect_eq ~raise program "entries" input expected
+  in
   ()
 
 
@@ -983,6 +997,39 @@ let loop2_jsligo ~raise () : unit =
   let make_input = e_nat ~loc in
   let make_expected = e_nat ~loc in
   expect_eq_n_pos_mid ~raise program "counter" make_input make_expected
+
+
+let loop2_mligo ~raise () : unit =
+  let program = type_file ~raise "./contracts/loop2.mligo" in
+  let () =
+    let make_input = e_nat ~loc in
+    let make_expected = e_nat ~loc in
+    expect_eq_n_pos_mid ~raise program "counter" make_input make_expected
+  in
+  let () =
+    let make_input = e_nat ~loc in
+    let make_expected n = e_nat ~loc (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid ~raise program "while_sum" make_input make_expected
+  in
+  let () =
+    let make_input = e_nat ~loc in
+    let make_expected n = e_int ~loc (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid ~raise program "for_sum" make_input make_expected
+  in
+  let input = e_unit ~loc in
+  let () =
+    let expected = e_pair ~loc (e_int ~loc 3) (e_string ~loc "totototo") in
+    expect_eq ~raise program "for_collection_list" input expected
+  in
+  let () =
+    let expected = e_pair ~loc (e_int ~loc 6) (e_string ~loc "totototo") in
+    expect_eq ~raise program "for_collection_set" input expected
+  in
+  let () =
+    let expected = e_pair ~loc (e_int ~loc 6) (e_string ~loc "123") in
+    expect_eq ~raise program "for_collection_map" input expected
+  in
+  ()
 
 
 let counter_contract ~raise f : unit =
@@ -1589,6 +1636,18 @@ let bytes_unpack ~raise f : unit =
       "id_address"
       (e_address ~loc addr)
       (e_some ~loc (e_address ~loc addr))
+  in
+  ()
+
+
+let let_mut ~raise () : unit =
+  let program = type_file ~raise "./contracts/let_mut.mligo" in
+  let () =
+    let exprs =
+      [ e_int ~loc 1, e_int ~loc 30; e_string ~loc "foo", e_string ~loc "bar" ]
+    in
+    List.iter exprs ~f:(fun (a, b) ->
+        expect_eq ~raise program "swap" (e_pair ~loc a b) (e_pair ~loc b a))
   in
   ()
 
@@ -2574,6 +2633,7 @@ let main =
   @ [ test_w "comparable (mligo)" comparable_mligo
     ; test_w "loop (mligo)" loop_mligo
     ; test_w "loop (jsligo)" loop_jsligo
+    ; test_w "loop2 (mligo)" loop2_mligo
     ; test_w "loop2 (jsligo)" loop2_jsligo
     ]
   @ test_w_all "includer" include_
@@ -2613,3 +2673,4 @@ let main =
     ; test_w "if_semi (jsligo)" if_semi_jsligo
     ; test_w "return_handling (jsligo)" if_semi_jsligo
     ]
+  @ [ test_w "let mut (mligo)" let_mut ]

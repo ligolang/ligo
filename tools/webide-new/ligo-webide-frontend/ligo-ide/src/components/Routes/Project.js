@@ -1,6 +1,6 @@
 import React, { PureComponent } from "react";
 
-import { WorkspaceLoader } from "~/ligo-components/eth-project";
+import { WorkspaceLoader } from "~/ligo-components/ligo-project";
 import { connect } from "~/base-components/redux";
 
 class ProjectWithProps extends PureComponent {
@@ -30,7 +30,7 @@ class ProjectWithProps extends PureComponent {
 
     return (
       <WorkspaceLoader
-        theme="obsidians"
+        theme="ligoide"
         projectRoot={projectRoot}
         type={type}
         signer={uiState.get("signer")}

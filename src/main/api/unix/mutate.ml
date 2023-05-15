@@ -1,20 +1,19 @@
-open Simple_utils.Trace
+(* open Simple_utils.Trace *)
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 
-let generator_to_variant ~raise s =
+(* let generator_to_variant ~raise s =
   if String.equal s "list"
   then `Generator_list
   else if String.equal s "random"
   then `Generator_random
-  else raise.error @@ Main_errors.main_invalid_generator_name s
-
+  else raise.error @@ Main_errors.main_invalid_generator_name s *)
 
 let mutate_cst (raw_options : Raw_options.t) source_file seed =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
-      let generator = generator_to_variant ~raise raw_options.generator in
+      (* let generator = generator_to_variant ~raise raw_options.generator in
       let get_module =
         match generator with
         | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)
@@ -78,5 +77,8 @@ let mutate_cst (raw_options : Raw_options.t) source_file seed =
           Parsing.Pascaligo.pretty_print
             Parsing.Pascaligo.Pretty.default_environment
             mutated_prg
-        in
-        buffer, [] )
+        in *)
+      ignore (raw_options, source_file, seed, raise);
+      let buffer = Buffer.create 50 in
+      Buffer.add_string buffer "Fuzzing disabled";
+      buffer, [] )

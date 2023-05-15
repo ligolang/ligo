@@ -479,8 +479,12 @@ let fetch_contract_type ~raise
       in
       (* TODO: on storage/parameter : assert_storable, assert_passable? *)
       m, var, { parameter; storage }
-    | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var))
-  | _ -> raise.error @@ bad_contract_io main_fname expr (Value_var.get_location var)
+    | _ ->
+      raise.error
+      @@ bad_contract_io main_fname expr.type_expression (Value_var.get_location var))
+  | _ ->
+    raise.error
+    @@ bad_contract_io main_fname expr.type_expression (Value_var.get_location var)
 
 
 (* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any

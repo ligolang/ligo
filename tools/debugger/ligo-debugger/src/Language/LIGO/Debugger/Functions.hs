@@ -22,9 +22,7 @@ import Morley.Michelson.Interpret (StkEl (StkEl))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
 
-import Cli (LigoTypeContent (LTCArrow), LigoTypeExpression (..))
-
-import Language.LIGO.Debugger.CLI.Types
+import Language.LIGO.Debugger.CLI
 
 -- | Registered name of a lambda.
 data LambdaName u

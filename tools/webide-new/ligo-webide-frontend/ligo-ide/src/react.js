@@ -5,12 +5,10 @@ import "./scss/index.scss";
 
 import App from "./App";
 
-if (!process.env.CDN) {
-  import("./scss/fonts/montserrat/montserrat.css");
-  import("./scss/fonts/inter/inter.css");
-  import("./scss/fonts/hack/hack.css");
-  import("@fortawesome/fontawesome-free/js/all");
-}
+import("./scss/fonts/montserrat/montserrat.css");
+import("./scss/fonts/inter/inter.css");
+import("./scss/fonts/hack/hack.css");
+import("@fortawesome/fontawesome-free/js/all");
 
 document.title = process.env.PROJECT_NAME;
 ReactDOM.render(<App />, document.getElementById("root"));

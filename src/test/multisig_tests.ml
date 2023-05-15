@@ -62,7 +62,7 @@ let params ~raise counter msg keys is_validl f =
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
   in
   let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
-  e_constructor
+  e_applied_constructor
     ~loc
     { constructor = Label.of_string "CheckMessage"
     ; element =

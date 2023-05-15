@@ -620,7 +620,9 @@ let bake_ops
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
     @@ Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw
   in
-  let aux incr op = Lwt_main.run @@ Incremental.add_operation incr (op incr) in
+  let aux incr op =
+    Lwt_main.run @@ Incremental.add_operation ~check_size:false incr (op incr)
+  in
   match List.fold_result ~f:aux ~init:incr operation with
   | Ok incr ->
     let last_operations = get_last_operations_result incr in
@@ -661,7 +663,7 @@ let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
   let operation =
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
-    @@ Op.delegation ~force_reveal:true (B ctxt.raw) contract (Some pkh)
+    @@ Op.delegation ~gas_limit:Max ~force_reveal:true (B ctxt.raw) contract (Some pkh)
   in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
@@ -679,7 +681,12 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   let hash = Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
   let operation =
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
-    @@ Op.register_global_constant ~force_reveal:true (B ctxt.raw) ~source ~value
+    @@ Op.register_global_constant
+         ~gas_limit:Max
+         ~force_reveal:true
+         (B ctxt.raw)
+         ~source
+         ~value
   in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> hash, ctxt
@@ -717,6 +724,7 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
     let op =
       Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
       @@ Op.register_global_constant
+           ~gas_limit:Max
            ~force_reveal:true
            (B ctxt.raw)
            ~source
@@ -784,11 +792,10 @@ let transfer ~raise ~loc ~calltrace (ctxt : context) ?entrypoint dst parameter a
     @@
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
-    let gas_limit = Op.Max in
     (* TODO: might let user choose here *)
     Op.transaction
       ~force_reveal:true
-      ~gas_limit
+      ~gas_limit:Max
       ~fee:(Test_tez.of_int 1)
       ~parameters
       ?entrypoint
@@ -823,6 +830,7 @@ let originate_contract
     @@ (* TODO : fee ? *)
     Op.contract_origination
       ~force_reveal:true
+      ~gas_limit:Max
       (B ctxt.raw)
       source
       ?credit:amt

@@ -3,6 +3,7 @@ open Pass_type
 open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
 let rec wrap_multi_bindings
     : type a.
@@ -93,7 +94,7 @@ let program : _ program_ -> program =
   make_prg @@ List.fold_right ~f ~init:[] prg
 
 
-let compile = `Cata { idle_cata_pass with program; block }
+let compile ~raise:_ = Fold { idle_fold with program; block }
 
 let reduction ~raise =
   { Iter.defaults with
@@ -105,35 +106,29 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)
 
-
-open Unit_test_helpers
+open Unit_test_helpers.Program
 
 let%expect_test "multi declaration in program" =
   {|
-    ((PE_attr ((key inline) (value ())) (PE_declaration
+    ((PE_attr ((key inline)) (PE_declaration
       (D_multi_var (
-        ((pattern (P_var x)) (let_rhs (E_variable foo)))
-        ((pattern (P_var y)) (let_rhs (E_variable bar)))
-        ((pattern (P_var z)) (let_rhs (E_variable baz)))))))
-     (PE_declaration
-      (D_var ((pattern (P_var last)) (let_rhs (E_variable last))))))
-    |}
-  |-> pass ~raise;
+        ((pattern (P_var x)) (let_rhs (EXPR1)))
+        ((pattern (P_var y)) (let_rhs (EXPR2)))
+        ((pattern (P_var z)) (let_rhs (EXPR3)))))))
+      (PE_declaration
+        (D_var ((pattern (P_var last)) (let_rhs (EXPR4))))))
+  |}
+  |-> compile;
   [%expect
     {|
-    ((PE_attr ((key inline) (value ()))
-      (PE_declaration (D_var ((pattern (P_var x)) (let_rhs (E_variable foo))))))
-     (PE_attr ((key inline) (value ()))
-      (PE_declaration (D_var ((pattern (P_var y)) (let_rhs (E_variable bar))))))
-     (PE_attr ((key inline) (value ()))
-      (PE_declaration (D_var ((pattern (P_var z)) (let_rhs (E_variable baz))))))
-     (PE_declaration
-      (D_var ((pattern (P_var last)) (let_rhs (E_variable last))))))
-  |}]
+        ((PE_attr ((key inline))
+          (PE_declaration (D_var ((pattern (P_var x)) (let_rhs (EXPR1))))))
+         (PE_attr ((key inline))
+          (PE_declaration (D_var ((pattern (P_var y)) (let_rhs (EXPR2))))))
+         (PE_attr ((key inline))
+          (PE_declaration (D_var ((pattern (P_var z)) (let_rhs (EXPR3))))))
+         (PE_declaration (D_var ((pattern (P_var last)) (let_rhs (EXPR4))))))
+    |}]

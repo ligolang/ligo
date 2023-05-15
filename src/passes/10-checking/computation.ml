@@ -56,81 +56,38 @@ and encode_row ({ fields; layout } : Ast_typed.row) : Type.row =
 
 and encode_layout (layout : Layout.t) : Type.layout = L_concrete layout
 
-let rec signature_of_module_expr
-    : ctx:Context.t -> Ast_typed.module_expr -> Context.Signature.t
-  =
- fun ~ctx mod_expr ->
-  match mod_expr.module_content with
-  | M_struct decls -> signature_of_module ~ctx decls
-  | M_variable mvar ->
-    (match Context.get_module ctx mvar with
-    | Some sig_ -> sig_
-    | None -> failwith "Unbounded module")
-  | M_module_path path ->
-    (match Context.get_signature ctx path with
-    | Some sig_ -> sig_
-    | None ->
-      Format.kasprintf
-        failwith
-        "Unbounded signature path: %a"
-        Module_expr.pp_module_path
-        path)
+and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item =
+  match item with
+  | Ast_typed.S_value (v, ty, attr) ->
+    Context.Signature.S_value (v, encode ty, encode_sig_item_attribute attr)
+  | S_type (v, ty) -> Context.Signature.S_type (v, encode ty)
+  | S_module (v, sig_) -> Context.Signature.S_module (v, encode_signature sig_)
 
 
-and signature_of_module : ctx:Context.t -> Ast_typed.module_ -> Context.Signature.t =
- fun ~ctx module_ ->
-  match module_ with
-  | [] -> []
-  | decl :: module_ ->
-    let public, sig_decl = signature_item_of_decl ~ctx decl in
-    let sig_ =
-      signature_of_module ~ctx:(Context.add_signature_items ctx sig_decl) module_
-    in
-    if public then sig_decl @ sig_ else sig_
+and encode_signature (sig_ : Ast_typed.signature) : Context.Signature.t =
+  List.map ~f:encode_sig_item sig_
 
 
-and signature_item_of_decl : ctx:Context.t -> Ast_typed.decl -> bool * Context.Signature.t
-  =
- fun ~ctx decl ->
-  match Location.unwrap decl with
-  | D_value { binder; expr; attr = { public; entry; view; _ } } ->
-    ( public
-    , [ S_value (Binder.get_var binder, encode expr.type_expression, { entry; view }) ] )
-  | D_type { type_binder = tvar; type_expr = type_; type_attr = { public; _ } } ->
-    public, [ S_type (tvar, encode type_) ]
-  | D_module { module_binder = mvar; module_; module_attr = { public; _ } } ->
-    let sig_' = signature_of_module_expr ~ctx module_ in
-    public, [ S_module (mvar, sig_') ]
-  | D_irrefutable_match { pattern; expr = _; attr = { public; entry; view; _ } } ->
-    let sigs =
-      List.map (Ast_typed.Pattern.binders pattern) ~f:(fun b ->
-          Context.Signature.S_value
-            (Binder.get_var b, encode @@ Binder.get_ascr b, { entry; view }))
-    in
-    public, sigs
+and encode_sig_item_attribute (attr : Ast_typed.sig_item_attribute) : Context.Attr.t =
+  { view = attr.view; entry = attr.entry }
 
 
 (* Load context from the outside declarations *)
-let ctx_init ?env () =
+let ctx_init_of_sig ?env () =
   match env with
   | None -> Context.empty
-  | Some env ->
-    Environment.fold env ~init:Context.empty ~f:(fun ctx decl ->
-        match Location.unwrap decl with
-        | D_irrefutable_match { pattern; expr = _; attr = _ } ->
-          List.fold (Ast_typed.Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
-              Context.add_imm ctx (Binder.get_var x) (encode @@ Binder.get_ascr x))
-        | D_value { binder; expr; attr = _ } ->
-          Context.add_imm ctx (Binder.get_var binder) (encode expr.type_expression)
-        | D_type { type_binder; type_expr; type_attr = _ } ->
-          Context.add_type ctx type_binder (encode type_expr)
-        | D_module { module_binder; module_; module_attr = _ } ->
-          let sig_ = signature_of_module_expr ~ctx module_ in
-          Context.add_module ctx module_binder sig_)
+  | Some (env : Ast_typed.signature) ->
+    let f ctx decl =
+      match decl with
+      | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ty)
+      | S_type (v, ty) -> Context.add_type ctx v (encode ty)
+      | S_module (v, sig_) -> Context.add_module ctx v (encode_signature sig_)
+    in
+    List.fold env ~init:Context.empty ~f
 
 
 let run_elab t ~raise ~options ~loc ?env () =
-  let ctx = ctx_init ?env () in
+  let ctx = ctx_init_of_sig ?env () in
   (* Format.printf "@[Context:@.%a@]" Context.pp ctx; *)
   let ctx, pos = Context.mark ctx in
   let (ctx, subst), elab = t ~raise ~options ~loc (ctx, Substitution.empty) in
@@ -369,7 +326,7 @@ module Context = struct
   let get_imm var : _ t = lift_ctx (fun ctx -> Context.get_imm ctx var)
   let get_imm_exn var ~error : _ t = get_imm var >>= raise_opt ~error
   let get_mut var : _ t = lift_ctx (fun ctx -> Context.get_mut ctx var)
-  let get_mut_exn var ~error : _ t = get_mut var >>= raise_opt ~error
+  let get_mut_exn var ~error : _ t = get_mut var >>= raise_result ~error
   let get_type_var tvar : _ t = lift_ctx (fun ctx -> Context.get_type_var ctx tvar)
   let get_type_var_exn tvar ~error = get_type_var tvar >>= raise_opt ~error
   let get_type tvar : _ t = lift_ctx (fun ctx -> Context.get_type ctx tvar)

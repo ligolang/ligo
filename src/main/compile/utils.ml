@@ -23,7 +23,7 @@ let core_expression_string ~raise ~options syntax expression =
 
 let type_expression_string ~raise ~options syntax expression init_prog =
   let core_exp = core_expression_string ~raise ~options syntax expression in
-  Of_core.compile_expression ~raise ~options ~init_prog core_exp
+  Of_core.compile_expression ~raise ~options ~context:init_prog core_exp
 
 
 let core_program_string ~raise ~options syntax expression =
@@ -40,9 +40,9 @@ let core_program_string ~raise ~options syntax expression =
   Of_unified.compile ~raise ~options unified
 
 
-let type_program_string ~raise ~options syntax expression =
+let type_program_string ~raise ~options ?context syntax expression =
   let core = core_program_string ~raise ~options syntax expression in
-  let typed = Of_core.typecheck ~raise ~options core in
+  let typed = Of_core.typecheck ~raise ~options ?context core in
   typed, core
 
 
@@ -63,7 +63,9 @@ let type_expression ~raise ~options ?annotation syntax expression init_prog =
     | None -> core_exp
     | Some ann -> Ast_core.e_ascription ~loc:core_exp.location core_exp ann
   in
-  let typed_exp = Of_core.compile_expression ~raise ~options ~init_prog core_exp in
+  let typed_exp =
+    Of_core.compile_expression ~raise ~options ~context:init_prog core_exp
+  in
   typed_exp
 
 
@@ -74,7 +76,13 @@ let compile_contract_input ~raise ~options parameter storage syntax init_prog =
   in
   let unified = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
   let core = Of_unified.compile_expression ~raise ~options unified in
-  let typed = Of_core.compile_expression ~raise ~options ~init_prog core in
+  let typed =
+    Of_core.compile_expression
+      ~raise
+      ~options
+      ~context:(Ast_typed.Misc.to_signature init_prog)
+      core
+  in
   let aggregated =
     Of_typed.compile_expression_in_context
       ~raise

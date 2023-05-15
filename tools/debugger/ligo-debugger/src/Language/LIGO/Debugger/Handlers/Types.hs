@@ -4,8 +4,8 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoLaunchRequestArguments (..)
   , LigoInitializeLoggerRequest (..)
   , LigoInitializeLoggerRequestArguments (..)
-  , LigoSetLigoBinaryPathRequest (..)
-  , LigoSetLigoBinaryPathRequestArguments (..)
+  , LigoSetLigoConfigRequest (..)
+  , LigoSetLigoConfigRequestArguments (..)
   , LigoSetProgramPathRequest (..)
   , LigoSetProgramPathRequestArguments (..)
   , LigoValidateEntrypointRequest (..)
@@ -19,7 +19,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSpecificRequest (..)
 
   , LigoInitializeLoggerResponse (..)
-  , LigoSetLigoBinaryPathResponse (..)
+  , LigoSetLigoConfigResponse (..)
   , LigoSetProgramPathResponse (..)
   , LigoValidateEntrypointResponse (..)
   , ContractMetadata (..)
@@ -79,19 +79,20 @@ data LigoInitializeLoggerRequestArguments = LigoInitializeLoggerRequestArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoInitializeLoggerRequestArguments)
 
-data LigoSetLigoBinaryPathRequest = LigoSetLigoBinaryPathRequest
-  { seqLigoSetLigoBinaryPathRequest :: Int
-  , typeLigoSetLigoBinaryPathRequest :: String
-  , commandLigoSetLigoBinaryPathRequest :: String
-  , argumentsLigoSetLigoBinaryPathRequest :: LigoSetLigoBinaryPathRequestArguments
+data LigoSetLigoConfigRequest = LigoSetLigoConfigRequest
+  { seqLigoSetLigoConfigRequest :: Int
+  , typeLigoSetLigoConfigRequest :: String
+  , commandLigoSetLigoConfigRequest :: String
+  , argumentsLigoSetLigoConfigRequest :: LigoSetLigoConfigRequestArguments
   } deriving stock (Eq, Show, Generic)
-    deriving Buildable via (GenericBuildable LigoSetLigoBinaryPathRequest)
+    deriving Buildable via (GenericBuildable LigoSetLigoConfigRequest)
 
--- | Binary path for LIGO executable.
-data LigoSetLigoBinaryPathRequestArguments = LigoSetLigoBinaryPathRequestArguments
-  { binaryPathLigoSetLigoBinaryPathRequestArguments :: Maybe FilePath
+-- | Fields fetched from config.
+data LigoSetLigoConfigRequestArguments = LigoSetLigoConfigRequestArguments
+  { binaryPathLigoSetLigoConfigRequestArguments :: Maybe FilePath
+  , maxStepsLigoSetLigoConfigRequestArguments :: Maybe Word64
   } deriving stock (Eq, Show, Generic)
-    deriving Buildable via (GenericBuildable LigoSetLigoBinaryPathRequestArguments)
+    deriving Buildable via (GenericBuildable LigoSetLigoConfigRequestArguments)
 
 data LigoSetProgramPathRequest = LigoSetProgramPathRequest
   { seqLigoSetProgramPathRequest :: Int
@@ -172,7 +173,7 @@ data LigoValidateConfigRequestArguments = LigoValidateConfigRequestArguments
 
 data LigoSpecificRequest
   = InitializeLoggerRequest LigoInitializeLoggerRequest
-  | SetLigoBinaryPathRequest LigoSetLigoBinaryPathRequest
+  | SetLigoConfigRequest LigoSetLigoConfigRequest
   | SetProgramPathRequest LigoSetProgramPathRequest
   | ValidateEntrypointRequest LigoValidateEntrypointRequest
   | GetContractMetadataRequest LigoGetContractMetadataRequest
@@ -188,12 +189,12 @@ data LigoInitializeLoggerResponse = LigoInitializeLoggerResponse
   } deriving stock (Show, Eq, Generic)
     deriving Buildable via (GenericBuildable LigoInitializeLoggerResponse)
 
-data LigoSetLigoBinaryPathResponse = LigoSetLigoBinaryPathResponse
-  { seqLigoSetLigoBinaryPathResponse :: Int
-  , request_seqLigoSetLigoBinaryPathResponse :: Int
-  , successLigoSetLigoBinaryPathResponse :: Bool
+data LigoSetLigoConfigResponse = LigoSetLigoConfigResponse
+  { seqLigoSetLigoConfigResponse :: Int
+  , request_seqLigoSetLigoConfigResponse :: Int
+  , successLigoSetLigoConfigResponse :: Bool
   } deriving stock (Show, Eq, Generic)
-    deriving Buildable via (GenericBuildable LigoSetLigoBinaryPathResponse)
+    deriving Buildable via (GenericBuildable LigoSetLigoConfigResponse)
 
 data LigoSetProgramPathResponse = LigoSetProgramPathResponse
   { seqLigoSetProgramPathResponse :: Int
@@ -247,7 +248,7 @@ data LigoValidateConfigResponse = LigoValidateConfigResponse
 
 data LigoSpecificResponse
   = InitializeLoggerResponse LigoInitializeLoggerResponse
-  | SetLigoBinaryPathResponse LigoSetLigoBinaryPathResponse
+  | SetLigoConfigResponse LigoSetLigoConfigResponse
   | SetProgramPathResponse LigoSetProgramPathResponse
   | ValidateEntrypointResponse LigoValidateEntrypointResponse
   | GetContractMetadataResponse LigoGetContractMetadataResponse

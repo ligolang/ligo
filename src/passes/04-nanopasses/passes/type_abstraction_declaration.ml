@@ -12,34 +12,37 @@ let x =
 
 this parses incorectly (the 'a binder is ignored) : See with christian
 *)
+let name = __MODULE__
+
+include Flag.No_arg ()
 
 let abstract_type params ty_expr =
   List.Ne.fold_right params ~init:ty_expr ~f:(fun ty_binder acc ->
       t_abstraction ~loc:(get_t_loc ty_expr) { ty_binder; kind = Type; type_ = acc })
 
 
-let compile =
-  let declaration : _ declaration_ -> declaration = function
-    | { location = loc
-      ; wrap_content = D_type_abstraction { name; params = None; type_expr }
-      } -> d_type ~loc { name; type_expr }
-    | { location = loc
-      ; wrap_content = D_type_abstraction { name; params = Some params; type_expr }
-      } ->
+let compile ~raise:_ =
+  let declaration : _ declaration_ -> declaration =
+   fun d ->
+    let loc = Location.get_location d in
+    match Location.unwrap d with
+    | D_type_abstraction { name; params = None; type_expr } ->
+      d_type ~loc { name; type_expr }
+    | D_type_abstraction { name; params = Some params; type_expr } ->
       let type_expr = abstract_type params type_expr in
       d_type ~loc { name; type_expr }
-    | { location = loc; wrap_content } -> make_d ~loc wrap_content
+    | d -> make_d ~loc d
   in
-  let expr : _ expr_ -> expr = function
-    | { location = loc
-      ; wrap_content =
-          E_type_in { type_decl = { name; params = Some params; type_expr }; body }
-      } ->
+  let expr : _ expr_ -> expr =
+   fun e ->
+    let loc = Location.get_location e in
+    match Location.unwrap e with
+    | E_type_in { type_decl = { name; params = Some params; type_expr }; body } ->
       let type_expr = abstract_type params type_expr in
       e_type_in ~loc { type_decl = { name; params = None; type_expr }; body }
-    | { location; wrap_content } -> make_e ~loc:location wrap_content
+    | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with declaration; expr }
+  Fold { idle_fold with declaration; expr }
 
 
 let reduction ~raise =
@@ -57,7 +60,7 @@ let reduction ~raise =
   }
 
 
-let decompile =
+let decompile ~raise:_ =
   let pass_declaration : _ declaration_ -> declaration =
    fun decl ->
     { fp =
@@ -77,48 +80,39 @@ let decompile =
           decl
     }
   in
-  `Cata { idle_cata_pass with declaration = pass_declaration }
+  Fold { idle_fold with declaration = pass_declaration }
 
 
-let pass ~raise =
-  morph ~name:__MODULE__ ~compile ~decompile ~reduction_check:(reduction ~raise)
-
-
-open Unit_test_helpers
-
-let%expect_test "decompile" =
-  {|
-  ((PE_declaration
-    (D_type (
-      (name my_t)
-      (type_expr
-        (T_abstraction
-          ((ty_binder a) (kind Type) (type_ 
-          (T_abstraction
-            ((ty_binder b) (kind Type) (type_ (T_var whatever))))))))))))
-  |}
-  <-| pass ~raise;
-  [%expect
-    {|
-    ((PE_declaration
-      (D_type_abstraction
-       ((name my_t) (params ((a b))) (type_expr (T_var whatever))))))
-    |}]
+open Unit_test_helpers.Declaration
 
 let%expect_test "compile" =
   {|
-  ((PE_declaration
-    (D_type_abstraction
-      ((name my_t) (params ((a b))) (type_expr (T_var whatever))))))
+    (D_type_abstraction ((name my_t) (params ((a b))) (type_expr (TY_EXPR))))
   |}
-  |-> pass ~raise;
+  |-> compile;
   [%expect
     {|
-    ((PE_declaration
-      (D_type
-       ((name my_t)
-        (type_expr
-         (T_abstraction
-          ((ty_binder a) (kind Type)
-           (type_
-            (T_abstraction ((ty_binder b) (kind Type) (type_ (T_var whatever)))))))))))) |}]
+    (D_type
+     ((name my_t)
+      (type_expr
+       (T_abstraction
+        ((ty_binder a) (kind Type)
+         (type_ (T_abstraction ((ty_binder b) (kind Type) (type_ (TY_EXPR)))))))))) |}]
+
+let%expect_test "decompile" =
+  {|
+    (D_type
+      ((name my_t)
+       (type_expr
+        (T_abstraction
+          ((ty_binder a)
+           (kind Type)
+           (type_ 
+            (T_abstraction
+              ((ty_binder b)
+               (kind Type)
+               (type_ (TY_EXPR))))))))))
+  |}
+  |-> decompile;
+  [%expect
+    {| (D_type_abstraction ((name my_t) (params ((a b))) (type_expr (TY_EXPR)))) |}]

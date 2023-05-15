@@ -6,6 +6,7 @@ module Location = Simple_utils.Location
 
 (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
     JavaScript and TypeScript don't have native pattern matching. *)
+include Flag.No_arg ()
 
 let expr_in_block : expr -> block =
  fun body ->
@@ -59,9 +60,8 @@ let list_to_matching_clause ~raise : expr -> (pattern, block) Case.clause =
   | _ -> raise.error (invalid_list_pattern_match (get_e_loc e))
 
 
-let compile ~raise ~syntax =
-  ignore raise;
-  let pass_expr : _ expr_ -> expr =
+let compile ~raise =
+  let expr : _ expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
     let same = make_e ~loc e.wrap_content in
@@ -79,34 +79,20 @@ let compile ~raise ~syntax =
       | _ -> same)
     | _ -> same
   in
-  if Syntax_types.equal syntax JsLIGO
-  then `Cata { idle_cata_pass with expr = pass_expr }
-  else `Cata idle_cata_pass
+  Fold { idle_fold with expr }
 
 
-let reduction ~raise ~syntax =
+let reduction ~raise =
   let fail () = raise.error (wrong_reduction __MODULE__) in
-  if Syntax_types.equal syntax JsLIGO
-  then
-    { Iter.defaults with
-      expr =
-        (function
-        | { wrap_content = E_call (f, _); _ }
-          when Option.value_map ~default:false (get_e_variable f) ~f:(fun x ->
-                   Variable.is_name x "match") -> fail ()
-        | _ -> ())
-    }
-  else Iter.defaults
+  { Iter.defaults with
+    expr =
+      (function
+      | { wrap_content = E_call (f, _); _ }
+        when Option.value_map ~default:false (get_e_variable f) ~f:(fun x ->
+                 Variable.is_name x "match") -> fail ()
+      | _ -> ())
+  }
 
 
-let decompile ~syntax =
-  ignore syntax;
-  `Cata idle_cata_pass (* TODO ? mmh  *)
-
-
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise ~syntax)
-    ~decompile:(decompile ~syntax)
-    ~reduction_check:(reduction ~raise ~syntax)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing

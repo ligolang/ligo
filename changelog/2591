@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nAdd mutable variables, the assignment operator, `for` loops, and `while` loops to CameLIGO.\\n\\n```\\nlet do_something g n = \\n  let mut x = 1 in\\n  for j = 1 upto n do\\n    while x < 10 do\\n      x := g i j x;\\n    done\\n  end;\\n  x\\n\\n```\\n\\n"
+merge_request: '2591'
+title: "CameLIGO: support for `let mut`, assignment and iteration"
+type: added
+            

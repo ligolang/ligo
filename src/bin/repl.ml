@@ -128,8 +128,7 @@ module Run = Ligo_run.Of_michelson
 module Raw_options = Compiler_options.Raw_options
 
 type state =
-  { env : Environment.t (* The repl should have its own notion of environment *)
-  ; syntax : Syntax_types.t
+  { syntax : Syntax_types.t
   ; protocol : Environment.Protocols.t
   ; top_level : Ast_typed.program
   ; dry_run_opts : Run.options
@@ -138,10 +137,9 @@ type state =
 
 let try_eval ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
-  let options = Compiler_options.set_init_env options state.env in
   let typed_exp =
     Ligo_compile.Utils.type_expression_string ~raise ~options state.syntax s
-    @@ Environment.to_program state.env
+    @@ Ast_typed.Misc.to_signature state.top_level
   in
   let aggregated_exp =
     Ligo_compile.Of_typed.compile_expression_in_context
@@ -181,18 +179,15 @@ let concat_modules ~declaration (m1 : Ast_typed.program) (m2 : Ast_typed.program
 
 let try_declaration ~raise ~raw_options state s =
   let options = Compiler_options.make ~raw_options ~syntax:state.syntax () in
-  let options = Compiler_options.set_init_env options state.env in
   try
     try_with
       (fun ~raise ~catch:_ ->
         let typed_prg, core_prg =
-          Ligo_compile.Utils.type_program_string ~raise ~options state.syntax s
+          Ligo_compile.Utils.type_program_string ~raise ~options ~context:(Ast_typed.Misc.to_signature state.top_level) state.syntax s
         in
-        let env = Environment.append state.env typed_prg in
         let state =
           { state with
-            env
-          ; top_level = concat_modules ~declaration:true state.top_level typed_prg
+            top_level = concat_modules ~declaration:true state.top_level typed_prg
           }
         in
         state, Defined_values_core core_prg)
@@ -214,7 +209,6 @@ let import_file ~raise ~raw_options state file_name module_name =
       ~protocol_version:state.protocol
       ()
   in
-  let options = Compiler_options.set_init_env options state.env in
   let module_ =
     let prg, signature =
       Build.qualified_typed_with_signature
@@ -235,11 +229,9 @@ let import_file ~raise ~raw_options state file_name module_name =
              }
       ]
   in
-  let env = Environment.append state.env module_ in
   let state =
     { state with
-      env
-    ; top_level = concat_modules ~declaration:true state.top_level module_
+      top_level = concat_modules ~declaration:true state.top_level module_
     }
   in
   state, Just_ok
@@ -254,16 +246,13 @@ let use_file ~raise ~raw_options state file_name =
       ~protocol_version:state.protocol
       ()
   in
-  let options = Compiler_options.set_init_env options state.env in
   (* Missing typer environment? *)
   let module' =
     Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
   in
-  let env = Environment.append state.env module' in
   let state =
     { state with
-      env
-    ; top_level = concat_modules ~declaration:false state.top_level module'
+      top_level = concat_modules ~declaration:false state.top_level module'
     }
   in
   state, Defined_values_typed module'
@@ -351,9 +340,7 @@ let welcome_msg =
 let make_initial_state syntax protocol dry_run_opts project_root options =
   let lib = Build.Stdlib.get ~options in
   let top_level = Build.Stdlib.select_lib_typed syntax lib in
-  let env = Environment.append (Environment.default protocol) top_level in
-  { env
-  ; top_level
+  { top_level
   ; syntax
   ; protocol
   ; dry_run_opts

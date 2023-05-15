@@ -1,1 +1,0 @@
-const unused: <T> int = 0 as int;

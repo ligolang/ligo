@@ -190,7 +190,7 @@ module Esy =
     (* The function [find_manifest_path] finds manifest file for a package. *)
 
     let find_manifest_path directory = 
-      if Stdlib.Sys.file_exists (directory / "esy.json") 
+      if match Simple_utils.File.exists (directory ^ "/" ^ "esy.json") with Some _ -> true | _ -> false
       then Some (directory / "esy.json")
       else if Stdlib.Sys.file_exists (directory / "package.json")
       then Some (directory / "package.json")
@@ -308,7 +308,7 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
    record of type [lock_file]. For example, here is an esy lock file:
 
   {
-    "checksum": "<some hash>"
+    "checksum": "<some hash>",
     "root": "ligo-main@link-dev:./esy.json",
     "node": {
       "ligo-main@link-dev:./esy.json": {

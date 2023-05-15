@@ -81,6 +81,17 @@ debugger-build:
   script:
     - nix build $FLAKE_FLAGS ./tools/debugger#packages.x86_64-linux.ligo-debugger
 
+debugger-weeder:
+  stage: tools-check
+  rules: &debugger_mr_dev
+    - !reference [.debugger_mr_changes]
+    - !reference [.dev]
+  needs: [debugger-build]
+  script:
+    - cd ./tools/debugger
+    - nix build $FLAKE_FLAGS .#packages.x86_64-linux.weeder-script
+    - ./result
+
 debugger-test-ligo-recommended:
   stage: tools-check
   rules: *debugger_mr_dev

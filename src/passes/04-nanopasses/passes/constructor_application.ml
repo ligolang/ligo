@@ -5,7 +5,12 @@ open Simple_utils
 open Errors
 module Location = Simple_utils.Location
 
-let compile ~syntax =
+include Flag.With_arg (struct
+  type flag = Syntax_types.t
+end)
+
+let compile ~raise:_ =
+  let syntax = get_flag () in
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
@@ -32,38 +37,32 @@ let compile ~syntax =
             in
             e_tuple ~loc lst
         in
-        e_constructor ~loc { constructor; element }
+        e_applied_constructor ~loc { constructor; element }
       | _ -> failwith "impossible: parsing invariant")
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
-let decompile =
+let decompile ~raise:_ =
   let expr : (expr, ty_expr, pattern, _, _) expr_ -> expr =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
-    | E_constructor { constructor; element } ->
+    | E_applied_constructor { constructor; element } ->
       e_ctor_app ~loc (e_constr ~loc constructor, Some (List.Ne.singleton element))
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
   { Iter.defaults with
     expr =
       (function
-      | { wrap_content = E_ctor_app _; _ } | { wrap_content = E_constr _; _ } ->
-        raise.error (wrong_reduction __MODULE__)
+      | { wrap_content = E_ctor_app _; _ } -> raise.error (wrong_reduction __MODULE__)
       | _ -> ())
   }
 
 
-let pass ~raise ~syntax =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~syntax)
-    ~decompile
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__

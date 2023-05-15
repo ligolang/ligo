@@ -12,6 +12,8 @@
   lsp_test)
  (libraries
   simple-utils
+  simple-utils-unix
+  simple-utils-unix.http_uri
   tezos-memory-proto-alpha
   ligo.main_interpreter.unix
   ligo.api.unix

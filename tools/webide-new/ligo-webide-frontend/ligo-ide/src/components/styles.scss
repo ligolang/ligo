@@ -22,7 +22,6 @@
 .ligoNavbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
 
   padding: 8px 16px;
   font-family: 'DM Sans', 'Open Sans', sans-serif;
@@ -48,4 +47,8 @@
   &:hover {
     color: black;
   }
+}
+
+.customHeight {
+  height: calc(100% - 7rem) !important;
 }

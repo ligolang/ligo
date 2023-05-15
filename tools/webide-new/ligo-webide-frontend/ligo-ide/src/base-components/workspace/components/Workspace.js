@@ -125,9 +125,6 @@ export default class Workspace extends Component {
       node || this.filetree.current.activeNode || this.filetree.current.rootNode[0];
     const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
-    // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
-    // }
     this.createModal.current.openCreateFileModal({ baseName, basePath });
   };
 
@@ -143,9 +140,6 @@ export default class Workspace extends Component {
     const activeNode = node || this.filetree.current.activeNode || this.filetree.current.rootNode;
     const basePath = activeNode.children ? activeNode.path : pathHelper.dirname(activeNode.path);
     const baseName = basePath;
-    // if (platform.isWeb) {
-    //   baseName = activeNode.children ? activeNode.pathInProject : pathHelper.dirname(activeNode.pathInProject)
-    // }
     this.createModal.current.openCreateFolderModal({ baseName, basePath });
   };
 
@@ -223,7 +217,6 @@ export default class Workspace extends Component {
             this.throttledDispatchResizeEvent();
           }}
           onDragFinished={this.onDragTerminal}
-          style={{ overflow: undefined }}
         >
           <CodeEditorCollection
             ref={this.codeEditor}
@@ -262,7 +255,7 @@ export default class Workspace extends Component {
     return (
       <>
         <SplitPane
-          className="obsidians-workspace"
+          className="ligoide-workspace"
           defaultSize={defaultSize}
           minSize={160}
           onChange={this.throttledDispatchResizeEvent}

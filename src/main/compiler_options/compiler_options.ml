@@ -28,7 +28,6 @@ type test_framework =
 
 type middle_end =
   { test : bool
-  ; init_env : Environment.t
   ; protocol_version : Protocols.t
   ; warn_unused_rec : bool
   ; no_stdlib : bool
@@ -101,7 +100,6 @@ let make
   in
   let middle_end =
     { test = raw_options.test
-    ; init_env = default protocol_version
     ; protocol_version
     ; warn_unused_rec = warn_unused_rec ~syntax raw_options.warn_unused_rec
     ; no_stdlib = raw_options.no_stdlib
@@ -125,10 +123,6 @@ let make
   in
   let common = { deprecated = raw_options.deprecated } in
   { frontend; tools; test_framework; middle_end; backend; common }
-
-
-let set_init_env opts init_env =
-  { opts with middle_end = { opts.middle_end with init_env } }
 
 
 let set_test_flag opts test = { opts with middle_end = { opts.middle_end with test } }

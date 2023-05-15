@@ -3,19 +3,17 @@ import classnames from "classnames";
 
 import { Input } from "reactstrap";
 import ToolbarButton from "../buttons/ToolbarButton";
-import { utils } from "~/ligo-components/eth-sdk";
 
 export default class NavigationBar extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
-      value: utils.isValidAddressReturn(props.tab.value),
+      value: "",
     };
     this.input = React.createRef();
   }
 
   componentDidUpdate(prevProps) {
-    this.setState({ value: utils.isValidAddressReturn(this.state.value) });
     if (prevProps.tab.key === this.props.tab.key) {
       return;
     }
@@ -62,11 +60,7 @@ export default class NavigationBar extends PureComponent {
     input.selectionDirection = direction;
   }
 
-  onChange = (event) => {
-    const value = utils.isValidAddressReturn(event.target.value);
-    this.setState({ value });
-    this.props.tab.temp = value.toLowerCase();
-  };
+  onChange = (event) => {};
 
   onKeyPress = (event) => {
     if (event.key === "Enter") {

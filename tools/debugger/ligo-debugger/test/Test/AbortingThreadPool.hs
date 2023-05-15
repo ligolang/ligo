@@ -1,5 +1,5 @@
 module Test.AbortingThreadPool
-  ( module Test.AbortingThreadPool
+  ( test_Execution
   ) where
 
 import Control.Concurrent (threadDelay)

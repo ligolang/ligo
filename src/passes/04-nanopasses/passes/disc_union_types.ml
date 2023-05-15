@@ -5,13 +5,16 @@ open Simple_utils.Trace
 module StrSet = Caml.Set.Make (String)
 module LSet = Caml.Set.Make (Label)
 
+(* morph discriminatory union types to sum-types and switches instructions to pattern matching *)
+let name = __MODULE__
+
+include Flag.No_arg ()
+
 type reg =
   { label : Label.t
   ; id_set : StrSet.t
   ; ty : ty_expr
   }
-
-type registered_unions = reg list
 
 let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg * ty_expr =
   (* all type in disc must be record *)
@@ -66,7 +69,7 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
 
 
 let compile ~raise =
-  let default_fold = default_fold List.append [] in
+  let default_fold, default_unfold = default_refold_acc ~plus:List.append ~init:[] in
   let detect_t d =
     let loc = Location.get_location d in
     match Location.unwrap d with
@@ -130,7 +133,7 @@ let compile ~raise =
   (* the fold register disc_unions types and morph them to variant 
      the unfold use registered disc_unions and morph switches into matches
   *)
-  `Hylo
+  Refold_acc
     ( { default_fold with declaration = detect_t }
     , { default_unfold with instruction = switch_to_match } )
 
@@ -144,9 +147,4 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let decompile ~raise:_ = Nothing

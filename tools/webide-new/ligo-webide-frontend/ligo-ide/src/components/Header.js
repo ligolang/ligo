@@ -2,20 +2,18 @@ import React, { PureComponent } from "react";
 
 import { List } from "immutable";
 import redux, { connect } from "~/base-components/redux";
-import { IpcChannel } from "~/base-components/ipc";
 
-import headerActions, { Header, NavGuard } from "~/ligo-components/eth-header";
-import { networkManager } from "~/ligo-components/eth-network";
-import { ProjectManager, actions } from "~/base-components/workspace";
-import { createProject } from "../lib/bsn";
+import headerActions, { Header, NavGuard } from "~/ligo-components/ligo-header";
+import { networkManager } from "~/ligo-components/ligo-network";
+import { actions } from "~/base-components/workspace";
 import keypairManager from "~/base-components/keypair";
 
-import EthSdk from "~/ligo-components/eth-sdk";
+import LigoSdk from "~/ligo-components/ligo-sdk";
 
-keypairManager.kp = EthSdk.kp;
+keypairManager.kp = LigoSdk.kp;
 
-networkManager.addSdk(EthSdk, EthSdk.networks);
-networkManager.addSdk(EthSdk, EthSdk.customNetworks);
+networkManager.addSdk(LigoSdk, LigoSdk.networks);
+networkManager.addSdk(LigoSdk, LigoSdk.customNetworks);
 
 function networkCustomGroupData(networkMap) {
   return Object.keys(networkMap)
@@ -34,7 +32,7 @@ function networkCustomGroupData(networkMap) {
 }
 
 const customeNetworkGroup = networkCustomGroupData(redux.getState()?.customNetworks.toJS());
-if (customeNetworkGroup.length > 0) networkManager.addSdk(EthSdk, customeNetworkGroup);
+if (customeNetworkGroup.length > 0) networkManager.addSdk(LigoSdk, customeNetworkGroup);
 
 class HeaderWithRedux extends PureComponent {
   state = {
@@ -75,44 +73,9 @@ class HeaderWithRedux extends PureComponent {
   }
 
   async refresh() {
-    if (process.env.DEPLOY === "bsn") {
-      networkManager.networks = [];
-      this.getNetworks();
-      clearInterval(this.state.interval);
-      const interval = setInterval(() => this.getNetworks(), 30 * 1000);
-      this.setState({ interval });
-    } else {
-      const customeRefreshNetworkGroup = networkCustomGroupData(this.props.customNetworks.toJS());
-      if (JSON.stringify(customeRefreshNetworkGroup) !== JSON.stringify(customeNetworkGroup))
-        networkManager.addSdk(EthSdk, customeRefreshNetworkGroup);
-    }
-  }
-
-  async getNetworks() {
-    try {
-      const ipc = new IpcChannel("bsn");
-      const projects = await ipc.invoke("projects", { chain: "eth" });
-      const remoteNetworks = projects.map((project) => {
-        const url = project.endpoints?.find((endpoint) => endpoint.startsWith("http"));
-        return {
-          id: `bsn_${project.id}`,
-          group: "BSN",
-          name: `${project.network.name}/${project.name}`,
-          fullName: `${project.network.name} - ${project.name}`,
-          icon: "fas fa-globe",
-          notification: `Switched to <b>${project.network.name}</b>.`,
-          url,
-          chainId: project.id,
-          projectKey: project.key,
-          symbol: "ETH",
-          raw: project,
-        };
-      });
-      networkManager.addSdk(EthSdk, remoteNetworks);
-      this.setNetwork({ redirect: false, notify: false });
-    } catch (error) {
-      networkManager.networks = [];
-    }
+    const customeRefreshNetworkGroup = networkCustomGroupData(this.props.customNetworks.toJS());
+    if (JSON.stringify(customeRefreshNetworkGroup) !== JSON.stringify(customeNetworkGroup))
+      networkManager.addSdk(LigoSdk, customeRefreshNetworkGroup);
   }
 
   setNetwork(options) {
@@ -155,24 +118,9 @@ class HeaderWithRedux extends PureComponent {
     return networkList;
   };
 
-  setCreateProject = () => {
-    const cp = async function (params) {
-      return await createProject.call(
-        this,
-        {
-          networkManager,
-          bsnChannel: new IpcChannel("bsn"),
-          projectChannel: BaseProjectManager.channel,
-        },
-        params
-      );
-    };
-    return process.env.DEPLOY === "bsn" && cp;
-  };
-
   render() {
     console.debug("[render] HeaderWithRedux");
-    const { uiState, profile, projects, contracts, accounts, network } = this.props;
+    const { uiState, profile, projects, network } = this.props;
 
     const selectedProject = projects.get("selected")?.toJS() || {};
 
@@ -181,27 +129,13 @@ class HeaderWithRedux extends PureComponent {
     const groupedNetworks = this.groupedNetworks(networkGroups);
     const selectedNetwork = networkList.find((n) => n.id === network) || {};
 
-    // networkManager.setNetwork(selectedNetwork);
-
-    // const browserAccounts = uiState.get("browserAccounts") || [];
-    // const starred = accounts.getIn([network, "accounts"])?.toJS() || [];
-    // const starredContracts = contracts.getIn([network, "starred"])?.toJS() || [];
-    // const selectedContract = contracts.getIn([network, "selected"]) || "";
-    // const selectedAccount = accounts.getIn([network, "selected"]) || "";
-
     return (
       <Header
         profile={profile}
         projects={projects}
         selectedProject={selectedProject}
-        // selectedContract={selectedContract}
-        // selectedAccount={selectedAccount}
-        // starred={starred}
-        // starredContracts={starredContracts}
-        // browserAccounts={browserAccounts}
         network={selectedNetwork}
         networkList={groupedNetworks}
-        createProject={this.setCreateProject()}
         uiState={this.props.uiState}
         customNetworks={this.props.customNetworks}
         customNetworkModalStatus={this.props.customNetworkModalStatus}
@@ -216,8 +150,6 @@ export default connect([
   "uiState",
   "profile",
   "projects",
-  "contracts",
-  "accounts",
   "network",
   "customNetworks",
   "customNetworkModalStatus",

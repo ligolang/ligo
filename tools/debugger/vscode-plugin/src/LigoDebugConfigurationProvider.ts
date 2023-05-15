@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as vscode from 'vscode'
 import { ContractMetadata, getBinaryPath, InputValueLang, isDefined, Maybe, tryExecuteCommand } from './base'
 import { LigoDebugContext } from './LigoDebugContext'
-import LigoProtocolClient from './LigoProtocolClient'
+import { LigoProtocolClient } from './LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
 import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage } from './ui'
 
@@ -47,7 +47,8 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 
 		const pluginConfig = vscode.workspace.getConfiguration();
 		const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
-		await this.client.sendMsg('setLigoBinaryPath', { binaryPath });
+		const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
+		await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 
 		const entrypoints: string[] =
 			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).entrypoints.reverse();

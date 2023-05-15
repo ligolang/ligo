@@ -5,8 +5,9 @@ open Errors
 module Location = Simple_utils.Location
 
 (*
-  T_app lhs should be a T_var , else error
-*)
+    T_app lhs should be a T_var , else error
+  *)
+include Flag.No_arg ()
 
 let compile ~raise =
   let pass_ty : _ ty_expr_ -> ty_expr =
@@ -19,7 +20,7 @@ let compile ~raise =
       else raise.error (expected_variable ({ fp = t } : ty_expr))
     | _ -> return_self ()
   in
-  `Cata { idle_cata_pass with ty_expr = pass_ty }
+  Fold { idle_fold with ty_expr = pass_ty }
 
 
 let reduction ~raise =
@@ -39,56 +40,31 @@ let reduction ~raise =
   { Iter.defaults with ty_expr }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing
 
-
-open Unit_test_helpers
+open Unit_test_helpers.Ty_expr
 
 let%expect_test "compile_t_app_t_var" =
   {|
-  ((
-    PE_declaration (D_type ((name t) (type_expr (
-      T_app (
-        (constr (T_var my_var))
-        (type_args (
-          (T_var arg1)
-          (T_var arg2)
-        ))
-      )
-    ))))
-  ))
+    (T_app
+      ((constr (T_var my_var))
+        (type_args ((T_var arg1) (T_var arg2)))))
   |}
-  |-> pass ~raise;
+  |-> compile;
   [%expect
-    {|
-    ((PE_declaration
-      (D_type
-       ((name t)
-        (type_expr
-         (T_app
-          ((constr (T_var my_var)) (type_args ((T_var arg1) (T_var arg2)))))))))) |}]
+    {| (T_app ((constr (T_var my_var)) (type_args ((T_var arg1) (T_var arg2))))) |}]
 
 let%expect_test "compile_t_app_wrong" =
-  {|((
-      PE_declaration (D_type ((name t) (type_expr (
-        T_app (
-          (constr (T_arg should_be_a_t_var))
-          (type_args (
-            (T_var arg1)
-            (T_var arg2)
-          ))
-        )
-      ))))
-  ))|}
-  |->! pass;
+  {|
+    (T_app
+      ((constr (T_arg should_be_a_t_var))
+       (type_args ((T_var arg1) (T_var arg2)))))
+  |}
+  |->! compile;
   [%expect
     {|
-    Err : (Small_passes_expected_variable
-              (T_app
-                  ((constr (T_arg should_be_a_t_var))
-                      (type_args ((T_var arg1) (T_var arg2)))))) |}]
+        Err : (Small_passes_expected_variable
+                  (T_app
+                      ((constr (T_arg should_be_a_t_var))
+                          (type_args ((T_var arg1) (T_var arg2)))))) |}]

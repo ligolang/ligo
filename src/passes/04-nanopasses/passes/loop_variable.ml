@@ -4,8 +4,9 @@ open Simple_utils.Trace
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
+include Flag.No_arg ()
 
-let compile =
+let compile ~raise:_ =
   let instruction : _ instruction_ -> instruction =
    fun i ->
     let loc = Location.get_location i in
@@ -35,7 +36,7 @@ let compile =
       i_for_in ~loc (ForAny { pattern; collection = expr; block })
     | x -> make_i ~loc x
   in
-  `Cata { idle_cata_pass with instruction }
+  Fold { idle_fold with instruction }
 
 
 let reduction ~raise =
@@ -47,9 +48,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

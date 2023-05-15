@@ -2,7 +2,7 @@
 module Language.LIGO.Debugger.Common
   ( EmbeddedLigoMeta
   , ligoPositionToSrcLoc
-  , ligoRangeToSourceLocation
+  , rangeToSourceLocation
   , spineAtPoint
   , containsNode
   , tryToProcessLigoStatement
@@ -14,8 +14,6 @@ module Language.LIGO.Debugger.Common
   , ReplacementException (..)
   , replacementErrorValueToException
   , refineStack
-  , ligoRangeToRange
-  , rangeToLigoRange
   , getMetaMbAndUnwrap
   , isLocationForFunctionCall
   , isScopeForStatements
@@ -38,16 +36,6 @@ import Data.Vinyl (Rec (RNil, (:&)))
 import Fmt (Buildable (..), pretty)
 import Text.Interpolation.Nyan
 
-import AST
-  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
-  QualifiedName, SomeLIGO (SomeLIGO), Verbatim, findNodeAtPoint)
-import AST qualified
-import Duplo (layer, leq, spineTo)
-import Extension (getExt)
-import Parser (ParsedInfo)
-import Product (Contains)
-import Range (Range (..), getRange)
-
 import Morley.Debugger.Core.Common (SrcLoc (..))
 import Morley.Debugger.Core.Navigate (SourceLocation, SourceLocation' (..))
 import Morley.Debugger.Core.Snapshots ()
@@ -61,8 +49,17 @@ import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (KindedAddress (ImplicitAddress), ta)
 import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 
-import Language.LIGO.Debugger.CLI.Types
+import Duplo (layer, leq, spineTo)
+
+import Language.LIGO.AST
+  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
+  QualifiedName, Verbatim)
+import Language.LIGO.AST qualified as AST
+import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Parser (ParsedInfo)
+import Language.LIGO.Product (Contains)
+import Language.LIGO.Range (LigoPosition (..), Range (..), getRange)
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
@@ -72,11 +69,11 @@ ligoPositionToSrcLoc :: HasCallStack => LigoPosition -> SrcLoc
 ligoPositionToSrcLoc (LigoPosition l c) =
   SrcLoc
     (Unsafe.fromIntegral (toInteger l - 1))
-    (Unsafe.fromIntegral c)
+    (Unsafe.fromIntegral (toInteger c - 1))
 
-ligoRangeToSourceLocation :: HasCallStack => LigoRange -> SourceLocation
-ligoRangeToSourceLocation LigoRange{..} =
-  SourceLocation (MSFile lrFile) (ligoPositionToSrcLoc lrStart) (ligoPositionToSrcLoc lrEnd)
+rangeToSourceLocation :: HasCallStack => Range -> SourceLocation
+rangeToSourceLocation Range{..} =
+  SourceLocation (MSFile _rFile) (ligoPositionToSrcLoc _rStart) (ligoPositionToSrcLoc _rFinish)
 
 -- | Returns all nodes which cover given range
 -- ordered from the most local to the least local.
@@ -84,6 +81,11 @@ spineAtPoint
   :: Contains Range xs
   => Range -> LIGO xs -> [LIGO xs]
 spineAtPoint pos = spineTo (\i -> pos `leq` getRange i)
+
+findNodeAtPoint
+  :: Contains Range xs
+  => Range -> LIGO xs -> Maybe (LIGO xs)
+findNodeAtPoint pos = listToMaybe . spineAtPoint pos
 
 getStatementLocs :: HasCallStack => Set SourceLocation -> HashMap FilePath (LIGO ParsedInfo) -> Set SourceLocation
 getStatementLocs locs parsedContracts =
@@ -95,28 +97,18 @@ getStatementLocs locs parsedContracts =
   where
     sourceLocationToRange :: SourceLocation -> Range
     sourceLocationToRange (SourceLocation (MSFile file) startPos endPos) = Range
-      { _rStart = posToTuple startPos
-      , _rFinish = posToTuple endPos
+      { _rStart = posToLigoPos startPos
+      , _rFinish = posToLigoPos endPos
       , _rFile = file
       }
       where
-        posToTuple :: Integral i => SrcLoc -> (i, i, i)
-        posToTuple (SrcLoc l c) =
-          (Unsafe.fromIntegral (l + 1), Unsafe.fromIntegral (c + 1), 0)
+        posToLigoPos :: SrcLoc -> LigoPosition
+        posToLigoPos (SrcLoc l c) = LigoPosition
+          { _lpLine = Unsafe.fromIntegral (l + 1)
+          , _lpCol = Unsafe.fromIntegral (c + 1)
+          }
 
     sourceLocationToRange loc = error [int||Got source location with Lorentz source #{loc}|]
-
-    rangeToSourceLocation :: Range -> SourceLocation
-    rangeToSourceLocation Range{..} =
-      SourceLocation
-        (MSFile _rFile)
-        (tupleToPos _rStart)
-        (tupleToPos _rFinish)
-      where
-        tupleToPos :: Integral i => (i, i, i) -> SrcLoc
-        tupleToPos (l, c, _) = SrcLoc
-          (Unsafe.fromIntegral $ l - 1)
-          (Unsafe.fromIntegral $ c - 1)
 
     ranges = toList locs
       <&> sourceLocationToRange
@@ -256,7 +248,7 @@ tryToProcessLigoStatement onSuccess onFail onEmpty = \case
       AST.ForOfLoop{} -> False
       AST.Seq{} -> False
       AST.Lambda{} -> True
-      AST.RecordUpd{} -> False
+      AST.RecordUpd{} -> True
       AST.CodeInj{} -> False
       AST.Paren e -> couldBeLastInSomeScope e
     couldBeLastInSomeScope node
@@ -294,7 +286,7 @@ isRedundantIndexedInfo :: LigoIndexedInfo u -> Bool
 isRedundantIndexedInfo LigoIndexedInfo{..} = isNothing $ asum
   [ do
     loc <- liiLocation
-    guard $ (not . isLigoStdLib . lrFile) loc
+    guard $ (not . isLigoStdLib . _rFile) loc
 
   , void liiEnvironment
   ]
@@ -354,24 +346,6 @@ refineStack =
     RNil -> []
     stkEl :& st -> stkElValue stkEl : refineStack st
 
-ligoRangeToRange :: LigoRange -> Range
-ligoRangeToRange LigoRange{..} = Range
-  { _rStart = toPosition lrStart
-  , _rFinish = toPosition lrEnd
-  , _rFile = lrFile
-  }
-  where
-    toPosition LigoPosition{..} = (Unsafe.fromIntegral lpLine, Unsafe.fromIntegral $ lpCol + 1, 0)
-
-rangeToLigoRange :: Range -> LigoRange
-rangeToLigoRange Range{..} = LigoRange
-  { lrStart = toLigoPosition _rStart
-  , lrEnd = toLigoPosition _rFinish
-  , lrFile = _rFile
-  }
-  where
-    toLigoPosition (line, col, _) = LigoPosition (Unsafe.fromIntegral line) (Unsafe.fromIntegral $ col - 1)
-
 -- | Tries to unwrap @EmbeddedLigoMeta@ from instr.
 -- If successful, then it returns meta and inner instr.
 -- Otherwise, no meta and the passed instr.
@@ -380,11 +354,10 @@ getMetaMbAndUnwrap = \case
   ConcreteMeta embeddedMeta inner -> (Just embeddedMeta, inner)
   instr -> (Nothing, instr)
 
-isLocationForFunctionCall :: LigoRange -> HashMap FilePath (LIGO ParsedInfo) -> Bool
-isLocationForFunctionCall ligoRange parsedContracts = isJust do
-  contract <- parsedContracts !? lrFile ligoRange
-  lang <- rightToMaybe $ getExt (lrFile ligoRange)
-  node <- findNodeAtPoint (ligoRangeToRange ligoRange) (SomeLIGO lang contract)
+isLocationForFunctionCall :: Range -> HashMap FilePath (LIGO ParsedInfo) -> Bool
+isLocationForFunctionCall range parsedContracts = isJust do
+  contract <- parsedContracts !? _rFile range
+  node <- findNodeAtPoint range contract
 
   AST.Apply{} <- layer node
   pass
@@ -427,14 +400,14 @@ isStandaloneOrTupleArgument = \case
     isFunctionDecl _ = False
 
 -- | Sometimes we want to ignore metas for some instructions.
-shouldIgnoreMeta :: LigoRange -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
-shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction || shouldIgnoreMetaByLocation
+shouldIgnoreMeta :: Range -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
+shouldIgnoreMeta range instr parsedContracts = shouldIgnoreMetaByInstruction || shouldIgnoreMetaByLocation
   where
     -- Sometimes it's not enough to ignore locations judging only by
     -- instruction that this location are referencing to.
     -- So, we can look into AST and make a decision.
     shouldIgnoreMetaByLocation = isJust do
-      contract <- parsedContracts !? lrFile ligoRange
+      contract <- parsedContracts !? _rFile range
 
       -- Some nodes in AST may have the same locations.
       -- We want to get the topmost one.
@@ -442,9 +415,7 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
             & groupBy (\lhs rhs -> getRange lhs == getRange rhs)
             <&> last
 
-      let squirrelRange = ligoRangeToRange ligoRange
-
-      case stripDuplicateRanges $ spineAtPoint squirrelRange contract of
+      case stripDuplicateRanges $ spineAtPoint range contract of
         -- Locations for @()@ in function declaration in CameLIGO.
         -- We ignore locations for @UNIT@ but it's not enough.
         (layer @Ctor -> Just (AST.Ctor "Unit")) : _ -> pass
@@ -490,11 +461,11 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
 
         -- Location for @case@ word in @switch@ statement.
         (layer @CaseOrDefaultStm -> Just (AST.CaseStm val vals)) : _
-          | squirrelRange /= getRange val && not (squirrelRange `elem` (getRange <$> vals)) -> pass
+          | range /= getRange val && not (range `elem` (getRange <$> vals)) -> pass
 
         -- Location for @default@ word in @switch@ statement.
         (layer @CaseOrDefaultStm -> Just (AST.DefaultStm vals)) : _
-          | not $ squirrelRange `elem` (getRange <$> vals) -> pass
+          | not $ range `elem` (getRange <$> vals) -> pass
 
         -- A group of nodes which have nested statements/expressions.
         -- It's inconvenient to stop at them because they could be pretty large
@@ -558,19 +529,19 @@ shouldIgnoreMeta ligoRange instr parsedContracts = shouldIgnoreMetaByInstruction
 -- /Interesting/ means that we want to use this location
 -- in switching breakpoints.
 data ExpressionSourceLocation = ExpressionSourceLocation
-  { eslLigoRange :: LigoRange
+  { eslRange :: Range
   , eslShouldKeep :: HashMap FilePath (LIGO ParsedInfo) -> Bool
   } deriving stock (Generic)
     deriving anyclass (NFData)
 
 instance Eq ExpressionSourceLocation where
-  lhs == rhs = eslLigoRange lhs == eslLigoRange rhs
+  lhs == rhs = eslRange lhs == eslRange rhs
 
 instance Ord ExpressionSourceLocation where
-  lhs <= rhs = eslLigoRange lhs <= eslLigoRange rhs
+  lhs <= rhs = eslRange lhs <= eslRange rhs
 
 getAllSourceLocations :: Set ExpressionSourceLocation -> Set SourceLocation
-getAllSourceLocations = S.map (ligoRangeToSourceLocation . eslLigoRange)
+getAllSourceLocations = S.map (rangeToSourceLocation . eslRange)
 
 getInterestingSourceLocations :: HashMap FilePath (LIGO ParsedInfo) -> Set ExpressionSourceLocation -> Set SourceLocation
 getInterestingSourceLocations parsedContracts = getAllSourceLocations . S.filter (`eslShouldKeep` parsedContracts)

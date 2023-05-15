@@ -27,6 +27,11 @@ module To_core : sig
     :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
     -> Ast_unified.expr
     -> Ast_core.expression
+
+  val type_expression
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_unified.ty_expr
+    -> Ast_core.type_expression
 end = struct
   module O = Ast_core
   module I = Ast_unified
@@ -52,6 +57,7 @@ end = struct
 
   and expression ~raise e = I.Catamorphism.cata_expr ~f:(folder ~raise) e
   and program ~raise p = I.Catamorphism.cata_program ~f:(folder ~raise) p
+  and type_expression ~raise p = I.Catamorphism.cata_ty_expr ~f:(folder ~raise) p
 
   and dummy_top_level () =
     (* directive are translated as let _ = () *)
@@ -260,7 +266,7 @@ end = struct
       in
       ret @@ E_for_each { fe_binder; collection; collection_type = Any; fe_body = block }
     | E_constant x -> ret @@ E_constant x
-    | E_constructor x -> ret @@ E_constructor x
+    | E_applied_constructor x -> ret @@ E_constructor x
     | E_simple_let_in { binder; rhs; let_result } ->
       ret
       @@ E_let_in
@@ -306,6 +312,10 @@ end = struct
     match Location.unwrap t with
     | T_attr (_, ty) -> ty
     | T_var v -> ret @@ T_variable v
+    | T_constant t ->
+      (match Ligo_prim.Literal_types.of_string_opt t with
+      | Some t -> ret @@ T_constant (t, Ligo_prim.Literal_types.to_arity t)
+      | None -> invariant @@ Format.asprintf "Type constant %s is unknown." t)
     | T_module_app { constr = { module_path; field; _ }; type_args } ->
       ret
       @@ T_app
@@ -413,8 +423,10 @@ end = struct
 end
 
 module From_core : sig
+  val program : Ast_core.program -> Ast_unified.program
   val pattern : Ast_core.type_expression option Ast_core.Pattern.t -> Ast_unified.pattern
   val expression : Ast_core.expression -> Ast_unified.expr
+  val type_expression : Ast_core.type_expression -> Ast_unified.ty_expr
 end = struct
   module I = Ast_core
   module O = Ast_unified
@@ -438,8 +450,10 @@ end = struct
       }
 
 
+  and program p = Ast_unified.Anamorphism.ana_program ~f:unfolder p
   and expression e = Ast_unified.Anamorphism.ana_expr ~f:unfolder e
   and pattern p = Ast_unified.Anamorphism.ana_pattern ~f:unfolder p
+  and type_expression t = Ast_unified.Anamorphism.ana_ty_expr ~f:unfolder t
 
   and conv_row_attr : string option -> O.Attribute.t list = function
     | None -> []
@@ -537,6 +551,7 @@ end = struct
     in
     match ty.type_content with
     | T_variable v -> ret @@ T_var v
+    | T_constant (t, _) -> ret @@ T_constant (Ligo_prim.Literal_types.to_string t)
     | T_app { type_operator; arguments } ->
       ignore type_operator.module_path;
       (* TODO *)

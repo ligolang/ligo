@@ -50,6 +50,8 @@ let test_cases =
         ; mk_region (10, 3) (12, 4)
         ; mk_region (14, 1) (17, 4)
         ; mk_region (15, 3) (17, 4)
+        ; mk_region (16, 5) (16, 16)
+        ; mk_region (15, 5) (15, 15)
         ]
     }
   ; { file_path = "contracts/lsp/folding_range.jsligo"

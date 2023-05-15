@@ -89,29 +89,29 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       let t' = compile_type t in
       return (T_set t')
     (* External types are allowed (since they're fully resolved) *)
-    | (External "map_find_opt", [ _ ; param2 ]) ->
+    | (External Map_find_opt, [ _ ; param2 ]) ->
       (match (compile_type param2).type_content with
       | T_big_map (_, v) | T_map (_, v) -> return (T_option v)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_map_find_opt application"))
-    | (External "map_add", [ _ ; _; param3 ]) -> return (compile_type param3).type_content
-    | (External "map_remove", [ _ ; param2 ]) -> return (compile_type param2).type_content
-    | (External "map_remove_value", [ _ ; param2 ]) ->
+    | (External Map_add, [ _ ; _; param3 ]) -> return (compile_type param3).type_content
+    | (External Map_remove, [ _ ; param2 ]) -> return (compile_type param2).type_content
+    | (External Map_remove_value, [ _ ; param2 ]) ->
       (match (compile_type param2).type_content with
       | T_big_map (_, v) | T_map (_, v) -> return v.type_content
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_map_remove application"))
-    | (External "int", [ param ]) ->
+    | (External Int, [ param ]) ->
       (match (compile_type param).type_content with
       | T_base TB_bls12_381_fr | T_base TB_nat | T_base TB_bytes -> return (T_base TB_int) 
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int application"))
-    | (External "int_lima", [ param ]) ->
+    | (External Int_lima, [ param ]) ->
       (match (compile_type param).type_content with
       | T_base TB_bls12_381_fr | T_base TB_nat -> return (T_base TB_int) 
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int_lima application"))
-    | (External "bytes", [ param ]) ->
+    | (External Bytes, [ param ]) ->
       (match (compile_type param).type_content with
       | T_base TB_int | T_base TB_nat -> return (T_base TB_bytes) 
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_bytes application"))
-    | (External ("ediv" | "u_ediv"), [ param1; param2 ]) ->
+    | (External Ediv, [ param1; param2 ]) ->
       let open AST in
       let return t1 t2 = compile_type (t_option ~loc (t_pair ~loc t1 t2)) in
       (match (compile_type param1).type_content, (compile_type param2).type_content with
@@ -121,29 +121,29 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       | T_base TB_int, T_base TB_nat -> return (t_int ~loc ()) (t_nat ~loc ())
       | T_base TB_mutez, T_base TB_mutez -> return (t_nat ~loc ()) (t_tez ~loc ())
       | T_base TB_mutez, T_base TB_nat -> return (t_tez ~loc ()) (t_tez ~loc ())
-      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(ediv|u_ediv) application"))
-    | (External ("and" | "u_and"), [ param1; param2 ]) ->
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_ediv application"))
+    | (External And, [ param1; param2 ]) ->
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_int, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
-      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_(and|u_and) application"))
-    | (External ("or"), [ param1; param2 ]) ->
+      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_and application"))
+    | (External Or, [ param1; param2 ]) ->
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_or application"))
-    | (External ("xor"), [ param1; param2 ]) ->
+    | (External Xor, [ param1; param2 ]) ->
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_bytes, T_base TB_bytes -> return (T_base TB_bytes)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_xor application"))
-    | (External ("lsl"), [ param1; param2 ]) ->
+    | (External Lsl, [ param1; param2 ]) ->
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_bytes, T_base TB_nat -> return (T_base TB_bytes)
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_lsl application"))
-    | (External ("lsr"), [ param1; param2 ]) ->
+    | (External Lsr, [ param1; param2 ]) ->
       (match (compile_type param1).type_content, (compile_type param2).type_content with
       | T_base TB_nat, T_base TB_nat -> return (T_base TB_nat)
       | T_base TB_bytes, T_base TB_nat -> return (T_base TB_bytes)

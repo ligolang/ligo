@@ -27,7 +27,7 @@ and expr : (CST.expr, unit, CST.pattern, unit, unit) AST.expression_ -> CST.expr
  fun e ->
   let w = Region.wrap_ghost in
   match Location.unwrap e with
-  | E_variable v -> EVar (w (Format.asprintf "%a" AST.Variable.pp v))
+  | E_variable v -> EVar (ghost_ident (Format.asprintf "%a" AST.Variable.pp v))
   | E_binary_op { operator; left; right } ->
     let binop op : 'a CST.wrap CST.bin_op CST.reg =
       w @@ CST.{ op; arg1 = left; arg2 = right }
@@ -70,14 +70,18 @@ and expr : (CST.expr, unit, CST.pattern, unit, unit) AST.expression_ -> CST.expr
     | WORD_NOT -> ELogic (BoolExpr (Not (unop ghost_bool_not)))
     | _ -> failwith "Impossible")
   | E_literal Literal_unit -> CST.EUnit (w (ghost_lpar, ghost_rpar))
-  | E_literal (Literal_int x) -> CST.EArith (Int (w (Z.to_string x, x)))
+  | E_literal (Literal_int x) -> CST.EArith (Int (ghost_int x))
   | E_literal (Literal_nat x) ->
     CST.EAnnot
-      (w @@ (CST.EArith (Int (w (Z.to_string x, x))), ghost_as, CST.TVar (w "nat")))
-  | E_literal (Literal_string x) -> CST.EString (String (w @@ Ligo_string.extract x))
+      (w @@ (CST.EArith (Int (ghost_int x)), ghost_as, CST.TVar (ghost_ident "nat")))
+  | E_literal (Literal_string x) ->
+    CST.EString
+      (match x with
+      | Standard s -> String (ghost_string s)
+      | Verbatim v -> Verbatim (ghost_verbatim v))
   | E_literal (Literal_mutez x) ->
     CST.EAnnot
-      (w @@ (CST.EArith (Int (w (Z.to_string x, x))), ghost_as, CST.TVar (w "tez")))
+      (w @@ (CST.EArith (Int (ghost_int x)), ghost_as, CST.TVar (ghost_ident "tez")))
   | _ ->
     failwith
       (Format.asprintf

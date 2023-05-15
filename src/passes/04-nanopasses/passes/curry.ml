@@ -6,6 +6,7 @@ open Errors
 module Location = Simple_utils.Location
 module Binder = Ligo_prim.Binder
 module Param = Ligo_prim.Param
+include Flag.No_arg ()
 
 let mut_flag = function
   | `Var -> Param.Mutable
@@ -175,7 +176,7 @@ let compile ~raise =
             e_application ~loc Application.{ lamb = acc; args = arg }))
     | e -> make_e ~loc e
   in
-  `Cata { idle_cata_pass with expr }
+  Fold { idle_fold with expr }
 
 
 let reduction ~raise =
@@ -188,9 +189,5 @@ let reduction ~raise =
   }
 
 
-let pass ~raise =
-  morph
-    ~name:__MODULE__
-    ~compile:(compile ~raise)
-    ~decompile:`None (* for now ? *)
-    ~reduction_check:(reduction ~raise)
+let name = __MODULE__
+let decompile ~raise:_ = Nothing (* for now ? *)

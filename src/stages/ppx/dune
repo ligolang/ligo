@@ -12,7 +12,12 @@
  (modules ppx_print_constant)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries core simple-utils ppxlib))
+ (libraries
+  core
+  simple-utils
+  simple-utils-unix.http_uri
+  simple-utils-unix
+  ppxlib))
 
 (library
  (name ppx_read_constant)
@@ -20,7 +25,12 @@
  (modules ppx_read_constant)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries core simple-utils ppxlib))
+ (libraries
+  core
+  simple-utils
+  simple-utils-unix
+  simple-utils-unix.http_uri
+  ppxlib))
 
 (library
  (name ppx_map)
@@ -28,4 +38,9 @@
  (modules ppx_map)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries base simple-utils ppxlib))
+ (libraries
+  base
+  simple-utils
+  simple-utils-unix
+  simple-utils-unix.http_uri
+  ppxlib))

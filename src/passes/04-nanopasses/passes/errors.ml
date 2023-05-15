@@ -70,7 +70,7 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Invalid field value. An anonymous arrow function was expected, eg. \
-         `None: () => foo`.@]"
+         Nothing: () => foo`.@]"
         snippet_pp
         (get_e_loc e)
     | `Small_passes_unsupported_match_object_property e ->
@@ -224,7 +224,7 @@ let error_json : t -> Simple_utils.Error.t =
     make ~stage ~content
   | `Small_passes_invalid_case e ->
     let message =
-      "Invalid field value. An anonymous arrow function was expected, eg. `None: () => \
+      "Invalid field value. An anonymous arrow function was expected, eg. Nothing: () => \
        foo`."
     in
     let location = get_e_loc e in
