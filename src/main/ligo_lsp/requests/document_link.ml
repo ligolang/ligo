@@ -45,9 +45,7 @@ let extract_link_from_directive ~(relative_to_dir : string)
     let target =
       if Sys.unix then target else
         target
-        |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
-        |> Str.global_replace (Str.regexp "\\\\") "/"
-        |> Str.global_replace (Str.regexp "\\") "/"
+        |> Lsp_helpers.Path.normalise_backslashes
         |> Caml.String.lowercase_ascii
     in
     Option.some @@ DocumentLink.create ~range ~target ()
@@ -60,9 +58,7 @@ let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option hand
       DocumentUri.to_path uri
     else
       DocumentUri.to_path uri
-      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
-      |> Str.global_replace (Str.regexp "\\\\") "/"
-      |> Str.global_replace (Str.regexp "\\") "/"
+      |> Lsp_helpers.Path.normalise_backslashes
       |> Caml.String.lowercase_ascii
   in
   let@ () = send_debug_msg @@ "On document_link:" ^ path in

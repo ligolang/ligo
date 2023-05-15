@@ -12,9 +12,8 @@ let of_region : Region.t -> t =
     then Lsp.Types.DocumentUri.of_path region#file
     else
       region#file
-      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
-      |> Str.global_replace (Str.regexp "\\\\") "/"
-      |> Str.global_replace (Str.regexp "//") "/"
+      |> Path.normalise_backslashes
+      |> Str.global_replace (Str.regexp "//") "/" (* Sometimes double fwd slashes were seen in the output *)
       |> Caml.String.lowercase_ascii
       |> Lsp.Types.DocumentUri.of_path
   in

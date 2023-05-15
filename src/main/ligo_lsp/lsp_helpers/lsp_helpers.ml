@@ -1,6 +1,7 @@
 (* Helpers provided by this lib *)
 module Ligo_interface = Ligo_interface
 module Helpers_pretty = Helpers_pretty
+module Path = Path
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def

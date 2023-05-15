@@ -37,9 +37,7 @@ let to_absolute : string -> string =
     abs_path
   else
     abs_path
-    |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
-    |> Str.global_replace (Str.regexp "\\\\") "/"
-    |> Str.global_replace (Str.regexp "\\") "/"
+    |> Lsp_helpers.Path.normalise_backslashes
     |> Caml.String.lowercase_ascii
 
 let rel_path_to_uri : string -> DocumentUri.t = fun rel_path ->
@@ -49,9 +47,7 @@ let rel_path_to_uri : string -> DocumentUri.t = fun rel_path ->
       abs_path
     else
       abs_path
-      |> Str.global_replace (Str.regexp "\\\\\\\\") "/"
-      |> Str.global_replace (Str.regexp "\\\\") "/"
-      |> Str.global_replace (Str.regexp "\\") "/"
+      |> Lsp_helpers.Path.normalise_backslashes
       |> Caml.String.lowercase_ascii
   in
   DocumentUri.of_path abs_path
