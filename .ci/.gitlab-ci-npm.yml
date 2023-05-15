@@ -42,10 +42,6 @@ esy-windows:
     paths:
       - platform-windows-x64
       - ligo_installer.exe 
-      - _build/default/src/test/error-recovery/simple/cameligo/original_generated
-      - _build/default/src/test/error-recovery/simple/cameligo/recovered
-      - _build/default/src/test/error-recovery/fuzzing/cameligo/original_generated
-      - _build/default/src/test/error-recovery/fuzzing/cameligo/recovered
 
 esy-test-windows:
   tags:
