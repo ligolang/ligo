@@ -44,7 +44,7 @@ import Control.Lens
   (At (at), Each (each), Ixed (ix), Zoom (zoom), lens, makeLensesWith, makePrisms, (%=), (.=),
   (<<.=), (?=))
 import Control.Lens.Prism (Prism', _Just)
-import Control.Monad.Except (throwError)
+import Control.Monad.Except (MonadError, throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
@@ -61,18 +61,18 @@ import UnliftIO (MonadUnliftIO, throwIO)
 
 import Morley.Debugger.Core.Common (fromCanonicalLoc)
 import Morley.Debugger.Core.Navigate
-  (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
-  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
+  (Direction (Backward), MonadWriter, MovementResult (HitBoundary), NavigableSnapshot (..),
+  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..),
+  SnapshotEndedWith (SnapshotEndedWithFail, SnapshotEndedWithOk), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots
-  (DebuggerFailure (DebuggerInfiniteLoop), InterpretHistory (..))
+  (DebuggerFailure (DebuggerInfiniteLoop), FinalStack (ContractFinalStack), InterpretHistory (..))
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailed (MichelsonExt, MichelsonFailedWith),
+  (ContractEnv' (ceMaxSteps), InstrRunner, InterpreterState (InterpreterState),
+  InterpreterStateMonad (..), MichelsonFailed (MichelsonExt, MichelsonFailedWith),
   MichelsonFailureWithStack (MichelsonFailureWithStack, mfwsErrorSrcPos, mfwsFailed),
-  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, isRemainingSteps, mkInitStack,
-  runInstrImpl)
+  MorleyLogsBuilder, StkEl (StkEl), isRemainingSteps, mkInitStack, runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
@@ -129,7 +129,7 @@ data InterpretStatus
   = InterpretRunning InterpretEvent
 
     -- | Termination finished successfully.
-  | InterpretTerminatedOk
+  | InterpretTerminatedOk FinalStack
 
     -- | Interpretation failed.
   | InterpretFailed (MichelsonFailureWithStack DebuggerFailure)
@@ -139,7 +139,7 @@ data InterpretStatus
 instance Buildable InterpretStatus where
   build = \case
     InterpretRunning ev -> "running / " <> build ev
-    InterpretTerminatedOk -> "terminated ok"
+    InterpretTerminatedOk{} -> "terminated ok"
     InterpretFailed err -> "failed with " <> build err
 
 -- | Type of the expression that we met.
@@ -213,8 +213,8 @@ instance NavigableSnapshot (InterpretSnapshot u) where
 
   pickSnapshotEdgeStatus is = case isStatus is of
     InterpretRunning _ -> SnapshotIntermediate
-    InterpretTerminatedOk -> SnapshotAtEnd pass
-    InterpretFailed err -> SnapshotAtEnd (Left err)
+    InterpretTerminatedOk stack -> SnapshotAtEnd (SnapshotEndedWithOk stack)
+    InterpretFailed err -> SnapshotAtEnd (SnapshotEndedWithFail err)
 
 instance NavigableSnapshotWithMethods (InterpretSnapshot u) where
   getCurMethodBlockLevel = length . isStackFrames <$> curSnapshot
@@ -278,21 +278,33 @@ csActiveStackFrameL = csStackFramesL . __head
         setHead :: NonEmpty a -> a -> NonEmpty a
         setHead (_ :| xs) x' = x' :| xs
 
+type ContractEnv m = ContractEnv' (CollectingEvalOp m)
+
 -- | Our monadic stack, allows running interpretation and making snapshot
 -- records.
-type CollectingEvalOp m =
+newtype CollectingEvalOp m a = CollectingEvalOp
   -- Including ConduitT to build snapshots sequence lazily.
   -- Normally ConduitT lies on top of the stack, but here we put it under
   -- ExceptT to make it record things even when a failure occurs.
-  ExceptT (MichelsonFailureWithStack DebuggerFailure) $
-  ConduitT () (InterpretSnapshot 'Unique) $
-  RWST ContractEnv MorleyLogsBuilder (CollectorState m) $
-  m
+  { runCollectingEvalOp :: ExceptT (MichelsonFailureWithStack DebuggerFailure)
+      (ConduitT () (InterpretSnapshot 'Unique)
+      (RWST (ContractEnv m) MorleyLogsBuilder (CollectorState m) m)) a
+  }
+  deriving newtype
+    ( MonadError (MichelsonFailureWithStack DebuggerFailure)
+    , MonadState (CollectorState m)
+    , MonadWriter MorleyLogsBuilder
+    , MonadReader (ContractEnv m)
+    , Monad
+    , Applicative
+    , Functor
+    )
 
--- TODO: Consider making CollectingEvalOp a newtype to avoid this overlapping
--- instance.
-instance {-# OVERLAPS #-} (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
-  stateInterpreterState f =
+instance MonadTrans CollectingEvalOp where
+  lift = CollectingEvalOp . lift . lift . lift
+
+instance (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
+  stateInterpreterState f = CollectingEvalOp $
     lift $ lift $ zoom csInterpreterStateL $ state f
 
 makePrisms ''InterpretStatus
@@ -301,10 +313,10 @@ makePrisms ''InterpretEvent
 statusExpressionEvaluatedP :: Prism' InterpretStatus SomeValue
 statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _Just
 
-logMessage :: (Monad m) => String -> CollectingEvalOp m ()
+logMessage :: forall m. (Monad m) => String -> CollectingEvalOp m ()
 logMessage str = do
   logger <- use csLoggingFunctionL
-  lift $ lift $ lift $ logger [int||[SnapshotCollecting] #{str}|]
+  lift $ logger [int||[SnapshotCollecting] #{str}|]
 
 -- | Executes the code and collects snapshots of execution.
 runInstrCollect :: forall m. (Monad m) => InstrRunner (CollectingEvalOp m)
@@ -553,7 +565,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
       csLastRecordedSnapshotL ?= newSnap
       csLastRangeMbL ?= loc
-      lift $ C.yield newSnap
+      CollectingEvalOp $ lift $ C.yield newSnap
 
     getStatements :: Instr i o -> Range -> CollectingEvalOp m [Range]
     getStatements instr range@Range{..} = do
@@ -635,8 +647,8 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
 runCollectInterpretSnapshots
   :: (MonadUnliftIO m, MonadActive m)
-  => CollectingEvalOp m a
-  -> ContractEnv
+  => CollectingEvalOp m FinalStack
+  -> ContractEnv m
   -> CollectorState m
   -> Value st
   -> LigoType
@@ -645,7 +657,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
   -- This should be safe because we yield at least one snapshot in the end
   InterpretHistory . fromList <$>
   lazyConsume do
-    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
+    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT $ runCollectingEvalOp act
     case outcome of
       Left stack -> do
         case mfwsFailed stack of
@@ -663,7 +675,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
           , isStackFrames = stackFrames
           }
 
-      Right _ -> do
+      Right finalStack -> do
         let opsAndStorageTypeMb = do
               LTCArrow LigoTypeArrow{..} <- _lteTypeContent <$> entrypointTypeMb
               pure _ltaType2
@@ -699,7 +711,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
 
                     Got #{status}|]
         C.yield InterpretSnapshot
-          { isStatus = InterpretTerminatedOk
+          { isStatus = InterpretTerminatedOk finalStack
           , ..
           }
 
@@ -714,7 +726,7 @@ collectInterpretSnapshots
   -> EntrypointCallT cp arg
   -> Value arg
   -> Value st
-  -> ContractEnv
+  -> ContractEnv m
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
   -> HashSet Range
@@ -735,14 +747,16 @@ collectInterpretSnapshots
   trackMaxSteps
   entrypointType =
     runCollectInterpretSnapshots
-      (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
+      (ContractFinalStack <$> runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
       collSt
       initStore
       entrypointType
     where
       initStack = mkInitStack (liftCallArg epc param) initStore
-      initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
+      initSt =
+        InterpreterState (ceMaxSteps env)
+          dummyGlobalCounter dummyBigMapCounter
       collSt = CollectorState
         { csInterpreterState = initSt
         , csStackFrames = one StackFrame
