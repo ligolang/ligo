@@ -11,7 +11,7 @@ let matches_loc : t -> Loc.t -> bool =
          | File region ->
             if Sys.unix then
               eq uri (of_path region#file)
-            else String.equal (to_path uri) (Str.global_replace (Str.regexp "\\\\\\\\") "\\\\" region#file)
+            else String.equal (to_path uri) (Str.global_replace (Str.regexp "\\\\\\\\\\\\\\\\") "\\\\" region#file)
 
   | Virtual _ -> false
 
