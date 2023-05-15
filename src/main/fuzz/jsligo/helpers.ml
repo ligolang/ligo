@@ -308,6 +308,8 @@ module Fold_helpers (M : Monad) = struct
       let* falsy = self value.falsy in
       return @@ ETernary { value = { value with condition; truthy; falsy }; region }
     | EContract { value; region } -> return @@ EContract { value; region }
+    | EPrefix { value; region } -> return @@ EPrefix { value; region }
+    | EPostfix { value; region } -> return @@ EPostfix { value; region }
 
 
   and map_statement : mapper -> statement -> statement monad =

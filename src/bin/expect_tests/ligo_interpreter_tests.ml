@@ -994,6 +994,38 @@ let%expect_test _ =
     Everything at the top-level was executed.
     - test_transfer_to_contract exited with value (). |}]
 
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_prefix_posfix_ops.jsligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test_prefix_ops exited with value ().
+    - test_postfix_ops exited with value ().
+    - test1 exited with value ().
+    - test2 exited with value ().
+    - test3 exited with value ().
+    - test4 exited with value ().
+    - test5 exited with value ().
+    - test6 exited with value ().
+    - test7 exited with value ().
+    - test8 exited with value ().
+    - test9 exited with value ().
+    - test10 exited with value ().
+    - test11 exited with value ().
+    - test12 exited with value ().
+    - test1_ exited with value ().
+    - test2_ exited with value ().
+    - test3_ exited with value ().
+    - test4_ exited with value ().
+    - test5_ exited with value ().
+    - test6_ exited with value ().
+    - test7_ exited with value ().
+    - test8_ exited with value ().
+    - test9_ exited with value ().
+    - test10_ exited with value ().
+    - test11_ exited with value ().
+    - test12_ exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 

@@ -79,6 +79,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Type_abstraction_declaration) ~flag:always ~arg:()
   ; entry (module Named_fun) ~flag:always ~arg:()
   ; entry (module Reverse_application) ~flag:always ~arg:()
+  ; entry (module Prefix_postfix_operators) ~flag:always ~arg:()
   ; entry (module Freeze_operators) ~flag:always ~arg:freeze_operators
   ; entry (module Literalize_annotated) ~flag:always ~arg:()
   ; entry (module List_as_function) ~flag:list_as_function ~arg:()

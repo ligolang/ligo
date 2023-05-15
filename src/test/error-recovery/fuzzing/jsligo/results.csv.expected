@@ -1,5 +1,5 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
-PASS,16tuples_sequences_functions.jsligo,64,725,387,226,54
+PASS,16tuples_sequences_functions.jsligo,66,715,379,226,51
 PASS,1high-order.jsligo,76,742,348,409,45
 PASS,1never.jsligo,23,182,94,110,15
 PASS,2amount.jsligo,10,80,38,40,4

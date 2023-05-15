@@ -103,6 +103,8 @@ module T =
     | VBAR     of lexeme Wrap.t  (* |    *)
     | ARROW    of lexeme Wrap.t  (* =>   *)
     | WILD     of lexeme Wrap.t  (* _    *)
+    | INCR     of lexeme Wrap.t  (* ++   *)
+    | DECR     of lexeme Wrap.t  (* --   *)
 
     (* JavaScript Keywords *)
 
@@ -225,6 +227,8 @@ module T =
     | VBAR     t
     | ARROW    t
     | WILD     t
+    | INCR     t
+    | DECR     t
 
     (* JavaScript Keywords *)
 
@@ -476,6 +480,8 @@ module T =
     let wrap_vbar     = wrap "|"
     let wrap_arrow    = wrap "=>"
     let wrap_wild     = wrap "_"
+    let wrap_incr     = wrap "++"
+    let wrap_decr     = wrap "--"
 
     (* Smart constructors *)
 
@@ -525,6 +531,8 @@ module T =
     let mk_VBAR     region = VBAR     (wrap_vbar     region)
     let mk_ARROW    region = ARROW    (wrap_arrow    region)
     let mk_WILD     region = WILD     (wrap_wild     region)
+    let mk_INCR     region = INCR     (wrap_incr     region)
+    let mk_DECR     region = DECR     (wrap_decr     region)
 
     (* All symbol smart constructors *)
 
@@ -574,7 +582,9 @@ module T =
       mk_XOR_EQ;  *)
       mk_VBAR;
       mk_ARROW;
-      mk_WILD
+      mk_WILD;
+      mk_INCR;
+      mk_DECR;
     ]
 
     (* All symbols *)
@@ -637,6 +647,8 @@ module T =
     let ghost_vbar     = wrap_vbar     Region.ghost
     let ghost_arrow    = wrap_arrow    Region.ghost
     let ghost_wild     = wrap_wild     Region.ghost
+    let ghost_incr     = wrap_incr     Region.ghost
+    let ghost_decr     = wrap_decr     Region.ghost
 
     let ghost_MINUS    = MINUS    ghost_minus
     let ghost_PLUS     = PLUS     ghost_plus
@@ -823,6 +835,8 @@ module T =
     | "VBAR"     -> ghost_vbar#payload
     | "ARROW"    -> ghost_arrow#payload
     | "WILD"     -> ghost_wild#payload
+    | "INCR"     -> ghost_incr#payload
+    | "DECR"     -> ghost_decr#payload
 
     (* JavaScript Keywords *)
 
@@ -957,6 +971,8 @@ module T =
     | VBAR     t -> t#region, "VBAR"
     | ARROW    t -> t#region, "ARROW"
     | WILD     t -> t#region, "WILD"
+    | INCR     t -> t#region, "INCR"
+    | DECR     t -> t#region, "DECR"
 
     (* JavaScript Keywords *)
 
@@ -1155,7 +1171,9 @@ module T =
     | XOR_EQ _ *)
     | VBAR _
     | ARROW _
-    | WILD _ -> true
+    | WILD _
+    | INCR _
+    | DECR _ -> true
     | _ -> false
 
     (* Verbatim strings *)
