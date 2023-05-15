@@ -30,6 +30,7 @@ module Mod_in = Nano_prim.Mod_in
 module Block_with = Nano_prim.Block_with
 module Assign = Ligo_prim.Assign
 module Assign_chainable = Nano_prim.Assign_chainable
+module Prefix_postfix = Nano_prim.Prefix_postfix
 module Type_decl = Nano_prim.Type_decl
 module Type_abstraction = Nano_prim.Type_abstraction
 module Record_update = Nano_prim.Record_update
@@ -337,6 +338,8 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_module_access of (Mod_variable.t Simple_utils.List.Ne.t, Variable.t) Mod_access.t
       [@not_initial]
   | E_match_block of ('self, 'pattern, 'block) Case.t [@not_initial]
+  | E_prefix of Prefix_postfix.prefix
+  | E_postfix of Prefix_postfix.postfix
 [@@deriving
   map
   , fold

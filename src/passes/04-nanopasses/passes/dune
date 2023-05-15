@@ -60,7 +60,8 @@
   restrict_projections
   special_unit_constructor
   unpuning
-  disc_union_types)
+  disc_union_types
+  prefix_postfix_operators)
  (libraries
   ast_unified
   syntax_types

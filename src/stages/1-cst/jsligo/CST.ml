@@ -65,6 +65,11 @@ type slash      = lexeme wrap  (* "/" *)
 type modulo     = lexeme wrap  (* "%" *)
 type times      = lexeme wrap  (* "*" *)
 
+(* Increment & Decrement operators *)
+
+type increment = lexeme wrap (* "++" *)
+type decrement = lexeme wrap (* "--" *) 
+
 (* Ternary operator *)
 
 type qmark = lexeme wrap  (* ? *)
@@ -356,6 +361,8 @@ and expr =
 | EArith    of arith_expr
 | EArray    of (array_item, comma) sepseq brackets reg
 | EAssign   of (expr * operator reg * expr)
+| EPrefix   of prefix_postfix_op reg
+| EPostfix  of prefix_postfix_op reg
 | EBytes    of (lexeme * Hex.t) wrap
 | ECall     of (expr * arguments) reg
 | ECodeInj  of code_inj reg
@@ -514,6 +521,15 @@ and 'a un_op = {
   arg : expr
 }
 
+and prefix_postfix_op = {
+  update_type : update_type;
+  variable : variable
+} 
+
+and update_type = 
+  Increment of increment 
+| Decrement of decrement
+
 and comp_expr =
   Lt    of lt        bin_op reg
 | Leq   of leq       bin_op reg
@@ -646,7 +662,9 @@ let rec expr_to_region = function
 | ECodeInj {region; _} | EModA { region; _} | ETernary {region; _} -> region
 | EBytes v -> v#region
 | EVar v -> v#region
-| EContract {region; _} -> region
+| EContract {region; _}
+| EPrefix {region;_}
+| EPostfix {region;_} -> region
 
 let statement_to_region = function
   SBreak b -> b#region

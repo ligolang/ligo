@@ -329,6 +329,8 @@ and pp_expr state = function
 | ECodeInj e -> pp_code_inj state e
 | ETernary e -> pp_ternary state e
 | EContract e -> pp_contract state e
+| EPrefix  e -> pp_prefix e
+| EPostfix e -> pp_postfix e
 
 and pp_code_inj state (node: code_inj reg) =
   let {language; code} = node.value in
@@ -416,6 +418,18 @@ and pp_ternary state {value; _} =
   nest state.indent (pp_expr state value.truthy) ^^
   space ^^ colon ^^ space ^^
   nest state.indent (pp_expr state value.falsy)
+
+and pp_prefix = function
+  {value={update_type=Increment _;variable}; _} -> 
+  plus  ^^ plus  ^^ pp_ident variable
+| {value={update_type=Decrement _;variable}; _} -> 
+  minus ^^ minus ^^ pp_ident variable
+
+and pp_postfix = function
+  {value={update_type=Increment _;variable}; _} -> 
+  pp_ident variable ^^ plus  ^^ plus
+| {value={update_type=Decrement _;variable}; _} -> 
+  pp_ident variable ^^ minus ^^ minus
 
 and pp_logic_expr state = function
   BoolExpr e -> pp_bool_expr state e

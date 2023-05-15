@@ -521,3 +521,58 @@ let seven_ : nat = 14n land 1n // 7
 ```
 
 </Syntax>
+
+<Syntax syntax="jsligo">
+
+## Increment operator
+
+Increment opeator increments (adds one to) the value of the binder.
+
+In the **prefix** position (`++p`) the operator increments the value and returns 
+the latest incremented value.
+
+In the **postfix** position (`p++`) the operator increments the value but 
+returns the old value before the increment.
+
+```jsligo test-ligo group=increment_ops
+
+const testInc = (() => {
+  let inc = 0;
+  
+  // Prefix increment operator
+  assert(++inc == 1);
+
+  // Postfix increment operator
+  assert(inc++ == 1);
+  assert(inc   == 2);
+})();
+
+```
+
+
+## Decrement operator 
+
+Decrement opeator decrements (subtracts one from) the value of the binder.
+
+In the **prefix** position (`--p`) the operator decrements the value and returns 
+the latest decremented value.
+
+In the **postfix** position (`p--`) the operator decrements the value but 
+returns the old value before the decrement.
+
+```jsligo test-ligo group=decrement_ops
+
+const testDec = (() => {
+  let dec = 10;
+
+  // Prefix decrement operator
+  assert(--dec == 9);
+
+  // Postfix decrement operator
+  assert(dec-- == 9);
+  assert(dec   == 8);
+})();
+
+```
+
+</Syntax>

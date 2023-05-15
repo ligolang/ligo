@@ -125,6 +125,8 @@
 %token <string Wrap.t> VBAR     "|"   [@recover.expr Token.wrap_vbar     $loc]
 %token <string Wrap.t> ARROW    "=>"  [@recover.expr Token.wrap_arrow    $loc]
 %token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc] [@recover.cost 700]
+%token <string Wrap.t> INCR     "++"  [@recover.expr Token.wrap_wild     $loc]
+%token <string Wrap.t> DECR     "--"  [@recover.expr Token.wrap_wild     $loc]
 
 (* JavaScript Keywords *)
 

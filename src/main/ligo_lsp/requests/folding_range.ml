@@ -323,7 +323,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | ETernary { value; region } ->
       mk_region region :: (expr value.condition @ expr value.truthy @ expr value.falsy)
     | EContract { value; region } -> mk_region region :: contract value (* FIXME *)
-    | EVar _ | EBytes _ | EUnit _ -> []
+    | EVar _ | EBytes _ | EUnit _ | EPostfix _ | EPrefix _ -> []
   and fun_expr value =
     expr value.parameters
     @ Option.value_map ~f:(fun (_, texp) -> type_expr texp) ~default:[] value.lhs_type
