@@ -37,8 +37,7 @@ let to_absolute : string -> string =
     abs_path
   else
     abs_path
-    |> Lsp_helpers.Path.normalise_backslashes
-    |> Caml.String.lowercase_ascii
+    |> Lsp_helpers.Path.normalise
 
 let rel_path_to_uri : string -> DocumentUri.t = fun rel_path ->
   let abs_path = to_absolute rel_path in
@@ -47,7 +46,6 @@ let rel_path_to_uri : string -> DocumentUri.t = fun rel_path ->
       abs_path
     else
       abs_path
-      |> Lsp_helpers.Path.normalise_backslashes
-      |> Caml.String.lowercase_ascii
+      |> Lsp_helpers.Path.normalise
   in
   DocumentUri.of_path abs_path

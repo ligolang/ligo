@@ -45,8 +45,7 @@ let extract_link_from_directive ~(relative_to_dir : string)
     let target =
       if Sys.unix then target else
         target
-        |> Lsp_helpers.Path.normalise_backslashes
-        |> Caml.String.lowercase_ascii
+        |> Lsp_helpers.Path.normalise
     in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None

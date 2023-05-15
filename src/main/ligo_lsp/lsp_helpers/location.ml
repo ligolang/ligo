@@ -12,9 +12,7 @@ let of_region : Region.t -> t =
     then Lsp.Types.DocumentUri.of_path region#file
     else
       region#file
-      |> Path.normalise_backslashes
-      |> Str.global_replace (Str.regexp "//") "/" (* Sometimes double fwd slashes were seen in the output *)
-      |> Caml.String.lowercase_ascii
+      |> Path.normalise
       |> Lsp.Types.DocumentUri.of_path
   in
   create ~uri ~range:(Range.of_region region)

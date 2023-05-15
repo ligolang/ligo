@@ -78,9 +78,7 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
            if Sys.unix then file else
            file
            |> DocumentUri.to_path
-           |> Lsp_helpers.Path.normalise_backslashes
-           |> Str.global_replace (Str.regexp "//") "/" (* Sometimes double fwd slashes were seen in the output *)
-           |> Caml.String.lowercase_ascii
+           |> Lsp_helpers.Path.normalise
            |> DocumentUri.of_path
          in
          List.map ~f:(fun range -> Location.create ~uri:file ~range) ranges)
