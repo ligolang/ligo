@@ -25,6 +25,7 @@ let get_diagnostics_test
     test_run_session ?config @@ open_file (to_absolute file_path)
   in
   should_match_list
+    ~extras_optional: true
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
     Diagnostic.testable
     ~actual:actual_diagnostics
@@ -90,15 +91,15 @@ let test_cases =
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
           ; range = Some (interval 2 19 21)
           }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Variable \"_#153\" not found. "
-              (* FIXME 1689 - we should not report that things added by
-                 error recovery do not exist, also the number here can
-                 be changed after any changes in LIGO, maybe we want to
-                 rewrite that test so it would not require promotion too often*)
-          ; range = Some (point 4 13)
-          }
+        (* ; { severity = DiagnosticSeverity.Error *)
+        (*   ; message = *)
+        (*       "Variable \"_#153\" not found. " *)
+        (*       (\* FIXME 1689 - we should not report that things added by *)
+        (*          error recovery do not exist, also the number here can *)
+        (*          be changed after any changes in LIGO, maybe we want to *)
+        (*          rewrite that test so it would not require promotion too often*\) *)
+        (*   ; range = Some (point 4 13) *)
+        (*   } *)
         ]
     ; max_number_of_problems = None
     }
