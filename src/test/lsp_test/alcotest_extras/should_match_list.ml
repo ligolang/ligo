@@ -22,6 +22,7 @@ let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool
 (* FIXME: In case of failure, the printed format is pretty ugly and gets repeated twice. *)
 let should_match_list
     ?(msg : string option)
+    ?(extras_optional: bool = false)
     (testable_a : 'a Alcotest.testable)
     ~(actual : 'a list)
     ~(expected : 'a list)
@@ -29,6 +30,7 @@ let should_match_list
   =
   match match_list ~actual ~expected ~eq:(Alcotest.equal testable_a) with
   | [], [] -> ()
+  | _extra, [] when extras_optional -> ()
   | extra, missing ->
     (* For some reason, using [format_list] for a leads to problems with identation,
        so we print each [a] separately *)
