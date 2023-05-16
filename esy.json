@@ -86,11 +86,11 @@
     "ligo-win32-ntdll-stubs": "*",
     "@opam/tezos-rust-libs": "*",
     "@opam/tz-016-test-helpers": "*",
-    "@opam/tz-015-test-helpers": "*",
+    "@opam/tz-017-test-helpers": "*",
     "@opam/tezos-base": "*",
     "@opam/tezos-hacl": "*",
     "@opam/tezos-micheline": "*",
-    "@opam/tc-015": "*",
+    "@opam/tc-017": "*",
     "@opam/tc-016": "*",
     "@opam/lwt_log": "*",
     "@opam/secp256k1-internal": "*",
@@ -103,8 +103,10 @@
     "esy-libffi": "*"
   },
   "resolutions": {
+    "@opam/bls12-381": "opam:6.1.0",
+    "@opam/bls12-381-hash": "./vendors/bls12-381-hash",
     "@opam/coq": "opam:8.13.2",
-    "@opam/tz-015-test-helpers": "./vendors/tezos-ligo",
+    "@opam/tz-017-test-helpers": "./vendors/tezos-ligo",
     "@opam/tz-016-test-helpers": "./vendors/tezos-ligo",
     "@opam/tezos-test-helpers": "./vendors/tezos-ligo",
     "ligo-win32-ntdll-stubs": "link:./vendors/win32-ntdll-stubs",
@@ -184,21 +186,43 @@
     "@opam/tezos-lazy-containers": "./vendors/tezos-ligo",
     "@opam/tezos-version": "./vendors/tezos-ligo",
     "@opam/tezos-tree-encoding": "./vendors/tezos-ligo",
+    "@opam/tz-scr-016": "./vendors/tezos-ligo",
     "@opam/tz-scr-017": "./vendors/tezos-ligo",
     "@opam/tp-016": {
       "source": "./vendors/tezos-ligo",
       "override": {
         "build": [
           "rm -rf vendors",
-          "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tp-015"
+          "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tp-016"
         ],
         "dependencies": {
           "@opam/hacl-star-raw": "*"
         }
       }
     },
+    "@opam/tp-017": {
+      "source": "./vendors/tezos-ligo",
+      "override": {
+        "build": [
+          "rm -rf vendors",
+          "env LD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $LD_LIBRARY_PATH} DYLD_LIBRARY_PATH=#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH} dune build -p tp-017"
+        ],
+        "dependencies": {
+          "@opam/hacl-star-raw": "*"
+        }
+      }
+    },
+    "@opam/octez-plonk": "./vendors/tezos-ligo",
+    "@opam/octez-bls12-381-polynomial": "./vendors/tezos-ligo",
+    "@opam/octez-bls12-381-signature": "./vendors/tezos-ligo",
+    "@opam/octez-bls12-381-hash": "./vendors/tezos-ligo",
+    "@opam/octez-plompiler": "./vendors/tezos-ligo",
+    "@opam/octez-distributed-lwt-internal": "./vendors/tezos-ligo",
+    "@opam/octez-polynomial": "./vendors/tezos-ligo",
+    "@opam/octez-mec": "./vendors/tezos-ligo",
+    "@opam/octez-distributed-internal": "./vendors/tezos-ligo",
     "@opam/tezos-rpc-http": "./vendors/tezos-ligo",
-    "@opam/tp-plugin-015": "./vendors/tezos-ligo",
+    "@opam/tp-plugin-016": "./vendors/tezos-ligo",
     "@opam/tp-017": {
       "source": "./vendors/tezos-ligo",
       "override": {
@@ -240,8 +264,8 @@
     "@opam/tezos-proxy": "./vendors/tezos-ligo",
     "@opam/tpe": "./vendors/tezos-ligo",
     "@opam/tezos-mockup-proxy": "./vendors/tezos-ligo",
-    "@opam/tp-plugin-016": "./vendors/tezos-ligo",
-    "@opam/tc-016": "./vendors/tezos-ligo"
+    "@opam/tp-plugin-017": "./vendors/tezos-ligo",
+    "@opam/tc-017": "./vendors/tezos-ligo"
   },
   "override": {
     "buildEnv": {

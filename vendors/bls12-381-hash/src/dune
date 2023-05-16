@@ -1,0 +1,27 @@
+(copy_files bindings/anemoi/caml_anemoi_stubs.c)
+
+(copy_files anemoi/{anemoi.h,anemoi.c,anemoi_constants.h})
+
+(copy_files poseidon/{poseidon.h,poseidon.c})
+
+(copy_files bindings/poseidon/caml_poseidon_stubs.c)
+
+(copy_files bindings/rescue/{caml_rescue_stubs.c})
+
+(copy_files rescue/{rescue.h,rescue.c})
+
+(copy_files bindings/griffin/{caml_griffin_stubs.c})
+
+(copy_files griffin/{griffin.h,griffin.c})
+
+(library
+ (public_name bls12-381-hash)
+ (name bls12_381_hash)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries bls12-381 ff-sig)
+ (library_flags :standard -linkall -ccopt -lpthread)
+ (foreign_stubs
+  (language c)
+  (names caml_anemoi_stubs anemoi caml_poseidon_stubs poseidon
+    caml_rescue_stubs rescue caml_griffin_stubs griffin)))

@@ -1,0 +1,252 @@
+# Testing on multiple platforms and Caml version, but some jobs can share the
+# _opam and _build directory.
+variables:
+  IMAGE_WITH_CACHE: "ocaml/opam:debian-testing-opam"
+  OCAML_COMPILER: "4.14.0"
+  # A workaround against a bug in gitlab-runner's default
+  # unzipping implementation, which partially breaks caching for the dune _build cache.
+  # See https://gitlab.com/gitlab-org/gitlab-runner/-/issues/27496 for more details.
+  FF_USE_FASTZIP: "true"
+
+.job-with-cache: &job_with_cache
+  image: ${IMAGE_WITH_CACHE}
+  cache:
+    # Make the cache unique per commit
+    key: opam-cache-$CI_COMMIT_SHORT_SHA
+    paths:
+      - _build
+      - _opam
+
+stages:
+  - lint
+  - build
+  - test-debian
+  - test-alpine
+  - install
+  - doc
+  - deploy
+
+lint:
+  stage: lint
+  image: ocaml/opam:debian-ocaml-4.12
+  before_script:
+    - opam install ocamlformat.0.20.1
+  script:
+    - dune build @fmt
+  rules:
+    - when: always
+
+lint-c:
+  stage: lint
+  image: ubuntu:20.04
+  script:
+    - apt-get update -y
+    - apt-get install clang-format-11 git -y
+    - clang-format-11 --version
+    - clang-format-11 src/**/*.{h,c} -i
+    # Check if a file has been modified and uncommited
+    - git diff --exit-code
+  rules:
+    - when: always
+
+# Build pipeline for debian
+# Keep it close to the one for other distributions
+.build-test-debian: &build_definition_debian
+  stage: test-debian
+  before_script:
+    # Always update system package manager + setup OPAM env
+    - sudo apt-get update
+    - eval $(opam env)
+    - opam repository set-url default https://opam.ocaml.org
+    - opam update
+
+    # List versions and environments
+    - ocaml --version
+    - opam --version
+    - echo $OPAM_SWITCH_PREFIX
+  script:
+    - opam install depext --yes
+    - opam install . --dry-run --deps-only --locked --with-test --with-doc --yes | awk '/-> installed/{print $3}' | xargs opam depext -iy
+    - opam install "core_bench<=v0.14.1" -y
+    - dune build
+    - dune build @install
+    - dune build @runtest
+  rules:
+    - when: always
+
+build-ocaml-4.12-debian-10:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-10-ocaml-4.12
+
+build-ocaml-4.13-debian-10:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-10-ocaml-4.13
+
+build-ocaml-4.14-debian-10:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-10-ocaml-4.14
+
+build-ocaml-5.0-debian-10:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-10-ocaml-5.0
+  allow_failure: true
+
+build-ocaml-4.12-debian-11:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-11-ocaml-4.12
+
+build-ocaml-4.13-debian-11:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-11-ocaml-4.13
+
+build-ocaml-4.14-debian-11:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-11-ocaml-4.14
+
+build-ocaml-5.0-debian-11:
+  <<: *build_definition_debian
+  image: ocaml/opam:debian-11-ocaml-5.0
+  allow_failure: true
+
+# Build and use cache. Useful for other jobs not related to testing.
+# Does not run any test
+build:
+  <<: *job_with_cache
+  stage: build
+  before_script:
+    # Always update system package manager + setup OPAM env
+    - sudo apt-get update
+    - "[ -d _opam ] || opam switch create --yes --no-install . $OCAML_COMPILER"
+    - eval $(opam env)
+    - opam repository set-url default https://opam.ocaml.org
+    - opam update
+
+    # List versions and environments
+    - ocaml --version
+    - opam --version
+    - echo $OPAM_SWITCH_PREFIX
+  script:
+
+    - opam install depext --yes
+    - opam install . --dry-run --deps-only --locked --with-test --with-doc --yes | awk '/-> installed/{print $3}' | xargs opam depext -iy
+    - opam install "core_bench<=v0.14.1" -y
+    - dune build
+    # For doc
+    - opam install odoc -y
+    - dune build @doc
+    - cp -r _build/default/_doc/_html _odoc/
+  artifacts:
+    paths:
+      - _odoc
+  rules:
+    - when: always
+
+# Build pipeline for alpine
+# Keep it close to the one for other distributions
+# Keep it close to utils/Dockerfile-alpine to be able to debug alpine on a dev
+# machine.
+.build-test-alpine: &build_definition_alpine
+  stage: test-alpine
+  before_script:
+    # Always update system package manager + setup OPAM env
+    - eval $(opam env)
+    - opam repository set-url default https://opam.ocaml.org
+    - opam update
+    # List versions and environments
+    - ocaml --version
+    - opam --version
+    - echo $OPAM_SWITCH_PREFIX
+  script:
+    - opam install depext --yes
+    - opam install . --dry-run --deps-only --locked --with-test --with-doc --yes | awk '/-> installed/{print $3}' | xargs opam depext -iy
+    - dune build @install
+    - dune build @runtest
+  rules:
+    - when: always
+
+build-ocaml-4.12-alpine-3.14:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.14-ocaml-4.12
+
+build-ocaml-4.13-alpine-3.14:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.14-ocaml-4.13
+
+build-ocaml-4.14-alpine-3.14:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.14-ocaml-4.14
+
+build-ocaml-5.0-alpine-3.14:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.14-ocaml-5.0
+  allow_failure: true
+
+build-ocaml-4.12-alpine-3.15:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.15-ocaml-4.12
+
+build-ocaml-4.13-alpine-3.15:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.15-ocaml-4.13
+
+build-ocaml-4.14-alpine-3.15:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.15-ocaml-4.14
+
+build-ocaml-5.0-alpine-3.15:
+  <<: *build_definition_alpine
+  image: ocaml/opam:alpine-3.15-ocaml-5.0
+  allow_failure: true
+
+opam-install-and-remove:
+  stage: install
+  image: ocaml/opam:debian-ocaml-4.12
+  before_script:
+    # List versions and environments
+    - ocaml --version
+    - opam --version
+    - cc --version
+    - echo $OPAM_SWITCH_PREFIX
+    - opam repository set-url default https://opam.ocaml.org
+    - opam update
+  script:
+    - opam pin add bls12-381-hash.dev . --no-action
+    - opam depext bls12-381-hash.dev -i -y -v
+    - opam install bls12-381-hash.dev -y -v --deps-only
+    - opam install bls12-381-hash.dev -y -v
+    - opam remove -a -y bls12-381-hash.dev
+  rules:
+    - when: always
+
+opam-install-and-remove-local-switch:
+  stage: install
+  image: ocaml/opam:debian-ocaml-4.12
+  before_script:
+    # Run everything in a local switch
+    - opam switch create ./ 4.14.0 --no-install
+    - eval $(opam config env)
+    # List versions and environments
+    - ocaml --version
+    - opam --version
+    - echo $OPAM_SWITCH_PREFIX
+    - opam repository set-url default https://opam.ocaml.org
+    - opam update
+  script:
+    - opam pin add bls12-381-hash.dev . --no-action
+    - opam depext bls12-381-hash.dev -i -y -v
+    - opam install bls12-381-hash.dev -y -v --deps-only
+    - opam install bls12-381-hash.dev -y -v
+    - opam remove -a -y bls12-381-hash.dev
+  rules:
+    - when: always
+
+pages:
+  <<: *job_with_cache
+  stage: deploy
+  script:
+    - cp -r _odoc public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
