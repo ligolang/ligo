@@ -29,7 +29,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (101)
+  isStatus: running / expression evaluated (101 : int)
   isStackFrames:
     [StackFrame:
       sfName: f
@@ -83,7 +83,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (201)
+  isStatus: running / expression evaluated (201 : int)
   isStackFrames:
     [StackFrame:
       sfName: f
@@ -137,7 +137,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (201)
+  isStatus: running / expression evaluated (201 : int)
   isStackFrames:
     [StackFrame:
       sfName: main
@@ -175,7 +175,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (20)
+  isStatus: running / expression evaluated (20 : int)
   isStackFrames:
     [StackFrame:
       sfName: main
@@ -194,7 +194,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (221)
+  isStatus: running / expression evaluated (221 : int)
   isStackFrames:
     [StackFrame:
       sfName: main
@@ -226,7 +226,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated ({ })
+  isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
     [StackFrame:
       sfName: main
@@ -239,7 +239,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair { } 221)
+  isStatus: running / expression evaluated (Pair { } 221 : operation list * int)
   isStackFrames:
     [StackFrame:
       sfName: main
