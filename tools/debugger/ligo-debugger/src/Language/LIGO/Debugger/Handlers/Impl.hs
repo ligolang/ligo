@@ -736,15 +736,18 @@ handleValidateValue LigoValidateValueRequest {..} = do
     } <- getCollectedRunInfo
 
   program <- getProgram
+  entrypointType <- getEntrypointType
+
+  let (parameterType, storageType) = getParameterAndStorageTypes entrypointType
 
   parseRes <- case category of
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint $
         \(_ :: T.Notes arg) _ ->
-        void <$> parseValue @arg program category (toText value) valueLang
+        void <$> parseValue @arg program category (toText value) valueLang parameterType
 
     "storage" ->
-      void <$> parseValue @storage program category (toText value) valueLang
+      void <$> parseValue @storage program category (toText value) valueLang storageType
 
     other ->
       throwIO $ PluginCommunicationException [int||Unexpected category #{other}|]
@@ -776,19 +779,22 @@ handleValidateConfig LigoValidateConfigRequest{..} = do
   lServVar <- asks _rcLSState
 
   program <- getProgram
+  entrypointType <- getEntrypointType
+
+  let (parameterType, storageType) = getParameterAndStorageTypes entrypointType
 
   withMichelsonEntrypoint contract michelsonEntrypointMb
     \(_ :: T.Notes arg) epc -> do
       logMessage [int||
         Checking parameter #{parameter} with lang #{parameterLang}
       |]
-      param <- parseValue @arg program "parameter" parameter parameterLang
+      param <- parseValue @arg program "parameter" parameter parameterLang parameterType
         >>= either (throwIO . ConfigurationException) pure
 
       logMessage [int||
         Checking storage #{storage} with lang #{storageLang}
       |]
-      stor <- parseValue @st program "storage" storage storageLang
+      stor <- parseValue @st program "storage" storage storageLang storageType
         >>= either (throwIO . ConfigurationException) pure
 
       atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
