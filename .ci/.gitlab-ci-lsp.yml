@@ -3,20 +3,30 @@
 include:
   - '/.ci/.gitlab-ci-tools-common.yml'
 
-vscode-extension-docker-test:
+variables:
+  OCTEZ_VERSION: "v16.1"
+
+vscode-extension-test:
   stage: tools-check
   rules: &vscode_extension_mr_dev
     - !reference [.vscode_extension_mr_changes]
     - !reference [.dev]
   needs: [docker_extract]
   script:
-    - git add ./ligo # Ligo binary is needed for these tests
-    - nix build $FLAKE_FLAGS ./tools/vscode#tests.x86_64-linux.vscode-extenstion-test-docker-image
-    - docker load -i result
-    - docker run --rm vscode-extension-test
-  # Nuke imported image to save some space
+    - docker build --build-arg OCTEZ_VERSION="$OCTEZ_VERSION" -f tools/vscode/Dockerfile -t lsp-vscode-test:$CI_JOB_ID .
+    - docker run --rm --init --user vscode lsp-vscode-test:$CI_JOB_ID xvfb-run bash -c 'yarn && yarn run package && yarn run test'
   after_script:
-    - docker image rm vscode-extension-test
+    - docker image rm lsp-vscode-test:$CI_JOB_ID
+
+vscode-extension-extest:
+  stage: tools-check
+  rules: *vscode_extension_mr_dev
+  needs: [docker_extract]
+  script:
+    - docker build --build-arg OCTEZ_VERSION="$OCTEZ_VERSION" -f tools/vscode/Dockerfile -t lsp-vscode-test:$CI_JOB_ID .
+    - docker run --rm --init --user vscode lsp-vscode-test:$CI_JOB_ID xvfb-run bash -c 'yarn && yarn run package && yarn run extest'
+  after_script:
+    - docker image rm lsp-vscode-test:$CI_JOB_ID
 
 vscode-extension-publish-check:
   stage: tools-check
