@@ -195,8 +195,7 @@ let rec expr : Eq.expr -> Folding.expr =
     return @@ E_call (expr, args)
   | EConstr { value = ctor, arg_opt; _ } ->
     let element = TODO_do_in_parsing.constructor_element arg_opt in
-    return
-    @@ E_applied_constructor { constructor = O.Label.of_string ctor#payload; element }
+    return @@ E_applied_constructor { constructor = O.Label.of_string ctor#payload; element }
   | EArray { value = items; _ } ->
     let items =
       let translate_array_item : I.array_item -> _ AST.Array_repr.item = function

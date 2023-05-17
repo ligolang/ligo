@@ -19,25 +19,27 @@ let scan_comment scan comment region =
   in scan lexbuf
 
 let collect_attributes tokens =
-  let open! Token in
+  let open! Token
+  in
   let rec inner acc = function
-    LineCom c :: tokens -> (
+    LineCom c as com_token :: tokens -> (
       let comment = "// " ^ c#payload in
-      let line_comment = Lexer.line_comment_attr acc in
+      let line_comment = Lexer.line_comment_attr com_token acc in
       match scan_comment line_comment comment c#region with
         Ok acc    -> inner acc tokens
       | Error msg -> Error (acc, msg))
 
-  | BlockCom c :: tokens -> (
+  | BlockCom c as com_token :: tokens -> (
       let comment = Printf.sprintf "/* %s */" c#payload in
-      let block_comment = Lexer.block_comment_attr acc in
+      let block_comment = Lexer.block_comment_attr com_token acc in
       match scan_comment block_comment comment c#region with
         Ok acc    -> inner acc tokens
       | Error msg -> Error (acc, msg))
 
   | token :: tokens -> inner (token :: acc) tokens
   | [] -> Ok (List.rev acc)
-  in inner [] tokens
+  in
+  inner [] tokens
 
 (* Exported *)
 

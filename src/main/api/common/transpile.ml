@@ -44,7 +44,7 @@ let contract source_file to_syntax from_syntax output_file =
             trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file c_unit source_file
           in
           let new_cst = Parsing_pascaligo.JsLIGO.of_cst old_cst in
-          Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_environment new_cst
+          Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_state new_cst
         | _ ->
           if Syntax_types.equal from_syntax to_syntax
           then

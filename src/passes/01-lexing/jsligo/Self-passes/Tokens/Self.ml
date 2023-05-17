@@ -32,5 +32,6 @@ let filters : t = [
   VBAR_hook.filter;
   SEMI.filter;
   SEMI_hook.filter;
-  Attributes.filter
+  Attributes.filter;
+  Comments.filter
 ]

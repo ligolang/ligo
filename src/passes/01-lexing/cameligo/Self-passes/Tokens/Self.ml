@@ -25,4 +25,6 @@ type t = filter list
 (* Listing all self-passes on lexical units (resulting in
    [filters]) *)
 
-let filters : t = []
+let filters : t = [
+  Comments.filter
+]

@@ -12,7 +12,7 @@ module Unit      = LexerLib.Unit
 
 (* Local dependencies *)
 
-module Token = Lx_js_self_tokens.Token
+module Token = Lx_ml_self_tokens.Token
 
 let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
   let open! Token in
@@ -41,7 +41,7 @@ let filter ?print_passes ~add_warning:_ units : result =
     match print_passes with
       Some std ->
         Std.(add_line std.out
-                      "Running JsLIGO unit  self-pass: \
+                      "Running CameLIGO unit  self-pass: \
                        Collect attributes from comments.")
     | None -> ()
   in Ok (filter units)

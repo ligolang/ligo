@@ -514,14 +514,14 @@ and print_expr state = function
 | EModA     e -> print_EModA     state e
 | EObject   e -> print_EObject   state e
 | EPar      e -> print_EPar      state e
+| EPrefix   e -> print_EPrefix   state e
+| EPostfix  e -> print_EPostfix  state e
 | EProj     e -> print_EProj     state e
 | ESeq      e -> print_ESeq      state e
 | EString   e -> print_EString   state e
 | ETernary  e -> print_ETernary  state e
 | EUnit     e -> print_EUnit     state e
 | EVar      e -> print_EVar      state e
-| EPrefix   e -> printEPrefix    state e 
-| EPostfix  e -> printEPostfix   state e
 
 (* Functional expressions *)
 
@@ -802,30 +802,30 @@ and print_EAssign state (node: expr * operator reg * expr) =
 
 (* Prefix operators *)
 
-and printEPrefix state = function
-  { value = { variable; update_type=Increment op }; region } ->
+and print_EPrefix state = function
+  {value = {variable; update_type=Increment op}; region} ->
     let children = Tree.[
       mk_child (make_node ~region:op#region) "Increment";
-      mk_child make_literal variable] 
+      mk_child make_literal variable]
     in Tree.make ~region state "EPrefix" children
-| { value = { variable; update_type=Decrement op }; region } -> 
+| {value = {variable; update_type=Decrement op}; region} ->
     let children = Tree.[
       mk_child (make_node ~region:op#region) "Decrement";
-      mk_child make_literal variable] 
+      mk_child make_literal variable]
     in Tree.make ~region state "EPrefix" children
 
 (* Postfix operators *)
 
-and printEPostfix state = function
-  { value = { variable; update_type=Increment op }; region } ->
+and print_EPostfix state = function
+  {value = {variable; update_type=Increment op}; region} ->
     let children = Tree.[
       mk_child (make_node ~region:op#region) "Increment";
-      mk_child make_literal variable] 
+      mk_child make_literal variable]
     in Tree.make ~region state "EPostfix" children
-| { value = { variable; update_type=Decrement op }; region } -> 
+| {value = {variable; update_type=Decrement op}; region} ->
     let children = Tree.[
       mk_child (make_node ~region:op#region) "Decrement";
-      mk_child make_literal variable] 
+      mk_child make_literal variable]
     in Tree.make ~region state "EPostfix" children
 
 (* Constructor applications *)

@@ -39,13 +39,13 @@ let test { test_name; actual; expected } =
       match syntax with
       | CameLIGO ->
         Cameligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_environment buffer actual)
+          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
       | JsLIGO ->
         Jsligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_environment buffer actual)
+          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
       | PascaLIGO ->
         Pascaligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_environment buffer actual))
+          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual))
   in
   Alcotest.(check string)
     "Formatted contents of the files should be equal"

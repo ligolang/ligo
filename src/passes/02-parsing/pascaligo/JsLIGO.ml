@@ -374,10 +374,10 @@ and toplevel_statement_of_D_Fun (node: fun_decl reg) : Js.toplevel_statement =
   Js.TopLevel (statement_of_D_Fun node, None)
 
 and statement_of_D_Fun (node: fun_decl reg) : Js.statement =
-  let {kwd_recursive; kwd_function; fun_name; type_params;
+  let {kwd_recursive; fun_name; type_params;
        parameters; ret_type; return; _} = node.value in
   let kwd_const   = match kwd_recursive with
-                      None     -> kwd_function
+                      None     -> Token.ghost_const
                     | Some kwd -> kwd in
   let binders     = pattern_of_P_Var fun_name
   and type_params = type_params_of_type_params type_params in
@@ -424,11 +424,12 @@ and fun_expr_of
   let parameters =
     match parameters.value.inside with
       None ->
-        let unit = Token.(ghost_lpar, ghost_rpar)
-        in Js.EUnit (reg_of unit)
-    | Some nsepseq ->
-        let nsepseq = Utils.nsepseq_map of_param_decl nsepseq in
-        let nsepseq = Js.ESeq (reg_of nsepseq) in
+        Js.EUnit (reg_of Token.(ghost_lpar, ghost_rpar))
+    | Some (head, tail) ->
+        let comma   = Token.ghost_comma in
+        let head    = of_param_decl head
+        and tail    = List.map (fun (_,d) -> comma, of_param_decl d) tail in
+        let nsepseq = Js.ESeq (reg_of (head, tail)) in
         Js.EPar (reg_of (par_of nsepseq)) in
   let arrow    = Token.ghost_arrow in
   let fun_expr = Js.{type_params; parameters; lhs_type; arrow; body}
@@ -649,8 +650,8 @@ and of_T_Cart (node: cartesian) =
   let type_expr, _, nsepseq = node.value in
   let first_arg  = type_expr_of_type_expr type_expr in
   let other_args = Utils.nsepseq_map type_expr_of_type_expr nsepseq in
-  let times      = Token.ghost_times in
-  let all_args   = Utils.nsepseq_cons first_arg times other_args in
+  let comma      = Token.ghost_comma in
+  let all_args   = Utils.nsepseq_cons first_arg comma other_args in
   let inside     = reg_of @@ brackets_of all_args
   in Js.TProd Js.{inside; attributes=[]}
 
@@ -905,7 +906,11 @@ and obj_of_cases :
   'a.('a -> Js.body) -> ('a case_clause reg, vbar) Utils.nsepseq -> Js.expr =
   fun mk_body node ->
     let properties : (Js.property, comma) Utils.nsepseq =
-      Utils.nsepseq_map (property_of_case_clause mk_body) node
+      let head, tail = node in
+      let head = property_of_case_clause mk_body head
+      and f (_, case) =
+        Token.ghost_comma, property_of_case_clause mk_body case
+      in head, List.map f tail
     in Js.EObject (reg_of (braces_of properties))
 
 and property_of_case_clause :

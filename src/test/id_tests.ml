@@ -4,7 +4,6 @@ open Ast_unified
 let e_some element =
   e_applied_constructor { constructor = Label.of_string "Some"; element }
 
-
 let get_program = get_program "./contracts/id.mligo"
 
 let first_owner, first_contract =

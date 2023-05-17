@@ -46,10 +46,6 @@ type kwd_from      = lexeme wrap
 type kwd_for       = lexeme wrap
 type kwd_of        = lexeme wrap
 
-(* Keywords of contracts *)
-
-type kwd_contract  = lexeme wrap
-
 (* Symbols *)
 
 type arrow    = lexeme wrap  (* "=>"  *)
@@ -68,7 +64,7 @@ type times      = lexeme wrap  (* "*" *)
 (* Increment & Decrement operators *)
 
 type increment = lexeme wrap (* "++" *)
-type decrement = lexeme wrap (* "--" *) 
+type decrement = lexeme wrap (* "--" *)
 
 (* Ternary operator *)
 
@@ -361,8 +357,6 @@ and expr =
 | EArith    of arith_expr
 | EArray    of (array_item, comma) sepseq brackets reg
 | EAssign   of (expr * operator reg * expr)
-| EPrefix   of prefix_postfix_op reg
-| EPostfix  of prefix_postfix_op reg
 | EBytes    of (lexeme * Hex.t) wrap
 | ECall     of (expr * arguments) reg
 | ECodeInj  of code_inj reg
@@ -373,6 +367,8 @@ and expr =
 | EModA     of expr module_access reg
 | EObject   of object_expr
 | EPar      of expr par reg
+| EPrefix   of prefix_postfix_op reg
+| EPostfix  of prefix_postfix_op reg
 | EProj     of projection reg
 | ESeq      of (expr, comma) nsepseq reg
 | EString   of string_expr
@@ -442,7 +438,8 @@ and for_of = {
 
 and index_kind = [
   `Let   of kwd_let
-| `Const of kwd_const]
+| `Const of kwd_const
+]
 
 and import =
   Import_rename   of import_rename
@@ -523,11 +520,11 @@ and 'a un_op = {
 
 and prefix_postfix_op = {
   update_type : update_type;
-  variable : variable
-} 
+  variable    : variable
+}
 
-and update_type = 
-  Increment of increment 
+and update_type =
+  Increment of increment
 | Decrement of decrement
 
 and comp_expr =

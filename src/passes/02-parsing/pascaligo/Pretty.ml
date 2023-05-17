@@ -19,14 +19,14 @@ open! PPrint
 
 (* UTILITIES *)
 
-type environment = unit
+type state = unit
 
-let default_environment : environment = ()
+let default_state : state = ()
 
 let unroll_D_Attr (attr, decl) =
   let rec aux attrs = function
-    D_Attr { value = (attr, decl); _ } -> aux (attr :: attrs) decl
-  | decl                -> List.rev attrs, decl
+    D_Attr {value = (attr, decl); _} -> aux (attr :: attrs) decl
+  | decl                             -> List.rev attrs, decl
   in aux [attr] decl
 
 let unroll_T_Attr (attr, type_expr) =
