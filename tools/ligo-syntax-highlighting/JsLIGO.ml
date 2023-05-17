@@ -39,15 +39,15 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
-    Name.uppercase_identifier;
-    Name.type_operator;
-    Name.type_name;
-    Name.type_parentheses;
-    Name.type_int;
-    Name.type_variant;
-    Name.type_product;
-    Name.type_binder;
-    "string";
+    Name_ref Name.uppercase_identifier;
+    Name_ref Name.type_operator;
+    Name_ref Name.type_name;
+    Name_ref Name.type_parentheses;
+    Name_ref Name.type_int;
+    Name_ref Name.type_variant;
+    Name_ref Name.type_product;
+    Name_ref Name.type_binder;
+    String_ref;
   ] in
   {
     syntax_name = "JsLIGO";
@@ -84,7 +84,12 @@ let syntax_highlighting =
         {
           emacs    = "\\\"";
           textmate = "\\\"";
-          vim      = "\\\""
+          vim      = "\\\"";
+        };
+        {
+          emacs    = "`";
+          textmate = "`";
+          vim      = "`";
         }
       ];
       comments = {
@@ -115,8 +120,8 @@ let syntax_highlighting =
            catch false negatives. We preferred this for the simplicity of the
            solution for now.
          *)
-        in_line_comments = [Name.attribute];
-        in_block_comments = [Name.attribute];
+        in_line_comments = [Name_ref Name.attribute];
+        in_block_comments = [Name_ref Name.attribute];
         in_strings = [];
       };
       brackets = [
@@ -130,6 +135,7 @@ let syntax_highlighting =
         ("(", ")");
         ("\"", "\"");
         ("'", "'");
+        ("`", "`")
       ];
       surrounding_pairs = [
         ("{", "}");
@@ -137,6 +143,7 @@ let syntax_highlighting =
         ("(", ")");
         ("\"", "\"");
         ("'", "'");
+        ("`", "`");
       ];
       syntax_table = [
         ("*", ". 23");  
@@ -146,18 +153,18 @@ let syntax_highlighting =
     };
     syntax_patterns = [
       (* TODO: Name.lowercase_identifier; *)
-      Name.uppercase_identifier;
-      Name.macro;
-      Name.let_binding;
-      Name.type_definition;
-      Name.control_keywords;
-      Name.numeric_literals;
-      Name.operators;
-      Name.module_alias;
-      Name.module_declaration;
-      Name.type_annotation;
-      Name.type_as;
-      Name.object_or_block;
+      Name_ref Name.uppercase_identifier;
+      Name_ref Name.macro;
+      Name_ref Name.let_binding;
+      Name_ref Name.type_definition;
+      Name_ref Name.control_keywords;
+      Name_ref Name.numeric_literals;
+      Name_ref Name.operators;
+      Name_ref Name.module_alias;
+      Name_ref Name.module_declaration;
+      Name_ref Name.type_annotation;
+      Name_ref Name.type_as;
+      Name_ref Name.object_or_block;
     ];
     repository = [
       {
@@ -256,12 +263,12 @@ let syntax_highlighting =
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
           patterns = [
-            Name.object_property_ctor;
-            Name.object_property_int;
-            Name.object_property_string;
-            Name.object_property;
-            Name.comma;
-            "$self";
+            Name_ref Name.object_property_ctor;
+            Name_ref Name.object_property_int;
+            Name_ref Name.object_property_string;
+            Name_ref Name.object_property;
+            Name_ref Name.comma;
+            Self_ref;
           ];
         }
       };
@@ -274,7 +281,7 @@ let syntax_highlighting =
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
-          patterns = ["$self"];
+          patterns = [Self_ref];
         }
       };
       {
@@ -286,7 +293,7 @@ let syntax_highlighting =
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
-          patterns = ["$self"];
+          patterns = [Self_ref];
         }
       };
       {
@@ -298,7 +305,7 @@ let syntax_highlighting =
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
-          patterns = ["$self"];
+          patterns = [Self_ref];
         }
       };
       {
@@ -310,7 +317,7 @@ let syntax_highlighting =
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
-          patterns = ["$self"];
+          patterns = [Self_ref];
         }
       };
       (* Types *)
@@ -320,7 +327,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.chevron_begin, None)];
           end_ = [(Regexp.chevron_end, None)];
-          patterns = [Name.type_name];
+          patterns = [Name_ref Name.type_name];
         };
       };
       {
@@ -383,7 +390,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.chevron_begin, None)];
           end_ = [(Regexp.chevron_end, None)];
-          patterns = [Name.comma; Name.type_name];
+          patterns = [Name_ref Name.comma; Name_ref Name.type_name];
         }
       };
       (*
@@ -415,7 +422,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.parentheses_begin, None)];
           end_ = [(Regexp.parentheses_end, None)];
-          patterns = Name.type_fun_param :: Name.type_annotation :: Name.comma :: type_core_patterns;
+          patterns = Name_ref Name.type_fun_param :: Name_ref Name.type_annotation :: Name_ref Name.comma :: type_core_patterns;
         }
       };
       {
@@ -437,7 +444,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.brackets_begin, None)];
           end_ = [(Regexp.brackets_end, None)];
-          patterns = Name.comma :: type_core_patterns;
+          patterns = Name_ref Name.comma :: type_core_patterns;
         }
       };
       {
@@ -446,7 +453,11 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
-          patterns = [Name.lowercase_identifier; Name.type_annotation_field; Name.comma];
+          patterns = [
+            Name_ref Name.lowercase_identifier;
+            Name_ref Name.type_annotation_field;
+            Name_ref Name.comma;
+          ];
         }
       };
     ]

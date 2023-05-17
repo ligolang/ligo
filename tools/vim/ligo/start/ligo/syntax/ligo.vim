@@ -10,7 +10,7 @@ syntax match typeint "\<[0-9]+\>" contained
 highlight link typeint Number 
 
 " typeparentheses
-syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
+syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string0 
 
 " typename
 syntax match typename "\<[a-z_][a-zA-Z0-9_]*\>" contained 
@@ -26,20 +26,20 @@ highlight link typeproduct Keyword
 syntax region typeproduct___ start="\[" end="\]" contained contains=lowercaseidentifier,typeannotationfield,semicolon 
 
 " typeannotationfield
-syntax region typeannotationfield matchgroup=typeannotationfield_ start=":" end="\(;\|\]\)\@=" contained contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
+syntax region typeannotationfield matchgroup=typeannotationfield_ start=":" end="\(;\|\]\)\@=" contained contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string0 
 highlight link typeannotationfield_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\(;\|)\|}\|\<is\>\|=\|:=\)\@=" contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\(;\|)\|}\|\<is\>\|=\|:=\)\@=" contains=uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string0 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@=" contains=iskeyword,uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@=" contains=iskeyword,uppercaseidentifier,ofkeyword,typeproduct,typeoperator,typename,typeparentheses,typeint,string0 
 highlight link typedefinition_ Keyword 
 
 " typebinder
 syntax match typebinder "<" nextgroup=typebinder___ skipempty skipwhite
-syntax region typebinder___ start="\([a-zA-Z0-9_,]\|\s\)\+>\@=" end=">" contained contains=typename,typename 
+syntax region typebinder___ start="\([a-zA-Z0-9_,]\|\s\)\+>\@=" end=">" contained contains=typename 
 
 " constorvar
 syntax match constorvar "\<\(const\|var\)\>" 
@@ -95,15 +95,15 @@ syntax match attribute "\[@.*\]"
 highlight link attribute PreProc 
 
 " string
-syntax region string start="\"" end="\"" contains=@Spell 
-highlight link string String 
+syntax region string0 start="\"" end="\"" contains=@Spell 
+highlight link string0 String 
 
 " linecomment
-syntax region linecomment start="\/\/" end="$" containedin=ALLBUT,string,blockcomment contains=@Spell 
+syntax region linecomment start="\/\/" end="$" containedin=ALLBUT,blockcomment,string0 contains=@Spell 
 highlight link linecomment Comment 
 
 " blockcomment
-syntax region blockcomment start="(\*" end="\*)" containedin=ALLBUT,string,linecomment contains=@Spell 
+syntax region blockcomment start="(\*" end="\*)" containedin=ALLBUT,blockcomment,string0 contains=@Spell 
 highlight link blockcomment Comment 
 
 let b:current_syntax = "ligo"
