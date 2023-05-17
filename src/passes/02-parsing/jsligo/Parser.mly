@@ -309,28 +309,28 @@ ternary_expr(expr):
 
 increment_decrement_operators:
   "++" "<ident>" {
-    let region = cover ($1#region) ($2#region)
+    let region = cover $1#region $2#region
     and update_type = Increment $1 in
-    let value  = {update_type; variable=$2} in
-    EPrefix ({region; value})
+    let value = {update_type; variable=$2}
+    in EPrefix {region; value}
   }
 | "--" "<ident>" {
-    let region = cover ($1#region) ($2#region)
+    let region = cover $1#region $2#region
     and update_type = Decrement $1 in
-    let value  = {update_type; variable=$2} in
-    EPrefix ({region; value})
+    let value = {update_type; variable=$2}
+    in EPrefix {region; value}
   }
 | "<ident>" "++" {
-    let region = cover ($1#region) ($2#region)
+    let region = cover $1#region $2#region
     and update_type = Increment $2 in
-    let value  = {update_type; variable=$1} in
-    EPostfix ({region; value})
+    let value = {update_type; variable=$1}
+    in EPostfix {region; value}
   }
 | "<ident>" "--" {
-    let region = cover ($1#region) ($2#region)
+    let region = cover $1#region $2#region
     and update_type = Decrement $2 in
-    let value  = {update_type; variable=$1} in
-    EPostfix ({region; value})
+    let value  = {update_type; variable=$1}
+    in EPostfix {region; value}
   }
 
 (* Expressions *)

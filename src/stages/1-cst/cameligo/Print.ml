@@ -677,19 +677,19 @@ and print_E_For state (node : for_loop reg) =
   let Region.{value; region} = node in
   let {index; bound1; bound2; body; _} = value in
   let children = Tree.[
-      mk_child make_literal index;
-      mk_child print_expr bound1;
-      mk_child print_expr bound2;
-      mk_child print_loop_body body] in
+    mk_child make_literal    index;
+    mk_child print_expr      bound1;
+    mk_child print_expr      bound2;
+    mk_child print_loop_body body] in
   Tree.make ~region state "E_For" children
 
 and print_E_ForIn state (node : for_in_loop reg) =
   let Region.{value; region} = node in
   let {pattern; collection; body; _} = value in
   let children = Tree.[
-      mk_child print_pattern pattern;
-      mk_child print_expr collection;
-      mk_child print_loop_body body] in
+    mk_child print_pattern   pattern;
+    mk_child print_expr      collection;
+    mk_child print_loop_body body] in
   Tree.make ~region state "E_ForIn" children
 
 and print_loop_body state (node : loop_body reg) =
@@ -994,8 +994,8 @@ and print_E_While state (node : while_loop reg) =
   let Region.{value; region} = node in
   let {cond; body; _} = value in
   let children = Tree.[
-      mk_child print_expr cond;
-      mk_child print_loop_body body] in
+    mk_child print_expr cond;
+    mk_child print_loop_body body] in
   Tree.make ~region state "E_While" children
 
 (* PRINTING (client-slide) *)

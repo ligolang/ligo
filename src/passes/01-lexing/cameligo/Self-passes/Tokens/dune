@@ -12,7 +12,8 @@
   ;; LIGO
   lexing_shared
   mh_ml_tokens)
- (modules Token Self))
+ (modules
+    Token Comments Self))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of

@@ -105,23 +105,22 @@ let () =
       let () =
         match cst, Options.jsligo with
           Ok (cst, _), Some file_opt ->
-             let jsligo_cst = JsLIGO.of_cst cst in
-             let doc = JsLIGOPretty.(print default_environment) jsligo_cst in
-             let width =
-               match Terminal_size.get_columns () with
-                 None -> 60
-               | Some c -> c in
-             let buffer = Buffer.create 2000 in
-             let () =
-               PPrint.ToBuffer.pretty 1.0 width buffer doc in
-             let contents = Buffer.contents buffer in (
-             match file_opt with
-               None -> Std.(add_line std.out contents)
-             | Some file ->
-                 let out_chan = Out_channel.open_text file in
-                 Out_channel.output_string out_chan contents;
-                 Out_channel.close out_chan
-           )
+            let jsligo_cst = JsLIGO.of_cst cst in
+            let doc = JsLIGOPretty.(print default_state) jsligo_cst in
+            let width =
+              match Terminal_size.get_columns () with
+                None -> 60
+              | Some c -> c in
+            let buffer = Buffer.create 2000 in
+            let () =
+              PPrint.ToBuffer.pretty 1.0 width buffer doc in
+            let contents = Buffer.contents buffer in (
+              match file_opt with
+                None -> Std.(add_line std.out contents)
+              | Some file ->
+                  let out_chan = Out_channel.open_text file in
+                  Out_channel.output_string out_chan contents;
+                  Out_channel.close out_chan)
         | _ -> () in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in

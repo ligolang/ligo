@@ -35,6 +35,7 @@
   lexing_cameligo
   lexing_shared
   cst_cameligo
+  parsing_shared
   ;; Vendors
   simple-utils
   ParserLib

@@ -13,7 +13,8 @@ module Raw_options = Compiler_options.Raw_options
 let mutate_cst (raw_options : Raw_options.t) source_file seed =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
-      (* let generator = generator_to_variant ~raise raw_options.generator in
+
+    (* let generator = generator_to_variant ~raise raw_options.generator in
       let get_module =
         match generator with
         | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)

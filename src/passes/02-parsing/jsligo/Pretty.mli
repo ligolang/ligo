@@ -1,25 +1,22 @@
 (* A pretty printer for JsLIGO *)
 
-type leading_bar =
-    Always
-  | Only_on_new_line
-  | Avoid
+module CST = Cst_jsligo.CST
+module PrettyComb = Parsing_shared.PrettyComb
 
-type environment =
-  { indent : int
-  ; leading_vbar : leading_bar
-  }
+(* Placement *)
 
-val default_environment : environment
+type state = PrettyComb.state
 
-type cst                = Cst_jsligo.CST.t
-type expr               = Cst_jsligo.CST.expr
-type type_expr          = Cst_jsligo.CST.type_expr
-type pattern            = Cst_jsligo.CST.pattern 
-type toplevel_statement = Cst_jsligo.CST.toplevel_statement 
+val default_state : state
 
-val print                    : environment -> cst -> PPrint.document
-val print_expr               : environment -> expr -> PPrint.document
-val print_type_expr          : environment -> type_expr -> PPrint.document
-val print_pattern            : environment -> pattern -> PPrint.document
-val print_toplevel_statement : environment -> toplevel_statement -> PPrint.document
+type cst                = CST.t
+type expr               = CST.expr
+type type_expr          = CST.type_expr
+type pattern            = CST.pattern
+type toplevel_statement = CST.toplevel_statement
+
+val print                    : state -> cst -> PPrint.document
+val print_expr               : state -> expr -> PPrint.document
+val print_type_expr          : state -> type_expr -> PPrint.document
+val print_pattern            : state -> pattern -> PPrint.document
+val print_toplevel_statement : state -> toplevel_statement -> PPrint.document

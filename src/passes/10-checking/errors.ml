@@ -26,7 +26,7 @@ let pattern_to_string p syntax =
   let p =
     Parsing.Cameligo.pretty_print_pattern
       ~cols:80
-      Parsing_cameligo.Pretty.default_environment
+      Parsing_cameligo.Pretty.default_state
       p
   in
   Buffer.contents p

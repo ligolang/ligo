@@ -23,18 +23,18 @@ module Pipeline = Lexing_shared.Pipeline
 
 module type PRETTY =
   sig
-    type environment
-    val default_environment : environment
+    type state
+    val default_state : state
 
     type cst
     type expr
     type type_expr
     type pattern
 
-    val print           : environment -> cst       -> PPrint.document
-    val print_expr      : environment -> expr      -> PPrint.document
-    val print_type_expr : environment -> type_expr -> PPrint.document
-    val print_pattern   : environment -> pattern   -> PPrint.document
+    val print           : state -> cst       -> PPrint.document
+    val print_expr      : state -> expr      -> PPrint.document
+    val print_type_expr : state -> type_expr -> PPrint.document
+    val print_pattern   : state -> pattern   -> PPrint.document
   end
 
 (* PARSING *)
@@ -172,20 +172,20 @@ module MakePretty (CST    : CST)
   sig
     (* Pretty-print a contract from its CST *)
 
-    val pretty_print : Pretty.environment -> CST.t -> Buffer.t
+    val pretty_print : Pretty.state -> CST.t -> Buffer.t
 
     (* Pretty-print an expression from its CST *)
 
-    val pretty_print_expression : Pretty.environment -> CST.expr -> Buffer.t
+    val pretty_print_expression : Pretty.state -> CST.expr -> Buffer.t
 
     (* Pretty-print a pattern from its CST. The [cols] parameters is
        the witdh measured in columns. If none, the width of the
        terminal is selected. If none, it is set to 60-character
        wide. *)
 
-    val pretty_print_pattern : ?cols:int -> Pretty.environment -> CST.pattern -> Buffer.t
+    val pretty_print_pattern : ?cols:int -> Pretty.state -> CST.pattern -> Buffer.t
 
     (* Pretty-print a type expression from its CST *)
 
-    val pretty_print_type_expr : Pretty.environment -> CST.type_expr -> Buffer.t
+    val pretty_print_type_expr : Pretty.state -> CST.type_expr -> Buffer.t
   end

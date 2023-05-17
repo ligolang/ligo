@@ -69,7 +69,7 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
         range_formatting
           { range_of_decl = Range.of_region <@ Cst_cameligo.CST.declaration_to_region
           ; print_decl =
-              CameLIGO_pretty.print_declaration CameLIGO_pretty.default_environment
+              CameLIGO_pretty.print_declaration CameLIGO_pretty.default_state
           }
           cst.decl
           range
@@ -77,7 +77,7 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
         range_formatting
           { range_of_decl = Range.of_region <@ Cst_pascaligo.CST.region_of_S_Decl
           ; print_decl =
-              PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_environment
+              PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_state
           }
           cst.decl
           range
@@ -85,7 +85,7 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
         range_formatting
           { range_of_decl = Range.of_region <@ Cst_jsligo.CST.toplevel_statement_to_region
           ; print_decl =
-              JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_environment
+              JsLIGO_pretty.print_toplevel_statement JsLIGO_pretty.default_state
           }
           cst.statements
           range
