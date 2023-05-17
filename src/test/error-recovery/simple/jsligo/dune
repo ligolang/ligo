@@ -4,8 +4,13 @@
   (:script ../../test.sh)
   (glob_files *.jsligo)
   (glob_files original/*.jsligo)
-   ../../../../passes/02-parsing/jsligo/ParserMain.exe)
+  ../../../../passes/02-parsing/jsligo/ParserMain.exe)
  (action
   (progn
-   (run bash %{script} --dialect=jsligo --test-type=simple --dune-workspace=%{workspace_root})
+   (run
+    bash
+    %{script}
+    --dialect=jsligo
+    --test-type=simple
+    --dune-workspace=%{workspace_root})
    (diff? results.csv.expected results.csv))))

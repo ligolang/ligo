@@ -7,5 +7,10 @@
   (:parser ../../../../passes/02-parsing/jsligo/ParserMain.exe))
  (action
   (progn
-   (run bash %{script} --dialect=jsligo --test-type=fuzzing --dune-workspace=%{workspace_root})
+   (run
+    bash
+    %{script}
+    --dialect=jsligo
+    --test-type=fuzzing
+    --dune-workspace=%{workspace_root})
    (diff? results.csv.expected results.csv))))

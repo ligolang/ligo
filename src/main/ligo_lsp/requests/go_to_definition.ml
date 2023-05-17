@@ -2,8 +2,7 @@ open Handler
 open Lsp_helpers
 
 let get_definition : Position.t -> DocumentUri.t -> Scopes.def list -> Scopes.def option =
-  fun pos uri definitions ->
-  List.find ~f:(Def.is_reference pos uri) definitions
+ fun pos uri definitions -> List.find ~f:(Def.is_reference pos uri) definitions
 
 
 let on_req_definition : Position.t -> DocumentUri.t -> Locations.t option Handler.t =

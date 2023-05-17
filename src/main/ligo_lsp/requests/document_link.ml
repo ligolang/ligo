@@ -40,21 +40,16 @@ let extract_link_from_directive ~(relative_to_dir : string)
     Option.some @@ DocumentLink.create ~range ~target ()
   | PP_Import d ->
     let range = Range.of_region d#file_path.region
-    and target = Filename.concat relative_to_dir d#file_path.value
-    in
-    let target =
-      if Sys.unix then target else
-        target
-        |> Lsp_helpers.Path.normalise
-    in
+    and target = Filename.concat relative_to_dir d#file_path.value in
+    let target = if Sys.unix then target else target |> Lsp_helpers.Path.normalise in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None
 
 
 let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option handler =
   let path =
-    if Sys.unix then
-      DocumentUri.to_path uri
+    if Sys.unix
+    then DocumentUri.to_path uri
     else
       DocumentUri.to_path uri
       |> Lsp_helpers.Path.normalise_backslashes

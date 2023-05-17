@@ -19,8 +19,12 @@ let run_ligo args =
   let result = Cli.run ~argv () in
   result
 
+
 (* Not sure which library in the stack is erroneously creating such large trails of slashes *)
-let replace_extraneous_slashes = Str.global_replace (Str.regexp "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\") "/"
+let replace_extraneous_slashes =
+  Str.global_replace
+    (Str.regexp "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
+    "/"
 
 
 let run_ligo_good args =

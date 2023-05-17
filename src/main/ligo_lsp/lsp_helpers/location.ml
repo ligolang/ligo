@@ -10,9 +10,6 @@ let of_region : Region.t -> t =
   let uri =
     if Sys.unix
     then Lsp.Types.DocumentUri.of_path region#file
-    else
-      region#file
-      |> Path.normalise
-      |> Lsp.Types.DocumentUri.of_path
+    else region#file |> Path.normalise |> Lsp.Types.DocumentUri.of_path
   in
   create ~uri ~range:(Range.of_region region)

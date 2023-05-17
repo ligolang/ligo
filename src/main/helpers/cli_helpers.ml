@@ -185,10 +185,10 @@ let makeCommand cmd =
         (fun path ->
           let cmd_p = Filename.concat path (sprintf "%s.cmd" cmd) in
           let exe_p = Filename.concat path (sprintf "%s.exe" cmd) in
-          if Sys.file_exists cmd_p then
-            Some cmd_p
-          else if Sys.file_exists exe_p then
-            Some exe_p
+          if Sys.file_exists cmd_p
+          then Some cmd_p
+          else if Sys.file_exists exe_p
+          then Some exe_p
           else None)
         paths
     in

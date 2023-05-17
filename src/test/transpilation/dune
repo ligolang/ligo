@@ -4,7 +4,10 @@
  (targets all_the_things.mligo_output)
  (action
   (ignore-stdout
-   (run bash -c "../../bin/runligo.exe print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
+   (run
+    bash
+    -c
+    "../../bin/runligo.exe print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
  (deps ../../bin/runligo.exe all_the_things.mligo))
 
 (rule
@@ -50,9 +53,10 @@
  (action
   (ignore-stdout
    ; We remove Carriage Returns (CR) from the output for Windows
-   (run bash
-        -c
-        "../../bin/runligo.exe print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
+   (run
+    bash
+    -c
+    "../../bin/runligo.exe print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
  (deps ../../bin/runligo.exe all_the_things.mligo_output))
 
 (rule

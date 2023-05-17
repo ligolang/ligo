@@ -117,7 +117,6 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
       mk_region region :: sepseq_concat_map value.elements ~f:expr
     | E_RevApp { value; _ } -> bin_op value
     | E_While { value; region } -> mk_region region :: while_loop value
-
   and match_expr value = expr value.subject @ clauses value.clauses
   and clauses { value; _ } = nsepseq_concat_map value ~f:match_clause
   and match_clause { value; region } =
@@ -197,7 +196,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   and for_loop value = expr value.bound1 @ expr value.bound2 @ loop_body value.body
   and for_in_loop value =
     pattern value.pattern @ expr value.collection @ loop_body value.body
-  and loop_body { value ; _ } =
+  and loop_body { value; _ } =
     Option.value_map ~f:(nsepseq_concat_map ~f:expr) ~default:[] value.seq_expr
   in
   Some (declaration_nseq cst.decl)

@@ -29,7 +29,9 @@ module Locations = struct
   include Lsp.Types.Locations
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq x y = Yojson.Safe.equal (yojson_of_t x) (yojson_of_t y) (* Because Caml.(=) didn't work *)
+  let eq x y = Yojson.Safe.equal (yojson_of_t x) (yojson_of_t y)
+
+  (* Because Caml.(=) didn't work *)
   let testable = Alcotest.testable pp eq
 end
 

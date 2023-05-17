@@ -22,7 +22,7 @@ let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool
 (* FIXME: In case of failure, the printed format is pretty ugly and gets repeated twice. *)
 let should_match_list
     ?(msg : string option)
-    ?(extras_optional: bool = false)
+    ?(extras_optional : bool = false)
     (testable_a : 'a Alcotest.testable)
     ~(actual : 'a list)
     ~(expected : 'a list)
