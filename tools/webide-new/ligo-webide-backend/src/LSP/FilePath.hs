@@ -17,7 +17,10 @@ import Config (ConnectionConfig(..), ServerConfig(..))
 type Uri = Text
 
 uriToFilePath :: Uri -> FilePath
-uriToFilePath = Text.unpack . Text.drop 7
+uriToFilePath uri =
+  if Text.take 7 uri == "file://"
+  then Text.unpack . Text.drop 7 $ uri
+  else Text.unpack uri
 
 filePathToUri :: FilePath -> Uri
 filePathToUri fp = Text.pack ("file://" <> fp)
