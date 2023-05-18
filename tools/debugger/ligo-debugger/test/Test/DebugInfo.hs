@@ -84,21 +84,19 @@ test_SourceMapper = testGroup "Reading source mapper"
             filter (hasn't (_1 . _Empty)) $
             collectContractMetas parsedContracts contract
 
-      let unitIntTuple = LigoTypeResolved
-            ( mkPairType
-                (mkSimpleConstantType "Unit")
-                (mkSimpleConstantType "Int")
-            )
+      let unitIntTuple' = mkPairType
+            (mkSimpleConstantType "Unit")
+            (mkSimpleConstantType "Int")
 
-      let mainType = LigoTypeResolved
-            ( mkPairType
-                (mkSimpleConstantType "Unit")
-                (mkSimpleConstantType "Int")
-              `mkArrowType`
-              mkPairType
-                (mkConstantType "List" [mkSimpleConstantType "operation"])
-                (mkSimpleConstantType "Int")
-            )
+      let unitIntTuple = LigoTypeResolved unitIntTuple'
+
+      let operationList' = mkConstantType "List" [mkSimpleConstantType "operation"]
+      let operationList = LigoTypeResolved operationList'
+
+      let resultType' = mkPairType operationList' intType'
+      let resultType = LigoTypeResolved resultType'
+
+      let mainType = LigoTypeResolved $ unitIntTuple' ~> resultType'
 
       nonEmptyMetasAndInstrs
         @?=
@@ -128,10 +126,12 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         , LigoMereLocInfo
             (Range (LigoPosition 2 12) (LigoPosition 2 18) file)
+            intType
             ?- SomeInstr (T.ADD @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
             (Range (LigoPosition 2 12) (LigoPosition 2 18) file)
+            intType
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.PUSH @'T.TInt (T.VInt 42))
@@ -145,10 +145,12 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         , LigoMereLocInfo
             (Range (LigoPosition 3 12) (LigoPosition 3 19) file)
+            intType
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
             (Range (LigoPosition 3 12) (LigoPosition 3 19) file)
+            intType
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.DUPN @_ @_ @_ @'T.TInt $ toPeanoNatural' @2)
@@ -158,10 +160,12 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         , LigoMereLocInfo
             (Range (LigoPosition 3 12) (LigoPosition 3 23) file)
+            intType
             ?- SomeInstr (T.MUL @'T.TInt @'T.TInt)
 
         , LigoMereLocInfo
             (Range (LigoPosition 3 12) (LigoPosition 3 23) file)
+            intType
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested (T.PUSH @'T.TInt (T.VInt 2))
@@ -180,18 +184,22 @@ test_SourceMapper = testGroup "Reading source mapper"
 
         , LigoMereLocInfo
             (Range (LigoPosition 4 4) (LigoPosition 4 25) file)
+            operationList
             ?- SomeInstr (T.NIL @'T.TOperation)
 
         , LigoMereLocInfo
             (Range (LigoPosition 4 4) (LigoPosition 4 25) file)
+            operationList
             ?- SomeInstr (T.Nested $ T.NIL @'T.TOperation)
 
         , LigoMereLocInfo
             (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
+            resultType
             ?- SomeInstr T.PAIR
 
         , LigoMereLocInfo
             (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
+            resultType
             ?- SomeInstr
                 (    T.Nested
                 $    T.Nested T.Nop

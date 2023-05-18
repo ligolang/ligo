@@ -31,13 +31,23 @@ test_Compilation = testGroup "Getting debug info"
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = Range (LigoPosition a b) (LigoPosition c d) file
       res <- compileLigoContractDebug "main" file
+
+      let mainType = LigoTypeResolved $
+            mkPairType
+              unitType'
+              intType'
+            ~>
+            mkPairType
+              (mkConstantType "List" [mkSimpleConstantType "Operation"])
+              intType'
+
       take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
-        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) mainType ]
+        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) mainType ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]

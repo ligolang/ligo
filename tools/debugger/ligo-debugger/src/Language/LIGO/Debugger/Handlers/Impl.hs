@@ -13,7 +13,7 @@ import Debug qualified
 import Unsafe qualified
 
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
-import Control.Monad.STM.Class (liftSTM)
+import Control.Monad.STM.Class (MonadSTM, liftSTM)
 import Data.Char (toLower)
 import Data.Default (def)
 import Data.HashMap.Strict qualified as HM
@@ -349,27 +349,20 @@ instance HasSpecificMessages LIGO where
         LigoStackEntry (LigoExposedStackEntry mDecl typ) <- pure desc
         let varName = maybe (pretty unknownVariable) pretty mDecl
 
-        whenJust (tryDecompilePrimitive michVal) \dec -> do
-          DV.putComputed
-            valConvertManager
-            (PreLigoConvertInfo michVal typ)
-            (LigoValue typ dec)
-
-        mLigoVal <- DV.computeSTM valConvertManager $
-          PreLigoConvertInfo michVal typ
-        let ligoVal = maybe ToBeComputed id mLigoVal
+        ligoVal <- decompileValue (PreLigoConvertInfo michVal typ) valConvertManager
         return (varName :: Text, ligoVal)
 
-    let builder =
-          case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just value))
-              -- We want to show $it variable only in the top-most stack frame.
-              | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
-                idx <- createVariables lang ligoVals
-                -- TODO: get the type of "$it" value and show it ligo-formatted
-                itVar <- buildVariable lang (MichValue (LigoType Nothing) value) "$it"
-                insertToIndex idx [itVar]
-            _ -> createVariables lang ligoVals
+    builder <-
+      case isStatus snap of
+        InterpretRunning (EventExpressionEvaluated typ (Just value))
+          -- We want to show $it variable only in the top-most stack frame.
+          | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
+            itVal <- decompileValue (PreLigoConvertInfo value typ) valConvertManager
+            pure do
+              idx <- createVariables lang ligoVals
+              itVar <- buildVariable lang itVal "$it"
+              insertToIndex idx [itVar]
+        _ -> pure $ createVariables lang ligoVals
 
     let (varReference, variables) = runBuilder builder
 
@@ -514,6 +507,21 @@ instance HasSpecificMessages LIGO where
 -- | Id of the top (currently active) stack frame.
 topFrameId :: Int
 topFrameId = 1
+
+decompileValue
+  :: (MonadSTM m, Monad m)
+  => PreLigoConvertInfo
+  -> Manager PreLigoConvertInfo LigoOrMichValue
+  -> m LigoOrMichValue
+decompileValue convertInfo@(PreLigoConvertInfo val typ) manager = do
+  whenJust (tryDecompilePrimitive val) \dec -> do
+    DV.putComputed
+      manager
+      convertInfo
+      (LigoValue typ dec)
+
+  mLigoVal <- DV.computeSTM manager convertInfo
+  pure $ fromMaybe ToBeComputed mLigoVal
 
 handleInitializeLogger :: LigoInitializeLoggerRequest -> RIO LIGO ()
 handleInitializeLogger LigoInitializeLoggerRequest {..} = do
