@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nShow `$it` variable in the debugger LIGO formatted. Before it was shown in the Michelson one.\\n\\n"
+merge_request: '2598'
+title: "[#1772] Show `$it` variable LIGO formatted"
+type: added
+            
