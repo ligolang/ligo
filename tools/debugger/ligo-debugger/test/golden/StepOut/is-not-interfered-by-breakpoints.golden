@@ -28,7 +28,7 @@ InterpretSnapshot:
 
 Stepping out, now should appear outside of the method despite the breakpoint
 InterpretSnapshot:
-  isStatus: running / expression evaluated (201)
+  isStatus: running / expression evaluated (201 : int)
   isStackFrames:
     [StackFrame:
       sfName: main

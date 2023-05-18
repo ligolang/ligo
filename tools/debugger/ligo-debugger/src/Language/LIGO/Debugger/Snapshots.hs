@@ -43,7 +43,7 @@ module Language.LIGO.Debugger.Snapshots
 import Control.Lens
   (At (at), Each (each), Ixed (ix), Zoom (zoom), lens, makeLensesWith, makePrisms, (%=), (.=),
   (<<.=), (?=))
-import Control.Lens.Prism (Prism', _Just)
+import Control.Lens.Prism (_Just)
 import Control.Monad.Except (MonadError, throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
@@ -80,7 +80,7 @@ import Morley.Util.Lens (postfixLFields)
 
 import Duplo (leq)
 
-import Language.LIGO.AST (LIGO)
+import Language.LIGO.AST (LIGO, Lang (Caml))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
@@ -173,7 +173,7 @@ data InterpretEvent
     --
     -- Normally, this always contains some value; 'Nothing' means that
     -- something went wrong (but we don't want to crash the entire debugger).
-  | EventExpressionEvaluated (Maybe SomeValue)
+  | EventExpressionEvaluated LigoType (Maybe SomeValue)
 
   deriving stock (Show, Eq)
 
@@ -185,8 +185,8 @@ instance Buildable InterpretEvent where
       "upon expression"
     EventExpressionPreview FunctionCall ->
       "upon function call"
-    EventExpressionEvaluated mval ->
-      "expression evaluated (" <> maybe "-" build mval <> ")"
+    EventExpressionEvaluated typ mval ->
+      "expression evaluated (" <> maybe "-" [int|m|#{id} : #{const $ buildType Caml typ}|] mval <> ")"
 
 -- | Information about execution state at a point where the debugger can
 -- potentially stop.
@@ -310,8 +310,8 @@ instance (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
 makePrisms ''InterpretStatus
 makePrisms ''InterpretEvent
 
-statusExpressionEvaluatedP :: Prism' InterpretStatus SomeValue
-statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _Just
+statusExpressionEvaluatedP :: Traversal' InterpretStatus SomeValue
+statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _2 . _Just
 
 logMessage :: forall m. (Monad m) => String -> CollectingEvalOp m ()
 logMessage str = do
@@ -419,7 +419,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           unlessM (HS.member loc <$> use csRecordedExpressionEvaluatedRangesL) do
             unless (shouldIgnoreMeta loc instr contracts) do
               csRecordedExpressionEvaluatedRangesL %= HS.insert loc
-              recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
+              recordSnapshot loc (EventExpressionEvaluated liiSourceType evaluatedVal)
 
         pure newStack
       Nothing -> pure newStack
@@ -691,7 +691,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
                   do csLastRecordedSnapshot endState
 
               case isStatus lastSnap of
-                InterpretRunning (EventExpressionEvaluated (Just val)) -> do
+                InterpretRunning (EventExpressionEvaluated _ (Just val)) -> do
                   let stackItemWithOpsAndStorage = StackItem
                         { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType opsAndStorageTypeMb)
                         , siValue = val

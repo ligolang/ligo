@@ -92,7 +92,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (101)
+  isStatus: running / expression evaluated (101 : int)
   isStackFrames:
     [StackFrame:
       sfName: f
@@ -173,7 +173,7 @@ InterpretSnapshot:
     ]
 
 InterpretSnapshot:
-  isStatus: running / expression evaluated (201)
+  isStatus: running / expression evaluated (201 : int)
   isStackFrames:
     [StackFrame:
       sfName: main

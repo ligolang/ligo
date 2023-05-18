@@ -126,8 +126,13 @@ test_Snapshots = testGroup "Snapshots collection"
                 )
               ]
             contractOut = StkEl $ T.toVal ([] :: [T.Operation], 42 :: Integer)
+
+            operationListType' = mkConstantType "List" [mkSimpleConstantType "Operation"]
+            operationListType = LigoTypeResolved operationListType'
+            opsAndStorageType = LigoTypeResolved $
+              mkPairType operationListType' intType'
           in
-          [ ( InterpretRunning . EventExpressionEvaluated . Just $
+          [ ( InterpretRunning . EventExpressionEvaluated intType . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( Range (LigoPosition 2 12) (LigoPosition 2 18) file
@@ -156,7 +161,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
+          , ( InterpretRunning . EventExpressionEvaluated operationListType . Just $
                 SomeLorentzValue ([] :: [T.Operation])
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 25) file
@@ -164,7 +169,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
+          , ( InterpretRunning . EventExpressionEvaluated opsAndStorageType . Just $
                 SomeLorentzValue ([] :: [T.Operation], 42 :: Integer)
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
