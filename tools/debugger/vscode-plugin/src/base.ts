@@ -29,10 +29,10 @@ export function isDefined<T>(x: T | undefined | null): x is T {
   return x !== null && x !== undefined
 }
 
-// Extract the name of a pseudo-command (like `{AskOnStart}`).
+// Extract the name of a pseudo-command (like `(*@AskOnStart@*)`).
 export function getCommand(str: Maybe<string>): Maybe<string> {
   if (isDefined(str)) {
-    const matches = str.match(/^\{(.*)\}$/);
+    const matches = str.match(/^\(\*\@(.*)\@\*\)$/);
     if (isDefined(matches)) {
       return matches[1];
     }

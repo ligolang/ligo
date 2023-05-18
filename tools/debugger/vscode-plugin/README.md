@@ -59,9 +59,9 @@ Also some notes:
 
 ## Running the debugger
 
-You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `{AskOnStart}`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
+You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `(*@AskOnStart@*)`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
 ```json
-"entrypoint": "{AskOnStart}" <-- will ask you to choose an entrypoint via quickpick
+"entrypoint": "(*@AskOnStart@*)" <-- will ask you to choose an entrypoint via quickpick
 ```
 ```json
 "entrypoint": "main_1" <-- will use "main_1" as entrypoint
@@ -85,7 +85,7 @@ It is possible to hardcode a concrete value both in LIGO and Michelson. You just
 ...
 ```
 
-However, usually you might prefer using the auto-filled values like `{AskOnStart}` that would request the actual value upon starting a debug session.
+However, usually you might prefer using the auto-filled values like `(*@AskOnStart@*)` that would request the actual value upon starting a debug session.
 
 In both cases you can use complex expressions, e.g. `{ a = 1; b = 2 }` for record definition or even `let x = 9 in x * x + 5` in Cameligo.
 The dialect of the passed expressions must match the dialect of the contract.
@@ -138,12 +138,12 @@ Use `Ctrl + F10` (`Cmd + F10` on Mac) to switch between the last and currently s
 
 ## FAQ
 
-### I've set `"entrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.
+### I've set `"entrypoint": "(*@AskOnStart@*)"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.
 
 We automatically detect the list of entrypoints in the file, and in case it contains only one entrypoint, we skip the selection stage.
 Make sure that your function is a valid entrypoint.
 
-### I've set `"michelsonEntrypoint": "{AskOnStart}"` in the configuration, and I'm still not asked for a Michelson entrypoint when starting a debug session.
+### I've set `"michelsonEntrypoint": "(*@AskOnStart@*)"` in the configuration, and I'm still not asked for a Michelson entrypoint when starting a debug session.
 
 We automatically detect the list of entrypoints in the contract, and in case it contains only one entrypoint, we skip the selection stage.
 
