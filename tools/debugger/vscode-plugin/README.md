@@ -164,3 +164,6 @@ It's okay. At this moment debugger doesn't support polymorphic types in the vari
 ### Debugger says that my contract has an infinite loop but it doesn't
 
 By default the debugger will do 1000 steps and after that will assume that a contract has an infinite loop. You can change the max steps value in the settings. By _step_ we mean step in `expression (pre + post)` granularity.
+
+### From some moment I see `%field% {AskOnStart} does not exist` error
+We changed command braces from `{` and `}` to `(*@` and `@*)` because the previous ones were conflicting with LIGO record notation. So, now you need to write `(*@AskOnStart@*)` instead of `{AskOnStart}`.
