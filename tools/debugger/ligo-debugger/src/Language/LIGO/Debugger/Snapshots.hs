@@ -237,9 +237,6 @@ data CollectorState m = CollectorState
     -- ^ Ranges of recorded expression snapshots.
     -- Note that these ranges refer only to snapshots, that
     -- have @EventExpressionPreview@ event.
-  , csRecordedExpressionEvaluatedRanges :: HashSet Range
-    -- ^ Ranges of recorded expression snapshots that have
-    -- @EventExpressionEvaluated@ event.
   , csLoggingFunction :: String -> m ()
     -- ^ Function for logging some useful debugging info.
   , csMainFunctionName :: Name 'Unique
@@ -256,6 +253,13 @@ data CollectorState m = CollectorState
   , csCheckStepsAmount :: Bool
     -- ^ We have a max steps field in the settings. If it's blank
     -- then we perform an infinite amount of steps.
+  , csRecordedFirstTime :: Bool
+    -- ^ A flag which indicates whether we recorded a location
+    -- with @EventExpressionPreview@/@EventFacedStatement@ event
+    -- for a first time.
+    --
+    -- We need it because we want to record a paired @EventExpressionEvaluated@
+    -- for the same location.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -342,7 +346,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
   preExecutedStage embeddedMetaMb inner stack
   newStack <- surroundExecutionInner embeddedMetaMb (runInstrImpl runInstrCollect) inner stack
-  postExecutedStage embeddedMetaMb inner newStack
+  postExecutedStage embeddedMetaMb inner newStack <* (csRecordedFirstTimeL .= False)
   where
     michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
     michFailureHandler err = use csLastRangeMbL >>= \case
@@ -369,16 +373,19 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           contracts <- use csParsedFilesL
           lastLoc <- use csLastRangeMbL
 
-          unlessM (HS.member loc <$> use csRecordedExpressionRangesL) do
+          recordedExpressionLocs <- use csRecordedExpressionRangesL
+
+          unless (shouldIgnoreMeta loc instr contracts || HS.member loc recordedExpressionLocs) do
+            csRecordedExpressionRangesL %= HS.insert loc
+            csRecordedFirstTimeL .= True
+
             -- There is no reason to record a snapshot with @EventExpressionPreview@
             -- event if we already recorded a @statement@ snapshot with the same location.
-            unless (shouldIgnoreMeta loc instr contracts || lastLoc == Just loc) do
+            unless (lastLoc == Just loc) do
               let eventExpressionReason =
                     if isLocationForFunctionCall loc contracts
                     then FunctionCall
                     else GeneralExpression
-
-              csRecordedExpressionRangesL %= HS.insert loc
 
               recordSnapshot loc (EventExpressionPreview eventExpressionReason)
 
@@ -416,9 +423,8 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           contracts <- use csParsedFilesL
 
-          unlessM (HS.member loc <$> use csRecordedExpressionEvaluatedRangesL) do
+          whenM (use csRecordedFirstTimeL) do
             unless (shouldIgnoreMeta loc instr contracts) do
-              csRecordedExpressionEvaluatedRangesL %= HS.insert loc
               recordSnapshot loc (EventExpressionEvaluated liiSourceType evaluatedVal)
 
         pure newStack
@@ -426,23 +432,27 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
     -- When we want to go inside a function call or loop-like thing (e,g, @for-of@ or @while@)
     -- we need to clean up remembered locations and after interpreting restore them.
-    wrapExecOrLoops :: Instr i o -> CollectingEvalOp m (Rec StkEl o) -> CollectingEvalOp m (Rec StkEl o)
-    wrapExecOrLoops instr act
+    wrapAction :: Instr i o -> CollectingEvalOp m (Rec StkEl o) -> CollectingEvalOp m (Rec StkEl o)
+    wrapAction instr act
       | isExecOrLoopLike instr = do
           -- <<.= sets a variable and returns its previous value (yeah, it's a bit confusing)
           oldExprRanges <- csRecordedExpressionRangesL <<.= HS.empty
-          oldExprEvaluatedRanges <- csRecordedExpressionEvaluatedRangesL <<.= HS.empty
           oldStatementRanges <- csRecordedStatementRangesL <<.= HS.empty
 
-          stack <- act
+          stack <- wrappedAct
 
           csRecordedExpressionRangesL .= oldExprRanges
-          csRecordedExpressionEvaluatedRangesL .= oldExprEvaluatedRanges
           csRecordedStatementRangesL .= oldStatementRanges
 
           pure stack
-      | otherwise = act
+      | otherwise = wrappedAct
       where
+        wrappedAct = do
+          oldRecordedFirstTime <- csRecordedFirstTimeL <<.= False
+          stack <- act
+          csRecordedFirstTimeL .= oldRecordedFirstTime
+          pure stack
+
         isExecOrLoopLike = \case
           EXEC{} -> True
           LOOP{} -> True
@@ -458,7 +468,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       -> Instr i o
       -> Rec StkEl i
       -> CollectingEvalOp m (Rec StkEl o)
-    surroundExecutionInner _embeddedMetaMb runInstr instr stack = wrapExecOrLoops instr $
+    surroundExecutionInner _embeddedMetaMb runInstr instr stack = wrapAction instr $
       case (instr, stack) of
 
         -- We're on a way to execute a function.
@@ -772,12 +782,12 @@ collectInterpretSnapshots
         , csParsedFiles = parsedContracts
         , csRecordedStatementRanges = HS.empty
         , csRecordedExpressionRanges = HS.empty
-        , csRecordedExpressionEvaluatedRanges = HS.empty
         , csLoggingFunction = logger
         , csMainFunctionName = Name entrypoint
         , csLastRangeMb = Nothing
         , csLambdaLocs = lambdaLocs
         , csCheckStepsAmount = trackMaxSteps
+        , csRecordedFirstTime = False
         }
 
       -- Strip duplicate locations.

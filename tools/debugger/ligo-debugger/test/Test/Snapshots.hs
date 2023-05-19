@@ -46,6 +46,7 @@ import Lorentz.Value (mt)
 import Language.LIGO.AST (scanContracts)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
@@ -1962,6 +1963,41 @@ test_Snapshots = testGroup "Snapshots collection"
             <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
         expected @?= actual
+
+  , testCaseSteps "Check evaluated record in LIGO format" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "record-evaluated.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        void $ moveTill Forward $
+          isAtLine 1
+
+        liftIO $ step "Skip preview, go to evaluated"
+        void $ move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning (EventExpressionEvaluated typ (Just value))
+            } -> do
+              let expected =
+                    [ LVRecord $ HM.fromList
+                        [ ("a", LVCt $ LCInt "42")
+                        , ("b", LVCt $ LCNat "0")
+                        , ("c", LVCt $ LCString "!")
+                        ]
+                    ]
+
+              liftIO $ step "Decompile evaluated value"
+              actual <-
+                liftIO (convertMichelsonValuesToLigo dummyLoggingFunction [PreLigoConvertInfo value typ])
+                  <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
+
+              expected @?= actual
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.
