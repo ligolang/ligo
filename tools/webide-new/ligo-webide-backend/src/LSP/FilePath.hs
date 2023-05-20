@@ -37,7 +37,7 @@ getConnectionPrefix :: ConnectionM FilePath
 getConnectionPrefix = do
   workspacePrefix <- Text.unpack <$> asks (scLSPWorkspacePrefix . ccServerConfig)
   connectionId <- asks ccId
-  pure $ workspacePrefix <> "/connection" <> show connectionId <> "/"
+  pure $ normalise $ workspacePrefix <> "/connection" <> show connectionId <> "/"
 
 modifyUri :: (Uri -> Uri) -> Aeson.Value -> Aeson.Value
 modifyUri f = \case
