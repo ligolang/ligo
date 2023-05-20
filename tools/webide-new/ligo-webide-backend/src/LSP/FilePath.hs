@@ -12,12 +12,15 @@ import Data.Text qualified as Text
 import System.FilePath (normalise)
 
 import Common (ConnectionM)
-import Config (ServerConfig (..), ConnectionConfig (..))
+import Config (ConnectionConfig(..), ServerConfig(..))
 
 type Uri = Text
 
 uriToFilePath :: Uri -> FilePath
-uriToFilePath = Text.unpack . Text.drop 7
+uriToFilePath uri =
+  if Text.take 7 uri == "file://"
+  then Text.unpack . Text.drop 7 $ uri
+  else Text.unpack uri
 
 filePathToUri :: FilePath -> Uri
 filePathToUri fp = Text.pack ("file://" <> fp)
@@ -37,18 +40,20 @@ getConnectionPrefix :: ConnectionM FilePath
 getConnectionPrefix = do
   workspacePrefix <- Text.unpack <$> asks (scLSPWorkspacePrefix . ccServerConfig)
   connectionId <- asks ccId
-  pure $ normalise $ workspacePrefix <> "/connection" <> show connectionId <> "/"
+  pure $ normalise $ workspacePrefix <> "connection" <> show connectionId <> "/"
 
 modifyUri :: (Uri -> Uri) -> Aeson.Value -> Aeson.Value
 modifyUri f = \case
   Aeson.Object keyMap ->
     keyMap
     & fmap (modifyUri f)
-    & updateKeyMap "uri" (\case
-       Aeson.String u -> Aeson.String (f u)
-       x -> x
-      )
+    & updateKeyMap "uri" keyMapUpdater
+    & updateKeyMap "target" keyMapUpdater
     & Aeson.Object
+    where
+      keyMapUpdater = \case
+        Aeson.String u -> Aeson.String (f u)
+        x -> x
   Aeson.Array arr -> Aeson.Array (fmap (modifyUri f) arr)
   x -> x
 

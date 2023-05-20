@@ -5,10 +5,11 @@ import Control.Lens (to)
 import Data.Aeson qualified as Aeson
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as BSL
+import Data.Map qualified as Map
 import Data.Text qualified as Text
 import Data.Text.Encoding qualified as Text (decodeUtf8, encodeUtf8)
 import Data.Text.Lazy.Builder qualified as Text (fromText)
-import Katip (LogStr(..), Severity(DebugS), logFM)
+import Katip (LogStr(..), Severity(DebugS, WarningS), logFM)
 import Language.LSP.Types (Method(..), NotificationMessage, Uri(..))
 import Language.LSP.Types.Lens (params, text, textDocument, uri)
 import Network.WebSockets (Connection)
@@ -22,17 +23,35 @@ import Config (ConnectionConfig(..), ServerConfig(..))
 import LSP.FilePath (modifyUri)
 
 receiveData :: Int -> Connection -> Handle -> ConnectionM ()
-receiveData clientId conn stdinProducer = forever $ do
+receiveData clientId conn stdinProducer = do
   workspacePrefix <- asks (scLSPWorkspacePrefix . ccServerConfig)
   let prefix = workspacePrefix <> "/connection" <> show clientId <> "/"
-  msg <- liftIO (WS.receiveData conn)
-  logFM DebugS ("Received: " <> LogStr (Text.fromText (prettyJSON msg)))
-  let prefixed = addPrefix prefix msg
-  createMissingFiles prefixed
-  logFM DebugS ("created")
-  liftIO (hPutStr stdinProducer (Text.decodeUtf8 (addContentLength prefixed)))
-  liftIO (hFlush stdinProducer)
-  logFM DebugS ("flushed")
+  receiveFileTree prefix conn
+  forever $ do
+    msg <- liftIO (WS.receiveData conn)
+    logFM DebugS ("Received: " <> LogStr (Text.fromText (prettyJSON msg)))
+    let prefixed = addPrefix prefix msg
+    createMissingFiles prefixed
+    logFM DebugS "Created missing files"
+    liftIO (hPutStr stdinProducer (Text.decodeUtf8 (addContentLength prefixed)))
+    liftIO (hFlush stdinProducer)
+
+receiveFileTree :: Text -> Connection -> ConnectionM ()
+receiveFileTree prefix conn =
+  let action = do
+        logFM DebugS "Receiving file tree"
+        count :: Int <- MaybeT (Aeson.decodeStrict <$> liftIO (WS.receiveData conn))
+        forM_ [(1::Int) .. count] $ \_ -> do
+          fileInfo :: Map Text Text <-
+            MaybeT (Aeson.decodeStrict <$> liftIO (WS.receiveData conn))
+          path <- hoistMaybe (Map.lookup "path" fileInfo)
+          content <- hoistMaybe (Map.lookup "content" fileInfo)
+          logFM DebugS (LogStr . Text.fromText $ path)
+          lift $ writeFileWithParent (prefix <> path) content
+        logFM DebugS "Finished receiving file tree"
+   in runMaybeT action >>= \case
+        Nothing -> logFM WarningS "Couldn't decode initial filetree"
+        Just () -> pure ()
 
 prettyJSON :: BS.ByteString -> Text
 prettyJSON bs =
@@ -62,7 +81,7 @@ addPrefixText prefix txt =
   then "file://" <> prefix <> Text.drop 7 txt
   else error $ "couldn't parse " <> txt
 
-createMissingFiles :: BS.ByteString -> ConnectionM BS.ByteString
+createMissingFiles :: BS.ByteString -> ConnectionM ()
 createMissingFiles bs =
   case bs of
     (Aeson.decodeStrict @(NotificationMessage 'TextDocumentDidOpen) -> Just rm) -> do
@@ -71,8 +90,12 @@ createMissingFiles bs =
           contents = rm ^. (params . textDocument . text)
       liftIO (createDirectoryIfMissing True (Text.unpack (getDir filename)))
       writeFile (Text.unpack filename) contents
-      pure bs
-    _ -> pure bs
+    _ -> pure ()
+
+writeFileWithParent :: Text -> Text -> ConnectionM ()
+writeFileWithParent filename content = do
+  liftIO (createDirectoryIfMissing True (Text.unpack (getDir filename)))
+  writeFile (Text.unpack filename) content
 
 getDir :: Text -> Text
 getDir =
