@@ -38,15 +38,13 @@ let default_state : state =
 
 (* Comments *)
 
-let print_comments : Wrap.comment list -> document =
-  separate_map
-    hardline
-    (fun (comment : Wrap.comment) ->
-       (*group (
-         ifflat
-         (string "//" ^^ string comment.value)
-         (string "(*" ^^ string comment.value ^^ string "*)")))*)
-       group (string "(*" ^^ string comment.value ^^ string "*)"))
+let print_comment = function
+  Wrap.Block comment -> string "(*" ^^ string comment.value ^^ string "*)"
+| Wrap.Line comment -> string "//" ^^ string comment.value
+
+let print_comments = function
+  [] -> empty
+| comments -> separate_map hardline print_comment comments ^^ hardline
 
 (* Tokens *)
 
