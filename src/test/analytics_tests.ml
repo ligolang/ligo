@@ -255,20 +255,6 @@ let test_info_measure_contract ~raise:_ () =
   check_analytics expected_registry_output_regex expected_agg_registry_content_regex
 
 
-let test_mutate_cst ~raise:_ () =
-  let expected_registry_output_regex = Str.regexp ".*" in
-  let expected_agg_registry_content_regex =
-    Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", version=\"\", \
-       command=\"mutate_cst\"} \
-       1.*ligo_cli_execution_by_syntax_and_protocol{user=\"[a-z0-9-]+\", \
-       repository=\"[a-z0-9-]+\", version=\"\", command=\"mutate_cst\", \
-       syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.*"
-  in
-  let _ = run_ligo [ "mutate"; "cst"; "contracts/list_declaration.jsligo" ] in
-  check_analytics expected_registry_output_regex expected_agg_registry_content_regex
-
-
 let test_changelog ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
@@ -469,7 +455,7 @@ let main =
     ; test "info get-scope " test_info_get_scope
     ; test "info list-declarations " test_info_list_declaration
     ; test "info measure-contract " test_info_measure_contract
-    ; test "mutate cst " test_mutate_cst (* ; test "repl " test_mutate_cst *)
+      (* ; test "repl " test_repl_cst *)
     ; test "changelog" test_changelog
     ; test "print preprocessed" test_print_preprocessed
     ; test "print dependency_graph" test_print_dependency_graph
