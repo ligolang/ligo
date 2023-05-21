@@ -39,15 +39,13 @@ let default_state : PrettyComb.state =
 
 (* Comments *)
 
-let pp_comments : Wrap.comment list -> document =
-  separate_map
-    hardline
-    (fun (comment : Wrap.comment) ->
-       (*group (
-         ifflat
-         (string "//" ^^ string comment.value)
-         (string "(*" ^^ string comment.value ^^ string "*)")))*)
-       group (string "/*" ^^ string comment.value ^^ string "*/"))
+let pp_comment = function
+  Wrap.Block comment -> string "/*" ^^ string comment.value ^^ string "*/"
+| Wrap.Line comment -> string "//" ^^ string comment.value
+
+let pp_comments = function
+  [] -> empty
+| comments -> separate_map hardline pp_comment comments ^^ hardline
 
 (* Tokens *)
 
@@ -703,16 +701,15 @@ and pp_variant_comp state (node: variant_comp) =
 
 and pp_attribute state (node : Attr.t wrap) =
   let key, val_opt = node#payload in
-  let thread = string "/* @" ^^ string key in
+  let thread = string "// @" ^^ string key in
   let thread = match val_opt with
                  Some Ident value ->
                    group (thread ^/^ nest state#indent (string value))
                | Some String value ->
                    group (thread ^/^
                           nest state#indent (string ("\"" ^ value ^ "\"")))
-               | None -> thread in
-  let thread = thread ^^ space ^^ string "*/"
-  in thread
+               | None -> thread
+  in pp_comments node#comments ^/^ thread
 
 and pp_attributes state = function
   []    -> empty

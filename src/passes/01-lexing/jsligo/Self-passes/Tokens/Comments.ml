@@ -37,110 +37,114 @@ let warn_about msg region =
 
 (* Filter (right to left) *)
 
-let add_wrap_comment (comment : string Wrap.t) (w : 'a Wrap.t) : 'a Wrap.t =
-  w#add_comment {region = comment#region; value = comment#payload}
-
-let add_comment (comment : string Wrap.t) : Token.t -> Token.t = function
-  Directive w -> let region = comment#region
-                 and value  = comment#payload in
-                 let reg    = Region.{value; region} in
-                 Directive (Directive.add_comment reg w)
+let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
+  Directive w -> (
+    let region, value =
+      match comment with
+        Wrap.Block Region.{region; value} -> region, value
+      | Wrap.Line  Region.{region; value} -> region, value in
+    let reg = Region.{value; region} in
+    Directive (Directive.add_comment reg w))
 
   (* Comments *)
 
-| BlockCom w -> BlockCom (add_wrap_comment comment w)
-| LineCom  w -> LineCom (add_wrap_comment comment w)
+| BlockCom w -> BlockCom (w#add_comment comment)
+| LineCom  w -> LineCom (w#add_comment comment)
 
   (* Literals *)
 
-| String   w -> String (add_wrap_comment comment w)
-| Verbatim w -> Verbatim (add_wrap_comment comment w)
-| Bytes    w -> Bytes (add_wrap_comment comment w)
-| Int      w -> Int (add_wrap_comment comment w)
-| Ident    w -> Ident (add_wrap_comment comment w)
-| UIdent   w -> UIdent (add_wrap_comment comment w)
-| Attr     w -> Attr (add_wrap_comment comment w)
+| String   w -> String (w#add_comment comment)
+| Verbatim w -> Verbatim (w#add_comment comment)
+| Bytes    w -> Bytes (w#add_comment comment)
+| Int      w -> Int (w#add_comment comment)
+| Ident    w -> Ident (w#add_comment comment)
+| UIdent   w -> UIdent (w#add_comment comment)
+| Attr     w -> Attr (w#add_comment comment)
 
 (* Symbols *)
 
-| MINUS    w -> MINUS (add_wrap_comment comment w)
-| PLUS     w -> PLUS (add_wrap_comment comment w)
-| SLASH    w -> SLASH (add_wrap_comment comment w)
-| TIMES    w -> TIMES (add_wrap_comment comment w)
-| REM      w -> REM (add_wrap_comment comment w)
-| QMARK    w -> QMARK (add_wrap_comment comment w)
-| LPAR     w -> LPAR (add_wrap_comment comment w)
-| RPAR     w -> RPAR (add_wrap_comment comment w)
-| LBRACKET w -> LBRACKET (add_wrap_comment comment w)
-| RBRACKET w -> RBRACKET (add_wrap_comment comment w)
-| LBRACE   w -> LBRACE (add_wrap_comment comment w)
-| RBRACE   w -> RBRACE (add_wrap_comment comment w)
-| COMMA    w -> COMMA (add_wrap_comment comment w)
-| SEMI     w -> SEMI (add_wrap_comment comment w)
-| COLON    w -> COLON (add_wrap_comment comment w)
-| DOT      w -> DOT (add_wrap_comment comment w)
-| ELLIPSIS w -> ELLIPSIS (add_wrap_comment comment w)
-| BOOL_OR  w -> BOOL_OR (add_wrap_comment comment w)
-| BOOL_AND w -> BOOL_AND (add_wrap_comment comment w)
-| BOOL_NOT w -> BOOL_NOT (add_wrap_comment comment w)
-| EQ       w -> EQ (add_wrap_comment comment w)
-| EQ2      w -> EQ2 (add_wrap_comment comment w)
-| NE       w -> NE (add_wrap_comment comment w)
-| LT       w -> LT (add_wrap_comment comment w)
-| GT       w -> GT (add_wrap_comment comment w)
-| LE       w -> LE (add_wrap_comment comment w)
-| PLUS_EQ  w -> PLUS_EQ (add_wrap_comment comment w)
-| MINUS_EQ w -> MINUS_EQ (add_wrap_comment comment w)
-| MULT_EQ  w -> MULT_EQ (add_wrap_comment comment w)
-| REM_EQ   w -> REM_EQ (add_wrap_comment comment w)
-| DIV_EQ   w -> DIV_EQ (add_wrap_comment comment w)
-| VBAR     w -> VBAR (add_wrap_comment comment w)
-| ARROW    w -> ARROW (add_wrap_comment comment w)
-| WILD     w -> WILD (add_wrap_comment comment w)
-| INCR     w -> INCR (add_wrap_comment comment w)
-| DECR     w -> DECR (add_wrap_comment comment w)
+| MINUS    w -> MINUS (w#add_comment comment)
+| PLUS     w -> PLUS (w#add_comment comment)
+| SLASH    w -> SLASH (w#add_comment comment)
+| TIMES    w -> TIMES (w#add_comment comment)
+| REM      w -> REM (w#add_comment comment)
+| QMARK    w -> QMARK (w#add_comment comment)
+| LPAR     w -> LPAR (w#add_comment comment)
+| RPAR     w -> RPAR (w#add_comment comment)
+| LBRACKET w -> LBRACKET (w#add_comment comment)
+| RBRACKET w -> RBRACKET (w#add_comment comment)
+| LBRACE   w -> LBRACE (w#add_comment comment)
+| RBRACE   w -> RBRACE (w#add_comment comment)
+| COMMA    w -> COMMA (w#add_comment comment)
+| SEMI     w -> SEMI (w#add_comment comment)
+| COLON    w -> COLON (w#add_comment comment)
+| DOT      w -> DOT (w#add_comment comment)
+| ELLIPSIS w -> ELLIPSIS (w#add_comment comment)
+| BOOL_OR  w -> BOOL_OR (w#add_comment comment)
+| BOOL_AND w -> BOOL_AND (w#add_comment comment)
+| BOOL_NOT w -> BOOL_NOT (w#add_comment comment)
+| EQ       w -> EQ (w#add_comment comment)
+| EQ2      w -> EQ2 (w#add_comment comment)
+| NE       w -> NE (w#add_comment comment)
+| LT       w -> LT (w#add_comment comment)
+| GT       w -> GT (w#add_comment comment)
+| LE       w -> LE (w#add_comment comment)
+| PLUS_EQ  w -> PLUS_EQ (w#add_comment comment)
+| MINUS_EQ w -> MINUS_EQ (w#add_comment comment)
+| MULT_EQ  w -> MULT_EQ (w#add_comment comment)
+| REM_EQ   w -> REM_EQ (w#add_comment comment)
+| DIV_EQ   w -> DIV_EQ (w#add_comment comment)
+| VBAR     w -> VBAR (w#add_comment comment)
+| ARROW    w -> ARROW (w#add_comment comment)
+| WILD     w -> WILD (w#add_comment comment)
+| INCR     w -> INCR (w#add_comment comment)
+| DECR     w -> DECR (w#add_comment comment)
 
 (* JavaScript Keywords *)
 
-| Break    w -> Break (add_wrap_comment comment w)
-| Case     w -> Case (add_wrap_comment comment w)
-| Const    w -> Const (add_wrap_comment comment w)
-| Default  w -> Default (add_wrap_comment comment w)
-| Else     w -> Else (add_wrap_comment comment w)
-| Export   w -> Export (add_wrap_comment comment w)
-| For      w -> For (add_wrap_comment comment w)
-| From     w -> From (add_wrap_comment comment w)
-| If       w -> If (add_wrap_comment comment w)
-| Import   w -> Import (add_wrap_comment comment w)
-| Let      w -> Let (add_wrap_comment comment w)
-| Of       w -> Of (add_wrap_comment comment w)
-| Return   w -> Return (add_wrap_comment comment w)
-| Switch   w -> Switch (add_wrap_comment comment w)
-| While    w -> While (add_wrap_comment comment w)
+| Break    w -> Break (w#add_comment comment)
+| Case     w -> Case (w#add_comment comment)
+| Const    w -> Const (w#add_comment comment)
+| Default  w -> Default (w#add_comment comment)
+| Else     w -> Else (w#add_comment comment)
+| Export   w -> Export (w#add_comment comment)
+| For      w -> For (w#add_comment comment)
+| From     w -> From (w#add_comment comment)
+| If       w -> If (w#add_comment comment)
+| Import   w -> Import (w#add_comment comment)
+| Let      w -> Let (w#add_comment comment)
+| Of       w -> Of (w#add_comment comment)
+| Return   w -> Return (w#add_comment comment)
+| Switch   w -> Switch (w#add_comment comment)
+| While    w -> While (w#add_comment comment)
 
 (* TypeScript keywords *)
 
-| As          w -> As (add_wrap_comment comment w)
-| Namespace   w -> Namespace (add_wrap_comment comment w)
-| Type        w -> Type (add_wrap_comment comment w)
+| As          w -> As (w#add_comment comment)
+| Namespace   w -> Namespace (w#add_comment comment)
+| Type        w -> Type (w#add_comment comment)
 
 (* Contract keywords *)
 
-| Contract  w -> Contract (add_wrap_comment comment w)
-| Parameter w -> Parameter (add_wrap_comment comment w)
+| Contract  w -> Contract (w#add_comment comment)
+| Parameter w -> Parameter (w#add_comment comment)
 
 (* Virtual tokens *)
 
-| ZWSP   w -> ZWSP (add_wrap_comment comment w)
-| ES6FUN w -> ES6FUN (add_wrap_comment comment w)
+| ZWSP   w -> ZWSP (w#add_comment comment)
+| ES6FUN w -> ES6FUN (w#add_comment comment)
 
 (* End-Of-File *)
 
-| EOF w -> EOF (add_wrap_comment comment w)
+| EOF w -> EOF (w#add_comment comment)
 
 let rec hook_comments_to_token (t : Token.t) (acc : Token.t list) = function
-  Token.(BlockCom w | LineCom w) :: tokens ->
-    hook_comments_to_token (add_comment w t) acc tokens
+  Token.BlockCom w :: tokens ->
+    let comment = Wrap.Block Region.{region=w#region; value=w#payload}
+    in hook_comments_to_token (add_comment comment t) acc tokens
+| Token.LineCom w :: tokens ->
+    let comment = Wrap.Line Region.{region=w#region; value=w#payload}
+    in hook_comments_to_token (add_comment comment t) acc tokens
 | tokens -> t :: acc, tokens
 
 let filter (tokens : tokens) =

@@ -37,117 +37,121 @@ let warn_about msg region =
 
 (* Filter (right to left) *)
 
-let add_wrap_comment (comment : string Wrap.t) (w : 'a Wrap.t) : 'a Wrap.t =
-  w#add_comment {region = comment#region; value = comment#payload}
-
-let add_comment (comment : string Wrap.t) : Token.t -> Token.t = function
-  Directive w -> let region = comment#region
-                 and value  = comment#payload in
-                 let reg    = Region.{value; region} in
-                 Directive (Directive.add_comment reg w)
+let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
+  Directive w -> (
+    let region, value =
+      match comment with
+        Wrap.Block Region.{region; value} -> region, value
+      | Wrap.Line  Region.{region; value} -> region, value in
+    let reg = Region.{value; region} in
+    Directive (Directive.add_comment reg w))
 
   (* Comments *)
 
-| BlockCom w -> BlockCom (add_wrap_comment comment w)
-| LineCom  w -> LineCom (add_wrap_comment comment w)
+| BlockCom w -> BlockCom (w#add_comment comment)
+| LineCom  w -> LineCom (w#add_comment comment)
 
   (* Literals *)
 
-| String   w -> String (add_wrap_comment comment w)
-| Verbatim w -> Verbatim (add_wrap_comment comment w)
-| Bytes    w -> Bytes (add_wrap_comment comment w)
-| Int      w -> Int (add_wrap_comment comment w)
-| Nat      w -> Nat (add_wrap_comment comment w)
-| Mutez    w -> Mutez (add_wrap_comment comment w)
-| Ident    w -> Ident (add_wrap_comment comment w)
-| UIdent   w -> UIdent (add_wrap_comment comment w)
-| Lang     w -> Lang (add_wrap_comment comment w)
-| Attr     w -> Attr (add_wrap_comment comment w)
+| String   w -> String (w#add_comment comment)
+| Verbatim w -> Verbatim (w#add_comment comment)
+| Bytes    w -> Bytes (w#add_comment comment)
+| Int      w -> Int (w#add_comment comment)
+| Nat      w -> Nat (w#add_comment comment)
+| Mutez    w -> Mutez (w#add_comment comment)
+| Ident    w -> Ident (w#add_comment comment)
+| UIdent   w -> UIdent (w#add_comment comment)
+| Lang     w -> Lang (w#add_comment comment)
+| Attr     w -> Attr (w#add_comment comment)
 
   (* Symbols *)
 
-| ARROW    w -> ARROW (add_wrap_comment comment w)
-| ASS      w -> ASS (add_wrap_comment comment w)
-| CONS     w -> CONS (add_wrap_comment comment w)
-| CARET    w -> CARET (add_wrap_comment comment w)
-| MINUS    w -> MINUS (add_wrap_comment comment w)
-| PLUS     w -> PLUS (add_wrap_comment comment w)
-| SLASH    w -> SLASH (add_wrap_comment comment w)
-| TIMES    w -> TIMES (add_wrap_comment comment w)
-| LPAR     w -> LPAR (add_wrap_comment comment w)
-| RPAR     w -> RPAR (add_wrap_comment comment w)
-| LBRACKET w -> LBRACKET (add_wrap_comment comment w)
-| RBRACKET w -> RBRACKET (add_wrap_comment comment w)
-| LBRACE   w -> LBRACE (add_wrap_comment comment w)
-| RBRACE   w -> RBRACE (add_wrap_comment comment w)
-| COMMA    w -> COMMA (add_wrap_comment comment w)
-| SEMI     w -> SEMI (add_wrap_comment comment w)
-| VBAR     w -> VBAR (add_wrap_comment comment w)
-| COLON    w -> COLON (add_wrap_comment comment w)
-| DOT      w -> DOT (add_wrap_comment comment w)
-| WILD     w -> WILD (add_wrap_comment comment w)
-| EQ       w -> EQ (add_wrap_comment comment w)
-| NE       w -> NE (add_wrap_comment comment w)
-| LT       w -> LT (add_wrap_comment comment w)
-| GT       w -> GT (add_wrap_comment comment w)
-| LE       w -> LE (add_wrap_comment comment w)
-| BOOL_OR  w -> BOOL_OR (add_wrap_comment comment w)
-| BOOL_AND w -> BOOL_AND (add_wrap_comment comment w)
-| QUOTE    w -> QUOTE (add_wrap_comment comment w)
-| REV_APP  w -> REV_APP (add_wrap_comment comment w)
-| PLUS_EQ  w -> PLUS_EQ (add_wrap_comment comment w)
-| MINUS_EQ w -> MINUS_EQ (add_wrap_comment comment w)
-| TIMES_EQ w -> TIMES_EQ (add_wrap_comment comment w)
-| SLASH_EQ w -> SLASH_EQ (add_wrap_comment comment w)
-| VBAR_EQ  w -> VBAR_EQ (add_wrap_comment comment w)
+| ARROW    w -> ARROW (w#add_comment comment)
+| ASS      w -> ASS (w#add_comment comment)
+| CONS     w -> CONS (w#add_comment comment)
+| CARET    w -> CARET (w#add_comment comment)
+| MINUS    w -> MINUS (w#add_comment comment)
+| PLUS     w -> PLUS (w#add_comment comment)
+| SLASH    w -> SLASH (w#add_comment comment)
+| TIMES    w -> TIMES (w#add_comment comment)
+| LPAR     w -> LPAR (w#add_comment comment)
+| RPAR     w -> RPAR (w#add_comment comment)
+| LBRACKET w -> LBRACKET (w#add_comment comment)
+| RBRACKET w -> RBRACKET (w#add_comment comment)
+| LBRACE   w -> LBRACE (w#add_comment comment)
+| RBRACE   w -> RBRACE (w#add_comment comment)
+| COMMA    w -> COMMA (w#add_comment comment)
+| SEMI     w -> SEMI (w#add_comment comment)
+| VBAR     w -> VBAR (w#add_comment comment)
+| COLON    w -> COLON (w#add_comment comment)
+| DOT      w -> DOT (w#add_comment comment)
+| WILD     w -> WILD (w#add_comment comment)
+| EQ       w -> EQ (w#add_comment comment)
+| NE       w -> NE (w#add_comment comment)
+| LT       w -> LT (w#add_comment comment)
+| GT       w -> GT (w#add_comment comment)
+| LE       w -> LE (w#add_comment comment)
+| BOOL_OR  w -> BOOL_OR (w#add_comment comment)
+| BOOL_AND w -> BOOL_AND (w#add_comment comment)
+| QUOTE    w -> QUOTE (w#add_comment comment)
+| REV_APP  w -> REV_APP (w#add_comment comment)
+| PLUS_EQ  w -> PLUS_EQ (w#add_comment comment)
+| MINUS_EQ w -> MINUS_EQ (w#add_comment comment)
+| TIMES_EQ w -> TIMES_EQ (w#add_comment comment)
+| SLASH_EQ w -> SLASH_EQ (w#add_comment comment)
+| VBAR_EQ  w -> VBAR_EQ (w#add_comment comment)
 
   (* Keywords *)
 
-| Begin     w -> Begin (add_wrap_comment comment w)
-| Do        w -> Do (add_wrap_comment comment w)
-| Done      w -> Done (add_wrap_comment comment w)
-| Downto    w -> Downto (add_wrap_comment comment w)
-| Else      w -> Else (add_wrap_comment comment w)
-| End       w -> End (add_wrap_comment comment w)
-| For       w -> For (add_wrap_comment comment w)
-| Fun       w -> Fun (add_wrap_comment comment w)
-| If        w -> If (add_wrap_comment comment w)
-| In        w -> In (add_wrap_comment comment w)
-| Land      w -> Land (add_wrap_comment comment w)
-| Let       w -> Let (add_wrap_comment comment w)
-| Lor       w -> Lor (add_wrap_comment comment w)
-| Lsl       w -> Lsl (add_wrap_comment comment w)
-| Lsr       w -> Lsr (add_wrap_comment comment w)
-| Lxor      w -> Lxor (add_wrap_comment comment w)
-| Match     w -> Match (add_wrap_comment comment w)
-| Mod       w -> Mod (add_wrap_comment comment w)
-| Module    w -> Module (add_wrap_comment comment w)
-| Mut       w -> Mut (add_wrap_comment comment w)
-| Not       w -> Not (add_wrap_comment comment w)
-| Of        w -> Of (add_wrap_comment comment w)
-| Or        w -> Or (add_wrap_comment comment w)
-| Rec       w -> Rec (add_wrap_comment comment w)
-| Struct    w -> Struct (add_wrap_comment comment w)
-| Then      w -> Then (add_wrap_comment comment w)
-| Type      w -> Type (add_wrap_comment comment w)
-| Upto      w -> Upto (add_wrap_comment comment w)
-| While     w -> While (add_wrap_comment comment w)
-| With      w -> With (add_wrap_comment comment w)
-| Contract  w -> Contract (add_wrap_comment comment w)
-| Parameter w -> Parameter (add_wrap_comment comment w)
+| Begin     w -> Begin (w#add_comment comment)
+| Do        w -> Do (w#add_comment comment)
+| Done      w -> Done (w#add_comment comment)
+| Downto    w -> Downto (w#add_comment comment)
+| Else      w -> Else (w#add_comment comment)
+| End       w -> End (w#add_comment comment)
+| For       w -> For (w#add_comment comment)
+| Fun       w -> Fun (w#add_comment comment)
+| If        w -> If (w#add_comment comment)
+| In        w -> In (w#add_comment comment)
+| Land      w -> Land (w#add_comment comment)
+| Let       w -> Let (w#add_comment comment)
+| Lor       w -> Lor (w#add_comment comment)
+| Lsl       w -> Lsl (w#add_comment comment)
+| Lsr       w -> Lsr (w#add_comment comment)
+| Lxor      w -> Lxor (w#add_comment comment)
+| Match     w -> Match (w#add_comment comment)
+| Mod       w -> Mod (w#add_comment comment)
+| Module    w -> Module (w#add_comment comment)
+| Mut       w -> Mut (w#add_comment comment)
+| Not       w -> Not (w#add_comment comment)
+| Of        w -> Of (w#add_comment comment)
+| Or        w -> Or (w#add_comment comment)
+| Rec       w -> Rec (w#add_comment comment)
+| Struct    w -> Struct (w#add_comment comment)
+| Then      w -> Then (w#add_comment comment)
+| Type      w -> Type (w#add_comment comment)
+| Upto      w -> Upto (w#add_comment comment)
+| While     w -> While (w#add_comment comment)
+| With      w -> With (w#add_comment comment)
+| Contract  w -> Contract (w#add_comment comment)
+| Parameter w -> Parameter (w#add_comment comment)
 
   (* Virtual tokens *)
 
-| ZWSP   w -> ZWSP (add_wrap_comment comment w)
+| ZWSP   w -> ZWSP (w#add_comment comment)
 
   (* End-Of-File *)
 
-| EOF w -> EOF (add_wrap_comment comment w)
+| EOF w -> EOF (w#add_comment comment)
 
 
 let rec hook_comments_to_token (t : Token.t) (acc : Token.t list) = function
-  Token.(BlockCom w | LineCom w) :: tokens ->
-    hook_comments_to_token (add_comment w t) acc tokens
+  Token.BlockCom w :: tokens ->
+    let comment = Wrap.Block Region.{region=w#region; value=w#payload}
+    in hook_comments_to_token (add_comment comment t) acc tokens
+| Token.LineCom w :: tokens ->
+    let comment = Wrap.Line Region.{region=w#region; value=w#payload}
+    in hook_comments_to_token (add_comment comment t) acc tokens
 | tokens -> t :: acc, tokens
 
 let filter (tokens : tokens) =
