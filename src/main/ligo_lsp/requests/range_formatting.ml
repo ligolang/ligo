@@ -68,16 +68,14 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
       | CameLIGO_cst cst ->
         range_formatting
           { range_of_decl = Range.of_region <@ Cst_cameligo.CST.declaration_to_region
-          ; print_decl =
-              CameLIGO_pretty.print_declaration CameLIGO_pretty.default_state
+          ; print_decl = CameLIGO_pretty.print_declaration CameLIGO_pretty.default_state
           }
           cst.decl
           range
       | PascaLIGO_cst cst ->
         range_formatting
           { range_of_decl = Range.of_region <@ Cst_pascaligo.CST.region_of_S_Decl
-          ; print_decl =
-              PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_state
+          ; print_decl = PascaLIGO_pretty.print_declaration PascaLIGO_pretty.default_state
           }
           cst.decl
           range

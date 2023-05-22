@@ -322,8 +322,10 @@ let e_none ~loc =
     ~loc
     { constructor = Label.of_string "None"; element = e_unit ~loc }
 
+
 let e_some element =
   e_applied_constructor { constructor = Label.of_string "Some"; element }
+
 
 let e_bool ~loc b =
   let e_true_ctor ~loc =

@@ -302,7 +302,7 @@ module Typing_env = struct
         let bindings =
           Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
         in
-        let type_env = tenv.type_env @ Ast_typed.Misc.to_signature [decl] in
+        let type_env = tenv.type_env @ Ast_typed.Misc.to_signature [ decl ] in
         let decls = tenv.decls @ [ decl ] in
         let () = List.iter ws ~f:raise.warning in
         { type_env; bindings; decls }

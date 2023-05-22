@@ -20,41 +20,41 @@ let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
 let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
 
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
-  fun cst ->
-    let open Cst_cameligo.Fold in
-    let get_range : some_node -> FoldingRange.t fold_control =
-      fun (Some_node (x, b)) ->
-        match b with
-        | S_reg (S_let_in | S_type_in) -> Skip
-        | S_reg _ -> Continue (mk_region x.region)
-        | _ -> Skip
-    in
-    Some (fold [] (Fun.flip (List.cons)) get_range cst)
+ fun cst ->
+  let open Cst_cameligo.Fold in
+  let get_range : some_node -> FoldingRange.t fold_control =
+   fun (Some_node (x, b)) ->
+    match b with
+    | S_reg (S_let_in | S_type_in) -> Skip
+    | S_reg _ -> Continue (mk_region x.region)
+    | _ -> Skip
+  in
+  Some (fold [] (Fun.flip List.cons) get_range cst)
 
 
 let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
-  fun cst ->
-    let open Cst_pascaligo.Fold in
-    let get_range : some_node -> FoldingRange.t fold_control =
-      fun (Some_node (x, b)) ->
-        match b with
-        | S_reg _ -> Continue (mk_region x.region)
-        | _ -> Skip
-    in
-    Some (fold [] (Fun.flip (List.cons)) get_range cst)
+ fun cst ->
+  let open Cst_pascaligo.Fold in
+  let get_range : some_node -> FoldingRange.t fold_control =
+   fun (Some_node (x, b)) ->
+    match b with
+    | S_reg _ -> Continue (mk_region x.region)
+    | _ -> Skip
+  in
+  Some (fold [] (Fun.flip List.cons) get_range cst)
 
 
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
-  fun cst ->
-    let open Cst_jsligo.Fold in
-    let get_range : some_node -> FoldingRange.t fold_control =
-      fun (Some_node (x, b)) ->
-        match b with
-        | S_reg (S_import _) -> Continue (mk_imports x.region)
-        | S_reg _ -> Continue (mk_region x.region)
-        | _ -> Skip
-    in
-    Some (fold [] (Fun.flip (List.cons)) get_range cst)
+ fun cst ->
+  let open Cst_jsligo.Fold in
+  let get_range : some_node -> FoldingRange.t fold_control =
+   fun (Some_node (x, b)) ->
+    match b with
+    | S_reg (S_import _) -> Continue (mk_imports x.region)
+    | S_reg _ -> Continue (mk_region x.region)
+    | _ -> Skip
+  in
+  Some (fold [] (Fun.flip List.cons) get_range cst)
 
 
 let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t =

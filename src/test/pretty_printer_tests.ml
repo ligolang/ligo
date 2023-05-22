@@ -38,11 +38,9 @@ let test { test_name; actual; expected } =
     Parsing.(
       match syntax with
       | CameLIGO ->
-        Cameligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
+        Cameligo.(pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
       | JsLIGO ->
-        Jsligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
+        Jsligo.(pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
       | PascaLIGO ->
         Pascaligo.(
           pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual))

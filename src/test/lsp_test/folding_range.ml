@@ -51,9 +51,7 @@ let test_cases =
         ; mk_region (14, 1) (17, 4)
         ; mk_region (15, 3) (17, 4)
         ; mk_region (16, 5) (16, 16)
-        ; mk_region (15, 5) (15, 15)
-
-        (* TODO: delete on folding range fix *)
+        ; mk_region (15, 5) (15, 15) (* TODO: delete on folding range fix *)
         ; mk_region (4, 16) (4, 27)
         ; mk_region (6, 5) (6, 12)
         ; mk_region (6, 5) (7, 20)
@@ -81,9 +79,7 @@ let test_cases =
         ; mk_region (11, 15) (14, 2)
         ; mk_region (16, 1) (19, 2)
         ; mk_region (16, 7) (19, 2)
-        ; mk_region (16, 24) (19, 2)
-
-        (* TODO: delete on folding range fix *)
+        ; mk_region (16, 24) (19, 2) (* TODO: delete on folding range fix *)
         ; mk_region (1, 7) (1, 22)
         ; mk_region (2, 7) (2, 22)
         ; mk_region (4, 20) (4, 30)
@@ -99,9 +95,7 @@ let test_cases =
     }
   ; { file_path = "contracts/lsp/import.jsligo"
     ; folding_ranges =
-        [ mk_import (0, 1) (3, 14)
-
-        (* TODO: delete on folding range fix *)
+        [ mk_import (0, 1) (3, 14) (* TODO: delete on folding range fix *)
         ; mk_region (0, 8) (3, 2)
         ]
     }
