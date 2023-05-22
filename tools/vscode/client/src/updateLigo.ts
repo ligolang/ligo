@@ -6,7 +6,10 @@ import * as os from 'os'
 import * as path from 'path'
 import * as semver from 'semver'
 import * as vscode from 'vscode'
-import { getBinaryPath } from './commands/common'
+import {
+  LanguageClient,
+} from 'vscode-languageclient/node'
+import { getBinaryPath, ligoBinaryInfo } from './commands/common'
 
 /* eslint-disable camelcase */
 /**
@@ -28,7 +31,7 @@ type Release = {
 }
 /* eslint-enable camelcase */
 
-export async function installLigo(ligoPath: string, latest: Release): Promise<boolean> {
+export async function installLigo(client: LanguageClient, ligoPath: string, latest: Release): Promise<boolean> {
   const asset = latest.assets.links.find((download) => download.name === 'Static Linux binary')
   if (!asset) {
     await vscode.window.showErrorMessage('Could not find a download for a static Linux binary.')
@@ -67,18 +70,24 @@ export async function installLigo(ligoPath: string, latest: Release): Promise<bo
           return false
         }
 
-        // FIXME: Sometimes the installation may fail. This will happen if ligo
-        // is currently being used by the extension. The error will be ETXTBSY
-        // and indicates that the file is currently busy.
-        fs.writeFile(ligoPath, Buffer.from(res.data), fileOptions, (err) => {
-          if (err) {
-            vscode.window.showErrorMessage(`Could not install LIGO: ${err.message}`)
-            return false
-          } else {
-            vscode.window.showInformationMessage(`LIGO installed at: ${path.resolve(ligoPath)}`)
-            return true
-          }
-        })
+        // Stop LIGO, wait a bit, perform the installation, then start LIGO
+        // again. The installation will likely fail with ETXTBSY otherwise.
+        const stopWaitTime = 2000
+        client.stop()
+          .then((_: void) => new Promise(resolve => setTimeout(resolve, stopWaitTime)))
+          .then((_: void) => {
+            let success = false
+            try {
+              fs.writeFileSync(ligoPath, Buffer.from(res.data), fileOptions)
+              vscode.window.showInformationMessage(`LIGO installed at: ${path.resolve(ligoPath)}`)
+              success = true
+            } catch (err) {
+              vscode.window.showErrorMessage(`Could not install LIGO: ${err.message}`)
+            }
+
+            client.start()
+            return success
+          })
       })
       .catch((err) => {
         if (axios.default.isCancel(err)) {
@@ -125,6 +134,7 @@ function openLigoReleases(): Thenable<boolean> {
 }
 
 async function promptLigoUpdate(
+  client: LanguageClient,
   ligoPath: string,
   installedVersionIdentifier: string | number,
 ): Promise<string | number> {
@@ -171,7 +181,7 @@ async function promptLigoUpdate(
 
   switch (answer) {
     case 'Static Linux Binary':
-      if (await installLigo(ligoPath, latestRelease)) {
+      if (await installLigo(client, ligoPath, latestRelease)) {
         return latestRelease.tag_name
       }
       break
@@ -186,14 +196,15 @@ async function promptLigoUpdate(
   return installedVersionIdentifier
 }
 
-export default async function updateLigo(): Promise<void> {
+export default async function updateLigo(client: LanguageClient): Promise<void> {
   const config = vscode.workspace.getConfiguration()
   /* eslint-disable no-use-before-define */
-  return updateLigoImpl(config)
+  return updateLigoImpl(client, config)
   /* eslint-enable no-use-before-define */
 }
 
 async function showUpdateError(
+  client: LanguageClient,
   errorMessage: string,
   suggestUpdate: boolean,
   ligoPath: string,
@@ -218,7 +229,7 @@ async function showUpdateError(
   switch (answer) {
     case 'Download static Linux binary':
       const latestRelease = await getLatestLigoRelease()
-      return await installLigo(ligoPath, latestRelease)
+      return await installLigo(client, ligoPath, latestRelease)
     case 'Choose path': {
       const uris = await vscode.window.showOpenDialog({ canSelectMany: false })
       if (!uris || uris.length === 0) {
@@ -231,7 +242,7 @@ async function showUpdateError(
         vscode.ConfigurationTarget.Global,
         true,
       )
-      await updateLigoImpl(config)
+      await updateLigoImpl(client, config)
       return true
     }
     case 'Download':
@@ -243,8 +254,8 @@ async function showUpdateError(
   }
 }
 
-async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<void> {
-  const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, config)
+async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceConfiguration): Promise<void> {
+  const ligoPath = getBinaryPath(ligoBinaryInfo, config)
 
   let data: string
   try {
@@ -266,6 +277,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
     }
 
     const shouldContinue = await showUpdateError(
+      client,
       `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}. ${hint}`,
       false,
       ligoPath,
@@ -287,6 +299,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
 
   async function unsupportedVersion<T>(): Promise<T> {
     await showUpdateError(
+      client,
       'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.',
       os.platform() === 'linux',
       ligoPath,
@@ -298,7 +311,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   async function validateSemver(version: string) {
     const semverTest = semver.valid(semver.coerce(version))
     if (semverTest) {
-      const newVersion = await promptLigoUpdate(ligoPath, semverTest)
+      const newVersion = await promptLigoUpdate(client, ligoPath, semverTest)
       switch (typeof newVersion) {
         case 'string':
           if (semver.lt(newVersion, '0.61.0')) {
@@ -323,7 +336,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
         return
       }
 
-      const newVersion = promptLigoUpdate(ligoPath, date)
+      const newVersion = promptLigoUpdate(client, ligoPath, date)
       switch (typeof newVersion) {
         case 'string':
           validateSemver(version)

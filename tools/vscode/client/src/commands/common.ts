@@ -21,6 +21,11 @@ type BinaryInfo = {
   path: string,
 }
 
+export const ligoBinaryInfo = {
+  name: 'ligo',
+  path: 'ligoLanguageServer.ligoBinaryPath'
+}
+
 export function changeLastContractPath(newPath: string) {
   lastContractPath = newPath
 }
