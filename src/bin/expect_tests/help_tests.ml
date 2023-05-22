@@ -118,7 +118,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                the LIGO environment (lima ,
                                mumbai). By default, the current protocol
-                               (mumbai) will be used
+                               (nairobi) will be used
   [-help], -?                . print this help text and exit
 
 (core/src/command.ml.Exit_called (status 0)) |}]
@@ -189,7 +189,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -260,7 +260,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -302,7 +302,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -359,7 +359,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -412,7 +412,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -467,7 +467,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
@@ -521,7 +521,7 @@ let%expect_test _ =
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
-                                   (mumbai) will be used
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit
 
     (core/src/command.ml.Exit_called (status 0)) |}]
