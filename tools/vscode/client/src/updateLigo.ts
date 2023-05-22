@@ -1,8 +1,9 @@
 import { execFileSync } from 'child_process'
 
 import * as axios from 'axios'
-import * as path from 'path'
 import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
 import * as semver from 'semver'
 import * as vscode from 'vscode'
 import { getBinaryPath } from './commands/common'
@@ -149,12 +150,24 @@ async function promptLigoUpdate(
       vscode.window.showErrorMessage(`Unknown version: ${installedVersionIdentifier}`)
   }
 
-  const answer = await vscode.window.showInformationMessage(
-    'A new LIGO version is available. If you use the static Linux binary, please select "Static Linux Binary", otherwise "Open Downloads".',
-    'Static Linux Binary',
-    'Open Downloads',
-    'Cancel',
-  )
+  let answer: string
+  switch (os.platform()) {
+    case 'linux':
+      answer = await vscode.window.showInformationMessage(
+        'A new LIGO version is available. If you use the static Linux binary, please select "Static Linux Binary", otherwise "Open Downloads".',
+        'Static Linux Binary',
+        'Open Downloads',
+        'Cancel',
+      )
+      break
+    default:
+      answer = await vscode.window.showInformationMessage(
+        'A new LIGO version is available. Please consider upgrading it.',
+        'Open Downloads',
+        'Cancel',
+      )
+      break
+  }
 
   switch (answer) {
     case 'Static Linux Binary':
@@ -275,7 +288,7 @@ async function updateLigoImpl(config: vscode.WorkspaceConfiguration): Promise<vo
   async function unsupportedVersion<T>(): Promise<T> {
     await showUpdateError(
       'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.',
-      true,
+      os.platform() === 'linux',
       ligoPath,
       config,
     )
