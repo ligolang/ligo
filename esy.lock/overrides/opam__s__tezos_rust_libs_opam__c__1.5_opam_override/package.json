@@ -1,0 +1,5 @@
+{
+  "buildEnv": {
+    "CC": "#{os == 'windows' ? 'x86_64-w64-mingw32-gcc': 'cc'}"
+  }
+}
