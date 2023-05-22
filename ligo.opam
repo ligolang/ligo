@@ -74,7 +74,6 @@ depends: [
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
-  "tezos-plonk" { >= "1.0.1" & < "2.0.0" }
   # dev dependencies (not labels as { dev } since this feature doesn't work 
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
@@ -96,7 +95,7 @@ build: [
 pin-depends: [
   [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tc-015.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-016.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
   [ "tz-b-c-ux.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
@@ -113,10 +112,10 @@ pin-depends: [
   [ "tz-mock-reg.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-016.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-017.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-plugin-015.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-plugin-016.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
@@ -131,6 +130,7 @@ pin-depends: [
   [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-bls12-381-signature.dev" "./vendors/tezos-ligo/opam" ]
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
   [ "linol.0.4" "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763" ]
   [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763" ]
