@@ -351,7 +351,7 @@ let rec decompile_value
   let self = decompile_value ~raise ~bigmaps in
   let loc = Location.interpreter in
   match t.type_content with
-  | tc when compare_type_content tc (t_bool ~loc ()).type_content = 0 -> v
+  | _ when Option.is_some (get_t_bool t) -> v
   | T_constant { language; injection; parameters } ->
     let () =
       Assert.assert_true

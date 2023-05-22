@@ -94,10 +94,13 @@ let t_bool ~loc ?sugar () : type_expression =
 
 
 let get_t_bool (t : type_expression) : unit option =
-  (* location of [t_bool] doesn't matter here since equality on type content 
-     is modulo loc *)
-  let t_bool = t_bool ~loc:t.location () in
-  Option.some_if (Types.equal_type_content t.type_content t_bool.type_content) ()
+  match t.type_content with
+  | T_sum { fields; _ } ->
+    let keys = Map.key_set fields in
+    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    then Some ()
+    else None
+  | _ -> None
 
 
 let get_t_option (t : type_expression) : type_expression option =
