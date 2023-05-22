@@ -61,7 +61,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let (michelson, errs) =
-    Tc_015.Michelson_v1_macros.expand_rec michelson in
+    Tc_016.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
@@ -188,7 +188,7 @@ let fake_bake tezos_context chain_id now =
   let protocol_data =
     let open! Alpha_context.Block_header in {
       contents ;
-      signature = Tezos_crypto.Signature.V0.zero ;
+      signature = Tezos_crypto.Signature.zero ;
     } in
   let tezos_context =
     force_lwt ~msg:("bad block "^__LOC__)
@@ -305,8 +305,9 @@ let interpret ?(options = make_options ()) (instr:('a, 'b, 'c, 'd) kdescr) bef :
   in
   let payer = match payer with
     | Implicit hash -> hash
-    | Originated hash -> Tezos_crypto.Signature.V0.Public_key_hash.zero
+    | Originated hash -> Tezos_crypto.Signature.Public_key_hash.zero
   in
+  let source = Alpha_context.Destination.Contract source in
   let step_constants = { source ; self ; payer ; amount ; chain_id ; balance ; now ; level } in
   Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef (EmptyCell, EmptyCell) >>=??
   fun (stack, _, _) -> Lwt_result_syntax.return stack
@@ -372,7 +373,8 @@ let failure_interpret
   let instr = kdescr in
   let step_constants =
     let self = match self with Implicit hash -> Contract_hash.zero | Originated hash -> hash in
-    let payer = match payer with Implicit hash -> hash | Originated hash -> Tezos_crypto.Signature.V0.Public_key_hash.zero in
+    let payer = match payer with Implicit hash -> hash | Originated hash -> Tezos_crypto.Signature.Public_key_hash.zero in
+  let source = Alpha_context.Destination.Contract source in
     { source ; self ; payer ; amount ; chain_id ; balance ; now  ; level } in
   Script_interpreter.Internals.step_descr no_trace_logger tezos_context step_constants instr bef stackb >>= fun x ->
   match x with

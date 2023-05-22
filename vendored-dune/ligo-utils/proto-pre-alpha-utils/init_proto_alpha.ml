@@ -4,7 +4,7 @@ module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Bytes
 module Error_monad = X_error_monad
-module Proto_env = Tp_environment_015_PtLimaPt
+module Proto_env = Tpe_016
 open Error_monad
 open Protocol
 
@@ -12,15 +12,15 @@ open Protocol
 module Context_init = struct
 
   type account = {
-      pkh : Signature.V0.Public_key_hash.t ;
-      pk :  Signature.V0.Public_key.t ;
-      sk :  Signature.V0.Secret_key.t ;
+      pkh : Signature.public_key_hash ;
+      pk :  Signature.public_key ;
+      sk :  Signature.secret_key ;
     }
 
   let generate_accounts n : (account * Alpha_context.Tez.t) list =
     let amount = Alpha_context.Tez.of_mutez_exn 4_000_000_000_000L in
     List.map ~f:(fun _ ->
-        let (pkh, pk, sk) = Tezos_crypto__Signature_v0.generate_key () in
+        let (pkh, pk, sk) = Signature.generate_key () in
         let account = { pkh ; pk ; sk } in
         account, amount)
       (List.range 0 n)
@@ -116,7 +116,7 @@ module Context_init = struct
       Stdlib.failwith "Must have one account with a roll to bake";
 
     (* Check there is at least one roll *)
-    let constants : Alpha_context.Constants.Parametric.t = Tp_015_params.Default_parameters.constants_test in
+    let constants : Alpha_context.Constants.Parametric.t = Tp_016_params.Default_parameters.constants_test in
     let* () = check_constants_consistency constants in
     let hash =
       Alpha_environment.Block_hash.of_b58check_exn "BLockGenesisGenesisGenesisGenesisGenesisCCCCCeZiLHU"
@@ -157,7 +157,7 @@ module Context_init = struct
         ~predecessor
         ?(proof_of_work_nonce = default_proof_of_work_nonce)
         ?(round = Alpha_context.Round.zero) ?seed_nonce_hash ?(liquidity_baking_toggle_vote = Liquidity_baking_repr.LB_off) () =
-    let payload_hash = Alpha_context.Block_payload.hash ~predecessor round Alpha_environment.Operation_list_hash.zero in
+    let payload_hash = Alpha_context.Block_payload.hash ~predecessor_hash:predecessor ~payload_round:round [] in (* TODO: check if this is correct *)
     Alpha_context.Block_header.({
         payload_hash ;
         payload_round = round ;
@@ -183,7 +183,7 @@ module Context_init = struct
     let protocol_data =
       let open! Alpha_context.Block_header in {
         contents ;
-        signature = Signature.V0.zero ;
+        signature = Signature.zero ;
       } in
     begin_validation_and_application ctxt Alpha_environment.Chain_id.zero
       (Construction { predecessor_hash = hash ; timestamp ; block_header_data = protocol_data }) ~predecessor:header
@@ -200,11 +200,12 @@ module Context_init = struct
 end
 
 type identity = {
-    public_key_hash : Signature.V0.public_key_hash;
-    public_key : Signature.V0.public_key;
-    secret_key : Signature.V0.secret_key;
+    public_key_hash : Signature.public_key_hash;
+    public_key : Signature.public_key;
+    secret_key : Signature.secret_key;
     implicit_contract : Alpha_context.Contract.t;
   }
+
 
 type environment = {
     tezos_context : Alpha_context.t ;

@@ -4,6 +4,6 @@
   (libraries
     tpe
     tp-016
+    tc-016
     tp-016.parameters
-    tc-015
-    tz-015-test-helpers))
+    tz-016-test-helpers))

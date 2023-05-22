@@ -61,7 +61,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let canonical_of_strings michelson =
   let (michelson, errs) =
-    Tc_016.Michelson_v1_macros.expand_rec michelson in
+    Tc_017.Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)
