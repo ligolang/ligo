@@ -183,7 +183,12 @@ let try_declaration ~raise ~raw_options state s =
     try_with
       (fun ~raise ~catch:_ ->
         let typed_prg, core_prg =
-          Ligo_compile.Utils.type_program_string ~raise ~options ~context:(Ast_typed.Misc.to_signature state.top_level) state.syntax s
+          Ligo_compile.Utils.type_program_string
+            ~raise
+            ~options
+            ~context:(Ast_typed.Misc.to_signature state.top_level)
+            state.syntax
+            s
         in
         let state =
           { state with
@@ -230,9 +235,7 @@ let import_file ~raise ~raw_options state file_name module_name =
       ]
   in
   let state =
-    { state with
-      top_level = concat_modules ~declaration:true state.top_level module_
-    }
+    { state with top_level = concat_modules ~declaration:true state.top_level module_ }
   in
   state, Just_ok
 
@@ -251,9 +254,7 @@ let use_file ~raise ~raw_options state file_name =
     Build.qualified_typed ~raise ~options (Build.Source_input.From_file file_name)
   in
   let state =
-    { state with
-      top_level = concat_modules ~declaration:false state.top_level module'
-    }
+    { state with top_level = concat_modules ~declaration:false state.top_level module' }
   in
   state, Defined_values_typed module'
 

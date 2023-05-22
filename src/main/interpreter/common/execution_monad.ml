@@ -217,7 +217,6 @@ module Command = struct
         -> a * Tezos_state.context
     =
    fun ~raise ~options command ctxt _log ->
-    let loc = Location.interpreter in
     let no_colour = options.test_framework.no_colour in
     let snippet_pp = Simple_utils.Snippet.pp ~no_colour in
     match command with
@@ -342,14 +341,7 @@ module Command = struct
         (match rest with
         | Ecoproto_error (Script_interpreter.Reject (_, x, _)) :: _ ->
           let code = Tezos_state.canonical_to_ligo x in
-          let code_ty = Michelson_backend.storage_retreival_dummy_ty in
-          let v =
-            LT.V_Michelson
-              (Ty_code
-                 { micheline_repr = { code; code_ty }
-                 ; ast_ty = Ast_aggregated.t_int ~loc ()
-                 })
-          in
+          let v = LT.V_Michelson (Untyped_code code) in
           let rej = LC.v_ctor "Rejected" (LC.v_pair (v, contract_failing)) in
           fail_ctor rej, ctxt
         | Ecoproto_error (Script_interpreter.Bad_contract_parameter _addr) :: _ ->
