@@ -236,7 +236,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "ticket_builder.mligo"; "--protocol"; "lima" ];
+    [ "compile"; "contract"; contract "ticket_builder.mligo" ];
   [%expect
     {|
 File "../../test/contracts/ticket_builder.mligo", line 28, characters 28-34:

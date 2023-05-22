@@ -13,7 +13,7 @@ bug-reports: "https://gitlab.com/ligolang/tezos/issues"
 depends: [
   "dune"
   "tpe"
-  "tp-016"
+  "tp-017"
 ]
 build: [
   ["dune" "build" "-p" name]

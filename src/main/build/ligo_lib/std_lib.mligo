@@ -35,7 +35,6 @@ type ticket = "%constant:ticket"
 (* external "custom" typers *)
 type external_bytes = "%constant:external_bytes"
 type external_int = "%constant:external_int"
-type external_int_lima = "%constant:external_int_lima"
 type external_ediv = "%constant:external_ediv"
 type external_and = "%constant:external_and"
 type external_or = "%constant:external_or"
@@ -48,9 +47,6 @@ type external_map_remove = "%constant:external_map_remove"
 type external_map_remove_value = "%constant:external_map_remove_value"
 
 (* protocol dependent types *)
-#if LIMA
-type tx_rollup_l2_address = "%constant:tx_rollup_l2_address"
-#endif
 
 let failwith (type a b) (x : a) = [%michelson ({| { FAILWITH } |} x : b)]
 
@@ -251,15 +247,9 @@ let is_nat (i : int) : nat option = [%michelson ({| { ISNAT } |} i : nat option)
 [@inline] let true : bool = True
 [@inline] let false : bool = False
 [@inline] let unit : unit = [%external ("UNIT")]
-#if MUMBAI
 let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
-#elif LIMA
-let int (type a) (v : a) : a external_int_lima = [%Michelson ({| { INT } |} : a -> a external_int_lima)] v
-#endif
-#if MUMBAI
 let nat (v : bytes) : nat = [%Michelson ({| { NAT } |} : bytes -> nat)] v
 let bytes (type a) (v : a) : a external_bytes = [%Michelson ({| { BYTES } |} : a -> a external_bytes)] v
-#endif
 let ignore (type a) (_ : a) : unit = ()
 let curry (type a b c) (f : a * b -> c) (x : a) (y : b) : c = f (x, y)
 let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1
