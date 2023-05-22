@@ -103,10 +103,6 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
       (match (compile_type param).type_content with
       | T_base TB_bls12_381_fr | T_base TB_nat | T_base TB_bytes -> return (T_base TB_int) 
       | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int application"))
-    | (External Int_lima, [ param ]) ->
-      (match (compile_type param).type_content with
-      | T_base TB_bls12_381_fr | T_base TB_nat -> return (T_base TB_int) 
-      | _ -> raise.error (corner_case ~loc:__LOC__ "invalid external_int_lima application"))
     | (External Bytes, [ param ]) ->
       (match (compile_type param).type_content with
       | T_base TB_int | T_base TB_nat -> return (T_base TB_bytes) 
