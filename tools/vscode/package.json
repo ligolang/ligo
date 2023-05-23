@@ -215,7 +215,7 @@
         "fs-extra": "^11.1.0",
         "node-fetch": "^3.2.3",
         "semver": "^7.3.5",
-        "vscode-languageclient": "^7.0.0"
+        "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
         "@types/mocha": "^9.0.0",
