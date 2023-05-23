@@ -294,7 +294,7 @@ and print_of_type_expr state (_, type_expr) =
 (* Type variable *)
 
 and print_T_Var state (node : variable) =
-  Tree.(make_unary state "T_Var" make_verbatim node)
+  Tree.(make_unary state "T_Var" make_literal node)
 
 (* Type parameter *)
 

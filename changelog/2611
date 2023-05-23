@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nLine comments on the same line as a token are printed where they should be.\\n\\n"
+merge_request: '2611'
+title: "Preserving of placement of line comments preceded by a token  (CameLIGO and JsLIGO)"
+type: added
+            

@@ -18,23 +18,6 @@ module Wrap      = Lexing_shared.Wrap
 
 type tokens = Token.t list
 
-let sprintf = Printf.sprintf
-
-let format_error ~no_colour ~file value (region: Region.t) =
-  let value =
-    if file then
-      sprintf "%s%s"
-        (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
-        (Std.redden value)
-    else
-      let header = region#to_string ~file ~offsets:true `Point
-      in sprintf "%s:\n%s" header value
-  in Region.{region; value}
-
-let warn_about msg region =
-  let msg = format_error ~no_colour:false ~file:true msg region
-  in Printf.eprintf "%s\n%!" msg.value
-
 (* Filter (right to left) *)
 
 let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function

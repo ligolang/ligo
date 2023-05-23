@@ -14,6 +14,8 @@ module Unit      = LexerLib.Unit
 
 module Token = Lx_ml_self_tokens.Token
 
+(* Filter *)
+
 let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
   let open! Token in
   let rec aux acc = function
