@@ -21,7 +21,6 @@ let%expect_test _ =
                                    another
       run                        . compile and interpret ligo code
       info                       . tools to get information from contracts
-      mutate                     . create mutants of a ligo file
       repl                       . interactive ligo interpreter
       init                       . Initialize a new ligo project from template.
                                    Contract or library.

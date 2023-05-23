@@ -1,47 +1,47 @@
 open Simple_utils.Function
 
 let specialise_and_print_pascaligo =
-  Parsing.Pascaligo.pretty_print Parsing.Pascaligo.Pretty.default_environment
+  Parsing.Pascaligo.pretty_print Parsing.Pascaligo.Pretty.default_state
   <@ Unification.Pascaligo.decompile_program
 
 
 let specialise_and_print_expression_pascaligo =
-  Parsing.Pascaligo.pretty_print_expression Parsing.Pascaligo.Pretty.default_environment
+  Parsing.Pascaligo.pretty_print_expression Parsing.Pascaligo.Pretty.default_state
   <@ Unification.Pascaligo.decompile_expression
 
 
 let specialise_and_print_ty_pascaligo =
-  Parsing.Pascaligo.pretty_print_type_expr Parsing.Pascaligo.Pretty.default_environment
+  Parsing.Pascaligo.pretty_print_type_expr Parsing.Pascaligo.Pretty.default_state
   <@ Unification.Pascaligo.decompile_ty_expr
 
 
 let specialise_and_print_cameligo =
-  Parsing.Cameligo.pretty_print Parsing.Cameligo.Pretty.default_environment
+  Parsing.Cameligo.pretty_print Parsing.Cameligo.Pretty.default_state
   <@ Unification.Cameligo.decompile_program
 
 
 let specialise_and_print_expression_cameligo =
-  Parsing.Cameligo.pretty_print_expression Parsing.Cameligo.Pretty.default_environment
+  Parsing.Cameligo.pretty_print_expression Parsing.Cameligo.Pretty.default_state
   <@ Unification.Cameligo.decompile_expression
 
 
 let specialise_and_print_ty_cameligo =
-  Parsing.Cameligo.pretty_print_type_expr Parsing.Cameligo.Pretty.default_environment
+  Parsing.Cameligo.pretty_print_type_expr Parsing.Cameligo.Pretty.default_state
   <@ Unification.Cameligo.decompile_ty_expr
 
 
 let specialise_and_print_jsligo =
-  Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_environment
+  Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_state
   <@ Unification.Jsligo.decompile_program
 
 
 let specialise_and_print_expression_jsligo =
-  Parsing.Jsligo.pretty_print_expression Parsing.Jsligo.Pretty.default_environment
+  Parsing.Jsligo.pretty_print_expression Parsing.Jsligo.Pretty.default_state
   <@ Unification.Jsligo.decompile_expression
 
 
 let specialise_and_print_ty_jsligo =
-  Parsing.Jsligo.pretty_print_type_expr Parsing.Jsligo.Pretty.default_environment
+  Parsing.Jsligo.pretty_print_type_expr Parsing.Jsligo.Pretty.default_state
   <@ Unification.Jsligo.decompile_ty_expr
 
 

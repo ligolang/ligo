@@ -2,6 +2,8 @@ type tokens = big_map<address, nat>;
 
 type allowances = big_map<[address, address], nat>;
 
+/* (sender,account) -> value */
+
 type storage = { tokens, allowances, total_amount: nat };
 
 type transfer = {

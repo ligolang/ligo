@@ -1,6 +1,0 @@
-(library
- (name fuzz_cameligo)
- (public_name ligo.fuzz.cameligo)
- (instrumentation
-  (backend bisect_ppx))
- (libraries fuzz_shared ligo_compile))

@@ -37,6 +37,11 @@ module T =
 
       Directive of Directive.t
 
+      (* Comments *)
+
+    | BlockCom of lexeme Wrap.t
+    | LineCom  of lexeme Wrap.t
+
       (* Literals *)
 
     | String   of lexeme Wrap.t
@@ -142,6 +147,11 @@ module T =
       (* Directives *)
 
       Directive d -> (Directive.to_lexeme d).Region.value
+
+      (* Comments *)
+
+    | LineCom t  -> sprintf "// %s" t#payload
+    | BlockCom t -> sprintf "(* %s *)" t#payload
 
       (* Literals *)
 
@@ -642,6 +652,18 @@ module T =
     let ghost_Attr   k v = Attr     (ghost_attr k v)
     let ghost_Lang     l = Lang     (ghost_lang l)
 
+    (* COMMENTS *)
+
+    let wrap_block_com  c    = Wrap.wrap c
+    let ghost_block_com c    = wrap_block_com c Region.ghost
+    let mk_BlockCom c region = BlockCom (wrap_block_com c region)
+    let ghost_BlockCom c     = mk_BlockCom c Region.ghost
+
+    let wrap_line_com c     = Wrap.wrap c
+    let ghost_line_com c    = wrap_line_com c Region.ghost
+    let mk_LineCom c region = LineCom (wrap_line_com c region)
+    let ghost_LineCom c     = mk_LineCom c Region.ghost
+
     (* VIRTUAL TOKENS *)
 
     let wrap_zwsp      = wrap ""
@@ -755,6 +777,13 @@ module T =
       (* Preprocessing directives *)
 
       Directive d -> Directive.project d
+
+      (* Comments *)
+
+    | LineCom t ->
+        t#region, sprintf "LineCom %S" t#payload
+    | BlockCom t ->
+        t#region, sprintf "BlockCom %S" t#payload
 
       (* Literals *)
 

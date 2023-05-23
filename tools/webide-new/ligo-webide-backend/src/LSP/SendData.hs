@@ -2,7 +2,6 @@ module LSP.SendData (sendData) where
 
 import Data.Aeson (Value)
 import Data.Aeson qualified as Aeson
-import Data.Aeson.Encode.Pretty qualified as Aeson (encodePretty)
 import Data.Aeson.Parser (json)
 import Data.Attoparsec.ByteString qualified as AP
 import Data.Attoparsec.ByteString.Char8 qualified as AP
@@ -29,7 +28,7 @@ parseAllInput conn bsl =
     Done cont val -> do
       let normalizedVal = modifyUri normalizeUri val
       prettyVal <- filterConnectionPrefix $
-            Text.decodeUtf8 $ LBS.toStrict $ Aeson.encodePretty normalizedVal
+            Text.decodeUtf8 $ LBS.toStrict $ Aeson.encode normalizedVal
       logFM DebugS $ "Sending: " <> LogStr (Text.fromText prettyVal)
 
       let output = Text.decodeUtf8 . LBS.toStrict . Aeson.encode $ normalizedVal

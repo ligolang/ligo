@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with an inconsistent `$it` variable (just evaluated variable).\\nBefore some intermediate results could be recorded. Now an `$it` variable is the correct one.\\n\\n"
+merge_request: '2603'
+title: "[#1806][#1769] Record evaluated event only for topmost location"
+type: fixed
+            

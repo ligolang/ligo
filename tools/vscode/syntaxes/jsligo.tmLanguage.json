@@ -5,7 +5,8 @@
   "scopeName": "source.jsligo",
   "fileTypes": [ "jsligo" ],
   "patterns": [
-    { "include": "#string" },
+    { "include": "#string0" },
+    { "include": "#string1" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
     { "include": "#uppercaseidentifier" },
@@ -22,10 +23,18 @@
     { "include": "#objectorblock" }
   ],
   "repository": {
-    "string": {
+    "string0": {
       "name": "string.quoted.double.jsligo",
       "begin": "\\\"",
       "end": "\\\"",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": []
+    },
+    "string1": {
+      "name": "string.quoted.double.jsligo",
+      "begin": "`",
+      "end": "`",
       "beginCaptures": {},
       "endCaptures": {},
       "patterns": []
@@ -204,7 +213,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeannotation": {
@@ -223,7 +233,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeannotationfield": {
@@ -242,7 +253,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeas": {
@@ -261,7 +273,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeoperator": {
@@ -309,7 +322,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeint": {
@@ -334,7 +348,8 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
-        { "include": "#string" }
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typeproduct": {

@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with a `restart` button. Before the debugger was printing an error if you press this button. Now the session is restarting properly.\\n\\n"
+merge_request: '2581'
+title: "[#1766] Fix restart button"
+type: fixed
+            

@@ -26,25 +26,27 @@ import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
   (DebuggerFailure (DebuggerInfiniteLoop), DebuggerState (..), Direction (..),
-  FrozenPredicate (FrozenPredicate), HistoryReplayM, MovementResult (..),
-  NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation), SrcLoc (..),
-  curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
+  FinalStack (ContractFinalStack), FrozenPredicate (FrozenPredicate), HistoryReplayM,
+  MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation' (SourceLocation),
+  SrcLoc (..), curSnapshot, frozen, matchesSrcType, move, moveTill, tsAfterInstrs, tsAllVisited)
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack))
+  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack),
+  StkEl (StkEl))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
 
-import Lorentz (MText)
+import Lorentz (MText, Rec (RNil, (:&)))
 import Lorentz qualified as L
 import Lorentz.Value (mt)
 
 import Language.LIGO.AST (scanContracts)
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Impl (convertMichelsonValuesToLigo)
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
@@ -124,8 +126,14 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (0 :: Integer)
                 )
               ]
+            contractOut = StkEl $ T.toVal ([] :: [T.Operation], 42 :: Integer)
+
+            operationListType' = mkConstantType "List" [mkSimpleConstantType "Operation"]
+            operationListType = LigoTypeResolved operationListType'
+            opsAndStorageType = LigoTypeResolved $
+              mkPairType operationListType' intType'
           in
-          [ ( InterpretRunning . EventExpressionEvaluated . Just $
+          [ ( InterpretRunning . EventExpressionEvaluated intType . Just $
                 SomeLorentzValue (42 :: Integer)
             , one
               ( Range (LigoPosition 2 12) (LigoPosition 2 18) file
@@ -154,7 +162,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
+          , ( InterpretRunning . EventExpressionEvaluated operationListType . Just $
                 SomeLorentzValue ([] :: [T.Operation])
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 25) file
@@ -162,7 +170,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-          , ( InterpretRunning . EventExpressionEvaluated . Just $
+          , ( InterpretRunning . EventExpressionEvaluated opsAndStorageType . Just $
                 SomeLorentzValue ([] :: [T.Operation], 42 :: Integer)
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
@@ -170,7 +178,7 @@ test_Snapshots = testGroup "Snapshots collection"
               )
             )
 
-           , ( InterpretTerminatedOk
+           , ( InterpretTerminatedOk $ ContractFinalStack (contractOut :& RNil)
             , one
               ( Range (LigoPosition 3 4) (LigoPosition 3 29) file
               , lastStack
@@ -1955,6 +1963,41 @@ test_Snapshots = testGroup "Snapshots collection"
             <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
         expected @?= actual
+
+  , testCaseSteps "Check evaluated record in LIGO format" \step -> do
+      let runData = ContractRunData
+            { crdProgram = contractsDir </> "record-evaluated.mligo"
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 0 :: Integer
+            }
+
+      testWithSnapshots runData do
+        void $ moveTill Forward $
+          isAtLine 1
+
+        liftIO $ step "Skip preview, go to evaluated"
+        void $ move Forward
+
+        checkSnapshot \case
+          InterpretSnapshot
+            { isStatus = InterpretRunning (EventExpressionEvaluated typ (Just value))
+            } -> do
+              let expected =
+                    [ LVRecord $ HM.fromList
+                        [ ("a", LVCt $ LCInt "42")
+                        , ("b", LVCt $ LCNat "0")
+                        , ("c", LVCt $ LCString "!")
+                        ]
+                    ]
+
+              liftIO $ step "Decompile evaluated value"
+              actual <-
+                liftIO (convertMichelsonValuesToLigo dummyLoggingFunction [PreLigoConvertInfo value typ])
+                  <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
+
+              expected @?= actual
+          snap -> unexpectedSnapshot snap
   ]
 
 -- | Special options for checking contract.

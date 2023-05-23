@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed syntax highlighting of bytes literals in JsLIGO (`(bytes `example`)`). Previously, there was no highlighting at all, but now the verbatim strings are highlighted in the same manner as strings.\\n\\n"
+merge_request: '2595'
+title: "[#1774] Allow `` to be treated as a string"
+type: fixed
+            

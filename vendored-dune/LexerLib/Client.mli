@@ -15,15 +15,17 @@ module type S =
     val mk_eof    : Region.t -> token
     val callback  : lexer
 
-    (* For JsLIGO only. First argument (accumulator) is the list of
-       previous tokens in reverse order. *)
+    (* For JsLIGO only. The accumulator is the list of previous tokens
+       in reverse order. The first argument is the comment-as-a-token. *)
 
     val line_comment_attr :
+      token -> (* The comment-token *)
       token list ->
       Lexing.lexbuf ->
       (token list, message) Stdlib.result
 
     val block_comment_attr :
+      token -> (* The comment-token *)
       token list ->
       Lexing.lexbuf ->
       (token list, message) Stdlib.result

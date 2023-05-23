@@ -1,8 +1,3 @@
-open Ast_unified
-open Pass_type
-open Simple_utils.Trace
-open Errors
-module Location = Simple_utils.Location
 (*
   After the [Constructor_application] pass,
   there are sill remaining [E_constr]/[P_ctor],
@@ -12,6 +7,12 @@ module Location = Simple_utils.Location
   there is only one node for constructors,
   [E_constr] should be completely removed after this pass.
 *)
+
+open Ast_unified
+open Pass_type
+open Simple_utils.Trace
+open Errors
+module Location = Simple_utils.Location
 
 let name = __MODULE__
 

@@ -276,6 +276,7 @@ while_cond:
 
 expr_stmt:
   assign_stmt             { EAssign $1 }
+| increment_decrement_operators
 | call_expr
 | ternary_expr(expr_stmt)
 | as_expr                 { $1 }
@@ -305,6 +306,32 @@ ternary_expr(expr):
     let region = cover start stop in
     let value  = {condition=$1; qmark=$2; truthy=$3; colon=$4; falsy=$5}
     in ETernary {value; region}}
+
+increment_decrement_operators:
+  "++" "<ident>" {
+    let region = cover $1#region $2#region
+    and update_type = Increment $1 in
+    let value = {update_type; variable=$2}
+    in EPrefix {region; value}
+  }
+| "--" "<ident>" {
+    let region = cover $1#region $2#region
+    and update_type = Decrement $1 in
+    let value = {update_type; variable=$2}
+    in EPrefix {region; value}
+  }
+| "<ident>" "++" {
+    let region = cover $1#region $2#region
+    and update_type = Increment $2 in
+    let value = {update_type; variable=$1}
+    in EPostfix {region; value}
+  }
+| "<ident>" "--" {
+    let region = cover $1#region $2#region
+    and update_type = Decrement $2 in
+    let value  = {update_type; variable=$1}
+    in EPostfix {region; value}
+  }
 
 (* Expressions *)
 
@@ -369,10 +396,11 @@ unary_expr_level:
     in EArith (Neg {region; value})
   }
 | "!" call_expr_level {
-    let region = cover ($1#region) (expr_to_region $2)
+    let region = cover $1#region (expr_to_region $2)
     and value  = {op=$1; arg=$2} in
     ELogic (BoolExpr (Not ({region; value})))
   }
+| increment_decrement_operators
 | call_expr_level { $1 }
 
 call_expr_level:

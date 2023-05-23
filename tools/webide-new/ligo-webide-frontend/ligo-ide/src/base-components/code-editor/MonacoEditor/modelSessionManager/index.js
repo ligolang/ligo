@@ -42,6 +42,7 @@ class ModelSessionManager {
     this.decorationMap = {};
     this.lintMarkerMap = {};
     this.compileMarkerMap = {};
+    this.nextEditorCursorUpdate = null;
   }
 
   tabsRef = null;
@@ -137,6 +138,10 @@ class ModelSessionManager {
 
   set editor(editor) {
     this._editor = editor;
+  }
+
+  get editor() {
+    return this._editor;
   }
 
   get projectManager() {

@@ -34,5 +34,6 @@ module Style' = Style.Make (Token)
 
 let filters : t = [
   Style'.filter;
-    ZWSP.filter
+  ZWSP.filter;
+  Comments.filter
 ]

@@ -288,6 +288,26 @@ let rec expr : Eq.expr -> Folding.expr =
   | EContract { value = c; _ } ->
     let lst = List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c) in
     return @@ E_contract lst
+  | EPrefix { region = _; value = { update_type = Increment op; variable } } ->
+    let loc = Location.lift op#region in
+    let pre_op = Location.wrap ~loc O.Prefix_postfix.Increment in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_prefix { pre_op; variable }
+  | EPrefix { region = _; value = { update_type = Decrement op; variable } } ->
+    let loc = Location.lift op#region in
+    let pre_op = Location.wrap ~loc O.Prefix_postfix.Decrement in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_prefix { pre_op; variable }
+  | EPostfix { region = _; value = { update_type = Increment op; variable } } ->
+    let loc = Location.lift op#region in
+    let post_op = Location.wrap ~loc O.Prefix_postfix.Increment in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_postfix { post_op; variable }
+  | EPostfix { region = _; value = { update_type = Decrement op; variable } } ->
+    let loc = Location.lift op#region in
+    let post_op = Location.wrap ~loc O.Prefix_postfix.Decrement in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_postfix { post_op; variable }
 
 
 let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =

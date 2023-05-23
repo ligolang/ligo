@@ -127,6 +127,13 @@ type ('a, 'b) program_ = [%import: ('a, 'b) Types.program_]
 
 let e_literal ~loc l : expr = make_e ~loc @@ E_literal l
 
+let get_e_literal__type_ e =
+  match get_e e with
+  | E_literal (Literal__type_ x) -> Some x
+  | _ -> None
+  [@@map _type_, "int"]
+
+
 let e__type_ ~loc p : expr = make_e ~loc @@ E_literal (Literal__type_ p)
   [@@map
     _type_

@@ -33,7 +33,7 @@ let filter ?print_passes ~add_warning:_ units : result =
     match print_passes with
       Some std ->
         Std.(add_line std.out
-                      "Running JsLIGO unit self-pass: \
+                      "Running JsLIGO unit  self-pass: \
                        Injecting ZWSP virtual tokens.")
     | None -> ()
   in Ok (filter units)

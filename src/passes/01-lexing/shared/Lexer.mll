@@ -296,7 +296,7 @@ let     common_sym =   ";" | "," | "(" | ")"  | "[" | "]"  | "{" | "}"
 let  pascaligo_sym = "->" | "=/=" | "#" | ":=" | "^"
 let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^"
 let     jsligo_sym =   "..." | "?" | "!" | "%" | "==" | "!=" | "+=" | "-="
-                     | "*=" | "/="| "%=" | "=>"
+                     | "*=" | "/="| "%=" | "=>" | "++" | "--"
 let     pyligo_sym = "->" | "^"   | "**"  | "//" | "%"  | "@"  | "|" | "&"
                    | "~"  | "`"   | "\\"
                    | "==" | "!=" | "+=" | "-="
@@ -346,23 +346,23 @@ rule scan state = parse
 (* Attribute scanning for JsLIGO. Accumulator [acc] is list of
    previous tokens in reverse order. *)
 
-and line_comment_attr acc state = parse
+and line_comment_attr com_token acc state = parse
   "//" blank* { let state = state#sync lexbuf |> fst in
-                scan_attributes true scan_eof acc state lexbuf }
+                scan_attributes true scan_eof com_token acc state lexbuf }
 | eof | _     { Lexbuf.rollback lexbuf; acc }
 
-and scan_attributes first_call scan_end acc state = parse
+and scan_attributes first_call scan_end com_token acc state = parse
   '@' id_attr {
     let attr, state = mk_id_attr key ?value state lexbuf in
     let state       = scan_blanks state lexbuf in
-    scan_attributes false scan_end (attr::acc) state lexbuf }
+    scan_attributes false scan_end com_token (attr::acc) state lexbuf }
 | '@' str_attr {
     let attr, state = mk_str_attr key ?value state lexbuf in
     let state       = scan_blanks state lexbuf in
-    scan_attributes false scan_end (attr::acc) state lexbuf }
+    scan_attributes false scan_end com_token (attr::acc) state lexbuf }
 | eof | _ {
     Lexbuf.rollback lexbuf;
-    if first_call then acc else scan_end acc state lexbuf }
+    if first_call then com_token :: acc else scan_end acc state lexbuf }
 
 and scan_blanks state = parse
   blank* { state#sync lexbuf |> fst }
@@ -372,9 +372,9 @@ and scan_eof acc state = parse
 | _          { let _, Region.{region; _} = state#sync lexbuf
                in fail region Unterminated_comment }
 
-and block_comment_attr acc state = parse
+and block_comment_attr com_token acc state = parse
   "/*" blank* { let state = state#sync lexbuf |> fst in
-                scan_attributes true scan_close acc state lexbuf }
+                scan_attributes true scan_close com_token acc state lexbuf }
 | eof | _ { Lexbuf.rollback lexbuf; scan_close acc state lexbuf }
 
 and scan_close acc state = parse
@@ -449,11 +449,11 @@ and scan_verbatim verb_close thread state = parse
       let pos   = state#pos#set_line line
       in state#set_pos pos
 
-    let line_comment_attr acc lexbuf =
-      handle (line_comment_attr acc) (mk_state lexbuf) lexbuf
+    let line_comment_attr com_token acc lexbuf =
+      handle (line_comment_attr com_token acc) (mk_state lexbuf) lexbuf
 
-    let block_comment_attr acc lexbuf =
-      handle (block_comment_attr acc) (mk_state lexbuf) lexbuf
+    let block_comment_attr com_token acc lexbuf =
+      handle (block_comment_attr com_token acc) (mk_state lexbuf) lexbuf
 
   end (* of functor [Make] in HEADER *)
 (* END TRAILER *)

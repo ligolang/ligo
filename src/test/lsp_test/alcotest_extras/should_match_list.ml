@@ -8,7 +8,7 @@ let rec remove_by (eq : 'a -> 'a -> bool) (y : 'a) (xs : 'a list) : 'a list =
 
 
 let diff_by (eq : 'a -> 'a -> bool) (xs : 'a list) (ys : 'a list) : 'a list =
-  List.fold_left xs ~init:ys ~f:(Fun.flip (remove_by eq))
+  List.fold_left ys ~init:xs ~f:(Fun.flip (remove_by eq))
 
 
 let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool)

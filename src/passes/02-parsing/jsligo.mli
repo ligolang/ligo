@@ -39,13 +39,13 @@ val parse_expression : CST.expr parser
 (* The function [pretty_print_file] reads a string buffer and assumes
    that its contents originally comes from a file. *)
 
-val pretty_print            : Pretty.environment -> CST.t -> Buffer.t
-val pretty_print_expression : Pretty.environment -> CST.expr -> Buffer.t
-val pretty_print_pattern    : ?cols:int -> Pretty.environment -> CST.pattern -> Buffer.t
-val pretty_print_type_expr  : Pretty.environment -> CST.type_expr -> Buffer.t
+val pretty_print            : Pretty.state -> CST.t -> Buffer.t
+val pretty_print_expression : Pretty.state -> CST.expr -> Buffer.t
+val pretty_print_pattern    : ?cols:int -> Pretty.state -> CST.pattern -> Buffer.t
+val pretty_print_type_expr  : Pretty.state -> CST.type_expr -> Buffer.t
 
 (* The function [pretty_print_file] reads a string buffer and assumes
    that its contents originally comes from a file. *)
 
-val pretty_print_file : Pretty.environment -> (file_path -> Buffer.t) parser
+val pretty_print_file : Pretty.state -> (file_path -> Buffer.t) parser
 val pretty_print_cst  : (file_path -> Buffer.t) parser

@@ -26,18 +26,18 @@ module LexerAPI = Lexing_shared.TopAPI
 
 module type PRETTY =
   sig
-    type environment
-    val default_environment : environment
+    type state
+    val default_state : state
 
     type cst
     type expr
     type type_expr
     type pattern
 
-    val print           : environment -> cst       -> PPrint.document
-    val print_expr      : environment -> expr      -> PPrint.document
-    val print_type_expr : environment -> type_expr -> PPrint.document
-    val print_pattern   : environment -> pattern   -> PPrint.document
+    val print           : state -> cst       -> PPrint.document
+    val print_expr      : state -> expr      -> PPrint.document
+    val print_type_expr : state -> type_expr -> PPrint.document
+    val print_pattern   : state -> pattern   -> PPrint.document
   end
 
 (* PARSING *)

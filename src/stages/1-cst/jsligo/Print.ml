@@ -514,6 +514,8 @@ and print_expr state = function
 | EModA     e -> print_EModA     state e
 | EObject   e -> print_EObject   state e
 | EPar      e -> print_EPar      state e
+| EPrefix   e -> print_EPrefix   state e
+| EPostfix  e -> print_EPostfix  state e
 | EProj     e -> print_EProj     state e
 | ESeq      e -> print_ESeq      state e
 | EString   e -> print_EString   state e
@@ -797,6 +799,34 @@ and print_EAssign state (node: expr * operator reg * expr) =
     mk_child print_expr arg1;
     mk_child print_expr arg2]
   in Tree.make state "EAssign" children
+
+(* Prefix operators *)
+
+and print_EPrefix state = function
+  {value = {variable; update_type=Increment op}; region} ->
+    let children = Tree.[
+      mk_child (make_node ~region:op#region) "Increment";
+      mk_child make_literal variable]
+    in Tree.make ~region state "EPrefix" children
+| {value = {variable; update_type=Decrement op}; region} ->
+    let children = Tree.[
+      mk_child (make_node ~region:op#region) "Decrement";
+      mk_child make_literal variable]
+    in Tree.make ~region state "EPrefix" children
+
+(* Postfix operators *)
+
+and print_EPostfix state = function
+  {value = {variable; update_type=Increment op}; region} ->
+    let children = Tree.[
+      mk_child (make_node ~region:op#region) "Increment";
+      mk_child make_literal variable]
+    in Tree.make ~region state "EPostfix" children
+| {value = {variable; update_type=Decrement op}; region} ->
+    let children = Tree.[
+      mk_child (make_node ~region:op#region) "Decrement";
+      mk_child make_literal variable]
+    in Tree.make ~region state "EPostfix" children
 
 (* Constructor applications *)
 

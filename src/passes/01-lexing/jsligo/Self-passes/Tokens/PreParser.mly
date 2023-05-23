@@ -183,6 +183,8 @@ everything_else:
 | "/="              { DIV_EQ $1    }
 | "|"               { VBAR $1      }
 | "_"               { WILD $1      }
+| "++"              { INCR $1      }
+| "--"              { DECR $1      }
 | "?"               { QMARK $1     }
 | "break"           { Break $1     }
 | "case"            { Case $1      }

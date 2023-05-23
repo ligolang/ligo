@@ -9,7 +9,12 @@ module Directive = Preprocessor.Directive
 
 type attribute  = Attr.t Region.reg
 type attributes = attribute list
-type comment    = string Region.reg
+
+(* Comments *)
+
+type comment =
+  Block of string Region.reg
+| Line  of string Region.reg
 
 (* Wrapping tokens with metadata *)
 

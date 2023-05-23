@@ -837,7 +837,7 @@ for_expr:
 | for_in_expr { $1 }
 
 for_int_expr:
-  "for" index "=" expr direction expr block { 
+  "for" index "=" expr direction expr block {
     let kwd_for  = $1 in
     let equal    = $3 in
     let stop     = $7.region in
@@ -859,32 +859,31 @@ direction:
 | "downto" { Downto $1 }
 
 block:
-  "do" ioption(series) "done" { 
-    let kwd_do    = $1 in
-    let kwd_done  = $3 in
-    let value     = {kwd_do;
-                     seq_expr = $2;
-                     kwd_done} in
-    let region    = cover kwd_do#region
-			  kwd_done#region
+  "do" ioption(series) "done" {
+    let kwd_do   = $1 in
+    let kwd_done = $3 in
+    let value    = {kwd_do;
+                    seq_expr = $2;
+                    kwd_done} in
+    let region   = cover kwd_do#region
+                         kwd_done#region
     in {region; value} }
 
 for_in_expr:
-  "for" pattern "in" expr block { 
-    let kwd_for  = $1 in
-    let kwd_in   = $3 in
-    let stop     = $5.region in
-    let region   = cover kwd_for#region stop in
-    let value    = {kwd_for;
-                    pattern     = $2;
-                    kwd_in;
-                    collection  = $4;
-                    body        = $5}
+  "for" pattern "in" expr block {
+    let kwd_for = $1 in
+    let kwd_in  = $3 in
+    let stop    = $5.region in
+    let region  = cover kwd_for#region stop in
+    let value   = {kwd_for;
+                   pattern    = $2;
+                   kwd_in;
+                   collection = $4;
+                   body       = $5}
     in E_ForIn {region; value} }
 
-
 while_expr:
-  "while" expr block { 
+  "while" expr block {
     let kwd_while = $1 in
     let stop      = $3.region in
     let region    = cover kwd_while#region stop in
@@ -1146,4 +1145,7 @@ let_in_sequence:
     in hook_E_Attr $1 let_in }
 
 seq_expr:
-  ass_expr_level | for_expr | while_expr | if_then_else(seq_expr) { $1 }
+  ass_expr_level
+| for_expr
+| while_expr
+| if_then_else(seq_expr) { $1 }

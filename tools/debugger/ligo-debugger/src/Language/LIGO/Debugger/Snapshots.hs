@@ -43,8 +43,8 @@ module Language.LIGO.Debugger.Snapshots
 import Control.Lens
   (At (at), Each (each), Ixed (ix), Zoom (zoom), lens, makeLensesWith, makePrisms, (%=), (.=),
   (<<.=), (?=))
-import Control.Lens.Prism (Prism', _Just)
-import Control.Monad.Except (throwError)
+import Control.Lens.Prism (_Just)
+import Control.Monad.Except (MonadError, throwError)
 import Control.Monad.RWS.Strict (RWST (..))
 import Data.Conduit (ConduitT)
 import Data.Conduit qualified as C
@@ -61,18 +61,18 @@ import UnliftIO (MonadUnliftIO, throwIO)
 
 import Morley.Debugger.Core.Common (fromCanonicalLoc)
 import Morley.Debugger.Core.Navigate
-  (Direction (Backward), MovementResult (HitBoundary), NavigableSnapshot (..),
-  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..), curSnapshot, frozen, moveRaw,
+  (Direction (Backward), MonadWriter, MovementResult (HitBoundary), NavigableSnapshot (..),
+  NavigableSnapshotWithMethods (..), SnapshotEdgeStatus (..),
+  SnapshotEndedWith (SnapshotEndedWithFail, SnapshotEndedWithOk), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots
-  (DebuggerFailure (DebuggerInfiniteLoop), InterpretHistory (..))
+  (DebuggerFailure (DebuggerInfiniteLoop), FinalStack (ContractFinalStack), InterpretHistory (..))
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (ContractEnv, InstrRunner, InterpreterState, InterpreterStateMonad (..),
-  MichelsonFailed (MichelsonExt, MichelsonFailedWith),
+  (ContractEnv' (ceMaxSteps), InstrRunner, InterpreterState (InterpreterState),
+  InterpreterStateMonad (..), MichelsonFailed (MichelsonExt, MichelsonFailedWith),
   MichelsonFailureWithStack (MichelsonFailureWithStack, mfwsErrorSrcPos, mfwsFailed),
-  MorleyLogsBuilder, StkEl (StkEl), initInterpreterState, isRemainingSteps, mkInitStack,
-  runInstrImpl)
+  MorleyLogsBuilder, StkEl (StkEl), isRemainingSteps, mkInitStack, runInstrImpl)
 import Morley.Michelson.Runtime.Dummy (dummyBigMapCounter, dummyGlobalCounter)
 import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
@@ -80,7 +80,7 @@ import Morley.Util.Lens (postfixLFields)
 
 import Duplo (leq)
 
-import Language.LIGO.AST (LIGO)
+import Language.LIGO.AST (LIGO, Lang (Caml))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
@@ -129,7 +129,7 @@ data InterpretStatus
   = InterpretRunning InterpretEvent
 
     -- | Termination finished successfully.
-  | InterpretTerminatedOk
+  | InterpretTerminatedOk FinalStack
 
     -- | Interpretation failed.
   | InterpretFailed (MichelsonFailureWithStack DebuggerFailure)
@@ -139,7 +139,7 @@ data InterpretStatus
 instance Buildable InterpretStatus where
   build = \case
     InterpretRunning ev -> "running / " <> build ev
-    InterpretTerminatedOk -> "terminated ok"
+    InterpretTerminatedOk{} -> "terminated ok"
     InterpretFailed err -> "failed with " <> build err
 
 -- | Type of the expression that we met.
@@ -173,7 +173,7 @@ data InterpretEvent
     --
     -- Normally, this always contains some value; 'Nothing' means that
     -- something went wrong (but we don't want to crash the entire debugger).
-  | EventExpressionEvaluated (Maybe SomeValue)
+  | EventExpressionEvaluated LigoType (Maybe SomeValue)
 
   deriving stock (Show, Eq)
 
@@ -185,8 +185,8 @@ instance Buildable InterpretEvent where
       "upon expression"
     EventExpressionPreview FunctionCall ->
       "upon function call"
-    EventExpressionEvaluated mval ->
-      "expression evaluated (" <> maybe "-" build mval <> ")"
+    EventExpressionEvaluated typ mval ->
+      "expression evaluated (" <> maybe "-" [int|m|#{id} : #{const $ buildType Caml typ}|] mval <> ")"
 
 -- | Information about execution state at a point where the debugger can
 -- potentially stop.
@@ -213,8 +213,8 @@ instance NavigableSnapshot (InterpretSnapshot u) where
 
   pickSnapshotEdgeStatus is = case isStatus is of
     InterpretRunning _ -> SnapshotIntermediate
-    InterpretTerminatedOk -> SnapshotAtEnd pass
-    InterpretFailed err -> SnapshotAtEnd (Left err)
+    InterpretTerminatedOk stack -> SnapshotAtEnd (SnapshotEndedWithOk stack)
+    InterpretFailed err -> SnapshotAtEnd (SnapshotEndedWithFail err)
 
 instance NavigableSnapshotWithMethods (InterpretSnapshot u) where
   getCurMethodBlockLevel = length . isStackFrames <$> curSnapshot
@@ -237,9 +237,6 @@ data CollectorState m = CollectorState
     -- ^ Ranges of recorded expression snapshots.
     -- Note that these ranges refer only to snapshots, that
     -- have @EventExpressionPreview@ event.
-  , csRecordedExpressionEvaluatedRanges :: HashSet Range
-    -- ^ Ranges of recorded expression snapshots that have
-    -- @EventExpressionEvaluated@ event.
   , csLoggingFunction :: String -> m ()
     -- ^ Function for logging some useful debugging info.
   , csMainFunctionName :: Name 'Unique
@@ -256,6 +253,13 @@ data CollectorState m = CollectorState
   , csCheckStepsAmount :: Bool
     -- ^ We have a max steps field in the settings. If it's blank
     -- then we perform an infinite amount of steps.
+  , csRecordedFirstTime :: Bool
+    -- ^ A flag which indicates whether we recorded a location
+    -- with @EventExpressionPreview@/@EventFacedStatement@ event
+    -- for a first time.
+    --
+    -- We need it because we want to record a paired @EventExpressionEvaluated@
+    -- for the same location.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -278,33 +282,45 @@ csActiveStackFrameL = csStackFramesL . __head
         setHead :: NonEmpty a -> a -> NonEmpty a
         setHead (_ :| xs) x' = x' :| xs
 
+type ContractEnv m = ContractEnv' (CollectingEvalOp m)
+
 -- | Our monadic stack, allows running interpretation and making snapshot
 -- records.
-type CollectingEvalOp m =
+newtype CollectingEvalOp m a = CollectingEvalOp
   -- Including ConduitT to build snapshots sequence lazily.
   -- Normally ConduitT lies on top of the stack, but here we put it under
   -- ExceptT to make it record things even when a failure occurs.
-  ExceptT (MichelsonFailureWithStack DebuggerFailure) $
-  ConduitT () (InterpretSnapshot 'Unique) $
-  RWST ContractEnv MorleyLogsBuilder (CollectorState m) $
-  m
+  { runCollectingEvalOp :: ExceptT (MichelsonFailureWithStack DebuggerFailure)
+      (ConduitT () (InterpretSnapshot 'Unique)
+      (RWST (ContractEnv m) MorleyLogsBuilder (CollectorState m) m)) a
+  }
+  deriving newtype
+    ( MonadError (MichelsonFailureWithStack DebuggerFailure)
+    , MonadState (CollectorState m)
+    , MonadWriter MorleyLogsBuilder
+    , MonadReader (ContractEnv m)
+    , Monad
+    , Applicative
+    , Functor
+    )
 
--- TODO: Consider making CollectingEvalOp a newtype to avoid this overlapping
--- instance.
-instance {-# OVERLAPS #-} (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
-  stateInterpreterState f =
+instance MonadTrans CollectingEvalOp where
+  lift = CollectingEvalOp . lift . lift . lift
+
+instance (Monad m) => InterpreterStateMonad (CollectingEvalOp m) where
+  stateInterpreterState f = CollectingEvalOp $
     lift $ lift $ zoom csInterpreterStateL $ state f
 
 makePrisms ''InterpretStatus
 makePrisms ''InterpretEvent
 
-statusExpressionEvaluatedP :: Prism' InterpretStatus SomeValue
-statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _Just
+statusExpressionEvaluatedP :: Traversal' InterpretStatus SomeValue
+statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _2 . _Just
 
-logMessage :: (Monad m) => String -> CollectingEvalOp m ()
+logMessage :: forall m. (Monad m) => String -> CollectingEvalOp m ()
 logMessage str = do
   logger <- use csLoggingFunctionL
-  lift $ lift $ lift $ logger [int||[SnapshotCollecting] #{str}|]
+  lift $ logger [int||[SnapshotCollecting] #{str}|]
 
 -- | Executes the code and collects snapshots of execution.
 runInstrCollect :: forall m. (Monad m) => InstrRunner (CollectingEvalOp m)
@@ -330,7 +346,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
   preExecutedStage embeddedMetaMb inner stack
   newStack <- surroundExecutionInner embeddedMetaMb (runInstrImpl runInstrCollect) inner stack
-  postExecutedStage embeddedMetaMb inner newStack
+  postExecutedStage embeddedMetaMb inner newStack <* (csRecordedFirstTimeL .= False)
   where
     michFailureHandler :: MichelsonFailureWithStack DebuggerFailure -> CollectingEvalOp m a
     michFailureHandler err = use csLastRangeMbL >>= \case
@@ -357,16 +373,19 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           contracts <- use csParsedFilesL
           lastLoc <- use csLastRangeMbL
 
-          unlessM (HS.member loc <$> use csRecordedExpressionRangesL) do
+          recordedExpressionLocs <- use csRecordedExpressionRangesL
+
+          unless (shouldIgnoreMeta loc instr contracts || HS.member loc recordedExpressionLocs) do
+            csRecordedExpressionRangesL %= HS.insert loc
+            csRecordedFirstTimeL .= True
+
             -- There is no reason to record a snapshot with @EventExpressionPreview@
             -- event if we already recorded a @statement@ snapshot with the same location.
-            unless (shouldIgnoreMeta loc instr contracts || lastLoc == Just loc) do
+            unless (lastLoc == Just loc) do
               let eventExpressionReason =
                     if isLocationForFunctionCall loc contracts
                     then FunctionCall
                     else GeneralExpression
-
-              csRecordedExpressionRangesL %= HS.insert loc
 
               recordSnapshot loc (EventExpressionPreview eventExpressionReason)
 
@@ -404,33 +423,36 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           contracts <- use csParsedFilesL
 
-          unlessM (HS.member loc <$> use csRecordedExpressionEvaluatedRangesL) do
+          whenM (use csRecordedFirstTimeL) do
             unless (shouldIgnoreMeta loc instr contracts) do
-              csRecordedExpressionEvaluatedRangesL %= HS.insert loc
-              recordSnapshot loc (EventExpressionEvaluated evaluatedVal)
+              recordSnapshot loc (EventExpressionEvaluated liiSourceType evaluatedVal)
 
         pure newStack
       Nothing -> pure newStack
 
     -- When we want to go inside a function call or loop-like thing (e,g, @for-of@ or @while@)
     -- we need to clean up remembered locations and after interpreting restore them.
-    wrapExecOrLoops :: Instr i o -> CollectingEvalOp m (Rec StkEl o) -> CollectingEvalOp m (Rec StkEl o)
-    wrapExecOrLoops instr act
+    wrapAction :: Instr i o -> CollectingEvalOp m (Rec StkEl o) -> CollectingEvalOp m (Rec StkEl o)
+    wrapAction instr act
       | isExecOrLoopLike instr = do
           -- <<.= sets a variable and returns its previous value (yeah, it's a bit confusing)
           oldExprRanges <- csRecordedExpressionRangesL <<.= HS.empty
-          oldExprEvaluatedRanges <- csRecordedExpressionEvaluatedRangesL <<.= HS.empty
           oldStatementRanges <- csRecordedStatementRangesL <<.= HS.empty
 
-          stack <- act
+          stack <- wrappedAct
 
           csRecordedExpressionRangesL .= oldExprRanges
-          csRecordedExpressionEvaluatedRangesL .= oldExprEvaluatedRanges
           csRecordedStatementRangesL .= oldStatementRanges
 
           pure stack
-      | otherwise = act
+      | otherwise = wrappedAct
       where
+        wrappedAct = do
+          oldRecordedFirstTime <- csRecordedFirstTimeL <<.= False
+          stack <- act
+          csRecordedFirstTimeL .= oldRecordedFirstTime
+          pure stack
+
         isExecOrLoopLike = \case
           EXEC{} -> True
           LOOP{} -> True
@@ -446,7 +468,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       -> Instr i o
       -> Rec StkEl i
       -> CollectingEvalOp m (Rec StkEl o)
-    surroundExecutionInner _embeddedMetaMb runInstr instr stack = wrapExecOrLoops instr $
+    surroundExecutionInner _embeddedMetaMb runInstr instr stack = wrapAction instr $
       case (instr, stack) of
 
         -- We're on a way to execute a function.
@@ -553,7 +575,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
       csLastRecordedSnapshotL ?= newSnap
       csLastRangeMbL ?= loc
-      lift $ C.yield newSnap
+      CollectingEvalOp $ lift $ C.yield newSnap
 
     getStatements :: Instr i o -> Range -> CollectingEvalOp m [Range]
     getStatements instr range@Range{..} = do
@@ -635,8 +657,8 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
 runCollectInterpretSnapshots
   :: (MonadUnliftIO m, MonadActive m)
-  => CollectingEvalOp m a
-  -> ContractEnv
+  => CollectingEvalOp m FinalStack
+  -> ContractEnv m
   -> CollectorState m
   -> Value st
   -> LigoType
@@ -645,7 +667,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
   -- This should be safe because we yield at least one snapshot in the end
   InterpretHistory . fromList <$>
   lazyConsume do
-    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT act
+    (outcome, endState, _) <- CL.runRWSC env initSt $ runExceptT $ runCollectingEvalOp act
     case outcome of
       Left stack -> do
         case mfwsFailed stack of
@@ -663,7 +685,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
           , isStackFrames = stackFrames
           }
 
-      Right _ -> do
+      Right finalStack -> do
         let opsAndStorageTypeMb = do
               LTCArrow LigoTypeArrow{..} <- _lteTypeContent <$> entrypointTypeMb
               pure _ltaType2
@@ -679,7 +701,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
                   do csLastRecordedSnapshot endState
 
               case isStatus lastSnap of
-                InterpretRunning (EventExpressionEvaluated (Just val)) -> do
+                InterpretRunning (EventExpressionEvaluated _ (Just val)) -> do
                   let stackItemWithOpsAndStorage = StackItem
                         { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType opsAndStorageTypeMb)
                         , siValue = val
@@ -699,7 +721,7 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
 
                     Got #{status}|]
         C.yield InterpretSnapshot
-          { isStatus = InterpretTerminatedOk
+          { isStatus = InterpretTerminatedOk finalStack
           , ..
           }
 
@@ -714,7 +736,7 @@ collectInterpretSnapshots
   -> EntrypointCallT cp arg
   -> Value arg
   -> Value st
-  -> ContractEnv
+  -> ContractEnv m
   -> HashMap FilePath (LIGO ParsedInfo)
   -> (String -> m ())
   -> HashSet Range
@@ -735,14 +757,16 @@ collectInterpretSnapshots
   trackMaxSteps
   entrypointType =
     runCollectInterpretSnapshots
-      (runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
+      (ContractFinalStack <$> runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
       collSt
       initStore
       entrypointType
     where
       initStack = mkInitStack (liftCallArg epc param) initStore
-      initSt = initInterpreterState dummyGlobalCounter dummyBigMapCounter env
+      initSt =
+        InterpreterState (ceMaxSteps env)
+          dummyGlobalCounter dummyBigMapCounter
       collSt = CollectorState
         { csInterpreterState = initSt
         , csStackFrames = one StackFrame
@@ -758,12 +782,12 @@ collectInterpretSnapshots
         , csParsedFiles = parsedContracts
         , csRecordedStatementRanges = HS.empty
         , csRecordedExpressionRanges = HS.empty
-        , csRecordedExpressionEvaluatedRanges = HS.empty
         , csLoggingFunction = logger
         , csMainFunctionName = Name entrypoint
         , csLastRangeMb = Nothing
         , csLambdaLocs = lambdaLocs
         , csCheckStepsAmount = trackMaxSteps
+        , csRecordedFirstTime = False
         }
 
       -- Strip duplicate locations.
