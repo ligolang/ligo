@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nPrevented the VSCode plugin from showing a button to download a static Linux binary in MacOS and Windows.If a new LIGO version is available, a pop-up might appear prompting the user to update, but the extension is not launched until that button is interacted with (any button in it is pressed). This behavior has been changed: the extension will be launched independently of the state of the pop-up.\\n"
+merge_request: '2612'
+title: "[#1805] Improve UX around the upgrade LIGO pop-up"
+type: fixed
+            
