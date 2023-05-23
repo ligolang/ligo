@@ -1,6 +1,6 @@
 [submodule "vendors/tezos-ligo"]
 	path = vendors/tezos-ligo
-	url = https://github.com/ligolang/tezos-ligo.git
+	url = https://gitlab.com/ligolang/tezos-ligo.git
 	branch = v17.0-ligo
 [submodule "tools/lsp/squirrel/bench/submodules/baseDAO"]
 	path = tools/lsp/squirrel/bench/submodules/baseDAO
