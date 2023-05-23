@@ -39,9 +39,18 @@ let default_state : PrettyComb.state =
 
 (* Comments *)
 
+let pp_line_comment comment = string "//" ^^ string comment.value
+
+let pp_block_comment comment =
+  string "/*" ^^ string comment.value ^^ string "*/"
+
+let pp_line_comment_opt prefix = function
+  None -> prefix
+| Some comment -> prefix ^^ space ^^ pp_line_comment comment
+
 let pp_comment = function
-  Wrap.Block comment -> string "/*" ^^ string comment.value ^^ string "*/"
-| Wrap.Line comment -> string "//" ^^ string comment.value
+  Wrap.Block comment -> pp_block_comment comment
+| Wrap.Line  comment -> pp_line_comment  comment
 
 let pp_comments = function
   [] -> empty
@@ -50,7 +59,8 @@ let pp_comments = function
 (* Tokens *)
 
 let token (t : string Wrap.t) : document =
-  pp_comments t#comments ^/^ string t#payload
+  let prefix = pp_comments t#comments ^/^ string t#payload
+  in pp_line_comment_opt prefix t#line_comment
 
 (* Enclosed documents *)
 
@@ -359,8 +369,9 @@ and pp_string s = dquotes (pp_ident s)
 and pp_verbatim s = bquotes (pp_ident s)
 
 and pp_bytes (node: (string * Hex.t) wrap)  =
-  pp_comments node#comments ^/^
-  string ("0x" ^ Hex.show (snd node#payload))
+  let prefix = pp_comments node#comments
+               ^/^ string ("0x" ^ Hex.show (snd node#payload))
+  in pp_line_comment_opt prefix node#line_comment
 
 and pp_expr state = function
   EFun      e -> pp_fun state e
@@ -530,15 +541,17 @@ and pp_arith_expr state = function
 | Int   e -> pp_int e
 
 and pp_int (node : (lexeme * Z.t) wrap) =
-  pp_comments node#comments ^/^
-  string (Z.to_string (snd node#payload))
+  let prefix = pp_comments node#comments
+               ^/^ string (Z.to_string (snd node#payload))
+  in pp_line_comment_opt prefix node#line_comment
 
 and pp_par_expr state (node: expr par) =
   let {lpar; inside; rpar} = node in
   pp_par_like_document state (pp_expr state inside) lpar rpar
 
 and pp_type_annot_rhs state colon value =
-  group (nest state#indent (break 0 ^^ token colon ^^ space ^^ pp_type_expr state value))
+  group (nest state#indent
+              (break 0 ^^ token colon ^^ space ^^ pp_type_expr state value))
 
 (* In flat mode, we may render the arguments like so:
 

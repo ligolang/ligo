@@ -12,4 +12,4 @@
   ;; LIGO
   lexing_shared
   lx_ml_self_tokens)
- (modules Self ZWSP Comments))
+ (modules Self ZWSP Comments LineCom))

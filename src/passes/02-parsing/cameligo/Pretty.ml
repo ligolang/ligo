@@ -38,9 +38,18 @@ let default_state : state =
 
 (* Comments *)
 
+let print_line_comment comment = string "//" ^^ string comment.value
+
+let print_block_comment comment =
+  string "(*" ^^ string comment.value ^^ string "*)"
+
+let print_line_comment_opt prefix = function
+  None -> prefix
+| Some comment -> prefix ^^ space ^^ print_line_comment comment
+
 let print_comment = function
-  Wrap.Block comment -> string "(*" ^^ string comment.value ^^ string "*)"
-| Wrap.Line comment -> string "//" ^^ string comment.value
+  Wrap.Block comment -> print_block_comment comment
+| Wrap.Line  comment -> print_line_comment  comment
 
 let print_comments = function
   [] -> empty
@@ -49,7 +58,8 @@ let print_comments = function
 (* Tokens *)
 
 let token (t : string Wrap.t) : document =
-  print_comments t#comments ^/^ string t#payload
+  let prefix = print_comments t#comments ^/^ string t#payload
+  in print_line_comment_opt prefix t#line_comment
 
 (* Enclosed documents *)
 
@@ -168,12 +178,14 @@ let unroll_E_Attr (attr, expr) =
 (* PRINTING LITERALS *)
 
 let print_bytes (node : (lexeme * Hex.t) wrap) =
-  print_comments node#comments
-  ^/^ string ("0x" ^ Hex.show (snd node#payload))
+  let prefix = print_comments node#comments
+               ^/^ string ("0x" ^ Hex.show (snd node#payload))
+  in print_line_comment_opt prefix node#line_comment
 
 let print_mutez (node : (lexeme * Int64.t) wrap) =
-  print_comments node#comments
-  ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
+  let prefix = print_comments node#comments
+               ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
+  in print_line_comment_opt prefix node#line_comment
 
 let print_ident (node : variable) = token node
 
@@ -184,12 +196,14 @@ let print_verbatim (node : lexeme wrap) =
   string "{|" ^^ print_ident node ^^ string "|}"
 
 let print_int (node : (lexeme * Z.t) wrap) =
-  print_comments node#comments
-  ^/^ string (Z.to_string (snd node#payload))
+  let prefix = print_comments node#comments
+               ^/^ string (Z.to_string (snd node#payload))
+  in print_line_comment_opt prefix node#line_comment
 
 and print_nat (node : (lexeme * Z.t) wrap) =
-  print_comments node#comments
-  ^/^ string (Z.to_string (snd node#payload) ^ "n")
+  let prefix = print_comments node#comments
+               ^/^ string (Z.to_string (snd node#payload) ^ "n")
+  in print_line_comment_opt prefix node#line_comment
 
 (* PRINTING THE CST *)
 
@@ -224,9 +238,10 @@ and print_attribute state (node : Attr.t wrap) =
   let thread = match val_opt with
                  Some (String value | Ident value) ->
                    group (thread ^/^ nest state#indent (string value))
-               | None -> thread
-  in print_comments node#comments
-     ^/^ lbracket ^^ at ^^ thread ^^ rbracket
+               | None -> thread in
+  let thread = print_comments node#comments
+               ^/^ lbracket ^^ at ^^ thread ^^ rbracket
+  in print_line_comment_opt thread node#line_comment
 
 and print_attributes state thread = function
   [] -> thread
@@ -1042,8 +1057,10 @@ and print_projection state (node : projection reg) =
 
 and print_selection = function
   FieldName name -> token name
-| Component cmp  -> print_comments cmp#comments ^/^
-                    (cmp#payload |> snd |> Z.to_string |> string)
+| Component cmp  ->
+    let prefix = print_comments cmp#comments
+                 ^/^ (cmp#payload |> snd |> Z.to_string |> string)
+    in print_line_comment_opt prefix cmp#line_comment
 
 (* Record expression *)
 

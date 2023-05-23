@@ -13,11 +13,7 @@ module Lexbuf = Simple_utils.Lexbuf
 
 let sprintf = Printf.sprintf
 
-let (let*) : ('a, 'e) result -> ('a -> ('b, 'e) result) -> ('b, 'e) result =
-  fun r f ->
-    match r with
-      Ok x         -> f x
-    | Error _ as e -> e
+let (let*) = Caml.Result.bind
 
 (* ERRORS *)
 
