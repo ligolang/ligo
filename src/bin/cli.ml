@@ -347,6 +347,12 @@ let no_colour =
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
+let show_loc =
+  let open Command.Param in
+  (* Using the american standard for the CLI *)
+  let name = "--show-loc" in
+  let doc = "show location in s-expressions" in
+  flag ~doc name no_arg
 
 let deprecated =
   let open Command.Param in
@@ -2103,6 +2109,7 @@ let print_ast_unified =
       nanopass
       display_format
       no_colour
+      show_loc
       deprecated
       skip_analytics
       project_root
@@ -2126,7 +2133,7 @@ let print_ast_unified =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Print.ast_unified raw_options nanopass source_file
+    @@ Api.Print.ast_unified raw_options show_loc nanopass source_file
   in
   let summary =
     "print the unified ligo AST. Execute nanopasses if option used\n\
@@ -2142,6 +2149,7 @@ let print_ast_unified =
      <*> nanopass
      <*> display_format
      <*> no_colour
+     <*> show_loc
      <*> deprecated
      <*> skip_analytics
      <*> project_root
