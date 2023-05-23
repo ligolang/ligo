@@ -380,8 +380,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let fun_type_args =
       let compile_fun_type_arg : I.fun_type_arg -> _ O.Named_fun.fun_type_arg =
        fun { name; type_expr; _ } ->
-        let name = TODO_do_in_parsing.tvar name in
-        { name = Some name; type_expr }
+        { name = name#payload; type_expr }
       in
       List.map ~f:compile_fun_type_arg (nsepseq_to_list fta.inside)
     in

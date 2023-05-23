@@ -19,6 +19,7 @@ type flags =
   ; object_to_record : bool
   ; detect_recursion : bool
   ; hack_literalize_jsligo : bool
+  ; named_fun : bool
   ; t_app_michelson_types : Syntax_types.t
   ; projections : Syntax_types.t
   ; pattern_constructor_application : Syntax_types.t
@@ -39,6 +40,7 @@ let passes ~(flags : flags) : (module T) list =
       ; freeze_operators
       ; constructor_application
       ; hack_literalize_jsligo
+      ; named_fun
       ; t_app_michelson_types
       ; projections
       ; pattern_constructor_application
@@ -77,7 +79,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Standalone_constructor_removal) ~flag:always ~arg:()
   ; entry (module Special_unit_constructor) ~flag:special_unit_constructor ~arg:()
   ; entry (module Type_abstraction_declaration) ~flag:always ~arg:()
-  ; entry (module Named_fun) ~flag:always ~arg:()
+  ; entry (module Named_fun) ~flag:named_fun ~arg:()
   ; entry (module Reverse_application) ~flag:always ~arg:()
   ; entry (module Prefix_postfix_operators) ~flag:always ~arg:()
   ; entry (module Freeze_operators) ~flag:always ~arg:freeze_operators
@@ -135,6 +137,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; freeze_operators = syntax
   ; constructor_application = syntax
   ; hack_literalize_jsligo = is_jsligo
+  ; named_fun = is_jsligo
   ; t_app_michelson_types = syntax
   ; projections = syntax
   ; pattern_constructor_application = syntax

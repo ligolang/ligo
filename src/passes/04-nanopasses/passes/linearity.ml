@@ -29,7 +29,7 @@ let compile ~raise =
    fun ty ->
     match Location.unwrap ty with
     | T_named_fun (args, _) ->
-      if unlinear_type Ty_variable.compare (List.filter_map args ~f:(fun x -> x.name))
+      if unlinear_type String.compare (List.map args ~f:(fun x -> x.name))
       then raise.error (non_linear_type (`Ty ty))
     | T_record_raw rows | T_sum_raw rows ->
       if unlinear_type Label.compare (List.map rows ~f:fst)
