@@ -113,6 +113,7 @@ type eof = lexeme wrap
 
 type variable    = lexeme wrap
 type fun_name    = lexeme wrap
+type fun_arg_name    = lexeme wrap
 type type_name   = lexeme wrap
 type type_var    = lexeme wrap
 type type_constr = lexeme wrap
@@ -198,7 +199,7 @@ and type_vars = (type_var, comma) nsepseq chevrons reg
 and fun_type_args = (fun_type_arg, comma) nsepseq par
 
 and fun_type_arg = {
-  name      : variable;
+  name      : fun_arg_name;
   colon     : colon;
   type_expr : type_expr
 }

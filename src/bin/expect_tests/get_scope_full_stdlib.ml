@@ -981,7 +981,7 @@ let%expect_test _ =
     (bool#58:5-9 -> bool)
     Range: File "", line 58, characters 5-9
     Body Range: File "", line 58, characters 12-24
-    Content: : |sum[False -> unit , True -> unit]|
+    Content: : |bool|
     references:
       File "", line 80, characters 63-67 ,
       File "", line 80, characters 111-115 ,

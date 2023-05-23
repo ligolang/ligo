@@ -1,5 +1,5 @@
 type 't fun_type_arg =
-  { name : Ligo_prim.Type_var.t option
+  { name : string
   ; type_expr : 't
   }
 
