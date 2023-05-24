@@ -28,8 +28,6 @@ type t = filter list
 let filters : t = [
   ES6FUN.filter;
   ES6FUN_hook.filter;
-  VBAR.filter;
-  VBAR_hook.filter;
   SEMI.filter;
   SEMI_hook.filter;
   Attributes.filter;
