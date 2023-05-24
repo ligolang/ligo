@@ -1,0 +1,7 @@
+type internal<T> = {
+        it: set<T>
+    };
+
+const j : set<int> = Set.literal(list([3, 2, 2, 1]));
+
+const t : internal<int> = { it: j };

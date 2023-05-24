@@ -156,7 +156,7 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
-%inline type_param  : "<ident>"  { $1 }
+%inline type_param  : "<ident>" | "<uident>" { $1 }
 %inline field_name  : "<ident>"  { $1 }
 %inline module_name : "<uident>" { $1 }
 %inline ctor        : "<uident>" { $1 }
@@ -652,7 +652,7 @@ binding_type:
   ":" ioption(type_generics) type_expr { ($1,$3), $2 }
 
 type_generics:
-  chevrons(nsepseq(type_name,",")) { $1 }
+  chevrons(nsepseq(type_param,",")) { $1 }
 
 binding_pattern:
   "_"            { PVar (mk_wild_pattern $1) }
