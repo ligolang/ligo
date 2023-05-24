@@ -13,6 +13,7 @@ module For_int = For_int
 module For_collection = For_collection
 module Patch = Patch
 module For_of = For_of
+module For_stmt = For_stmt
 module Removal = Removal
 module While = While
 module Switch = Switch

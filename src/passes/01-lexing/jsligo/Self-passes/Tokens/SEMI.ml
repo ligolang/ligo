@@ -103,7 +103,8 @@ let semicolon_insertion tokens =
   | (RBRACE _ as rbrace) :: (Let _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Const _ as r)  :: rest
   | (RBRACE _ as rbrace) :: (Ident _ as r)  :: rest
-  | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest ->
+  | (RBRACE _ as rbrace) :: (Type _ as r)  :: rest
+  | (RBRACE _ as rbrace) :: (For _ as r)  :: rest ->
     let (s, _) = Token.proj_token rbrace in
     inner (r :: mk_semi s :: rbrace :: result ) rest
   | (RPAR _ as hd) :: tl

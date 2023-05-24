@@ -2881,3 +2881,47 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_increment exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage string ;
+      code { CDR ;
+             PUSH string "" ;
+             PUSH int 1 ;
+             DUP 3 ;
+             SIZE ;
+             SUB ;
+             PUSH bool True ;
+             LOOP { PUSH int 0 ;
+                    DUP 2 ;
+                    COMPARE ;
+                    GE ;
+                    DUP ;
+                    IF { DUP 2 ;
+                         ABS ;
+                         DUP 5 ;
+                         PUSH nat 1 ;
+                         DIG 2 ;
+                         SLICE ;
+                         IF_NONE { PUSH string "SLICE" ; FAILWITH } {} ;
+                         DIG 3 ;
+                         CONCAT ;
+                         DUG 2 ;
+                         PUSH int 1 ;
+                         DIG 2 ;
+                         SUB ;
+                         SWAP }
+                       {} } ;
+             DIG 2 ;
+             DROP 2 ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
+  [%expect
+    {|
+    "reverse"
+    Everything at the top-level was executed.
+    - test exited with value (). |}]

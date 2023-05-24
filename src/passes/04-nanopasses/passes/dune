@@ -61,7 +61,8 @@
   special_unit_constructor
   unpuning
   disc_union_types
-  prefix_postfix_operators)
+  prefix_postfix_operators
+  for_to_while_loop)
  (libraries
   ast_unified
   syntax_types

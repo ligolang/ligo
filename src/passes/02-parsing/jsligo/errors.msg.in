@@ -32,7 +32,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE UIdent ZWSP
 ##
-## Ends in an error in state: 552.
+## Ends in an error in state: 705.
 ##
 ## property -> property_name . COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -41,7 +41,7 @@ interactive_expr: LBRACE UIdent ZWSP
 ##
 interactive_expr: LBRACE Attr Ident ZWSP
 ##
-## Ends in an error in state: 560.
+## Ends in an error in state: 713.
 ##
 ## property -> nseq(Attr) property_name . COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -55,7 +55,7 @@ assigned to the field.
 
 interactive_expr: LBRACE UIdent COLON ZWSP
 ##
-## Ends in an error in state: 553.
+## Ends in an error in state: 706.
 ##
 ## property -> property_name COLON . expr [ SEMI RBRACE COMMA ]
 ##
@@ -64,7 +64,7 @@ interactive_expr: LBRACE UIdent COLON ZWSP
 ##
 contract: LBRACE Attr Ident COLON ZWSP
 ##
-## Ends in an error in state: 561.
+## Ends in an error in state: 714.
 ##
 ## property -> nseq(Attr) property_name COLON . expr [ SEMI RBRACE COMMA ]
 ##
@@ -92,7 +92,7 @@ At this point, field declarations are expected, separated by commas
 
 interactive_expr: Bytes SEMI
 ##
-## Ends in an error in state: 644.
+## Ends in an error in state: 797.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -119,7 +119,7 @@ expected.
 
 contract: Const ZWSP
 ##
-## Ends in an error in state: 415.
+## Ends in an error in state: 411.
 ##
 ## const_decl -> Const . binding_list [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -150,7 +150,7 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Export ZWSP
 ##
-## Ends in an error in state: 614.
+## Ends in an error in state: 767.
 ##
 ## export_decl -> Export . declaration [ SEMI RBRACE EOF ]
 ## export_decl -> Export . nseq(Attr) declaration [ SEMI RBRACE EOF ]
@@ -161,7 +161,7 @@ contract: Export ZWSP
 ##
 contract: Attr Export ZWSP
 ##
-## Ends in an error in state: 623.
+## Ends in an error in state: 776.
 ##
 ## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE EOF ]
 ## export_decl -> nseq(Attr) Export . nseq(Attr) declaration [ SEMI RBRACE EOF ]
@@ -172,7 +172,7 @@ contract: Attr Export ZWSP
 ##
 contract: LBRACE Attr Export ZWSP
 ##
-## Ends in an error in state: 483.
+## Ends in an error in state: 529.
 ##
 ## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE Else EOF Default Case ]
 ## export_decl -> nseq(Attr) Export . nseq(Attr) declaration [ SEMI RBRACE Else EOF Default Case ]
@@ -188,7 +188,7 @@ At this point, one of the following is expected:
 
 contract: LBRACE Export ZWSP
 ##
-## Ends in an error in state: 414.
+## Ends in an error in state: 410.
 ##
 ## export_decl -> Export . declaration [ SEMI RBRACE Else EOF Default Case ]
 ## export_decl -> Export . nseq(Attr) declaration [ SEMI RBRACE Else EOF Default Case ]
@@ -204,7 +204,7 @@ At this point, one of the following is expected:
 
 contract: Export Attr ZWSP
 ##
-## Ends in an error in state: 418.
+## Ends in an error in state: 414.
 ##
 ## export_decl -> Export nseq(Attr) . declaration [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -219,7 +219,7 @@ contract: Export Attr ZWSP
 ##
 contract: Attr Export Attr ZWSP
 ##
-## Ends in an error in state: 484.
+## Ends in an error in state: 530.
 ##
 ## export_decl -> nseq(Attr) Export nseq(Attr) . declaration [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -238,13 +238,13 @@ At this point, if the attribute is complete, a value or type declaration is expe
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes COLON
 ##
-## Ends in an error in state: 495.
+## Ends in an error in state: 605.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Const Ident Of expr . RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of expr
+## nseq(Attr) For LPAR Const Ident Of expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -261,13 +261,13 @@ contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes COLON
 ##
 contract: If LPAR Bytes RPAR For LPAR Let Ident Of Ident SEMI
 ##
-## Ends in an error in state: 412.
+## Ends in an error in state: 638.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of expr . RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR Let Ident Of expr . RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of expr
+## For LPAR Let Ident Of expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -285,12 +285,12 @@ contract: If LPAR Bytes RPAR For LPAR Let Ident Of Ident SEMI
 ##
 contract: For LPAR Let Ident Of Ident SEMI
 ##
-## Ends in an error in state: 438.
+## Ends in an error in state: 547.
 ##
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of expr
+## For LPAR Let Ident Of expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -308,12 +308,102 @@ contract: For LPAR Let Ident Of Ident SEMI
 ##
 contract: Attr For LPAR Const Ident Of Bytes COLON
 ##
-## Ends in an error in state: 448.
+## Ends in an error in state: 510.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of expr
+## nseq(Attr) For LPAR Const Ident Of expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR For LPAR Const Ident Of Bytes While
+##
+## Ends in an error in state: 644.
+##
+## for_of_stmt(closed_stmt) -> For LPAR Const Ident Of expr . RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Const Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR Attr For LPAR Let Ident Of Bytes While
+##
+## Ends in an error in state: 599.
+##
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Let Ident Of expr . RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: Attr For LPAR Let Ident Of Bytes While
+##
+## Ends in an error in state: 504.
+##
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: For LPAR Const Ident Of Bytes While
+##
+## Ends in an error in state: 553.
+##
+## for_of_stmt(statement) -> For LPAR Const Ident Of expr . RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -329,184 +419,369 @@ contract: Attr For LPAR Const Ident Of Bytes COLON
 ## In state 228, spurious reduction of production expr -> disj_expr_level
 ##
 
-Ill-formed bounded ("for-of") loop.
+Ill-formed 'for-of' loop.
 At this point, if the expression denoting the index range is complete,
 a closing parenthesis ')' is expected.
 
 contract: For LPAR Let Ident Of Ident RPAR ZWSP
 ##
-## Ends in an error in state: 439.
+## Ends in an error in state: 548.
 ##
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of expr RPAR
+## For LPAR Let Ident Of expr RPAR
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident Of Ident RPAR ZWSP
 ##
-## Ends in an error in state: 413.
+## Ends in an error in state: 639.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of expr RPAR . closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR Let Ident Of expr RPAR . closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of expr RPAR
+## For LPAR Let Ident Of expr RPAR
 ##
 contract: Attr For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 449.
+## Ends in an error in state: 511.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of expr RPAR
+## nseq(Attr) For LPAR Const Ident Of expr RPAR
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 496.
+## Ends in an error in state: 606.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Const Ident Of expr RPAR . closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of expr RPAR
+## nseq(Attr) For LPAR Const Ident Of expr RPAR
+##
+contract: If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
+##
+## Ends in an error in state: 645.
+##
+## for_of_stmt(closed_stmt) -> For LPAR Const Ident Of expr RPAR . closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Const Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of expr RPAR
+##
+contract: If LPAR Bytes RPAR Attr For LPAR Let Ident Of Bytes RPAR ZWSP
+##
+## Ends in an error in state: 600.
+##
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Let Ident Of expr RPAR . closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of expr RPAR
+##
+contract: For LPAR Const Ident Of Bytes RPAR ZWSP
+##
+## Ends in an error in state: 554.
+##
+## for_of_stmt(statement) -> For LPAR Const Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of expr RPAR
+##
+contract: Attr For LPAR Let Ident Of Bytes RPAR ZWSP
+##
+## Ends in an error in state: 505.
+##
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of expr RPAR . statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of expr RPAR
 ##
 
-Ill-formed bounded ("for-of") loop.
+Ill-formed 'for-of' loop.
 At this point, the body of the loop is expected as a statement.
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident Of ZWSP
 ##
-## Ends in an error in state: 494.
+## Ends in an error in state: 604.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Const Ident Of . expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of
+## nseq(Attr) For LPAR Const Ident Of
 ##
 contract: For LPAR Let Ident Of ZWSP
 ##
-## Ends in an error in state: 437.
+## Ends in an error in state: 546.
 ##
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of
+## For LPAR Let Ident Of
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident Of ZWSP
 ##
-## Ends in an error in state: 411.
+## Ends in an error in state: 637.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident Of . expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR Let Ident Of . expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Let Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident Of
+## For LPAR Let Ident Of
 ##
 contract: Attr For LPAR Const Ident Of ZWSP
 ##
-## Ends in an error in state: 447.
+## Ends in an error in state: 509.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident Of
+## nseq(Attr) For LPAR Const Ident Of
+##
+contract: If LPAR Bytes RPAR For LPAR Const Ident Of ZWSP
+##
+## Ends in an error in state: 643.
+##
+## for_of_stmt(closed_stmt) -> For LPAR Const Ident Of . expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Const Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of
+##
+contract: If LPAR Bytes RPAR Attr For LPAR Let Ident Of ZWSP
+##
+## Ends in an error in state: 598.
+##
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Let Ident Of . expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of
+##
+contract: Attr For LPAR Let Ident Of ZWSP
+##
+## Ends in an error in state: 503.
+##
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident Of
 ##
 
-Ill-formed bounded ("for-of") loop.
+Ill-formed 'for-of' loop.
 At this point, the range of the index is expected as an expression.
 
 contract: If LPAR Bytes RPAR Attr For LPAR Const Ident ZWSP
 ##
-## Ends in an error in state: 493.
+## Ends in an error in state: 603.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Const Ident . Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident
+## nseq(Attr) For LPAR Const Ident
 ##
 contract: For LPAR Let Ident ZWSP
 ##
-## Ends in an error in state: 436.
+## Ends in an error in state: 545.
 ##
-## for_of_stmt(statement) -> For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR Let Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident
+## For LPAR Let Ident
 ##
 contract: If LPAR Ident RPAR For LPAR Let Ident ZWSP
 ##
-## Ends in an error in state: 410.
+## Ends in an error in state: 636.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR index_kind Ident . Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR Let Ident . Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Let Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind Ident
+## For LPAR Let Ident
 ##
 contract: Attr For LPAR Const Ident ZWSP
 ##
-## Ends in an error in state: 446.
+## Ends in an error in state: 508.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind Ident
+## nseq(Attr) For LPAR Const Ident
+##
+contract: If LPAR Bytes RPAR For LPAR Const Ident ZWSP
+##
+## Ends in an error in state: 642.
+##
+## for_of_stmt(closed_stmt) -> For LPAR Const Ident . Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Const Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident
+##
+contract: If LPAR Bytes RPAR Attr For LPAR Let Ident ZWSP
+##
+## Ends in an error in state: 597.
+##
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Let Ident . Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident
+##
+contract: For LPAR Const Ident Of ZWSP
+##
+## Ends in an error in state: 552.
+##
+## for_of_stmt(statement) -> For LPAR Const Ident Of . expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident Of
+##
+contract: For LPAR Const Ident ZWSP
+##
+## Ends in an error in state: 551.
+##
+## for_of_stmt(statement) -> For LPAR Const Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const Ident
+##
+contract: Attr For LPAR Let Ident ZWSP
+##
+## Ends in an error in state: 502.
+##
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let Ident . Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## var_pattern -> Ident . [ EQ COLON ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let Ident
 ##
 
-Ill-formed bounded ("for-of") loop.
+Ill-formed 'for-of' loop.
 At this point, the keyword 'of' is expected, followed by the index
 range as an expression.
 
 contract: For LPAR Let ZWSP
 ##
-## Ends in an error in state: 435.
+## Ends in an error in state: 544.
 ##
-## for_of_stmt(statement) -> For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR Let . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## let_decl -> Let . binding_list [ SEMI ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind
+## For LPAR Let
 ##
 contract: If LPAR Ident RPAR For LPAR Let ZWSP
 ##
-## Ends in an error in state: 409.
+## Ends in an error in state: 635.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR index_kind . Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR Let . Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Let . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## let_decl -> Let . binding_list [ SEMI ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR index_kind
+## For LPAR Let
 ##
 contract: Attr For LPAR Const ZWSP
 ##
-## Ends in an error in state: 445.
+## Ends in an error in state: 507.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## const_decl -> Const . binding_list [ SEMI ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind
+## nseq(Attr) For LPAR Const
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR Const ZWSP
 ##
-## Ends in an error in state: 492.
+## Ends in an error in state: 602.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR index_kind . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## const_decl -> Const . binding_list [ SEMI ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Const . Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Const . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) For LPAR index_kind
+## nseq(Attr) For LPAR Const
+##
+contract: If LPAR Bytes RPAR For LPAR Const ZWSP
+##
+## Ends in an error in state: 641.
+##
+## const_decl -> Const . binding_list [ SEMI ]
+## for_of_stmt(closed_stmt) -> For LPAR Const . Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR Const . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const
+##
+contract: If LPAR Bytes RPAR Attr For LPAR Let ZWSP
+##
+## Ends in an error in state: 596.
+##
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR Let . Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## let_decl -> Let . binding_list [ SEMI ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let
+##
+contract: For LPAR Const ZWSP
+##
+## Ends in an error in state: 550.
+##
+## const_decl -> Const . binding_list [ SEMI ]
+## for_of_stmt(statement) -> For LPAR Const . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR Const
+##
+contract: Attr For LPAR Let ZWSP
+##
+## Ends in an error in state: 501.
+##
+## for_of_stmt(statement) -> nseq(Attr) For LPAR Let . Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## let_decl -> Let . binding_list [ SEMI ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR Let
 ##
 
-Ill-formed bounded ("for-of") loop.
+Ill-formed 'for-of' loop.
 At this point, the index is expected as a variable.
 
 contract: For LPAR ZWSP
 ##
-## Ends in an error in state: 434.
+## Ends in an error in state: 430.
 ##
-## for_of_stmt(statement) -> For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR . Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR . Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For LPAR
@@ -515,27 +790,112 @@ contract: If LPAR Ident RPAR For LPAR ZWSP
 ##
 ## Ends in an error in state: 406.
 ##
-## for_of_stmt(closed_stmt) -> For LPAR . index_kind Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For LPAR . Const Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(closed_stmt) -> For LPAR . Let Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For LPAR . Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For LPAR . Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For LPAR
 ##
 contract: Attr For LPAR ZWSP
 ##
-## Ends in an error in state: 444.
+## Ends in an error in state: 438.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR . Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR . Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) For LPAR
 ##
 contract: If LPAR Bytes RPAR Attr For LPAR ZWSP
 ##
-## Ends in an error in state: 491.
+## Ends in an error in state: 573.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For LPAR . index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR . Const Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For LPAR . Let Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR . Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For LPAR . Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR . for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) For LPAR
@@ -549,9 +909,26 @@ followed by the index as a variable.
 
 contract: For ZWSP
 ##
-## Ends in an error in state: 433.
+## Ends in an error in state: 429.
 ##
-## for_of_stmt(statement) -> For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For . LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For . LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For
@@ -560,27 +937,112 @@ contract: If LPAR Ident RPAR For ZWSP
 ##
 ## Ends in an error in state: 405.
 ##
-## for_of_stmt(closed_stmt) -> For . LPAR index_kind Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> For . LPAR Const Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(closed_stmt) -> For . LPAR Let Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> For . LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> For . LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For
 ##
 contract: Attr For ZWSP
 ##
-## Ends in an error in state: 443.
+## Ends in an error in state: 437.
 ##
-## for_of_stmt(statement) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For . LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For . LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) For
 ##
 contract: If LPAR Bytes RPAR Attr For ZWSP
 ##
-## Ends in an error in state: 490.
+## Ends in an error in state: 572.
 ##
-## for_of_stmt(closed_stmt) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) For . LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For . LPAR Const Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) For . LPAR Let Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) For . LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) For . LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For . LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) For
@@ -641,7 +1103,7 @@ contract: If LPAR Ident RPAR ZWSP
 ##
 contract: Attr If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 432.
+## Ends in an error in state: 428.
 ##
 ## if_stmt -> nseq(Attr) If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -676,7 +1138,7 @@ contract: If ZWSP
 ##
 contract: Attr If ZWSP
 ##
-## Ends in an error in state: 431.
+## Ends in an error in state: 427.
 ##
 ## if_stmt -> nseq(Attr) If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -752,37 +1214,9 @@ Ill-formed module aliasing.
 At this point, the assignment symbol '=' is expected, followed by the
 qualified name of the aliased module
 
-contract: LBRACE Ident Default
-##
-## Ends in an error in state: 458.
-##
-## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ QMARK BOOL_OR ]
-## ternary_expr(expr_stmt) -> disj_expr_level . QMARK expr_stmt COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
-##
-## The known suffix of the stack is as follows:
-## disj_expr_level
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 542, spurious reduction of production member_expr -> Ident
-## In state 205, spurious reduction of production call_expr_level -> member_expr
-## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
-##
-
-Ill-formed block of statements.
-At this point, if the statement is complete, a closing brace '}' is
-expected.
-
 contract: LBRACE Ident SEMI ZWSP
 ##
-## Ends in an error in state: 556.
+## Ends in an error in state: 709.
 ##
 ## nsepseq(property,object_sep) -> property object_sep . nsepseq(property,object_sep) [ RBRACE ]
 ## nseq(__anonymous_0(property,object_sep)) -> property object_sep . [ RBRACE ]
@@ -799,7 +1233,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Ident RPAR LBRACE Case ZWSP
 ##
-## Ends in an error in state: 528.
+## Ends in an error in state: 681.
 ##
 ## case -> Case . expr COLON [ RBRACE Default Case ]
 ## case -> Case . expr COLON case_statements [ RBRACE Default Case ]
@@ -842,7 +1276,7 @@ At this point, if the expression is complete, a closing parenthesis
 
 contract: Switch LPAR Ident RPAR LBRACE Case Ident COLON ZWSP
 ##
-## Ends in an error in state: 530.
+## Ends in an error in state: 683.
 ##
 ## case -> Case expr COLON . [ RBRACE Default Case ]
 ## case -> Case expr COLON . case_statements [ RBRACE Default Case ]
@@ -878,7 +1312,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Case Bytes SEMI
 ##
-## Ends in an error in state: 529.
+## Ends in an error in state: 682.
 ##
 ## case -> Case expr . COLON [ RBRACE Default Case ]
 ## case -> Case expr . COLON case_statements [ RBRACE Default Case ]
@@ -972,7 +1406,7 @@ At this point, the expression evaluated against the cases is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return While
 ##
-## Ends in an error in state: 524.
+## Ends in an error in state: 677.
 ##
 ## nsepseq(case_statement,SEMI) -> case_statement . [ RBRACE Default Case ]
 ## nsepseq(case_statement,SEMI) -> case_statement . SEMI nsepseq(case_statement,SEMI) [ RBRACE Default Case ]
@@ -987,9 +1421,9 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return While
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 322, spurious reduction of production return_stmt -> Return
-## In state 441, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 482, spurious reduction of production statement -> base_stmt(statement)
-## In state 519, spurious reduction of production case_statement -> statement
+## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 476, spurious reduction of production statement -> base_stmt(statement)
+## In state 672, spurious reduction of production case_statement -> statement
 ##
 
 Ill-formed switch statement.
@@ -1016,7 +1450,7 @@ At this point, the first statement is expected.
 
 contract: LBRACKET ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 588.
+## Ends in an error in state: 741.
 ##
 ## array_item -> ELLIPSIS . expr [ RBRACKET COMMA ]
 ##
@@ -1029,7 +1463,7 @@ At this point, an expression denoting the included tuple is expected.
 
 contract: LBRACKET Ident COLON
 ##
-## Ends in an error in state: 593.
+## Ends in an error in state: 746.
 ##
 ## nsepseq(array_item,COMMA) -> array_item . [ RBRACKET ]
 ## nsepseq(array_item,COMMA) -> array_item . COMMA nsepseq(array_item,COMMA) [ RBRACKET ]
@@ -1050,7 +1484,7 @@ contract: LBRACKET Ident COLON
 ## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 228, spurious reduction of production expr -> disj_expr_level
-## In state 592, spurious reduction of production array_item -> expr
+## In state 745, spurious reduction of production array_item -> expr
 ##
 
 Ill-formed tuple expression.
@@ -1316,14 +1750,12 @@ At this point, one of the following is expected:
 
 contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ##
-## Ends in an error in state: 228.
+## Ends in an error in state: 749.
 ##
-## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ SEMI RPAR RBRACKET RBRACE QMARK Else EOF Default Case COMMA COLON BOOL_OR ]
-## expr -> disj_expr_level . [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-## ternary_expr(expr) -> disj_expr_level . QMARK expr COLON expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## par(expr) -> LPAR expr . RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE LBRACKET GT Else EQ2 EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
-## disj_expr_level
+## LPAR expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1336,16 +1768,15 @@ contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
 ## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
 ##
 
-Ill-formed expression.
-At this point, one of the following is expected:
- * a closing parenthesis ')', if definining a parenthesized expression
- * a closing parenthesis ')' after the parameters, if defining a function expression.
+Ill-formed parenthesised type expression.
+At this point, a closing parenthesis ')' is expected.
 
 contract: Namespace UIdent LBRACE ZWSP
 ##
-## Ends in an error in state: 613.
+## Ends in an error in state: 766.
 ##
 ## braces(stmts_or_namespace) -> LBRACE . stmts_or_namespace RBRACE [ SEMI RBRACE EOF ]
 ##
@@ -1358,7 +1789,7 @@ At this point, the first statement or submodule is expected.
 
 contract: Namespace UIdent ZWSP
 ##
-## Ends in an error in state: 612.
+## Ends in an error in state: 765.
 ##
 ## namespace -> Namespace UIdent . braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
 ##
@@ -1372,7 +1803,7 @@ statements and/or submodules.
 
 contract: Namespace ZWSP
 ##
-## Ends in an error in state: 611.
+## Ends in an error in state: 764.
 ##
 ## namespace -> Namespace . UIdent braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
 ##
@@ -1417,7 +1848,7 @@ At this point, a type expression is expected.
 
 contract: UIdent LPAR Bytes SEMI
 ##
-## Ends in an error in state: 604.
+## Ends in an error in state: 757.
 ##
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg . [ RPAR ]
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg . COMMA nsepseq(ctor_arg,COMMA) [ RPAR ]
@@ -1437,7 +1868,7 @@ contract: UIdent LPAR Bytes SEMI
 ## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 228, spurious reduction of production expr -> disj_expr_level
-## In state 602, spurious reduction of production ctor_arg -> expr
+## In state 755, spurious reduction of production ctor_arg -> expr
 ##
 
 Ill-formed instantiation of a parametric type.
@@ -1463,7 +1894,7 @@ At this point, one of the following is expected:
 
 contract: UIdent LPAR Ident COMMA ZWSP
 ##
-## Ends in an error in state: 605.
+## Ends in an error in state: 758.
 ##
 ## nsepseq(ctor_arg,COMMA) -> ctor_arg COMMA . nsepseq(ctor_arg,COMMA) [ RPAR ]
 ##
@@ -1474,7 +1905,7 @@ contract: UIdent LPAR Ident COMMA ZWSP
 Ill-formed instantiation of a constructor.
 At this point, an argument is expected as an expression.
 
-contract: Type UIdent LT Ident GT While
+contract: Type UIdent LT Ident GT ZWSP ZWSP
 ##
 ## Ends in an error in state: 180.
 ##
@@ -1482,13 +1913,6 @@ contract: Type UIdent LT Ident GT While
 ##
 ## The known suffix of the stack is as follows:
 ## Type UIdent type_params
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 19, spurious reduction of production chevrons(nsepseq(type_param,COMMA)) -> LT nsepseq(type_param,COMMA) GT
-## In state 183, spurious reduction of production type_params -> chevrons(nsepseq(type_param,COMMA))
 ##
 
 Ill-formed parametric type declaration.
@@ -1700,7 +2124,7 @@ contract: BOOL_NOT ZWSP
 ##
 interactive_expr: ZWSP
 ##
-## Ends in an error in state: 642.
+## Ends in an error in state: 795.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -1847,7 +2271,7 @@ At this point, one of the following is expected:
 
 contract: Return While
 ##
-## Ends in an error in state: 635.
+## Ends in an error in state: 788.
 ##
 ## toplevel_stmts -> stmt_or_namespace . SEMI toplevel_stmts [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace . option(SEMI) [ EOF ]
@@ -1860,9 +2284,9 @@ contract: Return While
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 322, spurious reduction of production return_stmt -> Return
-## In state 441, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 482, spurious reduction of production statement -> base_stmt(statement)
-## In state 620, spurious reduction of production stmt_or_namespace -> statement
+## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 476, spurious reduction of production statement -> base_stmt(statement)
+## In state 773, spurious reduction of production stmt_or_namespace -> statement
 ##
 
 Ill-formed top-level statement.
@@ -1874,7 +2298,7 @@ expected:
 
 contract: While LPAR Ident RPAR ZWSP
 ##
-## Ends in an error in state: 610.
+## Ends in an error in state: 763.
 ##
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -1897,7 +2321,7 @@ At this point, the body of the loop is expected as a statement.
 
 contract: While LPAR Bytes SEMI
 ##
-## Ends in an error in state: 607.
+## Ends in an error in state: 760.
 ##
 ## par(while_cond) -> LPAR while_cond . RPAR [ While WILD Verbatim UIdent Type Switch String Return MINUS Let LPAR LBRACKET LBRACE Int Import If Ident INCR For Export DECR Contract Const Bytes BOOL_NOT Attr ]
 ##
@@ -1916,7 +2340,7 @@ contract: While LPAR Bytes SEMI
 ## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 228, spurious reduction of production expr -> disj_expr_level
-## In state 609, spurious reduction of production while_cond -> expr
+## In state 762, spurious reduction of production while_cond -> expr
 ##
 
 Ill-formed unbounded ("while") loop.
@@ -1970,7 +2394,7 @@ contract: ZWSP
 ##
 contract: Directive ZWSP
 ##
-## Ends in an error in state: 633.
+## Ends in an error in state: 786.
 ##
 ## toplevel_stmts -> Directive . [ EOF ]
 ## toplevel_stmts -> Directive . toplevel_stmts [ EOF ]
@@ -2004,13 +2428,29 @@ expected.
 
 contract: Attr VBAR
 ##
-## Ends in an error in state: 622.
+## Ends in an error in state: 775.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF ]
-## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF ]
 ## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE EOF ]
 ## export_decl -> nseq(Attr) . Export nseq(Attr) declaration [ SEMI RBRACE EOF ]
-## for_of_stmt(statement) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF ]
 ## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) . namespace [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) . Export namespace [ SEMI RBRACE EOF ]
@@ -2041,13 +2481,29 @@ At this point, one of the following is expected:
 
 contract: LBRACE Return SEMI Attr ZWSP
 ##
-## Ends in an error in state: 442.
+## Ends in an error in state: 436.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF Default Case ]
-## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF Default Case ]
 ## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE EOF Default Case ]
 ## export_decl -> nseq(Attr) . Export nseq(Attr) declaration [ SEMI RBRACE EOF Default Case ]
-## for_of_stmt(statement) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
@@ -2075,9 +2531,9 @@ At this point, one of the following is expected:
 
 contract: Ident EQ ZWSP
 ##
-## Ends in an error in state: 474.
+## Ends in an error in state: 468.
 ##
-## assign_stmt -> assign_lhs EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs EQ
@@ -2098,7 +2554,7 @@ contract: LBRACKET ZWSP
 ##
 contract: LBRACKET Ident COMMA ZWSP
 ##
-## Ends in an error in state: 594.
+## Ends in an error in state: 747.
 ##
 ## nsepseq(array_item,COMMA) -> array_item COMMA . nsepseq(array_item,COMMA) [ RBRACKET ]
 ##
@@ -2167,7 +2623,7 @@ contract: Const Ident COLON LT Ident COMMA ZWSP
 ## Ident COMMA
 ##
 
-Ill-formed parametric type declaration.
+Ill-formed generic type declaration.
 At this point, a type parameter is expected.
 
 contract: Const Ident COLON LT UIdent ZWSP
@@ -2191,10 +2647,10 @@ contract: Const Ident COLON LT Ident ZWSP
 ## Ident
 ##
 
-Ill-formed parametric type declaration.
+Ill-formed generic type declaration.
 At this point, one of the following is expected:
-  * a comma ',' followed by another type parameter;
-  * a closing chevron '>' if there are no more type parameters.
+ * a closing chevron '>' if the type is complete.
+ * a comma, followed by another type parameter.
 
 contract: Const Ident COLON LT UIdent GT ZWSP ZWSP
 ##
@@ -2207,21 +2663,38 @@ contract: Const Ident COLON LT UIdent GT ZWSP ZWSP
 ##
 
 Ill-formed type annotation.
-At this point, if the type parameters are complete, a type expression
-is expected.
+At this point, if the type type parameters are complete, a type expression is expected.
 
 contract: Bytes QMARK ZWSP
 ##
-## Ends in an error in state: 459.
+## Ends in an error in state: 453.
 ##
-## ternary_expr(expr_stmt) -> disj_expr_level QMARK . expr_stmt COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
+## ternary_expr(non_decl_expr_stmt(expr_stmt)) -> disj_expr_level QMARK . non_decl_expr_stmt(expr_stmt) COLON non_decl_expr_stmt(expr_stmt) [ SEMI RBRACE Else EOF Default Case COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level QMARK
+##
+contract: For LPAR SEMI SEMI Ident QMARK ZWSP
+##
+## Ends in an error in state: 484.
+##
+## ternary_expr(non_decl_expr_stmt(closed_non_decl_expr_stmt)) -> disj_expr_level QMARK . non_decl_expr_stmt(closed_non_decl_expr_stmt) COLON non_decl_expr_stmt(closed_non_decl_expr_stmt) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level QMARK
+##
+interactive_expr: Bytes QMARK ZWSP
+##
+## Ends in an error in state: 229.
+##
+## ternary_expr(expr) -> disj_expr_level QMARK . expr COLON expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## disj_expr_level QMARK
 ##
 
-Ill-formed ternary expression.
-At this point, an expression for the truthy case is expected.
+Ill-formed ternary conditional expression.
+At this point, an expression for the truthy alternative is expected.
 
 contract: Import TIMES ZWSP
 ##
@@ -2337,16 +2810,48 @@ At this point, if all the values are complete, a closing brace '}' is expected.
 
 contract: If LPAR Bytes RPAR Attr ZWSP
 ##
-## Ends in an error in state: 430.
+## Ends in an error in state: 426.
 ##
 ## base_stmt(closed_stmt) -> nseq(Attr) . expr_stmt [ Else ]
-## base_stmt(closed_stmt) -> nseq(Attr) . declaration [ Else ]
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF Default Case ]
-## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE EOF Default Case ]
 ## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE Else EOF Default Case ]
 ## export_decl -> nseq(Attr) . Export nseq(Attr) declaration [ SEMI RBRACE Else EOF Default Case ]
-## for_of_stmt(closed_stmt) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR closed_stmt [ Else ]
-## for_of_stmt(statement) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) . For LPAR Const Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(closed_stmt) -> nseq(Attr) . For LPAR Let Ident Of expr RPAR closed_stmt [ Else ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
@@ -2531,11 +3036,8 @@ interactive_expr: Bytes As LBRACKET ZWSP
 ## LBRACKET
 ##
 
-Ill-formed type tuple or variant.
-At this point, one of the following is expected:
-  * a string denoting a data constructor,
-  * a component of a type tuple is expected as a type expression
-    (other than a string).
+Ill-formed type tuple.
+At this point, a component is expected as a type expression.
 
 interactive_expr: Bytes As LBRACE ZWSP
 ##
@@ -2806,12 +3308,30 @@ interactive_expr: Bytes As Attr ZWSP
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 91, spurious reduction of production nseq(Attr) -> Attr
 ##
+contract: Ident As LBRACKET Attr ZWSP
+##
+## Ends in an error in state: 155.
+##
+## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR RBRACKET COMMA ]
+## sum_type -> nseq(Attr) . VBAR nsepseq(variant,VBAR) [ RBRACKET COMMA ]
+## type_component_no_string -> nseq(Attr) . type_tuple [ RBRACKET COMMA ]
+## variant -> nseq(Attr) . brackets(variant_comp) [ VBAR RBRACKET COMMA ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 91, spurious reduction of production nseq(Attr) -> Attr
+##
 
 Ill-formed type expression.
 At this point, one of the following is expected:
   * an opening brace '{' if defining a record type;
   * an opening bracket '[' if defining a tuple of types;
-  * a variant of sum type starting with a vertical bar '|'.
+  * a vertical bar '|' followed by a variant.
 
 interactive_expr: Bytes As Attr VBAR ZWSP
 ##
@@ -2905,11 +3425,10 @@ interactive_expr: Bytes As LBRACKET Ident While
 ## Ident
 ##
 
-Ill-formed type component in a tuple.
+Ill-formed tuple of types.
 At this point, one of the following is expected:
   * a comma ',' followed by another component as a type expression;
-  * a closing bracket ']' if the tuple is complete;
-  * a type parameter after a chevron '<'.
+  * a closing bracket ']' if the tuple is complete.
 
 interactive_expr: Bytes As LBRACKET Ident COMMA ZWSP
 ##
@@ -3097,7 +3616,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR ZWSP
 ##
 interactive_expr: ES6FUN LPAR ZWSP
 ##
-## Ends in an error in state: 571.
+## Ends in an error in state: 724.
 ##
 ## fun_expr -> ES6FUN LPAR . RPAR ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN LPAR . RPAR type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3114,7 +3633,7 @@ At this point, one of the following is expected:
 
 interactive_expr: ES6FUN LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 581.
+## Ends in an error in state: 734.
 ##
 ## fun_expr -> ES6FUN par(parameters) . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN par(parameters) . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3124,7 +3643,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 572.
+## Ends in an error in state: 725.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## fun_expr -> ES6FUN LPAR RPAR . type_annotation ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
@@ -3158,19 +3677,6 @@ At this point, one of the following is expected:
   * an arrow '=>' followed by the function body;
   * the return type annotation starting with a colon ':'.
 
-interactive_expr: Bytes QMARK ZWSP
-##
-## Ends in an error in state: 229.
-##
-## ternary_expr(expr) -> disj_expr_level QMARK . expr COLON expr [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## disj_expr_level QMARK
-##
-
-Ill-formed ternary conditional operation.
-At this point, the expression in case of a true condition is expected.
-
 interactive_expr: Bytes QMARK Bytes SEMI
 ##
 ## Ends in an error in state: 230.
@@ -3193,9 +3699,39 @@ interactive_expr: Bytes QMARK Bytes SEMI
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 228, spurious reduction of production expr -> disj_expr_level
 ##
+contract: For LPAR SEMI SEMI Ident QMARK DECR Ident COMMA
+##
+## Ends in an error in state: 485.
+##
+## ternary_expr(non_decl_expr_stmt(closed_non_decl_expr_stmt)) -> disj_expr_level QMARK non_decl_expr_stmt(closed_non_decl_expr_stmt) . COLON non_decl_expr_stmt(closed_non_decl_expr_stmt) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level QMARK non_decl_expr_stmt(closed_non_decl_expr_stmt)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 482, spurious reduction of production non_decl_expr_stmt(closed_non_decl_expr_stmt) -> increment_decrement_operators
+##
+contract: Ident QMARK DECR Ident Else
+##
+## Ends in an error in state: 454.
+##
+## ternary_expr(non_decl_expr_stmt(expr_stmt)) -> disj_expr_level QMARK non_decl_expr_stmt(expr_stmt) . COLON non_decl_expr_stmt(expr_stmt) [ SEMI RBRACE Else EOF Default Case COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level QMARK non_decl_expr_stmt(expr_stmt)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 444, spurious reduction of production non_decl_expr_stmt(expr_stmt) -> increment_decrement_operators
+##
 
-Ill-formed ternary conditional operation.
-At this point, a colon ':' is expected, followed by an expression.
+Ill-formed ternary conditional expression.
+At this point, a colon ':' is expected, followed by the falsy alternative as an expression.
 
 interactive_expr: Bytes QMARK Bytes COLON ZWSP
 ##
@@ -3206,10 +3742,18 @@ interactive_expr: Bytes QMARK Bytes COLON ZWSP
 ## The known suffix of the stack is as follows:
 ## disj_expr_level QMARK expr COLON
 ##
+contract: For LPAR SEMI SEMI Ident QMARK DECR Ident COLON ZWSP
+##
+## Ends in an error in state: 486.
+##
+## ternary_expr(non_decl_expr_stmt(closed_non_decl_expr_stmt)) -> disj_expr_level QMARK non_decl_expr_stmt(closed_non_decl_expr_stmt) COLON . non_decl_expr_stmt(closed_non_decl_expr_stmt) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level QMARK non_decl_expr_stmt(closed_non_decl_expr_stmt) COLON
+##
 
-Ill-formed ternary conditional operation.
-At this point, the expression in case of a false condition is
-expected.
+Ill-formed ternary conditional expression.
+At this point, the falsy alternative is expected as an expression.
 
 interactive_expr: Bytes As ZWSP
 ##
@@ -3278,7 +3822,7 @@ interactive_expr: LT Ident GT ES6FUN LPAR Bytes RPAR COLON Ident While
 ##
 interactive_expr: ES6FUN LPAR RPAR COLON Ident While
 ##
-## Ends in an error in state: 575.
+## Ends in an error in state: 728.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3295,7 +3839,7 @@ interactive_expr: ES6FUN LPAR RPAR COLON Ident While
 ##
 interactive_expr: ES6FUN Ident ZWSP
 ##
-## Ends in an error in state: 578.
+## Ends in an error in state: 731.
 ##
 ## fun_expr -> ES6FUN Ident . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3304,7 +3848,7 @@ interactive_expr: ES6FUN Ident ZWSP
 ##
 interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident While
 ##
-## Ends in an error in state: 584.
+## Ends in an error in state: 737.
 ##
 ## fun_expr -> ES6FUN par(parameters) type_annotation . ARROW body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3393,31 +3937,63 @@ At this point, one of the following is expected:
 
 contract: Ident QMARK Ident LPAR RPAR While
 ##
-## Ends in an error in state: 460.
+## Ends in an error in state: 452.
 ##
-## ternary_expr(expr_stmt) -> disj_expr_level QMARK expr_stmt . COLON expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ QMARK BOOL_OR ]
+## ternary_expr(non_decl_expr_stmt(expr_stmt)) -> disj_expr_level . QMARK non_decl_expr_stmt(expr_stmt) COLON non_decl_expr_stmt(expr_stmt) [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## disj_expr_level QMARK expr_stmt
+## disj_expr_level
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 463, spurious reduction of production expr_stmt -> call_expr
+## In state 457, spurious reduction of production call_expr_level -> call_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+##
+contract: For LPAR SEMI SEMI Ident ZWSP
+##
+## Ends in an error in state: 483.
+##
+## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ QMARK BOOL_OR ]
+## ternary_expr(non_decl_expr_stmt(closed_non_decl_expr_stmt)) -> disj_expr_level . QMARK non_decl_expr_stmt(closed_non_decl_expr_stmt) COLON non_decl_expr_stmt(closed_non_decl_expr_stmt) [ RPAR COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## disj_expr_level
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 404, spurious reduction of production member_expr -> Ident
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ##
 
-Ill-formed ternary conditional statement.
-At this point, if the statement is complete, a colon ':' is expected.
+Ill-formed expression.
+At this point, if the boolean expression is complete, one of the following is expected:
+  * a question mark '?' if defining a ternary conditional expression;
+  * the boolean disjunction operator '||' if defining a boolean expression.
 
 contract: Ident QMARK Ident DIV_EQ Bytes COLON ZWSP
 ##
-## Ends in an error in state: 461.
+## Ends in an error in state: 455.
 ##
-## ternary_expr(expr_stmt) -> disj_expr_level QMARK expr_stmt COLON . expr_stmt [ SEMI RBRACE Else EOF Default Case COLON ]
+## ternary_expr(non_decl_expr_stmt(expr_stmt)) -> disj_expr_level QMARK non_decl_expr_stmt(expr_stmt) COLON . non_decl_expr_stmt(expr_stmt) [ SEMI RBRACE Else EOF Default Case COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## disj_expr_level QMARK expr_stmt COLON
+## disj_expr_level QMARK non_decl_expr_stmt(expr_stmt) COLON
 ##
 
 Ill-formed ternary conditional statement.
@@ -3426,45 +4002,45 @@ expected.
 
 contract: Ident REM_EQ ZWSP
 ##
-## Ends in an error in state: 466.
+## Ends in an error in state: 460.
 ##
-## assign_stmt -> assign_lhs REM_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs REM_EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs REM_EQ
 ##
 contract: Ident PLUS_EQ ZWSP
 ##
-## Ends in an error in state: 468.
+## Ends in an error in state: 462.
 ##
-## assign_stmt -> assign_lhs PLUS_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs PLUS_EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs PLUS_EQ
 ##
 contract: Ident MULT_EQ ZWSP
 ##
-## Ends in an error in state: 470.
+## Ends in an error in state: 464.
 ##
-## assign_stmt -> assign_lhs MULT_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs MULT_EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs MULT_EQ
 ##
 contract: Ident MINUS_EQ ZWSP
 ##
-## Ends in an error in state: 472.
+## Ends in an error in state: 466.
 ##
-## assign_stmt -> assign_lhs MINUS_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs MINUS_EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs MINUS_EQ
 ##
 contract: Ident DIV_EQ ZWSP
 ##
-## Ends in an error in state: 476.
+## Ends in an error in state: 470.
 ##
-## assign_stmt -> assign_lhs DIV_EQ . expr [ SEMI RBRACE Else EOF Default Case COLON ]
+## assign_stmt -> assign_lhs DIV_EQ . expr [ SEMI RPAR RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
 ## assign_lhs DIV_EQ
@@ -3475,7 +4051,7 @@ At this point, an expression is expected.
 
 contract: If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 517.
+## Ends in an error in state: 670.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) closed_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
 ##
@@ -3484,7 +4060,7 @@ contract: If LPAR Bytes RPAR Return Else ZWSP
 ##
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 511.
+## Ends in an error in state: 664.
 ##
 ## if_else_stmt(closed_stmt) -> If par(if_cond) closed_stmt Else . closed_stmt [ Else ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
@@ -3498,7 +4074,7 @@ At this point, the statement of the 'else' branch is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return SEMI ZWSP
 ##
-## Ends in an error in state: 525.
+## Ends in an error in state: 678.
 ##
 ## nsepseq(case_statement,SEMI) -> case_statement SEMI . nsepseq(case_statement,SEMI) [ RBRACE Default Case ]
 ## nseq(__anonymous_0(case_statement,SEMI)) -> case_statement SEMI . [ RBRACE Default Case ]
@@ -3518,7 +4094,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return Default
 ##
-## Ends in an error in state: 535.
+## Ends in an error in state: 688.
 ##
 ## braces(cases) -> LBRACE cases . RBRACE [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -3530,14 +4106,14 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return Default
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 322, spurious reduction of production return_stmt -> Return
-## In state 441, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 482, spurious reduction of production statement -> base_stmt(statement)
-## In state 519, spurious reduction of production case_statement -> statement
-## In state 524, spurious reduction of production nsepseq(case_statement,SEMI) -> case_statement
-## In state 522, spurious reduction of production sep_or_term_list(case_statement,SEMI) -> nsepseq(case_statement,SEMI)
-## In state 520, spurious reduction of production case_statements -> sep_or_term_list(case_statement,SEMI)
-## In state 523, spurious reduction of production default_case -> Default COLON case_statements
-## In state 534, spurious reduction of production cases -> default_case
+## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 476, spurious reduction of production statement -> base_stmt(statement)
+## In state 672, spurious reduction of production case_statement -> statement
+## In state 677, spurious reduction of production nsepseq(case_statement,SEMI) -> case_statement
+## In state 675, spurious reduction of production sep_or_term_list(case_statement,SEMI) -> nsepseq(case_statement,SEMI)
+## In state 673, spurious reduction of production case_statements -> sep_or_term_list(case_statement,SEMI)
+## In state 676, spurious reduction of production default_case -> Default COLON case_statements
+## In state 687, spurious reduction of production cases -> default_case
 ##
 
 Ill-formed switch statement.
@@ -3547,7 +4123,7 @@ At this point, if the case is complete, one of the following is expected:
 
 contract: LBRACE Return While
 ##
-## Ends in an error in state: 543.
+## Ends in an error in state: 696.
 ##
 ## braces(statements) -> LBRACE statements . RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3559,11 +4135,11 @@ contract: LBRACE Return While
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 322, spurious reduction of production return_stmt -> Return
-## In state 441, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 482, spurious reduction of production statement -> base_stmt(statement)
-## In state 545, spurious reduction of production nsepseq(statement,SEMI) -> statement
-## In state 568, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
-## In state 549, spurious reduction of production statements -> sep_or_term_list(statement,SEMI)
+## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 476, spurious reduction of production statement -> base_stmt(statement)
+## In state 698, spurious reduction of production nsepseq(statement,SEMI) -> statement
+## In state 721, spurious reduction of production sep_or_term_list(statement,SEMI) -> nsepseq(statement,SEMI)
+## In state 702, spurious reduction of production statements -> sep_or_term_list(statement,SEMI)
 ##
 
 Ill-formed block of statements.
@@ -3574,7 +4150,7 @@ expected:
 
 contract: LBRACE Return SEMI ZWSP
 ##
-## Ends in an error in state: 546.
+## Ends in an error in state: 699.
 ##
 ## nsepseq(statement,SEMI) -> statement SEMI . nsepseq(statement,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(statement,SEMI)) -> statement SEMI . [ RBRACE ]
@@ -3591,7 +4167,7 @@ At this point, one of the following is expected:
 
 contract: LBRACE ELLIPSIS Bytes COLON
 ##
-## Ends in an error in state: 555.
+## Ends in an error in state: 708.
 ##
 ## nsepseq(property,object_sep) -> property . [ RBRACE ]
 ## nsepseq(property,object_sep) -> property . object_sep nsepseq(property,object_sep) [ RBRACE ]
@@ -3613,7 +4189,7 @@ contract: LBRACE ELLIPSIS Bytes COLON
 ## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 228, spurious reduction of production expr -> disj_expr_level
-## In state 587, spurious reduction of production property -> ELLIPSIS expr
+## In state 740, spurious reduction of production property -> ELLIPSIS expr
 ##
 
 Ill-formed record expression.
@@ -3624,7 +4200,7 @@ expected:
 
 interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 585.
+## Ends in an error in state: 738.
 ##
 ## fun_expr -> ES6FUN par(parameters) type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3633,7 +4209,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 582.
+## Ends in an error in state: 735.
 ##
 ## fun_expr -> ES6FUN par(parameters) ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3642,7 +4218,7 @@ interactive_expr: ES6FUN LPAR Bytes RPAR ARROW ZWSP
 ##
 interactive_expr: ES6FUN Ident ARROW ZWSP
 ##
-## Ends in an error in state: 579.
+## Ends in an error in state: 732.
 ##
 ## fun_expr -> ES6FUN Ident ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3651,7 +4227,7 @@ interactive_expr: ES6FUN Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
-## Ends in an error in state: 576.
+## Ends in an error in state: 729.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR type_annotation ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3660,7 +4236,7 @@ interactive_expr: ES6FUN LPAR RPAR COLON Ident ARROW ZWSP
 ##
 interactive_expr: ES6FUN LPAR RPAR ARROW ZWSP
 ##
-## Ends in an error in state: 573.
+## Ends in an error in state: 726.
 ##
 ## fun_expr -> ES6FUN LPAR RPAR ARROW . body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -3718,35 +4294,9 @@ At this point, the body is expected as one of the following:
   * an expression;
   * a block of statements between braces '{' '}'.
 
-contract: LPAR Bytes COLON
-##
-## Ends in an error in state: 596.
-##
-## par(expr) -> LPAR expr . RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE QMARK PLUS NE MINUS LT LPAR LE LBRACKET GT Else EQ2 EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-##
-## The known suffix of the stack is as follows:
-## LPAR expr
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 205, spurious reduction of production call_expr_level -> member_expr
-## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
-## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 228, spurious reduction of production expr -> disj_expr_level
-##
-
-Ill-formed parenthesised type expression.
-At this point, a closing parenthesis ')' is expected.
-
 contract: Namespace UIdent LBRACE Return While
 ##
-## Ends in an error in state: 618.
+## Ends in an error in state: 771.
 ##
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . [ RBRACE ]
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . SEMI nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
@@ -3761,9 +4311,9 @@ contract: Namespace UIdent LBRACE Return While
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 322, spurious reduction of production return_stmt -> Return
-## In state 441, spurious reduction of production base_stmt(statement) -> return_stmt
-## In state 482, spurious reduction of production statement -> base_stmt(statement)
-## In state 620, spurious reduction of production stmt_or_namespace -> statement
+## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
+## In state 476, spurious reduction of production statement -> base_stmt(statement)
+## In state 773, spurious reduction of production stmt_or_namespace -> statement
 ##
 
 Ill-formed module declaration.
@@ -3774,7 +4324,7 @@ expected:
 
 contract: Namespace UIdent LBRACE Return SEMI ZWSP
 ##
-## Ends in an error in state: 619.
+## Ends in an error in state: 772.
 ##
 ## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace SEMI . nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace SEMI . [ RBRACE ]
@@ -3791,7 +4341,7 @@ At this point, one of the following is expected:
 
 contract: Return SEMI ZWSP
 ##
-## Ends in an error in state: 636.
+## Ends in an error in state: 789.
 ##
 ## option(SEMI) -> SEMI . [ EOF ]
 ## toplevel_stmts -> stmt_or_namespace SEMI . toplevel_stmts [ EOF ]
@@ -3807,7 +4357,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 558.
+## Ends in an error in state: 711.
 ##
 ## property -> nseq(Attr) . property_name COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -3827,13 +4377,29 @@ name) is expected.
 
 contract: LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 566.
+## Ends in an error in state: 719.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE ]
-## base_stmt(statement) -> nseq(Attr) . declaration [ SEMI RBRACE ]
 ## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE ]
 ## export_decl -> nseq(Attr) . Export nseq(Attr) declaration [ SEMI RBRACE ]
-## for_of_stmt(statement) -> nseq(Attr) . For LPAR index_kind Ident Of expr RPAR statement [ SEMI RBRACE ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Const Ident Of expr RPAR statement [ SEMI RBRACE ]
+## for_of_stmt(statement) -> nseq(Attr) . For LPAR Let Ident Of expr RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI RPAR statement [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE ]
+## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE ]
 ## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE ]
 ## property -> nseq(Attr) . property_name COLON expr [ SEMI RBRACE COMMA ]
 ##
@@ -3938,24 +4504,773 @@ contract: DECR ZWSP
 Ill-formed arithmetic expression.
 At this point, the decremented variable is expected.
 
-contract: Ident As LBRACKET UIdent ZWSP
+contract: If LPAR Bytes RPAR For LPAR SEMI ZWSP
 ##
-## Ends in an error in state: 66.
+## Ends in an error in state: 407.
 ##
-## module_access_t -> UIdent . DOT module_var_t [ RBRACKET COMMA ]
-## type_component_no_string -> UIdent . [ RBRACKET COMMA ]
-## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ RBRACKET COMMA ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## UIdent
+## For LPAR SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR SEMI ZWSP
+##
+## Ends in an error in state: 574.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI
+##
+contract: For LPAR SEMI ZWSP
+##
+## Ends in an error in state: 431.
+##
+## for_stmt(statement) -> For LPAR SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI
+##
+contract: Attr For LPAR SEMI ZWSP
+##
+## Ends in an error in state: 439.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI
+##
+contract: Attr For LPAR DECR Ident SEMI ZWSP
+##
+## Ends in an error in state: 514.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI
+##
+contract: If LPAR Bytes RPAR For LPAR DECR Ident SEMI ZWSP
+##
+## Ends in an error in state: 648.
+##
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI
+##
+contract: For LPAR DECR Ident SEMI ZWSP
+##
+## Ends in an error in state: 557.
+##
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR DECR Ident SEMI ZWSP
+##
+## Ends in an error in state: 609.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI . expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI
 ##
 
-Ill-formed type component in a tuple.
+Ill-formed 'for' loop.
 At this point, one of the following is expected:
-  * a selection operator '.' if defining a module path;
-  * a comma ',' followed by another component as a type expression;
-  * a closing bracket ']' if the tuple is complete;
-  * a type parameter after a chevron '<'.
+  * the condition as a boolean expression;
+  * a semicolon ';' if no condition.
+
+contract: For LPAR SEMI SEMI DECR Ident COLON
+##
+## Ends in an error in state: 491.
+##
+## nsepseq(closed_non_decl_expr_stmt,COMMA) -> closed_non_decl_expr_stmt . [ RPAR ]
+## nsepseq(closed_non_decl_expr_stmt,COMMA) -> closed_non_decl_expr_stmt . COMMA nsepseq(closed_non_decl_expr_stmt,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## closed_non_decl_expr_stmt
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 482, spurious reduction of production non_decl_expr_stmt(closed_non_decl_expr_stmt) -> increment_decrement_operators
+## In state 481, spurious reduction of production closed_non_decl_expr_stmt -> non_decl_expr_stmt(closed_non_decl_expr_stmt)
+##
+
+Ill-formed 'for' loop.
+At this point, if the statement is complete, one of the following is expected:
+  * a comma ',' followed by another increment or decrement statement;
+  * a closing parenthesis ')' if no more increment nor decrement.
+
+contract: For LPAR SEMI SEMI DECR Ident COMMA ZWSP
+##
+## Ends in an error in state: 492.
+##
+## nsepseq(closed_non_decl_expr_stmt,COMMA) -> closed_non_decl_expr_stmt COMMA . nsepseq(closed_non_decl_expr_stmt,COMMA) [ RPAR ]
+##
+## The known suffix of the stack is as follows:
+## closed_non_decl_expr_stmt COMMA
+##
+
+Ill-formed 'for' loop.
+At this point, increment or decrement statement is expected, e.g. 'i++'.
+
+contract: Attr For LPAR SEMI Bytes While
+##
+## Ends in an error in state: 494.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR For LPAR SEMI Bytes While
+##
+## Ends in an error in state: 628.
+##
+## for_stmt(closed_stmt) -> For LPAR SEMI expr . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: For LPAR SEMI Bytes While
+##
+## Ends in an error in state: 537.
+##
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR Attr For LPAR SEMI Bytes While
+##
+## Ends in an error in state: 589.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: Attr For LPAR DECR Ident SEMI Bytes While
+##
+## Ends in an error in state: 521.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR For LPAR DECR Ident SEMI Bytes While
+##
+## Ends in an error in state: 655.
+##
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: For LPAR DECR Ident SEMI Bytes While
+##
+## Ends in an error in state: 564.
+##
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+contract: If LPAR Bytes RPAR Attr For LPAR DECR Ident SEMI Bytes While
+##
+## Ends in an error in state: 616.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr . SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI expr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 205, spurious reduction of production call_expr_level -> member_expr
+## In state 280, spurious reduction of production unary_expr_level -> call_expr_level
+## In state 207, spurious reduction of production mult_expr_level -> unary_expr_level
+## In state 214, spurious reduction of production add_expr_level -> mult_expr_level
+## In state 277, spurious reduction of production comp_expr_level -> add_expr_level
+## In state 278, spurious reduction of production conj_expr_level -> comp_expr_level
+## In state 234, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 228, spurious reduction of production expr -> disj_expr_level
+##
+
+Ill-formed 'for' loop.
+At this point, if the condition is complete, a semicolon ';' is expected.
+
+contract: Attr For LPAR SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 495.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI expr SEMI
+##
+contract: If LPAR Bytes RPAR For LPAR SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 629.
+##
+## for_stmt(closed_stmt) -> For LPAR SEMI expr SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI expr SEMI
+##
+contract: For LPAR SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 538.
+##
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI expr SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 590.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI expr SEMI
+##
+contract: Attr For LPAR DECR Ident SEMI SEMI ZWSP
+##
+## Ends in an error in state: 515.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI SEMI
+##
+contract: If LPAR Bytes RPAR For LPAR DECR Ident SEMI SEMI ZWSP
+##
+## Ends in an error in state: 649.
+##
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI SEMI
+##
+contract: For LPAR DECR Ident SEMI SEMI ZWSP
+##
+## Ends in an error in state: 558.
+##
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR DECR Ident SEMI SEMI ZWSP
+##
+## Ends in an error in state: 610.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI SEMI
+##
+contract: Attr For LPAR DECR Ident SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 522.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI expr SEMI
+##
+contract: If LPAR Bytes RPAR For LPAR DECR Ident SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 656.
+##
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI expr SEMI
+##
+contract: For LPAR DECR Ident SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 565.
+##
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser SEMI expr SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR DECR Ident SEMI Bytes SEMI ZWSP
+##
+## Ends in an error in state: 617.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser SEMI expr SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser SEMI expr SEMI
+##
+contract: If LPAR Bytes RPAR For LPAR SEMI SEMI ZWSP
+##
+## Ends in an error in state: 408.
+##
+## for_stmt(closed_stmt) -> For LPAR SEMI SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI SEMI
+##
+contract: If LPAR Bytes RPAR Attr For LPAR SEMI SEMI ZWSP
+##
+## Ends in an error in state: 575.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI SEMI . RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI SEMI . RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI SEMI
+##
+contract: For LPAR SEMI SEMI ZWSP
+##
+## Ends in an error in state: 432.
+##
+## for_stmt(statement) -> For LPAR SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR SEMI SEMI
+##
+contract: Attr For LPAR SEMI SEMI ZWSP
+##
+## Ends in an error in state: 440.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR SEMI SEMI . nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR SEMI SEMI
+##
+
+Ill-formed 'for' loop.
+At this point, one of the following is expected:
+  * at least one increment or decrement statement, e.g. 'i++';
+  * a closing parenthesis ')' if no increment nor decrement.
+
+contract: Attr For LPAR DECR Ident COLON
+##
+## Ends in an error in state: 513.
+##
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 444, spurious reduction of production non_decl_expr_stmt(expr_stmt) -> increment_decrement_operators
+## In state 443, spurious reduction of production expr_stmt -> non_decl_expr_stmt(expr_stmt)
+## In state 528, spurious reduction of production for_initialiser -> expr_stmt
+##
+contract: If LPAR Bytes RPAR For LPAR DECR Ident COLON
+##
+## Ends in an error in state: 647.
+##
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 444, spurious reduction of production non_decl_expr_stmt(expr_stmt) -> increment_decrement_operators
+## In state 443, spurious reduction of production expr_stmt -> non_decl_expr_stmt(expr_stmt)
+## In state 528, spurious reduction of production for_initialiser -> expr_stmt
+##
+contract: For LPAR DECR Ident COLON
+##
+## Ends in an error in state: 556.
+##
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## For LPAR for_initialiser
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 444, spurious reduction of production non_decl_expr_stmt(expr_stmt) -> increment_decrement_operators
+## In state 443, spurious reduction of production expr_stmt -> non_decl_expr_stmt(expr_stmt)
+## In state 528, spurious reduction of production for_initialiser -> expr_stmt
+##
+contract: If LPAR Bytes RPAR Attr For LPAR DECR Ident COLON
+##
+## Ends in an error in state: 608.
+##
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR closed_stmt [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ Else ]
+## for_stmt(closed_stmt) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR closed_stmt [ Else ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI RPAR statement [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF Default Case ]
+## for_stmt(statement) -> nseq(Attr) For LPAR for_initialiser . SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) For LPAR for_initialiser
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 444, spurious reduction of production non_decl_expr_stmt(expr_stmt) -> increment_decrement_operators
+## In state 443, spurious reduction of production expr_stmt -> non_decl_expr_stmt(expr_stmt)
+## In state 528, spurious reduction of production for_initialiser -> expr_stmt
+##
+
+Ill-formed 'for' loop.
+At this point, if the initialiser statement is complete, a semicolon ';' is expected.
 
 contract: Ident As LBRACKET Int While
 ##
@@ -3991,30 +5306,21 @@ At this point, one of the following is expected:
   * a comma ',' followed by another component as a type expression;
   * a closing bracket ']' if the tuple is complete.
 
-contract: Ident As LBRACKET Attr ZWSP
+contract: Ident As LBRACKET UIdent ZWSP
 ##
-## Ends in an error in state: 155.
+## Ends in an error in state: 66.
 ##
-## object_type -> nseq(Attr) . LBRACE sep_or_term_list(field_decl,object_sep) RBRACE [ VBAR RBRACKET COMMA ]
-## sum_type -> nseq(Attr) . VBAR nsepseq(variant,VBAR) [ RBRACKET COMMA ]
-## type_component_no_string -> nseq(Attr) . type_tuple [ RBRACKET COMMA ]
-## variant -> nseq(Attr) . brackets(variant_comp) [ VBAR RBRACKET COMMA ]
+## module_access_t -> UIdent . DOT module_var_t [ RBRACKET COMMA ]
+## type_component_no_string -> UIdent . [ RBRACKET COMMA ]
+## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ RBRACKET COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 91, spurious reduction of production nseq(Attr) -> Attr
+## UIdent
 ##
 
-Ill-formed type expression.
-At this point, if the attribute is complete, one of the following is
-expected:
-  * an opening brace '{' if defining a record type;
-  * a vertical bar '|' if defining a variant type;
-  * an opening bracket '[' followed by a type commponent if defining an
-    array of types;
-  * an opening bracket '[' followed by a variant.
+Ill-formed type component in a tuple.
+At this point, one of the following is expected:
+  * a selection operator '.' if defining a module path;
+  * a comma ',' followed by another component as a type expression;
+  * a closing bracket ']' if the tuple is complete;
+  * a type parameter after a chevron '<'.

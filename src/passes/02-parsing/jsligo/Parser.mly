@@ -56,6 +56,7 @@ let private_attribute = Wrap.ghost ("private", None)
 %on_error_reduce bin_op(comp_expr_level,ge,add_expr_level)
 %on_error_reduce bin_op(comp_expr_level,EQ2,add_expr_level)
 %on_error_reduce expr_stmt
+%on_error_reduce expr
 %on_error_reduce comp_expr_level
 %on_error_reduce conj_expr_level
 %on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
@@ -63,9 +64,9 @@ let private_attribute = Wrap.ghost ("private", None)
 %on_error_reduce nsepseq(statement,SEMI)
 %on_error_reduce nsepseq(variant,VBAR)
 %on_error_reduce nsepseq(object_type,VBAR)
-%on_error_reduce ternary_expr(expr_stmt)
 %on_error_reduce nsepseq(field_name,COMMA)
 %on_error_reduce module_var_t
+%on_error_reduce for_stmt(statement)
 %on_error_reduce chevrons(nsepseq(type_param,COMMA))
 
 (* See [ParToken.mly] for the definition of tokens. *)
@@ -233,15 +234,15 @@ statement:
   base_stmt(statement) | if_stmt { $1 }
 
 base_stmt(right_stmt):
-  attributes expr_stmt     { SExpr   ($1,$2) }
+  attributes expr_stmt     { $2 $1      }
 | return_stmt              { SReturn $1 }
 | block_stmt               { SBlock  $1 }
 | switch_stmt              { SSwitch $1 }
 | import_stmt              { SImport $1 }
 | export_decl              { SExport $1 }
-| attributes declaration   { $2 $1      }
 | if_else_stmt(right_stmt)
 | for_of_stmt(right_stmt)
+| for_stmt(right_stmt)
 | while_stmt(right_stmt)   { $1 }
 
 closed_stmt:
@@ -256,6 +257,7 @@ for_of_stmt(right_stmt):
                   index=$5; kwd_of=$6; expr=$7; rpar=$8; statement=$9}
     in SForOf {region; value} }
 
+%inline
 index_kind:
   "const" { `Const $1 }
 | "let"   { `Let   $1 }
@@ -273,14 +275,55 @@ while_stmt(right_stmt):
 while_cond:
   expr { $1 }
 
+for_initialiser:
+  expr_stmt { $1 }
+
+for_stmt(right_stmt):
+  attributes "for" "(" 
+    ioption(for_initialiser) ";" 
+    ioption(expr) ";" 
+    ioption(nsepseq(closed_non_decl_expr_stmt, ",")) 
+  ")" ioption(right_stmt) {
+    let initialiser = Core.Option.map $4 ~f:(fun f -> f [])
+    and condition    = $6
+    and afterthought = $8
+    and statement    = $10 in
+    let region_end   = 
+      match $10 with
+        Some s -> statement_to_region s
+      | None   -> $9#region
+    in
+    let region = cover $2#region region_end
+    and value = {
+      attributes=$1;
+      kwd_for=$2;
+      lpar=$3;
+      initialiser;
+      semi1=$5;
+      condition;
+      semi2=$7;
+      afterthought;
+      rpar=$9;
+      statement;
+    }
+    in SFor {region;value}
+  }
+
 (* Expressions as Statements *)
 
 expr_stmt:
-  assign_stmt             { EAssign $1 }
+  declaration                   { $1 }
+| non_decl_expr_stmt(expr_stmt) { fun attrs -> SExpr (attrs, $1) }
+
+non_decl_expr_stmt(right_stmt):
+  assign_stmt                                  { EAssign $1 }
 | increment_decrement_operators
 | call_expr
-| ternary_expr(expr_stmt)
-| as_expr                 { $1 }
+| as_expr
+| ternary_expr(non_decl_expr_stmt(right_stmt)) { $1 }
+
+closed_non_decl_expr_stmt:
+  non_decl_expr_stmt(closed_non_decl_expr_stmt) { $1 }
 
 assign_lhs:
   projection  { EProj $1 }

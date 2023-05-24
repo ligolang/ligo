@@ -75,6 +75,7 @@ and print_statement state = function
 | SImport    s -> print_SImport    state s
 | SForOf     s -> print_SForOf     state s
 | SWhile     s -> print_SWhile     state s
+| SFor       s -> print_SFor       state s
 
 (* Blocks *)
 
@@ -286,6 +287,18 @@ and print_SForOf state (node: for_of reg) =
     mk_child print_expr       value.expr;
     mk_child print_statement  value.statement]
   in Tree.make state ~region "SForOf" children
+
+and print_SFor state (node: for_stmt reg) =
+  let Region.{value; region} = node in
+  
+  let children = 
+    mk_children_attr value.attributes @
+    Tree.[
+      mk_child_opt print_statement  value.initialiser;
+      mk_child_opt print_expr value.condition;] @
+    Tree.mk_children_nsepseq_opt print_expr value.afterthought @
+    [Tree.mk_child_opt print_statement value.statement]
+  in Tree.make state ~region "SFor" children
 
 (* While-loops *)
 

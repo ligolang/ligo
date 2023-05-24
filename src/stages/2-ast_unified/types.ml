@@ -63,6 +63,7 @@ module For_int = Nano_prim.For_int
 module For_collection = Nano_prim.For_collection
 module Patch = Nano_prim.Patch
 module For_of = Nano_prim.For_of
+module For_stmt = Nano_prim.For_stmt
 module Removal = Nano_prim.Removal
 module While = Nano_prim.While
 module Switch = Nano_prim.Switch
@@ -170,6 +171,7 @@ and ('self, 'expr, 'pattern, 'statement, 'block) instruction_content_ =
   | I_for of ('expr, 'block) For_int.t
   | I_for_in of ('pattern, 'expr, 'block) For_collection.t
   | I_for_of of ('expr, 'statement) For_of.t
+  | I_for_stmt of ('expr, 'statement) For_stmt.t
   | I_patch of 'expr Patch.t
   | I_remove of 'expr Removal.t
   | I_skip

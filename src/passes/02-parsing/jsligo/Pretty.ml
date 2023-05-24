@@ -171,6 +171,7 @@ and pp_statement state ?top = function
 | SImport    s -> pp_import state s
 | SForOf     s -> pp_for_of state s
 | SWhile     s -> pp_while state s
+| SFor       s -> pp_for state s
 
 and pp_SBlock state stmt =
   let print = pp_nsepseq (break 1) (pp_statement state)
@@ -181,6 +182,23 @@ and pp_SExpr state (node: attribute list * expr) =
   let expr_doc   = pp_expr state expr in
   if List.is_empty attr then expr_doc
   else pp_attributes state attr ^/^ expr_doc
+
+and pp_for state (node: for_stmt reg) =
+  let { attributes; kwd_for; lpar; initialiser; 
+        semi1; condition; semi2; afterthought; rpar; 
+        statement} = node.value in
+  let par =
+    Option.value_map initialiser ~default:space ~f:(pp_statement state) ^^
+    token semi1 ^^
+    Option.value_map condition ~default:space ~f:(pp_expr state) ^^
+    token semi2 ^^
+    Option.value_map afterthought ~default:space ~f:(pp_nsepseq (break 1) 
+      (pp_expr state))
+  in
+  let par = pp_par_like_document state par lpar rpar
+  in pp_attributes state attributes ^^ 
+  token kwd_for ^^ space ^^ par ^^ space ^^ 
+  Option.value_map statement ~default:(string ";") ~f:(pp_statement state)
 
 and pp_for_of state (node: for_of reg) =
   let {kwd_for; lpar; index_kind; index; kwd_of;

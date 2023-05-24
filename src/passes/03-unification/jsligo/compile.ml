@@ -528,8 +528,15 @@ let rec statement : Eq.statement -> Folding.statement =
   match s with
   | SNamespace _ | SImport _ | SExport _ | SLet _ | SConst _ | SType _ ->
     return @@ O.S_decl s
-  | SBlock _ | SExpr _ | SCond _ | SReturn _ | SSwitch _ | SBreak _ | SWhile _ | SForOf _
-    -> return @@ S_instr s
+  | SBlock _
+  | SExpr _
+  | SCond _
+  | SReturn _
+  | SSwitch _
+  | SBreak _
+  | SWhile _
+  | SForOf _
+  | SFor _ -> return @@ S_instr s
 
 
 and instruction : Eq.instruction -> Folding.instruction =
@@ -578,8 +585,12 @@ and instruction : Eq.instruction -> Folding.instruction =
     in
     let index = TODO_do_in_parsing.var index in
     return @@ I_for_of { index_kind; index; expr; for_stmt = statement }
+  | SFor s ->
+    let I.{ initialiser; condition; afterthought; statement; _ } = r_fst s in
+    let afterthought = Option.map afterthought ~f:Utils.nsepseq_to_nseq in
+    return @@ I_for_stmt { initialiser; condition; afterthought; statement }
   (* impossible, if triggered, look at functions 'statement' *)
-  | _ -> assert false
+  | SLet _ | SConst _ | SType _ | SNamespace _ | SExport _ | SImport _ -> assert false
 
 
 and declaration : Eq.declaration -> Folding.declaration =

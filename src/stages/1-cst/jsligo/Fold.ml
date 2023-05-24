@@ -48,6 +48,7 @@ type _ sing =
   | S_field_decl : field_decl sing
   | S_field_name : field_name sing
   | S_for_of : for_of sing
+  | S_for_stmt : for_stmt sing
   | S_fun_expr : fun_expr sing
   | S_fun_name : fun_name sing
   | S_fun_type_arg : fun_type_arg sing
@@ -377,6 +378,28 @@ let fold
     ; expr -| S_expr
     ; rpar -| S_rpar
     ; statement -| S_statement ]
+  | S_for_stmt ->
+    let { attributes   ;
+    kwd_for      ;
+    lpar         ;
+    initialiser ;
+    semi1        ;
+    condition    ;
+    semi2        ;
+    afterthought ;
+    rpar         ;
+    statement     } = node in
+    process_list
+    [ attributes -| S_list S_attribute
+    ; kwd_for -| S_kwd_for
+    ; lpar -| S_lpar
+    ; initialiser -| S_option S_statement
+    ; semi1 -| S_semi
+    ; condition -| S_option S_expr
+    ; semi2 -| S_semi
+    ; afterthought -| S_option (S_nsepseq (S_expr, S_comma))
+    ; rpar -| S_rpar
+    ; statement -| S_option S_statement ]
   | S_fun_expr ->
     let { type_params; parameters; lhs_type; arrow; body } = node in
     process_list
@@ -589,7 +612,8 @@ let fold
     | SExport node -> node -| S_reg (S_tuple_2 (S_kwd_export, S_statement))
     | SImport node -> node -| S_reg S_import
     | SWhile node -> node -| S_reg S_while_stmt
-    | SForOf node -> node -| S_reg S_for_of)
+    | SForOf node -> node -| S_reg S_for_of
+    | SFor node -> node -| S_reg S_for_stmt)
   | S_statements -> process @@ node -| S_nsepseq (S_statement, S_semi)
   | S_string -> () (* Leaf *)
   | S_string_expr -> process

@@ -14,6 +14,7 @@ type all =
     * Type_var.t
     * Location.t
   | `Nanopasses_attribute_ignored of Location.t
+  | `Nanopasses_infinite_for_loop of Location.t
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable of
     Location.t * Type_var.t
   | `Main_view_ignored of Location.t
@@ -135,6 +136,13 @@ let pp
       Format.fprintf
         f
         "@[<hv>%a@ Warning: unsupported attribute, ignored.@.@]"
+        snippet_pp
+        loc
+    | `Nanopasses_infinite_for_loop loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: A boolean conditional expression is expected.@.Otherwise \
+         this leads to an infinte loop.@.@]"
         snippet_pp
         loc
     | `Self_ast_imperative_warning_deprecated_polymorphic_variable (loc, name) ->
@@ -284,6 +292,13 @@ let to_warning : all -> Simple_utils.Warning.t =
     make ~stage:"parsing command line parameters" ~content
   | `Nanopasses_attribute_ignored loc ->
     let message = "Warning: ignored attributes" in
+    let content = make_content ~message ~location:loc () in
+    make ~stage:"typer" ~content
+  | `Nanopasses_infinite_for_loop loc ->
+    let message =
+      "Warning: A boolean conditional expression is expected.\n\
+       Otherwise this leads to an infinte loop."
+    in
     let content = make_content ~message ~location:loc () in
     make ~stage:"typer" ~content
   | `Self_ast_imperative_warning_deprecated_polymorphic_variable (location, variable) ->
