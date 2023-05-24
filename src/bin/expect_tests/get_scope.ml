@@ -12,6 +12,7 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
+  print_endline @@ replace_extraneous_slashes @@ [%expect.output];
   [%expect
     {|
     Scopes:
@@ -85,6 +86,7 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
+  print_endline @@ replace_extraneous_slashes @@ [%expect.output];
   [%expect
     {|
     Scopes:
@@ -716,6 +718,7 @@ let%expect_test _ =
     ; "--with-types"
     ; "--no-stdlib"
     ];
+  print_endline @@ replace_extraneous_slashes @@ [%expect.output];
   [%expect
     {|
     Scopes:

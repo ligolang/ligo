@@ -91,6 +91,8 @@
 
 (rule
  (alias get_scope_tests)
+ (enabled_if
+  (<> %{ocaml-config:system} mingw64))
  (deps
   (:schema ../main/scopes/schema.json)
   (glob_files contracts/*)

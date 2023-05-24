@@ -14,8 +14,8 @@ let diff_by (eq : 'a -> 'a -> bool) (xs : 'a list) (ys : 'a list) : 'a list =
 let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool)
     : 'a list * 'a list
   =
-  let extra = diff_by eq actual expected in
-  let missing = diff_by eq expected actual in
+  let extra = diff_by eq expected actual in
+  let missing = diff_by eq actual expected in
   extra, missing
 
 

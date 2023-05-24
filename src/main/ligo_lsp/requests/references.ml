@@ -74,5 +74,14 @@ let on_req_references : Position.t -> DocumentUri.t -> Location.t list option Ha
   in
   references
   |> List.concat_map ~f:(fun (file, ranges) ->
+         let file =
+           if Sys.unix
+           then file
+           else
+             file
+             |> DocumentUri.to_path
+             |> Lsp_helpers.Path.normalise
+             |> DocumentUri.of_path
+         in
          List.map ~f:(fun range -> Location.create ~uri:file ~range) ranges)
   |> return

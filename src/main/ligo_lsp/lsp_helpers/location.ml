@@ -7,4 +7,6 @@ let testable : t Alcotest.testable = Alcotest.testable pp eq
 
 let of_region : Region.t -> t =
  fun region ->
-  create ~uri:(Lsp.Types.DocumentUri.of_path region#file) ~range:(Range.of_region region)
+ let file = Path.normalise region#file in
+  let uri = Lsp.Types.DocumentUri.of_path file in
+  create ~uri ~range:(Range.of_region region)
