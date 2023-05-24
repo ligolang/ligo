@@ -66,6 +66,7 @@ let private_attribute = Wrap.ghost ("private", None)
 %on_error_reduce ternary_expr(expr_stmt)
 %on_error_reduce nsepseq(field_name,COMMA)
 %on_error_reduce module_var_t
+%on_error_reduce chevrons(nsepseq(type_param,COMMA))
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -649,9 +650,9 @@ binding_initializer:
     in {region; value} }
 
 binding_type:
-  ":" ioption(type_generics) type_expr { ($1,$3), $2 }
+  ":" ioption(type_parameters) type_expr { ($1,$3), $2 }
 
-type_generics:
+type_parameters:
   chevrons(nsepseq(type_param,",")) { $1 }
 
 binding_pattern:
@@ -742,6 +743,12 @@ sum_type:
     let region   = cover $2#region stop in
     let variants = {region; value=$3} in
     let value    = {attributes=$1; leading_vbar = Some $2; variants}
+    in TSum {region; value}
+  }
+| nsepseq(variant, "|") {
+    let region   = nsepseq_to_region (fun x -> x.region) $1 in
+    let variants = {region; value=$1} in
+    let value    = {attributes=[]; leading_vbar=None; variants}
     in TSum {region; value} }
 
 variant:
@@ -765,7 +772,11 @@ ctor_param:
 
 core_type:
   "<string>"            { TString $1 }
-| "<int>"               { TInt    $1 }
+| core_type_no_string   { $1}
+
+%inline
+core_type_no_string:
+  "<int>"               { TInt    $1 }
 | "_" | type_name       { TVar    $1 }
 | parameter_of_type     {         $1 }
 | module_access_t       { TModA   $1 }
@@ -784,11 +795,21 @@ union_type:
 
 (* Tuples of types *)
 
+(* The production [core_type_no_string] is here to avoid a conflict
+   with a variant for a constant contructor, e.g. [["C"]], which could
+   be interpreted otherwise as an type tuple (array) of the type
+   ["C"]. *)
+
 type_tuple:
   brackets(type_components) { $1 }
 
 type_components:
-  nsepseq(type_component,",") { $1 }
+  type_component_no_string { $1,[] }
+| type_component_no_string "," nsepseq(type_component,",") {
+    Utils.nsepseq_cons $1 $2 $3 }
+
+type_component_no_string:
+  fun_type | sum_type | core_type_no_string { $1 }
 
 type_component:
   type_expr { $1 }
@@ -807,7 +828,6 @@ type_ctor_app:
   type_name chevrons(type_ctor_args) {
     let region = cover $1#region $2.region
     in {region; value = ($1,$2)} }
-
 
 type_ctor_args:
   nsepseq(type_ctor_arg,",") { $1 }
@@ -895,14 +915,14 @@ statements:
 (* Expressions *)
 
 fun_expr:
-  ioption(type_generics) ES6FUN par(parameters)
+  ioption(type_parameters) ES6FUN par(parameters)
   ioption(type_annotation) "=>" body {
     let region = cover $3.region (body_to_region $6) in
     let value  = {type_params=$1; parameters = EPar $3;
                   lhs_type=$4; arrow=$5; body=$6}
     in {region; value}
   }
-| ioption(type_generics) ES6FUN "(" ")" ioption(type_annotation) "=>" body {
+| ioption(type_parameters) ES6FUN "(" ")" ioption(type_annotation) "=>" body {
     let region     = cover $3#region $4#region in
     let parameters = EUnit {region; value = ($3,$4)} in
     let region     = cover $3#region (body_to_region $7) in
