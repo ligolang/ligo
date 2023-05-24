@@ -308,7 +308,7 @@ and instr ~raise : instruction -> Statement_result.t =
     let w = While.map Fun.id (block_to_expression ~raise) w in
     Binding (fun hole -> let_unit_in (e_while ~loc w) hole)
   | I_break -> Binding (fun hole -> let_unit_in (e_unit ~loc) hole)
-  | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ ->
+  | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ | I_for_stmt _ ->
     failwith "removed"
 
 

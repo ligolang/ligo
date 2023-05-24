@@ -22,7 +22,7 @@ PASS,missing_expr_parenthesesR.jsligo,14,218,48,193,8
 PASS,missing_ident_in_type_decl.jsligo,2,2,2,125,0
 PASS,missing_int.jsligo,2,5,5,193,0
 PASS,missing_name_of_argument.jsligo,7,114,14,193,3
-PASS,missing_namespace_kw_in_namespace_decl.jsligo,14,197,33,125,4
+PASS,missing_namespace_kw_in_namespace_decl.jsligo,9,127,105,125,11
 PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,25,287,45,125,9
 PASS,missing_par_in_call.jsligo,2,8,4,193,0
 PASS,missing_par_in_if_condition.jsligo,23,280,28,185,4
