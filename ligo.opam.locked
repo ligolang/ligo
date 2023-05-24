@@ -7,6 +7,69 @@ authors: ["Gabriel Alfour" "Christian Rinderknecht"]
 license: "MIT"
 homepage: "https://gitlab.com/ligolang/tezos"
 bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+build: ["dune" "build" "-p" name "-j" jobs]
+dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
+pin-depends: [
+  [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-016.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tz-b-c-ux.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-context.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-crypto.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-error-monad.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-event-logging.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-hacl.dev" "./vendors/tezos-ligo/opam"]
+  [ "tz-lwtres-std.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-micheline.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup-commands.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tz-mock-reg.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-017.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tp-plugin-016.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-rpc-http-client.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tz-rpc-h-c-ux.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-sapling.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-shell-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-stdlib.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
+  [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-plonk.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-bls12-381-polynomial.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-bls12-381-signature.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-bls12-381-hash.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-distributed-lwt-internal.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-polynomial.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-mec.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-distributed-internal.dev" "./vendors/tezos-ligo/opam" ]
+  [
+    "linol.0.4"
+    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+  ]
+  [
+    "linol-lwt.0.4"
+    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+  ]
+  [
+    "ocaml-recovery-parser.0.2.4"
+    "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"
+  ]
+]
 depends: [
   "aches" {= "1.0.0"}
   "aches-lwt" {= "1.0.0"}
@@ -153,8 +216,6 @@ depends: [
   "ocplib-endian" {= "1.2"}
   "octavius" {= "1.2.2"}
   "octez-bls12-381-signature" {= "dev"}
-  "octez-bls12-381-hash" {= "dev"}
-  "octez-plompiler" {= "dev"}
   "odoc" {= "2.1.1"}
   "odoc-parser" {= "1.0.1"}
   "omd" {= "1.3.2"}
@@ -281,60 +342,4 @@ depends: [
   "zarith" {= "1.12"}
   "zarith_stubs_js" {= "v0.15.0"}
   "zed" {= "3.2.1"}
-]
-build: ["dune" "build" "-p" name "-j" jobs]
-dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
-pin-depends: [
-  [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-016.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-b-c-ux.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-context.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-crypto.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-error-monad.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-event-logging.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-hacl.dev" "./vendors/tezos-ligo/opam"]
-  [ "tz-lwtres-std.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-micheline.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup-commands.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-mock-reg.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-017.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-bls12-381-signature.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-bls12-381-hash.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-plugin-016.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc-http-client.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-rpc-h-c-ux.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-sapling.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-shell-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-stdlib.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
-  [
-    "linol.0.4"
-    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
-  ]
-  [
-    "linol-lwt.0.4"
-    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
-  ]
-  [
-    "ocaml-recovery-parser.0.2.4"
-    "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4"
-  ]
 ]
