@@ -29,5 +29,14 @@ let open_file (file_path : string) : DocumentUri.t Handler.t =
   return uri
 
 
-let to_absolute : string -> string = Filename.concat @@ Ligo_unix.getcwd ()
-let rel_path_to_uri : string -> DocumentUri.t = DocumentUri.of_path <@ to_absolute
+let to_absolute : string -> string =
+ fun p ->
+  let abs_path = Filename.concat (Ligo_unix.getcwd ()) p in
+  Lsp_helpers.Path.normalise abs_path
+
+
+let rel_path_to_uri : string -> DocumentUri.t =
+ fun rel_path ->
+  let abs_path = to_absolute rel_path in
+  let abs_path = Lsp_helpers.Path.normalise abs_path in
+  DocumentUri.of_path abs_path

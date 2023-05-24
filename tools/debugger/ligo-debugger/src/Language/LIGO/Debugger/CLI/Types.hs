@@ -33,7 +33,7 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 import Data.Vector qualified as V
 import Debug qualified
-import Fmt (Buildable (..), Builder, blockListF, nameF, pretty)
+import Fmt (Buildable (..), Builder, blockListF, nameF, pretty, unlinesF)
 import Generics.SYB (everywhere, mkT)
 import System.Console.ANSI
   (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
@@ -375,24 +375,32 @@ data LigoIndexedInfo u = LigoIndexedInfo
 
     -}
 
+  , liiSourceType :: LigoType
+    {- ^ A type for the last computed value.
+
+      Comes with location meta.
+
+    -}
   } deriving stock (Show, Generic, Data)
     deriving anyclass (NFData)
 
 deriving stock instance Eq (LigoIndexedInfo 'Concise)
 
 pattern LigoEmptyLocationInfo :: LigoIndexedInfo u
-pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing
+pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing (LigoType Nothing)
 
-pattern LigoMereLocInfo :: Range -> LigoIndexedInfo u
-pattern LigoMereLocInfo loc = LigoIndexedInfo
+pattern LigoMereLocInfo :: Range -> LigoType -> LigoIndexedInfo u
+pattern LigoMereLocInfo loc typ = LigoIndexedInfo
   { liiLocation = Just loc
   , liiEnvironment = Nothing
+  , liiSourceType = typ
   }
 
 pattern LigoMereEnvInfo :: LigoStack u -> LigoIndexedInfo u
 pattern LigoMereEnvInfo env = LigoIndexedInfo
   { liiLocation = Nothing
   , liiEnvironment = Just env
+  , liiSourceType = LigoType Nothing
   }
 
 -- | The debug output produced by LIGO.
@@ -655,26 +663,28 @@ instance FromJSON (LigoStackEntry u) where
     other            -> Aeson.unexpected other
 
 instance Default (LigoIndexedInfo u) where
-  def = LigoIndexedInfo Nothing Nothing
+  def = LigoEmptyLocationInfo
 
 instance (SingI u) => Buildable (LigoIndexedInfo u) where
   build = \case
     LigoEmptyLocationInfo -> "none"
-    LigoIndexedInfo mLoc mEnv -> mconcat $ catMaybes
+    LigoIndexedInfo mLoc mEnv typ -> unlinesF $ catMaybes
       [ mLoc <&> \loc -> [int||location: #{loc}|]
       , mEnv <&> \env -> nameF "environment stack" $ blockListF env
+      , case typ of { LigoTypeResolved{} -> Just [int||source type: #{buildType Caml typ}|] ; _ -> Nothing }
       ]
 
 instance FromJSON (LigoIndexedInfo u) where
   parseJSON = withObject "location info" \o -> do
     liiLocation <- o .:! "location"
     liiEnvironment <- o .:! "environment"
+    liiSourceType <- LigoType <$> o .:! "source_type"
     return LigoIndexedInfo{..}
 
 instance AsEmpty (LigoIndexedInfo u) where
   _Empty = prism
-    do \() -> LigoIndexedInfo Nothing Nothing
-    do \case LigoIndexedInfo Nothing Nothing -> Right (); other -> Left other
+    do \() -> LigoEmptyLocationInfo
+    do \case LigoEmptyLocationInfo -> Right (); other -> Left other
 
 instance {-# OVERLAPPING #-} (SingI u) => Buildable [LigoIndexedInfo u] where
   build = blockListF
@@ -690,11 +700,18 @@ instance FromJSON (LigoMapper u) where
     -- json ones because the json-schema from source mapper
     -- differs from @ligo info get-scopes@ one in this place.
     Array types <- replaceTextualNumbers <$> o .: "types"
+
+    let inlineType :: Value -> Parser Value
+        inlineType val = do
+          TextualNumber index <- parseJSON val
+          maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
+
     locations <- mich .: "locations"
+    envInlined <-
+      forOf (values . key "environment" . values . key "source_type") (Array locations) inlineType
+
     locationsInlined <-
-      forOf (values . key "environment" . values . key "source_type") (Array locations) \old -> do
-        TextualNumber index <- parseJSON old
-        maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
+      forOf (values . key "source_type") envInlined inlineType
 
     lmLocations <- parseJSON locationsInlined
     return LigoMapper{..}

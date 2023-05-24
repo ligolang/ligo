@@ -166,3 +166,6 @@ val cover : t -> t -> t
 val to_yojson       : t -> Yojson.Safe.t
 val of_yojson       : Yojson.Safe.t -> (t, string) Result.t
 val to_human_yojson : t -> Yojson.Safe.t
+
+val sexp_of_t : region -> Sexp.t
+val t_of_sexp : Sexp.t -> region

@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with a wrong type error in the debugger's input box. Before it had\\na Michelson type in it. Now we show there a LIGO type instead.\\n\\n"
+merge_request: '2597'
+title: "[#1798] Show LIGO types in input boxes"
+type: fixed
+            

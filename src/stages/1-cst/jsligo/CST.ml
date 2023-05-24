@@ -46,10 +46,6 @@ type kwd_from      = lexeme wrap
 type kwd_for       = lexeme wrap
 type kwd_of        = lexeme wrap
 
-(* Keywords of contracts *)
-
-type kwd_contract  = lexeme wrap
-
 (* Symbols *)
 
 type arrow    = lexeme wrap  (* "=>"  *)
@@ -64,6 +60,11 @@ type plus       = lexeme wrap  (* "+" *)
 type slash      = lexeme wrap  (* "/" *)
 type modulo     = lexeme wrap  (* "%" *)
 type times      = lexeme wrap  (* "*" *)
+
+(* Increment & Decrement operators *)
+
+type increment = lexeme wrap (* "++" *)
+type decrement = lexeme wrap (* "--" *)
 
 (* Ternary operator *)
 
@@ -112,6 +113,7 @@ type eof = lexeme wrap
 
 type variable    = lexeme wrap
 type fun_name    = lexeme wrap
+type fun_arg_name    = lexeme wrap
 type type_name   = lexeme wrap
 type type_var    = lexeme wrap
 type type_constr = lexeme wrap
@@ -197,7 +199,7 @@ and type_vars = (type_var, comma) nsepseq chevrons reg
 and fun_type_args = (fun_type_arg, comma) nsepseq par
 
 and fun_type_arg = {
-  name      : variable;
+  name      : fun_arg_name;
   colon     : colon;
   type_expr : type_expr
 }
@@ -366,6 +368,8 @@ and expr =
 | EModA     of expr module_access reg
 | EObject   of object_expr
 | EPar      of expr par reg
+| EPrefix   of prefix_postfix_op reg
+| EPostfix  of prefix_postfix_op reg
 | EProj     of projection reg
 | ESeq      of (expr, comma) nsepseq reg
 | EString   of string_expr
@@ -435,7 +439,8 @@ and for_of = {
 
 and index_kind = [
   `Let   of kwd_let
-| `Const of kwd_const]
+| `Const of kwd_const
+]
 
 and import =
   Import_rename   of import_rename
@@ -513,6 +518,15 @@ and 'a un_op = {
   op  : 'a;
   arg : expr
 }
+
+and prefix_postfix_op = {
+  update_type : update_type;
+  variable    : variable
+}
+
+and update_type =
+  Increment of increment
+| Decrement of decrement
 
 and comp_expr =
   Lt    of lt        bin_op reg
@@ -646,7 +660,9 @@ let rec expr_to_region = function
 | ECodeInj {region; _} | EModA { region; _} | ETernary {region; _} -> region
 | EBytes v -> v#region
 | EVar v -> v#region
-| EContract {region; _} -> region
+| EContract {region; _}
+| EPrefix {region;_}
+| EPostfix {region;_} -> region
 
 let statement_to_region = function
   SBreak b -> b#region

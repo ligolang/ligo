@@ -41,10 +41,10 @@ let pretty_print_cst ~(width : int) ~(dialect_cst : Dialect_cst.t) : string =
   let doc =
     match dialect_cst with
     | CameLIGO_cst cst ->
-      Parsing.Cameligo.Pretty.print Parsing.Cameligo.Pretty.default_environment cst
+      Parsing.Cameligo.Pretty.print Parsing.Cameligo.Pretty.default_state cst
     | JsLIGO_cst cst ->
-      Parsing.Jsligo.Pretty.print Parsing.Jsligo.Pretty.default_environment cst
+      Parsing.Jsligo.Pretty.print Parsing.Jsligo.Pretty.default_state cst
     | PascaLIGO_cst cst ->
-      Parsing.Pascaligo.Pretty.print Parsing.Pascaligo.Pretty.default_environment cst
+      Parsing.Pascaligo.Pretty.print Parsing.Pascaligo.Pretty.default_state cst
   in
   doc_to_string ~width doc

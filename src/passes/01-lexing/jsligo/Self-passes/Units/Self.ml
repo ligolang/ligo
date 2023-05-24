@@ -33,7 +33,8 @@ type t = filter list
 module Style' = Style.Make (Token)
 
 let filters : t = [
-    Style'.filter;
-      ZWSP.filter;
+  Style'.filter;
+  ZWSP.filter;
+  LineCom.filter; (* Before [Comments.filter] *)
   Comments.filter
 ]

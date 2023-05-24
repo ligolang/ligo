@@ -17,7 +17,7 @@ import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 
 import { extensions } from './common'
-import { changeLastContractPath, getBinaryPath } from './commands/common';
+import { changeLastContractPath, getBinaryPath, ligoBinaryInfo } from './commands/common';
 
 let client: LanguageClient;
 let ligoOptionButton: vscode.StatusBarItem;
@@ -74,17 +74,13 @@ function initializeStatusBarButton(
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-  if (context.extensionMode === vscode.ExtensionMode.Production) {
-    await updateLigo()
-    await updateExtension(context)
-  }
   const config = vscode.workspace.getConfiguration()
-  const ligoPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, config)
+  const ligoPath = getBinaryPath(ligoBinaryInfo, config)
   const serverOptions: ServerOptions = {
     command: ligoPath,
     args: ["lsp"],
     options: {
-      cwd: `${context.extensionPath}`,
+      cwd: context.extensionPath,
     },
   };
 
@@ -117,8 +113,14 @@ export async function activate(context: vscode.ExtensionContext) {
     'ligoLanguageServer',
     'LIGO Language Server',
     serverOptions,
-    clientOptions,
+    clientOptions
   );
+
+  // Check for LIGO and ligo-vscode updates
+  if (context.extensionMode === vscode.ExtensionMode.Production) {
+    updateLigo(client)
+    updateExtension(context)
+  }
 
   // Register VSC-specific server commands
   registerCommands(client);
@@ -128,8 +130,5 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
-    return undefined;
-  }
-  return client.stop();
+  return client?.stop();
 }

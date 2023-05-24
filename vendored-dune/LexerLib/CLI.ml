@@ -105,9 +105,9 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
 
     let specs =
       Getopt.[
-        noshort, "copy",         set copy true, None;
-        noshort, "tokens",       set tokens true, None;
-        noshort, "units",        set units true, None;
+        'c',     "copy",         set copy true, None;
+        't',     "tokens",       set tokens true, None;
+        'u',     "units",        set units true, None;
         noshort, "bytes",        set bytes true, None;
         noshort, "preprocess",   set preprocess true, None;
         noshort, "string",       None, Some set_string;
@@ -148,9 +148,9 @@ module Make (PreprocParams: Preprocessor.CLI.PARAMETERS) : PARAMETERS =
     let opt_wo_arg =
       let open SSet in
       empty
-      |> add "--copy"
-      |> add "--tokens"
-      |> add "--units"
+      |> add "--copy"   |> add "-c"
+      |> add "--tokens" |> add "-t"
+      |> add "--units"  |> add "-u"
       |> add "--bytes"
       |> add "--preprocess"
       |> add "--print-passes"

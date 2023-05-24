@@ -30,18 +30,18 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
-    Name.uppercase_identifier;
+    Name_ref Name.uppercase_identifier;
 
     (* Sum type *)
-    Name.of_keyword;
+    Name_ref Name.of_keyword;
 
-    Name.type_operator;
-    Name.type_name;
-    Name.type_var;
-    Name.type_parentheses;
-    Name.type_int;
-    Name.type_product;
-    "string";
+    Name_ref Name.type_operator;
+    Name_ref Name.type_name;
+    Name_ref Name.type_var;
+    Name_ref Name.type_parentheses;
+    Name_ref Name.type_int;
+    Name_ref Name.type_product;
+    String_ref;
   ] in
   {
     syntax_name          = "mligo";
@@ -134,18 +134,18 @@ let syntax_highlighting =
     };
     syntax_patterns = [
       (* TODO: Name.lowercase_identifier; *)
-      Name.uppercase_identifier;
-      Name.attribute;
-      Name.macro;
-      Name.let_binding;
-      Name.lambda;
-      Name.type_definition;
-      Name.control_keywords;
-      Name.module_declaration;
-      Name.structure_keywords;
-      Name.numeric_literals;
-      Name.operators;
-      Name.type_annotation;
+      Name_ref Name.uppercase_identifier;
+      Name_ref Name.attribute;
+      Name_ref Name.macro;
+      Name_ref Name.let_binding;
+      Name_ref Name.lambda;
+      Name_ref Name.type_definition;
+      Name_ref Name.control_keywords;
+      Name_ref Name.module_declaration;
+      Name_ref Name.structure_keywords;
+      Name_ref Name.numeric_literals;
+      Name_ref Name.operators;
+      Name_ref Name.type_annotation;
     ];
     repository = [
       Helpers.attribute;
@@ -210,7 +210,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.lambda_begin, Some Statement)];
           end_ = [(Regexp.lambda_end, Some Operator)];
-          patterns = [Name.type_annotation_lambda]
+          patterns = [Name_ref Name.type_annotation_lambda]
         }
       };
       {
@@ -298,7 +298,7 @@ let syntax_highlighting =
           meta_name = None;
           begin_ = [(Regexp.braces_begin, None)];
           end_ = [(Regexp.braces_end, None)];
-          patterns = [Name.uppercase_identifier; Name.type_annotation; Name.semicolon];
+          patterns = [Name_ref Name.uppercase_identifier; Name_ref Name.type_annotation; Name_ref Name.semicolon];
         }
       };
     ]

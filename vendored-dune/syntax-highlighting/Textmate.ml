@@ -39,7 +39,10 @@ module JSON = struct
   | Builtin_function  -> "support.function." ^ syntax 
   | FunctionName      -> "entity.name.function." ^ syntax
 
-  let make_reference r = if r = "$self" then r else "#" ^ r
+  let make_references (t : Core.t) : Core.reference -> string list = function
+    | Name_ref r -> [ "#" ^ r ]
+    | Self_ref -> [ "$self" ]
+    | String_ref -> List.mapi (fun i _ -> "#string" ^ string_of_int i) t.language_features.string_delimiters
 
   let spaces = "\\s*"
   
@@ -49,7 +52,7 @@ module JSON = struct
   and captures syntax (l: (int * Core.highlight_name) list) = 
     `Assoc (List.map (capture syntax) l)
 
-  and pattern_kind (name: string) (syntax: string) = function 
+  and pattern_kind (t: Core.t) (name: string) (syntax: string) = function 
     Core.Begin_end { 
       meta_name;
       begin_; 
@@ -82,8 +85,13 @@ module JSON = struct
       let end_ = String.concat spaces (List.map (fun f -> (fst f).Core.textmate) end_) in
       let patterns =
         let comments = ["line_comment"; "block_comment"] in
-        let special = "string" :: comments in
-        (if List.mem name special then Fun.id else (@) comments) patterns
+        let strings =
+          List.mapi
+            (fun i _ -> "string" ^ string_of_int i)
+            t.language_features.string_delimiters
+        in
+        let special = strings @ comments in
+        (if List.mem name special then Fun.id else (@) (List.map (fun c -> Core.Name_ref c) comments)) patterns
       in
       (match meta_name with 
         Some s -> [("name", `String (highlight_to_textmate syntax s))];
@@ -94,7 +102,12 @@ module JSON = struct
         ("end", `String end_);
         ("beginCaptures", captures syntax begin_captures);
         ("endCaptures", captures syntax end_captures);
-        ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) patterns))
+        ("patterns", `List (
+          List.concat_map
+            (fun reference ->
+              let references = make_references t reference in
+              List.map (fun ref -> `Assoc ["include", `String ref]) references)
+            patterns))
       ]
   | Match {match_; match_name} -> 
     let match_, regexps  = List.split match_ in
@@ -114,8 +127,8 @@ module JSON = struct
       ("captures", captures syntax captures_)
     ] 
 
-  and repository syntax r : Yojson.Safe.t = 
-    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind i.name syntax i.kind))) r)
+  and repository (t : Core.t) syntax r : Yojson.Safe.t = 
+    `Assoc (List.map (fun (i: Core.pattern) -> (i.name, `Assoc (pattern_kind t i.name syntax i.kind))) r)
     
   and language_features: Core.language_features -> Yojson.Safe.t = fun l ->
     `Assoc (
@@ -147,18 +160,23 @@ module JSON = struct
       ("name", `String s.syntax_name);
       ("scopeName", `String s.scope_name);
       ("fileTypes", `List (List.map (fun s -> `String s) s.file_types));
-      ("patterns", `List (List.map (fun reference -> `Assoc [("include", `String (make_reference reference))]) s.syntax_patterns));
-      ("repository", repository syntax s.repository)
+      ("patterns", `List (
+        List.concat_map
+          (fun reference ->
+            let references = make_references s reference in
+            List.map (fun ref -> `Assoc ["include", `String ref]) references)
+          s.syntax_patterns));
+      ("repository", repository s syntax s.repository)
     ]),
     language_features s.language_features)
 
 end
 
 module Validate = struct
-  let rec check_reference repository r =
-    if r = "$self" then 
+  let rec check_reference repository = function
+    | Core.Self_ref | Core.String_ref ->
       ok true
-    else 
+    | Core.Name_ref r ->
       let open Helpers in
       let exists_repo = List.exists (fun (i: Core.pattern) -> i.name = r) repository in
       let exists_builtin = List.exists (fun (i: string) -> i = r) Helpers.builtin_repo in
@@ -183,9 +201,17 @@ module Validate = struct
   
   let syntax (s: Core.t) = 
     let repository = s.repository in
-    let patterns = List.fold_left (fun a (c: Core.pattern) -> if is_error a then a else pattern_kind c.name repository c.kind) (ok true) repository in
+    let patterns = List.fold_left
+      (fun a (c: Core.pattern) -> if is_error a then a else pattern_kind c.name repository c.kind)
+      (ok true)
+      repository
+    in
     let curr = fold ~ok ~error patterns in
-    let patterns = List.fold_left (fun a (c: string) -> if is_error a then a else check_reference repository c) curr s.syntax_patterns in
+    let patterns = List.fold_left
+      (fun a (c: Core.reference) -> if is_error a then a else check_reference repository c)
+      curr
+      s.syntax_patterns
+    in
     fold ~ok ~error patterns
 
 end
@@ -198,7 +224,7 @@ let add_comments s =
   let line_comment = comments.line_comment in
   let block_comment = comments.block_comment in
   {s with 
-    syntax_patterns = "block_comment" :: "line_comment" :: s.syntax_patterns;
+    syntax_patterns = Core.Name_ref "block_comment" :: Core.Name_ref "line_comment" :: s.syntax_patterns;
     repository = 
       {
         name = "block_comment";
@@ -206,7 +232,7 @@ let add_comments s =
           meta_name =      Some Core.Comment;
           begin_ =         [((fst block_comment), None)];
           end_ =           [((snd block_comment), None)];
-          patterns =       "block_comment" :: extra_patterns.in_block_comments;
+          patterns =       Core.Name_ref "block_comment" :: extra_patterns.in_block_comments;
         }
       }
       ::
@@ -225,9 +251,9 @@ let add_comments s =
 let add_string s = 
   let language_features = s.Core.language_features in
   let string_delimiters = language_features.string_delimiters in
-  let strings = List.map (fun d -> 
+  let strings = List.mapi (fun i d ->
     Core.{
-      name = "string";
+      name = "string" ^ string_of_int i;
       kind = Core.Begin_end {
         meta_name =      Some Core.String;
         begin_ =         [(d, None)];
@@ -238,12 +264,12 @@ let add_string s =
   ) string_delimiters 
   in
   {s with 
-    syntax_patterns = "string" :: s.syntax_patterns;
+    syntax_patterns = Core.String_ref :: s.syntax_patterns;
     repository = strings @ s.repository
   }
 
 let to_jsons: string -> Core.t -> (Yojson.Safe.t * Yojson.Safe.t, Core.error) result = fun syntax s ->
-  let* _ = Validate.syntax s in
   let s = add_comments s in
   let s = add_string s in
+  let* _ = Validate.syntax s in
   JSON.to_yojson syntax s

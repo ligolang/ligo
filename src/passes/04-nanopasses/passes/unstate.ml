@@ -294,8 +294,8 @@ and instr ~raise : instruction -> Statement_result.t =
              ~loc
              { binder = Ligo_prim.Binder.make v None; expression = e })
           hole)
-  | I_expr ({ fp = { wrap_content = E_assign_chainable _; _ } } as e) ->
-    Binding (fun hole -> let_ignore_in e hole)
+  | I_expr ({ fp = { wrap_content = E_assign_chainable _ | E_simple_let_in _; _ } } as e)
+    -> Binding (fun hole -> let_ignore_in e hole)
   | I_expr e ->
     Binding (fun hole -> if Combinators.is_e_unit hole then e else let_unit_in e hole)
   | I_for for_ ->

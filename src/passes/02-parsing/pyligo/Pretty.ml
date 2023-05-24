@@ -10,9 +10,9 @@ open! PPrint
 module Option = Simple_utils.Option
 module Token  = Lexing_pyligo.Token
 
-type environment = unit
+type state = unit
 
-let default_environment : environment = ()
+let default_state : state = ()
 
 (*
 let pp_par printer {value; _} =

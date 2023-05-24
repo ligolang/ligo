@@ -32,9 +32,13 @@ type lexeme = string
    modify some, please make sure they remain in order. *)
 
 type kwd_begin  = lexeme wrap
+type kwd_do     = lexeme wrap
+type kwd_done   = lexeme wrap
+type kwd_downto = lexeme wrap
 type kwd_else   = lexeme wrap
 type kwd_end    = lexeme wrap
 type kwd_false  = lexeme wrap
+type kwd_for    = lexeme wrap
 type kwd_fun    = lexeme wrap
 type kwd_if     = lexeme wrap
 type kwd_in     = lexeme wrap
@@ -47,6 +51,7 @@ type kwd_lsr    = lexeme wrap
 type kwd_match  = lexeme wrap
 type kwd_mod    = lexeme wrap
 type kwd_module = lexeme wrap
+type kwd_mut    = lexeme wrap
 type kwd_not    = lexeme wrap
 type kwd_of     = lexeme wrap
 type kwd_or     = lexeme wrap
@@ -55,14 +60,9 @@ type kwd_struct = lexeme wrap
 type kwd_then   = lexeme wrap
 type kwd_true   = lexeme wrap
 type kwd_type   = lexeme wrap
-type kwd_with   = lexeme wrap
-type kwd_mut    = lexeme wrap
-type kwd_for    = lexeme wrap
-type kwd_while  = lexeme wrap
 type kwd_upto   = lexeme wrap
-type kwd_downto = lexeme wrap
-type kwd_do     = lexeme wrap
-type kwd_done   = lexeme wrap
+type kwd_while  = lexeme wrap
+type kwd_with   = lexeme wrap
 
 (* Symbols *)
 
@@ -331,7 +331,7 @@ and expr =
   E_Add      of plus bin_op reg          (* x + y               *)
 | E_And      of bool_and bin_op reg      (* x && y              *)
 | E_App      of (expr * expr nseq) reg   (* f x y     C (x,y)   *)
-| E_Assign   of assign reg               (* x := e *)
+| E_Assign   of assign reg               (* x := e              *)
 | E_Attr     of (attribute * expr)       (* [@a] e              *)
 | E_Bytes    of (lexeme * Hex.t) wrap    (* 0xFFFA              *)
 | E_Cat      of caret bin_op reg         (* "Hello" ^ world     *)
@@ -549,21 +549,21 @@ and while_loop = {
 }
 
 and for_in_loop = {
-  kwd_for     : kwd_for;
-  pattern     : pattern;
-  kwd_in      : kwd_in;
-  collection  : expr;
-  body        : loop_body reg
+  kwd_for    : kwd_for;
+  pattern    : pattern;
+  kwd_in     : kwd_in;
+  collection : expr;
+  body       : loop_body reg
 }
 
-and direction = 
-  | Upto of kwd_upto
-  | Downto of kwd_downto
+and direction =
+  Upto   of kwd_upto
+| Downto of kwd_downto
 
 and loop_body = {
-  kwd_do    : kwd_do;
-  seq_expr  : (expr, semi) nsepseq option;
-  kwd_done  : kwd_done
+  kwd_do   : kwd_do;
+  seq_expr : (expr, semi) sepseq;
+  kwd_done : kwd_done
 }
 
 (* PROJECTING REGIONS *)

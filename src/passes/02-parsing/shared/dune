@@ -3,7 +3,7 @@
 (library
  (name parsing_shared)
  (public_name ligo.parsing.shared)
- (modules Errors Formatter Common TopAPI)
+ (modules Errors Formatter Common TopAPI PrettyComb)
  (instrumentation
   (backend bisect_ppx))
  (libraries

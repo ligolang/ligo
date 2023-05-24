@@ -27,6 +27,7 @@ module ParserAPI  = Parsing_shared.TopAPI
 module PreprocParams = Preprocessor.CLI.Make (Config)
 module LexerParams   = LexerLib.CLI.Make (PreprocParams)
 module Parameters    = ParserLib.CLI.Make (LexerParams)
+module Options       = Parameters.Options
 
 (* Instantiating preprocessor and lexer *)
 
@@ -96,8 +97,8 @@ let () =
   let open! Main in
   match check_cli () with
     Ok ->
-      let file = Option.value Parameters.Options.input ~default:"" in
-      let no_colour = Parameters.Options.no_colour in
+      let file = Option.value Options.input ~default:"" in
+      let no_colour = Options.no_colour in
       let std, _cst = parse ~no_colour (Lexbuf.File file) in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in

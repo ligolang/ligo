@@ -10,11 +10,9 @@ type virtual_location = string
   [@@deriving hash, sexp]
 
 type t =
-  | File of (Region.t [@sexp.opaque]) (* file_location *)
+  | File of (Region.t) (* file_location *)
   | Virtual of virtual_location
-
-let sexp_of_t _ = Sexp.Atom ""
-let t_of_sexp _ = Virtual ""
+  [@@deriving sexp]
 let to_yojson = function
   | File reg  -> `List [`String "File"; Region.to_yojson reg]
   | Virtual v -> `List [`String "Virtual"; `String v]
@@ -71,15 +69,19 @@ let is_virtual = function
 
 type 'a wrap = {
   wrap_content : 'a ;
-  location : t [@hash.ignore] ;
-} [@@deriving eq,compare,yojson,hash,iter,map,fold]
+  location : t [@hash.ignore]  ;
+} [@@deriving eq,compare,yojson,hash,iter,map,fold,sexp]
+
 
 let sexp_of_wrap : ('a -> Sexp.t) -> 'a wrap -> Sexp.t =
-  fun sexp_of_content { wrap_content ; location=_} ->
-     sexp_of_content wrap_content
+  fun sexp_of_content ({ wrap_content ; location} as x) ->
+    match location with
+    | Virtual _ -> sexp_of_content wrap_content
+    | _ -> sexp_of_wrap sexp_of_content x
 
 let wrap_of_sexp : (Sexp.t -> 'a) -> Sexp.t -> 'a wrap = fun content_of_sexp sexp ->
   { wrap_content = content_of_sexp sexp ; location = dummy }
+
 
 let wrap_to_yojson f {wrap_content;location} =
   `Assoc [("wrap_content", f wrap_content); ("location",to_yojson location)]

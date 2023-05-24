@@ -9,7 +9,8 @@
   contract_test
   get_scope_tests
   pretty_printer_tests
-  lsp_test)
+  lsp_test
+  decompiler_tests)
  (libraries
   simple-utils
   simple-utils-unix
@@ -90,6 +91,8 @@
 
 (rule
  (alias get_scope_tests)
+ (enabled_if
+  (<> %{ocaml-config:system} mingw64))
  (deps
   (:schema ../main/scopes/schema.json)
   (glob_files contracts/*)
@@ -127,6 +130,7 @@
   (alias contract_test)
   (alias error-recovery/recovery-test)
   (alias get_scope_tests)
+  (alias decompiler_tests)
   (alias pretty-printer-tests)
   (alias lsp-test)))
 
@@ -134,6 +138,13 @@
  (alias manual-test)
  (action
   (run ./manual_test.exe))
+ (deps
+  (glob_files contracts/*)))
+
+(rule
+ (alias decompiler_tests)
+ (action
+  (run ./decompiler_tests.exe))
  (deps
   (glob_files contracts/*)))
 

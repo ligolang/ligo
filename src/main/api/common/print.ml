@@ -87,8 +87,8 @@ let cst (raw_options : Raw_options.t) source_file =
       , [] ) )
 
 
-let ast_unified (raw_options : Raw_options.t) stop_before source_file =
-  ( Ast_unified.Formatter.program_format
+let ast_unified (raw_options : Raw_options.t) show_loc stop_before source_file =
+  ( Ast_unified.Formatter.program_format ~show_loc
   , fun ~raise ->
       let syntax =
         Syntax.of_string_opt

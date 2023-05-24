@@ -1,10 +1,3 @@
-open Ast_unified
-open Pass_type
-open Simple_utils.Trace
-open Simple_utils
-open Errors
-module Location = Simple_utils.Location
-
 (**
   The goal of this pass is to do :
   {[
@@ -14,7 +7,7 @@ module Location = Simple_utils.Location
   ]}
 
   Here we do the same transformation as [ Constructor_application.pass ]
-  does for expressions : 
+  does for expressions :
   {[
     E_ctor_app            (E_constr lbl)          [p1; p2; p3; p4]
     |->
@@ -26,11 +19,19 @@ module Location = Simple_utils.Location
     [ Standalone_constructor_removal.pass  ] which transforms
     the standalone [E_constr] (i.e. not wrapped in a [E_ctor_app])
     into [E_Constructor.]
-  
+
     For patterns, there are no standalone [P_ctor] so there is no need
     for such a pass. And the absence of [P_ctor] is checked directly
     in this pass' reduction check.
 *)
+
+open Ast_unified
+open Pass_type
+open Simple_utils.Trace
+open Simple_utils
+open Errors
+module Location = Simple_utils.Location
+
 include Flag.With_arg (struct
   type flag = Syntax_types.t
 end)

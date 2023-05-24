@@ -2,6 +2,7 @@
 module Ligo_interface = Ligo_interface
 module Helpers_file = Helpers_file
 module Helpers_pretty = Helpers_pretty
+module Path = Path
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def
@@ -20,7 +21,17 @@ module Diagnostic = struct
   include Lsp.Types.Diagnostic
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+
+  let eq a b =
+    (* We don't want to fix the numbers of identifiers during tests, so we
+      replace things like "Variable \"_#123\" not found." 
+      to "Variable \"_#N\" not found." before comparisons *)
+    let remove_underscore_numeration s =
+      { s with message = Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message }
+    in
+    Caml.(remove_underscore_numeration a = remove_underscore_numeration b)
+
+
   let testable = Alcotest.testable pp eq
 end
 
@@ -28,7 +39,9 @@ module Locations = struct
   include Lsp.Types.Locations
 
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-  let eq = Caml.( = )
+  let eq x y = Yojson.Safe.equal (yojson_of_t x) (yojson_of_t y)
+
+  (* Because Caml.(=) didn't work *)
   let testable = Alcotest.testable pp eq
 end
 

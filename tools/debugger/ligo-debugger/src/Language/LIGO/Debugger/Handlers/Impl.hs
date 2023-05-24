@@ -13,11 +13,10 @@ import Debug qualified
 import Unsafe qualified
 
 import Control.Lens (Each (each), _Just, ix, uses, zoom, (+~), (.=), (^?!))
-import Control.Monad.STM.Class (liftSTM)
+import Control.Monad.STM.Class (MonadSTM, liftSTM)
 import Data.Char (toLower)
 import Data.Default (def)
 import Data.HashMap.Strict qualified as HM
-import Data.Map qualified as M
 import Data.Singletons (demote)
 import Fmt (Builder, blockListF, pretty)
 import GHC.Conc (unsafeIOToSTM)
@@ -34,9 +33,11 @@ import Control.DelayedValues qualified as DV
 
 import Morley.Debugger.Core
   (DebugSource (..), DebuggerState (..), NavigableSnapshot (getLastExecutedPosition),
-  PausedReason (..), SnapshotEdgeStatus (SnapshotAtEnd), SourceLocation, SrcLoc (..), curSnapshot,
-  frozen, groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory, slEnd)
-import Morley.Debugger.DAP.Handlers (runSTMHandler, writePostAction)
+  PausedReason (..), SnapshotEdgeStatus (SnapshotAtEnd),
+  SnapshotEndedWith (SnapshotEndedWithFail, SnapshotEndedWithOk), SourceLocation, SrcLoc (..),
+  _slPath, curSnapshot, frozen, groupSourceLocations, pickSnapshotEdgeStatus, playInterpretHistory,
+  slEnd)
+import Morley.Debugger.DAP.Handlers (fromMichelsonSource, runSTMHandler, writePostAction)
 import Morley.Debugger.DAP.LanguageServer (JsonFromBuildable (..))
 import Morley.Debugger.DAP.RIO (logMessage, openLogHandle)
 import Morley.Debugger.DAP.Types
@@ -54,7 +55,7 @@ import Morley.Michelson.Interpret
 import Morley.Michelson.Parser.Types (MichelsonSource)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
 import Morley.Michelson.Runtime (ContractState (..))
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummySelf, dummyMaxSteps)
+import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummyMaxSteps, dummySelf)
 import Morley.Michelson.Typed
   (Constrained (SomeValue), Contract, Contract' (..), ContractCode' (unContractCode),
   SomeContract (..))
@@ -102,13 +103,13 @@ instance HasSpecificMessages LIGO where
   reportErrorAndStoppedEvent = \case
     ExceptionMet exception -> writeException True exception
     Paused reason label -> writeStoppedEvent reason label
-    TerminatedOkMet -> writeTerminatedEvent
+    TerminatedOkMet{} -> writeTerminatedEvent
     PastFinish -> do
       snap <- zoom dsDebuggerState $ frozen curSnapshot
       case pickSnapshotEdgeStatus snap of
         SnapshotAtEnd outcome -> case outcome of
-          Left exception -> writeException False exception
-          Right () ->
+          SnapshotEndedWithFail exception -> writeException False exception
+          SnapshotEndedWithOk{} ->
             -- At the moment we never expect this, as in case of ok termination
             -- we should have already existed when stepping on last snapshot;
             -- but let's handle this condition gracefully anyway.
@@ -230,7 +231,6 @@ instance HasSpecificMessages LIGO where
           }
 
       writeException writeLog exception = do
-        st <- get
         let msg = case mfwsFailed exception of
               -- [LIGO-862] display this value as LIGO one
               MichelsonFailedWith val ->
@@ -241,7 +241,9 @@ instance HasSpecificMessages LIGO where
                   On line #{l + 1} char #{c + 1}|]
               _ -> pretty exception
 
-        mSrcLoc <- view slEnd <<$>> uses dsDebuggerState getLastExecutedPosition
+        lastPosMb <- uses dsDebuggerState getLastExecutedPosition
+        let mSrcLoc = view slEnd <$> lastPosMb
+
         pushMessage $ DAPEvent $ StoppedEvent $ DAP.defaultStoppedEvent
           { DAP.bodyStoppedEvent = DAP.defaultStoppedEventBody
             { DAP.reasonStoppedEventBody = "exception"
@@ -253,18 +255,15 @@ instance HasSpecificMessages LIGO where
           }
         when writeLog do
           pushMessage $ DAPEvent $ OutputEvent $ DAP.defaultOutputEvent
-            { DAP.bodyOutputEvent = withSrc st $ withSrcPos mSrcLoc DAP.defaultOutputEventBody
+            { DAP.bodyOutputEvent = withSrc lastPosMb $ withSrcPos mSrcLoc DAP.defaultOutputEventBody
               { DAP.categoryOutputEventBody = "stderr"
               , DAP.outputOutputEventBody = msg <> "\n"
               }
             }
         where
-          withSrc st event = event { DAP.sourceOutputEventBody = mkSource st }
-
-          mkSource DAPSessionState{..} = DAP.defaultSource
-            { DAP.nameSource = Just $ takeFileName _dsSource
-            , DAP.pathSource = _dsSource
-            }
+          withSrc lastPosMb event = case lastPosMb of
+            Nothing -> event
+            Just pos -> event { DAP.sourceOutputEventBody = fromMichelsonSource $ _slPath pos }
 
           withSrcPos mSrcPos event = case mSrcPos of
             Nothing -> event
@@ -350,27 +349,20 @@ instance HasSpecificMessages LIGO where
         LigoStackEntry (LigoExposedStackEntry mDecl typ) <- pure desc
         let varName = maybe (pretty unknownVariable) pretty mDecl
 
-        whenJust (tryDecompilePrimitive michVal) \dec -> do
-          DV.putComputed
-            valConvertManager
-            (PreLigoConvertInfo michVal typ)
-            (LigoValue typ dec)
-
-        mLigoVal <- DV.computeSTM valConvertManager $
-          PreLigoConvertInfo michVal typ
-        let ligoVal = maybe ToBeComputed id mLigoVal
+        ligoVal <- decompileValue (PreLigoConvertInfo michVal typ) valConvertManager
         return (varName :: Text, ligoVal)
 
-    let builder =
-          case isStatus snap of
-            InterpretRunning (EventExpressionEvaluated (Just value))
-              -- We want to show $it variable only in the top-most stack frame.
-              | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
-                idx <- createVariables lang ligoVals
-                -- TODO: get the type of "$it" value and show it ligo-formatted
-                itVar <- buildVariable lang (MichValue (LigoType Nothing) value) "$it"
-                insertToIndex idx [itVar]
-            _ -> createVariables lang ligoVals
+    builder <-
+      case isStatus snap of
+        InterpretRunning (EventExpressionEvaluated typ (Just value))
+          -- We want to show $it variable only in the top-most stack frame.
+          | frameIdScopesRequestArguments argumentsScopesRequest == 1 -> do
+            itVal <- decompileValue (PreLigoConvertInfo value typ) valConvertManager
+            pure do
+              idx <- createVariables lang ligoVals
+              itVar <- buildVariable lang itVal "$it"
+              insertToIndex idx [itVar]
+        _ -> pure $ createVariables lang ligoVals
 
     let (varReference, variables) = runBuilder builder
 
@@ -501,7 +493,7 @@ instance HasSpecificMessages LIGO where
 
   handleSetPreviousStack = pure ()
 
-  onTerminate = do
+  onTerminate restart = unless restart do
     lServState <- getServerStateH
     AbortingThreadPool.close (lsVarsComputeThreadPool lServState)
 
@@ -515,6 +507,21 @@ instance HasSpecificMessages LIGO where
 -- | Id of the top (currently active) stack frame.
 topFrameId :: Int
 topFrameId = 1
+
+decompileValue
+  :: (MonadSTM m, Monad m)
+  => PreLigoConvertInfo
+  -> Manager PreLigoConvertInfo LigoOrMichValue
+  -> m LigoOrMichValue
+decompileValue convertInfo@(PreLigoConvertInfo val typ) manager = do
+  whenJust (tryDecompilePrimitive val) \dec -> do
+    DV.putComputed
+      manager
+      convertInfo
+      (LigoValue typ dec)
+
+  mLigoVal <- DV.computeSTM manager convertInfo
+  pure $ fromMaybe ToBeComputed mLigoVal
 
 handleInitializeLogger :: LigoInitializeLoggerRequest -> RIO LIGO ()
 handleInitializeLogger LigoInitializeLoggerRequest {..} = do
@@ -737,15 +744,18 @@ handleValidateValue LigoValidateValueRequest {..} = do
     } <- getCollectedRunInfo
 
   program <- getProgram
+  entrypointType <- getEntrypointType
+
+  let (parameterType, storageType) = getParameterAndStorageTypes entrypointType
 
   parseRes <- case category of
     "parameter" ->
       withMichelsonEntrypoint contract michelsonEntrypoint $
         \(_ :: T.Notes arg) _ ->
-        void <$> parseValue @arg program category (toText value) valueLang
+        void <$> parseValue @arg program category (toText value) valueLang parameterType
 
     "storage" ->
-      void <$> parseValue @storage program category (toText value) valueLang
+      void <$> parseValue @storage program category (toText value) valueLang storageType
 
     other ->
       throwIO $ PluginCommunicationException [int||Unexpected category #{other}|]
@@ -777,19 +787,22 @@ handleValidateConfig LigoValidateConfigRequest{..} = do
   lServVar <- asks _rcLSState
 
   program <- getProgram
+  entrypointType <- getEntrypointType
+
+  let (parameterType, storageType) = getParameterAndStorageTypes entrypointType
 
   withMichelsonEntrypoint contract michelsonEntrypointMb
     \(_ :: T.Notes arg) epc -> do
       logMessage [int||
         Checking parameter #{parameter} with lang #{parameterLang}
       |]
-      param <- parseValue @arg program "parameter" parameter parameterLang
+      param <- parseValue @arg program "parameter" parameter parameterLang parameterType
         >>= either (throwIO . ConfigurationException) pure
 
       logMessage [int||
         Checking storage #{storage} with lang #{storageLang}
       |]
-      stor <- parseValue @st program "storage" storage storageLang
+      stor <- parseValue @st program "storage" storage storageLang storageType
         >>= either (throwIO . ConfigurationException) pure
 
       atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
@@ -842,6 +855,8 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   maxStepsMb <- getMaxStepsMb
   entrypointType <- getEntrypointType
 
+  let getContractState addr = pure $ contractState <$ guard (addr == dummySelf)
+
   his <-
     withRunInIO \unlifter ->
       collectInterpretSnapshots
@@ -854,8 +869,8 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         -- We're adding our own contract in order to use
         -- @{ SELF_ADDRESS; CONTRACT }@ replacement
         -- (we need to have this contract state to use @CONTRACT@ instruction).
-        dummyContractEnv
-          { ceContracts = M.fromList [(dummySelf, contractState)]
+        (dummyContractEnv @IO)
+          { ceContracts = getContractState
           , ceMaxSteps = fromMaybe dummyMaxSteps maxStepsMb
           }
         parsedContracts
@@ -866,7 +881,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
   let ds = initDebuggerState his allLocs
 
-  pure $ DAPSessionState ds mempty mempty program
+  pure $ DAPSessionState ds mempty mempty
 
 initDebuggerState :: InterpretHistory is -> Set SourceLocation -> DebuggerState is
 initDebuggerState his allLocs = DebuggerState

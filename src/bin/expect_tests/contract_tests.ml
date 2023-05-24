@@ -2856,3 +2856,22 @@ let%expect_test _ =
              PAIR } } |}];
   run_ligo_good [ "run"; "dry-run"; contract "bytes_int_nat_conv.mligo"; "()"; "()" ];
   [%expect {| ( LIST_EMPTY() , unit ) |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "contract"; contract "increment_prefix.jsligo"; "-m"; "IncDec" ];
+  [%expect
+    {|
+    { parameter (or (or (unit %decrement) (unit %increment)) (unit %reset)) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT
+               { IF_LEFT { DROP ; PUSH int 1 ; SWAP ; SUB } { DROP ; PUSH int 1 ; ADD } }
+               { DROP 2 ; PUSH int 0 } ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "test"; contract "increment_prefix.jsligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test_increment exited with value (). |}]

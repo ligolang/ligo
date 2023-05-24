@@ -20,6 +20,13 @@ let run_ligo args =
   result
 
 
+(* Not sure which library in the stack is erroneously creating such large trails of slashes *)
+let replace_extraneous_slashes =
+  Str.global_replace
+    (Str.regexp "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\")
+    "/"
+
+
 let run_ligo_good args =
   let () =
     (* std_lib and generated variables (gen#42) makes it very annoying as an expect test *)

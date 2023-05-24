@@ -35,6 +35,7 @@
   lexing_jsligo
   lexing_shared
   cst_jsligo
+  parsing_shared
   ;; Vendors
   simple-utils
   ParserLib
@@ -49,8 +50,6 @@
    Cst_jsligo ;; for CST in Parser.mli
    -open
    Lexing_shared)))
-
-;; for Attr, Wrap in Parser.mli
 
 ;; Local build of a standalone parser for JsLIGO
 

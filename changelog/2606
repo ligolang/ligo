@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nWith the last release of LIGO, the pretty-printers of CameLIGO and JsLIGO transformed all comments into block comments. This is a mistake, as block comments can be nested.\\n\\n"
+merge_request: '2606'
+title: "Preserving comment type (block or line) by pretty-printing."
+type: fixed
+            

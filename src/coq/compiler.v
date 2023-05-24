@@ -4,6 +4,7 @@ From Coq Require Import String List Arith ZArith Program.Tactics micromega.Lia m
 From Coq Require Extraction.
 Import ListNotations.
 Open Scope string_scope.
+Unset Lia Cache.
 
 From ligo_coq Require Import ope.
 

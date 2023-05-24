@@ -173,15 +173,15 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
 
 
 let pretty_print_cameligo =
-  Parsing.Cameligo.pretty_print_file Parsing.Cameligo.Pretty.default_environment
+  Parsing.Cameligo.pretty_print_file Parsing.Cameligo.Pretty.default_state
 
 
 let pretty_print_jsligo =
-  Parsing.Jsligo.pretty_print_file Parsing.Jsligo.Pretty.default_environment
+  Parsing.Jsligo.pretty_print_file Parsing.Jsligo.Pretty.default_state
 
 
 let pretty_print_pascaligo =
-  Parsing.Pascaligo.pretty_print_file Parsing.Pascaligo.Pretty.default_environment
+  Parsing.Pascaligo.pretty_print_file Parsing.Pascaligo.Pretty.default_state
 
 
 let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =
