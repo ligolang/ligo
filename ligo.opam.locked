@@ -153,6 +153,8 @@ depends: [
   "ocplib-endian" {= "1.2"}
   "octavius" {= "1.2.2"}
   "octez-bls12-381-signature" {= "dev"}
+  "octez-bls12-381-hash" {= "dev"}
+  "octez-plompiler" {= "dev"}
   "odoc" {= "2.1.1"}
   "odoc-parser" {= "1.0.1"}
   "omd" {= "1.3.2"}
@@ -304,7 +306,9 @@ pin-depends: [
   [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
   [ "tp-017.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-bls12-381-signature.dev" "./vendors/tezos-ligo/opam" ]
+  [ "octez-bls12-381-hash.dev" "./vendors/tezos-ligo/opam" ]
   [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
   [ "tp-plugin-016.dev" "./vendors/tezos-ligo/opam" ]
   [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
