@@ -242,6 +242,8 @@ generate-homebrew-version:
 
 bottle-ventura-i7:
   stage: pretooling
+  variables:
+    GIT_STRATEGY: clone
   tags:
     - mac
     - i7
@@ -308,14 +310,14 @@ bottle-ventura-m1:
 
 update-bottle-reference:
   stage: pretooling
-  variables:
-    GIT_STRATEGY: clone
   needs:
       - job: bottle-ventura-i7
         artifacts: true
       - job: bottle-ventura-m1
         artifacts: true
       - job: build_release_env_vars
+        artifacts: true
+      - job: generate-homebrew-version
         artifacts: true
   script:
     - ./.ci/scripts/homebrew/replace_bottle_reference.sh

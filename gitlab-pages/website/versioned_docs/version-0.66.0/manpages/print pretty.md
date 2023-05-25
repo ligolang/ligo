@@ -1,11 +1,11 @@
 
 ### SYNOPSIS
 ```
-ligo print ast-typed SOURCE_FILE
+ligo print pretty SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command prints the source file in the AST typed stage. Internally, it uses the build system to type the contract, but the contract is not combined with imported modules.
+This sub-command pretty-prints a source file in LIGO. The width of the pretty-printed text is adjusted to the number of columns in the terminal (or 60 if it cannot be determined).
 
 ### FLAGS
 **--deprecated**
@@ -23,26 +23,14 @@ disable coloring in CLI output
 **--project-root PATH**
 The path to root of the project.
 
-**--self-pass**
-apply the self pass
-
 **--skip-analytics**
 Avoid ligo analytics publication. Configurable with environment variable LIGO_SKIP_ANALYTICS too
 
 **--syntax SYNTAX**
 the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo and .jsligo respectively). (alias: -s)
 
-**--test**
-force testing mode.
-
-**--warn-infinite-loop**
-warn about infinite loop
-
-**--warn-unused-rec**
-warn about unused recursion in a recursive function
-
-**-p PROTOCOL**
-choose protocol's types/values pre-loaded into the LIGO environment (lima , mumbai). By default, the current protocol (mumbai) will be used (alias: --protocol)
+**--werror**
+treat warnings as errors
 
 **-help**
 print this help text and exit (alias: -?)
