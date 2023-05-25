@@ -303,6 +303,7 @@ depends: [
   "spawn" {= "v0.15.1"}
   "splittable_random" {= "v0.15.0"}
   "stdio" {= "v0.15.0"}
+  "stdint" {= "0.7.2"}
   "stdlib-shims" {= "0.3.0"}
   "stdune" {= "3.6.2"}
   "stringext" {= "1.6.0"}
