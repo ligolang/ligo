@@ -148,9 +148,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
 				config.program = '${file}'
-				config.entrypoint = '{AskOnStart}'
-				config.parameter = '{AskOnStart}'
-				config.storage = '{AskOnStart}'
+				config.entrypoint = '(*@AskOnStart@*)'
+				config.parameter = '(*@AskOnStart@*)'
+				config.storage = '(*@AskOnStart@*)'
 			}
 		}
 
@@ -159,7 +159,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
 		config.program ??= '${file}'
-		config.entrypoint ??= '{AskOnStart}'
+		config.entrypoint ??= '(*@AskOnStart@*)'
 		config.parameterLang ??= 'LIGO'
 		config.storageLang ??= 'LIGO'
 

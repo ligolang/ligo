@@ -105,17 +105,17 @@
                             "entrypoint": {
                                 "type": "string",
                                 "description": "Entry point of the contract (`main` method)",
-                                "default": "{AskOnStart}"
+                                "default": "(*@AskOnStart@*)"
                             },
                             "michelsonEntrypoint": {
                                 "type": "string",
                                 "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
-                                "default": "{AskOnStart}"
+                                "default": "(*@AskOnStart@*)"
                             },
                             "parameter": {
                                 "type": "string",
                                 "description": "Parameter value.",
-                                "default": "{AskOnStart}"
+                                "default": "(*@AskOnStart@*)"
                             },
                             "parameterLang": {
                                 "type": "string",
@@ -125,7 +125,7 @@
                             "storage": {
                                 "type": "string",
                                 "description": "Initial storage value.",
-                                "default": "{AskOnStart}"
+                                "default": "(*@AskOnStart@*)"
                             },
                             "storageLang": {
                                 "type": "string",
@@ -197,9 +197,9 @@
                         "request": "launch",
                         "name": "Launch LIGO",
                         "logDir": "",
-                        "entrypoint": "{AskOnStart}",
-                        "parameter": "{AskOnStart}",
-                        "storage": "{AskOnStart}"
+                        "entrypoint": "(*@AskOnStart@*)",
+                        "parameter": "(*@AskOnStart@*)",
+                        "storage": "(*@AskOnStart@*)"
                     }
                 ],
                 "configurationSnippets": [
@@ -210,9 +210,9 @@
                             "type": "ligo",
                             "request": "launch",
                             "name": "Launch ${1:LIGO contract}",
-                            "entrypoint": "${2|{AskOnStart}|}",
-                            "parameter": "${3|{AskOnStart}|}",
-                            "storage": "${4|{AskOnStart}|}"
+                            "entrypoint": "${2|(*@AskOnStart@*)|}",
+                            "parameter": "${3|(*@AskOnStart@*)|}",
+                            "storage": "${4|(*@AskOnStart@*)|}"
                         }
                     },
                     {
@@ -225,11 +225,11 @@
                             "logDir": "",
                             "program": "^\"\\${file}\"",
                             "stopOnEntry": true,
-                            "michelsonEntrypoint": "${2|{AskOnStart},default|}",
-                            "entrypoint": "${3|{AskOnStart}|}",
-                            "parameter": "${4|{AskOnStart}|}",
+                            "michelsonEntrypoint": "${2|(*@AskOnStart@*),default|}",
+                            "entrypoint": "${3|(*@AskOnStart@*)|}",
+                            "parameter": "${4|(*@AskOnStart@*)|}",
                             "parameterLang": "LIGO",
-                            "storage": "${5|{AskOnStart}|}",
+                            "storage": "${5|(*@AskOnStart@*)|}",
                             "storageLang": "LIGO",
                             "contractEnv": {
                                 "now": "${6:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
