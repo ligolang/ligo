@@ -1204,7 +1204,8 @@ ctor_app_expr:
    in Variant {region; value}
   }
 | ctor ctor_app_expr_args {
-   let region, app = $2 (CtorName $1) in
+   let region_app, app = $2 (CtorName $1) in
+   let region = cover $1#region region_app in
    Variant {region; value = {attributes=[]; tuple=None, app}} }
 
 ctor_app_expr_args:
@@ -1366,7 +1367,8 @@ ctor_app_pattern:
     in Variant {region; value}
   }
 | ctor ctor_app_pattern_args {
-    let region, app = $2 (CtorName $1) in
+    let region_app, app = $2 (CtorName $1) in
+    let region = cover $1#region region_app in
     Variant {region; value = {attributes=[]; tuple=None, app}}
   }
 | ctor {

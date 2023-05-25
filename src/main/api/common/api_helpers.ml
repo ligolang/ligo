@@ -3,16 +3,21 @@ open Simple_utils
 module Trace = Simple_utils.Trace
 
 let toplevel
-    :  ?warning_as_error:bool -> display_format:ex_display_format -> no_colour:bool
-    -> displayable -> ('value * 'w, _) result -> _
+    :  ?warning_as_error:bool -> minify_json:bool -> display_format:ex_display_format
+    -> no_colour:bool -> displayable -> ('value * 'w, _) result -> _
   =
- fun ?(warning_as_error = false) ~display_format ~no_colour disp value ->
+ fun ?(warning_as_error = false) ~minify_json ~display_format ~no_colour disp value ->
   let (Ex_display_format t) = display_format in
+  let format_yojson (yojson : json) : string =
+    if minify_json
+    then Yojson.Safe.to_string yojson
+    else Yojson.Safe.pretty_to_string yojson
+  in
   let as_str : string =
     match t with
     | Human_readable -> convert ~display_format:t ~no_colour disp
     | Dev -> convert ~display_format:t ~no_colour disp
-    | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t ~no_colour disp
+    | Json -> format_yojson @@ convert ~display_format:t ~no_colour disp
   in
   let warns =
     match value with
@@ -28,7 +33,7 @@ let toplevel
             ~no_colour
             (Displayable { value; format = Main_warnings.format })
         | Json ->
-          Yojson.Safe.pretty_to_string
+          format_yojson
           @@ convert
                ~display_format:t
                ~no_colour

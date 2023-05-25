@@ -98,7 +98,7 @@ let find_project_root () =
     then Some p
     else (
       let p' = Filename.dirname p in
-      (* Check if we reached the root directory, since the parent of 
+      (* Check if we reached the root directory, since the parent of
          the root directory is the root directory itself *)
       if Filename.equal p p' then None else aux p')
   in
@@ -166,8 +166,8 @@ let return_with_custom_formatter ~cli_analytics ~skip_analytics
 
 
 let return_result_lwt ~cli_analytics ~skip_analytics
-    :  return:return ref -> ?show_warnings:bool -> ?output_file:string -> display_format:_
-    -> no_colour:bool -> warning_as_error:bool
+    :  return:return ref -> ?show_warnings:bool -> ?output_file:string
+    -> ?minify_json:bool -> display_format:_ -> no_colour:bool -> warning_as_error:bool
     -> 'value Display.format
        * (raise:(Main_errors.all, Main_warnings.all) Trace.raise
           -> ('value * Analytics.analytics_inputs) Lwt.t)
@@ -176,6 +176,7 @@ let return_result_lwt ~cli_analytics ~skip_analytics
  fun ~return
      ?(show_warnings = false)
      ?output_file
+     ?(minify_json = false)
      ~display_format
      ~no_colour
      ~warning_as_error
@@ -193,6 +194,7 @@ let return_result_lwt ~cli_analytics ~skip_analytics
       let formatted_result () =
         Ligo_api.Api_helpers.toplevel
           ~warning_as_error
+          ~minify_json
           ~display_format
           ~no_colour
           (Displayable { value; format })
@@ -217,8 +219,8 @@ let return_result_lwt ~cli_analytics ~skip_analytics
 
 
 let return_result ~cli_analytics ~skip_analytics
-    :  return:return ref -> ?show_warnings:bool -> ?output_file:string -> display_format:_
-    -> no_colour:bool -> warning_as_error:bool
+    :  return:return ref -> ?show_warnings:bool -> ?output_file:string
+    -> ?minify_json:bool -> display_format:_ -> no_colour:bool -> warning_as_error:bool
     -> 'value Display.format
        * (raise:(Main_errors.all, Main_warnings.all) Trace.raise
           -> 'value * Analytics.analytics_inputs)
@@ -227,6 +229,7 @@ let return_result ~cli_analytics ~skip_analytics
  fun ~return
      ?show_warnings
      ?output_file
+     ?minify_json
      ~display_format
      ~no_colour
      ~warning_as_error
@@ -237,6 +240,7 @@ let return_result ~cli_analytics ~skip_analytics
     ~return
     ?show_warnings
     ?output_file
+    ?minify_json
     ~display_format
     ~no_colour
     ~warning_as_error

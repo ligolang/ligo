@@ -843,7 +843,7 @@ and print_E_Leq state (node : leq bin_op reg) =
 and print_E_LetIn state (node : let_in reg) =
   let Region.{value; region} = node in
   let {kwd_rec; binding; body; _} = value in
-  let binding_children = mk_children_binding binding in
+  let binding_children = mk_children_binding binding.value in
   let children =
     Tree.(mk_child_opt make_literal kwd_rec) :: binding_children
     @ [Tree.mk_child print_body body] in
@@ -857,7 +857,7 @@ and print_body state (node : expr) =
 and print_E_LetMutIn state (node : let_mut_in reg) =
   let Region.{value; region} = node in
   let {binding; body; _} = value in
-  let binding_children = mk_children_binding binding in
+  let binding_children = mk_children_binding binding.value in
   let children =
     binding_children @ [Tree.mk_child print_body body] in
   Tree.make ~region state "E_LetMutIn" children
@@ -923,7 +923,7 @@ and print_E_Mod state (node : kwd_mod bin_op reg) =
 
 and print_E_ModIn state (node : module_in reg) =
   let Region.{value; region} = node in
-  let children = mk_children_module_decl value.mod_decl
+  let children = mk_children_module_decl value.mod_decl.value
   in Tree.make state ~region "E_ModIn" children
 
 (* Qualified expression *)
@@ -1046,7 +1046,7 @@ and print_E_TypeIn state (node : type_in reg) =
   let Region.{value; region} = node in
   let {type_decl; body; _} = value in
   let children =
-    mk_children_type_decl type_decl
+    mk_children_type_decl type_decl.value
     @ [Tree.mk_child print_body body]
   in Tree.make ~region state "E_TypeIn" children
 

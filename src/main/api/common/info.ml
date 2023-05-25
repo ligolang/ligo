@@ -37,6 +37,42 @@ let measure_contract (raw_options : Raw_options.t) entry_point source_file =
       measure, [] )
 
 
+let dump_cst (raw_options : Raw_options.t) (source_files : string list) =
+  ( Dump_cst.output_format
+  , fun ~raise ->
+      ( List.map source_files ~f:(fun source_file ->
+            let syntax =
+              Syntax.of_string_opt
+                ~raise
+                (Syntax_name raw_options.syntax)
+                (Some source_file)
+            in
+            let protocol_version =
+              Helpers.protocol_to_variant ~raise raw_options.protocol_version
+            in
+            let options = Compiler_options.make ~raw_options ~protocol_version () in
+            let meta = Compile.Of_source.extract_meta syntax in
+            let c_unit, _ =
+              Compile.Of_source.preprocess_file
+                ~raise
+                ~options:options.frontend
+                ~meta
+                source_file
+            in
+            let cst =
+              Simple_utils.Trace.trace ~raise (fun e -> `Parser_tracer e)
+              @@ fun ~raise ->
+              Dialect_cst.get_cst_exn
+                ~preprocess:true
+                ~strict:false
+                ~file:source_file
+                syntax
+                c_unit
+            in
+            cst)
+      , [] ) )
+
+
 let list_declarations (raw_options : Raw_options.t) source_file =
   ( Formatter.declarations_format
   , fun ~raise ->

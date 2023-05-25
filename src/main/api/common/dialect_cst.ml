@@ -28,36 +28,49 @@ module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
 module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
 module Options = Parameters.Options
 
-let get_cst ~(strict : bool) ~(file : Path.t) (syntax : Syntax_types.t) (code : string)
-    : (t, string) result
+let get_cst_exn
+    ?(preprocess = false)
+    ~(strict : bool)
+    ~(file : string)
+    (syntax : Syntax_types.t)
+    (c_unit : Buffer.t)
+    : t
   =
-  let buffer = Caml.Buffer.of_seq (Caml.String.to_seq code) in
+  let parsing_error_to_string (err : Parsing.Errors.t) : string =
+    let ({ content = { message; _ }; _ } : Simple_utils.Error.t) =
+      Parsing.Errors.error_json err
+    in
+    message
+  in
   (* Warnings and errors will be reported to the user via diagnostics, so we
-     ignore them here unless the strict mode is enabled. *)
+      ignore them here unless the strict mode is enabled. *)
   let raise : parsing_raise =
-    { error =
-        (fun err -> raise @@ Fatal_cst_error (Helpers_pretty.parsing_error_to_string err))
+    { error = (fun err -> raise @@ Fatal_cst_error (parsing_error_to_string err))
     ; warning = (fun _ -> ())
     ; log_error =
-        (fun err ->
-          if strict
-          then raise @@ Fatal_cst_error (Helpers_pretty.parsing_error_to_string err))
+        (fun err -> if strict then raise @@ Fatal_cst_error (parsing_error_to_string err))
     ; fast_fail = false
     }
   in
   (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
-  let project_root = Path.to_string @@ Path.dirname file in
-  (* since the Path.t is currently used only by LSP, we need to convert it to string here *)
-  let file = Path.to_string file in
-  let preprocess = false in
-  try
-    let open Parsing in
-    match syntax with
-    | CameLIGO ->
-      let module Parse = Cameligo.Make (Options) in
-      Ok (CameLIGO (Parse.parse_file ~preprocess ~project_root ~raise buffer file))
-    | JsLIGO ->
-      let module Parse = Jsligo.Make (Options) in
-      Ok (JsLIGO (Parse.parse_file ~preprocess ~project_root ~raise buffer file))
-  with
+  let project_root = Filename.dirname file in
+  let open Parsing in
+  match syntax with
+  | CameLIGO ->
+    let module Parse = Cameligo.Make (Options) in
+    CameLIGO (Parse.parse_file ~preprocess ~project_root ~raise c_unit file)
+  | JsLIGO ->
+    let module Parse = Jsligo.Make (Options) in
+    JsLIGO (Parse.parse_file ~preprocess ~project_root ~raise c_unit file)
+
+
+let get_cst
+    ?(preprocess = false)
+    ~(strict : bool)
+    ~(file : string)
+    (syntax : Syntax_types.t)
+    (c_unit : Buffer.t)
+    : (t, string) result
+  =
+  try Ok (get_cst_exn ~preprocess ~strict ~file syntax c_unit) with
   | Fatal_cst_error err -> Error err

@@ -1032,7 +1032,7 @@ and print_E_LetIn state (node : let_in reg) =
     match kwd_rec with
       None -> token kwd_let
     | Some kwd_rec -> token kwd_let ^^ space ^^ token kwd_rec
-  in let_str ^^ space ^^ print_let_binding state binding ^^ space
+  in let_str ^^ space ^^ print_let_binding state binding.value ^^ space
      ^^ token kwd_in ^^ hardline ^^ group (print_expr state body)
 
 (* Mutable value definition *)
@@ -1040,7 +1040,7 @@ and print_E_LetIn state (node : let_in reg) =
 and print_E_LetMutIn state (node : let_mut_in reg) =
   let {kwd_let; kwd_mut; binding; kwd_in; body} = node.value in
   let let_str = token kwd_let ^^ space ^^ token kwd_mut ^^ space
-  in let_str ^^ print_let_binding state binding
+  in let_str ^^ print_let_binding state binding.value
      ^^ space ^^ token kwd_in ^^ hardline ^^ group (print_expr state body)
 
 (* List expressions *)
@@ -1100,7 +1100,7 @@ and print_E_Mod state (node : kwd_mod bin_op reg) = print_bin_op state node
 
 and print_E_ModIn state (node : module_in reg) =
   let {mod_decl; kwd_in; body} = node.value in
-  let {kwd_module; name; eq; module_expr; annotation = _} = mod_decl
+  let {kwd_module; name; eq; module_expr; annotation = _} = mod_decl.value
   in group (token kwd_module ^^ space
             ^^ print_ident name ^^ space ^^ token eq ^^ space
             ^^ print_module_expr state module_expr
@@ -1209,7 +1209,7 @@ and print_E_Typed state (node : typed_expr par) =
 
 and print_E_TypeIn state (node : type_in reg) =
   let {type_decl; kwd_in; body} = node.value in
-  print_type_decl state type_decl
+  print_type_decl state type_decl.value
   ^^ space ^^ token kwd_in ^^ hardline
   ^^ group (print_expr state body)
 

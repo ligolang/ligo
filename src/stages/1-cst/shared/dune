@@ -12,4 +12,4 @@
   ;; Third party
   zarith
   hex)
- (modules Tree Fold Nodes))
+ (modules Tree Fold Nodes Types))
