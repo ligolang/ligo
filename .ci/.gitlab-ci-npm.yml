@@ -20,7 +20,6 @@ esy-windows:
   script:
     - git submodule update --init --recursive
     - git config http.postBuffer 1048576000
-    - npm i -g esy@beta --force
     - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - $env:HOME = 'C:/Users/gitlabrunner'
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
@@ -120,7 +119,6 @@ esy-macos-intel:
     - mkdir -p ~/.npm
     - npm config set prefix '~/.npm'
     - export PATH=~/.npm/bin:$PATH
-    - npm i -g esy@beta --force
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
     - env ESY__PREFIX=$HOME/.esy-nairobi esy i
     - env ESY__PREFIX=$HOME/.esy-nairobi esy release
@@ -208,7 +206,6 @@ esy-macos-m1:
     - brew install node
     - npm config set prefix '~/.npm'
     - export PATH=~/.npm/bin:$PATH
-    - npm i -g esy@beta --force
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
     - env ESY__PREFIX=$HOME/.esy-nairobi esy i
     - env ESY__PREFIX=$HOME/.esy-nairobi esy release
