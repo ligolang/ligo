@@ -40,10 +40,22 @@ let rec there_is_else_case_default tokens =
   | Default _ :: _ -> true
   | _ -> false
 
+let attributes = [
+  "@entry"; "@inline"; "@view"; "@no_mutation"; "@private";
+  "@public"; "@hidden"; "@thunk";
+  "@layout"; "@annot"]
+
 let semicolon_insertion tokens =
   let open! Token in
   let rec inner result = function
-    (Directive _ as t) :: rest ->
+    Ident id as t :: rest
+      when List.mem ~equal:String.equal attributes id#payload -> (
+      match rest with
+        LPAR _ as lpar :: (String _ | Ident _ as value) ::
+        (RPAR _ as rpar) :: rest ->
+          inner (rpar :: value :: lpar :: t :: result) rest
+      | _ -> inner (t :: result) rest)
+  | (Directive _ as t) :: rest ->
     inner (t :: result) rest
   | (LineCom _ as t) :: rest ->
     inner (t :: result) rest
@@ -78,7 +90,7 @@ let semicolon_insertion tokens =
   | (LBRACE _ as semi) :: (Return _ as t)  :: rest
   | (COLON _ as semi) :: (LineCom _ as t) :: rest
   | (COLON _ as semi) :: (BlockCom _ as t) :: rest
-  | (COLON _ as semi) :: (Directive _ as t)  :: rest  
+  | (COLON _ as semi) :: (Directive _ as t)  :: rest
   | (COLON _ as semi) :: (Namespace _ as t)  :: rest
   | (COLON _ as semi) :: (Export _ as t)  :: rest
   | (COLON _ as semi) :: (Let _ as t)  :: rest
@@ -108,7 +120,7 @@ let semicolon_insertion tokens =
     let (s, _) = Token.proj_token rbrace in
     inner (r :: mk_semi s :: rbrace :: result ) rest
   | (RPAR _ as hd) :: tl
-  | (Else _ as hd) :: tl when not (there_is_a_decl_next tl) -> 
+  | (Else _ as hd) :: tl when not (there_is_a_decl_next tl) ->
     inner (hd :: result) tl
   | token :: (Directive _ as t) :: rest
   | token :: (Namespace _ as t) :: rest

@@ -15,8 +15,8 @@ import D = A;
 
 import E = A.C;
 
-// @no_mutation
+@no_mutation
 export let toto : D.titi = E.toto;
 
-// @inline
+@inline
 let add2 = (a: A.titi, b: D.titi) : A.titi => A.add (a, b);

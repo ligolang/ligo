@@ -279,16 +279,16 @@ for_initialiser:
   expr_stmt { $1 }
 
 for_stmt(right_stmt):
-  attributes "for" "(" 
-    ioption(for_initialiser) ";" 
-    ioption(expr) ";" 
-    ioption(nsepseq(closed_non_decl_expr_stmt, ",")) 
+  attributes "for" "("
+    ioption(for_initialiser) ";"
+    ioption(expr) ";"
+    ioption(nsepseq(closed_non_decl_expr_stmt, ","))
   ")" ioption(right_stmt) {
     let initialiser = Core.Option.map $4 ~f:(fun f -> f [])
     and condition    = $6
     and afterthought = $8
     and statement    = $10 in
-    let region_end   = 
+    let region_end   =
       match $10 with
         Some s -> statement_to_region s
       | None   -> $9#region
