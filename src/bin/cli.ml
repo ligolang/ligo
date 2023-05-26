@@ -2892,14 +2892,40 @@ module Lsp_server = struct
   module Server = Ligo_lsp.Server
 
   let run () =
-    let s = new Server.lsp_server in
-    let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-    let task = Linol_lwt.Jsonrpc2.run server in
-    match Linol_lwt.run task with
-    | () -> Ok ("", "")
-    | exception e ->
-      let e = Caml.Printexc.to_string e in
-      Error ("", e)
+    let reporter ppf =
+      let report _src level ~over k msgf =
+        let k _ =
+          over ();
+          k ()
+        in
+        let with_stamp header _tags k ppf fmt =
+          let time = Time_ns.(to_string_utc @@ now ()) in
+          Format.kfprintf
+            k
+            ppf
+            ("%s %a @[" ^^ fmt ^^ "@]@.")
+            time
+            Logs.pp_header
+            (level, header)
+        in
+        msgf @@ fun ?header ?tags fmt -> with_stamp header tags k ppf fmt
+      in
+      { Logs.report }
+    in
+    Out_channel.with_file
+      ~append:true
+      Filename.(temp_dir_name ^/ "ligo_language_server.log")
+      ~f:(fun outc ->
+        Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
+        Logs.set_level (Some Logs.Debug);
+        let s = new Server.lsp_server in
+        let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
+        let task = Linol_lwt.Jsonrpc2.run server in
+        match Linol_lwt.run task with
+        | () -> Ok ("", "")
+        | exception e ->
+          let e = Caml.Printexc.to_string e in
+          Error ("", e))
 end
 
 let lsp =
