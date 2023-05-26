@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\n"
+merge_request: '2618'
+title: "Fix bug in pattern matching compiler"
+type: fixed
+            

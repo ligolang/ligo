@@ -21,7 +21,7 @@ type matchees = Value_var.t list
 type pattern = O.type_expression I.Pattern.t
 type typed_pattern = pattern * O.type_expression
 type equations = (typed_pattern list * O.expression) list
-type rest = O.expression_content
+type rest = O.ty_expr -> O.expression_content
 
 module PP_DEBUG = struct
   let pp_typed_pattern ppf ((p, t) : typed_pattern) =
@@ -272,17 +272,14 @@ let rec match_ : matchees -> equations -> rest -> O.expression =
     let leq = partition (fun (pl, _) -> is_var (fst @@ List.hd_exn pl)) eqs in
     let aux
         (part_eq : equations)
-        ((def, _, _) :
-          O.expression_content * O.type_expression option * Location.t option)
+        ((def, _, _) : rest * O.type_expression option * Location.t option)
       =
       let r = consvar ms part_eq def in
-      r.expression_content, Some r.type_expression, Some r.location
+      (fun _ -> r.expression_content), Some r.type_expression, Some r.location
     in
     let r, t, location = List.fold_right ~f:aux ~init:(def, None, None) leq in
-    O.make_e
-      ~loc:(Option.value_exn ~here:[%here] location)
-      r
-      (Option.value_exn ~here:[%here] t)
+    let t = Option.value_exn ~here:[%here] t in
+    O.make_e ~loc:(Option.value_exn ~here:[%here] location) (r t) t
 
 
 and consvar : matchees -> equations -> rest -> O.expression =
@@ -348,7 +345,7 @@ and ctor_rule : matchees -> equations -> rest -> O.expression =
     let aux_m : Label.t * O.type_expression -> _ O.matching_content_case =
      fun (constructor, t) ->
       let proj = Value_var.fresh ~loc ~name:"ctor_proj" () in
-      let body = O.make_e ~loc def t in
+      let body = O.make_e ~loc (def t) t in
       { constructor; pattern = proj; body }
     in
     let grouped_eqs =
@@ -515,27 +512,25 @@ let compile_matching
     List.map ~f:(fun (pattern, pattern_ty, body) -> [ pattern, pattern_ty ], body) eqs
   in
   let loc = Value_var.get_location matchee in
-  let missing_case_default =
+  let missing_case_default ty =
     let fs =
       O.make_e
         ~loc
         (O.E_literal (Literal_value.Literal_string Backend.Michelson.fw_partial_match))
         (O.t_string ~loc ())
     in
-    let t_fail =
-      let a = Type_var.of_input_var ~loc "a" in
-      let b = Type_var.of_input_var ~loc "b" in
-      let ty_binder = a in
-      let kind = Ligo_prim.Kind.Type in
-      let type_ =
-        let ty_binder = b in
-        let kind = Ligo_prim.Kind.Type in
-        let type_ = O.t_arrow ~loc (O.t_variable ~loc a ()) (O.t_variable ~loc b ()) () in
-        O.t_for_all ~loc { ty_binder; kind; type_ } ()
-      in
-      O.t_for_all ~loc { ty_binder; kind; type_ } ()
+    let lamb =
+      O.e_raw_code
+        ~loc
+        { language = "michelson"
+        ; code =
+            O.e_literal_string
+              ~loc
+              (Ligo_string.standard "{ FAILWITH }")
+              (O.t_string ~loc ())
+        }
+        (O.t_arrow ~loc (O.t_string ~loc ()) ty ())
     in
-    let lamb = O.e_variable ~loc (Value_var.of_input_var ~loc "failwith") t_fail in
     let args = fs in
     O.E_application { lamb; args }
   in

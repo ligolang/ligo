@@ -664,3 +664,7 @@ let%expect_test _ =
              IF_NONE {} { SWAP ; DROP } ;
              NIL operation ;
              PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info" ; "measure-contract" ; good_test "bug_report.mligo"] ;
+  [%expect {| 2801 bytes |}]

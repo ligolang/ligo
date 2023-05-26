@@ -29,31 +29,32 @@
 
   This pass aims to remove those partial match failwiths by folding over the AST, and simplify a case-expression that appears
   inside another case expression for the same variable.
-  If failwith expressions still remain after this pass, the matching expression is anomalous (redundant/exhaustive).
-  That triggers a rather 'generic' error.
 
-  TODO: It might be desirable to allow anomalous patterns when users wants it, leaving the generated failwiths (?)
-  TODO: This approach is naive, with a more sophisticated approach it is possible to descriminate between non-exhaustive/redundant/unused patterns
 *)
 
-let fold_map_expression = Ast_expanded.Helpers.fold_map_expression
 
 open Ligo_prim
 open Ast_expanded
 module SimplMap = Simple_utils.Map.Make (Value_var)
+open Simple_utils.Function
 
 type simpl_map = (Label.t * Value_var.t) list SimplMap.t
+let fold_map_expression = Ast_expanded.Helpers.fold_map_expression
 
-let is_generated_partial_match : expression -> bool =
+let is_generated_partial_match : expression -> expression option =
  fun exp ->
   match exp.expression_content with
   (* This is bad, we probably need some constant for "internally generated failwith" ? *)
-  | E_application { lamb = { expression_content = E_variable v; _ }; args = e }
-    when String.equal "failwith" (Format.asprintf "%a" Value_var.pp v) ->
-    (match get_a_string e with
-    | Some fw -> String.equal fw (Ligo_string.extract Backend.Michelson.fw_partial_match)
-    | None -> false)
-  | _ -> false
+  | E_application { lamb = { expression_content = E_raw_code _; _ } as lamb; args } ->
+    (match get_e_literal args with
+    | Some (Literal_string x) ->
+      if String.equal
+           (Ligo_string.extract x)
+           (Ligo_string.extract Backend.Michelson.fw_partial_match)
+      then Some lamb
+      else None
+    | _ -> None)
+  | _ -> None
 
 
 let rec do_while : (expression -> bool * expression) -> expression -> expression =
@@ -99,7 +100,7 @@ let compress_matching : expression -> expression =
             let fw, no_fw =
               List.partition_tf
                 ~f:(fun (case : _ matching_content_case) ->
-                  is_generated_partial_match case.body)
+                  Option.is_some @@ is_generated_partial_match case.body)
                 cases.cases
             in
             (match no_fw, fw with
@@ -126,6 +127,17 @@ let compress_matching : expression -> expression =
   do_while simplify exp
 
 
-let peephole_expression exp =
-  let exp' = compress_matching exp in
-  exp'
+let fail_with_unit : expression -> expression =
+  let aux : unit -> expression -> bool * unit * expression =
+   fun () e ->
+    let loc = e.location in
+    match is_generated_partial_match e with
+    | Some lamb ->
+      true, (), e_application ~loc { lamb; args = e_literal_unit ~loc } e.type_expression
+    | None -> true, (), e
+  in
+  fun e -> snd @@ fold_map_expression aux () e
+
+
+let peephole_expression =
+  fail_with_unit <@ compress_matching
