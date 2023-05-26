@@ -49,6 +49,16 @@ let repeat x n =
 
 let zip_opt a b = match List.zip a b with | Or_unequal_lengths.Ok x -> Some x | Or_unequal_lengths.Unequal_lengths -> None
 
+let rec deoptionalize xs =
+  match xs with
+  | [] -> Some []
+  | None :: _ -> None
+  | Some x :: xs ->
+    let xs = deoptionalize xs in
+    match xs with
+    | None -> None
+    | Some xs -> Some (x :: xs)
+
 module Ne = struct
 
   type 'a t = 'a * 'a list
@@ -111,4 +121,14 @@ module Ne = struct
       )
     in
     rev @@ aux (singleton lst) lst
+
+  let deoptionalize : 'a option t -> 'a t option = fun lst ->
+    let hd, tl = lst in
+    match hd with
+    | None -> None
+    | Some hd ->
+      let tl = deoptionalize tl in
+      match tl with
+      | None -> None
+      | Some tl -> Some (hd, tl)
 end
