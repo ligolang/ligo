@@ -321,8 +321,7 @@ rule scan state = parse
     if String.(lexeme = verb_open) then
       let state, Region.{region; _} = state#sync lexbuf in
       let thread = Thread.make ~opening:region
-      in scan_verbatim verb_close thread state lexbuf
-         |> mk_verbatim
+      in scan_verbatim verb_close thread state lexbuf |> mk_verbatim
     else mk_sym state lexbuf }
 
 | "[@" str_attr "]"  { mk_str_attr key ?value state lexbuf }

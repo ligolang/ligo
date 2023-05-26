@@ -7,19 +7,19 @@ const x = 0
 
 type return_ = [list <operation>, storage];
 
-// @view
+@view
 const basic = (_a : address, s : storage): storage => x + s;
 
-// @view
+@view
 const not_funny = (_ : unit, s : storage): storage => basic(Tezos.get_sender(), x + s);
 
-// @view
+@view
 const get_storage = (_ : unit, s : storage): storage => x + s;
 
-// @view
+@view
 const get_address = (_ : unit, _s : storage): address => Tezos.get_sender();
 
-// @view
+@view
 const super_not_funny = (_ : unit, s : storage): storage => not_funny(unit, s) + get_storage(unit, s);
 
 

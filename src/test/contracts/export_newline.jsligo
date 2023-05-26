@@ -9,5 +9,5 @@ namespace E {
   export const toto = 42
 };
 
-/* @no_mutation */ export
+@no_mutation export
 const toto: D.titi = E.toto;
