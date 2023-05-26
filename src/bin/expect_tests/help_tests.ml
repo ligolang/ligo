@@ -122,9 +122,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                the LIGO environment (lima ,
                                mumbai). By default, the current protocol
                                (nairobi) will be used
-  [-help], -?                . print this help text and exit
-
-(core/src/command.ml.Exit_called (status 0)) |}]
+  [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; "-help" ];
@@ -194,9 +192,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; "-help" ];
@@ -266,9 +262,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "constant"; "-help" ];
@@ -309,9 +303,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; "-help" ];
@@ -367,9 +359,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; "-help" ];
@@ -421,9 +411,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-expr"; "-help" ];
@@ -477,9 +465,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "expression"; "-help" ];
@@ -532,9 +518,7 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "list-declarations"; "-help" ];
