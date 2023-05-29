@@ -12,6 +12,7 @@ type frontend =
   ; libraries : string list
   ; project_root : string option
   ; transpiled : bool
+  ; warn_infinite_loop : bool
   }
 
 type tools =
@@ -84,6 +85,7 @@ let make
     ; module_ = raw_options.module_
     ; project_root = raw_options.project_root
     ; transpiled = raw_options.transpiled
+    ; warn_infinite_loop = raw_options.warn_infinite_loop
     }
   in
   let tools =

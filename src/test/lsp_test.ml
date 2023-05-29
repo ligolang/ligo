@@ -12,4 +12,5 @@ let _main =
     ; Formatting.tests
     ; Range_formatting.tests
     ; References.tests
+    ; Cst_fold.tests
     ]

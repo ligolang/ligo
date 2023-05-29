@@ -139,11 +139,15 @@ module TODO_do_in_parsing = struct
 
   let make_block ~region (seq_expr : (I.expr, I.semi) nsepseq option) : I.expr =
     match seq_expr with
-    | None -> E_Unit { value = Lexing_cameligo.Token.(ghost_lpar, ghost_rpar) ; region }
+    | None -> E_Unit { value = Lexing_cameligo.Token.(ghost_lpar, ghost_rpar); region }
     | Some _ ->
-      let seq : _ Region.reg = { region ; value = I.{ elements = seq_expr; compound = None } } in
+      let seq : _ Region.reg =
+        { region; value = I.{ elements = seq_expr; compound = None } }
+      in
       E_Seq seq
-  let make_int i : I.expr = E_Int (Lexing_cameligo.Token.(ghost_int (Z.of_int i)))
+
+
+  let make_int i : I.expr = E_Int Lexing_cameligo.Token.(ghost_int (Z.of_int i))
 end
 
 let block = Eq.not_part_of_the_language
@@ -328,28 +332,41 @@ let rec expr : Eq.expr -> Folding.expr =
       ret @@ E_sequence seq)
   | E_Contract c ->
     ret @@ E_contract (List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c.value))
-  | E_Assign { value = { binder; expr = expression; _ } ; _ } ->
+  | E_Assign { value = { binder; expr = expression; _ }; _ } ->
     let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.var binder) None in
-    ret @@ E_assign_unitary { binder ; expression }
-  | E_LetMutIn { value = { binding = { binders ; type_params ; rhs_type ; let_rhs ; _ } ; body ; _ } ; _ } ->
+    ret @@ E_assign_unitary { binder; expression }
+  | E_LetMutIn
+      { value = { binding = { binders; type_params; rhs_type; let_rhs; _ }; body; _ }; _ }
+    ->
     let type_params = Option.map ~f:compile_type_params type_params in
     let rhs_type = Option.map ~f:snd rhs_type in
-    ret @@ E_let_mut_in { is_rec = false ; type_params ; lhs = binders ; rhs_type ; rhs = let_rhs ; body }
-  | E_While { value = { cond ; body = { value = { seq_expr ; _ } ; region } ; _ } ; _ } ->
+    ret
+    @@ E_let_mut_in
+         { is_rec = false; type_params; lhs = binders; rhs_type; rhs = let_rhs; body }
+  | E_While { value = { cond; body = { value = { seq_expr; _ }; region }; _ }; _ } ->
     let block = TODO_do_in_parsing.make_block ~region seq_expr in
-    ret @@ E_while { cond ; block }
-  | E_For { value = { index ; bound1 ; direction ; bound2 ; body = { value  = { seq_expr ; _ } ; _ } ; _ } ; region } ->
+    ret @@ E_while { cond; block }
+  | E_For
+      { value =
+          { index; bound1; direction; bound2; body = { value = { seq_expr; _ }; _ }; _ }
+      ; region
+      } ->
     let index = TODO_do_in_parsing.var index in
     let init = bound1 in
     let bound = bound2 in
-    let step = match direction with
+    let step =
+      match direction with
       | Upto _ -> Some TODO_do_in_parsing.(make_int 1)
-      | _ -> failwith "Downto not supported" in
+      | _ -> failwith "Downto not supported"
+    in
     let block = TODO_do_in_parsing.make_block ~region seq_expr in
-    ret @@ E_for { index ; init ; bound ; step ; block }
-  | E_ForIn { value = { pattern  ; collection ; body = { value = { seq_expr ; _ } ; region } ; _ } ; _ } ->
+    ret @@ E_for { index; init; bound; step; block }
+  | E_ForIn
+      { value = { pattern; collection; body = { value = { seq_expr; _ }; region }; _ }
+      ; _
+      } ->
     let block = TODO_do_in_parsing.make_block ~region seq_expr in
-    ret @@ E_for_in (ForAny { pattern ; collection ; block } )
+    ret @@ E_for_in (ForAny { pattern; collection; block })
 
 
 let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =

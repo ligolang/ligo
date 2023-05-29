@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nThis MR adds to increment & decrement operators (`++` && `--`) to JsLIGO.\\n\\n#### For example\\n\\n\\n```ts\\nconst testIncDec = (() => {\\n  let inc = 0;\\n  \\n  // Prefix increment operator\\n  assert(++inc == 1);\\n\\n  // Postfix increment operator\\n  assert(inc++ == 1);\\n  assert(inc   == 2);\\n\\n  let dec = 10;\\n\\n  // Prefix decrement operator\\n  assert(--dec == 9);\\n\\n  // Postfix decrement operator\\n  assert(dec-- == 9);\\n  assert(dec   == 8);\\n})();\\n\\n```\\n\\n#### Result\\n\\n\\n```bash\\n$ ligo run test x.jsligo \\nEverything at the top-level was executed.\\n- testIncDec exited with value ().\\n\\n```\\n\\n"
+merge_request: '2587'
+title: "[JsLIGO]: Add increment & decrement operators (`++` & `--`)"
+type: added
+            

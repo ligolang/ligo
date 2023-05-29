@@ -28,7 +28,7 @@ InterpretSnapshot:
 
 Jumping out of `f`:
 InterpretSnapshot:
-  isStatus: running / expression evaluated (201)
+  isStatus: running / expression evaluated (201 : int)
   isStackFrames:
     [StackFrame:
       sfName: main

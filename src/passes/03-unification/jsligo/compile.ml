@@ -288,6 +288,26 @@ let rec expr : Eq.expr -> Folding.expr =
   | EContract { value = c; _ } ->
     let lst = List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c) in
     return @@ E_contract lst
+  | EPrefix { region = _; value = { update_type = Increment op; variable } } ->
+    let loc = Location.lift op#region in
+    let pre_op = Location.wrap ~loc O.Prefix_postfix.Increment in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_prefix { pre_op; variable }
+  | EPrefix { region = _; value = { update_type = Decrement op; variable } } ->
+    let loc = Location.lift op#region in
+    let pre_op = Location.wrap ~loc O.Prefix_postfix.Decrement in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_prefix { pre_op; variable }
+  | EPostfix { region = _; value = { update_type = Increment op; variable } } ->
+    let loc = Location.lift op#region in
+    let post_op = Location.wrap ~loc O.Prefix_postfix.Increment in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_postfix { post_op; variable }
+  | EPostfix { region = _; value = { update_type = Decrement op; variable } } ->
+    let loc = Location.lift op#region in
+    let post_op = Location.wrap ~loc O.Prefix_postfix.Decrement in
+    let variable = TODO_do_in_parsing.var variable in
+    return @@ E_postfix { post_op; variable }
 
 
 let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
@@ -360,8 +380,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     let fun_type_args =
       let compile_fun_type_arg : I.fun_type_arg -> _ O.Named_fun.fun_type_arg =
        fun { name; type_expr; _ } ->
-        let name = TODO_do_in_parsing.tvar name in
-        { name = Some name; type_expr }
+        { name = name#payload; type_expr }
       in
       List.map ~f:compile_fun_type_arg (nsepseq_to_list fta.inside)
     in
@@ -509,8 +528,15 @@ let rec statement : Eq.statement -> Folding.statement =
   match s with
   | SNamespace _ | SImport _ | SExport _ | SLet _ | SConst _ | SType _ ->
     return @@ O.S_decl s
-  | SBlock _ | SExpr _ | SCond _ | SReturn _ | SSwitch _ | SBreak _ | SWhile _ | SForOf _
-    -> return @@ S_instr s
+  | SBlock _
+  | SExpr _
+  | SCond _
+  | SReturn _
+  | SSwitch _
+  | SBreak _
+  | SWhile _
+  | SForOf _
+  | SFor _ -> return @@ S_instr s
 
 
 and instruction : Eq.instruction -> Folding.instruction =
@@ -559,8 +585,12 @@ and instruction : Eq.instruction -> Folding.instruction =
     in
     let index = TODO_do_in_parsing.var index in
     return @@ I_for_of { index_kind; index; expr; for_stmt = statement }
+  | SFor s ->
+    let I.{ initialiser; condition; afterthought; statement; _ } = r_fst s in
+    let afterthought = Option.map afterthought ~f:Utils.nsepseq_to_nseq in
+    return @@ I_for_stmt { initialiser; condition; afterthought; statement }
   (* impossible, if triggered, look at functions 'statement' *)
-  | _ -> assert false
+  | SLet _ | SConst _ | SType _ | SNamespace _ | SExport _ | SImport _ -> assert false
 
 
 and declaration : Eq.declaration -> Folding.declaration =

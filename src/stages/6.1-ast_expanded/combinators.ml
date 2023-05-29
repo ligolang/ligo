@@ -218,6 +218,11 @@ let get_a_string (t : expression) =
   | _ -> None
 
 
+let e_literal__type_ ~loc x t : expression = make_e ~loc (E_literal (Literal__type_ x)) t
+  [@@map _type_, ("string", "int")]
+
+let e_literal_unit ~loc = make_e ~loc (E_literal Literal_unit) (t_unit ~loc ())
+
 let rec get_e_applications t =
   match get_e_application t with
   | Some { lamb; args } ->
@@ -272,8 +277,13 @@ let t_bool ~loc () : type_expression =
 
 
 let get_t_bool (t : type_expression) : unit option =
-  let t_bool = t_bool ~loc:t.location () in
-  Option.some_if (equal_type_content t.type_content t_bool.type_content) ()
+  match t.type_content with
+  | T_sum { fields; _ } ->
+    let keys = Map.key_set fields in
+    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    then Some ()
+    else None
+  | _ -> None
 
 
 let t_option ~loc typ : type_expression =
@@ -314,7 +324,7 @@ let is_michelson_pair (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   | _ -> None
 
 
-let e_unit () : expression_content = E_literal Literal_unit
+let e_unit () : expression_content = E_literal (Literal_unit)
 
 let get_e_tuple t =
   match t with

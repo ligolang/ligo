@@ -11,7 +11,7 @@ export type storage = {
 
 export type return_ = [list<operation>, storage];
 
-// @entry
+@entry
 const poke = (_p : unit, store: storage): return_ => {
   let { pokeTraces, feedback, ticketOwnership } = store;
     
@@ -41,8 +41,8 @@ const poke = (_p : unit, store: storage): return_ => {
   });
 };
 
-// @no_mutation
-// @entry
+@no_mutation
+@entry
 const pokeAndGetFeedback = (oracleAddress : address, store : storage) => {
   let { pokeTraces, feedback, ticketOwnership } = store;
   ignore(feedback);
@@ -86,7 +86,7 @@ const pokeAndGetFeedback = (oracleAddress : address, store : storage) => {
   });
 };
 
-// @entry
+@entry
 const init = (p : [address, nat], store: storage) : return_ => {
   let { pokeTraces, feedback, ticketOwnership } = store;
   let a = p[0]; let ticketCount = p[1];
@@ -116,5 +116,5 @@ const init = (p : [address, nat], store: storage) : return_ => {
   }
 };
 
-// @view
+@view
 const feedback = ([_, store] : [unit, storage]) : string => { return store.feedback };

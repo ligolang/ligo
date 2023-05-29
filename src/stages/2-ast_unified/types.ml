@@ -30,6 +30,7 @@ module Mod_in = Nano_prim.Mod_in
 module Block_with = Nano_prim.Block_with
 module Assign = Ligo_prim.Assign
 module Assign_chainable = Nano_prim.Assign_chainable
+module Prefix_postfix = Nano_prim.Prefix_postfix
 module Type_decl = Nano_prim.Type_decl
 module Type_abstraction = Nano_prim.Type_abstraction
 module Record_update = Nano_prim.Record_update
@@ -62,6 +63,7 @@ module For_int = Nano_prim.For_int
 module For_collection = Nano_prim.For_collection
 module Patch = Nano_prim.Patch
 module For_of = Nano_prim.For_of
+module For_stmt = Nano_prim.For_stmt
 module Removal = Nano_prim.Removal
 module While = Nano_prim.While
 module Switch = Nano_prim.Switch
@@ -85,22 +87,27 @@ type 'self type_expression_ = 'self type_expression_content_ Location.wrap
 and 'self ty_expr_ = 'self type_expression_
 
 and 'self type_expression_content_ =
-  | T_attr of Attribute.t * 'self
-  | T_var of Ty_variable.t
-  | T_constant of string
-  | T_prod of 'self Simple_utils.List.Ne.t
-  | T_app of ('self, 'self) Type_app.t
-  | T_fun of 'self Arrow.t
-  | T_named_fun of 'self Named_fun.t
-  | T_string of string
+  | T_attr of Attribute.t * 'self (* [@a] x *)
+  | T_var of Ty_variable.t (* x *)
+  | T_constant of string [@not_initial]
+  | T_prod of 'self Simple_utils.List.Ne.t (* x * y *)
+  | T_app of ('self, 'self) Type_app.t (* x y *)
+  | T_fun of 'self Arrow.t (* Initial in CameLIGO only: x -> y *)
+  | T_named_fun of 'self Named_fun.t (* JsLIGO only: (x : x) => y *)
+  | T_string of string (* Some types are parametrized by strings / ints *)
   | T_int of string * Z.t
-  | T_module_open_in of (Mod_variable.t, 'self) Mod_access.t
-  | T_arg of string
-  | T_sum_raw of 'self option Non_linear_rows.t
-  | T_record_raw of 'self option Non_linear_rows.t
+  | T_module_open_in of (Mod_variable.t, 'self) Mod_access.t (* A.(<...>) *)
+  | T_arg of string (* 'a *)
+  | T_sum_raw of
+      'self option Non_linear_rows.t (* A of int | B of string , initial for CameLIGO*)
+  | T_record_raw of 'self option Non_linear_rows.t (* {a: int; b : int} *)
   | T_disc_union of 'self Non_linear_disc_rows.t
-  | T_abstraction of 'self Abstraction.t
-  | T_module_access of (Mod_variable.t Simple_utils.List.Ne.t, Ty_variable.t) Mod_access.t
+    (* { kind: "A" } | { kind: "B" }, initial for JsLIGO only *)
+  | T_abstraction of 'self Abstraction.t [@not_initial]
+    (* [type 'a t = 'a * 'a] <- [t] this decl will be replaced by an abstraction 
+       at passes/04-nanopasses/passes/type_abstraction_declaration.ml *)
+  | T_module_access of
+      (Mod_variable.t Simple_utils.List.Ne.t, Ty_variable.t) Mod_access.t (* A.B.x *)
   | T_module_app of
       ( (Mod_variable.t Simple_utils.List.Ne.t, Ty_variable.t) Mod_access.t
       , 'self )
@@ -164,6 +171,7 @@ and ('self, 'expr, 'pattern, 'statement, 'block) instruction_content_ =
   | I_for of ('expr, 'block) For_int.t
   | I_for_in of ('pattern, 'expr, 'block) For_collection.t
   | I_for_of of ('expr, 'statement) For_of.t
+  | I_for_stmt of ('expr, 'statement) For_stmt.t
   | I_patch of 'expr Patch.t
   | I_remove of 'expr Removal.t
   | I_skip
@@ -337,6 +345,8 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_module_access of (Mod_variable.t Simple_utils.List.Ne.t, Variable.t) Mod_access.t
       [@not_initial]
   | E_match_block of ('self, 'pattern, 'block) Case.t [@not_initial]
+  | E_prefix of Prefix_postfix.prefix
+  | E_postfix of Prefix_postfix.postfix
 [@@deriving
   map
   , fold

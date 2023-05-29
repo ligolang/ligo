@@ -5,6 +5,8 @@ module Config
   , readConfig
   ) where
 
+import Control.Arrow ((>>>))
+import Data.Text qualified as Text
 import Options.Applicative
 
 data ServerConfig = ServerConfig
@@ -81,10 +83,18 @@ mkParserInfo clientCounter =
             <> metavar "STRING"
             <> help "print received requests and the responses"
           )
-      <*> strOption
+      <*> (normaliseWorkspacePrefix <$> strOption
           ( long "workspace-prefix"
             <> short 'w'
             <> metavar "STRING"
             <> help "folder to store files from the client"
-          )
+          ))
       <*> pure clientCounter
+
+-- Ensure there is exactly one slash at the end of the workspacePrefix
+normaliseWorkspacePrefix :: Text -> Text
+normaliseWorkspacePrefix =
+  Text.reverse
+  >>> Text.dropWhile (== '/')
+  >>> Text.cons '/'
+  >>> Text.reverse

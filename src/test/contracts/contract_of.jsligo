@@ -1,4 +1,4 @@
-// @entry
+@entry
 const increment = (action: int, store: int) : [list <operation>, int] => [list([]), store + action];
 
 const @contract_of = 42;

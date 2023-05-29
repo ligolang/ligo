@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nRemoved `mutate cst` sub-command (which was already previously disabled). Please use AST mutation from the testing framework.\\n\\n"
+merge_request: '2607'
+title: "Clean up: remove support for `mutate cst`"
+type: breaking
+            

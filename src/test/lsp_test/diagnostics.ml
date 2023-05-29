@@ -90,15 +90,11 @@ let test_cases =
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
           ; range = Some (interval 2 19 21)
           }
-        ; { severity = DiagnosticSeverity.Error
-          ; message =
-              "Variable \"_#153\" not found. "
-              (* FIXME 1689 - we should not report that things added by
-                 error recovery do not exist, also the number here can
-                 be changed after any changes in LIGO, maybe we want to
-                 rewrite that test so it would not require promotion too often*)
-          ; range = Some (point 4 13)
-          }
+          ; { severity = DiagnosticSeverity.Error 
+             ; message = 
+                 "Variable \"_#N\" not found. "
+             ; range = Some (point 4 13) 
+             }
         ]
     ; max_number_of_problems = None
     }

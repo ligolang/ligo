@@ -294,8 +294,8 @@ and instr ~raise : instruction -> Statement_result.t =
              ~loc
              { binder = Ligo_prim.Binder.make v None; expression = e })
           hole)
-  | I_expr ({ fp = { wrap_content = E_assign_chainable _; _ } } as e) ->
-    Binding (fun hole -> let_ignore_in e hole)
+  | I_expr ({ fp = { wrap_content = E_assign_chainable _ | E_simple_let_in _; _ } } as e)
+    -> Binding (fun hole -> let_ignore_in e hole)
   | I_expr e ->
     Binding (fun hole -> if Combinators.is_e_unit hole then e else let_unit_in e hole)
   | I_for for_ ->
@@ -308,7 +308,7 @@ and instr ~raise : instruction -> Statement_result.t =
     let w = While.map Fun.id (block_to_expression ~raise) w in
     Binding (fun hole -> let_unit_in (e_while ~loc w) hole)
   | I_break -> Binding (fun hole -> let_unit_in (e_unit ~loc) hole)
-  | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ ->
+  | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ | I_for_stmt _ ->
     failwith "removed"
 
 

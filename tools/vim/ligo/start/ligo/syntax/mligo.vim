@@ -13,7 +13,7 @@ syntax match typeint "\<[0-9]+\>" contained
 highlight link typeint Number 
 
 " typeparentheses
-syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeparentheses start="(" end=")" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 
 " typevar
 syntax match typevar "'\<[a-z_][a-zA-Z0-9_]*\>" contained 
@@ -28,15 +28,15 @@ syntax match typeoperator "\(->\|\.\|\*\||\)" contained
 highlight link typeoperator Operator 
 
 " typeannotationlambda
-syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" end="\()\|=\|;\|}\|->\)\@=" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" end="\()\|=\|;\|}\|->\)\@=" contained contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[%\|\<\(let\|in\|type\|end\|module\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typedefinition_ Keyword 
 
 " lowercaseidentifier
@@ -96,15 +96,15 @@ syntax match attribute "\[@.*\]"
 highlight link attribute PreProc 
 
 " string
-syntax region string start="\"" end="\"" contains=@Spell 
-highlight link string String 
+syntax region string0 start="\"" end="\"" contains=@Spell 
+highlight link string0 String 
 
 " linecomment
-syntax region linecomment start="\/\/" end="$" containedin=ALLBUT,string,blockcomment contains=@Spell 
+syntax region linecomment start="\/\/" end="$" containedin=ALLBUT,blockcomment,string0 contains=@Spell 
 highlight link linecomment Comment 
 
 " blockcomment
-syntax region blockcomment start="(\*" end="\*)" containedin=ALLBUT,string,linecomment contains=@Spell 
+syntax region blockcomment start="(\*" end="\*)" containedin=ALLBUT,blockcomment,string0 contains=@Spell 
 highlight link blockcomment Comment 
 
 let b:current_syntax = "mligo"

@@ -3,10 +3,12 @@
 (rule
  (targets all_the_things.mligo_output)
  (action
-  (with-stdout-to
-   all_the_things.mligo_output
-   (run ligo "print" "pretty" "all_the_things.mligo")))
- (deps all_the_things.mligo))
+  (ignore-stdout
+   (run
+    bash
+    -c
+    "../../bin/runligo.exe print pretty all_the_things.mligo | tr -d '\\015' > all_the_things.mligo_output")))
+ (deps ../../bin/runligo.exe all_the_things.mligo))
 
 (rule
  (targets all_the_things.jsligo_output)
@@ -49,10 +51,13 @@
 (rule
  (targets all_the_things.mligo_output2)
  (action
-  (with-stdout-to
-   all_the_things.mligo_output2
-   (run ligo print pretty all_the_things.mligo_output -s cameligo)))
- (deps all_the_things.mligo_output))
+  (ignore-stdout
+   ; We remove Carriage Returns (CR) from the output for Windows
+   (run
+    bash
+    -c
+    "../../bin/runligo.exe print pretty all_the_things.mligo_output -s cameligo | tr -d '\\015' > all_the_things.mligo_output2")))
+ (deps ../../bin/runligo.exe all_the_things.mligo_output))
 
 (rule
  (targets all_the_things.jsligo_output2)

@@ -65,7 +65,6 @@ const sidebars = {
       "manpages/install",
       "manpages/ligo",
       "manpages/login",
-      "manpages/mutate cst",
       "manpages/print ast-aggregated",
       "manpages/print ast-core",
       "manpages/print ast-typed",

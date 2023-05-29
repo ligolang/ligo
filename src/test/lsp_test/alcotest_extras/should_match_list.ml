@@ -8,14 +8,14 @@ let rec remove_by (eq : 'a -> 'a -> bool) (y : 'a) (xs : 'a list) : 'a list =
 
 
 let diff_by (eq : 'a -> 'a -> bool) (xs : 'a list) (ys : 'a list) : 'a list =
-  List.fold_left xs ~init:ys ~f:(Fun.flip (remove_by eq))
+  List.fold_left ys ~init:xs ~f:(Fun.flip (remove_by eq))
 
 
 let match_list ~(actual : 'a list) ~(expected : 'a list) ~(eq : 'a -> 'a -> bool)
     : 'a list * 'a list
   =
-  let extra = diff_by eq actual expected in
-  let missing = diff_by eq expected actual in
+  let extra = diff_by eq expected actual in
+  let missing = diff_by eq actual expected in
   extra, missing
 
 
@@ -47,5 +47,31 @@ let should_match_list
       (List.map ~f:to_string actual)
       format_list
       (List.map ~f:to_string extra)
+      format_list
+      (List.map ~f:to_string missing)
+
+
+let should_be_contained_in
+    ?(msg : string option)
+    (testable_a : 'a Alcotest.testable)
+    ~small
+    ~big
+    : unit
+  =
+  match diff_by (Alcotest.equal testable_a) big small with
+  | [] -> ()
+  | missing ->
+    let to_string = Format.asprintf "%a" (Alcotest.pp testable_a) in
+    let format_list = Fmt.Dump.list Fmt.string in
+    failf
+      ("%s"
+      ^^ "\n* Small list contains: %a"
+      ^^ "\n\n* Big list contains: %a"
+      ^^ "\n\n* Missing: %a")
+      (Option.value ~default:"The first list is not contained in the second list." msg)
+      format_list
+      (List.map ~f:to_string small)
+      format_list
+      (List.map ~f:to_string big)
       format_list
       (List.map ~f:to_string missing)

@@ -1,11 +1,11 @@
 type action_t =
-// @layout:comb
+@layout("comb")
     | ["A"]
     | ["B", int]
     | ["C", [int, int]];
 
 type storage_t = 
-// @layout comb
+@layout("comb")
 {
     x: int,
     y: int,

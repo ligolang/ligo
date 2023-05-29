@@ -99,7 +99,6 @@ replaceOpSing = \case
   STChestKey -> STChestKey
   STSaplingState nat -> STSaplingState nat
   STSaplingTransaction nat -> STSaplingTransaction nat
-  STTxRollupL2Address -> STTxRollupL2Address
   STNever -> STNever
 
 -- | Replaces operation and lambda values with their string representations
@@ -140,7 +139,6 @@ replaceOps sng val = case (val, sng) of
   (T.VBls12381G2 bts, _) -> T.VBls12381G2 bts
   (T.VChest ch, _) -> T.VChest ch
   (T.VChestKey chKey, _) -> T.VChestKey chKey
-  (T.VTxRollupL2Address addr, _) -> T.VTxRollupL2Address addr
 
 -- | Replace subtypes in the @LIGO@ one.
 replaceLigoType :: LIGO Info -> LIGO Info

@@ -4,7 +4,6 @@ module External = struct
   type t =
     | Bytes
     | Int
-    | Int_lima
     | Ediv
     | And
     | Or
@@ -20,7 +19,6 @@ module External = struct
   let to_string = function
     | Bytes -> "bytes"
     | Int -> "int"
-    | Int_lima -> "int_lima"
     | Ediv -> "ediv"
     | And -> "and"
     | Or -> "or"
@@ -214,7 +212,6 @@ let to_arity = function
   | Tx_rollup_l2_address -> 0
   | External Bytes -> 1
   | External Int -> 1
-  | External Int_lima -> 1
   | External Ediv -> 2
   | External And -> 2
   | External Or -> 2

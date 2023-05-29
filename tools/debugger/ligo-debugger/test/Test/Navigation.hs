@@ -7,6 +7,7 @@ module Test.Navigation
   , test_Seq_node_doesn't_have_location
   , test_constant_as_statement
   , test_top_level_function_with_preprocessor_don't_have_locations
+  , test_big_tuples_have_correct_evaluated_value
   , test_values_inside_switch_and_match_with_are_statements
   , test_local_function_assignments_are_statements
   , test_record_update_is_statement
@@ -131,6 +132,23 @@ test_top_level_function_with_preprocessor_don't_have_locations =
     doStep = processLigoStep (CStepIn GExpExt)
   in goldenTestWithSnapshots
       "top-level functions with preprocessor don't have expression locations in snapshots"
+      "StepIn"
+      runData
+      (dumpAllSnapshotsWithStep doStep)
+
+test_big_tuples_have_correct_evaluated_value :: TestTree
+test_big_tuples_have_correct_evaluated_value =
+  let
+    runData = ContractRunData
+      { crdProgram = contractsDir </> "tuple-with-size-five.mligo"
+      , crdEntrypoint = Nothing
+      , crdParam = ()
+      , crdStorage = 0 :: Integer
+      }
+
+    doStep = processLigoStep (CStepIn GExpExt)
+  in goldenTestWithSnapshots
+      "big tuples have correct evaluated value"
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)

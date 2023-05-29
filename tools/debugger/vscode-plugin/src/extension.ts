@@ -30,7 +30,22 @@ export function activate(context: vscode.ExtensionContext) {
 	const trackerFactory = new GranularityFillingTrackerFactory(() => stepStatus.status)
 	context.subscriptions.push(vscode.debug.registerDebugAdapterTrackerFactory('ligo', trackerFactory))
 
-	const provider = new LigoDebugConfigurationProvider(client, new LigoDebugContext(context));
+	const ligoDebugContext = new LigoDebugContext(context);
+
+	const askOnStartCommandChanged = ligoDebugContext.globalState.askOnStartCommandChanged();
+	if (!isDefined(askOnStartCommandChanged.value) || !askOnStartCommandChanged.value) {
+		vscode.window.showWarningMessage(
+			`Note that syntax for commands in launch.json have changed.
+			 Now commands are wrapped into (*@ and @*) instead of { and }.
+			 For more information see README.md`, "OK"
+		).then(result => {
+			if (isDefined(result)) {
+				askOnStartCommandChanged.value = true;
+			}
+		});
+	}
+
+	const provider = new LigoDebugConfigurationProvider(client, ligoDebugContext);
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ligo', provider))
 
 	const factory = new LigoDebugAdapterServerDescriptorFactory(server)

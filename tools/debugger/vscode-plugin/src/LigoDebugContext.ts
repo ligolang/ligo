@@ -10,10 +10,12 @@ import { Maybe, isDefined, InputBoxType, InputValueType } from './base'
 export class LigoDebugContext {
     context: vscode.ExtensionContext
     workspaceState: LigoDebugLocalStorage
+    globalState: LigoDebugGlobalStorage
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context
         this.workspaceState = new LigoDebugLocalStorage(context.workspaceState)
+        this.globalState = new LigoDebugGlobalStorage(context.globalState)
     }
 
     asAbsolutePath(relativePath: string): string {
@@ -53,12 +55,11 @@ class NoValueCell<T> implements ValueAccess<T> {
     set value(_newVal: Maybe<T>) {}
 }
 
-// Local storage with our custom format.
-export class LigoDebugLocalStorage {
-    state: vscode.Memento
+abstract class AbstractLigoDebugStorage {
+    public state: vscode.Memento;
 
     constructor(state: vscode.Memento) {
-        this.state = state
+        this.state = state;
     }
 
     // Accepts a set of keys that point to a cell in storage and returns
@@ -76,6 +77,13 @@ export class LigoDebugLocalStorage {
             return new NoValueCell()
         }
     }
+}
+
+// Local storage with our custom format.
+export class LigoDebugLocalStorage extends AbstractLigoDebugStorage {
+    constructor(state: vscode.Memento) {
+        super(state);
+    }
 
     lastEntrypoint(): ValueAccess<string> {
         return this.access("quickpick", "entrypoint")
@@ -87,5 +95,15 @@ export class LigoDebugLocalStorage {
     lastParameterOrStorageValue(type: InputBoxType, entrypoint: string, michelsonEntrypoint?: string)
         : ValueAccess<[string, InputValueType]> {
         return this.access("quickpick", "switch", "button", type, entrypoint, michelsonEntrypoint)
+    }
+}
+
+export class LigoDebugGlobalStorage extends AbstractLigoDebugStorage {
+    constructor(state: vscode.Memento) {
+        super(state);
+    }
+
+    public askOnStartCommandChanged(): ValueAccess<boolean> {
+        return this.access("command", "askOnStart");
     }
 }

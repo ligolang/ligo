@@ -27,25 +27,31 @@
 
   (* Ghost semantic values for inserted tokens *)
 
-  let mk_string   = Token.wrap_string   "ghost string"
-  let mk_verbatim = Token.wrap_verbatim "ghost verbatim"
-  let mk_bytes    = Token.wrap_bytes    (Hex.of_string "Ghost bytes")
-  let mk_int      = Token.wrap_int      Z.zero
-  let mk_nat      = Token.wrap_nat      Z.zero
-  let mk_mutez    = Token.wrap_mutez    Int64.zero
-  let mk_ident    = Token.wrap_ident    "ghost_ident"
-  let mk_uident   = Token.wrap_uident   "Ghost_uident"
-  let mk_attr     = Token.wrap_attr     "ghost_attr" None
+  let mk_string    = Token.wrap_string    "ghost string"
+  let mk_verbatim  = Token.wrap_verbatim  "ghost verbatim"
+  let mk_bytes     = Token.wrap_bytes     (Hex.of_string "Ghost bytes")
+  let mk_int       = Token.wrap_int       Z.zero
+  let mk_nat       = Token.wrap_nat       Z.zero
+  let mk_mutez     = Token.wrap_mutez     Int64.zero
+  let mk_ident     = Token.wrap_ident     "ghost_ident"
+  let mk_uident    = Token.wrap_uident    "Ghost_uident"
+  let mk_attr      = Token.wrap_attr      "ghost_attr" None
+  let mk_block_com = Token.wrap_block_com "(* comment *)"
+  let mk_line_com  = Token.wrap_line_com  "// comment"
 ]
 
 (* Make the recovery pay more attention to the number of synthesized tokens than
    production reducing because the latter often means only precedence level *)
-%[@recover.default_cost_of_symbol     1000]
-%[@recover.default_cost_of_production 1]
 
-(* Tokens (mirroring thise defined in module Token) *)
+%[@recover.default_cost_of_symbol     1000]
+%[@recover.default_cost_of_production    1]
+
+(* Tokens (mirroring those defined in module Token) *)
 
 (* Literals *)
+
+%token             <string Wrap.t> BlockCom  "<block_comment>" [@recover.expr mk_block_com $loc]
+%token             <string Wrap.t> LineCom   "<line_comment>"  [@recover.expr mk_line_com  $loc]
 
 %token  <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
 %token             <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]

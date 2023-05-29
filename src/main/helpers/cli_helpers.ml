@@ -181,15 +181,22 @@ let makeCommand cmd =
     in
     let paths = Str.split path_sep_regexp v in
     let npmPaths =
-      List.filter
-        (fun path -> Sys.file_exists (Filename.concat path (sprintf "%s.cmd" cmd)))
+      List.filter_map
+        (fun path ->
+          let cmd_p = Filename.concat path (sprintf "%s.cmd" cmd) in
+          let exe_p = Filename.concat path (sprintf "%s.exe" cmd) in
+          if Sys.file_exists cmd_p
+          then Some cmd_p
+          else if Sys.file_exists exe_p
+          then Some exe_p
+          else None)
         paths
     in
     match npmPaths with
     | [] ->
-      fprintf stderr "No %s bin path found" cmd;
+      fprintf stderr "No command %s found in environment" cmd;
       exit (-1)
-    | h :: _ -> Filename.concat h (sprintf "%s.cmd" cmd)
+    | h :: _ -> h
   in
   match Sys.unix with
   | true -> cmd
@@ -252,5 +259,5 @@ let run_command (cmd : command) =
       |> Array.append [| "_=" |]
     in
     let args = Array.sub args ~pos:1 ~len:(Array.length args - 1) in
-    run ~env "cmd.exe" (Array.append [| "/c"; bin_full_path |] args);
+    run ~env bin_full_path args;
     Ok ())

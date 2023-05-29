@@ -9,4 +9,4 @@ let is_stdlib (file : string) : bool =
 let is_packaged (file : string) : bool =
   (* Here we use a heuristic: if the file is defined within any directory called
      ".ligo", we suppose that it was imported. *)
-  List.mem (Filename.parts file) ".ligo" ~equal:String.( = )
+  List.mem (String.split_on_chars ~on:[ '\\'; '/' ] file) ".ligo" ~equal:String.( = )

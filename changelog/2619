@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n[JsLIGO] TypeScript decorators can now be used in stead of predefined attributes. Documentation to follow in another MR.\\n\\n\\n\\n"
+merge_request: '2619'
+title: "[JsLIGO] Support for a set of TS decorators"
+type: breaking
+            

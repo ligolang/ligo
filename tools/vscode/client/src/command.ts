@@ -19,7 +19,7 @@ function reportException(exception: Error) {
   }
 }
 
-async function executeChooseLigoOption(client) {
+async function executeChooseLigoOption(client: LanguageClient) {
   const possibleOptions = ['Compile contract', 'Compile storage', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
   const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
   switch (curCommand) {
@@ -46,7 +46,7 @@ async function executeChooseLigoOption(client) {
   }
 }
 
-async function executeChooseDeployOptions(client) {
+async function executeChooseDeployOptions(client: LanguageClient) {
   const possibleOptions = ['Deploy contract', 'Generate deploy script']
   const curCommand = await ui.createQuickPickBox(possibleOptions, 'Deployment options', 'command')
   switch (curCommand) {
@@ -99,7 +99,7 @@ const LigoCommands = {
   },
   CompileContract: {
     name: 'ligo.compileContract',
-    run: async (client) => lc.executeCompileContract(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeCompileContract(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileContract.name,
       async () => LigoCommands.CompileContract.run(client),
@@ -107,7 +107,10 @@ const LigoCommands = {
   },
   SilentCompileContract: {
     name: 'ligo.silentCompileContract',
-    run: async (client, options) => lc.executeSilentCompileContract(client, options),
+    run: async (
+      client: LanguageClient,
+      options: lc.SilentCompilationOptions
+    ) => lc.executeSilentCompileContract(client, options),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.SilentCompileContract.name,
       async (
@@ -117,7 +120,7 @@ const LigoCommands = {
   },
   CompileStorage: {
     name: 'ligo.compileStorage',
-    run: async (client) => lc.executeCompileStorage(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeCompileStorage(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileStorage.name,
       async () => LigoCommands.CompileStorage.run(client),
@@ -125,7 +128,7 @@ const LigoCommands = {
   },
   CompileExpression: {
     name: 'ligo.compileExpression',
-    run: async (client) => lc.executeCompileExpression(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeCompileExpression(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.CompileExpression.name,
       async () => LigoCommands.CompileExpression.run(client),
@@ -133,7 +136,7 @@ const LigoCommands = {
   },
   DryRun: {
     name: 'ligo.dryRun',
-    run: async (client) => lc.executeDryRun(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeDryRun(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.DryRun.name,
       async () => LigoCommands.DryRun.run(client),
@@ -141,7 +144,7 @@ const LigoCommands = {
   },
   EvaluateFunction: {
     name: 'ligo.evaluateFunction',
-    run: async (client) => lc.executeEvaluateFunction(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeEvaluateFunction(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.EvaluateFunction.name,
       async () => LigoCommands.EvaluateFunction.run(client),
@@ -149,7 +152,7 @@ const LigoCommands = {
   },
   EvaluateValue: {
     name: 'ligo.evaluateValue',
-    run: async (client) => lc.executeEvaluateValue(client).catch(reportException),
+    run: async (client: LanguageClient) => lc.executeEvaluateValue(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.EvaluateValue.name,
       async () => LigoCommands.EvaluateValue.run(client),
@@ -157,7 +160,7 @@ const LigoCommands = {
   },
   Deploy: {
     name: 'ligo.deploy',
-    run: async (client) => tc.executeDeploy(client).catch(reportException),
+    run: async (client: LanguageClient) => tc.executeDeploy(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.Deploy.name,
       async () => LigoCommands.Deploy.run(client),
@@ -165,7 +168,7 @@ const LigoCommands = {
   },
   GenerateDeployScript: {
     name: 'ligo.generateDeployScript',
-    run: async (client) => tc.executeGenerateDeployScript(client).catch(reportException),
+    run: async (client: LanguageClient) => tc.executeGenerateDeployScript(client).catch(reportException),
     register: (client: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.GenerateDeployScript.name,
       async () => LigoCommands.GenerateDeployScript.run(client),

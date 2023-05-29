@@ -155,9 +155,7 @@ let get_program ~raise ?(st = "auto") f =
       program)
 
 
-let get_program f ?st =
-  get_program ?st f
-
+let get_program f ?st = get_program ?st f
 
 let expression_to_core ~raise expression =
   let core =
@@ -175,7 +173,11 @@ let pack_payload ~raise (program : Ast_typed.program) (payload : Ast_unified.exp
   let code =
     let core = expression_to_core ~raise payload in
     let typed =
-      Ligo_compile.Of_core.compile_expression ~raise ~options ~context:(Ast_typed.Misc.to_signature program) core
+      Ligo_compile.Of_core.compile_expression
+        ~raise
+        ~options
+        ~context:(Ast_typed.Misc.to_signature program)
+        core
     in
     let aggregated =
       Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end typed
@@ -240,7 +242,11 @@ let typed_program_with_imperative_input_to_michelson
   in
   let app = Ligo_compile.Of_core.apply entry_point core in
   let typed_app =
-    Ligo_compile.Of_core.compile_expression ~raise ~options ~context:(Ast_typed.Misc.to_signature program) app
+    Ligo_compile.Of_core.compile_expression
+      ~raise
+      ~options
+      ~context:(Ast_typed.Misc.to_signature program)
+      app
   in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let aggregated =
@@ -269,7 +275,11 @@ let typed_program_with_imperative_input_to_michelson_twice
   let core2 = expression_to_core ~raise input2 in
   let app = Ligo_compile.Of_core.apply_twice entry_point core1 core2 in
   let typed_app =
-    Ligo_compile.Of_core.compile_expression ~raise ~options ~context:(Ast_typed.Misc.to_signature program) app
+    Ligo_compile.Of_core.compile_expression
+      ~raise
+      ~options
+      ~context:(Ast_typed.Misc.to_signature program)
+      app
   in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let aggregated =

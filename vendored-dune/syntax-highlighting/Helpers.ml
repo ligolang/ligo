@@ -31,7 +31,7 @@ let string: Core.pattern list = [
       begin_ = [(Regexp.string_begin, None)];
       end_ = [(Regexp.string_end, None)];
       patterns = [
-        "string_specialchar"
+        Name_ref "string_specialchar";
       ]
     }
   }

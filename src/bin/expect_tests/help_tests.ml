@@ -1,7 +1,12 @@
 open Cli_expect
 
+let remove_last_line str =
+  String.split_lines str |> List.drop_last_exn |> String.concat ~sep:"\n"
+
+
 let%expect_test _ =
   run_ligo_good [ "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     The LigoLANG compiler
@@ -16,7 +21,6 @@ let%expect_test _ =
                                    another
       run                        . compile and interpret ligo code
       info                       . tools to get information from contracts
-      mutate                     . create mutants of a ligo file
       repl                       . interactive ligo interpreter
       init                       . Initialize a new ligo project from template.
                                    Contract or library.
@@ -35,12 +39,11 @@ let%expect_test _ =
       lsp                        . [BETA] launch a LIGO lsp server
       analytics                  . Manage analytics
       version                    . print version information
-      help                       . explain a given subcommand (perhaps recursively)
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      help                       . explain a given subcommand (perhaps recursively) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
 compile a contract.
@@ -108,6 +111,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                transpiled contracts.
   [--views VIEWS], -v        . A list of declaration name that will be compiled
                                as on-chain views, separated by ','
+  [--warn-infinite-loop]     . warn about infinite loop
   [--warn-unused-rec]        . warn about unused recursion in a recursive
                                function
   [--werror]                 . treat warnings as errors
@@ -119,12 +123,11 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                the LIGO environment (lima ,
                                mumbai). By default, the current protocol
                                (nairobi) will be used
-  [-help], -?                . print this help text and exit
-
-(core/src/command.ml.Exit_called (status 0)) |}]
+  [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     compile parameters to a Michelson expression.
@@ -179,6 +182,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -190,12 +194,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     compile an initial storage in LIGO syntax to a Michelson expression.
@@ -250,6 +253,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -261,12 +265,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "constant"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     compile constant to a Michelson value and its hash.
@@ -295,6 +298,7 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--skip-analytics]         . Avoid ligo analytics publication. Configurable
                                    with environment variable LIGO_SKIP_ANALYTICS too
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -303,12 +307,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     run a smart-contract with the given storage and input.
@@ -349,6 +352,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -360,12 +364,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-call"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     run a function with the given parameter.
@@ -406,6 +409,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -413,12 +417,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "evaluate-expr"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     evaluate a given definition.
@@ -459,6 +462,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -468,12 +472,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "expression"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     compile to a Michelson value.
@@ -514,6 +517,7 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--skip-analytics]         . Avoid ligo analytics publication. Configurable
                                    with environment variable LIGO_SKIP_ANALYTICS too
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -522,12 +526,11 @@ let%expect_test _ =
                                    the LIGO environment (lima ,
                                    mumbai). By default, the current protocol
                                    (nairobi) will be used
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "list-declarations"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
   [%expect
     {|
     list all the top-level declarations.
@@ -559,6 +562,4 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
-      [-help], -?                . print this help text and exit
-
-    (core/src/command.ml.Exit_called (status 0)) |}]
+      [-help], -?                . print this help text and exit |}]

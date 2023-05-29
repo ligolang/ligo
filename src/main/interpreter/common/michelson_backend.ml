@@ -3,8 +3,6 @@ module Var = Simple_utils.Var
 open Simple_utils.Trace
 open Simple_utils.Option
 
-let storage_retreival_dummy_ty = Tezos_utils.Michelson.prim "int"
-
 let int_of_mutez t =
   Z.of_int64 @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.to_mutez t
 
@@ -1638,12 +1636,12 @@ let parse_raw_michelson_code ~raise code ty =
 let compare_michelson ~raise loc a b =
   let module LT = Ligo_interpreter.Types in
   let module LC = Ligo_interpreter.Combinators in
-  let ({ micheline_repr = { code; _ }; _ } : LT.typed_michelson_code) =
+  let (code, _) : LT.mcode * _ =
     trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-    @@ LC.get_michelson_expr a
+    @@ LC.get_michelson_code_and_type a
   in
-  let ({ micheline_repr = { code = code'; _ }; _ } : LT.typed_michelson_code) =
+  let (code', _) : LT.mcode * _ =
     trace_option ~raise (Errors.generic_error loc "Can't compare contracts")
-    @@ LC.get_michelson_expr b
+    @@ LC.get_michelson_code_and_type b
   in
   Caml.compare code code'

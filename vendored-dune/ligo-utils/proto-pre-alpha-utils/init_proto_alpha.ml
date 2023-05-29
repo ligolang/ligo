@@ -91,11 +91,11 @@ module Context_init = struct
     let proto_params =
       Data_encoding.Binary.to_bytes_exn Data_encoding.json json
     in
-    let* ctxt = Tp_environment.(
+    let* ctxt = Tpenv.(
       Context.add Memory_context.empty ["version"] (MBytes.of_string "genesis")
       )
     in
-    let* ctxt = Tp_environment.Context.(
+    let* ctxt = Tpenv.Context.(
       add ctxt protocol_param_key proto_params
       )
     in

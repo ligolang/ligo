@@ -1,2 +1,2 @@
-export /* @no_mutation */
+export @no_mutation
 const toto: D.titi = E.toto;

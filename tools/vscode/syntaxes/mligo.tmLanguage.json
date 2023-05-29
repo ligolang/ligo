@@ -3,7 +3,7 @@
   "scopeName": "source.mligo",
   "fileTypes": [ "mligo" ],
   "patterns": [
-    { "include": "#string" },
+    { "include": "#string0" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
     { "include": "#uppercaseidentifier" },
@@ -20,7 +20,7 @@
     { "include": "#typeannotation" }
   ],
   "repository": {
-    "string": {
+    "string0": {
       "name": "string.quoted.double.mligo",
       "begin": "\\\"",
       "end": "\\\"",
@@ -126,7 +126,7 @@
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
-        { "include": "#string" }
+        { "include": "#string0" }
       ]
     },
     "typeannotation": {
@@ -145,7 +145,7 @@
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
-        { "include": "#string" }
+        { "include": "#string0" }
       ]
     },
     "typeannotationlambda": {
@@ -164,7 +164,7 @@
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
-        { "include": "#string" }
+        { "include": "#string0" }
       ]
     },
     "typeoperator": {
@@ -198,7 +198,7 @@
         { "include": "#typeparentheses" },
         { "include": "#typeint" },
         { "include": "#typeproduct" },
-        { "include": "#string" }
+        { "include": "#string0" }
       ]
     },
     "typeint": {

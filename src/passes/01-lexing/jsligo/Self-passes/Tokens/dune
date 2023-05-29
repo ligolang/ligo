@@ -19,11 +19,10 @@
   Token
   ES6FUN
   ES6FUN_hook
-  VBAR
-  VBAR_hook
   SEMI
   SEMI_hook
   Attributes
+  Comments
   Self))
 
 ;; --------------------------------------------------------------------

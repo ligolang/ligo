@@ -34,7 +34,7 @@ let rec compile_type ~raise (t:AST.type_expression) : type_expression =
   let loc = t.location in
   match t.type_content with
   | T_variable (name) -> raise.error @@ no_type_variable @@ name
-  | t when (AST.compare_type_content t (t_bool ~loc ()).type_content) = 0-> return (T_base TB_bool)
+  | _ when Option.is_some (get_t_bool t) -> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
     let () = Assert.assert_true ~raise (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Backend.Michelson.name in
     match injection , parameters with

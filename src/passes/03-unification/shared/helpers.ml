@@ -90,3 +90,15 @@ module Make_unification (C : UNIF) = struct
   let compile_expression e = Ast_unified.Anamorphism.ana_expr ~f:unfolder e
   let compile_program prg = Ast_unified.Anamorphism.ana_program ~f:unfolder prg
 end
+
+let failwith_not_initial_node_decompiler node =
+  failwith @@
+    "Decompiler: ty_expr: not_initial nodes are not supported, make sure \
+     Nanopasses.decompile<...> was called before decompiling Ast_unified to CST. Node is:\n"
+  ^ Sexp.to_string_hum
+  @@
+  let d _ = Sexp.Atom "xx" in
+  match node with
+  | `Expr e -> AST.sexp_of_expr_ d d d d d e
+  | `Ty_expr t -> AST.sexp_of_ty_expr_ d t
+  | `Pattern p -> AST.sexp_of_pattern_ d d p

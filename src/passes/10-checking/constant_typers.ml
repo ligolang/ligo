@@ -1673,14 +1673,6 @@ module External_types = struct
         return m_or_bm)
 
 
-  let int_lima_types : (Errors.typer_error, Main_warnings.all) t =
-    let open Type in
-    let open Annot.Syntax in
-    of_type
-      (create
-         [ t_nat () ~loc ^~> t_int ~loc (); t_bls12_381_fr ~loc () ^~> t_int ~loc () ])
-
-
   let bytes_types : (Errors.typer_error, Main_warnings.all) t =
     let open Type in
     let open Annot.Syntax in

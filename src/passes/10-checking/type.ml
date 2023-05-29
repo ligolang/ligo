@@ -353,9 +353,14 @@ let get_t__type_ t = get_t_binary_construct t Literal_types._type_
   [@@map _type_, ("map", "big_map")]
 
 
-let get_t_bool t : unit option =
-  let t_bool = t_bool ~loc:t.location () in
-  Option.some_if (equal_content t.content t_bool.content) ()
+let get_t_bool (t : t) : unit option =
+  match t.content with
+  | T_sum { fields; _ } ->
+    let keys = Map.key_set fields in
+    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    then Some ()
+    else None
+  | _ -> None
 
 
 let get_t_tuple (t : t) : t list option =

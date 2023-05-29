@@ -2,6 +2,8 @@ type tokens = (address, nat) big_map
 
 type allowances = (address * address, nat) big_map
 
+(* (sender,account) -> value *)
+
 type storage =
   {
    tokens : tokens;
@@ -38,7 +40,7 @@ type getBalance =
 type getTotalSupply = {callback : nat contract}
 
 type action =
-  Transfer of transfer
+| Transfer of transfer
 | Approve of approve
 | GetAllowance of getAllowance
 | GetBalance of getBalance
@@ -52,8 +54,8 @@ let transfer (p, s : transfer * storage)
     else
       let authorized_value =
         match Big_map.find_opt
-                (Tezos.get_sender (), p.address_from)
-                s.allowances
+            (Tezos.get_sender (), p.address_from)
+            s.allowances
         with
           Some value -> value
         | None -> 0n in
@@ -88,16 +90,17 @@ let transfer (p, s : transfer * storage)
         (Some (receiver_balance + p.value))
         new_tokens in
     ([] : operation list),
-    {s with
-     tokens = new_tokens;
-     allowances = new_allowances}
+    {
+      s with
+        tokens = new_tokens; allowances = new_allowances
+    }
 
 let approve (p, s : approve * storage)
 : operation list * storage =
   let previous_value =
     match Big_map.find_opt
-            (p.spender, Tezos.get_sender ())
-            s.allowances
+        (p.spender, Tezos.get_sender ())
+        s.allowances
     with
       Some value -> value
     | None -> 0n in
@@ -112,8 +115,7 @@ let approve (p, s : approve * storage)
         (Some (p.value))
         s.allowances in
     ([] : operation list),
-    {s with
-     allowances = new_allowances}
+    {s with allowances = new_allowances}
 
 let getAllowance (p, s : getAllowance * storage)
 : operation list * storage =
@@ -157,9 +159,13 @@ let check_ (p : unit) : int =
   then 42
   else 0
 
+(* should return a constant function *)
+
 let f1 (x : unit) : unit -> tez =
   let amt : tez = Current.amount in
   fun (x : unit) -> amt
+
+(* should return an impure function *)
 
 let f2 (x : unit) : unit -> tez =
   fun (x : unit) -> Current.amount
@@ -411,6 +417,18 @@ let bar (b : int) : int =
   let test = fun (z : int) -> 2 + b + z in
   test b
 
+(*
+This test makes sure that the balance is accessible in CameLIGO.
+
+It is there to detect a regression of:
+https://gitlab.com/ligolang/ligo/issues/61
+
+which results in this error when you attempt to compile this contract:
+
+generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
+
+*)
+
 type parameter = unit
 
 type storage = tez
@@ -447,6 +465,8 @@ let mutimaps (m : foo) (n : foo) : foo =
   let bar : foo = Big_map.update 42 (Some 0) m in
   Big_map.update 42 (get bar) n
 
+(* Test CameLIGO bitwise operators *)
+
 let or_op (n : nat) : nat = Bitwise.or n 4n
 
 let and_op (n : nat) : nat = Bitwise.and n 7n
@@ -466,6 +486,8 @@ let xor_op_infix (n : nat) : nat = n lxor 7n
 let lsl_op_infix (n : nat) : nat = n lsl 7n
 
 let lsr_op_infix (n : nat) : nat = n lsr 7n
+
+// Test CameLIGO boolean operators
 
 let or_true (b : bool) : bool = b || true
 
@@ -499,6 +521,22 @@ let check_signature
   (pk, signed, msg : key * signature * bytes)
 : bool = Crypto.check pk signed msg
 
+(*
+$ tezos-client gen keys testsign
+
+$ tezos-client show address testsign -S
+Hash: tz1RffmtWjy435AXZuWwLWG6UaJ66ERmgviA
+Public Key: edpktz4xg6csJnJ5vcmMb2H37sWXyBDcoAp3XrBvjRaTSQ1zmZTeRQ
+Secret Key: unencrypted:edsk34mH9qhMdVWtbammJfYkUoQfwW6Rw5K6rbGW1ajppy3LPNbiJA
+
+$ tezos-client hash data '"hello"' of type string
+Raw packed data: 0x05010000000568656c6c6f
+...
+
+$ tezos-client sign bytes 0x05010000000568656c6c6f for testsign
+Signature: edsigtnzKd51CDomKVMFBoU8SzFZgNqRkYUaQH4DLUg8Lsimz98DFB82uiHAkdvx29DDqHxPf1noQ8noWpKMZoxTCsfprrbs4Xo
+*)
+
 let example : bool =
   Crypto.check
     ("edpktz4xg6csJnJ5vcmMb2H37sWXyBDcoAp3XrBvjRaTSQ1zmZTeRQ"
@@ -507,11 +545,17 @@ let example : bool =
      : signature)
     0x05010000000568656c6c6f
 
+(* Test whether closures capture variables in CameLIGO *)
+
 let test (k : int) : int =
   let j : int = k + 5 in
   let close : int -> int = fun (i : int) -> i + j in
-  let j : int = 20 in
+  let j : int = 20 (* Shadow original variable *)
+
+  in
   close 20
+
+(* This test check that the type are comparable *)
 
 let int_ (a : int) = a < a
 
@@ -534,6 +578,16 @@ let key_hash_ (a : key_hash) = a < a
 type comp_pair = int * int
 
 let comp_pair (a : comp_pair) = a < a
+
+(*
+type uncomp_pair_1 = int * int * int
+
+let uncomp_pair_1 (a: uncomp_pair_1) = a < a
+
+type uncomp_pair_2 = comp_pair * int
+
+let uncomp_pair_2 (a: uncomp_pair_2) = a < a
+*)
 
 type inner_record = (int, "one", nat, "two") michelson_pair
 
@@ -558,6 +612,8 @@ let main (i : int) =
   else
     let result = 0 in
     result
+
+// Test conditional in CameLIGO
 
 let main (i : int) = if i = 2 then 42 else 0
 
@@ -604,13 +660,15 @@ let main (action, store : unit * storage) : return =
   (([] : operation list), (foo : storage))
 
 type foo =
-  Bar of int
+| Bar of int
 | Baz
 
 let main (f : foo) : int =
   match f with
     Bar i -> i
   | Baz -> -1
+
+// Test conditional in CameLIGO
 
 let main (a, b : bool * bool) = if a = b then 999 else 1
 
@@ -627,8 +685,8 @@ let main (p, store : unit * storage)
 : operation list * storage =
   let n =
     (fun (f : int * int -> int)
-         (x : int)
-         (y : int) -> f (y, x))
+       (x : int)
+       (y : int) -> f (y, x))
       (fun (x : int) (y : int) -> x + y)
       0
       1 in
@@ -650,8 +708,8 @@ type storage = unit
 let main (p, s : unit * storage) : operation list * storage =
   let n =
     (fun (f : int -> int -> int)
-         (x : int)
-         (y : int) -> f y (x + y))
+       (x : int)
+       (y : int) -> f y (x + y))
       (fun (x : int) (y : int) -> x + y)
       0
       1 in
@@ -663,6 +721,8 @@ let main (p, s : unit * storage) =
   (fun (f : int -> int) (x : int) -> f x)
     (fun (x : int) -> x)
     1
+
+(* Test use of multiple subroutines in a CameLIGO function *)
 
 let foo (i : int) : int = i + 20
 
@@ -681,9 +741,11 @@ type param =
 type return = operation list * storage
 
 let attempt (p, store : param * storage) : return =
+  (* if p.attempt <> store.challenge then failwith "Failed challenge" else *)
+
   let contract : unit contract =
     match (Tezos.get_contract_opt Tezos.get_sender ()
-           : unit contract option)
+       : unit contract option)
     with
       Some contract -> contract
     | None -> (failwith "No contract" : unit contract) in
@@ -714,10 +776,12 @@ type reveal =
   }
 
 type parameter =
-  Commit of bytes
+| Commit of bytes
 | Reveal of reveal
 
 type return = operation list * storage
+
+(* We use hash-commit so that a baker can not steal *)
 
 let commit (p, s : bytes * storage) : return =
   let commit : commit =
@@ -776,11 +840,15 @@ let main (p, s : parameter * storage) : return =
     Commit c -> commit (c, s)
   | Reveal r -> reveal (r, s)
 
+(* Test a function which takes another function as an argument *)
+
 let foobar (i : int) : int =
   let foo : (int -> int) = fun (i : int) -> i in
   let bar : ((int -> int) -> int) =
     fun (f : int -> int) -> f i in
   bar foo
+
+(* higher order function with more than one argument *)
 
 let higher2 (i : int) (f : int -> int) : int =
   let ii : int = f i in
@@ -842,10 +910,15 @@ type update_details =
   }
 
 type action =
-  Buy of buy
+| Buy of buy
 | Update_owner of update_owner
 | Update_details of update_details
 | Skip
+
+(* The prices kept in storage can be changed by bakers, though they
+   should only be adjusted down over time, not up. *)
+(* The prices kept in storage can be changed by bakers, though they should only be
+   adjusted down over time, not up. *)
 
 type storage =
   {
@@ -856,6 +929,21 @@ type storage =
   }
 
 type return = operation list * storage
+
+(* Preliminary thoughts on ids:
+
+I very much like the simplicity of http://gurno.com/adam/mne/.  5 three
+letter words means you have a 15 character identity, not actually more
+annoying than an IP address and a lot more memorable than the raw
+digits. This can be stored as a single integer which is then
+translated into the corresponding series of 5 words.
+
+I in general like the idea of having a 'skip' mechanism, but it does
+need to cost something so people don't eat up the address space. 256^5
+means you have a lot of address space, but if people troll by skipping
+a lot that could be eaten up.  Should probably do some napkin
+calculations for how expensive skipping needs to be to deter people
+from doing it just to chew up address space.  *)
 
 let buy (parameter, storage : buy * storage) =
   let void : unit =
@@ -879,9 +967,10 @@ let buy (parameter, storage : buy * storage) =
   let updated_identities : (id, id_details) big_map =
     Big_map.update new_id (Some new_id_details) identities in
   ([] : operation list),
-  {storage with
-   identities = updated_identities;
-   next_id = new_id + 1}
+  {
+    storage with
+      identities = updated_identities; next_id = new_id + 1
+  }
 
 let update_owner
   (parameter, storage : update_owner * storage) =
@@ -911,8 +1000,7 @@ let update_owner
     let updated_identities =
       Big_map.update id (Some updated_id_details) identities in
     ([] : operation list),
-    {storage with
-     identities = updated_identities}
+    {storage with identities = updated_identities}
 
 let update_details
   (parameter, storage : update_details * storage) =
@@ -940,11 +1028,19 @@ let update_details
     let owner : address = current_id_details.owner in
     let profile : bytes =
       match new_profile with
-        None -> current_id_details.profile
+        None ->
+          (* Default *)
+
+          current_id_details.
+          profile
       | Some new_profile -> new_profile in
     let controller : address =
       match new_controller with
-        None -> current_id_details.controller
+        None ->
+          (* Default *)
+
+          current_id_details.
+          controller
       | Some new_controller -> new_controller in
     let updated_id_details : id_details =
       {
@@ -955,8 +1051,9 @@ let update_details
     let updated_identities : (id, id_details) big_map =
       Big_map.update id (Some updated_id_details) identities in
     ([] : operation list),
-    {storage with
-     identities = updated_identities}
+    {storage with identities = updated_identities}
+
+(* Let someone skip the next identity so nobody has to take one that's undesirable *)
 
 let skip (p, storage : unit * storage) =
   let void : unit =
@@ -964,8 +1061,7 @@ let skip (p, storage : unit * storage) =
     then ()
     else failwith "Incorrect amount paid." in
   ([] : operation list),
-  {storage with
-   next_id = storage.next_id + 1}
+  {storage with next_id = storage.next_id + 1}
 
 let main (action, storage : action * storage) : return =
   match action with
@@ -983,14 +1079,18 @@ let main (p, s : key_hash * unit) = main2 p s
 let main (kh : key_hash) : unit contract =
   Tezos.implicit_account kh
 
+// Demonstrate CameLIGO inclusion statements, see includer.mligo
+
 let foo : int = 144
+
+// Demonstrate CameLIGO inclusion statements, see included.mligo
 
 let bar : int = foo
 
 type storage = int
 
 type parameter =
-  Increment of int
+| Increment of int
 | Decrement of int
 
 type return = operation list * storage
@@ -1080,7 +1180,7 @@ let record_lambda =
   (farg.f farg.arg = 5)
 
 type foo_variant =
-  Foo
+| Foo
 | Bar of int
 | Baz of string
 
@@ -1090,6 +1190,20 @@ let variant_match =
     Foo -> false
   | Bar i -> true
   | Baz s -> false
+
+(* UNSUPPORTED: No deep patterns yet.
+type bar_variant =
+| Baz
+| Buz of int * int
+| Biz of int * int * string
+
+let long_variant_match =
+  let a = Biz (1,2,"Biz") in
+  match a with
+  | Baz -> "Baz"
+  | Buz (a,b) -> "Buz"
+  | Biz (a,b,c) -> c
+ *)
 
 let bool_match =
   let b = true in
@@ -1168,6 +1282,9 @@ let comparison_string =
 
 let divs_int =
   let a = 1 / 2 in
+  (* let b = 1/2n in *)
+  (* let c = 1n/2 in *)
+
   (a = 0)
 
 let divs_nat =
@@ -1210,9 +1327,17 @@ let check_hash_key (kh1, k2 : key_hash * key)
 
 type storage = unit
 
+(* not supported yet
+let main (p, s : unit * storage) = (fun x -> ()) ()
+*)
+
 let main (p, s : unit * storage) = (fun (_ : unit) -> ()) ()
 
 type storage = unit
+
+(* Not supported yet:
+let main (a, s : unit * storage) = (fun x -> ()) ()
+*)
 
 let main (a, s : unit * storage) =
   (fun (f : unit -> unit) -> f ()) (fun (_ : unit) -> unit)
@@ -1311,6 +1436,8 @@ let sum2 (p : string * string * string * string) : string =
   let a, b, c, d = p in
   a ^ b ^ c ^ d
 
+(* Simple test of binding multiple values *)
+
 let (x : int), (y : int) = 1, 2
 
 let main (p : unit) : int = x + y
@@ -1323,9 +1450,13 @@ let foobar : (int * int) = (23, 42)
 
 let (foo : int), (bar : int) = foobar
 
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
+
 let correct_values_bound (p : unit) : int * int = foo, bar
 
 let non_tuple_rhs (p : unit) : int = bar - foo
+
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
 
 let big_tuple : int * int * int * int * int =
   10, 20, 30, 40, 50
@@ -1335,6 +1466,8 @@ let (a : int), (b : int), (c : int), (d : int), (e : int) =
 
 let correct_values_big_tuple (p : unit)
 : int * int * int * int * int = a, b, c, d, e
+
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
 
 let different_types : int * string = 10, "hello"
 
@@ -1348,13 +1481,7 @@ type storage = int * int
 let main (n : int * storage) : operation list * storage =
   let x : int * int =
     let x : int = 7 in
-    x + n.0,
-    n.
-    1.
-    0
-    + n.
-      1.
-      1 in
+    x + n.0, n.1.0 + n.1.1 in
   ([] : operation list), x
 
 let f0 (a : string) = true
@@ -1417,11 +1544,12 @@ let iter_op (s : int list) : unit =
   List.iter do_nothing s
 
 let local_type (u : unit) : int =
-  type toto =
-    int in
-    let titi : toto = 1 in
-    let titi = titi + 2 in
-    titi
+  type toto = int in
+  let titi : toto = 1 in
+  let titi = titi + 2 in
+  titi
+
+(* Test functional iterators in CameLIGO *)
 
 let rec aux_simple (i : int) : int =
   if i < 100
@@ -1492,11 +1620,17 @@ let add (n, m : int * foobar) : foobar = Map.add 23 n m
 
 let rm (m : foobar) : foobar = Map.remove 42 m
 
+(* Dummy test so that we can add the same test for PascaLIGO *)
+
 let patch_ (m : foobar) : foobar =
   Map.literal [(0, 5); (1, 6); (2, 7)]
 
+(* Second dummy test, see above *)
+
 let patch_empty (m : foobar) : foobar =
   Map.literal [(0, 0); (1, 1); (2, 2)]
+
+(* Third dummy test, see above *)
 
 let patch_deep (m : foobar * nat) : foobar * nat =
   Map.literal [(0, 0); (1, 9); (2, 2)], 10n
@@ -1531,7 +1665,7 @@ let deep_op (m : foobar) : foobar =
 type storage = int
 
 type parameter =
-  Add of int
+| Add of int
 | Sub of int
 
 type return = operation list * storage
@@ -1562,7 +1696,7 @@ let match_option (i : int option) : int =
 type storage = int
 
 type parameter =
-  Increment of int
+| Increment of int
 | Decrement of int
 
 type return = operation list * storage
@@ -1608,15 +1742,17 @@ let main2 (pm, s : union1_michelson * nat) =
   | Choice2 f -> ([] : operation list), f.baz
 
 type st4 =
-  Foo4 of int
+| Foo4 of int
 | Bar4 of nat
 | Baz4 of string
 | Boz4 of bool
 
 type st3 =
-  Foo3 of int
+| Foo3 of int
 | Bar3 of nat
 | Baz3 of string
+
+(*convert from*)
 
 type tr3 = (string, "baz4", bool, "boz4") michelson_or
 
@@ -1633,6 +1769,8 @@ type tl2 = (tl3, "", string, "baz4") michelson_or
 type tl1 = (tl2, "", bool, "boz4") michelson_or
 
 let vl : tl1 = M_left (M_right "eq" : tl2)
+
+// Test michelson insertion in CameLIGO
 
 let michelson_add (n : nat * nat) : nat =
   [%Michelson ({| { UNPAIR;ADD } |} : nat * nat -> nat)] n
@@ -1659,6 +1797,8 @@ let main (action, store : unit * storage) : return =
   let foo = (3, (1, 2n)) in
   (([] : operation list), (foo : storage))
 
+(* Test function with several parameters *)
+
 let abcde_curried
   (a : int)
   (b : int)
@@ -1669,6 +1809,8 @@ let abcde_curried
 
 let abcde (x : int * int * int * int * int) : int =
   abcde_curried x.0 x.1 x.2 x.3 x.4
+
+// storage type
 
 type counter = nat
 
@@ -1685,6 +1827,8 @@ type storage =
    threshold : threshold;
    auth : authorized_keys
   }
+
+// I/O types
 
 type message = unit -> operation list
 
@@ -1714,9 +1858,8 @@ let check_message (param, s : check_message_pt * storage)
       let keys : authorized_keys = s.auth in
       let aux =
         fun (vk, pkh_sig
-             : (nat * authorized_keys) *
-               (key_hash * signature)) -> let valid, keys =
-            vk in
+           : (nat * authorized_keys) *
+             (key_hash * signature)) -> let valid, keys = vk in
           match keys with
             [] -> vk
           | key :: keys ->
@@ -1819,9 +1962,7 @@ let modify (r : foobar) : foobar =
 
 let modify_abc (r : abc) : abc =
   let c = 42 in
-  {r with
-   b = 2048;
-   c = c}
+  {r with b = 2048; c = c}
 
 type big_record =
   {
@@ -1844,8 +1985,9 @@ let br : big_record =
 type double_record = {inner : abc}
 
 let modify_inner (r : double_record) : double_record =
-  {r with
-   inner.b = 2048}
+  {r with inner.b = 2048}
+
+// Test while loops in PascaLIGO
 
 let rec sum ((n, acc) : int * int) : int =
   if (n < 1)
@@ -1886,9 +2028,13 @@ let y (_ : unit) : nat =
     x
   end
 
+// Test set iteration
+
 let aggregate (i : int) (j : int) : int = i + j
 
 let fold_op (s : int set) : int = Set.fold aggregate s 15
+
+(* Test set operations in CameLIGO *)
 
 let literal_op (p : unit) : string set =
   Set.literal ["foo"; "bar"; "foobar"]
@@ -1902,6 +2048,14 @@ let remove_op (s : string set) : string set =
 let remove_deep (s : string set * nat) : string set =
   Set.remove "foobar" s.0
 
+(*
+let patch_op (s: string set) : string set =
+  begin patch s with set ["foobar"]; end with s
+
+let patch_op_deep (s: string set * nat) : string set * nat =
+  begin patch s.0 with set ["foobar"]; end with s
+*)
+
 let mem_op (s : string set) : bool = Set.mem "foobar" s
 
 let size_op (s : string set) : nat = Set.cardinal s
@@ -1909,6 +2063,8 @@ let size_op (s : string set) : nat = Set.cardinal s
 let main (p : key_hash) : operation list =
   let useless : operation = Tezos.set_delegate (Some p) in
   ([] : operation list)
+
+(* Test that the string concatenation syntax in CameLIGO works *)
 
 let size_op (s : string) : nat = String.length s
 
@@ -1926,7 +2082,7 @@ let main (ps : unit * unit) : operation list * unit =
      : operation list * unit)
 
 type parameter =
-  Increment of int
+| Increment of int
 | Decrement of int
 
 type storage = int
@@ -1956,6 +2112,14 @@ let add_more_tez : tez =
   + 10000mutez
   + 1000mutez
 
+(*
+Modelled after:
+
+  https://gitlab.com/tezos/tezos/-/blob/95a072715b/tests_python/contracts_alpha/mini_scenarios/ticket_builder_fungible.tz
+
+Goes with ticket_wallet.mligo.
+*)
+
 type mint_parameter =
   [@layout comb]
   {
@@ -1964,7 +2128,7 @@ type mint_parameter =
   }
 
 type parameter =
-  Burn of unit ticket
+| Burn of unit ticket
 | Mint of mint_parameter
 
 type storage = [@layout comb] {admin : address}
@@ -1993,6 +2157,14 @@ let main (arg : parameter * storage)
         end
   end
 
+(*
+Modelled after:
+
+  https://gitlab.com/tezos/tezos/-/blob/95a072715b/tests_python/contracts_alpha/mini_scenarios/ticket_wallet_fungible.tz
+
+Goes with ticket_builder.mligo.
+*)
+
 type send_parameter =
   [@layout comb]
   {
@@ -2002,7 +2174,7 @@ type send_parameter =
   }
 
 type parameter =
-  Receive of unit ticket
+| Receive of unit ticket
 | Send of send_parameter
 
 type storage =
@@ -2035,7 +2207,7 @@ let main (arg : parameter * storage)
              None -> ticket
            | Some old_ticket ->
                (match Tezos.join_tickets
-                        (ticket, old_ticket)
+                    (ticket, old_ticket)
                 with
                   None ->
                     (failwith "impossible?" : unit ticket)
@@ -2072,8 +2244,8 @@ let main (arg : parameter * storage)
                       (failwith "not enough tickets" : nat)
                   | Some keep_amt -> keep_amt in
                 (match Tezos.split_ticket
-                         ticket
-                         (send_amt, keep_amt)
+                     ticket
+                     (send_amt, keep_amt)
                  with
                    None ->
                      (failwith "impossible?"
@@ -2111,14 +2283,17 @@ type storage =
 type return = operation list * storage
 
 let main (action, store : parameter * storage) : return =
+  (* Multiple evaluations of Tezos.get_now () give different values *)
+
   let my_now : timestamp = Tezos.get_now () in
   if my_now > store.next_use
   then
     let store : storage =
-      {store with
-       next_use = my_now + store.interval} in
+      {store with next_use = my_now + store.interval} in
     store.execute (), store
   else
+    (* TODO: Add the time until next use to this message *)
+
     (failwith
        "You have to wait before you can execute this contract again."
      : return)
@@ -2173,7 +2348,7 @@ let hello, ten, world, fifty_n = test_t_2
 let type_tuple_d_2 (p : unit) = hello ^ world
 
 type foobar =
-  Foo of int
+| Foo of int
 | Bar of bool
 | Kee of nat
 
@@ -2196,7 +2371,7 @@ type storage =
 type return = operation list * storage
 
 type vote =
-  Yea
+| Yea
 | Nay
 
 type reset =
@@ -2207,7 +2382,7 @@ type reset =
   }
 
 type parameter =
-  Vote of vote
+| Vote of vote
 | Reset of reset
 
 let reset (reset, _ : reset * storage) : return =
@@ -2223,29 +2398,39 @@ let reset (reset, _ : reset * storage) : return =
 
 let vote (vote, store : vote * storage) : return =
   let my_now = Tezos.get_now () in
+  (* let _ =
+     assert (my_now >= store.start_time && store.finish_time > my_now) in *)
+
   let addr = Tezos.get_sender () in
+  (* let _ = assert (not Set.mem addr store.voters) in *)
+
   let store =
     match vote with
       Yea -> {store with yea = store.yea + 1n}
     | Nay -> {store with nay = store.nay + 1n} in
   ([] : operation list),
-  {store with
-   voters = Set.add addr store.voters}
+  {store with voters = Set.add addr store.voters}
 
 let main (action, store : parameter * storage) : return =
   match action with
     Vote v -> vote (v, store)
   | Reset r -> reset (r, store)
 
+(* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
+
 type storage = int
 
+(* variant defining pseudo multi-entrypoint actions *)
+
 type parameter =
-  Increment of int
+| Increment of int
 | Decrement of int
 
 let add (a, b : int * int) : int = a + b
 
 let sub (a, b : int * int) : int = a - b
+
+(* real entrypoint that re-routes the flow based on the parameter provided *)
 
 let main (p, s : parameter * storage) =
   let storage =

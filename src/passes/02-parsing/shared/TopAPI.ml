@@ -40,11 +40,11 @@ module type PRINTER =
 
 module type PRETTY =
   sig
-    type environment
-    val default_environment : environment
+    type state
+    val default_state : state
 
     type tree
-    val print : environment -> tree -> PPrint.document
+    val print : state -> tree -> PPrint.document
   end
 
 module type WARNING =
@@ -146,7 +146,7 @@ module Make
     let finalise tree (std : Std.t) : unit =
       if Options.pretty then
         (* Printing the syntax tree to source code *)
-        let doc = Pretty.(print default_environment) tree in
+        let doc = Pretty.(print default_state) tree in
         let width =
           match Terminal_size.get_columns () with
             None -> 60

@@ -193,3 +193,13 @@ let of_yojson = fun t ->
        | (Error _ as e), _ | _, (Error _ as e) -> e)
   | _ ->
      Utils.error_yojson_format "{start: Pos.t, stop: Pos.t}"
+
+let extract (x : region) =
+  let start = x#start#compact `Point in
+  let end_ = x#stop#compact `Point in
+  start,end_
+
+let sexp_of_t x =
+  let start,end_ = extract x in
+  Sexp.(List [ Atom start ; Atom end_ ])
+let t_of_sexp x = assert false

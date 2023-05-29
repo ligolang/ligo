@@ -17,21 +17,63 @@ import modelSessionManager from "./modelSessionManager";
 import { theme } from "./theme";
 import { actions } from "~/base-components/workspace";
 import { findNonAsciiCharIndex } from "~/components/validators";
+import fileOps from "~/base-components/file-ops";
 
 function createWebSocket() {
-  const url = `ws://${process.env.BACKEND_URL}`;
+  const url = `wss://${process.env.BACKEND_URL}`;
   const webSocket = new WebSocket(url);
   webSocket.onopen = () => {
     const socket = toSocket(webSocket);
     const reader = new WebSocketMessageReader(socket);
     const writer = new WebSocketMessageWriter(socket);
-    const languageClient = createLanguageClient({
-      reader,
-      writer,
+
+    // Load all file contents and send them to the backend before initializing
+    // the language server.
+    modelSessionManager.projectManager.loadProjectFileTree().then((fileTree) => {
+      const filePromiseMap = new Map();
+      loadProjectFileContentsRecursively(fileTree, filePromiseMap).then(() => {
+        Promise.all(filePromiseMap.values()).then((contents) => {
+          const paths = Array.from(filePromiseMap.keys());
+          socket.send(paths.length);
+          for (let i = 0; i < paths.length; i++) {
+            const fileJSON = new Map();
+            fileJSON.set("path", paths[i]);
+            fileJSON.set("content", contents[i]);
+            socket.send(JSON.stringify(Object.fromEntries(fileJSON)));
+          }
+
+          const languageClient = createLanguageClient({
+            reader,
+            writer,
+          });
+          languageClient.start();
+          reader.onClose(() => languageClient.stop());
+        });
+      });
     });
-    languageClient.start();
-    reader.onClose(() => languageClient.stop());
   };
+}
+
+async function loadProjectFileContentsRecursively(fileTree, filePromiseMap) {
+  if (fileTree.isLeaf) {
+    if (isLigoPath(fileTree.key)) {
+      filePromiseMap.set(fileTree.key, fileOps.readFile(fileTree.key));
+    }
+  } else {
+    for (let i = 0; i < fileTree.children.length; i++) {
+      const child = fileTree.children[i];
+      loadProjectFileContentsRecursively(child, filePromiseMap);
+    }
+  }
+}
+
+function isLigoPath(path) {
+  return (
+    path.endsWith(".mligo") ||
+    path.endsWith(".ligo") ||
+    path.endsWith(".pligo") ||
+    path.endsWith(".jsligo")
+  );
 }
 
 function createLanguageClient(transports) {
@@ -79,6 +121,49 @@ export default class MonacoEditor extends Component {
     if (modelSessionManager.projectManager.onEditorReady) {
       modelSessionManager.projectManager.onEditorReady(this.monacoEditor, this);
     }
+
+    // Override go-to-definition logic
+    const services = [
+      ...this.monacoEditor._instantiationService._parent._services._entries.values(),
+    ];
+    const textModelService = services.find(
+      (x) => Object.getPrototypeOf(x) && "createModelReference" in Object.getPrototypeOf(x)
+    );
+
+    // GoToDefinition validates that the range is within the bounds of
+    // the text model, so just generate a really big one that will work
+    // for any range.
+    const navigationTextModel = monaco.editor.createModel(new Array(10000).fill("").join("\n"));
+
+    textModelService.createModelReference = async (uri) => {
+      const reference = {
+        async load() {
+          return navigationTextModel;
+        },
+        dispose() {},
+        textEditorModel: navigationTextModel,
+      };
+      return {
+        object: reference,
+        dispose() {},
+      };
+    };
+
+    const codeEditorService = this.monacoEditor._codeEditorService;
+    const openEditorBase = codeEditorService.openCodeEditor.bind(codeEditorService);
+    codeEditorService.openCodeEditor = async (input, source) => {
+      const result = await openEditorBase(input, source);
+      if (result === null) {
+        modelSessionManager.nextEditorCursorUpdate = input.options.selection;
+        actions.workspace.openFile({
+          path: input.resource.path.substring(1),
+          remote: true,
+          pathInProject: modelSessionManager.projectManager.pathInProject(input.resource.path),
+          isLeaf: true,
+        });
+      }
+      return result; // always return the base result
+    };
   }
 
   shouldComponentUpdate(props) {
@@ -86,7 +171,21 @@ export default class MonacoEditor extends Component {
       if (this.props.modelSession.model) {
         this.props.modelSession.viewState = this.monacoEditor.saveViewState();
       }
-      props.modelSession.recoverInEditor(this.monacoEditor);
+      props.modelSession.recoverInEditor(this.monacoEditor).then(() => {
+        if (modelSessionManager.nextEditorCursorUpdate !== null) {
+          modelSessionManager.editor.revealRangeInCenterIfOutsideViewport({
+            startLineNumber: modelSessionManager.nextEditorCursorUpdate.startLineNumber,
+            endLineNumber: modelSessionManager.nextEditorCursorUpdate.endLineNumber,
+            startColumn: modelSessionManager.nextEditorCursorUpdate.startColumn,
+            endColumn: modelSessionManager.nextEditorCursorUpdate.endColumn,
+          });
+          modelSessionManager.editor.setPosition({
+            lineNumber: modelSessionManager.nextEditorCursorUpdate.startLineNumber,
+            column: modelSessionManager.nextEditorCursorUpdate.startColumn,
+          });
+          modelSessionManager.nextEditorCursorUpdate = null;
+        }
+      });
 
       this.throttledLayoutEditor();
     }
@@ -134,9 +233,9 @@ export default class MonacoEditor extends Component {
       mouseWheelZoom: true,
     });
     // install Monaco language client services
-    // MonacoServices.install();
+    MonacoServices.install();
 
-    // createWebSocket();
+    createWebSocket();
 
     modelSessionManager.editor = monacoEditor;
     monacoEditor.onDidChangeModelContent((e) => {
