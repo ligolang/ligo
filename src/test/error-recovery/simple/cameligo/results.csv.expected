@@ -19,8 +19,8 @@ PASS,missing_eq_in_type_decl.mligo,0,0,0,122,0
 PASS,missing_expr_parenthesesL.mligo,2,39,9,122,0
 PASS,missing_expr_parenthesesR.mligo,2,22,6,122,0
 PASS,missing_ident_in_type_decl.mligo,2,2,2,94,0
-PASS,missing_in_kw.mligo,0,0,0,82,0
 PASS,missing_int.mligo,2,5,5,122,0
+PASS,missing_in_kw.mligo,0,0,0,82,0
 PASS,missing_module_kw_in_module_decl.mligo,13,93,5,94,1
 PASS,missing_name_of_argument.mligo,2,2,2,122,0
 PASS,missing_semicolon_in_record_decl.mligo,3,17,13,122,0

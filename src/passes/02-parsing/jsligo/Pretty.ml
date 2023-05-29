@@ -146,9 +146,13 @@ let is_enclosed_type = function
 (* PRINTING THE CST *)
 
 let rec print state (node : CST.t) =
-  Utils.nseq_to_list node.statements
-|> List.map ~f:(pp_toplevel_statement state)
-|> separate_map hardline group
+  let {statements; eof} = node in
+  let prog = Utils.nseq_to_list statements
+             |> List.map ~f:(pp_toplevel_statement state)
+             |> separate_map hardline group
+  in match eof#comments with
+       [] -> prog
+     | comments -> prog ^/^ pp_comments comments
 
 and pp_toplevel_statement state = function
   TopLevel (stmt, _) ->
@@ -184,20 +188,20 @@ and pp_SExpr state (node: attribute list * expr) =
   else pp_attributes state attr ^/^ expr_doc
 
 and pp_for state (node: for_stmt reg) =
-  let { attributes; kwd_for; lpar; initialiser; 
-        semi1; condition; semi2; afterthought; rpar; 
+  let { attributes; kwd_for; lpar; initialiser;
+        semi1; condition; semi2; afterthought; rpar;
         statement} = node.value in
   let par =
     Option.value_map initialiser ~default:space ~f:(pp_statement state) ^^
     token semi1 ^^
     Option.value_map condition ~default:space ~f:(pp_expr state) ^^
     token semi2 ^^
-    Option.value_map afterthought ~default:space ~f:(pp_nsepseq (break 1) 
+    Option.value_map afterthought ~default:space ~f:(pp_nsepseq (break 1)
       (pp_expr state))
   in
   let par = pp_par_like_document state par lpar rpar
-  in pp_attributes state attributes ^^ 
-  token kwd_for ^^ space ^^ par ^^ space ^^ 
+  in pp_attributes state attributes ^^
+  token kwd_for ^^ space ^^ par ^^ space ^^
   Option.value_map statement ~default:(string ";") ~f:(pp_statement state)
 
 and pp_for_of state (node: for_of reg) =
