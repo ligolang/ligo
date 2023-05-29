@@ -69,7 +69,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
   @@
   let const content =
     let%bind loc = loc () in
-    return @@ Type.make_t ~loc content (Some type_)
+    return @@ Type.make_t ~loc content
   in
   let lift type_ =
     let%bind loc = loc () in
@@ -104,9 +104,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     in
     let%bind ty_binders = ty_binders arity in
     let%bind loc = loc () in
-    let parameters =
-      List.map ~f:(fun t -> Type.make_t ~loc (T_variable t) None) ty_binders
-    in
+    let parameters = List.map ~f:(fun t -> Type.make_t ~loc (T_variable t)) ty_binders in
     let kind = Kind.Type in
     let%bind app =
       const @@ T_construct { language = "Michelson"; constructor; parameters }

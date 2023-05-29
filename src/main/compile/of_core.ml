@@ -117,13 +117,11 @@ let compile_expression
 let apply (entry_point : Value_var.t) (param : Ast_core.expression) : Ast_core.expression =
   let entry_point_var : Ast_core.expression =
     { expression_content = Ast_core.E_variable entry_point
-    ; sugar = None
     ; location = Virtual "generated entry-point variable"
     }
   in
   let applied : Ast_core.expression =
     { expression_content = Ast_core.E_application { lamb = entry_point_var; args = param }
-    ; sugar = None
     ; location = Virtual "generated application"
     }
   in
@@ -139,20 +137,17 @@ let apply_twice
   let name = Value_var.of_input_var ~loc:Location.dummy entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content = Ast_core.E_variable name
-    ; sugar = None
     ; location = Virtual "generated entry-point variable"
     }
   in
   let applied : Ast_core.expression =
     { expression_content =
         Ast_core.E_application { lamb = entry_point_var; args = param1 }
-    ; sugar = None
     ; location = Virtual "generated application"
     }
   in
   let applied : Ast_core.expression =
     { expression_content = Ast_core.E_application { lamb = applied; args = param2 }
-    ; sugar = None
     ; location = Virtual "generated application"
     }
   in

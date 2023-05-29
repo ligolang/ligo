@@ -1,7 +1,6 @@
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
-module S = Ast_core
 open Ligo_prim
 open Literal_types
 open Types
@@ -29,26 +28,22 @@ type type_content = [%import: Types.type_content]
   ez
     { prefixes =
         [ ( "make_t"
-          , fun ~loc type_content type_meta : type_expression ->
-              { type_content; location = loc; orig_var = None; type_meta } )
+          , fun ~loc type_content : type_expression ->
+              { type_content; location = loc; orig_var = None } )
         ; ("get", fun x -> x.type_content)
         ]
     ; wrap_constructor =
-        ( "type_content"
-        , fun type_content ~loc ?type_meta () -> make_t ~loc type_content type_meta )
+        ("type_content", fun type_content ~loc () -> make_t ~loc type_content)
     ; wrap_get = "type_content", get
     ; default_get = `Option
     }]
 
-let t_constant ~loc ?core injection parameters : type_expression =
-  make_t
-    ~loc
-    (T_constant { language = Backend.Michelson.name; injection; parameters })
-    core
+let t_constant ~loc injection parameters : type_expression =
+  make_t ~loc (T_constant { language = Backend.Michelson.name; injection; parameters })
 
 
 (* TODO?: X_name here should be replaced by X_injection *)
-let t__type_ ~loc ?core () : type_expression = t_constant ~loc ?core _type_ []
+let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
   [@@map
     _type_
     , ( "signature"
@@ -77,7 +72,7 @@ let t__type_ ~loc ?core () : type_expression = t_constant ~loc ?core _type_ []
       , "int64" )]
 
 
-let t__type_ ~loc ?core t : type_expression = t_constant ~loc ?core _type_ [ t ]
+let t__type_ ~loc t : type_expression = t_constant ~loc _type_ [ t ]
   [@@map
     _type_
     , ( "list"
@@ -94,12 +89,7 @@ let t_mutez = t_tez
 
 let t_abstraction1 ~loc name kind : type_expression =
   let ty_binder = Type_var.fresh ~loc ~name:"_a" () in
-  let type_ =
-    t_constant
-      ~loc
-      name
-      [ t_variable ~loc ~type_meta:(Ast_core.t_variable ~loc ty_binder ()) ty_binder () ]
-  in
+  let type_ = t_constant ~loc name [ t_variable ~loc ty_binder () ] in
   t_abstraction { ty_binder; kind; type_ } ~loc ()
 
 
@@ -153,8 +143,8 @@ let t_abstraction3 ~loc name kind_l kind_m kind_r : type_expression =
 
 let t_for_all ty_binder kind type_ = t_for_all { ty_binder; kind; type_ } ()
 
-let t_record ~loc ?core ~layout fields : type_expression =
-  t_record ~loc ?type_meta:core (Row.create ~layout fields) ()
+let t_record ~loc ~layout fields : type_expression =
+  t_record ~loc (Row.create ~layout fields) ()
 
 
 let default_layout = Layout.default
@@ -172,37 +162,33 @@ let fields_with_no_annot fields =
    Currently the typer doesn't insert any annotations. Lets keep that for now and raise an issue later 
 hopefully test won't pass but I am uncertain :D *)
 
-let ez_t_record
-    ~loc
-    ?core
-    ?(layout = default_layout)
-    (lst : (Label.t * type_expression) list)
+let ez_t_record ~loc ?(layout = default_layout) (lst : (Label.t * type_expression) list)
     : type_expression
   =
   let layout = layout @@ fields_with_no_annot lst in
   let row = Row.of_alist_exn ~layout lst in
-  make_t ~loc (T_record row) core
+  make_t ~loc (T_record row)
 
 
-let t_pair ~loc ?core a b : type_expression =
-  ez_t_record ~loc ?core [ Label.of_int 0, a; Label.of_int 1, b ]
+let t_pair ~loc a b : type_expression =
+  ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
-let t_sum_ez ~loc ?core ?(layout = default_layout) (lst : (string * type_expression) list)
+let t_sum_ez ~loc ?(layout = default_layout) (lst : (string * type_expression) list)
     : type_expression
   =
   let fields = List.map ~f:(fun (x, y) -> Label.of_string x, y) lst in
   let layout = layout @@ fields_with_no_annot fields in
   let row = Row.of_alist_exn ~layout fields in
-  make_t ~loc (T_sum row) core
+  make_t ~loc (T_sum row)
 
 
-let t_bool ~loc ?core () : type_expression =
-  t_sum_ez ~loc ?core [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
+let t_bool ~loc () : type_expression =
+  t_sum_ez ~loc [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
 
 
-let t_arrow param result ~loc ?s () : type_expression =
-  t_arrow ~loc ?type_meta:s { type1 = param; type2 = result } ()
+let t_arrow param result ~loc () : type_expression =
+  t_arrow ~loc { type1 = param; type2 = result } ()
 
 
 let get_lambda_with_type e =
