@@ -120,7 +120,7 @@ let test_cases =
              ~file:"contracts/lsp/registry.jsligo"
              ~lib_name:"bigarray"
              ~file_path:(Filename.concat "lib" "bigarray.mligo")
-        |> Caml.String.lowercase_ascii
+        |> Path.normalise
     ; definition = Some (interval 27 4 11)
     ; type_definition = false
     }
