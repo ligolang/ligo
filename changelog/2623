@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "Bug fix: Comments ending a contract are now pretty-printed (formatted by the editor).\\n\\n"
+merge_request: '2623'
+title: "Printing trailing comments (attached to EOF)"
+type: fixed
+            
