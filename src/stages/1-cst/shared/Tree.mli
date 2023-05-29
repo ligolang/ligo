@@ -114,6 +114,9 @@ val mk_children_list :
 val mk_children_nsepseq :
   'a printer -> ?root:root -> ('a,_) Utils.nsepseq -> child list
 
+val mk_children_nsepseq_opt :
+  'a printer -> ?root:root -> ('a,_) Utils.nsepseq option -> child list
+
 val mk_children_sepseq :
   'a printer -> ?root:root -> ('a,_) Utils.sepseq -> child list
 

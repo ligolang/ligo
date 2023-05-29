@@ -49,3 +49,29 @@ let should_match_list
       (List.map ~f:to_string extra)
       format_list
       (List.map ~f:to_string missing)
+
+
+let should_be_contained_in
+    ?(msg : string option)
+    (testable_a : 'a Alcotest.testable)
+    ~small
+    ~big
+    : unit
+  =
+  match diff_by (Alcotest.equal testable_a) big small with
+  | [] -> ()
+  | missing ->
+    let to_string = Format.asprintf "%a" (Alcotest.pp testable_a) in
+    let format_list = Fmt.Dump.list Fmt.string in
+    failf
+      ("%s"
+      ^^ "\n* Small list contains: %a"
+      ^^ "\n\n* Big list contains: %a"
+      ^^ "\n\n* Missing: %a")
+      (Option.value ~default:"The first list is not contained in the second list." msg)
+      format_list
+      (List.map ~f:to_string small)
+      format_list
+      (List.map ~f:to_string big)
+      format_list
+      (List.map ~f:to_string missing)

@@ -1,0 +1,7 @@
+const main = (_: unit, _: int): [list<operation>, int] => {
+  let y = 0;
+  for ( ; ; y++) {
+    let _ = unit;
+  }
+  return [list([]), y]
+};

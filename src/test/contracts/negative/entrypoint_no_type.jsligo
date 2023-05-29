@@ -4,7 +4,7 @@ type organization = {
 };
 type storage = int;
 
-// @entry
+@entry
 const unique = (_ : organization, _ : storage) => {
     return failwith("You need to be part of Tezos organization to activate an organization");
 };

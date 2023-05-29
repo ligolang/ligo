@@ -17,7 +17,7 @@ let%expect_test _ =
   [%expect
     {|
       File "../../test/contracts/negative/export_attr_const.jsligo", line 2, characters 12-18:
-        1 | export /* @no_mutation */
+        1 | export @no_mutation
         2 | const toto: D.titi = E.toto;
                         ^^^^^^
 

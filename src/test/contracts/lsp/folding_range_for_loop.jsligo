@@ -1,0 +1,20 @@
+const test = (() => {
+    for (let i = 0 ; i < 10 ; i++) {
+        i++
+    }
+    for ( let j = 0 
+        ; j < 10 
+        ; j++ ) {
+        j++
+    }
+    for (let k = 0 ; k < 10 ; k++) ;
+    for ( let l = 0 
+        ; l < 10 
+        ; l++ ) ;
+    for (let m = 0 ; m < 10 ; m++) {
+        for (let n = 0 ; n < 10 ; n++) {
+            m++;
+            n++
+        }
+    }
+})();

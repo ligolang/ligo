@@ -2,19 +2,19 @@ namespace IncDec {
   type storage = int;
   type ret = [list<operation>, storage];
 
-  // @entry
+  @entry
   const increment = (_: unit, store : storage) : ret => {
     let s = store
     return [list([]), ++s];
   }
 
-  // @entry
+  @entry
   const decrement = (_: unit, store : storage) : ret => {
     let s = store
     return [list([]), --s];
   }
 
-  // @entry
+  @entry
   const reset = (_ : unit, _ : storage) : ret =>
     [list([]), 0];
 };

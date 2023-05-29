@@ -8,6 +8,12 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "expression"; "jsligo"; "t"; "--init-file"; contract "jsligo_uppercase_generic.jsligo" ];
+  [%expect
+    {|
+    { 1 ; 2 ; 3 } |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "jsligo_list_concat.jsligo" ];
   [%expect
     {|
@@ -2429,7 +2435,7 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/entrypoint_no_type.jsligo", line 8, character 15 to line 10, character 1:
-      7 | // @entry
+      7 | @entry
       8 | const unique = (_ : organization, _ : storage) => {
                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       9 |     return failwith("You need to be part of Tezos organization to activate an organization");
@@ -2875,3 +2881,47 @@ let%expect_test _ =
     {|
     Everything at the top-level was executed.
     - test_increment exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage string ;
+      code { CDR ;
+             PUSH string "" ;
+             PUSH int 1 ;
+             DUP 3 ;
+             SIZE ;
+             SUB ;
+             PUSH bool True ;
+             LOOP { PUSH int 0 ;
+                    DUP 2 ;
+                    COMPARE ;
+                    GE ;
+                    DUP ;
+                    IF { DUP 2 ;
+                         ABS ;
+                         DUP 5 ;
+                         PUSH nat 1 ;
+                         DIG 2 ;
+                         SLICE ;
+                         IF_NONE { PUSH string "SLICE" ; FAILWITH } {} ;
+                         DIG 3 ;
+                         CONCAT ;
+                         DUG 2 ;
+                         PUSH int 1 ;
+                         DIG 2 ;
+                         SUB ;
+                         SWAP }
+                       {} } ;
+             DIG 2 ;
+             DROP 2 ;
+             NIL operation ;
+             PAIR } } |}];
+  run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
+  [%expect
+    {|
+    "reverse"
+    Everything at the top-level was executed.
+    - test exited with value (). |}]

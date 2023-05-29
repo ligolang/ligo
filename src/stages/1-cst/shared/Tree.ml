@@ -116,6 +116,10 @@ let mk_children_list print ?root = function
 let mk_children_nsepseq print ?root =
   mk_children_list print ?root <@ Utils.nsepseq_to_list
 
+let mk_children_nsepseq_opt print ?root = function
+  None -> []
+| Some value -> mk_children_nsepseq print ?root value
+
 let mk_children_sepseq print ?root =
   mk_children_list print ?root <@ Utils.sepseq_to_list
 

@@ -413,6 +413,7 @@ and statement =
 | SImport    of import reg
 | SWhile     of while_stmt reg
 | SForOf     of for_of reg
+| SFor       of for_stmt reg
 
 and namespace_statement =
   kwd_namespace * module_name * statements braces reg * attributes
@@ -441,6 +442,19 @@ and index_kind = [
   `Let   of kwd_let
 | `Const of kwd_const
 ]
+
+and for_stmt = {
+  attributes   : attributes;
+  kwd_for      : kwd_for;
+  lpar         : lpar;
+  initialiser  : statement option;
+  semi1        : semi;
+  condition    : expr option;
+  semi2        : semi;
+  afterthought : (expr, comma) nsepseq option;
+  rpar         : rpar;
+  statement    : statement option
+}
 
 and import =
   Import_rename   of import_rename
@@ -678,7 +692,8 @@ let statement_to_region = function
 | SExport {region; _}
 | SForOf {region; _}
 | SWhile {region; _}
-| SNamespace {region; _} -> region
+| SNamespace {region; _}
+| SFor {region;_} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

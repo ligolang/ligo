@@ -111,6 +111,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                transpiled contracts.
   [--views VIEWS], -v        . A list of declaration name that will be compiled
                                as on-chain views, separated by ','
+  [--warn-infinite-loop]     . warn about infinite loop
   [--warn-unused-rec]        . warn about unused recursion in a recursive
                                function
   [--werror]                 . treat warnings as errors
@@ -181,6 +182,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -251,6 +253,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -295,6 +298,7 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--skip-analytics]         . Avoid ligo analytics publication. Configurable
                                    with environment variable LIGO_SKIP_ANALYTICS too
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -348,6 +352,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -404,6 +409,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -456,6 +462,7 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
@@ -510,6 +517,7 @@ let%expect_test _ =
       [--project-root PATH]      . The path to root of the project.
       [--skip-analytics]         . Avoid ligo analytics publication. Configurable
                                    with environment variable LIGO_SKIP_ANALYTICS too
+      [--warn-infinite-loop]     . warn about infinite loop
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors

@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nJsLIGO now supports [`for` loops](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for)\\n\\n#### Example\\n\\n\\n```ts\\nconst getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s)\\n\\nconst isPalindrome = (s: string): bool => {\\n  let length = String.length(s);\\n  let isP = true;\\n  for (let i = 0, j = length - 1 ;  i <= j ; i++, j--) {\\n    isP = isP && getChar(s, abs(i)) == getChar(s, abs(j))\\n  }\\n  return isP;\\n}\\n\\nconst testPalindrome = (() => {\\n  Test.assert(isPalindrome(\"abba\"));\\n  Test.assert(isPalindrome(\"ababa\"));\\n  Test.assert(!isPalindrome(\"abcd\"));\\n  Test.assert(!isPalindrome(\"abcde\"));\\n})();\\n\\n```\\n\\n#### Result\\n\\n\\n```bash\\n$ ligo run test x.jsligo \\nEverything at the top-level was executed.\\n- testPalindrome exited with value ().\\n\\n```\\n\\n"
+merge_request: '2601'
+title: "[JsLIGO] Add `for( ... ; ... ; ... ) { ... }` loop"
+type: added
+            

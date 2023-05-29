@@ -1,7 +1,7 @@
-// @inline @pleh
+@inline // @pleh
 let x = 1;
 
-// @inline
+@inline
 let foo = (a : int) : int => {
   // [@inline]
   let test = 2 + a;
@@ -13,6 +13,7 @@ let y = 1;
 
 let bar = (b : int) : int => {
   // @inline @foo @bar
+  @inline
   let test = (z : int):int => 2 + b + z;
   return test (b);
 };

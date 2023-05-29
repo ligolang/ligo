@@ -56,6 +56,7 @@ let private_attribute = Wrap.ghost ("private", None)
 %on_error_reduce bin_op(comp_expr_level,ge,add_expr_level)
 %on_error_reduce bin_op(comp_expr_level,EQ2,add_expr_level)
 %on_error_reduce expr_stmt
+%on_error_reduce expr
 %on_error_reduce comp_expr_level
 %on_error_reduce conj_expr_level
 %on_error_reduce bin_op(conj_expr_level,BOOL_AND,comp_expr_level)
@@ -63,9 +64,10 @@ let private_attribute = Wrap.ghost ("private", None)
 %on_error_reduce nsepseq(statement,SEMI)
 %on_error_reduce nsepseq(variant,VBAR)
 %on_error_reduce nsepseq(object_type,VBAR)
-%on_error_reduce ternary_expr(expr_stmt)
 %on_error_reduce nsepseq(field_name,COMMA)
 %on_error_reduce module_var_t
+%on_error_reduce for_stmt(statement)
+%on_error_reduce chevrons(nsepseq(type_param,COMMA))
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -156,7 +158,7 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
-%inline type_param  : "<ident>"  { $1 }
+%inline type_param  : "<ident>" | "<uident>" { $1 }
 %inline field_name  : "<ident>"  { $1 }
 %inline module_name : "<uident>" { $1 }
 %inline ctor        : "<uident>" { $1 }
@@ -232,15 +234,15 @@ statement:
   base_stmt(statement) | if_stmt { $1 }
 
 base_stmt(right_stmt):
-  attributes expr_stmt     { SExpr   ($1,$2) }
+  attributes expr_stmt     { $2 $1      }
 | return_stmt              { SReturn $1 }
 | block_stmt               { SBlock  $1 }
 | switch_stmt              { SSwitch $1 }
 | import_stmt              { SImport $1 }
 | export_decl              { SExport $1 }
-| attributes declaration   { $2 $1      }
 | if_else_stmt(right_stmt)
 | for_of_stmt(right_stmt)
+| for_stmt(right_stmt)
 | while_stmt(right_stmt)   { $1 }
 
 closed_stmt:
@@ -255,6 +257,7 @@ for_of_stmt(right_stmt):
                   index=$5; kwd_of=$6; expr=$7; rpar=$8; statement=$9}
     in SForOf {region; value} }
 
+%inline
 index_kind:
   "const" { `Const $1 }
 | "let"   { `Let   $1 }
@@ -272,14 +275,55 @@ while_stmt(right_stmt):
 while_cond:
   expr { $1 }
 
+for_initialiser:
+  expr_stmt { $1 }
+
+for_stmt(right_stmt):
+  attributes "for" "("
+    ioption(for_initialiser) ";"
+    ioption(expr) ";"
+    ioption(nsepseq(closed_non_decl_expr_stmt, ","))
+  ")" ioption(right_stmt) {
+    let initialiser = Core.Option.map $4 ~f:(fun f -> f [])
+    and condition    = $6
+    and afterthought = $8
+    and statement    = $10 in
+    let region_end   =
+      match $10 with
+        Some s -> statement_to_region s
+      | None   -> $9#region
+    in
+    let region = cover $2#region region_end
+    and value = {
+      attributes=$1;
+      kwd_for=$2;
+      lpar=$3;
+      initialiser;
+      semi1=$5;
+      condition;
+      semi2=$7;
+      afterthought;
+      rpar=$9;
+      statement;
+    }
+    in SFor {region;value}
+  }
+
 (* Expressions as Statements *)
 
 expr_stmt:
-  assign_stmt             { EAssign $1 }
+  declaration                   { $1 }
+| non_decl_expr_stmt(expr_stmt) { fun attrs -> SExpr (attrs, $1) }
+
+non_decl_expr_stmt(right_stmt):
+  assign_stmt                                  { EAssign $1 }
 | increment_decrement_operators
 | call_expr
-| ternary_expr(expr_stmt)
-| as_expr                 { $1 }
+| as_expr
+| ternary_expr(non_decl_expr_stmt(right_stmt)) { $1 }
+
+closed_non_decl_expr_stmt:
+  non_decl_expr_stmt(closed_non_decl_expr_stmt) { $1 }
 
 assign_lhs:
   projection  { EProj $1 }
@@ -649,10 +693,10 @@ binding_initializer:
     in {region; value} }
 
 binding_type:
-  ":" ioption(type_generics) type_expr { ($1,$3), $2 }
+  ":" ioption(type_parameters) type_expr { ($1,$3), $2 }
 
-type_generics:
-  chevrons(nsepseq(type_name,",")) { $1 }
+type_parameters:
+  chevrons(nsepseq(type_param,",")) { $1 }
 
 binding_pattern:
   "_"            { PVar (mk_wild_pattern $1) }
@@ -742,6 +786,12 @@ sum_type:
     let region   = cover $2#region stop in
     let variants = {region; value=$3} in
     let value    = {attributes=$1; leading_vbar = Some $2; variants}
+    in TSum {region; value}
+  }
+| nsepseq(variant, "|") {
+    let region   = nsepseq_to_region (fun x -> x.region) $1 in
+    let variants = {region; value=$1} in
+    let value    = {attributes=[]; leading_vbar=None; variants}
     in TSum {region; value} }
 
 variant:
@@ -765,7 +815,11 @@ ctor_param:
 
 core_type:
   "<string>"            { TString $1 }
-| "<int>"               { TInt    $1 }
+| core_type_no_string   { $1}
+
+%inline
+core_type_no_string:
+  "<int>"               { TInt    $1 }
 | "_" | type_name       { TVar    $1 }
 | parameter_of_type     {         $1 }
 | module_access_t       { TModA   $1 }
@@ -784,11 +838,21 @@ union_type:
 
 (* Tuples of types *)
 
+(* The production [core_type_no_string] is here to avoid a conflict
+   with a variant for a constant contructor, e.g. [["C"]], which could
+   be interpreted otherwise as an type tuple (array) of the type
+   ["C"]. *)
+
 type_tuple:
   brackets(type_components) { $1 }
 
 type_components:
-  nsepseq(type_component,",") { $1 }
+  type_component_no_string { $1,[] }
+| type_component_no_string "," nsepseq(type_component,",") {
+    Utils.nsepseq_cons $1 $2 $3 }
+
+type_component_no_string:
+  fun_type | sum_type | core_type_no_string { $1 }
 
 type_component:
   type_expr { $1 }
@@ -807,7 +871,6 @@ type_ctor_app:
   type_name chevrons(type_ctor_args) {
     let region = cover $1#region $2.region
     in {region; value = ($1,$2)} }
-
 
 type_ctor_args:
   nsepseq(type_ctor_arg,",") { $1 }
@@ -895,14 +958,14 @@ statements:
 (* Expressions *)
 
 fun_expr:
-  ioption(type_generics) ES6FUN par(parameters)
+  ioption(type_parameters) ES6FUN par(parameters)
   ioption(type_annotation) "=>" body {
     let region = cover $3.region (body_to_region $6) in
     let value  = {type_params=$1; parameters = EPar $3;
                   lhs_type=$4; arrow=$5; body=$6}
     in {region; value}
   }
-| ioption(type_generics) ES6FUN "(" ")" ioption(type_annotation) "=>" body {
+| ioption(type_parameters) ES6FUN "(" ")" ioption(type_annotation) "=>" body {
     let region     = cover $3#region $4#region in
     let parameters = EUnit {region; value = ($3,$4)} in
     let region     = cover $3#region (body_to_region $7) in

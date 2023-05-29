@@ -1036,6 +1036,50 @@ let%expect_test _ =
     - test11_ exited with value ().
     - test12_ exited with value (). |}]
 
+let%expect_test "for loops" =
+  run_ligo_good [ "run"; "test"; test "/for_loop/single_loop.jsligo" ];
+  [%expect
+    {|
+      Everything at the top-level was executed.
+      - testPalindrome exited with value (). |}];
+  run_ligo_good [ "run"; "test"; test "/for_loop/pascal_triangle.jsligo" ];
+  [%expect
+    {|
+                            1
+                          1   1
+                        1   2   1
+                      1   3   3   1
+                    1   4   6   4   1
+                  1   5  10  10   5   1
+                1   6  15  20  15   6   1
+              1   7  21  35  35  21   7   1
+
+                              1
+                            1   1
+                          1   2   1
+                        1   3   3   1
+                      1   4   6   4   1
+                    1   5  10  10   5   1
+                  1   6  15  20  15   6   1
+                1   7  21  35  35  21   7   1
+              1   8  28  56  70  56  28   8   1
+          Everything at the top-level was executed.
+          - test8 exited with value "".
+          - test10 exited with value "". |}];
+  run_ligo_good [ "run"; "test"; test "/for_loop/matrix_multiplication.jsligo" ];
+  [%expect
+    {|
+          Everything at the top-level was executed.
+          - test_3x1_1x3 exited with value ().
+          - test_3x3_3x3 exited with value ().
+          - test_1x3_3x1 exited with value ().
+          - test_I3x3_3x3 exited with value (). |}];
+  run_ligo_good [ "run"; "test"; test "/for_loop/for_loops.jsligo" ];
+  [%expect
+    {|
+          Everything at the top-level was executed.
+          - testLoop exited with value (). |}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 

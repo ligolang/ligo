@@ -6,6 +6,7 @@ type t =
     deprecated : bool
   ; (* Warnings *)
     warn_unused_rec : bool
+  ; warn_infinite_loop : bool
   ; (* Frontend *)
     syntax : string
   ; entry_point : string list
@@ -45,6 +46,7 @@ module Default_options = struct
 
   (* Warnings *)
   let warn_unused_rec = false
+  let warn_infinite_loop = false
 
   (* Frontend *)
   let syntax = "auto"
@@ -84,6 +86,7 @@ let make
     ?(no_colour = Default_options.no_colour)
     ?(deprecated = Default_options.deprecated)
     ?(warn_unused_rec = Default_options.warn_unused_rec)
+    ?(warn_infinite_loop = Default_options.warn_infinite_loop)
     ?(syntax = Default_options.syntax)
     ?(entry_point = Default_options.entry_point)
     ?(module_ = Default_options.module_)
@@ -116,6 +119,7 @@ let make
     deprecated
   ; (* Warnings *)
     warn_unused_rec
+  ; warn_infinite_loop
   ; (* Frontend *)
     syntax
   ; entry_point

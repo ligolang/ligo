@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nFixed a bug with record hardcoding inside `launch.json` configuration. Before command braces `{ }` were conflicting with\\nrecords ones. Now command braces changed to `(*@ @*)` in order to evade these conflicts.\\n\\n"
+merge_request: '2602'
+title: "[#1808] Fix a bug with record hardcoding in `launch.json`"
+type: fixed
+            

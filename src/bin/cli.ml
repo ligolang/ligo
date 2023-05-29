@@ -347,12 +347,14 @@ let no_colour =
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
+
 let show_loc =
   let open Command.Param in
   (* Using the american standard for the CLI *)
   let name = "--show-loc" in
   let doc = "show location in s-expressions" in
   flag ~doc name no_arg
+
 
 let deprecated =
   let open Command.Param in
@@ -448,6 +450,13 @@ let warn_unused_rec =
   let open Command.Param in
   let name = "--warn-unused-rec" in
   let doc = "warn about unused recursion in a recursive function" in
+  flag ~doc name no_arg
+
+
+let warn_infinite_loop =
+  let open Command.Param in
+  let name = "--warn-infinite-loop" in
+  let doc = "warn about infinite loop" in
   flag ~doc name no_arg
 
 
@@ -560,6 +569,7 @@ let compile_file =
       project_root
       transpiled
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -582,6 +592,7 @@ let compile_file =
         ~project_root
         ~transpiled
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -641,6 +652,7 @@ let compile_file =
     <*> project_root
     <*> transpiled
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -669,6 +681,7 @@ let compile_parameter =
       file_constants
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -684,6 +697,7 @@ let compile_parameter =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -747,6 +761,7 @@ let compile_parameter =
     <*> file_constants
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -769,6 +784,7 @@ let compile_expression =
       file_constants
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -784,6 +800,7 @@ let compile_expression =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -830,6 +847,7 @@ let compile_expression =
     <*> file_constants
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -858,6 +876,7 @@ let compile_storage =
       file_constants
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -873,6 +892,7 @@ let compile_storage =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -936,6 +956,7 @@ let compile_storage =
     <*> file_constants
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -954,6 +975,7 @@ let compile_constant =
       warning_as_error
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -966,6 +988,7 @@ let compile_constant =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -1008,6 +1031,7 @@ let compile_constant =
     <*> werror
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1203,6 +1227,7 @@ let test =
       show_warnings
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1213,6 +1238,7 @@ let test =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~cli_expr_inj
         ~test:true
         ~libraries
@@ -1256,6 +1282,7 @@ let test =
     <*> warn
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1273,6 +1300,7 @@ let test_expr =
       show_warnings
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1283,6 +1311,7 @@ let test_expr =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~cli_expr_inj
         ~test:true
         ~libraries
@@ -1326,6 +1355,7 @@ let test_expr =
     <*> warn
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1351,6 +1381,7 @@ let dry_run =
       warning_as_error
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1364,6 +1395,7 @@ let dry_run =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -1423,6 +1455,7 @@ let dry_run =
     <*> werror
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1446,6 +1479,7 @@ let evaluate_call =
       warning_as_error
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1457,6 +1491,7 @@ let evaluate_call =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -1514,6 +1549,7 @@ let evaluate_call =
     <*> werror
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1536,6 +1572,7 @@ let evaluate_expr =
       warning_as_error
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1548,6 +1585,7 @@ let evaluate_expr =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -1595,6 +1633,7 @@ let evaluate_expr =
     <*> werror
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1615,6 +1654,7 @@ let interpret =
       skip_analytics
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1625,6 +1665,7 @@ let interpret =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~libraries
         ()
     in
@@ -1677,6 +1718,7 @@ let interpret =
     <*> skip_analytics
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -1761,6 +1803,7 @@ let measure_contract =
       warning_as_error
       project_root
       warn_unused_rec
+      warn_infinite_loop
       libraries
       ()
     =
@@ -1774,6 +1817,7 @@ let measure_contract =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~enable_typed_opt
         ~libraries
         ()
@@ -1818,6 +1862,7 @@ let measure_contract =
     <*> werror
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> libraries)
 
 
@@ -2222,6 +2267,7 @@ let print_ast_typed =
       self_pass
       project_root
       warn_unused_rec
+      warn_infinite_loop
       test
       no_colour
       deprecated
@@ -2236,6 +2282,7 @@ let print_ast_typed =
         ~self_pass
         ~project_root
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~test
         ~no_colour
         ~deprecated
@@ -2276,6 +2323,7 @@ let print_ast_typed =
      <*> self_pass
      <*> project_root
      <*> warn_unused_rec
+     <*> warn_infinite_loop
      <*> test_mode
      <*> no_colour
      <*> deprecated
@@ -2292,6 +2340,7 @@ let print_ast_aggregated =
       self_pass
       project_root
       warn_unused_rec
+      warn_infinite_loop
       test
       no_colour
       deprecated
@@ -2306,6 +2355,7 @@ let print_ast_aggregated =
         ~self_pass
         ~project_root
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~test
         ~no_colour
         ~deprecated
@@ -2346,6 +2396,7 @@ let print_ast_aggregated =
     <*> self_pass
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> test_mode
     <*> no_colour
     <*> deprecated
@@ -2365,6 +2416,7 @@ let print_ast_expanded =
       self_pass
       project_root
       warn_unused_rec
+      warn_infinite_loop
       test
       libraries
       ()
@@ -2377,6 +2429,7 @@ let print_ast_expanded =
         ~project_root
         ~deprecated
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~test
         ~libraries
         ()
@@ -2418,6 +2471,7 @@ let print_ast_expanded =
     <*> self_pass
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> test_mode
     <*> libraries)
 
@@ -2431,6 +2485,7 @@ let print_mini_c =
       optimize
       project_root
       warn_unused_rec
+      warn_infinite_loop
       no_colour
       deprecated
       skip_analytics
@@ -2443,6 +2498,7 @@ let print_mini_c =
         ~protocol_version
         ~project_root
         ~warn_unused_rec
+        ~warn_infinite_loop
         ~no_colour
         ~deprecated
         ~libraries
@@ -2483,6 +2539,7 @@ let print_mini_c =
     <*> optimize
     <*> project_root
     <*> warn_unused_rec
+    <*> warn_infinite_loop
     <*> no_colour
     <*> deprecated
     <*> skip_analytics
