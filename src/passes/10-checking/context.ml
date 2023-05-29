@@ -51,7 +51,7 @@ module Attr = struct
   [@@deriving compare, hash, equal]
 
   let default = { entry = false; view = false }
-  let of_core_attr ({ entry; view; _ } : Ast_core.ValueAttr.t) = { entry; view }
+  let of_core_attr ({ entry; view; _ } : Ast_typed.ValueAttr.t) = { entry; view }
 end
 
 module Signature = struct

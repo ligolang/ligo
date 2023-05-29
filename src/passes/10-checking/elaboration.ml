@@ -31,7 +31,6 @@ include Let_syntax
 let rec decode (type_ : Type.t) ~raise subst =
   let return type_content : O.type_expression =
     { type_content
-    ; type_meta = type_.meta
     ; orig_var = type_.orig_var
     ; location = type_.location
     }

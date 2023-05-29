@@ -83,7 +83,7 @@ and type_expression_orig ppf (te : type_expression) : unit =
     else if Option.is_some (Combinators.get_t_option te)
     then option ppf te
     else fprintf ppf "%a" type_content_orig te.type_content
-  | Some v -> Ast_core.(PP.type_expression ppf (t_variable ~loc:te.location v ()))
+  | Some v -> type_expression ppf (Combinators.t_variable ~loc:te.location v ())
 
 
 let rec expression ppf (e : expression) =

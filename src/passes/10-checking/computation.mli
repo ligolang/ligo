@@ -253,7 +253,7 @@ val lexists : Label.Set.t -> (Type.layout, 'err, 'wrn) t
 
 (** [create_type constr] returns a created type using the [constr] function
     with the location automatically provided *)
-val create_type : ?meta:Ast_core.type_expression -> Type.constr -> (Type.t, 'err, 'wrn) t
+val create_type : Type.constr -> (Type.t, 'err, 'wrn) t
 
 (** [def bindings ~on_exit ~in_] binds the context bindings [bindings] in 
     computation [in_] *)
@@ -358,12 +358,7 @@ module With_frag : sig
   include Monad.S3 with type ('a, 'err, 'wrn) t := ('a, 'err, 'wrn) t
 
   val lift : ('a, 'err, 'wrn) e -> ('a, 'err, 'wrn) t
-
-  val create_type
-    :  ?meta:Ast_core.type_expression
-    -> Type.constr
-    -> (Type.t, 'err, 'wrn) t
-
+  val create_type : Type.constr -> (Type.t, 'err, 'wrn) t
   val all_lmap : ('a, 'err, 'wrn) t Label.Map.t -> ('a Label.Map.t, 'err, 'wrn) t
   val all_lmap_unit : (unit, 'err, 'wrn) t Label.Map.t -> (unit, 'err, 'wrn) t
   val loc : unit -> (Location.t, 'err, 'wrn) t

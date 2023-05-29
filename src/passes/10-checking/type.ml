@@ -28,11 +28,9 @@ end
 
 module Row = Row.Make (Layout)
 
-type meta = Ast_core.type_expression option [@@deriving yojson]
 
 type t =
   { content : content
-  ; meta : (meta[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
   ; orig_var : (Type_var.t option[@equal.ignore] [@compare.ignore] [@hash.ignore])
   ; location : (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
   }
@@ -52,12 +50,12 @@ and content =
   , ez
       { prefixes =
           [ ( "make_t"
-            , fun ~loc content meta : t ->
-                { content; location = loc; orig_var = None; meta } )
+            , fun ~loc content : t ->
+                { content; location = loc; orig_var = None } )
           ; ("get", fun x -> x.content)
           ]
       ; wrap_constructor =
-          ("content", fun type_content ~loc ?meta () -> make_t ~loc type_content meta)
+          ("content", fun type_content ~loc () -> make_t ~loc type_content)
       ; wrap_get = "content", get
       ; default_get = `Option
       }]
@@ -72,7 +70,7 @@ and construct =
   }
 [@@deriving yojson, equal, sexp, compare, hash]
 
-type constr = loc:Location.t -> ?meta:Ast_core.type_expression -> unit -> t
+type constr = loc:Location.t -> unit -> t
 
 let rec free_vars t =
   let module Set = Type_var.Set in
@@ -199,14 +197,13 @@ let fields_with_no_annot fields =
   List.map ~f:(fun (name, _) -> Layout.{ name; annot = None }) fields
 
 
-let t_construct constructor parameters ~loc ?meta () : t =
+let t_construct constructor parameters ~loc  () : t =
   make_t
     ~loc
     (T_construct { language = Backend.Michelson.name; constructor; parameters })
-    meta
 
 
-let t__type_ ~loc ?meta () : t = t_construct Literal_types._type_ [] ~loc ?meta ()
+let t__type_ ~loc  () : t = t_construct Literal_types._type_ [] ~loc  ()
   [@@map
     _type_
     , ( "signature"
@@ -238,7 +235,7 @@ let t__type_ ~loc ?meta () : t = t_construct Literal_types._type_ [] ~loc ?meta 
 
 let t_michelson_code = t_michelson_program
 
-let t__type_ t ~loc ?meta () : t = t_construct ~loc ?meta Literal_types._type_ [ t ] ()
+let t__type_ t ~loc  () : t = t_construct ~loc  Literal_types._type_ [ t ] ()
   [@@map
     _type_
     , ( "list"
@@ -251,8 +248,8 @@ let t__type_ t ~loc ?meta () : t = t_construct ~loc ?meta Literal_types._type_ [
       , "views" )]
 
 
-let t__type_ t t' ~loc ?meta () : t =
-  t_construct ~loc ?meta Literal_types._type_ [ t; t' ] ()
+let t__type_ t t' ~loc  () : t =
+  t_construct ~loc  Literal_types._type_ [ t; t' ] ()
   [@@map _type_, ("map", "big_map", "typed_address")]
 
 
@@ -262,40 +259,40 @@ let row_ez fields ?(layout = default_layout) () =
   Row.of_alist_exn ~layout fields
 
 
-let t_record_ez fields ~loc ?meta ?layout () =
-  t_record ~loc ?meta (row_ez fields ?layout ()) ()
+let t_record_ez fields ~loc  ?layout () =
+  t_record ~loc  (row_ez fields ?layout ()) ()
 
 
-let t_tuple ts ~loc ?meta () =
-  t_record_ez (List.mapi ts ~f:(fun i t -> Int.to_string i, t)) ~loc ?meta ()
+let t_tuple ts ~loc  () =
+  t_record_ez (List.mapi ts ~f:(fun i t -> Int.to_string i, t)) ~loc  ()
 
 
-let t_pair t1 t2 ~loc ?meta () = t_tuple [ t1; t2 ] ~loc ?meta ()
-let t_triplet t1 t2 t3 ~loc ?meta () = t_tuple [ t1; t2; t3 ] ~loc ?meta ()
-let t_sum_ez fields ~loc ?meta ?layout () = t_sum ~loc ?meta (row_ez fields ?layout ()) ()
+let t_pair t1 t2 ~loc  () = t_tuple [ t1; t2 ] ~loc  ()
+let t_triplet t1 t2 t3 ~loc  () = t_tuple [ t1; t2; t3 ] ~loc  ()
+let t_sum_ez fields ~loc  ?layout () = t_sum ~loc  (row_ez fields ?layout ()) ()
 
-let t_bool ~loc ?meta () =
-  t_sum_ez ~loc ?meta [ "True", t_unit ~loc (); "False", t_unit ~loc () ] ()
-
-
-let t_option t ~loc ?meta () =
-  t_sum_ez ~loc ?meta [ "Some", t; "None", t_unit ~loc () ] ()
+let t_bool ~loc  () =
+  t_sum_ez ~loc  [ "True", t_unit ~loc (); "False", t_unit ~loc () ] ()
 
 
-let t_arrow param result ~loc ?meta () : t =
-  t_arrow ~loc ?meta { type1 = param; type2 = result } ()
+let t_option t ~loc  () =
+  t_sum_ez ~loc  [ "Some", t; "None", t_unit ~loc () ] ()
+
+
+let t_arrow param result ~loc  () : t =
+  t_arrow ~loc  { type1 = param; type2 = result } ()
 
 
 let t_mutez = t_tez
 
-let t_record_with_orig_var row ~orig_var ~loc ?meta () =
-  { (t_record row ~loc ?meta ()) with orig_var }
+let t_record_with_orig_var row ~orig_var ~loc  () =
+  { (t_record row ~loc  ()) with orig_var }
 
 
-let t_test_baker_policy ~loc ?meta () =
+let t_test_baker_policy ~loc  () =
   t_sum_ez
     ~loc
-    ?meta
+    
     [ "By_round", t_int ~loc ()
     ; "By_account", t_address ~loc ()
     ; "Excluding", t_list ~loc (t_address ~loc ()) ()
@@ -303,10 +300,10 @@ let t_test_baker_policy ~loc ?meta () =
     ()
 
 
-let t_test_exec_error ~loc ?meta () =
+let t_test_exec_error ~loc  () =
   t_sum_ez
     ~loc
-    ?meta
+    
     [ "Rejected", t_pair ~loc (t_michelson_code ~loc ()) (t_address ~loc ()) ()
     ; ( "Balance_too_low"
       , t_record_ez
@@ -321,8 +318,8 @@ let t_test_exec_error ~loc ?meta () =
     ()
 
 
-let t_test_exec_result ~loc ?meta () =
-  t_sum_ez ~loc ?meta [ "Success", t_nat ~loc (); "Fail", t_test_exec_error ~loc () ] ()
+let t_test_exec_result ~loc  () =
+  t_sum_ez ~loc  [ "Success", t_nat ~loc (); "Fail", t_test_exec_error ~loc () ] ()
 
 
 let get_t_construct t constr =

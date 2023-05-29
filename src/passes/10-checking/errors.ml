@@ -47,7 +47,7 @@ let type_improve t =
     (match Context.Hashes.find_type t with
     | Some t ->
       let t = make_type t in
-      { t with meta = t.meta; orig_var = t.orig_var }
+      { t with orig_var = t.orig_var }
     | _ -> t)
 
 

@@ -74,7 +74,7 @@ and expression_content ppf (ec : expression_content) =
       let_binder
       expression
       rhs
-      Types.ValueAttr.pp
+      Value_attr.pp
       attributes
       expression
       let_result
@@ -91,7 +91,7 @@ and expression_content ppf (ec : expression_content) =
       let_binder
       expression
       rhs
-      Types.ValueAttr.pp
+      Value_attr.pp
       attributes
       expression
       let_result
