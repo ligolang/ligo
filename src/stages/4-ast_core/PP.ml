@@ -110,7 +110,8 @@ and declaration ppf (d : declaration) =
     if not pd.attr.hidden
     then Types.Pattern_decl.pp expression type_expression_option ppf pd
   | D_type td -> Types.Type_decl.pp type_expression ppf td
-  | D_module md -> Types.Module_decl.pp module_expr ppf md
+  | D_module md -> Types.Module_decl.pp module_expr (Simple_utils.PP_helpers.option signature_expr) ppf md
+  | D_signature sd -> Types.Signature_decl.pp signature_expr ppf sd
 
 
 and decl ppf d = declaration ppf d
@@ -118,5 +119,31 @@ and decl ppf d = declaration ppf d
 and module_expr ppf (me : module_expr) : unit =
   Location.pp_wrap (Module_expr.pp decl) ppf me
 
+and sig_item_attribute ppf { view; entry } =
+  let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf "" in
+  fprintf
+    ppf
+    "%a%a"
+    (pp_if_set "view")
+    view
+    (pp_if_set "entry")
+    entry
+
+and sig_item ppf (d : sig_item) =
+  match d with
+  | S_value (var, type_, attr) ->
+    Format.fprintf ppf "@[<2>val %a :@ %a@;<1 2>%a@]" Value_var.pp var type_expression type_ sig_item_attribute attr
+  | S_type (var, type_) ->
+    Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
+  | S_type_var var ->
+    Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
+
+and signature ppf (sig_ : signature) : unit =
+  Format.fprintf ppf "@[<v>sig@[<v1>@,%a@]@,end@]" (list_sep sig_item (tag "@,")) sig_
+
+and signature_expr ppf (sig_expr : signature_expr) : unit =
+  match Location.unwrap sig_expr with
+  | S_sig sig_ -> Format.fprintf ppf "%a" signature sig_
+  | S_path path -> Simple_utils.PP_helpers.(ne_list_sep Module_var.pp (tag ".")) ppf path
 
 let program ppf (p : program) = list_sep declaration (tag "@,") ppf p

@@ -118,10 +118,12 @@ module T =
     | Of        of lexeme Wrap.t  (* of     *)
     | Or        of lexeme Wrap.t  (* or     *)
     | Rec       of lexeme Wrap.t  (* rec    *)
+    | Sig       of lexeme Wrap.t  (* sig    *)
     | Struct    of lexeme Wrap.t  (* struct *)
     | Then      of lexeme Wrap.t  (* then   *)
     | Type      of lexeme Wrap.t  (* type   *)
     | Upto      of lexeme Wrap.t  (* upto   *)
+    | Val       of lexeme Wrap.t  (* val    *)
     | While     of lexeme Wrap.t  (* while  *)
     | With      of lexeme Wrap.t  (* with   *)
     | Contract  of lexeme Wrap.t  (* contract_of *)
@@ -230,10 +232,12 @@ module T =
     | Of     t
     | Or     t
     | Rec    t
+    | Sig    t
     | Struct t
     | Then   t
     | Type   t
     | Upto   t
+    | Val    t
     | While  t
     | With   t
     | Contract t
@@ -274,10 +278,12 @@ module T =
     let wrap_not    = wrap "not"
     let wrap_of     = wrap "of"
     let wrap_or     = wrap "or"
+    let wrap_sig    = wrap "sig"
     let wrap_struct = wrap "struct"
     let wrap_then   = wrap "then"
     let wrap_type   = wrap "type"
     let wrap_upto   = wrap "upto"
+    let wrap_val    = wrap "val"
     let wrap_while  = wrap "while"
     let wrap_with   = wrap "with"
     let wrap_contract   = wrap "contract_of"
@@ -309,10 +315,12 @@ module T =
     let mk_Of     region = Of     (wrap_of     region)
     let mk_Or     region = Or     (wrap_or     region)
     let mk_Rec    region = Rec    (wrap_rec    region)
+    let mk_Sig    region = Sig    (wrap_sig    region)
     let mk_Struct region = Struct (wrap_struct region)
     let mk_Then   region = Then   (wrap_then   region)
     let mk_Type   region = Type   (wrap_type   region)
     let mk_Upto   region = Upto   (wrap_upto   region)
+    let mk_Val    region = Val    (wrap_val    region)
     let mk_While  region = While  (wrap_while  region)
     let mk_With   region = With   (wrap_with   region)
     let mk_Contract region = Contract (wrap_contract region)
@@ -345,10 +353,12 @@ module T =
       mk_Of;
       mk_Or;
       mk_Rec;
+      mk_Sig;
       mk_Struct;
       mk_Then;
       mk_Type;
       mk_Upto;
+      mk_Val;
       mk_While;
       mk_With;
       mk_Contract;
@@ -392,10 +402,12 @@ module T =
     let ghost_of     = wrap_of     Region.ghost
     let ghost_or     = wrap_or     Region.ghost
     let ghost_rec    = wrap_rec    Region.ghost
+    let ghost_sig    = wrap_sig    Region.ghost
     let ghost_struct = wrap_struct Region.ghost
     let ghost_then   = wrap_then   Region.ghost
     let ghost_type   = wrap_type   Region.ghost
     let ghost_upto   = wrap_upto   Region.ghost
+    let ghost_val    = wrap_val    Region.ghost
     let ghost_while  = wrap_while  Region.ghost
     let ghost_with   = wrap_with   Region.ghost
 
@@ -423,10 +435,12 @@ module T =
     let ghost_Of     = Of     ghost_of
     let ghost_Or     = Or     ghost_or
     let ghost_Rec    = Rec    ghost_rec
+    let ghost_Sig    = Sig    ghost_sig
     let ghost_Struct = Struct ghost_struct
     let ghost_Then   = Then   ghost_then
     let ghost_Type   = Type   ghost_type
     let ghost_Upto   = Upto   ghost_upto
+    let ghost_Val    = Val    ghost_val
     let ghost_While  = While  ghost_while
     let ghost_With   = With   ghost_with
 
@@ -751,10 +765,12 @@ module T =
     | "Of"     -> ghost_of#payload
     | "Or"     -> ghost_or#payload
     | "Rec"    -> ghost_rec#payload
+    | "Sig"    -> ghost_sig#payload
     | "Struct" -> ghost_struct#payload
     | "Then"   -> ghost_then#payload
     | "Type"   -> ghost_type#payload
     | "Upto"   -> ghost_upto#payload
+    | "Val"    -> ghost_val#payload
     | "While"  -> ghost_while#payload
     | "With"   -> ghost_with#payload
 
@@ -876,10 +892,12 @@ module T =
     | Of     t -> t#region, "Of"
     | Or     t -> t#region, "Or"
     | Rec    t -> t#region, "Rec"
+    | Sig    t -> t#region, "Sig"
     | Struct t -> t#region, "Struct"
     | Then   t -> t#region, "Then"
     | Type   t -> t#region, "Type"
     | Upto   t -> t#region, "Upto"
+    | Val    t -> t#region, "Val"
     | While  t -> t#region, "While"
     | With   t -> t#region, "With"
     | Contract t -> t#region, "Contract"

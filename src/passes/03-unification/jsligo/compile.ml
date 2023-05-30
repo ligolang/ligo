@@ -119,6 +119,8 @@ module Eq = struct
   type declaration = I.statement
   type program_entry = I.toplevel_statement
   type program = I.t
+  type sig_expr = unit
+  type sig_entry = unit
 end
 
 let pattern_of_expr x = `Expr x
@@ -623,7 +625,7 @@ and declaration : Eq.declaration -> Folding.declaration =
       attributes
       ~no_attr:
         (let name = TODO_do_in_parsing.mvar module_name in
-         O.D_module { name; mod_expr = statements.value.inside })
+         O.D_module { name; mod_expr = statements.value.inside; annotation = None })
       ~attr:(fun attributes ->
         I.SNamespace { n with value = kwd, module_name, statements, attributes })
   | SImport { value = s; _ } ->
@@ -693,3 +695,9 @@ and program_entry : Eq.program_entry -> Folding.program_entry = function
 
 
 and program : Eq.program -> Folding.program = fun x -> List.Ne.to_list x.statements
+
+
+and sig_expr : Eq.sig_expr -> Folding.sig_expr = fun () -> Location.wrap ~loc:Location.generated (O.S_body [])
+
+
+and sig_entry : Eq.sig_entry -> Folding.sig_entry = fun () -> Location.wrap ~loc:Location.generated (O.S_type_var (O.Ty_variable.fresh ~loc:Location.generated ~name:"SIG_ENTRY" ()))

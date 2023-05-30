@@ -258,6 +258,7 @@ let make_main_module ~raise (prg : Ast_typed.program) =
         { module_binder
         ; module_attr
         ; module_ = { module_content; module_location; signature }
+        ; annotation
         } ->
       let module_content = make_main_module_expr ~raise module_content in
       Location.wrap ~loc:(Location.get_location d)
@@ -265,6 +266,7 @@ let make_main_module ~raise (prg : Ast_typed.program) =
            { module_binder
            ; module_attr
            ; module_ = { module_content; module_location; signature }
+           ; annotation
            }
     | _ -> d
   in

@@ -190,7 +190,6 @@ and untype_module_expr : O.module_expr -> I.module_expr =
   | M_module_path path -> return (M_module_path path)
   | M_variable v -> return (M_variable v)
 
-
 and untype_declaration_constant
     : (O.expression -> I.expression) -> _ O.Value_decl.t -> _ I.Value_decl.t
   =
@@ -223,10 +222,10 @@ and untype_declaration_type : _ O.Type_decl.t -> _ I.Type_decl.t =
 
 
 and untype_declaration_module : _ O.Module_decl.t -> _ I.Module_decl.t =
- fun { module_binder; module_; module_attr = { public; hidden } } ->
+ fun { module_binder; module_; module_attr = { public; hidden }; annotation } ->
   let module_ = untype_module_expr module_ in
   let module_attr = ({ public; hidden } : I.TypeOrModuleAttr.t) in
-  { module_binder; module_; module_attr }
+  { module_binder; module_; module_attr; annotation }
 
 
 and untype_declaration =
@@ -244,6 +243,7 @@ and untype_declaration =
       return @@ D_type dt
     | D_module dm ->
       let dm = untype_declaration_module dm in
+      let dm = { dm with annotation = None } in
       return @@ D_module dm
 
 

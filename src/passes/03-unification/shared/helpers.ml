@@ -26,6 +26,8 @@ module type EQUIVALENCES = sig
   type declaration
   type program_entry
   type program
+  type sig_expr
+  type sig_entry
 end
 
 (* Define the type of Ast_unified nodes while being built *)
@@ -40,7 +42,7 @@ module Folding (X : EQUIVALENCES) = struct
   type block = (X.block, X.statement) Ast_unified.block_
 
   type declaration =
-    (X.declaration, X.expr, X.ty_expr, X.pattern, X.mod_expr) Ast_unified.declaration_
+    (X.declaration, X.expr, X.ty_expr, X.pattern, X.mod_expr, X.sig_expr) Ast_unified.declaration_
 
   type mod_expr = (X.mod_expr, X.program) Ast_unified.mod_expr_
   type expr = (X.expr, X.ty_expr, X.pattern, X.block, X.mod_expr) Ast_unified.expr_
@@ -49,6 +51,10 @@ module Folding (X : EQUIVALENCES) = struct
     (X.program_entry, X.declaration, X.instruction) Ast_unified.program_entry_
 
   type program = (X.program, X.program_entry) Ast_unified.program_
+
+  type sig_expr = (X.sig_expr, X.sig_entry, X.ty_expr) Ast_unified.sig_expr_
+
+  type sig_entry = (X.sig_expr, X.sig_entry, X.ty_expr) Ast_unified.sig_entry_
 end
 
 (* define types of unification function (for each sub-lang) *)
@@ -66,6 +72,8 @@ module type UNIF = sig
   val expr : Eq.expr -> expr
   val program_entry : Eq.program_entry -> program_entry
   val program : Eq.program -> program
+  val sig_expr : Eq.sig_expr -> sig_expr
+  val sig_entry : Eq.sig_entry -> sig_entry
 end
 
 (* apply anamorphism on expression/pattern (can easily be extended) *)
@@ -84,6 +92,8 @@ module Make_unification (C : UNIF) = struct
       ; declaration
       ; program_entry
       ; program
+      ; sig_expr
+      ; sig_entry
       }
 
 

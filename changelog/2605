@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nIn CameLIGO we introduce `module type` for describing simple contracts:\\n\\n```\\nmodule type I = sig\\n  (* `storage` is a type we don't know at this point *)\\n  type storage\\n\\n  (* `result` is a type declaration *)\\n  type result = operation list * storage\\n\\n  (* we can declare values to be entries *)\\n  [@entry] val foo : int -> storage -> result\\n\\n  (* or just values *)\\n  val initial_storage : storage\\nend\\n\\n```\\n\\nWe can attach a signature to a module in a module declaration:\\n\\n```\\nmodule C : I = struct\\n\\n  type storage = int\\n\\n  type result = operation list * storage\\n\\n  [@entry] let foo (x : int) (y : storage) : result = [], x  + y\\n\\n  let initial_storage : storage = 42\\n\\nend\\n\\n```\\n\\n"
+merge_request: '2605'
+title: "CameLIGO: simple interfaces support"
+type: added
+            

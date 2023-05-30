@@ -240,10 +240,11 @@ top_declaration:
 | "<directive>" { D_Directive $1 } (* Only at top-level *)
 
 declaration:
-  type_decl   { D_Type   $1 }
-| let_decl    { D_Let    $1 }
-| module_decl { D_Module $1 }
-| attr_decl   { D_Attr   $1 }
+  type_decl      { D_Type   $1 }
+| let_decl       { D_Let    $1 }
+| module_decl    { D_Module $1 }
+| attr_decl      { D_Attr   $1 }
+| signature_decl { D_Signature $1 }
 
 (* Attributed declarations *)
 
@@ -500,16 +501,15 @@ parameters:
 (* Top-level module declaration *)
 
 module_decl:
-  "module" module_name "=" module_expr {
-    let region = cover $1#region (module_expr_to_region $4)
-    and value  = {kwd_module=$1; name=$2; eq=$3; module_expr=$4}
+  "module" module_name ioption(module_constraint) "=" module_expr {
+    let region = cover $1#region (module_expr_to_region $5)
+    and value  = {kwd_module=$1; name=$2; eq=$4; module_expr=$5; annotation=$3}
     in {region; value} }
 
 module_expr:
   structure                { M_Body $1 }
 | module_name              { M_Var  $1 }
-| module_path(module_name) {
-    M_Path (mk_mod_path $1 (fun x -> x#region)) }
+| module_path(module_name) { M_Path (mk_mod_path $1 (fun x -> x#region)) }
 
 structure:
   "struct" ioption(nseq(declaration)) "end" {
@@ -520,6 +520,53 @@ structure:
       | Some nseq -> Utils.nseq_to_list nseq in
     let value  = {kwd_struct=$1; declarations; kwd_end=$3}
     in {region; value} }
+
+module_constraint:
+  ":" signature_expr { $2 }
+
+signature_decl:
+  "module" "type" module_name "=" signature_expr {
+    let region = cover $1#region $4#region
+    and value  = {kwd_module=$1; kwd_type=$2; name=$3; eq=$4;
+                  signature_expr=$5}
+    in {region; value} }
+
+signature_sig:
+  "sig" ioption(nseq(sig_item)) "end" {
+    let sig_items =
+      match $2 with
+        None -> []
+      | Some nseq -> Utils.nseq_to_list nseq in
+    let region = cover $1#region $3#region in
+    let value : signature_body = {kwd_sig=$1; kwd_end=$3; sig_items}
+    in {region;value} }
+
+sig_item:
+  "val" variable type_annotation(type_expr) {
+    let colon, t_expr = $3 in
+    let value  = $1, $2, colon, t_expr
+    and stop   = type_expr_to_region t_expr in
+    let region = cover $1#region stop
+    in S_Value {region; value}
+  }
+| "type" type_name "=" type_expr {
+    let value  = $1, $2, $3, $4
+    and stop   = type_expr_to_region $4 in
+    let region = cover $1#region stop
+    in S_Type {region; value}
+  }
+| "type" type_name {
+    let region = cover $1#region $2#region
+    in S_Type_var {region; value=$1,$2}
+  }
+| "[@attr]" sig_item {
+    let region = cover $1#region (sig_item_to_region $2)
+    in S_Attr {region; value = $1,$2} }
+
+signature_expr:
+  module_path(module_name) { S_Path (mk_mod_path $1 (fun x -> x#region)) }
+| module_name { S_Var $1 }
+| signature_sig { S_Sig $1 }
 
 (* PATTERNS *)
 

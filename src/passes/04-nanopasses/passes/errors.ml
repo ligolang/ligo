@@ -34,6 +34,7 @@ type t =
   | `Small_passes_bad_conversion_bytes of expr
   | `Small_passes_bad_format_literal of expr * string
   | `Small_passes_duplicate_identifier of Variable.t
+  | `Small_passes_duplicate_ty_identifier of Ty_variable.t
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -203,6 +204,9 @@ let error_ppformat
         s
     | `Small_passes_duplicate_identifier x ->
       let loc = Variable.get_location x in
+      Format.fprintf f "@[<hv>%a@ Duplicate identifier. @]" snippet_pp loc
+    | `Small_passes_duplicate_ty_identifier x ->
+      let loc = Ty_variable.get_location x in
       Format.fprintf f "@[<hv>%a@ Duplicate identifier. @]" snippet_pp loc)
 
 
@@ -381,6 +385,11 @@ let error_json : t -> Simple_utils.Error.t =
     make ~stage ~content
   | `Small_passes_duplicate_identifier x ->
     let location = Variable.get_location x in
+    let message = "Duplicate Identifier" in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_duplicate_ty_identifier x ->
+    let location = Ty_variable.get_location x in
     let message = "Duplicate Identifier" in
     let content = make_content ~message ~location () in
     make ~stage ~content

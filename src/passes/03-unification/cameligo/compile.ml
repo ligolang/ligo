@@ -16,6 +16,8 @@ module Eq = struct
   type declaration = I.declaration
   type program_entry = I.declaration
   type program = I.t
+  type sig_expr = I.signature_expr
+  type sig_entry = I.sig_item
 
   let not_part_of_the_language _ = assert false
 end
@@ -528,9 +530,12 @@ let declaration : Eq.declaration -> Folding.declaration =
     let name = TODO_do_in_parsing.tvar name in
     let params = Option.map ~f:TODO_do_in_parsing.type_vars_to_lst params in
     ret @@ D_type_abstraction { name; params; type_expr }
-  | D_Module { value = { name; module_expr; _ }; _ } ->
+  | D_Module { value = { name; module_expr; annotation; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
-    ret @@ D_module { name; mod_expr = module_expr }
+    ret @@ D_module { name; mod_expr = module_expr; annotation }
+  | D_Signature { value = { name; signature_expr; _ } ; _ } ->
+    let name = TODO_do_in_parsing.mvar name in
+    ret @@ D_signature { name ; sig_expr = signature_expr }
 
 
 let mod_expr : Eq.mod_expr -> Folding.mod_expr =
@@ -550,6 +555,36 @@ let mod_expr : Eq.mod_expr -> Folding.mod_expr =
     ret @@ M_path (List.Ne.append module_path (field, []))
   | M_Var m -> ret @@ M_var (TODO_do_in_parsing.mvar m)
 
-
 let program_entry : Eq.program_entry -> Folding.program_entry = fun x -> PE_declaration x
 let program : Eq.program -> Folding.program = fun { decl; _ } -> List.Ne.to_list decl
+
+
+let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
+    S_Sig { value = { sig_items; kwd_sig = _; kwd_end = _ } ; region } ->
+    let loc = Location.lift region in
+    Location.wrap ~loc @@ O.S_body sig_items
+  | S_Path { value = m ; region } ->
+    let loc = Location.lift region in
+    let module_path =
+      List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq m.module_path)
+    in
+    let field = TODO_do_in_parsing.mvar m.field in
+    Location.wrap ~loc @@ O.S_path (List.Ne.append module_path (field, []))
+  | S_Var name ->
+    let loc = Location.generated in
+    let name = TODO_do_in_parsing.mvar name in
+    Location.wrap ~loc @@ O.S_path (name, [])
+
+let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
+  | S_Value {region; value = (_, v, _, ty)} ->
+    let loc = Location.lift region in
+    Location.wrap ~loc (O.S_value (TODO_do_in_parsing.var v, ty))
+  | S_Type {region; value = (_, v, _, ty)} ->
+    let loc = Location.lift region in
+    Location.wrap ~loc (O.S_type (TODO_do_in_parsing.tvar v, ty))
+  | S_Type_var {region; value = (_, v)} ->
+    let loc = Location.lift region in
+    Location.wrap ~loc (O.S_type_var (TODO_do_in_parsing.tvar v))
+  | S_Attr {region; value = attr, si} ->
+    let loc = Location.lift region in
+    Location.wrap ~loc (O.S_attr (fst @@ TODO_do_in_parsing.conv_attr attr, si) : _ O.sig_entry_content_)

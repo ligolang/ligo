@@ -11,6 +11,8 @@ let dummy_loc : _ Recursion_schemes.Catamorphism.fold =
   ; declaration = rm_loc (Combinators.make_d ~loc:dummy)
   ; program_entry = Combinators.make_pe
   ; program  = Combinators.make_prg
+  ; sig_entry = Combinators.make_sig_entry
+  ; sig_expr = Combinators.make_sig_expr
   }
 
 let pp_as_sexp ~show_loc folder sexper ppf x =

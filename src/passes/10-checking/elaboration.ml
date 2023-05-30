@@ -109,14 +109,15 @@ let decode_attribute (attr : Context.Attr.t) : O.sig_item_attribute =
 
 
 let rec decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature =
-  let decode_item (item : Context.Signature.item) : O.sig_item =
+  let decode_item (item : Context.Signature.item) : O.sig_item list =
     match item with
     | S_value (var, type_, attr) ->
-      S_value (var, decode ~raise type_ subst, decode_attribute attr)
-    | S_type (var, type_) -> S_type (var, decode ~raise type_ subst)
-    | S_module (var, sig_) -> S_module (var, decode_signature ~raise sig_ subst)
+      [ S_value (var, decode ~raise type_ subst, decode_attribute attr) ]
+    | S_type (var, type_) -> [ S_type (var, decode ~raise type_ subst) ]
+    | S_module (var, sig_) -> [ S_module (var, decode_signature ~raise sig_ subst) ]
+    | S_module_type _ -> [ ]
   in
-  List.map ~f:decode_item sig_
+  List.concat_map ~f:decode_item sig_
 
 
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =

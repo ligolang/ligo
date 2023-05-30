@@ -148,11 +148,14 @@ and subst_abstraction
 and subst_row ?(free_vars = Type_var.Set.empty) row ~tvar ~type_ =
   Row.map (subst ~free_vars ~tvar ~type_) row
 
-
-let subst t ~tvar ~type_ =
-  let free_vars = free_vars t in
-  subst ~free_vars t ~tvar ~type_
-
+let subst =
+  let free_vars_type = free_vars in
+  let subst ?free_vars t ~tvar ~type_ =
+    let free_vars = match free_vars with
+      | None -> free_vars_type t
+      | Some free_vars -> free_vars
+    in subst ~free_vars t ~tvar ~type_ in
+  subst
 
 let rec fold : type a. t -> init:a -> f:(a -> t -> a) -> a =
  fun t ~init ~f ->

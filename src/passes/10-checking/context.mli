@@ -20,6 +20,7 @@ module Signature : sig
     | S_value of Value_var.t * Type.t * Attr.t
     | S_type of Type_var.t * Type.t
     | S_module of Module_var.t * t
+    | S_module_type of Module_var.t * Module_type.t
 
   val get_value : t -> Value_var.t -> (Type.t * Attr.t) option
   val get_type : t -> Type_var.t -> Type.t option
@@ -41,6 +42,7 @@ and item =
   | C_type of Type_var.t * Type.t
   | C_type_var of Type_var.t * Kind.t
   | C_module of Module_var.t * Signature.t
+  | C_module_type of Module_var.t * Module_type.t
   | C_texists_var of Type_var.t * Kind.t
   | C_texists_eq of Type_var.t * Kind.t * Type.t
   | C_lexists_var of Layout_var.t * fields
@@ -92,7 +94,8 @@ val get_texists_var : t -> Type_var.t -> Kind.t option
 val get_texists_eq : t -> Type_var.t -> Type.t option
 val get_lexists_var : t -> Layout_var.t -> fields option
 val get_lexists_eq : t -> Layout_var.t -> (fields * Type.layout) option
-val get_signature : t -> Module_var.t List.Ne.t -> Signature.t option
+val get_module_of_path : t -> Module_var.t List.Ne.t -> Signature.t option
+val get_module_type_of_path : t -> Module_var.t List.Ne.t -> Module_type.t option
 
 val get_type_or_type_var
   :  t

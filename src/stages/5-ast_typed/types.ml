@@ -96,7 +96,7 @@ and declaration_content =
   | D_value of (expr, ty_expr) Value_decl.t
   | D_irrefutable_match of (expr, ty_expr) Pattern_decl.t
   | D_type of ty_expr Type_decl.t
-  | D_module of module_expr Module_decl.t
+  | D_module of (module_expr, unit) Module_decl.t
 
 and declaration = declaration_content Location.wrap
 and decl = declaration [@@deriving eq, compare, yojson, hash]

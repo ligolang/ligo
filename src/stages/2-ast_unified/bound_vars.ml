@@ -66,7 +66,7 @@ let fv_folder =
       List.concat bounds
     | _ -> empty
   in
-  let declaration : (bound, bound, ty_expr, pattern, bound) declaration_ -> bound =
+  let declaration : (bound, bound, ty_expr, pattern, bound, bound) declaration_ -> bound =
    fun d ->
     match Location.unwrap d with
     | D_attr (_, d) -> d
@@ -97,11 +97,20 @@ let fv_folder =
     | D_irrefutable_match { pattern; expr = _ } ->
       let binders = Combinators.get_pattern_binders pattern in
       singleton binders
+    | D_signature { name = _ ; sig_expr = _ } ->
+      empty
     | _ -> empty
   in
   let block : _ block_ -> bound = fold_block_ union union empty in
-  let mod_expr = fold_mod_expr_ () union empty in
+  let mod_expr = fold_mod_expr_ union union empty in
   let program : _ program_ -> bound = fold_program_ union union empty in
+  let sig_expr : _ sig_expr_ -> bound = fold_sig_expr_ union union union empty in
+  let sig_entry : _ sig_entry_ -> bound = fun si ->
+    match Location.unwrap si with
+    | S_value (v, _) -> singleton [v]
+    | S_attr (_, si) -> si
+    | _ -> empty
+  in
   let instruction : _ instruction_ -> bound = fun _ -> empty in
   let program_entry : _ program_entry_ -> bound =
     fold_program_entry_ union union union empty
@@ -119,9 +128,12 @@ let fv_folder =
   ; declaration
   ; program_entry
   ; program
+  ; sig_expr
+  ; sig_entry
   }
 
 
 let bound_expr = cata_expr ~f:fv_folder
 let bound_program = cata_program ~f:fv_folder
 let bound_block = cata_block ~f:fv_folder
+let bound_sig_expr = cata_sig_expr ~f:fv_folder

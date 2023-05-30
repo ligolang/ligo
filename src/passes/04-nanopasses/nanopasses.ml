@@ -61,6 +61,7 @@ let passes ~(flags : flags) : (module T) list =
   [ entry (module Initial_node_check) ~flag:initial_node_check ~arg:()
   ; entry (module For_to_while_loop) ~flag:always ~arg:for_to_while_loop
   ; entry (module Duplicate_identifier) ~flag:duplicate_identifier ~arg:()
+  ; entry (module Linear_signature) ~flag:always ~arg:()
   ; entry (module Restrict_projections) ~flag:restrict_projection ~arg:()
   ; entry (module Single_switch_block) ~flag:always ~arg:()
   ; entry (module Export_declaration) ~flag:export_declaration ~arg:()

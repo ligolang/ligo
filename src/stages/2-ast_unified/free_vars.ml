@@ -115,13 +115,15 @@ let fv_folder =
       in
       bound, diff return bound
     | D_irrefutable_match { pattern; expr } -> pattern, diff expr pattern
-    | _ -> empty, fold_declaration_ ignore_bound union fv_ty union union empty d
+    | _ -> empty, fold_declaration_ ignore_bound union fv_ty union union union empty d
   in
   let block : _ block_ -> fv =
    fun lst -> fv_of_sequence (List.Ne.to_list (Location.unwrap lst))
   in
-  let mod_expr = fold_mod_expr_ () union empty in
+  let mod_expr = fold_mod_expr_ union union empty in
   let program : _ program_ -> fv = fv_of_sequence in
+  let sig_expr : _ sig_expr_ -> fv = fun _ -> empty in
+  let sig_entry : _ sig_entry_ -> fv = fun _ -> empty in
   let instruction = fold_instruction_ union union union ignore_bound union empty in
   let program_entry : _ program_entry_ -> sequence =
     fold_program_entry_ propagate_bound propagate_bound merge_bound (empty, empty)
@@ -139,6 +141,8 @@ let fv_folder =
   ; declaration
   ; program_entry
   ; program
+  ; sig_expr
+  ; sig_entry
   }
 
 

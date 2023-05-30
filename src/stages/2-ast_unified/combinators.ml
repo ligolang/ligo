@@ -38,8 +38,8 @@ type 'a type_expression_content_ = [%import: 'a Types.type_expression_content_]
     ; wrap_get = "type_expression_content_", get_t
     }]
 
-type ('a, 'b, 'c, 'd, 'e) declaration_content_ =
-  [%import: ('a, 'b, 'c, 'd, 'e) Types.declaration_content_]
+type ('a, 'b, 'c, 'd, 'e, 'f) declaration_content_ =
+  [%import: ('a, 'b, 'c, 'd, 'e, 'f) Types.declaration_content_]
 [@@deriving
   ez
     { prefixes =
@@ -122,6 +122,24 @@ type ('a, 'b) program_ = [%import: ('a, 'b) Types.program_]
     { prefixes =
         [ ("make_prg", fun content : program -> { fp = content })
         ; ("get_prg", fun (x : Types.program) -> x.fp)
+        ]
+    }]
+
+type ('a, 'b, 'c) sig_entry_ = [%import: ('a, 'b, 'c) Types.sig_entry_]
+[@@deriving
+  ez
+    { prefixes =
+        [ ("make_sig_entry", fun content : sig_entry -> { fp = content })
+        ; ("get_sig_entry", fun (x : Types.sig_entry) -> x.fp)
+        ]
+    }]
+
+type ('a, 'b, 'c) sig_expr_ = [%import: ('a, 'b, 'c) Types.sig_expr_]
+[@@deriving
+  ez
+    { prefixes =
+        [ ("make_sig_expr", fun content : sig_expr -> { fp = content })
+        ; ("get_sig_expr", fun (x : Types.sig_expr) -> x.fp)
         ]
     }]
 
@@ -386,6 +404,8 @@ let get_pattern_binders (p : pattern) : Variable.t list =
       ; declaration = (fun _ -> ())
       ; program_entry = (fun _ -> ())
       ; program = (fun _ -> ())
+      ; sig_expr = (fun _ -> ())
+      ; sig_entry = (fun _ -> ())
       }
   in
   Recursion_schemes.Catamorphism.cata_pattern ~f:folder p

@@ -343,8 +343,10 @@ module Context = struct
     lift_ctx (fun ctx -> Context.get_texists_var ctx tvar) >>= raise_opt ~error
 
 
-  let get_signature path : _ t = lift_ctx (fun ctx -> Context.get_signature ctx path)
-  let get_signature_exn path ~error : _ t = get_signature path >>= raise_opt ~error
+  let get_module_of_path path : _ t = lift_ctx (fun ctx -> Context.get_module_of_path ctx path)
+  let get_module_of_path_exn path ~error : _ t = get_module_of_path path >>= raise_opt ~error
+  let get_module_type_of_path path : _ t = lift_ctx (fun ctx -> Context.get_module_type_of_path ctx path)
+  let get_module_type_of_path_exn path ~error : _ t = get_module_type_of_path path >>= raise_opt ~error
   let get_module mvar : _ t = lift_ctx (fun ctx -> Context.get_module ctx mvar)
   let get_module_exn mvar ~error : _ t = get_module mvar >>= raise_opt ~error
   let get_sum constr : _ t = lift_ctx (fun ctx -> Context.get_sum ctx constr)

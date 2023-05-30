@@ -376,5 +376,5 @@ let to_signature (program : program) : signature =
         ctx @ [ S_value (Binder.get_var binder, expr.type_expression, { view; entry }) ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
         ctx @ [ S_type (type_binder, type_expr) ]
-      | D_module { module_binder; module_; module_attr = _ } ->
+      | D_module { module_binder; module_; module_attr = _; annotation = () } ->
         ctx @ [ S_module (module_binder, module_.signature) ])

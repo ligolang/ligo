@@ -56,11 +56,14 @@ type kwd_not    = lexeme wrap
 type kwd_of     = lexeme wrap
 type kwd_or     = lexeme wrap
 type kwd_rec    = lexeme wrap
+type kwd_signature = lexeme wrap
+type kwd_sig    = lexeme wrap
 type kwd_struct = lexeme wrap
 type kwd_then   = lexeme wrap
 type kwd_true   = lexeme wrap
 type kwd_type   = lexeme wrap
 type kwd_upto   = lexeme wrap
+type kwd_val    = lexeme wrap
 type kwd_while  = lexeme wrap
 type kwd_with   = lexeme wrap
 
@@ -146,6 +149,7 @@ and declaration =
 | D_Directive of Directive.t
 | D_Let       of let_decl reg
 | D_Module    of module_decl reg
+| D_Signature of signature_decl reg
 | D_Type      of type_decl reg
 
 (* Non-recursive, top-level values *)
@@ -169,6 +173,7 @@ and type_params = kwd_type * variable nseq
 and module_decl = {
   kwd_module  : kwd_module;
   name        : module_name;
+  annotation  : signature_expr option;
   eq          : equal;
   module_expr : module_expr
 }
@@ -183,6 +188,33 @@ and module_body = {
   declarations : declaration list;
   kwd_end      : kwd_end
 }
+
+(* Signature declaration *)
+
+and signature_decl = {
+  kwd_module     : kwd_module;
+  kwd_type       : kwd_type;
+  name           : module_name;
+  eq             : equal;
+  signature_expr : signature_expr
+}
+
+and signature_body = {
+  kwd_sig      : kwd_sig;
+  sig_items    : sig_item list;
+  kwd_end      : kwd_end
+}
+
+and signature_expr =
+  S_Sig  of signature_body reg
+| S_Path of module_name module_path reg
+| S_Var  of module_name
+
+and sig_item =
+  S_Value    of (kwd_val * variable * colon * type_expr) reg
+| S_Type     of (kwd_type * variable * equal * type_expr) reg
+| S_Type_var of (kwd_type * variable) reg
+| S_Attr     of (attribute * sig_item) reg
 
 (* Module paths *)
 
@@ -698,4 +730,11 @@ let declaration_to_region = function
 | D_Directive dir         -> Directive.to_region dir
 | D_Let       {region; _}
 | D_Module    {region; _}
+| D_Signature {region; _}
 | D_Type      {region; _} -> region
+
+let sig_item_to_region = function
+  S_Attr     {region; _}
+| S_Value    {region; _}
+| S_Type     {region; _}
+| S_Type_var {region; _} -> region

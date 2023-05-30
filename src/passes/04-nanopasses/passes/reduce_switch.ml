@@ -53,6 +53,8 @@ let split_break stmts : statement list * bool =
         ; declaration = (fun _ -> ())
         ; program_entry = (fun _ -> ())
         ; program = (fun _ -> ())
+        ; sig_expr = (fun _ -> ())
+        ; sig_entry = (fun _ -> ())
         }
     in
     if List.is_empty stmts

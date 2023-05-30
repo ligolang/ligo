@@ -64,6 +64,15 @@ and print_declaration state = function
 | D_Let       d -> print_D_Let       state d
 | D_Module    d -> print_D_Module    state d
 | D_Type      d -> print_D_Type      state d
+| D_Signature d -> print_D_Signature state d
+
+(* SIGNATURE DECLARATIONS *)
+
+and print_sig_item state = function
+  S_Attr     d -> print_S_Attr       state d
+| S_Value    d -> print_S_Value      state d
+| S_Type     d -> print_S_Type       state d
+| S_Type_var d -> print_S_Type_var state d
 
 (* Attributed declaration *)
 
@@ -73,6 +82,15 @@ and print_D_Attr state (node : (attribute * declaration) reg) =
     mk_child print_attribute   attribute;
     mk_child print_declaration declaration]
   in Tree.make state "D_Attr" children
+
+(* Attributed sig. item *)
+
+and print_S_Attr state (node : (attribute * sig_item) reg) =
+  let attribute, sig_item = node.value in
+  let children = Tree.[
+    mk_child print_attribute   attribute;
+    mk_child print_sig_item     sig_item]
+  in Tree.make state "S_Attr" children
 
 (* Preprocessing directives *)
 
@@ -147,9 +165,9 @@ and mk_children_module_decl (node : module_decl) =
         mk_child print_module_expr node.module_expr]
 
 and print_module_expr state = function
-  M_Body e -> print_M_Body state e
-| M_Path e -> print_M_Path state e
-| M_Var  e -> print_M_Var  state e
+  M_Body       e -> print_M_Body       state e
+| M_Path       e -> print_M_Path       state e
+| M_Var        e -> print_M_Var        state e
 
 and print_M_Body state (node : module_body reg) =
   let Region.{value; region} = node in
@@ -171,6 +189,60 @@ and print_module_path :
        @@ Utils.nsepseq_to_list value.module_path)
       @ [Tree.mk_child print value.field]
     in Tree.make state root ~region children
+
+(* Signature declaration *)
+
+and print_D_Signature state (node : signature_decl reg) =
+  let Region.{value; region} = node in
+  let children = mk_children_signature_decl value
+  in Tree.make state ~region "D_Signature" children
+
+and mk_children_signature_decl (node : signature_decl) =
+  Tree.[mk_child make_literal      node.name;
+        mk_child print_signature_expr node.signature_expr]
+
+and print_signature_expr state = function
+  S_Sig  e -> print_S_Sig  state e
+| S_Path e -> print_S_Path state e
+| S_Var  e -> print_S_Var  state e
+
+and print_S_Sig state (node : signature_body reg) =
+  let Region.{value; region} = node in
+  let sig_items = value.sig_items in
+  let children = Tree.mk_children_list print_sig_item sig_items
+  in Tree.make ~region state "S_Sig" children
+
+and print_S_Path state (node : module_name module_path reg) =
+  print_module_path Tree.make_literal "S_Path" state node
+
+and print_S_Var state (node : module_name) =
+  Tree.(make_unary state "S_Var" make_literal node)
+
+(* Value declarations (signature) *)
+
+and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
+  let Region.{value; region} = node in
+  let _kwd_val, var, _colon, type_expr = value in
+  let children = Tree.[mk_child make_literal var;
+                       mk_child print_type_expr type_expr]
+  in Tree.make ~region state "S_Value" children
+
+(* Type declarations (signature) *)
+
+and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
+  let Region.{value; region} = node in
+  let _kwd_type, var, _eq, type_expr = value in
+  let children = Tree.[mk_child make_literal var;
+                       mk_child print_type_expr type_expr]
+  in Tree.make ~region state "S_Type" children
+
+(* Type declarations (signature) *)
+
+and print_S_Type_var state (node : (kwd_type * variable) reg) =
+  let Region.{value; region} = node in
+  let _kwd_type, var = value in
+  let children = Tree.[mk_child make_literal var]
+  in Tree.make ~region state "S_Type_var" children
 
 (* TYPE EXPRESSIONS *)
 

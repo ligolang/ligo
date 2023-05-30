@@ -23,7 +23,7 @@ val type_declaration
   -> options:Compiler_options.middle_end
   -> ?env:O.signature
   -> I.declaration
-  -> O.declaration
+  -> O.declaration list
 
 val type_expression
   :  raise:(typer_error, Main_warnings.all) raise

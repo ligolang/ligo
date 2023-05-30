@@ -14,6 +14,8 @@ let rec folder =
     ; declaration = todo
     ; program_entry = todo
     ; program = todo
+    ; sig_expr = todo
+    ; sig_entry = todo
     }
 
 

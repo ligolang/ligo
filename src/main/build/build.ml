@@ -107,6 +107,7 @@ module Separate (Params : Params) = struct
                 ; module_location = loc
                 }
             ; module_attr = { public = true; hidden = true }
+            ; annotation = ()
             })
       :: ast
 
@@ -177,7 +178,7 @@ module Infer (Params : Params) = struct
         ~loc
         Ast_core.(
           D_module
-            { module_binder; module_; module_attr = { public = true; hidden = true } })
+            { module_binder; module_; module_attr = { public = true; hidden = true }; annotation = None })
       :: ast
 
 

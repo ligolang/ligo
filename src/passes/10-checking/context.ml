@@ -62,6 +62,7 @@ module Signature = struct
       | S_value of Value_var.t * Type.t * Attr.t
       | S_type of Type_var.t * Type.t
       | S_module of Module_var.t * t
+      | S_module_type of Module_var.t * Module_type.t
     [@@deriving compare, hash]
   end
 
@@ -98,6 +99,16 @@ module Signature = struct
       (fun t mvar ->
         (find_map t ~f:(function
             | S_module (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
+            | _ -> None) [@landmark "get_module"]))
+
+
+  let get_module_type =
+    memoize2
+      hashable
+      (module Module_var)
+      (fun t mvar ->
+        (find_map t ~f:(function
+            | S_module_type (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
@@ -168,6 +179,8 @@ module Signature = struct
         Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
       | S_module (mvar, sig_) ->
         Format.fprintf ppf "module %a = %a" Module_var.pp mvar pp sig_
+      | S_module_type (mvar, sig_) ->
+        Format.fprintf ppf "module type %a = %a" Module_var.pp mvar Module_type.pp sig_
 
 
     and pp ppf t = Format.fprintf ppf "@[<v>sig@,%a@,end@]" (list ~pp:pp_item) t
@@ -190,6 +203,7 @@ module T = struct
     | C_type of Type_var.t * Type.t
     | C_type_var of Type_var.t * Kind.t
     | C_module of Module_var.t * Signature.t
+    | C_module_type of Module_var.t * Module_type.t
     | C_texists_var of Type_var.t * Kind.t
     | C_texists_eq of Type_var.t * Kind.t * Type.t
     | C_lexists_var of Layout_var.t * fields
@@ -250,6 +264,8 @@ module PP = struct
         layout
     | C_module (mvar, sig_) ->
       Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
+    | C_module_type (mvar, sig_) ->
+      Format.fprintf ppf "module %a : %a" Module_var.pp mvar Module_type.pp sig_
     | C_pos _ | C_mut_lock _ -> ()
 
 
@@ -283,6 +299,7 @@ let item_of_signature_item (sig_item : Signature.item) : item =
   | S_value (var, type_, attr) -> C_value (var, Immutable, type_, attr)
   | S_type (tvar, type_) -> C_type (tvar, type_)
   | S_module (mvar, sig_) -> C_module (mvar, sig_)
+  | S_module_type (mvar, sig_) -> C_module_type (mvar, sig_)
 
 
 let add_signature_item t (sig_item : Signature.item) =
@@ -354,6 +371,16 @@ let get_module =
     (fun t mvar ->
       (List.find_map t ~f:(function
           | C_module (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
+          | _ -> None) [@landmark "get_module"]))
+
+
+let get_module_type =
+  memoize2
+    hashable
+    (module Module_var)
+    (fun t mvar ->
+      (List.find_map t ~f:(function
+          | C_module_type (mvar', mctx) when Module_var.equal mvar mvar' -> Some mctx
           | _ -> None) [@landmark "get_module"]))
 
 
@@ -496,6 +523,7 @@ module Apply = struct
     | S_type (tvar, type') -> S_type (tvar, type_ ctx type')
     | S_value (var, type', attr) -> S_value (var, type_ ctx type', attr)
     | S_module (mvar, sig') -> S_module (mvar, sig_ ctx sig')
+    | S_module_type (mvar, sig') -> S_module_type (mvar, sig')
 
 
   and sig_ ctx (sig_ : Signature.t) : Signature.t =
@@ -703,11 +731,29 @@ let to_module_mapi =
            | _ -> map) [@landmark "to_module_map"]))
 
 
-let get_signature t ((local_module, path) : Module_var.t List.Ne.t) =
+let get_module_of_path t ((local_module, path) : Module_var.t List.Ne.t) =
   let open Option.Let_syntax in
   List.fold path ~init:(get_module t local_module) ~f:(fun sig_ mvar ->
       let%bind sig_ = sig_ in
       Signature.get_module sig_ mvar)
+
+let get_module_type_of_path t module_path =
+  let module_path = List.Ne.rev module_path in
+  let (local_signature, path) : Module_var.t List.Ne.t = module_path in
+  let path = List.rev path in
+  match path with
+  | [] ->
+    get_module_type t local_signature
+  | local_module :: path ->
+    let open Option.Let_syntax in
+    let%bind t = get_module t local_module in
+    let rec aux = fun module_path (t : Signature.t) -> match module_path with
+        [] -> Some t
+      | mvar :: module_path ->
+        let%bind t = Signature.get_module t mvar in
+        aux module_path t in
+    let%bind t = aux path t in
+    Signature.get_module_type t local_signature
 
 
 type ('a, 'ret) contextual =
@@ -977,7 +1023,9 @@ end = struct
           (not (Set.mem (get_lexists_vars t) lvar)) && layout layout_ ~ctx
         | C_module (_mvar, sig_) ->
           (* Shadowing permitted *)
-          signature ~ctx sig_)
+          signature ~ctx sig_
+        | C_module_type _ ->
+          true (* TODO *))
     in
     loop ctx
 
@@ -1053,6 +1101,7 @@ end = struct
       | Some _ -> true
       | _ -> false)
     | S_module (_mvar, sig_) -> signature ~ctx sig_
+    | S_module_type (_mvar, _sig_) -> true (* TODO *)
 end
 
 module Hashes = struct

@@ -170,10 +170,10 @@ and compile_declaration scope (d : AST.declaration) : Scope.t * AST.declaration 
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = type_expression scope type_expr in
     return scope @@ AST.D_type { type_binder; type_expr; type_attr }
-  | D_module { module_binder; module_; module_attr } ->
+  | D_module { module_binder; module_; module_attr; annotation = () } ->
     let mod_scope, module_ = compile_module_expr scope module_ in
     let scope, module_binder = Scope.new_module_var scope module_binder mod_scope in
-    return scope @@ AST.D_module { module_binder; module_; module_attr }
+    return scope @@ AST.D_module { module_binder; module_; module_attr; annotation = () }
 
 
 and compile_program scope (program : AST.program) : Scope.t * AST.program =

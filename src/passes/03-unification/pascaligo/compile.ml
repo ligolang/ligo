@@ -865,7 +865,7 @@ and compile_declaration : CST.declaration -> AST.declaration =
     let d, loc = r_split d in
     let name = TODO_do_in_parsing.mvar ~loc:(w_snd d.name) (w_fst d.name) in
     let mod_expr = compile_module d.module_expr in
-    d_module { name; mod_expr } ~loc
+    d_module { name; mod_expr; annotation = None } ~loc
 
 
 (* ========================== MODULES ===================================== *)

@@ -185,15 +185,25 @@ module Context : sig
     -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
 
-  (** [get_signature path] returns the signature of the module path [path].
+  (** [get_module_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
-  val get_signature : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
+  val get_module_of_path : Module_var.t List.Ne.t -> (Signature.t option, 'err, 'wrn) t
 
-  val get_signature_exn
+  val get_module_of_path_exn
     :  Module_var.t List.Ne.t
     -> error:'err Errors.with_loc
     -> (Signature.t, 'err, 'wrn) t
+
+  (** [get_module_type_of_path path] returns the signature of the module path [path].
+      Returning [None] if not found in the current context. *)
+
+  val get_module_type_of_path : Module_var.t List.Ne.t -> (Module_type.t option, 'err, 'wrn) t
+
+  val get_module_type_of_path_exn
+    :  Module_var.t List.Ne.t
+    -> error:'err Errors.with_loc
+    -> (Module_type.t, 'err, 'wrn) t
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
       containing [constr].

@@ -57,6 +57,7 @@ module Mod_in = Mod_in
 module Value_decl (Attr : Declaration.Attr) = Declaration.Value_decl (Attr)
 module Type_decl (Attr : Declaration.Attr) = Declaration.Type_decl (Attr)
 module Module_decl (Attr : Declaration.Attr) = Declaration.Module_decl (Attr)
+module Signature_decl = Declaration.Signature_decl
 module Value_attr = Value_attr
 module Type_or_module_attr = Type_or_module_attr
 

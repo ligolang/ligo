@@ -33,6 +33,7 @@ and sexp_of_declaration (x : declaration) : Sexp.t =
     sexp_of_ty_expr
     sexp_of_pattern
     sexp_of_mod_expr
+    sexp_of_sig_expr
     x.fp
 
 
@@ -62,6 +63,13 @@ and sexp_of_program_entry : program_entry -> Sexp.t =
 
 and sexp_of_program : program -> Sexp.t =
  fun e -> Types.sexp_of_program_ sexp_of_program sexp_of_program_entry e.fp
+
+
+and sexp_of_sig_expr : sig_expr -> Sexp.t =
+ fun e -> Types.sexp_of_sig_expr_ sexp_of_sig_expr sexp_of_sig_entry sexp_of_ty_expr e.fp
+
+and sexp_of_sig_entry : sig_entry -> Sexp.t =
+ fun e -> Types.sexp_of_sig_entry_ sexp_of_sig_expr sexp_of_sig_entry sexp_of_ty_expr e.fp
 
 
 let rec ty_expr_of_sexp (s : Sexp.t) : ty_expr =
@@ -102,6 +110,7 @@ and declaration_of_sexp (s : Sexp.t) : declaration =
         ty_expr_of_sexp
         pattern_of_sexp
         mod_expr_of_sexp
+        sig_expr_of_sexp
         s
   }
 
@@ -139,4 +148,16 @@ and program_entry_of_sexp : Sexp.t -> program_entry =
 and program_of_sexp : Sexp.t -> program =
  fun s ->
   let fp = Types.program__of_sexp program_of_sexp program_entry_of_sexp s in
+  { fp }
+
+
+and sig_expr_of_sexp : Sexp.t -> sig_expr =
+ fun s ->
+  let fp = Types.sig_expr__of_sexp sig_expr_of_sexp sig_entry_of_sexp ty_expr_of_sexp s in
+  { fp }
+
+
+and sig_entry_of_sexp : Sexp.t -> sig_entry =
+ fun s ->
+  let fp = Types.sig_entry__of_sexp sig_expr_of_sexp sig_entry_of_sexp ty_expr_of_sexp s in
   { fp }

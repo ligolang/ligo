@@ -21,6 +21,21 @@ let default_parameter = "$parameter"
 let default_parameter_var =
   Type_var.of_input_var ~loc:Location.generated default_parameter
 
+(* [check_entries s e] returns true if all entries from signature s are present in e *)
+let check_entries : Signature.t -> Value_var.t list -> [`All_found | `Not_found of Value_var.t] =
+  fun sig_ e ->
+  let f s =
+    match s with
+    | Signature.S_value (var, _, attr) when attr.entry ->
+      if (List.mem ~equal:Value_var.equal e var) then
+        None
+      else
+        Some var
+    | _ -> None
+  in
+  match List.find_map ~f sig_ with
+  | None -> `All_found
+  | Some e -> `Not_found e
 
 let program_sig_ : Signature.t -> (Signature.item list, _, _) C.t =
  fun sig_ ->

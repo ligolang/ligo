@@ -25,7 +25,7 @@ let compile ~raise =
           in
           m_path ~loc module_path
         in
-        d_module ~loc { name = alias; mod_expr })
+        d_module ~loc { name = alias; mod_expr; annotation = None })
     | d -> make_d ~loc d
   in
   Fold { idle_fold with declaration }
