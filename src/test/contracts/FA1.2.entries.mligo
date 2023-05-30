@@ -47,7 +47,7 @@ let positive (n : nat) : nat option =
   else Some n
 
 [@entry]
-let transfer (param, storage : transfer * storage) : result =
+let transfer (param : transfer) (storage : storage) : result =
   let allowances = storage.allowances in
   let tokens = storage.tokens in
   let allowances =
@@ -84,7 +84,7 @@ let transfer (param, storage : transfer * storage) : result =
   (([] : operation list), { storage with tokens = tokens; allowances = allowances })
 
 [@entry]
-let approve (param, storage : approve * storage) : result =
+let approve (param : approve) (storage : storage) : result =
   let allowances = storage.allowances in
   let allowance_key = { owner = Tezos.get_sender () ; spender = param.spender } in
   let previous_value =
@@ -100,7 +100,7 @@ let approve (param, storage : approve * storage) : result =
   end
 
 [@entry]
-let getAllowance (param, storage : getAllowance * storage) : operation list * storage =
+let getAllowance (param : getAllowance) (storage : storage) : operation list * storage =
   let value =
     match Big_map.find_opt param.request storage.allowances with
     | Some value -> value
@@ -108,7 +108,7 @@ let getAllowance (param, storage : getAllowance * storage) : operation list * st
   [Tezos.transaction value 0mutez param.callback], storage
 
 [@entry]
-let getBalance (param, storage : getBalance * storage) : operation list * storage =
+let getBalance (param : getBalance) (storage : storage) : operation list * storage =
   let value =
     match Big_map.find_opt param.owner storage.tokens with
     | Some value -> value
@@ -116,9 +116,11 @@ let getBalance (param, storage : getBalance * storage) : operation list * storag
   [Tezos.transaction value 0mutez param.callback], storage
 
 [@entry]
-let getTotalSupply (param, storage : getTotalSupply * storage) : operation list * storage =
+let getTotalSupply (param : getTotalSupply) (storage : storage) : operation list * storage =
   let total = storage.total_supply in
   [Tezos.transaction total 0mutez param.callback],storage
+
+(* These are helpers written for testing *)
 
 let bad_transfer (_param, storage : transfer * unit) : operation list * unit =
   (([] : operation list), storage)

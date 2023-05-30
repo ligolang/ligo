@@ -194,10 +194,9 @@ and map_declaration m (x : declaration) =
     let expr = map_expression m expr in
     return @@ D_irrefutable_match { pattern; expr; attr }
   | D_type t -> return @@ D_type t
-  | D_module { module_binder; module_; module_attr } ->
+  | D_module { module_binder; module_; module_attr; annotation } ->
     let module_ = map_expression_in_module_expr m module_ in
-    return @@ D_module { module_binder; module_; module_attr }
-
+    return @@ D_module { module_binder; module_; module_attr; annotation }
 
 and map_decl m d = map_declaration m d
 and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
@@ -241,6 +240,7 @@ let get_module module_path decls =
           { module_binder
           ; module_ = { module_content = M_struct inner_decls; _ }
           ; module_attr = _
+          ; annotation = ()
           }
         when Module_var.equal module_binder m ->
         let found = get_module ms (List.rev inner_decls) in
@@ -251,12 +251,14 @@ let get_module module_path decls =
           { module_binder
           ; module_ = { module_content = M_variable module_var; _ }
           ; module_attr = _
+          ; annotation = ()
           }
         when Module_var.equal module_binder m -> get_module (module_var :: ms) rest
       | D_module
           { module_binder
           ; module_ = { module_content = M_module_path module_path'; _ }
           ; module_attr = _
+          ; annotation = ()
           }
         when Module_var.equal module_binder m ->
         get_module (List.Ne.to_list module_path' @ ms) rest
@@ -293,6 +295,7 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
           ; module_ =
               { module_content = M_struct inner_decls; module_location; signature }
           ; module_attr
+          ; annotation = ()
           }
         when Module_var.equal module_binder m ->
         (match find_module [] ms (List.rev inner_decls) with
@@ -304,6 +307,7 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
                  ; module_ =
                      { module_content = M_struct inner_decls; module_location; signature }
                  ; module_attr
+                 ; annotation = ()
                  }
           in
           `Updated (List.rev rest @ (decl :: acc), a)
@@ -312,6 +316,7 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
           { module_binder
           ; module_ = { module_content = M_variable module_var; _ }
           ; module_attr = _
+          ; annotation = ()
           }
         when Module_var.equal module_binder m ->
         find_module (decl :: acc) (module_var :: ms) rest
@@ -319,6 +324,7 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
           { module_binder
           ; module_ = { module_content = M_module_path module_path'; _ }
           ; module_attr = _
+          ; annotation = ()
           }
         when Module_var.equal module_binder m ->
         find_module (decl :: acc) (List.Ne.to_list module_path' @ ms) rest
@@ -357,6 +363,7 @@ let drop_until
             ; module_ =
                 { module_content = M_struct inner_decls; module_location; signature }
             ; module_attr
+            ; annotation = ()
             }
         , m :: ms )
         when Module_var.equal module_binder m ->
@@ -370,6 +377,7 @@ let drop_until
                  ; module_ =
                      { module_content = M_struct inner_decls; module_location; signature }
                  ; module_attr
+                 ; annotation = ()
                  }
           in
           List.rev rest @ (decl :: acc), `Found data
@@ -378,6 +386,7 @@ let drop_until
             { module_binder
             ; module_ = { module_content = M_variable module_var; _ }
             ; module_attr = _
+            ; annotation = ()
             }
         , m :: ms )
         when Module_var.equal module_binder m ->
@@ -386,6 +395,7 @@ let drop_until
             { module_binder
             ; module_ = { module_content = M_module_path module_path'; _ }
             ; module_attr = _
+            ; annotation = ()
             }
         , m :: ms )
         when Module_var.equal module_binder m ->
@@ -813,7 +823,7 @@ end = struct
       match Location.unwrap x with
       | D_value { binder = _; expr; attr = _ } -> get_fv_expr expr
       | D_irrefutable_match { pattern = _; expr; attr = _ } -> get_fv_expr expr
-      | D_module { module_binder = _; module_; module_attr = _ } ->
+      | D_module { module_binder = _; module_; module_attr = _; annotation = () } ->
         get_fv_module_expr module_
       | D_type _t -> empty
     in
@@ -935,9 +945,9 @@ module Declaration_mapper = struct
       let expr = map_expression f expr in
       return @@ D_value { binder; expr; attr }
     | D_type t -> return @@ D_type t
-    | D_module { module_binder; module_; module_attr } ->
+    | D_module { module_binder; module_; module_attr; annotation } ->
       let module_ = map_expression_in_module_expr f module_ in
-      return @@ D_module { module_binder; module_; module_attr }
+      return @@ D_module { module_binder; module_; module_attr; annotation }
     | D_irrefutable_match { pattern; expr; attr } ->
       let expr = map_expression f expr in
       return @@ D_irrefutable_match { pattern; expr; attr }

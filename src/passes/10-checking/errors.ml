@@ -124,6 +124,7 @@ type typer_error =
   | `Typer_assert_equal of
     Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_unbound_module of Module_var.t list * Location.t
+  | `Typer_unbound_module_type of Module_var.t List.Ne.t * Location.t
   | `Typer_unbound_texists_var of Type_var.t * Location.t
   | `Typer_unbound_type_variable of Type_var.t * Location.t
   | `Typer_unbound_module_variable of Module_var.t * Location.t
@@ -148,6 +149,11 @@ type typer_error =
   | `Typer_uncomparable_types of Type.t * Type.t * Location.t
   | `Typer_comparator_composed of Type.t * Location.t
   | `Typer_cannot_decode_texists of Type.t * Location.t
+  | `Typer_signature_not_found_value of Value_var.t * Location.t
+  | `Typer_signature_not_found_type of Type_var.t * Location.t
+  | `Typer_signature_not_found_entry of Value_var.t * Location.t
+  | `Typer_signature_not_match_value of Value_var.t * Type.t * Type.t * Location.t
+  | `Typer_signature_not_match_type of Type_var.t * Type.t * Type.t * Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -411,6 +417,15 @@ let extract_loc_and_message : typer_error -> Location.t * string =
       | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
     in
     loc, Format.asprintf "@[<hv> Module \"%a\" not found.@]" pp_path path
+  | `Typer_unbound_module_type (path, loc) ->
+    let path = List.Ne.to_list path in
+    let rec pp_path ppf path =
+      match path with
+      | [] -> failwith "Empty path"
+      | [ mvar ] -> Format.fprintf ppf "%a" Module_var.pp mvar
+      | mvar :: path -> Format.fprintf ppf "%a.%a" Module_var.pp mvar pp_path path
+    in
+    loc, Format.asprintf "@[<hv> Signature \"%a\" not found.@]" pp_path path
   | `Typer_cannot_decode_texists (type_, loc) ->
     let type_ = type_improve type_ in
     ( loc
@@ -432,6 +447,48 @@ let extract_loc_and_message : typer_error -> Location.t * string =
         lit_type
         (pp_texists_hint ~requires_annotations:true ())
         [ expected_type; lit_type ] )
+  | `Typer_signature_not_found_value (var, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Value \"%a\" declared in signature but not found.@]"
+        Value_var.pp
+        var )
+  | `Typer_signature_not_found_type (tvar, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Type \"%a\" declared in signature but not found.@]"
+        Type_var.pp
+        tvar )
+  | `Typer_signature_not_found_entry (var, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Entry \"%a\" defined in module but not declared in signature.@]"
+        Value_var.pp
+        var )
+  | `Typer_signature_not_match_value (var, found_type, expected_type, loc) ->
+    let found_type = type_improve found_type in
+    let expected_type = type_improve expected_type in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Value \"%a\" does not match.@.Expected \"%a\", but got: \"%a\".@]"
+        Value_var.pp
+        var
+        pp_type
+        expected_type
+        pp_type
+        found_type )
+  | `Typer_signature_not_match_type (tvar, found_type, expected_type, loc) ->
+    let found_type = type_improve found_type in
+    let expected_type = type_improve expected_type in
+    ( loc
+    , Format.asprintf
+        "@[<hv>Type \"%a\" does not match.@.Expected \"%a\", but got: \"%a\".@]"
+        Type_var.pp
+        tvar
+        pp_type
+        expected_type
+        pp_type
+        found_type )
 
 
 let error_ppformat

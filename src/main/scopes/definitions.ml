@@ -199,11 +199,12 @@ and defs_of_decl : AST.declaration -> def list -> def list =
     defs_of_pattern ~body:expr pattern @@ defs_of_expr expr @@ acc
   | D_type { type_binder; type_expr; type_attr } ->
     defs_of_tvar ~bindee:type_expr type_binder acc
-  | D_module { module_binder; module_; module_attr } ->
+  | D_module { module_binder; module_; module_attr; annotation = _ } ->
     (* Here, the module body's defs are within the lhs_def,
          mod_case_of_mod_expr recursively calls defs_of_decl *)
     let mod_case : mod_case = mod_case_of_mod_expr ~defs_of_decls module_ in
     defs_of_mvar ~mod_case ~bindee:module_ module_binder @@ acc
+  | D_signature _ -> acc
 
 
 and defs_of_decls : AST.declaration list -> def list -> def list =
@@ -223,11 +224,12 @@ module Of_Stdlib = struct
       defs_of_pattern ~body:expr pattern acc
     | D_type { type_binder; type_expr; type_attr } ->
       defs_of_tvar ~bindee:type_expr type_binder acc
-    | D_module { module_binder; module_; module_attr } ->
+    | D_module { module_binder; module_; module_attr; annotation = _ } ->
       (* Here, the module body's defs are within the lhs_def,
          mod_case_of_mod_expr recursively calls defs_of_decl *)
       let mod_case : mod_case = mod_case_of_mod_expr module_ ~defs_of_decls in
       defs_of_mvar ~mod_case ~bindee:module_ module_binder acc
+    | D_signature _ -> acc
 
 
   and defs_of_decls : AST.declaration list -> def list -> def list =

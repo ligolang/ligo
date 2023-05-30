@@ -37,6 +37,7 @@ and declaration_to_yojson (x : declaration) =
     ty_expr_to_yojson
     pattern_to_yojson
     mod_expr_to_yojson
+    sig_expr_to_yojson
     x.fp
 
 
@@ -64,6 +65,14 @@ and program_entry_to_yojson (x : program_entry) =
 
 and program_to_yojson (x : program) =
   program__to_yojson program_to_yojson program_entry_to_yojson x.fp
+
+
+and sig_expr_to_yojson (x : sig_expr) =
+  sig_expr__to_yojson sig_expr_to_yojson sig_entry_to_yojson ty_expr_to_yojson x.fp
+
+
+and sig_entry_to_yojson (x : sig_entry) =
+  sig_entry__to_yojson sig_expr_to_yojson sig_entry_to_yojson ty_expr_to_yojson x.fp
 
 
 open Ppx_deriving_yojson_runtime
@@ -103,6 +112,7 @@ and declaration_of_yojson x =
     ty_expr_of_yojson
     pattern_of_yojson
     mod_expr_of_yojson
+    sig_expr_of_yojson
     x
   >|= fun fp : declaration -> { fp }
 
@@ -135,3 +145,13 @@ and program_entry_of_yojson x =
 and program_of_yojson x =
   program__of_yojson program_of_yojson program_entry_of_yojson x
   >|= fun fp : program -> { fp }
+
+
+and sig_expr_of_yojson x =
+  sig_expr__of_yojson sig_expr_of_yojson sig_entry_of_yojson ty_expr_of_yojson x
+  >|= fun fp : sig_expr -> { fp }
+
+
+and sig_entry_of_yojson x =
+  sig_entry__of_yojson sig_expr_of_yojson sig_entry_of_yojson ty_expr_of_yojson x
+  >|= fun fp : sig_entry -> { fp }

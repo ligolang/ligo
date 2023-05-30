@@ -180,7 +180,7 @@ and compile_declaration path aliases (d : AST.declaration)
   | D_type { type_binder; type_expr; type_attr } ->
     let type_expr = type_expression aliases type_expr in
     return_s aliases @@ AST.D_type { type_binder; type_expr; type_attr }
-  | D_module { module_binder; module_; module_attr } ->
+  | D_module { module_binder; module_; module_attr; annotation = () } ->
     let mod_aliases, path, module_ =
       compile_module_expr module_binder path aliases module_
     in
@@ -188,7 +188,7 @@ and compile_declaration path aliases (d : AST.declaration)
     (match module_ with
     | None -> return_n aliases
     | Some module_ ->
-      return_s aliases @@ AST.D_module { module_binder; module_; module_attr })
+      return_s aliases @@ AST.D_module { module_binder; module_; module_attr; annotation = () })
 
 
 and compile_declaration_list path aliases (program : AST.program)

@@ -19,6 +19,7 @@
   named_fun
   freeze_operators
   duplicate_identifier
+  linear_signature
   restrict_t_app
   list_as_function
   match_as_function

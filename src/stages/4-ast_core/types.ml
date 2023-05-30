@@ -34,6 +34,7 @@ module Update = Update (Access_label)
 module Value_decl = Value_decl (Value_attr)
 module Type_decl = Type_decl (Type_or_module_attr)
 module Module_decl = Module_decl (Type_or_module_attr)
+module Signature_decl = Signature_decl
 module Pattern = Linear_pattern
 module Match_expr = Match_expr.Make (Pattern)
 module Pattern_decl = Pattern_decl (Pattern) (Value_attr)
@@ -81,12 +82,31 @@ and declaration_content =
   | D_value of (expr, ty_expr option) Value_decl.t
   | D_irrefutable_match of (expr, ty_expr option) Pattern_decl.t
   | D_type of ty_expr Type_decl.t
-  | D_module of module_expr Module_decl.t
+  | D_module of (module_expr, signature_expr option) Module_decl.t
+  | D_signature of signature_expr Signature_decl.t
 
 and declaration = declaration_content Location.wrap
 and decl = declaration [@@deriving eq, compare, yojson, hash]
 and module_expr_content = decl Module_expr.t
 and module_expr = module_expr_content Location.wrap [@@deriving eq, compare, yojson, hash]
+
+and sig_item =
+  | S_value of Value_var.t * ty_expr * sig_item_attribute
+  | S_type of Type_var.t * ty_expr
+  | S_type_var of Type_var.t
+
+and sig_item_attribute =
+  { entry : bool
+  ; view : bool
+  }
+
+and signature = sig_item list
+
+and signature_content =
+  | S_sig of signature
+  | S_path of Module_var.t Simple_utils.List.Ne.t
+
+and signature_expr = signature_content Location.wrap
 
 type module_ = decl list [@@deriving eq, compare, yojson, hash]
 type program = declaration list [@@deriving eq, compare, yojson, hash]

@@ -245,9 +245,11 @@ module Of_Ast = struct
       let scopes = type_expression type_expr scopes env in
       let env = Env.add_tvar type_binder env in
       scopes, env
-    | D_module { module_binder; module_; module_attr = _ } ->
+    | D_module { module_binder; module_; module_attr = _; annotation = _ } ->
       let scopes, defs_or_alias_opt, module_map = module_expression module_ scopes env in
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
+      scopes, env
+    | D_signature _ ->
       scopes, env
 
 

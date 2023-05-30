@@ -18,6 +18,6 @@ PASS,4assert.mligo,34,366,64,108,9
 PASS,4check_signature.mligo,37,120,44,45,5
 PASS,4fibo.mligo,35,126,52,84,8
 PASS,4k.mligo,25,170,24,64,3
-PASS,4michelson_or_tree.mligo,10,126,14,79,1
+PASS,4michelson_or_tree.mligo,10,126,14,79,2
 PASS,4super-counter.mligo,25,158,50,76,5
 PASS,4ticket_wallet.mligo,195,1116,248,418,40

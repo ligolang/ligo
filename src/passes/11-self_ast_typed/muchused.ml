@@ -244,6 +244,7 @@ and get_all_declarations (module_name : Module_var.t)
           { module_binder
           ; module_ = { module_content = M_struct module_; _ }
           ; module_attr = _
+          ; annotation = _
           } ->
         let recs = get_all_declarations module_binder module_ in
         let add_module_name (v, t) =
@@ -301,7 +302,7 @@ and muchuse_declaration (x : declaration) s =
           muchuse_of_binder (Binder.get_var b) expr.type_expression s)
     in
     muchuse_union muchuse_expr (muchuse_maxs muchuse_pattern)
-  | D_module { module_; module_binder; module_attr = _ } ->
+  | D_module { module_; module_binder; module_attr = _; annotation = _ } ->
     muchuse_module_expr s module_binder module_
   | D_type _ -> s
 

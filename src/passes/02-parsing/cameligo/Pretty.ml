@@ -157,6 +157,12 @@ let unroll_D_Attr (attr, decl) =
   | decl                              -> List.rev attrs, decl
   in aux [attr] decl
 
+let unroll_S_attr (attr, sig_item) =
+  let rec aux attrs = function
+    S_Attr {value = (attr, sig_item); _ } -> aux (attr :: attrs) sig_item
+  | sig_item                              -> List.rev attrs, sig_item
+  in aux [attr] sig_item
+
 let unroll_T_Attr (attr, type_expr) =
   let rec aux attrs = function
     T_Attr (attr, type_expr) -> aux (attr :: attrs) type_expr
@@ -229,6 +235,20 @@ and print_declaration state = function
 | D_Let       d -> print_D_Let       state d ^^ hardline
 | D_Module    d -> print_D_Module    state d ^^ hardline
 | D_Type      d -> print_D_Type      state d ^^ hardline
+| D_Signature d -> print_D_Signature state d ^^ hardline
+
+
+(* SIGNATURE DECLARATIONS *)
+
+and print_sig_item_list state (node : sig_item list) =
+  List.map ~f:(print_sig_item state) node
+  |> separate_map hardline group
+
+and print_sig_item state = function
+  S_Attr       d -> print_S_Attr     state d
+| S_Value      d -> print_S_Value    state d ^^ hardline
+| S_Type       d -> print_S_Type     state d ^^ hardline
+| S_Type_var   d -> print_S_Type_var       d ^^ hardline
 
 (* Attributed declaration *)
 
@@ -251,6 +271,13 @@ and print_attribute state (node : Attr.t wrap) =
 and print_attributes state thread = function
   [] -> thread
 | a  -> group (separate_map (break 0) (print_attribute state) a ^/^ thread)
+
+(* Attributed sig. item *)
+
+and print_S_Attr state (node : (attribute * sig_item) reg) =
+  let attributes, sig_item = unroll_S_attr node.value in
+  let thread = print_sig_item state sig_item
+  in print_attributes state thread attributes
 
 (* Preprocessing directives *)
 
@@ -298,10 +325,17 @@ and print_type_params thread (node : type_params par option) =
       thread ^^ token lpar ^^ token kwd_type ^^ params ^^ token rpar
       ^^ space
 
+
+(* Value declarations (signature) *)
+
+and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
+  let kwd_val, var, colon, type_expr = node.value
+  in token kwd_val ^^ space ^^ print_ident var ^^ space ^^ token colon ^^ space ^^ print_type_expr state type_expr
+
 (* Module declaration (structure) *)
 
 and print_D_Module state (node : module_decl reg) =
-  let {kwd_module; name; eq; module_expr} = node.value in
+  let {kwd_module; name; eq; module_expr; annotation = _} = node.value in
   let name        = print_ident name
   and module_expr = print_module_expr state module_expr
   in group (token kwd_module ^^ space ^^ name ^^ space ^^ token eq
@@ -322,6 +356,32 @@ and print_M_Path (node : module_name module_path reg) =
   print_module_path print_ident node
 
 and print_M_Var (node : module_name) = print_ident node
+
+
+(* Module declaration (signature) *)
+
+and print_D_Signature state (node : signature_decl reg) =
+  let {kwd_module; kwd_type; name; eq; signature_expr} = node.value in
+  let name        = print_ident name
+  and signature_expr = print_signature_expr state signature_expr
+  in group (token kwd_module ^^ space ^^ token kwd_type ^^ space ^^ name ^^ space ^^ token eq
+            ^^ space ^^ signature_expr)
+
+and print_signature_expr state = function
+  S_Sig  e -> print_S_sig  state e
+| S_Path e -> print_S_path       e
+| S_Var  e -> print_S_var        e
+
+and print_S_sig state (node : signature_body reg) =
+  let {kwd_sig; sig_items; kwd_end} = node.value in
+  let decls = print_sig_item_list state sig_items in
+  let decls = nest state#indent (break 0 ^^ decls) in
+  group (token kwd_sig ^^ decls ^^ hardline ^^ token kwd_end)
+
+and print_S_path (node : module_name module_path reg) =
+  print_module_path print_ident node
+
+and print_S_var (node : module_name) = print_ident node
 
 (* Type declaration *)
 
@@ -349,6 +409,22 @@ and print_type_var (node : type_var) =
   match node.value with
     Some quote, var -> token quote ^^ print_ident var
   | None, var       -> print_ident var
+
+(* Type declaration (signature) *)
+
+and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
+  let kwd_type, name, eq, type_expr = node.value in
+  let name    = print_ident name
+  and padding = match type_expr with T_Variant _ -> 0 | _ -> state#indent
+  and t_expr  = print_type_expr state type_expr in
+  token kwd_type ^^ space ^^ name ^^ space ^^ token eq
+  ^^ group (nest padding (break 1 ^^ t_expr))
+
+
+and print_S_Type_var (node : (kwd_type * variable) reg) =
+  let kwd_type, name = node.value in
+  let name    = print_ident name in
+  token kwd_type ^^ space ^^ name
 
 (* TYPE EXPRESSIONS *)
 
@@ -999,7 +1075,7 @@ and print_E_Mod state (node : kwd_mod bin_op reg) = print_bin_op state node
 
 and print_E_ModIn state (node : module_in reg) =
   let {mod_decl; kwd_in; body} = node.value in
-  let {kwd_module; name; eq; module_expr} = mod_decl
+  let {kwd_module; name; eq; module_expr; annotation = _} = mod_decl
   in group (token kwd_module
             ^^ print_ident name ^^ space ^^ token eq ^^ space
             ^^ print_module_expr state module_expr

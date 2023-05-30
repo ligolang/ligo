@@ -154,12 +154,14 @@ let rec decl : declaration -> Statement_result.t =
           ; rhs = e_fun ~loc { type_params; parameters; ret_type; body = return }
           ; body = x
           })
-  | D_module { name; mod_expr } ->
+  | D_module { name; mod_expr; annotation = _TODO } ->
     Binding
       (fun x ->
         e_mod_in
           ~loc:(Location.cover loc (get_e_loc x))
           { module_name = name; rhs = mod_expr; body = x })
+  | D_signature { name = _; sig_expr = _ } ->
+    Binding Fun.id
   | D_type { name; type_expr } ->
     Binding
       (fun x ->

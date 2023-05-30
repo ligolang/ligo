@@ -194,7 +194,7 @@ and get_fv_module (env : env) acc = function
         ({ hd with wrap_content = D_value { binder; expr; attr } } :: acc)
         tl)
     else get_fv_module env acc tl
-  | ({ Location.wrap_content = D_module { module_binder; module_; module_attr }; _ } as
+  | ({ Location.wrap_content = D_module { module_binder; module_; module_attr; annotation }; _ } as
     hd)
     :: tl ->
     (match MVarMap.find_opt module_binder env.env with
@@ -204,7 +204,7 @@ and get_fv_module (env : env) acc = function
       let env = merge_env env new_env in
       get_fv_module
         env
-        ({ hd with wrap_content = D_module { module_binder; module_; module_attr } }
+        ({ hd with wrap_content = D_module { module_binder; module_; module_attr; annotation } }
         :: acc)
         tl
     | None -> get_fv_module env acc tl)
@@ -285,7 +285,7 @@ and get_fv_program (env : env) acc : program -> _ * program = function
         ({ hd with wrap_content = D_value { binder; expr; attr } } :: acc)
         tl)
     else get_fv_program env acc tl
-  | ({ Location.wrap_content = D_module { module_binder; module_; module_attr }; _ } as
+  | ({ Location.wrap_content = D_module { module_binder; module_; module_attr; annotation }; _ } as
     hd)
     :: tl ->
     (match MVarMap.find_opt module_binder env.env with
@@ -295,7 +295,7 @@ and get_fv_program (env : env) acc : program -> _ * program = function
       let env = merge_env env new_env in
       get_fv_program
         env
-        ({ hd with wrap_content = D_module { module_binder; module_; module_attr } }
+        ({ hd with wrap_content = D_module { module_binder; module_; module_attr; annotation } }
         :: acc)
         tl
     | None -> get_fv_program env acc tl)

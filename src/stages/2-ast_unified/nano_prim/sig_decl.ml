@@ -1,6 +1,5 @@
-type ('mod_expr, 'signature) t =
+type 'sig_expr t =
   { name : Ligo_prim.Module_var.t
-  ; mod_expr : 'mod_expr
-  ; annotation : 'signature option
+  ; sig_expr : 'sig_expr
   }
 [@@deriving yojson, map, iter, fold, sexp, eq, compare, hash]

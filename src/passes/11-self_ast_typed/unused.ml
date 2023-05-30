@@ -157,7 +157,7 @@ and defuse_of_declaration defuse (decl : declaration) : defuse =
   match Location.unwrap decl with
   | D_irrefutable_match { expr; _ } | D_value { expr; _ } -> defuse_of_expr defuse expr
   | D_type _ -> defuse, []
-  | D_module { module_; module_binder = _; module_attr = _ } ->
+  | D_module { module_; module_binder = _; module_attr = _; annotation = _ } ->
     defuse_of_module_expr defuse module_
 
 

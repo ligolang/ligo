@@ -231,6 +231,7 @@ let import_file ~raise ~raw_options state file_name module_name =
              { module_binder = Module_var.of_input_var ~loc module_name
              ; module_
              ; module_attr = { public = true; hidden = false }
+             ; annotation = ()
              }
       ]
   in

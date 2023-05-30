@@ -129,6 +129,10 @@ type _ sing =
   | S_selection : selection sing
   | S_semi : semi sing
   | S_sequence_expr : sequence_expr sing
+  | S_signature_body : signature_body sing
+  | S_signature_decl : signature_decl sing
+  | S_signature_expr : signature_expr sing
+  | S_sig_item : sig_item sing
   | S_slash : slash sing
   | S_slash_eq : slash_eq sing
   | S_sepseq : 'a sing * 'b sing -> ('a, 'b) Utils.sepseq sing
@@ -256,6 +260,7 @@ let fold
     | D_Let node -> node -| S_reg S_let_decl
     | D_Type node -> node -| S_reg S_type_decl
     | D_Module node -> node -| S_reg S_module_decl
+    | D_Signature node -> node -| S_reg S_signature_decl
     | D_Directive node -> node -| S_directive)
   | S_direction -> process
     (match node with
@@ -476,7 +481,8 @@ let fold
     ; declarations -| S_list S_declaration
     ; kwd_end -| S_kwd_end ]
   | S_module_decl ->
-    let { kwd_module; name; eq; module_expr} = node in
+    let { kwd_module; name; annotation; eq; module_expr} = node in
+    ignore annotation;
     process_list
     [ kwd_module -| S_kwd_module
     ; name -| S_module_name
@@ -580,6 +586,31 @@ let fold
     ; elements -| S_sepseq (S_expr, S_semi) ]
   | S_sepseq (sing_1, sing_2) ->
     process @@ node -| S_option (S_nsepseq (sing_1, sing_2))
+  | S_signature_body ->
+    let { kwd_sig; sig_items; kwd_end } : signature_body = node in
+    process_list
+    [ kwd_sig -| S_kwd_module
+    ; sig_items -| S_list S_sig_item
+    ; kwd_end -| S_kwd_end ]
+  | S_signature_decl ->
+    let { kwd_module; kwd_type; name; eq; signature_expr} : signature_decl = node in
+    process_list
+    [ kwd_module -| S_kwd_module
+    ; kwd_type -| S_kwd_type
+    ; name -| S_module_name
+    ; eq -| S_equal
+    ; signature_expr -| S_signature_expr ]
+  | S_signature_expr -> process
+    (match node with
+      S_Sig node -> node -| S_reg S_signature_body
+    | S_Path node -> node -| S_reg (S_module_path S_module_name)
+    | S_Var node -> node -| S_module_name)
+  | S_sig_item -> process
+    (match node with
+      S_Attr node -> node -| S_reg (S_tuple_2 (S_attribute, S_sig_item))
+    | S_Value node -> node -| S_reg (S_tuple_4 (S_kwd_let, S_variable, S_colon, S_type_expr))
+    | S_Type node -> node -| S_reg (S_tuple_4 (S_kwd_type, S_variable, S_equal, S_type_expr))
+    | S_Type_var node -> node -| S_reg (S_tuple_2 (S_kwd_type, S_variable)))
   | S_slash -> process @@ node -| S_wrap S_lexeme
   | S_slash_eq -> process @@ node -| S_wrap S_lexeme
   | S_the_unit -> process @@ node -| S_tuple_2 (S_lpar, S_rpar)

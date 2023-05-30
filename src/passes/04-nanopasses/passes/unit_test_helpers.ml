@@ -210,3 +210,11 @@ module Instruction = Make (struct
   let t_of_sexp = S_exp.instruction_of_sexp
   let sexp_of_t = S_exp.sexp_of_instruction
 end)
+
+module Sig_expr = Make (struct
+  type a = sig_expr
+
+  let morphers = Morphing.sig_expr_morphers
+  let t_of_sexp = S_exp.sig_expr_of_sexp
+  let sexp_of_t = S_exp.sexp_of_sig_expr
+end)

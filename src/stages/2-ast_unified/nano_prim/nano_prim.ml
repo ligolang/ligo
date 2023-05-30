@@ -24,6 +24,7 @@ module Fun_decl = Fun_decl
 module Type_abstraction_decl = Type_abstraction_decl
 module Type_decl = Type_decl
 module Mod_decl = Mod_decl
+module Sig_decl = Sig_decl
 module Operators = Operators
 module Let_binding = Let_binding
 module Rev_app = Rev_app

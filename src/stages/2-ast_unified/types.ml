@@ -73,6 +73,7 @@ module Simple_decl = Nano_prim.Simple_decl
 module Fun_decl = Nano_prim.Fun_decl
 module Type_abstraction_decl = Nano_prim.Type_abstraction_decl
 module Mod_decl = Nano_prim.Mod_decl
+module Sig_decl = Nano_prim.Sig_decl
 module Operators = Nano_prim.Operators
 module Let_binding = Nano_prim.Let_binding
 module Rev_app = Nano_prim.Rev_app
@@ -222,10 +223,10 @@ include struct
 end
 
 (* ========================== DECLARATIONS ================================= *)
-type ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr) declaration_ =
-  ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr) declaration_content_ Location.wrap
+type ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_ =
+  ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_content_ Location.wrap
 
-and ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr) declaration_content_ =
+and ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_content_ =
   | D_attr of (Attribute.t * 'self)
   | D_directive of unit (* directive ignored for now *)
   | D_import of Import.t
@@ -240,7 +241,8 @@ and ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr) declaration_content_ =
     (* const x = y , z = w *)
   | D_fun of ('ty_expr, 'expr, 'pattern Param.t) Fun_decl.t
   | D_type_abstraction of 'ty_expr Type_abstraction_decl.t
-  | D_module of 'mod_expr Mod_decl.t
+  | D_module of ('mod_expr, 'sig_expr) Mod_decl.t
+  | D_signature of 'sig_expr Sig_decl.t
   | D_type of 'ty_expr Type_decl.t [@not_initial]
   | D_irrefutable_match of ('expr, 'pattern) Pattern_decl.t [@not_initial]
 [@@deriving
@@ -253,6 +255,48 @@ and ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr) declaration_content_ =
   , eq
   , compare
   , hash]
+
+(* ========================== SIGNATURES ====================================== *)
+include struct
+  [@@@warning "-27"]
+
+  type ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_ =
+    ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_content_ Location.wrap
+
+  and ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_content_ =
+    | S_value of Variable.t * 'ty_expr
+    | S_type of Ligo_prim.Type_var.t * 'ty_expr
+    | S_type_var of Ligo_prim.Type_var.t
+    | S_attr of Attribute.t * 'sig_entry
+  [@@deriving
+    map
+  , fold
+  , yojson
+  , iter
+  , sexp
+  , is { tags = [ "not_initial" ]; name = "sig_entry" }
+  , eq
+  , compare
+  , hash]
+
+  and ('sig_expr, 'sig_entry, 'ty_expr) sig_expr_ =
+    ('sig_expr, 'sig_entry, 'ty_expr) sig_expr_content_ Location.wrap
+
+  and ('sig_expr, 'sig_entry, 'ty_expr) sig_expr_content_ =
+    | S_body of 'sig_entry list
+    | S_path of Ligo_prim.Module_var.t Simple_utils.List.Ne.t
+  [@@deriving
+    map
+  , fold
+  , yojson
+  , iter
+  , sexp
+  , is { tags = [ "not_initial" ]; name = "sig_expr" }
+  , eq
+  , compare
+  , hash]
+
+end
 
 (* ========================== MODULES ====================================== *)
 include struct
@@ -387,8 +431,10 @@ and pattern = { fp : (pattern, ty_expr) pattern_ }
 and instruction = { fp : (instruction, expr, pattern, statement, block) instruction_ }
 and statement = { fp : (statement, instruction, declaration) statement_ }
 and block = { fp : (block, statement) block_ }
-and declaration = { fp : (declaration, expr, ty_expr, pattern, mod_expr) declaration_ }
+and declaration = { fp : (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_ }
 and mod_expr = { fp : (mod_expr, program) mod_expr_ }
 and expr = { fp : (expr, ty_expr, pattern, block, mod_expr) expr_ }
 and program_entry = { fp : (program_entry, declaration, instruction) program_entry_ }
-and program = { fp : (program, program_entry) program_ } [@@deriving eq, compare, hash]
+and program = { fp : (program, program_entry) program_ }
+and sig_expr = { fp : (sig_expr, sig_entry, ty_expr) sig_expr_ }
+and sig_entry = { fp : (sig_expr, sig_entry, ty_expr) sig_entry_ } [@@deriving eq, compare, hash]
