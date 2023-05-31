@@ -980,8 +980,6 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
            Constant_typers.External_types.map_remove_types parameters
          | T_construct { constructor = External Int; parameters; _ } ->
            Constant_typers.External_types.int_types parameters
-         | T_construct { constructor = External Int_lima; parameters; _ } ->
-           Constant_typers.External_types.int_lima_types parameters
          | T_construct { constructor = External Bytes; parameters; _ } ->
            Constant_typers.External_types.bytes_types parameters
          | T_construct { constructor = External Ediv; parameters; _ } ->

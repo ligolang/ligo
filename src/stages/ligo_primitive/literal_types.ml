@@ -4,7 +4,6 @@ module External = struct
   type t =
     | Bytes
     | Int
-    | Int_lima
     | Ediv
     | And
     | Or
@@ -20,7 +19,6 @@ module External = struct
   let to_string = function
     | Bytes -> "bytes"
     | Int -> "int"
-    | Int_lima -> "int_lima"
     | Ediv -> "ediv"
     | And -> "and"
     | Or -> "or"
@@ -162,7 +160,6 @@ let of_string_opt = function
   | "views" -> Some Views
   | "external_bytes" -> Some (External Bytes)
   | "external_int" -> Some (External Int)
-  | "external_int_lima" -> Some (External Int_lima)
   | "external_ediv" -> Some (External Ediv)
   | "external_and" -> Some (External And)
   | "external_or" -> Some (External Or)
@@ -215,7 +212,6 @@ let to_arity = function
   | Tx_rollup_l2_address -> 0
   | External Bytes -> 1
   | External Int -> 1
-  | External Int_lima -> 1
   | External Ediv -> 2
   | External And -> 2
   | External Or -> 2
@@ -311,7 +307,6 @@ let v_typed_address = Type_var.of_input_var (to_string Typed_address)
 let v_mutation = Type_var.of_input_var (to_string Mutation)
 let v_tx_rollup_l2_address = Type_var.of_input_var (to_string Tx_rollup_l2_address)
 let v_external_int = Type_var.of_input_var (to_string @@ External Int)
-let v_external_int_lima = Type_var.of_input_var (to_string @@ External Int_lima)
 let v_external_bytes = Type_var.of_input_var (to_string @@ External Bytes)
 let v_external_ediv = Type_var.of_input_var (to_string @@ External Ediv)
 let v_external_and = Type_var.of_input_var (to_string @@ External And)

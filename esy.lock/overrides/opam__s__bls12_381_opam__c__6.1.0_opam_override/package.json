@@ -1,0 +1,15 @@
+{
+  "build": [
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < dune-windows-only-rule.patch' : 'true' }"
+    ],
+    [
+      "bash",
+      "-c",
+      "#{os == 'windows' ? 'patch -p1 < build-blst-windows-only-command.patch' : 'true' }"
+    ],
+    "dune build -p bls12-381 -j 4"
+  ]
+}

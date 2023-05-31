@@ -3,8 +3,8 @@
   (public_name tezos-memory-proto-alpha)
   (libraries
     tpe
-    tp-016
-    tp-016.parameters
-    tp-016.environment
-    tc-016
-    tz-016-test-helpers))
+    tp-017
+    tc-017
+    tp-017.parameters
+    tp-017.environment
+    tz-017-test-helpers))

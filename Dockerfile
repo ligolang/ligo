@@ -27,10 +27,10 @@ COPY scripts/setup_switch.sh /ligo/scripts/setup_switch.sh
 RUN opam update \
   && sh scripts/setup_switch.sh
 COPY scripts/install_opam_deps.sh /ligo/scripts/install_opam_deps.sh
+COPY vendors /ligo/vendors
+COPY vendored-dune /ligo/vendored-dune
 COPY ligo.opam /ligo
 COPY ligo.opam.locked /ligo
-COPY vendored-dune /ligo/vendored-dune
-COPY vendors /ligo/vendors
 
 # install all transitive deps
 RUN opam update && sh scripts/install_opam_deps.sh
@@ -51,8 +51,7 @@ COPY npm /ligo/npm
 COPY examples /ligo/examples
 
 # Run tests
-RUN opam exec -- dune build @check \
-  && opam exec -- dune runtest --profile static --no-buffer \
+RUN opam exec -- dune runtest --profile static --no-buffer \
 # Coverage (only the overall)
   && find . -name '*.coverage' | xargs rm -f \
   && opam exec -- dune clean \

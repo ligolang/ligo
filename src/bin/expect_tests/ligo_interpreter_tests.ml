@@ -41,7 +41,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_timestamp_contract.mligo" ];
   [%expect
     {|
-    Success (2109n)
+    Success (1279n)
     Everything at the top-level was executed.
     - test_timestamp exited with value (). |}]
 
@@ -578,7 +578,7 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test exited with value (2136n , 2341n , 2341n). |}]
+    - test exited with value (1305n , 1510n , 1510n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_implicit_account.jsligo" ];
@@ -844,13 +844,13 @@ let%expect_test _ =
     {|
     edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
-    - test exited with value Success (2797n). |}]
+    - test exited with value Success (1968n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
   [%expect
     {|
-    Success (3504n)
+    Success (2673n)
     Everything at the top-level was executed.
     - test_one exited with value (). |}]
 
