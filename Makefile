@@ -66,7 +66,7 @@ _build/default/src/bin/js_main.bc.js: ./src/bin/js_main.ml ./src/bin/dune
 
 .PHONY: build-demo-webide demo-webide-start
 build-demo-webide: _build/default/src/bin/js_main.bc.js
-	cd jsoo && npm i && npm run build
+	cd jsoo && env PUPPETEER_PRODUCT=firefox npm i && npm run build
 
 demo-webide-start:
 	make build-demo-webide
