@@ -14,13 +14,13 @@ let hover_string : Syntax_types.t -> Scopes.def -> string =
   | Module mdef -> Helpers_pretty.print_module syntax mdef
 
 
-let on_req_hover : Position.t -> DocumentUri.t -> Hover.t option Handler.t =
- fun pos uri ->
-  with_cached_doc uri None
+let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
+ fun pos file ->
+  with_cached_doc file None
   @@ fun { get_scope_info; _ } ->
-  when_some' (Go_to_definition.get_definition pos uri get_scope_info.definitions)
+  when_some' (Go_to_definition.get_definition pos file get_scope_info.definitions)
   @@ fun definition ->
-  when_some' (DocumentUri.get_syntax uri)
+  when_some' (Path.get_syntax file)
   @@ fun syntax ->
   let syntax_highlight = Syntax.to_string syntax in
   let hover_string = hover_string syntax definition in

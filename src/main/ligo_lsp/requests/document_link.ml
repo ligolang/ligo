@@ -31,27 +31,25 @@ let extract_directives_pascaligo (cst : Parsing.Pascaligo.CST.t)
   @@ Simple_utils.Utils.nseq_to_list cst.decl
 
 
-let extract_link_from_directive ~(relative_to_dir : string)
+let extract_link_from_directive ~(relative_to_dir : Path.t)
     : Preprocessor.Directive.t -> DocumentLink.t option
   = function
   | PP_Include d ->
     let range = Range.of_region d#file_path.region
-    and target = Filename.concat relative_to_dir d#file_path.value in
+    and target = Path.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | PP_Import d ->
     let range = Range.of_region d#file_path.region
-    and target = Filename.concat relative_to_dir d#file_path.value in
-    let target = Lsp_helpers.Path.normalise target in
+    and target = Path.concat relative_to_dir d#file_path.value in
     Option.some @@ DocumentLink.create ~range ~target ()
   | _ -> None
 
 
-let on_req_document_link (uri : DocumentUri.t) : DocumentLink.t list option handler =
-  let path = uri |> DocumentUri.to_path |> Lsp_helpers.Path.normalise in
-  let@ () = send_debug_msg @@ "On document_link:" ^ path in
-  let dir = Filename.dirname path in
+let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
+  let@ () = send_debug_msg @@ "On document_link:" ^ Path.to_string file in
+  let dir = Path.dirname file in
   let@ directives_opt =
-    with_cst uri None
+    with_cst file None
     @@ function
     | CameLIGO_cst cst -> return @@ Some (extract_directives_cameligo cst)
     | JsLIGO_cst cst -> return @@ Some (extract_directives_jsligo cst)

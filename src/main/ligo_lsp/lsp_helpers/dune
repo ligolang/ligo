@@ -19,4 +19,14 @@
   unification
   decompile
   build
-  ligo.preprocessing))
+  ligo.preprocessing)
+ (inline_tests
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix))
+ (preprocess
+  (staged_pps
+   ppx_import
+   ppx_sexp_conv
+   ppx_deriving.eq
+   ppx_deriving.ord
+   ppx_hash
+   ppx_expect)))

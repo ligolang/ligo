@@ -1,7 +1,13 @@
 open Lsp_helpers
 
-(* FIXME Should we use Hashtbl from Core implementing to_sexp somehow? *)
-module Hashtbl = Caml.Hashtbl
+module DocsCache = struct
+  module PathHashtbl = Hashtbl.Make (Path)
+  include PathHashtbl (* So we can call e.g. [DocsCache.find] *)
+
+  type t = Ligo_interface.file_data PathHashtbl.t
+
+  let create : unit -> t = fun () -> PathHashtbl.create ~size:32 ()
+end
 
 (** Stores the configuration pertaining to the LIGO language server. *)
 type config =
@@ -24,11 +30,11 @@ type notify_back_mockable =
 type handler_env =
   { notify_back : notify_back_mockable
   ; config : config
-  ; docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t
+  ; docs_cache : DocsCache.t
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
-type 'a handler = Handler of (handler_env -> 'a IO.t)
+type 'a handler = Handler of (handler_env -> 'a IO.t) [@@unboxed]
 
 module Handler = struct
   type 'a t = 'a handler
@@ -65,10 +71,7 @@ let ask : handler_env Handler.t = Handler IO.return
 
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
 let ask_config : config Handler.t = fmap (fun x -> x.config) ask
-
-let ask_docs_cache : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t Handler.t =
-  fmap (fun x -> x.docs_cache) ask
-
+let ask_docs_cache : DocsCache.t Handler.t = fmap (fun x -> x.docs_cache) ask
 
 (** Conditional computations *)
 
@@ -88,7 +91,7 @@ let when_some_ (m_opt : 'a option) (f : 'a -> unit Handler.t) : unit Handler.t =
 
 let when_some' (m_opt : 'a option) (f : 'a -> 'b option Handler.t) : 'b option Handler.t =
   match m_opt with
-  | Some m -> fmap Fun.id (f m)
+  | Some m -> f m
   | None -> return None
 
 
@@ -147,13 +150,13 @@ Also returns default value if `get_scope` for this file fails, unless
 *)
 let with_cached_doc
     ?(return_default_if_no_info = true)
-    (uri : DocumentUri.t)
+    (path : Path.t)
     (default : 'a) (* Default value in case cached doc not found *)
     (f : Ligo_interface.file_data -> 'a Handler.t)
     : 'a Handler.t
   =
   let@ docs = ask_docs_cache in
-  match Hashtbl.find_opt docs uri with
+  match DocsCache.find docs path with
   | Some file_data ->
     if (not return_default_if_no_info) || file_data.get_scope_info.has_info
     then f file_data
@@ -163,13 +166,13 @@ let with_cached_doc
 
 let with_cached_doc_pure
     ?(return_default_if_no_info : bool option)
-    (uri : DocumentUri.t)
+    (path : Path.t)
     (default : 'a)
     (f : Ligo_interface.file_data -> 'a)
     : 'a Handler.t
   =
   let f' = return <@ f in
-  with_cached_doc ?return_default_if_no_info uri default f'
+  with_cached_doc ?return_default_if_no_info path default f'
 
 
 (** Like with_cached_doc, but parses a CST from code. If `strict` is passed, error
@@ -184,15 +187,14 @@ let with_cst
     ?(strict = false)
     ?(on_error : string -> unit handler =
       fun err -> send_debug_msg @@ "Unable to get CST: " ^ err)
-    (uri : DocumentUri.t)
+    (path : Path.t)
     (default : 'a)
     (f : Dialect_cst.t -> 'a Handler.t)
     : 'a Handler.t
   =
-  with_cached_doc ~return_default_if_no_info:false uri default
+  with_cached_doc ~return_default_if_no_info:false path default
   @@ fun { syntax; code; _ } ->
-  let file = DocumentUri.to_path uri in
-  match Dialect_cst.get_cst ~strict ~file syntax code with
+  match Dialect_cst.get_cst ~strict ~file:path syntax code with
   | Error err ->
     let@ () = on_error err in
     return default

@@ -1,23 +1,20 @@
 open Handler
 open Lsp_helpers
 
-let get_definition : Position.t -> DocumentUri.t -> Scopes.def list -> Scopes.def option =
+let get_definition : Position.t -> Path.t -> Scopes.def list -> Scopes.def option =
  fun pos uri definitions -> List.find ~f:(Def.is_reference pos uri) definitions
 
 
-let on_req_definition : Position.t -> DocumentUri.t -> Locations.t option Handler.t =
- fun pos uri ->
-  with_cached_doc uri None
+let on_req_definition : Position.t -> Path.t -> Locations.t option Handler.t =
+ fun pos file ->
+  with_cached_doc file None
   @@ fun { get_scope_info; _ } ->
-  when_some' (get_definition pos uri get_scope_info.definitions)
+  when_some' (get_definition pos file get_scope_info.definitions)
   @@ fun definition ->
-  let region = Def.get_location definition in
+  let def_location = Def.get_location definition in
   return
   @@
-  match region with
-  | File region ->
-    (* stdlib ranges have an empty file name. They have no definition location. *)
-    Option.some_if
-      (not (Helpers_file.is_stdlib region#file))
-      (`Location [ Location.of_region region ])
-  | Virtual _ -> None
+  match def_location with
+  | File { range; path } ->
+    Some (`Location [ Location.create ~range ~uri:(DocumentUri.of_path path) ])
+  | StdLib _ | Virtual _ -> None

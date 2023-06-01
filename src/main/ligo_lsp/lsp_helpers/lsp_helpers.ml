@@ -27,7 +27,9 @@ module Diagnostic = struct
       replace things like "Variable \"_#123\" not found." 
       to "Variable \"_#N\" not found." before comparisons *)
     let remove_underscore_numeration s =
-      { s with message = Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message }
+      { s with
+        message = Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message
+      }
     in
     Caml.(remove_underscore_numeration a = remove_underscore_numeration b)
 
@@ -41,7 +43,7 @@ module Locations = struct
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq x y = Yojson.Safe.equal (yojson_of_t x) (yojson_of_t y)
 
-  (* Because Caml.(=) didn't work *)
+  (* XXX Caml.(=) didn't work. What about derived? *)
   let testable = Alcotest.testable pp eq
 end
 
@@ -51,6 +53,9 @@ module DocumentLink = struct
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
+
+  let create ?target =
+    Lsp.Types.DocumentLink.create ?target:(Option.map ~f:Path.to_string target)
 end
 
 module FoldingRange = struct

@@ -6,7 +6,7 @@ open Requests.Handler
 
 type prepare_rename_test =
   { test_name : string
-  ; file_path : string
+  ; file_path : Path.t (* To support packaged files *)
   ; reference : Position.t
   ; can_rename : bool
   }
@@ -22,7 +22,9 @@ let get_prepare_rename_test
     @@ let@ uri = open_file file_path in
        Requests.on_req_prepare_rename reference uri
   in
-  let error_prefix = Format.asprintf "In %s, %a: " file_path Position.pp reference in
+  let error_prefix =
+    Format.asprintf "In %s, %a: " (Path.to_string file_path) Position.pp reference
+  in
   match result with
   | None ->
     if can_rename
@@ -40,58 +42,59 @@ let get_prepare_rename_test
 
 let test_cases =
   [ { test_name = "Identifier (definition)"
-    ; file_path = to_absolute "contracts/lsp/simple.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:4
     ; can_rename = true
     }
   ; { test_name = "Identifier (reference)"
-    ; file_path = to_absolute "contracts/lsp/simple.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:1 ~character:8
     ; can_rename = true
     }
   ; { test_name = "Identifier from stdlib"
-    ; file_path = to_absolute "contracts/lsp/simple.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:5 ~character:8
     ; can_rename = false
     }
   ; { test_name = "Number"
-    ; file_path = to_absolute "contracts/lsp/simple.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:8
     ; can_rename = false
     }
   ; { test_name = "Type"
-    ; file_path = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:2 ~character:8
     ; can_rename = true
     }
   ; { test_name = "Module"
-    ; file_path = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:16
     ; can_rename = true
     }
   ; { test_name = "Built-in type"
-    ; file_path = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:1 ~character:11
     ; can_rename = false
     }
   ; { test_name = "Type from stdlib"
-    ; file_path = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:28
     ; can_rename = false
     }
   ; { test_name = "Keyword"
-    ; file_path = to_absolute "contracts/lsp/simple.mligo"
+    ; file_path = Path.from_relative "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:0 ~character:0
     ; can_rename = false
     }
   ; { test_name = "Registry package imported identifier"
-    ; file_path = to_absolute "contracts/lsp/registry.jsligo"
+    ; file_path = Path.from_relative "contracts/lsp/registry.jsligo"
     ; reference = Position.create ~line:9 ~character:20
     ; can_rename = false
     }
   ; { test_name = "Registry package identifier"
     ; file_path =
-        Option.value_exn
+        Path.from_absolute
+        @@ Option.value_exn
         @@ Lsp_test_helpers.Lib.resolve_lib_path
              ~project_root:"contracts/lsp"
              ~file:"contracts/lsp/registry.jsligo"

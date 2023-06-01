@@ -19,13 +19,13 @@ let get_references_test
   @@ fun () ->
   let actual_references, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file (to_absolute test_file) in
+    @@ let@ uri = open_file (Path.from_relative test_file) in
        Requests.on_req_references reference uri
   in
   let expected_references =
     List.map
       ~f:(fun (file, range) ->
-        Location.create ~uri:(DocumentUri.of_path @@ to_absolute file) ~range)
+        Location.create ~uri:(DocumentUri.of_path @@ Path.from_relative file) ~range)
       references
   in
   match actual_references with

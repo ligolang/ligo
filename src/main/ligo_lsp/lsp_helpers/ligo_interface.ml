@@ -1,6 +1,5 @@
 module Get_scope = Get_scope
 open Get_scope
-open Linol_lwt
 
 type nonrec get_scope_info = get_scope_info
 
@@ -11,10 +10,10 @@ type file_data =
   ; get_scope_info : get_scope_info
   }
 
-let get_scope : deprecated:bool -> DocumentUri.t -> string -> get_scope_info =
- fun ~deprecated uri source ->
+let get_scope : deprecated:bool -> Path.t -> string -> get_scope_info =
+ fun ~deprecated path source ->
   (* packages - project_root [later] *)
-  let file = DocumentUri.to_path uri in
+  let file = Path.to_string path in
   (* #include - Pass lib or dirs *)
   let dir_name = Filename.dirname file in
   (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)

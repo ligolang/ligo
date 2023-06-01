@@ -14,7 +14,7 @@ let parsing_error_to_string (err : Parsing.Errors.t) : string =
   message
 
 
-let get_cst ~(strict : bool) ~(file : string) (syntax : Syntax_types.t) (code : string)
+let get_cst ~(strict : bool) ~(file : Path.t) (syntax : Syntax_types.t) (code : string)
     : (t, string) result
   =
   let buffer = Caml.Buffer.of_seq (Caml.String.to_seq code) in
@@ -29,7 +29,9 @@ let get_cst ~(strict : bool) ~(file : string) (syntax : Syntax_types.t) (code : 
     }
   in
   (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
-  let project_root = Filename.dirname file in
+  let project_root = Path.to_string @@ Path.dirname file in
+  (* since the Path.t is currently used only by LSP, we need to convert it to string here *)
+  let file = Path.to_string file in
   let preprocess = false in
   try
     let open Parsing in

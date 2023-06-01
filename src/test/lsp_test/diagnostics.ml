@@ -22,7 +22,7 @@ let get_diagnostics_test
         { default_test_config with max_number_of_problems })
   in
   let _uri, actual_diagnostics =
-    test_run_session ?config @@ open_file (to_absolute file_path)
+    test_run_session ?config @@ open_file (Path.from_relative file_path)
   in
   should_match_list
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
@@ -90,11 +90,10 @@ let test_cases =
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
           ; range = Some (interval 2 19 21)
           }
-          ; { severity = DiagnosticSeverity.Error 
-             ; message = 
-                 "Variable \"_#N\" not found. "
-             ; range = Some (point 4 13) 
-             }
+        ; { severity = DiagnosticSeverity.Error
+          ; message = "Variable \"_#N\" not found. "
+          ; range = Some (point 4 13)
+          }
         ]
     ; max_number_of_problems = None
     }

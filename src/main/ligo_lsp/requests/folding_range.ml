@@ -57,9 +57,9 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   Some (fold [] (Fun.flip List.cons) get_range cst)
 
 
-let on_req_folding_range : DocumentUri.t -> FoldingRange.t list option Handler.t =
- fun uri ->
-  Handler.with_cst uri None
+let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =
+ fun file ->
+  Handler.with_cst file None
   @@ function
   | Dialect_cst.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
   | Dialect_cst.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
