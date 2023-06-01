@@ -13,7 +13,7 @@ let main source syntax =
     | Some v -> v
     | None -> failwith ("Invalid syntax " ^ syntax)
   in
-  let protocol_version = "lima" in
+  let protocol_version = "nairobi" in
   let display_format = Simple_utils.Display.human_readable in
   let michelson_format = `Text in
   let michelson_comments = [ `Source ] in
