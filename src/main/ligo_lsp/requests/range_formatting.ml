@@ -44,11 +44,10 @@ let range_formatting
     Some [ TextEdit.create ~newText:content ~range:covering_interval ]
 
 
-let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option Handler.t
-  =
- fun uri range ->
-  let@ () = send_debug_msg @@ "Formatting request on " ^ DocumentUri.to_path uri in
-  if Helpers_file.is_packaged (DocumentUri.to_path uri)
+let on_req_range_formatting : Path.t -> Range.t -> TextEdit.t list option Handler.t =
+ fun file range ->
+  let@ () = send_debug_msg @@ "Formatting request on " ^ Path.to_string file in
+  if Helpers_file.is_packaged file
   then
     let@ () =
       send_message ~type_:Error @@ "Can not format a file from an imported package."
@@ -59,7 +58,7 @@ let on_req_range_formatting : DocumentUri.t -> Range.t -> TextEdit.t list option
       send_message ~type_:Error
       @@ "Can not apply range formatting on a file with syntax errors"
     in
-    with_cst ~strict:true ~on_error uri None
+    with_cst ~strict:true ~on_error file None
     @@ fun cst ->
     let@ edits =
       return

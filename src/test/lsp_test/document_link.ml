@@ -17,7 +17,7 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
   @@ fun () ->
   let links_opt, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file (to_absolute file_path) in
+    @@ let@ uri = open_file (Path.from_relative file_path) in
        Requests.on_req_document_link uri
   in
   match links_opt with

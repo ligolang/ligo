@@ -1,11 +1,12 @@
-(** Range between two positions  *)
+(** Range between two positions *)
 open Imports
 
 include Lsp.Types.Range
 
-let eq = Caml.( = )
+type t = [%import: Lsp.Types.Range.t] [@@deriving eq, ord, sexp]
+
 let pp = Helpers_pretty.pp_with_yojson yojson_of_t
-let testable = Alcotest.testable pp eq
+let testable = Alcotest.testable pp equal
 let to_string = Helpers_pretty.show_with_yojson yojson_of_t
 
 let of_region (region : Region.t) : t =

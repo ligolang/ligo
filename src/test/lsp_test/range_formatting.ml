@@ -16,7 +16,7 @@ let get_formatting_test ({ file_path; range; expected } : range_formatting_test)
      without printing too many lines in log.*)
   let result, _diagnostics =
     test_run_session
-    @@ let@ uri = open_file (to_absolute file_path) in
+    @@ let@ uri = open_file (Path.from_relative file_path) in
        Requests.on_req_range_formatting uri range
   in
   let mk_message s =

@@ -4,9 +4,7 @@ open Lsp_helpers
 open Requests.Handler
 
 (* one env per document *)
-let get_scope_buffers : (DocumentUri.t, Ligo_interface.file_data) Hashtbl.t =
-  Hashtbl.create 32
-
+let get_scope_buffers : DocsCache.t = DocsCache.create ()
 
 let default_config : config =
   { max_number_of_problems = 100
@@ -37,13 +35,14 @@ class lsp_server =
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
+      let file = DocumentUri.to_path document.uri in
       run_handler
         { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
       @@ let@ { deprecated; _ } = ask_config in
          let@ () =
            if not deprecated
            then (
-             match DocumentUri.get_syntax document.uri with
+             match Path.get_syntax file with
              | None -> return ()
              | Some PascaLIGO ->
                send_message
@@ -54,7 +53,7 @@ class lsp_server =
              | Some (CameLIGO | JsLIGO) -> return ())
            else return ()
          in
-         Requests.on_doc document.uri content
+         Requests.on_doc file content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -65,9 +64,10 @@ class lsp_server =
         ~old_content:_old
         ~new_content
         : unit IO.t =
+      let file = DocumentUri.to_path document.uri in
       run_handler
         { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
-      @@ Requests.on_doc document.uri new_content
+      @@ Requests.on_doc file new_content
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
@@ -285,34 +285,43 @@ class lsp_server =
         match r with
         | Client_request.TextDocumentFormatting { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_formatting uri
+          run ~uri ~default:None @@ Requests.on_req_formatting (DocumentUri.to_path uri)
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_definition position uri
+          run ~uri ~default:None
+          @@ Requests.on_req_definition position (DocumentUri.to_path uri)
         | Client_request.TextDocumentHover { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_hover position uri
+          run ~uri ~default:None
+          @@ Requests.on_req_hover position (DocumentUri.to_path uri)
         | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_prepare_rename position uri
+          run ~uri ~default:None
+          @@ Requests.on_req_prepare_rename position (DocumentUri.to_path uri)
         | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
           let uri = textDocument.uri in
           let default = WorkspaceEdit.create () in
-          run ~uri ~default @@ Requests.on_req_rename newName position uri
+          run ~uri ~default
+          @@ Requests.on_req_rename newName position (DocumentUri.to_path uri)
         | Client_request.TextDocumentReferences { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_references position uri
+          run ~uri ~default:None
+          @@ Requests.on_req_references position (DocumentUri.to_path uri)
         | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_type_definition position uri
+          run ~uri ~default:None
+          @@ Requests.on_req_type_definition position (DocumentUri.to_path uri)
         | Client_request.TextDocumentLink { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_document_link uri
+          run ~uri ~default:None
+          @@ Requests.on_req_document_link (DocumentUri.to_path uri)
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_folding_range uri
+          run ~uri ~default:None
+          @@ Requests.on_req_folding_range (DocumentUri.to_path uri)
         | Client_request.TextDocumentRangeFormatting { range; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_range_formatting uri range
+          run ~uri ~default:None
+          @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

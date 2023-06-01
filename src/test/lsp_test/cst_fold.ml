@@ -24,7 +24,11 @@ let get_cst_fold
   @@ fun () ->
   let contents = In_channel.read_all file_path in
   let cst =
-    Dialect_cst.get_cst ~strict:false ~file:file_path Syntax_types.CameLIGO contents
+    Dialect_cst.get_cst
+      ~strict:false
+      ~file:(Path.from_relative file_path)
+      Syntax_types.CameLIGO
+      contents
   in
   match cst with
   | Ok (CameLIGO_cst cst) ->

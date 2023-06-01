@@ -9,7 +9,7 @@ type definition_test =
   { test_name : string
   ; file_with_reference : string
   ; reference : Position.t
-  ; file_with_definition : string
+  ; file_with_definition : Path.t (* To support packaged files *)
   ; definition : Range.t option
   ; type_definition : bool
   }
@@ -32,7 +32,7 @@ let get_definition_test
   in
   let actual_definition, diagnostics =
     test_run_session
-    @@ let@ uri = open_file (to_absolute file_with_reference) in
+    @@ let@ uri = open_file (Path.from_relative file_with_reference) in
        get_definition reference uri
   in
   let expected_definition =
@@ -57,56 +57,56 @@ let test_cases =
   [ { test_name = "Identifier"
     ; file_with_reference = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:1 ~character:8
-    ; file_with_definition = to_absolute "contracts/lsp/simple.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/simple.mligo"
     ; definition = Some (interval 0 4 5)
     ; type_definition = false
     }
   ; { test_name = "Imported identifier"
     ; file_with_reference = "contracts/build/B.mligo"
     ; reference = Position.create ~line:6 ~character:19
-    ; file_with_definition = to_absolute "contracts/build/A.mligo"
+    ; file_with_definition = Path.from_relative "contracts/build/A.mligo"
     ; definition = Some (interval 0 4 8)
     ; type_definition = false
     }
   ; { test_name = "Identifier (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:18
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = Some (interval 2 4 5)
     ; type_definition = false
     }
   ; { test_name = "Type"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:9 ~character:8
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = Some (interval 8 5 9)
     ; type_definition = false
     }
   ; { test_name = "Type (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:8 ~character:14
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = Some (interval 1 5 8)
     ; type_definition = false
     }
   ; { test_name = "Local module"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:8
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = Some (interval 0 7 8)
     ; type_definition = false
     }
   ; { test_name = "stdlib definition"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:11
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = None
     ; type_definition = false
     }
   ; { test_name = "stdlib type definition"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:11
-    ; file_with_definition = to_absolute "contracts/lsp/local_module.mligo"
+    ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
     ; definition = None
     ; type_definition = true
     }
@@ -114,13 +114,13 @@ let test_cases =
     ; file_with_reference = "contracts/lsp/registry.jsligo"
     ; reference = Position.create ~line:9 ~character:20
     ; file_with_definition =
-        Option.value_exn
+        Path.from_absolute
+        @@ Option.value_exn
         @@ Lsp_test_helpers.Lib.resolve_lib_path
              ~project_root:"contracts/lsp"
              ~file:"contracts/lsp/registry.jsligo"
              ~lib_name:"bigarray"
              ~file_path:(Filename.concat "lib" "bigarray.mligo")
-        |> Path.normalise
     ; definition = Some (interval 27 4 11)
     ; type_definition = false
     }

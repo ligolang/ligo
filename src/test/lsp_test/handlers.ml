@@ -16,27 +16,15 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
   let mocked_notify_back = ref [] in
   let result =
     run_handler
-      { notify_back = Mock mocked_notify_back; config; docs_cache = Hashtbl.create 32 }
+      { notify_back = Mock mocked_notify_back; config; docs_cache = DocsCache.create () }
       session
   in
   Lwt_main.run result, !mocked_notify_back
 
 
-(** File path is expected to be absolute *)
-let open_file (file_path : string) : DocumentUri.t Handler.t =
-  let uri = DocumentUri.of_path file_path in
-  let@ () = Requests.on_doc uri (In_channel.read_all file_path) in
-  return uri
+let open_file (file : Path.t) : Path.t Handler.t =
+  let@ () = Requests.on_doc file (In_channel.read_all @@ Path.to_string file) in
+  return file
 
 
-let to_absolute : string -> string =
- fun p ->
-  let abs_path = Filename.concat (Ligo_unix.getcwd ()) p in
-  Lsp_helpers.Path.normalise abs_path
-
-
-let rel_path_to_uri : string -> DocumentUri.t =
- fun rel_path ->
-  let abs_path = to_absolute rel_path in
-  let abs_path = Lsp_helpers.Path.normalise abs_path in
-  DocumentUri.of_path abs_path
+let to_absolute : string -> string = Path.to_string <@ Path.from_relative
