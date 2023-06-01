@@ -59,6 +59,9 @@ type _ sing =
   | S_import : import sing
   | S_increment : increment sing
   | S_index_kind : index_kind sing
+  | S_interface_annotation : interface_annotation sing
+  | S_interface_expr : interface_expr sing
+  | S_interface_body : interface_body sing
   | S_kwd_as : kwd_as sing
   | S_kwd_break : kwd_break sing
   | S_kwd_case : kwd_case sing
@@ -71,6 +74,8 @@ type _ sing =
   | S_kwd_if : kwd_if sing
   | S_kwd_import : kwd_import sing
   | S_kwd_let : kwd_let sing
+  | S_kwd_implements : kwd_implements sing
+  | S_kwd_interface : kwd_interface sing
   | S_kwd_namespace : kwd_namespace sing
   | S_kwd_of : kwd_of sing
   | S_kwd_return : kwd_return sing
@@ -91,6 +96,7 @@ type _ sing =
   | S_module_access : 'a sing -> 'a module_access sing
   | S_module_name : module_name sing
   | S_modulo : modulo sing
+  | S_interface_statement : interface_statement sing
   | S_namespace_statement : namespace_statement sing
   | S_ne_injection : 'a sing -> 'a ne_injection sing
   | S_negate : negate sing
@@ -125,6 +131,8 @@ type _ sing =
   | S_slash : slash sing
   | S_statement : statement sing
   | S_statements : statements sing
+  | S_interface_entry : interface_entry sing
+  | S_interface_entries : interface_entries sing
   | S_string : string sing
   | S_string_expr : string_expr sing
   | S_sum_type : sum_type sing
@@ -140,6 +148,8 @@ type _ sing =
   | S_tuple_3 : 'a sing * 'b sing * 'c sing -> ('a * 'b * 'c) sing
   | S_tuple_4 :
     'a sing * 'b sing * 'c sing * 'd sing -> ('a * 'b * 'c * 'd) sing
+  | S_tuple_5 :
+    'a sing * 'b sing * 'c sing * 'd sing * 'e sing -> ('a * 'b * 'c * 'd * 'e) sing
   | S_type_constr : type_constr sing
   | S_type_decl : type_decl sing
   | S_type_expr : type_expr sing
@@ -457,6 +467,8 @@ let fold
   | S_kwd_if -> process @@ node -| S_wrap S_lexeme
   | S_kwd_import -> process @@ node -| S_wrap S_lexeme
   | S_kwd_let -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_implements -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_interface -> process @@ node -| S_wrap S_lexeme
   | S_kwd_namespace -> process @@ node -| S_wrap S_lexeme
   | S_kwd_of -> process @@ node -| S_wrap S_lexeme
   | S_kwd_return -> process @@ node -| S_wrap S_lexeme
@@ -490,9 +502,22 @@ let fold
     ; field -| sing ]
   | S_module_name -> process @@ node -| S_wrap S_lexeme
   | S_modulo -> process @@ node -| S_wrap S_lexeme
-  | S_namespace_statement ->
-    process @@ node -| S_tuple_4 (S_kwd_namespace
+  | S_interface_statement ->
+    process @@ node -| S_tuple_4 (S_kwd_interface
                                  , S_module_name
+                                 , S_interface_body
+                                 , S_list S_attribute)
+  | S_interface_annotation -> process @@ node -| S_reg (S_tuple_2 (S_kwd_implements
+                                                                  , S_interface_expr))
+  | S_interface_expr ->
+    process @@ (match node with
+      IInterface node -> node -| S_interface_body
+        | IPath node -> node -| S_reg (S_nsepseq (S_module_name, S_dot)))
+  | S_interface_body -> process @@ node -| S_reg (S_braces S_interface_entries)
+  | S_namespace_statement ->
+    process @@ node -| S_tuple_5 (S_kwd_namespace
+                                 , S_module_name
+                                 , S_option S_interface_annotation
                                  , S_reg (S_braces S_statements)
                                  , S_list S_attribute)
   | S_ne_injection sing ->
@@ -608,6 +633,7 @@ let fold
     | SType node -> node -| S_reg S_type_decl
     | SSwitch node -> node -| S_reg S_switch
     | SBreak node -> node -| S_kwd_break
+    | SInterface node -> node -| S_reg S_interface_statement
     | SNamespace node -> node -| S_reg S_namespace_statement
     | SExport node -> node -| S_reg (S_tuple_2 (S_kwd_export, S_statement))
     | SImport node -> node -| S_reg S_import
@@ -615,6 +641,12 @@ let fold
     | SForOf node -> node -| S_reg S_for_of
     | SFor node -> node -| S_reg S_for_stmt)
   | S_statements -> process @@ node -| S_nsepseq (S_statement, S_semi)
+  | S_interface_entry -> process
+    (match node with
+        IType node -> node -| S_reg (S_tuple_5 (S_list S_attribute, S_kwd_type, S_variable, S_equal, S_type_expr))
+      | IType_var node -> node -| S_reg (S_tuple_3 (S_list S_attribute, S_kwd_type, S_variable))
+      | IConst node -> node -| S_reg (S_tuple_5 (S_list S_attribute, S_kwd_const, S_variable, S_colon, S_type_expr)))
+  | S_interface_entries -> process @@ node -| S_nsepseq (S_interface_entry, S_semi)
   | S_string -> () (* Leaf *)
   | S_string_expr -> process
     (match node with
@@ -683,6 +715,14 @@ let fold
       ; node_2 -| sing_2
       ; node_3 -| sing_3
       ; node_4 -| sing_4 ])
+  | S_tuple_5 (sing_1, sing_2, sing_3, sing_4, sing_5) ->
+    (match node with
+      (node_1, node_2, node_3, node_4, node_5) -> process_list
+      [ node_1 -| sing_1
+      ; node_2 -| sing_2
+      ; node_3 -| sing_3
+      ; node_4 -| sing_4
+      ; node_5 -| sing_5 ])
   | S_type_constr -> process @@ node -| S_wrap S_lexeme
   | S_type_decl ->
     let { attributes; kwd_type; name; params; eq; type_expr } = node in

@@ -92,7 +92,7 @@ At this point, field declarations are expected, separated by commas
 
 interactive_expr: Bytes SEMI
 ##
-## Ends in an error in state: 797.
+## Ends in an error in state: 842.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -150,10 +150,11 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Export ZWSP
 ##
-## Ends in an error in state: 767.
+## Ends in an error in state: 801.
 ##
 ## export_decl -> Export . declaration [ SEMI RBRACE EOF ]
 ## export_decl -> Export . nseq(Attr) declaration [ SEMI RBRACE EOF ]
+## interface_stmt -> Export . interface [ SEMI RBRACE EOF ]
 ## namespace_stmt -> Export . namespace [ SEMI RBRACE EOF ]
 ##
 ## The known suffix of the stack is as follows:
@@ -161,10 +162,11 @@ contract: Export ZWSP
 ##
 contract: Attr Export ZWSP
 ##
-## Ends in an error in state: 776.
+## Ends in an error in state: 811.
 ##
 ## export_decl -> nseq(Attr) Export . declaration [ SEMI RBRACE EOF ]
 ## export_decl -> nseq(Attr) Export . nseq(Attr) declaration [ SEMI RBRACE EOF ]
+## interface_stmt -> nseq(Attr) Export . interface [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) Export . namespace [ SEMI RBRACE EOF ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1167,7 +1169,7 @@ contract: Import UIdent EQ UIdent DOT ZWSP
 ##
 ## Ends in an error in state: 60.
 ##
-## nsepseq(module_name,DOT) -> UIdent DOT . nsepseq(module_name,DOT) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
+## nsepseq(module_name,DOT) -> UIdent DOT . nsepseq(module_name,DOT) [ SEMI RPAR RBRACKET RBRACE LBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## UIdent DOT
@@ -1778,7 +1780,7 @@ contract: Namespace UIdent LBRACE ZWSP
 ##
 ## Ends in an error in state: 766.
 ##
-## braces(stmts_or_namespace) -> LBRACE . stmts_or_namespace RBRACE [ SEMI RBRACE EOF ]
+## braces(stmts_or_namespace_or_interface) -> LBRACE . stmts_or_namespace_or_interface RBRACE [ SEMI RBRACE EOF ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE
@@ -1787,25 +1789,12 @@ contract: Namespace UIdent LBRACE ZWSP
 Ill-formed module declaration.
 At this point, the first statement or submodule is expected.
 
-contract: Namespace UIdent ZWSP
-##
-## Ends in an error in state: 765.
-##
-## namespace -> Namespace UIdent . braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
-##
-## The known suffix of the stack is as follows:
-## Namespace UIdent
-##
-
-Ill-formed module declaration.
-At this point, an opening brace '{' is expected, followed by
-statements and/or submodules.
-
 contract: Namespace ZWSP
 ##
 ## Ends in an error in state: 764.
 ##
-## namespace -> Namespace . UIdent braces(stmts_or_namespace) [ SEMI RBRACE EOF ]
+## namespace -> Namespace . UIdent braces(stmts_or_namespace_or_interface) [ SEMI RBRACE EOF ]
+## namespace -> Namespace . UIdent interface_annotation braces(stmts_or_namespace_or_interface) [ SEMI RBRACE EOF ]
 ##
 ## The known suffix of the stack is as follows:
 ## Namespace
@@ -2124,7 +2113,7 @@ contract: BOOL_NOT ZWSP
 ##
 interactive_expr: ZWSP
 ##
-## Ends in an error in state: 795.
+## Ends in an error in state: 840.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -2271,13 +2260,13 @@ At this point, one of the following is expected:
 
 contract: Return While
 ##
-## Ends in an error in state: 788.
+## Ends in an error in state: 833.
 ##
-## toplevel_stmts -> stmt_or_namespace . SEMI toplevel_stmts [ EOF ]
-## toplevel_stmts -> stmt_or_namespace . option(SEMI) [ EOF ]
+## toplevel_stmts -> stmt_or_namespace_or_interface . SEMI toplevel_stmts [ EOF ]
+## toplevel_stmts -> stmt_or_namespace_or_interface . option(SEMI) [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
-## stmt_or_namespace
+## stmt_or_namespace_or_interface
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2286,7 +2275,7 @@ contract: Return While
 ## In state 322, spurious reduction of production return_stmt -> Return
 ## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
 ## In state 476, spurious reduction of production statement -> base_stmt(statement)
-## In state 773, spurious reduction of production stmt_or_namespace -> statement
+## In state 808, spurious reduction of production stmt_or_namespace_or_interface -> statement
 ##
 
 Ill-formed top-level statement.
@@ -2394,7 +2383,7 @@ contract: ZWSP
 ##
 contract: Directive ZWSP
 ##
-## Ends in an error in state: 786.
+## Ends in an error in state: 831.
 ##
 ## toplevel_stmts -> Directive . [ EOF ]
 ## toplevel_stmts -> Directive . toplevel_stmts [ EOF ]
@@ -2428,7 +2417,7 @@ expected.
 
 contract: Attr VBAR
 ##
-## Ends in an error in state: 775.
+## Ends in an error in state: 810.
 ##
 ## base_stmt(statement) -> nseq(Attr) . expr_stmt [ SEMI RBRACE EOF ]
 ## export_decl -> nseq(Attr) . Export declaration [ SEMI RBRACE EOF ]
@@ -2452,6 +2441,8 @@ contract: Attr VBAR
 ## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR [ SEMI RBRACE EOF ]
 ## for_stmt(statement) -> nseq(Attr) . For LPAR for_initialiser SEMI expr SEMI nsepseq(closed_non_decl_expr_stmt,COMMA) RPAR statement [ SEMI RBRACE EOF ]
 ## if_stmt -> nseq(Attr) . If par(if_cond) statement [ SEMI RBRACE EOF ]
+## interface_stmt -> nseq(Attr) . interface [ SEMI RBRACE EOF ]
+## interface_stmt -> nseq(Attr) . Export interface [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) . namespace [ SEMI RBRACE EOF ]
 ## namespace_stmt -> nseq(Attr) . Export namespace [ SEMI RBRACE EOF ]
 ##
@@ -4279,15 +4270,15 @@ At this point, the body is expected as one of the following:
 
 contract: Namespace UIdent LBRACE Return While
 ##
-## Ends in an error in state: 771.
+## Ends in an error in state: 806.
 ##
-## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . [ RBRACE ]
-## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace . SEMI nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
-## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace . SEMI [ RBRACE ]
-## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace . SEMI nseq(__anonymous_0(stmt_or_namespace,SEMI)) [ RBRACE ]
+## nsepseq(stmt_or_namespace_or_interface,SEMI) -> stmt_or_namespace_or_interface . [ RBRACE ]
+## nsepseq(stmt_or_namespace_or_interface,SEMI) -> stmt_or_namespace_or_interface . SEMI nsepseq(stmt_or_namespace_or_interface,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) -> stmt_or_namespace_or_interface . SEMI [ RBRACE ]
+## nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) -> stmt_or_namespace_or_interface . SEMI nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) [ RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
-## stmt_or_namespace
+## stmt_or_namespace_or_interface
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -4296,7 +4287,7 @@ contract: Namespace UIdent LBRACE Return While
 ## In state 322, spurious reduction of production return_stmt -> Return
 ## In state 435, spurious reduction of production base_stmt(statement) -> return_stmt
 ## In state 476, spurious reduction of production statement -> base_stmt(statement)
-## In state 773, spurious reduction of production stmt_or_namespace -> statement
+## In state 808, spurious reduction of production stmt_or_namespace_or_interface -> statement
 ##
 
 Ill-formed module declaration.
@@ -4307,14 +4298,14 @@ expected:
 
 contract: Namespace UIdent LBRACE Return SEMI ZWSP
 ##
-## Ends in an error in state: 772.
+## Ends in an error in state: 807.
 ##
-## nsepseq(stmt_or_namespace,SEMI) -> stmt_or_namespace SEMI . nsepseq(stmt_or_namespace,SEMI) [ RBRACE ]
-## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace SEMI . [ RBRACE ]
-## nseq(__anonymous_0(stmt_or_namespace,SEMI)) -> stmt_or_namespace SEMI . nseq(__anonymous_0(stmt_or_namespace,SEMI)) [ RBRACE ]
+## nsepseq(stmt_or_namespace_or_interface,SEMI) -> stmt_or_namespace_or_interface SEMI . nsepseq(stmt_or_namespace_or_interface,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) -> stmt_or_namespace_or_interface SEMI . [ RBRACE ]
+## nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) -> stmt_or_namespace_or_interface SEMI . nseq(__anonymous_0(stmt_or_namespace_or_interface,SEMI)) [ RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
-## stmt_or_namespace SEMI
+## stmt_or_namespace_or_interface SEMI
 ##
 
 Ill-formed module declaration.
@@ -4324,13 +4315,13 @@ At this point, one of the following is expected:
 
 contract: Return SEMI ZWSP
 ##
-## Ends in an error in state: 789.
+## Ends in an error in state: 834.
 ##
 ## option(SEMI) -> SEMI . [ EOF ]
-## toplevel_stmts -> stmt_or_namespace SEMI . toplevel_stmts [ EOF ]
+## toplevel_stmts -> stmt_or_namespace_or_interface SEMI . toplevel_stmts [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
-## stmt_or_namespace SEMI
+## stmt_or_namespace_or_interface SEMI
 ##
 
 Ill-formed top-level declaration.
@@ -5307,3 +5298,319 @@ At this point, one of the following is expected:
   * a comma ',' followed by another component as a type expression;
   * a closing bracket ']' if the tuple is complete;
   * a type parameter after a chevron '<'.
+
+contract: Interface ZWSP
+##
+## Ends in an error in state: 767.
+##
+## interface -> Interface . UIdent braces(interface_entries) [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## Interface
+##
+
+Ill-formed interface declaration.
+At this point, the name of the interface is expected, starting with a
+capital letter.
+
+contract: Interface UIdent ZWSP
+##
+## Ends in an error in state: 768.
+##
+## interface -> Interface UIdent . braces(interface_entries) [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## Interface UIdent
+##
+
+Ill-formed interface declaration.
+At this point, an opening brace '{' is expected, followed by
+declarations.
+
+contract: Interface UIdent LBRACE ZWSP
+##
+## Ends in an error in state: 769.
+##
+## braces(interface_entries) -> LBRACE . interface_entries RBRACE [ SEMI RBRACE LBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE
+##
+
+Ill-formed interface declaration.
+At this point, the first statement is expected.
+
+contract: Interface UIdent LBRACE Type ZWSP
+##
+## Ends in an error in state: 770.
+##
+## interface_entry -> Type . Ident EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> Type . UIdent EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> Type . Ident [ SEMI RBRACE ]
+## interface_entry -> Type . UIdent [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Type
+##
+contract: Interface UIdent LBRACE Attr Type ZWSP
+##
+## Ends in an error in state: 783.
+##
+## interface_entry -> nseq(Attr) Type . Ident EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) Type . UIdent EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) Type . Ident [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) Type . UIdent [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Type
+##
+
+Ill-formed type declaration.
+At this point, the name of the type being defined is expected.
+
+contract: Interface UIdent LBRACE Type UIdent ZWSP
+##
+## Ends in an error in state: 771.
+##
+## interface_entry -> Type UIdent . EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> Type UIdent . [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Type UIdent
+##
+contract: Interface UIdent LBRACE Type Ident ZWSP
+##
+## Ends in an error in state: 774.
+##
+## interface_entry -> Type Ident . EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> Type Ident . [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Type Ident
+##
+contract: Interface UIdent LBRACE Attr Type UIdent ZWSP
+##
+## Ends in an error in state: 784.
+##
+## interface_entry -> nseq(Attr) Type UIdent . EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) Type UIdent . [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Type UIdent
+##
+contract: Interface UIdent LBRACE Attr Type Ident ZWSP
+##
+## Ends in an error in state: 787.
+##
+## interface_entry -> nseq(Attr) Type Ident . EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) Type Ident . [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Type Ident
+##
+
+Ill-formed interface declaration.
+At this point, one of the following is expected:
+  * the assignment symbol '=' followed by a type expression;
+  * a closing brace '}' if the interface is complete.
+
+contract: Interface UIdent LBRACE Type UIdent EQ ZWSP
+##
+## Ends in an error in state: 772.
+##
+## interface_entry -> Type UIdent EQ . type_expr [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Type UIdent EQ
+##
+contract: Interface UIdent LBRACE Type Ident EQ ZWSP
+##
+## Ends in an error in state: 775.
+##
+## interface_entry -> Type Ident EQ . type_expr [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Type Ident EQ
+##
+contract: Interface UIdent LBRACE Attr Type UIdent EQ ZWSP
+##
+## Ends in an error in state: 785.
+##
+## interface_entry -> nseq(Attr) Type UIdent EQ . type_expr [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Type UIdent EQ
+##
+contract: Interface UIdent LBRACE Attr Type Ident EQ ZWSP
+##
+## Ends in an error in state: 788.
+##
+## interface_entry -> nseq(Attr) Type Ident EQ . type_expr [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Type Ident EQ
+##
+
+Ill-formed type declaration in interface.
+At this point, a type expression is expected.
+
+contract: Interface UIdent LBRACE Const ZWSP
+##
+## Ends in an error in state: 777.
+##
+## interface_entry -> Const . Ident type_annotation [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Const
+##
+contract: Interface UIdent LBRACE Attr Const ZWSP
+##
+## Ends in an error in state: 790.
+##
+## interface_entry -> nseq(Attr) Const . Ident type_annotation [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Const
+##
+
+Ill-formed value declaration in interface.
+At this point, a pattern is expected, e.g. a variable.
+
+contract: Interface UIdent LBRACE Const Ident ZWSP
+##
+## Ends in an error in state: 778.
+##
+## interface_entry -> Const Ident . type_annotation [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Const Ident
+##
+contract: Interface UIdent LBRACE Attr Const Ident ZWSP
+##
+## Ends in an error in state: 791.
+##
+## interface_entry -> nseq(Attr) Const Ident . type_annotation [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr) Const Ident
+##
+
+Ill-formed value declaration in interface.
+At this point, a colon ':' followed by a type expression is expected.
+
+contract: Interface UIdent LBRACE Attr ZWSP
+##
+## Ends in an error in state: 782.
+##
+## interface_entry -> nseq(Attr) . Type Ident EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) . Type UIdent EQ type_expr [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) . Type Ident [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) . Type UIdent [ SEMI RBRACE ]
+## interface_entry -> nseq(Attr) . Const Ident type_annotation [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## nseq(Attr)
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 91, spurious reduction of production nseq(Attr) -> Attr
+##
+
+Ill-formed declaration in interface.
+At this point, if the attribute is complete, a declaration starting with the keywords 'const' or 'type' is expected.
+
+contract: Interface UIdent LBRACE Const Ident COLON Ident While
+##
+## Ends in an error in state: 794.
+##
+## nsepseq(interface_entry,SEMI) -> interface_entry . [ RBRACE ]
+## nsepseq(interface_entry,SEMI) -> interface_entry . SEMI nsepseq(interface_entry,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(interface_entry,SEMI)) -> interface_entry . SEMI [ RBRACE ]
+## nseq(__anonymous_0(interface_entry,SEMI)) -> interface_entry . SEMI nseq(__anonymous_0(interface_entry,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## interface_entry
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 79, spurious reduction of production core_type -> Ident
+## In state 133, spurious reduction of production type_expr -> core_type
+## In state 134, spurious reduction of production type_annotation -> COLON type_expr
+## In state 779, spurious reduction of production interface_entry -> Const Ident type_annotation
+##
+
+Ill-formed functional type in interface.
+At this point, an arrow '=>' is expected.
+
+contract: Interface UIdent LBRACE Type Ident SEMI ZWSP
+##
+## Ends in an error in state: 795.
+##
+## nsepseq(interface_entry,SEMI) -> interface_entry SEMI . nsepseq(interface_entry,SEMI) [ RBRACE ]
+## nseq(__anonymous_0(interface_entry,SEMI)) -> interface_entry SEMI . [ RBRACE ]
+## nseq(__anonymous_0(interface_entry,SEMI)) -> interface_entry SEMI . nseq(__anonymous_0(interface_entry,SEMI)) [ RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## interface_entry SEMI
+##
+
+Ill-formed interface declaration.
+At this point, one of the following is expected:
+  * another declaration;
+  * a closing brace '}' if the interface is complete.
+
+contract: Namespace UIdent ZWSP
+##
+## Ends in an error in state: 765.
+##
+## namespace -> Namespace UIdent . braces(stmts_or_namespace_or_interface) [ SEMI RBRACE EOF ]
+## namespace -> Namespace UIdent . interface_annotation braces(stmts_or_namespace_or_interface) [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## Namespace UIdent
+##
+
+Ill-formed namespace declaration.
+At this point, one of the following is expected:
+  * an interface name;
+  * an opening brace '{' is expected, followed by statements and/or submodules.
+
+contract: Namespace UIdent Implements ZWSP
+##
+## Ends in an error in state: 824.
+##
+## interface_annotation -> Implements . interface_expr [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Implements
+##
+
+Ill-formed namespace declaration.
+At this point, an opening brace '{' is expected, followed by
+statements and/or submodules.
+
+contract: Namespace UIdent Implements UIdent ZWSP
+##
+## Ends in an error in state: 828.
+##
+## namespace -> Namespace UIdent interface_annotation . braces(stmts_or_namespace_or_interface) [ SEMI RBRACE EOF ]
+##
+## The known suffix of the stack is as follows:
+## Namespace UIdent interface_annotation
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 59, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 825, spurious reduction of production interface_expr -> nsepseq(module_name,DOT)
+## In state 826, spurious reduction of production interface_annotation -> Implements interface_expr
+##
+
+Ill-formed namespace declaration.
+At this point, an opening brace '{' is expected, followed by
+statements and/or submodules.

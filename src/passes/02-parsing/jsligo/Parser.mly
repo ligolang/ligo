@@ -186,10 +186,10 @@ contract:
 (* TOP-LEVEL STATEMENTS *)
 
 toplevel_stmts:
-  stmt_or_namespace ";" toplevel_stmts {
+  stmt_or_namespace_or_interface ";" toplevel_stmts {
     Utils.nseq_cons (TopLevel ($1, Some $2)) $3
   }
-| stmt_or_namespace ";"? {
+| stmt_or_namespace_or_interface ";"? {
     TopLevel ($1, $2), []
   }
 | "<directive>" {
@@ -198,8 +198,8 @@ toplevel_stmts:
 | "<directive>" toplevel_stmts {
     Utils.nseq_cons (Directive $1) $2 }
 
-stmt_or_namespace:
-  statement | namespace_stmt { $1 }
+stmt_or_namespace_or_interface:
+  statement | namespace_stmt | interface_stmt { $1 }
 
 (* Attributes *)
 
@@ -220,13 +220,70 @@ namespace_stmt:
     | None -> namespace }
 
 namespace:
-  "namespace" module_name braces(stmts_or_namespace) {
+  "namespace" module_name ioption(interface_annotation) braces(stmts_or_namespace_or_interface) {
+    let region = cover $1#region $4.region
+    in fun attrs ->
+       SNamespace {region; value=($1,$2,$3,$4,private_attribute::attrs)} }
+
+
+(* Interface Statement *)
+
+interface_stmt:
+  attributes ioption("export") interface {
+    let interface = $3 $1 in
+    match $2 with
+      Some kwd_export ->
+        let region = cover kwd_export#region (statement_to_region interface)
+        in SExport {region; value = (kwd_export, interface)}
+    | None -> interface }
+
+interface:
+  "interface" module_name braces(interface_entries) {
     let region = cover $1#region $3.region
     in fun attrs ->
-       SNamespace {region; value=($1,$2,$3, private_attribute::attrs)} }
+       SInterface {region; value=($1,$2,$3,attrs)}
+  }
 
-stmts_or_namespace: (* TODO: Keep terminator *)
-  sep_or_term_list(stmt_or_namespace,";") { fst $1 }
+interface_entries:
+  sep_or_term_list(interface_entry,";") { fst $1 }
+
+interface_entry:
+  attributes "type" type_name "=" type_expr {
+    let value  = $1, $2, $3, $4, $5
+    and stop   = type_expr_to_region $5 in
+    let region = cover $2#region stop
+    in IType {region; value}
+  }
+| attributes "type" type_name {
+    let value = $1, $2, $3 in
+    let region = cover $2#region $3#region
+    in IType_var {region; value}
+  }
+| attributes "const" "<ident>" type_annotation {
+    let colon, t_expr = $4 in
+    let value  = $1, $2, $3, colon, t_expr
+    and stop   = type_expr_to_region t_expr in
+    let region = cover $2#region stop
+    in IConst {region; value}
+  }
+
+interface_expr:
+  nsepseq(module_name,".") {
+    let region = nsepseq_to_region (fun x -> x#region) $1 in
+    IPath { region; value = $1 }
+  }
+| braces(interface_entries) { IInterface $1 }
+
+interface_annotation:
+  "implements" interface_expr {
+    let stop = match $2 with | IInterface {region;_} | IPath {region; _} -> region in
+    let region = cover $1#region stop
+    and value = $1, $2
+    in {region; value}
+  }
+
+stmts_or_namespace_or_interface: (* TODO: Keep terminator *)
+  sep_or_term_list(stmt_or_namespace_or_interface,";") { fst $1 }
 
 (* STATEMENTS *)
 

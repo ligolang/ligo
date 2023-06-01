@@ -119,8 +119,8 @@ module Eq = struct
   type declaration = I.statement
   type program_entry = I.toplevel_statement
   type program = I.t
-  type sig_expr = unit
-  type sig_entry = unit
+  type sig_expr = I.interface_expr
+  type sig_entry = I.interface_entry
 end
 
 let pattern_of_expr x = `Expr x
@@ -528,7 +528,7 @@ let rec statement : Eq.statement -> Folding.statement =
   let loc = Location.lift (I.statement_to_region s) in
   let return = Location.wrap ~loc in
   match s with
-  | SNamespace _ | SImport _ | SExport _ | SLet _ | SConst _ | SType _ ->
+  | SInterface _ | SNamespace _ | SImport _ | SExport _ | SLet _ | SConst _ | SType _ ->
     return @@ O.S_decl s
   | SBlock _
   | SExpr _
@@ -592,7 +592,7 @@ and instruction : Eq.instruction -> Folding.instruction =
     let afterthought = Option.map afterthought ~f:Utils.nsepseq_to_nseq in
     return @@ I_for_stmt { initialiser; condition; afterthought; statement }
   (* impossible, if triggered, look at functions 'statement' *)
-  | SLet _ | SConst _ | SType _ | SNamespace _ | SExport _ | SImport _ -> assert false
+  | SLet _ | SConst _ | SType _ | SInterface _ | SNamespace _ | SExport _ | SImport _ -> assert false
 
 
 and declaration : Eq.declaration -> Folding.declaration =
@@ -620,14 +620,15 @@ and declaration : Eq.declaration -> Folding.declaration =
   in
   match d with
   | SNamespace ({ value; _ } as n) ->
-    let kwd, module_name, statements, attributes = value in
+    let kwd, module_name, interface_annotation, statements, attributes = value in
+    let annotation = Option.map ~f:(fun {region = _; value = _, value} -> value) interface_annotation in
     return_attr
       attributes
       ~no_attr:
         (let name = TODO_do_in_parsing.mvar module_name in
-         O.D_module { name; mod_expr = statements.value.inside; annotation = None })
+         O.D_module { name; mod_expr = statements.value.inside; annotation })
       ~attr:(fun attributes ->
-        I.SNamespace { n with value = kwd, module_name, statements, attributes })
+        I.SNamespace { n with value = kwd, module_name, interface_annotation, statements, attributes })
   | SImport { value = s; _ } ->
     let import =
       match s with
@@ -649,6 +650,15 @@ and declaration : Eq.declaration -> Folding.declaration =
         O.Import.Import_selected { imported; module_str }
     in
     return @@ D_import import
+  | SInterface ({ value; _ } as n) ->
+    let kwd, module_name, interface_body, attributes = value in
+    return_attr
+      attributes
+      ~no_attr:
+        (let name = TODO_do_in_parsing.mvar module_name in
+         O.D_signature { name; sig_expr = IInterface interface_body })
+      ~attr:(fun attributes ->
+        I.SInterface { n with value = kwd, module_name, interface_body, attributes })
   | SExport { value = _, statement; _ } -> return @@ D_export statement
   | SLet ({ value = { bindings; attributes; _ }; _ } as l) ->
     return_attr
@@ -697,7 +707,46 @@ and program_entry : Eq.program_entry -> Folding.program_entry = function
 and program : Eq.program -> Folding.program = fun x -> List.Ne.to_list x.statements
 
 
-and sig_expr : Eq.sig_expr -> Folding.sig_expr = fun () -> Location.wrap ~loc:Location.generated (O.S_body [])
+and sig_expr : Eq.sig_expr -> Folding.sig_expr = function
+  | IInterface { value = { inside; lbrace = _ ; rbrace = _ } ; region } ->
+    let loc = Location.lift region in
+    let sig_items = nsepseq_to_list inside in
+    Location.wrap ~loc @@ O.S_body sig_items
+  | IPath { value; region } ->
+    let loc = Location.lift region in
+    let value = nsepseq_to_nseq value in
+    let value = List.Ne.map TODO_do_in_parsing.mvar value in
+    Location.wrap ~loc @@ O.S_path value
 
 
-and sig_entry : Eq.sig_entry -> Folding.sig_entry = fun () -> Location.wrap ~loc:Location.generated (O.S_type_var (O.Ty_variable.fresh ~loc:Location.generated ~name:"SIG_ENTRY" ()))
+and sig_entry : Eq.sig_entry -> Folding.sig_entry = fun se ->
+  let return ~loc = Location.wrap ~loc in
+  let return_attr attributes ~loc ~attr ~no_attr =
+    match attributes with
+    | [] -> return ~loc @@ no_attr
+    | hd :: tl ->
+      let hd = TODO_do_in_parsing.conv_attr hd in
+      return ~loc @@ (S_attr (hd, attr tl) : _ O.sig_entry_content_)
+  in
+  match se with
+  | IType {region; value = (attributes, kwd_type, v, equal, ty)} ->
+    let loc = Location.lift region in
+    return_attr
+      attributes
+      ~loc
+      ~no_attr:(O.S_type (TODO_do_in_parsing.tvar v, ty))
+      ~attr:(fun attributes -> I.IType {region; value = (attributes, kwd_type, v, equal, ty) })
+  | IType_var {region; value = (attributes, kwd_type, v)} ->
+    let loc = Location.lift region in
+    return_attr
+      attributes
+      ~loc
+      ~no_attr:(O.S_type_var (TODO_do_in_parsing.tvar v))
+      ~attr:(fun attributes -> I.IType_var {region; value = (attributes, kwd_type, v) })
+  | IConst {region; value = (attributes, kwd_type, v, equal, ty)} ->
+    let loc = Location.lift region in
+    return_attr
+      attributes
+      ~loc
+      ~no_attr:(O.S_value (TODO_do_in_parsing.var v, ty))
+      ~attr:(fun attributes -> I.IConst {region; value = (attributes, kwd_type, v, equal, ty) })

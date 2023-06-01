@@ -131,6 +131,8 @@ module T =
     (* TypeScript keywords *)
 
     | As          of lexeme Wrap.t  (* as        *)
+    | Implements  of lexeme Wrap.t  (* implements *)
+    | Interface   of lexeme Wrap.t  (* interface *)
     | Namespace   of lexeme Wrap.t  (* namespace *)
     | Type        of lexeme Wrap.t  (* type      *)
 
@@ -253,9 +255,11 @@ module T =
 
     (* TypeScript keywords *)
 
-    | As        t
-    | Namespace t
-    | Type      t -> t#payload
+    | As         t
+    | Implements t
+    | Interface  t
+    | Namespace  t
+    | Type       t -> t#payload
 
     (* Contract keywords *)
 
@@ -319,13 +323,17 @@ module T =
 
      (* TypeScript keywords *)
 
-     let wrap_as        = wrap "as"
-     let wrap_namespace = wrap "namespace"
-     let wrap_type      = wrap "type"
+     let wrap_as         = wrap "as"
+     let wrap_implements = wrap "implements"
+     let wrap_interface  = wrap "interface"
+     let wrap_namespace  = wrap "namespace"
+     let wrap_type       = wrap "type"
 
-     let mk_As        region = As        (wrap_as        region)
-     let mk_Namespace region = Namespace (wrap_namespace region)
-     let mk_Type      region = Type      (wrap_type      region)
+     let mk_As         region = As         (wrap_as         region)
+     let mk_Implements region = Implements (wrap_implements region)
+     let mk_Interface  region = Interface  (wrap_interface  region)
+     let mk_Namespace  region = Namespace  (wrap_namespace  region)
+     let mk_Type       region = Type       (wrap_type       region)
 
      let wrap_contract = wrap "contract_of"
 
@@ -358,6 +366,8 @@ module T =
        mk_While;
   (*   mk_With;   *)
        mk_As;
+       mk_Implements;
+       mk_Interface;
        mk_Namespace;
        mk_Type;
        mk_Contract;
@@ -421,13 +431,17 @@ module T =
 
      (* TypeScript keywords *)
 
-     let ghost_as        = wrap_as        Region.ghost
-     let ghost_namespace = wrap_namespace Region.ghost
-     let ghost_type      = wrap_type      Region.ghost
+     let ghost_as         = wrap_as         Region.ghost
+     let ghost_implements = wrap_implements Region.ghost
+     let ghost_interface  = wrap_interface  Region.ghost
+     let ghost_namespace  = wrap_namespace  Region.ghost
+     let ghost_type       = wrap_type       Region.ghost
 
-     let ghost_As        = As        ghost_as
-     let ghost_Namespace = Namespace ghost_namespace
-     let ghost_Type      = Type      ghost_type
+     let ghost_As         = As         ghost_as
+     let ghost_Implements = Implements ghost_implements
+     let ghost_Interface  = Interface  ghost_interface
+     let ghost_Namespace  = Namespace  ghost_namespace
+     let ghost_Type       = Type       ghost_type
 
 
     (* SYMBOLS *)
@@ -862,9 +876,11 @@ module T =
 
     (* TypeScript keywords *)
 
-    | "Type"      -> ghost_type#payload
-    | "Namespace" -> ghost_namespace#payload
-    | "As"        -> ghost_as#payload
+    | "As"         -> ghost_as#payload
+    | "Implements" -> ghost_implements#payload
+    | "Interface"  -> ghost_interface#payload
+    | "Namespace"  -> ghost_namespace#payload
+    | "Type"       -> ghost_type#payload
 
     (* Virtual tokens *)
 
@@ -1002,6 +1018,8 @@ module T =
     (* TypeScript keywords *)
 
     | As          t -> t#region, sprintf "As%s" (comments t)
+    | Implements  t -> t#region, sprintf "Implements%s" (comments t)
+    | Interface   t -> t#region, sprintf "Interface%s" (comments t)
     | Namespace   t -> t#region, sprintf "Namespace%s" (comments t)
     | Type        t -> t#region, sprintf "Type%s" (comments t)
 

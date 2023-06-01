@@ -202,6 +202,8 @@ everything_else:
 | "while"           { While $1     }
 | "from"            { From $1      }
 | "as"              { As $1        }
+| "implements"      { Implements $1 }
+| "interface"       { Interface $1 }
 | "namespace"       { Namespace $1 }
 | "type"            { Type $1      }
 | "contract_of"     { Contract $1  }
