@@ -3522,23 +3522,6 @@ interactive_expr: Bytes As UIdent DOT ZWSP
 Ill-formed selection of a type in a module.
 At this point, the qualified name of a type is expected.
 
-interactive_expr: Bytes As UIdent DOT UIdent ZWSP
-##
-## Ends in an error in state: 68.
-##
-## module_access_t -> UIdent . DOT module_var_t [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
-## type_ctor_app -> UIdent . chevrons(type_ctor_args) [ SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON ARROW ]
-##
-## The known suffix of the stack is as follows:
-## UIdent
-##
-
-Ill-formed selection of a type in a module.
-At this point, one of the following is expected:
-  * a dot '.', followed by a type of the module;
-  * an opening chevron '<' followed by a type parameter
-    and a closing chevron '>'.
-
 interactive_expr: Bytes As VBAR Attr ZWSP
 ##
 ## Ends in an error in state: 176.

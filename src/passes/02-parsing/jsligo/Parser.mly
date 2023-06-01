@@ -889,7 +889,7 @@ module_access_t:
 
 module_var_t:
   module_access_t { TModA $1 }
-| "<ident>"       { TVar  $1 }
+| type_name       { TVar  $1 }
 | type_ctor_app   { TApp  $1 }
 
 (* Record types (a.k.a. "object types" in JS) *)

@@ -8,6 +8,23 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "expression"; "jsligo"; "add2(x, x)"; "--init-file"; contract "modules.jsligo" ];
+  [%expect {|
+    File "../../test/contracts/modules.jsligo", line 2, character 0 to line 4, character 1:
+      1 | // @foo
+      2 | namespace B {
+          ^^^^^^^^^^^^^
+      3 |   export type titi = int;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+      4 | };
+          ^
+      5 |
+
+    Warning: unsupported attribute, ignored.
+
+    84 |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "FA1.2.interface.mligo"; "-m"; "FA12_ENTRIES" ];
   [%expect
     {|
