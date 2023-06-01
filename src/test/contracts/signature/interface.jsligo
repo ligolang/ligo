@@ -1,0 +1,32 @@
+namespace Interfaces {
+  interface IncDec {
+    type storage;
+    type ret = [list<operation>, storage];
+    @entry const increment : (k: int, s: storage) => ret;
+    @entry const decrement : (k: int, s: storage) => ret;
+    @entry const reset : (_u: unit, s: storage) => ret;
+  };
+};
+
+namespace IncDec implements Interfaces.IncDec {
+  type storage = int;
+  type ret = [list<operation>, storage];
+
+  @entry
+  const increment = (delta : int, store : storage) : ret =>
+    [list([]), store + delta];
+
+  @entry
+  const decrement = (delta : int, store : storage) : ret =>
+    [list([]), store - delta];
+
+  @entry
+  const reset = (_ : unit, _ : storage) : ret =>
+    [list([]), 0];
+};
+
+namespace X implements { type t; const x : t } {
+  type t = int;
+  const x = 42;
+  const y = 5;
+};

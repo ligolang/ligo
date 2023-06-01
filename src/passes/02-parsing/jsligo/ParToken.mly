@@ -148,9 +148,11 @@
 
 (* TypeScript keywords *)
 
-%token <string Wrap.t> As        "as"        [@recover.expr Token.wrap_as        $loc]
-%token <string Wrap.t> Namespace "namespace" [@recover.expr Token.wrap_namespace $loc]
-%token <string Wrap.t> Type      "type"      [@recover.expr Token.wrap_type      $loc]
+%token <string Wrap.t> As         "as"         [@recover.expr Token.wrap_as         $loc]
+%token <string Wrap.t> Implements "implements" [@recover.expr Token.wrap_implements $loc]
+%token <string Wrap.t> Interface  "interface"  [@recover.expr Token.wrap_interface  $loc]
+%token <string Wrap.t> Namespace  "namespace"  [@recover.expr Token.wrap_namespace  $loc]
+%token <string Wrap.t> Type       "type"       [@recover.expr Token.wrap_type       $loc]
 
 (* Contract keywords *)
 %token <string Wrap.t> Contract  "contract_of"  [@recover.expr Token.wrap_contract $loc]

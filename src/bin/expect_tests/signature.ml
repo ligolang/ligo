@@ -26,3 +26,16 @@ let%expect_test _ =
     ];
   [%expect {|
     42 |}]
+
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "X.x"
+    ; "--init-file"
+    ; contract "interface.jsligo"
+    ];
+  [%expect {|
+    42 |}]

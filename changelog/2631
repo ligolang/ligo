@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nThere's a new `interface` keyword for defining interfaces to be used in contracts (as namespaces):\\n\\n\\n```\\ninterface ID {\\n  type storage;\\n  type ret = [list<operation>, storage];\\n  @entry const increment : (k: int, s: storage) => ret;\\n  @entry const decrement : (k: int, s: storage) => ret;\\n  @entry const reset : (_u: unit, s: storage) => ret;\\n};\\n\\nnamespace IncDec implements ID {\\n  type storage = int;\\n  type ret = [list<operation>, storage];\\n\\n  @entry\\n  const increment = (delta : int, store : storage) : ret =>\\n    [list([]), store + delta];\\n\\n  @entry\\n  const decrement = (delta : int, store : storage) : ret =>\\n    [list([]), store - delta];\\n\\n  @entry\\n  const reset = (_ : unit, _ : storage) : ret =>\\n    [list([]), 0];\\n};\\n\\n```\\n\\nUsing `implements`, when defining a namespace, we can check that the namespace (contract) implements the interface. Type declarations in interfaces can be left without definition (e.g. `storage` above), and the implementation can choose the concrete instance for the type.\\n\\n"
+merge_request: '2631'
+title: "JsLIGO: simple interfaces for namespace contracts"
+type: added
+            

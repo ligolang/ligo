@@ -27,24 +27,26 @@ type lexeme = string
 
 (* Keywords of JsLIGO *)
 
-type kwd_else      = lexeme wrap
-type kwd_if        = lexeme wrap
-type kwd_let       = lexeme wrap
-type kwd_const     = lexeme wrap
-type kwd_type      = lexeme wrap
-type kwd_return    = lexeme wrap
-type kwd_switch    = lexeme wrap
-type kwd_case      = lexeme wrap
-type kwd_default   = lexeme wrap
-type kwd_as        = lexeme wrap
-type kwd_break     = lexeme wrap
-type kwd_namespace = lexeme wrap
-type kwd_export    = lexeme wrap
-type kwd_import    = lexeme wrap
-type kwd_while     = lexeme wrap
-type kwd_from      = lexeme wrap
-type kwd_for       = lexeme wrap
-type kwd_of        = lexeme wrap
+type kwd_else       = lexeme wrap
+type kwd_if         = lexeme wrap
+type kwd_let        = lexeme wrap
+type kwd_const      = lexeme wrap
+type kwd_type       = lexeme wrap
+type kwd_return     = lexeme wrap
+type kwd_switch     = lexeme wrap
+type kwd_case       = lexeme wrap
+type kwd_default    = lexeme wrap
+type kwd_as         = lexeme wrap
+type kwd_break      = lexeme wrap
+type kwd_namespace  = lexeme wrap
+type kwd_export     = lexeme wrap
+type kwd_import     = lexeme wrap
+type kwd_implements = lexeme wrap
+type kwd_interface  = lexeme wrap
+type kwd_while      = lexeme wrap
+type kwd_from       = lexeme wrap
+type kwd_for        = lexeme wrap
+type kwd_of         = lexeme wrap
 
 (* Symbols *)
 
@@ -408,6 +410,7 @@ and statement =
 | SType      of type_decl reg
 | SSwitch    of switch reg
 | SBreak     of kwd_break
+| SInterface of interface_statement reg
 | SNamespace of namespace_statement reg
 | SExport    of (kwd_export * statement) reg
 | SImport    of import reg
@@ -416,7 +419,25 @@ and statement =
 | SFor       of for_stmt reg
 
 and namespace_statement =
-  kwd_namespace * module_name * statements braces reg * attributes
+  kwd_namespace * module_name * interface_annotation option * statements braces reg * attributes
+
+and interface_expr =
+  IInterface of interface_body
+| IPath      of (module_name, dot) nsepseq reg
+
+and interface_entry =
+  IType      of (attributes * kwd_type * variable * equal * type_expr) reg
+| IType_var  of (attributes * kwd_type * variable) reg
+| IConst     of (attributes * kwd_const * variable * colon * type_expr) reg
+
+and interface_entries = (interface_entry, semi) nsepseq
+
+and interface_body = interface_entries braces reg
+
+and interface_annotation = (kwd_implements * interface_expr) reg
+
+and interface_statement =
+  kwd_interface * module_name * interface_body * attributes
 
 and while_stmt = {
   kwd_while : kwd_while;
@@ -692,6 +713,7 @@ let statement_to_region = function
 | SExport {region; _}
 | SForOf {region; _}
 | SWhile {region; _}
+| SInterface {region; _}
 | SNamespace {region; _}
 | SFor {region;_} -> region
 

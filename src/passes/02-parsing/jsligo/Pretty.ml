@@ -170,6 +170,7 @@ and pp_statement state ?top = function
 | SType      s -> pp_type state s
 | SSwitch    s -> pp_switch state s
 | SBreak     s -> token s
+| SInterface s -> pp_interface state s
 | SNamespace s -> pp_namespace state ?top s
 | SExport    s -> pp_export state s
 | SImport    s -> pp_import state s
@@ -244,7 +245,7 @@ and pp_export state {value = (kwd_export, statement); _} =
   token kwd_export ^^ space ^^ pp_statement state statement
 
 and pp_namespace state ?top (node: namespace_statement reg) =
-  let kwd_namespace, name, statements, attributes = node.value in
+  let kwd_namespace, name, interface_annotation, statements, attributes = node.value in
   let top = match top with Some true -> true | _ -> false in
   let is_private =
     List.exists ~f:(fun a -> String.equal (fst a#payload) "private")
@@ -258,7 +259,65 @@ and pp_namespace state ?top (node: namespace_statement reg) =
     ^^ (if ((top && is_private) || not top) then empty
         else string "export" ^^ space)
     ^^ space
+    ^^ (match interface_annotation with None -> empty | Some ia -> pp_interface_annotation state ia ^^ space)
     ^^ pp_braces state ~force_hardline:true pp_statements statements)
+
+and pp_interface state (node: interface_statement reg) =
+  let kwd_interface, name, interface_body, attributes = node.value in
+  group (
+    (if List.is_empty attributes then empty
+     else pp_attributes state attributes)
+    ^/^ token kwd_interface ^^ space ^^ token name
+    ^^ space
+    ^^ pp_interface_body state interface_body)
+
+and pp_interface_annotation state ({value; _}: interface_annotation) =
+  let kwd_implements, interface_expr = value in
+  token kwd_implements ^^ space ^^ pp_interface_expr state interface_expr
+
+and pp_interface_expr state = function
+    IInterface ib -> pp_interface_body state ib
+  | IPath p -> pp_nsepseq empty (fun a -> string a#payload) p.value
+
+and pp_interface_body state (node: interface_body) =
+  let interface_entries = node in
+  let pp_interface_entries = pp_nsepseq (break 1) (pp_interface_entry state) in
+  pp_braces state ~force_hardline:true pp_interface_entries interface_entries
+
+and pp_interface_entry state = function
+    IType t -> pp_itype state t
+  | IType_var t -> pp_itype_var state t
+  | IConst c -> pp_iconst state c
+
+and pp_itype state ({value; _}: (attributes * kwd_type * variable * equal * type_expr) reg) =
+  let attributes, kwd_type, name, eq, type_expr = value in
+  let attributes = filter_private attributes in
+  let lhs = token kwd_type ^^ space ^^ token name in
+  let rhs = group (pp_type_expr state type_expr) in
+  let type_doc =
+    if is_enclosed_type type_expr
+    then lhs ^^ space ^^ token eq ^^ space ^^ rhs
+    else lhs ^^ prefix state#indent 1 (space ^^ token eq) rhs
+  in
+  if List.is_empty attributes
+  then type_doc
+  else pp_attributes state attributes ^/^ type_doc
+
+and pp_itype_var state ({value; _}: (attributes * kwd_type * variable) reg) =
+  let attributes, kwd_type, name = value in
+  let attributes = filter_private attributes in
+  let lhs = token kwd_type ^^ space ^^ token name in
+  let type_doc = lhs
+  in
+  if List.is_empty attributes
+  then type_doc
+  else pp_attributes state attributes ^/^ type_doc
+
+and pp_iconst state ({value; _} : (attributes * kwd_const * variable * colon * type_expr) reg) =
+  let attributes, kwd_const, name, colon, type_expr = value in
+  pp_attributes state attributes ^/^
+  token kwd_const ^^ space
+  ^^ pp_ident name ^^ pp_type_annot_rhs state colon type_expr
 
 and pp_cond_expr state {value; _} =
   let {attributes; test; ifso; ifnot; _} = value in

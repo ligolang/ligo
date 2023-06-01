@@ -231,9 +231,9 @@ and add_attribute_to_SLet (attr: attribute) (node: Js.let_decl reg) =
 and add_attribute_to_SNamespace
     (attr: attribute)
     (node: Js.namespace_statement reg) =
-  let kwd_namespace, module_name, statements, attributes = node.value in
+  let kwd_namespace, module_name, _TODO, statements, attributes = node.value in
   let attributes = attr :: attributes in
-  let namespace  = kwd_namespace, module_name, statements, attributes
+  let namespace  = kwd_namespace, module_name, _TODO, statements, attributes
   in Js.SNamespace (reg_of namespace)
 
 and add_attribute_to_SType (attr: attribute) (node: Js.type_decl reg) =
@@ -534,7 +534,7 @@ and namespace_of_M_Body
   let statements    = first_stmt,
                       List.map (fun stmt -> comma, stmt) other_stmts in
   let statements    = reg_of (braces_of statements) in
-  let namespace     = kwd_namespace, module_name, statements, attributes
+  let namespace     = kwd_namespace, module_name, None, statements, attributes
   in Js.SNamespace (reg_of namespace)
 
 and import_of_M_Path
