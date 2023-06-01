@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2634'
+title: "JsLIGO: allow final uppercase in module path for types"
+type: fixed
+            

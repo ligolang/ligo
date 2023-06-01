@@ -6,9 +6,9 @@ namespace B {
 namespace A {
     export type titi = B.titi;
     export namespace C {
-        export let toto: titi = 42;
+        export const toto: titi = 42;
     };
-    export let add = (a: titi, b: titi) : titi => a + b;
+    export const add = (a: titi, b: titi) : titi => a + b;
 };
 
 import D = A;
@@ -16,7 +16,18 @@ import D = A;
 import E = A.C;
 
 @no_mutation
-export let toto : D.titi = E.toto;
+export const toto : D.titi = E.toto;
 
 @inline
-let add2 = (a: A.titi, b: D.titi) : A.titi => A.add (a, b);
+const add2 = (a: A.titi, b: D.titi) : A.titi => A.add (a, b);
+
+namespace Foo {
+  type Bar = int;
+  namespace Bar { type t = int; };
+};
+
+// we test capitalized type inside module
+const x : Foo.Bar = 42;
+
+// also in a binding
+const f = (x: Foo.Bar) => x;
