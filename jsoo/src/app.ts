@@ -45,7 +45,9 @@ async function main() {
   // No runtime file needed since we just enable effects,
   // and it can only be enabled in whole program compilation
   // mode with Dune
-  // await loadJSBundle(`${path}/${app}.bc.runtime.js`);
+  try {
+    await loadJSBundle(`${path}/${app}.bc.runtime.js`);
+  } catch (_) {}
   await loadJSBundle(`${path}/${app}.bc.js`);
   console.log("All WASM dependencies loaded");
   document.getElementById("compile")?.addEventListener("click", function () {

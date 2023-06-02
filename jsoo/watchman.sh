@@ -1,7 +1,9 @@
 #! /bin/sh
 
+WATCHED_DIR="../_build/default/src/bin"
+watchman watch $WATCHED_DIR
 watchman -j <<-EOT
-["trigger", "../_build/default/src/bin", {
+["trigger", "$WATCHED_DIR", {
   "name": "cp-jsoo-js",
   "expression": ["suffix", "js"],
   "chdir": "$PWD",

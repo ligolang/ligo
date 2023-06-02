@@ -3,10 +3,15 @@ const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const distPath = path.resolve(__dirname, "dist");
-let commitHash = require("child_process")
-  .execSync("git rev-parse --short HEAD")
-  .toString()
-  .trim();
+let commitHash;
+try {
+  commitHash = require("child_process")
+    .execSync("git rev-parse --short HEAD")
+    .toString()
+    .trim();
+} catch (_) {
+  commitHash = "";
+}
 
 module.exports = {
   resolve: {
