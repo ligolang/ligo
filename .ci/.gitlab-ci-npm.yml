@@ -11,11 +11,6 @@ esy-windows:
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      changes:
-        - esy.json
-        - esy.lock/index.json
-        - ligo.opam
-        - dune
       when: always
   script:
     - git submodule update --init --recursive
@@ -29,15 +24,14 @@ esy-windows:
     - bash -c "patch -p1 -R < 001-tezos-deps-via-esy.patch" # So that dune runtest doesn't run tezos tests
     - bash -c "esy b dune runtest || esy b dune runtest || esy b dune runtest"
     - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
+    - bash -c "esy b --install || esy b --install || esy b --install"
+    - cp ./_build/install/default/bin/ligo.exe ./windows-installer
+    - cp ./LICENSE.md ./windows-installer
+    - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./windows-installer
+    - cd windows-installer; makensis .\WindowsInstaller.nsi; mv ligo_installer.exe ../ligo_installer.exe ; cd ..
     - bash -c "esy release || esy release || esy release"
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
-    - cp ./windows-installer/*.dll _release/bin/
-    - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./_release
-    - cp ./windows-installer/WindowsInstaller.nsi _release
-    - cd _release; makensis .\WindowsInstaller.nsi
-    - cd .. ; mv _release platform-windows-x64
-    # ligo_installer is not useful inside package and if ligo_installer.exe is inside package, the package can't be uploaded.
-    - mv platform-windows-x64/ligo_installer.exe ligo_installer.exe 
+    - mv _release platform-windows-x64
   artifacts:
     paths:
       - platform-windows-x64
