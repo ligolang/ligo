@@ -14,7 +14,7 @@
   "dependencies": {
     "@codemirror/lang-javascript": "*",
     "@codemirror/state": "*",
-    "@ligolang/hacl-wasm": "*",
+    "@ligolang/hacl-wasm": "1.1.0-dev.1",
     "@ligolang/ocaml-bls12-381": "*",
     "@ligolang/secp256k1-wasm": "*",
     "browserify-fs": "^1.0.0",
