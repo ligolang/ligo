@@ -1,14 +1,9 @@
-// Provides: _1_Hacl_Poly1305_32_blocklen
-function _1_Hacl_Poly1305_32_blocklen() {
-  return 0;
-}
-
-//Provides: caml_thread_initialize
+// Provides: caml_thread_initialize
 function caml_thread_initialize() {
   return 0;
 }
 
-//Provides: caml_mutex_new
+// Provides: caml_mutex_new
 function caml_mutex_new() {
   return 0;
 }
@@ -107,10 +102,5 @@ function ctypes_struct_ffitype_set_argument() {
 }
 // Provides: ctypes_void_ffit
 function ctypes_void_ffit() {
-  return 0;
-}
-
-// Provides: _17_EverCrypt_AutoConfig2_init
-function _17_EverCrypt_AutoConfig2_init() {
   return 0;
 }
