@@ -20,6 +20,7 @@ module type VAR = sig
   val set_location : Location.t -> t -> t
   val is_generated : t -> bool
   val is_ignored : t -> bool
+  val add_prefix : string -> t -> t
 
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit
@@ -51,7 +52,7 @@ module Internal () = struct
 
   let global_counter = ref 1
   let reset_counter () = global_counter := 1
-
+  let add_prefix str var = {var with name=str^var.name}
   let fresh ~loc ?(name = "gen") () =
     let counter =
       incr global_counter;

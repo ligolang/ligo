@@ -80,8 +80,8 @@ let of_int i = string_of_int i |> of_string
 let of_z i = Z.to_string i |> of_string
 
 module Assoc = struct
-  type 'a assoc = (t * 'a) list [@@deriving eq, compare, yojson, hash]
-  type 'a t = 'a assoc [@@deriving eq, compare, yojson, hash]
+  type 'a assoc = (t * 'a) list [@@deriving eq, compare, yojson, hash, sexp]
+  type 'a t = 'a assoc [@@deriving eq, compare, yojson, hash, sexp]
 
   let iter : 'a t -> f:('a -> unit) -> unit =
    fun xs ~f -> List.iter ~f:(fun (_, x) -> f x) xs
