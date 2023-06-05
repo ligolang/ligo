@@ -7,7 +7,7 @@ let current = Nairobi
 let in_use = Nairobi (* Protocol we depend on *)
 
 (* this list is used to print the list of protocols in the CLI help *)
-let protocols_str : string list = [ "lima"; "mumbai" ]
+let protocols_str : string list = [ "mumbai"; "nairobi" ]
 
 let protocols_to_variant : string -> t option =
  fun p ->

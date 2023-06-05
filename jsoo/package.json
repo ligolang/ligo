@@ -26,7 +26,10 @@
     "util": "^0.12.5"
   },
   "devDependencies": {
+    "colorette": "^2.0.20",
     "html-webpack-plugin": "^5.5.0",
+    "puppeteer": "^20.5.0",
+    "static-server": "^2.2.1",
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.5",
     "webpack": "^5.75.0",
