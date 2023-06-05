@@ -23,12 +23,8 @@ end
 
 module Value_decl = Value_decl (ValueAttr)
 
-module Access_label = struct
-  include Ast_aggregated.Access_label
-end
-
-module Accessor = Ast_aggregated.Accessor
-module Update = Ast_aggregated.Update
+module Accessor = Accessor (Access_label)
+module Update = Update (Access_label)
 module Let_in = Let_in.Make (Binder) (ValueAttr)
 
 type expression_content =
