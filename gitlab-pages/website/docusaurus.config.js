@@ -64,46 +64,42 @@ const config = {
         },
         items: [
           { type: 'docsVersionDropdown', position: 'left' },
-          { to: 'https://ide.ligolang.org/', label: 'Try Online', position: 'left', target: '_self' },
-          { to: 'docs/intro/installation', label: 'Install', position: 'left' },
-          { to: 'docs/intro/introduction', label: 'Docs', position: 'left' },
-          {
-            to: 'docs/tutorials/getting-started',
-            label: 'Tutorials',
-            position: 'left'
-          },
-          { to: 'https://packages.ligolang.org/packages', label: 'Packages', position: 'left', target: '_blank' },
-          { to: 'https://academy.ligolang.org/', label: 'Academy', position: 'left', target: '_self' },
-          { to: '/contact', label: 'Ask Questions', position: 'left' },
+          { to: 'docs/intro/introduction', label: 'Docs', position: 'left', target: '_self' },
+          { to: 'docs/intro/changelog', label: 'API', position: 'left' },
           { to: 'docs/faq/intro', label: 'FAQ', position: 'left' },
-          { to: 'docs/next/intro/changelog', label: 'Changelog', position: 'left' }
+          { to: 'https://packages.ligolang.org/packages', label: 'Registry', position: 'right' },
+          { to: 'https://ide.ligolang.org/', label: 'Web IDE', position: 'right' }
         ],
       },
       footer: {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Tooling',
             items: [
               {
-                label: 'Install',
+                label: 'Taqueria',
                 to: 'docs/intro/installation',
               },
               {
-                label: 'CLI Commands',
+                label: 'Registry',
                 to: 'docs/api/cli-commands',
               },
               {
-                label: 'Cheat Sheet',
+                label: 'Octez-client',
+                to: 'docs/api/cheat-sheet',
+              },
+              {
+                label: 'Templates',
                 to: 'docs/api/cheat-sheet',
               }
             ],
           },
           {
-            title: 'Community',
+            title: 'Need help',
             items: [
               {
-                label: 'Tezos Stack Exchange',
+                label: 'FAQ',
                 href: 'https://tezos.stackexchange.com/questions/tagged/ligo',
               },
               {
@@ -115,34 +111,26 @@ const config = {
                 href: 'https://t.me/LigoLang',
               },
               {
-                label: 'Riot',
-                href: 'https://riot.im/app/#/room/#ligo-public:matrix.org',
-              },
-              {
                 label: 'Twitter',
                 href: 'https://twitter.com/LigoLang',
               },
             ],
           },
           {
-            title: 'More',
+            title: 'Open source',
             items: [
               {
-                label: 'Tutorials',
+                label: 'Ligo Gitlab',
                 to: 'docs/tutorials/getting-started',
               },
               {
-                label: 'Blog',
+                label: 'Open an issue',
                 to: 'https://forum.tezosagora.org/tag/ligo',
               },
               {
-                label: 'GitLab',
+                label: 'Website sources',
                 href: 'https://gitlab.com/ligolang/ligo',
-              },
-              {
-                label: 'Contribute',
-                to: 'docs/contributors/origin',
-              },
+              }
             ],
           },
         ],

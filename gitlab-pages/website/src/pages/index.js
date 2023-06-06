@@ -88,32 +88,31 @@ export default function Home() {
             flexDirection: "column",
           }}
         >
+          <div id="title">
+            <h1>A friendly Smart Contract Language for Tezos</h1>
+            <p>Smart contracts were never so easy</p>
+          </div>
           <div id="intro" className="centered">
+            <HomepageCodeExamples />
             <div id="callToAction">
               <ul>
                 <li className="primary">
-                  <a href="https://ide.ligolang.org">Try Online</a>
+                  <a href={useBaseUrl("tutorials/getting-started/getting-started")}>Get started</a>
                 </li>
-                <li className="primary">
-                  <a
-                    href="https://gitpod.io/#https://gitlab.com/ligolang/template-ligo"
-                    target="_blank"
-                  >
-                    Try on Gitpod
+                <li className="secondary">
+                  <a href={useBaseUrl("docs/reference/toplevel")}>
+                    Language
                   </a>
                 </li>
                 <li className="secondary">
-                  <a href={useBaseUrl("/docs/intro/installation")}>Install</a>
-                </li>
-                <li className="secondary">
-                  <a href={useBaseUrl("https://academy.ligolang.org/")}>
-                    Learn on Academy
+                  <a href={useBaseUrl("docs/next/intro/changelog")}>
+                    Changelog
                   </a>
                 </li>
               </ul>
             </div>
-            <HomepageCodeExamples />
           </div>
+
           <HomepageFeatures />
           <HomepagePartners />
         </div>
