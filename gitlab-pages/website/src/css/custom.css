@@ -531,7 +531,7 @@ a:hover {
 #homePage {
   display: flex;
   flex-direction: column;
-  margin-top: 80px;
+  margin-top: 30px;
 }
 
 #homePage .tab-content {
@@ -542,7 +542,7 @@ a:hover {
   margin: 0;
 }
 
-#homePage h1 {
+#homePage title h1 {
   font-family: "Open Sans", sans-serif;
   font-weight: bold;
   font-size: 1.875em;
@@ -555,7 +555,7 @@ a:hover {
 }
 
 #callToAction {
-  margin-top: 300px;
+  margin-top: 60px;
 }
 
 #homePage #intro #callToAction ul {
@@ -569,7 +569,7 @@ a:hover {
   font-weight: normal;
   font-size: 2em;
   border-left: 4px solid;
-  padding: 30px 50px;
+  padding: 25px 50px;
 }
 
 #homePage #intro #callToAction ul li.secondary a {
@@ -598,7 +598,15 @@ a:hover {
   min-height: 450px;
   max-width: 400px;
 }
+#homePage #title {
+  align-self: center;
+  margin-bottom: 20px;
+}
 
+#homePage #title p {
+  font-style: italic;
+  font-size: 1.5em;
+}
 #homePage #intro #preview p {
   font-style: italic;
   font-size: 1.5em;

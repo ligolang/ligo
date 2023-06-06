@@ -8,17 +8,13 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; base "cameligo.mligo" ];
   [%expect
     {|
-    Everything at the top-level was executed.
-    - test_initial_storage exited with value ().
-    - test_increment exited with value (). |}]
+    Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; base "jsligo.jsligo" ];
   [%expect
     {|
-    Everything at the top-level was executed.
-    - test_initial_storage exited with value ().
-    - test_increment exited with value (). |}]
+    Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; base "cameligo.mligo"; "-m"; "IncDec" ];

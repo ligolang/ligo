@@ -16,6 +16,12 @@
 ### Breaking :
 {{#breaking}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/breaking}}
 {{/breaking_ind}}
 
@@ -23,6 +29,12 @@
 ### Added :
 {{#added}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/added}}
 {{/added_ind}}
 
@@ -30,6 +42,12 @@
 ### Fixed :
 {{#fixed}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/fixed}}
 {{/fixed_ind}}
 
@@ -37,6 +55,12 @@
 ### Changed :
 {{#changed}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/changed}}
 {{/changed_ind}}
 
@@ -44,6 +68,12 @@
 ### Deprecated :
 {{#deprecated}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/deprecated}}
 {{/deprecated_ind}}
 
@@ -51,6 +81,12 @@
 ### Removed :
 {{#removed}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/removed}}
 {{/removed_ind}}
 
@@ -58,6 +94,12 @@
 ### Performance :
 {{#performance}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/performance}}
 {{/performance_ind}}
 
@@ -65,6 +107,12 @@
 ### Internal :
 {{#internal}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/internal}}
 {{/internal_ind}}
 
@@ -72,6 +120,12 @@
 ### Other :
 {{#other}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/other}}
 {{/other_ind}}
 
@@ -79,6 +133,12 @@
 ### Uncategorized :
 {{#null}}
 * {{{title}}} ([!{{merge_request}} by {{{author}}}](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}))
+  <details>
+  <summary> <ins>Details</ins> : </summary>
+  
+  {{#description}}{{{description}}}{{/description}}{{^description}}No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}}){{/description}}
+  
+  </details>
 {{/null}}
 {{/null_ind}}
 
@@ -88,121 +148,5 @@
 _No changes for this version_
 {{/changes}}
 
-<details>
-{{#changes}}
-<summary> <ins>Details</ins> : </summary>
-
-{{#breaking}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/breaking}}
-
-{{#added}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/added}}
-
-{{#fixed}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/fixed}}
-
-{{#changed}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/changed}}
-
-{{#deprecated}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/deprecated}}
-
-{{#removed}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/removed}}
-
-{{#performance}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/performance}}
-
-{{#internal}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/internal}}
-
-{{#other}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/other}}
-
-{{#null}}
-### [{{{type}}}] {{{title}}}
-{{#description}}
-{{{description}}}
-{{/description}}
-
-{{^description}}
-No details provided for this change. Please visit the [MR to learn more](https://gitlab.com/ligolang/ligo/-/merge_requests/{{merge_request}})
-{{/description}}
-{{/null}}
-{{/changes}}
-</details>
-
----
 {{/changelog}}
+

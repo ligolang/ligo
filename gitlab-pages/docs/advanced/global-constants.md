@@ -12,6 +12,22 @@ stored on chain, and they can be referred to from a contract we are
 deploying. Using global constants, we will be able to originate
 contracts that (after expansion) surpass size limit for contracts.
 
+## API primer
+
+<SyntaxTitle syntax="pascaligo">
+function constant: string -> 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val constant : string -> 'a
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let constant : string => 'a
+</SyntaxTitle>
+
+The primitive `Tezos.constant` allows you to use a predefined constant already registered on chain.
+It accepts a hash in the form of a string and will require a type annotation.
+
 ## Using global constants
 
 Global constants are introduced using `Tezos.constant`. This function
