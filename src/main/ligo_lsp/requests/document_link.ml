@@ -50,10 +50,15 @@ let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
   let dir = Path.dirname file in
   let@ directives_opt =
     with_cst file None
-    @@ function
-    | CameLIGO_cst cst -> return @@ Some (extract_directives_cameligo cst)
-    | JsLIGO_cst cst -> return @@ Some (extract_directives_jsligo cst)
-    | PascaLIGO_cst cst -> return @@ Some (extract_directives_pascaligo cst)
+    @@ fun cst ->
+    return
+    @@ Option.some
+    @@ Dialect_cst.from_dialect
+         { cameligo = extract_directives_cameligo
+         ; jsligo = extract_directives_jsligo
+         ; pascaligo = extract_directives_pascaligo
+         }
+         cst
   in
   return
   @@ Option.map ~f:(List.filter_map ~f:(extract_link_from_directive ~relative_to_dir:dir))

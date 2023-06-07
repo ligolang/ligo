@@ -136,3 +136,6 @@ let checking_error_to_string (error : Checking.Errors.typer_error) : string =
     "%a"
     (Checking.Errors.error_ppformat ~display_format ~no_colour:false)
     error
+
+    let default_line_width_for_formatted_file = 80
+    let default_line_width_for_hovers = 60

@@ -15,9 +15,8 @@ let get_formatting_test ({ file_path; range; expected } : range_formatting_test)
   (* Not creating an Alcotest.test_case here because we want to test many cases
      without printing too many lines in log.*)
   let result, _diagnostics =
-    test_run_session
-    @@ let@ uri = open_file (Path.from_relative file_path) in
-       Requests.on_req_range_formatting uri range
+    test_run_session @@ let@ uri = open_file (Path.from_relative file_path) in
+       Requests.on_req_range_formatting uri range FormattingOptions.default
   in
   let mk_message s =
     Format.asprintf "Range formatting: %s. %s, %a" s file_path Range.pp range

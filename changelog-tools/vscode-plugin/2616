@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded support for overriding line length limit for LSP formatting. Check the [VSCode extension README](tools/vscode/README.md) for instructions.\\n\\n"
+merge_request: '2616'
+title: "[#1765] LSP formatting: make max line width configurable"
+type: added
+            
