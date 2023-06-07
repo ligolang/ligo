@@ -17,7 +17,7 @@ let get_formatting_test ({ file_path; expected } : formatting_test)
   let result, _diagnostics =
     test_run_session
     @@ let@ uri = open_file (Path.from_relative file_path) in
-       Requests.on_req_formatting uri
+       Requests.on_req_formatting uri FormattingOptions.default
   in
   match result, expected with
   | None, None -> ()
@@ -42,6 +42,12 @@ let test_cases =
     }
   ; { file_path = "contracts/lsp/format_me.jsligo"
     ; expected = Some "contracts/lsp/formatted.jsligo"
+    }
+  ; { file_path = "contracts/lsp/with_ligopretty/format_me.mligo"
+    ; expected = Some "contracts/lsp/with_ligopretty/formatted.mligo"
+    }
+  ; { file_path = "contracts/lsp/with_ligopretty/format_me.jsligo"
+    ; expected = Some "contracts/lsp/with_ligopretty/formatted.jsligo"
     }
   ]
 

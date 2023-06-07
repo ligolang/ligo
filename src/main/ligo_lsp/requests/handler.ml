@@ -19,6 +19,8 @@ type config =
         (** Disabled requests, i.e., they are not handled by the language server. Defaults to []. *)
   ; deprecated : bool
         (** Enable support for the deprecated PascaLIGO syntax. Defaults to [false]. *)
+  ; max_line_width : int option
+        (** Override the max line width for formatted file (80 by default) *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)

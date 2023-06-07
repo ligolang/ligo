@@ -131,6 +131,15 @@
                     ],
                     "default": "info",
                     "description": "The verbosity of logging. Error will show only errors, warning will show errors and warnings, and so on."
+                },
+                "ligoLanguageServer.maxLineWidth": {
+                    "scope": "resource",
+                    "type": [
+                        "number",
+                        "null"
+                    ],
+                    "default": null,
+                    "description": "Sets custom max line width for a formatted file. Default is 80. If a custom `printWidth` is set in `.ligopretty` file, this setting has no effect (see [the README.md](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md)). Requires LIGO newer than 0.65.0."
                 }
             }
         },

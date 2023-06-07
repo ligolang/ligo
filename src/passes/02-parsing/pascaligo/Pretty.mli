@@ -2,7 +2,7 @@
 
 module CST = Cst_pascaligo.CST
 
-type state
+type state = unit
 val default_state : state
 
 type cst           = CST.t

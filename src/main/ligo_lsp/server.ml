@@ -11,6 +11,7 @@ let default_config : config =
   ; logging_verbosity = MessageType.Info
   ; disabled_features = []
   ; deprecated = false
+  ; max_line_width = None
   }
 
 
@@ -106,6 +107,8 @@ class lsp_server =
                |> member "deprecated"
                |> to_bool_option
                |> Option.value ~default:default_config.deprecated
+           ; max_line_width =
+               ligo_language_server |> member "maxLineWidth" |> to_int_option
            }
 
     method! on_req_initialize
@@ -283,9 +286,10 @@ class lsp_server =
           else Fun.const @@ IO.return default
         in
         match r with
-        | Client_request.TextDocumentFormatting { textDocument; _ } ->
+        | Client_request.TextDocumentFormatting { textDocument; options; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None @@ Requests.on_req_formatting (DocumentUri.to_path uri)
+          run ~uri ~default:None
+          @@ Requests.on_req_formatting (DocumentUri.to_path uri) options
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None
@@ -319,9 +323,10 @@ class lsp_server =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_folding_range (DocumentUri.to_path uri)
-        | Client_request.TextDocumentRangeFormatting { range; textDocument; _ } ->
+        | Client_request.TextDocumentRangeFormatting { range; textDocument; options; _ }
+          ->
           let uri = textDocument.uri in
           run ~uri ~default:None
-          @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range
+          @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range options
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

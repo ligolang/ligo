@@ -9,6 +9,7 @@ module Def = Def
 module Dialect_cst = Dialect_cst
 module DocumentUri = Document_uri
 module Position = Position
+module PP_config = PP_config
 module Range = Range
 module Location = Location
 
@@ -64,6 +65,12 @@ module FoldingRange = struct
   let pp = Helpers_pretty.pp_with_yojson yojson_of_t
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
+end
+
+module FormattingOptions = struct
+  include Lsp.Types.FormattingOptions
+
+  let default : t = create ~tabSize:2 ~insertSpaces:false ()
 end
 
 module ClientCapabilities = Lsp.Types.ClientCapabilities

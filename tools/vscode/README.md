@@ -17,7 +17,7 @@ Those are being actively worked on.
 
 ## Functionality
 
-Code navigation
+### Code navigation
 
 - [x] Jump to definition
 - [x] Find references (only in open files)
@@ -28,12 +28,12 @@ Code navigation
 - [x] Document links
 - [ ] Workspace symbols
 
-Diagnostics
+### Diagnostics
 
 - [x] Parser diagnostics
 - [x] Type-checker diagnostics
 
-Code editing
+### Code editing
 
 - [x] Hovers
 - [x] Rename symbol (only in open files)
@@ -42,15 +42,25 @@ Code editing
 - [ ] Signature help
 - [ ] Refactorings
 
-Formatting
+### Formatting
 
 - [x] Whole document formatting
 - [ ] On-type formatting
-- [x] Document range formatting
+- [x] Document range formatting (BETA)
+
+It can be configured via extension settings or by creating a `.ligopretty` file in the project root.
+
+A `.ligopretty` file should contain a JSON object with
+
+- `printWidth : int`- max line size (in characters) for file after pretty printing, default is 80.
+- `tabWidth : int`- ident size, default is editor's tab size. Currently supported only for JsLIGO.
+
+All fields are optional. If some option is specified both in a `.ligopretty` file and
+in the `Ligo Language Server: Max Line Width` extension setting, the option from `.ligopretty` file would be used.
 
 ## Commands
 
-You can restart the LSP server executing the `LIGO: LIGO Restart LSP Server` command. Likewise, commands to start and stop the server are supported as well.
+You can restart the LSP server by executing the `LIGO: LIGO Restart LSP Server` command. Likewise, commands to start and stop the server are supported as well.
 
 LIGO Options contains various commands for building and running LIGO functions and expressions.
 
@@ -74,20 +84,21 @@ Inside the list, you can write the name of any capability to disable it. For exa
 ```
 
 The supported features that may be disabled are listed below:
-* `textDocument/definition`
-* `textDocument/typeDefinition`
-* `textDocument/references`
-* `textDocument/completion`
-* `textDocument/signatureHelp`
-* `textDocument/foldingRange`
-* `textDocument/selectionRange`
-* `textDocument/documentLink`
-* `textDocument/documentSymbol`
-* `textDocument/hover`
-* `textDocument/rename`
-* `textDocument/prepareRename`
-* `textDocument/formatting`
-* `textDocument/rangeFormatting`
-* `textDocument/codeAction`
+
+- `textDocument/definition`
+- `textDocument/typeDefinition`
+- `textDocument/references`
+- `textDocument/completion`
+- `textDocument/signatureHelp`
+- `textDocument/foldingRange`
+- `textDocument/selectionRange`
+- `textDocument/documentLink`
+- `textDocument/documentSymbol`
+- `textDocument/hover`
+- `textDocument/rename`
+- `textDocument/prepareRename`
+- `textDocument/formatting`
+- `textDocument/rangeFormatting`
+- `textDocument/codeAction`
 
 **Note**: Please restart the LIGO Language Server after changing this configuration.

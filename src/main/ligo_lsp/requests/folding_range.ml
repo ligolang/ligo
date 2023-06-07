@@ -60,7 +60,11 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
 let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =
  fun file ->
   Handler.with_cst file None
-  @@ function
-  | Dialect_cst.CameLIGO_cst cst -> Handler.return @@ folding_range_cameligo cst
-  | Dialect_cst.JsLIGO_cst cst -> Handler.return @@ folding_range_jsligo cst
-  | Dialect_cst.PascaLIGO_cst cst -> Handler.return @@ folding_range_pascaligo cst
+  @@ fun cst ->
+  Handler.return
+  @@ Dialect_cst.from_dialect
+       { cameligo = folding_range_cameligo
+       ; jsligo = folding_range_jsligo
+       ; pascaligo = folding_range_pascaligo
+       }
+       cst
