@@ -1,11 +1,11 @@
 
 ### SYNOPSIS
 ```
-ligo print ast-typed SOURCE_FILE
+ligo print ast-core SOURCE_FILE
 ```
 
 ### DESCRIPTION
-This sub-command prints the source file in the AST typed stage. Internally, it uses the build system to type the contract, but the contract is not combined with imported modules.
+This sub-command prints the source file in the AST core stage.
 
 ### FLAGS
 **--deprecated**
@@ -31,18 +31,6 @@ Avoid ligo analytics publication. Configurable with environment variable LIGO_SK
 
 **--syntax SYNTAX**
 the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo and .jsligo respectively). (alias: -s)
-
-**--test**
-force testing mode.
-
-**--warn-infinite-loop**
-warn about infinite loop
-
-**--warn-unused-rec**
-warn about unused recursion in a recursive function
-
-**-p PROTOCOL**
-choose protocol's types/values pre-loaded into the LIGO environment (mumbai , nairobi). By default, the current protocol (nairobi) will be used (alias: --protocol)
 
 **-help**
 print this help text and exit (alias: -?)

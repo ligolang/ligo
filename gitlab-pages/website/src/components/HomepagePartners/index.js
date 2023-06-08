@@ -19,18 +19,6 @@ const PARTNERS = [
     image: 'img/partners/MacStadium-developerlogo.png',
     link: 'https://www.macstadium.com/',
     pinned: true
-  },
-  {
-    name: 'TQ Tezos',
-    image: 'img/partners/tq-logo.svg',
-    link: 'https://tqtezos.com/',
-    pinned: true
-  },
-  {
-    name: 'Stove Labs',
-    image: 'img/partners/stove-logo.png',
-    link: 'https://stove-labs.com',
-    pinned: true
   }
 ];
 

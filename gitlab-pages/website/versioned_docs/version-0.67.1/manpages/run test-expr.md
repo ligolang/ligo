@@ -1,13 +1,16 @@
 
 ### SYNOPSIS
 ```
-ligo compile constant SYNTAX _EXPRESSION
+ligo run test-expr SYNTAX _EXPRESSION
 ```
 
 ### DESCRIPTION
-This sub-command compiles a LIGO expression to a Michelson value and its hash as a global constant. It works by compiling the LIGO expression to a Michelson expression and then interpreting it using Michelson's interpreter.
+This sub-command tests a LIGO contract using a LIGO interpreter. Still under development, there are features that are work in progress and are subject to change. No real test procedure should rely on this sub-command alone.
 
 ### FLAGS
+**--arg EXPRESSION**
+an expression passed to LIGO interpreter, accessible through variable 'cli_arg'
+
 **--deprecated**
 enable deprecated language PascaLIGO
 
@@ -32,20 +35,14 @@ The path to root of the project.
 **--skip-analytics**
 Avoid ligo analytics publication. Configurable with environment variable LIGO_SKIP_ANALYTICS too
 
+**--steps INT**
+a bound in the number of steps to be done by the interpreter. (alias: -n)
+
 **--warn-infinite-loop**
 warn about infinite loop
 
 **--warn-unused-rec**
 warn about unused recursion in a recursive function
-
-**--werror**
-treat warnings as errors
-
-**--without-run**
-disable running of compiled expression.
-
-**-p PROTOCOL**
-choose protocol's types/values pre-loaded into the LIGO environment (mumbai , nairobi). By default, the current protocol (nairobi) will be used (alias: --protocol)
 
 **-help**
 print this help text and exit (alias: -?)

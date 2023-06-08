@@ -249,7 +249,7 @@ xrefcheck:
   stage: push
   tags:
     - docker
-  image: node:16.17.0-buster
+  image: node:20.2.0-buster
   needs:
     - job: changelog
       artifacts: true
@@ -305,7 +305,7 @@ algolia-crawl:
 
 deploy_website_preview:
   stage: deploy
-  image: node:16.17.0-buster
+  image: node:20.2.0-buster
   tags:
     - docker
   needs:
