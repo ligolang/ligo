@@ -102,7 +102,6 @@ library:
     - process-extras
     - record-dot-preprocessor
     - record-hasfield
-    - regex-tdfa
     - scientific
     - semver
     - singletons
@@ -115,29 +114,17 @@ library:
     - time
     - text
     - transformers
-    - tree-sitter
     - unliftio
     - unliftio-core
     - unordered-containers
     - vector
     - vinyl
-    - witherable
 
   build-tools:
     - record-dot-preprocessor:record-dot-preprocessor
 
   source-dirs:
     - src/
-
-  include-dirs:
-    - grammar/camligo/src
-    - grammar/jsligo/src
-
-  c-sources:
-    - grammar/camligo/src/parser.c
-    - grammar/camligo/src/scanner.c
-    - grammar/jsligo/src/parser.c
-    - grammar/jsligo/src/scanner.c
 
   generated-other-modules:
     - Paths_ligo_debugger

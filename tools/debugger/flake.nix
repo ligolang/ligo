@@ -3,7 +3,7 @@
   nixConfig = {
     flake-registry =
       "https://github.com/serokell/flake-registry/raw/master/flake-registry.json";
-    extra-substituters = [ "https://hydra.iohk.io" ];
+    extra-substituters = [ "https://cache.iohk.io" ];
     extra-trusted-public-keys =
       [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
   };
@@ -34,12 +34,10 @@
         pkgs = import nixpkgs nixpkgsArgs;
         pkgs-legacy = nixpkgs-legacy.legacyPackages.${system};
 
-        grammars = import ./ligo-debugger/grammar { pkgs = haskellPkgs; };
-
         weeder-hacks = import haskell-nix-weeder { pkgs = pkgs-legacy; };
 
         ligo-debugger-stack-project = pkgs:
-          (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit grammars; inherit weeder-hacks; });
+          (pkgs.haskell-nix.callPackage ./ligo-debugger { inherit weeder-hacks; });
 
         ligo-debugger-package = pkgs:
           (ligo-debugger-stack-project pkgs).ligo-debugger;

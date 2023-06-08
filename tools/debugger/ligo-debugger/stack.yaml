@@ -52,13 +52,9 @@ extra-deps:
 - fastsum-0.2.0.0
 - stm-containers-1.2
 - stm-hamt-1.2.0.7
-- git: https://github.com/serokell/tree-sitter.git
-  commit: 59b427b5739c5ae348addcedac31632a663f2a45
 - git: https://github.com/serokell/duplo.git
   commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
-- git: https://github.com/Bodigrim/text-rope
-  commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-  # nix-sha256: 16fgpzc0rrkypryapqh33dvj40bcp6biyp1janlwq34aj4yc4y8l
+  # nix-sha256: 079zlh8ld4iz5xx0qwqzj86p0ajfcgn2mcnwh9kn2l7zkygqs1vr
 # For keyed BLAKE2b and NaCl secret box
 - crypto-sodium-0.0.5.0
 # Dependencies of crypto-sodium

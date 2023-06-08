@@ -1,70 +1,20 @@
+{-# LANGUAGE InstanceSigs #-}
 module Language.LIGO.AST.Parser
-  ( Source (..)
-  , ParserCallback
-  , parse
-  , loadPreprocessed
-  , parsePreprocessed
-  , scanContracts
+  ( scanContracts
+  , ASTs (..)
   ) where
 
+import Control.MessagePack (withMsgArray, withMsgMap, (.:))
+import Control.Monad.Validate (MonadValidate)
+import Data.MessagePack (Config, DecodeError, MessagePack, Object (ObjectNil))
+import Data.MessagePack.Types (MessagePack (..))
 import System.FilePath ((</>))
-import Text.Regex.TDFA ((=~))
 import UnliftIO.Directory (doesDirectoryExist, listDirectory)
-import UnliftIO.Exception (Handler (..), catches, fromEither)
 
-import Language.LIGO.AST.Common (ContractInfo, addLigoErrsToMsg, pattern FindContract)
-import Language.LIGO.AST.Parser.Camligo qualified as Caml
-import Language.LIGO.AST.Parser.Jsligo qualified as Js
+import Language.LIGO.AST.Parser.CameLigoCST qualified as CameLIGO
+import Language.LIGO.AST.Parser.JsLigoCST qualified as JsLIGO
 import Language.LIGO.AST.Skeleton
-import Language.LIGO.Debugger.CLI
-import Language.LIGO.Diagnostic (Message)
 import Language.LIGO.Extension
-import Language.LIGO.ParseTree (Source (..), toParseTree)
-import Language.LIGO.Parser (parseLineMarkerText, runParserM)
-
-type ParserCallback m contract = Source -> m contract
-
-parse :: MonadIO m => ParserCallback m ContractInfo
-parse src = do
-  (recogniser, dialect) <- fromEither $ onExt ElimExt
-    { eeCaml = (Caml.recognise,   Caml)
-    , eeJs   = (Js.recognise,     Js)
-    } (srcPath src)
-  tree <- toParseTree dialect src
-  uncurry (FindContract src) <$> runParserM (recogniser tree)
-
-loadPreprocessed
-  :: (HasLigoClient m)
-  => Source
-  -> m (Source, [Message])
-loadPreprocessed src = do
-  let (src', needsPreprocessing) = prePreprocess $ srcText src
-  if needsPreprocessing
-    then
-      ((, []) <$> preprocess src') `catches`
-        [ Handler \(LigoDecodedExpectedClientFailureException errs warns _) ->
-          pure (src', fromLigoErrorToMsg <$> toList errs <> warns)
-        , Handler \(_ :: SomeLigoException) ->
-          pure (src', [])
-        ]
-    else
-      pure (src', [])
-  where
-    -- If the user has hand written any line markers, they will get removed here.
-    -- Also query whether we need to do any preprocessing at all in the first place.
-    prePreprocess :: Text -> (Source, Bool)
-    prePreprocess contents =
-      let
-        hasPreprocessor = contents =~ ("^#[ \t]*[a-z]+" :: Text)
-        prepreprocessed = (\l -> maybe (l, False) (const (mempty, True)) $ parseLineMarkerText l) <$> lines contents
-        shouldPreprocess = hasPreprocessor || any snd prepreprocessed
-      in
-      (src{srcText = unlines $ map fst prepreprocessed}, shouldPreprocess)
-
-parsePreprocessed :: (HasLigoClient m) => Source -> m ContractInfo
-parsePreprocessed src = do
-  (src', msgs) <- loadPreprocessed src
-  addLigoErrsToMsg msgs <$> parse src'
 
 -- | Scan the whole directory for LIGO contracts.
 -- This ignores every other file which is not a contract.
@@ -86,3 +36,39 @@ scanContractsImpl seen predicate top
             | otherwise -> pure seen
         else pure seen
   | otherwise = pure seen
+
+class ToAST (lang :: Lang) where
+  type CST lang
+  toAST :: CST lang -> LIGO Info
+
+instance ToAST 'Caml where
+  type CST 'Caml = CameLIGO.CST
+  toAST = CameLIGO.toAST
+
+instance ToAST 'Js where
+  type CST 'Js = JsLIGO.CST
+  toAST = JsLIGO.toAST
+
+data SomeLang where
+  SomeLang :: (ToAST lang, MessagePack (CST lang)) => Proxy lang -> SomeLang
+
+reifyLang :: Lang -> SomeLang
+reifyLang = \case
+  Caml -> SomeLang (Proxy @'Caml)
+  Js -> SomeLang (Proxy @'Js)
+
+newtype ASTs = ASTs { unASTs :: [SomeLIGO Info] }
+
+instance MessagePack ASTs where
+  toObject _ = const ObjectNil
+
+  fromObjectWith :: forall m. (MonadValidate DecodeError m) => Config -> Object -> m ASTs
+  fromObjectWith _ = withMsgArray "ASTs" \(toList -> arr) ->
+    ASTs <$> traverse objectToAST arr
+    where
+      objectToAST :: Object -> m (SomeLIGO Info)
+      objectToAST = withMsgMap "AST" \o -> do
+        lang <- o .: "lang"
+        SomeLang (Proxy :: Proxy lang) <- pure $ reifyLang lang
+        cst <- o .: "cst"
+        pure $ SomeLIGO lang (toAST @lang cst)

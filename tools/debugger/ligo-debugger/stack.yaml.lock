@@ -246,17 +246,6 @@ packages:
   original:
     hackage: stm-hamt-1.2.0.7
 - completed:
-    commit: 59b427b5739c5ae348addcedac31632a663f2a45
-    git: https://github.com/serokell/tree-sitter.git
-    name: tree-sitter
-    pantry-tree:
-      sha256: 0b89f31225bdd760f25a25e3c700c45e87f1a8f772813e97bd662e193618d0a1
-      size: 34417
-    version: 0.9.0.2
-  original:
-    commit: 59b427b5739c5ae348addcedac31632a663f2a45
-    git: https://github.com/serokell/tree-sitter.git
-- completed:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
     git: https://github.com/serokell/duplo.git
     name: duplo
@@ -267,17 +256,6 @@ packages:
   original:
     commit: f65dc29eef93a7260cfbb7db812f0bd265db16fd
     git: https://github.com/serokell/duplo.git
-- completed:
-    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-    git: https://github.com/Bodigrim/text-rope
-    name: text-rope
-    pantry-tree:
-      sha256: e26b7ce27f67a1a2bf58fe88f817a98722d83cefed2b89e8e1530da2e05e1485
-      size: 1431
-    version: '0.2'
-  original:
-    commit: 1f721c1936cbfb1ea4a742f12754047afdcff3a8
-    git: https://github.com/Bodigrim/text-rope
 - completed:
     hackage: crypto-sodium-0.0.5.0@sha256:05a6cc03c407d62a999bace5fef6ed925395cb11265675052e8f39ce6f95a6ef,5590
     pantry-tree:

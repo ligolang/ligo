@@ -123,6 +123,9 @@ instance MessagePack Range where
         when (line < 1 && (not . isLigoStdLib) file) $ refute "Line number is zero"
         return (file, LigoPosition line (col + 1))
 
+instance Modifies Range where
+  ascribe _ = id
+
 -- | Like 'Range', but includes information on the preprocessed range of the
 -- file.
 newtype PreprocessedRange
