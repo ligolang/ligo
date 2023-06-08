@@ -459,9 +459,9 @@ end
 
 ```jsligo group=contract
 namespace C {
-  // @entry
+  @entry
   const increment = (p : int, s : int) : [list<operation>, int] => [list([]), s + p];
-  // @entry
+  @entry
   const decrement = (p : int, s : int) : [list<operation>, int] => [list([]), s - p];
 };
 ```

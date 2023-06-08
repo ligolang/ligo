@@ -157,13 +157,13 @@ namespace IncDec {
 
   // Three entrypoints
 
-  // @entry
+  @entry
   const increment = (delta : int, store : storage) : ret => [list([]), store + delta];
 
-  // @entry
+  @entry
   const decrement = (delta : int, store : storage) : ret => [list([]), store - delta];
 
-  // @entry
+  @entry
   const reset = (_ : unit, _ : storage) : ret => [list([]), 0];
 };
 ```
