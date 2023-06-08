@@ -361,6 +361,14 @@ and compile_expression : Data.t -> Data.path -> I.expression -> O.expression =
         cases
     in
     return (O.E_matching { matchee = self matchee; cases })
+  | I.E_lambda { binder; output_type; result } ->
+    let data = Data.rm_exp data (Param.get_var binder) in
+    return
+      (O.E_lambda
+         { binder = Param.map self_ty binder
+         ; output_type = self_ty output_type
+         ; result = self ~data result
+         })
   | I.E_for { binder; start; final; incr; f_body } ->
     let data = Data.rm_exp data binder in
     return
@@ -403,12 +411,6 @@ and compile_expression : Data.t -> Data.path -> I.expression -> O.expression =
     let let_result = self ~data let_result in
     let let_binder = I.Pattern.map self_ty let_binder in
     return @@ O.E_let_in { let_binder; rhs = self rhs; let_result; attributes }
-  | I.E_lambda { binder; output_type; result } ->
-    let binder = Param.map self_ty binder in
-    let output_type = self_ty output_type in
-    let data = Data.rm_exp data (Param.get_var binder) in
-    let result = self ~data result in
-    return (O.E_lambda { binder; output_type; result })
   | I.E_for_each { fe_binder = b, b_opt; collection; collection_type; fe_body } ->
     let data = Data.rm_exp data b in
     let data = Option.value_map b_opt ~default:data ~f:(fun b -> Data.rm_exp data b) in

@@ -39,5 +39,5 @@ const printPascalTriangle = (n: int): string => {
 }
 
 const test8 = printPascalTriangle(8)
-const _ = Test.println("")
+const testspace = Test.println("")
 const test10 = printPascalTriangle(9)
