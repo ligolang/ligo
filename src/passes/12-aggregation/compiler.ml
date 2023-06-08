@@ -403,6 +403,12 @@ and compile_expression : Data.t -> Data.path -> I.expression -> O.expression =
     let let_result = self ~data let_result in
     let let_binder = I.Pattern.map self_ty let_binder in
     return @@ O.E_let_in { let_binder; rhs = self rhs; let_result; attributes }
+  | I.E_lambda { binder; output_type; result } ->
+    let binder = Param.map self_ty binder in
+    let output_type = self_ty output_type in
+    let data = Data.rm_exp data (Param.get_var binder) in
+    let result = self ~data result in
+    return (O.E_lambda { binder; output_type; result })
   | I.E_for_each { fe_binder = b, b_opt; collection; collection_type; fe_body } ->
     let data = Data.rm_exp data b in
     let data = Option.value_map b_opt ~default:data ~f:(fun b -> Data.rm_exp data b) in
@@ -434,7 +440,6 @@ and compile_expression : Data.t -> Data.path -> I.expression -> O.expression =
   | I.E_update x -> return (O.E_update (I.Update.map self x))
   | I.E_constructor x -> return (O.E_constructor (Constructor.map self x))
   | I.E_application x -> return (O.E_application (Application.map self x))
-  | I.E_lambda x -> return (O.E_lambda (Lambda.map self self_ty x))
   | I.E_type_abstraction x -> return (O.E_type_abstraction (Type_abs.map self x))
   | I.E_type_inst { forall; type_ } ->
     return (O.E_type_inst { forall = self forall; type_ = self_ty type_ })
