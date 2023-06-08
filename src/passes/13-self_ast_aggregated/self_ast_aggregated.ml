@@ -118,6 +118,7 @@ let all_program
     ~(options : Compiler_options.middle_end)
     (prg : Ast_aggregated.program)
   =
+  let prg = if not options.test then Remove_unused.remove_unused prg else prg in
   let prg = Ast_aggregated.Helpers.map_program Polymorphic_replace.expression prg in
   let prg =
     if not options.test

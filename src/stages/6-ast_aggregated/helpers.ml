@@ -236,84 +236,101 @@ and fold_map_cases
 
 module Free_variables : sig
   val expression : expression -> Value_var.t list
+  val expression_only_var : expression -> Value_var.t list
 end = struct
   open Ligo_prim
   module VarSet = Caml.Set.Make (Value_var)
 
-  let unions : VarSet.t list -> VarSet.t =
-   fun l -> List.fold l ~init:VarSet.empty ~f:VarSet.union
+  type t =
+    { var : VarSet.t
+    ; mut_var : VarSet.t
+    }
+
+  let empty = { var = VarSet.empty; mut_var = VarSet.empty }
+  let singleton_var v = { var = VarSet.singleton v; mut_var = VarSet.empty }
+  let singleton_mut_var v = { var = VarSet.empty; mut_var = VarSet.singleton v }
+
+  let remove name t =
+    { var = VarSet.remove name t.var; mut_var = VarSet.remove name t.mut_var }
 
 
-  let rec get_fv_expr : expression -> VarSet.t =
+  let union { var = y1; mut_var = z1 } { var = y2; mut_var = z2 } =
+    { var = VarSet.union y1 y2; mut_var = VarSet.union z1 z2 }
+
+
+  let unions : t list -> t = fun l -> List.fold l ~init:empty ~f:union
+
+  let rec get_fv_expr : expression -> t =
    fun e ->
     let self = get_fv_expr in
     match e.expression_content with
-    | E_variable v -> VarSet.singleton v
-    | E_literal _ -> VarSet.empty
+    | E_variable v -> singleton_var v
+    | E_literal _ -> empty
     | E_raw_code { language = _; code } -> self code
     | E_constant { arguments; _ } -> unions @@ List.map ~f:self arguments
-    | E_application { lamb; args } -> VarSet.union (self lamb) (self args)
+    | E_application { lamb; args } -> union (self lamb) (self args)
     | E_type_inst { forall; _ } -> self forall
     | E_lambda { binder; result; _ } ->
       let fv = self result in
-      VarSet.remove (Param.get_var binder) @@ fv
+      remove (Param.get_var binder) @@ fv
     | E_type_abstraction { type_binder = _; result } -> self result
     | E_recursive { fun_name; lambda = { binder; result; _ }; _ } ->
       let fv = self result in
-      VarSet.remove fun_name @@ VarSet.remove (Param.get_var binder) @@ fv
+      remove fun_name @@ remove (Param.get_var binder) fv
     | E_constructor { element; _ } -> self element
-    | E_matching { matchee; cases } -> VarSet.union (self matchee) (get_fv_cases cases)
+    | E_matching { matchee; cases } -> union (self matchee) (get_fv_cases cases)
     | E_record m ->
       let res = Record.map ~f:self m in
       let res = Record.values res in
       unions res
     | E_accessor { struct_; _ } -> self struct_
-    | E_update { struct_; update; _ } -> VarSet.union (self struct_) (self update)
+    | E_update { struct_; update; _ } -> union (self struct_) (self update)
     | E_let_in { let_binder; rhs; let_result; _ } ->
       let fv2 = self let_result in
       let fv2 =
         List.fold (Pattern.binders let_binder) ~init:fv2 ~f:(fun acc binder ->
-            VarSet.remove (Binder.get_var binder) acc)
+            remove (Binder.get_var binder) acc)
       in
-      VarSet.union (self rhs) fv2
-    (* HACK? return free mutable variables too, without distinguishing
-       them from free immutable variables *)
+      union (self rhs) fv2
     | E_let_mut_in { let_binder; rhs; let_result; _ } ->
       let fv2 = self let_result in
       let fv2 =
         List.fold (Pattern.binders let_binder) ~init:fv2 ~f:(fun acc binder ->
-            VarSet.remove (Binder.get_var binder) acc)
+            remove (Binder.get_var binder) acc)
       in
-      VarSet.union (self rhs) fv2
+      union (self rhs) fv2
     | E_assign { binder; expression } ->
-      VarSet.union (VarSet.singleton (Binder.get_var binder)) (self expression)
-    | E_deref v -> VarSet.singleton v
+      union (singleton_mut_var (Binder.get_var binder)) (self expression)
+    | E_deref v -> singleton_mut_var v
     | E_for { binder; start; final; incr; f_body } ->
-      unions [ self start; self final; self incr; VarSet.remove binder (self f_body) ]
+      unions [ self start; self final; self incr; remove binder (self f_body) ]
     | E_for_each { fe_binder = binder, None; collection; fe_body; collection_type = _ } ->
-      unions [ self collection; VarSet.remove binder (self fe_body) ]
+      unions [ self collection; remove binder (self fe_body) ]
     | E_for_each { fe_binder = binder1, Some binder2; collection; fe_body; _ } ->
-      unions
-        [ self collection
-        ; VarSet.remove binder1 @@ VarSet.remove binder2 @@ self fe_body
-        ]
-    | E_while { cond; body } -> VarSet.union (self cond) (self body)
+      unions [ self collection; remove binder1 @@ remove binder2 @@ self fe_body ]
+    | E_while { cond; body } -> union (self cond) (self body)
 
 
-  and get_fv_cases : _ Types.Match_expr.match_case list -> VarSet.t =
+  and get_fv_cases : _ Types.Match_expr.match_case list -> t =
    fun m ->
     unions
     @@ List.map m ~f:(fun { pattern; body } ->
            let varSet = get_fv_expr body in
            let vars = Pattern.binders pattern |> List.map ~f:Binder.get_var in
-           let varSet = List.fold vars ~init:varSet ~f:(fun vs v -> VarSet.remove v vs) in
+           let varSet = List.fold vars ~init:varSet ~f:(fun vs v -> remove v vs) in
            varSet)
 
 
+  let to_list x = VarSet.fold (fun v r -> v :: r) x []
+
   let expression e =
     let varSet = get_fv_expr e in
-    let fv = VarSet.fold (fun v r -> v :: r) varSet [] in
-    fv
+    to_list (VarSet.union varSet.mut_var varSet.var)
+
+
+  let expression_only_var e =
+    let varSet = get_fv_expr e in
+    to_list varSet.var
 end
 
 type 'err mapper = expression -> expression

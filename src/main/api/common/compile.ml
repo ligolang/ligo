@@ -223,7 +223,6 @@ let typed_contract_and_expression
   let (entry_point, contract_type), app_typed_prg =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
     @@ Ligo_compile.Of_core.specific_passes
-         ~remove:false
          (Ligo_compile.Of_core.Contract { entrypoints = entry_point; module_path })
          typed_prg
   in
@@ -299,7 +298,7 @@ let parameter
           ~has_env_comments:false
           ()
       in
-      let typed_expr, app_typed_prg, constants, contract_type, entry_point, module_path =
+      let typed_param, app_typed_prg, constants, contract_type, entry_point, module_path =
         typed_contract_and_expression
           ~raise
           ~options
@@ -307,9 +306,6 @@ let parameter
           ~source_file
           ~expression
           Check_parameter
-      in
-      let typed_param, typed_prg =
-        Self_ast_typed.remove_unused_expression typed_expr app_typed_prg
       in
       let (_ : Mini_c.meta Run.Michelson.michelson) =
         let aggregated_contract =
@@ -339,7 +335,7 @@ let parameter
         Ligo_compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
-          typed_prg
+          app_typed_prg
           typed_param
       in
       let expanded_param =
@@ -406,7 +402,7 @@ let storage
           ~has_env_comments:false
           ()
       in
-      let typed_expr, app_typed_prg, constants, contract_type, entry_point, module_path =
+      let typed_store, app_typed_prg, constants, contract_type, entry_point, module_path =
         typed_contract_and_expression
           ~raise
           ~options
@@ -414,9 +410,6 @@ let storage
           ~source_file
           ~expression
           Check_storage
-      in
-      let typed_store, typed_prg =
-        Self_ast_typed.remove_unused_expression typed_expr app_typed_prg
       in
       let (_ : Mini_c.meta Run.Michelson.michelson) =
         let aggregated_contract =
@@ -446,7 +439,7 @@ let storage
         Ligo_compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
-          typed_prg
+          app_typed_prg
           typed_store
       in
       let expanded_param =

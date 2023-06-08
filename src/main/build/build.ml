@@ -390,7 +390,6 @@ let build_expression ~raise
       expression
       (Ast_typed.Misc.to_signature init_prg)
   in
-  let typed_exp, init_prg = Self_ast_typed.remove_unused_expression typed_exp init_prg in
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
