@@ -1831,6 +1831,41 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
               (Errors.generic_error
                  term.location
                  (Format.sprintf "could not resolve (litstr %d)" id)))
+        | Prim (_, s, [], [ id ])
+          when String.equal "codestr" s && String.is_prefix ~prefix:"$" id ->
+          let id = String.chop_prefix_exn ~prefix:"$" id in
+          let id = Int.of_string id in
+          (match List.nth args id with
+          | Some (V_Ct (C_string s), _) ->
+            let open Tezos_micheline in
+            let code = s in
+            let code, errs = Micheline_parser.tokenize code in
+            (match errs with
+            | _ :: _ ->
+              raise.error
+                (Errors.generic_error
+                   term.location
+                   (Format.sprintf "could not parse raw michelson"))
+            | [] ->
+              let code, errs = Micheline_parser.parse_expression ~check:false code in
+              (match errs with
+              | _ :: _ ->
+                raise.error
+                  (Errors.generic_error
+                     term.location
+                     (Format.sprintf "could not parse raw michelson"))
+              | [] ->
+                let code = Micheline.strip_locations code in
+                (* hmm *)
+                let code =
+                  Micheline.inject_locations (fun _ -> Location.generated) code
+                in
+                map_node (fun _ -> ()) (fun x -> x) code))
+          | _ ->
+            raise.error
+              (Errors.generic_error
+                 term.location
+                 (Format.sprintf "could not resolve (codestr %d)" id)))
         | Prim (a, b, c, d) ->
           let open Tezos_micheline.Micheline in
           let f arg (c, d) =

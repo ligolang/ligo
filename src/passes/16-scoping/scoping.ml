@@ -259,6 +259,28 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
        (match List.nth args id with
         | Some (E_literal (m, Literal_string s), _) -> String (m, Ligo_string.extract s)
         | _ -> internal_error __LOC__ (Format.sprintf "could not resolve (litstr %d)" id))
+     | Prim (_, s, [], [id]) when String.equal "codestr" s && String.is_prefix ~prefix:"$" id ->
+       let id = String.chop_prefix_exn ~prefix:"$" id in
+       let id = Int.of_string id in
+       used := id :: ! used;
+       (match List.nth args id with
+        | Some (E_literal (m, Literal_string s), _) ->
+          let open Tezos_micheline in
+          let code = Ligo_string.extract s in
+          let (code, errs) = Micheline_parser.tokenize code in
+          (match errs with
+           | _ :: _ -> internal_error __LOC__ (Format.sprintf "could not parse raw michelson")
+           | [] ->
+             let (code, errs) = Micheline_parser.parse_expression ~check:false code in
+             match errs with
+             | _ :: _ ->  internal_error __LOC__ (Format.sprintf "could not parse raw michelson")
+             | [] ->
+               let code = Micheline.strip_locations code in
+               (* hmm *)
+               let code = Micheline.inject_locations (fun _ -> Location.generated) code in
+               map_node (fun _ -> m) (fun x -> x) code
+          )
+        | _ -> internal_error __LOC__ (Format.sprintf "could not resolve (litstr %d)" id))
      | Prim (a, b, c, d) ->
        let open Tezos_micheline.Micheline in
        let f arg (c, d) =
