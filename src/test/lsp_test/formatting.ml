@@ -49,6 +49,10 @@ let test_cases =
   ; { file_path = "contracts/lsp/with_ligopretty/format_me.jsligo"
     ; expected = Some "contracts/lsp/with_ligopretty/formatted.jsligo"
     }
+  ; { file_path = "contracts/lsp/folding_range_for_loop.jsligo"
+    ; expected =
+        Some "contracts/lsp/with_ligopretty/folding_range_for_loop_formatted.jsligo"
+    }
   ]
 
 
