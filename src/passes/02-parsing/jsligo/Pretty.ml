@@ -193,17 +193,18 @@ and pp_for state (node: for_stmt reg) =
         semi1; condition; semi2; afterthought; rpar;
         statement} = node.value in
   let par =
-    Option.value_map initialiser ~default:space ~f:(pp_statement state) ^^
-    token semi1 ^^
-    Option.value_map condition ~default:space ~f:(pp_expr state) ^^
-    token semi2 ^^
-    Option.value_map afterthought ~default:space ~f:(pp_nsepseq (break 1)
-      (pp_expr state))
+    Option.value_map initialiser ~default:space ~f:(pp_statement state)
+    ^^ token semi1
+    ^^ Option.value_map condition ~default:empty
+                        ~f:(fun expr -> break 1 ^^ pp_expr state expr)
+    ^^ token semi2
+    ^^ Option.value_map afterthought ~default:empty
+         ~f:(fun seq -> break 1 ^^ pp_nsepseq (break 1) (pp_expr state) seq)
   in
   let par = pp_par_like_document state par lpar rpar
   in pp_attributes state attributes ^^
   token kwd_for ^^ space ^^ par ^^ space ^^
-  Option.value_map statement ~default:(string ";") ~f:(pp_statement state)
+  Option.value_map statement ~default:empty ~f:(pp_statement state)
 
 and pp_for_of state (node: for_of reg) =
   let {kwd_for; lpar; index_kind; index; kwd_of;

@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed pretty-printing of for-loops in JsLIGO.\\n\\n"
+merge_request: '2651'
+title: "Fixed pretty-printing of for-loops (extra semicolon)."
+type: fixed
+            
