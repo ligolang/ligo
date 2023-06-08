@@ -46,6 +46,7 @@
   curry
   linearity
   external_hack
+  of_file
   export_declaration
   import_restriction
   projections

@@ -4,6 +4,7 @@ open Passes.Pass_type
 module Errors = Passes.Errors
 module Selector = Passes.Pass_type.Selector
 open Simple_utils.Function
+module ModRes = Preprocessor.ModRes
 
 type flags =
   { initial_node_check : bool
@@ -24,6 +25,7 @@ type flags =
   ; t_app_michelson_types : Syntax_types.t
   ; projections : Syntax_types.t
   ; pattern_constructor_application : Syntax_types.t
+  ; mod_res : ModRes.t option
   }
 
 let passes ~(flags : flags) : (module T) list =
@@ -46,6 +48,7 @@ let passes ~(flags : flags) : (module T) list =
       ; t_app_michelson_types
       ; projections
       ; pattern_constructor_application
+      ; mod_res
       }
     =
     flags
@@ -88,6 +91,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Prefix_postfix_operators) ~flag:always ~arg:()
   ; entry (module Freeze_operators) ~flag:always ~arg:freeze_operators
   ; entry (module Literalize_annotated) ~flag:always ~arg:()
+  ; entry (module Of_file) ~flag:always ~arg:mod_res
   ; entry (module List_as_function) ~flag:list_as_function ~arg:()
   ; entry (module Array_to_tuple) ~flag:array_to_tuple ~arg:()
   ; entry (module Match_as_function) ~flag:match_as_function ~arg:()
@@ -128,6 +132,9 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   let is_jsligo = Syntax_types.equal syntax JsLIGO in
   let is_pascaligo = Syntax_types.equal syntax PascaLIGO in
   let duplicate_identifier = if options.frontend.transpiled then false else is_jsligo in
+  let mod_res =
+    Option.bind ~f:Preprocessor.ModRes.make options.Compiler_options.frontend.project_root
+  in
   { initial_node_check = not disable_initial_check
   ; duplicate_identifier
   ; for_to_while_loop = options.frontend.warn_infinite_loop
@@ -146,6 +153,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; t_app_michelson_types = syntax
   ; projections = syntax
   ; pattern_constructor_application = syntax
+  ; mod_res = mod_res
   }
 
 

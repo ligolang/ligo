@@ -227,6 +227,41 @@ let%expect_test _ =
     { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "of_file.mligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ;
+             UNIT ;
+             PUSH mutez 300000000 ;
+             NONE key_hash ;
+             CREATE_CONTRACT
+               { parameter unit ;
+                 storage unit ;
+                 code { DROP ; UNIT ; NIL operation ; PAIR } } ;
+             SWAP ;
+             DROP ;
+             UNIT ;
+             NIL operation ;
+             DIG 2 ;
+             CONS ;
+             PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "s"
+    ; "--init-file"
+    ; contract "of_file.mligo"
+    ];
+  [%expect
+    {xxx|
+    "let s = [%of_file \"./of_file.mligo\"]\n\nlet m () = [%michelson ({| { PUSH unit Unit ; PUSH mutez 300000000 ; NONE key_hash ; CREATE_CONTRACT (codestr $0) ; PAIR } |} [%of_file \"./interpreter_tests/contract_under_test/compiled.tz\"] : operation * address)]\n\nlet main (_ : unit) (_ : unit) : operation list * unit =\n  let op, _ = m () in\n  [op], ()\n" |xxx}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"

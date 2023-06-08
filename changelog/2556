@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2556'
+title: "Support `[%of_file]` and string code injection in `[%michelson]`"
+type: added
+            
