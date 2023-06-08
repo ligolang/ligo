@@ -1080,6 +1080,12 @@ let%expect_test "for loops" =
           Everything at the top-level was executed.
           - testLoop exited with value (). |}]
 
+let%expect_test "aggregation regression" =
+  run_ligo_good [ "run"; "test"; test "agg_bar.mligo" ];
+  [%expect {|
+    Running <A simple list extension>
+    Everything at the top-level was executed. |}]
+
 (* do not remove that :) *)
 let () = Caml.Sys.chdir pwd
 
