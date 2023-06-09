@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2652'
+title: "Fix (nanopass `LET_SYNTAX`): use location from rhs instead of global one"
+type: fixed
+            

@@ -71,7 +71,7 @@ let%expect_test _ =
     Variable definitions:
     (main#1:4-8 -> main)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-8
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, character 0 to line 3, character 17
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash -> address|
     references: []
     (p#1:10-11 -> p)
@@ -171,7 +171,7 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
     (f#2:4-5 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 0-11
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
     Content: |resolved: ∀ gen#3 : * . gen#3 -> int|
     references: []
     (x#2:6-7 -> x)

@@ -34,7 +34,7 @@ let%expect_test _ =
       File "", line 260, characters 111-119
     (assert#243:4-10 -> assert)
     Range: File "", line 243, characters 4-10
-    Body Range: File "", line 243, characters 0-76
+    Body Range: File "", line 243, characters 31-76
     Content: |core: bool -> unit|
     references: []
     (assert_some#244:4-15 -> assert_some)
@@ -49,12 +49,12 @@ let%expect_test _ =
     references: []
     (abs#246:4-7 -> abs)
     Range: File "", line 246, characters 4-7
-    Body Range: File "", line 246, characters 0-62
+    Body Range: File "", line 246, characters 26-62
     Content: |core: int -> nat|
     references: File "", line 420, characters 31-34
     (is_nat#247:4-10 -> is_nat)
     Range: File "", line 247, characters 4-10
-    Body Range: File "", line 247, characters 0-81
+    Body Range: File "", line 247, characters 36-81
     Content: |core: int -> option (nat)|
     references: []
     (true#248:14-18 -> true)
@@ -88,7 +88,7 @@ let%expect_test _ =
       File "", line 354, characters 72-75
     (nat#252:4-7 -> nat)
     Range: File "", line 252, characters 4-7
-    Body Range: File "", line 252, characters 0-73
+    Body Range: File "", line 252, characters 28-73
     Content: |core: bytes -> nat|
     references: []
     (bytes#253:4-9 -> bytes)
@@ -113,7 +113,7 @@ let%expect_test _ =
     references: File "", line 426, characters 30-37
     (assert_with_error#258:4-21 -> assert_with_error)
     Range: File "", line 258, characters 4-21
-    Body Range: File "", line 258, characters 0-76
+    Body Range: File "", line 258, characters 48-76
     Content: |unresolved|
     references: []
     (assert_some_with_error#259:4-26 -> assert_some_with_error)
@@ -1300,57 +1300,57 @@ let%expect_test _ =
     Content: Members: Variable definitions:
                       (get_balance#59:6-17 -> get_balance)
                       Range: File "", line 59, characters 6-17
-                      Body Range: File "", line 59, characters 2-76
+                      Body Range: File "", line 59, characters 38-76
                       Content: |core: unit -> tez|
                       references: []
                       (get_amount#60:6-16 -> get_amount)
                       Range: File "", line 60, characters 6-16
-                      Body Range: File "", line 60, characters 2-74
+                      Body Range: File "", line 60, characters 37-74
                       Content: |core: unit -> tez|
                       references: []
                       (get_now#61:6-13 -> get_now)
                       Range: File "", line 61, characters 6-13
-                      Body Range: File "", line 61, characters 2-80
+                      Body Range: File "", line 61, characters 40-80
                       Content: |core: unit -> timestamp|
                       references: File "", line 322, characters 47-54
                       (get_sender#62:6-16 -> get_sender)
                       Range: File "", line 62, characters 6-16
-                      Body Range: File "", line 62, characters 2-82
+                      Body Range: File "", line 62, characters 41-82
                       Content: |core: unit -> address|
                       references: []
                       (get_source#63:6-16 -> get_source)
                       Range: File "", line 63, characters 6-16
-                      Body Range: File "", line 63, characters 2-82
+                      Body Range: File "", line 63, characters 41-82
                       Content: |core: unit -> address|
                       references: []
                       (get_level#64:6-15 -> get_level)
                       Range: File "", line 64, characters 6-15
-                      Body Range: File "", line 64, characters 2-72
+                      Body Range: File "", line 64, characters 36-72
                       Content: |core: unit -> nat|
                       references: []
                       (get_self_address#65:6-22 -> get_self_address)
                       Range: File "", line 65, characters 6-22
-                      Body Range: File "", line 65, characters 2-94
+                      Body Range: File "", line 65, characters 47-94
                       Content: |core: unit -> address|
                       references: []
                       (get_chain_id#66:6-18 -> get_chain_id)
                       Range: File "", line 66, characters 6-18
-                      Body Range: File "", line 66, characters 2-88
+                      Body Range: File "", line 66, characters 44-88
                       Content: |core: unit -> chain_id|
                       references: []
                       (get_total_voting_power#67:6-28 -> get_total_voting_power)
                       Range: File "", line 67, characters 6-28
-                      Body Range: File "", line 67, characters 2-98
+                      Body Range: File "", line 67, characters 49-98
                       Content: |core: unit -> nat|
                       references: []
                       (get_min_block_time#68:6-24 -> get_min_block_time)
                       Range: File "", line 68, characters 6-24
-                      Body Range: File "", line 68, characters 2-90
+                      Body Range: File "", line 68, characters 45-90
                       Content: |core: unit -> nat|
                       references: []
                       (voting_power#69:6-18 -> voting_power)
                       Range: File "", line 69, characters 6-18
-                      Body Range: File "", line 69, characters 2-89
+                      Body Range: File "", line 69, characters 43-89
                       Content: |core: key_hash -> nat|
                       references: []
                       (address#70:6-13 -> address)
@@ -1360,7 +1360,7 @@ let%expect_test _ =
                       references: File "", line 383, characters 21-28
                       (implicit_account#71:6-22 -> implicit_account)
                       Range: File "", line 71, characters 6-22
-                      Body Range: File "", line 71, characters 2-117
+                      Body Range: File "", line 71, characters 57-117
                       Content: |core: key_hash -> contract (unit)|
                       references: []
                       (join_tickets#72:6-18 -> join_tickets)
@@ -1382,12 +1382,12 @@ let%expect_test _ =
                       references: []
                       (pairing_check#76:6-19 -> pairing_check)
                       Range: File "", line 76, characters 6-19
-                      Body Range: File "", line 76, characters 2-117
+                      Body Range: File "", line 76, characters 70-117
                       Content: |core: list (( bls12_381_g1 * bls12_381_g2 )) -> bool|
                       references: []
                       (set_delegate#77:6-18 -> set_delegate)
                       Range: File "", line 77, characters 6-18
-                      Body Range: File "", line 77, characters 2-106
+                      Body Range: File "", line 77, characters 55-106
                       Content: |core: option (key_hash) -> operation|
                       references: []
                       (self#78:25-29 -> self)
@@ -1885,24 +1885,24 @@ let%expect_test _ =
     Content: Members: Variable definitions:
                       (length#205:6-12 -> length)
                       Range: File "", line 205, characters 6-12
-                      Body Range: File "", line 205, characters 2-57
+                      Body Range: File "", line 205, characters 34-57
                       Content: |core: string -> nat|
                       references:
                         File "", line 417, characters 22-28 ,
                         File "", line 420, characters 43-49
                       (concats#206:6-13 -> concats)
                       Range: File "", line 206, characters 6-13
-                      Body Range: File "", line 206, characters 2-71
+                      Body Range: File "", line 206, characters 44-71
                       Content: |core: list (string) -> string|
                       references: []
                       (concat#208:6-12 -> concat)
                       Range: File "", line 208, characters 6-12
-                      Body Range: File "", line 208, characters 2-82
+                      Body Range: File "", line 208, characters 52-82
                       Content: |core: string -> string -> string|
                       references: []
                       (sub#209:6-9 -> sub)
                       Range: File "", line 209, characters 6-9
-                      Body Range: File "", line 209, characters 2-84
+                      Body Range: File "", line 209, characters 54-84
                       Content: |core: nat -> nat -> string -> string|
                       references:
                         File "", line 418, characters 24-27 ,
@@ -1970,7 +1970,7 @@ let%expect_test _ =
     Content: Members: Variable definitions:
                       (concats#224:6-13 -> concats)
                       Range: File "", line 224, characters 6-13
-                      Body Range: File "", line 224, characters 2-69
+                      Body Range: File "", line 224, characters 42-69
                       Content: |core: list (bytes) -> bytes|
                       references: []
                       (pack#225:6-10 -> pack)
@@ -1985,17 +1985,17 @@ let%expect_test _ =
                       references: []
                       (length#227:6-12 -> length)
                       Range: File "", line 227, characters 6-12
-                      Body Range: File "", line 227, characters 2-56
+                      Body Range: File "", line 227, characters 33-56
                       Content: |core: bytes -> nat|
                       references: []
                       (concat#229:6-12 -> concat)
                       Range: File "", line 229, characters 6-12
-                      Body Range: File "", line 229, characters 2-79
+                      Body Range: File "", line 229, characters 49-79
                       Content: |core: bytes -> bytes -> bytes|
                       references: []
                       (sub#230:6-9 -> sub)
                       Range: File "", line 230, characters 6-9
-                      Body Range: File "", line 230, characters 2-82
+                      Body Range: File "", line 230, characters 52-82
                       Content: |core: nat -> nat -> bytes -> bytes|
                       references: []
                       Type definitions:
@@ -2009,37 +2009,37 @@ let%expect_test _ =
     Content: Members: Variable definitions:
                       (blake2b#234:6-13 -> blake2b)
                       Range: File "", line 234, characters 6-13
-                      Body Range: File "", line 234, characters 2-78
+                      Body Range: File "", line 234, characters 36-78
                       Content: |core: bytes -> bytes|
                       references: []
                       (sha256#235:6-12 -> sha256)
                       Range: File "", line 235, characters 6-12
-                      Body Range: File "", line 235, characters 2-76
+                      Body Range: File "", line 235, characters 35-76
                       Content: |core: bytes -> bytes|
                       references: []
                       (sha512#236:6-12 -> sha512)
                       Range: File "", line 236, characters 6-12
-                      Body Range: File "", line 236, characters 2-76
+                      Body Range: File "", line 236, characters 35-76
                       Content: |core: bytes -> bytes|
                       references: []
                       (sha3#237:6-10 -> sha3)
                       Range: File "", line 237, characters 6-10
-                      Body Range: File "", line 237, characters 2-72
+                      Body Range: File "", line 237, characters 33-72
                       Content: |core: bytes -> bytes|
                       references: []
                       (keccak#238:6-12 -> keccak)
                       Range: File "", line 238, characters 6-12
-                      Body Range: File "", line 238, characters 2-76
+                      Body Range: File "", line 238, characters 35-76
                       Content: |core: bytes -> bytes|
                       references: []
                       (hash_key#239:6-14 -> hash_key)
                       Range: File "", line 239, characters 6-14
-                      Body Range: File "", line 239, characters 2-84
+                      Body Range: File "", line 239, characters 38-84
                       Content: |core: key -> key_hash|
                       references: []
                       (check#240:6-11 -> check)
                       Range: File "", line 240, characters 6-11
-                      Body Range: File "", line 240, characters 2-112
+                      Body Range: File "", line 240, characters 59-112
                       Content: |core: key -> signature -> bytes -> bool|
                       references: []
                       Type definitions:
@@ -2076,7 +2076,7 @@ let%expect_test _ =
                       references: []
                       (get_total_voting_power#300:6-28 -> get_total_voting_power)
                       Range: File "", line 300, characters 6-28
-                      Body Range: File "", line 300, characters 2-96
+                      Body Range: File "", line 300, characters 49-96
                       Content: |core: unit -> nat|
                       references: []
                       (failwith#301:6-14 -> failwith)
@@ -2105,49 +2105,49 @@ let%expect_test _ =
                         File "", line 637, characters 40-51
                       (set_source#303:6-16 -> set_source)
                       Range: File "", line 303, characters 6-16
-                      Body Range: File "", line 303, characters 2-74
+                      Body Range: File "", line 303, characters 40-74
                       Content: |core: address -> unit|
                       references: []
                       (get_storage_of_address#304:6-28 -> get_storage_of_address)
                       Range: File "", line 304, characters 6-28
-                      Body Range: File "", line 304, characters 2-111
+                      Body Range: File "", line 304, characters 65-111
                       Content: |core: address -> michelson_program|
                       references: File "", line 337, characters 32-54
                       (get_balance#305:6-17 -> get_balance)
                       Range: File "", line 305, characters 6-17
-                      Body Range: File "", line 305, characters 2-75
+                      Body Range: File "", line 305, characters 40-75
                       Content: |core: address -> tez|
                       references: []
                       (print#306:6-11 -> print)
                       Range: File "", line 306, characters 6-11
-                      Body Range: File "", line 306, characters 2-66
+                      Body Range: File "", line 306, characters 34-66
                       Content: |core: string -> unit|
                       references:
                         File "", line 359, characters 4-9 ,
                         File "", line 395, characters 4-9
                       (eprint#307:6-12 -> eprint)
                       Range: File "", line 307, characters 6-12
-                      Body Range: File "", line 307, characters 2-67
+                      Body Range: File "", line 307, characters 35-67
                       Content: |core: string -> unit|
                       references: []
                       (get_voting_power#308:6-22 -> get_voting_power)
                       Range: File "", line 308, characters 6-22
-                      Body Range: File "", line 308, characters 2-88
+                      Body Range: File "", line 308, characters 47-88
                       Content: |core: key_hash -> nat|
                       references: []
                       (nth_bootstrap_contract#309:6-28 -> nth_bootstrap_contract)
                       Range: File "", line 309, characters 6-28
-                      Body Range: File "", line 309, characters 2-97
+                      Body Range: File "", line 309, characters 51-97
                       Content: |core: nat -> address|
                       references: []
                       (nth_bootstrap_account#310:6-27 -> nth_bootstrap_account)
                       Range: File "", line 310, characters 6-27
-                      Body Range: File "", line 310, character 2 to line 312, character 5
+                      Body Range: File "", line 311, character 4 to line 312, character 5
                       Content: |core: int -> address|
                       references: []
                       (get_bootstrap_account#313:6-27 -> get_bootstrap_account)
                       Range: File "", line 313, characters 6-27
-                      Body Range: File "", line 313, characters 2-105
+                      Body Range: File "", line 313, characters 65-105
                       Content: |core: nat -> ( address * key * string )|
                       references: []
                       (nth_bootstrap_typed_address#314:6-33 -> nth_bootstrap_typed_address)
@@ -2158,7 +2158,7 @@ let%expect_test _ =
                       references: []
                       (last_originations#315:6-23 -> last_originations)
                       Range: File "", line 315, characters 6-23
-                      Body Range: File "", line 315, characters 2-108
+                      Body Range: File "", line 315, characters 67-108
                       Content: |core: unit -> map (address ,
                       list (address))|
                       references: []
@@ -2169,7 +2169,7 @@ let%expect_test _ =
                       references: []
                       (new_account#319:6-17 -> new_account)
                       Range: File "", line 319, characters 6-17
-                      Body Range: File "", line 319, characters 2-81
+                      Body Range: File "", line 319, characters 46-81
                       Content: |core: unit -> ( string * key )|
                       references: []
                       (decompile#320:6-15 -> decompile)
@@ -2179,12 +2179,12 @@ let%expect_test _ =
                       references: File "", line 338, characters 5-14
                       (bake_until_n_cycle_end#321:6-28 -> bake_until_n_cycle_end)
                       Range: File "", line 321, characters 6-28
-                      Body Range: File "", line 321, characters 2-94
+                      Body Range: File "", line 321, characters 48-94
                       Content: |core: nat -> unit|
                       references: []
                       (get_time#322:6-14 -> get_time)
                       Range: File "", line 322, characters 6-14
-                      Body Range: File "", line 322, characters 2-57
+                      Body Range: File "", line 322, characters 41-57
                       Content: |core: unit -> timestamp|
                       references: []
                       (cast_address#323:6-18 -> cast_address)
@@ -2202,12 +2202,12 @@ let%expect_test _ =
                         File "", line 640, characters 22-34
                       (register_delegate#324:6-23 -> register_delegate)
                       Range: File "", line 324, characters 6-23
-                      Body Range: File "", line 324, characters 2-91
+                      Body Range: File "", line 324, characters 49-91
                       Content: |core: key_hash -> unit|
                       references: []
                       (register_constant#325:6-23 -> register_constant)
                       Range: File "", line 325, characters 6-23
-                      Body Range: File "", line 325, characters 2-100
+                      Body Range: File "", line 325, characters 59-100
                       Content: |core: michelson_program -> string|
                       references: []
                       (to_typed_address#326:6-22 -> to_typed_address)
@@ -2218,27 +2218,27 @@ let%expect_test _ =
                       references: []
                       (constant_to_michelson_program#327:6-35 -> constant_to_michelson_program)
                       Range: File "", line 327, characters 6-35
-                      Body Range: File "", line 327, characters 2-116
+                      Body Range: File "", line 327, characters 71-116
                       Content: |core: string -> michelson_program|
                       references: []
                       (parse_michelson#328:6-21 -> parse_michelson)
                       Range: File "", line 328, characters 6-21
-                      Body Range: File "", line 328, characters 2-102
+                      Body Range: File "", line 328, characters 57-102
                       Content: |core: string -> michelson_program|
                       references: []
                       (restore_context#329:6-21 -> restore_context)
                       Range: File "", line 329, characters 6-21
-                      Body Range: File "", line 329, characters 2-77
+                      Body Range: File "", line 329, characters 42-77
                       Content: |core: unit -> unit|
                       references: []
                       (save_context#330:6-18 -> save_context)
                       Range: File "", line 330, characters 6-18
-                      Body Range: File "", line 330, characters 2-75
+                      Body Range: File "", line 330, characters 39-75
                       Content: |core: unit -> unit|
                       references: []
                       (drop_context#331:6-18 -> drop_context)
                       Range: File "", line 331, characters 6-18
-                      Body Range: File "", line 331, characters 2-75
+                      Body Range: File "", line 331, characters 39-75
                       Content: |core: unit -> unit|
                       references: []
                       (to_string#332:6-15 -> to_string)
@@ -2265,17 +2265,17 @@ let%expect_test _ =
                         File "", line 638, characters 12-23
                       (set_baker_policy#339:6-22 -> set_baker_policy)
                       Range: File "", line 339, characters 6-22
-                      Body Range: File "", line 339, characters 2-91
+                      Body Range: File "", line 339, characters 57-91
                       Content: |core: test_baker_policy -> unit|
                       references: File "", line 340, characters 39-55
                       (set_baker#340:6-15 -> set_baker)
                       Range: File "", line 340, characters 6-15
-                      Body Range: File "", line 340, characters 2-70
+                      Body Range: File "", line 340, characters 39-70
                       Content: |core: address -> unit|
                       references: []
                       (size#341:6-10 -> size)
                       Range: File "", line 341, characters 6-10
-                      Body Range: File "", line 341, characters 2-72
+                      Body Range: File "", line 341, characters 44-72
                       Content: |core: michelson_contract -> int|
                       references:
                         File "", line 429, characters 12-16 ,
@@ -2297,12 +2297,12 @@ let%expect_test _ =
                         File "", line 436, characters 12-28
                       (read_contract_from_file#346:6-29 -> read_contract_from_file)
                       Range: File "", line 346, characters 6-29
-                      Body Range: File "", line 346, characters 2-115
+                      Body Range: File "", line 346, characters 67-115
                       Content: |core: string -> michelson_contract|
                       references: []
                       (chr#347:6-9 -> chr)
                       Range: File "", line 347, characters 6-9
-                      Body Range: File "", line 347, character 2 to line 356, character 10
+                      Body Range: File "", line 348, character 4 to line 356, character 10
                       Content: |core: nat -> option (string)|
                       references: []
                       (nl#357:6-8 -> nl)
@@ -2312,17 +2312,17 @@ let%expect_test _ =
                       references: File "", line 359, characters 15-17
                       (println#358:6-13 -> println)
                       Range: File "", line 358, characters 6-13
-                      Body Range: File "", line 358, character 2 to line 359, character 18
+                      Body Range: File "", line 359, characters 4-18
                       Content: |core: string -> unit|
                       references: []
                       (set_print_values#361:6-22 -> set_print_values)
                       Range: File "", line 361, characters 6-22
-                      Body Range: File "", line 361, characters 2-100
+                      Body Range: File "", line 361, characters 43-100
                       Content: |core: unit -> unit|
                       references: []
                       (unset_print_values#362:6-24 -> unset_print_values)
                       Range: File "", line 362, characters 6-24
-                      Body Range: File "", line 362, characters 2-103
+                      Body Range: File "", line 362, characters 45-103
                       Content: |core: unit -> unit|
                       references: []
                       (get_last_events_from#382:6-26 -> get_last_events_from)
@@ -2333,12 +2333,12 @@ let%expect_test _ =
                       references: []
                       (transfer#390:6-14 -> transfer)
                       Range: File "", line 390, characters 6-14
-                      Body Range: File "", line 390, characters 2-162
+                      Body Range: File "", line 390, characters 84-162
                       Content: |core: address -> michelson_program -> tez -> test_exec_result|
                       references: []
                       (transfer_exn#391:6-18 -> transfer_exn)
                       Range: File "", line 391, characters 6-18
-                      Body Range: File "", line 391, characters 2-157
+                      Body Range: File "", line 391, characters 75-157
                       Content: |core: address -> michelson_program -> tez -> nat|
                       references: []
                       (log#392:6-9 -> log)
@@ -2348,12 +2348,12 @@ let%expect_test _ =
                       references: File "", line 419, characters 25-28
                       (reset_state#396:6-17 -> reset_state)
                       Range: File "", line 396, characters 6-17
-                      Body Range: File "", line 396, characters 2-117
+                      Body Range: File "", line 396, characters 52-117
                       Content: |core: nat -> list (tez) -> unit|
                       references: []
                       (reset_state_at#397:6-20 -> reset_state_at)
                       Range: File "", line 397, characters 6-20
-                      Body Range: File "", line 397, characters 2-117
+                      Body Range: File "", line 397, characters 69-117
                       Content: |core: timestamp -> nat -> list (tez) -> unit|
                       references: []
                       (bootstrap_contract#398:6-24 -> bootstrap_contract)
@@ -2373,22 +2373,22 @@ let%expect_test _ =
                         File "", line 473, characters 23-35
                       (save_mutation#400:6-19 -> save_mutation)
                       Range: File "", line 400, characters 6-19
-                      Body Range: File "", line 400, characters 2-106
+                      Body Range: File "", line 400, characters 66-106
                       Content: |core: string -> mutation -> option (string)|
                       references: []
                       (sign#401:6-10 -> sign)
                       Range: File "", line 401, characters 6-10
-                      Body Range: File "", line 401, characters 2-83
+                      Body Range: File "", line 401, characters 51-83
                       Content: |core: string -> bytes -> signature|
                       references: []
                       (add_account#402:6-17 -> add_account)
                       Range: File "", line 402, characters 6-17
-                      Body Range: File "", line 402, characters 2-88
+                      Body Range: File "", line 402, characters 50-88
                       Content: |core: string -> key -> unit|
                       references: []
                       (baker_account#403:6-19 -> baker_account)
                       Range: File "", line 403, characters 6-19
-                      Body Range: File "", line 403, characters 2-105
+                      Body Range: File "", line 403, characters 65-105
                       Content: |core: ( string * key ) -> option (tez) -> unit|
                       references: []
                       (set_big_map#404:6-17 -> set_big_map)
@@ -2411,7 +2411,7 @@ let%expect_test _ =
                         File "", line 637, characters 14-38
                       (michelson_equal#415:6-21 -> michelson_equal)
                       Range: File "", line 415, characters 6-21
-                      Body Range: File "", line 415, characters 2-88
+                      Body Range: File "", line 415, characters 81-88
                       Content: |core: michelson_program -> michelson_program -> bool|
                       references: []
                       (to_entrypoint#416:6-19 -> to_entrypoint)
@@ -2422,7 +2422,7 @@ let%expect_test _ =
                       references: []
                       (originate_contract#424:6-24 -> originate_contract)
                       Range: File "", line 424, characters 6-24
-                      Body Range: File "", line 424, characters 2-135
+                      Body Range: File "", line 424, characters 96-135
                       Content: |core: michelson_contract -> michelson_program -> tez -> address|
                       references:
                         File "", line 428, characters 12-30 ,
@@ -2474,12 +2474,12 @@ let%expect_test _ =
                       references: []
                       (compile_contract_from_file#449:6-32 -> compile_contract_from_file)
                       Range: File "", line 449, characters 6-32
-                      Body Range: File "", line 449, character 2 to line 451, character 52
+                      Body Range: File "", line 450, character 4 to line 451, character 52
                       Content: |core: string -> string -> list (string) -> michelson_contract|
                       references: File "", line 453, characters 12-38
                       (originate_from_file#452:6-25 -> originate_from_file)
                       Range: File "", line 452, characters 6-25
-                      Body Range: File "", line 452, character 2 to line 456, character 13
+                      Body Range: File "", line 453, character 4 to line 456, character 13
                       Content: |core: string -> string -> list (string) -> michelson_program -> tez ->
                       ( address *
                         michelson_contract *
@@ -2533,7 +2533,7 @@ let%expect_test _ =
                       references: []
                       (assert#566:6-12 -> assert)
                       Range: File "", line 566, characters 6-12
-                      Body Range: File "", line 566, characters 2-78
+                      Body Range: File "", line 566, characters 33-78
                       Content: |core: bool -> unit|
                       references: []
                       (assert_some#567:6-17 -> assert_some)
@@ -2548,7 +2548,7 @@ let%expect_test _ =
                       references: []
                       (assert_with_error#570:6-23 -> assert_with_error)
                       Range: File "", line 570, characters 6-23
-                      Body Range: File "", line 570, characters 2-78
+                      Body Range: File "", line 570, characters 50-78
                       Content: |unresolved|
                       references: []
                       (assert_some_with_error#571:6-28 -> assert_some_with_error)
