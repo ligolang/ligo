@@ -356,6 +356,34 @@ let show_loc =
   flag ~doc name no_arg
 
 
+let hide_sort : _ Command.Param.t =
+  let open Command.Param in
+  let all_sorts =
+    [ "ty_expr"
+    ; "pattern"
+    ; "instruction"
+    ; "statement"
+    ; "block"
+    ; "declaration"
+    ; "mod_expr"
+    ; "expr"
+    ; "program"
+    ; "program_entry"
+    ]
+  in
+  let doc =
+    Format.asprintf
+      "restrict sorts shown in s-exp. available sorts: %a"
+      (Simple_utils.PP_helpers.list String.pp)
+      all_sorts
+  in
+  let spec =
+    optional_with_default []
+    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string
+  in
+  flag ~doc ~aliases:[ "hide" ] "--hide-sort" spec
+
+
 let deprecated =
   let open Command.Param in
   let name = "--deprecated" in
@@ -2155,6 +2183,7 @@ let print_ast_unified =
       display_format
       no_colour
       show_loc
+      hide_sort
       deprecated
       skip_analytics
       project_root
@@ -2178,7 +2207,7 @@ let print_ast_unified =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Print.ast_unified raw_options show_loc nanopass source_file
+    @@ Api.Print.ast_unified raw_options show_loc hide_sort nanopass source_file
   in
   let summary =
     "print the unified ligo AST. Execute nanopasses if option used\n\
@@ -2195,6 +2224,7 @@ let print_ast_unified =
      <*> display_format
      <*> no_colour
      <*> show_loc
+     <*> hide_sort
      <*> deprecated
      <*> skip_analytics
      <*> project_root
