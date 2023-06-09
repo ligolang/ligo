@@ -28,3 +28,13 @@ let t5 =
   let x : int foo = { bar = 1 } in
   let y : int = x.bar in
   y
+
+module Foo = struct
+  type 'a t = Bar of 'a
+  type ('a, 'b) s = 'a t
+end
+
+type ('a, 'b) baz = ('a, 'b) Foo.s
+
+let t6 : int Foo.t = Bar 42
+let t7 : (int, string) baz = t6

@@ -29,11 +29,17 @@ let%expect_test _ =
   run_ligo_good
     [ "run"; "interpret"; "t2"; "--init-file"; test "parametric_types.jsligo" ];
   [%expect {|
+    Bar(42) |}];
+  run_ligo_good [ "run"; "interpret"; "t6"; "--init-file"; test "parametric_types.mligo" ];
+  [%expect {|
     Bar(42) |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "run"; "interpret"; "t3"; "--init-file"; test "parametric_types.jsligo" ];
+  [%expect {|
+    Bar(42) |}];
+  run_ligo_good [ "run"; "interpret"; "t7"; "--init-file"; test "parametric_types.mligo" ];
   [%expect {|
     Bar(42) |}]
 
