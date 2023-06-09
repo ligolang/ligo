@@ -53,7 +53,7 @@ let compile_let_rhs
     type_params
     (parameters : pattern list)
     rhs_type
-    body
+    (body : expr)
   =
   let param_tys_opt =
     Option.all (List.map parameters ~f:(fun x -> Option.map ~f:fst (get_p_typed x)))
@@ -93,7 +93,7 @@ let compile_let_rhs
       let ft =
         match param_tys_opt with
         | [] -> rhs_type
-        | lst -> t_fun_of_list ~loc (lst @ [ rhs_type ])
+        | lst -> t_fun_of_list ~loc:(get_t_loc rhs_type) (lst @ [ rhs_type ])
       in
       let generalized =
         match type_params with
@@ -103,7 +103,7 @@ let compile_let_rhs
       return generalized
     in
     Option.value_map lhs_ty_opt ~default:fun_pattern ~f:(fun ty ->
-        p_typed ~loc ty fun_pattern)
+        p_typed ~loc:(get_p_loc fun_pattern) ty fun_pattern)
   in
   lhs, rhs
 
@@ -123,7 +123,7 @@ let compile ~raise =
       e_simple_let_in ~loc { binder; rhs; let_result = body }
     | E_let_in { is_rec; type_params; lhs = fun_pattern, params; rhs_type; rhs; body } ->
       let fun_pattern, rhs =
-        compile_let_rhs ~raise ~loc is_rec fun_pattern type_params params rhs_type rhs
+        compile_let_rhs ~raise ~loc:(get_e_loc rhs) is_rec fun_pattern type_params params rhs_type rhs
       in
       e_simple_let_in ~loc { binder = fun_pattern; rhs; let_result = body }
     | e -> make_e ~loc e
@@ -143,7 +143,7 @@ let compile ~raise =
       d_irrefutable_match ~loc { pattern; expr }
     | D_let { is_rec; type_params; pattern = fun_pattern, params; rhs_type; let_rhs } ->
       let fun_pattern, rhs =
-        compile_let_rhs ~raise ~loc is_rec fun_pattern type_params params rhs_type let_rhs
+        compile_let_rhs ~raise ~loc:(get_e_loc let_rhs) is_rec fun_pattern type_params params rhs_type let_rhs
       in
       d_const
         ~loc

@@ -553,12 +553,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "capture_big_map.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/capture_big_map.mligo", line 12, character 2 to line 13, character 17:
-     11 |
+    File "../../test/contracts/negative/capture_big_map.mligo", line 13, characters 4-17:
      12 |   let supply (ledger:l) (_:nat) =
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      13 |     ledger.supply
-          ^^^^^^^^^^^^^^^^^
+              ^^^^^^^^^^^^^
      14 |
 
     Invalid capturing, term captures the type big_map (address ,
@@ -1548,13 +1546,13 @@ let%expect_test _ =
       code { { /* _ */ } ;
              CDR ;
              { /* _ */ } ;
-             { /* File "../../test/contracts/noop.mligo", line 1, character 0 to line 6, character 28 */
-               { /* File "../../test/contracts/noop.mligo", line 2, character 2 to line 6, character 28 */
+             { /* File "../../test/contracts/noop.mligo", line 2, character 2 to line 6, character 28 */
+               { /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */
                  LAMBDA
                    unit
                    unit
                    { { /* x#216 */ } ;
-                     { /* File "../../test/contracts/noop.mligo", line 2, character 2 to line 6, character 28 */ } } } ;
+                     { /* File "../../test/contracts/noop.mligo", line 2, characters 28-29 */ } } } ;
                { /* f#215, _ */ } ;
                { /* File "../../test/contracts/noop.mligo", line 3, character 2 to line 6, character 28 */
                  { /* File "../../test/contracts/noop.mligo", line 3, characters 18-21 */

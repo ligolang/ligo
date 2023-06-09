@@ -53,12 +53,14 @@ module Data = struct
     { binding : pat_binding
     ; item : (O.expression[@sexp.opaque])
     ; attr : (O.ValueAttr.t[@sexp.opaque])
+    ; loc : Location.t
     }
 
   and exp_ =
     { binding : var_binding
     ; item : (O.expression[@sexp.opaque])
     ; attr : (O.ValueAttr.t[@sexp.opaque])
+    ; loc : Location.t
     }
 
   (* [binding_] link [old] identifiers to freshly generated ones [fresh] *)
@@ -224,14 +226,14 @@ let aggregate_scope : Data.t -> leaf:O.expression -> O.expression =
   let rec f : Data.decl -> O.expression -> O.expression =
    fun d acc_exp ->
     match d with
-    | Pat { binding = { old = _; fresh }; item; attr } ->
-      O.e_a_let_in ~loc:item.location fresh item acc_exp attr
-    | Exp { binding = { old = _; fresh }; item; attr } ->
+    | Pat { binding = { old = _; fresh }; item; attr; loc } ->
+      O.e_a_let_in ~loc fresh item acc_exp attr
+    | Exp { binding = { old = _; fresh }; item; attr; loc } ->
       let binder =
         O.Pattern.var ~loc:(Value_var.get_location fresh)
         @@ Binder.make fresh item.type_expression
       in
-      O.e_a_let_in ~loc:item.location binder item acc_exp attr
+      O.e_a_let_in ~loc binder item acc_exp attr
     | Mod { in_scope = { content; _ }; _ } -> List.fold_right content ~f ~init:acc_exp
   in
   List.fold_right data.content ~f ~init:leaf
@@ -242,14 +244,14 @@ let build_context : Data.t -> O.context =
   let rec f : Data.decl -> O.declaration list =
    fun d ->
     match d with
-    | Pat { binding = { old = _; fresh }; item; attr } ->
+    | Pat { binding = { old = _; fresh }; item; attr; loc } ->
       [ Location.wrap
-          ~loc:item.location
+          ~loc
           (O.D_irrefutable_match { pattern = fresh; expr = item; attr })
       ]
-    | Exp { binding = { old = _; fresh }; item; attr } ->
+    | Exp { binding = { old = _; fresh }; item; attr; loc } ->
       let binder = Binder.make fresh item.type_expression in
-      [ Location.wrap ~loc:item.location (O.D_value { binder; expr = item; attr }) ]
+      [ Location.wrap ~loc (O.D_value { binder; expr = item; attr }) ]
     | Mod { in_scope = { content; _ }; _ } -> List.join (List.map content ~f)
   in
   List.join (List.map ~f data.content)
@@ -273,14 +275,14 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
         let item = compile_expression acc_scope [] expr in
         let pattern = I.Pattern.map compile_type pattern in
         let fresh = Data.fresh_pattern pattern path in
-        (Data.{ binding = { old = pattern; fresh }; item; attr } : Data.pat_)
+        (Data.{ binding = { old = pattern; fresh }; item; attr; loc = decl.location } : Data.pat_)
       in
       Data.add_exp_pat acc_scope pat
     | I.D_value { binder; expr; attr } ->
       let exp =
         let item = compile_expression acc_scope [] expr in
         let fresh = Data.fresh_var binder.var path in
-        (Data.{ binding = { old = binder.var; fresh }; item; attr } : Data.exp_)
+        (Data.{ binding = { old = binder.var; fresh }; item; attr; loc = decl.location } : Data.exp_)
       in
       Data.add_exp acc_scope exp
     | I.D_module { module_binder; module_; module_attr = _ } ->
