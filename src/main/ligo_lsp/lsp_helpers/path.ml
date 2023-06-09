@@ -16,8 +16,14 @@ let normalise_backslashes : string -> string =
 let normalise_case : string -> string = Caml.String.lowercase_ascii
 
 let normalise : string -> string =
- fun p -> if Sys.unix then p else p |> normalise_backslashes |> normalise_case
+  if Sys.unix then Fun.id else normalise_case <@ normalise_backslashes
 
+
+(** Like [to_string] but capitalizes the drive letter on Windows,
+  so drive is e.g. "C:" instead of "c:")
+    *)
+let to_string_with_canonical_drive_letter : t -> string =
+  if Sys.unix then to_string else String.capitalize <@ to_string
 
 (** Create [Path.t] from a string containing absolute file path *)
 let from_absolute : string -> t = fun p -> UnsafePath (normalise p)
