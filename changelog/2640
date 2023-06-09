@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nFixed LSP \"document link\" feature on Windows\\n\\n"
+merge_request: '2640'
+title: "[#1744] Fix document link on Windows"
+type: fixed
+            

@@ -54,8 +54,9 @@ module DocumentLink = struct
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
 
-  let create ?target =
-    Lsp.Types.DocumentLink.create ?target:(Option.map ~f:Path.to_string target)
+  let create ~(target:Path.t) =
+    Lsp.Types.DocumentLink.create
+      ~target:("file:///" ^ Path.to_string_with_canonical_drive_letter target)
 end
 
 module FoldingRange = struct

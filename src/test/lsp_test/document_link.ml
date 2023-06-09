@@ -31,10 +31,11 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
 
 
 let test_cases =
+  let relative x = Some ("file:///" ^ Path.to_string_with_canonical_drive_letter (Path.from_relative x)) in
   [ { file_path = "contracts/includer.mligo"
     ; document_links =
         [ { range = interval 2 9 25
-          ; target = Some (to_absolute "contracts/included.mligo")
+          ; target = relative "contracts/included.mligo"
           ; tooltip = None
           ; data = None
           }
@@ -43,7 +44,7 @@ let test_cases =
   ; { file_path = "contracts/includer.jsligo"
     ; document_links =
         [ { range = interval 2 9 26
-          ; target = Some (to_absolute "contracts/included.jsligo")
+          ; target = relative "contracts/included.jsligo"
           ; tooltip = None
           ; data = None
           }
@@ -52,12 +53,12 @@ let test_cases =
   ; { file_path = "contracts/build/E.mligo" (* with #import *)
     ; document_links =
         [ { range = interval 0 8 17
-          ; target = Some (to_absolute "contracts/build/F.mligo")
+          ; target = relative "contracts/build/F.mligo"
           ; tooltip = None
           ; data = None
           }
         ; { range = interval 1 8 17
-          ; target = Some (to_absolute "contracts/build/G.mligo")
+          ; target = relative "contracts/build/G.mligo"
           ; tooltip = None
           ; data = None
           }
@@ -66,7 +67,7 @@ let test_cases =
   ; { file_path = "contracts/build/B.jsligo" (* with #import *)
     ; document_links =
         [ { range = interval 0 8 18
-          ; target = Some (to_absolute "contracts/build/A.jsligo")
+          ; target = relative "contracts/build/A.jsligo"
           ; tooltip = None
           ; data = None
           }
