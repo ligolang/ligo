@@ -3,6 +3,7 @@ esy-windows:
     - windows
   stage: build
   needs: []
+  interruptible: true
   variables:
     GIT_STRATEGY: clone
   rules:
@@ -10,7 +11,7 @@ esy-windows:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_train" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - esy.json
         - esy.lock/index.json
@@ -55,7 +56,7 @@ esy-test-windows:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_train" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - esy.json
         - esy.lock/index.json
