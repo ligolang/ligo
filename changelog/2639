@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nType application for parametric types inside modules is fixed in this MR\\n\\n#### Example\\n\\n\\n```ocaml\\nmodule Foo = struct\\n  type 'a t = Bar of 'a\\n  type ('a, 'b) s = 'a t\\nend\\n\\ntype ('a, 'b) baz = ('a, 'b) Foo.s\\n\\nlet test1 : int Foo.t = Bar 42\\nlet test2 : (int, string) baz = test1\\n\\n```\\n\\n#### Result\\n\\n\\n```bash\\n$ ligo run test x.mligo \\nEverything at the top-level was executed.\\n- test1 exited with value Bar (42).\\n- test2 exited with value Bar (42).\\n\\n```\\n\\n"
+merge_request: '2639'
+title: "CameLIGO: add support for module access in type application"
+type: fixed
+            

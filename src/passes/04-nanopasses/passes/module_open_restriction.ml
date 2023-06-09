@@ -49,6 +49,13 @@ let compile ~raise =
     match Location.unwrap ty with
     | T_module_open_in { field; field_as_open; _ } when field_as_open ->
       raise.error (unsupported_module_access (`Type field))
+    | T_app { constr = ({ fp } : ty_expr); type_args } as t ->
+      (match Location.unwrap fp with
+      | T_module_access { module_path; field; _ } ->
+        t_module_app
+          ~loc
+          { type_args; constr = { module_path; field; field_as_open = false } }
+      | _ -> make_t ~loc t)
     | T_module_open_in { module_path; field; _ } ->
       (match get_t_var field with
       | Some v ->
