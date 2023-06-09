@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "Fixed a bug related to compiling functions"
+merge_request: '2650'
+title: "[Hotfix] Fix regression in the compilation process"
+type: fixed
+            
