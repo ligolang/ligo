@@ -47,6 +47,7 @@ let mapping_binop ~syntax : (Operators.op * Ligo_prim.Constant.constant') list =
     ]
   | JsLIGO ->
     [ PLUS, C_POLYMORPHIC_ADD
+    ; PLUS, C_ADD
     ; MINUS, C_POLYMORPHIC_SUB
     ; STAR, C_MUL
     ; SLASH, C_DIV
