@@ -97,7 +97,7 @@ export default function Home() {
             <div id="callToAction">
               <ul>
                 <li className="primary">
-                  <a href={useBaseUrl("tutorials/getting-started")}>Get started</a>
+                  <a href={useBaseUrl("docs/tutorials/getting-started")}>Get started</a>
                 </li>
                 <li className="secondary">
                   <a href={useBaseUrl("docs/reference/toplevel")}>
