@@ -143,43 +143,43 @@
                                 "properties": {
                                     "now": {
                                         "default": "2020-01-01T00:00:00Z",
-                                        "description": "Value returned by `NOW` instruction"
+                                        "description": "Value returned by `Tezos.get_now()`"
                                     },
                                     "level": {
                                         "default": 0,
-                                        "description": "Value returned by `LEVEL` instruction"
+                                        "description": "Value returned by `Tezos.get_level()`"
                                     },
                                     "sender": {
                                         "type": "string",
                                         "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
-                                        "description": "Value returned by SENDER instruction"
+                                        "description": "Value returned by `Tezos.get_sender()`"
                                     },
                                     "source": {
                                         "type": "string",
                                         "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
-                                        "description": "Value returned by SOURCE instruction"
+                                        "description": "Value returned by `Tezos.get_source()`"
                                     },
                                     "self": {
                                         "type": "string",
                                         "default": "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b",
-                                        "description": "Value returned by SELF_ADDRESS instruction"
+                                        "description": "Value returned by `Tezos.get_self_address()`"
                                     },
                                     "amount": {
                                         "default": 0,
-                                        "description": "Value returned by AMOUNT instruction"
+                                        "description": "Value returned by `Tezos.get_amount()`"
                                     },
                                     "balance": {
                                         "default": 0,
-                                        "description": "Value returned by BALANCE instruction"
+                                        "description": "Value returned by `Tezos.get_balance()`"
                                     },
                                     "chainId": {
                                         "type": "string",
                                         "default": "NetXH12Aer3be93",
-                                        "description": "Value returned by CHAIN_ID instruction"
+                                        "description": "Value returned by `Tezos.get_chain_id()`"
                                     },
                                     "votingPowers": {
                                         "type": "object",
-                                        "description": "Voting power distribution, affects VOTING_POWER and TOTAL_VOTING_POWER instructions",
+                                        "description": "Voting power distribution, affects `Tezos.voting_power` and `Tezos.get_total_voting_power()`",
                                         "properties": {
                                             "kind": {
                                                 "enum": "simple"
@@ -243,7 +243,7 @@
                                 "votingPowers": {
                                     "kind": "simple",
                                     "contents": {
-                                        "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "10$0"
+                                        "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "100$0"
                                     }
                                 }
                             }
