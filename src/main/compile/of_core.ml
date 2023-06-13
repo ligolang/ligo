@@ -17,10 +17,10 @@ type form =
       ; module_path : Module_var.t list
       }
 
-let specific_passes ~raise cform prg =
+let specific_passes ~raise ~options cform prg =
   match cform with
   | Contract { entrypoints; module_path } ->
-    Self_ast_typed.all_contract ~raise entrypoints module_path prg
+    Self_ast_typed.all_contract ~raise ~options entrypoints module_path prg
   | View { command_line_views; contract_entry; module_path; contract_type } ->
     let prg =
       Self_ast_typed.all_view
@@ -59,7 +59,7 @@ let typecheck_with_signature
     | None -> typed
     | Some cform ->
       trace ~raise self_ast_typed_tracer
-      @@ fun ~raise -> snd @@ specific_passes ~raise cform typed
+      @@ fun ~raise -> snd @@ specific_passes ~raise ~options cform typed
   in
   applied, signature
 
@@ -89,7 +89,7 @@ let typecheck
     | None -> typed
     | Some cform ->
       trace ~raise self_ast_typed_tracer
-      @@ fun ~raise -> snd @@ specific_passes ~raise cform typed
+      @@ fun ~raise -> snd @@ specific_passes ~raise ~options cform typed
   in
   applied
 

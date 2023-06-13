@@ -6,6 +6,7 @@ type all =
   [ `Self_ast_typed_warning_unused of Location.t * string
   | `Self_ast_typed_warning_muchused of Location.t * string
   | `Self_ast_typed_warning_unused_rec of Location.t * string
+  | `Self_ast_typed_metadata_invalid_type of Location.t * string
   | `Checking_ambiguous_constructor_expr of
     Ast_core.expression * Type_var.t * Type_var.t * Location.t
   | `Checking_ambiguous_constructor_pat of
@@ -128,6 +129,18 @@ let pp
         f
         "@[<hv>%a:@.Warning: unused recursion .@.Hint: remove recursion from the \
          function \"%s\" to prevent this warning.\n\
+         @]"
+        snippet_pp
+        loc
+        s
+    | `Self_ast_typed_metadata_invalid_type (loc, s) ->
+      Format.fprintf
+        f
+        "@[<hv>%a:@.Warning: If the following metadata is meant to be TZIP-16 \
+         compliant,@.then it should be a 'big_map' from 'string' to 'bytes'.@.Hint: The \
+         corresponding type should be :@.\
+         @[  %s@]@.\
+         You can disable this warning with the '--no-metadata-check' flag.@.\
          @]"
         snippet_pp
         loc
@@ -289,6 +302,18 @@ let to_warning : all -> Simple_utils.Warning.t =
         s
     in
     let content = make_content ~message ~location () in
+    make ~stage:"parsing command line parameters" ~content
+  | `Self_ast_typed_metadata_invalid_type (loc, s) ->
+    let message =
+      Format.sprintf
+        "Warning: If the following metadata is meant to be TZIP-16 compliant,@.\
+         then it should be a 'big_map' from 'string' to 'bytes'.@.\
+         Hint: The corresponding type should be :@.\
+         @[  %s@]@.\
+         You can disable this warning with the '--no-metadata-check' flag.\n"
+        s
+    in
+    let content = make_content ~message ~location:loc () in
     make ~stage:"parsing command line parameters" ~content
   | `Nanopasses_attribute_ignored loc ->
     let message = "Warning: ignored attributes" in

@@ -178,7 +178,11 @@ module Infer (Params : Params) = struct
         ~loc
         Ast_core.(
           D_module
-            { module_binder; module_; module_attr = { public = true; hidden = true }; annotation = None })
+            { module_binder
+            ; module_
+            ; module_attr = { public = true; hidden = true }
+            ; annotation = None
+            })
       :: ast
 
 
@@ -432,7 +436,7 @@ let rec build_contract_aggregated ~raise
   let typed_prg = qualified_typed ~raise ~options source in
   let contract_info, typed_contract =
     trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes
+    @@ Ligo_compile.Of_core.specific_passes ~options
          (Ligo_compile.Of_core.Contract { entrypoints = entry_points; module_path })
          typed_prg
   in
@@ -448,7 +452,7 @@ let rec build_contract_aggregated ~raise
         { command_line_views; contract_entry = entry_point; module_path; contract_type }
     in
     trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes form typed_prg
+    @@ Ligo_compile.Of_core.specific_passes ~options form typed_prg
   in
   let aggregated =
     Ligo_compile.Of_typed.apply_to_entrypoint_contract
