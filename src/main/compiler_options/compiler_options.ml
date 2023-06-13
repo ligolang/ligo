@@ -34,6 +34,7 @@ type middle_end =
   ; no_stdlib : bool
   ; syntax_for_errors : Syntax_types.t option
   ; no_colour : bool
+  ; no_metadata_check : bool
   }
 
 type backend =
@@ -107,6 +108,7 @@ let make
     ; no_stdlib = raw_options.no_stdlib
     ; syntax_for_errors = syntax
     ; no_colour = raw_options.no_colour
+    ; no_metadata_check = raw_options.no_metadata_check
     }
   in
   let backend =

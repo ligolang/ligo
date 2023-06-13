@@ -51,6 +51,15 @@ let rec annot (t : t) (label : Label.t) =
   | Field x -> aux x
 
 
+let rec find_annot (t : t) (annot : string) =
+  let aux = function
+    | { name; annot = Some annot' } when String.equal annot annot' -> Some name
+    | _ -> None in
+  match t with
+  | Inner ts -> List.find_map ~f:(fun t -> find_annot t annot) ts
+  | Field x -> aux x
+
+
 (* For Michelson [or] there is no special "comb" support; we must
    ultimately pick a binary tree layout. So it will be convenient to
    expand out to binary trees: *)

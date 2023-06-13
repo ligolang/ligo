@@ -347,6 +347,11 @@ let no_colour =
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
+let no_metadata_check  =
+  let open Command.Param in
+  let name = "--no-metadata-check" in
+  let doc = "disable TZIP-16 metadata compliance check" in
+  flag ~doc name no_arg
 
 let show_loc =
   let open Command.Param in
@@ -589,6 +594,7 @@ let compile_file =
       show_warnings
       warning_as_error
       no_colour
+      no_metadata_check
       deprecated
       skip_analytics
       michelson_comments
@@ -614,6 +620,7 @@ let compile_file =
         ~no_stdlib
         ~warning_as_error
         ~no_colour
+        ~no_metadata_check
         ~deprecated
         ~constants
         ~file_constants
@@ -672,6 +679,7 @@ let compile_file =
     <*> warn
     <*> werror
     <*> no_colour
+    <*> no_metadata_check
     <*> deprecated
     <*> skip_analytics
     <*> michelson_comments
@@ -894,6 +902,7 @@ let compile_storage =
       now
       display_format
       no_colour
+      no_metadata_check
       deprecated
       skip_analytics
       michelson_format
@@ -922,6 +931,7 @@ let compile_storage =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~no_metadata_check
         ()
     in
     let cli_analytics =
@@ -974,6 +984,7 @@ let compile_storage =
     <*> now
     <*> display_format
     <*> no_colour
+    <*> no_metadata_check
     <*> deprecated
     <*> skip_analytics
     <*> michelson_code_format
