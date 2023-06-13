@@ -34,7 +34,7 @@ val type_expression
   -> O.expression
 
 val untype_expression : O.expression -> I.expression
-val untype_type_expression : O.type_expression -> I.type_expression
+val untype_type_expression : ?use_orig_var:bool -> O.type_expression -> I.type_expression
 
 val assert_type_expression_eq
   :  raise:(typer_error, Main_warnings.all) raise
