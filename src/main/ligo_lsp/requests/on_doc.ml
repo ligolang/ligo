@@ -19,7 +19,7 @@ let on_doc : Path.t -> string -> unit Handler.t =
   in
   let@ { deprecated; max_number_of_problems; _ } = ask_config in
   let new_state = Ligo_interface.get_scope ~deprecated file contents in
-  DocsCache.set
+  Docs_cache.set
     get_scope_buffers
     ~key:file
     ~data:{ get_scope_info = new_state; syntax; code = contents };
@@ -27,17 +27,25 @@ let on_doc : Path.t -> string -> unit Handler.t =
     match syntax with
     | PascaLIGO ->
       [ Diagnostics.
-          { range = None
-          ; message = "PascaLIGO is not officially supported in this LIGO version"
+          { message = "PascaLIGO is not officially supported in this LIGO version"
           ; severity = DiagnosticSeverity.Warning
+          ; location = { range = Range.dummy; path = file }
           }
       ]
     | CameLIGO | JsLIGO -> []
   in
-  let simple_diags = Diagnostics.get_diagnostics new_state in
-  let diags =
-    List.map
-      ~f:Diagnostics.from_simple_diagnostic
-      (List.take (simple_diags @ deprecation_warnings) max_number_of_problems)
+  let diags_by_file =
+    let simple_diags = Diagnostics.get_diagnostics new_state in
+    Diagnostics.partition_simple_diagnostics
+      file
+      (Some max_number_of_problems)
+      (simple_diags @ deprecation_warnings)
   in
-  send_diagnostic diags
+  (* Corner case: clear diagnostics for this file in case there are none. *)
+  let@ () =
+    let uri = DocumentUri.of_path file in
+    if List.Assoc.mem diags_by_file ~equal:DocumentUri.equal uri
+    then pass
+    else send_diagnostic uri []
+  in
+  iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic)

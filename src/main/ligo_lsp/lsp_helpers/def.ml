@@ -4,15 +4,17 @@ type t = Scopes.def
 
 (* TODO use this in Scopes instead of `Loc` and `LSet` *)
 
-module Def_location = struct
-  type loc_in_file =
+module Loc_in_file = struct
+  type t =
     { path : Path.t
     ; range : Range.t
     }
   [@@deriving eq, ord, sexp]
+end
 
+module Def_location = struct
   type t =
-    | File of loc_in_file
+    | File of Loc_in_file.t
     | StdLib of { range : Range.t }
     | Virtual of string
   [@@deriving eq, ord, sexp]

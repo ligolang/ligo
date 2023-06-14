@@ -1,10 +1,10 @@
 open Imports
 
-(** [Path.t] is expected to be absolute and normalized 
+(** [Path.t] is expected to be absolute and normalized
   (normalization is currently nontrivial only for Windows), [UnsafePath]
   allows to create a Path form string, make sure those points are satisfied when using it *)
 type t = UnsafePath of string [@@unboxed] [@@deriving eq, ord, sexp, hash]
-(* We don't need to normalize before equality check since we expect `Path.t` to contain 
+(* We don't need to normalize before equality check since we expect `Path.t` to contain
   a path that's already normalized*)
 
 let to_string (UnsafePath a) = a
@@ -25,10 +25,11 @@ let normalise : string -> string =
 let to_string_with_canonical_drive_letter : t -> string =
   if Sys.unix then to_string else String.capitalize <@ to_string
 
+
 (** Create [Path.t] from a string containing absolute file path *)
 let from_absolute : string -> t = fun p -> UnsafePath (normalise p)
 
-(** Create [Path.t] from a string containing file path relative to current dir. 
+(** Create [Path.t] from a string containing file path relative to current dir.
     Made for creating absolute paths in tests *)
 let from_relative : string -> t =
  fun p ->
@@ -45,3 +46,9 @@ let concat : t -> string -> t =
 
 let get_extension : t -> string option = snd <@ Filename.split_extension <@ to_string
 let get_syntax = Syntax.of_ext_opt ~support_pascaligo:true <@ get_extension
+
+let pp (ppf : Format.formatter) : t -> unit =
+  Format.fprintf ppf "%s" <@ to_string_with_canonical_drive_letter
+
+
+let testable : t Alcotest.testable = Alcotest.testable pp equal
