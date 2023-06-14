@@ -102,6 +102,18 @@ debugger-test-ligo-recommended:
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
 
+debugger-test-ligo-latest:
+  stage: tools-check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+  needs: [docker_extract]
+  variables:
+    LIGO_TEST_FLAGS: "-r"
+  before_script: *get_latest_ligo_binary
+  script: *run_ligo_debugger_tests
+  allow_failure: true
+
 debugger-test-static-debugger-binary:
   stage: tools-check
   rules: *debugger_mr_dev
