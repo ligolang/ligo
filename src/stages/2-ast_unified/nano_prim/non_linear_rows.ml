@@ -8,7 +8,7 @@ end
 module Make (Row_lhs : Row_lhs) = struct
   type 'ty row_element =
     { associated_type : 'ty
-    ; attributes : Attribute.t list
+    ; attributes : Attribute.t list [@sexp.list]
     ; decl_pos : int
     }
   [@@deriving yojson, map, iter, fold, sexp, eq, compare, hash]

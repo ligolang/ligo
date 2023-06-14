@@ -160,6 +160,7 @@ let typed_prod =
     ; type_file "type_shadowing.mligo"
     ; type_file "type_vars_let_fun.mligo"
     ; type_file "export_newline.jsligo"
+    ; type_file "ppx_helpers.mligo"
     ]
 
 
