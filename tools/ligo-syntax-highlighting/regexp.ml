@@ -302,7 +302,7 @@ let type_definition_match: Core.regexp = {
 (*
   A type declaration may appear in the following places:
   * At top-level or in a module, immediately before a "let", "#" (directive),
-    "module", "type", "end", "[%" (attribute) or EOF.
+    "module", "type", "end", "[@" (attribute) or EOF.
   * Locally inside a "let", immediately before an "in".
 
   follow(type_decl) = Type Module Let In End EOF Directive Attr
@@ -312,9 +312,9 @@ let type_definition_begin: Core.regexp = type_definition_match
 
 let type_definition_end: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
-  emacs    = "^#\\\\|\\\\[%\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\|)\\\\b";
-  textmate = "(?=^#|\\[%|\\b(let|in|type|end|module)\\b|\\))";
-  vim      = "\\(^#\\|\\[%\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\|)\\)\\@=";
+  emacs    = "^#\\\\|\\\\[@\\\\|\\\\b\\\\(let\\\\|in\\\\|type\\\\|end\\\\|module\\\\)\\\\|)\\\\b";
+  textmate = "(?=^#|\\[@|\\b(let|in|type|end|module)\\b|\\))";
+  vim      = "\\(^#\\|\\[@\\|\\<\\(let\\|in\\|type\\|end\\|module\\)\\>\\|)\\)\\@=";
 }
 
 let type_name_match: Core.regexp = {
