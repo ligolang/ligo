@@ -3,12 +3,11 @@ open Lsp_helpers
 open Ligo_interface
 module Def_location = Def.Def_location
 module Def_locations = Def.Def_locations
+module Loc_in_file = Def.Loc_in_file
 module PathMap = Map.Make (Path)
 module Ranges = Set.Make (Range)
 
-let get_references
-    : Def_location.t -> Scopes.def Sequence.t -> Def_location.loc_in_file Sequence.t
-  =
+let get_references : Def_location.t -> Scopes.def Sequence.t -> Loc_in_file.t Sequence.t =
  fun location defs ->
   defs
   |> Sequence.concat_map ~f:(fun def ->
@@ -20,10 +19,10 @@ let get_references
          | Virtual _ | StdLib _ -> None)
 
 
-let partition_references : Def_location.loc_in_file Sequence.t -> Ranges.t PathMap.t =
+let partition_references : Loc_in_file.t Sequence.t -> Ranges.t PathMap.t =
   Sequence.fold
     ~f:(fun acc loc ->
-      let open Def_location in
+      let open Loc_in_file in
       PathMap.update acc loc.path ~f:(function
           | None -> Ranges.singleton loc.range
           | Some others -> Ranges.add others loc.range))
@@ -32,7 +31,7 @@ let partition_references : Def_location.loc_in_file Sequence.t -> Ranges.t PathM
 
 (* This version is useful for rename request *)
 let get_all_references_grouped_by_file
-    : Def_location.t -> DocsCache.t -> (Path.t * Range.t Sequence.t) Sequence.t
+    : Def_location.t -> Docs_cache.t -> (Path.t * Range.t Sequence.t) Sequence.t
   =
  fun location get_scope_buffers ->
   let go (_path, { get_scope_info; _ }) =
@@ -40,7 +39,7 @@ let get_all_references_grouped_by_file
     get_references location @@ Sequence.of_list defs
   in
   get_scope_buffers
-  |> DocsCache.to_alist
+  |> Docs_cache.to_alist
   |> Sequence.of_list
   |> Sequence.concat_map ~f:go
   |> partition_references
@@ -48,11 +47,11 @@ let get_all_references_grouped_by_file
   |> Sequence.map ~f:(fun (file, refs) -> file, Ranges.to_sequence refs)
 
 
-let get_all_references : Def_location.t -> DocsCache.t -> Def_location.loc_in_file list =
+let get_all_references : Def_location.t -> Docs_cache.t -> Loc_in_file.t list =
  fun location get_scope_buffers ->
   get_all_references_grouped_by_file location get_scope_buffers
   |> Sequence.concat_map ~f:(fun (path, ranges) ->
-         Sequence.map ~f:(fun range -> Def_location.{ path; range }) ranges)
+         Sequence.map ~f:(fun range -> Loc_in_file.{ path; range }) ranges)
   |> Sequence.to_list
 
 
@@ -65,7 +64,7 @@ let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t
   @@ fun definition ->
   let references = get_all_references (Def.get_location definition) get_scope_buffers in
   let@ () = send_debug_msg @@ "On references request on " ^ Path.to_string file in
-  let show_reference Def_location.{ path; range } =
+  let show_reference Loc_in_file.{ path; range } =
     Path.to_string path ^ "\n" ^ Range.to_string range
   in
   let@ () =

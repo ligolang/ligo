@@ -1,12 +1,12 @@
 open Lsp_helpers
+module Path_hashtbl = Hashtbl.Make (Path)
 
-module DocsCache = struct
-  module PathHashtbl = Hashtbl.Make (Path)
-  include PathHashtbl (* So we can call e.g. [DocsCache.find] *)
+module Docs_cache = struct
+  include Path_hashtbl (* So we can call e.g. [Docs_cache.find] *)
 
-  type t = Ligo_interface.file_data PathHashtbl.t
+  type t = Ligo_interface.file_data Path_hashtbl.t
 
-  let create : unit -> t = fun () -> PathHashtbl.create ~size:32 ()
+  let create : unit -> t = fun () -> Path_hashtbl.create ~size:32 ()
 end
 
 (** Stores the configuration pertaining to the LIGO language server. *)
@@ -25,14 +25,19 @@ type config =
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
 type notify_back_mockable =
-  | Normal of Linol_lwt.Jsonrpc2.notify_back
-  | Mock of Diagnostic.t list ref (* FIXME: collect logs for tests *)
+  | Normal of DocumentUri.t * Linol_lwt.Jsonrpc2.notify_back
+      (** Contains the current URI (coming from the LSP method) that will be
+          used for publishing diagnostics as well as the class that may be used
+          for interacting with the LSP client. *)
+  (* FIXME: collect logs for tests *)
+  | Mock of Diagnostic.t list Path_hashtbl.t
+      (** A mock environment that may used to collect diagnostics for tests. *)
 
 (** Environment available in Handler monad *)
 type handler_env =
   { notify_back : notify_back_mockable
   ; config : config
-  ; docs_cache : DocsCache.t
+  ; docs_cache : Docs_cache.t
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -43,6 +48,7 @@ module Handler = struct
 end
 
 let return (a : 'a) : 'a Handler.t = Handler (fun _ -> IO.return a)
+let pass : unit Handler.t = return ()
 
 type 'a t = 'a Handler.t
 
@@ -73,7 +79,17 @@ let ask : handler_env Handler.t = Handler IO.return
 
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
 let ask_config : config Handler.t = fmap (fun x -> x.config) ask
-let ask_docs_cache : DocsCache.t Handler.t = fmap (fun x -> x.docs_cache) ask
+let ask_docs_cache : Docs_cache.t Handler.t = fmap (fun x -> x.docs_cache) ask
+
+(** Sequencing handlers *)
+
+let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
+  let rec go = function
+    | [] -> return ()
+    | x :: xs -> bind (h x) (fun () -> go xs)
+  in
+  go xs
+
 
 (** Conditional computations *)
 
@@ -114,7 +130,7 @@ let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Hand
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal nb ->
+  | Normal (_uri, nb) ->
     let@ { logging_verbosity; _ } = ask_config in
     if Caml.(type_ <= logging_verbosity)
     then lift_IO @@ nb#send_log_msg ~type_ s
@@ -122,14 +138,21 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   | Mock _ -> return ()
 
 
-(** Send diagnostics (errors, warnings) to *)
-let send_diagnostic (s : Diagnostic.t list) : unit Handler.t =
+(** Send diagnostics (errors, warnings) to the LSP client. *)
+let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal nb -> lift_IO (nb#send_diagnostic s)
-  | Mock mock_ref ->
-    mock_ref := s @ !mock_ref;
-    return ()
+  | Normal (original_uri, nb) ->
+    let () = nb#set_uri uri in
+    let@ () = lift_IO (nb#send_diagnostic s) in
+    let () = nb#set_uri original_uri in
+    pass
+  | Mock diagnostics ->
+    return
+      (Path_hashtbl.update
+         diagnostics
+         (DocumentUri.to_path uri)
+         ~f:(Option.value_map ~default:s ~f:(( @ ) s)))
 
 
 (** Message will appear in log in case [logging_verbosity = MessageType.Log] *)
@@ -139,7 +162,7 @@ let send_debug_msg : string -> unit Handler.t = send_log_msg ~type_:MessageType.
 let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal nb ->
+  | Normal (_uri, nb) ->
     lift_IO
       (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
   | Mock _ -> return ()
@@ -158,7 +181,7 @@ let with_cached_doc
     : 'a Handler.t
   =
   let@ docs = ask_docs_cache in
-  match DocsCache.find docs path with
+  match Docs_cache.find docs path with
   | Some file_data ->
     if (not return_default_if_no_info) || file_data.get_scope_info.has_info
     then f file_data

@@ -16,7 +16,7 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
   when_some' (Go_to_definition.get_definition pos file get_scope_info.definitions)
   @@ fun def ->
   when_some'
-    (let from_def_location : Def.t -> Def.Def_location.loc_in_file option =
+    (let from_def_location : Def.t -> Def.Loc_in_file.t option =
       fun def ->
        match Def.get_location def with
        | StdLib _ | Virtual _ -> None
@@ -34,7 +34,7 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
          None (* We can't return any position to user: type of this vdef is inferred *)
        | File { range; path } ->
          Option.some
-         @@ Option.value ~default:Def.Def_location.{ range; path }
+         @@ Option.value ~default:Def.Loc_in_file.{ range; path }
          @@ (Go_to_definition.get_definition range.start file get_scope_info.definitions
             >>= from_def_location))
      | Module _mdef -> None)

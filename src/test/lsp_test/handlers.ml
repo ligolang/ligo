@@ -12,15 +12,15 @@ let default_test_config : config =
 
 
 let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
-    : 'a * Diagnostic.t list
+    : 'a * Diagnostic.t list Path_hashtbl.t
   =
-  let mocked_notify_back = ref [] in
+  let mocked_notify_back = Path_hashtbl.create () in
   let result =
     run_handler
-      { notify_back = Mock mocked_notify_back; config; docs_cache = DocsCache.create () }
+      { notify_back = Mock mocked_notify_back; config; docs_cache = Docs_cache.create () }
       session
   in
-  Lwt_main.run result, !mocked_notify_back
+  Lwt_main.run result, mocked_notify_back
 
 
 let open_file (file : Path.t) : Path.t Handler.t =

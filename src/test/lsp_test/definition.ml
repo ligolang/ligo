@@ -47,8 +47,8 @@ let get_definition_test
        file_with_reference
        Position.pp
        reference
-       (Fmt.Dump.list Diagnostic.pp)
-       diagnostics)
+       Fmt.Dump.(list (pair Path.pp (list Diagnostic.pp)))
+       (Path_hashtbl.to_alist diagnostics))
     expected_definition
     actual_definition
 

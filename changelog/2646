@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed an issue causing diagnostics from other files to be incorrectly shown in the current file.\\n\\n"
+merge_request: '2646'
+title: "Draft: [#1920] Prevent diags from other files to be shown"
+type: fixed
+            

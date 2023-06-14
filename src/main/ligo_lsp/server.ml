@@ -4,7 +4,7 @@ open Lsp_helpers
 open Requests.Handler
 
 (* one env per document *)
-let get_scope_buffers : DocsCache.t = DocsCache.create ()
+let get_scope_buffers : Docs_cache.t = Docs_cache.create ()
 
 let default_config : config =
   { max_number_of_problems = 100
@@ -38,7 +38,10 @@ class lsp_server =
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       let file = DocumentUri.to_path document.uri in
       run_handler
-        { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
+        { notify_back = Normal (document.uri, notify_back)
+        ; config
+        ; docs_cache = get_scope_buffers
+        }
       @@ let@ { deprecated; _ } = ask_config in
          let@ () =
            if not deprecated
@@ -67,7 +70,10 @@ class lsp_server =
         : unit IO.t =
       let file = DocumentUri.to_path document.uri in
       run_handler
-        { notify_back = Normal notify_back; config; docs_cache = get_scope_buffers }
+        { notify_back = Normal (document.uri, notify_back)
+        ; config
+        ; docs_cache = get_scope_buffers
+        }
       @@ Requests.on_doc file new_content
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
@@ -273,13 +279,14 @@ class lsp_server =
             run_handler
               { notify_back =
                   Normal
-                    (new Linol_lwt.Jsonrpc2.notify_back
-                       ~uri
-                       ~notify_back
-                       ~server_request
-                       ~workDoneToken:None
-                       ~partialResultToken:None
-                       ())
+                    ( uri
+                    , new Linol_lwt.Jsonrpc2.notify_back
+                        ~uri
+                        ~notify_back
+                        ~server_request
+                        ~workDoneToken:None
+                        ~partialResultToken:None
+                        () )
               ; config
               ; docs_cache = get_scope_buffers
               }

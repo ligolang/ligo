@@ -17,18 +17,33 @@ let get_diagnostics_test
   =
   Alcotest.test_case test_name `Quick
   @@ fun () ->
+  let file_path_normalized = Path.from_relative file_path in
   let config =
     Option.map max_number_of_problems ~f:(fun max_number_of_problems ->
         { default_test_config with max_number_of_problems })
   in
   let _uri, actual_diagnostics =
-    test_run_session ?config @@ open_file (Path.from_relative file_path)
+    test_run_session ?config @@ open_file file_path_normalized
+  in
+  (* [on_doc] sends an empty list in case there are no diags, so we also need to
+     address this corner case in our test expectations. *)
+  let expected_diagnostics =
+    let diags_by_file =
+      Requests.partition_simple_diagnostics
+        file_path_normalized
+        max_number_of_problems
+        diagnostics
+    in
+    let uri = DocumentUri.of_path file_path_normalized in
+    if List.Assoc.mem diags_by_file ~equal:DocumentUri.equal uri
+    then diags_by_file
+    else (uri, []) :: diags_by_file
   in
   should_match_list
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
-    Diagnostic.testable
-    ~actual:actual_diagnostics
-    ~expected:(List.map ~f:Requests.from_simple_diagnostic diagnostics)
+    Alcotest.(pair Path.testable (unordered_list Diagnostic.testable))
+    ~actual:(Requests.Handler.Path_hashtbl.to_alist actual_diagnostics)
+    ~expected:(List.map ~f:(Tuple2.map_fst ~f:DocumentUri.to_path) expected_diagnostics)
 
 
 let test_cases =
@@ -37,11 +52,17 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s)\nCannot unify \"int\" with \"string\"."
-          ; range = Some (interval 2 19 27)
+          ; location =
+              { range = interval 2 19 27
+              ; path = Path.from_relative "contracts/negative/error_typer_1.mligo"
+              }
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Variable \"foo\" not found. "
-          ; range = Some (interval 5 31 34)
+          ; location =
+              { range = interval 5 31 34
+              ; path = Path.from_relative "contracts/negative/error_typer_1.mligo"
+              }
           }
         ]
     ; max_number_of_problems = None
@@ -56,7 +77,10 @@ let test_cases =
                following is expected:\n\
               \  * another declaration;\n\
               \  * the end of the file.\n"
-          ; range = Some (interval 0 10 11)
+          ; location =
+              { range = interval 0 10 11
+              ; path = Path.from_relative "contracts/lsp/syntax_error.mligo"
+              }
           }
         ]
     ; max_number_of_problems = None
@@ -66,14 +90,20 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
           ; message = "Toplevel let declaration is silently changed to const declaration."
-          ; range = Some (interval 0 0 10)
+          ; location =
+              { range = interval 0 0 10
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
           }
         ; { severity = DiagnosticSeverity.Warning
           ; message =
               "\n\
                Warning: unused variable \"x\".\n\
                Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; range = Some (interval 2 10 11)
+          ; location =
+              { range = interval 2 10 11
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
           }
         ]
     ; max_number_of_problems = None
@@ -84,15 +114,24 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Error
           ; message =
               "Ill-formed expression.\nAt this point, an expression is expected.\n"
-          ; range = Some (interval 4 15 18)
+          ; location =
+              { range = interval 4 15 18
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
-          ; range = Some (interval 2 19 21)
+          ; location =
+              { range = interval 2 19 21
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
           }
         ; { severity = DiagnosticSeverity.Error
           ; message = "Variable \"_#N\" not found. "
-          ; range = Some (point 4 13)
+          ; location =
+              { range = point 4 13
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
           }
         ]
     ; max_number_of_problems = None
@@ -110,14 +149,20 @@ let test_cases =
               "Warning: The type of \"TopTop(42)\" is ambiguous: Inferred type is \
                \"ttop2\" but could be of type \"ttop\".\n\
                Hint: You might want to add a type annotation. \n"
-          ; range = Some (interval 64 14 23)
+          ; location =
+              { range = interval 64 14 23
+              ; path = Path.from_relative "contracts/warning_sum_types.mligo"
+              }
           }
         ; { severity = DiagnosticSeverity.Warning
           ; message =
               "Warning: The type of \"TopA(42)\" is ambiguous: Inferred type is \"ttop\" \
                but could be of type \"ta\".\n\
                Hint: You might want to add a type annotation. \n"
-          ; range = Some (interval 65 14 21)
+          ; location =
+              { range = interval 65 14 21
+              ; path = Path.from_relative "contracts/warning_sum_types.mligo"
+              }
           }
         ]
     ; max_number_of_problems = Some 2
@@ -130,7 +175,10 @@ let test_cases =
               "Invalid type(s)\n\
                Cannot unify \"int\" with \"( ^a * ^b ) -> ^a\".\n\
                Hint: \"^b\", \"^a\" represent placeholder type(s).\n"
-          ; range = Some (interval 0 21 22)
+          ; location =
+              { range = interval 0 21 22
+              ; path = Path.from_relative "contracts/lsp/poly_type_error.mligo"
+              }
           }
         ]
     ; max_number_of_problems = None
@@ -138,6 +186,29 @@ let test_cases =
   ; { test_name = "No diagnostics for imported package."
     ; file_path = "contracts/lsp/registry.jsligo"
     ; diagnostics = []
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows diagnostics from another file."
+    ; file_path = "contracts/lsp/import_warnings.jsligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Warning
+          ; message = "Toplevel let declaration is silently changed to const declaration."
+          ; location =
+              { range = interval 0 0 10
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Warning
+          ; message =
+              "\n\
+               Warning: unused variable \"x\".\n\
+               Hint: replace it by \"_x\" to prevent this warning.\n"
+          ; location =
+              { range = interval 2 10 11
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
+          }
+        ]
     ; max_number_of_problems = None
     }
   ]
