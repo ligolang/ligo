@@ -37,6 +37,7 @@
   top_level_restriction
   contract_hack
   constructor_application
+  sum_type_helper_generator
   standalone_constructor_removal
   pattern_constructor_application
   object_to_record

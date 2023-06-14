@@ -86,6 +86,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Standalone_constructor_removal) ~flag:always ~arg:()
   ; entry (module Special_unit_constructor) ~flag:special_unit_constructor ~arg:()
   ; entry (module Type_abstraction_declaration) ~flag:always ~arg:()
+  ; entry (module Sum_type_helper_generator) ~flag:always ~arg:()
   ; entry (module Named_fun) ~flag:named_fun ~arg:()
   ; entry (module Reverse_application) ~flag:always ~arg:()
   ; entry (module Prefix_postfix_operators) ~flag:always ~arg:()
