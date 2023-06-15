@@ -33,6 +33,8 @@ let inside ~(big : t) ~(small : t) : bool =
   big.start <= small.start && small.end_ <= big.end_
 
 
+(** Returns [true] iff [position] is inside [range] (including intersection at
+    any endpoint of the range. *)
 let contains_position (position : Position.t) (range : t) : Bool.t =
   let open Position in
   range.start <= position && position <= range.end_

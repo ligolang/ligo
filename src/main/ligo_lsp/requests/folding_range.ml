@@ -1,5 +1,4 @@
 open Lsp_helpers
-open Simple_utils.Utils
 
 let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t =
  fun kind reg ->
@@ -15,9 +14,6 @@ let mk_folding_range : FoldingRangeKind.t -> Region.t -> FoldingRange.t =
 
 let mk_region : Region.t -> FoldingRange.t = mk_folding_range FoldingRangeKind.Region
 let mk_imports : Region.t -> FoldingRange.t = mk_folding_range FoldingRangeKind.Imports
-let nseq_concat_map nseq ~f = List.concat_map (nseq_to_list nseq) ~f
-let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
-let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
 
 let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
  fun cst ->

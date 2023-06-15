@@ -1,0 +1,12 @@
+module Foo is {
+  const module_field = 5
+  const another_thing = "asdad"
+
+  module Bar is {
+    const nested = record [ left = 1; right = 2 ]
+  }
+}
+
+const x = Foo.
+const y = Foo.Bar.
+const z = Foo.Bar.nested.

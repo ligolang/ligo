@@ -25,6 +25,8 @@ type type_case =
 
 type def_type =
   | Local
+  | Parameter
+  | Module_field
   | Global
 
 type vdef =
@@ -35,6 +37,7 @@ type vdef =
   ; t : type_case
   ; references : LSet.t
   ; def_type : def_type
+  ; mod_path : string list
   }
 
 type tdef =
@@ -45,11 +48,12 @@ type tdef =
   ; content : Ast_core.type_expression
   ; def_type : def_type
   ; references : LSet.t
+  ; mod_path : string list
   }
 
 type mod_case =
   | Def of def list
-  | Alias of string list
+  | Alias of string list * string option
 
 and mdef =
   { name : string
@@ -59,6 +63,7 @@ and mdef =
   ; references : LSet.t
   ; mod_case : mod_case
   ; def_type : def_type
+  ; mod_path : string list
   }
 
 and def =

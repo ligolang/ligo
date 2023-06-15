@@ -1,4 +1,5 @@
 include Diagnostics
+include Completion
 include Document_link
 include Folding_range
 include Formatting

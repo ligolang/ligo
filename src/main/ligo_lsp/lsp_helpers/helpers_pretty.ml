@@ -108,7 +108,7 @@ let print_module_with_description
     ^ closing_comment
     ^ " "
     ^ description.close
-  | Alias module_path_list ->
+  | Alias (module_path_list, _) ->
     description.import_keyword
     ^ " "
     ^ mdef.name

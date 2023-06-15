@@ -25,7 +25,7 @@ let get_folding_range_test
   | Some actual_folds ->
     if contains_in_check
     then
-      should_be_contained_in FoldingRange.testable ~small:actual_folds ~big:folding_ranges
+      should_be_contained_in FoldingRange.testable ~small:folding_ranges ~big:actual_folds
     else
       should_match_list
         FoldingRange.testable

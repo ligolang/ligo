@@ -1,0 +1,991 @@
+open Alcotest_extras
+open Lsp_helpers
+open Handlers
+module Requests = Ligo_lsp.Server.Requests
+open Requests.Handler
+
+type completion_test =
+  { test_name : string
+  ; file_name : string
+  ; position : Position.t
+  ; completions : CompletionItem.t list
+  ; negative_labels : string list
+  }
+
+let completion_test
+    (dialect : Syntax_types.t)
+    { test_name; file_name; position; completions; negative_labels }
+    : unit Alcotest.test_case
+  =
+  let pretty_syntax_type =
+    match dialect with
+    | CameLIGO -> "CameLIGO"
+    | JsLIGO -> "JsLIGO"
+    | PascaLIGO -> "PascaLIGO"
+  in
+  Alcotest.test_case (Format.sprintf "%s: %s" pretty_syntax_type test_name) `Quick
+  @@ fun () ->
+  let actual_completions, _diagnostics =
+    test_run_session
+    @@ let@ uri = open_file (Path.from_relative file_name) in
+       Requests.on_req_completion position uri
+  in
+  let get_completion_list = function
+    | `CompletionList items -> items
+    | `List _ -> fail "Unexpected `List"
+  in
+  match actual_completions with
+  | None -> fail "Expected some completion list, got None"
+  | Some actual_completions ->
+    let actual_completions = (get_completion_list actual_completions).items in
+    should_be_contained_in
+      CompletionItem.testable
+      ~small:completions
+      ~big:actual_completions;
+    let actual_labels =
+      List.map actual_completions ~f:(fun completion -> completion.label)
+    in
+    should_not_be_contained_in Alcotest.string ~small:negative_labels ~big:actual_labels
+
+
+let test_cases_cameligo =
+  [ { test_name = "Complete record fields"
+    ; file_name = "contracts/lsp/completion_record.mligo"
+    ; position = Position.create ~line:7 ~character:30
+    ; completions =
+        [ CompletionItem.create
+            ~label:"numeric"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete partially written nested record field"
+    ; file_name = "contracts/lsp/completion_record.mligo"
+    ; position = Position.create ~line:15 ~character:40
+    ; completions =
+        [ CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field"
+    ; file_name = "contracts/lsp/completion_record.mligo"
+    ; position = Position.create ~line:15 ~character:30
+    ; completions =
+        [ CompletionItem.create
+            ~label:"record_1"
+            ~kind:CompletionItemKind.Field
+            ~detail:"record_1"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete module field"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:9 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"module_field"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"another_thing"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested module field"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:10 ~character:16
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"{\n left : int;\n right : int\n}"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested record field within module"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:11 ~character:23
+    ; completions =
+        [ CompletionItem.create
+            ~label:"left"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"right"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written module field"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:11 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field within module"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:11 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"{\n left : int;\n right : int\n}"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete simple suggestions"
+    ; file_name = "contracts/lsp/completion_simple.mligo"
+    ; position = Position.create ~line:4 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"thing1"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"some_string"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete type within module"
+    ; file_name = "contracts/lsp/completion_type.mligo"
+    ; position = Position.create ~line:5 ~character:30
+    ; completions =
+        [ CompletionItem.create
+            ~label:"here_it_is"
+            ~kind:CompletionItemKind.TypeParameter
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within module alias"
+    ; file_name = "contracts/lsp/completion_alias.mligo"
+    ; position = Position.create ~line:10 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"target"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within already written module alias"
+    ; file_name = "contracts/lsp/completion_alias.mligo"
+    ; position = Position.create ~line:10 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"B"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Y"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From inner scope"
+    ; file_name = "contracts/lsp/completion_inside_module.mligo"
+    ; position = Position.create ~line:5 ~character:21
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"inner"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From outer scope"
+    ; file_name = "contracts/lsp/completion_inside_module.mligo"
+    ; position = Position.create ~line:8 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Inner"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = [ "Inner.inner"; "Inner.completion" ]
+    }
+  ; { test_name = "From top-level scope"
+    ; file_name = "contracts/lsp/completion_inside_module.mligo"
+    ; position = Position.create ~line:11 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Outer"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels =
+        [ "Outer.outer"
+        ; "Outer.Inner.inner"
+        ; "Outer.Inner.completion"
+        ; "Outer.completion"
+        ]
+    }
+  ; { test_name = "Module definitions don't contain scopes"
+    ; file_name = "contracts/lsp/completion_similar_name.mligo"
+    ; position = Position.create ~line:14 ~character:13
+    ; completions =
+        [ CompletionItem.create
+            ~label:"add"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int -> (int -> storage)"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"sub"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int -> (int -> storage)"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"zero"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"storage"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = [ "a"; "b" ]
+    }
+  ; { test_name = "Complete from scope after a dot"
+    ; file_name = "contracts/lsp/completion_similar_name.mligo"
+    ; position = Position.create ~line:16 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Math"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Map"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x09"
+            ()
+        ]
+    ; negative_labels = [ "Math.add"; "Math.sub"; "Math.zero" ]
+    }
+  ; { test_name = "Complete first module from written module path"
+    ; file_name = "contracts/lsp/completion_module.mligo"
+    ; position = Position.create ~line:9 ~character:9
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  (* FIXME (#1689): Once error recovery is improved, we should revisit this test
+     based on the feedback in this thread:
+     https://gitlab.com/ligolang/ligo/-/merge_requests/2527#note_1430629077
+  ; { test_name = "Complete first module from written module path"
+    ; file_name = "contracts/lsp/completion_missing_end.mligo"
+    ; position = Position.create ~line:5 ~character:13
+    ; completions =
+        [ CompletionItem.create
+            ~label:"ABA"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }*)
+  ]
+
+
+let test_cases_jsligo =
+  [ { test_name = "Complete record fields"
+    ; file_name = "contracts/lsp/completion_record.jsligo"
+    ; position = Position.create ~line:7 ~character:31
+    ; completions =
+        [ CompletionItem.create
+            ~label:"numeric"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete partially written nested record field"
+    ; file_name = "contracts/lsp/completion_record.jsligo"
+    ; position = Position.create ~line:15 ~character:43
+    ; completions =
+        [ CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field"
+    ; file_name = "contracts/lsp/completion_record.jsligo"
+    ; position = Position.create ~line:15 ~character:33
+    ; completions =
+        [ CompletionItem.create
+            ~label:"record_1"
+            ~kind:CompletionItemKind.Field
+            ~detail:"record_1"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete module field"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:9 ~character:14
+    ; completions =
+        [ CompletionItem.create
+            ~label:"module_field"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"another_thing"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested module field"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:10 ~character:18
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"{ left: int; right: int }"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested record field within module"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:11 ~character:25
+    ; completions =
+        [ CompletionItem.create
+            ~label:"left"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"right"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written module field"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:11 ~character:14
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field within module"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:11 ~character:21
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"{ left: int; right: int }"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete simple suggestions"
+    ; file_name = "contracts/lsp/completion_simple.jsligo"
+    ; position = Position.create ~line:4 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"thing1"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"some_string"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete type within module"
+    ; file_name = "contracts/lsp/completion_type.jsligo"
+    ; position = Position.create ~line:5 ~character:30
+    ; completions =
+        [ CompletionItem.create
+            ~label:"here_it_is"
+            ~kind:CompletionItemKind.TypeParameter
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within module alias"
+    ; file_name = "contracts/lsp/completion_alias.jsligo"
+    ; position = Position.create ~line:10 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"target"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within already written module alias"
+    ; file_name = "contracts/lsp/completion_alias.jsligo"
+    ; position = Position.create ~line:10 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"B"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Y"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From inner scope"
+    ; file_name = "contracts/lsp/completion_inside_module.jsligo"
+    ; position = Position.create ~line:5 ~character:23
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"/* Unresolved */"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"inner"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"/* Unresolved */"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From outer scope"
+    ; file_name = "contracts/lsp/completion_inside_module.jsligo"
+    ; position = Position.create ~line:8 ~character:21
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"/* Unresolved */"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Inner"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = [ "Inner.inner"; "Inner.completion" ]
+    }
+  ; { test_name = "From top-level scope"
+    ; file_name = "contracts/lsp/completion_inside_module.jsligo"
+    ; position = Position.create ~line:11 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Outer"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels =
+        [ "Outer.outer"
+        ; "Outer.Inner.inner"
+        ; "Outer.Inner.completion"
+        ; "Outer.completion"
+        ]
+    }
+  ; { test_name = "Module definitions don't contain scopes"
+    ; file_name = "contracts/lsp/completion_similar_name.jsligo"
+    ; position = Position.create ~line:14 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"add"
+            ~kind:CompletionItemKind.Variable
+            ~detail:
+              "(_: int) => (_: int) => {\n\
+              \  number: int;\n\
+              \  previous_action: | [\"Add\", int]\n\
+              \  | [\"Reset\", unit]\n\
+              \  | [\"Sub\", int]\n\
+               }"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"sub"
+            ~kind:CompletionItemKind.Variable
+            ~detail:
+              "(_: int) => (_: int) => {\n\
+              \  number: int;\n\
+              \  previous_action: | [\"Add\", int]\n\
+              \  | [\"Reset\", unit]\n\
+              \  | [\"Sub\", int]\n\
+               }"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"zero"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"storage"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = [ "a"; "b" ]
+    }
+  ; { test_name = "Complete from scope after a dot"
+    ; file_name = "contracts/lsp/completion_similar_name.jsligo"
+    ; position = Position.create ~line:16 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Math"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Map"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x09"
+            ()
+        ]
+    ; negative_labels = [ "Math.add"; "Math.sub"; "Math.zero" ]
+    }
+  ; { test_name = "Complete first module from written module path"
+    ; file_name = "contracts/lsp/completion_module.jsligo"
+    ; position = Position.create ~line:9 ~character:11
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ]
+
+
+let test_cases_pascaligo =
+  [ { test_name = "Complete record fields"
+    ; file_name = "contracts/lsp/completion_record.pligo"
+    ; position = Position.create ~line:7 ~character:32
+    ; completions =
+        [ CompletionItem.create
+            ~label:"numeric"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete partially written nested record field"
+    ; file_name = "contracts/lsp/completion_record.pligo"
+    ; position = Position.create ~line:15 ~character:42
+    ; completions =
+        [ CompletionItem.create
+            ~label:"stringy"
+            ~kind:CompletionItemKind.Field
+            ~detail:"string"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field"
+    ; file_name = "contracts/lsp/completion_record.pligo"
+    ; position = Position.create ~line:15 ~character:32
+    ; completions =
+        [ CompletionItem.create
+            ~label:"record_1"
+            ~kind:CompletionItemKind.Field
+            ~detail:"record_1"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete module field"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:9 ~character:14
+    ; completions =
+        [ CompletionItem.create
+            ~label:"module_field"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"another_thing"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested module field"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:10 ~character:18
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"record[left -> int , right -> int({ name: left }, { name: right })]"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete nested record field within module"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:11 ~character:25
+    ; completions =
+        [ CompletionItem.create
+            ~label:"left"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ; CompletionItem.create
+            ~label:"right"
+            ~kind:CompletionItemKind.Field
+            ~detail:"int"
+            ~sortText:"\x03"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written module field"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:11 ~character:14
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Bar"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete already written record field within module"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:11 ~character:21
+    ; completions =
+        [ CompletionItem.create
+            ~label:"nested"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"record[left -> int , right -> int({ name: left }, { name: right })]"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete simple suggestions"
+    ; file_name = "contracts/lsp/completion_simple.pligo"
+    ; position = Position.create ~line:4 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"thing1"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"some_string"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"string"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete type within module"
+    ; file_name = "contracts/lsp/completion_type.pligo"
+    ; position = Position.create ~line:5 ~character:31
+    ; completions =
+        [ CompletionItem.create
+            ~label:"here_it_is"
+            ~kind:CompletionItemKind.TypeParameter
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within module alias"
+    ; file_name = "contracts/lsp/completion_alias.pligo"
+    ; position = Position.create ~line:10 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"target"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Complete variable within already written module alias"
+    ; file_name = "contracts/lsp/completion_alias.pligo"
+    ; position = Position.create ~line:10 ~character:17
+    ; completions =
+        [ CompletionItem.create
+            ~label:"B"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"Y"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From inner scope"
+    ; file_name = "contracts/lsp/completion_inside_module.pligo"
+    ; position = Position.create ~line:5 ~character:23
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"inner"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "From outer scope"
+    ; file_name = "contracts/lsp/completion_inside_module.pligo"
+    ; position = Position.create ~line:8 ~character:21
+    ; completions =
+        [ CompletionItem.create
+            ~label:"outer"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"(* Unresolved *)"
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Inner"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = [ "Inner.inner"; "Inner.completion" ]
+    }
+  ; { test_name = "From top-level scope"
+    ; file_name = "contracts/lsp/completion_inside_module.pligo"
+    ; position = Position.create ~line:11 ~character:19
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Outer"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels =
+        [ "Outer.outer"
+        ; "Outer.Inner.inner"
+        ; "Outer.Inner.completion"
+        ; "Outer.completion"
+        ]
+    }
+  ; { test_name = "Module definitions don't contain scopes"
+    ; file_name = "contracts/lsp/completion_similar_name.pligo"
+    ; position = Position.create ~line:14 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"add"
+            ~kind:CompletionItemKind.Variable
+            ~detail:
+              "int -> int -> record[number -> int ,\n\
+              \                     previous_action -> sum[Add -> int ,\n\
+              \                                            Reset -> unit ,\n\
+              \                                            Sub -> int(({ name: Add }, { \
+               name: Reset }), { name: Sub })]({ name: number }, { name: previous_action \
+               })]"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"sub"
+            ~kind:CompletionItemKind.Variable
+            ~detail:
+              "int -> int -> record[number -> int ,\n\
+              \                     previous_action -> sum[Add -> int ,\n\
+              \                                            Reset -> unit ,\n\
+              \                                            Sub -> int(({ name: Add }, { \
+               name: Reset }), { name: Sub })]({ name: number }, { name: previous_action \
+               })]"
+            ~sortText:"\x05"
+            ()
+        ; CompletionItem.create
+            ~label:"zero"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"storage"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = [ "a"; "b" ]
+    }
+  ; { test_name = "Complete from scope after a dot"
+    ; file_name = "contracts/lsp/completion_similar_name.pligo"
+    ; position = Position.create ~line:16 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Math"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ; CompletionItem.create
+            ~label:"Map"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x09"
+            ()
+        ]
+    ; negative_labels = [ "Math.add"; "Math.sub"; "Math.zero" ]
+    }
+  ; { test_name = "Complete first module from written module path"
+    ; file_name = "contracts/lsp/completion_module.pligo"
+    ; position = Position.create ~line:9 ~character:11
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ]
+
+
+let tests =
+  ( "completion"
+  , List.map ~f:(completion_test CameLIGO) test_cases_cameligo
+    @ List.map ~f:(completion_test JsLIGO) test_cases_jsligo
+    @ List.map ~f:(completion_test PascaLIGO) test_cases_pascaligo )

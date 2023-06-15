@@ -1,0 +1,11 @@
+module A is {
+  module B is {
+    const target = 0
+  }
+
+  module Y is B
+}
+
+module X is A
+
+const target = X.Y.

@@ -1,5 +1,5 @@
+include Expectations
 include Pretty_check
-include Should_match_list
 
 (* Like Aloctest.string, but without escaping *)
 let raw_string : string Alcotest.testable =

@@ -1,0 +1,17 @@
+type action is Add of int | Sub of int | Reset
+
+type storage is record [ number : int; previous_action : action ]
+
+module Math is {
+  function add (const a : int; const b : int) : storage is
+    record [ number = a + b; previous_action = Add(b) ]
+
+  function sub (const a : int; const b : int) : storage is
+    record [ number = a - b; previous_action = Sub(b) ]
+
+  const zero = record [ number = 0; previous_action = Reset ]
+}
+
+const x = Math.
+
+const y = Ma

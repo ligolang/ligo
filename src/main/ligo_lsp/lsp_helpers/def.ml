@@ -41,6 +41,32 @@ let get_location : Scopes.def -> Def_location.t =
   | Module mdef -> mdef.range
 
 
+let get_name : Scopes.def -> string = function
+  | Variable vdef -> vdef.name
+  | Type tdef -> tdef.name
+  | Module mdef -> mdef.name
+
+
+let get_def_type : Scopes.def -> Scopes.Types.def_type = function
+  | Variable vdef -> vdef.def_type
+  | Type tdef -> tdef.def_type
+  | Module mdef -> mdef.def_type
+
+
+let get_mod_path : Scopes.def -> string list = function
+  | Variable vdef -> vdef.mod_path
+  | Type tdef -> tdef.mod_path
+  | Module mdef -> mdef.mod_path
+
+
+let get_path : Scopes.def -> Path.t option =
+  Def_location.(
+    function
+    | File { path; _ } -> Some path
+    | StdLib _ | Virtual _ -> None)
+  <@ get_location
+
+
 let references_getter : Scopes.def -> Def_locations.t =
  fun def ->
   let module LSet = Scopes.Types.LSet in

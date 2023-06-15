@@ -1,0 +1,6 @@
+module I_have_a_type is {
+  type here_it_is is string * list(int)
+  const also_a_value : here_it_is = ("hello", list [42])
+}
+
+type the_type is I_have_a_type.

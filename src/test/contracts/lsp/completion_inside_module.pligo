@@ -1,0 +1,12 @@
+module Outer is {
+  const outer = "outer"
+  module Inner is {
+    const inner = 0
+
+    const completion = 
+  }
+
+  const completion = 
+}
+
+const completion = 

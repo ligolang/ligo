@@ -120,6 +120,14 @@ let list_to_sepseq (lst : 'a list) (sep : 's) : ('a, 's) sepseq =
   | [] -> None
   | _ -> list_to_nsepseq_opt lst sep
 
+(* Map and concatenate lists *)
+
+let nseq_concat_map nseq ~f = List.concat_map (nseq_to_list nseq) ~f
+
+let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
+
+let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
+
 (* Modules based on [String], like sets and maps. *)
 
 module String =
