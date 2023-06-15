@@ -1,0 +1,11 @@
+namespace A {
+  namespace B {
+    const target = 0
+  };
+
+  import Y = B
+};
+
+import X = A
+
+const target = X.Y.

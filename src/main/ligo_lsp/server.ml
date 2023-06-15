@@ -182,6 +182,15 @@ class lsp_server =
     method config_folding_range =
       Some (`Bool (self#is_request_enabled "textDocument/foldingRange"))
 
+    method! config_completion =
+      let completionItem =
+        CompletionOptions.create_completionItem ~labelDetailsSupport:true ()
+      in
+      let completion_options =
+        CompletionOptions.create ~completionItem ~triggerCharacters:[ "."; "@" ] ()
+      in
+      Some completion_options
+
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
         hoverProvider = self#config_hover
@@ -193,6 +202,7 @@ class lsp_server =
       ; documentLinkProvider = self#config_document_link_provider
       ; foldingRangeProvider = self#config_folding_range
       ; documentRangeFormattingProvider = self#config_range_formatting
+      ; completionProvider = self#config_completion
       }
 
     method! on_notification_unhandled
@@ -335,5 +345,9 @@ class lsp_server =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range options
+        | Client_request.TextDocumentCompletion { textDocument; position; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_completion position (DocumentUri.to_path uri)
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

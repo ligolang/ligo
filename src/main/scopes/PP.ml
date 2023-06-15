@@ -57,7 +57,7 @@ let rec definitions : Format.formatter -> def list -> unit =
         t.content
         refs
         t.references
-    | Module { mod_case = Alias a; references; _ } ->
+    | Module { mod_case = Alias (a, _resolved); references; _ } ->
       Format.fprintf ppf "Alias: %s @ %a @ " (String.concat ~sep:"." a) refs references
     | Module { mod_case = Def d; references; _ } ->
       Format.fprintf ppf "Members: %a @ %a @ " definitions d refs references
@@ -129,19 +129,36 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       ]
   in
   let aux = function
-    | Variable { name; range; body_range; t; references; uid; def_type = _ } ->
-      uid, defintion ~name ~range ~body_range ~t ~references
-    | Type { name; range; body_range; content; uid; def_type = _; references } ->
-      uid, type_definition ~name ~range ~body_range ~content ~references
-    | Module { name; range; body_range; mod_case = Def d; references; uid; def_type = _ }
-      ->
+    | Variable { name; range; body_range; t; references; uid; def_type = _; mod_path = _ }
+      -> uid, defintion ~name ~range ~body_range ~t ~references
+    | Type
+        { name; range; body_range; content; uid; def_type = _; references; mod_path = _ }
+      -> uid, type_definition ~name ~range ~body_range ~content ~references
+    | Module
+        { name
+        ; range
+        ; body_range
+        ; mod_case = Def d
+        ; references
+        ; uid
+        ; def_type = _
+        ; mod_path = _
+        } ->
       ( uid
       , `Assoc
           [ "definition", defintion ~name ~range ~body_range ~references ~t:Unresolved
           ; "members", defs_json d
           ] )
     | Module
-        { name; range; body_range; mod_case = Alias a; references; uid; def_type = _ } ->
+        { name
+        ; range
+        ; body_range
+        ; mod_case = Alias (a, _resolved)
+        ; references
+        ; uid
+        ; def_type = _
+        ; mod_path = _
+        } ->
       let alias = `List (List.map a ~f:(fun s -> `String s)) in
       ( uid
       , `Assoc

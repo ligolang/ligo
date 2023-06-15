@@ -1,0 +1,6 @@
+namespace I_have_a_type {
+  type here_it_is = [string, list<int>];
+  const also_a_value: here_it_is = ["hello", list([42])]
+}
+
+type the_type = I_have_a_type.

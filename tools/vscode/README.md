@@ -37,10 +37,18 @@ Those are being actively worked on.
 
 - [x] Hovers
 - [x] Rename symbol (only in open files)
-- [ ] Code completion for variable names
-- [ ] Code completion for record fields and constructors
 - [ ] Signature help
 - [ ] Refactorings
+
+### Code completion
+
+- [X] Variable, module and type names
+- [X] Record fields
+- [X] Module fields
+- [X] Keywords and operators
+- [ ] Constructors
+- [ ] Files
+- [ ] Type-aware code completion
 
 ### Formatting
 

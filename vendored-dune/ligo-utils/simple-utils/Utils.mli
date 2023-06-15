@@ -63,6 +63,12 @@ val nseq_to_list    :        'a nseq -> 'a list
 val nsepseq_to_list : ('a,'b) nsepseq -> 'a list
 val sepseq_to_list  : ('a,'b)  sepseq -> 'a list
 
+(* Map and concatenate lists *)
+
+val nseq_concat_map    :  'a        nseq -> f:('a -> 'c list) -> 'c list
+val nsepseq_concat_map : ('a,'b) nsepseq -> f:('a -> 'c list) -> 'c list
+val sepseq_concat_map  : ('a,'b)  sepseq -> f:('a -> 'c list) -> 'c list
+
 (* Conversions to non-empty lists *)
 
 val nsepseq_to_nseq : ('a,'b) nsepseq -> 'a nseq

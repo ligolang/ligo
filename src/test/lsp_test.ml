@@ -13,4 +13,5 @@ let _main =
     ; Range_formatting.tests
     ; References.tests
     ; Cst_fold.tests
+    ; Completion.tests
     ]

@@ -1,0 +1,5 @@
+const thing1 = 42
+
+const some_string = "hello"
+
+const completion = 

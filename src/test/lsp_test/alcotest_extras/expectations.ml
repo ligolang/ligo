@@ -1,6 +1,5 @@
 open Pretty_check
 
-(* should_match_list *)
 let rec remove_by (eq : 'a -> 'a -> bool) (y : 'a) (xs : 'a list) : 'a list =
   match xs with
   | [] -> []
@@ -54,11 +53,11 @@ let should_match_list
 let should_be_contained_in
     ?(msg : string option)
     (testable_a : 'a Alcotest.testable)
-    ~small
-    ~big
+    ~(small : 'a list)
+    ~(big : 'a list)
     : unit
   =
-  match diff_by (Alcotest.equal testable_a) big small with
+  match diff_by (Alcotest.equal testable_a) small big with
   | [] -> ()
   | missing ->
     let to_string = Format.asprintf "%a" (Alcotest.pp testable_a) in
@@ -75,3 +74,29 @@ let should_be_contained_in
       (List.map ~f:to_string big)
       format_list
       (List.map ~f:to_string missing)
+
+
+let should_not_be_contained_in
+    ?(msg : string option)
+    (testable_a : 'a Alcotest.testable)
+    ~small
+    ~big
+    : unit
+  =
+  match List.filter small ~f:(List.mem big ~equal:(Alcotest.equal testable_a)) with
+  | [] -> ()
+  | extra ->
+    let to_string = Format.asprintf "%a" (Alcotest.pp testable_a) in
+    let format_list = Fmt.Dump.list Fmt.string in
+    failf
+      ("%s"
+      ^^ "\n* Small list contains: %a"
+      ^^ "\n\n* Big list contains: %a"
+      ^^ "\n\n* Extra: %a")
+      (Option.value ~default:"The first list contains items in the second list." msg)
+      format_list
+      (List.map ~f:to_string small)
+      format_list
+      (List.map ~f:to_string big)
+      format_list
+      (List.map ~f:to_string extra)

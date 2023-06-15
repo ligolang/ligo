@@ -5,7 +5,7 @@ module LSet = Types.LSet
 module LMap = Map.Make (Location_ordered)
 open Env
 
-type t = string list LMap.t
+type t = (string list * string) LMap.t
 
 (** [mvar_to_id] takes and [Module_var.t] and gives id of the form
     [{name}#{line}:{start_col}-{end_col}] *)
@@ -66,7 +66,10 @@ let resolve_module_alias
   let ma_res = resolve_mpath mvs env in
   match ma_res with
   | Some (ma, resolved_ids) ->
-    let m_alias = LMap.add (Module_var.get_location lhs_mv) resolved_ids m_alias in
+    let resolved_name = Format.asprintf "%a" Module_var.pp ma in
+    let m_alias =
+      LMap.add (Module_var.get_location lhs_mv) (resolved_ids, resolved_name) m_alias
+    in
     m_alias, Some (Alias ma)
   | None -> m_alias, None
 
@@ -204,10 +207,11 @@ let rec patch : t -> Types.def list -> Types.def list =
       | Module m ->
         let mod_case =
           match m.mod_case with
-          | Alias a ->
+          | Alias (a, resolved) ->
             (match LMap.find_opt m.range m_alias with
-            | Some a -> Types.Alias a
-            | None -> Types.Alias a)
+            | Some (resolved_alias, resolved_name) ->
+              Types.Alias (resolved_alias, Some resolved_name)
+            | None -> Types.Alias (a, resolved))
           | Def defs -> Def (patch m_alias defs)
         in
         Module { m with mod_case }

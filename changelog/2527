@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nAdded support for completion in the LIGO Language Server. Supported completions include:\\n\\nVariable, module, and type names.Record fields.Module fields.Keywords and operators.\\n"
+merge_request: '2527'
+title: "[#1651] Implement completion"
+type: added
+            

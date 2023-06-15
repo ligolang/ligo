@@ -1,0 +1,12 @@
+namespace Outer {
+  const outer = "outer"
+  namespace Inner {
+    const inner = 0
+
+    const completion = 
+  }
+
+  const completion = 
+}
+
+const completion = 

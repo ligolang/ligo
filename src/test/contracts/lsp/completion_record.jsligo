@@ -1,0 +1,16 @@
+type record_1 = {
+  numeric: int,
+  stringy: string,
+};
+
+const record_1: record_1 = { numeric: 42; stringy: "hello" }
+
+const hello: string = record_1.
+
+type record_2 = {
+  record_1: record_1,
+};
+
+const record_2 : record_2 = { record_1 }
+
+const hello_2: string = record_2.record_1.s

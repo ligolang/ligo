@@ -18,6 +18,22 @@ include Imports
 module Trace = Simple_utils.Trace
 
 (* Lsp.Types reexports *)
+module CompletionItem = struct
+  include Lsp.Types.CompletionItem
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable : t Alcotest.testable = Alcotest.testable pp eq
+end
+
+module CompletionList = struct
+  include Lsp.Types.CompletionList
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable : t Alcotest.testable = Alcotest.testable pp eq
+end
+
 module Diagnostic = struct
   include Lsp.Types.Diagnostic
 
@@ -75,6 +91,8 @@ module FormattingOptions = struct
 end
 
 module ClientCapabilities = Lsp.Types.ClientCapabilities
+module CompletionItemKind = Lsp.Types.CompletionItemKind
+module CompletionOptions = Lsp.Types.CompletionOptions
 module ConfigurationItem = Lsp.Types.ConfigurationItem
 module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
