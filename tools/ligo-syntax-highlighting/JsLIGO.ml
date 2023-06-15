@@ -153,6 +153,7 @@ let syntax_highlighting =
     };
     syntax_patterns = [
       (* TODO: Name.lowercase_identifier; *)
+      Name_ref Name.attribute;
       Name_ref Name.uppercase_identifier;
       Name_ref Name.macro;
       Name_ref Name.let_binding;
