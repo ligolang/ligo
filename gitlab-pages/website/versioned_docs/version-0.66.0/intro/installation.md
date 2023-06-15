@@ -3,14 +3,33 @@ id: installation
 title: Installation
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 Currently Ligo can be installed on Linux and MacOS. It still possible to use it on Windows through WSL or docker.
 
 You can also try LIGO in a Gitpod environment
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://gitlab.com/ligolang/template-ligo)
 
+## Releases
 
-## Static Linux binary
+Releases are available at the [releases page of GitLab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
+
+If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](https://ligolang.org/docs/next/intro/changelog). It contains links to corresponding releases, should you wish to download the artifacts.
+
+## Install
+<Tabs
+  defaultValue="Lbinary"
+  values={[
+    { label: 'Linux binary', value: 'Lbinary' },
+    { label: 'MacOS', value: 'macos' },
+    { label: 'Debian package', value: 'deb' },
+    { label: 'Arch', value: 'AUR' },
+    { label: 'Dockerized', value: 'docker' },
+    { label: 'Windows', value: 'windows' }
+  ]}>
+<TabItem value="Lbinary">
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
@@ -27,26 +46,32 @@ Optionally, you can put it somewhere in your `PATH` for easy access:
 ```zsh
 sudo cp ./ligo /usr/local/bin
 ```
-
-## MacOS
-
-Try our tap,
-
-```
+</TabItem>
+<TabItem value="macos">
+  
+Try our tap :
+```bash
 brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
 brew install ligolang/ligo/ligo
 ```
 
-## Debian Linux package installation
+To upgrade ligo : 
+```bash
+brew update
+brew upgrade ligolang/ligo/ligo
+```
 
+</TabItem>
+<TabItem value="deb">
+  
 A `.deb` package containing the static `ligo` executable is also available.
 First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/4437631759/artifacts/raw/ligo.deb), and then install using: 
 
 ```zsh
 sudo apt install ./ligo.deb
 ```
-
-## Arch User repository
+</TabItem>
+<TabItem value="AUR">
 
 It's possible to install latest release of ligo through [AUR](https://aur.archlinux.org/packages/ligo-bin)
 
@@ -62,8 +87,10 @@ Or through tools like [yay](https://github.com/Jguer/yay)
 yay -S ligo-bin
 ```
 
-## Dockerised installation
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release ](./changelog.md):
+</TabItem>
+<TabItem value="docker">
+  
+  If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release ](./changelog.md):
 
 Linux or OSX:
 > ```sh
@@ -91,7 +118,10 @@ Or if you want the development version, replace the version above with `next`.
 
 Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
-## Windows
+</TabItem>
+<TabItem value="windows">
+
+
 
 > **Disclaimer**
 >
@@ -122,9 +152,5 @@ For now, you'll have to click on `More info`, and then, `Run anyway`.
 ![Run Anyway](/img/windows-more-info-clicked.png)
 
 
-
-## Releases
-
-Releases are available at the [releases page of GitLab project](https://gitlab.com/ligolang/ligo/-/releases). All the artifacts are attached there.
-
-If you wish to see the changelog, you can either run `ligo changelog` or go to [this page](https://ligolang.org/docs/next/intro/changelog). It contains links to corresponding releases, should you wish to download the artifacts.
+</TabItem>
+</Tabs>
