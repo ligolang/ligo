@@ -347,11 +347,13 @@ let no_colour =
   let doc = "disable coloring in CLI output" in
   flag ~doc name no_arg
 
-let no_metadata_check  =
+
+let no_metadata_check =
   let open Command.Param in
   let name = "--no-metadata-check" in
   let doc = "disable TZIP-16 metadata compliance check" in
   flag ~doc name no_arg
+
 
 let show_loc =
   let open Command.Param in
@@ -2912,15 +2914,14 @@ module Lsp_server = struct
       in
       { Logs.report }
     in
-    Out_channel.with_file
-      ~append:true
-      Filename.(temp_dir_name ^/ "ligo_language_server.log")
-      ~f:(fun outc ->
+    let log_file = Filename.(temp_dir_name ^/ "ligo_language_server.log") in
+    Out_channel.with_file ~append:true log_file ~f:(fun outc ->
         Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
         Logs.set_level (Some Logs.Debug);
         let s = new Server.lsp_server in
         let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
         let task = Linol_lwt.Jsonrpc2.run server in
+        Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
         match Linol_lwt.run task with
         | () -> Ok ("", "")
         | exception e ->
