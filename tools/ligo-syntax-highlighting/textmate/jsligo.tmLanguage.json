@@ -9,6 +9,7 @@
     { "include": "#string1" },
     { "include": "#block_comment" },
     { "include": "#line_comment" },
+    { "include": "#attribute" },
     { "include": "#uppercaseidentifier" },
     { "include": "#macro" },
     { "include": "#letbinding" },
