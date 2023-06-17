@@ -109,8 +109,7 @@
         localSystem = system;
       };
       ligo-binary = {
-        # ligo 0.62.0
-        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/3942174485/artifacts/raw/ligo"; hash = "sha256-sBNzotk6RNyoOEQDSr1BpVG3XIFL16u9M6GL6NEtACw="; };
+        "x86_64-linux" = { url = "https://gitlab.com/ligolang/ligo/-/jobs/4437631759/artifacts/raw/ligo"; hash = "sha256-+s+282qS8tKPLsDtH4LBnHdy/+wyo/qBIX4TZu1xAfs="; };
       };
       ligo-syntaxes = pkgs.callPackage ../vscode/syntaxes {};
       tezos-client = inputs.tezos-packaging.packages.${system}.tezos-client;

@@ -1,13 +1,17 @@
 {
     "defaultProtocol":{
-       "showName":"Lima (mainnet)",
-       "name":"lima"
+       "showName":"Mumbainet (mainnet)",
+       "name":"mumbainet"
     },
     "protocols":[
        {
-          "showName":"Lima (mainnet)",
-          "name":"lima"
-       }
+          "showName":"Mumbainet (mainnet)",
+          "name":"mumbainet"
+       },
+       {
+         "showName": "Nairobi (next)",
+         "name": "nairobi"
+      }
     ],
     "networks":[
        {
@@ -34,15 +38,15 @@
           "type":"custom"
        },
        {
-          "id":"tezostestlima",
+          "id":"tezostestnairobinet",
           "group":"Tezos",
-          "name":"Limanet",
-          "fullName":"Limanet Testnet",
-          "url":"https://limanet.tezos.marigold.dev",
-          "explorerUrl":"https://limanet.tzkt.io/",
+          "name":"Nairobinet",
+          "fullName":"Nairobinet Testnet",
+          "url":"https://nairobinet.tezos.marigold.dev",
+          "explorerUrl":"https://nairobinet.tzkt.io/",
           "symbol":"XTZ",
           "icon":"tezosmain",
-          "faucetUrl": "https://faucet.limanet.teztnets.xyz/",
+          "faucetUrl": "https://faucet.nairobinet.teztnets.xyz/",
           "type":"custom"
        },
        {
