@@ -51,7 +51,7 @@ test_multiFile = mkTest "compiles multi-file input correctly" $ do
                     ]
                 },
               rEntrypoint = Just "main",
-              rProtocol = Just "lima",
+              rProtocol = Just "nairobi",
               rStorage = Nothing,
               rDisplayFormat = Nothing
             }

@@ -32,7 +32,6 @@ main :: IO ()
 main = do
   ligoPath <- lookupEnv "LIGO_PATH"
   octezClientPath <- lookupEnv "OCTEZ_CLIENT_PATH"
-  dockerLigoVersion <- lookupEnv "DOCKER_LIGO_VERSION"
   clientCounter <- newIORef 0
 
   let standardConfig = ServerConfig
@@ -45,12 +44,7 @@ main = do
         , scLSPWorkspacePrefix = "/tmp" -- not used
         , scLSPClientCounter = clientCounter -- not used
         }
-  let dockerizedConfig = standardConfig
-        {scDockerizedLigoVersion = Just dockerLigoVersion}
 
   testWithApplication (pure (mkApp standardConfig)) $ \standardPort ->
-    testWithApplication (pure (mkApp dockerizedConfig)) $ \dockerizedPort ->
       defaultMain $ testGroup "LIGO Web IDE backend tests"
-        [ runReader (test_backend "Standard LIGO") standardPort
-        , runReader (test_backend "Dockerized LIGO") dockerizedPort
-        ]
+        [ runReader (test_backend "Standard LIGO") standardPort]
