@@ -71,10 +71,67 @@ let main source syntax =
     "<failed>"
 
 
+let test code syntax =
+  let syntax_v =
+    match
+      Syntax.of_ext_opt ~support_pascaligo:Default_options.deprecated (Some syntax)
+    with
+    | Some v -> v
+    | None -> failwith ("Invalid syntax " ^ syntax)
+  in
+  let raw_options =
+    Raw_options.make
+      ~syntax
+      ~steps:1000000
+      ~disable_michelson_typechecking:true
+      ~deprecated:false
+      ~warn_unused_rec:true
+      ~cli_expr_inj:None
+      ~test:true
+      ()
+  in
+  let value_format, f =
+  Api.Run.test raw_options (Build.Source_input.Raw { id = "source_of_text" ^ Syntax.to_ext syntax_v; code })
+  in
+  let result = Simple_utils.Trace.to_stdlib_result f in
+  let format =
+    Simple_utils.Display.bind_format value_format Main_errors.Formatter.error_format
+  in
+  let value, _analytics =
+    match result with
+    | Ok ((v, analytics), _w) -> Ok v, analytics
+    | Error (e, _w) -> Error e, []
+  in
+  let display_format = Simple_utils.Display.human_readable in
+  let formatted_result =
+    Ligo_api.Api_helpers.toplevel
+      ~warning_as_error:false
+      ~display_format
+      ~no_colour:false
+      (Displayable { value; format })
+      result
+  in
+  match formatted_result with
+  | Ok (a, b) ->
+    print_endline a;
+    print_endline b;
+    a
+  | Error (a, b) ->
+    print_endline "error";
+    print_endline a;
+    print_endline b;
+    "<failed>"
+
 let _ =
   Js.export
     "ligo"
     (object%js
+       method test code syntax =
+         let code = Js.to_string code in
+         let syntax = Js.to_string syntax in
+         let michelson = test code syntax in
+         Js.string michelson
+
        method compile code syntax =
          let code = Js.to_string code in
          let syntax = Js.to_string syntax in

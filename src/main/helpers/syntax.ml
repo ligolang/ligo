@@ -14,11 +14,21 @@ let file_name_to_variant ~raise ~support_pascaligo sf : t =
   | _ -> raise.error (main_invalid_extension sf)
 
 
+(* For some reason, likely a bug in Js_of_ocaml, pattern matching fails
+   when matched against ("mligo" | ".mligo") and needs to be explicitly written as
+   | "mligo" -> ...
+   | ".mligo" -> ...
+ *)
 let of_ext_opt ~support_pascaligo = function
   | None -> None
-  | Some ("mligo" | ".mligo") -> Some CameLIGO
-  | Some ("jsligo" | ".jsligo") -> Some JsLIGO
-  | Some ("ligo" | ".ligo" | "pligo" | ".pligo") when support_pascaligo -> Some PascaLIGO
+  | Some "mligo" -> Some CameLIGO
+  | Some ".mligo" -> Some CameLIGO
+  | Some "jsligo" -> Some JsLIGO
+  | Some ".jsligo" -> Some JsLIGO
+  | Some "ligo" when support_pascaligo -> Some PascaLIGO
+  | Some ".ligo" when support_pascaligo -> Some PascaLIGO
+  | Some "pligo" when support_pascaligo -> Some PascaLIGO
+  | Some ".pligo" when support_pascaligo -> Some PascaLIGO
   | Some _ -> None
 
 

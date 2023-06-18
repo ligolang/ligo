@@ -353,12 +353,17 @@ let compile_contract_ast_single ~raise ~options ~tezos_context main views =
       in
       michelsons
   in
+  let disable_typecheck =
+    match Sys.backend_type with
+    | Sys.Other "js_of_ocaml" -> true
+    | _ -> false
+  in
   let contract =
     Ligo_compile.Of_michelson.build_contract
       ~raise
       ~has_env_comments:false
       ~protocol_version:options.middle_end.protocol_version
-      ~disable_typecheck:false
+      ~disable_typecheck
       ~tezos_context
       main_michelson
       views

@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nFixes testing framework in `ligo.js`\\n\\n"
+merge_request: '2470'
+title: "Fix Testing Framework in the JSOO build"
+type: fixed
+            

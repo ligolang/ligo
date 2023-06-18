@@ -61,7 +61,11 @@ run-vscode: install-vscode
 	code
 
 _build/default/src/bin/js_main.bc.js: ./src/bin/js_main.ml ./src/bin/dune
+	patch -d vendors/tezos-ligo -p1 < ./0001-Nairobi-JSOO-Gas-free.patch
+	patch -d vendors/tezos-ligo -p1 < ./0002-JSOO-Use-lib_hacl-compatible-with-hacl-star-0.4.1.patch
 	opam exec -- dune build $(<:.ml=.bc.js)
+	patch -d vendors/tezos-ligo -R -p1 < 0001-Nairobi-JSOO-Gas-free.patch
+	patch -d vendors/tezos-ligo -R -p1 < 0002-JSOO-Use-lib_hacl-compatible-with-hacl-star-0.4.1.patch
 
 
 .PHONY: build-demo-webide demo-webide-start

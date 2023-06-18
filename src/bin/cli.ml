@@ -1300,7 +1300,7 @@ let test =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Run.test raw_options source_file
+    @@ Api.Run.test raw_options (Build.Source_input.From_file source_file)
   in
   let summary = "test a contract with the LIGO test framework." in
   let readme () =

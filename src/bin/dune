@@ -114,6 +114,8 @@
  (modules runligo)
  (package ligo))
 
+;; Make sure the vendored Tezos is gas free to build testing
+;; framework for browser
 (executable
  (name js_main)
  (ocamlc_flags -g)
