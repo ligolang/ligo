@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added an ability to configure the execution environment in the debugger. Now the user can specify self-address, the balance of the contract, etc. For more information see `README.md`.\\n\\n\\n"
+merge_request: '2663'
+title: "[#1840] Support providing custom execution environment"
+type: added
+            

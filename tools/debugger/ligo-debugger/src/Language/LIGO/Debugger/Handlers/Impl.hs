@@ -5,6 +5,7 @@ module Language.LIGO.Debugger.Handlers.Impl
     -- * Helpers
   , initDebuggerState
   , convertMichelsonValuesToLigo
+  , initContractEnv
   ) where
 
 import Prelude hiding (try)
@@ -18,6 +19,7 @@ import Data.Char (toLower)
 import Data.Default (def)
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (demote)
+import Data.Time.Clock.POSIX (getPOSIXTime)
 import Fmt (Builder, blockListF, pretty)
 import GHC.Conc (unsafeIOToSTM)
 import System.FilePath (takeFileName, (<.>), (</>))
@@ -45,23 +47,26 @@ import Morley.Debugger.DAP.Types
   DAPSpecificEvent (InvalidatedEvent, OutputEvent, StoppedEvent, TerminatedEvent),
   DAPSpecificResponse (..), HandlerEnv (..), HasSpecificMessages (..), RIO, RequestBase (..),
   RioContext (..), ShouldStop (..), StopEventDesc (..), StoppedReason (..), dsDebuggerState,
-  dsVariables, pushMessage)
+  dsVariables, pushMessage, unMichelsonJson)
 import Morley.Debugger.Protocol.DAP (ScopesRequestArguments (frameIdScopesRequestArguments))
 import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonFailedWith), MichelsonFailureWithStack (mfwsErrorSrcPos),
-  RemainingSteps (RemainingSteps), ceContracts, ceMaxSteps, mfwsFailed)
+  (ContractEnv' (..), MichelsonFailed (MichelsonFailedWith),
+  MichelsonFailureWithStack (mfwsErrorSrcPos), RemainingSteps (RemainingSteps), ceContracts,
+  ceMaxSteps, mfwsFailed)
 import Morley.Michelson.Parser.Types (MichelsonSource)
 import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
-import Morley.Michelson.Runtime (ContractState (..))
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummyMaxSteps, dummySelf)
+import Morley.Michelson.Runtime (ContractState (..), mkVotingPowers)
+import Morley.Michelson.Runtime.Dummy (dummyMaxSteps)
 import Morley.Michelson.Typed
   (Constrained (SomeValue), Contract, Contract' (..), ContractCode' (unContractCode),
   SomeContract (..))
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
-import Morley.Tezos.Core (tz)
+import Morley.Tezos.Address (Constrained (Constrained), ta)
+import Morley.Tezos.Core (Timestamp (Timestamp), dummyChainId, tz)
+import Morley.Tezos.Crypto (parseHash)
 
 import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI
@@ -840,6 +845,9 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
 
   lambdaLocs <- getLambdaLocs
 
+  -- We're adding our own contract in order to use
+  -- @{ SELF_ADDRESS; CONTRACT }@ replacement
+  -- (we need to have this contract state to use @CONTRACT@ instruction).
   let contractState = ContractState
         { csBalance = [tz|0u|]
         , csContract = contract
@@ -855,7 +863,11 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   maxStepsMb <- getMaxStepsMb
   entrypointType <- getEntrypointType
 
-  let getContractState addr = pure $ contractState <$ guard (addr == dummySelf)
+  contractEnv <-
+    initContractEnv
+      contractState
+      (contractEnvLigoLaunchRequestArguments ?: def)
+      (fromMaybe dummyMaxSteps maxStepsMb)
 
   his <-
     withRunInIO \unlifter ->
@@ -866,13 +878,7 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
         epc
         param
         stor
-        -- We're adding our own contract in order to use
-        -- @{ SELF_ADDRESS; CONTRACT }@ replacement
-        -- (we need to have this contract state to use @CONTRACT@ instruction).
-        (dummyContractEnv @IO)
-          { ceContracts = getContractState
-          , ceMaxSteps = fromMaybe dummyMaxSteps maxStepsMb
-          }
+        contractEnv
         parsedContracts
         (unlifter . logMessage)
         lambdaLocs
@@ -882,6 +888,49 @@ initDebuggerSession LigoLaunchRequestArguments {..} = do
   let ds = initDebuggerState his allLocs
 
   pure $ DAPSessionState ds mempty mempty
+
+initContractEnv
+  :: (MonadIO m)
+  => ContractState -> LigoContractEnvArguments -> RemainingSteps -> m (ContractEnv IO)
+initContractEnv selfState LigoContractEnvArguments{..} ceMaxSteps = do
+  ceNow <- liftIO $
+    maybe (Timestamp <$> getPOSIXTime) (pure . unMichelsonJson)
+    nowLigoContractEnvArguments
+
+  let ceBalance = maybe [tz|1|] unMichelsonJson balanceLigoContractEnvArguments
+  let ceAmount = maybe [tz|0|] unMichelsonJson amountLigoContractEnvArguments
+
+  let ceSelf =
+        selfLigoContractEnvArguments
+        ?: [ta|KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b|]
+  let ceSource =
+        sourceLigoContractEnvArguments
+        ?: Constrained [ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|]
+  let ceSender =
+        senderLigoContractEnvArguments
+        ?: Constrained [ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|]
+
+  let ceChainId = maybe dummyChainId unMichelsonJson chainIdLigoContractEnvArguments
+  let ceLevel = maybe 10000 unMichelsonJson levelLigoContractEnvArguments
+
+  ceVotingPowers <- case votingPowersLigoContractEnvArguments of
+    Nothing -> pure $ mkVotingPowers
+      [ (unsafe $ parseHash "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr", 100)
+      ]
+    Just spec -> case spec of
+      SimpleVotingPowers (SimpleVotingPowersInfo vps) ->
+        pure $ mkVotingPowers $
+          bimap unMichelsonJson unMichelsonJson <$> toPairs vps
+
+  -- ↑ It's good to keep the default addresses in match with default
+  -- custom configuration in package.json.
+
+  let ceErrorSrcPos = def
+  let ceMinBlockTime = def
+  let ceContracts addr = pure $ selfState <$ guard (addr == ceSelf)
+
+  let ceOperationHash = Nothing
+  pure ContractEnv{ceMetaWrapper = id, ..}
 
 initDebuggerState :: InterpretHistory is -> Set SourceLocation -> DebuggerState is
 initDebuggerState his allLocs = DebuggerState
