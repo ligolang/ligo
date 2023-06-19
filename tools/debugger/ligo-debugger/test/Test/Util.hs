@@ -60,6 +60,7 @@ module Test.Util
   ) where
 
 import Control.Lens (each)
+import Data.Default (def)
 import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
@@ -80,10 +81,12 @@ import Morley.Debugger.Core.Navigate
   (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
   HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
   SourceLocation' (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
-import Morley.Michelson.Interpret (ContractEnv' (ceMaxSteps), RemainingSteps)
-import Morley.Michelson.Runtime.Dummy (dummyContractEnv, dummyMaxSteps)
+import Morley.Michelson.Interpret (RemainingSteps)
+import Morley.Michelson.Runtime (ContractState (..))
+import Morley.Michelson.Runtime.Dummy (dummyMaxSteps)
 import Morley.Michelson.Typed (SingI (sing))
 import Morley.Michelson.Typed qualified as T
+import Morley.Tezos.Core (tz)
 import Morley.Util.Typeable
 
 import Duplo hiding (int, (<.>))
@@ -283,6 +286,15 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
   let statementLocs = getStatementLocs (getAllSourceLocations exprLocs) parsedContracts
   let allLocs = getInterestingSourceLocations parsedContracts exprLocs <> statementLocs
 
+  let contractState = ContractState
+        { csBalance = [tz|0u|]
+        , csContract = contract
+        , csStorage = T.toVal st
+        , csDelegate = Nothing
+        }
+
+  contractEnv <- initContractEnv contractState def (maxStepsMb ?: dummyMaxSteps)
+
   his <-
     collectInterpretSnapshots
       file
@@ -291,7 +303,7 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
       T.unsafeEpcCallRoot
       (T.toVal param)
       (T.toVal st)
-      dummyContractEnv { ceMaxSteps = fromMaybe dummyMaxSteps maxStepsMb }
+      contractEnv
       parsedContracts
       logger
       lambdaLocs

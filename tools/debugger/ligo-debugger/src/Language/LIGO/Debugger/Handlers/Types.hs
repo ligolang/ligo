@@ -1,7 +1,12 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 -- | Types related to DAP.
 module Language.LIGO.Debugger.Handlers.Types
   ( LigoLaunchRequest (..)
   , LigoLaunchRequestArguments (..)
+  , LigoContractEnvArguments (..)
+  , LigoVotingPowers (..)
+  , SimpleVotingPowersInfo (..)
   , LigoInitializeLoggerRequest (..)
   , LigoInitializeLoggerRequestArguments (..)
   , LigoSetLigoConfigRequest (..)
@@ -33,8 +38,12 @@ import Fmt (Buildable (..), GenericBuildable (..))
 
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.TH (deriveSum, jsonfyMany)
-import Morley.Debugger.DAP.Types ()
+import Morley.Debugger.DAP.Types (MichelsonJson (MichelsonJson))
 import Morley.Michelson.Untyped qualified as U
+import Morley.Tezos.Address (ContractAddress, L1Address)
+import Morley.Tezos.Core (ChainId, Mutez, Timestamp)
+import Morley.Tezos.Crypto (KeyHash)
+import Data.Default (Default (def))
 
 data LigoLaunchRequest = LigoLaunchRequest
   { seqLigoLaunchRequest :: Int
@@ -61,8 +70,43 @@ data LigoLaunchRequestArguments = LigoLaunchRequestArguments
 
     -- | Parameter value for contract.
   , parameterLigoLaunchRequestArguments :: Maybe String
+
+    -- | Custom contract environment
+  , contractEnvLigoLaunchRequestArguments :: Maybe LigoContractEnvArguments
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable LigoLaunchRequestArguments)
+
+data LigoContractEnvArguments = LigoContractEnvArguments
+  { nowLigoContractEnvArguments :: Maybe $ MichelsonJson Timestamp
+  , balanceLigoContractEnvArguments :: Maybe $ MichelsonJson Mutez
+  , amountLigoContractEnvArguments :: Maybe $ MichelsonJson Mutez
+  , selfLigoContractEnvArguments :: Maybe ContractAddress
+  , sourceLigoContractEnvArguments :: Maybe L1Address
+  , senderLigoContractEnvArguments :: Maybe L1Address
+  , chainIdLigoContractEnvArguments :: Maybe $ MichelsonJson ChainId
+  , levelLigoContractEnvArguments :: Maybe $ MichelsonJson Natural
+  , votingPowersLigoContractEnvArguments :: Maybe LigoVotingPowers
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable LigoContractEnvArguments)
+
+instance Default LigoContractEnvArguments where
+  def = LigoContractEnvArguments
+    Nothing Nothing Nothing Nothing
+    Nothing Nothing Nothing Nothing Nothing
+
+data LigoVotingPowers
+  = SimpleVotingPowers SimpleVotingPowersInfo
+  deriving stock (Eq, Show, Generic)
+  deriving Buildable via (GenericBuildable LigoVotingPowers)
+
+data SimpleVotingPowersInfo = SimpleVotingPowersInfo
+  { contentsSimpleVotingPowersInfo :: Map (MichelsonJson KeyHash) (MichelsonJson Natural)
+  } deriving stock (Eq, Show, Generic)
+    deriving Buildable via (GenericBuildable SimpleVotingPowersInfo)
+
+-- TODO: move it to morley-debugger
+instance Buildable a => Buildable (MichelsonJson a) where
+  build (MichelsonJson v) = build v
 
 data LigoInitializeLoggerRequest = LigoInitializeLoggerRequest
   { seqLigoInitializeLoggerRequest :: Int
@@ -260,8 +304,10 @@ data LigoSpecificResponse
 deriveSum
   [ (''LigoSpecificRequest, "Request", "command", [])
   , (''LigoSpecificResponse, "Response", "command", [])
+  , (''LigoVotingPowers, "VotingPowers", "kind", [])
   ]
 jsonfyMany
   [ ''LigoLaunchRequest
   , ''LigoLaunchRequestArguments
+  , ''LigoContractEnvArguments
   ]

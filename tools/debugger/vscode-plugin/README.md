@@ -37,13 +37,13 @@ What is supported as part of MVP:
 * All stepping commands (including `Step Back`) with statement and expression granularities;
 * Display of variables, including records, constructors, lists, and combinations of them;
 * Stack frames display;
-* Breakpoints (but not guaranteed to work properly in all the cases at the moment).
+* Breakpoints (but not guaranteed to work properly in all the cases at the moment);
+* Providing custom environment (`Tezos.get_now`, `Tezos.get_balance`, etc).
 
 Bits of functionality that will be added very soon:
 * Contracts related functionality:
   - [ ] Running contract with embedded Michelson.
   - [ ] Running contract with other contracts origination.
-  - [ ] Providing custom environment (`NOW`, `BALANCE`, e.t.c).
   - [ ] Running contracts with global constants.
   - [ ] Running corner cases of contracts with tickets (the current support is partial).
 * Others:
@@ -122,6 +122,39 @@ With such a contract, you can specify in `launch.json`:
     "parameter": 5
 }
 ```
+
+### Passing a custom environment
+The debugger supports providing a custom environment for your contracts. You can customize it in the `contractEnv` field. An example of configuration:
+```json
+...
+"contractEnv": {
+  "now": "2020-01-01T00:00:00Z",
+  "level": "10000",
+  "sender": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+  "source": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+  "self": "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b",
+  "amount": "0",
+  "balance": "1000000",
+  "chainId": "NetXH12Aer3be93",
+  "votingPowers": {
+    "kind": "simple",
+    "contents": {
+      "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "100"
+    }
+  }
+}
+...
+```
+All these fields are optional. Let's describe what they mean:
+1. `now`. The value returned by `Tezos.get_now()`. Default: current system time.
+2. `level`. The value returned by `Tezos.get_level()`. Default: `"10000"`.
+3. `sender`. The value returned by `Tezos.get_sender()`. Default: `"tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"`.
+4. `source`. The value returned by `Tezos.get_source()`. Default: `"tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"`.
+5. `self`. The value returned by `Tezos.get_self_address()`. Default: `"KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b"`.
+6. `amount`. The value returned by `Tezos.get_amount()`. Default: `"0"`.
+7. `balance`. The value returned by `Tezos.get_balance()`. Default: `"1000000"`.
+8. `chainId`. The value returned by `Tezos.get_chain_id()`. Default: `"NetXH12Aer3be93"`.
+9. `votingPowers`. At this moment only the `simple` kind is supported. In the `contents` field you should specify key hashes and their voting powers. Default: `{ "kind": "simple", "contents": { "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "100" } }`.
 
 ## Stepping
 
