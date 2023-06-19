@@ -5,6 +5,7 @@ import TabItem from "@theme/TabItem";
 import { useColorMode } from "@docusaurus/theme-common";
 import defaultTheme from "prism-react-renderer/themes/palenight";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import styles from './styles.module.css';
 
 import CAMELIGO_EXAMPLE from '!!raw-loader!./cameligo.mligo';
 import JSLIGO_EXAMPLE from '!!raw-loader!./jsligo.jsligo';
@@ -23,9 +24,11 @@ function CodeExamples(props) {
   return (
     <Tabs
       defaultValue="jsligo"
+      attributes={{className: styles.tabPannel}}
       values={[
         { label: "JsLIGO", value: "jsligo" },
-        { label: "CameLIGO", value: "cameligo" }
+        { label: "CameLIGO", value: "cameligo" },
+        { label: "Try it", value: "try" }
       ]}
     >
       <TabItem value="jsligo">
@@ -69,7 +72,18 @@ function CodeExamples(props) {
           )}
         </Highlight>
       </TabItem>
-
+      <TabItem value="try">
+        <div id="webide">
+          <ul>
+            <li className="primary">
+              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/168a39632c555e70098ac6236c7a20a8">JsLIGO on Web IDE</a>
+            </li>
+            <li className="secondary">
+              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/fd1ed87670420bfaa6438b2078f8de6c">CameLIGO on Web IDE</a>
+            </li>
+          </ul>
+        </div>
+      </TabItem>
     </Tabs >
   );
 }
