@@ -57,11 +57,9 @@ const sidebars = {
         ],
       },
       "advanced/entrypoints-contracts",
-      "contract/views",
-      "contract/events",
-      "contract/tickets",
+      //TODO "contract/views",
+      // "contract/events",
       "tutorials/start-a-project-from-a-template",
-      "reference/current-reference"
     ],
     "Testing and Debugging": [
       "advanced/testing",
@@ -231,7 +229,8 @@ const sidebars = {
       "reference/option-reference",
       "reference/current-reference",
       "reference/test",
-      "reference/proxy-ticket-reference"
+      "reference/proxy-ticket-reference",
+      "contract/tickets"
     ],
     "Changelog": [
       "intro/changelog",
@@ -240,7 +239,8 @@ const sidebars = {
       "protocol/jakarta",
       "protocol/kathmandu",
       "protocol/lima",
-      "protocol/mumbai"
+      "protocol/mumbai",
+      "protocol/nairobi"
     ],
   },
   "faq": {

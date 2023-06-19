@@ -42,11 +42,7 @@
         ]
       },
       "advanced/entrypoints-contracts",
-      "contract/views",
-      "contract/events",
-      "contract/tickets",
-      "tutorials/start-a-project-from-a-template",
-      "reference/current-reference"
+      "tutorials/start-a-project-from-a-template"
     ],
     "Testing and Debugging": [
       "advanced/testing",
@@ -214,7 +210,8 @@
       "reference/option-reference",
       "reference/current-reference",
       "reference/test",
-      "reference/proxy-ticket-reference"
+      "reference/proxy-ticket-reference",
+      "contract/tickets"
     ],
     "Changelog": [
       "intro/changelog",
