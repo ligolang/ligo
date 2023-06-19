@@ -7,6 +7,10 @@ let fold : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc) -> 'acc =
  fun record ~init ~f -> Map.fold ~f:(fun ~key:_ ~data:a acc -> f acc a) record ~init
 
 
+let foldi : 'a t -> init:'acc -> f:(Label.t -> 'acc -> 'a -> 'acc) -> 'acc =
+ fun record ~init ~f -> Map.fold ~f:(fun ~key ~data:a acc -> f key acc a) record ~init
+
+
 let fold_map : 'a t -> init:'acc -> f:('acc -> 'a -> 'acc * 'b) -> 'acc * 'b t =
  fun record ~init ~f ->
   Label.Map.fold_map ~f:(fun ~key:_ ~data:a acc -> f acc a) ~init record

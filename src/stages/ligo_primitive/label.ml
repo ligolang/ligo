@@ -11,6 +11,9 @@ module T = struct
     | Some _, None -> 1
     | None, None -> String.compare l1 l2
     | Some i1, Some i2 -> Int.compare i1 i2
+
+
+  let join (Label l1) (Label l2) = Label (l1 ^ l2)
 end
 
 include T

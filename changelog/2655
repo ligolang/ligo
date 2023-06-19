@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nWe implement a new algorithm for the pattern-matching compiler which reduces the size of generated code in some cases.\\n\\nIn some cases we observed upto 80% reduction in generated code.\\n\\n#### Example\\n\\n\\n```ocaml\\ntype t = A | B\\n\\ntype p = (t * t * t * t)\\n\\nlet main (p : p) (_ : int) : operation list * int = \\n  [], (match p with\\n    A,A,A,A -> 1\\n  | B,B,B,B -> 1\\n  | _,A,A,A -> 2\\n  | _,B,B,B -> 2\\n  | _,_,A,A -> 3\\n  | _,_,B,B -> 3\\n  | _,_,_,A -> 4\\n  | _,_,_,B -> 4)\\n\\n```\\n\\n#### Before\\n\\n\\n```bash\\n$ ligo.67 info measure-contract x.mligo \\n3920 bytes\\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo info measure-contract x.mligo \\n468 bytes\\n\\n```\\n\\n"
+merge_request: '2655'
+title: "Perf: Implement a new algorithm for pattern matching compilation to reduce code size"
+type: performance
+            
