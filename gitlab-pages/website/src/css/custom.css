@@ -558,6 +558,52 @@ a:hover {
   margin-top: 60px;
 }
 
+#homePage #intro #webide ul {
+  cursor: pointer;
+  font-weight: normal;
+  padding: 0px;
+  display: inline-block;
+}
+
+#homePage #intro #webide ul li {
+  margin-left: 1.5em;
+  margin-right: 4.5em;
+  margin-top: 0.5em;
+  text-align: center;
+  cursor: pointer;
+  font-size: 1.4em;
+  border: 2px solid;
+  padding: 25px 50px;
+}
+
+#homePage #intro #webide ul li a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#homePage #intro #webide ul li.primary:hover {
+  background-color: var(--ifm-color-primary);
+  border-left: 4px solid var(--ifm-color-primary);
+}
+
+#homePage #intro #webide ul li.primary:hover a {
+  color: white;
+}
+
+#homePage #intro #webide ul li.secondary:hover {
+  background-color: var(--secondary-brand-color);
+}
+
+#homePage #intro #webide ul li.secondary:hover a {
+  color: white;
+  background-color: var(--secondary-brand-color);
+}
+
+#homePage #intro #webide ul li.secondary a {
+  color: var(--secondary-brand-color);
+}
+
 #homePage #intro #callToAction ul {
   padding: 0;
   margin: 0;
@@ -567,7 +613,7 @@ a:hover {
 #homePage #intro #callToAction ul li a {
   cursor: pointer;
   font-weight: normal;
-  font-size: 2em;
+  font-size: 1.5em;
   border-left: 4px solid;
   padding: 25px 50px;
 }
