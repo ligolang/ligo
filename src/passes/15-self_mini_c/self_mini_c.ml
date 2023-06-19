@@ -157,6 +157,17 @@ let inline_lets : bool ref -> expression -> expression =
   map_expression (inline_let changed)
 
 
+let remove_unused_e_let_tuples : bool ref -> expression -> expression =
+  fun changed ->
+  map_expression (fun e -> 
+    match e.content with
+    | E_let_tuple (_, (bs, e2)) ->
+      let fvs = get_fv [] e2 in
+      if List.for_all bs ~f:(fun (v,_) -> not @@ Free_variables.mem fvs v) 
+      then (changed := true ; e2)
+      else e
+    | _ -> e)
+
 (* Let "beta" mean transforming the code:
 
      (\x. e1) e2
@@ -321,6 +332,7 @@ let rec all_expression ~raise (options : Compiler_options.t) : expression -> exp
     let e = betas changed e in
     let e = etas changed e in
     let e = not_comparable ~raise e in
+    let e = remove_unused_e_let_tuples changed e in
     if !changed
     then all_expression ~raise options e
     else e

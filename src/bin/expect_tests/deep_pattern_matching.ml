@@ -571,7 +571,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_T.mligo" ];
   [%expect {|
-    3920 bytes |}]
+    468 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_V.mligo" ];
@@ -666,5 +666,9 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "info" ; "measure-contract" ; good_test "bug_report.mligo"] ;
-  [%expect {| 2801 bytes |}]
+  run_ligo_good [ "info"; "measure-contract"; good_test "bug_report.mligo" ];
+  [%expect {| 468 bytes |}]
+
+let%expect_test _ =
+  run_ligo_good [ "info"; "measure-contract"; good_test "mini_shifumi.mligo" ];
+  [%expect {| 368 bytes |}]
