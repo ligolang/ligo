@@ -14,7 +14,7 @@
     ],
     "keywords": [],
     "engines": {
-        "vscode": "^1.57.0"
+        "vscode": "^1.78.0"
     },
     "activationEvents": [
         "onLanguage:ligo",
@@ -214,7 +214,8 @@
         "package": "vsce package",
         "lint": "eslint client --ext .ts",
         "build-tests": "tsc -p ./test/",
-        "test": "npm run build-tests && node client/out/test/driver.js"
+        "test": "npm run build-tests && node client/out/test/driver.js",
+        "extest": "npm run build-tests && extest setup-and-run --yarn --offline client/out/test/vsc-test/commands.test.js"
     },
     "dependencies": {
         "@airgap/beacon-sdk": "^3.0.0",
@@ -227,20 +228,25 @@
         "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
-        "@types/mocha": "^9.0.0",
-        "@types/node": "^15.12.2",
-        "@types/vscode": "^1.57.0",
+        "@types/chai": "^4.3.5",
+        "@types/copy-paste": "^1.1.30",
+        "@types/mocha": "^10.0.1",
+        "@types/node": "^20.1.0",
+        "@types/vscode": "^1.78.0",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
-        "@vscode/test-electron": "^1.6.1",
+        "@vscode/test-electron": "^2.3.0",
+        "@vscode/vsce": "^2.19.0",
+        "chai": "^4.3.7",
+        "copy-paste": "^1.3.0",
         "esbuild": "^0.13.4",
         "eslint": "^7.28.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "eslint-plugin-import": "^2.23.4",
         "glob": "^7.2.0",
-        "mocha": "^9.1.3",
+        "mocha": "^10.2.0",
         "ts-command-line-args": "^2.1.0",
-        "typescript": "^4.3.2",
-        "vsce": "^2.7.0"
+        "typescript": "^5.0.4",
+        "vscode-extension-tester": "^5.5.3"
     }
 }

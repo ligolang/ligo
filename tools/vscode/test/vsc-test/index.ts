@@ -34,14 +34,22 @@ export function run(): Promise<void> {
   const testsRoot = path.resolve(__dirname, '..')
 
   return new Promise((c, e) => {
-    glob('**/**.test.js', { cwd: testsRoot }, (err, files) => {
+    glob('**/**.test.js', { cwd: testsRoot }, (err: any, files: string[]) => {
+
       if (err) {
         e(err)
         return
       }
 
       // Add files to the test suite
-      files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)))
+      files.forEach((f) => {
+        // TODO: eventually rewrite every test with vscode-extension-tester and
+        // change package.json to only use extest. This file can be deleted
+        // after that.
+        if (path.basename(f) !== 'commands.test.js') {
+          mocha.addFile(path.resolve(testsRoot, f))
+        }
+      })
 
       try {
         // Run the mocha test
