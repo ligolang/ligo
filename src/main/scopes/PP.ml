@@ -40,6 +40,12 @@ let rec definitions : Format.formatter -> def list -> unit =
         PP_helpers.(list_sep Location.pp (tag " ,@ "))
         locs
   in
+  let pp_def_type ppf = function
+    | Local -> Format.fprintf ppf "Local"
+    | Global -> Format.fprintf ppf "Global"
+    | Parameter -> Format.fprintf ppf "Parameter"
+    | Module_field -> Format.fprintf ppf "Module_field"
+  in
   let pp_content ppf = function
     | Variable v ->
       let typ ppf t =
@@ -48,7 +54,17 @@ let rec definitions : Format.formatter -> def list -> unit =
         | Resolved t -> Format.fprintf ppf "resolved: %a" Ast_typed.PP.type_expression t
         | Unresolved -> Format.fprintf ppf "unresolved"
       in
-      Format.fprintf ppf "|%a|@ %a" typ v.t refs v.references
+      Format.fprintf
+        ppf
+        "|%a|@ %a @ Mod Path = %a @ Def Type = %a"
+        typ
+        v.t
+        refs
+        v.references
+        (PP_helpers.list String.pp)
+        v.mod_path
+        pp_def_type
+        v.def_type
     | Type t ->
       Format.fprintf
         ppf

@@ -145,7 +145,7 @@ let rec defs_of_expr : AST.expression -> string list -> def list -> def list =
     let mod_case = mod_case_of_mod_expr ~defs_of_decls rhs inner_mod_path in
     defs_of_mvar ~mod_case ~bindee:rhs module_binder Local inner_mod_path
     @@ self let_result mod_path acc
-  | E_raw_code { language; code } -> []
+  | E_raw_code { language = _; code = _ } -> acc
   (* Variant *)
   | E_constructor { constructor; element } -> self element mod_path acc
   | E_matching { matchee; cases } ->

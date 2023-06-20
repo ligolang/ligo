@@ -322,27 +322,7 @@
       "type": "object",
       "properties": {
         "type_content": { "$ref": "#/$defs/type_content" },
-        "sugar": {
-          "type": "array",
-          "anyOf": [
-            { "prefixItems": [{ "const": "None" }, { "const": null }],
-              "minItems": 2, "maxItems": 2
-            },
-            { "prefixItems": [
-                { "const": "Some" },
-                { "type": "object",
-                  "properties": {
-                    "type_content": { "$ref": "#/$defs/type_content" },
-                    "location":     { "$ref": "#/$defs/location" }
-                  }
-                }
-              ],
-              "minItems": 2, "maxItems": 2
-            }
-          ]
-        },
         "location": { "$ref": "#/$defs/location" },
-        "type_meta": { "$ref": "#/$defs/type_expression" },
         "orig_var": { "$ref": "#/$defs/location" }
       },
       "required": ["type_content", "location"],

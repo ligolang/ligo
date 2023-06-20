@@ -56,6 +56,15 @@ let test_cases =
         ; "contracts/lsp/included.mligo", Range.Construct.interval 0 4 5
         ]
     }
+  ; { test_name = "references in a file with michelson injections"
+    ; test_file = "contracts/lsp/references_michelson_inj.mligo"
+    ; reference = Position.create ~line:4 ~character:8
+    ; references =
+        [ "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 0 4 5
+        ; "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 4 8 9
+        ; "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 4 11 12
+        ]
+    }
   ]
 
 

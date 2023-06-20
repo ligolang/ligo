@@ -31,28 +31,38 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-11 ,
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-11
+    Mod Path =
+    Def Type = Global
     (a#8:4-5 -> a)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 8, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, character 2 to line 10, character 3
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Global
     (i#9:6-7 -> i)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 9, characters 10-15
     Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 10, characters 2-3
+    Mod Path =
+    Def Type = Local
     (b#12:4-5 -> b)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 12, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, character 2 to line 14, character 3
     Content: |unresolved|
     references: []
+    Mod Path =
+    Def Type = Global
     (j#13:6-7 -> j)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15
     Content: |unresolved|
     references:
       File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 14, characters 2-3
+    Mod Path =
+    Def Type = Local
     Type definitions:
     (foo_record#1:5-15 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 5-15
@@ -93,32 +103,44 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, character 2 to line 5, character 6
     Content: |core: unit -> int|
     references: []
+    Mod Path =
+    Def Type = Global
     (u#1:16-17 -> u)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 1, characters 16-17
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, character 2 to line 5, character 6
     Content: |core: unit|
     references: []
+    Mod Path =
+    Def Type = Parameter
     (y#2:6-7 -> y)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, characters 10-12
     Content: |unresolved|
     references: []
+    Mod Path =
+    Def Type = Local
     (foo#4:6-9 -> foo)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 6-9
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
     Content: |core: toto -> toto|
     references: []
+    Mod Path =
+    Def Type = Local
     (b#4:11-12 -> b)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
     Content: |core: toto|
     references:
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
+    Mod Path =
+    Def Type = Parameter
     (x#7:4-5 -> x)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 7, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 7, characters 8-10
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     (toto#3:7-11 -> toto)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 3, characters 7-11
@@ -183,6 +205,8 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 14-21
     Content: |core: int|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     Errors:
@@ -223,24 +247,32 @@ let%expect_test _ =
     Content: |resolved: int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 11, characters 10-13
+    Mod Path =
+    Def Type = Global
     (x#6:9-10 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 9-10
     Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
     Content: |core: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
+    Mod Path =
+    Def Type = Parameter
     (bar#7:4-7 -> bar)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 4-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
     Content: |resolved: int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 12, characters 10-13
+    Mod Path =
+    Def Type = Global
     (x#7:9-10 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
     Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
     Content: |core: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
+    Mod Path =
+    Def Type = Parameter
     (main#9:4-8 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-8
     Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
@@ -249,6 +281,8 @@ let%expect_test _ =
     ( list (operation) *
       record[x -> int , y -> int({ name: x }, { name: y })] )|
     references: []
+    Mod Path =
+    Def Type = Global
     (s#9:12-13 -> s)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 12-13
     Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
@@ -257,23 +291,31 @@ let%expect_test _ =
       File "../../test/contracts/warning_unused.mligo", line 10, characters 10-11 ,
       File "../../test/contracts/warning_unused.mligo", line 12, characters 14-15 ,
       File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
+    Mod Path =
+    Def Type = Local
     (x#10:6-7 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 6-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
     Content: |resolved: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 11, characters 14-15
+    Mod Path =
+    Def Type = Local
     (x#11:6-7 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Local
     (x#12:6-7 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 6-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
     Content: |resolved: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+    Mod Path =
+    Def Type = Local
     Type definitions:
     (storage#1:5-12 -> storage)
     Range: File "../../test/contracts/warning_unused.mligo", line 1, characters 5-12
@@ -315,11 +357,15 @@ let%expect_test _ =
     references:
       File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-10 ,
       File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 12-13
+    Mod Path =
+    Def Type = Global
     (x#2:4-5 -> x)
     Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/warning_duplicate2.mligo", line 2, characters 9-13
     Content: |resolved: ( option (ticket (nat)) * option (ticket (nat)) )|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     Warnings:
@@ -352,6 +398,8 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-21
     Content: |resolved: ( ticket (nat) * ticket (nat) )|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     (Foo#1:7-10 -> Foo)
@@ -365,6 +413,8 @@ let%expect_test _ =
                       references:
                         File "../../test/contracts/warning_duplicate.mligo", line 5, characters 13-14 ,
                         File "../../test/contracts/warning_duplicate.mligo", line 5, characters 20-21
+                      Mod Path = "Foo"
+                      Def Type = Module_field
                       Type definitions:
                       Module definitions:
 
