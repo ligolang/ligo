@@ -383,6 +383,21 @@ update_esy_version:
     paths:
       - esy.json
 
+calculate_nix_SRI:
+  stage: tooling
+  rules:
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null) 
+      when: always
+    - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
+      when: always
+  script: 
+    - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
+    - BINARY_GITLAB_ARTIFACT_URL="https://gitlab.com/ligolang/ligo/-/jobs/$LAST_TAG_JOB_ID/artifacts/raw/ligo"
+    - SRI_LIGO_BINARY_HASH=$(nix --extra-experimental-features nix-command hash to-sri --type sha256 $(nix-prefetch-url --type sha256 --quiet $BINARY_GITLAB_ARTIFACT_URL))
+    - echo "SRI_LIGO_BINARY_HASH=${SRI_LIGO_BINARY_HASH}" >> nixSriLigoBinary.env
+  artifacts:
+    reports:
+      dotenv: nixSriLigoBinary.env
 
 update-repository-status:
   stage: tooling
@@ -410,7 +425,7 @@ update-repository-status:
     - node scripts/manpages/manpages.js ./ligo
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
-    - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION
+    - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION $SRI_LIGO_BINARY_HASH
     - git add tools/webide-new/ligo-webide-backend/Dockerfile esy.json vendors/tezos-ligo HomebrewFormula/ gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
@@ -418,6 +433,7 @@ update-repository-status:
     - job: update_esy_version
       artifacts: true
     - job: docker_extract
+    - job: calculate_nix_SRI
     - job: initialize-ssh
     - job: initialize-git
     - job: update-bottle-reference
