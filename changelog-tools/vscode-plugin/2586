@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed the buttons in the extension not working due to LIGO CLI changes. Updated some of the deploying networks.\\n\\n"
+merge_request: '2586'
+title: "[#1679] Update protocol and buttons in VS Code"
+type: fixed
+            
