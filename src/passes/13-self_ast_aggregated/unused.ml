@@ -1,7 +1,5 @@
 open Ligo_prim
-open Ast_typed
-
-type contract_pass_data = Contract_passes.contract_pass_data
+open Ast_aggregated
 
 (* We go through the Typed AST and maintain a map
    from variables to a boolean indicating if the variable
@@ -70,9 +68,6 @@ let rec defuse_of_expr defuse expr : defuse =
   | E_accessor { struct_; _ } -> defuse_of_expr defuse struct_
   | E_update { struct_; update; _ } ->
     defuse_union (defuse_of_expr defuse struct_) (defuse_of_expr defuse update)
-  | E_mod_in { let_result; rhs; _ } ->
-    defuse_union (defuse_of_module_expr defuse rhs) (defuse_of_expr defuse let_result)
-  | E_module_accessor _ -> defuse, []
   | E_type_inst { forall; _ } -> defuse_of_expr defuse forall
   | E_assign { binder; expression } ->
     defuse_union
@@ -144,21 +139,9 @@ and defuse_of_cases defuse cases =
       defuse, unused_ @ unused)
 
 
-and defuse_of_module_expr defuse (module_expr : module_expr) : defuse =
-  match module_expr.module_content with
-  | M_struct decls ->
-    List.fold_left decls ~init:(defuse, []) ~f:(fun (defuse, unused_) decl ->
-        let defuse, unused = defuse_of_declaration defuse decl in
-        defuse, unused_ @ unused)
-  | M_variable _ | M_module_path _ -> defuse, []
-
-
 and defuse_of_declaration defuse (decl : declaration) : defuse =
   match Location.unwrap decl with
   | D_irrefutable_match { expr; _ } | D_value { expr; _ } -> defuse_of_expr defuse expr
-  | D_type _ -> defuse, []
-  | D_module { module_; module_binder = _; module_attr = _; annotation = _ } ->
-    defuse_of_module_expr defuse module_
 
 
 let defuse_of_declaration defuse decl =
@@ -171,12 +154,12 @@ let unused_declaration ~raise (decl : declaration) =
   let defuse, _ = defuse_neutral in
   let unused = defuse_of_declaration defuse decl in
   let warn_var v =
-    `Self_ast_typed_warning_unused (V.get_location v, Format.asprintf "%a" V.pp v)
+    `Self_ast_aggregated_warning_unused (V.get_location v, Format.asprintf "%a" V.pp v)
   in
   update_annotations @@ List.map ~f:warn_var unused
 
 
 let unused_map_program ~raise : program -> program = function
-  | p ->
+  | (p, e) ->
     let () = List.iter ~f:(unused_declaration ~raise) p in
-    p
+    (p, e)

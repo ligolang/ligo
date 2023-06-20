@@ -28,6 +28,7 @@ type self_ast_aggregated_error =
     Constant.constant' * Ast_aggregated.expression
   | `Self_ast_aggregated_bad_set_param_type of
     Constant.constant' * Ast_aggregated.expression
+  | `Self_ast_aggregated_nested_bigmap of Location.t
   ]
 [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
@@ -180,7 +181,14 @@ let error_ppformat
         snippet_pp
         e.location
         Constant.pp_constant'
-        c)
+        c
+    | `Self_ast_aggregated_nested_bigmap loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid big map nesting.@.A big map cannot be nested inside another \
+         big map. @]"
+        snippet_pp
+        loc)
 
 
 let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
@@ -296,6 +304,13 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
         "Ill-formed \"%a\" expression.@.A list of pair parameters is expected."
         Constant.pp_constant'
         c
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_nested_bigmap location ->
+    let message =
+      Format.sprintf
+        "Invalid big map nesting.@.A big map cannot be nested inside another big map."
     in
     let content = make_content ~message ~location () in
     make ~stage ~content

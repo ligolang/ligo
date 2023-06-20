@@ -185,16 +185,7 @@ let%expect_test _ =
     Content: |resolved: int|
     references: []
     Type definitions:
-    Module definitions:
-    Warnings:
-    File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7:
-      1 | let x = 42
-      2 | let f x = 0
-                ^
-      3 | let g = x
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning. |}]
+    Module definitions: |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -449,13 +440,4 @@ let%expect_test _ =
     Content: |resolved: int|
     references: []
     Type definitions:
-    Module definitions:
-    Warnings:
-    File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12:
-      1 | let m = match (Some 4) with
-      2 |   | Some s_x -> 1
-                   ^^^
-      3 |   | None -> 0
-    :
-    Warning: unused variable "s_x".
-    Hint: replace it by "_s_x" to prevent this warning. |}]
+    Module definitions: |}]

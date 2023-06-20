@@ -257,7 +257,7 @@ let%expect_test _ =
                 ^
       4 |
     :
-    Warning: variable "b" cannot be used more than once.
+    Warning: variable cannot be used more than once.
 
     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 6-7:
       2 |
@@ -265,7 +265,7 @@ let%expect_test _ =
                 ^
       4 |
     :
-    Warning: variable "b" cannot be used more than once.
+    Warning: variable cannot be used more than once.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;
@@ -295,14 +295,14 @@ let%expect_test _ =
                ^
       2 |
     :
-    Warning: variable "b" cannot be used more than once.
+    Warning: variable cannot be used more than once.
 
     File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_tuple.mligo", line 1, characters 5-6:
       1 | let (b, _) = (Option.unopt (Tezos.create_ticket "one" 10n), 1)
                ^
       2 |
     :
-    Warning: variable "b" cannot be used more than once.
+    Warning: variable cannot be used more than once.
     { parameter unit ;
       storage (ticket string) ;
       code { DROP ;

@@ -534,6 +534,7 @@ module Command = struct
           in
           Michelson_backend.build_ast
             ~raise
+            ~options:options.middle_end
             subst_lst
             Immutable
             arg_binder

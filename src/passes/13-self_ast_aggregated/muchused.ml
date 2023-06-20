@@ -1,7 +1,5 @@
 open Ligo_prim
-open Ast_typed
-
-type contract_pass_data = Contract_passes.contract_pass_data
+open Ast_aggregated
 
 module V = Ligo_prim.Value_var
 module M = Simple_utils.Map.Make (V)
@@ -64,11 +62,10 @@ let rec is_dup (t : type_expression) =
   | T_constant { injection = Big_map | Map; parameters = [ t1; t2 ]; _ } ->
     is_dup t1 && is_dup t2
   | T_record row | T_sum row ->
-    let row_types = row.fields |> Map.data |> List.filter ~f:(fun v -> not (is_dup v)) in
+    let row_types = row.fields |> Record.values |> List.filter ~f:(fun v -> not (is_dup v)) in
     List.is_empty row_types
   | T_arrow _ -> true
   | T_variable _ -> true
-  | T_abstraction { type_; ty_binder = _; kind = _ } -> is_dup type_
   | T_for_all { type_; ty_binder = _; kind = _ } -> is_dup type_
   | T_constant
       { injection =
@@ -143,24 +140,7 @@ let rec muchuse_of_expr expr : muchuse =
   | E_accessor { struct_; _ } -> muchuse_of_expr struct_
   | E_update { struct_; update; _ } ->
     muchuse_union (muchuse_of_expr struct_) (muchuse_of_expr update)
-  | E_mod_in { module_binder; rhs; let_result } ->
-    let muchuse = muchuse_of_expr let_result in
-    muchuse_module_expr muchuse module_binder rhs
   | E_type_inst { forall; _ } -> muchuse_of_expr forall
-  | E_module_accessor { module_path; element } ->
-    let pref =
-      Format.asprintf
-        "%a"
-        (Simple_utils.PP_helpers.list_sep Module_var.pp (Simple_utils.PP_helpers.tag "."))
-        module_path
-    in
-    let name =
-      V.of_input_var ~loc:expr.location
-      @@ pref
-      ^ "."
-      ^ Format.asprintf "%a" Value_var.pp element
-    in
-    M.add name 1 M.empty, []
   | E_assign { binder; expression } ->
     muchuse_union
       (M.add (Binder.get_var binder) 1 M.empty, [])
@@ -225,69 +205,6 @@ and muchuse_of_cases cases =
          muchuse)
 
 
-and get_all_declarations (module_name : Module_var.t)
-    : module_ -> (Value_var.t * type_expression) list
-  = function
-  | m ->
-    let aux ({ wrap_content = x; location } : decl) =
-      match x with
-      | D_value { binder; expr; _ } ->
-        let name =
-          V.of_input_var ~loc:location
-          @@ Format.asprintf "%a" Module_var.pp module_name
-          ^ "."
-          ^ Format.asprintf "%a" Value_var.pp
-          @@ Binder.get_var binder
-        in
-        [ name, expr.type_expression ]
-      | D_module
-          { module_binder
-          ; module_ = { module_content = M_struct module_; _ }
-          ; module_attr = _
-          ; annotation = _
-          } ->
-        let recs = get_all_declarations module_binder module_ in
-        let add_module_name (v, t) =
-          let name =
-            V.of_input_var ~loc:location
-            @@ Format.asprintf "%a" Module_var.pp module_name
-            ^ "."
-            ^ Format.asprintf "%a" Value_var.pp v
-          in
-          name, t
-        in
-        recs |> List.map ~f:add_module_name
-      | D_irrefutable_match { pattern; _ } ->
-        let binders = Pattern.binders pattern in
-        List.map binders ~f:(fun binder ->
-            let name =
-              V.of_input_var ~loc:location
-              @@ Format.asprintf "%a" Module_var.pp module_name
-              ^ "."
-              ^ Format.asprintf "%a" Value_var.pp
-              @@ Binder.get_var binder
-            in
-            name, Binder.get_ascr binder)
-      | D_type _ | D_module _ -> []
-    in
-    m |> List.map ~f:aux |> List.concat
-
-
-and muchuse_module_expr
-    (muchuse : muchuse)
-    (module_binder : Module_var.t)
-    (module_ : module_expr)
-  =
-  match module_.module_content with
-  | M_struct module_ ->
-    let decls = get_all_declarations module_binder module_ in
-    List.fold_right
-      ~f:(fun (v, t) (c, m) -> muchuse_of_binder v t (c, m))
-      decls
-      ~init:(muchused_declarations muchuse module_)
-  | M_variable _ | M_module_path _ -> muchuse
-
-
 and muchuse_declaration (x : declaration) s =
   match Location.unwrap x with
   | D_value { expr; binder; _ } ->
@@ -302,9 +219,6 @@ and muchuse_declaration (x : declaration) s =
           muchuse_of_binder (Binder.get_var b) expr.type_expression s)
     in
     muchuse_union muchuse_expr (muchuse_maxs muchuse_pattern)
-  | D_module { module_; module_binder; module_attr = _; annotation = _ } ->
-    muchuse_module_expr s module_binder module_
-  | D_type _ -> s
 
 
 and muchused_declarations (muchuse : muchuse) = function
@@ -315,13 +229,13 @@ and muchused_declarations (muchuse : muchuse) = function
 
 
 let muchused_map_program ~raise : program -> program = function
-  | p ->
+  | (p, e) ->
     let update_annotations annots =
       List.iter ~f:raise.Simple_utils.Trace.warning annots
     in
     let _, muchused = muchused_declarations muchuse_neutral p in
     let warn_var v =
-      `Self_ast_typed_warning_muchused (V.get_location v, Format.asprintf "%a" V.pp v)
+      `Self_ast_aggregated_warning_muchused (V.get_location v, Format.asprintf "%a" V.pp v)
     in
     let () = update_annotations @@ List.map ~f:warn_var muchused in
-    p
+    (p, e)

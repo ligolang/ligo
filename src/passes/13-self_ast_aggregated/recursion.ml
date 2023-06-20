@@ -1,12 +1,11 @@
-module FV = Helpers.Free_variables
 open Ligo_prim
-open Ast_typed
+open Ast_aggregated
 open Simple_utils.Trace
 
 let var_equal = Value_var.equal
 
 let check_rec_binder_shadowed ~fun_name ~(lambda : _ Lambda.t) =
-  let _, fv, _ = FV.expression lambda.result in
+  let fv = Helpers.Free_variables.expression lambda.result in
   let is_binder_shadowed_in_body = not @@ List.mem fv fun_name ~equal:var_equal in
   var_equal fun_name (Param.get_var lambda.binder) || is_binder_shadowed_in_body
 
@@ -15,7 +14,7 @@ let show_unused_rec_warning ~raise ~warn_unused_rec fun_name =
   if warn_unused_rec
   then
     raise.warning
-      (`Self_ast_typed_warning_unused_rec
+      (`Self_ast_aggregated_warning_unused_rec
         (Value_var.get_location fun_name, Format.asprintf "%a" Value_var.pp fun_name))
   else ()
 

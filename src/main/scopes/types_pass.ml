@@ -320,10 +320,10 @@ module Typing_env = struct
       ~(options : Compiler_options.middle_end)
       tenv
     =
+    ignore options;
     match
-      let warn_unused_rec = options.warn_unused_rec in
       Simple_utils.Trace.to_stdlib_result
-      @@ Self_ast_typed.all_program ~warn_unused_rec tenv.decls
+      @@ Self_ast_typed.all_program tenv.decls
     with
     | Ok (_, ws) -> List.iter ws ~f:raise.warning
     | Error (e, ws) ->

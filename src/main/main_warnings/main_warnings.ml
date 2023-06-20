@@ -3,10 +3,10 @@ open Ligo_prim
 open Display
 
 type all =
-  [ `Self_ast_typed_warning_unused of Location.t * string
-  | `Self_ast_typed_warning_muchused of Location.t * string
-  | `Self_ast_typed_warning_unused_rec of Location.t * string
-  | `Self_ast_typed_metadata_invalid_type of Location.t * string
+  [ `Self_ast_aggregated_warning_unused of Location.t * string
+  | `Self_ast_aggregated_warning_muchused of Location.t * string
+  | `Self_ast_aggregated_warning_unused_rec of Location.t * string
+  | `Self_ast_aggregated_metadata_invalid_type of Location.t * string
   | `Checking_ambiguous_constructor_expr of
     Ast_core.expression * Type_var.t * Type_var.t * Location.t
   | `Checking_ambiguous_constructor_pat of
@@ -107,7 +107,7 @@ let pp
          entry] annotation@.@]"
         snippet_pp
         loc
-    | `Self_ast_typed_warning_unused (loc, s) ->
+    | `Self_ast_aggregated_warning_unused (loc, s) ->
       Format.fprintf
         f
         "@[<hv>%a:@.Warning: unused variable \"%s\".@.Hint: replace it by \"_%s\" to \
@@ -117,14 +117,13 @@ let pp
         loc
         s
         s
-    | `Self_ast_typed_warning_muchused (loc, s) ->
+    | `Self_ast_aggregated_warning_muchused (loc, _s) ->
       Format.fprintf
         f
-        "@[<hv>%a:@.Warning: variable \"%s\" cannot be used more than once.\n@]"
+        "@[<hv>%a:@.Warning: variable cannot be used more than once.\n@]"
         snippet_pp
         loc
-        s
-    | `Self_ast_typed_warning_unused_rec (loc, s) ->
+    | `Self_ast_aggregated_warning_unused_rec (loc, s) ->
       Format.fprintf
         f
         "@[<hv>%a:@.Warning: unused recursion .@.Hint: remove recursion from the \
@@ -133,7 +132,7 @@ let pp
         snippet_pp
         loc
         s
-    | `Self_ast_typed_metadata_invalid_type (loc, s) ->
+    | `Self_ast_aggregated_metadata_invalid_type (loc, s) ->
       Format.fprintf
         f
         "@[<hv>%a:@.Warning: If the following metadata is meant to be TZIP-16 \
@@ -278,7 +277,7 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"view compilation" ~content
-  | `Self_ast_typed_warning_unused (location, variable) ->
+  | `Self_ast_aggregated_warning_unused (location, variable) ->
     let message =
       Format.sprintf
         "@.Warning: unused variable \"%s\".@.Hint: replace it by \"_%s\" to prevent this \
@@ -288,13 +287,13 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location ~variable () in
     make ~stage:"parsing command line parameters" ~content
-  | `Self_ast_typed_warning_muchused (location, s) ->
+  | `Self_ast_aggregated_warning_muchused (location, _s) ->
     let message =
-      Format.sprintf "@.Warning: variable \"%s\" cannot be used more than once.\n@]" s
+      Format.sprintf "@.Warning: variable cannot be used more than once.\n@]"
     in
     let content = make_content ~message ~location () in
     make ~stage:"typer" ~content
-  | `Self_ast_typed_warning_unused_rec (location, s) ->
+  | `Self_ast_aggregated_warning_unused_rec (location, s) ->
     let message =
       Format.sprintf
         "Warning: unused recursion .@.Hint: remove recursion from the function \"%s\" to \
@@ -303,7 +302,7 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"parsing command line parameters" ~content
-  | `Self_ast_typed_metadata_invalid_type (loc, s) ->
+  | `Self_ast_aggregated_metadata_invalid_type (loc, s) ->
     let message =
       Format.sprintf
         "Warning: If the following metadata is meant to be TZIP-16 compliant,@.\

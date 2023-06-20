@@ -417,6 +417,7 @@ let storage
           Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
             ~raise
             ~options:options.middle_end
+            ~contract_pass:true
             app_typed_prg
             entry_point
             module_path
