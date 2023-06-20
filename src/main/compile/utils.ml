@@ -87,6 +87,7 @@ let compile_contract_input ~raise ~options parameter storage syntax init_prog =
     Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      ~self_program:false
       init_prog
       typed
   in

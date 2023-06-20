@@ -989,15 +989,6 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract.mligo" ];
   [%expect
     {|
-File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 10-16:
-  3 |
-  4 | let main (action : parameter) (store : storage) : storage =
-                ^^^^^^
-  5 |   store + 1
-:
-Warning: unused variable "action".
-Hint: replace it by "_action" to prevent this warning.
-
 File "../../test/contracts/negative/bad_contract.mligo", line 4, characters 4-8:
   3 |
   4 | let main (action : parameter) (store : storage) : storage =
@@ -1009,15 +1000,6 @@ An entrypoint must of type "parameter * storage -> operation list * storage". |}
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract2.mligo" ];
   [%expect
     {|
-File "../../test/contracts/negative/bad_contract2.mligo", line 5, characters 10-16:
-  4 |
-  5 | let main (action : parameter) (store : storage) : return =
-                ^^^^^^
-  6 |   ("bad",store + 1)
-:
-Warning: unused variable "action".
-Hint: replace it by "_action" to prevent this warning.
-
 File "../../test/contracts/negative/bad_contract2.mligo", line 5, character 0 to line 6, character 19:
   4 |
   5 | let main (action : parameter) (store : storage) : return =
@@ -1031,24 +1013,6 @@ We expected a list of operations but we got string |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract3.mligo" ];
   [%expect
     {|
-File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 10-16:
-  4 |
-  5 | let main (action, store : parameter * storage) : return =
-                ^^^^^^
-  6 |   (([]: operation list),"bad")
-:
-Warning: unused variable "action".
-Hint: replace it by "_action" to prevent this warning.
-
-File "../../test/contracts/negative/bad_contract3.mligo", line 5, characters 18-23:
-  4 |
-  5 | let main (action, store : parameter * storage) : return =
-                        ^^^^^
-  6 |   (([]: operation list),"bad")
-:
-Warning: unused variable "store".
-Hint: replace it by "_store" to prevent this warning.
-
 File "../../test/contracts/negative/bad_contract3.mligo", line 5, character 0 to line 6, character 30:
   4 |
   5 | let main (action, store : parameter * storage) : return =

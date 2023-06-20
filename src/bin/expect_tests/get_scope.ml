@@ -360,43 +360,7 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-40
     Content: : |sum[Bar -> string , Foo -> int]|
     references: []
-    Module definitions:
-    Warnings:
-    File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 8-9:
-      7 |   | Foo x -> x + a
-      8 |   | Bar y -> 1 + a
-                  ^
-      9 |
-    :
-    Warning: unused variable "y".
-    Hint: replace it by "_y" to prevent this warning.
-
-    File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 8-10:
-     14 |     a
-     15 |   | hd::tl -> 2
-                  ^^
-     16 |
-    :
-    Warning: unused variable "tl".
-    Hint: replace it by "_tl" to prevent this warning.
-
-    File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6:
-     14 |     a
-     15 |   | hd::tl -> 2
-              ^^
-     16 |
-    :
-    Warning: unused variable "hd".
-    Hint: replace it by "_hd" to prevent this warning.
-
-    File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 8-9:
-     12 |   | [] ->
-     13 |     let c = 2 in
-                  ^
-     14 |     a
-    :
-    Warning: unused variable "c".
-    Hint: replace it by "_c" to prevent this warning. |}]
+    Module definitions: |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -830,14 +794,6 @@ let%expect_test _ =
     Def Type = Local
     Type definitions:
     Module definitions:
-    Warnings:
-    File "../../test/contracts/get_scope_tests/application.mligo", line 3, characters 7-8:
-      2 |   let f : (int-> int -> int) = fun (i : int) (j : int) -> j + i in
-      3 |   (let b = 1 in f 1) (let c = 2 in c)
-                 ^
-    :
-    Warning: unused variable "b".
-    Hint: replace it by "_b" to prevent this warning.
  |}]
 
 let%expect_test _ =
@@ -2062,44 +2018,7 @@ let%expect_test _ =
       Content: Alias: A#1:7-8
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-9 ,
-        File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12
-
-      Warnings:
-      File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 12-13:
-       13 |         // Module parametric type in
-       14 |         let h : string bar = { bar = "World" } in
-                        ^
-       15 |         ()
-      :
-      Warning: unused variable "h".
-      Hint: replace it by "_h" to prevent this warning.
-
-      File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 12-13:
-       11 |         // Module type in
-       12 |         let g : foo = "Hello" in
-                        ^
-       13 |         // Module parametric type in
-      :
-      Warning: unused variable "g".
-      Hint: replace it by "_g" to prevent this warning.
-
-      File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 8-9:
-       45 |     // paramertic type in
-       46 |     let j : nat boo = Some 1n in
-                    ^
-       47 |     ()
-      :
-      Warning: unused variable "j".
-      Hint: replace it by "_j" to prevent this warning.
-
-      File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 8-9:
-       42 |     // type in
-       43 |     let i : qux = false in
-                    ^
-       44 |     type 'a boo = 'a option in
-      :
-      Warning: unused variable "i".
-      Hint: replace it by "_i" to prevent this warning. |}];
+        File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12 |}];
   run_ligo_good
     [ "info"
     ; "get-scope"

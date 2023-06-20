@@ -95,16 +95,6 @@ let test_cases =
               ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
               }
           }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message =
-              "\n\
-               Warning: unused variable \"x\".\n\
-               Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; location =
-              { range = interval 2 10 11
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
         ]
     ; max_number_of_problems = None
     }
@@ -195,16 +185,6 @@ let test_cases =
           ; message = "Toplevel let declaration is silently changed to const declaration."
           ; location =
               { range = interval 0 0 10
-              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message =
-              "\n\
-               Warning: unused variable \"x\".\n\
-               Hint: replace it by \"_x\" to prevent this warning.\n"
-          ; location =
-              { range = interval 2 10 11
               ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
               }
           }

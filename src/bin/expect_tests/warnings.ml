@@ -46,13 +46,13 @@ let%expect_test _ =
     ];
   [%expect
     {|
-  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65:
+  File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7:
     1 | module Foo = struct
     2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              ^
     3 | end
   :
-  Warning: variable "Foo.x" cannot be used more than once.
+  Warning: variable cannot be used more than once.
 
   Error(s) occurred while checking the contract:
   At (unshown) location 15, type ticket nat cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
@@ -74,7 +74,7 @@ let%expect_test _ =
             ^
     2 | let x = (x, x)
   :
-  Warning: variable "x" cannot be used more than once.
+  Warning: variable cannot be used more than once.
 
   Error(s) occurred while checking the contract:
   At (unshown) location 8, type option (ticket nat) cannot be used here because it is not duplicable. Only duplicable types can be used with the DUP instruction and as view inputs and outputs.
@@ -84,21 +84,21 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "duplicate_ticket_local_module.mligo" ];
   [%expect
     {|
+  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 8-9:
+    7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
+    8 |     let y = ticket, ticket
+                ^
+    9 |   end in
+  :
+  Warning: variable cannot be used more than once.
+
   File "../../test/contracts/duplicate_ticket_local_module.mligo", line 7, characters 8-14:
     6 |   module B = struct
     7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
                 ^^^^^^
     8 |     let y = ticket, ticket
   :
-  Warning: variable "ticket" cannot be used more than once.
-
-  File "../../test/contracts/duplicate_ticket_local_module.mligo", line 8, characters 4-26:
-    7 |     let ticket = Option.unopt (Tezos.create_ticket 10n 10n)
-    8 |     let y = ticket, ticket
-            ^^^^^^^^^^^^^^^^^^^^^^
-    9 |   end in
-  :
-  Warning: variable "B.y" cannot be used more than once.
+  Warning: variable cannot be used more than once.
 
   Error(s) occurred while type checking the contract:
   Ill typed contract:

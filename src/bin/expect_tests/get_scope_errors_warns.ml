@@ -323,16 +323,7 @@ let%expect_test _ =
     Content: : |record[x -> int , y -> int]|
     references:
       File "../../test/contracts/warning_unused.mligo", line 9, characters 22-29
-    Module definitions:
-    Warnings:
-    File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7:
-     10 |   let x = s.x + 3 in
-     11 |   let x = foo x in
-                ^
-     12 |   let x = bar s.x in
-    :
-    Warning: unused variable "x".
-    Hint: replace it by "_x" to prevent this warning. |}];
+    Module definitions: |}];
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -367,14 +358,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
-    Module definitions:
-    Warnings:
-    File "../../test/contracts/warning_duplicate2.mligo", line 1, characters 4-5:
-      1 | let x = Tezos.create_ticket 42n 42n
-              ^
-      2 | let x = (x, x)
-    :
-    Warning: variable "x" cannot be used more than once. |}];
+    Module definitions: |}];
   run_ligo_good
     [ "info"
     ; "get-scope"
@@ -420,13 +404,4 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-12 ,
-      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-19
-
-    Warnings:
-    File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65:
-      1 | module Foo = struct
-      2 |   let x : nat ticket = Option.unopt (Tezos.create_ticket 42n 42n)
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      3 | end
-    :
-    Warning: variable "Foo.x" cannot be used more than once. |}]
+      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-19 |}]
