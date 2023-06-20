@@ -23,18 +23,14 @@ let map_ty_on_attr
   aux None ty
 
 
-let compile_row ~loc layout_attr_opt (lst : ty_expr option Non_linear_rows.t) =
+let compile_row ~f layout_attr_opt (lst : ty_expr option Non_linear_rows.t) =
   (* setting to default layout, but getting modified afterwards *)
   let lst =
     lst
     |> List.sort ~compare:(fun (_, ra) (_, rb) ->
            let open Non_linear_rows in
            Int.compare ra.decl_pos rb.decl_pos)
-    |> List.map ~f:(fun (label, Non_linear_rows.{ associated_type; attributes; _ }) ->
-           let ty =
-             Option.value_or_thunk associated_type ~default:(fun () -> tv_unit ~loc ())
-           in
-           label, ty, attributes)
+    |> List.map ~f
   in
   let layout =
     let labels = List.map ~f:(fun (l, _, a) -> l, a) lst in
@@ -61,6 +57,23 @@ let compile_row ~loc layout_attr_opt (lst : ty_expr option Non_linear_rows.t) =
   Row.of_alist_exn ~layout fields
 
 
+let compile_row_sum ~loc =
+  compile_row ~f:(fun (label, Non_linear_rows.{ associated_type; attributes; _ }) ->
+      let ty =
+        Option.value_or_thunk associated_type ~default:(fun () -> tv_unit ~loc ())
+      in
+      label, ty, attributes)
+
+
+let compile_row_record ~loc =
+  compile_row ~f:(fun (label, Non_linear_rows.{ associated_type; attributes; _ }) ->
+      let ty =
+        Option.value_or_thunk associated_type ~default:(fun () ->
+            t_var ~loc (Ty_variable.of_input_var ~loc (Label.to_string label)))
+      in
+      label, ty, attributes)
+
+
 module Normalize_layout = struct
   include Flag.No_arg ()
 
@@ -79,8 +92,9 @@ module Normalize_layout = struct
             | _ -> false)
           ~f:(fun layout_attr_opt ty ->
             match get_t ty with
-            | T_sum_raw row -> t_sum ~loc (compile_row ~loc layout_attr_opt row)
-            | T_record_raw row -> t_record ~loc (compile_row ~loc layout_attr_opt row)
+            | T_sum_raw row -> t_sum ~loc (compile_row_sum ~loc layout_attr_opt row)
+            | T_record_raw row ->
+              t_record ~loc (compile_row_record ~loc layout_attr_opt row)
             | _ -> ty)
       | t -> make_t ~loc t
     in
@@ -101,8 +115,8 @@ module Normalize_no_layout = struct
      fun t ->
       let loc = Location.get_location t in
       match Location.unwrap t with
-      | T_sum_raw row -> t_sum ~loc (compile_row ~loc None row)
-      | T_record_raw row -> t_record ~loc (compile_row ~loc None row)
+      | T_sum_raw row -> t_sum ~loc (compile_row_sum ~loc None row)
+      | T_record_raw row -> t_record ~loc (compile_row_record ~loc None row)
       | t -> make_t ~loc t
     in
     Fold { idle_fold with ty_expr }
@@ -119,4 +133,19 @@ module Normalize_no_layout = struct
 
 
   let decompile ~raise:_ = Nothing
+
+  open Unit_test_helpers.Ty_expr
+
+  let%expect_test "type punning" =
+    {|
+    (T_record_raw
+      (((Label x) ((associated_type ()) (decl_pos 0)))
+       ((Label y) ((associated_type ()) (decl_pos 1)))))
+  |}
+    |-> compile;
+    [%expect
+      {|
+      (T_record
+       ((fields (((Label x) (T_var x)) ((Label y) (T_var y)))) (layout ())))
+    |}]
 end
