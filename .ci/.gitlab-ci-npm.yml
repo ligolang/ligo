@@ -33,6 +33,7 @@ esy-windows:
     - cp ./LICENSE.md ./windows-installer
     - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./windows-installer
     - cd windows-installer; makensis .\WindowsInstaller.nsi; mv ligo_installer.exe ../ligo_installer.exe ; cd ..
+    - ./scripts/signInstallerWithTestCertificates.ps1 -Path ./ligo_installer.exe -Password $env:TEST_CERTIFICATE_PASSWORD
     - bash -c "esy release || esy release || esy release"
     - mv _release platform-windows-x64
   artifacts:
