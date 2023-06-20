@@ -1,0 +1,39 @@
+# This file was automatically generated, do not edit.
+# Edit file manifest/main.ml instead.
+opam-version: "2.0"
+maintainer: "contact@tezos.com"
+authors: ["Tezos devteam"]
+homepage: "https://www.tezos.com/"
+bug-reports: "https://gitlab.com/tezos/tezos/issues"
+dev-repo: "git+https://gitlab.com/tezos/tezos.git"
+license: "MIT"
+depends: [
+  "dune" { >= "3.0"}
+  "dune-configurator"
+  "ocaml" { >= "4.14" }
+  "qcheck-alcotest" { >= "0.20" }
+  "tezos-test-helpers"
+  "tezos-base"
+  "tezos-micheline"
+  "tezos-stdlib-unix"
+  "tp-016"
+  "tc-016"
+  "tpe"
+  "tp-plugin-016"
+  "tezos-shell-services"
+  "octez-plompiler"
+  "tezos-crypto-dal"
+]
+build: [
+  ["rm" "-rf" "vendors"]
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+synopsis: "Tezos/Protocol: protocol testing framework"
+url {
+  src: "https://gitlab.com/ligolang/tezos-ligo/-/archive/v17.0-ligo/-17.0.tar.gz"
+  checksum: [
+    "sha256=5b39f7b90d5ee362054ffdf057bbfb47a90f0a2dd14e3c64deb7e18ffb8e6cd4"
+    "sha512=f29c7ea482b3dc4c9bd827e6fd85055361e070e3687e6ac34599a0b26c001897271c0540a2bc4e9947a9dea4b9e109ff92abcf868bec6af2967bcf46a3f41309"
+  ]
+}

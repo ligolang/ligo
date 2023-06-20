@@ -1,0 +1,45 @@
+# This file was automatically generated, do not edit.
+# Edit file manifest/main.ml instead.
+opam-version: "2.0"
+maintainer: "contact@tezos.com"
+authors: ["Tezos devteam"]
+homepage: "https://www.tezos.com/"
+bug-reports: "https://gitlab.com/tezos/tezos/issues"
+dev-repo: "git+https://gitlab.com/tezos/tezos.git"
+license: "MIT"
+depends: [
+  "dune" { >= "3.0"}
+  "dune-configurator"
+  "ocaml" { >= "4.14" }
+  "hacl-star" { >= "0.7.0" & < "0.8" }
+  "hacl-star-raw"
+  "ctypes_stubs_js"
+  "ctypes" { >= "0.18.0" }
+  "ezjsonm" { >= "1.1.0" }
+  "tezt" { with-test & >= "3.1.0" }
+  "tezos-stdlib" {with-test}
+  "tezos-error-monad" {with-test}
+  "tz-lwtres-std" {with-test}
+  "zarith" { with-test & >= "1.12" & < "1.13" }
+  "zarith_stubs_js" {with-test}
+  "data-encoding" { with-test & >= "0.7.1" & < "1.0.0" }
+  "qcheck-alcotest" { with-test & >= "0.20" }
+  "octez-alcotezt" {with-test}
+  "tezos-test-helpers" {with-test}
+]
+conflicts: [
+  "hacl_x25519"
+]
+build: [
+  ["rm" "-rf" "vendors"]
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+synopsis: "Tezos: thin layer around hacl-star"
+url {
+  src: "https://gitlab.com/ligolang/tezos-ligo/-/archive/v17.0-ligo/-17.0.tar.gz"
+  checksum: [
+    "sha256=5b39f7b90d5ee362054ffdf057bbfb47a90f0a2dd14e3c64deb7e18ffb8e6cd4"
+    "sha512=f29c7ea482b3dc4c9bd827e6fd85055361e070e3687e6ac34599a0b26c001897271c0540a2bc4e9947a9dea4b9e109ff92abcf868bec6af2967bcf46a3f41309"
+  ]
+}

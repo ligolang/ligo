@@ -11,7 +11,7 @@ esy-windows:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_train" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - esy.json
         - esy.lock/index.json
@@ -19,12 +19,10 @@ esy-windows:
         - dune
       when: always
   script:
-    - git submodule update --init --recursive
     - git config http.postBuffer 1048576000
     - $env:PATH = 'C:\Program Files (x86)\NSIS;C:\Program Files\Git\bin;C:\Users\gitlabrunner\AppData\Roaming\npm;' + $env:PATH
     - $env:HOME = 'C:/Users/gitlabrunner'
-    - $env:ESY__PREFIX = $env:HOME + '/.esy-nairobi'
-    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
+    - $env:ESY__PREFIX = $env:HOME + '/.esy-opam-host'
     - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
     - esy i
     - bash -c "patch -p1 -R < 001-tezos-deps-via-esy.patch" # So that dune runtest doesn't run tezos tests
@@ -36,7 +34,6 @@ esy-windows:
     - cp ./tools/webide-new/ligo-webide-frontend/ligo-ide/public/favicon.ico ./windows-installer
     - cd windows-installer; makensis .\WindowsInstaller.nsi; mv ligo_installer.exe ../ligo_installer.exe ; cd ..
     - bash -c "esy release || esy release || esy release"
-    - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
     - mv _release platform-windows-x64
   artifacts:
     paths:
@@ -56,7 +53,7 @@ esy-test-windows:
       when: always
     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "merge_train" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
         - esy.json
         - esy.lock/index.json
@@ -122,8 +119,8 @@ esy-macos-intel:
     - npm config set prefix '~/.npm'
     - export PATH=~/.npm/bin:$PATH
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
-    - env ESY__PREFIX=$HOME/.esy-nairobi esy i
-    - env ESY__PREFIX=$HOME/.esy-nairobi esy release
+    - env ESY__PREFIX=$HOME/.esy-opam-host esy i
+    - env ESY__PREFIX=$HOME/.esy-opam-host esy release
     - mv _release platform-darwin
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
   artifacts:
@@ -209,8 +206,8 @@ esy-macos-m1:
     - npm config set prefix '~/.npm'
     - export PATH=~/.npm/bin:$PATH
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
-    - env ESY__PREFIX=$HOME/.esy-nairobi esy i
-    - env ESY__PREFIX=$HOME/.esy-nairobi esy release
+    - env ESY__PREFIX=$HOME/.esy-opam-host esy i
+    - env ESY__PREFIX=$HOME/.esy-opam-host esy release
     - mv _release platform-darwin-arm64
     - git submodule foreach --recursive git reset --hard; git submodule update --init --recursive # ensure previously applied patch is removed
   artifacts:
