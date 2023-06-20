@@ -4,6 +4,7 @@ module Helpers  = SyntaxHighlighting.Helpers
 module Name = struct
   let macro                     = "macro"
   let let_binding               = "letbinding"
+  let keywords                  = "keywords"
   let control_keywords          = "controlkeywords"
   let numeric_literals          = "numericliterals"
   let operators                 = "operators"
@@ -158,6 +159,7 @@ let syntax_highlighting =
       Name_ref Name.macro;
       Name_ref Name.let_binding;
       Name_ref Name.type_definition;
+      Name_ref Name.keywords;
       Name_ref Name.control_keywords;
       Name_ref Name.numeric_literals;
       Name_ref Name.operators;
@@ -185,6 +187,13 @@ let syntax_highlighting =
             (Regexp.let_binding_match2_jsligo, Some FunctionName)
           ];
           match_name = None
+        }
+      };
+      {
+        name = Name.keywords;
+        kind = Match {
+          match_name = None;
+          match_ = [(Regexp.keywords_match_jsligo, Some Keyword)]
         }
       };
       {

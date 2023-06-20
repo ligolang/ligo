@@ -222,9 +222,15 @@ let identifier_annotation_positive_lookahead: Core.regexp = {
   vim      = "\\<\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\>\\s*:\\@=";
 }
 
+let keywords_match_jsligo: Core.regexp = {
+  emacs    = "";
+  textmate = "\\b(export|import|from|as)\\b";
+  vim      = "";
+}
+
 let control_keywords_match_jsligo: Core.regexp = {
   emacs    = "";
-  textmate = "\\b(switch|case|default|if|else|for|of|while|return|break|export)\\b";
+  textmate = "\\b(switch|case|default|if|else|for|of|while|return|break)\\b";
   vim      = ""
 }
 
