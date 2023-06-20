@@ -40,17 +40,12 @@ let scopes
       , stdlib_core )
   in
   let defs =
-    let types =
-      if with_types
-      then Types_pass.resolve ~raise ~options ~stdlib_decls prg
-      else Types_pass.empty
-    in
-    let module_aliases = Module_aliases_pass.declarations prg in
-    let refs = References.declarations (stdlib_core @ prg) in
     Definitions.definitions prg stdlib_defs
-    |> (if with_types then Types_pass.patch types else Fn.id)
-    |> References.patch refs
-    |> Module_aliases_pass.patch module_aliases
+    |> (if with_types
+       then Types_pass.patch (Types_pass.resolve ~raise ~options ~stdlib_decls prg)
+       else Fn.id)
+    |> References.patch (References.declarations (stdlib_core @ prg))
+    |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
   in
   let scopes =
     Scopes_pass.Of_Ast.declarations ~env_preload_decls prg

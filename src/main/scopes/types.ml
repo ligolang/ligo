@@ -18,6 +18,8 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
+type uid = string
+
 type type_case =
   | Core of Ast_core.type_expression
   | Resolved of Ast_typed.type_expression
@@ -31,7 +33,7 @@ type def_type =
 
 type vdef =
   { name : string
-  ; uid : string
+  ; uid : uid
   ; range : Location.t
   ; body_range : Location.t
   ; t : type_case
@@ -42,7 +44,7 @@ type vdef =
 
 type tdef =
   { name : string
-  ; uid : string
+  ; uid : uid
   ; range : Location.t
   ; body_range : Location.t
   ; content : Ast_core.type_expression
@@ -53,11 +55,11 @@ type tdef =
 
 type mod_case =
   | Def of def list
-  | Alias of string list * string option
+  | Alias of string list * uid option
 
 and mdef =
   { name : string
-  ; uid : string
+  ; uid : uid
   ; range : Location.t
   ; body_range : Location.t
   ; references : LSet.t

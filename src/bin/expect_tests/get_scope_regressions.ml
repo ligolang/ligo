@@ -26,28 +26,38 @@ let%expect_test _ =
     Content: |resolved: list (int) -> unit|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
+    Mod Path =
+    Def Type = Global
     (s#1:17-18 -> s)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, characters 17-18
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, character 6 to line 3, character 27
     Content: |core: list (int)|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 25-26
+    Mod Path =
+    Def Type = Parameter
     (do_nothing#2:6-16 -> do_nothing)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 6-16
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 19-48
     Content: |resolved: int -> unit|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 13-23
+    Mod Path =
+    Def Type = Local
     (_useless#2:20-28 -> _useless)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 20-28
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
     Content: |core: int|
     references: []
+    Mod Path =
+    Def Type = Parameter
     (test#6:6-10 -> test)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 6-10
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
     Content: |resolved: list (int) -> unit|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions: |}]
 
@@ -74,18 +84,24 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash -> address|
     references: []
+    Mod Path =
+    Def Type = Global
     (p#1:10-11 -> p)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 10-11
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 50-51
+    Mod Path =
+    Def Type = Parameter
     (c#2:6-7 -> c)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
     Content: |core: contract (unit)|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 16-17
+    Mod Path =
+    Def Type = Local
     Type definitions:
     Module definitions: |}]
 
@@ -117,11 +133,15 @@ let%expect_test _ =
     Content: |core: user|
     references:
       File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-30
+    Mod Path =
+    Def Type = Global
     (alice_admin#13:4-15 -> alice_admin)
     Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 4-15
     Body Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-32
     Content: |core: bool|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     (user#1:5-9 -> user)
     Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, characters 5-9
@@ -169,21 +189,29 @@ let%expect_test _ =
     Content: |resolved: int|
     references:
       File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
+    Mod Path =
+    Def Type = Global
     (f#2:4-5 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
     Content: |resolved: ∀ gen#3 : * . gen#3 -> int|
     references: []
+    Mod Path =
+    Def Type = Global
     (x#2:6-7 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
     Content: |resolved: gen#3|
     references: []
+    Mod Path =
+    Def Type = Parameter
     (g#3:4-5 -> g)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 3, characters 8-9
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     Warnings:
@@ -231,6 +259,8 @@ let%expect_test _ =
                                         Content: |resolved: int|
                                         references:
                                           File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 17-21
+                                        Mod Path = "A""B"
+                                        Def Type = Module_field
                                         Type definitions:
                                         Module definitions:
 
@@ -250,6 +280,8 @@ let%expect_test _ =
                       Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
                       Content: |resolved: int|
                       references: []
+                      Mod Path = "C"
+                      Def Type = Module_field
                       Type definitions:
                       Module definitions:
                       (D#9:11-12 -> D)
@@ -287,6 +319,8 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, character 4 to line 12, character 10
     Content: |core: D.titi|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     (A#1:7-8 -> A)
@@ -312,6 +346,8 @@ let%expect_test _ =
                                         Content: |core: titi|
                                         references:
                                           File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 6-10
+                                        Mod Path = "A""C"
+                                        Def Type = Module_field
                                         Type definitions:
                                         Module definitions:
 
@@ -361,6 +397,8 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, character 4 to line 11, character 10
     Content: |core: int|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     (A#2:11-12 -> A)
@@ -379,6 +417,8 @@ let%expect_test _ =
                                         Content: |resolved: int|
                                         references:
                                           File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 21-25
+                                        Mod Path = "A""C"
+                                        Def Type = Module_field
                                         Type definitions:
                                         Module definitions:
 
@@ -399,6 +439,8 @@ let%expect_test _ =
                       Content: |resolved: int|
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 6-10
+                      Mod Path = "E"
+                      Def Type = Module_field
                       Type definitions:
                       Module definitions:
                       (F#8:15-16 -> F)
@@ -438,16 +480,22 @@ let%expect_test _ =
     Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 1, character 8 to line 3, character 13
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Global
     (s_x#2:9-12 -> s_x)
     Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 9-12
     Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 16-17
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Local
     (m2#6:4-6 -> m2)
     Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 4-6
     Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, character 9 to line 8, character 13
     Content: |resolved: int|
     references: []
+    Mod Path =
+    Def Type = Global
     Type definitions:
     Module definitions:
     Warnings:
