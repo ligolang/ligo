@@ -18,7 +18,7 @@ module Location = Simple_utils.Location
 module List = Simple_utils.List
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
-type uid = string
+type uid = Uid of string [@@unboxed]
 
 type type_case =
   | Core of Ast_core.type_expression
@@ -55,7 +55,7 @@ type tdef =
 
 type mod_case =
   | Def of def list
-  | Alias of string list * uid option
+  | Alias of uid list * uid option
 
 and mdef =
   { name : string
@@ -110,11 +110,29 @@ let get_body_range = function
   | Module m -> m.body_range
 
 
-let make_def_id name (loc : Location.t) =
-  match loc with
-  | File region -> name ^ "#" ^ region#compact ~file:false `Point
-  | Virtual v -> name ^ "#" ^ v
+let uid_equal (Uid a : uid) (Uid b : uid) : bool = String.(a = b)
 
+let make_def_id name (loc : Location.t) : uid =
+  Uid
+    (match loc with
+    | File region -> name ^ "#" ^ region#compact ~file:false `Point
+    | Virtual v -> name ^ "#" ^ v)
+
+
+(** [mvar_to_id] takes and [Module_var.t] and gives id of the form
+    [{name}#{line}:{start_col}-{end_col}] *)
+let mvar_to_id (m : Module_var.t) : uid =
+  let name = Format.asprintf "%a" Module_var.pp m in
+  let loc = Module_var.get_location m in
+  make_def_id name loc
+
+
+(** Given an UID of format [{name}#{line}:{start_col}-{end_col}], returns only
+    the [{name}] part. *)
+let uid_to_name (Uid uid : uid) : string = String.take_while uid ~f:(Char.( <> ) '#')
+
+(** Returns an UID of format [{name}#{line}:{start_col}-{end_col}]. *)
+let uid_to_string (Uid uid : uid) : string = uid
 
 type scope = Location.t * def list
 type scopes = scope list

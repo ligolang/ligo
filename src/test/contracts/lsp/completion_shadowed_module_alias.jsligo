@@ -1,0 +1,7 @@
+namespace X {
+  const x = 1
+};
+
+import X = X;
+
+const y = X.

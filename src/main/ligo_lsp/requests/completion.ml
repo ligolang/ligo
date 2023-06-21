@@ -340,7 +340,9 @@ let complete_fields
             List.find_map get_scope_info.definitions ~f:(function
                 | Variable _ | Type _ -> None
                 | Module m ->
-                  if String.(m.name = resolved) then get_module_defs m.mod_case else None))
+                  if Scopes.Types.uid_equal m.uid resolved
+                  then get_module_defs m.mod_case
+                  else None))
     in
     Go_to_definition.get_definition module_pos path get_scope_info.definitions
     >>= function
