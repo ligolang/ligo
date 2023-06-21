@@ -1,11 +1,11 @@
 
 ### SYNOPSIS
 ```
-ligo compile storage SOURCE_FILE STORAGE_EXPRESSION
+ligo run evaluate-call SOURCE_FILE FUNCTION PARAMETER_EXPRESSION
 ```
 
 ### DESCRIPTION
-This sub-command compiles an initial storage for a given contract to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract.
+This sub-command runs a LIGO function on a given argument. The context is initialized from a source file where the function is implemented. The interpretation is done using Michelson's interpreter.
 
 ### FLAGS
 **--amount INT**
@@ -14,38 +14,23 @@ the tezos amount the Michelson interpreter will use for the transaction.
 **--balance INT**
 the balance the Michelson interpreter will use for the contract balance.
 
-**--constants CONSTANTS**
-A list of global constants that will be assumed in the context, separated by ',' (alias: -c)
-
 **--deprecated**
 enable deprecated language PascaLIGO
 
 **--display-format FORMAT**
 the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)
 
-**--file-constants FILE_CONSTANTS**
-A file with a JSON list of strings with Michelson code. Those Michelson values will be registered as global constants in the context.
-
 **--library LIBS**
 A comma-separated list of paths to directories where to search for files to be included by the preprocessor (alias: -l)
 
-**--michelson-format CODE_FORMAT**
-format that will be used by compile-contract for the resulting Michelson. Available formats are 'text' (default), 'json' and 'hex'.
-
 **--no-color**
 disable coloring in CLI output
-
-**--no-metadata-check**
-disable TZIP-16 metadata compliance check
 
 **--no-warn**
 disable warning messages
 
 **--now TIMESTAMP**
 the NOW value the Michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
-
-**--output-file FILENAME**
-if used, prints the output into the specified file instead of stdout (alias: -o)
 
 **--project-root PATH**
 The path to root of the project.
@@ -70,12 +55,6 @@ warn about unused recursion in a recursive function
 
 **--werror**
 treat warnings as errors
-
-**-e ENTRY-POINT**
-the entry-point that will be compiled. (alias: --entry-point)
-
-**-m MODULE**
-the entry-point will be compiled from that module. (alias: --module)
 
 **-p PROTOCOL**
 choose protocol's types/values pre-loaded into the LIGO environment (mumbai , nairobi). By default, the current protocol (nairobi) will be used (alias: --protocol)

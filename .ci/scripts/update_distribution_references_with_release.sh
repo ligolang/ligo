@@ -49,5 +49,5 @@ done
 
 
 # Latest ligo SRI BINARY HASH
-WEB_IDE_FLAKE_REGEX_PATTERN='"x86_64-linux" = { url = ".+"; hash = ".+"; }';
+WEB_IDE_FLAKE_REGEX_PATTERN='"x86_64-linux" = \{ url = ".+"; hash = ".+"; \}';
 "${SED_IN_PLACE_COMMAND[@]}" -E "s|$WEB_IDE_FLAKE_REGEX_PATTERN|\"x86_64-linux\" = { url = \"$BINARY_GITLAB_ARTIFACT_URL\"; hash = \"$SRI_LIGO_BINARY_HASH\"; }|g" "$ROOT_FOLDER/tools/webide-new/flake.nix"
