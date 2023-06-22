@@ -41,7 +41,7 @@ module Diagnostic = struct
 
   let eq a b =
     (* We don't want to fix the numbers of identifiers during tests, so we
-      replace things like "Variable \"_#123\" not found." 
+      replace things like "Variable \"_#123\" not found."
       to "Variable \"_#N\" not found." before comparisons *)
     let remove_underscore_numeration s =
       { s with
@@ -71,9 +71,22 @@ module DocumentLink = struct
   let eq = Caml.( = )
   let testable = Alcotest.testable pp eq
 
-  let create ~(target:Path.t) =
-    Lsp.Types.DocumentLink.create
-      ~target:("file:///" ^ Path.to_string_with_canonical_drive_letter target)
+  let path_to_target path =
+    let prefix =
+      (* Target of document link should be an URI, but the lsp library wrongly uses string type here,
+     so we're creating a string starting with "file:///"*)
+      if Sys.unix
+      then
+        "file://"
+        (* after adding the prefix to abs path "/home/..." we'll get "file:///home/..." *)
+      else "file:///"
+      (* after adding the prefix to "C:/users/..." we'll get "file:///C:/users/..." *)
+    in
+    prefix ^ Path.to_string_with_canonical_drive_letter path
+
+
+  let create ~(target : Path.t) =
+    Lsp.Types.DocumentLink.create ~target:(path_to_target target)
 end
 
 module FoldingRange = struct

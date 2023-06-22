@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nFixed a regression where document links were not appearing for Linux.\\n\\n"
+merge_request: '2698'
+title: "[Chore] Fix document links on Linux"
+type: fixed
+            

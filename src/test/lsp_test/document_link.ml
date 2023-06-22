@@ -31,7 +31,7 @@ let get_document_link_test ({ file_path; document_links } : document_link_test)
 
 
 let test_cases =
-  let relative x = Some ("file:///" ^ Path.to_string_with_canonical_drive_letter (Path.from_relative x)) in
+  let relative x = Some (DocumentLink.path_to_target (Path.from_relative x)) in
   [ { file_path = "contracts/includer.mligo"
     ; document_links =
         [ { range = interval 2 9 25
