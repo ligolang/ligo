@@ -316,8 +316,8 @@ module Make (Lexer  : LEXER)
       let to_byte pos = pos#byte in
 
       match mode with
-        `Byte  -> to_point
-      | `Point -> to_byte
+        `Byte  -> to_byte
+      | `Point -> to_point
 
     (* Wrap lexer in supplier according [mode] *)
 
