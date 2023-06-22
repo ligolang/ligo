@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nRemoved the `ligo daemon` command. It was previously used by the old language server to create a persistent LIGO process, but it is hacky and offered no performance improvements, so we delete it.\\n\\n"
+merge_request: '2690'
+title: "[Chore] Remove `ligo daemon`"
+type: breaking
+            

@@ -35,7 +35,6 @@ let%expect_test _ =
       add-user                   . [BETA] create a new user for the LIGO package
                                    registry
       login                      . [BETA] login to the LIGO package registry
-      daemon                     . launch a long running LIGO process
       lsp                        . [BETA] launch a LIGO lsp server
       analytics                  . Manage analytics
       version                    . print version information
