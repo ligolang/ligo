@@ -17,7 +17,6 @@
   publish
   user
   ligo.cli_helpers
-  daemon
   ligo_api)
  (modules command_unx cli version))
 
@@ -73,15 +72,6 @@
  (preprocess
   (pps ppx_deriving_yojson))
  (modules user))
-
-(library
- (name daemon)
- (instrumentation
-  (backend bisect_ppx))
- (libraries parse-argv cli_helpers)
- (preprocess
-  (pps ppx_deriving_yojson))
- (modules daemon))
 
 (rule
  (targets version.ml)

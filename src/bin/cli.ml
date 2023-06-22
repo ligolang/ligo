@@ -2874,17 +2874,6 @@ let login =
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
 
 
-let daemon =
-  let summary = "launch a long running LIGO process" in
-  let readme () = "Run LIGO subcommands without exiting the process" in
-  let cli_analytic = Analytics.generate_cli_metric ~command:"daemon" in
-  let f ligo_bin_path skip_analytics () =
-    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> Daemon.main ~ligo_bin_path ()
-  in
-  Command.basic ~summary ~readme (f <$> ligo_bin_path <*> skip_analytics)
-
-
 module Lsp_server = struct
   (* Main code
   This is the code that creates an instance of the lsp server class
@@ -2980,7 +2969,6 @@ let main =
      ; "publish", publish
      ; "add-user", add_user
      ; "login", login
-     ; "daemon", daemon
      ; "lsp", lsp
      ; "analytics", analytics
      ]
