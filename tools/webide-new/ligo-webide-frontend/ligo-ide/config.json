@@ -1,12 +1,12 @@
 {
     "defaultProtocol":{
-       "showName":"Mumbainet (mainnet)",
-       "name":"mumbainet"
+       "showName":"Mumbai",
+       "name":"mumbai"
     },
     "protocols":[
        {
-          "showName":"Mumbainet (mainnet)",
-          "name":"mumbainet"
+          "showName":"Mumbai",
+          "name":"mumbai"
        },
        {
          "showName": "Nairobi (next)",
