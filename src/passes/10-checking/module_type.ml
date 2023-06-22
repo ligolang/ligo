@@ -21,7 +21,7 @@ type t =
 and item =
   | MT_value of Value_var.t * Type.t * Attr.t
   | MT_type of Type_var.t * Type.t
-  [@@deriving compare, hash, equal]
+[@@deriving compare, hash, equal]
 
 let list ~pp ppf xs =
   let rec loop ppf = function
@@ -30,6 +30,7 @@ let list ~pp ppf xs =
   in
   Format.fprintf ppf "@[<v>%a@]" loop xs
 
+
 let rec pp_item ppf item =
   match item with
   | MT_value (var, type_, _attr) ->
@@ -37,16 +38,23 @@ let rec pp_item ppf item =
   | MT_type (tvar, type_) ->
     Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
 
-and pp_tvar ppf tvar =
-  Format.fprintf ppf "type %a" Type_var.pp tvar
 
-and pp ppf { tvars ; items } = Format.fprintf ppf "@[<v>sig@,%a%a@,end@]" (list ~pp:pp_tvar) tvars (list ~pp:pp_item) items
+and pp_tvar ppf tvar = Format.fprintf ppf "type %a" Type_var.pp tvar
+
+and pp ppf { tvars; items } =
+  Format.fprintf
+    ppf
+    "@[<v>sig@,%a%a@,end@]"
+    (list ~pp:pp_tvar)
+    tvars
+    (list ~pp:pp_item)
+    items
+
 
 let rec instantiate_var mt ~tvar ~type_ =
   let self mt = instantiate_var mt ~tvar ~type_ in
   match mt with
-  | [] ->
-    mt
+  | [] -> mt
   | MT_value (val_var, val_type, val_attr) :: mt ->
     let val_type = Type.subst val_type ~tvar ~type_ in
     MT_value (val_var, val_type, val_attr) :: self mt

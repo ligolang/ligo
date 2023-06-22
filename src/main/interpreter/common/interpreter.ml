@@ -2149,8 +2149,8 @@ let eval_expression ~raise ~steps ~options
   (* Compile new context *)
   let initial_state = Execution_monad.make_state ~raise ~options in
   let prg =
-    trace ~raise Main_errors.self_ast_typed_tracer
-      @@ Self_ast_typed.all_program prg in
+    trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.all_program prg
+  in
   let expr =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise

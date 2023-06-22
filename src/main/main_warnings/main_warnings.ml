@@ -137,10 +137,8 @@ let pp
         f
         "@[<hv>%a:@.Warning: If the following metadata is meant to be TZIP-16 \
          compliant,@.then it should be a 'big_map' from 'string' to 'bytes'.@.Hint: The \
-         corresponding type should be :@.\
-         @[  %s@]@.\
-         You can disable this warning with the '--no-metadata-check' flag.@.\
-         @]"
+         corresponding type should be :@.@[  %s@]@.You can disable this warning with the \
+         '--no-metadata-check' flag.@.@]"
         snippet_pp
         loc
         s
@@ -305,11 +303,10 @@ let to_warning : all -> Simple_utils.Warning.t =
   | `Self_ast_aggregated_metadata_invalid_type (loc, s) ->
     let message =
       Format.sprintf
-        "Warning: If the following metadata is meant to be TZIP-16 compliant,@.\
-         then it should be a 'big_map' from 'string' to 'bytes'.@.\
-         Hint: The corresponding type should be :@.\
-         @[  %s@]@.\
-         You can disable this warning with the '--no-metadata-check' flag.\n"
+        "Warning: If the following metadata is meant to be TZIP-16 compliant,@.then it \
+         should be a 'big_map' from 'string' to 'bytes'.@.Hint: The corresponding type \
+         should be :@.@[  %s@]@.You can disable this warning with the \
+         '--no-metadata-check' flag.\n"
         s
     in
     let content = make_content ~message ~location:loc () in

@@ -1,6 +1,5 @@
 open Ligo_prim
 open Ast_aggregated
-
 module V = Ligo_prim.Value_var
 module M = Simple_utils.Map.Make (V)
 
@@ -62,7 +61,9 @@ let rec is_dup (t : type_expression) =
   | T_constant { injection = Big_map | Map; parameters = [ t1; t2 ]; _ } ->
     is_dup t1 && is_dup t2
   | T_record row | T_sum row ->
-    let row_types = row.fields |> Record.values |> List.filter ~f:(fun v -> not (is_dup v)) in
+    let row_types =
+      row.fields |> Record.values |> List.filter ~f:(fun v -> not (is_dup v))
+    in
     List.is_empty row_types
   | T_arrow _ -> true
   | T_variable _ -> true
@@ -229,7 +230,7 @@ and muchused_declarations (muchuse : muchuse) = function
 
 
 let muchused_map_program ~raise : program -> program = function
-  | (p, e) ->
+  | p, e ->
     let update_annotations annots =
       List.iter ~f:raise.Simple_utils.Trace.warning annots
     in
@@ -238,4 +239,4 @@ let muchused_map_program ~raise : program -> program = function
       `Self_ast_aggregated_warning_muchused (V.get_location v, Format.asprintf "%a" V.pp v)
     in
     let () = update_annotations @@ List.map ~f:warn_var muchused in
-    (p, e)
+    p, e

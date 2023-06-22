@@ -198,7 +198,9 @@ module Context : sig
   (** [get_module_type_of_path path] returns the signature of the module path [path].
       Returning [None] if not found in the current context. *)
 
-  val get_module_type_of_path : Module_var.t List.Ne.t -> (Module_type.t option, 'err, 'wrn) t
+  val get_module_type_of_path
+    :  Module_var.t List.Ne.t
+    -> (Module_type.t option, 'err, 'wrn) t
 
   val get_module_type_of_path_exn
     :  Module_var.t List.Ne.t

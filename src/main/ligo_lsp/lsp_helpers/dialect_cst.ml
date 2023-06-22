@@ -13,11 +13,12 @@ type ('cameligo, 'jsligo, 'pascaligo, 'result) from_dialect =
   ; pascaligo : 'pascaligo -> 'result
   }
 
-let from_dialect : ('a,'b,'c,'result) from_dialect -> ('a,'b,'c) dialect -> 'result =
-  fun f -> function
+let from_dialect : ('a, 'b, 'c, 'result) from_dialect -> ('a, 'b, 'c) dialect -> 'result =
+ fun f -> function
   | CameLIGO x -> f.cameligo x
   | JsLIGO x -> f.jsligo x
   | PascaLIGO x -> f.pascaligo x
+
 
 type t = (Parsing.Cameligo.CST.t, Parsing.Jsligo.CST.t, Parsing.Pascaligo.CST.t) dialect
 type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise

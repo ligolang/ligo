@@ -34,7 +34,6 @@ and ty_expr = type_expression [@@deriving equal, compare, yojson, hash]
 module ValueAttr = Ast_typed.ValueAttr
 module ModuleAttr = Ast_typed.TypeOrModuleAttr
 module Value_decl = Value_decl (ValueAttr)
-
 module Pattern = Linear_pattern
 module Accessor = Accessor (Access_label)
 module Update = Update (Access_label)

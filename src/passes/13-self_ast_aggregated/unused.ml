@@ -160,6 +160,6 @@ let unused_declaration ~raise (decl : declaration) =
 
 
 let unused_map_program ~raise : program -> program = function
-  | (p, e) ->
+  | p, e ->
     let () = List.iter ~f:(unused_declaration ~raise) p in
-    (p, e)
+    p, e

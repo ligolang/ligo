@@ -52,7 +52,8 @@ module Internal () = struct
 
   let global_counter = ref 1
   let reset_counter () = global_counter := 1
-  let add_prefix str var = {var with name=str^var.name}
+  let add_prefix str var = { var with name = str ^ var.name }
+
   let fresh ~loc ?(name = "gen") () =
     let counter =
       incr global_counter;

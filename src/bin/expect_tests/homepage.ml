@@ -6,14 +6,12 @@ let base path =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; base "cameligo.mligo" ];
-  [%expect
-    {|
+  [%expect {|
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; base "jsligo.jsligo" ];
-  [%expect
-    {|
+  [%expect {|
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =

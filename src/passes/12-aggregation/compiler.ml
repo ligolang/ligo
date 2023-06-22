@@ -245,9 +245,7 @@ let build_context : Data.t -> O.context =
    fun d ->
     match d with
     | Pat { binding = { old = _; fresh }; item; attr; loc } ->
-      [ Location.wrap
-          ~loc
-          (O.D_irrefutable_match { pattern = fresh; expr = item; attr })
+      [ Location.wrap ~loc (O.D_irrefutable_match { pattern = fresh; expr = item; attr })
       ]
     | Exp { binding = { old = _; fresh }; item; attr; loc } ->
       let binder = Binder.make fresh item.type_expression in
@@ -275,14 +273,16 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
         let item = compile_expression acc_scope [] expr in
         let pattern = I.Pattern.map compile_type pattern in
         let fresh = Data.fresh_pattern pattern path in
-        (Data.{ binding = { old = pattern; fresh }; item; attr; loc = decl.location } : Data.pat_)
+        (Data.{ binding = { old = pattern; fresh }; item; attr; loc = decl.location }
+          : Data.pat_)
       in
       Data.add_exp_pat acc_scope pat
     | I.D_value { binder; expr; attr } ->
       let exp =
         let item = compile_expression acc_scope [] expr in
         let fresh = Data.fresh_var binder.var path in
-        (Data.{ binding = { old = binder.var; fresh }; item; attr; loc = decl.location } : Data.exp_)
+        (Data.{ binding = { old = binder.var; fresh }; item; attr; loc = decl.location }
+          : Data.exp_)
       in
       Data.add_exp acc_scope exp
     | I.D_module { module_binder; module_; module_attr = _ } ->

@@ -168,9 +168,11 @@ and fold_map_declaration m acc (x : declaration) =
   | D_type t ->
     let wrap_content = D_type t in
     acc, { x with wrap_content }
-  | D_module { module_binder; module_; module_attr ; annotation = () } ->
+  | D_module { module_binder; module_; module_attr; annotation = () } ->
     let acc', module_ = (fold_map_expression_in_module_expr m) acc module_ in
-    let wrap_content = D_module { module_binder; module_; module_attr; annotation = () } in
+    let wrap_content =
+      D_module { module_binder; module_; module_attr; annotation = () }
+    in
     acc', { x with wrap_content }
 
 

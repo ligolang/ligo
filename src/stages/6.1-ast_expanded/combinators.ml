@@ -221,6 +221,7 @@ let get_a_string (t : expression) =
 let e_literal__type_ ~loc x t : expression = make_e ~loc (E_literal (Literal__type_ x)) t
   [@@map _type_, ("string", "int")]
 
+
 let e_literal_unit ~loc = make_e ~loc (E_literal Literal_unit) (t_unit ~loc ())
 
 let rec get_e_applications t =
@@ -324,7 +325,7 @@ let is_michelson_pair (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   | _ -> None
 
 
-let e_unit () : expression_content = E_literal (Literal_unit)
+let e_unit () : expression_content = E_literal Literal_unit
 
 let get_e_tuple t =
   match t with

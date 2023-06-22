@@ -24,7 +24,8 @@ module Catamorphism = struct
     ; instruction :
         ('instruction, 'expr, 'pattern, 'statement, 'block) instruction_ -> 'instruction
     ; declaration :
-        ('declaration, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_ -> 'declaration
+        ('declaration, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_
+        -> 'declaration
     ; program_entry :
         ('program_entry, 'declaration, 'instruction) program_entry_ -> 'program_entry
     ; program : ('program, 'program_entry) program_ -> 'program
@@ -44,7 +45,7 @@ module Catamorphism = struct
     , program_entry
     , program
     , sig_expr
-    , sig_entry)
+    , sig_entry )
     fold
 
   let idle : idle_fold =
@@ -64,7 +65,8 @@ module Catamorphism = struct
 
 
   let rec cata_expr
-      : type e t p s b m i d pe prg sgt si. f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) fold -> expr -> e
+      : type e t p s b m i d pe prg sgt si.
+        f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) fold -> expr -> e
     =
    fun ~f x ->
     map_expr_
@@ -169,13 +171,18 @@ module Catamorphism = struct
       : type e t p s b m i d pe prg sgt si.
         f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) fold -> sig_expr -> sgt
     =
-   fun ~f x -> map_sig_expr_ (cata_sig_expr ~f) (cata_sig_entry ~f) (cata_ty_expr ~f) x.fp |> f.sig_expr
+   fun ~f x ->
+    map_sig_expr_ (cata_sig_expr ~f) (cata_sig_entry ~f) (cata_ty_expr ~f) x.fp
+    |> f.sig_expr
+
 
   and cata_sig_entry
       : type e t p s b m i d pe prg sgt si.
         f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) fold -> sig_entry -> si
     =
-   fun ~f x -> map_sig_entry_ (cata_sig_expr ~f) (cata_sig_entry ~f) (cata_ty_expr ~f) x.fp |> f.sig_entry
+   fun ~f x ->
+    map_sig_entry_ (cata_sig_expr ~f) (cata_sig_entry ~f) (cata_ty_expr ~f) x.fp
+    |> f.sig_entry
 end
 
 module Anamorphism = struct
@@ -202,7 +209,8 @@ module Anamorphism = struct
     ; instruction :
         'instruction -> ('instruction, 'expr, 'pattern, 'statement, 'block) instruction_
     ; declaration :
-        'declaration -> ('declaration, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_
+        'declaration
+        -> ('declaration, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_
     ; program_entry :
         'program_entry -> ('program_entry, 'declaration, 'instruction) program_entry_
     ; program : 'program -> ('program, 'program_entry) program_
@@ -325,14 +333,21 @@ module Anamorphism = struct
         f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) unfold -> sgt -> sig_expr
     =
    fun ~f x ->
-    { fp = f.sig_expr x |> map_sig_expr_ (ana_sig_expr ~f) (ana_sig_entry ~f) (ana_ty_expr ~f) }
+    { fp =
+        f.sig_expr x
+        |> map_sig_expr_ (ana_sig_expr ~f) (ana_sig_entry ~f) (ana_ty_expr ~f)
+    }
+
 
   and ana_sig_entry
       : type e t p s b m i d pe prg sgt si.
         f:(e, t, p, s, b, m, i, d, pe, prg, sgt, si) unfold -> si -> sig_entry
     =
    fun ~f x ->
-    { fp = f.sig_entry x |> map_sig_entry_ (ana_sig_expr ~f) (ana_sig_entry ~f) (ana_ty_expr ~f) }
+    { fp =
+        f.sig_entry x
+        |> map_sig_entry_ (ana_sig_expr ~f) (ana_sig_entry ~f) (ana_ty_expr ~f)
+    }
 end
 
 module Iter = struct
@@ -344,7 +359,8 @@ module Iter = struct
     ; block : (block, statement) block_ -> unit
     ; mod_expr : (mod_expr, program) mod_expr_ -> unit
     ; instruction : (instruction, expr, pattern, statement, block) instruction_ -> unit
-    ; declaration : (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_ -> unit
+    ; declaration :
+        (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_ -> unit
     ; program_entry : (program_entry, declaration, instruction) program_entry_ -> unit
     ; program : (program, program_entry) program_ -> unit
     ; sig_expr : (sig_expr, sig_entry, ty_expr) sig_expr_ -> unit
@@ -412,12 +428,12 @@ module Iter = struct
             iter.program x)
       ; sig_expr =
           (fun x ->
-             acc.sig_expr x;
-             iter.sig_expr x)
+            acc.sig_expr x;
+            iter.sig_expr x)
       ; sig_entry =
           (fun x ->
-             acc.sig_entry x;
-             iter.sig_entry x)
+            acc.sig_entry x;
+            iter.sig_entry x)
       }
     in
     List.fold ~init:defaults ~f:aux iters

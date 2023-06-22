@@ -381,8 +381,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   | TFun { value = fta, _, te2; _ } ->
     let fun_type_args =
       let compile_fun_type_arg : I.fun_type_arg -> _ O.Named_fun.fun_type_arg =
-       fun { name; type_expr; _ } ->
-        { name = name#payload; type_expr }
+       fun { name; type_expr; _ } -> { name = name#payload; type_expr }
       in
       List.map ~f:compile_fun_type_arg (nsepseq_to_list fta.inside)
     in
@@ -592,7 +591,8 @@ and instruction : Eq.instruction -> Folding.instruction =
     let afterthought = Option.map afterthought ~f:Utils.nsepseq_to_nseq in
     return @@ I_for_stmt { initialiser; condition; afterthought; statement }
   (* impossible, if triggered, look at functions 'statement' *)
-  | SLet _ | SConst _ | SType _ | SInterface _ | SNamespace _ | SExport _ | SImport _ -> assert false
+  | SLet _ | SConst _ | SType _ | SInterface _ | SNamespace _ | SExport _ | SImport _ ->
+    assert false
 
 
 and declaration : Eq.declaration -> Folding.declaration =
@@ -621,14 +621,19 @@ and declaration : Eq.declaration -> Folding.declaration =
   match d with
   | SNamespace ({ value; _ } as n) ->
     let kwd, module_name, interface_annotation, statements, attributes = value in
-    let annotation = Option.map ~f:(fun {region = _; value = _, value} -> value) interface_annotation in
+    let annotation =
+      Option.map ~f:(fun { region = _; value = _, value } -> value) interface_annotation
+    in
     return_attr
       attributes
       ~no_attr:
         (let name = TODO_do_in_parsing.mvar module_name in
          O.D_module { name; mod_expr = statements.value.inside; annotation })
       ~attr:(fun attributes ->
-        I.SNamespace { n with value = kwd, module_name, interface_annotation, statements, attributes })
+        I.SNamespace
+          { n with
+            value = kwd, module_name, interface_annotation, statements, attributes
+          })
   | SImport { value = s; _ } ->
     let import =
       match s with
@@ -706,9 +711,8 @@ and program_entry : Eq.program_entry -> Folding.program_entry = function
 
 and program : Eq.program -> Folding.program = fun x -> List.Ne.to_list x.statements
 
-
 and sig_expr : Eq.sig_expr -> Folding.sig_expr = function
-  | IInterface { value = { inside; lbrace = _ ; rbrace = _ } ; region } ->
+  | IInterface { value = { inside; lbrace = _; rbrace = _ }; region } ->
     let loc = Location.lift region in
     let sig_items = nsepseq_to_list inside in
     Location.wrap ~loc @@ O.S_body sig_items
@@ -719,7 +723,8 @@ and sig_expr : Eq.sig_expr -> Folding.sig_expr = function
     Location.wrap ~loc @@ O.S_path value
 
 
-and sig_entry : Eq.sig_entry -> Folding.sig_entry = fun se ->
+and sig_entry : Eq.sig_entry -> Folding.sig_entry =
+ fun se ->
   let return ~loc = Location.wrap ~loc in
   let return_attr attributes ~loc ~attr ~no_attr =
     match attributes with
@@ -729,24 +734,26 @@ and sig_entry : Eq.sig_entry -> Folding.sig_entry = fun se ->
       return ~loc @@ (S_attr (hd, attr tl) : _ O.sig_entry_content_)
   in
   match se with
-  | IType {region; value = (attributes, kwd_type, v, equal, ty)} ->
+  | IType { region; value = attributes, kwd_type, v, equal, ty } ->
     let loc = Location.lift region in
     return_attr
       attributes
       ~loc
       ~no_attr:(O.S_type (TODO_do_in_parsing.tvar v, ty))
-      ~attr:(fun attributes -> I.IType {region; value = (attributes, kwd_type, v, equal, ty) })
-  | IType_var {region; value = (attributes, kwd_type, v)} ->
+      ~attr:(fun attributes ->
+        I.IType { region; value = attributes, kwd_type, v, equal, ty })
+  | IType_var { region; value = attributes, kwd_type, v } ->
     let loc = Location.lift region in
     return_attr
       attributes
       ~loc
       ~no_attr:(O.S_type_var (TODO_do_in_parsing.tvar v))
-      ~attr:(fun attributes -> I.IType_var {region; value = (attributes, kwd_type, v) })
-  | IConst {region; value = (attributes, kwd_type, v, equal, ty)} ->
+      ~attr:(fun attributes -> I.IType_var { region; value = attributes, kwd_type, v })
+  | IConst { region; value = attributes, kwd_type, v, equal, ty } ->
     let loc = Location.lift region in
     return_attr
       attributes
       ~loc
       ~no_attr:(O.S_value (TODO_do_in_parsing.var v, ty))
-      ~attr:(fun attributes -> I.IConst {region; value = (attributes, kwd_type, v, equal, ty) })
+      ~attr:(fun attributes ->
+        I.IConst { region; value = attributes, kwd_type, v, equal, ty })

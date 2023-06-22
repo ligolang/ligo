@@ -6,7 +6,6 @@ type type_variable = Type_var.t [@@deriving compare, hash]
 type expression_variable = Value_var.t [@@deriving compare, hash]
 type module_variable = Module_var.t [@@deriving compare, hash]
 
-
 type type_content =
   | T_variable of Type_var.t
   | T_constant of type_injection

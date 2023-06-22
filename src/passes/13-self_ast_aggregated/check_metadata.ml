@@ -18,9 +18,11 @@ let find_storage_metadata_opt (storage : Ast_aggregated.type_expression)
   match storage.type_content with
   | Ast_aggregated.T_record rows ->
     let metadata_string = "metadata" in
-    let metadata_label = match Ligo_prim.Layout.find_annot rows.layout metadata_string with
-    | Some l -> l
-    | _ ->  Ligo_prim.Label.of_string metadata_string in
+    let metadata_label =
+      match Ligo_prim.Layout.find_annot rows.layout metadata_string with
+      | Some l -> l
+      | _ -> Ligo_prim.Label.of_string metadata_string
+    in
     let fields : Ast_aggregated.type_expression Ligo_prim.Record.t = rows.fields in
     Ligo_prim.Record.find_opt fields metadata_label
   | _ -> None
@@ -28,7 +30,10 @@ let find_storage_metadata_opt (storage : Ast_aggregated.type_expression)
 
 (** Verifies that the type of the [metadata] field in the storage
     is a [(string, bytes) big_map], as required by the TZIP-16 standard. *)
-let check_metadata_tzip16_type_compliance ~raise ?syntax (storage_metadata : type_expression)
+let check_metadata_tzip16_type_compliance
+    ~raise
+    ?syntax
+    (storage_metadata : type_expression)
     : unit
   =
   let pass =
@@ -39,10 +44,14 @@ let check_metadata_tzip16_type_compliance ~raise ?syntax (storage_metadata : typ
       | Some _, Some _ -> true
       | _ -> false)
   in
-  let suggested_type = match syntax with
+  let suggested_type =
+    match syntax with
     (* TODO: improve this with decompilation? *)
     | Some Syntax_types.JsLIGO -> "big_map<string, bytes>"
     | Some CameLIGO -> "(string, bytes) big_map"
-    | _ -> "big_map string bytes" in
-  let warning = `Self_ast_aggregated_metadata_invalid_type (storage_metadata.location, suggested_type) in
+    | _ -> "big_map string bytes"
+  in
+  let warning =
+    `Self_ast_aggregated_metadata_invalid_type (storage_metadata.location, suggested_type)
+  in
   if not pass then raise.warning @@ warning

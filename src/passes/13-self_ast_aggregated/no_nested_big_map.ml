@@ -25,9 +25,7 @@ let rec check_no_nested_bigmap ~raise is_in_bigmap e =
   | T_for_all x -> check_no_nested_bigmap ~raise is_in_bigmap x.type_
 
 
-let self_typing ~raise
-    : contract_type -> expression -> bool * contract_type * expression
-  =
+let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression =
  fun dat el ->
   let () = check_no_nested_bigmap ~raise false el.type_expression in
   true, dat, el

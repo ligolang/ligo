@@ -117,7 +117,6 @@ let reduction ~raise =
 
 let decompile ~raise:_ = Nothing
 
-
 open Unit_test_helpers.Program
 
 let%expect_test "compile" =
@@ -131,8 +130,10 @@ let%expect_test "compile" =
         (T_sum_raw
          (((Label Foo) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
           ((Label Bar) ((associated_type ()) (decl_pos 1))))))))))))
-  |} |-> compile;
-  [%expect {|
+  |}
+  |-> compile;
+  [%expect
+    {|
     ((PE_declaration
       (D_type
        ((name dyn_param)

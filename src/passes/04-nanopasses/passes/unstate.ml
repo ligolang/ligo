@@ -160,8 +160,7 @@ let rec decl : declaration -> Statement_result.t =
         e_mod_in
           ~loc:(Location.cover loc (get_e_loc x))
           { module_name = name; rhs = mod_expr; body = x })
-  | D_signature { name = _; sig_expr = _ } ->
-    Binding Fun.id
+  | D_signature { name = _; sig_expr = _ } -> Binding Fun.id
   | D_type { name; type_expr } ->
     Binding
       (fun x ->

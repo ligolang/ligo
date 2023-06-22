@@ -22,7 +22,6 @@ module ModuleAttr = struct
 end
 
 module Value_decl = Value_decl (ValueAttr)
-
 module Accessor = Accessor (Access_label)
 module Update = Update (Access_label)
 module Let_in = Let_in.Make (Binder) (ValueAttr)

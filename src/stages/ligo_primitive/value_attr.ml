@@ -1,19 +1,19 @@
 type t =
-{ inline : bool
-; no_mutation : bool
-; (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
+  { inline : bool
+  ; no_mutation : bool
+  ; (* Some external constant (e.g. `Test.balance`) do not accept any argument. This annotation is used to prevent LIGO interpreter to evaluate (V_Thunk values) and forces inlining in the compiling (15-self_mini_c)
   TODO: we should change the type of such constants to be `unit -> 'a` instead of just 'a
 *)
-  view : bool
-; entry : bool
-; public : bool
-; (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
+    view : bool
+  ; entry : bool
+  ; public : bool
+  ; (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
   set to true for standard libraries
 *)
-  hidden : bool
-; (* Controls whether it should be inlined at AST level *)
-  thunk : bool
-}
+    hidden : bool
+  ; (* Controls whether it should be inlined at AST level *)
+    thunk : bool
+  }
 [@@deriving eq, compare, yojson, hash]
 
 open Format
@@ -21,31 +21,31 @@ open Format
 let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
 
 let pp ppf { inline; no_mutation; view; entry; public; hidden; thunk } =
-fprintf
-  ppf
-  "%a%a%a%a%a%a%a"
-  (pp_if_set "inline")
-  inline
-  (pp_if_set "no_mutation")
-  no_mutation
-  (pp_if_set "view")
-  view
-  (pp_if_set "entry")
-  entry
-  (pp_if_set "private")
-  (not public)
-  (pp_if_set "hidden")
-  hidden
-  (pp_if_set "thunk")
-  thunk
+  fprintf
+    ppf
+    "%a%a%a%a%a%a%a"
+    (pp_if_set "inline")
+    inline
+    (pp_if_set "no_mutation")
+    no_mutation
+    (pp_if_set "view")
+    view
+    (pp_if_set "entry")
+    entry
+    (pp_if_set "private")
+    (not public)
+    (pp_if_set "hidden")
+    hidden
+    (pp_if_set "thunk")
+    thunk
 
 
 let default_attributes =
-{ inline = false
-; no_mutation = false
-; view = false
-; entry = false
-; public = true
-; hidden = false
-; thunk = false
-}
+  { inline = false
+  ; no_mutation = false
+  ; view = false
+  ; entry = false
+  ; public = true
+  ; hidden = false
+  ; thunk = false
+  }

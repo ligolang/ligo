@@ -97,17 +97,17 @@ let fv_folder =
     | D_irrefutable_match { pattern; expr = _ } ->
       let binders = Combinators.get_pattern_binders pattern in
       singleton binders
-    | D_signature { name = _ ; sig_expr = _ } ->
-      empty
+    | D_signature { name = _; sig_expr = _ } -> empty
     | _ -> empty
   in
   let block : _ block_ -> bound = fold_block_ union union empty in
   let mod_expr = fold_mod_expr_ union union empty in
   let program : _ program_ -> bound = fold_program_ union union empty in
   let sig_expr : _ sig_expr_ -> bound = fold_sig_expr_ union union union empty in
-  let sig_entry : _ sig_entry_ -> bound = fun si ->
+  let sig_entry : _ sig_entry_ -> bound =
+   fun si ->
     match Location.unwrap si with
-    | S_value (v, _) -> singleton [v]
+    | S_value (v, _) -> singleton [ v ]
     | S_attr (_, si) -> si
     | _ -> empty
   in

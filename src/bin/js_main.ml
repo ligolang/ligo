@@ -91,7 +91,9 @@ let test code syntax =
       ()
   in
   let value_format, f =
-  Api.Run.test raw_options (Build.Source_input.Raw { id = "source_of_text" ^ Syntax.to_ext syntax_v; code })
+    Api.Run.test
+      raw_options
+      (Build.Source_input.Raw { id = "source_of_text" ^ Syntax.to_ext syntax_v; code })
   in
   let result = Simple_utils.Trace.to_stdlib_result f in
   let format =
@@ -121,6 +123,7 @@ let test code syntax =
     print_endline a;
     print_endline b;
     "<failed>"
+
 
 let _ =
   Js.export

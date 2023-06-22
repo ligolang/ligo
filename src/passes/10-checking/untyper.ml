@@ -190,6 +190,7 @@ and untype_module_expr : O.module_expr -> I.module_expr =
   | M_module_path path -> return (M_module_path path)
   | M_variable v -> return (M_variable v)
 
+
 and untype_declaration_constant
     : (O.expression -> I.expression) -> _ O.Value_decl.t -> _ I.Value_decl.t
   =
