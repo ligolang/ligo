@@ -5,7 +5,7 @@ module LSet = Types.LSet
 module LMap = Map.Make (Location_ordered)
 open Env
 
-type t = (Types.uid list * Types.uid) LMap.t
+type t = (Types.Uid.t list * Types.Uid.t) LMap.t
 
 (** [resolve_mpath] takes a module path [mvs] and tries to resolve in the [env]
     the final output is of type [(Module_var.t * string list) option] 
@@ -20,11 +20,11 @@ type t = (Types.uid list * Types.uid) LMap.t
     and then look for the rest of the module path [B.C.D] in [env] of the resolved
     module *)
 let resolve_mpath
-    : Module_var.t List.Ne.t -> env -> (Module_var.t * Types.uid list) option
+    : Module_var.t List.Ne.t -> env -> (Module_var.t * Types.Uid.t list) option
   =
  fun mvs env ->
   let init = [] in
-  let f : Types.uid list -> _ -> Types.uid list =
+  let f : Types.Uid.t list -> _ -> Types.Uid.t list =
    fun acc (_input, real, _resolved, _defs_of_that_module) -> Types.mvar_to_id real :: acc
   in
   let defs = env.avail_defs @ env.parent in

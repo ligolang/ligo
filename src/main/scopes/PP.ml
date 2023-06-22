@@ -11,7 +11,7 @@ let scopes : Format.formatter -> scopes -> unit =
     in
     let pp_bindings f defs =
       List.iter defs ~f:(fun def ->
-          Format.fprintf f "%s " (uid_to_string @@ get_def_uid def))
+          Format.fprintf f "%s " (Uid.to_string @@ get_def_uid def))
     in
     Format.fprintf f "[ %a ] %a" pp_bindings defs Location.pp loc
   in
@@ -78,7 +78,7 @@ let rec definitions : Format.formatter -> def list -> unit =
       Format.fprintf
         ppf
         "Alias: %s @ %a @ "
-        (String.concat ~sep:"." @@ List.map ~f:uid_to_string a)
+        (String.concat ~sep:"." @@ List.map ~f:Uid.to_string a)
         refs
         references
     | Module { mod_case = Def d; references; _ } ->
@@ -103,7 +103,7 @@ let rec definitions : Format.formatter -> def list -> unit =
         Format.fprintf
           f
           "(%s -> %s) @ Range: %a @ Body Range: %a @ Content: %a@ "
-          (uid_to_string @@ get_def_uid def)
+          (Uid.to_string @@ get_def_uid def)
           (get_def_name def)
           Location.pp
           (get_range def)
@@ -181,14 +181,14 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; def_type = _
         ; mod_path = _
         } ->
-      let alias = `List (List.map a ~f:(fun s -> `String (uid_to_string s))) in
+      let alias = `List (List.map a ~f:(fun s -> `String (Uid.to_string s))) in
       ( uid
       , `Assoc
           [ "definition", defintion ~name ~range ~body_range ~references ~t:Unresolved
           ; "alias", alias
           ] )
   in
-  Tuple2.map_fst ~f:uid_to_string @@ aux def
+  Tuple2.map_fst ~f:Uid.to_string @@ aux def
 
 
 and defs_json (defs : def list) : Yojson.Safe.t =
@@ -233,13 +233,13 @@ let scopes_json (scopes : scopes) : Yojson.Safe.t =
                | Module _ | Variable _ -> false)
          in
          let vs =
-           List.map ~f:(fun def -> `String (uid_to_string @@ get_def_uid def)) variables
+           List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) variables
          in
          let ts =
-           List.map ~f:(fun def -> `String (uid_to_string @@ get_def_uid def)) types
+           List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) types
          in
          let ms =
-           List.map ~f:(fun def -> `String (uid_to_string @@ get_def_uid def)) modules
+           List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) modules
          in
          `Assoc
            [ "range", Location.to_yojson loc
