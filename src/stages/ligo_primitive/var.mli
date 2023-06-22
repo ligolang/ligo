@@ -22,7 +22,6 @@ module type VAR = sig
   val is_ignored : t -> bool
   val add_prefix : string -> t -> t
 
-
   (* Prints vars as %s or %s#%d *)
   val pp : Format.formatter -> t -> unit
 

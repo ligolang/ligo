@@ -198,6 +198,7 @@ and map_declaration m (x : declaration) =
     let module_ = map_expression_in_module_expr m module_ in
     return @@ D_module { module_binder; module_; module_attr; annotation }
 
+
 and map_decl m d = map_declaration m d
 and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
 

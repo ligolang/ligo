@@ -224,7 +224,8 @@ end
 
 (* ========================== DECLARATIONS ================================= *)
 type ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_ =
-  ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_content_ Location.wrap
+  ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_content_
+  Location.wrap
 
 and ('self, 'expr, 'ty_expr, 'pattern, 'mod_expr, 'sig_expr) declaration_content_ =
   | D_attr of (Attribute.t * 'self)
@@ -270,14 +271,14 @@ include struct
     | S_attr of Attribute.t * 'sig_entry
   [@@deriving
     map
-  , fold
-  , yojson
-  , iter
-  , sexp
-  , is { tags = [ "not_initial" ]; name = "sig_entry" }
-  , eq
-  , compare
-  , hash]
+    , fold
+    , yojson
+    , iter
+    , sexp
+    , is { tags = [ "not_initial" ]; name = "sig_entry" }
+    , eq
+    , compare
+    , hash]
 
   and ('sig_expr, 'sig_entry, 'ty_expr) sig_expr_ =
     ('sig_expr, 'sig_entry, 'ty_expr) sig_expr_content_ Location.wrap
@@ -287,15 +288,14 @@ include struct
     | S_path of Ligo_prim.Module_var.t Simple_utils.List.Ne.t
   [@@deriving
     map
-  , fold
-  , yojson
-  , iter
-  , sexp
-  , is { tags = [ "not_initial" ]; name = "sig_expr" }
-  , eq
-  , compare
-  , hash]
-
+    , fold
+    , yojson
+    , iter
+    , sexp
+    , is { tags = [ "not_initial" ]; name = "sig_expr" }
+    , eq
+    , compare
+    , hash]
 end
 
 (* ========================== MODULES ====================================== *)
@@ -431,10 +431,15 @@ and pattern = { fp : (pattern, ty_expr) pattern_ }
 and instruction = { fp : (instruction, expr, pattern, statement, block) instruction_ }
 and statement = { fp : (statement, instruction, declaration) statement_ }
 and block = { fp : (block, statement) block_ }
-and declaration = { fp : (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_ }
+
+and declaration =
+  { fp : (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_ }
+
 and mod_expr = { fp : (mod_expr, program) mod_expr_ }
 and expr = { fp : (expr, ty_expr, pattern, block, mod_expr) expr_ }
 and program_entry = { fp : (program_entry, declaration, instruction) program_entry_ }
 and program = { fp : (program, program_entry) program_ }
 and sig_expr = { fp : (sig_expr, sig_entry, ty_expr) sig_expr_ }
-and sig_entry = { fp : (sig_expr, sig_entry, ty_expr) sig_entry_ } [@@deriving eq, compare, hash]
+
+and sig_entry = { fp : (sig_expr, sig_entry, ty_expr) sig_entry_ }
+[@@deriving eq, compare, hash]

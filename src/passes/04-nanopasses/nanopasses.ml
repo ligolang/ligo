@@ -154,7 +154,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; t_app_michelson_types = syntax
   ; projections = syntax
   ; pattern_constructor_application = syntax
-  ; mod_res = mod_res
+  ; mod_res
   }
 
 

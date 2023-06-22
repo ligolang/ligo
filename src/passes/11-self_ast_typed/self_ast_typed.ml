@@ -2,8 +2,7 @@ module Errors = Errors
 module Helpers = Helpers
 open Ligo_prim
 
-let all_program ~raise init =
-  Make_entry_point.make_main_module ~raise init
+let all_program ~raise init = Make_entry_point.make_main_module ~raise init
 
 let all_contract ~raise entrypoints module_path (prg : Ast_typed.program) =
   let module_ = Helpers.get_module module_path prg in

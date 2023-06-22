@@ -273,7 +273,8 @@ let%expect_test _ =
     ; "-e"
     ; entrypoint
     ];
-  [%expect {|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (nat %metadata)) ;
       code { CDR ; NIL operation ; PAIR } } |}];
@@ -299,7 +300,8 @@ let%expect_test _ =
     ; "-e"
     ; entrypoint
     ];
-  [%expect {|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (nat %metadata)) ;
       code { CDR ; NIL operation ; PAIR } } |}];

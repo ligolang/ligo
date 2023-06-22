@@ -48,14 +48,11 @@ let typecheck_with_signature
     @@ Checking.type_program_with_signature ~options:options.middle_end ?env:context p
   in
   let typed =
-    if self_pass then
+    if self_pass
+    then
       trace ~raise self_ast_typed_tracer
-      @@ fun ~raise ->
-      Self_ast_typed.all_program
-        ~raise
-        typed
-    else
-      typed
+      @@ fun ~raise -> Self_ast_typed.all_program ~raise typed
+    else typed
   in
   typed, signature
 
@@ -74,10 +71,7 @@ let typecheck
   in
   let typed =
     trace ~raise self_ast_typed_tracer
-    @@ fun ~raise ->
-    Self_ast_typed.all_program
-      ~raise
-      typed
+    @@ fun ~raise -> Self_ast_typed.all_program ~raise typed
   in
   let applied =
     match cform with

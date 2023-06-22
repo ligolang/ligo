@@ -46,12 +46,16 @@ module Diagnostic = struct
   let remove_underscore_numeration s =
     { s with
       message =
-      "(* This is a testable_pp. The actual result might be slightly different. *) "
-      ^ Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message
+        "(* This is a testable_pp. The actual result might be slightly different. *) "
+        ^ Str.global_replace (Str.regexp {|_#[0-9][0-9]*|}) "_#N" s.message
     }
+
+
   let testable_pp fmt a = pp fmt (remove_underscore_numeration a)
+
   let testable_eq a b =
     eq (remove_underscore_numeration a) (remove_underscore_numeration b)
+
 
   let testable = Alcotest.testable testable_pp testable_eq
 end

@@ -19,10 +19,7 @@ type ('a, 'err, 'wrn) t =
 
 let rec encode (type_ : Ast_typed.type_expression) : Type.t =
   let return content : Type.t =
-    { content
-    ; orig_var = type_.orig_var
-    ; location = type_.location
-    }
+    { content; orig_var = type_.orig_var; location = type_.location }
   in
   match type_.type_content with
   | T_variable tvar -> return @@ T_variable tvar
@@ -343,10 +340,22 @@ module Context = struct
     lift_ctx (fun ctx -> Context.get_texists_var ctx tvar) >>= raise_opt ~error
 
 
-  let get_module_of_path path : _ t = lift_ctx (fun ctx -> Context.get_module_of_path ctx path)
-  let get_module_of_path_exn path ~error : _ t = get_module_of_path path >>= raise_opt ~error
-  let get_module_type_of_path path : _ t = lift_ctx (fun ctx -> Context.get_module_type_of_path ctx path)
-  let get_module_type_of_path_exn path ~error : _ t = get_module_type_of_path path >>= raise_opt ~error
+  let get_module_of_path path : _ t =
+    lift_ctx (fun ctx -> Context.get_module_of_path ctx path)
+
+
+  let get_module_of_path_exn path ~error : _ t =
+    get_module_of_path path >>= raise_opt ~error
+
+
+  let get_module_type_of_path path : _ t =
+    lift_ctx (fun ctx -> Context.get_module_type_of_path ctx path)
+
+
+  let get_module_type_of_path_exn path ~error : _ t =
+    get_module_type_of_path path >>= raise_opt ~error
+
+
   let get_module mvar : _ t = lift_ctx (fun ctx -> Context.get_module ctx mvar)
   let get_module_exn mvar ~error : _ t = get_module mvar >>= raise_opt ~error
   let get_sum constr : _ t = lift_ctx (fun ctx -> Context.get_sum ctx constr)

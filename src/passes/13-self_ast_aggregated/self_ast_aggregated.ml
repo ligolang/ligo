@@ -123,7 +123,11 @@ let all_program
   let prg = self_program ~f:(Unused.unused_map_program ~raise) prg in
   let prg = self_program ~f:(Muchused.muchused_map_program ~raise) prg in
   let warn_unused_rec = options.warn_unused_rec in
-  let prg = Ast_aggregated.Helpers.map_program (Recursion.remove_rec_expression ~raise ~warn_unused_rec) prg in
+  let prg =
+    Ast_aggregated.Helpers.map_program
+      (Recursion.remove_rec_expression ~raise ~warn_unused_rec)
+      prg
+  in
   let prg = if not options.test then Remove_unused.remove_unused prg else prg in
   let prg = Ast_aggregated.Helpers.map_program Polymorphic_replace.expression prg in
   let prg =
@@ -139,9 +143,8 @@ let all_program
 
 
 let contract_passes ~raise =
-  [ Contract_passes.self_typing ~raise
-  ; No_nested_big_map.self_typing ~raise
-  ]
+  [ Contract_passes.self_typing ~raise; No_nested_big_map.self_typing ~raise ]
+
 
 let contract_passes_map ~raise =
   [ Contract_passes.entrypoint_typing ~raise; Contract_passes.emit_event_typing ~raise ]
@@ -151,13 +154,16 @@ let all_contract ~raise ~(options : Compiler_options.middle_end) parameter stora
   let contract_type : Contract_passes.contract_type = { parameter; storage } in
   let () =
     if not options.no_metadata_check
-    then (
-      (* Check storage type TZIP-16 compliance *)
-      let open Check_metadata in
+    then
+      let (* Check storage type TZIP-16 compliance *)
+      open Check_metadata in
       match find_storage_metadata_opt contract_type.storage with
       | Some metadata ->
-        check_metadata_tzip16_type_compliance ~raise ?syntax:options.syntax_for_errors metadata
-      | None -> ())
+        check_metadata_tzip16_type_compliance
+          ~raise
+          ?syntax:options.syntax_for_errors
+          metadata
+      | None -> ()
   in
   let all_p =
     List.map ~f:(fun pass ->

@@ -4,7 +4,6 @@ module List = Simple_utils.List
 module Ligo_string = Simple_utils.Ligo_string
 module Row = Row.With_optional_layout
 
-
 type type_content =
   | T_variable of Type_var.t
   | T_constant of Literal_types.t * int

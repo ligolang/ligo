@@ -109,8 +109,7 @@ module Of_Ast_typed = struct
       | M_module_path _ -> prev
       | M_struct ds ->
         List.fold_left ds ~init:prev ~f:(fun prev d ->
-            extract_binding_types prev d.wrap_content)
-      )
+            extract_binding_types prev d.wrap_content))
 end
 
 module Of_Ast_core = struct
@@ -258,8 +257,7 @@ module Of_Ast_core = struct
       declarations bindings decls
     | D_module { module_ = { wrap_content = M_variable _; _ }; _ }
     | D_module { module_ = { wrap_content = M_module_path _; _ }; _ } -> bindings
-    | D_signature _ ->
-      bindings
+    | D_signature _ -> bindings
 
 
   and declarations : t -> Ast_core.declaration list -> t =
@@ -322,8 +320,7 @@ module Typing_env = struct
     =
     ignore options;
     match
-      Simple_utils.Trace.to_stdlib_result
-      @@ Self_ast_typed.all_program tenv.decls
+      Simple_utils.Trace.to_stdlib_result @@ Self_ast_typed.all_program tenv.decls
     with
     | Ok (_, ws) -> List.iter ws ~f:raise.warning
     | Error (e, ws) ->

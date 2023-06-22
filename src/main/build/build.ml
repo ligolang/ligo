@@ -436,7 +436,8 @@ let rec build_contract_aggregated ~raise
   let typed_prg = qualified_typed ~raise ~options source in
   let contract_info, typed_contract =
     trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes ~options
+    @@ Ligo_compile.Of_core.specific_passes
+         ~options
          (Ligo_compile.Of_core.Contract { entrypoints = entry_points; module_path })
          typed_prg
   in

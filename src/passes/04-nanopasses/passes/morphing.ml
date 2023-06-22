@@ -71,7 +71,14 @@ let default_unfold : 'a pass_unfold =
         map_instruction_ (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) x.fp)
   ; declaration =
       (fun (x, acc) ->
-        map_declaration_ (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) (prop acc) x.fp)
+        map_declaration_
+          (prop acc)
+          (prop acc)
+          (prop acc)
+          (prop acc)
+          (prop acc)
+          (prop acc)
+          x.fp)
   ; program_entry =
       (fun (x, acc) -> map_program_entry_ (prop acc) (prop acc) (prop acc) x.fp)
   ; program = (fun (x, acc) -> map_program_ (prop acc) (prop acc) x.fp)
@@ -102,8 +109,10 @@ let default_fold plus init : 'a pass_fold =
       (fun x ->
         { fp = map_program_entry_ fst fst fst x }, fold_program_entry_ p p p init x)
   ; program = (fun x -> { fp = map_program_ fst fst x }, fold_program_ p p init x)
-  ; sig_expr = (fun x -> { fp = map_sig_expr_ fst fst fst x }, fold_sig_expr_ p p p init x)
-  ; sig_entry = (fun x -> { fp = map_sig_entry_ fst fst fst x }, fold_sig_entry_ p p p init x)
+  ; sig_expr =
+      (fun x -> { fp = map_sig_expr_ fst fst fst x }, fold_sig_expr_ p p p init x)
+  ; sig_entry =
+      (fun x -> { fp = map_sig_entry_ fst fst fst x }, fold_sig_entry_ p p p init x)
   }
 
 
@@ -155,7 +164,14 @@ let _type__morphers =
   }
   [@@map
     _type_
-    , ("expr", "program", "pattern", "ty_expr", "instruction", "block", "declaration", "sig_expr")]
+    , ( "expr"
+      , "program"
+      , "pattern"
+      , "ty_expr"
+      , "instruction"
+      , "block"
+      , "declaration"
+      , "sig_expr" )]
 
 
 let mk_code_transformation : type v. pass_kind -> v morphers -> v code_transformation =

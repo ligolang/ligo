@@ -210,36 +210,46 @@ and evaluate_layout (layout : Layout.t) : Type.layout = L_concrete layout
 
 module With_default_layout = struct
   let evaluate_type_ = evaluate_type
+
   let rec evaluate_type type_ =
     let open C in
     evaluate_type_
       ~default_layout:(fun fields -> return @@ Type.default_layout_from_field_set fields)
       type_
 
+
   and evaluate_module_type_item_attribute (attr : Ast_core.sig_item_attribute) =
     let open C in
     let open Let_syntax in
     return @@ Module_type.Attr.{ view = attr.view; entry = attr.entry }
 
+
   and evaluate_module_type (sig_ : Ast_core.signature) : (Module_type.t * unit, _, _) C.t =
     let open C in
     let open Let_syntax in
     match sig_ with
-    | [] -> return @@ (Module_type.{ tvars = [] ; items = [] }, ())
-    | (Ast_core.S_value (v, ty, attr) :: sig_) ->
+    | [] -> return @@ (Module_type.{ tvars = []; items = [] }, ())
+    | Ast_core.S_value (v, ty, attr) :: sig_ ->
       let%bind ty = evaluate_type ty in
       let%bind attr = evaluate_module_type_item_attribute attr in
       let%bind { tvars; items }, () = evaluate_module_type sig_ in
-      return @@ (Module_type.{ tvars ; items = MT_value (v, ty, attr) :: items } , ())
-    | (S_type (v, ty) :: sig_) ->
+      return @@ (Module_type.{ tvars; items = MT_value (v, ty, attr) :: items }, ())
+    | S_type (v, ty) :: sig_ ->
       let%bind ty = evaluate_type ty in
-      let%bind { tvars; items }, () = def_type [ (v, ty) ] ~on_exit:Drop ~in_:(evaluate_module_type sig_) in
-      return @@ (Module_type.{ tvars ; items = MT_type (v, ty) :: items } , ())
-    | (S_type_var v :: sig_) ->
-      let%bind { tvars; items }, () = def_type_var [ (v, Type) ] ~on_exit:Drop ~in_:(evaluate_module_type sig_) in
-      return @@ (Module_type.{ tvars = v :: tvars ; items } , ())
+      let%bind { tvars; items }, () =
+        def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_module_type sig_)
+      in
+      return @@ (Module_type.{ tvars; items = MT_type (v, ty) :: items }, ())
+    | S_type_var v :: sig_ ->
+      let%bind { tvars; items }, () =
+        def_type_var [ v, Type ] ~on_exit:Drop ~in_:(evaluate_module_type sig_)
+      in
+      return @@ (Module_type.{ tvars = v :: tvars; items }, ())
 
-  and evaluate_signature_expr (sig_expr : Ast_core.signature_expr) : (Module_type.t, _, _) C.t =
+
+  and evaluate_signature_expr (sig_expr : Ast_core.signature_expr)
+      : (Module_type.t, _, _) C.t
+    =
     let open C in
     let open Let_syntax in
     match Location.unwrap sig_expr with
@@ -1333,43 +1343,58 @@ and compile_match (matchee : O.expression E.t) cases matchee_type
       in
       O.E_matching { matchee; cases })
 
+
 and cast_items (inferred_sig : Signature.t) (items : Module_type.item list) =
-    let open C in
-    let open Let_syntax in
-    match items with
-      [] ->
-      return ([], [])
-    | (Module_type.MT_type (v, ty) :: sig_) -> (
-      let%bind ty' = raise_opt (Signature.get_type inferred_sig v) ~error:(signature_not_found_type v) in
-      if (Type.equal ty ty') then
-        let%bind sig_, entries = cast_items inferred_sig sig_ in
-        return (Signature.S_type (v, ty') :: sig_, entries)
-      else
-        raise (signature_not_match_type v ty ty')
-    )
-    | (Module_type.MT_value (v, ty, attr) :: sig_) -> (
-      let%bind ty', attr' = raise_opt (Signature.get_value inferred_sig v) ~error:(signature_not_found_value v) in
-      if (Bool.equal attr.entry attr'.entry && Bool.equal attr.view attr'.view && Type.equal ty ty') then
-        let%bind sig_, entries = cast_items inferred_sig sig_ in
-        let entries = entries @ if attr.entry then [ v ] else [ ] in
-        return (Signature.S_value (v, ty', attr') :: sig_, entries)
-      else
-        raise (signature_not_match_value v ty ty')
-    )
+  let open C in
+  let open Let_syntax in
+  match items with
+  | [] -> return ([], [])
+  | Module_type.MT_type (v, ty) :: sig_ ->
+    let%bind ty' =
+      raise_opt (Signature.get_type inferred_sig v) ~error:(signature_not_found_type v)
+    in
+    if Type.equal ty ty'
+    then (
+      let%bind sig_, entries = cast_items inferred_sig sig_ in
+      return (Signature.S_type (v, ty') :: sig_, entries))
+    else raise (signature_not_match_type v ty ty')
+  | Module_type.MT_value (v, ty, attr) :: sig_ ->
+    let%bind ty', attr' =
+      raise_opt (Signature.get_value inferred_sig v) ~error:(signature_not_found_value v)
+    in
+    if Bool.equal attr.entry attr'.entry
+       && Bool.equal attr.view attr'.view
+       && Type.equal ty ty'
+    then (
+      let%bind sig_, entries = cast_items inferred_sig sig_ in
+      let entries = entries @ if attr.entry then [ v ] else [] in
+      return (Signature.S_value (v, ty', attr') :: sig_, entries))
+    else raise (signature_not_match_value v ty ty')
+
 
 and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
     : (Signature.t * Value_var.t list, _, _) C.t
-    =
-    let open C in
-    let open Let_syntax in
-    let Module_type.{ tvars ; items } = annoted_sig in
-    let instantiate_tvar tvar r =
-      let%bind insts, items = r in
-      let%bind type_ = raise_opt (Signature.get_type inferred_sig tvar) ~error:(signature_not_found_type tvar) in
-      return (Signature.S_type (tvar, type_) :: insts, Module_type.instantiate_var items ~tvar ~type_) in
-    let%bind insts, items = List.fold_right tvars ~init:(return ([], items)) ~f:instantiate_tvar in
-    let%bind items, entries = cast_items inferred_sig items in
-    return (insts @ items, entries)
+  =
+  let open C in
+  let open Let_syntax in
+  let Module_type.{ tvars; items } = annoted_sig in
+  let instantiate_tvar tvar r =
+    let%bind insts, items = r in
+    let%bind type_ =
+      raise_opt
+        (Signature.get_type inferred_sig tvar)
+        ~error:(signature_not_found_type tvar)
+    in
+    return
+      ( Signature.S_type (tvar, type_) :: insts
+      , Module_type.instantiate_var items ~tvar ~type_ )
+  in
+  let%bind insts, items =
+    List.fold_right tvars ~init:(return ([], items)) ~f:instantiate_tvar
+  in
+  let%bind items, entries = cast_items inferred_sig items in
+  return (insts @ items, entries)
+
 
 and infer_module_expr (mod_expr : I.module_expr)
     : (Signature.t * O.module_expr E.t, _, _) C.t
@@ -1416,10 +1441,7 @@ and infer_declaration (decl : I.declaration)
   let open Let_syntax in
   let%bind syntax = Options.syntax () in
   let no_declaration (sig_item : Signature.item list) =
-    return
-      ( sig_item
-      , E.(
-          return [ ]) )
+    return (sig_item, E.(return []))
   in
   let const content (sig_item : Signature.item list) =
     let%bind loc = loc () in
@@ -1474,30 +1496,42 @@ and infer_declaration (decl : I.declaration)
       [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
   | D_module { module_binder; module_; module_attr = { public; hidden }; annotation } ->
     let%bind inferred_sig, module_ = infer_module_expr module_ in
-    let%bind annoted_sig = match annotation with
+    let%bind annoted_sig =
+      match annotation with
       | None ->
         (* For non-annoted signatures, we use the one inferred *)
         let%bind inferred_sig = Generator.make_main_signature inferred_sig in
         return inferred_sig
       | Some signature_expr ->
         (* For annoted signtures, we evaluate the signature, cast the inferred signature to it, and check that all entries implemented where declared *)
-        let%bind annoted_sig = With_default_layout.evaluate_signature_expr signature_expr in
+        let%bind annoted_sig =
+          With_default_layout.evaluate_signature_expr signature_expr
+        in
         let%bind annoted_sig, entries = cast_signature inferred_sig annoted_sig in
-        let%bind () = match Generator.check_entries inferred_sig entries with
+        let%bind () =
+          match Generator.check_entries inferred_sig entries with
           | `All_found -> return ()
-          | `Not_found e -> raise (signature_not_found_entry e) in
+          | `Not_found e -> raise (signature_not_found_entry e)
+        in
         let%bind annoted_sig = Generator.make_main_signature annoted_sig in
-        return annoted_sig in
+        return annoted_sig
+    in
     const
       E.(
         let%bind module_ = module_ in
         let%bind signature = decode_signature annoted_sig in
-        return @@ O.D_module { module_binder; module_ = { module_ with signature }; module_attr = { public; hidden }; annotation = () })
+        return
+        @@ O.D_module
+             { module_binder
+             ; module_ = { module_ with signature }
+             ; module_attr = { public; hidden }
+             ; annotation = ()
+             })
       [ S_module (module_binder, annoted_sig) ]
   | D_signature { signature_binder; signature } ->
     let%bind signature_expr = With_default_layout.evaluate_signature_expr signature in
-    no_declaration
-      [ S_module_type (signature_binder, signature_expr) ]
+    no_declaration [ S_module_type (signature_binder, signature_expr) ]
+
 
 and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =
   let open C in

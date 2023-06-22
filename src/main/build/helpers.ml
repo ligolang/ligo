@@ -39,7 +39,8 @@ let at_prefix (b : Ast_core.type_expression option Binder.t) =
 let internalize_core (ds : Ast_core.program) : Ast_core.program =
   let open Ast_core in
   let rec module_decl
-      ({ module_binder; module_; module_attr; annotation } : (module_expr, _) Module_decl.t)
+      ({ module_binder; module_; module_attr; annotation } :
+        (module_expr, _) Module_decl.t)
     =
     let module_ =
       match module_ with

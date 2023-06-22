@@ -37,13 +37,7 @@ let name = __MODULE__
 let decompile ~raise:_ =
   let pass_ty : _ ty_expr_ -> ty_expr = function
     | { location = loc; wrap_content = T_fun (param, ret) } ->
-      t_named_fun
-        ~loc
-        ( [ { name = "_"
-            ; type_expr = param
-            }
-          ]
-        , ret )
+      t_named_fun ~loc ([ { name = "_"; type_expr = param } ], ret)
     | { location = loc; wrap_content } -> make_t ~loc wrap_content
   in
   Fold { idle_fold with ty_expr = pass_ty }

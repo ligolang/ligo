@@ -18,12 +18,14 @@ let check_for_duplicated_val ~raise b =
       | Some v -> raise.error (duplicate_identifier v)
       | _ -> ())
 
+
 let check_for_duplicated_type ~raise b =
   List.iter b ~f:(fun bound ->
       let dups = List.find_a_dup ~compare:Ty_variable.compare (List.rev bound) in
       match dups with
       | Some v -> raise.error (duplicate_ty_identifier v)
       | _ -> ())
+
 
 module Type_vars = struct
   type bound = Ty_variable.t list list
@@ -36,13 +38,19 @@ module Type_vars = struct
     | Types.List.Or_unequal_lengths.Ok x -> x
     | Types.List.Or_unequal_lengths.Unequal_lengths -> assert false
 
-  let ftv_folder : (bound, ty_expr, pattern, bound, bound, bound, bound, bound, bound, bound, bound, bound) fold =
+
+  let ftv_folder
+      : ( bound, ty_expr, pattern, bound, bound, bound, bound, bound, bound, bound, bound
+      , bound ) fold
+    =
     let sig_expr : _ sig_expr_ -> bound = fold_sig_expr_ union union union empty in
-    let sig_entry : _ sig_entry_ -> bound = fun si ->
+    let sig_entry : _ sig_entry_ -> bound =
+     fun si ->
       match Location.unwrap si with
       | S_type (v, _) -> [ singleton v ]
       | S_type_var v -> [ singleton v ]
-      | _ -> empty in
+      | _ -> empty
+    in
     { expr = (fun _ -> empty)
     ; ty_expr =
         (fun x -> Combinators.make_t ~loc:(Location.get_location x) (Location.unwrap x))
@@ -62,10 +70,13 @@ end
 
 let compile ~raise =
   let sig_expr : _ sig_expr_ -> unit =
-    fun se ->
-      let () = check_for_duplicated_val ~raise @@ Bound_vars.bound_sig_expr { fp = se } in
-      let () = check_for_duplicated_type ~raise @@ cata_sig_expr ~f:Type_vars.ftv_folder { fp = se } in
-      ()
+   fun se ->
+    let () = check_for_duplicated_val ~raise @@ Bound_vars.bound_sig_expr { fp = se } in
+    let () =
+      check_for_duplicated_type ~raise
+      @@ cata_sig_expr ~f:Type_vars.ftv_folder { fp = se }
+    in
+    ()
   in
   Check { Iter.defaults with sig_expr }
 
@@ -79,8 +90,7 @@ let%expect_test _ =
     (S_body
       ((S_type_var t)
        (S_type t (TY_EXPR))))
-    |}
-    |->! compile;
+    |} |->! compile;
     [%expect {|
     Err : (Small_passes_duplicate_ty_identifier t)
     |}])

@@ -123,7 +123,15 @@ let compile ~raise =
       e_simple_let_in ~loc { binder; rhs; let_result = body }
     | E_let_in { is_rec; type_params; lhs = fun_pattern, params; rhs_type; rhs; body } ->
       let fun_pattern, rhs =
-        compile_let_rhs ~raise ~loc:(get_e_loc rhs) is_rec fun_pattern type_params params rhs_type rhs
+        compile_let_rhs
+          ~raise
+          ~loc:(get_e_loc rhs)
+          is_rec
+          fun_pattern
+          type_params
+          params
+          rhs_type
+          rhs
       in
       e_simple_let_in ~loc { binder = fun_pattern; rhs; let_result = body }
     | e -> make_e ~loc e
@@ -143,7 +151,15 @@ let compile ~raise =
       d_irrefutable_match ~loc { pattern; expr }
     | D_let { is_rec; type_params; pattern = fun_pattern, params; rhs_type; let_rhs } ->
       let fun_pattern, rhs =
-        compile_let_rhs ~raise ~loc:(get_e_loc let_rhs) is_rec fun_pattern type_params params rhs_type let_rhs
+        compile_let_rhs
+          ~raise
+          ~loc:(get_e_loc let_rhs)
+          is_rec
+          fun_pattern
+          type_params
+          params
+          rhs_type
+          let_rhs
       in
       d_const
         ~loc

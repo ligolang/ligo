@@ -42,7 +42,13 @@ module Folding (X : EQUIVALENCES) = struct
   type block = (X.block, X.statement) Ast_unified.block_
 
   type declaration =
-    (X.declaration, X.expr, X.ty_expr, X.pattern, X.mod_expr, X.sig_expr) Ast_unified.declaration_
+    ( X.declaration
+    , X.expr
+    , X.ty_expr
+    , X.pattern
+    , X.mod_expr
+    , X.sig_expr )
+    Ast_unified.declaration_
 
   type mod_expr = (X.mod_expr, X.program) Ast_unified.mod_expr_
   type expr = (X.expr, X.ty_expr, X.pattern, X.block, X.mod_expr) Ast_unified.expr_
@@ -51,9 +57,7 @@ module Folding (X : EQUIVALENCES) = struct
     (X.program_entry, X.declaration, X.instruction) Ast_unified.program_entry_
 
   type program = (X.program, X.program_entry) Ast_unified.program_
-
   type sig_expr = (X.sig_expr, X.sig_entry, X.ty_expr) Ast_unified.sig_expr_
-
   type sig_entry = (X.sig_expr, X.sig_entry, X.ty_expr) Ast_unified.sig_entry_
 end
 
@@ -102,9 +106,10 @@ module Make_unification (C : UNIF) = struct
 end
 
 let failwith_not_initial_node_decompiler node =
-  failwith @@
-    "Decompiler: ty_expr: not_initial nodes are not supported, make sure \
-     Nanopasses.decompile<...> was called before decompiling Ast_unified to CST. Node is:\n"
+  failwith
+  @@ "Decompiler: ty_expr: not_initial nodes are not supported, make sure \
+      Nanopasses.decompile<...> was called before decompiling Ast_unified to CST. Node \
+      is:\n"
   ^ Sexp.to_string_hum
   @@
   let d _ = Sexp.Atom "xx" in

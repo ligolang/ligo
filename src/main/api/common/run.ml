@@ -20,17 +20,16 @@ let test (raw_options : Raw_options.t) code_input =
           ~raise
           ~support_pascaligo:raw_options.deprecated
           (Syntax_name raw_options.syntax)
-          Build.Source_input.(match code_input with
-           | HTTP uri -> Some (Http_uri.get_filename uri)
-           | From_file file_name -> Some file_name
-           | Raw { id; _ } -> Some id
-           | Raw_input_lsp { file; _ } -> Some file)
+          Build.Source_input.(
+            match code_input with
+            | HTTP uri -> Some (Http_uri.get_filename uri)
+            | From_file file_name -> Some file_name
+            | Raw { id; _ } -> Some id
+            | Raw_input_lsp { file; _ } -> Some file)
       in
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
       let Compiler_options.{ steps; _ } = options.test_framework in
-      let typed =
-        Build.qualified_typed ~raise ~options code_input
-      in
+      let typed = Build.qualified_typed ~raise ~options code_input in
       Interpreter.eval_test ~raise ~steps ~options typed, [] )
 
 

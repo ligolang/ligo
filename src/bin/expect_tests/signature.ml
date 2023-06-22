@@ -14,7 +14,6 @@ let%expect_test _ =
   [%expect {|
     42 |}]
 
-
 let%expect_test _ =
   run_ligo_good
     [ "compile"
@@ -26,7 +25,6 @@ let%expect_test _ =
     ];
   [%expect {|
     42 |}]
-
 
 let%expect_test _ =
   run_ligo_good

@@ -54,7 +54,8 @@ let rec annot (t : t) (label : Label.t) =
 let rec find_annot (t : t) (annot : string) =
   let aux = function
     | { name; annot = Some annot' } when String.equal annot annot' -> Some name
-    | _ -> None in
+    | _ -> None
+  in
   match t with
   | Inner ts -> List.find_map ~f:(fun t -> find_annot t annot) ts
   | Field x -> aux x
