@@ -115,8 +115,7 @@ let print_module_with_description
     ^ (Option.value ~default:" "
       @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_import)
     ^ (module_path_list
-      |> List.map ~f:(String.split ~on:'#')
-      |> List.map ~f:(Fun.flip List.nth_exn 0)
+      |> List.map ~f:(List.hd_exn <@ String.split ~on:'#' <@ Scopes.Types.Uid.to_name)
       |> String.concat ~sep:".")
 
 

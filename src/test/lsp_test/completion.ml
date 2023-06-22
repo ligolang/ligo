@@ -344,6 +344,19 @@ let test_cases_cameligo =
         ]
     ; negative_labels = []
     }
+  ; { test_name = "Completion from shadowed module"
+    ; file_name = "contracts/lsp/completion_shadowed_module_alias.mligo"
+    ; position = Position.create ~line:6 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"x"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
   ; { test_name = "Complete first module from written module path"
     ; file_name = "contracts/lsp/completion_missing_end.mligo"
     ; position = Position.create ~line:5 ~character:13
@@ -667,6 +680,19 @@ let test_cases_jsligo =
         ]
     ; negative_labels = []
     }
+  ; { test_name = "Completion from shadowed module"
+    ; file_name = "contracts/lsp/completion_shadowed_module_alias.jsligo"
+    ; position = Position.create ~line:6 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"x"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
+            ()
+        ]
+    ; negative_labels = []
+    }
   ]
 
 
@@ -974,6 +1000,19 @@ let test_cases_pascaligo =
             ~label:"Foo"
             ~kind:CompletionItemKind.Module
             ~sortText:"\x08"
+            ()
+        ]
+    ; negative_labels = []
+    }
+  ; { test_name = "Completion from shadowed module"
+    ; file_name = "contracts/lsp/completion_shadowed_module_alias.pligo"
+    ; position = Position.create ~line:6 ~character:12
+    ; completions =
+        [ CompletionItem.create
+            ~label:"x"
+            ~kind:CompletionItemKind.Variable
+            ~detail:"int"
+            ~sortText:"\x05"
             ()
         ]
     ; negative_labels = []

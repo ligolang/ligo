@@ -29,7 +29,7 @@ let defs_of_vvar ~(body : AST.expression)
     let name = get_binder_name vvar in
     let vdef : vdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name (VVar.get_location vvar) in
+      let uid : Uid.t = Uid.make name (VVar.get_location vvar) in
       let range : Location.t = VVar.get_location vvar in
       let body_range : Location.t =
         match body.expression_content with
@@ -63,7 +63,7 @@ let defs_of_tvar ~(bindee : Ast_core.type_expression)
     let name = get_type_binder_name tvar in
     let tdef : tdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name (TVar.get_location tvar) in
+      let uid : Uid.t = Uid.make name (TVar.get_location tvar) in
       let range : Location.t = TVar.get_location tvar in
       let body_range : Location.t = bindee.location (* How to get this ? *) in
       let content : Ast_core.type_expression = bindee in
@@ -83,7 +83,7 @@ let defs_of_mvar ~(bindee : Ast_core.module_expr) ~(mod_case : mod_case)
     let name = get_mod_binder_name mvar in
     let mdef : mdef =
       let name : string = name in
-      let uid : string = Types.make_def_id name (MVar.get_location mvar) in
+      let uid : Uid.t = Uid.make name (MVar.get_location mvar) in
       let range : Location.t = MVar.get_location mvar in
       let body_range : Location.t =
         match Location.unwrap bindee with
@@ -198,7 +198,7 @@ and mod_case_of_mod_expr
  fun ~defs_of_decls mod_expr mod_path ->
   let alias_of_mvars : Module_var.t list -> mod_case =
    fun mvars ->
-    let path = List.map ~f:(fun mvar -> Format.asprintf "%a" MVar.pp mvar) mvars in
+    let path = List.map ~f:mvar_to_id mvars in
     (* The resolved name will be filled later. *)
     Alias (path, None)
   in

@@ -5,15 +5,7 @@ module LSet = Types.LSet
 module LMap = Map.Make (Location_ordered)
 open Env
 
-type t = (string list * string) LMap.t
-
-(** [mvar_to_id] takes and [Module_var.t] and gives id of the form
-    [{name}#{line}:{start_col}-{end_col}] *)
-let mvar_to_id m =
-  let name = Format.asprintf "%a" Module_var.pp m in
-  let loc = Module_var.get_location m in
-  Types.make_def_id name loc
-
+type t = (Types.Uid.t list * Types.Uid.t) LMap.t
 
 (** [resolve_mpath] takes a module path [mvs] and tries to resolve in the [env]
     the final output is of type [(Module_var.t * string list) option] 
@@ -27,11 +19,13 @@ let mvar_to_id m =
     if it is an alias-of-an-alias it will resolve it to the final module definition
     and then look for the rest of the module path [B.C.D] in [env] of the resolved
     module *)
-let resolve_mpath : Module_var.t List.Ne.t -> env -> (Module_var.t * string list) option =
+let resolve_mpath
+    : Module_var.t List.Ne.t -> env -> (Module_var.t * Types.Uid.t list) option
+  =
  fun mvs env ->
   let init = [] in
-  let f : string list -> _ -> string list =
-   fun acc (_input, real, _resolved, _defs_of_that_module) -> mvar_to_id real :: acc
+  let f : Types.Uid.t list -> _ -> Types.Uid.t list =
+   fun acc (_input, real, _resolved, _defs_of_that_module) -> Types.mvar_to_id real :: acc
   in
   let defs = env.avail_defs @ env.parent in
   let mmap = env.module_map in
@@ -66,7 +60,7 @@ let resolve_module_alias
   let ma_res = resolve_mpath mvs env in
   match ma_res with
   | Some (ma, resolved_ids) ->
-    let resolved_name = Format.asprintf "%a" Module_var.pp ma in
+    let resolved_name = Types.mvar_to_id ma in
     let m_alias =
       LMap.add (Module_var.get_location lhs_mv) (resolved_ids, resolved_name) m_alias
     in
@@ -196,7 +190,7 @@ let declarations : AST.declaration list -> t =
   m_alias
 
 
-(** [patch] fixes the module aliases in the [defs], It looks for module aliase
+(** [patch] fixes the module aliases in the [defs]. It looks for module aliases
     definitions & then looks up the range of the module definition in [t] *)
 let rec patch : t -> Types.def list -> Types.def list =
  fun m_alias defs ->
