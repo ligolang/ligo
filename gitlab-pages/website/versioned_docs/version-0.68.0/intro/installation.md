@@ -48,14 +48,16 @@ sudo cp ./ligo /usr/local/bin
 ```
 </TabItem>
 <TabItem value="macos">
-  
+
 Try our tap :
+
 ```bash
 brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git
 brew install ligolang/ligo/ligo
 ```
 
-To upgrade ligo : 
+To upgrade ligo :
+
 ```bash
 brew update
 brew upgrade ligolang/ligo/ligo
@@ -63,7 +65,7 @@ brew upgrade ligolang/ligo/ligo
 
 </TabItem>
 <TabItem value="deb">
-  
+
 A `.deb` package containing the static `ligo` executable is also available.
 First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/4515773937/artifacts/raw/ligo.deb), and then install using: 
 
@@ -89,8 +91,8 @@ yay -S ligo-bin
 
 </TabItem>
 <TabItem value="docker">
-  
-  If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release ](./changelog.md):
+
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release ](./changelog.md):
 
 Linux or OSX:
 > ```sh
@@ -121,8 +123,6 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 </TabItem>
 <TabItem value="windows">
 
-
-
 > **Disclaimer**
 >
 > Windows version is beta quality and is still working in progress. Please report any issues found
@@ -150,7 +150,6 @@ The installer hasn't been signed with a recognized Windows Developer ID. So for 
 
 For now, you'll have to click on `More info`, and then, `Run anyway`.
 ![Run Anyway](/img/windows-more-info-clicked.png)
-
 
 </TabItem>
 </Tabs>
