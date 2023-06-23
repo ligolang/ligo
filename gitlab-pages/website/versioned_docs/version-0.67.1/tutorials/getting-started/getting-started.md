@@ -58,7 +58,7 @@ sudo apt install ./ligo.deb
 
 ### Dockerised installation
 
-If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release ](https://ligolang.org/docs/next/intro/changelog):
+If you've [installed 🐳 Docker](https://docs.docker.com/install/), you can run the latest [LIGO release](https://ligolang.org/docs/next/intro/changelog):
 
 Linux or OSX:
 
