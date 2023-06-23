@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFix a stack overflow with a module alias shadowing a module during a completion. For example, in this:\\n\\n\\n```\\nnamespace X {\\n  const x = 1\\n};\\n\\nimport X = X;\\n\\nconst y = X.\\n\\n```\\n\\nTrying to complete `X.` would cause a failure.\\n\\n"
+merge_request: '2697'
+title: "[#1950] Fix completion stack overflow with shadowed module"
+type: fixed
+            
