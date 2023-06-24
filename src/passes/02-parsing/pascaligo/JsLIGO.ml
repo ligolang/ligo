@@ -21,19 +21,21 @@ open! CST
 
 let (let*) = Utils.(let*)
 
+let unit = Token.(ghost_lpar, ghost_rpar)
+
 let format_error ~no_colour ~file value (region: Region.t) =
   let value =
     if file then
       Printf.sprintf "%s%s"
         (Format.asprintf "%a" (Snippet.pp_lift ~no_colour) region)
-        (Std.redden value)
+        value
     else
       let header = region#to_string ~file ~offsets:true `Point
       in Printf.sprintf "%s:\n%s" header value
   in Region.{region; value}
 
 let warn_about msg region =
-  let msg = format_error ~no_colour:false ~file:true msg region
+  let msg = format_error ~no_colour:true ~file:true msg region
   in Printf.eprintf "%s\n%!" msg.value
 
 let exit_with msg region = warn_about msg region; exit 1
@@ -424,7 +426,7 @@ and fun_expr_of
   let parameters =
     match parameters.value.inside with
       None ->
-        Js.EUnit (reg_of Token.(ghost_lpar, ghost_rpar))
+        Js.EUnit (reg_of unit)
     | Some (head, tail) ->
         let comma   = Token.ghost_comma in
         let head    = of_param_decl head
@@ -649,8 +651,9 @@ and add_attribute_to_TModA
 and of_T_Cart (node: cartesian) =
   let type_expr, _, nsepseq = node.value in
   let first_arg  = type_expr_of_type_expr type_expr in
-  let other_args = Utils.nsepseq_map type_expr_of_type_expr nsepseq in
+  let hd, tl = Utils.nsepseq_map type_expr_of_type_expr nsepseq in
   let comma      = Token.ghost_comma in
+  let other_args = hd, List.map (fun (_, t) -> (comma, t)) tl in
   let all_args   = Utils.nsepseq_cons first_arg comma other_args in
   let inside     = reg_of @@ brackets_of all_args
   in Js.TProd Js.{inside; attributes=[]}
@@ -661,11 +664,12 @@ and of_T_Fun (node: (type_expr * arrow * type_expr) reg) =
   let domain, _, codomain = node.value in
   let name          = Wrap.ghost (Utils.gen_sym ())
   and colon         = Token.ghost_colon
+  and arrow         = Token.ghost_arrow
   and type_expr     = type_expr_of_type_expr domain in
   let fun_type_arg  = Js.{name; colon; type_expr} in
   let fun_type_args = par_of (fun_type_arg,[]) in
   let codomain      = type_expr_of_type_expr codomain
-  in Js.TFun (reg_of (fun_type_args, colon, codomain))
+  in Js.TFun (reg_of (fun_type_args, arrow, codomain))
 
 (* Integer literal in types (e.g. "42") *)
 
@@ -813,15 +817,18 @@ and expr_of_E_Add (node: plus bin_op reg) =
 and expr_of_bin_op (node: lexeme wrap bin_op reg) =
   let {op; arg1; arg2} = node.value in
   let arg1 = expr_of_expr arg1
-  and arg2 = expr_of_expr arg2 in
-  reg_of Js.{op; arg1; arg2}
+  and arg2 = expr_of_expr arg2
+  in reg_of Js.{op; arg1; arg2}
 
 (* Logical conjunction (e.g. "x and y") *)
 
 and expr_of_E_And (node: kwd_and bin_op reg) =
+  let Region.{value; region} = node in
+  let value = {value with op = Wrap.ghost "&&"} in
+  let node = Region.{value; region} in
   Js.(ELogic (BoolExpr (And (expr_of_bin_op node))))
 
-(* Application of data constructor (e.g. "Foo (x,y)") *)
+(* Application of data constructor of function (e.g. "Foo (x,y)") *)
 
 and expr_of_E_App (node: call) =
   let fun_or_ctor, args = node.value in
@@ -839,8 +846,7 @@ and expr_of_E_App (node: call) =
       in Js.EConstr (reg_of app)
   | _, None ->
       let fun_expr = expr_of_expr fun_or_ctor
-      and unit     = Token.(ghost_lpar, ghost_rpar) in
-      let unit     = Js.Unit (reg_of unit)
+      and unit     = Js.Unit (reg_of unit)
       in Js.ECall (reg_of (fun_expr, unit))
   | _, Some args ->
       let fun_expr = expr_of_expr fun_or_ctor
@@ -945,8 +951,7 @@ and property_of_P_App
 and property_of_P_Ctor (body: Js.body) (node: ctor) : Js.property =
   let name        = Js.EVar node
   and type_params = None
-  and unit        = Token.(ghost_lpar, ghost_rpar) in
-  let parameters  = Js.EUnit (reg_of unit)
+  and parameters  = Js.EUnit (reg_of unit)
   and lhs_type    = None
   and arrow       = Token.ghost_arrow in
   let value       = Js.{type_params; parameters; lhs_type; arrow; body} in
@@ -971,8 +976,7 @@ and expr_of_E_CodeInj (node: code_inj reg) =
 
 and expr_of_E_Ctor (node: ctor) =
   if node#payload = "Unit" then
-    let unit = Token.(ghost_lpar, ghost_rpar)
-    in Js.EUnit (reg_of unit)
+    Js.EVar (Wrap.ghost "unit")
   else
     let constr = Wrap.ghost node#payload
     in Js.EConstr (reg_of (constr, None))
@@ -988,9 +992,7 @@ and expr_of_E_Cond (node: expr conditional reg) =
   let falsy =
     match if_not with
       Some (_, if_not) -> expr_of_expr if_not
-    | None ->
-        let unit = Token.(ghost_lpar, ghost_rpar)
-        in Js.EUnit (reg_of unit) in
+    | None -> Js.EUnit (reg_of unit) in
   let ternary = Js.{condition; qmark; truthy; colon; falsy}
   in Js.ETernary (reg_of ternary)
 
@@ -1024,6 +1026,9 @@ and expr_of_E_Div (node: slash bin_op reg) =
 (* Equality (e.g. "x = y") *)
 
 and expr_of_E_Equal (node: equal bin_op reg) =
+  let Region.{value; region} = node in
+  let value = {value with op = Wrap.ghost "=="} in
+  let node = Region.{value; region} in
   Js.(ELogic (CompExpr (Equal (expr_of_bin_op node))))
 
 (* Functional expression (e.g. "fun x -> x") *)
@@ -1197,6 +1202,9 @@ and expr_of_un_op (node: lexeme wrap un_op reg) =
 (* Non-equality (e.g. "x =/= y") *)
 
 and expr_of_E_Neq (node: neq bin_op reg) =
+  let Region.{value; region} = node in
+  let value = {value with op = Wrap.ghost "!="} in
+  let node = Region.{value; region} in
   Js.(ELogic (CompExpr (Neq (expr_of_bin_op node))))
 
 (* Empty list ("nil") *)
@@ -1218,6 +1226,9 @@ and expr_of_E_Not (node: kwd_not un_op reg) =
 (* Logical disjunction (e.g. "x or y") *)
 
 and expr_of_E_Or (node: kwd_or bin_op reg) =
+  let Region.{region; value} = node in
+  let value = {value with op = Wrap.ghost "||"} in
+  let node = Region.{region; value} in
   Js.(ELogic (BoolExpr (Or (expr_of_bin_op node))))
 
 (* Parenthesised expressions (e.g. "(x - M.y)") *)
@@ -1242,7 +1253,7 @@ and mk_projection (expr: Js.expr) (selection: selection) : Js.expr =
         let value = mk_var name in
         Js.(FieldName (reg_of {dot; value}))
     | Component index ->
-        let index = expr_of_expr (E_Nat index) in
+        let index = expr_of_expr (E_Int index) in
         let index = reg_of (brackets_of index)
         in Js.Component index
   in Js.(EProj (reg_of {expr; selection}))
@@ -1656,7 +1667,8 @@ and statement_of_ForMap (node: for_map reg) =
       let let_decl      = Js.{attributes=[]; kwd_let; bindings} in
       let let_stmt      = Js.SLet (reg_of let_decl)
       in
-      let statements    = Utils.nsepseq_cons let_stmt comma statements in
+      let semi          = Token.ghost_semi in
+      let statements    = Utils.nsepseq_cons let_stmt semi statements in
       let statement     = Js.SBlock (reg_of (braces_of statements))
       and kwd_for       = Token.ghost_for
       and lpar          = Token.ghost_lpar

@@ -8,10 +8,20 @@ module Lexbuf = Simple_utils.Lexbuf
 
 (* Internal dependencies *)
 
-module Config       = Preprocessing_pascaligo.Config
+module Config = Preprocessing_pascaligo.Config
+
+(* CLIs *)
+
+module PreprocParams = Preprocessor.CLI.Make (Config)
+module LexerParams   = LexerLib.CLI.Make (PreprocParams)
+module Parameters    = ParserLib.CLI.Make (LexerParams)
+module Options       = Parameters.Options
+
+(* Internal dependencies *)
+
 module Token        = Lexing_pascaligo.Token
-module UnitPasses   = Lx_psc_self_units.Self
-module TokenPasses  = Lx_psc_self_tokens.Self
+module UnitPasses   = Lx_psc_self_units.Self.Make (Options)
+module TokenPasses  = Lx_psc_self_tokens.Self.Make (Options)
 module ParErr       = Parsing_pascaligo.ParErr
 module Tree         = Cst_shared.Tree
 module CST          = Cst_pascaligo.CST
@@ -23,13 +33,6 @@ module JsLIGOPretty = Parsing_jsligo.Pretty
 module PreprocAPI = Preprocessor.TopAPI
 module LexerAPI   = Lexing_shared.TopAPI
 module ParserAPI  = Parsing_shared.TopAPI
-
-(* CLIs *)
-
-module PreprocParams = Preprocessor.CLI.Make (Config)
-module LexerParams   = LexerLib.CLI.Make (PreprocParams)
-module Parameters    = ParserLib.CLI.Make (LexerParams)
-module Options       = Parameters.Options
 
 (* Instantiating preprocessor and lexer *)
 

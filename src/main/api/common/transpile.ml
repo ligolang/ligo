@@ -2,6 +2,11 @@ open Api_helpers
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
+module Config = Preprocessing_cameligo.Config
+module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
+module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
+module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
+module Options = Parameters.Options
 
 let contract source_file to_syntax from_syntax output_file =
   ( Parsing.Formatter.ppx_format
@@ -24,24 +29,22 @@ let contract source_file to_syntax from_syntax output_file =
             (Syntax_name to_syntax)
             output_file
       in
-      let options =
-        Compiler_options.make ~raw_options:(Raw_options.make ()) ~syntax:from_syntax ()
-      in
-      let meta = Compile.Of_source.extract_meta from_syntax in
-      let c_unit, _ =
-        Compile.Of_source.preprocess_file
-          ~raise
-          ~options:options.frontend
-          ~meta
-          source_file
-      in
+      let c_unit = Compile.Utils.buffer_from_path source_file in
       let buffer =
         let open Trace in
         let open Main_errors in
         match from_syntax, to_syntax with
         | PascaLIGO, JsLIGO ->
+          let module Options = struct
+            include Options
+
+            let jsligo = Some output_file
+          end
+          in
+          let module Parse = Parsing.Pascaligo.Make (Options) in
           let old_cst =
-            trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file c_unit source_file
+            trace ~raise parser_tracer
+            @@ Parse.parse_file ~preprocess:false c_unit source_file
           in
           let new_cst = Parsing_pascaligo.JsLIGO.of_cst old_cst in
           Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_state new_cst

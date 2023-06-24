@@ -3,8 +3,9 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Std    = Simple_utils.Std
+module Region  = Simple_utils.Region
+module Std     = Simple_utils.Std
+module Options = LexerLib.Options
 
 (* Self-passes *)
 
@@ -29,8 +30,7 @@ module type PASSES =
 
 module Make (Passes : PASSES) =
   struct
-    type item = Passes.item
-
+    type item  = Passes.item
     type items = Passes.items
 
     type error = {

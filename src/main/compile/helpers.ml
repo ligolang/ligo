@@ -71,12 +71,19 @@ let preprocess_raw_input
 
 type file_path = string
 
+module Config = Preprocessing_cameligo.Config
+module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
+module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
+module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
+module Options = Parameters.Options
+
 let parse_and_abstract_pascaligo
     ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
     buffer
     file_path
   =
-  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_file buffer file_path in
+  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Pascaligo.compile_program raw
 
 
@@ -84,27 +91,32 @@ let parse_and_abstract_expression_pascaligo
     ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
     buffer
   =
-  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_expression buffer in
+  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Pascaligo.compile_expression raw
 
 
 let parse_and_abstract_cameligo ~raise buffer file_path =
-  let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_file buffer file_path in
+  let module Parse = Parsing.Cameligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_expression_cameligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_expression buffer in
+  let module Parse = Parsing.Cameligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Cameligo.compile_expression raw
 
 
 let parse_and_abstract_jsligo ~raise buffer file_path =
-  let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_file buffer file_path in
+  let module Parse = Parsing.Jsligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_expression_jsligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_expression buffer in
+  let module Parse = Parsing.Jsligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Jsligo.compile_expression raw
 
 
@@ -134,17 +146,20 @@ let parse_and_abstract_expression
 
 
 let parse_and_abstract_string_cameligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Cameligo.parse_string buffer in
+  let module Parse = Parsing.Cameligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_string_jsligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Jsligo.parse_string buffer in
+  let module Parse = Parsing.Jsligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_string_pascaligo ~raise buffer =
-  let raw = trace ~raise parser_tracer @@ Parsing.Pascaligo.parse_string buffer in
+  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Pascaligo.compile_program raw
 
 
@@ -158,9 +173,20 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
   parse_and_abstract ~raise buffer
 
 
-let pretty_print_cameligo_cst = Parsing.Cameligo.pretty_print_cst
-let pretty_print_jsligo_cst = Parsing.Jsligo.pretty_print_cst
-let pretty_print_pascaligo_cst = Parsing.Pascaligo.pretty_print_cst
+let pretty_print_cameligo_cst ?preprocess ?project_root ~raise buffer file_path =
+  let module Parse = Parsing.Cameligo.Make (Options) in
+  Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
+
+
+let pretty_print_jsligo_cst ?preprocess ?project_root ~raise buffer file_path =
+  let module Parse = Parsing.Jsligo.Make (Options) in
+  Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
+
+
+let pretty_print_pascaligo_cst ?preprocess ?project_root ~raise buffer file_path =
+  let module Parse = Parsing.Pascaligo.Make (Options) in
+  Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
+
 
 let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
   let print =
@@ -172,16 +198,58 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
   trace ~raise parser_tracer @@ print buffer file_path
 
 
-let pretty_print_cameligo =
-  Parsing.Cameligo.pretty_print_file Parsing.Cameligo.Pretty.default_state
+let pretty_print_cameligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
+  let module Options = struct
+    include Options
+
+    let jsligo = jsligo
+  end
+  in
+  let module Parse = Parsing.Cameligo.Make (Options) in
+  Parse.pretty_print_file
+    Parsing.Cameligo.Pretty.default_state
+    ?jsligo
+    ?preprocess
+    ?project_root
+    ~raise
+    buffer
+    file_path
 
 
-let pretty_print_jsligo =
-  Parsing.Jsligo.pretty_print_file Parsing.Jsligo.Pretty.default_state
+let pretty_print_jsligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
+  let module Options = struct
+    include Options
+
+    let jsligo = jsligo
+  end
+  in
+  let module Parse = Parsing.Jsligo.Make (Options) in
+  Parse.pretty_print_file
+    Parsing.Jsligo.Pretty.default_state
+    ?jsligo
+    ?preprocess
+    ?project_root
+    ~raise
+    buffer
+    file_path
 
 
-let pretty_print_pascaligo =
-  Parsing.Pascaligo.pretty_print_file Parsing.Pascaligo.Pretty.default_state
+let pretty_print_pascaligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
+  let module Options = struct
+    include Options
+
+    let jsligo = jsligo
+  end
+  in
+  let module Parse = Parsing.Pascaligo.Make (Options) in
+  Parse.pretty_print_file
+    Parsing.Pascaligo.Pretty.default_state
+    ?jsligo
+    ?preprocess
+    ?project_root
+    ~raise
+    buffer
+    file_path
 
 
 let pretty_print ?preprocess ~raise ~(meta : meta) buffer file_path =

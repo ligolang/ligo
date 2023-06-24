@@ -279,8 +279,8 @@ module Make (Config : Config.S) (Client : Client.S) =
 let utf8_bom = "\xEF\xBB\xBF" (* Byte Order Mark for UTF-8 *)
 let nl       = ['\n' '\r'] | "\r\n"
 let blank    = ' ' | '\t'
-let digit   = ['0'-'9']
-let natural = digit | digit+ digit (* Linemarkers *)
+let digit    = ['0'-'9']
+let natural  = digit | digit+ digit (* Linemarkers *)
 
 (* Comment delimiters *)
 
@@ -460,8 +460,7 @@ and in_block block thread state = parse
     let state, Region.{value=lexeme; _} = state#sync lexbuf in
     if   String.(block#closing = lexeme)
     then Ok (thread, state)
-    else scan_utf8_wrap (scan_utf8 open_block)
-                        (in_block block)
+    else scan_utf8_wrap (scan_utf8 open_block) (in_block block)
                         thread state lexbuf }
 | nl as nl {
     let thread = thread#push_string nl
@@ -470,8 +469,7 @@ and in_block block thread state = parse
 
 | eof { fail state thread#opening Error.Unterminated_comment }
 
-| _ { scan_utf8_wrap (scan_utf8 open_block)
-                     (in_block block)
+| _ { scan_utf8_wrap (scan_utf8 open_block) (in_block block)
                      thread state lexbuf }
 
 (* Line comments *)

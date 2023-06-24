@@ -5,8 +5,18 @@ let%expect_test _ =
   run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "jsligo" ];
   [%expect
     {|
-    # 1 "../../test/contracts/example.ligo"
-    # 1 "../../test/contracts/example.ligo"
+    File "../../test/contracts/example.ligo", line 27, characters 31-47:
+     26 | function main (const action : parameter; const store : storage) : return is
+     27 |  ((nil : list (operation)),    // No operations
+                                         ^^^^^^^^^^^^^^^^
+     28 |   case action of [
+    Warning: Attribute dropped.
+    // @comment
+    "
+      This file is toy example contract in PascaLIGO.
+      It has been introduced for testing transpilation from PascaLIGO to JsLIGO.
+    "
+    // @comment " This is testnew.ligo"
     type storage = int;
 
     type parameter =
@@ -14,12 +24,16 @@ let%expect_test _ =
 
     type @return = [list<operation>, storage];
 
+    // @comment " Two entrypoints"
     const add = (store: storage, delta: int): storage =>
       store + delta;
 
     const sub = (store: storage, delta: int): storage =>
       store - delta;
 
+    // @comment
+    " Main access point that dispatches to the entrypoints according to
+       the smart contract parameter. "
     const main = (action: parameter, store: storage): @return =>
       [
         list([]) as list<operation>,
@@ -48,7 +62,13 @@ let%expect_test _ =
    even if [--to-syntax] is not *)
 let%expect_test _ =
   run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "-o"; "dest.jsligo" ];
-  [%expect {| |}]
+  [%expect {|
+    File "../../test/contracts/example.ligo", line 27, characters 31-47:
+     26 | function main (const action : parameter; const store : storage) : return is
+     27 |  ((nil : list (operation)),    // No operations
+                                         ^^^^^^^^^^^^^^^^
+     28 |   case action of [
+    Warning: Attribute dropped. |}]
 
 (* ---------- Tests for (un)supported syntaxes ------------------------------ *)
 

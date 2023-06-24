@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nTranspilation from PascaLIGO to JsLIGO was fixed. Pretty-printing of JsLIGO was fixed.\\n\\n"
+merge_request: '2693'
+title: "Fixing transpilation PascaLIGO to JsLIGO"
+type: fixed
+            

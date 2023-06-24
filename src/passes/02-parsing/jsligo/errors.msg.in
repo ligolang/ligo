@@ -1773,7 +1773,7 @@ contract: MINUS LPAR LBRACE Ident RBRACE ZWSP
 ## In state 228, spurious reduction of production expr -> disj_expr_level
 ##
 
-Ill-formed parenthesised type expression.
+Ill-formed parenthesised expression.
 At this point, a closing parenthesis ')' is expected.
 
 contract: Namespace UIdent LBRACE ZWSP
