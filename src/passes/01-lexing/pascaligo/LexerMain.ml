@@ -3,17 +3,18 @@
 (* Local dependencies *)
 
 module Config        = Preprocessing_pascaligo.Config
-module PreprocParams = Preprocessor.CLI.Make (Config)
 module Token         = Lexing_pascaligo.Token
-module UnitPasses    = Lx_psc_self_units.Self
-module TokenPasses   = Lx_psc_self_tokens.Self
 
 (* Vendors dependencies *)
 
-module Std        = Simple_utils.Std
-module Lexbuf     = Simple_utils.Lexbuf
-module Parameters = LexerLib.CLI.Make (PreprocParams)
-module PreprocAPI = Preprocessor.TopAPI.Make (PreprocParams)
+module Std           = Simple_utils.Std
+module Lexbuf        = Simple_utils.Lexbuf
+module PreprocParams = Preprocessor.CLI.Make (Config)
+module PreprocAPI    = Preprocessor.TopAPI.Make (PreprocParams)
+module Parameters    = LexerLib.CLI.Make (PreprocParams)
+module Options       = Parameters.Options
+module UnitPasses    = Lx_psc_self_units.Self.Make (Options)
+module TokenPasses   = Lx_psc_self_tokens.Self.Make (Options)
 
 module Warning =
   struct
@@ -29,8 +30,8 @@ let () =
   let open! API in
   match check_cli () with
     Ok ->
-      let file = Option.value Parameters.Options.input ~default:"" in
-      let no_colour = Parameters.Options.no_colour in
+      let file = Option.value Options.input ~default:"" in
+      let no_colour = Options.no_colour in
       let std, _tokens = scan_all_tokens ~no_colour (Lexbuf.File file) in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in

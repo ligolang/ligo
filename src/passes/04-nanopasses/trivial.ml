@@ -9,8 +9,8 @@ open Simple_utils.Trace
   To_core and From_core module help moving from a "fixpoint" AST representation (in the style of AST_unified)
   to a "classical" AST representation (in the style of AST_core).
   It must be trivial and no code transformation should happen at this point
-  
-  
+
+
   Note/TODO : We are handling attributes here. We could (and should ?) do it in a nanopass ? but it would
   add quite a lot of nodes to AST_unified for not much ...
 *)
@@ -86,6 +86,7 @@ end = struct
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
+    | { key = "comment"; value = _} -> o_attr (* TODO: We might want to keep it *)
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
@@ -98,6 +99,7 @@ end = struct
     match i_attr with
     | { key = "view"; value = None } -> { o_attr with view = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
+    | { key = "comment"; value = _} -> o_attr (* TODO: We might want to keep it *)
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       let default : O.sig_item_attribute = { entry = false; view = false } in
@@ -112,6 +114,7 @@ end = struct
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
+    | { key = "comment"; value = _} -> o_attr (* TODO: We might want to keep it *)
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
@@ -125,6 +128,7 @@ end = struct
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
+    | { key = "comment"; value = _} -> o_attr (* TODO: We might want to keep it *)
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Type_or_module_attr.default_attributes
@@ -641,7 +645,7 @@ end = struct
            { constr
            ; type_args =
                List.Ne.singleton arg
-               (* XXX for some reason matching on [I.get_t_option ty] transforms "int option" 
+               (* XXX for some reason matching on [I.get_t_option ty] transforms "int option"
                         to "a option" so we have manual matching here instead *)
            }
     | T_sum { fields; layout } ->

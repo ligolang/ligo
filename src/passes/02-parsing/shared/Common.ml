@@ -71,7 +71,13 @@ module MakeParser
 
     type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-    type 'a parser = ?preprocess:bool -> ?project_root:file_path -> raise:raise -> Buffer.t -> 'a
+    type 'a parser =
+      ?jsligo:string option option ->
+      ?preprocess:bool ->
+      ?project_root:file_path ->
+      raise:raise ->
+      Buffer.t ->
+      'a
 
     (* Lifting [Stdlib.result] to [Trace.raise] and logging errors. *)
 
@@ -95,18 +101,23 @@ module MakeParser
 
     (* Generic parser *)
 
-    let gen_parser ?(preprocess = true) ?project_root ~raise ?file_path buffer : CST.tree =
+    let gen_parser ?(jsligo=None) ?(preprocess=true) ?project_root ~raise
+                   ?file_path buffer
+      : CST.tree =
       (* Instantiating the general lexer of LexerLib *)
-      let preprocess_ = preprocess in
-      let project_root_ = project_root in
+
+      let preprocess_opt   = preprocess
+      and project_root_opt = project_root
+      and jsligo_opt       = jsligo
+      in
       let module Warning =
         struct
           let add = raise.Trace.warning
-        end in
-
+        end
+      in
       let module DefaultPreprocParams =
-        Preprocessor.CLI.MakeDefault (Config) in
-
+        Preprocessor.CLI.MakeDefault (Config)
+      in
       let module PreprocParams =
         struct
           module Config = Config
@@ -116,7 +127,7 @@ module MakeParser
               include DefaultPreprocParams.Options
 
               let input = file_path
-              let project_root = project_root_
+              let project_root = project_root_opt
             end
         end in
 
@@ -125,17 +136,18 @@ module MakeParser
       let module LexerParams =
         LexerLib.CLI.MakeDefault (PreprocParams) in
 
-      let module LexerParams = struct
-        include LexerParams
+      let module LexerParams =
+        struct
+          include LexerParams
 
-        module Options = struct
-          include LexerParams.Options
+          module Options =
+            struct
+              include LexerParams.Options
 
-          let preprocess = preprocess_
-        end
-
-      end
-      in
+              let preprocess = preprocess_opt
+              let jsligo = jsligo_opt
+            end
+        end in
 
       let module MainLexer =
         LexerAPI.Make
@@ -169,26 +181,27 @@ module MakeParser
       (* Running the parser in error recovery mode *)
 
       let tree =
-        let string = Buffer.contents buffer in
-        let lexbuf = Lexing.from_string string in
+        let string    = Buffer.contents buffer in
+        let lexbuf    = Lexing.from_string string in
         let no_colour = DefaultPreprocParams.Options.no_colour in
-        let     () = Lexbuf.reset ?file:file_path lexbuf in
-        let     () = Lexer.clear () in
+        let        () = Lexbuf.reset ?file:file_path lexbuf in
+        let        () = Lexer.clear () in
         MainParser.recov_from_lexbuf ~no_colour (module ParErr) lexbuf
 
       in lift ~raise tree
 
     (* Parsing a file *)
 
-    let from_file ?preprocess ?project_root ~raise buffer file_path : CST.tree =
-      gen_parser ?preprocess ?project_root ~raise ~file_path buffer
+    let from_file ?jsligo ?preprocess ?project_root ~raise buffer file_path
+      : CST.tree =
+      gen_parser ?jsligo ?preprocess ?project_root ~raise ~file_path buffer
 
     let parse_file = from_file
 
     (* Parsing a string *)
 
-    let from_string ?preprocess ?project_root ~raise buffer : CST.tree =
-      gen_parser ?preprocess ?project_root ~raise buffer
+    let from_string ?jsligo ?preprocess ?project_root ~raise buffer : CST.tree =
+      gen_parser ?jsligo ?preprocess ?project_root ~raise buffer
 
     let parse_string = from_string
   end
@@ -262,7 +275,13 @@ module MakeTwoParsers
 
     type raise = (Errors.t, Main_warnings.all) Trace.raise
 
-    type 'a parser = ?preprocess:bool -> ?project_root:file_path -> raise:raise -> Buffer.t -> 'a
+    type 'a parser =
+      ?jsligo:string option option ->
+      ?preprocess:bool ->
+      ?project_root:file_path ->
+      raise:raise ->
+      Buffer.t ->
+      'a
 
     module Errors = Errors
 

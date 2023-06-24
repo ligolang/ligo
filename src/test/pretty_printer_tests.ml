@@ -11,6 +11,12 @@ let parsing_error_to_string (err : Parsing.Errors.t) : string =
   message
 
 
+module Config = Preprocessing_cameligo.Config
+module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
+module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
+module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
+module Options = Parameters.Options
+
 type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
 
 let test { test_name; actual; expected } =
@@ -38,12 +44,17 @@ let test { test_name; actual; expected } =
     Parsing.(
       match syntax with
       | CameLIGO ->
-        Cameligo.(pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
+        let module Parse = Cameligo.Make (Options) in
+        let module Pretty = Cameligo.Pretty in
+        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual
       | JsLIGO ->
-        Jsligo.(pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
+        let module Parse = Jsligo.Make (Options) in
+        let module Pretty = Jsligo.Pretty in
+        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual
       | PascaLIGO ->
-        Pascaligo.(
-          pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual))
+        let module Parse = Pascaligo.Make (Options) in
+        let module Pretty = Pascaligo.Pretty in
+        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
   in
   Alcotest.(check string)
     "Formatted contents of the files should be equal"

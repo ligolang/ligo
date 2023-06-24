@@ -837,7 +837,7 @@ and pp_ne_injection :
         pp_brackets_like_document state elements lbracket rbracket
     in
     let inj = if List.is_empty attributes then inj
-              else break 0 ^^ pp_attributes state attributes ^/^ inj
+              else hardline ^^ pp_attributes state attributes ^/^ inj
     in inj
 
 and pp_type_app state (node: (type_constr * type_params) reg) =

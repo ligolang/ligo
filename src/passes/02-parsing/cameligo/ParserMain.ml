@@ -8,10 +8,20 @@ module Lexbuf = Simple_utils.Lexbuf
 
 (* Internal dependencies *)
 
-module Config      = Preprocessing_cameligo.Config
+module Config = Preprocessing_cameligo.Config
+
+(* CLIs *)
+
+module PreprocParams = Preprocessor.CLI.Make (Config)
+module LexerParams   = LexerLib.CLI.Make (PreprocParams)
+module Parameters    = ParserLib.CLI.Make (LexerParams)
+module Options       = Parameters.Options
+
+(* Internal dependencies *)
+
 module Token       = Lexing_cameligo.Token
-module UnitPasses  = Lx_ml_self_units.Self
-module TokenPasses = Lx_ml_self_tokens.Self
+module UnitPasses  = Lx_ml_self_units.Self.Make (Options)
+module TokenPasses = Lx_ml_self_tokens.Self.Make (Options)
 module ParErr      = Parsing_cameligo.ParErr
 module Tree        = Cst_shared.Tree
 module CST         = Cst_cameligo.CST
@@ -21,12 +31,6 @@ module CST         = Cst_cameligo.CST
 module PreprocAPI = Preprocessor.TopAPI
 module LexerAPI   = Lexing_shared.TopAPI
 module ParserAPI  = Parsing_shared.TopAPI
-
-(* CLIs *)
-
-module PreprocParams = Preprocessor.CLI.Make (Config)
-module LexerParams   = LexerLib.CLI.Make (PreprocParams)
-module Parameters    = ParserLib.CLI.Make (LexerParams)
 
 (* Instantiating preprocessor and lexer *)
 

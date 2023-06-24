@@ -113,15 +113,15 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type variable    = lexeme wrap
-type fun_name    = lexeme wrap
-type fun_arg_name    = lexeme wrap
-type type_name   = lexeme wrap
-type type_var    = lexeme wrap
-type type_constr = lexeme wrap
-type constr      = lexeme wrap
-type field_name  = lexeme wrap
-type module_name = lexeme wrap
+type variable     = lexeme wrap
+type fun_name     = lexeme wrap
+type fun_arg_name = lexeme wrap
+type type_name    = lexeme wrap
+type type_var     = lexeme wrap
+type type_constr  = lexeme wrap
+type constr       = lexeme wrap
+type field_name   = lexeme wrap
+type module_name  = lexeme wrap
 
 type attribute   = Attr.t wrap
 type language    = lexeme wrap
