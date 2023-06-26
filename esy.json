@@ -59,7 +59,7 @@
     "@opam/dune": "*",
     "@opam/alcotest": "*",
     "@opam/ocamlgraph": "*",
-    "@opam/menhir": "20211128",
+    "@opam/menhir": "20230608",
     "@opam/coq": "*",
     "@opam/bos": "*",
     "@opam/qcheck": "*",
