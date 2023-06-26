@@ -135,18 +135,18 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
 and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
  fun te ->
   let w = Region.wrap_ghost in
-  (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow? 
+  (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow?
         Why [t.name] is not working?? *)
   let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
    fun t -> TVar (ghost_ident @@ Format.asprintf "%a" Ligo_prim.Type_var.pp t)
-   (* XXX we should split generated names on '#'? Can we just extract the name somehow? 
+   (* XXX we should split generated names on '#'? Can we just extract the name somehow?
          Why [t.name] is not working?? *)
   and decompile_variant
       : AST.Label.t -> CST.type_expr option -> AST.Attribute.t list -> CST.variant
     =
    fun (AST.Label.Label constr_name) t attributes ->
     let params =
-      (* Looks like it's the correct way to decompile a constr with multiple params, 
+      (* Looks like it's the correct way to decompile a constr with multiple params,
     we should add tests for this scenario *)
       match t with
       | None -> None
@@ -278,7 +278,15 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     failwith
       "Decompiler: T_fun is not initial for JsLIGO, should be transformed to T_named_fun \
        via backwards nanopass"
-  | T_for_all _ | T_module_app _ | T_abstraction _ | T_constant _ ->
+  (* This node is not initial,
+  i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,
+  so type declaration that contains expression with abstraction should be transformed to
+  D_type_abstraction by type_abstraction_declaration nanopass, so this case looks impossible,
+  but in some cases (e.g. LSP hovers) we just want to transform type expression to pretty string,
+  so we'll just drop the quantifiers here *)
+  | T_abstraction Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ }
+  | T_for_all Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
+  | T_module_app _ | T_constant _ ->
     Helpers.failwith_not_initial_node_decompiler @@ `Ty_expr te
 
 
