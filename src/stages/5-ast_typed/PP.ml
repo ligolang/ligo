@@ -165,6 +165,14 @@ and expression_content ppf (ec : expression_content) =
   | E_for for_loop -> For_loop.pp expression ppf for_loop
   | E_for_each for_each -> For_each_loop.pp expression ppf for_each
   | E_while while_loop -> While_loop.pp expression ppf while_loop
+  | E_error { expression; error } ->
+    (* Should only be printed in debugging situations *)
+    Format.fprintf
+      ppf
+      "@[Error { expression = %a;@;<1 8>message = %s }@]"
+      Ast_core.PP.expression
+      expression
+      error.content.message
 
 
 and type_inst ppf { forall; type_ } =

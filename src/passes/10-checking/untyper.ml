@@ -163,6 +163,7 @@ and untype_expression_content ~loc ~raise (ec : O.expression_content) : I.expres
       self forall
     | _ ->
       failwith "Impossible case: cannot untype a type instance of a non polymorphic type")
+  | E_error { expression; _ } -> expression
 
 
 and untype_match_expr ~raise

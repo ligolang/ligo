@@ -92,6 +92,13 @@ type expression_content =
   | E_for of expr For_loop.t
   | E_for_each of expr For_each_loop.t
   | E_while of expr While_loop.t
+  (* Error recovery *)
+  | E_error of error
+
+and error =
+  { expression : Ast_core.expression
+  ; error : Simple_utils.Error.t
+  }
 
 and type_inst =
   { forall : expression

@@ -137,8 +137,12 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     | E_while w ->
       let res, w = While_loop.fold_map self init w in
       res, return @@ E_while w
-    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_module_accessor _) as e'
-      -> init, return e')
+    | ( E_deref _
+      | E_literal _
+      | E_variable _
+      | E_contract _
+      | E_module_accessor _
+      | E_error _ ) as e' -> init, return e')
 
 
 and fold_map_case

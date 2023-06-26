@@ -6,6 +6,7 @@ type aggregation_error =
   [ `Aggregation_corner_case of string
   | `Aggregation_redundant_pattern of Location.t
   | `Aggregation_cannot_compile_texists of Ast_typed.type_expression * Location.t
+  | `Aggregation_cannot_compile_erroneous_expression of Ast_typed.expression * Location.t
   ]
 [@@deriving poly_constructor { prefix = "aggregation_" }]
 
@@ -25,6 +26,13 @@ let error_ppformat
         "@[<hv>Underspecified type \"%a\".@.Please add additional annotations.%a@]"
         Ast_typed.PP.type_expression
         type_
+        (Snippet.pp ~no_colour)
+        loc
+    | `Aggregation_cannot_compile_erroneous_expression (_expr, loc) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Cannot compile erroneous expression. This is an internal error, \
+         please contact the developers.@]"
         (Snippet.pp ~no_colour)
         loc
     | `Aggregation_redundant_pattern loc ->
@@ -51,6 +59,13 @@ let error_json : aggregation_error -> Simple_utils.Error.t =
         "@[<hv>Underspecified type \"%a\".@.Please add additional annotations.@]"
         Ast_typed.PP.type_expression
         type_
+    in
+    let content = make_content ~message ~location:loc () in
+    make ~stage ~content
+  | `Aggregation_cannot_compile_erroneous_expression (_expr, loc) ->
+    let message =
+      "Cannot compile erroneous expression. This is an internal error, please contact \
+       the developers"
     in
     let content = make_content ~message ~location:loc () in
     make ~stage ~content

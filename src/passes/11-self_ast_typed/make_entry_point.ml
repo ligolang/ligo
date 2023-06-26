@@ -63,7 +63,7 @@ let let_storage_and_parameter_types ~parameter_type ~storage_type ~in_ =
   >:: (def_type Magic_vars.storage storage_type >:: in_)
 
 
-let e_views ~storage_type ~raise view_types =
+let e_views ~storage_type ~(raise : _ Simple_utils.Trace.raise) view_types =
   let open Ast_typed in
   List.fold_right
     view_types

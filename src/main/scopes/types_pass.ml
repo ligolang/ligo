@@ -230,6 +230,10 @@ module Of_Ast_typed = struct
       let return = add_bindings env in
       let loc = exp.location in
       match exp.expression_content with
+      (* FIXME: @Melywn
+         What should be the expected behaviour here for erroneous 
+         expressions? *)
+      | E_error _
       | E_literal _
       | E_application _
       | E_raw_code _

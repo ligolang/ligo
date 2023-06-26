@@ -1,5 +1,6 @@
 module I = Ast_typed
 module O = Ast_aggregated
+open Errors
 open Ligo_prim
 
 (*
@@ -485,7 +486,7 @@ and compile_type ~(raise : _ Trace.raise) : I.type_expression -> O.type_expressi
   in
   match ty.type_content with
   | T_variable x -> return (T_variable x)
-  | T_exists _ -> raise.error @@ Errors.cannot_compile_texists ty ty.location
+  | T_exists _ -> raise.error @@ cannot_compile_texists ty ty.location
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
   | T_sum (r, _) -> return (T_sum (I.Row.map self r))
@@ -509,6 +510,7 @@ and compile_expression ~(raise : _ Trace.raise)
     { expression_content; type_expression; location = expr.location }
   in
   match expr.expression_content with
+  | I.E_error _ -> raise.error @@ cannot_compile_erroneous_expression expr expr.location
   (* resolving variable names *)
   | I.E_contract _ -> assert false (* reduced in self_ast_typed *)
   | I.E_variable v ->
