@@ -380,17 +380,9 @@ let t_type_forall_ez ty_params init =
 let get_pattern_binders (p : pattern) : Variable.t list =
   let fp : (Variable.t list, unit) pattern_ -> Variable.t list =
    fun p ->
-    let init =
-      match Location.unwrap p with
-      | P_var x -> [ x ]
-      | P_pun_record lst ->
-        List.filter_map lst ~f:(function
-            | Punned { wrap_content; location } ->
-              Some (Variable.of_input_var ~loc:location (Label.to_string wrap_content))
-            | _ -> None)
-      | _ -> []
-    in
-    fold_pattern_ List.append (fun acc () -> acc) init p
+    match Location.unwrap p with
+    | P_var x | P_var_typed (_, x) -> [ x ]
+    | _ -> fold_pattern_ List.append (fun lst () -> lst) [] p
   in
   let folder =
     Recursion_schemes.Catamorphism.
