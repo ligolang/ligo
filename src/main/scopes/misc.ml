@@ -122,7 +122,7 @@ let rec map_typed_type_expression_module_path
       T_abstraction { ty_binder; kind; type_ = type_expression type_ }
     | T_for_all { ty_binder; kind; type_ } ->
       T_for_all { ty_binder; kind; type_ = type_expression type_ }
-    | (T_variable _ | T_singleton _) as t -> t
+    | (T_variable _ | T_exists _ | T_singleton _) as t -> t
   and row : Ast_typed.row -> Ast_typed.row =
    fun { fields; layout } -> { fields = Label.Map.map fields ~f:type_expression; layout }
   and type_expression : Ast_typed.type_expression -> Ast_typed.type_expression =

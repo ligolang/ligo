@@ -426,15 +426,21 @@ module With_frag : sig
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
 
-(** {8 Execution}*)
+(** {8 Execution} *)
 
 (** This section defines functions related to running computations. *)
 
-(** [encode type_] encodes an [Ast_typed.type_expression] representation of a type into the typer's
-    internal representation [Type.t]. *)
-val encode : Ast_typed.type_expression -> Type.t
+(** [encode ~raise type_] encodes an [Ast_typed.type_expression] representation of a type
+    into the typer's internal representation [Type.t]. *)
+val encode
+  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  -> Ast_typed.type_expression
+  -> Type.t
 
-val encode_signature : Ast_typed.signature -> Context.Signature.t
+val encode_signature
+  :  raise:(Errors.typer_error, Main_warnings.all) raise
+  -> Ast_typed.signature
+  -> Context.Signature.t
 
 (** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)

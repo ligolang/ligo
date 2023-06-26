@@ -12,7 +12,7 @@ let decompile_value ~raise (output_type : Ast_aggregated.type_expression) (ty, v
   in
   let pat = Expansion.decompile aggregated in
   let typed = Aggregation.decompile pat in
-  let core = Checking.untype_expression typed in
+  let core = trace ~raise checking_tracer @@ Checking.untype_expression typed in
   core
 
 

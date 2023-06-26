@@ -1,4 +1,5 @@
 module Location = Simple_utils.Location
+module Trace = Simple_utils.Trace
 open PPrint
 open Ligo_prim
 open Simple_utils.Function
@@ -11,18 +12,23 @@ let unlines : document list -> document = separate hardline <@ strip_empty
 let dots = !^"\"...\""
 
 let decompile_type (ty_expr : Ast_typed.ty_expr) : document =
-  let core_type = Checking.untype_type_expression ~use_orig_var:true ty_expr in
+  let unresolved_type =
+    let open Ast_unified in
+    t_var
+      ~loc:Location.generated
+      (Ty_variable.of_input_var ~loc:Location.generated "unresolved")
+  in
   let unified_type =
     match
-      Simple_utils.Trace.to_stdlib_result
-      @@ Nanopasses.decompile_ty_expr ~syntax:JsLIGO core_type
+      Trace.to_stdlib_result @@ Checking.untype_type_expression ~use_orig_var:true ty_expr
     with
-    | Ok (unified_type, _) -> unified_type
-    | Error _ ->
-      let open Ast_unified in
-      t_var
-        ~loc:Location.generated
-        (Ty_variable.of_input_var ~loc:Location.generated "unresolved")
+    | Ok (core_type, _) ->
+      (match
+         Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ~syntax:JsLIGO core_type
+       with
+      | Ok (unified_type, _) -> unified_type
+      | Error _ -> unresolved_type)
+    | Error _ -> unresolved_type
   in
   let open Unification.Jsligo in
   let open Parsing.Jsligo in

@@ -31,7 +31,12 @@ val resolve
   -> Typing_env.t
 
 module Of_Ast_core : sig
-  val declarations : t -> Ast_typed.signature -> Ast_core.declaration list -> t
+  val declarations
+    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
+    -> t
+    -> Ast_typed.signature
+    -> Ast_core.declaration list
+    -> t
 end
 
 val patch : t -> Types.def list -> Types.def list

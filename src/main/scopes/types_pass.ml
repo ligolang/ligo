@@ -166,15 +166,18 @@ module Of_Ast_typed = struct
     | Module_binding of (Ast_typed.module_variable * Ast_typed.signature)
     | Lambda_binding of (Location.t * Ast_typed.ty_expr)
 
-  let label_bindings : _ Pattern.t -> Ast_typed.ty_expr -> binding list =
+  let label_bindings ~raise : _ Pattern.t -> Ast_typed.ty_expr -> binding list =
    fun p ty_expr ->
     List.map ~f:(fun elt -> Label_binding elt)
-    @@ label_bindings p (Checking.untype_type_expression ~use_orig_var:false ty_expr)
+    @@ label_bindings
+         p
+         (Checking.untype_type_expression ~raise ~use_orig_var:false ty_expr)
 
 
-  let mk_label_binding : Label.t -> Ast_typed.ty_expr -> binding =
+  let mk_label_binding ~raise : Label.t -> Ast_typed.ty_expr -> binding =
    fun label ty_expr ->
-    Label_binding (label, Checking.untype_type_expression ~use_orig_var:false ty_expr)
+    Label_binding
+      (label, Checking.untype_type_expression ~raise ~use_orig_var:false ty_expr)
 
 
   let add_binding : t -> binding -> t =
@@ -211,16 +214,16 @@ module Of_Ast_typed = struct
         | S_module_type (v, sig_) -> add_bindings bindings [ Module_binding (v, sig_) ])
 
 
-  let rec extract_module_content : t -> Ast_typed.module_content -> t =
+  let rec extract_module_content ~raise : t -> Ast_typed.module_content -> t =
    fun prev -> function
     | M_variable _ -> prev
     | M_module_path _ -> prev
     | M_struct ds ->
       List.fold_left ds ~init:prev ~f:(fun prev d ->
-          extract_binding_types prev d.wrap_content)
+          extract_binding_types ~raise prev d.wrap_content)
 
 
-  and extract_binding_types : t -> Ast_typed.declaration_content -> t =
+  and extract_binding_types ~raise : t -> Ast_typed.declaration_content -> t =
    fun prev ->
     let aux : t -> Ast_typed.expression -> t =
      fun env exp ->
@@ -242,11 +245,13 @@ module Of_Ast_typed = struct
       | E_record record ->
         let labels = Record.labels record in
         return
-        @@ List.map ~f:(fun label -> mk_label_binding label exp.type_expression) labels
+        @@ List.map
+             ~f:(fun label -> mk_label_binding ~raise label exp.type_expression)
+             labels
       | E_accessor { struct_; path } | E_update { struct_; path; update = _ } ->
-        return [ mk_label_binding path struct_.type_expression ]
+        return [ mk_label_binding ~raise path struct_.type_expression ]
       | E_constructor { constructor; element = _ } ->
-        return [ mk_label_binding constructor exp.type_expression ]
+        return [ mk_label_binding ~raise constructor exp.type_expression ]
       | E_lambda { binder; output_type; _ } ->
         return
           [ Type_binding (Param.get_var binder, Param.get_ascr binder)
@@ -261,7 +266,7 @@ module Of_Ast_typed = struct
           ; Lambda_binding (exp.location, output_type)
           ]
       | E_let_mut_in { let_binder; rhs; _ } | E_let_in { let_binder; rhs; _ } ->
-        let labels = label_bindings let_binder rhs.type_expression in
+        let labels = label_bindings ~raise let_binder rhs.type_expression in
         return
         @@ List.map
              ~f:(fun binder ->
@@ -271,7 +276,9 @@ module Of_Ast_typed = struct
       | E_matching { matchee; disc_label = _; cases } ->
         let ty_expr = matchee.type_expression in
         let pats = List.map ~f:(fun elt -> elt.pattern) cases in
-        let labels = List.concat_map ~f:(fun elt -> label_bindings elt ty_expr) pats in
+        let labels =
+          List.concat_map ~f:(fun elt -> label_bindings ~raise elt ty_expr) pats
+        in
         let bindings =
           List.concat_map cases ~f:(fun { pattern; _ } ->
               let binders = Pattern.binders pattern in
@@ -310,7 +317,7 @@ module Of_Ast_typed = struct
       in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_irrefutable_match { pattern; expr; _ } ->
-      let prev = add_bindings prev (label_bindings pattern expr.type_expression) in
+      let prev = add_bindings prev (label_bindings ~raise pattern expr.type_expression) in
       let prev =
         let f acc binder =
           add_bindings
@@ -325,9 +332,9 @@ module Of_Ast_typed = struct
       let prev =
         add_bindings prev [ Module_binding (module_binder, module_.signature) ]
       in
-      extract_module_content prev module_.module_content
+      extract_module_content ~raise prev module_.module_content
     | D_module_include { module_content; module_location = _; signature = _ } ->
-      extract_module_content prev module_content
+      extract_module_content ~raise prev module_content
     | D_signature { signature_binder; signature; signature_attr = _ } ->
       let prev = add_bindings prev [ Module_binding (signature_binder, signature) ] in
       extract_binding_types_from_signature prev signature
@@ -348,7 +355,7 @@ module Of_Ast_core = struct
 
   (* S_include is kinda weird thing. After Ast_unified -> Ast_core they occur in JsLIGO
     and it's impossible to decompile them back into CST. So, it would be convenient to inline them. *)
-  let rec inline_generated_include_sig_item
+  let rec inline_generated_include_sig_item ~raise
       : t -> Ast_typed.signature -> Ast_core.sig_item -> Ast_core.sig_item list
     =
    fun env prg_sig sig_item ->
@@ -357,15 +364,16 @@ module Of_Ast_core = struct
     | S_value _ | S_type _ | S_type_var _ -> [ sig_item ]
     | S_module (mvar, sig_) ->
       [ Location.wrap ~loc
-        @@ Ast_core.S_module (mvar, inline_generated_include_signature env prg_sig sig_)
+        @@ Ast_core.S_module
+             (mvar, inline_generated_include_signature ~raise env prg_sig sig_)
       ]
     | S_module_type (mvar, sig_) ->
       [ Location.wrap ~loc
         @@ Ast_core.S_module_type
-             (mvar, inline_generated_include_signature env prg_sig sig_)
+             (mvar, inline_generated_include_signature ~raise env prg_sig sig_)
       ]
     | S_include { wrap_content = sig_expr; location = _ } ->
-      let f = inline_generated_include_sig_item env prg_sig in
+      let f = inline_generated_include_sig_item ~raise env prg_sig in
       (match sig_expr with
       | S_sig { items } -> List.concat_map ~f items
       | S_path path ->
@@ -378,26 +386,28 @@ module Of_Ast_core = struct
           in
           match signature_case with
           | Resolved sig_ ->
-            return @@ (Checking.untype_signature ~use_orig_var:true sig_).items
+            return @@ (Checking.untype_signature ~raise ~use_orig_var:true sig_).items
           | Core { items } -> return @@ List.concat_map ~f items
           | Unresolved -> None))
 
 
-  and inline_generated_include_signature
+  and inline_generated_include_signature ~raise
       : t -> Ast_typed.signature -> Ast_core.signature -> Ast_core.signature
     =
    fun env prg_sig { items } ->
-    { items = List.concat_map items ~f:(inline_generated_include_sig_item env prg_sig) }
+    { items =
+        List.concat_map items ~f:(inline_generated_include_sig_item ~raise env prg_sig)
+    }
 
 
-  let add_module_signature
+  let add_module_signature ~raise
       : t -> Ast_typed.signature -> Module_var.t -> Ast_core.signature_expr option -> t
     =
    fun env prg_sig v -> function
     | Some { wrap_content = S_sig signature; _ } ->
       add_module_signature
         (Module_var.get_location v)
-        (Core (inline_generated_include_signature env prg_sig signature))
+        (Core (inline_generated_include_signature ~raise env prg_sig signature))
         env
     | Some { wrap_content = S_path path; _ } ->
       Option.value
@@ -488,9 +498,9 @@ module Of_Ast_core = struct
     | _ -> binders, expr
 
 
-  let rec expression : Ast_typed.signature -> t -> Ast_core.expression -> t =
+  let rec expression ~raise : Ast_typed.signature -> t -> Ast_core.expression -> t =
    fun prg_sig bindings expr ->
-    let expression = expression prg_sig in
+    let expression = expression ~raise prg_sig in
     let get_type : Ast_core.expression -> Ast_core.ty_expr option =
      fun expr ->
       match expr.expression_content with
@@ -593,7 +603,7 @@ module Of_Ast_core = struct
       let bindings = expression bindings rhs in
       expression bindings let_result
     | E_mod_in { rhs; let_result; _ } ->
-      let bindings = module_expr_content prg_sig bindings (Location.unwrap rhs) in
+      let bindings = module_expr_content ~raise prg_sig bindings (Location.unwrap rhs) in
       expression bindings let_result
 
 
@@ -620,19 +630,21 @@ module Of_Ast_core = struct
     | S_path _ -> bindings
 
 
-  and module_expr_content : Ast_typed.signature -> t -> Ast_core.module_expr_content -> t =
+  and module_expr_content ~raise
+      : Ast_typed.signature -> t -> Ast_core.module_expr_content -> t
+    =
    fun prg_sig bindings -> function
-    | M_struct decls -> declarations bindings prg_sig decls
+    | M_struct decls -> declarations ~raise bindings prg_sig decls
     | M_variable _ | M_module_path _ -> bindings
 
 
-  and declaration : Ast_typed.signature -> t -> Ast_core.declaration -> t =
+  and declaration ~raise : Ast_typed.signature -> t -> Ast_core.declaration -> t =
    fun prg_sig bindings decl ->
     match Location.unwrap decl with
     | D_value { binder; expr; attr = { dyn_entry; _ } } ->
       let binders, expr = set_core_type_if_possible ~dyn_entry [ binder ] expr in
       let bindings = add_binders bindings binders in
-      expression prg_sig bindings expr
+      expression ~raise prg_sig bindings expr
     | D_irrefutable_match { pattern; expr; attr = { dyn_entry; _ } } ->
       let bindings =
         match expr.expression_content with
@@ -644,7 +656,7 @@ module Of_Ast_core = struct
       let binders = Pattern.binders pattern in
       let binders, expr = set_core_type_if_possible ~dyn_entry binders expr in
       let bindings = add_binders bindings binders in
-      expression prg_sig bindings expr
+      expression ~raise prg_sig bindings expr
     | D_type _ -> bindings
     | D_module
         { module_binder
@@ -654,12 +666,13 @@ module Of_Ast_core = struct
         } ->
       let bindings =
         add_module_signature
+          ~raise
           bindings
           prg_sig
           module_binder
           (Option.map ~f:(fun annotation -> annotation.signature) annotation)
       in
-      let bindings = module_expr_content prg_sig bindings wrap_content in
+      let bindings = module_expr_content ~raise prg_sig bindings wrap_content in
       (match annotation with
       | None -> bindings
       | Some { signature = { wrap_content; location = _ }; filter = _ } ->
@@ -671,17 +684,22 @@ module Of_Ast_core = struct
         ; signature_attr = _
         } ->
       let bindings =
-        add_module_signature bindings prg_sig signature_binder (Some signature)
+        add_module_signature ~raise bindings prg_sig signature_binder (Some signature)
       in
       signature_content bindings wrap_content
 
 
-  and declarations : t -> Ast_typed.signature -> Ast_core.declaration list -> t =
-   fun bindings prg_sig -> List.fold ~init:bindings ~f:(declaration prg_sig)
+  and declarations ~raise : t -> Ast_typed.signature -> Ast_core.declaration list -> t =
+   fun bindings prg_sig -> List.fold ~init:bindings ~f:(declaration ~raise prg_sig)
 
 
   and sig_items : t -> Ast_core.sig_item list -> t =
    fun bindings -> List.fold ~init:bindings ~f:sig_item
+
+
+  let declarations ~raise : t -> Ast_typed.signature -> Ast_core.declaration list -> t =
+   fun bindings prg_sig decls ->
+    Trace.trace ~raise Main_errors.checking_tracer @@ declarations bindings prg_sig decls
 end
 
 module Typing_env = struct
@@ -758,6 +776,7 @@ module Typing_env = struct
         @@
         match ty_expr.type_content with
         | T_variable tvar -> T_variable (make_concise_name tvar)
+        | T_exists tvar -> T_exists (make_concise_name tvar)
         | T_abstraction abstr ->
           T_abstraction { abstr with ty_binder = make_concise_name abstr.ty_binder }
         | T_for_all for_all ->
@@ -894,7 +913,8 @@ module Typing_env = struct
       List.fold_left decls ~init:tenv ~f:(fun tenv decl ->
           let decl = replace_gen_type_vars_decl decl in
           let bindings =
-            Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
+            Trace.trace ~raise Main_errors.checking_tracer
+            @@ Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
           in
           let type_env =
             { tenv.type_env with
@@ -990,7 +1010,7 @@ let resolve
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
   let tenv = Typing_env.signature_sort_pass ~raise ~options ~loc tenv in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
-  let bindings = Of_Ast_core.declarations tenv.bindings tenv.type_env prg in
+  let bindings = Of_Ast_core.declarations ~raise tenv.bindings tenv.type_env prg in
   { tenv with bindings }
 
 

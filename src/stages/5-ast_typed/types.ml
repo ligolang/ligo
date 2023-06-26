@@ -8,6 +8,7 @@ type module_variable = Module_var.t [@@deriving compare, hash]
 
 type type_content =
   | T_variable of Type_var.t
+  | T_exists of Type_var.t
   | T_constant of type_injection
   | T_sum of
       type_expression Row.t

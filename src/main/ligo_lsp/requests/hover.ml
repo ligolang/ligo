@@ -257,10 +257,11 @@ let hover_string
       match mdef.signature with
       | Core core_sig -> Some (drop_common_module_path @@ strip_generated core_sig)
       | Resolved signature ->
-        Some
-          (drop_common_module_path
-          @@ strip_generated
-          @@ Checking.untype_signature ~use_orig_var:true signature)
+        let%map.Option sig' =
+          Simple_utils.Trace.to_option
+          @@ Checking.untype_signature ~use_orig_var:true signature
+        in
+        drop_common_module_path @@ strip_generated sig'
       | Unresolved -> None
     in
     let print_signature sig_ =

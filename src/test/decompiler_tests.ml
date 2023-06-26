@@ -72,7 +72,12 @@ let mk_decompiler_test { code; expected; syntax; name } =
       (* ^ E.g. "let x a = a + 1" creates two vdefs but the one for x is always first*)
       (match vdef.t with
       | Core t -> t
-      | Resolved ast_typed -> Checking.untype_type_expression ast_typed
+      | Resolved ast_typed ->
+        Trace.try_with
+          (fun ~raise ~catch:_ -> Checking.untype_type_expression ~raise ast_typed)
+          (fun ~catch:_ _ ->
+            failwith
+              "Got a vdef with a resolved type, but cannot decompile type expression")
       | Unresolved -> failwith "Got a vdef with unresolved type")
     | Type tdef :: _ ->
       Option.value_or_thunk

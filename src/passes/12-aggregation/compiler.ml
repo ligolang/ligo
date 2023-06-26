@@ -347,54 +347,58 @@ module Data = struct
     }
 end
 
-let rec aggregate_scope : Data.t -> leaf:O.expression -> O.expression =
+let rec aggregate_scope ~(raise : _ Trace.raise)
+    : Data.t -> leaf:O.expression -> O.expression
+  =
  fun { content; _ } ~leaf ->
   let rec f : int -> O.expression -> O.expression =
    fun d acc_exp ->
     match Data.get_global_decl d with
     | Pat { binding = { old = _; fresh }; item; env; attr; loc } ->
-      let item = compile_expression env item in
+      let item = compile_expression ~raise env item in
       O.e_a_let_in ~loc fresh item acc_exp attr
     | Exp { binding = { old = _; fresh }; item; env; attr; loc } ->
-      let item = compile_expression env item in
+      let item = compile_expression ~raise env item in
       let binder =
         O.Pattern.var ~loc:(Value_var.get_location fresh)
         @@ Binder.make fresh item.type_expression
       in
       O.e_a_let_in ~loc binder item acc_exp attr
-    | Mod { in_; _ } -> aggregate_scope in_ ~leaf:acc_exp
+    | Mod { in_; _ } -> aggregate_scope ~raise in_ ~leaf:acc_exp
     | Incl content -> List.fold_right content ~f ~init:acc_exp
   in
   List.fold_right content ~f ~init:leaf
 
 
-and build_context : Data.t -> O.context =
+and build_context ~(raise : _ Trace.raise) : Data.t -> O.context =
  fun { content; _ } ->
   let rec f : int -> O.declaration list =
    fun d ->
     match Data.get_global_decl d with
     | Pat { binding = { old = _; fresh }; item; env; attr; loc } ->
-      let item = compile_expression env item in
+      let item = compile_expression ~raise env item in
       [ Location.wrap ~loc (O.D_irrefutable_match { pattern = fresh; expr = item; attr })
       ]
     | Exp { binding = { old = _; fresh }; item; env; attr; loc } ->
-      let item = compile_expression env item in
+      let item = compile_expression ~raise env item in
       let binder = Binder.make fresh item.type_expression in
       [ Location.wrap ~loc (O.D_value { binder; expr = item; attr }) ]
-    | Mod { in_; _ } -> build_context in_
+    | Mod { in_; _ } -> build_context ~raise in_
     | Incl content -> List.join (List.map ~f content)
   in
   List.join (List.map ~f content)
 
 
-and compile : Data.t -> I.expression -> I.program -> O.program =
+and compile ~(raise : _ Trace.raise) : Data.t -> I.expression -> I.program -> O.program =
  fun data hole program ->
-  let data = compile_declarations data [] program.pr_module in
-  let hole = compile_expression data.env hole in
-  build_context data, hole
+  let data = compile_declarations ~raise data [] program.pr_module in
+  let hole = compile_expression ~raise data.env hole in
+  build_context ~raise data, hole
 
 
-and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
+and compile_declarations ~(raise : _ Trace.raise)
+    : Data.t -> Data.path -> I.module_ -> Data.t
+  =
  fun init_scope path lst ->
   let f : Data.t -> I.declaration -> Data.t =
    fun acc_scope decl ->
@@ -402,7 +406,7 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
     | I.D_type _ -> acc_scope
     | I.D_irrefutable_match { pattern; expr; attr } ->
       let pat =
-        let pattern = I.Pattern.map compile_type pattern in
+        let pattern = I.Pattern.map (compile_type ~raise) pattern in
         let fresh = Data.fresh_pattern pattern path in
         (Data.
            { binding = { old = pattern; fresh }
@@ -430,6 +434,7 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
     | I.D_module { module_binder; module_; module_attr = _ } ->
       let rhs_glob =
         compile_module_expr
+          ~raise
           acc_scope.env
           (Data.extend_debug_path path module_binder)
           module_
@@ -437,7 +442,12 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
       Data.add_module acc_scope module_binder rhs_glob
     | I.D_module_include module_ ->
       let data =
-        compile_module_expr ~copy_content:true acc_scope.env ("INCL" :: path) module_
+        compile_module_expr
+          ~raise
+          ~copy_content:true
+          acc_scope.env
+          ("INCL" :: path)
+          module_
       in
       Data.include_ acc_scope data
     | I.D_signature _ -> acc_scope
@@ -449,12 +459,12 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
   [copy_content] let you control if the module content should be entirely copied
   as a new set of bindings, or if we should just make reference to it
 *)
-and compile_module_expr ?(copy_content = false)
+and compile_module_expr ~(raise : _ Trace.raise) ?(copy_content = false)
     : Data.env -> Data.path -> I.module_expr -> Data.t
   =
  fun env path mexpr ->
   match mexpr.module_content with
-  | M_struct prg -> compile_declarations { env; content = [] } path prg
+  | M_struct prg -> compile_declarations ~raise { env; content = [] } path prg
   | M_variable v ->
     let res = Data.resolve_path env [ v ] in
     if copy_content then Data.refresh res path else { res with content = [] }
@@ -463,9 +473,9 @@ and compile_module_expr ?(copy_content = false)
     if copy_content then Data.refresh res path else { res with content = [] }
 
 
-and compile_type : I.type_expression -> O.type_expression =
+and compile_type ~(raise : _ Trace.raise) : I.type_expression -> O.type_expression =
  fun ty ->
-  let self = compile_type in
+  let self = compile_type ~raise in
   let return type_content : O.type_expression =
     { type_content
     ; orig_var = Option.map ty.abbrev ~f:(fun { orig_var = _, v; _ } -> v)
@@ -475,6 +485,7 @@ and compile_type : I.type_expression -> O.type_expression =
   in
   match ty.type_content with
   | T_variable x -> return (T_variable x)
+  | T_exists _ -> raise.error @@ Errors.cannot_compile_texists ty ty.location
   | T_constant { language; injection; parameters } ->
     return (T_constant { language; injection; parameters = List.map parameters ~f:self })
   | T_sum (r, _) -> return (T_sum (I.Row.map self r))
@@ -485,13 +496,16 @@ and compile_type : I.type_expression -> O.type_expression =
   | T_for_all x -> return (T_for_all (Abstraction.map self x))
 
 
-and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.expression
+and compile_expression ~(raise : _ Trace.raise)
+    : Data.env -> ?debug_path:Data.path -> I.expression -> O.expression
   =
  fun env ?(debug_path = []) expr ->
-  let self ?(env = env) ?(debug_path = debug_path) = compile_expression env ~debug_path in
-  let self_ty = compile_type in
+  let self ?(env = env) ?(debug_path = debug_path) =
+    compile_expression ~raise ~debug_path env
+  in
+  let self_ty = compile_type ~raise in
   let return expression_content : O.expression =
-    let type_expression = compile_type expr.type_expression in
+    let type_expression = compile_type ~raise expr.type_expression in
     { expression_content; type_expression; location = expr.location }
   in
   match expr.expression_content with
@@ -583,6 +597,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
     let data =
       let rhs_scope =
         compile_module_expr
+          ~raise
           env
           ("LOCAL#in" :: Data.extend_debug_path debug_path module_binder)
           rhs
@@ -590,7 +605,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
       Data.add_module { env; content = [] } module_binder rhs_scope
     in
     let x = Data.resolve_path data.env [ module_binder ] in
-    aggregate_scope x ~leaf:(self ~env:data.env let_result)
+    aggregate_scope ~raise x ~leaf:(self ~env:data.env let_result)
   (* trivials *)
   | I.E_literal l -> return (O.E_literal l)
   | I.E_raw_code x -> return (O.E_raw_code (Raw_code.map self x))

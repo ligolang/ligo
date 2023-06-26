@@ -250,6 +250,8 @@ let typed_contract_and_expression_impl
   in
   let app_typed_sig = Ast_typed.to_signature app_typed_prg.pr_module in
   let annotation =
+    Trace.trace ~raise Main_errors.checking_tracer
+    @@ fun ~raise ->
     match check_type with
     | Runned_result.Check_storage ->
       (* to handle dynamic entrypoints:
@@ -270,8 +272,8 @@ let typed_contract_and_expression_impl
         in
         Option.value x ~default:ctrct_sig.storage
       in
-      Checking.untype_type_expression ty
-    | Check_parameter -> Checking.untype_type_expression ctrct_sig.parameter
+      Checking.untype_type_expression ~raise ty
+    | Check_parameter -> Checking.untype_type_expression ~raise ctrct_sig.parameter
   in
   let typed_expr =
     Trace.try_with

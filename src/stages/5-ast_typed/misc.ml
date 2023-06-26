@@ -56,6 +56,8 @@ let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
     (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
     if Type_var.equal x y then Some () else None
   | T_variable _, _ -> None
+  | T_exists x, T_exists y -> if Type_var.equal x y then Some () else None
+  | T_exists _, _ -> None
   | T_singleton a, T_singleton b -> assert_literal_eq (a, b)
   | T_singleton _, _ -> None
   | T_abstraction a, T_abstraction b ->

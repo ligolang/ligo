@@ -220,7 +220,7 @@ let rec fold_map_type_expression
   let init, te = f init te in
   let return type_content = { te with type_content } in
   match te.type_content with
-  | (T_variable _ | T_singleton _) as tc -> init, return tc
+  | (T_variable _ | T_exists _ | T_singleton _) as tc -> init, return tc
   | T_constant { parameters; language; injection } ->
     let init, parameters = List.fold_map parameters ~init ~f in
     init, return @@ T_constant { parameters; language; injection }

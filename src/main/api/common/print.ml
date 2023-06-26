@@ -208,7 +208,10 @@ let signature (raw_options : Raw_options.t) source_file =
         Option.value_exn ~message:"could not find module"
         @@ Ast_typed.Misc.get_path_signature typed.pr_sig module_path
       in
-      let core_sig = Checking.untype_signature ~use_orig_var:true sig_ in
+      let core_sig =
+        Trace.trace ~raise Main_errors.checking_tracer
+        @@ Checking.untype_signature ~use_orig_var:true sig_
+      in
       let unified_sig_expr =
         Trace.trace ~raise Main_errors.nanopasses_tracer
         @@ Nanopasses.decompile_sig_expr ~syntax

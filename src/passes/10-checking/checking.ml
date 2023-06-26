@@ -1939,7 +1939,7 @@ let type_expression ~raise ~options ~path ?env ?tv_opt expr =
   C.run_elab
     (match tv_opt with
     | Some type_ ->
-      let type_ = C.encode type_ in
+      let type_ = C.encode ~raise type_ in
       check_expression expr type_
     | None ->
       let%map.C _, expr = infer_expression expr in
@@ -1967,7 +1967,7 @@ let type_type_expression ~raise ~options ~path ?env (ty : I.type_expression) =
 
 let eval_signature_sort ~raise ~options ~loc ~path ?env old_sig =
   C.run_elab
-    (let%map.C sig_sort = infer_signature_sort (C.encode_signature old_sig) in
+    (let%map.C sig_sort = infer_signature_sort (C.encode_signature ~raise old_sig) in
      E.(decode_sig_sort sig_sort))
     ~raise
     ~options

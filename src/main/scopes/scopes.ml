@@ -43,7 +43,11 @@ let defs_and_typed_program
       let stdlib_decls, stdlib_core = stdlib in
       let stdlib_core_types =
         Types_pass.(
-          Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
+          Of_Ast_core.declarations
+            ~raise
+            (empty Env.empty)
+            stdlib_decls.pr_sig
+            stdlib_core)
       in
       ( stdlib_decls
       , stdlib_core
