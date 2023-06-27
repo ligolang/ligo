@@ -101,6 +101,25 @@ let build_update ~loc ~last_proj_update ~init lhs path =
   aux (init, Fun.id) path
 
 
+let build_update_no_map ~loc ~last_proj_update ~init path =
+  let rec aux : expr * (expr -> expr) -> expr Selection.t list -> expr =
+   fun (last_proj, updator) lst ->
+    match lst with
+    | [] -> updator (last_proj_update last_proj)
+    | access :: tl ->
+      (match access with
+      | FieldName _ | Component_num _ ->
+        let label = label_of_access access in
+        let updator hole =
+          updator (e_record_update ~loc { struct_ = last_proj; label; update = hole })
+        in
+        let prev_access = e_record_access ~loc { struct_ = last_proj; label } in
+        aux (prev_access, updator) tl
+      | Component_expr _ -> failwith "impossible")
+  in
+  aux (init, Fun.id) path
+
+
 let compile_assignment_rhs
     :  loc:Location.t -> last_proj_update:(expr -> expr) -> lhs:Variable.t
     -> path:expr Selection.t list -> default_rhs:expr -> expr
@@ -206,19 +225,6 @@ let compile ~raise =
       let var, rhs = compile_assignment ~raise ~loc lhs_expr rhs_expr in
       e_assign_chainable ~loc { var; op; rhs; returned = lhs_expr }
     | E_update { structure; update } ->
-      let struct_var, wrapping =
-        match get_e_variable structure with
-        | Some v -> v, Fun.id
-        | None ->
-          let loc = get_e_loc structure in
-          let v = Variable.fresh ~loc () in
-          let f upd =
-            e_simple_let_in
-              ~loc
-              { binder = p_var ~loc v; rhs = structure; let_result = upd }
-          in
-          v, f
-      in
       let lens_upd (rhs : expr) (lens : Update.field_lens) (lhs : expr) =
         let op cons_name = e_constant ~loc { cons_name; arguments = [ lhs; rhs ] } in
         match lens with
@@ -229,30 +235,40 @@ let compile ~raise =
         | Lens_Div -> op C_DIV
         | Lens_Fun -> failwith "no idea"
       in
-      let updates =
-        List.map update ~f:(function
-            | Pun { wrap_content = l; location = loc } ->
-              l, e_variable ~loc (Variable.of_input_var ~loc (Label.to_string l))
-            | Full_field { field_lhs = hd :: tl; field_lens; field_rhs } ->
-              let last_proj_update = lens_upd field_rhs field_lens in
-              let lhs = struct_var in
-              let init =
-                e_record_access
-                  ~loc
-                  { struct_ = e_variable ~loc struct_var; label = label_of_access hd }
-              in
-              (match hd with
-              | FieldName l -> l, build_update ~loc ~last_proj_update ~init lhs tl
-              | Component_num (l, _) ->
-                Label.of_string l, build_update ~loc ~last_proj_update ~init lhs tl
-              | Component_expr _ -> failwith "impossible")
-            | _ -> failwith "impossible")
+      let rec aux v updates =
+        match updates with
+        | [] -> e_variable ~loc v
+        | update :: updates ->
+          let rhs =
+            match update with
+            | Update.Pun label ->
+              let loc = label.location in
+              e_record_update
+                ~loc
+                { struct_ = e_variable ~loc v
+                ; label = label.wrap_content
+                ; update =
+                    e_variable
+                      ~loc
+                      (Variable.of_input_var ~loc (Label.to_string label.wrap_content))
+                }
+            | Update.Full_field { field_lhs; field_lens; field_rhs } ->
+              build_update_no_map
+                ~loc
+                ~last_proj_update:(lens_upd field_rhs field_lens)
+                ~init:(e_variable ~loc v)
+                field_lhs
+          in
+          let v = Ligo_prim.Value_var.fresh ~loc () in
+          e_simple_let_in ~loc { binder = p_var ~loc v; rhs; let_result = aux v updates }
       in
-      let upd =
-        List.fold updates ~init:structure ~f:(fun acc (label, update) ->
-            e_record_update ~loc { struct_ = acc; label; update })
-      in
-      wrapping upd
+      let struct_var = Ligo_prim.Value_var.fresh ~loc () in
+      e_simple_let_in
+        ~loc
+        { binder = p_var ~loc struct_var
+        ; rhs = structure
+        ; let_result = aux struct_var update
+        }
     | e -> make_e ~loc e
   in
   Fold { idle_fold with instruction; expr }
