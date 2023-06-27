@@ -1,0 +1,7 @@
+
+author: lesenechal.remi & melwyn95
+description: "\\nThe change fixes a bug in record update\\n\\n#### Example\\n\\n\\n```ocaml\\ntype level1 = {\\n  foo : int;\\n  bar : int;\\n  buz : int;\\n}\\n\\ntype level2 = {\\n  l1 : level1;\\n  fiz : int;\\n}\\n\\ntype level3 = {\\n  l2 : level2;\\n  buz : int;\\n}\\n\\nlet update (s , n: level3 * int) : level3 =\\n  { s with\\n    buz = n;\\n    l2.fiz = n;\\n    l2.l1.foo = n;\\n    l2.l1.bar = n;\\n  }\\n\\nlet test () : level3 =\\n  let s : level3 = {\\n    buz = 0;\\n    l2 = { \\n      fiz = 0;\\n      l1 = {\\n        foo = 0;\\n        bar = 0;\\n        buz = 0;\\n      }\\n    }\\n  } in\\n  let s1 = update (s, 5) in\\n  let () = assert (s1.buz = 5) in\\n  let () = assert (s1.l2.fiz = 5) in\\n  let () = assert (s1.l2.l1.bar = 5) in\\n  let () = assert (s1.l2.l1.foo = 5) in\\n  s1\\n\\n```\\n\\n#### Before (0.68.0)\\n\\n\\n```bash\\n$ ligo.68 run interpret 'test ()' --init-file update.mligo \\nfailed with: \"failed assertion\"\\n\\n```\\n\\n#### After\\n\\n\\n```bash\\n$ ligo run interpret 'test ()' --init-file update.mligo \\nrecord[buz -> 5 ,\\n       l2 -> record[fiz -> 5 , l1 -> record[bar -> 5 , buz -> 0 , foo -> 5]]]\\n\\n```\\n\\n"
+merge_request: '2707'
+title: "Resolve \"Functional record update is broken for nested records\""
+type: fixed
+            

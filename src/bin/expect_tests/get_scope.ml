@@ -600,6 +600,7 @@ let%expect_test _ =
     [ myrec#1:5-10 a#3:4-5 i#6:18-19  ] File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 35-36
     [ myrec#1:5-10 a#3:4-5 i#6:18-19 j#6:31-32  ] File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 40-45
     [ myrec#1:5-10 a#3:4-5  ] File "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 53-55
+    [ myrec#1:5-10 a#3:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 2-44
     [ myrec#1:5-10 a#3:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 3-4
     [ myrec#1:5-10 a#3:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 23-24
     [ myrec#1:5-10 a#3:4-5 b#6:4-5 g#16:19-20  ] File "../../test/contracts/get_scope_tests/records.mligo", line 16, characters 28-41

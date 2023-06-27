@@ -237,6 +237,7 @@ let%expect_test _ =
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#11:6-7  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-17
+    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 25-39
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
     [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
 
