@@ -602,7 +602,14 @@ let rec error_ppformat
         (PP_helpers.list_sep_d pp_elt)
         locs_and_types
     | `Resolve_config_config_type_mismatch (got, pp_typ) ->
-      Format.fprintf f "Expected config type to be a record.\nGot: %a" pp_typ got)
+      Format.fprintf f "Expected config type to be a record.\nGot: %a" pp_typ got
+    | `Scopes_recovered_error e ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.%s@]"
+        Simple_utils.(PP_helpers.option (Snippet.pp ~no_colour))
+        e.content.location
+        e.content.message)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -820,6 +827,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Resolve_config_corner_case err ->
     let content = make_content ~message:(Format.asprintf "Corner case: %s" err) () in
     [ make ~stage:"resolve_config" ~content ]
+  | `Scopes_recovered_error e -> [ e ]
 
 
 let error_jsonformat : Types.all -> Yojson.Safe.t =

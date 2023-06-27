@@ -103,5 +103,6 @@ type all =
   | `Resolve_config_config_type_mismatch of
     Ast_typed.type_expression * (Format.formatter -> Ast_typed.type_expression -> unit)
   | `Repl_unexpected
+  | `Scopes_recovered_error of Simple_utils.Error.t
   ]
 [@@deriving poly_constructor]

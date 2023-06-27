@@ -191,12 +191,14 @@ let type_expr_doc
     let core_typ =
       (* We want to avoid cases like "type t = t", so, lets remove its original name, but
               still use orig_var for type experessions that are inside our type *)
-      Option.bind
-        ~f:(fun typ ->
-          Option.map ~f:reduce_generated_params
-          @@ Trace.to_option
-          @@ Checking.untype_type_expression ~use_orig_var:true { typ with abbrev = None })
-        ty_expr
+      let%bind.Option ty_expr = ty_expr in
+      let%map.Option ty_expr =
+        Trace.to_option
+        @@ Checking.untype_type_expression
+             ~use_orig_var:true
+             { ty_expr with abbrev = None }
+      in
+      reduce_generated_params ty_expr
     in
     let bindee =
       match core_typ with

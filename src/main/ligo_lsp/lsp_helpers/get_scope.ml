@@ -88,9 +88,7 @@ let get_scope_raw
     (source_file : BuildSystem.Source_input.code_input)
     ~defs_only
     ~raise
-    : Def.definitions
-      * (Ast_typed.signature * Ast_typed.declaration list) option
-      * inlined_scopes
+    : Def.definitions * Ast_typed.program option * inlined_scopes
   =
   let with_types = raw_options.with_types in
   with_code_input
@@ -215,8 +213,7 @@ let following_passes_diagnostics
     ~(syntax : Syntax_types.t)
     ~(logger : type_:Lsp.Types.MessageType.t -> string -> unit Lwt.t)
     (raw_options : Raw_options.t)
-    (env : Ast_typed.signature)
-    (prg : Ast_typed.declaration list)
+    ({ pr_module; pr_sig = { sig_items; sig_sort } } : Ast_typed.program)
     : unit Lwt.t
   =
   let options =
@@ -232,13 +229,13 @@ let following_passes_diagnostics
   in
   try
     let contract_sig, pr_sig_items, prg =
-      match env.sig_sort with
+      match sig_sort with
       | Ss_contract contract_sig ->
         (* There is an entrypoint in a contract, so we know the storage *)
-        Some contract_sig, env.sig_items, prg
+        Some contract_sig, sig_items, pr_module
       | Ss_module ->
         let storage_type = "never" in
-        let context = { stdlib_context with sig_items = env.sig_items } in
+        let context = { stdlib_context with sig_items } in
         let virtual_main_typed, _virtual_main_core =
           make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
         in
@@ -246,8 +243,8 @@ let following_passes_diagnostics
           | Ss_module ->
             None (* Should be impossible since virtual main is an entrypoint *)
           | Ss_contract contract_sig -> Some contract_sig)
-        , env.sig_items @ virtual_main_typed.pr_sig.sig_items
-        , prg @ virtual_main_typed.pr_module )
+        , sig_items @ virtual_main_typed.pr_sig.sig_items
+        , pr_module @ virtual_main_typed.pr_module )
     in
     let prg : Ast_typed.program =
       { pr_module = prg
@@ -371,10 +368,10 @@ let get_defs_and_diagnostics
                let%map errors, warnings, storage_vars =
                  match prg with
                  | None -> Lwt.return ([], [], [])
-                 | Some (env, prg) ->
+                 | Some prg ->
                    let stdlib_context = (fst stdlib).pr_sig in
                    let potential_tzip16_storages =
-                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path env prg
+                     Tzip16_storage.vars_to_mark_as_tzip16_compatible path prg
                    in
                    Trace.try_with_lwt
                      ~fast_fail:false
@@ -386,7 +383,6 @@ let get_defs_and_diagnostics
                            ~syntax
                            ~logger
                            raw_options
-                           env
                            prg
                        in
                        catch.errors (), catch.warnings (), potential_tzip16_storages)

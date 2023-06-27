@@ -71,21 +71,21 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   | E_while w -> While_loop.fold self init w
 
 
+and fold_expression_in_module self acc (decls : declaration list) =
+  List.fold decls ~init:acc ~f:(fun acc x ->
+      match x.wrap_content with
+      | D_value x -> self acc x.expr
+      | D_irrefutable_match x -> self acc x.expr
+      | D_module x -> fold_expression_in_module_expr self acc x.module_
+      | D_module_include x -> fold_expression_in_module_expr self acc x
+      | D_type _ -> acc
+      | D_signature _ -> acc)
+
+
 and fold_expression_in_module_expr : ('a -> expression -> 'a) -> 'a -> module_expr -> 'a =
  fun self acc x ->
   match x.module_content with
-  | M_struct decls ->
-    List.fold
-      ~f:(fun acc x ->
-        match x.wrap_content with
-        | D_value x -> self acc x.expr
-        | D_irrefutable_match x -> self acc x.expr
-        | D_module x -> fold_expression_in_module_expr self acc x.module_
-        | D_module_include x -> fold_expression_in_module_expr self acc x
-        | D_type _ -> acc
-        | D_signature _ -> acc)
-      ~init:acc
-      decls
+  | M_struct decls -> fold_expression_in_module self acc decls
   | M_module_path _ -> acc
   | M_variable _ -> acc
 

@@ -31,9 +31,7 @@ let defs_and_typed_program
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
-    -> definitions
-       * (Ast_typed.signature * Ast_typed.declaration list) option
-       * Ast_typed.ty_expr LMap.t
+    -> definitions * Ast_typed.program option * Ast_typed.ty_expr LMap.t
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let stdlib_decls, stdlib_core, stdlib_defs =
@@ -43,11 +41,7 @@ let defs_and_typed_program
       let stdlib_decls, stdlib_core = stdlib in
       let stdlib_core_types =
         Types_pass.(
-          Of_Ast_core.declarations
-            ~raise
-            (empty Env.empty)
-            stdlib_decls.pr_sig
-            stdlib_core)
+          Of_Ast_core.program ~raise (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
       in
       ( stdlib_decls
       , stdlib_core
@@ -55,24 +49,22 @@ let defs_and_typed_program
         |> Types_pass.patch stdlib_core_types ))
   in
   let m_alias, env = Module_aliases_pass.declarations (stdlib_core @ prg) in
-  let bindings, typed =
+  let tenv, typed =
     if with_types
-    then (
-      let Types_pass.Typing_env.{ type_env; bindings; decls } =
-        Types_pass.resolve ~raise ~options ~stdlib_decls ~module_env:env prg
-      in
-      bindings, Some (type_env, decls))
+    then
+      Tuple2.map_snd ~f:Option.some
+      @@ Types_pass.resolve ~raise ~options ~stdlib_decls ~module_env:env prg
     else Types_pass.empty Env.empty, None
   in
   let mangled_uids, defs = Definitions.Of_Ast.definitions prg module_deps stdlib_defs in
   ( defs
     |> Module_aliases_pass.patch m_alias
-    |> (if with_types then Types_pass.patch bindings else Fn.id)
-    |> References.patch (References.declarations (stdlib_core @ prg) bindings.label_cases)
+    |> (if with_types then Types_pass.patch tenv else Fn.id)
+    |> References.patch (References.declarations (stdlib_core @ prg) tenv.label_cases)
     |> Inline_mangled_modules_pass.patch mangled_uids
     |> wrap_definitions
   , typed
-  , bindings.lambda_cases )
+  , tenv.lambda_cases )
 
 
 let scopes_declarations
@@ -111,9 +103,7 @@ let defs_and_typed_program_and_scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
-    -> definitions
-       * (Ast_typed.signature * Ast_typed.declaration list) option
-       * inlined_scopes
+    -> definitions * Ast_typed.program option * inlined_scopes
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let definitions, typed, _ =
