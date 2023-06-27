@@ -2040,7 +2040,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
       (locations, _, _, _, _) <-
-        case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+        case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 

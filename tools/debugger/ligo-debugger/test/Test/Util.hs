@@ -257,7 +257,7 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
   let entrypoint = mEntrypoint ?: "main"
   ligoMapper <- compileLigoContractDebug entrypoint file
   (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles, lambdaLocs, entrypointType) <-
-    case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+    case readLigoMapper ligoMapper of
       Right v -> pure v
       Left err -> HUnit.assertFailure $ pretty err
 

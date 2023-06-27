@@ -683,7 +683,7 @@ handleGetContractMetadata LigoGetContractMetadataRequest{..} = do
       logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
       (exprLocs, someContract, allFiles, lambdaLocs, entrypointType) <-
-        readLigoMapper ligoDebugInfo typesReplaceRules instrReplaceRules
+        readLigoMapper ligoDebugInfo
         & either (throwIO . MichelsonDecodeException) pure
 
       do

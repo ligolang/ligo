@@ -58,7 +58,7 @@ buildSourceMapper
   -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet Range, LigoType)
 buildSourceMapper file entrypoint = do
   ligoMapper <- compileLigoContractDebug entrypoint file
-  case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+  case readLigoMapper ligoMapper of
     Right v -> pure v
     Left err -> assertFailure $ pretty err
 
@@ -258,7 +258,7 @@ test_Errors = testGroup "Errors"
   [ testCase "duplicated ticket error is recognized" do
       let file = contractsDir </> "dupped-ticket.mligo"
       ligoMapper <- compileLigoContractDebug "main" file
-      case readLigoMapper ligoMapper typesReplaceRules instrReplaceRules of
+      case readLigoMapper ligoMapper of
         Left (PreprocessError UnsupportedTicketDup) -> pass
         _ -> assertFailure [int||Expected "UnsupportedTicketDup" error.|]
   ]
