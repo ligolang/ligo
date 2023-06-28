@@ -43,15 +43,29 @@ module Phys_hashable (T : T) = struct
   let hash t = Caml.Hashtbl.hash t
 end
 
-module Attr = struct
-  type t =
-    { entry : bool
-    ; view : bool
-    }
-  [@@deriving compare, hash, equal]
+module Attrs = struct
+  module Value = struct
+    type t =
+      { entry : bool
+      ; view : bool
+      ; public : bool
+      }
+    [@@deriving compare, hash, equal]
 
-  let default = { entry = false; view = false }
-  let of_core_attr ({ entry; view; _ } : Ast_typed.ValueAttr.t) = { entry; view }
+    let default = { entry = false; view = false; public = true }
+
+    let of_core_attr ({ entry; view; public; _ } : Ast_typed.ValueAttr.t) =
+      { entry; view; public }
+  end
+
+  module Type = struct
+    type t = { public : bool } [@@deriving compare, hash, equal]
+
+    let default = { public = true }
+    let of_core_attr ({ public; _ } : Ast_typed.TypeOrModuleAttr.t) = { public }
+  end
+
+  module Module = Type
 end
 
 module Signature = struct
@@ -59,9 +73,9 @@ module Signature = struct
     type t = item list
 
     and item =
-      | S_value of Value_var.t * Type.t * Attr.t
-      | S_type of Type_var.t * Type.t
-      | S_module of Module_var.t * t
+      | S_value of Value_var.t * Type.t * Attrs.Value.t
+      | S_type of Type_var.t * Type.t * Attrs.Type.t
+      | S_module of Module_var.t * t * Attrs.Module.t
       | S_module_type of Module_var.t * Module_type.t
     [@@deriving compare, hash]
   end
@@ -88,7 +102,7 @@ module Signature = struct
       (module Type_var)
       (fun t tvar ->
         (find_map t ~f:(function
-            | S_type (tvar', type_) when Type_var.equal tvar tvar' -> Some type_
+            | S_type (tvar', type_, _) when Type_var.equal tvar tvar' -> Some type_
             | _ -> None) [@landmark "get_type"]))
 
 
@@ -98,7 +112,7 @@ module Signature = struct
       (module Module_var)
       (fun t mvar ->
         (find_map t ~f:(function
-            | S_module (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
+            | S_module (mvar', sig_, _) when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
@@ -116,11 +130,11 @@ module Signature = struct
    fun item1 item2 ->
     match item1, item2 with
     | S_value (var1, type1, attr1), S_value (var2, type2, attr2) ->
-      Value_var.equal var1 var2 && Type.equal type1 type2 && Attr.equal attr1 attr2
-    | S_type (tvar1, type1), S_type (tvar2, type2) ->
-      Type_var.equal tvar1 tvar2 && Type.equal type1 type2
-    | S_module (mvar1, sig1), S_module (mvar2, sig2) ->
-      Module_var.equal mvar1 mvar2 && equal sig1 sig2
+      Value_var.equal var1 var2 && Type.equal type1 type2 && Attrs.Value.equal attr1 attr2
+    | S_type (tvar1, type1, attr1), S_type (tvar2, type2, attr2) ->
+      Type_var.equal tvar1 tvar2 && Type.equal type1 type2 && Attrs.Type.equal attr1 attr2
+    | S_module (mvar1, sig1, attr1), S_module (mvar2, sig2, attr2) ->
+      Module_var.equal mvar1 mvar2 && equal sig1 sig2 && Attrs.Module.equal attr1 attr2
     | _, _ -> false
 
 
@@ -132,7 +146,7 @@ module Signature = struct
         (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
-             | S_type (tvar, type_) -> Map.set map ~key:tvar ~data:(!next, type_)
+             | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:(!next, type_)
              | _ -> map) [@landmark "to_type_mapi"]))
 
 
@@ -142,7 +156,7 @@ module Signature = struct
         (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
-             | S_module (mvar, t) -> Map.set map ~key:mvar ~data:(!next, t)
+             | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:(!next, t)
              | _ -> map) [@landmark "to_module_map"]))
 
 
@@ -150,7 +164,7 @@ module Signature = struct
     memoize hashable (fun t ->
         (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
              match item with
-             | S_type (tvar, type_) -> Map.set map ~key:tvar ~data:type_
+             | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:type_
              | _ -> map) [@landmark "to_type_map"]))
 
 
@@ -158,7 +172,7 @@ module Signature = struct
     memoize hashable (fun t ->
         (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
              match item with
-             | S_module (mvar, t) -> Map.set map ~key:mvar ~data:t
+             | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:t
              | _ -> map) [@landmark "to_module_map"]))
 
 
@@ -175,9 +189,9 @@ module Signature = struct
       match item with
       | S_value (var, type_, _attr) ->
         Format.fprintf ppf "%a : %a" Value_var.pp var Type.pp type_
-      | S_type (tvar, type_) ->
+      | S_type (tvar, type_, _attr) ->
         Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
-      | S_module (mvar, sig_) ->
+      | S_module (mvar, sig_, _attr) ->
         Format.fprintf ppf "module %a = %a" Module_var.pp mvar pp sig_
       | S_module_type (mvar, sig_) ->
         Format.fprintf ppf "module type %a = %a" Module_var.pp mvar Module_type.pp sig_
@@ -199,7 +213,7 @@ module T = struct
   type t = item list
 
   and item =
-    | C_value of Value_var.t * mutable_flag * Type.t * Attr.t
+    | C_value of Value_var.t * mutable_flag * Type.t * Attrs.Value.t
     | C_type of Type_var.t * Type.t
     | C_type_var of Type_var.t * Kind.t
     | C_module of Module_var.t * Signature.t
@@ -283,11 +297,11 @@ let ( |:: ) = add
 let ( |@ ) = join
 let add_value t var mut_flag type_ attr = t |:: C_value (var, mut_flag, type_, attr)
 
-let add_imm t var ?(attr = Attr.default) type_ =
+let add_imm t var ?(attr = Attrs.Value.default) type_ =
   t |:: C_value (var, Immutable, type_, attr)
 
 
-let add_mut t var type_ = t |:: C_value (var, Mutable, type_, Attr.default)
+let add_mut t var type_ = t |:: C_value (var, Mutable, type_, Attrs.Value.default)
 let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
 let add_texists_var t tvar kind = t |:: C_texists_var (tvar, kind)
@@ -297,8 +311,8 @@ let add_lexists_var t lvar fields = t |:: C_lexists_var (lvar, fields)
 let item_of_signature_item (sig_item : Signature.item) : item =
   match sig_item with
   | S_value (var, type_, attr) -> C_value (var, Immutable, type_, attr)
-  | S_type (tvar, type_) -> C_type (tvar, type_)
-  | S_module (mvar, sig_) -> C_module (mvar, sig_)
+  | S_type (tvar, type_, _attr) -> C_type (tvar, type_)
+  | S_module (mvar, sig_, _attr) -> C_module (mvar, sig_)
   | S_module_type (mvar, sig_) -> C_module_type (mvar, sig_)
 
 
@@ -520,9 +534,9 @@ module Apply = struct
 
   let rec sig_item ctx (sig_item : Signature.item) : Signature.item =
     match sig_item with
-    | S_type (tvar, type') -> S_type (tvar, type_ ctx type')
+    | S_type (tvar, type', attr) -> S_type (tvar, type_ ctx type', attr)
     | S_value (var, type', attr) -> S_value (var, type_ ctx type', attr)
-    | S_module (mvar, sig') -> S_module (mvar, sig_ ctx sig')
+    | S_module (mvar, sig', attr) -> S_module (mvar, sig_ ctx sig', attr)
     | S_module_type (mvar, sig') -> S_module_type (mvar, sig')
 
 
@@ -549,7 +563,7 @@ let equal_item : item -> item -> bool =
     Value_var.equal var1 var2
     && Param.equal_mutable_flag mut_flag1 mut_flag2
     && Type.equal type1 type2
-    && Attr.equal attr1 attr2
+    && Attrs.Value.equal attr1 attr2
   | C_type (tvar1, type1), C_type (tvar2, type2) ->
     Type_var.equal tvar1 tvar2 && Type.equal type1 type2
   | C_type_var (tvar1, kind1), C_type_var (tvar2, kind2) ->
@@ -1097,11 +1111,11 @@ end = struct
       (match type_ ~ctx type' with
       | Some Type -> true
       | _ -> false)
-    | S_type (_tvar, type') ->
+    | S_type (_tvar, type', _) ->
       (match type_ ~ctx type' with
       | Some _ -> true
       | _ -> false)
-    | S_module (_mvar, sig_) -> signature ~ctx sig_
+    | S_module (_mvar, sig_, _) -> signature ~ctx sig_
     | S_module_type (_mvar, _sig_) -> true (* TODO *)
 end
 

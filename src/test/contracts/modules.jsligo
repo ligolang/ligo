@@ -22,8 +22,8 @@ export const toto : D.titi = E.toto;
 const add2 = (a: A.titi, b: D.titi) : A.titi => A.add (a, b);
 
 namespace Foo {
-  type Bar = int;
-  namespace Bar { type t = int; };
+  export type Bar = int;
+  export namespace Bar { export type t = int; };
 };
 
 // we test capitalized type inside module

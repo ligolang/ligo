@@ -62,7 +62,8 @@ let%expect_test _ =
    even if [--to-syntax] is not *)
 let%expect_test _ =
   run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "-o"; "dest.jsligo" ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/example.ligo", line 27, characters 31-47:
      26 | function main (const action : parameter; const store : storage) : return is
      27 |  ((nil : list (operation)),    // No operations

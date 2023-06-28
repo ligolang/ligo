@@ -27,6 +27,6 @@ namespace IncDec implements Interfaces.IncDec {
 
 namespace X implements { type t; const x : t } {
   type t = int;
-  const x = 42;
+  export const x = 42;
   const y = 5;
 };
