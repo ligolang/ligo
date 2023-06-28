@@ -16,7 +16,28 @@ let compile ~raise:_ =
     | D_export d -> d_attr ~loc (Attribute.{ key = "public"; value = None }, d)
     | d -> make_d ~loc d
   in
-  Fold { idle_fold with declaration }
+  let rec no_visibility
+      :  (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_content_
+      -> bool
+    =
+   fun e ->
+    match e with
+    | D_attr (Attribute.{ key = "public" | "private"; value = _ }, _) | D_export _ ->
+      false
+    | D_attr (_, d) -> no_visibility (Location.unwrap d.fp)
+    | _ -> true
+  in
+  let program_entry
+      : (program_entry, declaration, instruction) program_entry_ -> program_entry
+    =
+   fun e ->
+    match e with
+    | PE_declaration d when no_visibility (Location.unwrap d.fp) ->
+      let loc = Location.generated in
+      pe_declaration (d_attr ~loc (Attribute.{ key = "private"; value = None }, d))
+    | e -> make_pe e
+  in
+  Fold { idle_fold with declaration; program_entry }
 
 
 let decompile ~raise:_ =

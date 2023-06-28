@@ -101,7 +101,7 @@ let decode type_ ~raise subst =
            else loc)))
 
 
-let decode_attribute (attr : Context.Attr.t) : O.sig_item_attribute =
+let decode_attribute (attr : Context.Attrs.Value.t) : O.sig_item_attribute =
   { entry = attr.entry; view = attr.view }
 
 
@@ -110,8 +110,9 @@ let rec decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature
     match item with
     | S_value (var, type_, attr) ->
       [ S_value (var, decode ~raise type_ subst, decode_attribute attr) ]
-    | S_type (var, type_) -> [ S_type (var, decode ~raise type_ subst) ]
-    | S_module (var, sig_) -> [ S_module (var, decode_signature ~raise sig_ subst) ]
+    | S_type (var, type_, _attr) -> [ S_type (var, decode ~raise type_ subst) ]
+    | S_module (var, sig_, _attr) ->
+      [ S_module (var, decode_signature ~raise sig_ subst) ]
     | S_module_type _ -> []
   in
   List.concat_map ~f:decode_item sig_

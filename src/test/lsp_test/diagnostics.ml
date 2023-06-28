@@ -91,7 +91,7 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Warning
           ; message = "Toplevel let declaration is silently changed to const declaration."
           ; location =
-              { range = interval 0 0 10
+              { range = interval 0 7 17
               ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
               }
           }
@@ -184,7 +184,7 @@ let test_cases =
         [ { severity = DiagnosticSeverity.Warning
           ; message = "Toplevel let declaration is silently changed to const declaration."
           ; location =
-              { range = interval 0 0 10
+              { range = interval 0 7 17
               ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
               }
           }

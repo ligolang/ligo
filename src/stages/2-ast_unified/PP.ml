@@ -77,3 +77,10 @@ let statement ?(show_loc = false) =
 
 let pattern ?(show_loc = false) =
   pp_as_sexp ~show_loc Recursion_schemes.Catamorphism.cata_pattern S_exp.sexp_of_pattern
+
+
+let declaration ?(show_loc = false) =
+  pp_as_sexp
+    ~show_loc
+    Recursion_schemes.Catamorphism.cata_declaration
+    S_exp.sexp_of_declaration

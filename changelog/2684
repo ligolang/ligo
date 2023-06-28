@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nIn JsLIGO, the `export` keyword was not enforced, thus effectively exporting all declarations in namespace.\\n\\nWith this change, the `export` becomes mandatory to export from namespaces (and top-level `.jsligo` when imported from another file).\\n\\n"
+merge_request: '2684'
+title: "JsLIGO: enforce `export` keyword"
+type: breaking
+            

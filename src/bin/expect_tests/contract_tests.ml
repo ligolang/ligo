@@ -1379,8 +1379,14 @@ let%expect_test _ =
 (* JsLIGO export testing *)
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_type.jsligo" ];
-  [%expect {|
-      Internal error: Entrypoint main does not exist |}];
+  [%expect
+    {|
+      File "../../test/contracts/negative/modules_export_type.jsligo", line 5, characters 9-16:
+        4 |
+        5 | type a = Bar.foo
+                     ^^^^^^^
+
+      Type "foo" not found. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_const.jsligo" ];
   [%expect
     {|
@@ -1399,7 +1405,12 @@ let%expect_test _ =
 
       Toplevel let declaration is silently changed to const declaration.
 
-      Internal error: Entrypoint main does not exist |}];
+      File "../../test/contracts/negative/modules_export_const.jsligo", line 5, characters 8-15:
+        4 |
+        5 | let a = Bar.foo;
+                    ^^^^^^^
+
+      Variable "foo" not found. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "modules_export_namespace.jsligo" ];
   [%expect
     {|
@@ -1411,7 +1422,12 @@ let%expect_test _ =
 
       Toplevel let declaration is silently changed to const declaration.
 
-      Internal error: Entrypoint main does not exist |}]
+      File "../../test/contracts/negative/modules_export_namespace.jsligo", line 7, characters 13-20:
+        6 |
+        7 | import Foo = Bar.Foo
+                         ^^^^^^^
+
+       Module "Bar.Foo" not found. |}]
 
 (* Test compile contract with Big_map.get_and_update for Hangzhou *)
 let%expect_test _ =

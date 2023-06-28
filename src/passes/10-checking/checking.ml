@@ -4,6 +4,7 @@ module Errors = Errors
 open Errors
 open Ligo_prim
 module Signature = Context.Signature
+module Attrs = Context.Attrs
 module I = Ast_core
 module O = Ast_typed
 module C = Computation
@@ -1356,7 +1357,7 @@ and cast_items (inferred_sig : Signature.t) (items : Module_type.item list) =
     if Type.equal ty ty'
     then (
       let%bind sig_, entries = cast_items inferred_sig sig_ in
-      return (Signature.S_type (v, ty') :: sig_, entries))
+      return (Signature.S_type (v, ty', Attrs.Module.default) :: sig_, entries))
     else raise (signature_not_match_type v ty ty')
   | Module_type.MT_value (v, ty, attr) :: sig_ ->
     let%bind ty', attr' =
@@ -1386,7 +1387,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
         ~error:(signature_not_found_type tvar)
     in
     return
-      ( Signature.S_type (tvar, type_) :: insts
+      ( Signature.S_type (tvar, type_, Attrs.Type.default) :: insts
       , Module_type.instantiate_var items ~tvar ~type_ )
   in
   let%bind insts, items =
@@ -1471,14 +1472,14 @@ and infer_declaration (decl : I.declaration)
          ~f:(fun (v, _, ty) ->
            Context.Signature.S_value (v, ty, Context.Attr.of_core_attr attr))
          frags)
-  | D_type { type_binder; type_expr; type_attr = { public; hidden } } ->
+  | D_type { type_binder; type_expr; type_attr = { public; hidden } as attr } ->
     let%bind type_expr = With_default_layout.evaluate_type type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
     const
       E.(
         let%bind type_expr = decode type_expr in
         return @@ O.D_type { type_binder; type_expr; type_attr = { public; hidden } })
-      [ S_type (type_binder, type_expr) ]
+      [ S_type (type_binder, type_expr, Attrs.Type.of_core_attr attr) ]
   | D_value { binder; attr; expr } ->
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
@@ -1494,14 +1495,24 @@ and infer_declaration (decl : I.declaration)
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
       [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
-  | D_module { module_binder; module_; module_attr = { public; hidden }; annotation } ->
+  | D_module
+      { module_binder; module_; module_attr = { public; hidden } as attr; annotation } ->
     let%bind inferred_sig, module_ = infer_module_expr module_ in
+    let rec remove_non_public inferred_sig =
+      let self = remove_non_public in
+      match inferred_sig with
+      | [] -> []
+      | Signature.S_value (_, _, attr) :: k when not attr.public -> self k
+      | Signature.S_type (_, _, attr) :: k when not attr.public -> self k
+      | Signature.S_module (_, _, attr) :: k when not attr.public -> self k
+      | x :: k -> x :: self k
+    in
     let%bind annoted_sig =
       match annotation with
       | None ->
         (* For non-annoted signatures, we use the one inferred *)
         let%bind inferred_sig = Generator.make_main_signature inferred_sig in
-        return inferred_sig
+        return @@ remove_non_public inferred_sig
       | Some signature_expr ->
         (* For annoted signtures, we evaluate the signature, cast the inferred signature to it, and check that all entries implemented where declared *)
         let%bind annoted_sig =
@@ -1514,7 +1525,7 @@ and infer_declaration (decl : I.declaration)
           | `Not_found e -> raise (signature_not_found_entry e)
         in
         let%bind annoted_sig = Generator.make_main_signature annoted_sig in
-        return annoted_sig
+        return @@ remove_non_public annoted_sig
     in
     const
       E.(
@@ -1527,7 +1538,7 @@ and infer_declaration (decl : I.declaration)
              ; module_attr = { public; hidden }
              ; annotation = ()
              })
-      [ S_module (module_binder, annoted_sig) ]
+      [ S_module (module_binder, annoted_sig, Attrs.Module.of_core_attr attr) ]
   | D_signature { signature_binder; signature } ->
     let%bind signature_expr = With_default_layout.evaluate_signature_expr signature in
     no_declaration [ S_module_type (signature_binder, signature_expr) ]

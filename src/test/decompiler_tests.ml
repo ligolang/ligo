@@ -282,8 +282,8 @@ let decompiler_ty_expr_tests =
       ; code =
           {|
       namespace A {
-        namespace B {
-          type t = | ["X"]
+        export namespace B {
+          export type t = | ["X"]
         }
       };
       
