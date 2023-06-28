@@ -136,10 +136,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 0
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

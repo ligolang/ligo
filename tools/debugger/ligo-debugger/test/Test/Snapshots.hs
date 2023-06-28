@@ -432,7 +432,7 @@ test_Snapshots = testGroup "Snapshots collection"
                   | actualPos == pos -> pass
                 loc -> liftIO $ assertFailure [int||Expected stopping at line #{pos + 1}, got #{loc}|]
 
-        let stepNextLine :: HistoryReplayM (InterpretSnapshot 'Unique) IO ()
+        let stepNextLine :: ReaderT TestCtx (HistoryReplayM (InterpretSnapshot 'Unique) IO) ()
             stepNextLine = void $ moveTill Forward $ FrozenPredicate do
               curSnapshot >>= \case
                 InterpretSnapshot
@@ -632,7 +632,7 @@ test_Snapshots = testGroup "Snapshots collection"
             , crdStorage = 42 :: Integer
             }
 
-      (allLocs, his) <- mkSnapshotsFor runData
+      (allLocs, his, ep, ligoTypesVec) <- mkSnapshotsFor runData
 
       let his' = InterpretHistory $
             fromList (take 1000 (toList $ unInterpretHistory his)) <>
@@ -643,7 +643,7 @@ test_Snapshots = testGroup "Snapshots collection"
       step "Evaluating prefix of interpret history"
       res <-
         timeout tenSeconds do
-          withSnapshots (allLocs, his') do
+          withSnapshots (allLocs, his', ep, ligoTypesVec) do
             replicateM_ 3 $ move Forward
             frozen curSnapshot
 
@@ -878,7 +878,7 @@ test_Snapshots = testGroup "Snapshots collection"
             , crdStorage = 0 :: Integer
             }
 
-      let stackFramesCheck :: ([[Text]] -> Bool) -> HistoryReplayM (InterpretSnapshot u) IO ()
+      let stackFramesCheck :: ([[Text]] -> Bool) -> ReaderT TestCtx (HistoryReplayM (InterpretSnapshot u) IO) ()
           stackFramesCheck namesCheck = do
             (_, fmap getStackFrameNames . tsAfterInstrs -> stackFrameNames) <-
               listen $ moveTill Forward false
@@ -1287,7 +1287,8 @@ test_Snapshots = testGroup "Snapshots collection"
                         }
                       : _
                   } :| _
-              } | typ1 == expectedOperationListType && typ2 == expectedIntType -> pass
+              } | typ1 == expectedOperationListType
+                , typ2 == expectedIntType -> pass
             snap -> unexpectedSnapshot snap
 
     , testCaseSteps "Nested structures have types" \step -> do
@@ -1741,7 +1742,7 @@ test_Snapshots = testGroup "Snapshots collection"
                     do \InterpretSnapshot{..} -> isStatus == InterpretRunning EventFacedStatement
               >>> toListOf (each . isStackFramesL . ix 0 . sfLocL)
 
-        (_, getLocations . coerce -> locs) <- mkSnapshotsFor runData
+        (_, getLocations . coerce -> locs, _, _) <- mkSnapshotsFor runData
         pure locs
     in
     [ testCase "Last statement in function" do
@@ -1881,6 +1882,8 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
+        ligoTypesVec <- asks tcLigoTypesVec
+
         liftIO $ step "Go to some line"
         void $ moveTill Forward
           $ goesAfter (SrcLoc 19 0)
@@ -1888,7 +1891,7 @@ test_Snapshots = testGroup "Snapshots collection"
         snap <- frozen curSnapshot
 
         liftIO $ step "Extract values and types"
-        let convertInfos = extractConvertInfos snap
+        let convertInfos = extractConvertInfos ligoTypesVec snap
 
         let expected =
               [ LVConstructor
@@ -1908,7 +1911,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO (convertMichelsonValuesToLigo dummyLoggingFunction convertInfos)
             <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
-        expected @?= actual
+        actual @?= expected
 
   , testCaseSteps "Check max steps" \step -> do
       let runData = ContractRunData
@@ -1941,13 +1944,19 @@ test_Snapshots = testGroup "Snapshots collection"
             }
 
       testWithSnapshots runData do
+        ep <- asks tcEntrypointType
+
         liftIO $ step "Go to last snapshot"
         void $ moveTill Forward false
 
         snap <- frozen curSnapshot
 
+        let (_, storageType, _) = getParameterStorageAndOpsTypes ep
+
         liftIO $ step "Extract new storage convert info"
-        let storageConvertInfo = extractConvertInfos snap Unsafe.!! 1
+        let someValues = snap ^.. isStackFramesL . ix 0 . sfStackL . each . siValueL
+
+        let storageConvertInfo = PreLigoConvertInfo (someValues Unsafe.!! 1) storageType
 
         let expected =
               [ LVRecord $ HM.fromList
@@ -1962,7 +1971,7 @@ test_Snapshots = testGroup "Snapshots collection"
           liftIO (convertMichelsonValuesToLigo dummyLoggingFunction [storageConvertInfo])
             <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
-        expected @?= actual
+        actual @?= expected
 
   , testCaseSteps "Check evaluated record in LIGO format" \step -> do
       let runData = ContractRunData
@@ -1996,7 +2005,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 liftIO (convertMichelsonValuesToLigo dummyLoggingFunction [PreLigoConvertInfo value typ])
                   <&> mapMaybe (\case{LigoValue _ v -> Just v ; _ -> Nothing})
 
-              expected @?= actual
+              actual @?= expected
           snap -> unexpectedSnapshot snap
   ]
 
@@ -2039,7 +2048,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
 
       ligoMapper <- compileLigoContractDebug (fromMaybe "main" coEntrypoint) (contractsDir </> contractName)
 
-      (locations, _, _, _, _) <-
+      (locations, _, _, _, _, _) <-
         case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
