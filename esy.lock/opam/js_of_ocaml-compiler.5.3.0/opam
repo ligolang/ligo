@@ -46,10 +46,10 @@ build: [
 ]
 url {
   src:
-    "https://github.com/ocsigen/js_of_ocaml/releases/download/5.2.0/js_of_ocaml-5.2.0.tbz"
+    "https://github.com/ocsigen/js_of_ocaml/releases/download/5.3.0/js_of_ocaml-5.3.0.tbz"
   checksum: [
-    "sha256=650ab0a4ffa6a505716b73adb293428fa7bfd6a0293349bf186123338a7fceb5"
-    "sha512=f1b12ed23ffd653fc1199f208d7ba61ea3d15c81baecf5d195893ae3422dd09670d077467c2e6d910b400b96000ed6261d5ee820acc0ed1b316715fd1da0b323"
+    "sha256=be9e3deeb98e5d28f1bcb2d9847c04d2885fc07ed58ccd8b08aa4b6628cd64d2"
+    "sha512=26ba67312747f63c1ab58e92a20fde635833275a56b0570c145e57c093a0412ea8dd6c1bce84a71fd321d76a4223b7e50843c4352f6515909ea1b0713b6cfe68"
   ]
 }
-x-commit-hash: "3b3f66ba0f2755ff96c5f0a5ae41d2fb2fb1f8ea"
+x-commit-hash: "7b2929f3e08375a859f13f31cf8d918b6e9455b7"
