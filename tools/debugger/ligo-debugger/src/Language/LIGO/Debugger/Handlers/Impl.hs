@@ -646,7 +646,7 @@ handleValidateEntrypoint LigoValidateEntrypointRequest{..} = do
   let pickedEntrypoint = entrypointLigoValidateEntrypointRequestArguments
 
   program <- getProgram
-  result <- void <$> try @_ @LigoCallException (compileLigoContractDebug pickedEntrypoint program)
+  result <- try @_ @LigoCallException (checkCompilation pickedEntrypoint program)
 
   writeResponse $ ExtraResponse $ ValidateEntrypointResponse LigoValidateEntrypointResponse
     { seqLigoValidateEntrypointResponse = 0
