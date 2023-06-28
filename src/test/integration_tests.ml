@@ -165,7 +165,7 @@ let shadowing ~raise () : unit =
   let _ =
     let input = e_constructor ~loc "A" (e_int ~loc 1) in
     let expected = e_list ~loc [ e_constructor ~loc "A" (e_int ~loc 1) ] in
-    expect_eq ~raise program "main" input expected
+    expect_eq ~raise program "check" input expected
   in
   ()
 
@@ -914,7 +914,7 @@ let eq_bool_common ~raise program =
         expect_eq_twice
           ~raise
           program
-          "main"
+          "check"
           (e_bool ~loc a)
           (e_bool ~loc b)
           (e_int ~loc expected))
@@ -1312,13 +1312,13 @@ let jsligo_list ~raise () : unit =
 let lambda ~raise f : unit =
   let program = type_file ~raise f in
   let make_expected = e_unit ~loc in
-  expect_eq_twice ~raise program "main" (e_unit ~loc) (e_unit ~loc) make_expected
+  expect_eq_twice ~raise program "check" (e_unit ~loc) (e_unit ~loc) make_expected
 
 
 let lambda2 ~raise f : unit =
   let program = type_file ~raise f in
   let make_expected = e_unit ~loc in
-  expect_eq_twice ~raise program "main" (e_unit ~loc) (e_unit ~loc) make_expected
+  expect_eq_twice ~raise program "check" (e_unit ~loc) (e_unit ~loc) make_expected
 
 
 let michelson_insertion ~raise program : unit =
@@ -1360,12 +1360,12 @@ let mligo_let_multiple ~raise () : unit =
   let () =
     let input = e_unit ~loc in
     let expected = e_int ~loc 3 in
-    expect_eq ~raise program "main" input expected
+    expect_eq ~raise program "check" input expected
   in
   let () =
     let input = e_unit ~loc in
     let expected = e_int ~loc 6 in
-    expect_eq ~raise program "main_paren" input expected
+    expect_eq ~raise program "check_paren" input expected
   in
   let () =
     let input = e_unit ~loc in
@@ -1401,12 +1401,12 @@ let jsligo_let_multiple ~raise () : unit =
   let () =
     let input = e_unit ~loc in
     let expected = e_int ~loc 3 in
-    expect_eq ~raise program "main" input expected
+    expect_eq ~raise program "check" input expected
   in
   let () =
     let input = e_unit ~loc in
     let expected = e_int ~loc 6 in
-    expect_eq ~raise program "main_paren" input expected
+    expect_eq ~raise program "check_paren" input expected
   in
   let () =
     let input = e_unit ~loc in
@@ -1459,7 +1459,7 @@ let addr_test ~raise program =
     Signature.Public_key_hash.to_b58check
     @@ (List.nth_exn (test_environment ()).identities 0).public_key_hash
   in
-  expect_eq ~raise program "main" (e_key_hash ~loc key_hash) (e_address ~loc addr)
+  expect_eq ~raise program "check" (e_key_hash ~loc key_hash) (e_address ~loc addr)
 
 
 let address ~raise f : unit =
@@ -1487,12 +1487,12 @@ let is_nat ~raise f : unit =
   let () =
     let input = e_int ~loc 10 in
     let expected = e_some ~loc (e_nat ~loc 10) in
-    expect_eq ~raise program "main" input expected
+    expect_eq ~raise program "check" input expected
   in
   let () =
     let input = e_int ~loc (-10) in
     let expected = e_none ~loc in
-    expect_eq ~raise program "main" input expected
+    expect_eq ~raise program "check" input expected
   in
   ()
 
@@ -1540,7 +1540,7 @@ let check_signature ~raise f : unit =
 
 let curry ~raise () : unit =
   let program = type_file ~raise "./contracts/curry.mligo" in
-  let () = expect_eq ~raise program "main" (e_int ~loc 2) (e_int ~loc 12) in
+  let () = expect_eq ~raise program "check" (e_int ~loc 2) (e_int ~loc 12) in
   let () = expect_eq ~raise program "partial_apply" (e_int ~loc 2) (e_int ~loc 12) in
   ()
 
@@ -1550,7 +1550,7 @@ let set_delegate ~raise f : unit =
   let raw_pkh, _, _ = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let program = type_file ~raise f in
-  let () = expect_eq ~raise program "main" (e_key_hash ~loc pkh_str) (e_list ~loc []) in
+  let () = expect_eq ~raise program "check" (e_key_hash ~loc pkh_str) (e_list ~loc []) in
   ()
 
 
@@ -1657,12 +1657,12 @@ let empty_case ~raise f : unit =
   let () =
     let input _ = e_constructor ~loc "Bar" (e_int ~loc 1) in
     let expected _ = e_int ~loc 1 in
-    expect_eq_n ~raise program "main" input expected
+    expect_eq_n ~raise program "check" input expected
   in
   let () =
     let input _ = e_constructor ~loc "Baz" (e_unit ~loc) in
     let expected _ = e_int ~loc (-1) in
-    expect_eq_n ~raise program "main" input expected
+    expect_eq_n ~raise program "check" input expected
   in
   ()
 
@@ -2490,12 +2490,12 @@ let disc_union_jsligo ~raise () : unit =
     ( e_constructor ~loc "Increment" (e_record_ez ~loc [ "amount", e_int ~loc 42 ])
     , e_int ~loc 22 )
   in
-  let _ = expect_eq_twice ~raise program "main" data1 data2 (e_int ~loc 64) in
+  let _ = expect_eq_twice ~raise program "check" data1 data2 (e_int ~loc 64) in
   let data1, data2 =
     ( e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 5 ])
     , e_int ~loc 22 )
   in
-  let _ = expect_eq_twice ~raise program "main" data1 data2 (e_int ~loc 17) in
+  let _ = expect_eq_twice ~raise program "check" data1 data2 (e_int ~loc 17) in
   ()
 
 
@@ -2557,21 +2557,21 @@ let switch_return_jsligo ~raise () : unit =
   let data =
     e_constructor ~loc "Increment" (e_record_ez ~loc [ "amount", e_int ~loc 42 ])
   in
-  let _ = expect_eq ~raise program "main" data (e_int ~loc 51) in
+  let _ = expect_eq ~raise program "check" data (e_int ~loc 51) in
   let data =
     e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 5 ])
   in
-  let _ = expect_eq ~raise program "main" data (e_int ~loc 2) in
+  let _ = expect_eq ~raise program "check" data (e_int ~loc 2) in
   let data =
     e_constructor ~loc "Decrement" (e_record_ez ~loc [ "amount", e_int ~loc 3 ])
   in
-  let _ = expect_eq ~raise program "main" data (e_int ~loc 5) in
+  let _ = expect_eq ~raise program "check" data (e_int ~loc 5) in
   let data = e_constructor ~loc "Reset" (e_unit ~loc) in
-  let _ = expect_eq ~raise program "main" data (e_int ~loc 3) in
-  let _ = expect_eq ~raise program "main2" (e_int ~loc 0) (e_int ~loc 11) in
-  let _ = expect_eq ~raise program "main2" (e_int ~loc 1) (e_int ~loc 5) in
-  let _ = expect_eq ~raise program "main2" (e_int ~loc 2) (e_int ~loc 3) in
-  let _ = expect_eq ~raise program "main2" (e_int ~loc 3) (e_int ~loc (-1)) in
+  let _ = expect_eq ~raise program "check" data (e_int ~loc 3) in
+  let _ = expect_eq ~raise program "check2" (e_int ~loc 0) (e_int ~loc 11) in
+  let _ = expect_eq ~raise program "check2" (e_int ~loc 1) (e_int ~loc 5) in
+  let _ = expect_eq ~raise program "check2" (e_int ~loc 2) (e_int ~loc 3) in
+  let _ = expect_eq ~raise program "check2" (e_int ~loc 3) (e_int ~loc (-1)) in
   ()
 
 

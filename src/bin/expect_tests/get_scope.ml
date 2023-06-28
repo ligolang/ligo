@@ -913,7 +913,7 @@ let%expect_test _ =
     [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 12-14
     [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
     [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
-    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5 c#8:4-5 p#13:10-11  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-43
+    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5 c#8:4-5 p#13:11-12  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-44
 
     Variable definitions:
     (a#4:4-5 -> a)
@@ -939,19 +939,19 @@ let%expect_test _ =
     references: []
     Mod Path =
     Def Type = Global
-    (main#13:4-8 -> main)
-    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-8
-    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-47
+    (check#13:4-9 -> check)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 4-9
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-48
     Content: |core: foo_record -> foo_variant|
     references: []
     Mod Path =
     Def Type = Global
-    (p#13:10-11 -> p)
-    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 10-11
-    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-47
+    (p#13:11-12 -> p)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-48
     Content: |core: foo_record|
     references:
-      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 42-43
+      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-44
     Mod Path =
     Def Type = Parameter
     Type definitions:
@@ -962,13 +962,13 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 26-37 ,
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 46-57 ,
-      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 28-39
+      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 29-40
     (foo_record#2:5-15 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 5-15
     Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
     Content: : |record[bar -> foo_variant , foo -> foo_variant]|
     references:
-      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 14-24
+      File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 15-25
     Module definitions: |}]
 
 let%expect_test _ =
