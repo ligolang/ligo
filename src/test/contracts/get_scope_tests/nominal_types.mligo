@@ -10,5 +10,5 @@ let c = {
   bar = b ;
 }
 
-let main (p : foo_record) : foo_variant = p.foo
+let check (p : foo_record) : foo_variant = p.foo
 

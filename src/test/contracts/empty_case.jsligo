@@ -2,7 +2,7 @@ type fooBarBaz =
   ["Bar", int]
 | ["Baz"];
 
-let main = (f : fooBarBaz) : int =>
+let check = (f : fooBarBaz) : int =>
   match(f, {
     Bar: (i: int) => i,
     Baz: () => -1

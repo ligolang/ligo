@@ -2,7 +2,7 @@ type a = int
 
 type a = A of a | B of a
 
-let main (a : a) =
+let check (a : a) =
   let a : a = a in 
   let a = match a with 
     A a -> a

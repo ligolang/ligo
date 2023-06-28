@@ -1,1 +1,1 @@
-let main (_ : unit) : address = Tezos.get_self_address ()
+let check (_ : unit) : address = Tezos.get_self_address ()

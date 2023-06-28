@@ -6,7 +6,7 @@ type parameter =
   
 type ret = storage;
 
-const main = (action : parameter, store : storage) : ret => {
+const check = (action : parameter, store : storage) : ret => {
  let amount = store;
  switch (action.kind) {
     case "Increment":

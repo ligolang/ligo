@@ -74,20 +74,20 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-14
-    [ p#1:10-11  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
-    [ p#1:10-11 c#2:6-7  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
+    [ p#1:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 10-14
+    [ p#1:11-12  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 26-52
+    [ p#1:11-12 c#2:6-7  ] File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 3, characters 2-17
 
     Variable definitions:
-    (main#1:4-8 -> main)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-8
+    (check#1:4-9 -> check)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 4-9
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash -> address|
     references: []
     Mod Path =
     Def Type = Global
-    (p#1:10-11 -> p)
-    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 10-11
+    (p#1:11-12 -> p)
+    Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
     Content: |core: key_hash|
     references:

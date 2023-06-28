@@ -4,7 +4,7 @@ type parameter =
 | { kind: "Decrement", amount: int }
 | { kind: "Reset" };
 
-const main = (action: parameter) => {
+const check = (action: parameter) => {
   switch (action.kind) {
     case "Increment":
       let a = action.amount;
@@ -30,7 +30,7 @@ const _INCREMENT:int = 0;
 const _DECREMENT:int = 1;
 const _RESET:int = 2;
 
-const main2 = (action: int) => {
+const check2 = (action: int) => {
   switch (action) {
     case _INCREMENT:
       let a = 2;
