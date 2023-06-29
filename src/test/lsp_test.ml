@@ -16,4 +16,5 @@ let _main =
     ; Range_formatting.tests
     ; References.tests
     ; On_doc.tests
+    ; Semantic_highlight.tests
     ]

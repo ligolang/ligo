@@ -5,3 +5,4 @@ module Folding_range = Folding_range
 module Prepare_rename = Prepare_rename
 module References = References
 module Cst_fold = Cst_fold
+module Semantic_highlight = Semantic_highlight

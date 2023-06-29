@@ -111,6 +111,8 @@ The supported features that may be disabled are listed below:
 - `textDocument/formatting`
 - `textDocument/rangeFormatting`
 - `textDocument/codeAction`
+- `textDocument/semanticTokens/full`
+- `textDocument/semanticTokens/range`
 
 **Note**: Please restart the LIGO Language Server after changing this configuration.
 

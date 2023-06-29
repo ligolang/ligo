@@ -244,7 +244,7 @@
   (add-to-list 'lsp-language-id-configuration '(ligo-caml-mode . "ligo"))
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp-stdio-connection `(,ligo-bin "lsp"))
+    :new-connection (lsp-stdio-connection `(,ligo-bin "lsp" "all-capabilities"))
     :major-modes '(ligo-caml-mode)
     :server-id 'ligo)))
 (defun jsligo-syntax-table ()

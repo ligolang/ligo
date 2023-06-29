@@ -6,7 +6,7 @@ if executable('ligo')
       autocmd User lsp_setup
           \ call lsp#register_server({
           \   'name': 'ligo_lsp',
-          \   'cmd': {server_info->['ligo', 'lsp']},
+          \   'cmd': {server_info->['ligo', 'lsp', 'all-capabilities']},
           \   'allowlist': ['jsligo', 'mligo'],
           \ })
     augroup END

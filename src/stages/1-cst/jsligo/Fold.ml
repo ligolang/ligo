@@ -338,7 +338,7 @@ let fold'
     process_list
     [ statements -| S_nseq (S_array_2 (S_statement, S_option S_semi))
     ; eof -| S_eof ]
-  | S_ctor -> process @@  node -| S_wrap S_lexeme
+  | S_ctor -> process @@ node -| S_wrap S_lexeme
   | S_ctor_app sing ->
     let sharp, app = node in
     process_list
@@ -845,7 +845,7 @@ let fold'
     | T_ParameterOf node -> node -| S_reg S_parameter_of_type
     | T_String node -> node -| S_string_literal
     | T_Union node -> node -| S_union_type
-    | T_Var node -> node -| S_variable
+    | T_Var node -> node -| S_type_name
     | T_Variant node -> node -| S_variant_type )
   | S_type_name -> process @@ node -| S_variable
   | S_type_var -> process @@ node -| S_variable

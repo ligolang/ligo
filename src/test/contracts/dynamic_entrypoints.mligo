@@ -18,7 +18,7 @@ let call_one () (s : storage) : operation list * storage =
       let op, storage = f () s.storage in
       op, {s with storage}
   | None -> failwith (-1)
-  
+
 [@entry]
 let call_tick (p : int ticket) (s : storage) : operation list * storage =
   match Dynamic_entrypoints.get tick s.dynamic_entrypoints with
