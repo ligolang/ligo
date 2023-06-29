@@ -193,7 +193,7 @@ module Context_init = struct
   let main n =
     let (>>=?) = Lwt_result_syntax.( let* ) in
     init n >>=? fun ((ctxt, header, hash), accounts, contracts) ->
-    let timestamp = Environment.Time.of_seconds @@ 1645576185L in
+    let timestamp = Environment.Time.of_seconds @@ 1645498950L in
     begin_construction ~timestamp ~header ~hash ctxt.context >>=? fun ctxt ->
       Lwt_result_syntax.return (ctxt, accounts, contracts)
 
