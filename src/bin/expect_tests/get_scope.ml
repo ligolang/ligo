@@ -2231,7 +2231,7 @@ let%expect_test _ =
               "byte": {
                 "pos_fname": "../../test/contracts/get_scope_tests/min_repr_2532/main.mligo",
                 "pos_lnum": 3,
-                "pos_bol": 1,
+                "pos_bol": 0,
                 "pos_cnum": 25
               },
               "point_num": 163,
@@ -2241,7 +2241,7 @@ let%expect_test _ =
               "byte": {
                 "pos_fname": "../../test/contracts/get_scope_tests/min_repr_2532/main.mligo",
                 "pos_lnum": 3,
-                "pos_bol": 1,
+                "pos_bol": 0,
                 "pos_cnum": 34
               },
               "point_num": 172,

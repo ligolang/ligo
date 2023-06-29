@@ -59,7 +59,7 @@ let make ~byte ~point_num ~point_bol : t =
       {< byte = Lexing.{byte with pos_cnum = byte.pos_bol + offset} >}
 
     method reset_cnum =
-      {< byte = Lexing.{byte with pos_cnum = 0} >}
+      {< byte = Lexing.{byte with pos_cnum = 0; pos_bol = 0} >}
 
     method set ~file ~line ~offset =
       let pos = self#set_file file in
@@ -73,7 +73,7 @@ let make ~byte ~point_num ~point_bol : t =
 
     method shift_one_uchar len =
       {< byte = Lexing.{byte with pos_cnum = byte.pos_cnum + len};
-         point_num = point_num + 1 >}
+         point_num = point_num + (if len < 0 then -1 else 1) >}
 
     method add_nl =
       {< byte = Lexing.{byte with
