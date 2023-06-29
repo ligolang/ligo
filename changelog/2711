@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed source position counting for tokens.\\n\\n"
+merge_request: '2711'
+title: "Fixing source positions in bytes"
+type: fixed
+            
