@@ -322,8 +322,7 @@ and print_type_params thread (node : type_params par option) =
   | Some {value; _ } ->
       let {lpar; inside=(kwd_type, vars); rpar} = value in
       let params = print_nseq print_ident vars in
-      thread ^^ token lpar ^^ token kwd_type ^^ params ^^ token rpar
-      ^^ space
+      thread ^^ space ^^ token lpar ^^ token kwd_type ^^ space ^^ params ^^ token rpar
 
 
 (* Value declarations (signature) *)
@@ -970,9 +969,9 @@ and print_E_ForIn state (node : for_in_loop reg) =
 
 and print_E_Fun state (node : fun_expr reg) =
   let {kwd_fun; type_params; binders; rhs_type; arrow; body} = node.value in
-  let thread  = token kwd_fun ^^ space in
+  let thread  = token kwd_fun in
   let thread  = print_type_params thread type_params in
-  let thread  = thread
+  let thread  = thread ^^ space
                 ^^ nest state#indent
                         (print_nseq (print_pattern state) binders) in
   let thread  = print_opt_type state thread rhs_type in
