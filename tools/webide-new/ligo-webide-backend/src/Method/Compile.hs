@@ -5,7 +5,7 @@ import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
 import Error (LigoCompilerError(..))
-import Ligo (runLigo)
+import Ligo (runLigo, moduleOption)
 import Schema.CompileRequest (CompileRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
 import Source (withProject)
@@ -13,12 +13,15 @@ import Types (prettyDisplayFormat)
 
 compile :: CompileRequest -> WebIDEM CompilerResponse
 compile request =
-  withProject (rProject request) $ \(dirPath, fullMainPath) -> do
+  withProject (rProject request) $ \(dirPath, fullMainPath, pModule) -> do
     let initial = case rStorage request of
-          Nothing -> ["compile", "contract", "--deprecated", fullMainPath]
+          Nothing -> 
+            ["compile", "contract", "--deprecated", fullMainPath] 
+            ++ moduleOption pModule
           Just storage ->
             ["compile", "storage", "--no-color", "--deprecated",
              fullMainPath, Text.unpack storage]
+            ++ moduleOption pModule
 
     (ec, out, err) <- runLigo dirPath $
       initial

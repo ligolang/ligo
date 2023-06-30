@@ -5,7 +5,7 @@ import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
 import Error (LigoCompilerError(..))
-import Ligo (runLigo)
+import Ligo (runLigo, moduleOption)
 import Schema.CompilerResponse (CompilerResponse(..))
 import Schema.DryRunRequest (DryRunRequest(..))
 import Source (withProject)
@@ -13,9 +13,10 @@ import Types (prettyDisplayFormat)
 
 dryRun :: DryRunRequest -> WebIDEM CompilerResponse
 dryRun request =
-  withProject (drrProject request) $ \(dirPath, fullMainPath) -> do
+  withProject (drrProject request) $ \(dirPath, fullMainPath, pModule) -> do
     (ec, out, err) <- runLigo dirPath $
       ["run", "dry-run", "--no-color", "--deprecated", fullMainPath]
+      ++ moduleOption pModule
       ++ [Text.unpack (drrParameters request), Text.unpack (drrStorage request)]
       ++ maybe []
            (\df -> ["--display-format", prettyDisplayFormat df])

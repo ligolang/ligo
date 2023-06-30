@@ -53,6 +53,7 @@ instance ToSchema SourceFile where
 data Project = Project
   { pSourceFiles :: [SourceFile]
   , pMain :: FilePath
+  , pModule :: Maybe FilePath
   } deriving stock (Eq, Ord, Show, Generic)
 
 instance FromJSON Project where
@@ -70,7 +71,7 @@ instance ToSchema Project where
 withProject
   :: (MonadIO m, MonadMask m)
   => Project
-  -> ((FilePath, FilePath) -> m a)
+  -> ((FilePath, FilePath, Maybe FilePath) -> m a)
   -> m a
 withProject project f = do
   pwd <- liftIO getCurrentDirectory
@@ -80,9 +81,10 @@ withProject project f = do
    in withTempDirectory pwd "" $ \dirPath -> do
         let fullFilepaths = map (dirPath </>) filepaths
         let fullMainPath = dirPath </> pMain project
+        let moduleOption = pModule project
 
         liftIO . forM_ (zip fullFilepaths sources) $ \(fp, src) -> do
           createDirectoryIfMissing True (takeDirectory fp)
           Text.writeFile fp (unSource src)
 
-        f (dirPath, fullMainPath)
+        f (dirPath, fullMainPath, moduleOption)
