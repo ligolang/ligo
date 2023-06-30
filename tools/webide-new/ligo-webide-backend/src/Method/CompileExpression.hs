@@ -5,7 +5,7 @@ import System.Exit (ExitCode(ExitFailure, ExitSuccess))
 
 import Common (WebIDEM)
 import Error (LigoCompilerError(..))
-import Ligo (runLigo)
+import Ligo (runLigo, moduleOption)
 import Schema.CompileExpressionRequest (CompileExpressionRequest(..))
 import Schema.CompilerResponse (CompilerResponse(..))
 import Source (withProject)
@@ -13,13 +13,14 @@ import Types (prettyDisplayFormat)
 
 compileExpression :: CompileExpressionRequest -> WebIDEM CompilerResponse
 compileExpression request =
-  withProject (cerProject request) $ \(dirPath, fullMainPath) -> do
+  withProject (cerProject request) $ \(dirPath, fullMainPath, pModule) -> do
     dialect <- case inferDialect fullMainPath of
       Nothing -> throwM $ WrongMainFileExtension fullMainPath
       Just d -> pure d
 
     (ec, out, err) <- runLigo dirPath $
       ["compile", "expression", "--no-color", "--deprecated"]
+      ++ moduleOption pModule
       ++ [prettyDialect dialect, Text.unpack (cerFunction request)]
       ++ maybe []
            (\df -> ["--display-format", prettyDisplayFormat df])

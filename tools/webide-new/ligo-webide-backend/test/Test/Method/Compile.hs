@@ -24,6 +24,7 @@ test_singleFile = mkTest "compiles basic single-file input correctly" $ do
             { pMain = "main.mligo",
               pSourceFiles =
                 [SourceFile "main.mligo" (Source source)]
+              , pModule = Nothing
             },
           rEntrypoint = Nothing,
           rProtocol = Nothing,
@@ -33,6 +34,26 @@ test_singleFile = mkTest "compiles basic single-file input correctly" $ do
   actual <- post "compile" body
   expected <- liftIO . fmap CompilerResponse
     $ Text.readFile (contractsDir </> "basic/output.tz")
+  liftIO (actual @?= expected)
+
+test_singleFile_moduleContract :: TestM TestTree
+test_singleFile_moduleContract = mkTest "compiles basic single-file input with module contract correctly" $ do
+  source <- liftIO $ Text.readFile $ contractsDir </> "module_contract/main.mligo"
+  let body = CompileRequest
+        { rProject = Project
+            { pMain = "main.mligo",
+              pSourceFiles =
+                [SourceFile "main.mligo" (Source source)],
+              pModule = Just "IncDec"
+            },
+          rEntrypoint = Nothing,
+          rProtocol = Nothing,
+          rStorage = Nothing,
+          rDisplayFormat = Nothing
+        }
+  actual <- post "compile" body
+  expected <- liftIO . fmap CompilerResponse
+    $ Text.readFile (contractsDir </> "module_contract/output.tz")
   liftIO (actual @?= expected)
 
 test_multiFile :: TestM TestTree
@@ -49,6 +70,7 @@ test_multiFile = mkTest "compiles multi-file input correctly" $ do
                     [SourceFile "main.mligo" mainSource,
                      SourceFile "dir/types.mligo" typesSource
                     ]
+                  , pModule = Nothing
                 },
               rEntrypoint = Just "main",
               rProtocol = Just "nairobi",

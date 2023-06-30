@@ -27,6 +27,7 @@ test_singleFile = mkTest "generates deploy script for single-file contract corre
             { pMain = "main.mligo",
               pSourceFiles =
                 [SourceFile "main.mligo" (Source source)]
+              , pModule = Nothing
               }
           , gdsrName = "increment-cameligo"
           , gdsrEntrypoint = Just "main"

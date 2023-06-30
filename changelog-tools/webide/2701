@@ -1,0 +1,7 @@
+
+author: melwyn95
+description: "\\nAdds support for passing module name for module contract in web-ide\\n\\n"
+merge_request: '2701'
+title: "web-ide: Add module (`-m`) option to webide frontend & backend"
+type: added
+            

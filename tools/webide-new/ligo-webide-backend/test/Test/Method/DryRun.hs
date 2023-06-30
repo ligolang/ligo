@@ -23,6 +23,7 @@ test_singleFile = mkTest "compiles basic single-file input correctly" $ do
               { pMain = "main.mligo",
                 pSourceFiles =
                   [SourceFile "main.mligo" (Source source)]
+                , pModule = Nothing
               },
             drrParameters = "Increment (1)",
             drrStorage = "0",

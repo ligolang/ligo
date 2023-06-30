@@ -88,6 +88,7 @@ export default class ProjectSettings {
       main: rawSettings.main,
       deploy: rawSettings.deploy,
       storage: rawSettings.storage,
+      module: rawSettings.module,
       doNotShowCompilationMessage: rawSettings.doNotShowCompilationMessage || false,
     };
     if (rawSettings.gistId) {

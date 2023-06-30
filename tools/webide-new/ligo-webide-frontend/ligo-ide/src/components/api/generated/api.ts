@@ -261,6 +261,12 @@ export interface Project {
     'main': string;
     /**
      * 
+     * @type {string}
+     * @memberof Project
+     */
+    'module'?: string;
+    /**
+     * 
      * @type {Array<SourceFile>}
      * @memberof Project
      */

@@ -58,7 +58,14 @@ class ProjectSettingsTab extends AbstractProjectSettingsTab {
                 placeholder="Path to the contract storage"
                 readOnly={readOnly}
               />
-
+              <DebouncedFormGroup
+                label="Module name (optional)"
+                className="bg-black"
+                value={projectSettings?.get("module")}
+                onChange={this.onChange("module")}
+                placeholder="Name of module contract"
+                readOnly={readOnly}
+              />
               <h4 className="mt-4">Gist</h4>
               <DebouncedFormGroup
                 label="Gist token (not stored in config)"

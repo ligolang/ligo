@@ -12,7 +12,7 @@ import Source (withProject)
 
 listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
 listDeclarations request =
-  withProject (ldrProject request) $ \(dirPath, fullMainPath) -> do
+  withProject (ldrProject request) $ \(dirPath, fullMainPath, _) -> do
     (ec, out, err) <- runLigo dirPath $
       [ "info", "list-declarations", "--no-color", "--deprecated", fullMainPath]
       ++ ["--display-format", "dev"]

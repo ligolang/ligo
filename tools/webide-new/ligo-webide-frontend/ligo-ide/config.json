@@ -1,17 +1,17 @@
 {
     "defaultProtocol":{
-       "showName":"Mumbai",
-       "name":"mumbai"
+       "showName":"Nairobi",
+       "name":"nairobi"
     },
     "protocols":[
        {
-          "showName":"Mumbai",
-          "name":"mumbai"
+          "showName":"Nairobi",
+          "name":"nairobi"
        },
        {
-         "showName": "Nairobi (next)",
-         "name": "nairobi"
-      }
+          "showName":"Mumbai",
+          "name":"mumbai"
+       }
     ],
     "networks":[
        {
