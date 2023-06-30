@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nCode using parametric types in CameLIGO would be formatted invalidly. For example, given this:\\n\\n\\n```\\nlet id (type t) : t -> t = fun x -> x\\n\\n```\\n\\nAfter formatting, it would produce invalid code, like so:\\n\\n\\n```\\nlet id(typet)  : t -> t = fun x -> x\\n\\n```\\n\\nThis has now been fixed.\\n\\n"
+merge_request: '2710'
+title: "[Chore] Fix pretty printing of CameLIGO parametric types"
+type: fixed
+            
