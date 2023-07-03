@@ -29,6 +29,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         "      --mono           Use Menhir monolithic API";
         "      --cst            Print the CST";
         "      --pretty         Pretty-print the input";
+        "      --width=<n>      Width for --pretty";
         "      --recovery       Enable error recovery";
         "Debug options:";
         "      --used-tokens    Print the tokens up to the syntax error";
@@ -45,6 +46,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
 
     let mono       = ref false
     and pretty     = ref false
+    and width      = ref (None : int option)
     and cst        = ref false
     and recovery   = ref false
 
@@ -72,6 +74,19 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       else raise (Getopt.Error
                     "Only one --trace-recovery option allowed.")
 
+    (* --width=<arg> *)
+
+    let set_width (arg : string) =
+      if Caml.(!width = None)
+      then match Base.int_of_string_opt arg with
+             None -> raise (Getopt.Error "Invalid width.")
+           | Some n -> width := Some n
+      else raise (Getopt.Error "Only one --width option allowed.")
+
+    let print_width = function
+      None -> "None"
+    | Some n -> string_of_int n
+
     (* Specifying the command-line options a la GNU
 
        See [GetoptLib.Getopt] for the layout of the command line and
@@ -81,6 +96,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       Getopt.[
         noshort, "mono",           set mono true, None;
         noshort, "pretty",         set pretty true, None;
+        noshort, "width",          None, Some set_width;
         noshort, "cst",            set cst true, None;
         noshort, "recovery",       set recovery true, None;
         noshort, "trace-recovery", set trace_recovery (Some None),
@@ -136,6 +152,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       let open SSet in
       empty
       |> add "--trace-recovery"
+      |> add "--width"
 
     let argv_copy = Array.copy Sys.argv
 
@@ -164,6 +181,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     and pretty      = !pretty
     and cst         = !cst
     and recovery    = !recovery
+    and width       = !width
 
     (* Debug options *)
 
@@ -177,6 +195,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       let options = [
         sprintf "mono         = %b" mono;
         sprintf "pretty       = %b" pretty;
+        sprintf "width        = %s" (print_width width);
         sprintf "cst          = %b" cst;
         sprintf "recovery     = %b" recovery;
         sprintf "used_tokens  = %b" used_tokens;
@@ -215,6 +234,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         include LexerParams.Options
         let mono           = mono
         let pretty         = pretty
+        let width          = width
         let cst            = cst
         let recovery       = recovery
         let trace_recovery = trace_recovery

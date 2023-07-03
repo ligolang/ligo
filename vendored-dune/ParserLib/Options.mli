@@ -8,6 +8,7 @@ module type S =
 
     val mono        : bool          (* --mono        *)
     val pretty      : bool          (* --pretty      *)
+    val width       : int option    (* --width=<n>   *)
     val cst         : bool          (* --cst         *)
     val recovery    : bool          (* --recovery    *)
     val used_tokens : bool          (* --used-tokens *)

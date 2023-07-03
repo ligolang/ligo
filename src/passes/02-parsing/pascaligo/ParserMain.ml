@@ -103,8 +103,7 @@ let () =
   match check_cli () with
     Ok ->
       let file = Option.value Options.input ~default:"" in
-      let no_colour = Options.no_colour in
-      let std, cst = parse ~no_colour (Lexbuf.File file) in
+      let std, cst = parse (Lexbuf.File file) in
       let () =
         match cst, Options.jsligo with
           Ok (cst, _), Some file_opt ->

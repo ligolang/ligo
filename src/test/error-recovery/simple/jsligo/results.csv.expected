@@ -10,7 +10,7 @@ PASS,missing_arrow_in_lambda_in_match.jsligo,11,101,49,193,6
 PASS,missing_colon_in_record_expr.jsligo,2,9,7,193,0
 PASS,missing_comma_in_arguments.jsligo,4,81,29,189,5
 PASS,missing_comma_in_list_pat.jsligo,7,109,29,193,3
-PASS,missing_comma_in_record_decl.jsligo,7,4,4,193,0
+PASS,missing_comma_in_record_decl.jsligo,1,4,4,193,0
 PASS,missing_comma_in_tuple_pat.jsligo,7,101,19,193,4
 PASS,missing_curly_bracketR_in_the_nested_namespace.jsligo,20,344,46,125,8
 PASS,missing_curly_bracket_in_record_decl.jsligo,20,284,70,193,9
@@ -21,7 +21,7 @@ PASS,missing_expr_parenthesesL.jsligo,14,229,43,193,8
 PASS,missing_expr_parenthesesR.jsligo,14,218,48,193,8
 PASS,missing_ident_in_type_decl.jsligo,2,2,2,125,0
 PASS,missing_int.jsligo,2,5,5,193,0
-PASS,missing_namespace_kw_in_namespace_decl.jsligo,9,127,105,125,11
+PASS,missing_namespace_kw_in_namespace_decl.jsligo,16,127,105,125,11
 PASS,missing_name_of_argument.jsligo,7,114,14,193,3
 PASS,missing_open_curly_bracket_in_namespace_decl.jsligo,25,287,45,125,9
 PASS,missing_par_in_call.jsligo,2,8,4,193,0
@@ -38,7 +38,7 @@ PASS,triple_eq_in_if_condition.jsligo,0,0,0,113,0
 PASS,unfinished_code00.jsligo,3,8,8,445,0
 PASS,unfinished_code01.jsligo,4,2,2,445,0
 PASS,unfinished_code02.jsligo,3,10,10,445,0
-PASS,unfinished_code03.jsligo,91,854,108,445,19
+PASS,unfinished_code03.jsligo,94,854,108,445,19
 PASS,unfinished_code04.jsligo,7,29,27,445,0
 PASS,unfinished_code05.jsligo,6,8,8,445,0
 PASS,unfinished_code06.jsligo,6,9,9,445,0

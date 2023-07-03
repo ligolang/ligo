@@ -44,10 +44,6 @@ let pp_line_comment comment = string "//" ^^ string comment.value
 let pp_block_comment comment =
   string "/*" ^^ string comment.value ^^ string "*/"
 
-let pp_line_comment_opt prefix = function
-  None -> prefix
-| Some comment -> prefix ^^ space ^^ pp_line_comment comment
-
 let pp_comment = function
   Wrap.Block comment -> pp_block_comment comment
 | Wrap.Line  comment -> pp_line_comment  comment
@@ -57,6 +53,10 @@ let pp_comments = function
 | comments -> separate_map hardline pp_comment comments ^^ hardline
 
 (* Tokens *)
+
+let pp_line_comment_opt prefix = function
+  None -> prefix
+| Some comment -> prefix ^^ space ^^ pp_line_comment comment
 
 let token (t : string Wrap.t) : document =
   let prefix = pp_comments t#comments ^/^ string t#payload
@@ -827,7 +827,7 @@ and pp_ne_injection :
   'a.state -> ('a -> document) -> 'a ne_injection reg -> document =
   fun state printer {value; _} ->
     let {compound; ne_elements; attributes; _} = value in
-    let elements = pp_nsepseq (break 1) printer ne_elements in
+    let elements = pp_nsepseq hardline printer ne_elements in
     let inj =
       match compound with
         None -> elements

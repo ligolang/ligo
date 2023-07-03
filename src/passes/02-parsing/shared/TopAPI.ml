@@ -148,9 +148,12 @@ module Make
         (* Printing the syntax tree to source code *)
         let doc = Pretty.(print default_state) tree in
         let width =
-          match Terminal_size.get_columns () with
-            None -> 60
-          | Some c -> c in
+          match Options.width with
+            Some width -> width
+          | None ->
+              match Terminal_size.get_columns () with
+                Some c -> c
+              | None -> 60 (* Default *) in
         let buffer = Buffer.create 2000 in
         let () =
           PPrint.ToBuffer.pretty 1.0 width buffer doc in
@@ -170,7 +173,8 @@ module Make
 
     let format_errors ~no_colour std errors : unit =
       let print Region.{value; region} =
-        let contents = MainParser.format_error ~no_colour ~file:true value region
+        let contents =
+          MainParser.format_error ~no_colour ~file:true value region
         in Std.(add_line std.err contents.Region.value)
       in List.iter ~f:print @@ List.rev errors
     (* Converting results from ParserLib and handling CLI options *)
@@ -219,9 +223,9 @@ module Make
 
     (* Putting preprocessor, lexer and parser together *)
 
-    let parse : no_colour:bool -> parser =
-      fun ~no_colour ->
+    let parse : parser =
       fun (input : Lexbuf.input) ->
+          let no_colour = Options.no_colour in
           let from_stdin () =
             let std   = Std.empty
             and stdin = In_channel.stdin in

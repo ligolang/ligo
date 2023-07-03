@@ -7,7 +7,6 @@ module Trace       = Simple_utils.Trace
 module Lexbuf      = Simple_utils.Lexbuf
 module Unit        = LexerLib.Unit
 module Config      = Preprocessor.Config
-module Options     = ParserLib.Options
 module type PARSER = ParserLib.LowAPI.PARSER
 
 (* Internal dependencies *)
@@ -195,7 +194,8 @@ module MakePretty (CST    : CST)
        terminal is selected. If none, it is set to 60-character
        wide. *)
 
-    val pretty_print_pattern : ?cols:int -> Pretty.state -> CST.pattern -> Buffer.t
+    val pretty_print_pattern :
+      ?cols:int -> Pretty.state -> CST.pattern -> Buffer.t
 
     (* Pretty-print a type expression from its CST *)
 
