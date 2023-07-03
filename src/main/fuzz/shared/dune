@@ -5,7 +5,5 @@
   (backend bisect_ppx))
  (libraries
   simple-utils
-  simple-utils-unix
-  simple-utils-unix.http_uri
   qcheck
   ligo.ast_typed))

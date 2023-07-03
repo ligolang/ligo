@@ -74,7 +74,7 @@
   compiler_options
   main_warnings)
  (inline_tests
-  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix)
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api)
   (flags (-stop-on-error)))
  (preprocess
   (pps

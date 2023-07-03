@@ -1,7 +1,6 @@
 (library
  (name interpreter)
  (public_name ligo.main_interpreter)
- (virtual_modules mutation)
  (instrumentation
   (backend bisect_ppx))
  (preprocess
@@ -13,6 +12,7 @@
   main_errors
   ligo_compile
   build
+  fuzz
   ligo_run
   self_ast_typed
   bls12-381))

@@ -1,7 +1,6 @@
 (library
  (name ligo_api)
  (public_name ligo.api)
- (virtual_modules mutate)
  (instrumentation
   (backend bisect_ppx))
  (libraries
