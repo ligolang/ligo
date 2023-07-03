@@ -1,9 +1,0 @@
-(library
- (name interpreter_unix)
- (public_name ligo.main_interpreter.unix)
- (instrumentation
-  (backend bisect_ppx))
- (preprocess
-  (pps ppx_here))
- (implements interpreter)
- (libraries fuzz))

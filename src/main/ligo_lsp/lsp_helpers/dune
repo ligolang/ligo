@@ -11,6 +11,7 @@
   lsp
   compiler_options
   simple-utils
+  simple-utils-unix.http_uri
   yojson
   scopes
   syntax_types
@@ -21,7 +22,7 @@
   build
   ligo.preprocessing)
  (inline_tests
-  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api.unix))
+  (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api))
  (preprocess
   (staged_pps
    ppx_import

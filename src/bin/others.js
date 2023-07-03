@@ -1,3 +1,6 @@
+// Provides: ocaml_terminal_size_get
+function ocaml_terminal_size_get() {}
+
 // Provides: exit
 function exit() {}
 

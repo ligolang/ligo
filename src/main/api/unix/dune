@@ -1,7 +1,0 @@
-(library
- (name ligo_api_unix)
- (public_name ligo.api.unix)
- (implements ligo.api)
- (instrumentation
-  (backend bisect_ppx))
- (libraries interpreter interpreter_unix tar-unix cohttp-lwt-unix))

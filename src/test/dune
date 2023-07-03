@@ -16,8 +16,8 @@
   simple-utils-unix
   simple-utils-unix.http_uri
   tezos-memory-proto-alpha
-  ligo.main_interpreter.unix
-  ligo.api.unix
+  ligo.main_interpreter
+  ligo.api
   ligo_init
   ligo
   ligo.unix
