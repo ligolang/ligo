@@ -119,6 +119,10 @@ let test_cases =
     ; actual = "contracts/formatter/lambda_type_vars.jsligo"
     ; expected = "contracts/formatter/lambda_type_vars_formatted.jsligo"
     }
+  ; { test_name = "line comment about a record field"
+    ; actual = "contracts/formatter/line_comment_on_field.jsligo"
+    ; expected = "contracts/formatter/line_comment_on_field_formatted.jsligo"
+    }
   ]
 
 

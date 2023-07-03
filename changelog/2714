@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed a bug in pretty-printing JsLIGO record fields followed by line comments.\\n\\n"
+merge_request: '2714'
+title: "[JsLIGO][Formatter] Force hardline after each field of a compound structure, so a possible line comment does not absorb the next component"
+type: fixed
+            

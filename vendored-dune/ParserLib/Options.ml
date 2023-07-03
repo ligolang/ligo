@@ -6,6 +6,7 @@ module type S =
 
     val mono           : bool
     val pretty         : bool
+    val width          : int option
     val cst            : bool
     val recovery       : bool
     val used_tokens    : bool
@@ -24,4 +25,5 @@ module MakeDefault (Options : LexerLib.Options.S) =
     let recovery = true
     let trace_recovery = None
     let used_tokens = false
+    let width = None
   end

@@ -102,8 +102,7 @@ let () =
   match check_cli () with
     Ok ->
       let file = Option.value Options.input ~default:"" in
-      let no_colour = Options.no_colour in
-      let std, _cst = parse ~no_colour (Lexbuf.File file) in
+      let std, _cst = parse (Lexbuf.File file) in
       let () = Std.(add_nl std.out) in
       let () = Std.(add_nl std.err) in
       Printf.printf  "%s%!" (Std.string_of std.out);

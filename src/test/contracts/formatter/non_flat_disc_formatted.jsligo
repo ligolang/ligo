@@ -1,5 +1,8 @@
 type test =
-  | { kind: "Alt1", value: (a: int) => string }
+  | {
+      kind: "Alt1",
+      value: (a: int) => string
+    }
   | { kind: "Alt2" }
   | {
       kind: "Alt3",
