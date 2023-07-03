@@ -41,9 +41,10 @@ import System.Process (cwd, proc)
 import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Interpolation.Nyan hiding (rmode')
 
-import UnliftIO (MonadUnliftIO, hFlush, handle, throwIO, try, withSystemTempFile)
+import UnliftIO
+  (Handler (Handler), MonadUnliftIO, catches, hFlush, handle, throwIO, try, withSystemTempFile)
 import UnliftIO.Directory (doesFileExist)
-import UnliftIO.Exception (fromEither, mapExceptionM)
+import UnliftIO.Exception (fromEither)
 import UnliftIO.Process (readCreateProcessWithExitCode)
 
 import Morley.Michelson.Parser qualified as MP
@@ -85,6 +86,13 @@ strArg = LigoCliArg . protect . toString
       ('-' : _) -> ' ' : arg
       _ -> arg
 
+rewrapIOError :: MonadUnliftIO m => m a -> m a
+rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
+  UnliftIO.throwIO LigoIOException
+    { lieType = IOException.ioe_type exc
+    , lieDescription = toText $ IOException.ioe_description exc
+    }
+
 callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m LByteString
 callLigoBS _rootDir args conM = do
   LigoClientEnv {..} <- getLigoClientEnv
@@ -103,12 +111,6 @@ callLigoBS _rootDir args conM = do
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
       UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM (Just ec)
     pure lo
-  where
-    rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
-      UnliftIO.throwIO LigoIOException
-        { lieType = IOException.ioe_type exc
-        , lieDescription = toText $ IOException.ioe_description exc
-        }
 
 -- | Calls the LIGO binary (extracted from 'getLigoClientEnv') with the provided
 -- root directory (ignored for now), arguments, and contract.
@@ -128,6 +130,7 @@ callLigo rootDir args conM = do
   let raw = maybe "" (toString . srcText) conM
   let process = (proc _lceClientPath $ coerce args){cwd = rootDir}
   (ec, lo, le) <- readCreateProcessWithExitCode process raw
+    & rewrapIOError
   unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
     UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM (Just ec)
   pure $ toText lo
@@ -259,9 +262,20 @@ handleLigoMessages path encodedErr = do
 -- LIGO Debugger stuff
 ----------------------------------------------------------------------------
 
-withMapLigoExc :: (MonadUnliftIO m) => m a -> m a
-withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
-  [int||#{cfeStderr e}|] :: LigoCallException
+withMapLigoExc :: (HasLigoClient m) => m a -> m a
+withMapLigoExc = flip catches
+  [ Handler \(e :: LigoClientFailureException) ->
+      throwIO ([int||#{cfeStderr e}|] :: LigoCallException)
+
+  , Handler \(e :: LigoIOException) -> do
+      LigoClientEnv ligoPath <- getLigoClientEnv
+      let callException :: LigoCallException =
+            [int||#{displayException e}
+            Perhaps you specified a wrong path to LIGO executable: #{ligoPath}
+            |]
+
+      throwIO callException
+  ]
 
 {-
   Here and in the next calling @ligo@ binary functions
