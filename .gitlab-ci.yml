@@ -119,7 +119,9 @@ docker_build:
     - docker save -o ligo.tar.gz ${LIGO_IMAGE_TAG}
     - docker save -o ligo_ci.tar.gz ${LIGO_CI_IMAGE_TAG}
   after_script:
-    - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm --force "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+    - docker image rm --force "${LIGO_IMAGE_TAG}-builder" >/dev/null 2>&1 || true
+    - docker image rm --force "${LIGO_CI_IMAGE_TAG}" >/dev/null 2>&1 || true
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
