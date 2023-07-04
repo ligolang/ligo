@@ -111,8 +111,26 @@ let defs_to_completion_items
           let sortText = completion_context_priority ?same_file context in
           let kind, detail =
             match def with
-            | Scopes.Types.Variable _ ->
-              CompletionItemKind.Variable, Some (Req_hover.hover_string syntax def)
+            | Scopes.Types.Variable vdef ->
+              let show_type : Ast_core.type_expression -> string =
+                (* VSCode is ignoring any newlines in completion detail *)
+                let pp_mode = Ligo_interface.{ width = 60; indent = 2 } in
+                fun te ->
+                  match
+                    Ligo_interface.pretty_print_type_expression pp_mode ~syntax te
+                  with
+                  | `Ok str -> str
+                  | `Nonpretty (_exn, str) -> str
+                (* Sending log messages from here or adding exn to return type will make the code
+                less straightforward, so we're just silently ignoring it
+                since one can use hover on this term to see the exn anyway. *)
+              in
+              ( CompletionItemKind.Variable
+              , Option.some
+                @@ Option.value_map
+                     ~default:(Helpers_pretty.unresolved_type_as_comment syntax)
+                     ~f:(show_type <@ Type_definition.use_var_name_if_availiable)
+                @@ Type_definition.get_type vdef )
             | Scopes.Types.Type _ -> CompletionItemKind.TypeParameter, None
             | Scopes.Types.Module _ -> CompletionItemKind.Module, None
           in

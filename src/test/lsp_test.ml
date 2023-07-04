@@ -4,14 +4,15 @@ let _main =
   Printexc.record_backtrace true;
   Alcotest.run
     "lsp_server_tests"
-    [ Definition.tests
-    ; Prepare_rename.tests
+    [ Completion.tests
+    ; Cst_fold.tests
+    ; Definition.tests
     ; Diagnostics.tests
     ; Document_link.tests
     ; Folding_range.tests
     ; Formatting.tests
+    ; Hover.tests
+    ; Prepare_rename.tests
     ; Range_formatting.tests
     ; References.tests
-    ; Cst_fold.tests
-    ; Completion.tests
     ]

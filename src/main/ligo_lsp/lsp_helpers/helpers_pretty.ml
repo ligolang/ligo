@@ -1,5 +1,6 @@
-(* This module collects pretty printing stuff that we use in hover
-   and some functions for debug printing *)
+(* This module collects pretty printing stuff that we use in hovers
+   and some functions for debug printing. It does not contain reexports/wrappers for
+   LIGO CST/AST printers, since such reexports are contained in [Ligo_interface] *)
 
 open Imports
 
@@ -11,6 +12,15 @@ let show_with_yojson (f : 'a -> Yojson.Safe.t) (x : 'a) : string =
   Yojson.Safe.to_string @@ f x
 
 
+let doc_to_string ~(width : int) (doc : PPrint.document) : string =
+  let buffer = Buffer.create 131 in
+  PPrint.ToBuffer.pretty 1.0 width buffer doc;
+  Buffer.contents buffer
+
+
+let default_line_width_for_formatted_file = 80
+let default_line_width_for_hovers = 60
+
 let get_comment syntax =
   let block =
     match syntax with
@@ -21,6 +31,15 @@ let get_comment syntax =
   match block with
   | Some x -> x#opening, x#closing
   | _ -> "", ""
+
+
+(* In hovers and completion some types can be unresolved
+   (e.g. if the current code is invalid). We're showing
+    that some thing has no inferred type printing its type as
+   e.g. [(* Unresolved *)] for CameLIGO  *)
+let unresolved_type_as_comment syntax =
+  let opening_comment, closing_comment = get_comment syntax in
+  opening_comment ^ " Unresolved " ^ closing_comment
 
 
 type module_pp_mode =
@@ -64,30 +83,6 @@ let pascaligo_module =
   ; close = "}"
   ; semicolon_at_the_end = false
   }
-
-
-let pp_type_expression
-    :  syntax:Syntax_types.t
-    -> [ `Core of Ast_core.type_expression | `Typed of Ast_typed.type_expression ]
-    -> string
-  =
- fun ~syntax te ->
-  let cte =
-    match te with
-    | `Core cte -> cte
-    | `Typed tte -> Checking.untype_type_expression tte
-  in
-  let ty_expr_to_string =
-    let raise = Simple_utils.Trace.raise_failwith "LSP" in
-    Buffer.contents
-    <@ Decompile.Helpers.specialise_and_print_ty syntax
-    <@ Decompile.Of_core.decompile_ty_expr ~raise ~syntax
-  in
-  try ty_expr_to_string cte with
-  | _ ->
-    (match te with
-    | `Core cte -> Format.asprintf "%a" Ast_core.PP.type_expression cte
-    | `Typed tte -> Format.asprintf "%a" Ast_typed.PP.type_expression tte)
 
 
 let print_module_with_description
@@ -137,5 +132,16 @@ let checking_error_to_string (error : Checking.Errors.typer_error) : string =
     error
 
 
-let default_line_width_for_formatted_file = 80
-let default_line_width_for_hovers = 60
+let parsing_error_to_string (err : Parsing.Errors.t) : string =
+  let ({ content = { message; _ }; _ } : Simple_utils.Error.t) =
+    Parsing.Errors.error_json err
+  in
+  message
+
+
+let passes_error_to_string (error : Passes.Errors.t) : string =
+  let display_format = Simple_utils.Display.Human_readable in
+  Format.asprintf
+    "%a"
+    (Passes.Errors.error_ppformat ~display_format ~no_colour:false)
+    error

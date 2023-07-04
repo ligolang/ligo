@@ -1,0 +1,3 @@
+const z = Tezos.create_contract
+
+type t = Test.Proxy_ticket.proxy_address;

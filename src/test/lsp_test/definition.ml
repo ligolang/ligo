@@ -112,7 +112,7 @@ let test_cases =
     }
   ; { test_name = "Registry package imported identifier"
     ; file_with_reference = "contracts/lsp/registry.jsligo"
-    ; reference = Position.create ~line:9 ~character:20
+    ; reference = Position.create ~line:8 ~character:20
     ; file_with_definition =
         Path.from_absolute
         @@ Option.value_exn

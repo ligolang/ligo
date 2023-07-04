@@ -194,10 +194,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   let w = Region.wrap_ghost in
   let needs_parens : CST.type_expr -> bool = function
     (* When we apply type constr to some type, sometimes we need to add parens
-      e.g. A of int -> (A of int) option vs {a : int} -> { a : int } option.
-      TODO: Currently we're using the same function for type applications and
-      lhs/rhs of operators like "->", but it's better to consider operator precendance 
-      / associativity. *)
+      e.g. [A of int] -> [(A of int) option] vs [{a : int}] -> [{ a : int }] option. *)
     | T_Fun _ | T_Cart _ | T_Variant _ | T_Attr _ | T_Parameter _ -> true
     | T_Par _
     | T_App _
@@ -211,12 +208,23 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   let parens : CST.type_expr -> CST.type_expr =
    fun t -> T_Par (w CST.{ lpar = ghost_lpar; inside = t; rpar = ghost_rpar })
   in
-  let p : CST.type_expr -> CST.type_expr =
-   fun t -> if needs_parens t then parens t else t
+  (* Since [a -> (b -> c)] is identical to [a -> (b -> c)], if a [T_Fun] is an rhs of another [T_Fun],
+     we don't need parens. So we call `p ~arrow_rhs:true` for the rhs of a T_Fun *)
+  let p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
+   fun ?(arrow_rhs = false) t ->
+    if needs_parens t
+    then
+      if arrow_rhs
+      then (
+        match t with
+        | T_Fun _ -> t
+        | _ -> parens t)
+      else parens t
+    else t
   in
   let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
    fun t -> T_Var (ghost_ident @@ Format.asprintf "%a" Ligo_prim.Type_var.pp t)
-   (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow? 
+   (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow?
       Why [t.name] is not working?? *)
   in
   match Location.unwrap te with
@@ -225,7 +233,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_string s -> T_String (ghost_string s)
   | T_arg s -> T_Arg (w (Some ghost_quote, ghost_ident s))
   | T_var t -> decompile_tvar t
-  | T_fun (t1, t2) -> T_Fun (w (p t1, ghost_arrow, p t2))
+  | T_fun (t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
   | T_prod (first, rest) ->
     (match Utils.list_to_sepseq rest ghost_times with
     | Some nsepseq -> T_Cart (w (first, ghost_times, nsepseq))
@@ -326,5 +334,13 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       @@ decompile_mod_path { module_path; field = decompile_tvar field; field_as_open })
   | T_disc_union _ -> failwith "Decompiler: disc unions should appear only in JsLIGO"
   | T_named_fun _ -> failwith "Decompiler: Named arguments should appear only in JsLIGO"
-  | T_module_app _ | T_abstraction _ | T_constant _ | T_for_all _ ->
+  (* This node is not initial,
+  i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,
+  so type declaration that contains expression with abstraction should be transformed to
+  D_type_abstraction by type_abstraction_declaration nanopass, so this case looks impossible,
+  but in some cases (e.g. LSP hovers) we just want to transform type expression to pretty string,
+  so we'll just drop the quantifiers here *)
+  | T_abstraction Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ }
+  | T_for_all Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
+  | T_module_app _ | T_constant _ ->
     Helpers.failwith_not_initial_node_decompiler @@ `Ty_expr te
