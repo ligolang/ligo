@@ -453,10 +453,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:48
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 15
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

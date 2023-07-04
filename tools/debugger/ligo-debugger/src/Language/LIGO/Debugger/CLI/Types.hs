@@ -7,7 +7,7 @@ module Language.LIGO.Debugger.CLI.Types
 
 import Prelude hiding (Element, Product (..), sum)
 
-import Control.Lens (AsEmpty (..), Each (each), _head, forOf, makePrisms, prism)
+import Control.Lens (AsEmpty (..), Each (each), _head, makePrisms, prism)
 import Control.Lens.Prism (_Just)
 import Data.Aeson
   (FromJSON (..), Options (constructorTagModifier, fieldLabelModifier, sumEncoding),
@@ -16,7 +16,6 @@ import Data.Aeson
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap (toAscList)
 import Data.Aeson.KeyMap qualified as Aeson
-import Data.Aeson.Lens (key, values)
 import Data.Aeson.Parser (scientific)
 import Data.Aeson.Types (Parser)
 import Data.Aeson.Types qualified as Aeson
@@ -70,10 +69,8 @@ newtype LigoVariable (u :: NameType) = LigoVariable
 deriving stock instance Eq (LigoVariable 'Concise)
 
 -- | Reference to type description in the types map.
---
--- Not used at the moment.
-newtype LigoTypeRef = LigoTypeRef { unLigoTypeRef :: Word }
-  deriving stock (Show, Eq, Ord, Generic)
+newtype LigoTypeRef = LigoTypeRef { unLigoTypeRef :: Int }
+  deriving stock (Show, Eq, Ord, Data, Generic)
   deriving anyclass (NFData)
 
 -- | Inner object representing type content that depends on `name` in `LigoTypeContent`.
@@ -293,6 +290,10 @@ data LigoTypeExpression = LigoTypeExpression
   deriving anyclass (NFData, Hashable)
   deriving (FromJSON) via LigoJSON 3 LigoTypeExpression
 
+newtype LigoTypesVec = LigoTypesVec { unLigoTypesVec :: Vector LigoTypeExpression }
+  deriving stock (Data, Generic)
+  deriving newtype (Show, NFData, FromJSON)
+
 newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
   deriving stock (Data)
   deriving newtype (Show, Generic, NFData, Hashable)
@@ -300,13 +301,19 @@ newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
 pattern LigoTypeResolved typ = LigoType (Just typ)
 
+type family LigoTypeF (u :: NameType) where
+  LigoTypeF 'Unique  = Maybe LigoTypeRef
+  LigoTypeF 'Concise = LigoType
+
 -- | An element of the stack with some information interesting for us.
 data LigoExposedStackEntry u = LigoExposedStackEntry
   { leseDeclaration :: Maybe (LigoVariable u)
-  , leseType        :: LigoType
-  } deriving stock (Show, Generic, Data)
-    deriving anyclass (NFData)
+  , leseType        :: LigoTypeF u
+  } deriving stock (Generic)
 
+deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoExposedStackEntry u)
+deriving stock instance (Show (LigoTypeF u)) => Show (LigoExposedStackEntry u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoExposedStackEntry u)
 deriving stock instance Eq (LigoExposedStackEntry 'Concise)
 
 -- | An element of the stack.
@@ -317,12 +324,14 @@ data LigoStackEntry u
     -- ^ Stack entry that is unknown.
     -- This can denote some auxiliary entry added by LIGO, like
     -- reusable functions or part of sum type when unfolding via @IF_LEFT@s.
-  deriving stock (Show, Generic, Data)
-  deriving anyclass (NFData)
+  deriving stock (Generic)
 
+deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoStackEntry u)
+deriving stock instance (Show (LigoTypeF u)) => Show (LigoStackEntry u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoStackEntry u)
 deriving stock instance Eq (LigoStackEntry 'Concise)
 
-pattern LigoStackEntryNoVar :: LigoType -> LigoStackEntry u
+pattern LigoStackEntryNoVar :: LigoTypeF u -> LigoStackEntry u
 pattern LigoStackEntryNoVar ty = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Nothing
   , leseType = ty
@@ -375,37 +384,40 @@ data LigoIndexedInfo u = LigoIndexedInfo
 
     -}
 
-  , liiSourceType :: LigoType
+  , liiSourceType :: Maybe (LigoTypeF u)
     {- ^ A type for the last computed value.
 
       Comes with location meta.
 
     -}
-  } deriving stock (Show, Generic, Data)
-    deriving anyclass (NFData)
+  } deriving stock (Generic)
 
+deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoIndexedInfo u)
+deriving stock instance (Show (LigoTypeF u)) => Show (LigoIndexedInfo u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoIndexedInfo u)
 deriving stock instance Eq (LigoIndexedInfo 'Concise)
 
 pattern LigoEmptyLocationInfo :: LigoIndexedInfo u
-pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing (LigoType Nothing)
+pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing Nothing
 
-pattern LigoMereLocInfo :: Range -> LigoType -> LigoIndexedInfo u
+pattern LigoMereLocInfo :: Range -> LigoTypeF u -> LigoIndexedInfo u
 pattern LigoMereLocInfo loc typ = LigoIndexedInfo
   { liiLocation = Just loc
   , liiEnvironment = Nothing
-  , liiSourceType = typ
+  , liiSourceType = Just typ
   }
 
 pattern LigoMereEnvInfo :: LigoStack u -> LigoIndexedInfo u
 pattern LigoMereEnvInfo env = LigoIndexedInfo
   { liiLocation = Nothing
   , liiEnvironment = Just env
-  , liiSourceType = LigoType Nothing
+  , liiSourceType = Nothing
   }
 
 -- | The debug output produced by LIGO.
 data LigoMapper u = LigoMapper
   { lmLocations :: [LigoIndexedInfo u]
+  , lmTypes :: LigoTypesVec
   , lmMichelsonCode :: Micheline.Expression
   }
 
@@ -641,11 +653,14 @@ instance Eq LigoType where
 instance (SingI u) => Buildable (LigoExposedStackEntry u) where
   build (LigoExposedStackEntry decl ty) =
     let declB = maybe (build unknownVariable) build decl
-    in [int||elem #{declB} of #{buildType Caml ty}|]
+    in [int||elem #{declB} of #{buildLigoTypeF @u ty}|]
 
-instance FromJSON (LigoExposedStackEntry u) where
+instance FromJSON LigoTypeRef where
+  parseJSON val = parseJSON val >>= \(TextualNumber n) -> pure $ LigoTypeRef n
+
+instance FromJSON (LigoExposedStackEntry 'Unique) where
   parseJSON = withObject "LIGO exposed stack entry" \o -> do
-    leseType <- LigoType <$> o .:! "source_type"
+    leseType <- o .:! "source_type"
     leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
 
@@ -654,7 +669,7 @@ instance (SingI u) => Buildable (LigoStackEntry u) where
     LigoStackEntry ese   -> build ese
     LigoHiddenStackEntry -> "<hidden elem>"
 
-instance FromJSON (LigoStackEntry u) where
+instance FromJSON (LigoStackEntry 'Unique) where
   parseJSON v = case v of
     Aeson.Null       -> pure LigoHiddenStackEntry
     Aeson.Object o
@@ -671,14 +686,14 @@ instance (SingI u) => Buildable (LigoIndexedInfo u) where
     LigoIndexedInfo mLoc mEnv typ -> unlinesF $ catMaybes
       [ mLoc <&> \loc -> [int||location: #{loc}|]
       , mEnv <&> \env -> nameF "environment stack" $ blockListF env
-      , case typ of { LigoTypeResolved{} -> Just [int||source type: #{buildType Caml typ}|] ; _ -> Nothing }
+      , case typ of { Just ty -> Just [int||source type: #{buildLigoTypeF @u ty}|] ; _ -> Nothing }
       ]
 
-instance FromJSON (LigoIndexedInfo u) where
+instance FromJSON (LigoIndexedInfo 'Unique) where
   parseJSON = withObject "location info" \o -> do
     liiLocation <- o .:! "location"
     liiEnvironment <- o .:! "environment"
-    liiSourceType <- LigoType <$> o .:! "source_type"
+    liiSourceType <-  o .:! "source_type"
     return LigoIndexedInfo{..}
 
 instance AsEmpty (LigoIndexedInfo u) where
@@ -689,7 +704,7 @@ instance AsEmpty (LigoIndexedInfo u) where
 instance {-# OVERLAPPING #-} (SingI u) => Buildable [LigoIndexedInfo u] where
   build = blockListF
 
-instance FromJSON (LigoMapper u) where
+instance FromJSON (LigoMapper 'Unique) where
   parseJSON = withObject "ligo output" \o -> do
     mich <- o .: "michelson"
     lmMichelsonCode <- mich .: "expression"
@@ -699,21 +714,8 @@ instance FromJSON (LigoMapper u) where
     -- Also, we need to replace textual numbers with fair
     -- json ones because the json-schema from source mapper
     -- differs from @ligo info get-scopes@ one in this place.
-    Array types <- replaceTextualNumbers <$> o .: "types"
-
-    let inlineType :: Value -> Parser Value
-        inlineType val = do
-          TextualNumber index <- parseJSON val
-          maybe (fail $ "Undexpected out of bounds with index " <> show index) pure (types V.!? index)
-
-    locations <- mich .: "locations"
-    envInlined <-
-      forOf (values . key "environment" . values . key "source_type") (Array locations) inlineType
-
-    locationsInlined <-
-      forOf (values . key "source_type") envInlined inlineType
-
-    lmLocations <- parseJSON locationsInlined
+    lmTypes <- parseJSON . replaceTextualNumbers =<< o .: "types"
+    lmLocations <- mich .: "locations"
     return LigoMapper{..}
     where
       replaceTextualNumbers :: Value -> Value
@@ -1048,13 +1050,6 @@ buildType lang LigoType{..} = case unLigoType of
         ]
     in show ppr
 
-stripSuffixHashLigoStackEntry :: LigoStackEntry 'Unique -> LigoStackEntry 'Concise
-stripSuffixHashLigoStackEntry = \case
-  LigoStackEntry lese@LigoExposedStackEntry{..} -> LigoStackEntry lese
-    { leseDeclaration = stripSuffixHashVariable <$> leseDeclaration
-    }
-  LigoHiddenStackEntry -> LigoHiddenStackEntry
-
 -- | If we have malformed LIGO contract then we'll see
 -- in error @ligo@ binary output a red-colored text
 -- which represents a place where error occurred.
@@ -1064,13 +1059,29 @@ replaceANSI =
   . T.replace
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
+buildLigoTypeF :: forall u. (SingI u) => LigoTypeF u -> Builder
+buildLigoTypeF typ = case sing @u of
+  SUnique -> build typ
+  SConcise -> buildType Caml typ
+
 makeLensesWith postfixLFields ''LigoExposedStackEntry
 makeLensesWith postfixLFields ''LigoIndexedInfo
 makePrisms ''LigoStackEntry
 
-stripSuffixHashFromLigoIndexedInfo :: LigoIndexedInfo 'Unique -> LigoIndexedInfo 'Concise
-stripSuffixHashFromLigoIndexedInfo indexedInfo =
-  indexedInfo & liiEnvironmentL . _Just . each %~ stripSuffixHashLigoStackEntry
+makeConciseLigoStackEntry :: LigoTypesVec -> LigoStackEntry 'Unique -> LigoStackEntry 'Concise
+makeConciseLigoStackEntry vec = \case
+  LigoStackEntry lese@LigoExposedStackEntry{..} -> LigoStackEntry lese
+    { leseDeclaration = stripSuffixHashVariable <$> leseDeclaration
+    , leseType = vec `readLigoType` leseType
+    }
+  LigoHiddenStackEntry -> LigoHiddenStackEntry
+
+makeConciseLigoIndexedInfo :: LigoTypesVec -> LigoIndexedInfo 'Unique -> LigoIndexedInfo 'Concise
+makeConciseLigoIndexedInfo vec indexedInfo =
+  indexedInfo
+    { liiEnvironment = liiEnvironment indexedInfo & _Just . each %~ makeConciseLigoStackEntry vec
+    , liiSourceType = readLigoType vec <$> liiSourceType indexedInfo
+    }
 
 parseEntrypointsList :: Text -> Maybe EntrypointsList
 parseEntrypointsList (lines -> parts) = do
@@ -1082,3 +1093,8 @@ parseEntrypointsList (lines -> parts) = do
 
     safeInit :: [a] -> Maybe [a]
     safeInit = fmap init . nonEmpty
+
+readLigoType :: LigoTypesVec -> Maybe LigoTypeRef -> LigoType
+readLigoType (LigoTypesVec v) = \case
+  Nothing -> LigoType Nothing
+  Just (LigoTypeRef n) -> LigoType $ v V.!? n

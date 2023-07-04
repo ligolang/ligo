@@ -348,10 +348,10 @@ test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
     }
 
   ] `forM` \runData -> do
-    locsAndHis <- liftIO $ mkSnapshotsForImpl dummyLoggingFunction Nothing runData
+    locsHisEpAndLigoTypes <- liftIO $ mkSnapshotsForImpl dummyLoggingFunction Nothing runData
     return $ testProperty [int||On example of "#{crdProgram runData}"|] $
-      property $ withSnapshots locsAndHis do
-        let liftProp = lift . lift
+      property $ withSnapshots locsHisEpAndLigoTypes do
+        let liftProp = lift . lift . lift
 
         granularity <- liftProp $ forAllWith pretty genStepGranularity
 

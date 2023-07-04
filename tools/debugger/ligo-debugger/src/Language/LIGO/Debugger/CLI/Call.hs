@@ -1,5 +1,6 @@
 module Language.LIGO.Debugger.CLI.Call
-  ( compileLigoContractDebug
+  ( checkCompilation
+  , compileLigoContractDebug
   , compileLigoExpression
   , getAvailableEntrypoints
   , decompileLigoValues
@@ -272,6 +273,17 @@ withMapLigoExc = mapExceptionM \(e :: LigoClientFailureException) ->
   Moreover, one day they can change this format
   and it would be painful to resolve it on our side.
 -}
+
+-- | When user picks an entrypoint we want to be sure that
+-- the contract will compile with it.
+checkCompilation :: (HasLigoClient m) => String -> FilePath -> m ()
+checkCompilation entrypoint file = void $ withMapLigoExc $
+  callLigoBS Nothing
+    [ "compile", "contract"
+    , "--no-warn"
+    , "-e", strArg entrypoint
+    , strArg file
+    ] Nothing
 
 -- | Run ligo to compile the contract with all the necessary debug info.
 compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m (LigoMapper 'Unique)

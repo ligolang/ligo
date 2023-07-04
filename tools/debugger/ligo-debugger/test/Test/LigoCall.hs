@@ -41,7 +41,7 @@ test_Compilation = testGroup "Getting debug info"
               (mkConstantType "List" [mkSimpleConstantType "Operation"])
               intType'
 
-      take 15 (stripSuffixHashFromLigoIndexedInfo <$> toList (lmLocations res)) @?= mconcat
+      take 15 (makeConciseLigoIndexedInfo (lmTypes res) <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]

@@ -93,10 +93,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/statement-in-match-branch.mligo@7:7-7:31
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 42
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

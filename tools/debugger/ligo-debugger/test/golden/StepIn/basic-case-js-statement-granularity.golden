@@ -226,10 +226,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@13:12-13:47
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 221
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

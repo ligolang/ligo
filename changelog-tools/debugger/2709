@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Made a significant performance improvement in the debugger.\\n\\n\\n"
+merge_request: '2709'
+title: "[#1819] Debugger start optimizations"
+type: performance
+            

@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+
 -- | Evaluation of snapshots in LIGO code execution.
 module Language.LIGO.Debugger.Snapshots
   ( StackItem (..)
@@ -15,7 +17,7 @@ module Language.LIGO.Debugger.Snapshots
   , runInstrCollect
   , runCollectInterpretSnapshots
   , collectInterpretSnapshots
-  , stripSuffixHashFromSnapshots
+  , makeConciseSnapshots
 
     -- * Lenses
   , siLigoDescL
@@ -52,7 +54,6 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
-import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
 import Data.List.NonEmpty (cons)
 import Data.Vinyl (Rec (..))
@@ -92,8 +93,9 @@ import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Ra
 data StackItem u = StackItem
   { siLigoDesc :: LigoStackEntry u
   , siValue :: SomeValue
-  } deriving stock (Show, Generic)
+  } deriving stock (Generic)
 
+deriving stock instance (Show (LigoTypeF u)) => Show (StackItem u)
 deriving stock instance Eq (StackItem 'Concise)
 
 instance (SingI u) => Buildable (StackItem u) where
@@ -115,8 +117,9 @@ data StackFrame u = StackFrame
   , sfStack :: [StackItem u]
     -- ^ Ligo stack available at the current position of this stack frame.
     -- Top of the stack goes first.
-  } deriving stock (Show, Generic)
+  } deriving stock (Generic)
 
+deriving stock instance (Show (LigoTypeF u)) => Show (StackFrame u)
 deriving stock instance Eq (StackFrame 'Concise)
 
 instance (SingI u) => Buildable (StackFrame u) where
@@ -196,8 +199,9 @@ data InterpretSnapshot u = InterpretSnapshot
     -- ^ Type of snapshot.
   , isStackFrames :: NonEmpty (StackFrame u)
     -- ^ Stack frames, top-level frame goes last.
-  } deriving stock (Show, Generic)
+  } deriving stock (Generic)
 
+deriving stock instance (Show (LigoTypeF u)) => Show (InterpretSnapshot u)
 deriving stock instance Eq (InterpretSnapshot 'Concise)
 
 instance (SingI u) => Buildable (InterpretSnapshot u) where
@@ -261,6 +265,8 @@ data CollectorState m = CollectorState
     --
     -- We need it because we want to record a paired @EventExpressionEvaluated@
     -- for the same location.
+  , csLigoTypesVec :: LigoTypesVec
+    -- ^ Vector with LIGO types. It's needed to map @LigoTypeRef@ into bare @LigoType@.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -268,9 +274,9 @@ makeLensesWith postfixLFields ''StackFrame
 makeLensesWith postfixLFields ''InterpretSnapshot
 makeLensesWith postfixLFields ''CollectorState
 
-stripSuffixHashFromSnapshots :: InterpretSnapshot 'Unique -> InterpretSnapshot 'Concise
-stripSuffixHashFromSnapshots snap =
-  snap & isStackFramesL . each . sfStackL . each . siLigoDescL %~ stripSuffixHashLigoStackEntry
+makeConciseSnapshots :: LigoTypesVec -> InterpretSnapshot 'Unique -> InterpretSnapshot 'Concise
+makeConciseSnapshots vec snap =
+  snap & isStackFramesL . each . sfStackL . each . siLigoDescL %~ makeConciseLigoStackEntry vec
 
 -- | Lens giving an access to the top-most frame - which is also
 -- the only active one.
@@ -343,7 +349,9 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           Would be ignored: #{shouldIgnoreMeta loc inner contracts}
         |]
 
-  let stack = maybe oldStack (embedFunctionNames oldStack) (liiEnvironment =<< embeddedMetaMb)
+  ligoTypesVec <- use csLigoTypesVecL
+
+  let stack = maybe oldStack (embedFunctionNames ligoTypesVec oldStack) (liiEnvironment =<< embeddedMetaMb)
 
   preExecutedStage embeddedMetaMb inner stack
   newStack <- surroundExecutionInner embeddedMetaMb (runInstrImpl runInstrCollect) inner stack
@@ -424,9 +432,11 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           contracts <- use csParsedFilesL
 
+          ligoTypesVec <- use csLigoTypesVecL
+
           whenM (use csRecordedFirstTimeL) do
             unless (shouldIgnoreMeta loc instr contracts) do
-              recordSnapshot loc (EventExpressionEvaluated liiSourceType evaluatedVal)
+              recordSnapshot loc (EventExpressionEvaluated (ligoTypesVec `readLigoType` join liiSourceType) evaluatedVal)
 
         pure newStack
       Nothing -> pure newStack
@@ -662,9 +672,8 @@ runCollectInterpretSnapshots
   -> ContractEnv m
   -> CollectorState m
   -> Value st
-  -> LigoType
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
-runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointTypeMb) =
+runCollectInterpretSnapshots act env initSt initStorage =
   -- This should be safe because we yield at least one snapshot in the end
   InterpretHistory . fromList <$>
   lazyConsume do
@@ -687,14 +696,6 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
           }
 
       Right finalStack -> do
-        let opsAndStorageTypeMb = do
-              LTCArrow LigoTypeArrow{..} <- _lteTypeContent <$> entrypointTypeMb
-              pure _ltaType2
-
-        let storageTypeMb = do
-              LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> opsAndStorageTypeMb
-              _ltfAssociatedType <$> _lttFields HM.!? "1"
-
         let isStackFrames = either error id do
               lastSnap <-
                 maybeToRight
@@ -704,11 +705,11 @@ runCollectInterpretSnapshots act env initSt initStorage (LigoType entrypointType
               case isStatus lastSnap of
                 InterpretRunning (EventExpressionEvaluated _ (Just val)) -> do
                   let stackItemWithOpsAndStorage = StackItem
-                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType opsAndStorageTypeMb)
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
                         , siValue = val
                         }
                   let oldStorage = StackItem
-                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing (LigoType storageTypeMb)
+                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
                         , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
                         }
                   pure
@@ -742,7 +743,7 @@ collectInterpretSnapshots
   -> (String -> m ())
   -> HashSet Range
   -> Bool -- ^ should we track steps amount
-  -> LigoType -- ^ type of an entrypoint
+  -> LigoTypesVec
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile
@@ -756,13 +757,12 @@ collectInterpretSnapshots
   logger
   lambdaLocs
   trackMaxSteps
-  entrypointType =
+  ligoTypesVec =
     runCollectInterpretSnapshots
       (ContractFinalStack <$> runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
       collSt
       initStore
-      entrypointType
     where
       initStack = mkInitStack (liftCallArg epc param) initStore
       initSt =
@@ -789,6 +789,7 @@ collectInterpretSnapshots
         , csLambdaLocs = lambdaLocs
         , csCheckStepsAmount = trackMaxSteps
         , csRecordedFirstTime = False
+        , csLigoTypesVec = ligoTypesVec
         }
 
       -- Strip duplicate locations.
