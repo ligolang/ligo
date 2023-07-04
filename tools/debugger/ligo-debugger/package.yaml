@@ -83,7 +83,6 @@ library:
     - free
     - hashable
     - lens
-    - lens-aeson
     - monad-stm
     - morley
     - morley-debugger

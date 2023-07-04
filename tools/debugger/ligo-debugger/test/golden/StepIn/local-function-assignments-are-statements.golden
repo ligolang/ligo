@@ -274,10 +274,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@8:4-8:39
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 6
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

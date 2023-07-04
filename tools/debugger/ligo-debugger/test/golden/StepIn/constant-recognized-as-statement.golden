@@ -429,10 +429,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@20:4-20:96
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 167
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

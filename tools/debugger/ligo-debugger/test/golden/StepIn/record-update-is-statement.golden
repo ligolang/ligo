@@ -58,13 +58,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/record-update-is-statement.mligo@15:4-15:37
       sfStack:
         [StackItem:
-          siLigoDesc:
-            elem ? of operation list * { a: int;
-                                 b: string; c: (True of (unit) | False of (unit));
-                             }
+          siLigoDesc: elem ? of 
           siValue: { { }; Pair 0 "\"str\""; True }
         , StackItem:
-          siLigoDesc: elem ? of { a: int; b: string; c: (True of (unit) | False of (unit)); }
+          siLigoDesc: elem ? of 
           siValue: Pair (Pair 0 "\"str\"") False
         ]
     ]

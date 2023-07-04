@@ -4,8 +4,6 @@ module Language.LIGO.Debugger.Michelson
   ( DecodeError (..)
   , MichelsonDecodeException (..)
   , PreprocessError (..)
-  , typesReplaceRules
-  , instrReplaceRules
   , readLigoMapper
   ) where
 
@@ -19,10 +17,8 @@ import Data.Default (Default, def)
 import Data.HashSet qualified as HashSet
 import Data.Set qualified as Set
 import Fmt (Buildable (..), Builder, indentF, pretty, unlinesF, (+|), (|+))
-import Generics.SYB (everywhere, mkM, mkT)
 import Text.Interpolation.Nyan
 import Text.Show qualified
-import Util (everywhereM')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Micheline.Class (FromExp, FromExpError (FromExpError), fromExp)
@@ -56,7 +52,8 @@ data OpWithMeta meta
   = MPrimEx (InstrWithMeta meta)
   | MSeqEx [OpWithMeta meta]
   | MMetaEx meta (OpWithMeta meta)
-  deriving stock (Eq, Show, Data)
+  deriving stock (Eq, Show, Data, Generic)
+  deriving anyclass (NFData)
 
 instance RenderDoc (OpWithMeta meta) where
   renderDoc pn (MMetaEx _ op) = renderDoc pn op
@@ -213,11 +210,9 @@ fromUntypedToTyped
   :: (Default meta, Data meta, Show meta, NFData meta)
   => ContractWithMeta meta
   -> (meta -> Bool)
-  -> (U.T -> U.T)
-  -> (InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
   -> Either (DecodeError meta) SomeContract
-fromUntypedToTyped uContract isRedundantMeta typeRules instrRules = do
-  processedUContract <- first PreprocessError $ preprocessContract uContract typeRules instrRules
+fromUntypedToTyped uContract isRedundantMeta = do
+  processedUContract <- first PreprocessError $ preprocessContract uContract
   first wrapTypeCheckFailed
     $ typeCheckingWith debuggerTcOptions
     $ Tc.typeCheckContract' (typeCheckOpWithMeta isRedundantMeta) processedUContract
@@ -251,46 +246,143 @@ createErrorValue errMsg =
   where
     addrText = mformatAddress errorAddress
 
-instrReplaceRules :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
-instrReplaceRules = \case
-  U.EMPTY_BIG_MAP typeAnn varAnn tyKey tyValue ->
-    pure $ MPrimEx $ U.EMPTY_MAP typeAnn varAnn tyKey tyValue
-  U.SELF varAnn rawLigoAnn -> do
-    -- LIGO compiles `self` with default entrypoint to `SELF @default`,
-    -- not just `SELF`, and Morley does not work with that well
-    -- (`EpName ""` and `EpName "default"` are treated as different
-    -- entrypoints)
-    let michAnn = if rawLigoAnn == [U.annQ|default|] then U.noAnn else rawLigoAnn
-    let epName = U.epNameFromSelfAnn michAnn
-    ty <- do
-      tyMb <- view $ at epName
-      maybe
-        do throwError $ EntrypointTypeNotFound epName
-        pure
-        tyMb
+-- | Makes replacements in types.
+-- At this moment we replace only big maps with maps.
+replaceTy :: U.Ty -> U.Ty
+replaceTy (U.Ty t ann) = U.Ty (replaceT t) ann
+  where
+    replaceT :: U.T -> U.T
+    replaceT = \case
+      U.TOption ty -> U.TOption (replaceTy ty)
+      U.TList ty -> U.TList (replaceTy ty)
+      U.TSet ty -> U.TSet (replaceTy ty)
+      U.TContract ty -> U.TContract (replaceTy ty)
+      U.TTicket ty -> U.TTicket (replaceTy ty)
+      U.TPair fAnn1 fAnn2 varAnn1 varAnn2 ty ty' ->
+        U.TPair fAnn1 fAnn2 varAnn1 varAnn2 (replaceTy ty) (replaceTy ty')
+      U.TOr fAnn1 fAnn2 ty ty' -> U.TOr fAnn1 fAnn2 (replaceTy ty) (replaceTy ty')
+      U.TLambda ty ty' -> U.TLambda (replaceTy ty) (replaceTy ty')
+      U.TMap ty ty' -> U.TMap (replaceTy ty) (replaceTy ty')
 
-    let errorValue =
-          createErrorValue [mt|Cannot find self contract in the contract's environment|]
+      -- Actual replacements
+      U.TBigMap ty ty' -> U.TMap (replaceTy ty) (replaceTy ty')
+      other -> other
 
-    pure $
-      MSeqEx $ MPrimEx <$>
-        [ U.SELF_ADDRESS varAnn
-        , U.CONTRACT varAnn michAnn ty
-        , U.IF_NONE
-            do
-              MPrimEx <$>
-                [ U.PUSH def errorValueType errorValue
-                , U.FAILWITH
-                ]
-            do []
-        ]
+-- | Makes replacements in instructions.
+-- At this moments we do the next replacements:
+-- 1, @EMPTY_BIG_MAP@ -> @EMPTY_MAP@
+-- 2. @SELF@ -> @{ SELF_ADDRESS; CONTRACT; IF_NONE { PUSH err; FAILWITH; } {}; }@
+replaceOpWithMeta
+  :: forall meta.
+  (Default meta, Data meta)
+  => OpWithMeta meta
+  -> PreprocessMonad meta (OpWithMeta meta)
+replaceOpWithMeta = \case
+  MPrimEx instr -> replaceInstr instr
+  MSeqEx ops -> MSeqEx <$> traverse replaceOpWithMeta ops
+  MMetaEx meta op -> do
+    mappedOp <- replaceOpWithMeta op
+    pure $ MMetaEx meta mappedOp
+  where
+    replaceInstr :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
+    replaceInstr = \case
+      U.EXT ext -> case ext of
+        U.UTEST_ASSERT U.TestAssert{tassInstrs = ops, ..} -> do
+          tassInstrs <- traverse replaceOpWithMeta ops
+          returnInstr $ U.EXT $ U.UTEST_ASSERT U.TestAssert{..}
+        other -> returnInstr (U.EXT other)
+      U.PUSH varAnn ty val -> do
+        replacedVal <- replaceValue val
+        returnInstr $ U.PUSH varAnn (replaceTy ty) replacedVal
+      U.NONE typeAnn varAnn ty -> returnInstr $ U.NONE typeAnn varAnn (replaceTy ty)
+      U.IF_NONE ops ops' ->
+        MPrimEx ... U.IF_NONE <$> traverse replaceOpWithMeta ops <*> traverse replaceOpWithMeta ops'
+      U.LEFT typeAnn varAnn fAnn1 fAnn2 ty ->
+        returnInstr $ U.LEFT typeAnn varAnn fAnn1 fAnn2 (replaceTy ty)
+      U.RIGHT typeAnn varAnn fAnn1 fAnn2 ty ->
+        returnInstr $ U.RIGHT typeAnn varAnn fAnn1 fAnn2 (replaceTy ty)
+      U.IF_LEFT ops ops' ->
+        MPrimEx ... U.IF_LEFT <$> traverse replaceOpWithMeta ops <*> traverse replaceOpWithMeta ops'
+      U.NIL typeAnn varAnn ty -> returnInstr $ U.NIL typeAnn varAnn (replaceTy ty)
+      U.IF_CONS ops ops' ->
+        MPrimEx ... U.IF_CONS <$> traverse replaceOpWithMeta ops <*> traverse replaceOpWithMeta ops'
+      U.EMPTY_SET typeAnn varAnn ty -> returnInstr $ U.EMPTY_SET typeAnn varAnn (replaceTy ty)
+      U.EMPTY_MAP typeAnn varAnn tyKey tyValue ->
+        returnInstr $ U.EMPTY_MAP typeAnn varAnn (replaceTy tyKey) (replaceTy tyValue)
+      U.MAP varAnn ops -> MPrimEx . U.MAP varAnn <$> traverse replaceOpWithMeta ops
+      U.ITER ops -> MPrimEx . U.ITER <$> traverse replaceOpWithMeta ops
+      U.IF ops ops' ->
+        MPrimEx ... U.IF <$> traverse replaceOpWithMeta ops <*> traverse replaceOpWithMeta ops'
+      U.LOOP ops -> MPrimEx . U.LOOP <$> traverse replaceOpWithMeta ops
+      U.LOOP_LEFT ops -> MPrimEx . U.LOOP_LEFT <$> traverse replaceOpWithMeta ops
+      U.LAMBDA varAnn ty ty' ops ->
+        MPrimEx . U.LAMBDA varAnn (replaceTy ty) (replaceTy ty') <$> traverse replaceOpWithMeta ops
+      U.LAMBDA_REC varAnn ty ty' ops ->
+        MPrimEx . U.LAMBDA_REC varAnn (replaceTy ty) (replaceTy ty') <$> traverse replaceOpWithMeta ops
+      U.DIP ops -> MPrimEx . U.DIP <$> traverse replaceOpWithMeta ops
+      U.DIPN n ops -> MPrimEx . U.DIPN n <$> traverse replaceOpWithMeta ops
+      U.CAST varAnn ty -> returnInstr $ U.CAST varAnn (replaceTy ty)
+      U.UNPACK typeAnn varAnn ty -> returnInstr $ U.UNPACK typeAnn varAnn (replaceTy ty)
+      U.VIEW varAnn viewName ty -> returnInstr $ U.VIEW varAnn viewName (replaceTy ty)
+      U.CONTRACT varAnn fAnn ty -> returnInstr $ U.CONTRACT varAnn fAnn (replaceTy ty)
+      U.CREATE_CONTRACT varAnn1 varAnn2 contract -> do
+        processedContract <- liftEither $ preprocessContract contract
+        returnInstr $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
+      U.EMIT varAnn fAnn tyMb -> returnInstr $ U.EMIT varAnn fAnn (replaceTy <$> tyMb)
 
-  instr -> pure $ MPrimEx instr
+      -- Actual replacements
+      U.EMPTY_BIG_MAP typeAnn varAnn tyKey tyValue ->
+        returnInstr $ U.EMPTY_MAP typeAnn varAnn (replaceTy tyKey) (replaceTy tyValue)
 
-typesReplaceRules :: U.T -> U.T
-typesReplaceRules = \case
-  U.TBigMap tyKey tyValue -> U.TMap tyKey tyValue
-  other -> other
+      U.SELF varAnn rawLigoAnn -> do
+        -- LIGO compiles `self` with default entrypoint to `SELF @default`,
+        -- not just `SELF`, and Morley does not work with that well
+        -- (`EpName ""` and `EpName "default"` are treated as different
+        -- entrypoints)
+        let michAnn = if rawLigoAnn == [U.annQ|default|] then U.noAnn else rawLigoAnn
+        let epName = U.epNameFromSelfAnn michAnn
+        ty <- replaceTy <$> do
+          tyMb <- view $ at epName
+          maybe
+            do throwError $ EntrypointTypeNotFound epName
+            pure
+            tyMb
+
+        let errorValue =
+              createErrorValue [mt|Cannot find self contract in the contract's environment|]
+
+        pure $
+          MSeqEx $ MPrimEx <$>
+            [ U.SELF_ADDRESS varAnn
+            , U.CONTRACT varAnn michAnn ty
+            , U.IF_NONE
+                do
+                  MPrimEx <$>
+                    [ U.PUSH def errorValueType errorValue
+                    , U.FAILWITH
+                    ]
+                do []
+            ]
+
+      other -> returnInstr other
+
+    returnInstr :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
+    returnInstr = pure . MPrimEx
+
+    replaceValue :: U.Value' (OpWithMeta meta) -> PreprocessMonad meta (U.Value' (OpWithMeta meta))
+    replaceValue = \case
+      U.ValuePair l r -> U.ValuePair <$> replaceValue l <*> replaceValue r
+      U.ValueLeft l -> U.ValueLeft <$> replaceValue l
+      U.ValueRight r -> U.ValueRight <$> replaceValue r
+      U.ValueSome v -> U.ValueSome <$> replaceValue v
+      U.ValueSeq lst -> U.ValueSeq <$> traverse replaceValue lst
+      U.ValueMap lst ->
+        let
+          mapElt (U.Elt k v) = U.Elt <$> replaceValue k <*> replaceValue v
+        in U.ValueMap <$> traverse mapElt lst
+      U.ValueLambda lst -> U.ValueLambda <$> traverse replaceOpWithMeta lst
+      U.ValueLamRec lst -> U.ValueLamRec <$> traverse replaceOpWithMeta lst
+      other -> pure other
 
 -- | Since optimization disabling feature in @ligo@ can produce
 -- badly typed Michelson code, we should fix it somehow. At this
@@ -305,32 +397,18 @@ preprocessContract
   :: forall meta
    . (Default meta, Data meta)
   => ContractWithMeta meta
-  -> (U.T -> U.T)
-  -> (InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
   -> Either PreprocessError (ContractWithMeta meta)
-preprocessContract con@U.Contract{..} typesRules instrRules =
+preprocessContract con@U.Contract{..} =
   let
     ctx = U.mkEntrypointsMap WithImplicitDefaultEp contractParameter
-    mappedOpsInMonad = mapM go contractCode
+    U.ParameterType t rootAnn = contractParameter
+    mappedOpsInMonad = mapM replaceOpWithMeta contractCode
     mappedOpsE = runExcept $ runReaderT mappedOpsInMonad ctx
   in mappedOpsE <&> \ops -> con
       { U.contractCode = ops
-      , U.contractParameter = everywhere (mkT typesRules) contractParameter
-      , U.contractStorage = everywhere (mkT typesRules) contractStorage
+      , U.contractParameter = U.ParameterType (replaceTy t) rootAnn
+      , U.contractStorage = replaceTy contractStorage
       }
-  where
-    go :: OpWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
-    go = fmap (everywhere $ mkT typesRules) . everywhereM' (mkM preprocessExpandedOps)
-      where
-        preprocessExpandedOps :: OpWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
-        preprocessExpandedOps = \case
-          MPrimEx instr -> do
-            case instr of
-              U.CREATE_CONTRACT varAnn1 varAnn2 contract -> do
-                processedContract <- liftEither $ preprocessContract contract typesRules instrRules
-                pure $ MPrimEx $ U.CREATE_CONTRACT varAnn1 varAnn2 processedContract
-              _ -> instrRules instr
-          other -> pure other
 
 -- | Read LIGO's debug output and produce
 --
@@ -341,12 +419,11 @@ preprocessContract con@U.Contract{..} typesRules instrRules =
 -- 3. All contract filepaths that would be used in debugging session.
 -- 4. All locations that are related to lambdas.
 -- 5. LIGO type of entrypoint.
+-- 6. Vector with LIGO types.
 readLigoMapper
   :: LigoMapper 'Unique
-  -> (U.T -> U.T)
-  -> (forall meta. (Default meta) => InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta))
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range, LigoType)
-readLigoMapper ligoMapper typeRules instrRules = do
+  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range, LigoType, LigoTypesVec)
+readLigoMapper ligoMapper = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
 
@@ -359,13 +436,13 @@ readLigoMapper ligoMapper typeRules instrRules = do
                 Just (LigoStackEntry LigoExposedStackEntry{..} : _) -> Last $ Just leseType
                 _ -> Last Nothing
         & getLast
-        & fromMaybe (LigoType Nothing)
+        & maybe (LigoType Nothing) (readLigoType $ lmTypes ligoMapper)
 
   uContract <-
     expressionToUntypedContract extendedExpression
 
   extendedContract@(SomeContract extContract) <-
-    fromUntypedToTyped uContract isRedundantIndexedInfo typeRules instrRules
+    fromUntypedToTyped uContract isRedundantIndexedInfo
 
   let allFiles = uContract ^.. template @_ @EmbeddedLigoMeta . liiLocationL . _Just . rFile
         -- We want to remove duplicates
@@ -380,7 +457,7 @@ readLigoMapper ligoMapper typeRules instrRules = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs, entrypointType)
+  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs, entrypointType, lmTypes ligoMapper)
 
   where
     getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [Range])

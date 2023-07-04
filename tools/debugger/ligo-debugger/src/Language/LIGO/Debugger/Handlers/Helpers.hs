@@ -102,6 +102,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
   , lsLambdaLocs :: Maybe (HashSet Range)
+  , lsLigoTypesVec :: Maybe LigoTypesVec
   , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
   , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue
   , lsMoveId :: Word
@@ -223,6 +224,11 @@ expectInitialized errMsg maybeM = maybeM >>= \case
   Nothing -> throwIO $ PluginCommunicationException errMsg
   Just val -> pure val
 
+expectInitializedH :: (Monad m, MonadSTM m) => Text -> m (Maybe a) -> m a
+expectInitializedH errMsg maybeM = maybeM >>= \case
+  Nothing -> liftSTM $ throwSTM $ PluginCommunicationException errMsg
+  Just val -> pure val
+
 getProgram
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => RIO ext FilePath
@@ -260,15 +266,31 @@ getEntrypointType
   => RIO ext LigoType
 getEntrypointType = "Entrypoint type is not initialized" `expectInitialized` (lsEntrypointType <$> getServerState)
 
-getParameterAndStorageTypes :: LigoType -> (LigoType, LigoType)
-getParameterAndStorageTypes (LigoTypeResolved typ) = fromMaybe (LigoType Nothing, LigoType Nothing) do
-  LTCArrow LigoTypeArrow{..} <- pure $ _lteTypeContent typ
-  LTCRecord LigoTypeTable{..} <- pure $ _lteTypeContent _ltaType1
+getEntrypointTypeH
+  :: (MonadReader (HandlerEnv ext) m, MonadSTM m, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => m LigoType
+getEntrypointTypeH = "Entrypoint type is not initialized" `expectInitializedH` (lsEntrypointType <$> getServerStateH)
 
-  param <- _ltfAssociatedType <$> _lttFields HM.!? "0"
-  st <- _ltfAssociatedType <$> _lttFields HM.!? "1"
-  pure (LigoTypeResolved param, LigoTypeResolved st)
-getParameterAndStorageTypes _ = (LigoType Nothing, LigoType Nothing)
+getLigoTypesVec
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => RIO ext LigoTypesVec
+getLigoTypesVec = "Ligo types are not initialized" `expectInitialized` (lsLigoTypesVec <$> getServerState)
+
+getLigoTypesVecH
+  :: (MonadReader (HandlerEnv ext) m, MonadSTM m, LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => m LigoTypesVec
+getLigoTypesVecH = "Ligo types are not initialized" `expectInitializedH` (lsLigoTypesVec <$> getServerStateH)
+
+getParameterStorageAndOpsTypes :: LigoType -> (LigoType, LigoType, LigoType)
+getParameterStorageAndOpsTypes (LigoTypeResolved typ) =
+  fromMaybe (LigoType Nothing, LigoType Nothing, LigoType Nothing) do
+    LTCArrow LigoTypeArrow{..} <- pure $ _lteTypeContent typ
+    LTCRecord LigoTypeTable{..} <- pure $ _lteTypeContent _ltaType1
+
+    param <- _ltfAssociatedType <$> _lttFields HM.!? "0"
+    st <- _ltfAssociatedType <$> _lttFields HM.!? "1"
+    pure (LigoTypeResolved param, LigoTypeResolved st, LigoTypeResolved _ltaType2)
+getParameterStorageAndOpsTypes _ = (LigoType Nothing, LigoType Nothing, LigoType Nothing)
 
 parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
 parseContracts allFiles = do

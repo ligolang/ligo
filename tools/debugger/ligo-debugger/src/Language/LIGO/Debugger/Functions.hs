@@ -116,18 +116,18 @@ embedFunctionNameIntoLambda (LigoVariable newName) =
       | lastPresentName `compareUniqueNames` newName -> curNames
       | otherwise -> NE.cons (LName newName) curNames
 
-tryToEmbedEnvIntoLambda :: (LigoStackEntry 'Unique, StkEl t) -> StkEl t
-tryToEmbedEnvIntoLambda (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
-  case leseType of
+tryToEmbedEnvIntoLambda :: LigoTypesVec -> (LigoStackEntry 'Unique, StkEl t) -> StkEl t
+tryToEmbedEnvIntoLambda vec (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
+  case vec `readLigoType` leseType of
     LigoTypeResolved LigoTypeExpression { _lteTypeContent = LTCArrow{} }
       -> StkEl $ maybe id embedFunctionNameIntoLambda leseDeclaration val
     _ -> stkEl
-tryToEmbedEnvIntoLambda (_, stkEl) = stkEl
+tryToEmbedEnvIntoLambda _ (_, stkEl) = stkEl
 
-embedFunctionNames :: Rec StkEl t -> LigoStack 'Unique -> Rec StkEl t
-embedFunctionNames (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda (y, x) :& embedFunctionNames xs ys
-embedFunctionNames stack [] = stack
-embedFunctionNames RNil _ = RNil
+embedFunctionNames :: LigoTypesVec -> Rec StkEl t -> LigoStack 'Unique -> Rec StkEl t
+embedFunctionNames vec (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda vec (y, x) :& embedFunctionNames vec xs ys
+embedFunctionNames _ stack [] = stack
+embedFunctionNames _ RNil _ = RNil
 
 getLambdaMeta :: T.Value ('T.TLambda i o) -> LambdaMeta
 getLambdaMeta = fromMaybe def . view lambdaMetaL

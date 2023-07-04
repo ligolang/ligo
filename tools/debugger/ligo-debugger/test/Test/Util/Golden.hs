@@ -57,8 +57,9 @@ instance Exception UnhandledHUnitException where
 
 -- | Let's dumping a piece of output, that will be then matched againt
 -- the golden file.
-newtype GoldenActionContext = GoldenActionContext
+data GoldenActionContext = GoldenActionContext
   { gacDumpOutput :: Builder -> IO ()
+  , gacLigoTypesVec :: LigoTypesVec
   }
 
 -- | This creates a golden test of the snapshots visited by the specific replay.
@@ -91,7 +92,7 @@ goldenTestWithSnapshotsImpl
      -- ^ Golden file.
   -> ContractRunData
      -- ^ Which contract to run and how.
-  -> ReaderT GoldenActionContext (HistoryReplayM (InterpretSnapshot 'Unique) IO) ()
+  -> ReaderT GoldenActionContext (ReaderT TestCtx (HistoryReplayM (InterpretSnapshot 'Unique) IO)) ()
      -- ^ The movement logic within a special monad that has 'HistoryReplay'
      -- constraint and provides a way to construct the expected output.
   -> TestTree
@@ -113,8 +114,9 @@ goldenTestWithSnapshotsImpl logger testName goldenFolder runData logicFunc = do
     action = handle (throwIO . UnhandledHUnitException) do
       outputVar <- newIORef mempty
       let write = liftIO . modifyIORef outputVar . (:)
-      testWithSnapshotsImpl logger Nothing runData $
-        usingReaderT (GoldenActionContext write) logicFunc
+      testWithSnapshotsImpl logger Nothing runData do
+        ligoTypesVec <- asks tcLigoTypesVec
+        usingReaderT (GoldenActionContext write ligoTypesVec) logicFunc
       recordedOutput <- readIORef outputVar
       return $
         fmt $ mconcat $ intersperse "\n" $
@@ -167,7 +169,7 @@ goldenTestWithSnapshots, _goldenTestWithSnapshotsLogging
   :: TestName
   -> FilePath
   -> ContractRunData
-  -> ReaderT GoldenActionContext (HistoryReplayM (InterpretSnapshot 'Unique) IO) ()
+  -> ReaderT GoldenActionContext (ReaderT TestCtx (HistoryReplayM (InterpretSnapshot 'Unique) IO)) ()
   -> TestTree
 goldenTestWithSnapshots = goldenTestWithSnapshotsImpl dummyLoggingFunction
 _goldenTestWithSnapshotsLogging = goldenTestWithSnapshotsImpl putStrLn
@@ -190,7 +192,8 @@ dumpCurSnapshot
      , MonadReader GoldenActionContext m, MonadIO m
      )
   => m ()
-dumpCurSnapshot = dumpComment . pretty =<< frozen curSnapshot
+dumpCurSnapshot =
+  asks gacLigoTypesVec >>= \vec -> frozen curSnapshot >>= dumpComment . pretty . makeConciseSnapshots vec
 
 -- | Perform the given step many times until the end and record the snapshots
 -- at stops.

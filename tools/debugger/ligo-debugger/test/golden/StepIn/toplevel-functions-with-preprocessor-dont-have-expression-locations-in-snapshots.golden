@@ -233,10 +233,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 42
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]

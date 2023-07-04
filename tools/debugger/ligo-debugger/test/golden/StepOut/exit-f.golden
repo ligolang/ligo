@@ -55,10 +55,10 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.mligo@13:4-13:29
       sfStack:
         [StackItem:
-          siLigoDesc: elem ? of operation list * int
+          siLigoDesc: elem ? of 
           siValue: Pair { } 221
         , StackItem:
-          siLigoDesc: elem ? of int
+          siLigoDesc: elem ? of 
           siValue: 0
         ]
     ]
