@@ -115,6 +115,7 @@ let rec usage_in_expr (f : Value_var.t) (expr : expression) : usage =
   | E_update { struct_; path = _; update } -> usages [ self struct_; self update ]
   | E_type_inst { forall; type_ = _ } -> self forall
   | E_assign { expression; _ } -> self expression
+  | E_coerce { anno_expr; _ } -> self anno_expr
   | E_let_mut_in { let_binder = _; rhs; let_result; attributes = _ } ->
     usages [ self rhs; self let_result ]
   | E_while { cond; body } -> usages [ self cond; self body ]
@@ -296,6 +297,9 @@ let rec uncurry_in_expression ~raise (f : Value_var.t) (depth : int) (expr : exp
   | E_assign { expression; binder } ->
     let expression = self expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr; type_annotation } ->
+    let anno_expr = self anno_expr in
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let rhs = self rhs in
     let let_result = self let_result in

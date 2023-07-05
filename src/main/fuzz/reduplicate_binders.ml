@@ -92,6 +92,9 @@ let rec reduplicate ~raise : expression -> expression =
     let binder = binder_remove_counter binder in
     let expression = self expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr; type_annotation } ->
+    let anno_expr = self anno_expr in
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let let_binder = pattern_remove_counter let_binder in
     let rhs = self rhs in

@@ -85,14 +85,14 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/negative/error_type_record_access.mligo", line 6, characters 17-20:
+    File "../../test/contracts/negative/error_type_record_access.mligo", line 6, characters 19-22:
       5 | let bar (x : foo) : int =
-      6 |   let y : bool = x.i in
-                           ^^^
+      6 |   let y : string = x.i in
+                             ^^^
       7 |   42
 
     Invalid type(s)
-    Cannot unify "int" with "bool". |}];
+    Cannot unify "int" with "string". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"

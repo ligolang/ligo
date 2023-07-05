@@ -274,6 +274,7 @@ let is_t__type_ t = Option.is_some (get_t__type_ t)
     , ( "list"
       , "set"
       , "nat"
+      , "bool"
       , "string"
       , "bytes"
       , "int"
@@ -287,14 +288,6 @@ let is_t__type_ t = Option.is_some (get_t__type_ t)
 
 
 let is_t_mutez t = is_t_tez t
-
-let is_t_bool t =
-  match t.type_content with
-  | T_sum { fields; _ } ->
-    (match Record.labels fields with
-    | [ Label "True"; Label "False" ] -> true
-    | _ -> false)
-  | _ -> false
 
 
 let ez_e_record (lst : (Label.t * expression) list) : expression_content =

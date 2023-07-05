@@ -98,6 +98,9 @@ let rec replace : expression -> Value_var.t -> Value_var.t -> expression =
   | E_assign { binder; expression } ->
     let expression = replace expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr; type_annotation } ->
+    let anno_expr = replace anno_expr in
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let rhs = replace rhs in
     let let_result = replace let_result in
@@ -269,6 +272,9 @@ let rec subst_expression
   | E_assign { binder; expression } ->
     let expression = self expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr; type_annotation } ->
+    let anno_expr = self anno_expr in
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     (* in case of mutable variable, we don't substitute *)
     let rhs = self rhs in

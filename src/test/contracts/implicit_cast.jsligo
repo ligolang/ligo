@@ -1,0 +1,13 @@
+const f = (s : list<int>) => {
+  let _s = s;
+  let k = 0;
+  while (_s && k < 3) {
+    _s = Option.unopt(List.tail_opt(_s));
+    k++;
+  };
+  return k;
+};
+
+const xss : list<list<int>> = list([list([]), list([1,2]), list([1])]);
+
+const has_non_empty : option<list<int>> = List.find_opt((xs : list<int>) : bool => xs, xss);

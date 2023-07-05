@@ -39,9 +39,9 @@ let mapping_binop ~syntax : (Operators.op * Ligo_prim.Constant.constant') list =
     ; LTGT, C_NEQ
     ; WORD_LSL, C_LSL
     ; WORD_LSR, C_LSR
-    ; WORD_LXOR, C_XOR
-    ; WORD_LAND, C_AND
-    ; WORD_LOR, C_OR
+    ; WORD_LXOR, C_LXOR
+    ; WORD_LAND, C_LAND
+    ; WORD_LOR, C_LOR
     ; DCOLON, C_CONS
     ; CARET, C_CONCAT
     ]

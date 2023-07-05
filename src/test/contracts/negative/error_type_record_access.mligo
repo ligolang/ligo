@@ -3,5 +3,5 @@ type foo = {
 }
 
 let bar (x : foo) : int = 
-  let y : bool = x.i in
+  let y : string = x.i in
   42

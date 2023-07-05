@@ -52,6 +52,7 @@ module Of_Ast_typed = struct
       | E_update _
       | E_constant _ -> return []
       | E_type_inst _ -> return []
+      | E_coerce _ -> return []
       | E_variable v -> return [ v, exp.type_expression ]
       | E_lambda { binder; _ } -> return [ Param.get_var binder, Param.get_ascr binder ]
       | E_recursive { fun_name; fun_type; lambda = { binder; _ }; force_lambdarec = _ } ->

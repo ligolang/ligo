@@ -615,6 +615,7 @@ type subtype_error = unify_error
 module O = Ast_typed
 module E = Elaboration
 
+
 let rec subtype ~(received : Type.t) ~(expected : Type.t)
     : (O.expression -> O.expression Elaboration.t, _, _) t
   =
@@ -685,6 +686,17 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
     when Type_var.equal tvar1 tvar2 -> return E.return
   | T_exists tvar1, _ -> subtype_texists ~mode:Contravariant tvar1 expected
   | _, T_exists tvar2 -> subtype_texists ~mode:Covariant tvar2 received
+  | T_construct { constructor = Nat; _ }, _
+  | T_construct { constructor = Int; _ }, _
+  | T_construct { constructor = Tez; _ }, _
+  | T_construct { constructor = String; _ }, _
+  | T_construct { constructor = Bytes; _ }, _
+  | T_construct { constructor = List; _ }, _
+  | T_construct { constructor = Set; _ }, _
+  | T_construct { constructor = Map; _ }, _ when Option.is_some (Type.get_t_bool expected) ->
+    return E.(fun hole ->
+        let%bind expected = decode expected in
+        return @@ O.e_coerce ~loc { anno_expr = hole ; type_annotation = expected } expected)
   | _, _ ->
     let%bind () = unify received expected in
     return E.return

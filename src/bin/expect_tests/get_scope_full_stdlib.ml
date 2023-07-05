@@ -1046,7 +1046,8 @@ let%expect_test _ =
       File "", line 367, characters 53-57 ,
       File "", line 415, characters 74-78 ,
       File "", line 566, characters 18-22 ,
-      File "", line 570, characters 29-33
+      File "", line 570, characters 29-33 ,
+
     (option#55:8-14 -> option)
     Range: File "", line 55, characters 8-14
     Body Range: File "", line 55, characters 17-34

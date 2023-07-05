@@ -125,6 +125,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
       let res, rhs = self init rhs in
       let res, let_result = self res let_result in
       res, return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
+    | E_coerce asc ->
+      let res, asc = Ascription.fold_map self self_type init asc in
+      res, return @@ E_coerce asc
     | E_for f ->
       let res, f = For_loop.fold_map self init f in
       res, return @@ E_for f

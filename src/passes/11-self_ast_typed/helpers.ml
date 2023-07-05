@@ -62,6 +62,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
     res
   | E_deref _ -> init
   | E_assign a -> Assign.fold self self_type init a
+  | E_coerce a -> Ascription.fold self self_type init a
   | E_for f -> For_loop.fold self init f
   | E_for_each fe -> For_each_loop.fold self init fe
   | E_while w -> While_loop.fold self init w
@@ -149,6 +150,9 @@ let rec map_expression : 'err mapper -> expression -> expression =
   | E_assign a ->
     let a = Assign.map self (fun a -> a) a in
     return @@ E_assign a
+  | E_coerce asc ->
+    let asc = Ascription.map self (fun a -> a) asc in
+    return @@ E_coerce asc
   | E_for f ->
     let f = For_loop.map self f in
     return @@ E_for f
@@ -763,6 +767,8 @@ end = struct
     | E_assign { binder; expression } ->
       let fvs = self expression in
       { fvs with mutSet = VarSet.add (Binder.get_var binder) fvs.mutSet }
+    | E_coerce { anno_expr; _ } ->
+      self anno_expr
     | E_for { binder; start; final; incr; f_body } ->
       let f_body_fvs = self f_body in
       let f_body_fvs =
@@ -903,6 +909,9 @@ module Declaration_mapper = struct
     | E_assign a ->
       let a = Assign.map self (fun a -> a) a in
       return @@ E_assign a
+    | E_coerce a ->
+      let a = Ascription.map self (fun a -> a) a in
+      return @@ E_coerce a
     | E_for f ->
       let f = For_loop.map self f in
       return @@ E_for f

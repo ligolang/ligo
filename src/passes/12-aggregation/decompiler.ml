@@ -84,6 +84,10 @@ let rec decompile : I.expression -> O.expression =
     let binder = Binder.map decompile_type binder in
     let expression = decompile expression in
     return @@ O.E_assign { binder; expression }
+  | I.E_coerce { anno_expr; type_annotation } ->
+    let type_annotation = decompile_type type_annotation in
+    let anno_expr = decompile anno_expr in
+    return @@ O.E_coerce { anno_expr; type_annotation }
   | I.E_for for_loop ->
     let for_loop = For_loop.map decompile for_loop in
     return @@ O.E_for for_loop

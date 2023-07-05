@@ -388,6 +388,7 @@ let%expect_test _ =
     [ a#1:4-5 b#3:4-5 x#15:8-9 y#15:11-12  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 5-10
     [ a#1:4-5 b#3:4-5 x#15:8-9 y#15:11-12  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 16-18
     [ a#1:4-5 b#3:4-5 x#15:8-9 y#15:11-12  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 17, characters 7-16
+    [ a#1:4-5 b#3:4-5 c#4:10-11 z#8:10-11 n#8:13-14 m#8:23-24 x#15:8-9 y#15:11-12  ]
 
     Variable definitions:
     (a#1:4-5 -> a)

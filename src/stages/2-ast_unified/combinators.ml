@@ -299,6 +299,7 @@ let tv__type_ ~loc () : ty_expr =
   [@@map
     _type_
     , ( "string"
+      , "bool"
       , "bytes"
       , "int"
       , "operation"

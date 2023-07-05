@@ -235,6 +235,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression =
     let binder = swap_mut_binder swaper binder in
     let expression = self expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr ; type_annotation } ->
+    let anno_expr = self anno_expr in
+    let type_annotation = self_type type_annotation in
+    return @@ E_coerce { anno_expr ; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let let_binder = swap_mut_pattern swaper let_binder in
     let rhs = self rhs in
@@ -444,6 +448,10 @@ let rec expression : Scope.t -> expression -> Scope.t * expression =
     let binder = mut_binder_get scope binder in
     let _, expression = self expression in
     return @@ E_assign { binder; expression }
+  | E_coerce { anno_expr; type_annotation } ->
+    let _, anno_expr = self anno_expr in
+    let type_annotation = self_type type_annotation in
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let scope, let_binder = mut_pattern_new scope let_binder in
     let _, rhs = self rhs in
