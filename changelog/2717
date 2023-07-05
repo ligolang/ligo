@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed transpilation from PascaLIGO to JsLIGO of predefined data constructors \"True\", \"False\" and \"Unit\" as values (patterns remain unchanged).\\n\\n"
+merge_request: '2717'
+title: "Fixed transpilation of \"True\", \"False\" and \"Unit\"."
+type: fixed
+            

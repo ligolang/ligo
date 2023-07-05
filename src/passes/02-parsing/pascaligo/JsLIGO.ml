@@ -840,10 +840,14 @@ and expr_of_E_App (node: call) =
       let args    = Js.ESeq (reg_of args) in
       let app     = econstr, Some args
       in Js.EConstr (reg_of app)
-  | E_Ctor ctor, None ->
-      let econstr = Wrap.ghost ctor#payload in
-      let app     = econstr, None
-      in Js.EConstr (reg_of app)
+  | E_Ctor ctor, None -> (
+      match ctor#payload with
+        "True"  -> Js.EVar (Wrap.ghost "true")
+      | "False" -> Js.EVar (Wrap.ghost "false")
+      | "Unit"  -> Js.EUnit (Region.wrap_ghost unit)
+      | _       -> let econstr = Wrap.ghost ctor#payload in
+                   let app     = econstr, None
+                   in Js.EConstr (reg_of app))
   | _, None ->
       let fun_expr = expr_of_expr fun_or_ctor
       and unit     = Js.Unit (reg_of unit)
@@ -932,7 +936,8 @@ and property_of_P_App
     (body: Js.body)
     (node: (pattern * pattern tuple option) reg) =
   match node.value with
-    P_Ctor p, None -> property_of_P_Ctor body p
+    P_Ctor p, None ->
+      property_of_P_Ctor body p
   | P_Ctor p, Some tuple ->
       let name        = Js.EVar p
       and type_params = None in
@@ -949,7 +954,10 @@ and property_of_P_App
   | pattern, _ -> pattern_not_transpiled pattern
 
 and property_of_P_Ctor (body: Js.body) (node: ctor) : Js.property =
-  let name        = Js.EVar node
+  let name =
+    match node#payload with
+      "Unit"  -> Js.EUnit (reg_of unit)
+    | _       -> Js.EVar node
   and type_params = None
   and parameters  = Js.EUnit (reg_of unit)
   and lhs_type    = None
@@ -975,11 +983,12 @@ and expr_of_E_CodeInj (node: code_inj reg) =
 (* Data constructor as expression (e.g., "C") *)
 
 and expr_of_E_Ctor (node: ctor) =
-  if node#payload = "Unit" then
-    Js.EVar (Wrap.ghost "unit")
-  else
-    let constr = Wrap.ghost node#payload
-    in Js.EConstr (reg_of (constr, None))
+  match node#payload with
+    "Unit"  -> Js.EUnit (reg_of unit)
+  | "False" -> Js.EVar (Wrap.ghost "false")
+  | "True"  -> Js.EVar (Wrap.ghost "true")
+  | _       -> let constr = Wrap.ghost node#payload
+               in Js.EConstr (reg_of (constr, None))
 
 (* Conditional expression *)
 
