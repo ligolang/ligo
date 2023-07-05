@@ -1,5 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
-
 module Test.Util
   ( -- * Shared helpers
     (</>)
@@ -100,6 +98,7 @@ import Language.LIGO.Debugger.Handlers.Impl
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import "ligo-debugger" Util
 
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"
@@ -122,8 +121,8 @@ newtype TestBuildable a = TB
 rmode'tb :: Buildable (TestBuildable a) => RMode a
 rmode'tb = RMode (build . TB)
 
-instance {-# OVERLAPPABLE #-} Buildable a => Buildable (TestBuildable a) where
-  build = build . unTB
+instance {-# OVERLAPPABLE #-} (ForInternalUse => Buildable a) => Buildable (TestBuildable a) where
+  build = itIsForInternalUse $ build . unTB
 
 instance Buildable (TestBuildable a) => Buildable (TestBuildable [a]) where
   build (TB l) = pretty $ blockListF' "-" (build . TB) l

@@ -1,5 +1,8 @@
 module Util
   ( groupByKey
+  , ForInternalUse
+  , itIsForInternalUse
+  , allowedForInternalUseOnly
   , readSemVerQ
   , resourcesFolder
   , rmode'semv
@@ -29,6 +32,7 @@ import Data.Bitraversable (bitraverse)
 import Data.Char qualified as Char
 import Data.List (groupBy, singleton)
 import Data.Map.Internal qualified as MI
+import Data.Reflection (Given, give, given)
 import Data.Scientific qualified as Sci
 import Data.SemVer qualified as SemVer
 import Data.Text qualified as Text
@@ -54,6 +58,27 @@ extractGroup :: (a -> k) -> (a -> v) -> [[a]] -> [(k, [v])]
 extractGroup _ _ [] = []
 extractGroup f g ([] : xs) = extractGroup f g xs
 extractGroup f g (ys@(y : _) : xs) = (f y, g <$> ys) : extractGroup f g xs
+
+-- | This constraint indicates that the given value/function must be used
+-- only where it will affect us, developers, and would be invisible for the users
+-- (it is fine if users can find it if they try hard though).
+--
+-- It serves as a safety measure.
+--
+-- Examples:
+--
+-- * A function that is to be used in tests only;
+-- * A function that prints too verbose information.
+type ForInternalUse = Given IsForInternalUse
+data IsForInternalUse = IsForInternalUse
+
+-- | Allow using values that require 'ForInternalUse'.
+itIsForInternalUse :: (ForInternalUse => a) -> a
+itIsForInternalUse = give IsForInternalUse
+
+allowedForInternalUseOnly :: ForInternalUse => a -> a
+allowedForInternalUseOnly =
+  case given @IsForInternalUse of IsForInternalUse -> id
 
 -- | Read a 'SemVer.Version' from a file at compile time.
 --

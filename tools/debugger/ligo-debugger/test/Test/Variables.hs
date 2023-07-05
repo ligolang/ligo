@@ -6,7 +6,7 @@ import Data.Map qualified as M
 import Fmt (pretty)
 import Unsafe (fromJust)
 
-import Morley.Debugger.Protocol.DAP (Variable (..))
+import Morley.Debugger.Protocol.DAP (Variable (..), defaultVariable)
 import Morley.Michelson.Typed
   (Constrained (SomeValue), EpAddress (EpAddress'), EpName (UnsafeEpName),
   MkEntrypointCallRes (MkEntrypointCallRes), ParamNotes (pnRootAnn), SingI,
@@ -52,39 +52,21 @@ testAddresses = testGroup "addresses"
       snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "address"
                   , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
-                  , evaluateNameVariable = Nothing
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
-              , Variable
+              , defaultVariable
                   { nameVariable = "entrypoint"
                   , valueVariable = "foo"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
-                  , evaluateNameVariable = Nothing
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ])
           , (2,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "addr"
                   , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
                   , variablesReferenceVariable = 1
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
                   , __vscodeVariableMenuContextVariable = Just "address"
                   }
               ])
@@ -95,15 +77,10 @@ testAddresses = testGroup "addresses"
       snd (runBuilder $ createVariables Caml [addressItem]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                 { nameVariable = "addr"
                 , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                , typeVariable = ""
-                , presentationHintVariable = Nothing
                 , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                , variablesReferenceVariable = 0
-                , namedVariablesVariable = Nothing
-                , indexedVariablesVariable = Nothing
                 , __vscodeVariableMenuContextVariable = Just "address"
                 }
               ])
@@ -127,39 +104,21 @@ testContracts = testGroup "contracts"
           snd (runBuilder $ createVariables Caml [contractItem]) @?=
             M.fromList
               [ (1,
-                  [ Variable
+                  [ defaultVariable
                       { nameVariable = "address"
                       , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                      , typeVariable = ""
-                      , presentationHintVariable = Nothing
-                      , evaluateNameVariable = Nothing
-                      , variablesReferenceVariable = 0
-                      , namedVariablesVariable = Nothing
-                      , indexedVariablesVariable = Nothing
-                      , __vscodeVariableMenuContextVariable = Nothing
                       }
-                  , Variable
+                  , defaultVariable
                       { nameVariable = "entrypoint"
                       , valueVariable = "foo"
-                      , typeVariable = ""
-                      , presentationHintVariable = Nothing
-                      , evaluateNameVariable = Nothing
-                      , variablesReferenceVariable = 0
-                      , namedVariablesVariable = Nothing
-                      , indexedVariablesVariable = Nothing
-                      , __vscodeVariableMenuContextVariable = Nothing
                       }
                   ])
               , (2,
-                  [ Variable
+                  [ defaultVariable
                       { nameVariable = "contract"
                       , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
-                      , typeVariable = ""
-                      , presentationHintVariable = Nothing
                       , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU%foo"
                       , variablesReferenceVariable = 1
-                      , namedVariablesVariable = Nothing
-                      , indexedVariablesVariable = Nothing
                       , __vscodeVariableMenuContextVariable = Just "contract"
                       }
                   ])
@@ -169,15 +128,10 @@ testContracts = testGroup "contracts"
       snd (runBuilder $ createVariables Caml [contractItem]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "contract"
                   , valueVariable = "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
                   , __vscodeVariableMenuContextVariable = Just "contract"
                   }
               ])
@@ -237,16 +191,11 @@ testOption = testGroup "option"
       snd (runBuilder $ createVariables Caml [vNothingItem]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "nothingVar"
                   , valueVariable = "None"
-                  , typeVariable = ""
                   , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "None"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ]
             )
@@ -256,30 +205,19 @@ testOption = testGroup "option"
       snd (runBuilder $ createVariables Caml [vUnitItem]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "Some"
                   , valueVariable = "()"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
                 ]
               )
           , (2,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "someUnit"
                   , valueVariable = "Some ()"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "Some ()"
                   , variablesReferenceVariable = 1
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ]
             )
@@ -326,16 +264,10 @@ testList = testGroup "list"
       snd (runBuilder $ createVariables Caml [vList]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "list"
                   , valueVariable = "[]"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "[]"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ]
             )
@@ -345,41 +277,24 @@ testList = testGroup "list"
       snd (runBuilder $ createVariables Caml [vList]) @?=
         M.fromList
           [ (1,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "1"
                   , valueVariable = "()"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
-              , Variable
+              , defaultVariable
                   { nameVariable = "2"
                   , valueVariable = "()"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "()"
-                  , variablesReferenceVariable = 0
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ]
             )
           , (2,
-              [ Variable
+              [ defaultVariable
                   { nameVariable = "list"
                   , valueVariable = "[(), ()]"
-                  , typeVariable = ""
-                  , presentationHintVariable = Nothing
                   , evaluateNameVariable = Just "[(), ()]"
                   , variablesReferenceVariable = 1
-                  , namedVariablesVariable = Nothing
-                  , indexedVariablesVariable = Nothing
-                  , __vscodeVariableMenuContextVariable = Nothing
                   }
               ]
             )
