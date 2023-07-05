@@ -8,6 +8,7 @@ module Language.LIGO.Debugger.Common
   , tryToProcessLigoStatement
   , getStatementLocs
   , isRedundantIndexedInfo
+  , stkElValue
   , isLigoStdLib
   , errorValueType
   , errorAddress

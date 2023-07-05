@@ -96,6 +96,7 @@ library
       TypeApplications
       TypeFamilies
       TypeOperators
+      UndecidableInstances
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages
   include-dirs:
@@ -133,6 +134,7 @@ library
     , nyan-interpolation-core
     , process
     , process-extras
+    , reflection
     , regex-tdfa
     , scientific
     , semver
@@ -206,6 +208,7 @@ executable ligo-debugger
       TypeApplications
       TypeFamilies
       TypeOperators
+      UndecidableInstances
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-depends:
@@ -226,6 +229,7 @@ test-suite ligo-debugger-test
       Test.Breakpoints
       Test.DebugInfo
       Test.DelayedValues
+      Test.Functions
       Test.LigoCall
       Test.Navigation
       Test.Pretty
@@ -282,6 +286,7 @@ test-suite ligo-debugger-test
       TypeApplications
       TypeFamilies
       TypeOperators
+      UndecidableInstances
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:

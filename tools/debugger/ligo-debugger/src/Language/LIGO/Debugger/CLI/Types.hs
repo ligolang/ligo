@@ -301,9 +301,22 @@ newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
 pattern LigoTypeResolved :: LigoTypeExpression -> LigoType
 pattern LigoTypeResolved typ = LigoType (Just typ)
 
+pattern LigoTypeUnresolved :: LigoType
+pattern LigoTypeUnresolved = LigoType Nothing
+
+{-# COMPLETE LigoTypeResolved, LigoTypeUnresolved #-}
+
 type family LigoTypeF (u :: NameType) where
   LigoTypeF 'Unique  = Maybe LigoTypeRef
   LigoTypeF 'Concise = LigoType
+
+-- | Prints type in Cameligo.
+--
+-- This is restricted for internal use only to avoid using it for producing
+-- user-visible output, for such purpose 'buildType' with an appropriate
+-- dialect must be used.
+instance ForInternalUse => Buildable LigoType where
+  build = allowedForInternalUseOnly $ buildType Caml
 
 -- | An element of the stack with some information interesting for us.
 data LigoExposedStackEntry u = LigoExposedStackEntry

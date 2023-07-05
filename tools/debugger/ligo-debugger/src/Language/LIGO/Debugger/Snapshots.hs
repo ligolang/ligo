@@ -9,7 +9,8 @@ module Language.LIGO.Debugger.Snapshots
   , InterpretEvent (..)
   , statusExpressionEvaluatedP
   , InterpretSnapshot (..)
-  , LambdaMeta (..)
+  , LambdaMeta
+  , LambdaMeta' (..)
   , ContractEnv
   , CollectorState (..)
   , InterpretHistory (..)
@@ -88,6 +89,7 @@ import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Functions
 import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
+import Util
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
@@ -324,10 +326,14 @@ makePrisms ''InterpretEvent
 statusExpressionEvaluatedP :: Traversal' InterpretStatus SomeValue
 statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _2 . _Just
 
-logMessage :: forall m. (Monad m) => String -> CollectingEvalOp m ()
-logMessage str = do
+logMessage :: (Monad m) => (ForInternalUse => String) -> CollectingEvalOp m ()
+logMessage msg = logMessageM (pure msg)
+
+logMessageM :: (Monad m) => (ForInternalUse => CollectingEvalOp m String) -> CollectingEvalOp m ()
+logMessageM mkMsg = do
   logger <- use csLoggingFunctionL
-  lift $ logger [int||[SnapshotCollecting] #{str}|]
+  msg <- itIsForInternalUse mkMsg
+  lift $ logger [int||[SnapshotCollecting] #{msg}|]
 
 -- | Executes the code and collects snapshots of execution.
 runInstrCollect :: forall m. (Monad m) => InstrRunner (CollectingEvalOp m)
@@ -492,7 +498,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
         -- creating a @lambda arg1 (lambda arg2 res)@ value
         -- and using @EXEC@ after it to perform application.
         (EXEC{}, _ :& StkEl lam :& _) -> do
-          let meta@LambdaMeta{..} = getLambdaMeta lam
+          let meta = getLambdaMeta lam
           logMessage
             [int||
               Meta #{meta} for lambda #{lam}
@@ -500,7 +506,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           oldStackFrames <- use csStackFramesL
 
-          forM_ lmVariables \name -> do
+          forM_ (lmAllFuncNames meta) \name -> do
             let sfName = pretty name
             loc <- use $ csActiveStackFrameL . sfLocL
             let newStackFrame = StackFrame
@@ -511,7 +517,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
             mainFunctionName <- use csMainFunctionNameL
 
-            unless (mainFunctionName `matchesUniqueLambdaName` name) do
+            unless (name `compareUniqueNames` mainFunctionName) do
               logMessage
                 [int||
                   Created new stack frame #{newStackFrame}
@@ -522,7 +528,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           newStack <- runInstr instr stack
 
           csStackFramesL .= oldStackFrames
-          logMessage =<< [int|m|
+          logMessageM [int|m|
             Restored stack frames, new active frame: #{sfName <$> use csActiveStackFrameL}
             |]
 
