@@ -1,164 +1,162 @@
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@2:3-2:43
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@3:3-3:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@3:12-3:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: foo
       sfLoc: test/contracts/local-function-assignments.mligo@2:38-2:43
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of int * int
-          siValue: Pair 0 2
-        ]
+          siValue: Pair 0 2 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@3:16-3:24
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@4:3-4:44
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s1 of int
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@5:3-5:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
           siLigoDesc: elem s1 of int
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@5:12-5:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
           siLigoDesc: elem s1 of int
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: bar
       sfLoc: test/contracts/local-function-assignments.mligo@4:39-4:44
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem b of int
           siValue: -2
         , StackItem:
           siLigoDesc: elem a of int
-          siValue: 0
-        ]
+          siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@5:19-5:24
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
           siLigoDesc: elem s1 of int
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@6:3-6:57
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s2 of int
           siValue: 2
         , StackItem:
@@ -166,20 +164,32 @@ InterpretSnapshot:
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@7:3-7:26
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  };
+                    { SWAP;
+                      {  };
+                      { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s2 of int
           siValue: 2
@@ -188,20 +198,32 @@ InterpretSnapshot:
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@7:12-7:26
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  };
+                    { SWAP;
+                      {  };
+                      { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s2 of int
           siValue: 2
@@ -210,31 +232,42 @@ InterpretSnapshot:
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: baz
       sfLoc: test/contracts/local-function-assignments.mligo@6:48-6:57
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of int * int
           siValue: Pair 2 0
         , StackItem:
           siLigoDesc: elem a of int
-          siValue: 2
-        ]
+          siValue: 2 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@7:20-7:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
-          siValue: { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  };
+                    { SWAP;
+                      {  };
+                      { { {  }; { SWAP }; MUL }; { SWAP }; ADD } } } } } }
         , StackItem:
           siLigoDesc: elem s2 of int
           siValue: 2
@@ -243,18 +276,15 @@ InterpretSnapshot:
           siValue: 2
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@8:3-8:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s3 of int
           siValue: 2
         , StackItem:
@@ -262,22 +292,17 @@ InterpretSnapshot:
           siValue: 2
         , StackItem:
           siLigoDesc: elem s1 of int
-          siValue: 2
-        ]
-    ]
-
+          siValue: 2 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@8:4-8:39
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of 
           siValue: Pair { } 6
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0
-        ]
-    ]
+          siValue: 0 ] ]

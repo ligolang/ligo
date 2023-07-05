@@ -9,7 +9,7 @@ module Language.LIGO.Debugger.Navigate
 import Control.Lens (ix)
 import Data.Default (Default (..))
 import Data.Map qualified as Map
-import Fmt (Buildable (..))
+import Fmt.Buildable (Buildable, build)
 
 import Morley.Debugger.Core.Common
 import Morley.Debugger.Core.Navigate hiding (isAtBreakpoint)

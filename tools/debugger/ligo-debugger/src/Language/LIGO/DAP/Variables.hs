@@ -9,7 +9,7 @@ module Language.LIGO.DAP.Variables
 import Control.Lens hiding ((...))
 import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
-import Fmt (pretty)
+import Fmt.Buildable (pretty)
 
 import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
 import Morley.Debugger.Protocol.DAP (Variable)

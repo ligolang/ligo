@@ -2,15 +2,13 @@ Steping out immediately on start
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.mligo@13:4-13:29
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of 
           siValue: Pair { } 221
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0
-        ]
-    ]
+          siValue: 0 ] ]

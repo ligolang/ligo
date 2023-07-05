@@ -7,8 +7,7 @@ module Language.LIGO.Debugger.Error
   , ImpossibleHappened(..)
   ) where
 
-import Fmt (Buildable (..), pretty)
-import Fmt.Internal.Core (FromBuilder)
+import Fmt.Buildable (Buildable, FromDoc, build, pretty)
 import GHC.TypeLits (KnownSymbol, Symbol)
 
 import Language.LIGO.Debugger.CLI.Exception
@@ -81,7 +80,7 @@ instance Buildable DebuggerExceptionType where
 -- (plugin or LIGO).
 newtype ImpossibleHappened = ImpossibleHappened Text
   deriving stock (Eq, Show)
-  deriving newtype (FromBuilder, Buildable)
+  deriving newtype (FromDoc, Buildable)
 
 instance Exception ImpossibleHappened where
   displayException = pretty

@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Util
   ( groupByKey
   , ForInternalUse
@@ -7,6 +10,7 @@ module Util
   , resourcesFolder
   , rmode'semv
   , rmode'ansi
+  , rmode'
   , everywhereM'
   , foldMapM
   , safeIndex
@@ -38,7 +42,8 @@ import Data.SemVer qualified as SemVer
 import Data.Text qualified as Text
 import Data.Text.Lazy.Encoding qualified as TL
 import Debug qualified
-import Fmt (build)
+import Fmt.Buildable (Buildable, FromDoc, pretty)
+import Fmt.Internal.Core (FromBuilder, fromBuilder)
 import Generics.SYB (Data (gmapM), GenericM)
 import Language.Haskell.TH.Syntax (Code (..), Q, liftTyped)
 import System.Console.ANSI (SGR, setSGRCode)
@@ -102,10 +107,10 @@ resourcesFolder :: FilePath
 resourcesFolder = "src" </> "resources"
 
 rmode'semv :: RMode SemVer.Version
-rmode'semv = RMode (build . SemVer.toText)
+rmode'semv = RMode (pretty . SemVer.toText)
 
 rmode'ansi :: RMode [SGR]
-rmode'ansi = RMode (build . concatMap (setSGRCode . singleton))
+rmode'ansi = RMode (pretty . concatMap (setSGRCode . singleton))
 
 -- | Monadic variation on everywhere'
 everywhereM' :: forall m. Monad m => GenericM m -> GenericM m
@@ -186,6 +191,8 @@ lazyBytesToText = toText . TL.decodeUtf8
 textToLazyBytes :: Text -> LByteString
 textToLazyBytes = TL.encodeUtf8 . fromStrict
 
+rmode' :: (Buildable a) => RMode a
+rmode' = RMode pretty
 
 -- | Sometimes numbers are carried as strings in order to fit into
 -- common limits for sure.
@@ -207,3 +214,6 @@ instance Integral a => FromJSON (TextualNumber a) where
       fromIntegralNoOverflow i
         & either (fail . displayException) (pure . TextualNumber)
     other -> Aeson.unexpected other
+
+instance {-# OVERLAPPABLE #-} (FromDoc a) => FromBuilder a where
+  fromBuilder = pretty

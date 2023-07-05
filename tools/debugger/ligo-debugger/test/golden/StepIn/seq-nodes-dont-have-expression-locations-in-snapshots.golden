@@ -1,145 +1,113 @@
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:3-4:19
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:13-4:19
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (0 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:13-4:19
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:3-5:14
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@6:3-6:14
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:3-7:29
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair { } 0 : operation list * int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of 
           siValue: Pair { } 0
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0
-        ]
-    ]
+          siValue: 0 ] ]

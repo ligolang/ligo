@@ -34,16 +34,16 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSpecificResponse (..)
   ) where
 
-import Fmt (Buildable (..), GenericBuildable (..))
+import Data.Default (Default (def))
+import Fmt.Buildable (Buildable, GenericBuildable (..))
 
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.TH (deriveSum, jsonfyMany)
-import Morley.Debugger.DAP.Types (MichelsonJson (MichelsonJson))
+import Morley.Debugger.DAP.Types (MichelsonJson)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (ContractAddress, L1Address)
 import Morley.Tezos.Core (ChainId, Mutez, Timestamp)
 import Morley.Tezos.Crypto (KeyHash)
-import Data.Default (Default (def))
 
 data LigoLaunchRequest = LigoLaunchRequest
   { seqLigoLaunchRequest :: Int
@@ -103,10 +103,6 @@ data SimpleVotingPowersInfo = SimpleVotingPowersInfo
   { contentsSimpleVotingPowersInfo :: Map (MichelsonJson KeyHash) (MichelsonJson Natural)
   } deriving stock (Eq, Show, Generic)
     deriving Buildable via (GenericBuildable SimpleVotingPowersInfo)
-
--- TODO: move it to morley-debugger
-instance Buildable a => Buildable (MichelsonJson a) where
-  build (MichelsonJson v) = build v
 
 data LigoInitializeLoggerRequest = LigoInitializeLoggerRequest
   { seqLigoInitializeLoggerRequest :: Int

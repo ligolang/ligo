@@ -5,7 +5,7 @@ module Test.AbortingThreadPool
 import Control.Concurrent (threadDelay)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO.Async (waitEither, withAsync)
 
 import Control.AbortingThreadPool

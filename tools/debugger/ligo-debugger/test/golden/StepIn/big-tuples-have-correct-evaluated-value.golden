@@ -1,66 +1,55 @@
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@2:3-2:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@2:26-2:39
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair (Pair (Pair 1 2) (Pair 3 4)) 5 : int * int * int * int * int)
+  isStatus:
+    running / expression evaluated (Pair (Pair (Pair 1 2) (Pair 3 4)) 5 : int * int * int * int * int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@2:26-2:39
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:3-3:49
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of int * int * int * int * int
           siValue: Pair (Pair (Pair 1 2) (Pair 3 4)) 5
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:48
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -77,18 +66,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:48
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -105,18 +91,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:44
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -133,18 +116,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -161,18 +141,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:36
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -189,18 +166,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:32
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -217,18 +191,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (1 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:32
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -245,18 +216,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (3 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:36
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -273,18 +241,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (6 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -301,18 +266,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (10 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:44
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -329,18 +291,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (15 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:27-3:48
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -357,18 +316,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -385,18 +341,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -413,18 +366,15 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair { } 15 : operation list * int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:48
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem e of int
           siValue: 5
         , StackItem:
@@ -441,22 +391,17 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0
-        ]
-    ]
-
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:4-3:48
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of 
           siValue: Pair { } 15
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0
-        ]
-    ]
+          siValue: 0 ] ]

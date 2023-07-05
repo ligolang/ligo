@@ -24,7 +24,7 @@ import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 
 import Morley.Debugger.Core
   (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition), PausedReason (..),
@@ -238,7 +238,7 @@ test_Next_golden = testGroup "Next" do
           [int||
             Starting from `f`'s beginning,
             should traverse `f`, skip `g`, and go to the end
-            |]
+          |]
           dumpAllSnapshotsWithStep doStep
 
     , testGroup "Interaction with breakpoints"
@@ -304,7 +304,7 @@ test_StepOut_golden = testGroup "StepOut" do
           [int|n|
             Stepping out, now should appear outside of the method despite
             the breakpoint
-            |]
+          |]
           doStep
           dumpCurSnapshot
 
@@ -320,6 +320,7 @@ test_Continue_golden = testGroup "Continue"
         switchBreakpoint
           (MSFile $ crdProgram $ basicCaseRun Caml)
           (SrcLoc 11 0)
+
         [int||Breakpoint is set at `f` & `g` call|]
         dumpAllSnapshotsWithStep doStep
   ]

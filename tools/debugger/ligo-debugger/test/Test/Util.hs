@@ -7,6 +7,7 @@ module Test.Util
   , AST.allLangs
   , AST.langExtension
   , pattern SomeLorentzValue
+  , rmode'
 
     -- * Test utilities
   , (@?=)
@@ -69,7 +70,7 @@ import System.FilePath ((<.>), (</>))
 import Test.HUnit (Assertion)
 import Test.HUnit.Lang qualified as HUnit
 import Test.Tasty.HUnit qualified as HUnit
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import Text.Interpolation.Nyan.Core (RMode (..))
 import Text.Show qualified
 
@@ -119,7 +120,7 @@ newtype TestBuildable a = TB
 
 -- | Provide @tb@ rendering mode for nyan-interpolators.
 rmode'tb :: Buildable (TestBuildable a) => RMode a
-rmode'tb = RMode (build . TB)
+rmode'tb = RMode (pretty . TB)
 
 instance {-# OVERLAPPABLE #-} (ForInternalUse => Buildable a) => Buildable (TestBuildable a) where
   build = itIsForInternalUse $ build . unTB

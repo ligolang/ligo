@@ -33,6 +33,7 @@ import Control.Lens.Lens (lens)
 import Data.Default (Default (def))
 import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet qualified as HashSet
+import Fmt.Buildable (Buildable, build)
 import Text.Show qualified
 
 import Duplo.Pretty (PP (..), Pretty (..))
@@ -79,6 +80,11 @@ data Lang
   | Js
   deriving stock (Show, Eq, Enum, Bounded, Generic)
   deriving anyclass (Hashable)
+
+instance Buildable Lang where
+  build = \case
+    Caml -> "caml"
+    Js -> "js"
 
 allLangs :: [Lang]
 allLangs = [minBound .. maxBound]

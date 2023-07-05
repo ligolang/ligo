@@ -33,8 +33,9 @@ import Prelude hiding (Product)
 import Control.Exception (throwIO)
 import Control.Monad.RWS hiding (Product)
 import Data.Text qualified as Text
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import Unsafe qualified
+import Util
 
 import Duplo.Pretty hiding (int)
 import Duplo.Tree
