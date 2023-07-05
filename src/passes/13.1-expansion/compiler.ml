@@ -101,6 +101,7 @@ let rec compile_expression : I.expression -> O.expression =
   | E_deref x -> return (O.E_deref x)
   | E_literal x -> return (O.E_literal x)
   | E_variable x -> return (O.E_variable x)
+  | E_coerce { anno_expr; _ } -> self anno_expr
 
 
 and compile_matching

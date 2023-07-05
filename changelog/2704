@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nWhen checking an expression for a boolean, certain values are \"casted\" implicitly:\\n`n : nat` is true iff `0 < n``n : int` is true iff `0 <> n``n : tez` is true iff `0 < n``s : string` is true iff `\"\" < s``b : bytes` is true iff `empty-bytes < b``xs : 'a list` is true iff `xs = []``xs : 'a set` is true iff `0 < Set.cardinal xs``m : ('a, 'b) map` is true iff `0 < Map.size m`\\nNow values of types such as `nat`, `int`, `tez`, `string`, `bytes`, lists, maps and sets can be used in conditions, and are casted automatically to `bool`:\\n\\n```\\nconst f = (s : list<int>) => {\\n  let _s = s;\\n  let k = 0;\\n  while (_s && k < 3) {\\n    _s = Option.unopt(List.tail_opt(_s));\\n    k++;\\n  };\\n  return k;\\n};\\n\\n```\\n\\n"
+merge_request: '2704'
+title: "Implicit casting: booleans"
+type: added
+            

@@ -661,33 +661,36 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_AND, [ V_Ct (C_bool a'); V_Ct (C_bool b') ] -> return @@ v_bool (a' && b')
   | C_XOR, [ V_Ct (C_bool a'); V_Ct (C_bool b') ] ->
     return @@ v_bool ((a' || b') && not (a' && b'))
-  (* Bitwise operators *)
-  | C_AND, [ V_Ct (C_int a'); V_Ct (C_nat b') ] ->
-    let v = Z.logand a' b' in
-    return @@ v_nat v
-  | C_AND, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
-    let v = Z.logand a' b' in
-    return @@ v_nat v
-  | C_AND, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
-    return @@ v_int64 Int64.(a' land b')
-  | C_AND, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
-    return @@ v_bytes (TzBytes.logand a' b')
-  | C_OR, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
-    let v = Z.logor a' b' in
-    return @@ v_nat v
-  | C_OR, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] -> return @@ v_int64 Int64.(a' lor b')
-  | C_OR, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
-    return @@ v_bytes (TzBytes.logor a' b')
-  | C_XOR, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
-    let v = Z.logxor a' b' in
-    return @@ v_nat v
-  | C_XOR, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
-    return @@ v_int64 Int64.(a' lxor b')
-  | C_XOR, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
-    return @@ v_bytes (TzBytes.logxor a' b')
   | C_OR, _ -> fail @@ error_type ()
   | C_AND, _ -> fail @@ error_type ()
   | C_XOR, _ -> fail @@ error_type ()
+  (* Bitwise operators *)
+  | C_LAND, [ V_Ct (C_int a'); V_Ct (C_nat b') ] ->
+    let v = Z.logand a' b' in
+    return @@ v_nat v
+  | C_LAND, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
+    let v = Z.logand a' b' in
+    return @@ v_nat v
+  | C_LAND, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
+    return @@ v_int64 Int64.(a' land b')
+  | C_LAND, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
+    return @@ v_bytes (TzBytes.logand a' b')
+  | C_LOR, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
+    let v = Z.logor a' b' in
+    return @@ v_nat v
+  | C_LOR, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] -> return @@ v_int64 Int64.(a' lor b')
+  | C_LOR, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
+    return @@ v_bytes (TzBytes.logor a' b')
+  | C_LXOR, [ V_Ct (C_nat a'); V_Ct (C_nat b') ] ->
+    let v = Z.logxor a' b' in
+    return @@ v_nat v
+  | C_LXOR, [ V_Ct (C_int64 a'); V_Ct (C_int64 b') ] ->
+    return @@ v_int64 Int64.(a' lxor b')
+  | C_LXOR, [ V_Ct (C_bytes a'); V_Ct (C_bytes b') ] ->
+    return @@ v_bytes (TzBytes.logxor a' b')
+  | C_LOR, _ -> fail @@ error_type ()
+  | C_LAND, _ -> fail @@ error_type ()
+  | C_LXOR, _ -> fail @@ error_type ()
   | C_LSL, [ V_Ct (C_int64 a'); V_Ct (C_nat b') ] ->
     let b' = Z.to_int b' in
     return @@ v_int64 Int64.(shift_left a' b')
@@ -2129,6 +2132,13 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       loop start
     | _ -> failwith (Format.asprintf "Expected int types for for loop"))
   | E_type_abstraction { type_binder = _; result } -> eval_ligo result calltrace env
+  | E_coerce _ ->
+    fail
+    @@ Errors.generic_error
+         term.location
+         "Coerce not supported: coerce expressions should be translated \
+          before being interpreted. This could mean that the expression that you are \
+          trying to interpret is too generic, try adding a type annotation."
   | E_type_inst _ ->
     fail
     @@ Errors.generic_error

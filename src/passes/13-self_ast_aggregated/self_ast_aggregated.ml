@@ -102,6 +102,7 @@ let all_aggregated_expression ~raise e =
 
 let all_expression ~raise ~(options : Compiler_options.middle_end) e =
   let e = map_expression Polymorphic_replace.expression e in
+  let e = map_expression (Coerce_replace.expression ~raise) e in
   let e =
     if not options.test
     then (
@@ -130,6 +131,7 @@ let all_program
   in
   let prg = if not options.test then Remove_unused.remove_unused prg else prg in
   let prg = Ast_aggregated.Helpers.map_program Polymorphic_replace.expression prg in
+  let prg = Ast_aggregated.Helpers.map_program (Coerce_replace.expression ~raise) prg in
   let prg =
     if not options.test
     then (

@@ -113,6 +113,7 @@ and expression_content ppf (ec : expression_content) =
       let_result
   | E_assign a -> Assign.pp expression type_expression ppf a
   | E_deref var -> Format.fprintf ppf "!%a" Value_var.pp var
+  | E_coerce a -> Ascription.pp expression type_expression ppf a
   | E_for for_loop -> For_loop.pp expression ppf for_loop
   | E_for_each for_each -> For_each_loop.pp expression ppf for_each
   | E_while while_loop -> While_loop.pp expression ppf while_loop

@@ -147,6 +147,7 @@ and expression_content ppf (ec : expression_content) =
       attributes
       expression
       let_result
+  | E_coerce a -> Ascription.pp expression type_expression ppf a
   | E_assign a -> Assign.pp expression type_expression ppf a
   | E_deref n -> Format.fprintf ppf "!%a" Value_var.pp n
   | E_for for_loop -> For_loop.pp expression ppf for_loop

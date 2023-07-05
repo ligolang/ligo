@@ -37,6 +37,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> 'a =
     res
   | E_deref _ -> init
   | E_assign a -> Assign.fold self self_type init a
+  | E_coerce a -> Ascription.fold self self_type init a
   | E_for f -> For_loop.fold self init f
   | E_for_each fe -> For_each_loop.fold self init fe
   | E_while w -> While_loop.fold self init w

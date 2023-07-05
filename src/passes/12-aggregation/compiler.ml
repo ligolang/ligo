@@ -448,6 +448,7 @@ and compile_expression : Data.t -> Data.path -> I.expression -> O.expression =
   | I.E_type_inst { forall; type_ } ->
     return (O.E_type_inst { forall = self forall; type_ = self_ty type_ })
   | I.E_constant x -> return (O.E_constant (Constant.map self x))
+  | I.E_coerce x -> return (O.E_coerce (Ascription.map self self_ty x))
   | I.E_assign x -> return (O.E_assign (Assign.map self self_ty x))
   | I.E_deref x -> return (O.E_deref x)
   | I.E_while x -> return (O.E_while (While_loop.map self x))

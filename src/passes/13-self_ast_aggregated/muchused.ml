@@ -146,6 +146,7 @@ let rec muchuse_of_expr expr : muchuse =
     muchuse_union
       (M.add (Binder.get_var binder) 1 M.empty, [])
       (muchuse_of_expr expression)
+  | E_coerce { anno_expr ; _ } -> muchuse_of_expr anno_expr
   | E_deref var -> M.add var 1 M.empty, []
   | E_let_mut_in { let_binder; rhs; let_result; _ } ->
     let binders = Pattern.binders let_binder in

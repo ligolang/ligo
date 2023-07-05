@@ -88,6 +88,9 @@ let apply_table_expr table (expr : AST.expression) =
         | E_assign { binder; expression } ->
           let binder = Binder.map apply_table_type binder in
           return @@ E_assign { binder; expression }
+        | E_coerce { anno_expr; type_annotation } ->
+          let type_annotation = apply_table_type type_annotation in
+          return @@ E_coerce { anno_expr; type_annotation }
         | E_variable _var when AST.equal_expression e expr ->
           let _, types =
             List.fold_map ~init:e.type_expression table ~f:(fun te (v, t) ->
@@ -201,6 +204,9 @@ let subst_external_term et t (e : AST.expression) =
         | E_assign { binder; expression } ->
           let binder = Binder.map (subst_external_type et t) binder in
           return @@ E_assign { binder; expression }
+        | E_coerce { anno_expr; type_annotation } ->
+          let type_annotation = subst_external_type et t type_annotation in
+          return @@ E_coerce { anno_expr; type_annotation }
         (* Again not applying to E_let_in ?? What? *)
         | E_let_in _
         | E_let_mut_in _
@@ -395,6 +401,9 @@ let rec mono_polymorphic_expression ~raise
   | E_assign { binder; expression } ->
     let data, expression = self data expression in
     data, return (E_assign { binder; expression })
+  | E_coerce { anno_expr; type_annotation } ->
+    let data, anno_expr = self data anno_expr in
+    data, return (E_coerce { anno_expr; type_annotation })
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let data, rhs = self data rhs in
     let data, let_result = self data let_result in

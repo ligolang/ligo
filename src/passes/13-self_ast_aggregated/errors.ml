@@ -29,6 +29,7 @@ type self_ast_aggregated_error =
   | `Self_ast_aggregated_bad_set_param_type of
     Constant.constant' * Ast_aggregated.expression
   | `Self_ast_aggregated_nested_bigmap of Location.t
+  | `Self_ast_aggregated_unsolved_coerce of Location.t
   ]
 [@@deriving poly_constructor { prefix = "self_ast_aggregated_" }]
 
@@ -188,8 +189,13 @@ let error_ppformat
         "@[<hv>%a@.Invalid big map nesting.@.A big map cannot be nested inside another \
          big map. @]"
         snippet_pp
+        loc
+    | `Self_ast_aggregated_unsolved_coerce loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Invalid coercion. It should have been resolved.@]"
+        snippet_pp
         loc)
-
 
 let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
  fun e ->
@@ -311,6 +317,13 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
     let message =
       Format.sprintf
         "Invalid big map nesting.@.A big map cannot be nested inside another big map."
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_aggregated_unsolved_coerce location ->
+    let message =
+      Format.sprintf
+        "Unsolved coercion."
     in
     let content = make_content ~message ~location () in
     make ~stage ~content

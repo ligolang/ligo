@@ -338,20 +338,30 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
                    match%bind mode i with
                    | Annot.Inferred ->
                      return
-                       ( (arg_type, fst @@ Hashtbl.find_exn output_args i)
+                       ( (i, arg_type, fst @@ Hashtbl.find_exn output_args i)
                          :: unify_worklist
                        , checked )
                    | Checked -> return (unify_worklist, (i, arg_type, arg) :: checked))
              in
-             (* Unify the inferred types *)
-             let%bind () =
+             (* Unify the inferred types, using subtypes *)
+             let%bind update_worklist =
                unify_worklist
                (* Reverse due to [foldi] above *)
-               |> List.rev_map ~f:(fun (arg_type1, arg_type2) ->
+               |> List.rev_map ~f:(fun (i, arg_type1, arg_type2) ->
                       let%bind arg_type1 = Context.tapply arg_type1 in
                       let%bind arg_type2 = Context.tapply arg_type2 in
-                      unify arg_type1 arg_type2)
-               |> all_unit
+                      let%bind f = subtype ~expected:arg_type1 ~received:arg_type2 in
+                      let _inferred, expr = Hashtbl.find_exn output_args i in
+                      return (i, arg_type1, f, expr))
+               |> all
+             in
+             (* Apply the coercion on subtypes *)
+             let () =
+               update_worklist
+               |> List.iter ~f:(fun (i, type_, f, expr) ->
+                      let expr = E.(let%bind expr = expr in
+                                    f expr) in
+                      Hashtbl.set output_args ~key:i ~data:(type_, expr))
              in
              return (checked, ret_type))
     in
@@ -979,10 +989,10 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Inferred ]
              ~types:
-               [ t_bool ~loc () ^~> t_bool ~loc ()
-               ; t_int ~loc () ^~> t_int ~loc ()
+               [ t_int ~loc () ^~> t_int ~loc ()
                ; t_nat ~loc () ^~> t_int ~loc ()
                ; t_bytes ~loc () ^~> t_bytes ~loc ()
+               ; t_bool ~loc () ^~> t_bool ~loc ()
                ]) )
     ; ( C_AND
       , of_type
@@ -990,10 +1000,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
                [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-               ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-               ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
-               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_OR
       , of_type
@@ -1001,9 +1007,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
                [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
-               ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
-               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )
     ; ( C_XOR
       , of_type
@@ -1011,7 +1014,32 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~mode_annot:[ Inferred; Inferred ]
              ~types:
                [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ; t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+               ]) )
+    ; ( C_LAND
+      , of_type
+          (create
+             ~mode_annot:[ Inferred; Inferred ]
+             ~types:
+               [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+               ; t_int ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+               ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+               ]) )
+    ; ( C_LOR
+      , of_type
+          (create
+             ~mode_annot:[ Inferred; Inferred ]
+             ~types:
+               [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
+               ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
+               ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
+               ]) )
+    ; ( C_LXOR
+      , of_type
+          (create
+             ~mode_annot:[ Inferred; Inferred ]
+             ~types:
+               [ t_nat ~loc () ^-> t_nat ~loc () ^~> t_nat ~loc ()
                ; t_int64 ~loc () ^-> t_int64 ~loc () ^~> t_int64 ~loc ()
                ; t_bytes ~loc () ^-> t_bytes ~loc () ^~> t_bytes ~loc ()
                ]) )

@@ -137,6 +137,9 @@ and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
     let while_loop = While_loop.map self while_loop in
     return @@ I.make_e ~loc @@ E_while while_loop
   | E_deref var -> return @@ I.make_e ~loc @@ E_variable var
+  | E_coerce asc ->
+    let asc = Ascription.map self self_type asc in
+    return @@ I.make_e ~loc @@ E_ascription asc
   | E_type_inst { forall; type_ = type_inst } ->
     (match forall.type_expression.type_content with
     | T_for_all { ty_binder; type_; kind = _ } ->

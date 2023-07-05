@@ -374,6 +374,9 @@ module Mutator = struct
     | E_assign { binder; expression } ->
       let+ expression, mutation = self expression in
       return @@ E_assign { binder; expression }, mutation
+    | E_coerce { anno_expr; type_annotation } ->
+      let+ anno_expr, mutation = self anno_expr in
+      return @@ E_coerce { anno_expr; type_annotation }, mutation
 
 
   and mutate_cases

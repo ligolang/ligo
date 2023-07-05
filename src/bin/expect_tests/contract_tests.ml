@@ -12,6 +12,45 @@ let%expect_test _ =
     [ "compile"
     ; "expression"
     ; "jsligo"
+    ; "f(list([1,2,3,4,5]))"
+    ; "--init-file"
+    ; contract "implicit_cast.jsligo"
+    ];
+  [%expect
+    {|
+    3 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "b2"
+    ; "--init-file"
+    ; contract "implicit_cast.mligo"
+    ];
+  [%expect
+    {|
+    True |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "ball"
+    ; "--init-file"
+    ; contract "implicit_cast.mligo"
+    ];
+  [%expect
+    {|
+    True |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
     ; "add2(x, x)"
     ; "--init-file"
     ; contract "modules.jsligo"

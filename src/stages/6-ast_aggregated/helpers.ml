@@ -201,6 +201,9 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     | E_assign a ->
       let res, a = Assign.fold_map self idle init a in
       res, return @@ E_assign a
+    | E_coerce asc ->
+      let res, asc = Ascription.fold_map self idle init asc in
+      res, return @@ E_coerce asc
     | E_for f ->
       let res, f = For_loop.fold_map self init f in
       res, return @@ E_for f
@@ -301,6 +304,8 @@ end = struct
       union (self rhs) fv2
     | E_assign { binder; expression } ->
       union (singleton_mut_var (Binder.get_var binder)) (self expression)
+    | E_coerce { anno_expr ; _ } ->
+      self anno_expr
     | E_deref v -> singleton_mut_var v
     | E_for { binder; start; final; incr; f_body } ->
       unions [ self start; self final; self incr; remove binder (self f_body) ]
@@ -400,6 +405,9 @@ let rec map_expression : 'err mapper -> expression -> expression =
   | E_raw_code { language; code } ->
     let code = self code in
     return @@ E_raw_code { language; code }
+  | E_coerce asc ->
+    let asc = Ascription.map self (fun a -> a) asc in
+    return @@ E_coerce asc
   | (E_deref _ | E_literal _ | E_variable _) as e' -> return e'
 
 

@@ -27,6 +27,10 @@ type constant' =
   | C_AND [@pure]
   | C_OR [@pure]
   | C_XOR [@pure]
+  (* BITWISE *)
+  | C_LAND [@pure]
+  | C_LOR [@pure]
+  | C_LXOR [@pure]
   | C_LSL
   | C_LSR
   (* COMPARATOR *)

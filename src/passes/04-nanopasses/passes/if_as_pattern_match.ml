@@ -23,6 +23,7 @@ let compile ~raise:_ =
               }
           ]
       in
+      let test = e_annot (test, tv_bool ~loc:Location.generated ()) ~loc:(get_e_loc test) in
       e_match ~loc { expr = test; cases }
     | e -> make_e ~loc e
   in
