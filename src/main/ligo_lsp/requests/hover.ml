@@ -40,21 +40,24 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
       | _ -> []
     in
     let params = get_params tdef.content.type_content in
-    let name_with_params =
-      Ast_core.Combinators.t_app
-        ~loc:Loc.dummy
-        { type_operator =
-            Ligo_prim.Module_access.make_el
-            @@ Ligo_prim.Type_var.of_input_var ~loc:Loc.dummy tdef.name
-        ; arguments =
-            List.map
-              ~f:(fun var -> Ast_core.Combinators.t_variable var ~loc:Loc.dummy ())
-              params
-        }
-        ()
+    (* Like ['a x] or [x<a>] if there are params, or just [x] othervise *)
+    let@ name_with_params =
+      match params with
+      | [] -> return tdef.name
+      | _ ->
+        print_type_with_prefix
+        @@ Ast_core.Combinators.t_app
+             ~loc:Loc.dummy
+             { type_operator =
+                 Ligo_prim.Module_access.make_el
+                 @@ Ligo_prim.Type_var.of_input_var ~loc:Loc.dummy tdef.name
+             ; arguments =
+                 List.map
+                   ~f:(fun var -> Ast_core.Combinators.t_variable var ~loc:Loc.dummy ())
+                   params
+             }
+             ()
     in
-    (* Like ['a x] or [x<a>] *)
-    let@ name_with_params = print_type_with_prefix name_with_params in
     let prefix = PPrint.(string "type" ^//^ PPrint.string name_with_params ^//^ equals) in
     print_type_with_prefix ~prefix tdef.content
   | Module mdef -> return @@ Helpers_pretty.print_module syntax mdef
