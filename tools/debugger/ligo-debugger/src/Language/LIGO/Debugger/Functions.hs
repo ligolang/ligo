@@ -25,15 +25,15 @@ import Control.Lens (AsEmpty (..), lens, makeLensesWith, makePrisms, non', prism
 import Data.Default (Default (..))
 import Data.Singletons (SingI)
 import Data.Vinyl (Rec (RNil, (:&)))
-import Fmt (Buildable (..), genericF)
-import Text.Interpolation.Nyan
+import Fmt.Buildable (Buildable, build)
+import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
-import Morley.Michelson.Interpret (StkEl (StkEl))
+import Morley.Michelson.Interpret (StkEl (MkStkEl))
 import Morley.Michelson.Typed qualified as T
 import Morley.Util.Lens (postfixLFields)
 
 import Language.LIGO.Debugger.CLI
-import Util
 
 -- | Registered name of a lambda.
 data LambdaName u
@@ -93,9 +93,7 @@ data LambdaEvent u
   deriving anyclass (NFData)
 
 deriving stock instance Eq (LambdaEvent 'Concise)
-
-instance (SingI u, ForInternalUse) => Buildable (LambdaEvent u) where
-  build = genericF
+deriving anyclass instance (SingI u, ForInternalUse) => Buildable (LambdaEvent u)
 
 makePrisms ''LambdaEvent
 
@@ -242,15 +240,15 @@ embedFunctionNameIntoLambda (LigoVariable newName) newType =
     events ->
       LambdaNamed (LambdaNamedInfo newName newType) : events
 
-tryToEmbedEnvIntoLambda :: LigoTypesVec -> (LigoStackEntry 'Unique, StkEl t) -> StkEl t
-tryToEmbedEnvIntoLambda vec (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(StkEl val)) =
+tryToEmbedEnvIntoLambda :: LigoTypesVec -> (LigoStackEntry 'Unique, StkEl meta t) -> StkEl meta t
+tryToEmbedEnvIntoLambda vec (LigoStackEntry LigoExposedStackEntry{..}, stkEl@(MkStkEl m val)) =
   case (leseDeclaration, vec `readLigoType` leseType) of
     (Just name, typ@(LigoTypeResolved LigoTypeExpression { _lteTypeContent = LTCArrow{} }))
-      -> StkEl $ embedFunctionNameIntoLambda name typ val
+      -> MkStkEl m $ embedFunctionNameIntoLambda name typ val
     _ -> stkEl
 tryToEmbedEnvIntoLambda _ (_, stkEl) = stkEl
 
-embedFunctionNames :: LigoTypesVec -> Rec StkEl t -> LigoStack 'Unique -> Rec StkEl t
+embedFunctionNames :: LigoTypesVec -> Rec (StkEl meta) t -> LigoStack 'Unique -> Rec (StkEl meta) t
 embedFunctionNames vec (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda vec (y, x) :& embedFunctionNames vec xs ys
 embedFunctionNames _ stack [] = stack
 embedFunctionNames _ RNil _ = RNil

@@ -16,14 +16,15 @@ import Data.Data (Data)
 import Data.Default (Default, def)
 import Data.HashSet qualified as HashSet
 import Data.Set qualified as Set
-import Fmt (Buildable (..), Builder, indentF, pretty, unlinesF, (+|), (|+))
-import Text.Interpolation.Nyan
+import Fmt.Buildable (Buildable, build, indentF, pretty, unlinesF, (+|), (|+))
+import Fmt.Utils (Doc)
+import Text.Interpolation.Nyan hiding (rmode')
 import Text.Show qualified
+import Util (rmode')
 
 import Morley.Debugger.Core.Common (debuggerTcOptions)
 import Morley.Micheline.Class (FromExp, FromExpError (FromExpError), fromExp)
-import Morley.Micheline.Expression
-  (Exp (..), Expression, MichelinePrimAp (..), MichelinePrimitive (..), annotToText)
+import Morley.Micheline.Expression (Exp (..), Expression, MichelinePrimAp (..), annotToText)
 import Morley.Micheline.Expression.WithMeta (ExpressionWithMeta, WithMeta, expAllExtraL, expMetaL)
 import Morley.Michelson.Printer (RenderDoc, isRenderable, renderDoc)
 import Morley.Michelson.Printer.Util (renderOpsList)
@@ -65,11 +66,11 @@ instance RenderDoc (OpWithMeta meta) where
           _ -> True
 
 instance (Buildable meta) => Buildable (OpWithMeta meta) where
-  build (MMetaEx meta op) = [int||<MMetaEx: #{meta} #{op}>|]
-  build (MPrimEx expandedInstr) = [int||<MPrimEx: #{expandedInstr}>|]
-  build (MSeqEx expandedOps)    = [int||<MSeqEx: #{expandedOps}>|]
+  build (MMetaEx meta op) =  [int||<MMetaEx: #{meta} #{op}>|]
+  build (MPrimEx expandedInstr) =  [int||<MPrimEx: #{expandedInstr}>|]
+  build (MSeqEx expandedOps)    =  [int||<MSeqEx: #{expandedOps}>|]
 
-type InstrWithMeta meta = U.InstrAbstract (OpWithMeta meta)
+type InstrWithMeta meta = U.InstrAbstract [] (OpWithMeta meta)
 type ContractWithMeta meta = U.Contract' (OpWithMeta meta)
 
 instance (meta ~ meta') => FromExp (WithMeta meta) (OpWithMeta meta') where
@@ -120,19 +121,19 @@ instance Buildable (FromExpressionWithMetaError EmbeddedLigoMeta) where
       , indentF 2 $ build err
       ]
     where
-      buildExpWithMeta :: Exp (WithMeta EmbeddedLigoMeta) -> Builder
+      buildExpWithMeta :: Exp (WithMeta EmbeddedLigoMeta) -> Doc
       buildExpWithMeta = \case
         ExpInt _ i -> build i
         ExpString _ s -> build s
         ExpBytes _ b ->
           build $ encodeBase58Check b
-        ExpSeq _ s -> "(" +| buildList buildExpWithMeta s |+ ")"
-        ExpPrim _ (MichelinePrimAp (MichelinePrimitive text) s annots) ->
-          text <> " " |+ "(" +|
-          buildList buildExpWithMeta s +| ") " +|
-          buildList (build . annotToText) annots
+        ExpSeq _ s -> "(" +| buildList' buildExpWithMeta s |+ ")"
+        ExpPrim _ (MichelinePrimAp prim s annots) ->
+          build prim <> " " |+ "(" +|
+          buildList' buildExpWithMeta s +| ") " +|
+          buildList' (build . annotToText) annots
         where
-          buildList buildElem = mconcat . intersperse ", " . map buildElem
+          buildList' buildElem = mconcat . intersperse ", " . map buildElem
 
 newtype TcErrorWithMeta meta = TcErrorWithMeta (TcError' (OpWithMeta meta))
   deriving newtype (Eq, Buildable)
@@ -144,7 +145,7 @@ data DecodeError meta
   | PreprocessError PreprocessError
   deriving stock (Eq, Generic)
 
-instance (Buildable (FromExpressionWithMetaError meta)) => Buildable (DecodeError meta) where
+instance (Buildable (FromExpressionWithMetaError meta), Buildable meta) => Buildable (DecodeError meta) where
   build = \case
     FromExpressionFailed err ->
       [int||Failed to parse Micheline expression: #{err}|]
@@ -162,8 +163,8 @@ data MetaEmbeddingError
 
 instance Buildable MetaEmbeddingError where
   build = \case
-    InsufficientMetas n -> [int||Insufficient number of entries: #s{n}|]
-    ExtraMetas n -> [int||Too many debug entries left: #s{n}|]
+    InsufficientMetas n ->  [int||Insufficient number of entries: #s{n}|]
+    ExtraMetas n ->  [int||Too many debug entries left: #s{n}|]
 
 -- | Embeds metas in DFS order. If the length of metas list is not equal to
 -- the size of @Micheline@ tree, then the error would be thrown.
@@ -240,7 +241,7 @@ type PreprocessMonad meta =
   ReaderT (Map U.EpName U.Ty) $
   Except PreprocessError
 
-createErrorValue :: MText -> U.Value' (OpWithMeta meta)
+createErrorValue :: MText -> U.Value' [] (OpWithMeta meta)
 createErrorValue errMsg =
   U.ValuePair (U.ValueString addrText) (U.ValueString errMsg)
   where
@@ -369,7 +370,7 @@ replaceOpWithMeta = \case
     returnInstr :: InstrWithMeta meta -> PreprocessMonad meta (OpWithMeta meta)
     returnInstr = pure . MPrimEx
 
-    replaceValue :: U.Value' (OpWithMeta meta) -> PreprocessMonad meta (U.Value' (OpWithMeta meta))
+    replaceValue :: U.Value' [] (OpWithMeta meta) -> PreprocessMonad meta (U.Value' [] (OpWithMeta meta))
     replaceValue = \case
       U.ValuePair l r -> U.ValuePair <$> replaceValue l <*> replaceValue r
       U.ValueLeft l -> U.ValueLeft <$> replaceValue l
@@ -402,7 +403,7 @@ preprocessContract con@U.Contract{..} =
   let
     ctx = U.mkEntrypointsMap WithImplicitDefaultEp contractParameter
     U.ParameterType t rootAnn = contractParameter
-    mappedOpsInMonad = mapM replaceOpWithMeta contractCode
+    mappedOpsInMonad = replaceOpWithMeta contractCode
     mappedOpsE = runExcept $ runReaderT mappedOpsInMonad ctx
   in mappedOpsE <&> \ops -> con
       { U.contractCode = ops

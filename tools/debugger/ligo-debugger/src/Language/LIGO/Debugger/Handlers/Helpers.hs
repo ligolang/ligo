@@ -13,9 +13,11 @@ import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
 import Data.Typeable (cast)
-import Fmt (Buildable (..), Builder, pretty)
-import Text.Interpolation.Nyan
+import Fmt.Buildable (Buildable, build, pretty)
+import Fmt.Utils (Doc)
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO.Exception (fromEither, throwIO, try)
+import Util
 
 import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
@@ -116,7 +118,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   }
 
 instance Buildable LigoLanguageServerState where
-  build LigoLanguageServerState{..} = [int||
+  build LigoLanguageServerState{..} =  [int||
     Debugging program: #{lsProgram}
     |]
 
@@ -142,7 +144,7 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
       & first noParseEntrypointErr
       & fromEither
 
-  let noEntrypointErr = ConfigurationException
+  let noEntrypointErr = ConfigurationException $
         [int||Entrypoint `#{michelsonEntrypoint}` not found|]
   T.MkEntrypointCallRes notes call <-
     T.mkEntrypointCall michelsonEntrypoint (cParamNotes contract)
@@ -191,10 +193,10 @@ parseValue ctxContractPath category val valueLang ligoType = runExceptT do
 
   ext <- withExceptT (toText . displayException) $ getExt ctxContractPath
 
-  let typ :: Builder =
+  let typ :: Doc =
         case ligoType of
           LigoTypeResolved{} -> buildType ext ligoType
-          _ -> [int||#{demote @t} // n.b.: the expected type is \
+          _ ->  [int||#{demote @t} // n.b.: the expected type is \
                shown in Michelson format|]
 
   typeVerifyTopLevelType mempty uvalue

@@ -25,14 +25,15 @@ import Data.Default (Default (..))
 import Data.List qualified as L
 import Data.Singletons.TH
 import Data.Text qualified as T
-import Fmt (Buildable (build), Builder)
-import Fmt.Internal.Core (FromBuilder)
+import Fmt.Buildable (Buildable, FromDoc, build)
+import Fmt.Utils (Doc)
 import GHC.Generics (Generic (Rep))
 import GHC.TypeLits (Nat)
 import System.Environment (getEnv)
 import System.IO.Error (isDoesNotExistError)
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO.Exception as UnliftIO (catch, throwIO)
+import Util
 
 import Morley.Util.TypeLits (ErrorMessage (Text), TypeError)
 
@@ -107,7 +108,7 @@ newtype Name (u :: NameType) = Name Text
   deriving stock (Data)
   deriving newtype (Show, NFData, FromJSON)
 
-deriving newtype instance FromBuilder (Name 'Concise)
+deriving newtype instance FromDoc (Name 'Concise)
 deriving newtype instance IsString (Name 'Concise)
 deriving newtype instance Eq (Name 'Concise)
 
@@ -126,7 +127,7 @@ instance (SingI u) => Buildable (Name u) where
       -- Here we want to pretty-print monomorphed variables.
       -- They have format like "poly_#SomeModule#NestedModule#foo_name_42"
       -- and we want to pretty-print them like "SomeModule.NestedModule.foo_name$42".
-      buildUnique :: Text -> Builder
+      buildUnique :: Text -> Doc
       buildUnique (T.stripPrefix "poly_" -> Just name)
         | not (T.null index) && T.all isDigit index && T.any (== '_') functionWithIndex =
           [int||#{moduleName}#{functionName}$#{index}|]

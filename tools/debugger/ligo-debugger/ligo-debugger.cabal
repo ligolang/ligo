@@ -300,7 +300,6 @@ test-suite ligo-debugger-test
     , directory
     , duplo
     , filepath
-    , fmt
     , hedgehog
     , hspec-expectations
     , lens

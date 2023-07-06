@@ -3,8 +3,10 @@ module Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
   ) where
 
 import Data.Singletons (Sing, withSingI)
-import Fmt (Builder, pretty)
-import Text.Interpolation.Nyan
+import Fmt.Buildable (pretty)
+import Fmt.Utils (Doc)
+import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
 import Morley.Michelson.Text (mkMTextCut, mt)
 import Morley.Michelson.Typed (SingI (sing), SingT (..))
@@ -12,7 +14,7 @@ import Morley.Michelson.Typed qualified as T
 
 import Duplo (Cofree ((:<)), fastMake, layer, match)
 
-import Language.LIGO.AST.Pretty
+import Language.LIGO.AST.Pretty hiding (Doc)
 import Language.LIGO.AST.Skeleton
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Types
@@ -161,7 +163,7 @@ replaceLigoType (match -> Just (i, app@(TApply t _))) =
 replaceLigoType (i :< fs) = (i :< fmap replaceLigoType fs)
 
 -- | Generate a contract that decompiles one Michelson value.
-generateDecompilation' :: LigoType -> T.SomeValue -> Builder
+generateDecompilation' :: LigoType -> T.SomeValue -> Doc
 generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType of
   LigoType (Just expr) ->
     let
@@ -171,7 +173,7 @@ generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType
 
       isType = isJust (layer @AST.Type replacedTypeNode) || isJust (layer @TypeName replacedTypeNode)
       replacedVal = replaceOps (sing @t) val
-      typ = show @Builder $ lppDialect Caml replacedTypeNode
+      typ = show @Doc $ lppDialect Caml replacedTypeNode
     in
       if not isType
       then noDecompilation
@@ -193,7 +195,7 @@ generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType
 -- | Generate a contract that decompiles a bunch of Michelson values.
 -- After executing this contract will return a @JSON@ list with
 -- @JSON@ representations of @LIGO@ values.
-generateDecompilation :: [(LigoType, T.SomeValue)] -> Builder
+generateDecompilation :: [(LigoType, T.SomeValue)] -> Doc
 generateDecompilation typesAndValues =
   [int||
   let () = Test.unset_print_values ()

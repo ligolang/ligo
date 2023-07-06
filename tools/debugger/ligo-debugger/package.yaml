@@ -163,7 +163,6 @@ tests:
       - directory
       - duplo
       - filepath
-      - fmt
       - hedgehog
       - hspec-expectations
       - lens

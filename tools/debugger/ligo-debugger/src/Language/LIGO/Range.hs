@@ -31,7 +31,7 @@ import Data.Aeson (FromJSON (parseJSON), withObject, (.:))
 import Data.ByteString qualified as BS
 import Data.Data (Data)
 import Debug qualified
-import Fmt (Buildable (build))
+import Fmt.Buildable (Buildable, build)
 
 import Duplo.Lattice
 import Duplo.Pretty

@@ -17,11 +17,11 @@ module Language.LIGO.Debugger.CLI.Exception
 
 import Data.Default (Default (def))
 import Data.Text qualified as Text
-import Fmt (Buildable (build), pretty)
-import Fmt.Internal.Core (FromBuilder (fromBuilder))
+import Fmt.Buildable (Buildable, FromDoc, build, fmt, pretty)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode)
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
 import Morley.Debugger.Protocol.DAP qualified as DAP
 
@@ -181,15 +181,15 @@ data LigoDecodeException = LigoDecodeException
 
 -- | Invalid debugger configuration provided.
 newtype ConfigurationException = ConfigurationException Text
-  deriving newtype (Show, Buildable, FromBuilder)
+  deriving newtype (Show, Buildable, FromDoc)
 
 -- | Something got wrong on @ligo@ executable's side.
 newtype LigoCallException = LigoCallException { leMessage :: Text }
-  deriving newtype (Eq, Show, FromBuilder)
+  deriving newtype (Eq, Show, FromDoc)
 
 -- | Some unexpected error in communication with the plugin.
 newtype PluginCommunicationException = PluginCommunicationException Text
-  deriving newtype (Show, Buildable, FromBuilder)
+  deriving newtype (Show, Buildable, FromDoc)
 
 instance Default LigoCallException where
   def = LigoCallException ""
@@ -208,9 +208,9 @@ instance Exception LigoDecodeException where
   displayException = pretty
 
 -- TODO: move this instance to morley-debugger
-instance FromBuilder DAP.Message where
-  fromBuilder txt = DAP.defaultMessage
-    { DAP.formatMessage = fromBuilder txt
+instance FromDoc DAP.Message where
+  fmt txt = DAP.defaultMessage
+    { DAP.formatMessage = fmt txt
     }
 
 instance Exception ConfigurationException where

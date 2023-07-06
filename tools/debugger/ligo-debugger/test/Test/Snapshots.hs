@@ -21,7 +21,7 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (Assertion, (@=?))
 import Test.Util
 import Test.Util.Options (minor, reinsuring)
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO (forConcurrently_)
 
 import Morley.Debugger.Core
@@ -33,8 +33,7 @@ import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
-  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack),
-  StkEl (StkEl))
+  (MichelsonFailed (MichelsonExt), MichelsonFailureWithStack (MichelsonFailureWithStack), NoStkElMeta (NoStkElMeta), StkEl (MkStkEl))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))
 import Morley.Michelson.Typed (SomeValue)
 import Morley.Michelson.Typed qualified as T
@@ -126,7 +125,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 , SomeLorentzValue (0 :: Integer)
                 )
               ]
-            contractOut = StkEl $ T.toVal ([] :: [T.Operation], 42 :: Integer)
+            contractOut = MkStkEl NoStkElMeta $ T.toVal ([] :: [T.Operation], 42 :: Integer)
 
             operationListType' = mkConstantType "List" [mkSimpleConstantType "Operation"]
             operationListType = LigoTypeResolved operationListType'

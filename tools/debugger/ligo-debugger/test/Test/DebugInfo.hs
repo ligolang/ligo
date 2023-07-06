@@ -12,7 +12,7 @@ import Fmt (Buildable (..), pretty)
 import Test.HUnit (Assertion)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 
 import Morley.Debugger.Core (SourceLocation, SourceLocation' (..), SrcLoc (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (MSFile))

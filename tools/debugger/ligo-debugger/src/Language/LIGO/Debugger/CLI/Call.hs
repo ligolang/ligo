@@ -33,13 +33,13 @@ import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
 import Data.Text qualified as Text
-import Fmt (Buildable, build, pretty)
+import Fmt.Buildable (Buildable, build, pretty)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode (ExitSuccess))
 import System.FilePath (isPathSeparator, takeDirectory, (</>))
 import System.Process (cwd, proc)
 import System.Process.ByteString.Lazy qualified as PExtras
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 
 import UnliftIO (MonadUnliftIO, hFlush, handle, throwIO, try, withSystemTempFile)
 import UnliftIO.Directory (doesFileExist)

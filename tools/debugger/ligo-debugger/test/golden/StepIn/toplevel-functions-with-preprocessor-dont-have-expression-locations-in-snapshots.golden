@@ -1,242 +1,290 @@
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:3-9:42
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of unit * int
           siValue: Pair Unit 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:27-9:41
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:34-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:34-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair 0 42 : int * int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: foo
       sfLoc: test/contracts/contract-with-preprocessor.mligo@5:3-5:8
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of int * int
-          siValue: Pair 0 42
-        ]
+          siValue: Pair 0 42 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: foo
       sfLoc: test/contracts/contract-with-preprocessor.mligo@5:3-5:8
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem b of int
           siValue: 42
         , StackItem:
           siLigoDesc: elem a of int
-          siValue: 0
-        ]
+          siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:27-9:41
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:25
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair { } 42 : operation list * int)
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem s of int
           siValue: 0
         , StackItem:
           siLigoDesc: elem foo of int * int -> int
-          siValue: { {  }; { {  }; {  }; { {  }; UNPAIR; {  }; { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } }
-        ]
-    ]
-
+          siValue:
+            { {  };
+              { {  };
+                {  };
+                { {  };
+                  UNPAIR;
+                  {  };
+                  { {  }; { SWAP; {  }; { {  }; { SWAP }; ADD } } } } } } ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
-    [StackFrame:
+    [ StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
       sfStack:
-        [StackItem:
+        [ StackItem:
           siLigoDesc: elem ? of 
           siValue: Pair { } 42
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0
-        ]
-    ]
+          siValue: 0 ] ]

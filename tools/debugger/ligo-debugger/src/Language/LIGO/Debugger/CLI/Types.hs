@@ -32,12 +32,13 @@ import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
 import Data.Vector qualified as V
 import Debug qualified
-import Fmt (Buildable (..), Builder, blockListF, nameF, pretty, unlinesF)
+import Fmt.Buildable (Buildable, blockListF, build, nameF, pretty, unlinesF)
+import Fmt.Utils (Doc)
 import Generics.SYB (everywhere, mkT)
 import System.Console.ANSI
   (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
   SGR (Reset, SetColor, SetConsoleIntensity))
-import Text.Interpolation.Nyan (int, rmode')
+import Text.Interpolation.Nyan (int)
 import Util
 
 import Morley.Micheline.Expression qualified as Micheline
@@ -46,7 +47,7 @@ import Morley.Util.Lens
 import Duplo
   (Apply, Cofree ((:<)), Comonad (extract), Element, Lattice (leq), Tree, inject, layer, text)
 
-import Language.LIGO.AST.Pretty
+import Language.LIGO.AST.Pretty hiding (Doc)
 import Language.LIGO.AST.Skeleton hiding (Name)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
@@ -654,14 +655,14 @@ instance FromJSON (LigoVariable u) where
   parseJSON = fmap LigoVariable . parseJSON
 
 instance Buildable LigoTypeRef where
-  build (LigoTypeRef i) = [int||type##{i}|]
+  build (LigoTypeRef i) =  [int||type##{i}|]
 
 -- We're writing this instance because sometimes
 -- it's hard to construct @LigoType@ by hand (e.g. in tests).
 -- So, we'll treat that types are equal if only their prettified representations
 -- are equal.
 instance Eq LigoType where
-  lhs == rhs = buildType Caml lhs == buildType Caml rhs
+  lhs == rhs = pretty @_ @Text (buildType Caml lhs) == pretty @_ @Text (buildType Caml rhs)
 
 instance (SingI u) => Buildable (LigoExposedStackEntry u) where
   build (LigoExposedStackEntry decl ty) =
@@ -697,7 +698,7 @@ instance (SingI u) => Buildable (LigoIndexedInfo u) where
   build = \case
     LigoEmptyLocationInfo -> "none"
     LigoIndexedInfo mLoc mEnv typ -> unlinesF $ catMaybes
-      [ mLoc <&> \loc -> [int||location: #{loc}|]
+      [ mLoc <&> \loc ->  [int||location: #{loc}|]
       , mEnv <&> \env -> nameF "environment stack" $ blockListF env
       , case typ of { Just ty -> Just [int||source type: #{buildLigoTypeF @u ty}|] ; _ -> Nothing }
       ]
@@ -1051,7 +1052,7 @@ mkPairType fstElem sndElem = mkRecordType LTree
   ]
 
 -- | Prettify @LigoType@ in provided dialect.
-buildType :: Lang -> LigoType -> Builder
+buildType :: Lang -> LigoType -> Doc
 buildType lang LigoType{..} = case unLigoType of
   Nothing -> ""
   Just typExpr ->
@@ -1072,7 +1073,7 @@ replaceANSI =
   . T.replace
       [int||#ansi{[SetConsoleIntensity BoldIntensity, SetColor Foreground Dull Red]}|] "-->"
 
-buildLigoTypeF :: forall u. (SingI u) => LigoTypeF u -> Builder
+buildLigoTypeF :: forall u. (SingI u) => LigoTypeF u -> Doc
 buildLigoTypeF typ = case sing @u of
   SUnique -> build typ
   SConcise -> buildType Caml typ

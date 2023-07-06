@@ -34,8 +34,9 @@ import Data.List.NonEmpty (groupBy)
 import Data.Set qualified as S
 import Data.Set qualified as Set
 import Data.Vinyl (Rec (RNil, (:&)))
-import Fmt (Buildable (..), pretty)
-import Text.Interpolation.Nyan
+import Fmt.Buildable (Buildable, pretty)
+import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
 import Morley.Debugger.Core.Common (SrcLoc (..))
 import Morley.Debugger.Core.Navigate (SourceLocation, SourceLocation' (..))
@@ -331,11 +332,11 @@ replacementErrorValueToException = \case
     pure $ ReplacementException errMsg
   _ -> Nothing
 
-stkElValue :: StkEl v -> SomeValue
+stkElValue :: StkEl meta v -> SomeValue
 stkElValue stkEl = let v = seValue stkEl in withValueTypeSanity v (SomeValue v)
 
 -- | Leave only information that matters in LIGO.
-refineStack :: Rec StkEl st -> [SomeValue]
+refineStack :: Rec (StkEl meta) st -> [SomeValue]
 refineStack =
   -- Note: it is important for this function to be lazy if we don't
   -- want to have full copy of stack skeleton (which is sequence of `:&`)

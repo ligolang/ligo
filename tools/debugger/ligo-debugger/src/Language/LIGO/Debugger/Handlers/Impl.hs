@@ -20,14 +20,16 @@ import Data.Default (def)
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (demote)
 import Data.Time.Clock.POSIX (getPOSIXTime)
-import Fmt (Builder, blockListF, pretty)
+import Fmt.Buildable (blockListF, pretty)
+import Fmt.Utils (Doc)
 import GHC.Conc (unsafeIOToSTM)
 import System.FilePath (takeFileName, (<.>), (</>))
-import Text.Interpolation.Nyan
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO (UnliftIO (..), askUnliftIO, withRunInIO)
 import UnliftIO.Directory (doesFileExist)
 import UnliftIO.Exception (Handler (..), catches, throwIO, try)
 import UnliftIO.STM (modifyTVar)
+import Util
 
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues (Manager (mComputation))
@@ -56,7 +58,7 @@ import Morley.Michelson.Interpret
   MichelsonFailureWithStack (mfwsErrorSrcPos), RemainingSteps (RemainingSteps), ceContracts,
   ceMaxSteps, mfwsFailed)
 import Morley.Michelson.Parser.Types (MichelsonSource)
-import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens, printDocB)
+import Morley.Michelson.Printer.Util (RenderDoc (renderDoc), doesntNeedParens)
 import Morley.Michelson.Runtime (ContractState (..), mkVotingPowers)
 import Morley.Michelson.Runtime.Dummy (dummyMaxSteps)
 import Morley.Michelson.Typed
@@ -170,7 +172,7 @@ instance HasSpecificMessages LIGO where
           }
         pushMessage $ DAPEvent $ TerminatedEvent $ DAP.defaultTerminatedEvent
           where
-            buildOpsAndNewStorage :: (MonadThrow m) => LigoOrMichValue -> m (Builder, Builder)
+            buildOpsAndNewStorage :: (MonadThrow m) => LigoOrMichValue -> m (Doc, Doc)
             buildOpsAndNewStorage = \case
               LigoValue ligoType ligoValue -> case toTupleMaybe ligoValue of
                 Just [LVList ops, st] -> do
@@ -189,23 +191,20 @@ instance HasSpecificMessages LIGO where
                 (T.VPair (T.VList ops, r :: T.Value r)) ->
                   case T.valueTypeSanity r of
                     T.Dict ->
-                      case T.checkOpPresence (T.sing @r) of
-                        T.OpAbsent -> pure
-                          ( blockListF ops
-                          , printDocB False $ renderDoc doesntNeedParens r
-                          )
+                      case T.checkTPresence T.SPSOp (T.sing @r) of
+                        T.TAbsent -> pure (blockListF ops, renderDoc doesntNeedParens r)
                         _ -> throwM invalidStorage
                 _ -> throwM badLastElement
               _ -> throwM notComputed
 
-            buildOldStorage :: (MonadThrow m) => LigoOrMichValue -> m Builder
+            buildOldStorage :: (MonadThrow m) => LigoOrMichValue -> m Doc
             buildOldStorage = \case
               LigoValue ligoType ligoValue -> pure $ buildLigoValue ligoType ligoValue
               MichValue _ (SomeValue (st :: T.Value r)) ->
                 case T.valueTypeSanity st of
                   T.Dict ->
-                    case T.checkOpPresence (T.sing @r) of
-                      T.OpAbsent -> pure $ printDocB False $ renderDoc doesntNeedParens st
+                    case T.checkTPresence T.SPSOp (T.sing @r) of
+                      T.TAbsent -> pure $ renderDoc doesntNeedParens st
                       _ -> throwM invalidStorage
               _ -> throwM notComputed
 
@@ -437,7 +436,7 @@ instance HasSpecificMessages LIGO where
         return $ ShouldStop False
 
     , Handler \(SomeException err) -> do
-        writeErrResponse @ImpossibleHappened
+        writeErrResponse @ImpossibleHappened $
           [int||Internal (unhandled) error: #exc{err}|]
         return $ ShouldStop False
     ]
