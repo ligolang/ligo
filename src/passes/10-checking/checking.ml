@@ -1502,7 +1502,7 @@ and infer_declaration (decl : I.declaration)
       let self = remove_non_public in
       match inferred_sig with
       | [] -> []
-      | Signature.S_value (_, _, attr) :: k when not attr.public -> self k
+      | Signature.S_value (_, _, attr) :: k when not attr.public && not attr.entry -> self k
       | Signature.S_type (_, _, attr) :: k when not attr.public -> self k
       | Signature.S_module (_, _, attr) :: k when not attr.public -> self k
       | x :: k -> x :: self k
@@ -1518,12 +1518,7 @@ and infer_declaration (decl : I.declaration)
         let%bind annoted_sig =
           With_default_layout.evaluate_signature_expr signature_expr
         in
-        let%bind annoted_sig, entries = cast_signature inferred_sig annoted_sig in
-        let%bind () =
-          match Generator.check_entries inferred_sig entries with
-          | `All_found -> return ()
-          | `Not_found e -> raise (signature_not_found_entry e)
-        in
+        let%bind annoted_sig, _entries = cast_signature inferred_sig annoted_sig in
         let%bind annoted_sig = Generator.make_main_signature annoted_sig in
         return @@ remove_non_public annoted_sig
     in
@@ -1542,6 +1537,13 @@ and infer_declaration (decl : I.declaration)
   | D_signature { signature_binder; signature } ->
     let%bind signature_expr = With_default_layout.evaluate_signature_expr signature in
     no_declaration [ S_module_type (signature_binder, signature_expr) ]
+  | D_module_include module_ ->
+    let%bind sig_, module_ = infer_module_expr module_ in
+    const
+      E.(
+        let%bind module_ = module_ in
+        return @@ O.D_module_include module_)
+      sig_
 
 
 and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =

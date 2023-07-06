@@ -105,6 +105,7 @@ let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
 | Match     w -> Match (w#add_comment comment)
 | Mod       w -> Mod (w#add_comment comment)
 | Module    w -> Module (w#add_comment comment)
+| Include   w -> Include (w#add_comment comment)
 | Mut       w -> Mut (w#add_comment comment)
 | Not       w -> Not (w#add_comment comment)
 | Of        w -> Of (w#add_comment comment)

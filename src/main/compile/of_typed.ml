@@ -205,6 +205,7 @@ let rec list_declarations (only_ep : bool) (m : Ast_typed.program) : Value_var.t
           then Binder.get_var binder :: prev
           else prev
         else Binder.get_var binder :: prev
+      | D_module_include _ -> assert false (* What TODO here ? *)
       | D_module
           { module_binder; module_ = { module_content = M_struct m; _ }; module_attr; _ }
         when not module_attr.hidden ->

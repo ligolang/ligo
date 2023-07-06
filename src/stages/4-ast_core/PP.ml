@@ -116,6 +116,7 @@ and declaration ppf (d : declaration) =
       (Simple_utils.PP_helpers.option signature_expr)
       ppf
       md
+  | D_module_include me -> fprintf ppf "include (%a)" module_expr me
   | D_signature sd -> Types.Signature_decl.pp signature_expr ppf sd
 
 

@@ -244,6 +244,7 @@ declaration:
 | let_decl       { D_Let    $1 }
 | module_decl    { D_Module $1 }
 | attr_decl      { D_Attr   $1 }
+| module_include { D_Module_include $1 }
 | signature_decl { D_Signature $1 }
 
 (* Attributed declarations *)
@@ -497,6 +498,15 @@ type_params:
 
 parameters:
   nseq(core_irrefutable) { $1 }
+
+(* Top-level directives *)
+
+module_include:
+  "include" module_expr {
+    let stop   = module_expr_to_region $2 in
+    let region = cover $1#region stop in
+    let value  = {kwd_include=$1; module_expr=$2}
+    in {region; value} }
 
 (* Top-level module declaration *)
 

@@ -24,32 +24,68 @@ let default_parameter_var =
   Type_var.of_input_var ~loc:Location.generated default_parameter
 
 
-let get_entries_of_module (prg : Ast_typed.module_) =
+let get_entries_of_signature (sign : Ast_typed.signature) =
+  let f d =
+    match d with
+    | Ast_typed.S_value (binder, ty, attr) when attr.entry -> Some (binder, ty)
+    | _ -> None
+  in
+  sign |> List.filter_map ~f
+
+
+let get_entries_of_module ?signature (prg : Ast_typed.module_) =
   let f d =
     match Location.unwrap d with
     | Ast_typed.D_value { binder; attr; _ } when attr.entry ->
-      Some (Binder.get_var binder, Binder.get_ascr binder)
+      [ Binder.get_var binder, Binder.get_ascr binder ]
     | Ast_typed.D_irrefutable_match { pattern; attr; _ } when attr.entry ->
       (match Location.unwrap pattern with
-      | P_var binder -> Some (Binder.get_var binder, Binder.get_ascr binder)
-      | _ -> None)
+      | P_var binder -> [ Binder.get_var binder, Binder.get_ascr binder ]
+      | _ -> [])
+    | Ast_typed.D_module_include { signature; _ } -> get_entries_of_signature signature
+    | _ -> []
+  in
+  let filter =
+    match signature with
+    | None -> fun _ -> true
+    | Some signature ->
+      let signature_entries = get_entries_of_signature signature in
+      fun e ->
+        List.mem ~equal:(fun (v, _) (v', _) -> Value_var.equal v v') signature_entries e
+  in
+  prg |> List.concat_map ~f |> List.filter ~f:filter
+
+
+let get_views_of_signature (sign : Ast_typed.signature) =
+  let f d =
+    match d with
+    | Ast_typed.S_value (binder, ty, attr) when attr.view -> Some (binder, ty)
     | _ -> None
   in
-  prg |> List.filter_map ~f
+  sign |> List.filter_map ~f
 
 
-let get_views_of_module (prg : Ast_typed.module_) =
+let get_views_of_module ?signature (prg : Ast_typed.module_) =
   let f d =
     match Location.unwrap d with
     | Ast_typed.D_value { binder; attr; _ } when attr.view ->
-      Some (Binder.get_var binder, Binder.get_ascr binder)
+      [ Binder.get_var binder, Binder.get_ascr binder ]
     | Ast_typed.D_irrefutable_match { pattern; attr; _ } when attr.view ->
       (match Location.unwrap pattern with
-      | P_var binder -> Some (Binder.get_var binder, Binder.get_ascr binder)
-      | _ -> None)
-    | _ -> None
+      | P_var binder -> [ Binder.get_var binder, Binder.get_ascr binder ]
+      | _ -> [])
+    | Ast_typed.D_module_include { signature; _ } -> get_views_of_signature signature
+    | _ -> []
   in
-  prg |> List.filter_map ~f
+  let filter =
+    match signature with
+    | None -> fun _ -> true
+    | Some signature ->
+      let signature_views = get_views_of_signature signature in
+      fun e ->
+        List.mem ~equal:(fun (v, _) (v', _) -> Value_var.equal v v') signature_views e
+  in
+  prg |> List.concat_map ~f |> List.filter ~f:filter
 
 
 let create_entrypoint_function_expr entrypoints parameter_type storage_type =
@@ -142,10 +178,10 @@ let create_views_function_expr ~loc views storage_type =
   List.fold_right ~f ~init:(e_a_test_nil_views ~loc storage_type) views
 
 
-let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
+let program ~raise ?signature : Ast_typed.module_ -> Ast_typed.declaration list =
  fun module_ ->
   let loc = Location.generated in
-  match Simple_utils.List.Ne.of_list_opt @@ get_entries_of_module module_ with
+  match Simple_utils.List.Ne.of_list_opt @@ get_entries_of_module ?signature module_ with
   | None -> []
   | Some entries ->
     let parameter_type, storage_type =
@@ -202,7 +238,7 @@ let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
              }
       , Ast_typed.e_a_variable ~loc (Binder.get_var binder) expr.type_expression )
     in
-    let views = get_views_of_module module_ in
+    let views = get_views_of_module ?signature module_ in
     let views_decl, views_var =
       let expr = create_views_function_expr ~loc views storage_type in
       let binder = Binder.make default_views_var expr.type_expression in
@@ -243,15 +279,15 @@ let program ~raise : Ast_typed.module_ -> Ast_typed.declaration list =
     [ entrypoint_type_decl; entrypoint_function_decl; views_decl; contract_decl ]
 
 
-let make_main_module_expr ~raise (module_content : Ast_typed.module_content) =
+let make_main_module_expr ~raise ?signature (module_content : Ast_typed.module_content) =
   match module_content with
   | M_struct ds ->
-    let postfix = program ~raise ds in
+    let postfix = program ~raise ?signature ds in
     Module_expr.M_struct (ds @ postfix)
   | _ -> module_content
 
 
-let make_main_module ~raise (prg : Ast_typed.program) =
+let make_main_module ~raise ?signature (prg : Ast_typed.program) =
   let f d =
     match Location.unwrap d with
     | Ast_typed.D_module
@@ -260,7 +296,7 @@ let make_main_module ~raise (prg : Ast_typed.program) =
         ; module_ = { module_content; module_location; signature }
         ; annotation
         } ->
-      let module_content = make_main_module_expr ~raise module_content in
+      let module_content = make_main_module_expr ~raise ~signature module_content in
       Location.wrap ~loc:(Location.get_location d)
       @@ Ast_typed.D_module
            { module_binder
@@ -271,7 +307,7 @@ let make_main_module ~raise (prg : Ast_typed.program) =
     | _ -> d
   in
   let prg = Helpers.Declaration_mapper.map_module f prg in
-  prg @ program ~raise prg
+  prg @ program ~raise ?signature prg
 
 
 let make_main_entrypoint ~raise
@@ -347,11 +383,11 @@ let make_main_entrypoint ~raise
     default_built_entrypoint_var, prg
 
 
-let program ~raise
+let program ~raise ?signature
     : Ast_typed.program -> Ast_typed.expression_variable * Ast_typed.program
   =
  fun prg ->
-  let annoted_entry_points = get_entries_of_module prg |> List.map ~f:fst in
+  let annoted_entry_points = get_entries_of_module ?signature prg |> List.map ~f:fst in
   match annoted_entry_points with
   | [] -> default_entrypoint_var, prg
   | hd :: tl -> make_main_entrypoint ~raise (hd, tl) prg

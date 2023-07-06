@@ -234,6 +234,7 @@ and print_declaration state = function
 | D_Directive d -> print_D_Directive state d
 | D_Let       d -> print_D_Let       state d ^^ hardline
 | D_Module    d -> print_D_Module    state d ^^ hardline
+| D_Module_include d -> print_D_Module_include state d ^^ hardline
 | D_Type      d -> print_D_Type      state d ^^ hardline
 | D_Signature d -> print_D_Signature state d ^^ hardline
 
@@ -340,6 +341,11 @@ and print_D_Module state (node : module_decl reg) =
   in group (token kwd_module ^^ space ^^ name ^^ space ^^ token eq
             ^^ space ^^ module_expr)
 
+and print_D_Module_include state (node : module_include reg) =
+  let {kwd_include ; module_expr } = node.value in
+  let module_expr = print_module_expr state module_expr
+  in group (token kwd_include ^^ space ^^ module_expr)
+  
 and print_module_expr state = function
   M_Body e -> print_M_Body state e
 | M_Path e -> print_M_Path       e

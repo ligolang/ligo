@@ -58,7 +58,11 @@ let get_declarations_typed (typed_prg : Ast_typed.program) =
                Option.return @@ [ `Type a.type_binder ]
              | D_module a when not a.module_attr.hidden ->
                Option.return @@ [ `Module a.module_binder ]
-             | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ -> None)
+             | D_value _
+             | D_irrefutable_match _
+             | D_type _
+             | D_module _
+             | D_module_include _ -> None)
   @@ typed_prg
 
 

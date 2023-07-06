@@ -47,6 +47,7 @@ end
 module Module_var : sig
   include VAR
 
+  val internal_get_name_and_counter : t -> string * int
   val is_name : t -> string -> bool
 end
 

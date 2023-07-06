@@ -1,5 +1,5 @@
 STATUS,FILE,LOC,CST,SYMBOLS,TOKENS,ERRORS
-PASS,1annotated_michelson_record_tree.mligo,32,157,77,181,12
+PASS,1annotated_michelson_record_tree.mligo,30,133,59,181,8
 PASS,1condition.mligo,12,57,1,77,1
 PASS,1incr_decr.mligo,9,103,9,103,1
 PASS,1local_type_decl.mligo,16,68,32,32,3
@@ -9,7 +9,7 @@ PASS,1ticket_builder.mligo,43,207,53,186,6
 PASS,1ticket_wallet.mligo,189,1143,151,418,23
 PASS,1voting.mligo,15,118,50,62,2
 PASS,2address.mligo,17,76,20,25,3
-PASS,2annotated_michelson_record_comb.mligo,95,600,60,229,13
+PASS,2annotated_michelson_record_comb.mligo,15,125,15,229,4
 PASS,2let_destructuring.mligo,153,1083,93,458,14
 PASS,2let_multiple.mligo,64,608,84,238,15
 PASS,2local_type_decl.mligo,18,84,22,32,2

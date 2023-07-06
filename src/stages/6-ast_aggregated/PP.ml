@@ -123,6 +123,14 @@ and type_inst ppf { forall; type_ } =
   Format.fprintf ppf "%a@@{%a}" expression forall type_expression type_
 
 
+and declaration ppf (x : declaration) =
+  match Location.unwrap x with
+  | D_value x -> Value_decl.pp expression type_expression ppf x
+  | D_irrefutable_match x -> Pattern_decl.pp expression type_expression ppf x
+
+
+and context ppf (x : context) = list_sep declaration (tag "\n") ppf x
+
 module With_name_tbl = struct
   module Type_var_name_tbl : sig
     type t

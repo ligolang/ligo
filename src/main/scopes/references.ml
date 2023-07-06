@@ -429,6 +429,7 @@ and declaration : AST.declaration -> references -> env -> references * env =
     let refs, defs_or_alias_opt, module_map = module_expression module_ refs env in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     refs, env
+  | D_module_include _ -> refs, env (* TODO *)
   | D_signature _ -> refs, env
 
 
