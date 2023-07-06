@@ -1,84 +1,18 @@
-(*
 open Cli_expect
 
-(* evaluate-expr *)
+(* list-declarations *)
 
 let%expect_test _ =
   run_ligo_good
-    [ "run"
-    ; "evaluate-expr"
-    ; "../../test/contracts/evaluation_tests.ligo"
-    ; "--entry-point"
-    ; "a"
+    [ "info"
+    ; "list-declarations"
+    ; "../../test/contracts/entry_contract_for_list_declaration.jsligo"
+    ; "--only-ep"
     ];
-  [%expect {|
-    record[bar -> "bar" , foo -> +0] |}];
-  run_ligo_good
-    [ "run"
-    ; "evaluate-expr"
-    ; "../../test/contracts/evaluation_tests.ligo"
-    ; "--entry-point"
-    ; "b"
-    ];
-  [%expect {|
-    2 |}]
-*)
-(* list-declarations *)
-(*
-let%expect_test _ =
-  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.ligo" ];
   [%expect
     {|
-    ../../test/contracts/loop.ligo declarations:
-    inner_capture_in_conditional_block
-    dummy
-    nested_for_collection_local_var
-    nested_for_collection
-    for_collection_map_kv
-    for_collection_empty
-    for_collection_with_patches
-    for_collection_comp_with_acc
-    for_collection_proc_call
-    for_collection_rhs_capture
-    for_collection_if_and_local_var
-    for_collection_set
-    for_collection_list
-    for_sum_step
-    for_sum
-    while_sum
-    counter |}];
-  run_ligo_good
-    [ "info"; "list-declarations"; "../../test/contracts/loop.mligo"; "--format"; "json" ];
-  [%expect
-    {|
-    {
-      "source_file": "../../test/contracts/loop.mligo",
-      "declarations": [
-        "counter_nest", "aux_nest", "counter", "counter_simple", "aux_simple"
-      ]
-    } |}];
-  run_ligo_good [ "info"; "list-declarations"; "../../test/contracts/loop.mligo" ];
-  [%expect
-    {|
-    ../../test/contracts/loop.mligo declarations:
-    counter_nest
-    aux_nest
-    counter
-    counter_simple
-    aux_simple |}];
-  run_ligo_good
-    [ "info"; "list-declarations"; "../../test/contracts/list_declaration.jsligo" ];
-  [%expect {|
-    ../../test/contracts/list_declaration.jsligo declarations:
-    main |}];
-  run_ligo_bad
-    [ "run"; "interpret"; "1"; "--syntax"; "cameligo"; "--protocol"; "do_not_exist" ];
-  [%expect
-    {| Invalid protocol version 'do_not_exist'. Available versions: kathmandu , lima |}];
-  run_ligo_bad [ "repl"; "camelig0" ];
-  [%expect {| Please check syntax name. |}];
-  run_ligo_bad [ "repl"; "cameligo"; "--protocol"; "h" ];
-  [%expect {| Please check protocol name. |}];
-  run_ligo_bad [ "repl"; "cameligo"; "--sender"; "foo" ];
-  [%expect {| Please check run options. |}]
-*)
+    ../../test/contracts/entry_contract_for_list_declaration.jsligo declarations:
+    Foo.$main
+    Foo.reset
+    Foo.decrement
+    Foo.increment |}]
