@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\n`list-declaration` command also print entries (declaration with attribute `entry`) when used with `--only-ep`\\n\\n"
+merge_request: '2635'
+title: "list-declaration also lists entries with attributes"
+type: fixed
+            
