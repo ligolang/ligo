@@ -113,6 +113,7 @@ module T =
     | Match     of lexeme Wrap.t  (* match  *)
     | Mod       of lexeme Wrap.t  (* mod    *)
     | Module    of lexeme Wrap.t  (* module *)
+    | Include   of lexeme Wrap.t  (* include*)
     | Mut       of lexeme Wrap.t  (* mut    *)
     | Not       of lexeme Wrap.t  (* not    *)
     | Of        of lexeme Wrap.t  (* of     *)
@@ -208,40 +209,41 @@ module T =
 
     (* Keywords *)
 
-    | Begin  t
-    | Do     t
-    | Done   t
-    | Downto t
-    | Else   t
-    | End    t
-    | For    t
-    | Fun    t
-    | If     t
-    | In     t
-    | Land   t
-    | Let    t
-    | Lor    t
-    | Lsl    t
-    | Lsr    t
-    | Lxor   t
-    | Match  t
-    | Mod    t
-    | Module t
-    | Mut    t
-    | Not    t
-    | Of     t
-    | Or     t
-    | Rec    t
-    | Sig    t
-    | Struct t
-    | Then   t
-    | Type   t
-    | Upto   t
-    | Val    t
-    | While  t
-    | With   t
-    | Contract t
-    | Parameter t -> t#payload
+    | Begin     t
+    | Contract  t
+    | Do        t
+    | Done      t
+    | Downto    t
+    | Else      t
+    | End       t
+    | For       t
+    | Fun       t
+    | If        t
+    | In        t
+    | Land      t
+    | Let       t
+    | Lor       t
+    | Lsl       t
+    | Lsr       t
+    | Lxor      t
+    | Match     t
+    | Mod       t
+    | Include   t
+    | Module    t
+    | Sig       t
+    | Val       t
+    | Mut       t
+    | Not       t
+    | Of        t
+    | Or        t
+    | Parameter t
+    | Rec       t
+    | Struct    t
+    | Then      t
+    | Type      t
+    | Upto      t
+    | While     t
+    | With      t -> t#payload
 
     (* Virtual tokens *)
 
@@ -254,82 +256,87 @@ module T =
 
     (* KEYWORDS *)
 
-    let wrap_begin  = wrap "begin"
-    let wrap_do     = wrap "do"
-    let wrap_done   = wrap "done"
-    let wrap_downto = wrap "downto"
-    let wrap_else   = wrap "else"
-    let wrap_end    = wrap "end"
-    let wrap_for    = wrap "for"
-    let wrap_fun    = wrap "fun"
-    let wrap_rec    = wrap "rec"
-    let wrap_if     = wrap "if"
-    let wrap_in     = wrap "in"
-    let wrap_let    = wrap "let"
-    let wrap_match  = wrap "match"
-    let wrap_mod    = wrap "mod"
-    let wrap_mut    = wrap "mut"
-    let wrap_land   = wrap "land"
-    let wrap_lor    = wrap "lor"
-    let wrap_lxor   = wrap "lxor"
-    let wrap_lsl    = wrap "lsl"
-    let wrap_lsr    = wrap "lsr"
-    let wrap_module = wrap "module"
-    let wrap_not    = wrap "not"
-    let wrap_of     = wrap "of"
-    let wrap_or     = wrap "or"
+    let wrap_begin     = wrap "begin"
+    let wrap_contract  = wrap "contract_of"
+    let wrap_do        = wrap "do"
+    let wrap_done      = wrap "done"
+    let wrap_downto    = wrap "downto"
+    let wrap_else      = wrap "else"
+    let wrap_end       = wrap "end"
+    let wrap_for       = wrap "for"
+    let wrap_fun       = wrap "fun"
+    let wrap_if        = wrap "if"
+    let wrap_in        = wrap "in"
+    let wrap_include   = wrap "include"
+    let wrap_let       = wrap "let"
+    let wrap_match     = wrap "match"
+    let wrap_mod       = wrap "mod"
+    let wrap_mut       = wrap "mut"
+    let wrap_land      = wrap "land"
+    let wrap_lor       = wrap "lor"
     let wrap_sig    = wrap "sig"
-    let wrap_struct = wrap "struct"
-    let wrap_then   = wrap "then"
-    let wrap_type   = wrap "type"
-    let wrap_upto   = wrap "upto"
     let wrap_val    = wrap "val"
-    let wrap_while  = wrap "while"
-    let wrap_with   = wrap "with"
-    let wrap_contract   = wrap "contract_of"
-    let wrap_parameter  = wrap "parameter_of"
+
+    let wrap_lxor      = wrap "lxor"
+    let wrap_lsl       = wrap "lsl"
+    let wrap_lsr       = wrap "lsr"
+    let wrap_module    = wrap "module"
+    let wrap_not       = wrap "not"
+    let wrap_of        = wrap "of"
+    let wrap_or        = wrap "or"
+    let wrap_parameter = wrap "parameter_of"
+    let wrap_rec       = wrap "rec"
+    let wrap_struct    = wrap "struct"
+    let wrap_then      = wrap "then"
+    let wrap_type      = wrap "type"
+    let wrap_upto      = wrap "upto"
+    let wrap_while     = wrap "while"
+    let wrap_with      = wrap "with"
 
     (* Smart constructors *)
 
-    let mk_Begin  region = Begin  (wrap_begin  region)
-    let mk_Do     region = Do     (wrap_do     region)
-    let mk_Done   region = Done   (wrap_done   region)
-    let mk_Downto region = Downto (wrap_downto region)
-    let mk_Else   region = Else   (wrap_else   region)
-    let mk_End    region = End    (wrap_end    region)
-    let mk_For    region = For    (wrap_for    region)
-    let mk_Fun    region = Fun    (wrap_fun    region)
-    let mk_If     region = If     (wrap_if     region)
-    let mk_In     region = In     (wrap_in     region)
-    let mk_Land   region = Land   (wrap_land   region)
-    let mk_Let    region = Let    (wrap_let    region)
-    let mk_Lor    region = Lor    (wrap_lor    region)
-    let mk_Lsl    region = Lsl    (wrap_lsl    region)
-    let mk_Lsr    region = Lsr    (wrap_lsr    region)
-    let mk_Lxor   region = Lxor   (wrap_lxor   region)
-    let mk_Match  region = Match  (wrap_match  region)
-    let mk_Mod    region = Mod    (wrap_mod    region)
-    let mk_Module region = Module (wrap_module region)
-    let mk_Mut    region = Mut    (wrap_mut    region)
-    let mk_Not    region = Not    (wrap_not    region)
-    let mk_Of     region = Of     (wrap_of     region)
-    let mk_Or     region = Or     (wrap_or     region)
-    let mk_Rec    region = Rec    (wrap_rec    region)
-    let mk_Sig    region = Sig    (wrap_sig    region)
-    let mk_Struct region = Struct (wrap_struct region)
-    let mk_Then   region = Then   (wrap_then   region)
-    let mk_Type   region = Type   (wrap_type   region)
-    let mk_Upto   region = Upto   (wrap_upto   region)
-    let mk_Val    region = Val    (wrap_val    region)
-    let mk_While  region = While  (wrap_while  region)
-    let mk_With   region = With   (wrap_with   region)
-    let mk_Contract region = Contract (wrap_contract region)
+    let mk_Begin     region = Begin     (wrap_begin     region)
+    let mk_Contract  region = Contract  (wrap_contract  region)
+    let mk_Do        region = Do        (wrap_do        region)
+    let mk_Done      region = Done      (wrap_done      region)
+    let mk_Downto    region = Downto    (wrap_downto    region)
+    let mk_Else      region = Else      (wrap_else      region)
+    let mk_End       region = End       (wrap_end       region)
+    let mk_For       region = For       (wrap_for       region)
+    let mk_Fun       region = Fun       (wrap_fun       region)
+    let mk_If        region = If        (wrap_if        region)
+    let mk_In        region = In        (wrap_in        region)
+    let mk_Include   region = Include   (wrap_include   region)
+    let mk_Land      region = Land      (wrap_land      region)
+    let mk_Let       region = Let       (wrap_let       region)
+    let mk_Lor       region = Lor       (wrap_lor       region)
+    let mk_Lsl       region = Lsl       (wrap_lsl       region)
+    let mk_Lsr       region = Lsr       (wrap_lsr       region)
+    let mk_Lxor      region = Lxor      (wrap_lxor      region)
+    let mk_Match     region = Match     (wrap_match     region)
+    let mk_Mod       region = Mod       (wrap_mod       region)
+    let mk_Module    region = Module    (wrap_module    region)
+    let mk_Mut       region = Mut       (wrap_mut       region)
+    let mk_Not       region = Not       (wrap_not       region)
+    let mk_Of        region = Of        (wrap_of        region)
+    let mk_Or        region = Or        (wrap_or        region)
+    let mk_Sig       region = Sig       (wrap_sig       region)
+    let mk_Val       region = Val       (wrap_val       region)
+
     let mk_Parameter region = Parameter (wrap_parameter region)
+    let mk_Rec       region = Rec       (wrap_rec       region)
+    let mk_Struct    region = Struct    (wrap_struct    region)
+    let mk_Then      region = Then      (wrap_then      region)
+    let mk_Type      region = Type      (wrap_type      region)
+    let mk_Upto      region = Upto      (wrap_upto      region)
+    let mk_While     region = While     (wrap_while     region)
+    let mk_With      region = With      (wrap_with      region)
 
     (* All keyword smart constructors *)
 
     let keywords = [
       mk_Begin;
+      mk_Contract;
       mk_Do;
       mk_Done;
       mk_Downto;
@@ -339,6 +346,7 @@ module T =
       mk_Fun;
       mk_If;
       mk_In;
+      mk_Include;
       mk_Land;
       mk_Let;
       mk_Lor;
@@ -352,6 +360,7 @@ module T =
       mk_Not;
       mk_Of;
       mk_Or;
+      mk_Parameter;
       mk_Rec;
       mk_Sig;
       mk_Struct;
@@ -360,9 +369,7 @@ module T =
       mk_Upto;
       mk_Val;
       mk_While;
-      mk_With;
-      mk_Contract;
-      mk_Parameter
+      mk_With
     ]
 
     (* All keywords *)
@@ -378,71 +385,78 @@ module T =
 
     (* Ghost keywords *)
 
-    let ghost_begin  = wrap_begin  Region.ghost
-    let ghost_do     = wrap_do     Region.ghost
-    let ghost_done   = wrap_done   Region.ghost
-    let ghost_downto = wrap_downto Region.ghost
-    let ghost_else   = wrap_else   Region.ghost
-    let ghost_end    = wrap_end    Region.ghost
-    let ghost_for    = wrap_for    Region.ghost
-    let ghost_fun    = wrap_fun    Region.ghost
-    let ghost_if     = wrap_if     Region.ghost
-    let ghost_in     = wrap_in     Region.ghost
-    let ghost_land   = wrap_land   Region.ghost
-    let ghost_let    = wrap_let    Region.ghost
-    let ghost_lor    = wrap_lor    Region.ghost
-    let ghost_lsl    = wrap_lsl    Region.ghost
-    let ghost_lsr    = wrap_lsr    Region.ghost
-    let ghost_lxor   = wrap_lxor   Region.ghost
-    let ghost_match  = wrap_match  Region.ghost
-    let ghost_mod    = wrap_mod    Region.ghost
-    let ghost_module = wrap_module Region.ghost
-    let ghost_mut    = wrap_mut    Region.ghost
-    let ghost_not    = wrap_not    Region.ghost
-    let ghost_of     = wrap_of     Region.ghost
-    let ghost_or     = wrap_or     Region.ghost
-    let ghost_rec    = wrap_rec    Region.ghost
-    let ghost_sig    = wrap_sig    Region.ghost
-    let ghost_struct = wrap_struct Region.ghost
-    let ghost_then   = wrap_then   Region.ghost
-    let ghost_type   = wrap_type   Region.ghost
-    let ghost_upto   = wrap_upto   Region.ghost
-    let ghost_val    = wrap_val    Region.ghost
-    let ghost_while  = wrap_while  Region.ghost
-    let ghost_with   = wrap_with   Region.ghost
+    let ghost_begin     = wrap_begin     Region.ghost
+    let ghost_contract  = wrap_contract  Region.ghost
+    let ghost_do        = wrap_do        Region.ghost
+    let ghost_done      = wrap_done      Region.ghost
+    let ghost_downto    = wrap_downto    Region.ghost
+    let ghost_else      = wrap_else      Region.ghost
+    let ghost_end       = wrap_end       Region.ghost
+    let ghost_for       = wrap_for       Region.ghost
+    let ghost_fun       = wrap_fun       Region.ghost
+    let ghost_if        = wrap_if        Region.ghost
+    let ghost_in        = wrap_in        Region.ghost
+    let ghost_include   = wrap_include   Region.ghost
+    let ghost_land      = wrap_land      Region.ghost
+    let ghost_let       = wrap_let       Region.ghost
+    let ghost_lor       = wrap_lor       Region.ghost
+    let ghost_lsl       = wrap_lsl       Region.ghost
+    let ghost_lsr       = wrap_lsr       Region.ghost
+    let ghost_lxor      = wrap_lxor      Region.ghost
+    let ghost_match     = wrap_match     Region.ghost
+    let ghost_mod       = wrap_mod       Region.ghost
+    let ghost_module    = wrap_module    Region.ghost
+    let ghost_mut       = wrap_mut       Region.ghost
+    let ghost_not       = wrap_not       Region.ghost
+    let ghost_of        = wrap_of        Region.ghost
+    let ghost_or        = wrap_or        Region.ghost
+    let ghost_parameter = wrap_parameter Region.ghost
+    let ghost_rec       = wrap_rec       Region.ghost
+    let ghost_struct    = wrap_struct    Region.ghost
+    let ghost_then      = wrap_then      Region.ghost
+    let ghost_type      = wrap_type      Region.ghost
+    let ghost_upto      = wrap_upto      Region.ghost
+    let ghost_while     = wrap_while     Region.ghost
+    let ghost_with      = wrap_with      Region.ghost
+    let ghost_val       = wrap_with      Region.ghost
+    let ghost_sig       = wrap_with      Region.ghost
 
-    let ghost_Begin  = Begin  ghost_begin
-    let ghost_Do     = Do     ghost_do
-    let ghost_Done   = Done   ghost_done
-    let ghost_Downto = Downto ghost_downto
-    let ghost_Else   = Else   ghost_else
-    let ghost_End    = End    ghost_end
-    let ghost_Fun    = Fun    ghost_fun
-    let ghost_For    = For    ghost_for
-    let ghost_If     = If     ghost_if
-    let ghost_In     = In     ghost_in
-    let ghost_Land   = Land   ghost_land
-    let ghost_Let    = Let    ghost_let
-    let ghost_Lor    = Lor    ghost_lor
-    let ghost_Lsl    = Lsl    ghost_lsl
-    let ghost_Lsr    = Lsr    ghost_lsr
-    let ghost_Lxor   = Lxor   ghost_lxor
-    let ghost_Match  = Match  ghost_match
-    let ghost_Mod    = Mod    ghost_mod
-    let ghost_Module = Module ghost_module
-    let ghost_Mut    = Mut    ghost_mut
-    let ghost_Not    = Not    ghost_not
-    let ghost_Of     = Of     ghost_of
-    let ghost_Or     = Or     ghost_or
-    let ghost_Rec    = Rec    ghost_rec
-    let ghost_Sig    = Sig    ghost_sig
-    let ghost_Struct = Struct ghost_struct
-    let ghost_Then   = Then   ghost_then
-    let ghost_Type   = Type   ghost_type
-    let ghost_Upto   = Upto   ghost_upto
-    let ghost_Val    = Val    ghost_val
-    let ghost_While  = While  ghost_while
-    let ghost_With   = With   ghost_with
+    let ghost_Begin     = Begin     ghost_begin
+    let ghost_Contract  = Contract  ghost_contract
+    let ghost_Do        = Do        ghost_do
+    let ghost_Done      = Done      ghost_done
+    let ghost_Downto    = Downto    ghost_downto
+    let ghost_Else      = Else      ghost_else
+    let ghost_End       = End       ghost_end
+    let ghost_Fun       = Fun       ghost_fun
+    let ghost_For       = For       ghost_for
+    let ghost_If        = If        ghost_if
+    let ghost_In        = In        ghost_in
+    let ghost_Include   = Include   ghost_include
+    let ghost_Land      = Land      ghost_land
+    let ghost_Let       = Let       ghost_let
+    let ghost_Lor       = Lor       ghost_lor
+    let ghost_Lsl       = Lsl       ghost_lsl
+    let ghost_Lsr       = Lsr       ghost_lsr
+    let ghost_Lxor      = Lxor      ghost_lxor
+    let ghost_Match     = Match     ghost_match
+    let ghost_Mod       = Mod       ghost_mod
+    let ghost_Module    = Module    ghost_module
+    let ghost_Mut       = Mut       ghost_mut
+    let ghost_Not       = Not       ghost_not
+    let ghost_Of        = Of        ghost_of
+    let ghost_Or        = Or        ghost_or
+    let ghost_Parameter = Parameter ghost_parameter
+    let ghost_Rec       = Rec       ghost_rec
+    let ghost_Struct    = Struct    ghost_struct
+    let ghost_Then      = Then      ghost_then
+    let ghost_Type      = Type      ghost_type
+    let ghost_Upto      = Upto      ghost_upto
+    let ghost_While     = While     ghost_while
+    let ghost_With      = With      ghost_with
+    let ghost_Val       = Val       ghost_val
+    let ghost_Sig       = Sig       ghost_sig
+
 
 
     (* SYMBOLS *)
@@ -741,38 +755,41 @@ module T =
 
     (* Keywords *)
 
-    | "Begin"  -> ghost_begin#payload
-    | "Do"     -> ghost_do#payload
-    | "Done"   -> ghost_done#payload
-    | "Downto" -> ghost_downto#payload
-    | "Else"   -> ghost_else#payload
-    | "End"    -> ghost_end#payload
-    | "For"    -> ghost_for#payload
-    | "Fun"    -> ghost_fun#payload
-    | "If"     -> ghost_if#payload
-    | "In"     -> ghost_in#payload
-    | "Land"   -> ghost_land#payload
-    | "Let"    -> ghost_let#payload
-    | "Lor"    -> ghost_lor#payload
-    | "Lsl"    -> ghost_lsl#payload
-    | "Lsr"    -> ghost_lsr#payload
-    | "Lxor"   -> ghost_lxor#payload
-    | "Match"  -> ghost_match#payload
-    | "Mod"    -> ghost_mod#payload
-    | "Module" -> ghost_module#payload
-    | "Mut"    -> ghost_mut#payload
-    | "Not"    -> ghost_not#payload
-    | "Of"     -> ghost_of#payload
-    | "Or"     -> ghost_or#payload
-    | "Rec"    -> ghost_rec#payload
-    | "Sig"    -> ghost_sig#payload
-    | "Struct" -> ghost_struct#payload
-    | "Then"   -> ghost_then#payload
-    | "Type"   -> ghost_type#payload
-    | "Upto"   -> ghost_upto#payload
-    | "Val"    -> ghost_val#payload
-    | "While"  -> ghost_while#payload
-    | "With"   -> ghost_with#payload
+    | "Begin"     -> ghost_begin#payload
+    | "Contract"  -> ghost_contract#payload
+    | "Do"        -> ghost_do#payload
+    | "Done"      -> ghost_done#payload
+    | "Downto"    -> ghost_downto#payload
+    | "Else"      -> ghost_else#payload
+    | "End"       -> ghost_end#payload
+    | "For"       -> ghost_for#payload
+    | "Fun"       -> ghost_fun#payload
+    | "If"        -> ghost_if#payload
+    | "In"        -> ghost_in#payload
+    | "Include"   -> ghost_include#payload
+    | "Land"      -> ghost_land#payload
+    | "Let"       -> ghost_let#payload
+    | "Lor"       -> ghost_lor#payload
+    | "Lsl"       -> ghost_lsl#payload
+    | "Lsr"       -> ghost_lsr#payload
+    | "Lxor"      -> ghost_lxor#payload
+    | "Match"     -> ghost_match#payload
+    | "Mod"       -> ghost_mod#payload
+    | "Module"    -> ghost_module#payload
+    | "Mut"       -> ghost_mut#payload
+    | "Not"       -> ghost_not#payload
+    | "Of"        -> ghost_of#payload
+    | "Or"        -> ghost_or#payload
+    | "Parameter" -> ghost_parameter#payload
+    | "Rec"       -> ghost_rec#payload
+    | "Struct"    -> ghost_struct#payload
+    | "Then"      -> ghost_then#payload
+    | "Type"      -> ghost_type#payload
+    | "Upto"      -> ghost_upto#payload
+    | "While"     -> ghost_while#payload
+    | "With"      -> ghost_with#payload
+    | "Val"       -> ghost_val#payload
+    | "Sig"       -> ghost_sig#payload
 
     (* Virtual tokens *)
 
@@ -868,40 +885,41 @@ module T =
 
     (* Keywords *)
 
-    | Begin  t -> t#region, "Begin"
-    | Do     t -> t#region, "Do"
-    | Done   t -> t#region, "Done"
-    | Downto t -> t#region, "Downto"
-    | Else   t -> t#region, "Else"
-    | End    t -> t#region, "End"
-    | For    t -> t#region, "For"
-    | Fun    t -> t#region, "Fun"
-    | If     t -> t#region, "If"
-    | In     t -> t#region, "In"
-    | Land   t -> t#region, "Land"
-    | Let    t -> t#region, "Let"
-    | Lor    t -> t#region, "Lor"
-    | Lsl    t -> t#region, "Lsl"
-    | Lsr    t -> t#region, "Lsr"
-    | Lxor   t -> t#region, "Lxor"
-    | Match  t -> t#region, "Match"
-    | Mod    t -> t#region, "Mod"
-    | Module t -> t#region, "Module"
-    | Mut    t -> t#region, "Mut"
-    | Not    t -> t#region, "Not"
-    | Of     t -> t#region, "Of"
-    | Or     t -> t#region, "Or"
-    | Rec    t -> t#region, "Rec"
-    | Sig    t -> t#region, "Sig"
-    | Struct t -> t#region, "Struct"
-    | Then   t -> t#region, "Then"
-    | Type   t -> t#region, "Type"
-    | Upto   t -> t#region, "Upto"
-    | Val    t -> t#region, "Val"
-    | While  t -> t#region, "While"
-    | With   t -> t#region, "With"
-    | Contract t -> t#region, "Contract"
+    | Begin     t -> t#region, "Begin"
+    | Contract  t -> t#region, "Contract"
+    | Do        t -> t#region, "Do"
+    | Done      t -> t#region, "Done"
+    | Downto    t -> t#region, "Downto"
+    | Else      t -> t#region, "Else"
+    | End       t -> t#region, "End"
+    | For       t -> t#region, "For"
+    | Fun       t -> t#region, "Fun"
+    | If        t -> t#region, "If"
+    | In        t -> t#region, "In"
+    | Land      t -> t#region, "Land"
+    | Let       t -> t#region, "Let"
+    | Lor       t -> t#region, "Lor"
+    | Lsl       t -> t#region, "Lsl"
+    | Lsr       t -> t#region, "Lsr"
+    | Lxor      t -> t#region, "Lxor"
+    | Match     t -> t#region, "Match"
+    | Mod       t -> t#region, "Mod"
+    | Module    t -> t#region, "Module"
+    | Include   t -> t#region, "Include"
+    | Mut       t -> t#region, "Mut"
+    | Not       t -> t#region, "Not"
+    | Of        t -> t#region, "Of"
+    | Or        t -> t#region, "Or"
+    | Val       t -> t#region, "Val"
+    | Sig       t -> t#region, "Sig"
     | Parameter t -> t#region, "Parameter"
+    | Rec       t -> t#region, "Rec"
+    | Struct    t -> t#region, "Struct"
+    | Then      t -> t#region, "Then"
+    | Type      t -> t#region, "Type"
+    | Upto      t -> t#region, "Upto"
+    | While     t -> t#region, "While"
+    | With      t -> t#region, "With"
 
     (* Virtual tokens *)
 

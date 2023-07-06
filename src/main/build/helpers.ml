@@ -79,6 +79,7 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
         | D_irrefutable_match pattern_decl' ->
           let pattern_decl' = pattern_decl pattern_decl' in
           D_irrefutable_match pattern_decl'
+        | D_module_include x -> D_module_include x
         | D_signature signature' ->
           (* TODO *)
           D_signature signature')

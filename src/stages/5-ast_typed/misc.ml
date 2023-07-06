@@ -119,7 +119,7 @@ and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option
   | Literal_bls12_381_fr _, _ -> None
 
 
-let get_entry (lst : program) (name : Value_var.t) : expression option =
+let rec get_entry (lst : program) (name : Value_var.t) : expression option =
   let aux x =
     match Location.unwrap x with
     | D_value
@@ -135,7 +135,8 @@ let get_entry (lst : program) (name : Value_var.t) : expression option =
             ; entry = _
             }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
-    | D_irrefutable_match _ | D_type _ | D_module _ -> None
+    | D_module_include { module_content = M_struct x; _ } -> get_entry x name
+    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> None
   in
   List.find_map ~f:aux (List.rev lst)
 
@@ -310,7 +311,7 @@ let uncurry_wrap ~loc ~type_ var =
   some @@ expr
 
 
-let fetch_views_in_program ~storage_ty
+let rec fetch_views_in_program ~storage_ty
     : program -> program * (type_expression * type_expression Binder.t) list
   =
  fun prog ->
@@ -361,7 +362,10 @@ let fetch_views_in_program ~storage_ty
         ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref) :: prog
         , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
           :: views ))
-    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
+    | D_module_include { module_content = M_struct x; _ } ->
+      fetch_views_in_program ~storage_ty x
+    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ ->
+      return ()
   in
   List.fold_right ~f:aux ~init:([], []) prog
 
@@ -376,5 +380,6 @@ let to_signature (program : program) : signature =
         ctx @ [ S_value (Binder.get_var binder, expr.type_expression, { view; entry }) ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
         ctx @ [ S_type (type_binder, type_expr) ]
+      | D_module_include x -> x.signature
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
         ctx @ [ S_module (module_binder, module_.signature) ])

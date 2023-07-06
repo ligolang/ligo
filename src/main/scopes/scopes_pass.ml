@@ -249,7 +249,7 @@ module Of_Ast = struct
       let scopes, defs_or_alias_opt, module_map = module_expression module_ scopes env in
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
       scopes, env
-    | D_signature _ -> scopes, env
+    | D_module_include _ | D_signature _ -> scopes, env
 
 
   (** [declarations] takes a list of [AST.declaration], [references] & [env]

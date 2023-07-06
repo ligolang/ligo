@@ -177,6 +177,9 @@ and fold_map_declaration m acc (x : declaration) =
       D_module { module_binder; module_; module_attr; annotation = () }
     in
     acc', { x with wrap_content }
+  | D_module_include module_ ->
+    let acc', module_ = (fold_map_expression_in_module_expr m) acc module_ in
+    acc', { x with wrap_content = D_module_include module_ }
 
 
 and fold_map_decl m = fold_map_declaration m
@@ -263,7 +266,7 @@ end
 (* of module IdMap *)
 
 (* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
-let get_views : program -> (Value_var.t * Location.t) list =
+let rec get_views : program -> (Value_var.t * Location.t) list =
  fun p ->
   let f
       : declaration -> (Value_var.t * Location.t) list -> (Value_var.t * Location.t) list
@@ -277,8 +280,9 @@ let get_views : program -> (Value_var.t * Location.t) list =
       when attr.view ->
       let var = Binder.get_var binder in
       (var, Value_var.get_location var) :: acc
-    (* TODO: exhaustive here ... *)
-    | D_type _ | D_module _ | D_value _ | D_irrefutable_match _ -> acc
+    | D_module_include { module_content = M_struct x; _ } -> get_views x
+    | D_type _ | D_module _ | D_value _ | D_irrefutable_match _ | D_module_include _ ->
+      acc
   in
   List.fold_right ~init:[] ~f p
 
@@ -290,4 +294,4 @@ let fetch_view_type : declaration -> (type_expression * type_expression Binder.t
   | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr; attr }
     when attr.view ->
     Some (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
-  | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ -> None
+  | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_module_include _ -> None

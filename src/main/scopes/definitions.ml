@@ -225,6 +225,10 @@ and defs_of_decl : AST.declaration -> def_type -> string list -> def list -> def
       mod_case_of_mod_expr ~defs_of_decls module_ inner_mod_path
     in
     defs_of_mvar ~mod_case ~bindee:module_ module_binder def_type mod_path acc
+  | D_module_include module_ ->
+    (match mod_case_of_mod_expr ~defs_of_decls module_ [] with
+    | Alias _ -> acc
+    | Def x -> x)
   | D_signature _ -> acc
 
 
@@ -259,6 +263,10 @@ module Of_Stdlib = struct
         mod_case_of_mod_expr module_ ~defs_of_decls inner_mod_path
       in
       defs_of_mvar ~mod_case ~bindee:module_ module_binder def_type mod_path acc
+    | D_module_include module_ ->
+      (match mod_case_of_mod_expr ~defs_of_decls module_ [] with
+      | Alias _ -> acc
+      | Def x -> x)
     | D_signature _ -> acc
 
 

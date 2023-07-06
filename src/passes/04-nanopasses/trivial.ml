@@ -204,6 +204,7 @@ end = struct
            }
     | D_irrefutable_match { pattern; expr } ->
       ret @@ D_irrefutable_match { pattern; expr; attr = Value_attr.default_attributes }
+    | D_module_include x -> ret @@ D_module_include x
     | D_let _ | D_import _ | D_export _ | D_var _ | D_multi_const _ | D_multi_var _
     | D_const { type_params = Some _; _ }
     | _ ->
@@ -438,6 +439,9 @@ end = struct
       ret location
       @@ D_module
            { x with module_attr = conv_modtydecl_attr ~raise location x.module_attr attr }
+    | PE_attr (_, (O.{ wrap_content = D_module_include _; location } as d)) ->
+      raise.warning (`Nanopasses_attribute_ignored location);
+      program_entry ~raise (PE_declaration d)
     | PE_attr (_TODO, O.{ wrap_content = D_signature x; location }) ->
       ret location @@ D_signature x
     | PE_declaration d -> d

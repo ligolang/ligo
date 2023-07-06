@@ -139,7 +139,7 @@
 %token <string Wrap.t> With   "with"   [@recover.expr Token.wrap_with    $loc]
 %token <string Wrap.t> Contract "contract_of" [@recover.expr Token.wrap_contract $loc]
 %token <string Wrap.t> Parameter "parameter_of" [@recover.expr Token.wrap_parameter $loc]
-
+%token <string Wrap.t> Include "include" [@recover.expr Token.wrap_include  $loc]
 (* Virtual tokens *)
 
 %token <string Wrap.t> ZWSP [@recover.expr Token.wrap_zwsp $loc]

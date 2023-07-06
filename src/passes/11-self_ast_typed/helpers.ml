@@ -78,6 +78,7 @@ and fold_expression_in_module_expr : ('a -> expression -> 'a) -> 'a -> module_ex
         | D_value x -> self acc x.expr
         | D_irrefutable_match x -> self acc x.expr
         | D_module x -> fold_expression_in_module_expr self acc x.module_
+        | D_module_include x -> fold_expression_in_module_expr self acc x
         | D_type _ -> acc)
       ~init:acc
       decls
@@ -201,6 +202,9 @@ and map_declaration m (x : declaration) =
   | D_module { module_binder; module_; module_attr; annotation } ->
     let module_ = map_expression_in_module_expr m module_ in
     return @@ D_module { module_binder; module_; module_attr; annotation }
+  | D_module_include module_ ->
+    return @@ D_module_include (map_expression_in_module_expr m module_)
+
 
 
 and map_decl m d = map_declaration m d
@@ -217,7 +221,7 @@ let fetch_entry_type ~raise : string -> program -> type_expression * Location.t 
     | D_value { binder; expr; attr = _ }
     | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr; attr = _ }
       -> if Value_var.is_name (Binder.get_var binder) main_fname then Some expr else None
-    | D_irrefutable_match _ | D_type _ | D_module _ -> None
+    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> None
   in
   let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
   let expr =
@@ -348,69 +352,6 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
          f)
 
 
-(* drop_until [pred] [mp] [p] looks for a declaration in module path
-   [mp] inside program [p] that makes [pred] true, discarding all the
-   previously non-used declarations *)
-let drop_until
-    :  (declaration -> bool) -> Module_var.t list -> program
-    -> program * [ `Found of declaration | `Not_found of Module_var.t list ]
-  =
- fun pred module_path prg_decls ->
-  let prg_decls = List.rev prg_decls in
-  let rec find_module acc module_path decls =
-    match decls with
-    | [] -> acc, `Not_found module_path
-    | decl :: rest ->
-      let loc = Location.get_location decl in
-      (match Location.unwrap decl, module_path with
-      | ( D_module
-            { module_binder
-            ; module_ =
-                { module_content = M_struct inner_decls; module_location; signature }
-            ; module_attr
-            ; annotation = ()
-            }
-        , m :: ms )
-        when Module_var.equal module_binder m ->
-        let inner_decls, found = find_module [] ms (List.rev inner_decls) in
-        (match found with
-        | `Found data ->
-          let decl =
-            Location.wrap ~loc
-            @@ D_module
-                 { module_binder
-                 ; module_ =
-                     { module_content = M_struct inner_decls; module_location; signature }
-                 ; module_attr
-                 ; annotation = ()
-                 }
-          in
-          List.rev rest @ (decl :: acc), `Found data
-        | `Not_found module_path -> find_module (decl :: acc) module_path rest)
-      | ( D_module
-            { module_binder
-            ; module_ = { module_content = M_variable module_var; _ }
-            ; module_attr = _
-            ; annotation = ()
-            }
-        , m :: ms )
-        when Module_var.equal module_binder m ->
-        find_module (decl :: acc) (module_var :: ms) rest
-      | ( D_module
-            { module_binder
-            ; module_ = { module_content = M_module_path module_path'; _ }
-            ; module_attr = _
-            ; annotation = ()
-            }
-        , m :: ms )
-        when Module_var.equal module_binder m ->
-        find_module (decl :: acc) (Simple_utils.List.Ne.to_list module_path' @ ms) rest
-      | _, [] when pred decl -> List.rev rest @ (decl :: acc), `Found decl
-      | _, _ -> find_module acc module_path rest)
-  in
-  find_module [] module_path prg_decls
-
-
 let fetch_contract_type ~raise
     :  Value_var.t -> Module_var.t list -> program
     -> program * expression_variable * contract_type
@@ -460,7 +401,8 @@ let fetch_contract_type ~raise
           ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref) :: prog
           , Some (Binder.get_var binder, expr) ))
       else return ()
-    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ -> return ()
+    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ | D_module_include _ ->
+      return ()
   in
   let run m = List.fold_right ~f:aux ~init:([], None) m in
   let m, main_decl_opt = update_module module_path run m in
@@ -519,7 +461,7 @@ let get_shadowed_decl : program -> (ValueAttr.t -> bool) -> Location.t option =
       | Some x -> seen, Value_var.get_location x :: shadows
       | None ->
         if predicate attr then Binder.get_var binder :: seen, shadows else seen, shadows)
-    | D_irrefutable_match _ | D_type _ | D_module _ -> seen, shadows
+    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> seen, shadows
   in
   let _, shadows = List.fold ~f:aux ~init:([], []) prg in
   match shadows with
@@ -539,7 +481,7 @@ let update_attribute_annotations
     | D_irrefutable_match ({ attr; _ } as decl) when Option.is_some (pred attr) ->
       let attr = Option.value_exn @@ pred attr in
       { x with wrap_content = D_irrefutable_match { decl with attr } }
-    | D_module _ | D_type _ | D_value _ | D_irrefutable_match _ -> x
+    | D_module_include _ | D_module _ | D_type _ | D_value _ | D_irrefutable_match _ -> x
   in
   List.map ~f:aux m
 
@@ -575,7 +517,7 @@ let annotate_with_attribute ~raise
             in
             decorated :: prg, List.remove_element ~compare:String.compare found names
           | None -> continue)
-        | D_irrefutable_match _ | D_type _ | D_module _ -> continue)
+        | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> continue)
   in
   let () =
     match not_found with
@@ -830,6 +772,7 @@ end = struct
       match Location.unwrap x with
       | D_value { binder = _; expr; attr = _ } -> get_fv_expr expr
       | D_irrefutable_match { pattern = _; expr; attr = _ } -> get_fv_expr expr
+      | D_module_include module_
       | D_module { module_binder = _; module_; module_attr = _; annotation = () } ->
         get_fv_module_expr module_
       | D_type _t -> empty
@@ -961,6 +904,9 @@ module Declaration_mapper = struct
     | D_irrefutable_match { pattern; expr; attr } ->
       let expr = map_expression f expr in
       return @@ D_irrefutable_match { pattern; expr; attr }
+    | D_module_include module_ ->
+      let module_ = map_expression_in_module_expr f module_ in
+      return @@ D_module_include module_
 
 
   and map_decl m d = map_declaration m d

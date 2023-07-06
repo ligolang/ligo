@@ -100,6 +100,7 @@ type _ sing =
   | S_minus_eq : minus_eq sing
   | S_module_body : module_body sing
   | S_module_decl : module_decl sing
+  | S_module_include : module_include sing
   | S_module_expr : module_expr sing
   | S_module_in : module_in sing
   | S_module_name : module_name sing
@@ -260,8 +261,9 @@ let fold
     | D_Let node -> node -| S_reg S_let_decl
     | D_Type node -> node -| S_reg S_type_decl
     | D_Module node -> node -| S_reg S_module_decl
-    | D_Signature node -> node -| S_reg S_signature_decl
-    | D_Directive node -> node -| S_directive)
+    | D_Directive node -> node -| S_directive
+    | D_Module_include node -> node -| S_reg S_module_include
+    | D_Signature node -> node -| S_reg S_signature_decl)
   | S_direction -> process
     (match node with
       Upto node -> node -| S_kwd_upto
@@ -488,6 +490,8 @@ let fold
     ; name -| S_module_name
     ; eq -| S_equal
     ; module_expr -| S_module_expr ]
+  | S_module_include ->
+    assert false
   | S_module_expr -> process
     (match node with
       M_Body node -> node -| S_reg S_module_body

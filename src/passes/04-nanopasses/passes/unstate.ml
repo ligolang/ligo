@@ -167,9 +167,10 @@ let rec decl : declaration -> Statement_result.t =
         e_type_in
           ~loc:(Location.cover loc (get_e_loc x))
           { type_decl = { name; type_expr; params = None }; body = x })
-  | D_import (Import_all_as _ | Import_selected _) -> failwith "not supported"
-  | D_multi_var _ | D_multi_const _ -> failwith "multi vars removed"
-  | D_type_abstraction _ -> failwith "type abs removed"
+  | D_import (Import_all_as _ | Import_selected _) | D_module_include _ ->
+    failwith "can't parse"
+  | D_multi_var _ | D_multi_const _ | D_type_abstraction _ ->
+    failwith "removed in previous passes"
   | D_irrefutable_match { pattern; expr } ->
     let lhs = List.Ne.singleton pattern in
     Binding

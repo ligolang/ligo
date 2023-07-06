@@ -177,6 +177,7 @@ and declaration ?(use_hidden = true) ppf (d : declaration) =
     if md.module_attr.hidden && use_hidden
     then ()
     else Types.Module_decl.pp module_expr (fun _ () -> ()) ppf md
+  | D_module_include x -> fprintf ppf "include %a" module_expr x
 
 
 and decl ppf d = declaration ppf d

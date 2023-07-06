@@ -536,6 +536,8 @@ let declaration : Eq.declaration -> Folding.declaration =
   | D_Signature { value = { name; signature_expr; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
     ret @@ D_signature { name; sig_expr = signature_expr }
+  | D_Module_include { value = { module_expr; _ }; _ } ->
+    ret @@ D_module_include module_expr
 
 
 let mod_expr : Eq.mod_expr -> Folding.mod_expr =

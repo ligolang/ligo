@@ -110,6 +110,7 @@ let add_comment (comment : string Region.reg) : Token.t -> Token.t = function
 | With      w -> With (w#add_line_comment comment)
 | Contract  w -> Contract (w#add_line_comment comment)
 | Parameter w -> Parameter (w#add_line_comment comment)
+| Include w -> Include (w#add_line_comment comment)
 
 let filter (units : Token.t Unit.t list) : Token.t Unit.t list =
   let open! Token in
