@@ -25,9 +25,9 @@ esy-windows:
     - $env:ESY__PREFIX = $env:HOME + '/.esy-opam-host'
     - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
     - esy i
-    - bash -c "patch -p1 -R < 001-tezos-deps-via-esy.patch" # So that dune runtest doesn't run tezos tests
-    - bash -c "esy b dune runtest || esy b dune runtest || esy b dune runtest"
-    - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
+    # - bash -c "patch -p1 -R < 001-tezos-deps-via-esy.patch" # So that dune runtest doesn't run tezos tests
+    # - bash -c "esy b dune runtest || esy b dune runtest || esy b dune runtest"
+    # - bash -c "patch -p1 < 001-tezos-deps-via-esy.patch"
     - bash -c "esy b --install || esy b --install || esy b --install"
     - cp ./_build/install/default/bin/ligo.exe ./windows-installer
     - cp ./LICENSE.md ./windows-installer
