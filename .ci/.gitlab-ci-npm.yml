@@ -176,7 +176,7 @@ publish_npm_darwin_x86_64:
     - cd platform-darwin
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json macos-intel)
-    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-intel$SUFFIX || status=1
+    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag macos-intel$SUFFIX ; npm dist-tag add ligolang@macos-intel$SUFFIX latest || status=1
     - echo "ligo_npm_build_status $status" | curl --data-binary @- -u '$PROM_PUSH_AUTH' https://pushgateway.prometheus.gcp.marigold.dev/metrics/job/ligo-build-short/branch/$CI_COMMIT_TAG/arch/darwin
 
 esy-macos-m1:
@@ -308,4 +308,4 @@ publish_ligojs:
     - cd ./ligo-npm
     - chmod 664 package.json
     - VERSION=$(../.ci/scripts/versioning/determine_esy_version.sh package.json web)
-    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public || status=1
+    - status=0 ; ../.ci/scripts/versioning/update_esy_version.sh package.json $VERSION ; npm publish --access public --tag ligo-js$SUFFIX || status=1
