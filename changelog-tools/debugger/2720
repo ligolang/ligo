@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nHandled the case when the specified path to the LIGO executable isn't the correct one.\\n\\n"
+merge_request: '2720'
+title: "[#1878] Handle wrong LIGO executable path"
+type: fixed
+            
