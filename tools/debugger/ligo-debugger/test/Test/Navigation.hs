@@ -19,17 +19,15 @@ module Test.Navigation
   ) where
 
 import Fmt (pretty)
-import Hedgehog (Gen, annotateShow, discard, forAll, forAllWith, property, (===))
-import Hedgehog.Gen qualified as Gen
-import Hedgehog.Range qualified as Range
+import Hedgehog (forAllWith, property)
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.Hedgehog (testProperty)
 import Text.Interpolation.Nyan hiding (rmode')
 
 import Morley.Debugger.Core
-  (Direction (..), MovementResult (..), NavigableSnapshot (getExecutedPosition), PausedReason (..),
-  SourceLocation' (..), SrcLoc (..), curSnapshot, frozen, getCurMethodBlockLevel,
-  getFutureSnapshotsNum, moveTill, switchBreakpoint)
+  (Direction (..), FrozenPredicate (..), NavigableSnapshot (getExecutedPosition),
+  SourceLocation' (..), SrcLoc (..), curSnapshot, frozen, moveTill, switchBreakpoint)
+import Morley.Debugger.Core.TestUtil.Reversible
 import Morley.Debugger.DAP.Types (StepCommand' (..))
 import Morley.Michelson.Parser.Types (MichelsonSource (..))
 import Morley.Michelson.Text (mt)
@@ -39,18 +37,6 @@ import Language.LIGO.Debugger.Snapshots
 
 import Test.Util
 import Test.Util.Golden
-
--- TODO: move these to Morley
-
-deriving stock instance Show Direction
-
-genDirection :: Gen Direction
-genDirection = Gen.frequency [(7, pure Forward), (3, pure Backward)]
-
-reverseDirection :: Direction -> Direction
-reverseDirection = \case
-  Forward -> Backward
-  Backward -> Forward
 
 -- Note: see the docs to 'processLigoStep' on rules for the expected
 -- stepping behaviour
@@ -355,48 +341,19 @@ test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
         let liftProp = lift . lift . lift
 
         granularity <- liftProp $ forAllWith pretty genStepGranularity
-
-        -- Jump to some position in the middle of execution.
-        -- But at the position matching the current granularity.
-        do
-          futureSnapshotsNum <- frozen getFutureSnapshotsNum
-          stepsNum <- liftProp . forAll $
-            Gen.integral (Range.constant 0 futureSnapshotsNum)
-          replicateM_ stepsNum $ processLigoStep (CStepIn granularity)
-
-        isStatus <$> frozen curSnapshot >>= \case
-          -- This property doesn't hold for @GStmt@ granularity
-          -- in case of stopping at function call.
-          InterpretRunning (EventExpressionPreview FunctionCall)
-            | granularity == GStmt -> liftProp discard
-          _ -> pass
-
-        startPos <- frozen getExecutedPosition
-        annotateShow startPos
-        startMethodLevel <- frozen getCurMethodBlockLevel
-
-        dir <- liftProp $ forAll genDirection
-
-        -- Do a step over...
-        do
-          moveRes <- processLigoStep (CNext dir granularity)
-          unless (moveRes == MovedSuccessfully PlainPaused) $
-            -- We started at the end of the tape, this case is not interesting
-            liftProp discard
-
-        endMethodLevel <- frozen getCurMethodBlockLevel
-        unless (startMethodLevel == endMethodLevel) $
-          -- Exited current method, step back won't return to the old position
-          liftProp discard
-
-        annotateShow =<< frozen getExecutedPosition
-
-        -- ...and then a step in the opposite direction
-        processLigoStep (CNext (reverseDirection dir) granularity)
-
-        -- Check this all resulted in no-op
-        endPos <- frozen getExecutedPosition
-        liftProp $ startPos === endPos
+        oneStepReversed
+          liftProp
+          defaultOneStepReversedSettings
+          { osrsDiscardAtStartWhenHolds = FrozenPredicate do
+              -- The property doesn't hold for @GStmt@ granularity
+              -- in case of stopping at function call since we tend to make an
+              -- artificial stop there.
+              guard (granularity == GStmt)
+              InterpretRunning (EventExpressionPreview FunctionCall) <- isStatus <$> curSnapshot
+              pass
+          }
+          processLigoStep
+          granularity
 
 test_ContinueReversed :: TestTree
 test_ContinueReversed = testGroup "Continueing back is the opposite to Continue"
