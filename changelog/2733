@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed bug in the lexing of JsLIGO: the CLI was incorrectly read and could lead to a runtime error.\\n\\n"
+merge_request: '2733'
+title: "[JsLIGO] Bug fix: The Attributes self-pass used Make instead of MakeDefault,..."
+type: fixed
+            
