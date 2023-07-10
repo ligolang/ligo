@@ -27,6 +27,7 @@ import * as vscode from 'vscode'
 import { isDefined, Maybe } from './base';
 import { DebugAdapterTracker, DebugAdapterTrackerFactory } from "vscode";
 import { SteppingGranularity } from "./ui";
+import * as ncp from 'copy-paste';
 
 type LigoSpecificRequest
 	= 'initializeLogger'
@@ -39,13 +40,64 @@ type LigoSpecificRequest
 	;
 
 /**
- * Make up a large text for an error.
+ * Make up a large text box with an error.
  *
  * It will be marked to appear in a modal dialog box as other options do
  * not allow for showing large texts conveniently.
+ *
+ * Also this text box provides an ability to copy-paste its error message.
  */
-function largeError(...messageParts: string[]): vscode.MessageOptions {
-	return { modal: true, detail: messageParts.join("\n\n") }
+function showLargeErrorMessage<S, T extends string>(
+		title: string,
+		messageParts: string[],
+		callback?: (result: T) => Promise<S>,
+		...items: T[]
+	) {
+
+	const detail = messageParts.join("\n\n");
+
+	vscode.window.showErrorMessage<T | "Copy">(
+		title,
+		{ modal: true, detail },
+		...items,
+		"Copy"
+	).then(async result => {
+		if (isDefined(result)) {
+			switch(result) {
+				case "Copy":
+					ncp.copy(detail, async () => {
+						try {
+							// 'ncp' will throw an exception if
+							// 'paste' doesn't work.
+							ncp.paste();
+						} catch (_) {
+							/**
+							 * User doesn't have preinstalled copy software.
+							 *
+							 * Here we do hacky thing: we're opening a temporary file
+							 * with error contents inside and executing vscode commands:
+							 * 1. Select all;
+							 * 2. Copy to clipboard;
+							 * 3. Close temporary file.
+							 */
+
+							const uri = vscode.Uri.parse('ligo:error_log').with({ query: detail });
+							const doc = await vscode.workspace.openTextDocument(uri);
+
+							await vscode.window.showTextDocument(doc, { preview: false });
+							await vscode.commands.executeCommand('editor.action.selectAll');
+							await vscode.commands.executeCommand('editor.action.clipboardCopyAction');
+							await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+						}
+					});
+					break;
+				default:
+					if (isDefined(callback)) {
+						await callback(result);
+					}
+			}
+		}
+	});
 }
 
 export function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
@@ -79,12 +131,10 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
 			return;
 
 		case "Configuration":
-			vscode.window.showErrorMessage(
+			showLargeErrorMessage(
 				"Launch configuration problem",
-				largeError(formattedMessage),
-				"Open launch.json",
-			).then(result => {
-				if (isDefined(result)) {
+				[formattedMessage],
+				async _ => {
 					const workspaceFolders: Maybe<readonly vscode.WorkspaceFolder[]> = vscode.workspace.workspaceFolders;
 					if (isDefined(workspaceFolders)) {
 						// Workspace with ligo project
@@ -96,38 +146,44 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
 								vscode.window.showTextDocument(config);
 							});
 					}
-				}
-			});
+				},
+				"Open launch.json",
+			);
 			return;
 	}
 
 	// Handling exception origins
 	switch (response.body.error?.variables?.origin) {
 		case "user":
-			vscode.window.showErrorMessage("Error", largeError(formattedMessage));
+			showLargeErrorMessage("Error", [formattedMessage]);
 			return;
 		case "ligo":
-			vscode.window.showErrorMessage("LIGO reported error", largeError(formattedMessage));
+			showLargeErrorMessage("LIGO reported error", [formattedMessage]);
 			return;
 		case "adapter-ligo":
 			const versionIssues = response.body.error?.variables?.versionIssues
-			vscode.window.showErrorMessage("Unexpected output from LIGO", largeError
-				( isDefined(versionIssues)
-					? versionIssues
-					: "Some unexpected error when communicating with LIGO"
+
+			showLargeErrorMessage(
+				"Unexpected output from LIGO",
+				[ isDefined(versionIssues)
+						? versionIssues
+						: "Some unexpected error when communicating with LIGO"
 				, "Details: " + formattedMessage
-				));
+				]
+			);
 			return;
 		case "adapter-plugin":
 		case "adapter":
 			// TODO [LIGO-892]: we need to provide details on how to reach us
-			vscode.window.showErrorMessage("Internal error happened", largeError
-				( "Please contact us."
+			showLargeErrorMessage(
+				"Internal error happened",
+				[ "Please contact us."
 				, "Details: " + formattedMessage
-				));
+				]
+			);
 			return;
 		default:
-			vscode.window.showErrorMessage("Some error", largeError(formattedMessage));
+			showLargeErrorMessage("An unknown error occurred", [formattedMessage]);
 			return;
 	}
 }
