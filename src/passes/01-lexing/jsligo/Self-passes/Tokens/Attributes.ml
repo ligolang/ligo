@@ -6,8 +6,8 @@ module Std           = Simple_utils.Std
 module Region        = Simple_utils.Region
 module Lexbuf        = Simple_utils.Lexbuf
 module Config        = Preprocessing_jsligo.Config
-module PreprocParams = Preprocessor.CLI.Make (Config)
-module Parameters    = LexerLib.CLI.Make (PreprocParams)
+module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
+module Parameters    = LexerLib.CLI.MakeDefault (PreprocParams)
 module Options       = Parameters.Options
 module Lexer         = Lexing_shared.Lexer.Make (Options) (Token)
 
