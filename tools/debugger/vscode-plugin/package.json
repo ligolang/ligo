@@ -285,10 +285,12 @@
         "@vscode/debugprotocol": "1.55.1"
     },
     "devDependencies": {
+        "@types/copy-paste": "1.1.30",
         "@types/node": "^15.14.9",
         "@types/vscode": "^1.67.0",
         "@typescript-eslint/eslint-plugin": "^4.33.0",
         "@typescript-eslint/parser": "^4.27.0",
+        "copy-paste": "1.5.3",
         "esbuild": "^0.13.4",
         "eslint": "^7.32.0",
         "eslint-config-airbnb-base": "^14.2.1",
