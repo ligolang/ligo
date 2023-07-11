@@ -19,6 +19,17 @@ const stepStatus = new DebugSteppingGranularityStatus(async _granularity => {})
 export function activate(context: vscode.ExtensionContext) {
 	const adapterPath = join(context.extensionPath, 'bin', `ligo-debugger${platform === 'win32' ? '.exe' : ''}`)
 
+	const documentProvider = new class implements vscode.TextDocumentContentProvider {
+		onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
+		onDidChange = this.onDidChangeEmitter.event;
+
+		provideTextDocumentContent(uri: vscode.Uri): string {
+			return uri.query;
+		}
+	}
+
+	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('ligo', documentProvider));
+
 	server = new LigoServer(adapterPath, [])
 	client = new LigoProtocolClient(server.address())
 

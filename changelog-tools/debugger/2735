@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nAdded a `Copy` button in modal error boxes in the debugger that copies error contests.\\n\\n"
+merge_request: '2735'
+title: "[#1825] Implement copying error messages"
+type: added
+            
