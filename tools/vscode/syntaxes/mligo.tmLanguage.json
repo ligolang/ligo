@@ -83,7 +83,7 @@
     },
     "operators": {
       "name": "keyword.operator.mligo",
-      "match": "::|\\-|\\+|\\b(mod|land|lor|lxor|lsl|lsr)\\b|&&|\\|\\||>|<>|<=|=>|<|>",
+      "match": "::|\\-|\\+|\\b(mod|land|lor|lxor|lsl|lsr)\\b|&&|\\|\\||>|<>|<=|=>|<|>|\\|>",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },

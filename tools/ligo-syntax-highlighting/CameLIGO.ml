@@ -68,7 +68,8 @@ let syntax_highlighting =
         "#";
         "or";
         "and";
-        "^"
+        "^";
+        "|>";
       ];
       string_delimiters = [
         {
