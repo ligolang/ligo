@@ -10,10 +10,7 @@
   "esy": {
     "buildsInSource": "_build",
     "opamOverrideRemote": "https://github.com/ligolang/esy-opam-override",
-    "build": [
-      "dune build -p ligo",
-      "chmod -R a+w #{self.target_dir}"
-    ],
+    "build": ["dune build -p ligo", "chmod -R a+w #{self.target_dir}"],
     "buildEnv": {
       "OCAMLRUNPARAM": "b",
       "PATH": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : esy-libffi.lib : esy-libev.lib : $PATH}",
@@ -35,9 +32,7 @@
       }
     },
     "release": {
-      "bin": [
-        "ligo"
-      ],
+      "bin": ["ligo"],
       "includePackages": [
         "root",
         "esy-libev",
@@ -50,6 +45,7 @@
     }
   },
   "dependencies": {
+    "ocaml": "4.14.0",
     "@opam/core": "*",
     "@opam/core_kernel": "*",
     "@opam/js_of_ocaml": "*",
@@ -59,7 +55,7 @@
     "@opam/dune": "*",
     "@opam/alcotest": "*",
     "@opam/ocamlgraph": "*",
-    "@opam/menhir": "20211128",
+    "@opam/menhir": "20230608",
     "@opam/coq": "*",
     "@opam/bos": "*",
     "@opam/qcheck": "*",
@@ -73,7 +69,7 @@
     "@opam/tar-unix": "*",
     "@opam/lambda-term": "*",
     "@opam/parse-argv": "*",
-    "@opam/tezos-crypto": "*",
+    "@opam/tezos-crypto": "17.0",
     "@opam/ppx_deriving": "*",
     "@opam/ppx_deriving_yojson": "*",
     "@opam/ppx_expect": "*",
@@ -92,13 +88,13 @@
     "@opam/linol-lwt": "*",
     "ligo-win32-ntdll-stubs": "*",
     "@opam/tezos-rust-libs": "*",
-    "@opam/tz-016-test-helpers": "*",
-    "@opam/tz-017-test-helpers": "*",
-    "@opam/tezos-base": "*",
-    "@opam/tezos-hacl": "*",
-    "@opam/tezos-micheline": "*",
-    "@opam/tc-017": "*",
-    "@opam/tc-016": "*",
+    "@opam/tz-016-test-helpers": "17.0",
+    "@opam/tz-017-test-helpers": "17.0",
+    "@opam/tezos-base": "17.0",
+    "@opam/tezos-hacl": "17.0",
+    "@opam/tezos-micheline": "17.0",
+    "@opam/tc-017": "17.0",
+    "@opam/tc-016": "17.0",
     "@opam/lwt_log": "*",
     "@opam/secp256k1-internal": "*",
     "@opam/bls12-381-signature": "*",
@@ -110,6 +106,9 @@
     "esy-libffi": "*"
   },
   "resolutions": {
+    "@opam/octez-bls12-381-hash": "opam:17.0",
+    "@opam/octez-bls12-381-polynomial": "opam:17.0",
+    "@opam/octez-bls12-381-signature": "opam:17.0",
     "@opam/index": "opam:1.6.1",
     "@opam/progress": "opam:0.2.1",
     "@opam/tezos-sapling": {

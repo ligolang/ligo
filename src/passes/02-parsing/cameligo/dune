@@ -20,7 +20,9 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir-recover --external-tokens Lexing_cameligo.Token Parser.cmly))))
+   (run menhir-recover
+      --external-tokens Lexing_cameligo.Token.MenhirInterpreter
+      Parser.cmly))))
 
 ;; Build of the CameLIGO parser as a library
 

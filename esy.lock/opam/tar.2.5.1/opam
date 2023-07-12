@@ -40,10 +40,10 @@ build: [
 dev-repo: "git+https://github.com/mirage/ocaml-tar.git"
 url {
   src:
-    "https://github.com/mirage/ocaml-tar/releases/download/v2.5.0/tar-2.5.0.tbz"
+    "https://github.com/mirage/ocaml-tar/releases/download/v2.5.1/tar-2.5.1.tbz"
   checksum: [
-    "sha256=06fd25f419fb65648cef70e363beead722a95f250165f4629b3f7ee283c1b85b"
-    "sha512=90e1d667cbf31ee3424280b0d6fddf5bcf51228b29eee48d45e81615706c25f3ea64fd403138875755ddeec44ae96be34d7852a1840fc7eabf88b3a6f3dd46dd"
+    "sha256=d3440f488667a05be16449c371d103254aa1134b8a2f134c336a5413c68c3df4"
+    "sha512=b1ca0988a9f68aa6fd5b96c13ee50c67c011a6ff545b3b6bef99129aa0e606cb6c354e6efd76854a21f8e565047279f7b012cfc0efc899db811fa98588ce13dd"
   ]
 }
-x-commit-hash: "1e3b706e948ce8ed3590d6c4849fcd2db539210c"
+x-commit-hash: "95bd151a9237db1f8b7b4339245139ccd6f7886d"

@@ -20,7 +20,9 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir-recover --external-tokens Lexing_jsligo.Token Parser.cmly))))
+   (run menhir-recover
+      --external-tokens Lexing_jsligo.Token.MenhirInterpreter
+      Parser.cmly))))
 
 ;; Build of the JsLIGO parser as a library
 
