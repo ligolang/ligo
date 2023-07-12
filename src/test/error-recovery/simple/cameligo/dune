@@ -1,16 +1,9 @@
-(rule
- (alias runtest)
- (deps
-  (:script ../../test.sh)
-  (glob_files *.mligo)
-  (glob_files original/*.mligo)
-  ../../../../passes/02-parsing/cameligo/ParserMain.exe)
- (action
-  (progn
-   (run
-    bash
-    %{script}
-    --dialect=cameligo
-    --test-type=simple
-    --dune-workspace=%{workspace_root})
-   (diff? results.csv.expected results.csv))))
+(library
+ (name simple_cameligo_test)
+ (public_name ligo.lsp_test.error_recovery.simple_cameligo_test)
+ (inline_tests
+  (deps
+   (glob_files *.mligo)
+   (glob_files original/*.mligo)))
+ (libraries error_recovery)
+ (preprocess (pps ppx_expect)))

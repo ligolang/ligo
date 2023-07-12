@@ -1,16 +1,9 @@
-(rule
- (alias runtest)
- (deps
-  (:script ../../test.sh)
-  (glob_files *.mligo)
-  (glob_files original/*.mligo)
-  %{workspace_root}/src/passes/02-parsing/cameligo/ParserMain.exe)
- (action
-  (progn
-   (run
-    bash
-    %{script}
-    --dialect=cameligo
-    --test-type=fuzzing
-    --dune-workspace=%{workspace_root})
-   (diff? results.csv.expected results.csv))))
+(library
+ (name fuzzing_cameligo_test)
+ (public_name ligo.lsp_test.error_recovery.fuzzing_cameligo_test)
+ (inline_tests
+  (deps
+   (glob_files *.mligo)
+   (glob_files original/*.mligo)))
+ (libraries error_recovery)
+ (preprocess (pps ppx_expect)))

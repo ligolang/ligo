@@ -1,0 +1,9 @@
+(library
+ (name fuzzing_pascaligo_test)
+ (public_name ligo.lsp_test.error_recovery.fuzzing_pascaligo_test)
+ (inline_tests
+  (deps
+   (glob_files *.ligo)
+   (glob_files original/*.ligo)))
+ (libraries error_recovery)
+ (preprocess (pps ppx_expect)))

@@ -99,11 +99,10 @@ module type DEBUG_CONFIG =
 
 (* The functor integrating the parser with its errors *)
 
-module Make (Lexer  : LEXER)
-            (Parser : PARSER with type token = Lexer.Token.t)
-            (Debug  : DEBUG_CONFIG) :
+module type S =
   sig
-    type token = Lexer.Token.t
+    type token
+    type tree
 
     type message = string Region.reg
 
@@ -117,7 +116,7 @@ module Make (Lexer  : LEXER)
     | Lexing  of error
     | System  of error
 
-    type 'src parser = 'src -> (Parser.tree, pass_error) Stdlib.result
+    type 'src parser = 'src -> (tree, pass_error) Stdlib.result
 
     (* Monolithic API of Menhir *)
 
@@ -149,7 +148,7 @@ module Make (Lexer  : LEXER)
            is not found or a lexer error occurred. *)
 
     type 'src recovery_parser =
-      'src -> (Parser.tree * message list, message Utils.nseq) Stdlib.result
+      'src -> (tree * message list, message Utils.nseq) Stdlib.result
 
     (* Parsing with recovery from various sources *)
 
@@ -162,3 +161,8 @@ module Make (Lexer  : LEXER)
 
     val format_error : no_colour:bool -> file:bool -> string -> Region.t -> string Region.reg
   end
+
+module Make (Lexer  : LEXER)
+            (Parser : PARSER with type token = Lexer.Token.t)
+            (Debug  : DEBUG_CONFIG) : S with type token = Lexer.Token.t
+                                         and type tree = Parser.tree

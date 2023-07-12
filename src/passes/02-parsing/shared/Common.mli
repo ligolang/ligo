@@ -72,6 +72,22 @@ module MakeParser
       raise:raise ->
       Buffer.t ->
       'a
+    module type ParserLexer = sig
+      module Parser : ParserLib.LowAPI.S
+        with type token = Token.t and type tree = CST.tree
+      module Lexer : Lexing_shared.TopAPI.S
+      module DefaultPreprocParams : Preprocessor.CLI.PARAMETERS
+    end
+
+    module type ParserLexerOptions = sig
+      val jsligo : file_path option option
+      val preprocess : bool
+      val project_root : file_path option
+      val raise : raise
+      val file_path : file_path option
+    end
+
+    module ParserLexerGenerator (Options : ParserLexerOptions) : ParserLexer
 
     val parse_file   : (file_path -> CST.tree) parser
     val parse_string : CST.tree parser

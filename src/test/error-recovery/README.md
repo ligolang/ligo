@@ -4,42 +4,41 @@ This is tests for error-recovery
 
 # How to run
 
-The main script is [test.sh](test.sh). 
+The main script is [error_recovery.ml](error_recovery.ml).
 You can run all tests by `dune build @recovery-test` or from this folder you can run `cd simple/cameligo && dune runtest` or `dune runtest ./simple/cameligo` to evaluate tests for a specific dialect.
 
 # How it works
 
-Every folder contains a list of test cases and `results.csv.expected` file.
-Every test case consists of two contracts with the same name. 
+Every folder contains a list of test cases and `test.ml` file.
+Every test case consists of two contracts with the same name.
 One of them is incorrect and another one is its correct version in `original` folder.
 
 Test script runs parser without recovery on correct contract to generate its pretty-printed version, cst, cst symbols, and tokens.
 It also runs parser without recovery on incorrect contract to collect errors and parser with recovery on incorrect contract to generate pretty-printed version, cst, cst symbols, and tokens of recovered contract and collect errors.
 
 The script checks that the recoverable parser's output preserves an error found by the general parser and contains correct CST.
-In case of failing or any other non-zero code produced the status will be set as FAIL.
+In case of any unexpected errors the status will be set as FAIL.
 
-After that, the script diffs all corresponding results and writes the number of different lines in `diff` to `results.csv`. `0` means good recovery. For some tests, it is impossible to guess the right answer so lower changes are better.
-The last check is that generated `results.csv` is equal to `results.csv.expected`. [Some tests](#why-some-tests-have-fail-status) have FAIL status in `results.csv.expected` file.
+After that, the script diffs all corresponding results and counts the number of different lines in `diff`. `0` means good recovery. For some tests, it is impossible to guess the right answer so lower changes are better. [Some tests](#why-some-tests-have-fail-status) have FAIL status in `test.ml` file.
 
-# How to interpret changes between `results.csv` and `result.csv.expected`?
+# How to interpret changes between test output and expected in `test.ml`?
 
-If the numbers are not much different, you can run `dune promote` to copy your actual `results.csv` to `results.csv.expected`. In the opposite case, your changes may cause regression of error recovery so further investigation is needed.
+If the numbers are not much different, you can run `dune promote` to update `test.ml` with the current result. In the opposite case, your changes may cause regression of error recovery so further investigation is needed.
 
-## Results.csv description
+## `test.ml` expectations description
 
 - STATUS - equals to PASS if all sanity checks passed during testing and equals to FAIL in opposite case.
-- LOC — diff between pretty-printed code (amount of lines). It should be very small otherwise, the recovery likely spoiled innocent code around the error. 
-- CST — diff between printed CST. It catches changes in the structure of the code so e.g. big numbers only here likely mean misinterpreting function scopes. 
+- LOC — diff between pretty-printed code (amount of lines). It should be very small otherwise, the recovery likely spoiled innocent code around the error.
+- CST — diff between printed CST. It catches changes in the structure of the code so e.g. big numbers only here likely mean misinterpreting function scopes.
 - CST's symbols — diff between lists of CST's nodes in tree-order (amount of
 nodes). It's like the previous but the tree structure is erased so it is focused on content of CST rather than structure.
 - Tokens — diff between lists of tokens (amount of tokens). It is focused only on terminal node of CST so it shows how many tokens was inserted or skipped.
-- Errors — count of new syntax errors returned by recovery parser. Currently, our tests assume only one mistake so all new errors are caused by a wrong guess of the recovery. So 1-2 is an acceptable value but a bigger one is suspicious. 
+- Errors — count of new syntax errors returned by recovery parser. Currently, our tests assume only one mistake so all new errors are caused by a wrong guess of the recovery. So 1-2 is an acceptable value but a bigger one is suspicious.
 
 ## How to investigate a problems?
 
 It's hard but possible by use debug tools:
-- look at sources of the `results.csv` numbers: 
+- look at sources of the `results.csv` numbers:
 ```bash
 cd _build/default/src/test/error-recovery/simple/cameligo
 diff recovered/problem_test.mligo original_generated/formatted_problem_test.mligo
@@ -69,7 +68,4 @@ firefox 0.html # or firefox N.html where N is number of interesting state
 
 # Why some tests have FAIL status?
 
-In spite of the error recovery, the parser still can fail if an error turns out before it:
-
-- The basic case is a lexer failure
-- The new case is a pre-parser failure. Currently, it affects only the ReasonLIGO
+In spite of the error recovery, the parser still can fail if an error turns out before it. For example lexer failure or pre-parser failure
