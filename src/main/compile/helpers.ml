@@ -71,18 +71,25 @@ let preprocess_raw_input
 
 type file_path = string
 
-module Config = Preprocessing_cameligo.Config
-module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
-module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
-module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
-module Options = Parameters.Options
+module Make (Config : Preprocessor.Config.S) =
+struct
+  module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
+  module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
+  module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
+  module Options = Parameters.Options
+end
+
+module Pascaligo = Make (Preprocessing_pascaligo.Config)
+module Cameligo = Make (Preprocessing_cameligo.Config)
+module Jsligo = Make (Preprocessing_jsligo.Config)
+
 
 let parse_and_abstract_pascaligo
     ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
     buffer
     file_path
   =
-  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let module Parse = Parsing.Pascaligo.Make (Pascaligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Pascaligo.compile_program raw
 
@@ -91,31 +98,31 @@ let parse_and_abstract_expression_pascaligo
     ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)
     buffer
   =
-  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let module Parse = Parsing.Pascaligo.Make (Pascaligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Pascaligo.compile_expression raw
 
 
 let parse_and_abstract_cameligo ~raise buffer file_path =
-  let module Parse = Parsing.Cameligo.Make (Options) in
+  let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_expression_cameligo ~raise buffer =
-  let module Parse = Parsing.Cameligo.Make (Options) in
+  let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Cameligo.compile_expression raw
 
 
 let parse_and_abstract_jsligo ~raise buffer file_path =
-  let module Parse = Parsing.Jsligo.Make (Options) in
+  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_file buffer file_path in
   Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_expression_jsligo ~raise buffer =
-  let module Parse = Parsing.Jsligo.Make (Options) in
+  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_expression buffer in
   Unification.Jsligo.compile_expression raw
 
@@ -146,19 +153,19 @@ let parse_and_abstract_expression
 
 
 let parse_and_abstract_string_cameligo ~raise buffer =
-  let module Parse = Parsing.Cameligo.Make (Options) in
+  let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Cameligo.compile_program raw
 
 
 let parse_and_abstract_string_jsligo ~raise buffer =
-  let module Parse = Parsing.Jsligo.Make (Options) in
+  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Jsligo.compile_program raw
 
 
 let parse_and_abstract_string_pascaligo ~raise buffer =
-  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let module Parse = Parsing.Pascaligo.Make (Pascaligo.Options) in
   let raw = trace ~raise parser_tracer @@ Parse.parse_string buffer in
   Unification.Pascaligo.compile_program raw
 
@@ -174,17 +181,17 @@ let parse_and_abstract_string ~raise (syntax : Syntax_types.t) buffer =
 
 
 let pretty_print_cameligo_cst ?preprocess ?project_root ~raise buffer file_path =
-  let module Parse = Parsing.Cameligo.Make (Options) in
+  let module Parse = Parsing.Cameligo.Make (Cameligo.Options) in
   Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
 
 
 let pretty_print_jsligo_cst ?preprocess ?project_root ~raise buffer file_path =
-  let module Parse = Parsing.Jsligo.Make (Options) in
+  let module Parse = Parsing.Jsligo.Make (Jsligo.Options) in
   Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
 
 
 let pretty_print_pascaligo_cst ?preprocess ?project_root ~raise buffer file_path =
-  let module Parse = Parsing.Pascaligo.Make (Options) in
+  let module Parse = Parsing.Pascaligo.Make (Pascaligo.Options) in
   Parse.pretty_print_cst ?preprocess ?project_root ~raise buffer file_path
 
 
@@ -200,7 +207,7 @@ let pretty_print_cst ~raise ~(meta : meta) buffer file_path =
 
 let pretty_print_cameligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
   let module Options = struct
-    include Options
+    include Cameligo.Options
 
     let jsligo = jsligo
   end
@@ -218,7 +225,7 @@ let pretty_print_cameligo ?jsligo ?preprocess ?project_root ~raise buffer file_p
 
 let pretty_print_jsligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
   let module Options = struct
-    include Options
+    include Jsligo.Options
 
     let jsligo = jsligo
   end
@@ -236,7 +243,7 @@ let pretty_print_jsligo ?jsligo ?preprocess ?project_root ~raise buffer file_pat
 
 let pretty_print_pascaligo ?jsligo ?preprocess ?project_root ~raise buffer file_path =
   let module Options = struct
-    include Options
+    include Pascaligo.Options
 
     let jsligo = jsligo
   end
