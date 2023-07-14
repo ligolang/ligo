@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nUse `nairobinet` rather than `mumbainet` for deployment. Use `ecadinfra.com` rather than `tez.ie` for networks and keygen.\\n\\n"
+merge_request: '2739'
+title: "[Chore] Update VSCode extension network and API"
+type: fixed
+            
