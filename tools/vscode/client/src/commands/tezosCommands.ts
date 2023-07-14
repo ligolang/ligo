@@ -13,13 +13,10 @@ import { getLastContractPath, ligoOutput } from './common';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
-const mainnet = 'mainnet'
-const currentlyActiveNetworks = ['mumbainet', 'ghostnet']
+const currentlyActiveNetworks = ['nairobinet', 'ghostnet']
 
 const Tezos = (network: string): TezosToolkit | undefined => {
-  if (network === mainnet) {
-    return new TezosToolkit(`https://${mainnet}.api.tez.ie`)
-  } else if (currentlyActiveNetworks.includes(network)) {
+  if (currentlyActiveNetworks.includes(network)) {
     return new TezosToolkit(`https://${network}.ecadinfra.com`)
   } else {
     return undefined
@@ -63,19 +60,23 @@ async function askForContractAndStorage(
   return { code, storage }
 }
 
-export async function fetchRandomPrivateKey(network: string): Promise<string | undefined> {
-  const URL = `https://api.tez.ie/keys/${network}/`;
+export async function fetchRandomPrivateKey(network: string): Promise<["OK" | "Error", string]> {
+  const URL = `https://keygen.ecadinfra.com/${network}`;
   const response = await fetch(URL, {
     method: 'POST',
     headers: { Authorization: AUTHORIZATION_HEADER },
   });
 
   const status = response.status;
-  if (status === 200) {
-    return response.text()
-  } else {
-    return undefined
-  }
+  const text = await response.text()
+  return [status === 200 ? "OK" : "Error", text]
+}
+
+const showUnsupportedMessage = (network: string, msg?: string) => {
+  const details = msg ? ` Details: ${msg}` : ''
+  return vscode.window.showWarningMessage(
+    `Currently, the extension does not support deployment on the ${network} testnet.${details}`,
+  )
 }
 
 export async function executeDeploy(client: LanguageClient): Promise<void> {
@@ -86,19 +87,29 @@ export async function executeDeploy(client: LanguageClient): Promise<void> {
     {
       cancellable: false,
       location: vscode.ProgressLocation.Notification,
-      title: 'Deploying contract. It might take some time\n',
+      title: 'Deploying contract. It might take some time',
     },
     async (progress) => {
       const TezosNetwork = Tezos(network)
+      if (!TezosNetwork) {
+        showUnsupportedMessage(network)
+        return
+      }
 
       progress.report({
         message: 'Generating key',
       })
 
-      await importKey(TezosNetwork, await fetchRandomPrivateKey(network));
+      const [status, result] = await fetchRandomPrivateKey(network)
+      if (status === "Error") {
+        showUnsupportedMessage(network, result)
+        return
+      }
+
+      await importKey(TezosNetwork, result);
 
       progress.report({
-        message: 'Key generated, originating contract',
+        message: 'Originating contract',
       })
 
       const op = await TezosNetwork.contract.originate({
@@ -142,14 +153,9 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
       title: 'Generating deploy script. It might take some time',
     },
     async (progress) => {
-      const showUnsupportedMessage = () =>
-        vscode.window.showWarningMessage(
-          `Currently, the extension does not support deployment on the ${network} testnet`
-        )
-
       const TezosNetwork = Tezos(network)
       if (!TezosNetwork) {
-        showUnsupportedMessage()
+        showUnsupportedMessage(network)
         return
       }
 
@@ -157,15 +163,16 @@ export async function executeGenerateDeployScript(client: LanguageClient): Promi
         message: 'Generating key',
       })
 
-      const randomPrivateKey = await fetchRandomPrivateKey(network)
-      if (!randomPrivateKey) {
-        showUnsupportedMessage()
+      const [status, result] = await fetchRandomPrivateKey(network)
+      if (status === "Error") {
+        showUnsupportedMessage(network, result)
         return
       }
 
+      const randomPrivateKey = result
       await importKey(TezosNetwork, randomPrivateKey);
       progress.report({
-        message: 'Key generated, calculating burn-cap cost',
+        message: 'Calculating burn-cap cost',
       })
 
       const estimate = await TezosNetwork.estimate.originate({
