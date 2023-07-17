@@ -58,13 +58,24 @@ export class CompilerManager {
       );
     }
 
-    WebIdeApi.compileContract({
-      project: {
-        sourceFiles: contractFiles,
-        main: projectManager.mainFilePath,
-        module,
-      },
-    })
+    // UGLY FIX : pass module value only if it is non-empty
+    const project =
+      module !== ""
+        ? {
+            project: {
+              sourceFiles: contractFiles,
+              main: projectManager.mainFilePath,
+              module,
+            },
+          }
+        : {
+            project: {
+              sourceFiles: contractFiles,
+              main: projectManager.mainFilePath,
+            },
+          };
+
+    WebIdeApi.compileContract(project)
       .then(async (resp) => {
         if (CompilerManager.terminal) {
           CompilerManager.terminal.writeToTerminal(resp.data.replace(/\n/g, "\n\r"));
