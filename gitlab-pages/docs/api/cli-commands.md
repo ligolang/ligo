@@ -20,6 +20,22 @@ ligo compile contract SOURCE_FILE --entry-point ENTRY_POINT
 ligo compile contract examples/counter.mligo --entry-point main
 ```
 
+
+## Compiling a view
+
+Compile a view with a specific entry point.
+
+```zsh
+ligo compile view SOURCE_FILE VIEW_NAME --entry-point ENTRY_POINT
+```
+
+#### Example
+
+```zsh
+ligo compile view examples/counter.mligo v1 --entry-point main
+```
+
+
 ## Defining the initial storage
 
 If your contract implements a sophisticated storage, you can compile a LIGO expression into a Michelson value quite easily.

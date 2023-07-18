@@ -427,6 +427,8 @@ type contract_michelson =
   ; views : (Value_var.t, Stacking.compiled_expression) named list
   }
 
+type view_michelson = (Ligo_prim.Value_var.t, Stacking.compiled_expression) named
+
 let rec build_contract_aggregated ~raise
     :  options:Compiler_options.t -> string list -> string -> string list
     -> Source_input.code_input -> _
@@ -484,6 +486,67 @@ let rec build_contract_aggregated ~raise
   entry_point, (parameter_ty, storage_ty), aggregated, agg_views
 
 
+and build_view_aggregated ~raise
+    :  options:Compiler_options.t -> string list -> string -> string
+    -> Source_input.code_input -> _
+  =
+ fun ~options entry_points module_ view_name source ->
+  let module_path = parse_module_path ~loc module_ in
+  let typed_prg = qualified_typed ~raise ~options source in
+  let contract_info, typed_contract =
+    trace ~raise self_ast_typed_tracer
+    @@ Ligo_compile.Of_core.specific_passes
+         ~options
+         (Ligo_compile.Of_core.Contract { entrypoints = entry_points; module_path })
+         typed_prg
+  in
+  let entry_point, contract_type = contract_info in
+  let _, typed_views =
+    let form =
+      Ligo_compile.Of_core.View
+        { command_line_views = Some [ view_name ]
+        ; contract_entry = entry_point
+        ; module_path
+        ; contract_type
+        }
+    in
+    trace ~raise self_ast_typed_tracer
+    @@ Ligo_compile.Of_core.specific_passes ~options form typed_prg
+  in
+  let aggregated =
+    Ligo_compile.Of_typed.apply_to_entrypoint_contract
+      ~raise
+      ~options:options.middle_end
+      ~contract_pass:true
+      typed_contract
+      entry_point
+      module_path
+  in
+  let agg_views =
+    match typed_views with
+    | [] -> None
+    | _ -> build_aggregated_views ~raise ~options ~contract_type module_path typed_views
+  in
+  let parameter_ty, storage_ty =
+    trace_option
+      ~raise
+      (`Self_ast_aggregated_tracer
+        (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract"))
+      (let open Simple_utils.Option in
+      let open Ast_aggregated in
+      let* { type1 = input_ty; _ } =
+        Ast_aggregated.get_t_arrow aggregated.type_expression
+      in
+      Ast_aggregated.get_t_pair input_ty)
+  in
+  match agg_views with
+  | Some ([ name ], expr) ->
+    entry_point, (parameter_ty, storage_ty), name, expr
+  | _ ->
+    raise.error (`Self_ast_aggregated_tracer
+        (Self_ast_aggregated.Errors.corner_case "Could not find compiled view"))
+
+
 and build_contract_stacking ~raise
     :  options:Compiler_options.t -> string list -> string -> string list
     -> Source_input.code_input
@@ -502,6 +565,19 @@ and build_contract_stacking ~raise
   entrypoint, (contract, aggregated), (views, agg_views)
 
 
+and build_view_stacking ~raise
+    :  options:Compiler_options.t -> string list -> string -> string
+    -> Source_input.code_input
+    -> _ * ((Value_var.t * Stacking.compiled_expression) list * _)
+  =
+ fun ~options entry_points module_ view_name source ->
+  let entrypoint, _, view_name, view_expr =
+    build_view_aggregated ~raise ~options entry_points module_ view_name source
+  in
+  let views = build_views ~raise ~options (Some ([ view_name ], view_expr)) in
+  entrypoint, (views, ([ view_name ], view_expr))
+
+
 (* building a contract in michelson *)
 and build_contract ~raise ~options entry_point module_ views source =
   let entrypoint, (contract, _), (views, _) =
@@ -510,6 +586,16 @@ and build_contract ~raise ~options entry_point module_ views source =
   let entrypoint = { name = entrypoint; value = contract } in
   let views = List.map ~f:(fun (name, value) -> { name; value }) views in
   { entrypoint; views }
+
+
+(* building a view in michelson *)
+and build_view ~raise ~options entry_point module_ view_name source =
+  let _, (views, _) =
+    build_view_stacking ~raise ~options entry_point module_ view_name source
+  in
+  let views = List.map ~f:(fun (name, value) -> { name; value }) views in
+  let view = List.hd_exn views in
+  view
 
 
 (* Meta ligo needs contract and views as aggregated programs *)

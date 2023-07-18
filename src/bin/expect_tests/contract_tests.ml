@@ -8,6 +8,25 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "view"; contract "off_view.mligo"; "va"; "-e"; "maina" ];
+  [%expect {|
+    { UNPAIR ; SIZE ; ADD } |}];
+  run_ligo_good [ "compile"; "view"; contract "off_view.mligo"; "vb"; "-e"; "mainb" ];
+  [%expect {|
+    { UNPAIR ; SIZE ; ADD ; INT } |}];
+  run_ligo_bad [ "compile"; "view"; contract "off_view.mligo"; "va"; "-e"; "mainb" ];
+  [%expect
+    {|
+    File "../../test/contracts/off_view.mligo", line 4, characters 4-6:
+      3 |
+      4 | let va (p : string) (s : int) : int = String.length p + s
+              ^^
+      5 | let vb (p : string) (s : nat) : int = int (String.length p + s)
+
+    Invalid type for view "mainb#9".
+    Cannot find "nat" as storage. |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"

@@ -320,6 +320,16 @@ module Michelson_formatter = struct
     Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
 
 
+  let pp_view_json ppf (parameter, returnType, code) =
+    let code_json : Data_encoding.json = get_json code in
+    let returnType_json : Data_encoding.json = get_json returnType in
+    let parameter_json : Data_encoding.json = get_json parameter in
+    let json : Data_encoding.json =
+      `O [ "parameter", parameter_json; "returnType", returnType_json; "code", code_json ]
+    in
+    Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
+
+
   let result_ppformat
       michelson_format
       michelson_comments
@@ -395,6 +405,66 @@ module Michelson_formatter = struct
     =
    fun michelson_format michelson_comments ->
     Display.map ~f:shrink (shrunk_result_format michelson_format michelson_comments)
+
+
+  let view_ppformat
+      michelson_format
+      ~display_format
+      ~no_colour
+      f
+      (_, parameter, returnType, code)
+    =
+    (* The [no_colour] option is provided to all [_ppformat] functions by default,
+       but not needed by all of them. Remove the [ignore] if you need it. *)
+    let () = ignore no_colour in
+    let mich_pp michelson_format =
+      match michelson_format with
+      | `Text -> fun ppf (_, _, code) -> pp_comment ~comment:(fun _ -> None) ppf code
+      | `Json -> pp_view_json
+      | `Hex -> fun ppf (_, _, code) -> pp_hex ppf code
+    in
+    match display_format with
+    | Human_readable | Dev ->
+      let m =
+        Format.asprintf "%a\n" (mich_pp michelson_format) (parameter, returnType, code)
+      in
+      Format.pp_print_string f m
+
+
+  (* is this even used anywhere??? *)
+  let view_jsonformat michelson_format (_, parameter, returnType, code) : json =
+    match michelson_format with
+    | `Text ->
+      let code_as_str = Format.asprintf "%a" (pp_comment ~comment:(fun _ -> None)) code in
+      `Assoc [ "text_code", `String code_as_str ]
+    | `Hex ->
+      let code_as_hex = Format.asprintf "%a" pp_hex code in
+      `Assoc [ "hex_code", `String code_as_hex ]
+    | `Json ->
+      let code_as_str = Format.asprintf "%a" pp_view_json (parameter, returnType, code) in
+      `Assoc [ "json_code", `String code_as_str ]
+
+
+  let view_result_format
+      :  michelson_format
+      -> (string
+         * (Mini_c.meta, string) Micheline.node
+         * (Mini_c.meta, string) Micheline.node
+         * (Mini_c.meta, string) Micheline.node)
+         format
+    =
+   fun mf -> { pp = view_ppformat mf; to_json = view_jsonformat mf }
+
+
+  let view_michelson_format
+      :  michelson_format
+      -> (string
+         * (Mini_c.meta, string) Micheline.node
+         * (Mini_c.meta, string) Micheline.node
+         * (Mini_c.meta, string) Micheline.node)
+         format
+    =
+   fun michelson_format -> view_result_format michelson_format
 
 
   let michelson_constant_jsonformat michelson_format a : json =
