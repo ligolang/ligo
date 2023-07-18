@@ -295,6 +295,13 @@ let only_ep =
   flag ~doc name no_arg
 
 
+let skip_generated =
+  let open Command.Param in
+  let name = "--skip-generated" in
+  let doc = "Skip generated declarations" in
+  flag ~doc name no_arg
+
+
 let experimental_disable_optimizations_for_debugging =
   let open Command.Param in
   let name = "--experimental-disable-optimizations-for-debugging" in
@@ -1898,6 +1905,7 @@ let list_declarations =
   let f
       source_file
       only_ep
+      skip_generated
       syntax
       display_format
       no_colour
@@ -1908,7 +1916,14 @@ let list_declarations =
       ()
     =
     let raw_options =
-      Raw_options.make ~only_ep ~syntax ~project_root ~deprecated ~libraries ()
+      Raw_options.make
+        ~only_ep
+        ~skip_generated
+        ~syntax
+        ~project_root
+        ~deprecated
+        ~libraries
+        ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -1937,6 +1952,7 @@ let list_declarations =
     (f
     <$> source_file
     <*> only_ep
+    <*> skip_generated
     <*> syntax
     <*> display_format
     <*> no_colour
