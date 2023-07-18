@@ -46,7 +46,7 @@ class NotificationManager {
     return new Notification(this._ref, opts);
   }
 
-  success(title, message, autoDismiss = 2, actions = undefined) {
+  success(title, message, autoDismiss = 4, actions = undefined) {
     return this.displayNotification({
       title,
       message,
@@ -56,7 +56,7 @@ class NotificationManager {
     });
   }
 
-  error(title, message, autoDismiss = 4, actions = undefined) {
+  error(title, message, autoDismiss = 8, actions = undefined) {
     return this.displayNotification({
       title,
       message,
@@ -66,7 +66,7 @@ class NotificationManager {
     });
   }
 
-  warning(title, message, autoDismiss = 2, actions = undefined) {
+  warning(title, message, autoDismiss = 4, actions = undefined) {
     return this.displayNotification({
       title,
       message,
@@ -76,7 +76,7 @@ class NotificationManager {
     });
   }
 
-  info(title, message, autoDismiss = 2, actions = undefined) {
+  info(title, message, autoDismiss = 4, actions = undefined) {
     return this.displayNotification({
       title,
       message,

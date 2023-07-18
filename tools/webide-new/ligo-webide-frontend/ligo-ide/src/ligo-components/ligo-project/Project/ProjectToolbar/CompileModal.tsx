@@ -52,7 +52,7 @@ const CompileModal: React.FC<CompileModalProps> = ({
               checked={doNotShow}
             />
             <Label>
-              Do not show this again. You can use <kbd>ctrl/cmb+b</kbd> shortcut to compile.
+              Do not show this again. You can use <kbd>ctrl/cmd+b</kbd> shortcut to compile.
             </Label>
           </div>
         </>
