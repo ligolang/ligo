@@ -37,7 +37,12 @@ const LigoHeader = () => {
   return (
     <div className="ligoNavbar">
       <div className="ligoGroup">
-        <a className="ligoLink ligoLinkNoPadding" href={`////${window.location.host}`}>
+        <a
+          className="ligoLink ligoLinkNoPadding"
+          href="////ligolang.org"
+          target="_blank"
+          rel="noreferrer"
+        >
           <img className="ligoLogo" src={ligologo} alt="Hello" />
         </a>
         {links.map((l) => {
