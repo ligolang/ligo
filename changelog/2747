@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nA new flag for `info list-declarations` allows to prevent printing the generated `$main` entrypoint:\\n\\n```\\n$ cat b.jsligo \\ntype storage = int;\\n\\ntype ret = [list<operation>, storage];\\n\\n@entry\\nconst increment = (delta: int, store: storage): ret => [list([]), store + delta];\\n\\n@entry\\nconst decrement = (delta: int, store: storage): ret => [list([]), store - delta];\\n\\n@entry\\nconst reset = (_: unit, _: storage): ret => [list([]), 0];\\n$ ligo info list-declaration --display-format dev --only-ep --skip-generated b.jsligo\\nb.jsligo declarations:                   \\nreset\\ndecrement\\nincrement\\n\\n```\\n\\n"
+merge_request: '2747'
+title: "CLI: add `--skip-generated` in `list-declarations` sub-command"
+type: added
+            

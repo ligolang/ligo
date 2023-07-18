@@ -59,5 +59,10 @@ let list_declarations (raw_options : Raw_options.t) source_file =
         Simple_utils.Trace.trace ~raise Main_errors.self_ast_typed_tracer
         @@ Self_ast_typed.all_program prg
       in
-      let declarations = Compile.Of_typed.list_declarations raw_options.only_ep prg in
+      let declarations =
+        Compile.Of_typed.list_declarations
+          ~skip_generated:raw_options.skip_generated
+          raw_options.only_ep
+          prg
+      in
       (source_file, declarations), [] )
