@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nThe new sub-command `compile view` allows to compile views directly. This can be useful for compiling off-chain views to be used in metadata:\\n\\n```\\n$ cat off_view.mligo \\nlet main (p : int) (s : int) : operation list * int = [], p + s\\n\\nlet v (p : string) (s : int) : int = String.length p + s\\n$ ligo compile view off_view.mligo v --michelson-format json\\n{\"parameter\":{\"prim\":\"string\"},\"returnType\":{\"prim\":\"int\"},\"code\":[{\"prim\":\"UNPAIR\"},{\"prim\":\"SIZE\"},{\"prim\":\"ADD\"}]}\\n\\n```\\n\\n"
+merge_request: '2737'
+title: "New sub-command: `compile view` for off-chain view compilation"
+type: added
+            

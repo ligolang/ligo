@@ -62,6 +62,8 @@ type contract_michelson =
   ; views : (Ligo_prim.Value_var.t, Stacking.compiled_expression) named list
   }
 
+type view_michelson = (Ligo_prim.Value_var.t, Stacking.compiled_expression) named
+
 val qualified_typed
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
@@ -114,6 +116,15 @@ val build_contract
   -> string list
   -> Source_input.code_input
   -> contract_michelson
+
+val build_view
+  :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+  -> options:Compiler_options.t
+  -> string list
+  -> string
+  -> string
+  -> Source_input.code_input
+  -> view_michelson
 
 val qualified_core
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise

@@ -475,3 +475,35 @@ let storage
              compiled_param.expr
              compiled_param.expr_ty)
       , [] ) )
+
+
+let view (raw_options : Raw_options.t) source view_name michelson_code_format =
+  ( Formatter.Michelson_formatter.view_michelson_format michelson_code_format
+  , fun ~raise ->
+      let syntax =
+        match source with
+        | Text (_source_code, syntax) -> syntax
+        | File source_file ->
+          Syntax.of_string_opt
+            ~raise
+            ~support_pascaligo:raw_options.deprecated
+            (Syntax_name raw_options.syntax)
+            (Some source_file)
+      in
+      let protocol_version =
+        Helpers.protocol_to_variant ~raise raw_options.protocol_version
+      in
+      let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
+      let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+      let source =
+        match source with
+        | File filename -> BuildSystem.Source_input.From_file filename
+        | Text (source_code, syntax) ->
+          BuildSystem.Source_input.(
+            Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
+      in
+      let { name ; value } : Build.view_michelson =
+        Build.build_view ~raise ~options entry_point module_ view_name source
+      in
+      let compiled_view = Ligo_compile.Of_michelson.build_view ~raise name value in
+      compiled_view, [] )

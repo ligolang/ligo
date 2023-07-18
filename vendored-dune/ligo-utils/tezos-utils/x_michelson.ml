@@ -58,15 +58,15 @@ let contract parameter storage code views =
     ] @ views
   )
 
+let lview : type l . l -> (string * (l, string) node * (l, string) node * (l, string) node) -> l t =
+  fun view_loc (name, t_arg, t_ret, code) ->
+      (* TODO should provide original view declaration location instead of dummy view_loc? *)
+      lprim view_loc ~children:[lstring view_loc name ; t_arg ; t_ret ; code] "view"
+
 let lcontract :
   type l. l -> l -> l t -> l -> l t -> l -> l t -> l -> (string * (l, string) node * (l, string) node * (l, string) node) list -> l t =
   fun root_loc parameter_loc parameter storage_loc storage code_loc code view_loc views ->
-  let views = List.map
-    ~f:(fun (name, t_arg, t_ret, code) ->
-      (* TODO should provide original view declaration location instead of dummy view_loc? *)
-      lprim view_loc ~children:[lstring view_loc name ; t_arg ; t_ret ; code] "view")
-    views
-  in
+  let views = List.map ~f:(lview view_loc) views in
   lseq root_loc ([
     lprim parameter_loc ~children:[parameter] "parameter" ;
     lprim storage_loc ~children:[storage] "storage" ;

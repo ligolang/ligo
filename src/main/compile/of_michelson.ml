@@ -84,6 +84,15 @@ let dummy : Stacking.meta =
   { location = Location.dummy; env = []; binder = None; source_type = None }
 
 
+let build_view ~raise name (view : Stacking.compiled_expression) =
+  let view_param_ty, ret_ty =
+    trace_option ~raise (main_view_not_a_function name)
+    @@ (* remitodo error specific to views*)
+    Self_michelson.fetch_views_ty view.expr_ty
+  in
+  Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr
+
+
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise
     :  protocol_version:Environment.Protocols.t -> ?enable_typed_opt:bool
@@ -99,17 +108,15 @@ let build_contract ~raise
      ?tezos_context
      compiled
      views ->
-  let views =
-    List.map
-      ~f:(fun (name, view) ->
-        let view_param_ty, ret_ty =
-          trace_option ~raise (main_view_not_a_function name)
-          @@ (* remitodo error specific to views*)
-          Self_michelson.fetch_views_ty view.expr_ty
-        in
-        Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr)
-      views
+  let build_view_f (name, (view : Stacking.compiled_expression)) =
+    let view_param_ty, ret_ty =
+      trace_option ~raise (main_view_not_a_function name)
+      @@ (* remitodo error specific to views*)
+      Self_michelson.fetch_views_ty view.expr_ty
+    in
+    Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr
   in
+  let views = List.map ~f:build_view_f views in
   let param_ty, storage_ty =
     trace_option ~raise main_entrypoint_not_a_function
     @@ Self_michelson.fetch_contract_ty_inputs compiled.expr_ty
