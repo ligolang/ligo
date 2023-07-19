@@ -408,7 +408,7 @@ function main (const p : int; const s : unit) : list (operation) * unit is {
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p,s : int * unit) = if p > 10 then failwith "Failure."
+let main (p,s : int * unit) : operation list * unit = if p > 10 then failwith "Failure." else [], ()
 ```
 
 </Syntax>
@@ -416,8 +416,8 @@ let main (p,s : int * unit) = if p > 10 then failwith "Failure."
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = (p: int, s: unit): unit => {
-  if (p > 10) { failwith ("Failure."); };
+let main = (p: int, s: unit): [list<operation>, unit] => {
+  if (p > 10) { failwith ("Failure."); } else return [list([]), []];
 };
 ```
 

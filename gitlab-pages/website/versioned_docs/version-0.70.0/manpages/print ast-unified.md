@@ -14,6 +14,9 @@ enable deprecated language PascaLIGO
 **--display-format FORMAT**
 the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)
 
+**--hide-sort restrict**
+sorts shown in s-exp. available sorts: "ty_expr""pattern""instruction""statement""block""declaration""mod_expr""expr""program""program_entry" (alias: -hide)
+
 **--library LIBS**
 A comma-separated list of paths to directories where to search for files to be included by the preprocessor (alias: -l)
 
