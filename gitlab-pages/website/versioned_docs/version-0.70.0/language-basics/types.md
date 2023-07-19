@@ -15,7 +15,7 @@ LIGO types are built on top of Michelson's type system.
 
 ## Built-in types
 
-For quick reference, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/-/blob/dev/src/environment/environment.ml).
+For quick reference, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/-/blob/dev/src/main/build/ligo_lib/std_lib.mligo#L1-33).
 
 ## Type aliases
 

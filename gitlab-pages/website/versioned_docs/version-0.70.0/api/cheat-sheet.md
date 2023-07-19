@@ -1056,6 +1056,33 @@ let fail = (u: unit) : unit =>
 ```
 
 </div>
+<div className="primitive">
+contract_of and parameter_of
+</div>
+<div className="example">
+
+```jsligo group=tezos_specific
+namespace C {
+  type storage = int;
+
+  // @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+
+  // @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+};
+
+const testC = () => {
+    let initial_storage = 42;
+    let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0 as tez);
+    let contr : contract<parameter_of C> = Test.to_contract(taddr);
+    let p : parameter_of C = Increment(1);
+    let _ = Test.transfer_to_contract_exn(contr, p, 1 as mutez);
+    return assert(Test.get_storage(taddr) == initial_storage + 1);
+}
+```
+
+</div>
 </div>
 
 </Syntax>

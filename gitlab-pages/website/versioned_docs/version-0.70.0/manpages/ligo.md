@@ -47,9 +47,6 @@ install LIGO dependencies declared in package.json
 **login**
 [BETA] login to the LIGO package registry
 
-**daemon**
-launch a long running LIGO process
-
 **lsp**
 [BETA] launch a LIGO lsp server
 

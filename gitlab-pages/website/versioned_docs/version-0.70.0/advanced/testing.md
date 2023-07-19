@@ -1042,3 +1042,35 @@ let test = (() : [list<[int,int]>, list<int>] => {
 ```
 
 </Syntax>
+
+### Testing a contract declared as a module or namespace
+
+When declaring the entry points of a contract using `@entry`, LIGO generates two hidden values in the module:
+
+* an implicit `main` function, which can be obtained using the keyword `contract_of(C)` where `C` is the namespace or module containing the entry points, and
+* the input type for that `main` function, which can be obtained using the keyword `parameter_of C`.
+
+In the example below, `contract_of(C)` is returns the implicitly-declared `main` function that calls the `increment` or `decrement` entry points depending on the argument given, and `parameter_of C` is the [variant](https://ligolang.org/docs/language-basics/unit-option-pattern-matching#variant-types) `["Increment", int] | ["Decrement", int]`.
+
+```jsligo group=tezos_specific
+namespace C {
+  type storage = int;
+
+  // @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+
+  // @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+};
+
+const testC = () => {
+    let initial_storage = 42;
+    let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0 as tez);
+    let contr : contract<parameter_of C> = Test.to_contract(taddr);
+    let p : parameter_of C = Increment(1);
+    let _ = Test.transfer_to_contract_exn(contr, p, 1 as mutez);
+    return assert(Test.get_storage(taddr) == initial_storage + 1);
+}
+```
+
+The special constructions `contract_of(C)` and `parameter_of C` are not first-class functions, they are special syntax which take a module or namespace name as a parameter. This means for example that `some_function(contract_of)` or `contract_of(some_variable)` are invalid uses of the syntax (a literal module or parameter name must always be passed as part of the syntax).

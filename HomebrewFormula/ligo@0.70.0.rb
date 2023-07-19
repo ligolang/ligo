@@ -1,4 +1,4 @@
-class Ligo < Formula
+class LigoAT0700 < Formula
   desc "Friendly Smart Contract Language for Tezos"
   homepage "https://ligolang.org/"
   license "MIT"
@@ -11,8 +11,8 @@ class Ligo < Formula
 
   bottle do
     root_url "https://gitlab.com/api/v4/projects/12294987/packages/generic/ligo_bottle/current"
-  sha256 cellar: :any, arm64_ventura: "18678fd4f4de86c4126f406b91ac20b75689cf5c40b35c05d5bceecc102b37b5"
-  sha256 cellar: :any, ventura: "e706d0ad9fc9865f03400e9460fdbb1dd4f0d2f1e1ec083e9d20ffdf82c54afe"
+  # bottle arm64_ventura
+  # bottle ventura
   end
 
   build_dependencies = %w[opam rust hidapi pkg-config gnu-sed cmake gcc]

@@ -174,7 +174,7 @@ Consider the following contract:
 ```pascaligo
 function sum (const x : int; const y : int) is x + y
 
-function main (const parameter : int; const storage : int) is
+function main (const parameter : int; const storage : int) : list (operation) * int is
   (list [], sum (parameter, storage))
 ```
 
@@ -184,7 +184,7 @@ function main (const parameter : int; const storage : int) is
 ```cameligo
 let sum (x, y : int * int) = x + y
 
-let main (parameter, storage : int * int) =
+let main (parameter, storage : int * int) : operation list * int =
   ([], sum (parameter, storage))
 ```
 
@@ -222,7 +222,7 @@ Other declarations can be inlined as well. In this contract, the compiler may ge
 ```pascaligo
 const n = 4
 
-function main (const _ : int ; const _ : int) is
+function main (const _ : int ; const _ : int) : list (operation) * int is
   (list [], n * n)
 ```
 
@@ -232,7 +232,7 @@ function main (const _ : int ; const _ : int) is
 ```cameligo
 let n = 4
 
-let main (_, _ : unit * int) = [], n * n
+let main (_, _ : unit * int) : operation list * int = [], n * n
 ```
 
 </Syntax>
