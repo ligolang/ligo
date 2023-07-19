@@ -795,8 +795,13 @@ and pp_variant_comp state (node: variant_comp) =
              ^^ pp_nsepseq (break 1) (pp_type_expr state) params)
 
 and pp_attribute state (node : Attr.t wrap) =
+  let cst_attr = ["entry"; "inline"; "view"; "no_mutation";
+                  "private"; "public"; "hidden"; "thunk"] in
   let key, val_opt = node#payload in
-  let thread = string "// @" ^^ string key in
+  let thread =
+    if List.mem cst_attr key ~equal:String.equal then
+      string "@" ^^ string key
+    else string "// @" ^^ string key in
   let thread = match val_opt with
                  Some Ident value ->
                    group (thread ^/^ nest state#indent (string value))
