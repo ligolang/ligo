@@ -110,12 +110,14 @@ let compile_curry ~raise ~loc recursive_opt parameters ret_type body =
           let binder = Param.make ~mut_flag:(mut_flag param_kind) v param_type in
           binder, ret_type, None
         | None ->
-          let fresh_binder = Variable.fresh ~loc:(get_p_loc pattern) () in
+          let fresh_binder = Variable.fresh ~loc:Location.generated () in
           (* REMITODO : inspect param_kind to know if e_simple_let_in or e_let_mut_in *)
           let prelude let_result =
             e_simple_let_in
               ~loc:(get_e_loc body)
-              { binder = pattern; rhs = e_variable ~loc fresh_binder; let_result }
+              { binder = pattern;
+                rhs = e_variable ~loc:Location.generated fresh_binder;
+                let_result }
           in
           let binder = Param.make ~mut_flag:Immutable fresh_binder param_type in
           binder, ret_type, Some prelude)

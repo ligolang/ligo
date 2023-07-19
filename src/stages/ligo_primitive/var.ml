@@ -5,7 +5,7 @@ module type VAR = sig
 
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
-  val fresh : loc:Location.t -> ?name:string -> unit -> t
+  val fresh : loc:Location.t -> ?name:string -> ?generated:bool -> unit -> t
   val fresh_like : ?loc:Location.t -> t -> t
 
   (* Construct a user variable directly from a string. This should only
@@ -54,12 +54,12 @@ module Internal () = struct
   let reset_counter () = global_counter := 1
   let add_prefix str var = { var with name = str ^ var.name }
 
-  let fresh ~loc ?(name = "gen") () =
+  let fresh ~loc ?(name = "gen") ?(generated = true) () =
     let counter =
       incr global_counter;
       !global_counter
     in
-    { name; counter; generated = true; location = loc }
+    { name; counter; generated; location = loc }
 
 
   let fresh_like ?loc v =

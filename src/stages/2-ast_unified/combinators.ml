@@ -244,7 +244,7 @@ let e_unopt ~loc matchee none_body (var_some, some_body) =
 
 let let_unit_in rhs body =
   e_let_in
-    ~loc:(Location.cover (get_e_loc rhs) (get_e_loc body))
+    ~loc:Location.generated
     { is_rec = false
     ; type_params = None
     ; lhs = List.Ne.singleton @@ p_unit ~loc:Location.generated
@@ -256,7 +256,7 @@ let let_unit_in rhs body =
 
 let let_ignore_in rhs body =
   e_let_in
-    ~loc:(Location.cover (get_e_loc rhs) (get_e_loc body))
+    ~loc:Location.generated
     { is_rec = false
     ; type_params = None
     ; lhs =
@@ -271,13 +271,7 @@ let let_ignore_in rhs body =
 
 
 let block_of_statements stmts =
-  let loc =
-    List.Ne.fold_left
-      ~init:Location.generated
-      ~f:Location.cover
-      (List.Ne.map get_s_loc stmts)
-  in
-  make_b ~loc stmts
+  make_b ~loc:Location.generated stmts
 
 
 let e_pair ~loc l r = e_tuple ~loc (Simple_utils.List.Ne.of_list [ l; r ])
