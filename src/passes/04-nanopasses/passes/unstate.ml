@@ -65,17 +65,17 @@ module Statement_result = struct
   let merge_block : t List.Ne.t -> t = fun (hd, tl) -> List.fold ~f:merge ~init:hd tl
 
   (* morph a statement_result into an expression *)
-  let to_expression ~loc : t -> expr =
+  let to_expression : t -> expr =
    fun statement_result ->
     match statement_result with
-    | Binding b -> b (e_unit ~loc)
+    | Binding b -> b (e_unit ~loc:Location.generated)
     | Return r -> r
-    | Control_flow f -> f (Return (e_unit ~loc))
+    | Control_flow f -> f (Return (e_unit ~loc:Location.generated))
 
 
   (* merge one flow branch *)
-  let merge_flow ~loc (x : t) (hole : t) =
-    to_expression ~loc
+  let merge_flow (x : t) (hole : t) =
+    to_expression
     @@
     match x with
     | Return _ -> x
@@ -116,7 +116,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_mut_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { is_rec = false
           ; type_params
           ; lhs = List.Ne.singleton pattern
@@ -128,7 +128,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { is_rec = false
           ; type_params
           ; lhs = List.Ne.singleton pattern
@@ -140,13 +140,13 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { is_rec; type_params; lhs = pattern; rhs_type; rhs = let_rhs; body = x })
   | D_fun { is_rec; fun_name; type_params; parameters; ret_type; return } ->
     Binding
       (fun x ->
         e_let_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { is_rec
           ; type_params
           ; lhs = List.Ne.singleton (p_var ~loc:(Variable.get_location fun_name) fun_name)
@@ -158,14 +158,14 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_mod_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { module_name = name; rhs = mod_expr; body = x })
   | D_signature { name = _; sig_expr = _ } -> Binding Fun.id
   | D_type { name; type_expr } ->
     Binding
       (fun x ->
         e_type_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { type_decl = { name; type_expr; params = None }; body = x })
   | D_import (Import_all_as _ | Import_selected _) | D_module_include _ ->
     failwith "can't parse"
@@ -176,7 +176,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:(Location.cover loc (get_e_loc x))
+          ~loc:loc
           { is_rec = false
           ; type_params = None
           ; lhs
@@ -199,11 +199,11 @@ and instr ~raise : instruction -> Statement_result.t =
  fun i ->
   let loc = get_i_loc i in
   match get_i i with
-  | I_return expr_opt -> Return (Option.value expr_opt ~default:(e_unit ~loc))
+  | I_return expr_opt -> Return (Option.value expr_opt ~default:(e_unit ~loc:Location.generated))
   | I_block block' ->
     let block = get_b block' in
     (match Statement_result.merge_block (List.Ne.map (statement ~raise) block) with
-    | Binding f -> Binding (fun hole -> let_ignore_in (f (e_unit ~loc)) hole)
+    | Binding f -> Binding (fun hole -> let_ignore_in (f (e_unit ~loc:Location.generated)) hole)
     | Return _ as res -> res
     | Control_flow _ ->
       raise.error (unsupported_control_flow block')
@@ -236,7 +236,7 @@ and instr ~raise : instruction -> Statement_result.t =
         let cases =
           List.Ne.map
             (fun Case.{ pattern; rhs } ->
-              let rhs = Statement_result.to_expression ~loc (clause ~raise rhs) in
+              let rhs = Statement_result.to_expression (clause ~raise rhs) in
               Case.{ pattern; rhs })
             cases
         in
@@ -249,7 +249,7 @@ and instr ~raise : instruction -> Statement_result.t =
           let cases =
             List.Ne.map
               (fun Case.{ pattern; rhs } ->
-                let rhs = Statement_result.merge_flow ~loc (clause ~raise rhs) hole in
+                let rhs = Statement_result.merge_flow (clause ~raise rhs) hole in
                 Case.{ pattern; rhs })
               cases
           in
@@ -263,7 +263,7 @@ and instr ~raise : instruction -> Statement_result.t =
       let cond =
         e_cond
           ~loc
-          { test; ifso = Statement_result.to_expression ~loc ifso_res; ifnot = None }
+          { test; ifso = Statement_result.to_expression ifso_res; ifnot = None }
       in
       Binding (fun hole -> let_unit_in cond hole)
     | x, Some ifnot_res
@@ -272,8 +272,8 @@ and instr ~raise : instruction -> Statement_result.t =
         e_cond
           ~loc
           { test
-          ; ifso = Statement_result.to_expression ~loc ifso_res
-          ; ifnot = Some (Statement_result.to_expression ~loc ifnot_res)
+          ; ifso = Statement_result.to_expression ifso_res
+          ; ifnot = Some (Statement_result.to_expression ifnot_res)
           }
       in
       Binding (fun hole -> let_unit_in cond hole)
@@ -285,8 +285,8 @@ and instr ~raise : instruction -> Statement_result.t =
           e_cond
             ~loc
             { test
-            ; ifso = Statement_result.merge_flow ~loc ifso_res hole
-            ; ifnot = Some (Statement_result.merge_flow ~loc ifnot_res hole)
+            ; ifso = Statement_result.merge_flow ifso_res hole
+            ; ifnot = Some (Statement_result.merge_flow ifnot_res hole)
             }))
   | I_assign (v, e) ->
     Binding
@@ -309,14 +309,14 @@ and instr ~raise : instruction -> Statement_result.t =
   | I_while w ->
     let w = While.map Fun.id (block_to_expression ~raise) w in
     Binding (fun hole -> let_unit_in (e_while ~loc w) hole)
-  | I_break -> Binding (fun hole -> let_unit_in (e_unit ~loc) hole)
+  | I_break -> Binding (fun hole -> let_unit_in (e_unit ~loc:Location.generated) hole)
   | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ | I_for_stmt _ ->
     failwith "removed"
 
 
 and block_to_expression ~raise block =
   Statement_result.(
-    to_expression ~loc:(get_b_loc block)
+    to_expression
     @@ merge_block (List.Ne.map (statement ~raise) (get_b block)))
 
 
@@ -347,7 +347,7 @@ let compile ~raise =
         let block_res = map (statement ~raise) (get_b block) in
         append block_res (singleton @@ Statement_result.Return expr)
       in
-      let res = Statement_result.(to_expression ~loc (merge_block block_with_res)) in
+      let res = Statement_result.(to_expression (merge_block block_with_res)) in
       { fp = { res.fp with location = loc } }
     | e -> make_e ~loc e
   in

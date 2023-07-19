@@ -1,0 +1,7 @@
+
+author: tomjack
+description: "\\nDebugger: fix a location mapping bug.\\n\\n"
+merge_request: '2682'
+title: "Fix location propagation in unstate nanopass"
+type: fixed
+            

@@ -100,9 +100,12 @@ module Data = struct
     | [] -> v
     | _ ->
       let name, _ = Value_var.internal_get_name_and_counter v in
-      let name = List.fold_right ~f:(fun s r -> s ^ "#" ^ r) ~init:name path in
-      let name = "#" ^ name in
-      Value_var.fresh ~loc:(Value_var.get_location v) ~name ()
+      let name = List.fold_right ~f:(fun s r -> s ^ "." ^ r) ~init:name path in
+      (* hmm... these vars are kind of generated, but also kind of
+         not; they come directly from user declarations after
+         all. setting generated:false here so that they show up in env
+         info for the debugger *)
+      Value_var.fresh ~loc:(Value_var.get_location v) ~generated:false ~name ()
 
 
   let fresh_pattern : O.ty_expr O.Pattern.t -> path -> O.ty_expr O.Pattern.t =

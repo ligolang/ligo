@@ -376,7 +376,6 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 1, characters 8-9
-    [ a#1:4-5 c#4:10-11  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 31 to line 6, character 11
     [ a#1:4-5 c#4:10-11 i#4:37-38 j#4:39-40  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-21
     [ a#1:4-5 c#4:10-11 i#4:37-38 j#4:39-40 k#5:8-9  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-11
     [ a#1:4-5 c#4:10-11 z#8:10-11 n#8:13-14 m#8:23-24  ] File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-12
@@ -418,7 +417,7 @@ let%expect_test _ =
     Def Type = Local
     (i#4:37-38 -> i)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 37-38
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 31 to line 6, character 11
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 12-13
@@ -426,7 +425,7 @@ let%expect_test _ =
     Def Type = Local
     (j#4:39-40 -> j)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, character 31 to line 6, character 11
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 16-17

@@ -5,7 +5,7 @@ module type VAR = sig
 
   (* Create a compiler generated variable *)
   val reset_counter : unit -> unit
-  val fresh : loc:Location.t -> ?name:string -> unit -> t
+  val fresh : loc:Location.t -> ?name:string -> ?generated:bool -> unit -> t
   val fresh_like : ?loc:Location.t -> t -> t
   (* Construct a user variable directly from a string. This should only
       be used for embedding user variable names. For programmatically

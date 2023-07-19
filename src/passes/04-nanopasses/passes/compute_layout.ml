@@ -77,7 +77,7 @@ let compile_row_record ~loc =
 module Normalize_layout = struct
   include Flag.No_arg ()
 
-  let name = __MODULE__
+  let name = "compute_layout1"
 
   let compile ~raise:_ =
     let ty_expr : _ ty_expr_ -> ty_expr =
@@ -108,7 +108,7 @@ end
 module Normalize_no_layout = struct
   include Flag.No_arg ()
 
-  let name = __MODULE__
+  let name = "compute_layout2"
 
   let compile ~raise:_ =
     let ty_expr : _ ty_expr_ -> ty_expr =
