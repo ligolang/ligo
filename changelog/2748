@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nPredefined, constant JsLIGO annotations, like `@entry`, are now formatted outside of a line comment.\\n\\n"
+merge_request: '2748'
+title: "Fixed pretty-printing of JsLIGO annotations (attributes) when they have no arguments."
+type: fixed
+            
