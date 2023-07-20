@@ -13,4 +13,5 @@ if [ -n "$VERSION" ]; then
   jq --arg version "$VERSION" '.version = $version' $ESY_FILEPATH > $ESY_FILEPATH.tmp && mv $ESY_FILEPATH.tmp $ESY_FILEPATH
   VERSION_WITHOUT_DEV="$(echo "$VERSION" | sed 's/-dev.*//g')"
   jq --arg version "$VERSION_WITHOUT_DEV" '.override.buildEnv.LIGO_VERSION = $version' $ESY_FILEPATH > $ESY_FILEPATH.tmp && mv $ESY_FILEPATH.tmp $ESY_FILEPATH
+  jq --arg version "$VERSION_WITHOUT_DEV" '.esy.buildEnv.LIGO_VERSION = $version' $ESY_FILEPATH > $ESY_FILEPATH.tmp && mv $ESY_FILEPATH.tmp $ESY_FILEPATH
 fi
