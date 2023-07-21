@@ -468,6 +468,8 @@ publish-AUR-package:
   needs:
     - job: create-AUR-package
       artifacts: true
+    - job: build_release_env_vars
+      artifacts: true
   rules:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
