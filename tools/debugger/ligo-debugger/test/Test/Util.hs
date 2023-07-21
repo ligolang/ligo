@@ -56,7 +56,11 @@ module Test.Util
   , mkOptionType
   , intType'
   , unitType'
+  , boolType'
   , intType
+  , boolType
+  , twoElemTreeLayout
+  , combLayout
   ) where
 
 import Control.Lens (each)
@@ -409,7 +413,7 @@ genStepGranularity = Gen.frequency do
   return (weight, pure gran)
 
 mkOptionType :: LigoTypeExpression -> LigoTypeExpression
-mkOptionType typ = mkSumType LTree
+mkOptionType typ = mkSumType (twoElemTreeLayout "None" "Some")
   [ ("Some", typ)
   , ("None", unitType')
   ]
@@ -420,8 +424,17 @@ intType' = mkSimpleConstantType "Int"
 unitType' :: LigoTypeExpression
 unitType' = mkSimpleConstantType "Unit"
 
+boolType' :: LigoTypeExpression
+boolType' = mkSumType (twoElemTreeLayout "True" "False")
+  [ ("True", unitType')
+  , ("False", unitType')
+  ]
+
 intType :: LigoType
 intType = LigoTypeResolved intType'
+
+boolType :: LigoType
+boolType = LigoTypeResolved boolType'
 
 extractConvertInfos :: LigoTypesVec -> InterpretSnapshot 'Unique -> [PreLigoConvertInfo]
 extractConvertInfos ligoTypesVec snap =
@@ -431,3 +444,16 @@ extractConvertInfos ligoTypesVec snap =
     LigoStackEntry (LigoExposedStackEntry _ typRef) <- pure desc
     let typ = readLigoType ligoTypesVec typRef
     pure $ PreLigoConvertInfo michVal typ
+
+twoElemTreeLayout :: Text -> Text -> LigoLayout
+twoElemTreeLayout a b = LLInner
+  [ LLField smaller
+  , LLField larger
+  ]
+  where
+    (smaller, larger)
+      | a <= b = (a, b)
+      | otherwise = (b, a)
+
+combLayout :: [Text] -> LigoLayout
+combLayout = LLInner . fmap LLField

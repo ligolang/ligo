@@ -63,16 +63,6 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem s of int
-          siValue: 0 ] ]
-InterpretSnapshot:
-  isStatus: running / upon expression
-  isStackFrames:
-    [ StackFrame:
-      sfName: main
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
       sfStack:
         [ StackItem:
@@ -89,21 +79,11 @@ InterpretSnapshot:
           siLigoDesc: elem s of int
           siValue: 0 ] ]
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair { } 0 : operation list * int)
-  isStackFrames:
-    [ StackFrame:
-      sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem s of int
-          siValue: 0 ] ]
-InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:28
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

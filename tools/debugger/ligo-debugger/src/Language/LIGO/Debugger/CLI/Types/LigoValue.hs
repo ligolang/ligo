@@ -11,8 +11,8 @@ import Debug qualified
 
 import Control.Exception (throw)
 import Data.Aeson
-  (FromJSON (parseJSON), GFromJSON, Options (..), SumEncoding (TwoElemArray), Value (..), Zero,
-  defaultOptions, genericParseJSON, withText)
+  (FromJSON (parseJSON), FromJSONKey, GFromJSON, Options (..), SumEncoding (TwoElemArray),
+  Value (..), Zero, defaultOptions, genericParseJSON, withArray, withText)
 import Data.Aeson.Types (Parser)
 import Data.Char (toUpper)
 import Data.Data (Data)
@@ -23,6 +23,7 @@ import Data.Text.Lazy.Builder (Builder)
 import Data.Time (nominalDiffTimeToSeconds)
 import Data.Time.Clock.System (SystemTime (MkSystemTime), systemToUTCTime)
 import Data.Time.Format.ISO8601 (iso8601Show)
+import Data.Vector qualified as V
 import Fmt.Buildable (Buildable, build, hexF, pretty)
 import Fmt.Utils (Doc)
 import GHC.Generics (Rep)
@@ -57,7 +58,7 @@ data LigoOrMichValue
 data LigoValue
   = LVCt LigoConstant
   | LVList [LigoValue]
-  | LVRecord (HashMap Text LigoValue)
+  | LVRecord (HashMap LigoLabel LigoValue)
   | LVConstructor (Text, LigoValue)
   | LVSet [LigoValue]
   | LVMap [(LigoValue, LigoValue)]
@@ -71,6 +72,10 @@ data LigoValue
   | LVFuncVal
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
+
+data LigoLabel = LLabel Text
+  deriving stock (Generic, Show, Eq, Data)
+  deriving anyclass (NFData, Hashable, FromJSONKey)
 
 data LigoMutFlag
   = LMFImmutable
@@ -173,23 +178,15 @@ surround :: (Buildable a) => Doc -> Doc -> Doc -> [a] -> Doc
 surround left right sep lst = mconcat $ left : intersperse sep (build <$> lst) ++ [right]
 
 toTupleMaybe :: LigoValue -> Maybe [LigoValue]
-toTupleMaybe (LVRecord record) = forM [0..HM.size record - 1] \i -> HM.lookup (pretty i) record
+toTupleMaybe (LVRecord record) = forM [0..HM.size record - 1] \i -> HM.lookup (LLabel $ pretty i) record
 toTupleMaybe _ = Nothing
 
-getRecordOrderMb :: LigoType -> LigoValue -> Maybe [(Text, (LigoType, LigoValue))]
-getRecordOrderMb ligoType = \case
-  LVRecord record -> do
-    LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
-
-    valsAndNums <-
-      forM (toPairs record) \(k, v) -> do
-        field <- HM.lookup k _lttFields
-        let num = _ltfDeclPos field
-        let innerType = LigoType (Just $ _ltfAssociatedType field)
-        pure ((k, (innerType, v)), num)
-
-    pure $ fst <$> sortBy (comparing snd) valsAndNums
-  _ -> Nothing
+getTypeByFieldName :: Text -> LigoType -> LigoType
+getTypeByFieldName field = \case
+  LigoTypeResolved LigoTypeExpression
+    { _lteTypeContent = LTCRecord LigoTypeTable{..}
+    } -> LigoType $ HM.lookup field _lttFields
+  _ -> LigoTypeUnresolved
 
 -- | Tries to decompile @Michelson@ primitive into LIGO value.
 tryDecompilePrimitive :: SomeValue -> Maybe LigoValue
@@ -241,7 +238,7 @@ instance FromJSON LigoValue where
   parseJSON val = genericParseJSON defaultOptions
     { sumEncoding = TwoElemArray
     , constructorTagModifier = drop 1 . toSnakeCase . processCtor . drop 2
-    } val <|> parseFunction val
+    } val <|> parseRecord val <|> parseFunction val
     where
       processCtor :: String -> String
       processCtor = \case
@@ -250,8 +247,28 @@ instance FromJSON LigoValue where
         "Gen" -> "Generator"
         other -> other
 
+      parseRecord :: Value -> Parser LigoValue
+      parseRecord = withArray "Record" \(V.toList -> arr) -> do
+        LVRecord . HM.fromList <$> mapM parseElem arr
+        where
+          parseElem :: Value -> Parser (LigoLabel, LigoValue)
+          parseElem = withArray "RecordElem" \arr -> do
+            case V.toList arr of
+              [labelValue, ligoValue] -> do
+                label <- parseJSON labelValue
+                value <- parseJSON ligoValue
+                pure (label, value)
+              _ -> fail "Expected 2 elements array"
+
       parseFunction :: Value -> Parser LigoValue
       parseFunction = withText "Function" \txt -> guard (txt == "<fun>") >> pure LVFuncVal
+
+instance FromJSON LigoLabel where
+  parseJSON = withArray "LigoLabel" \arr -> do
+    case V.toList arr of
+      [String ctor, label]
+        | ctor == "Label" -> LLabel <$> parseJSON label
+      _ -> fail "Expected 2 elements array"
 
 instance FromJSON LigoMutFlag where
   parseJSON val = asum
@@ -312,7 +329,7 @@ buildLigoValue' lang mode ligoType = \case
     case toTupleMaybe val of
       Just tuple ->
         let
-          innerTypes = maybe (repeat $ LigoType Nothing) (map (fst . snd)) (getRecordOrderMb ligoType val)
+          innerTypes = map (\i -> getTypeByFieldName (pretty i) ligoType) [0..length tuple - 1]
           builtTuple lb rb = surround lb rb ", " (zipWith (buildLigoValue' lang mode) innerTypes tuple)
         in
           case (mode, lang) of
@@ -333,14 +350,12 @@ buildLigoValue' lang mode ligoType = \case
               (DpmEvaluated, Caml) -> recordWithSep "; "
               (DpmEvaluated, Js) -> recordWithSep ", "
         in
-          case getRecordOrderMb ligoType val of
-            Just order -> buildRecord order
-            Nothing -> buildRecord $ map (\(t, v) -> (t, (LigoType Nothing, v))) (HM.toList record)
+          buildRecord $ map (\(LLabel t, v) -> (t, (getTypeByFieldName t ligoType, v))) (HM.toList record)
   LVConstructor (ctor, value) ->
     let
       innerType = LigoType do
         LTCSum LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
-        _ltfAssociatedType <$> HM.lookup ctor _lttFields
+        HM.lookup ctor _lttFields
     in [int||#{ctor} (#{buildLigoValue' lang mode innerType value})|]
   LVSet values -> case mode of
     DpmNormal -> surround "{" "}" "; " (buildLigoValue' lang mode innerTypeFromConstant <$> values)
@@ -354,8 +369,8 @@ buildLigoValue' lang mode ligoType = \case
       let
         mkTuple :: (LigoValue, LigoValue) -> LigoValue
         mkTuple (fstVal, sndVal) = LVRecord $ HM.fromList
-          [ ("0", fstVal)
-          , ("1", sndVal)
+          [ (LLabel "0", fstVal)
+          , (LLabel "1", sndVal)
           ]
 
         moduleName = case typesFromConstantAndName of
@@ -370,7 +385,7 @@ buildLigoValue' lang mode ligoType = \case
 
           pure $ mkConstantType "List" [mkPairType keyTypeUnwrapped valueTypeUnwrapped]
 
-      in  [int||#{moduleName}.literal(#{buildLigoValue' lang mode listType $ LVList (mkTuple <$> keyValues)})|]
+      in [int||#{moduleName}.literal(#{buildLigoValue' lang mode listType $ LVList (mkTuple <$> keyValues)})|]
   LVTypedAddress address -> build address
   LVMichelson _ -> "<internal: contract code>"
   LVMichelsonContract _ -> "<internal: michelson contract>"

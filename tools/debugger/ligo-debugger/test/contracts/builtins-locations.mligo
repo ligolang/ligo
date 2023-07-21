@@ -1,8 +1,8 @@
 let main (_, s : unit * int) : operation list * int =
-  let val = is_nat s in
+  let v = is_nat s in
   let () = assert true in
   let res =
-    match val with
+    match v with
     | Some _ -> s + 42
     | None -> s
   in

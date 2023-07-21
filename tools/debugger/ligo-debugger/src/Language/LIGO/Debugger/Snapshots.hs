@@ -70,7 +70,8 @@ import Morley.Debugger.Core.Navigate
   SnapshotEndedWith (SnapshotEndedWithFail, SnapshotEndedWithOk), curSnapshot, frozen, moveRaw,
   unfreezeLocally)
 import Morley.Debugger.Core.Snapshots
-  (DebuggerFailure (DebuggerInfiniteLoop), FinalStack (ContractFinalStack), InterpretHistory (..))
+  (DebuggerFailure (DebuggerInfiniteLoop), FinalStack (ContractFinalStack, ViewFinalStack),
+  InterpretHistory (..))
 import Morley.Michelson.ErrorPos (ErrorSrcPos (ErrorSrcPos), Pos (Pos), SrcPos (SrcPos))
 import Morley.Michelson.Interpret
   (ContractEnv' (ceMaxSteps), InstrRunner, InterpreterState (InterpreterState),
@@ -88,6 +89,7 @@ import Duplo (leq)
 import Language.LIGO.AST (LIGO, Lang (Caml))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
+import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Functions
 import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
@@ -631,14 +633,14 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       if isLambdaLoc && not isLambda
       then pure []
       else do
-        let statements = filterAndReverseStatements isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
+        let statements = filterAndReverseStatements isLambda isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
 
         pure $ getRange <$> statements
       where
         -- Here we're looking for statements and the nearest scope locations.
         -- These statements are filtered by strict inclusivity of their ranges to this scope.
-        filterAndReverseStatements :: Bool -> Range -> [LIGO ParsedInfo] -> [LIGO ParsedInfo]
-        filterAndReverseStatements = \isLambdaLoc startRange nodes ->
+        filterAndReverseStatements :: Bool -> Bool -> Range -> [LIGO ParsedInfo] -> [LIGO ParsedInfo]
+        filterAndReverseStatements isLambda = \isLambdaLoc startRange nodes ->
           let (statements, scopeRange) = usingState startRange $ go [] nodes isLambdaLoc False
           in filter (\(getRange -> stmtRange) -> stmtRange `leq` scopeRange && stmtRange /= scopeRange) statements
           where
@@ -654,7 +656,14 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                 -- to treat it as a statement. From observations we'll see that it's a statement
                 -- if and only if it's discovered as a first statement that cover the given range.
 
-                onSuccess x xs = decide True x (go (x : acc) xs)
+                onSuccess x xs =
+                  let newAcc
+                        -- We want to ignore body location if it's assigned
+                        -- to @LAMBDA@ instr.
+                        | getRange x == range && isLambda = acc
+                        | otherwise = x : acc
+                  in
+                  decide True x (go newAcc xs)
                 onFail x xs = decide False x (go acc xs)
 
                 decide :: Bool -> LIGO ParsedInfo -> (Bool -> Bool -> State Range [LIGO ParsedInfo]) -> State Range [LIGO ParsedInfo]
@@ -697,32 +706,29 @@ runCollectInterpretSnapshots act env initSt initStorage =
           }
 
       Right finalStack -> do
-        let isStackFrames = either error id do
-              lastSnap <-
-                maybeToRight
-                  "Internal error: No snapshots were recorded while interpreting Michelson code"
-                  do csLastRecordedSnapshot endState
+        let lastValue =
+              case finalStack of
+                ContractFinalStack (StkEl x :& RNil) -> SomeValue x
+                ViewFinalStack (StkEl x :& RNil) -> SomeValue x
 
-              case isStatus lastSnap of
-                InterpretRunning (EventExpressionEvaluated _ (Just val)) -> do
-                  let stackItemWithOpsAndStorage = StackItem
-                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
-                        , siValue = val
-                        }
-                  let oldStorage = StackItem
-                        { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
-                        , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
-                        }
-                  pure
-                    $ (lastSnap ^. isStackFramesL)
-                        & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
-                status ->
-                  throwError
-                    [int||
-                    Internal error:
-                    Expected "Interpret running" status with evaluated expression status.
+        let stackItemWithOpsAndStorage = StackItem
+              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
+              , siValue = lastValue
+              }
+        let oldStorage = StackItem
+              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
+              , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
+              }
 
-                    Got #{status}|]
+        lastSnap <-
+          maybe
+            (throwIO $ ImpossibleHappened "No snapshots were recorded while interpreting Michelson code")
+            pure
+            (csLastRecordedSnapshot endState)
+
+        let isStackFrames = (lastSnap ^. isStackFramesL)
+              & ix 0 . sfStackL .~ [stackItemWithOpsAndStorage, oldStorage]
+
         C.yield InterpretSnapshot
           { isStatus = InterpretTerminatedOk finalStack
           , ..

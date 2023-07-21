@@ -37,8 +37,20 @@ InterpretSnapshot:
       sfLoc: test/contracts/tuple-with-size-five.mligo@3:3-3:49
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of int * int * int * int * int
-          siValue: Pair (Pair (Pair 1 2) (Pair 3 4)) 5
+          siLigoDesc: elem e of int
+          siValue: 5
+        , StackItem:
+          siLigoDesc: elem d of int
+          siValue: 4
+        , StackItem:
+          siLigoDesc: elem c of int
+          siValue: 3
+        , StackItem:
+          siLigoDesc: elem b of int
+          siValue: 2
+        , StackItem:
+          siLigoDesc: elem a of int
+          siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
           siValue: 0 ] ]

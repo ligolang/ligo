@@ -21,7 +21,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -49,7 +49,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -77,7 +77,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -105,7 +105,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -133,7 +133,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -161,7 +161,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -189,7 +189,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -210,7 +210,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -231,7 +231,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -252,7 +252,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
@@ -273,7 +273,7 @@ InterpretSnapshot:
         , StackItem:
           siLigoDesc: elem g of unit -> int
           siValue:
-            { DROP; { { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } } }
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
           siLigoDesc: elem f of int -> int
           siValue:
