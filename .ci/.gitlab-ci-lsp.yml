@@ -28,6 +28,17 @@ vscode-extension-extest:
   after_script:
     - docker image rm lsp-vscode-test:$CI_JOB_ID
 
+vscode-extension-extest-deploy:
+  stage: tools-check
+  rules: *vscode_extension_mr_dev
+  needs: [docker_extract]
+  script:
+    - docker build --build-arg OCTEZ_VERSION="$OCTEZ_VERSION" -f tools/vscode/Dockerfile -t lsp-vscode-test:$CI_JOB_ID .
+    - docker run --rm --init --user vscode lsp-vscode-test:$CI_JOB_ID xvfb-run bash -c 'yarn && yarn run package && yarn run extest-deploy'
+  after_script:
+    - docker image rm lsp-vscode-test:$CI_JOB_ID
+  allow_failure: true
+
 vscode-extension-publish-check:
   stage: tools-check
   rules: *vscode_extension_mr_dev

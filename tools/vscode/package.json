@@ -215,7 +215,8 @@
         "lint": "eslint client --ext .ts",
         "build-tests": "tsc -p ./test/",
         "test": "npm run build-tests && node client/out/test/driver.js",
-        "extest": "npm run build-tests && extest setup-and-run --yarn --offline client/out/test/vsc-test/commands.test.js"
+        "extest": "npm run build-tests && extest setup-and-run --yarn --offline client/out/test/vsc-test/commands.test.js",
+        "extest-deploy": "npm run build-tests && extest setup-and-run --yarn --offline client/out/test/vsc-test/commands-deploy.test.js"
     },
     "dependencies": {
         "@airgap/beacon-sdk": "^3.0.0",
@@ -230,6 +231,7 @@
     "devDependencies": {
         "@types/chai": "^4.3.5",
         "@types/copy-paste": "^1.1.30",
+        "@types/glob": "^7.2.0",
         "@types/mocha": "^10.0.1",
         "@types/node": "^20.1.0",
         "@types/vscode": "^1.78.0",
