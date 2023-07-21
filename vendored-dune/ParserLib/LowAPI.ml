@@ -321,10 +321,12 @@ module Make (Lexer  : LEXER)
 
     (* Wrap lexer in supplier according [mode] *)
 
-    let lexer_lexbuf_to_supplier mode lexer lexbuf () =
-      let token       = lexer lexbuf in
-      let start, stop = (Lexer.Token.to_region token)#pos
-      in token, of_pos mode start, of_pos mode stop
+    let lexer_lexbuf_to_supplier mode lexer lexbuf =
+      Lexer.clear ();
+      fun () ->
+        let token       = lexer lexbuf in
+        let start, stop = (Lexer.Token.to_region token)#pos
+        in token, of_pos mode start, of_pos mode stop
 
     (* Incremental parsing *)
 
