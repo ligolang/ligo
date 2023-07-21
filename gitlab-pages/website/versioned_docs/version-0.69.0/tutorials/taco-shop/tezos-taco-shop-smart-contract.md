@@ -70,7 +70,7 @@ current_purchase_price = max_price / available_stock
 
 In this tutorial, we will use LIGO's dockerised version, for the sake
 of simplicity. You can find the installation instructions
-[here](../../intro/installation.md#dockerised-installation).
+[here](../../intro/installation.md#install).
 
 ## Implementing our First `main` Function
 

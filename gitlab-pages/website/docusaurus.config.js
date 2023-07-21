@@ -104,7 +104,7 @@ const config = {
               },
               {
                 label: 'Discord',
-                href: 'https://discord.gg/xtz',
+                href: 'https://discord.gg/tezos',
               },
               {
                 label: 'Telegram',

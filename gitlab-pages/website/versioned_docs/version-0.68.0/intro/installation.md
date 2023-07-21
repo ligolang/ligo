@@ -132,7 +132,7 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 Windows users can install LIGO via NPM.
 
 ```sh
-npm i -g ligolang@windows-beta
+npm i -g ligolang@windows
 ```
 
 ### via GUI installer
