@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\nFix a bug where nested namespace module type application were rejected\\n\\n"
+merge_request: '2723'
+title: "fix module open in module_open_restriction"
+type: fixed
+            
