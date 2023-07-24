@@ -112,7 +112,6 @@ debugger-test-ligo-latest:
     LIGO_TEST_FLAGS: "-r"
   before_script: *get_latest_ligo_binary
   script: *run_ligo_debugger_tests
-  allow_failure: true
 
 debugger-test-static-debugger-binary:
   stage: tools-check
