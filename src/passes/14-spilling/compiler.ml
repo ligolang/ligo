@@ -446,7 +446,12 @@ let rec compile_expression ~raise (ae:AST.expression) : expression =
                 (Record.find_opt c_body_lst (Label.of_string c)) in
             let match_none = get_case "None" in
             let match_some = get_case "Some" in
+            (* insert dummy unit value for typer's (None of unit)
+               delusion *)
             let n = self (fst match_none) in
+            let t_unit = Expression.make_t (T_base TB_unit) in
+            let e_unit = Expression.make (E_literal Literal_unit) t_unit in
+            let n = return (E_let_in (e_unit, true, ((snd match_none, t_unit), n))) in
             let (tv' , s') =
               let tv' = compile_type ~raise opt_tv in
               let s' = self (fst match_some) in

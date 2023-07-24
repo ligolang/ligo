@@ -211,6 +211,7 @@ let rec fold_pattern_with_path
 type vars_and_projections =
   { bound_var : Value_var.t
   ; new_var : Value_var.t
+  ; ascr : O.type_expression
   }
 
 (** This function scans a pattern an find occurances for each sub-pattern
@@ -229,7 +230,8 @@ let get_vars_and_projections
       | I.Pattern.P_var b ->
         let bound_var = Binder.get_var b in
         let new_var, names = Names.get path names in
-        { bound_var; new_var } :: vp, names
+        let ascr = Binder.get_ascr b in
+        { bound_var; new_var; ascr } :: vp, names
       | _ -> vp, names)
     ([], names)
     path
@@ -720,6 +722,7 @@ let compile
     (matchee_type : O.type_expression)
     (matchee : Value_var.t)
     (cases : (O.expression, O.type_expression) I.Match_expr.match_case list)
+    ~(mut : bool)
     : O.expression
   =
   let matchee_label = Label.of_string (Format.asprintf "%a" Value_var.pp matchee) in
@@ -740,8 +743,21 @@ let compile
           List.fold
             vars_projs
             ~init:body
-            ~f:(fun body { bound_var = to_subst; new_var } ->
-              Substitution.substitute_var_in_body ~to_subst ~new_var body)
+            ~f:(fun body { bound_var = to_subst; new_var; ascr } ->
+                (if mut then O.e_let_mut_in else O.e_let_in)
+                  { let_binder = Binder.make to_subst ascr;
+                    rhs = O.e_variable new_var ascr ~loc:Location.generated;
+                    let_result = body;
+                    (* ??? *)
+                    attributes = { inline = false;
+                                   no_mutation = false;
+                                   view = false;
+                                   entry = false;
+                                   public = false;
+                                   hidden = false;
+                                   thunk = false } }
+                  body_type
+                  ~loc:Location.generated)
         in
         names, (to_simple_pattern matchee_type pattern, body))
   in

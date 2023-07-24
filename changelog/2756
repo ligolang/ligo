@@ -1,0 +1,7 @@
+
+author: tomjack
+description: "Debugger: preserve bound variables in pattern matching.\\n\\n"
+merge_request: '2756'
+title: "Preserve bound vars in match compiler (using lets)"
+type: fixed
+            
