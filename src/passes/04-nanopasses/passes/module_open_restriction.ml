@@ -56,7 +56,7 @@ let compile ~raise =
           ~loc
           { type_args; constr = { module_path; field; field_as_open = false } }
       | _ -> make_t ~loc t)
-    | T_module_open_in { module_path; field; _ } ->
+    | T_module_open_in { module_path; field ; field_as_open = false } ->
       (match get_t_var field with
       | Some v ->
         t_module_access
@@ -83,6 +83,19 @@ let compile ~raise =
           t_module_app
             ~loc
             { type_args; constr = { module_path; field = field'; field_as_open = false } }
+        | T_module_app
+            { constr = { module_path = module_path'; field; field_as_open = false }
+            ; type_args
+            } ->
+          t_module_app
+            ~loc
+            { constr =
+                { module_path = List.Ne.cons module_path module_path'
+                ; field
+                ; field_as_open = false
+                }
+            ; type_args
+            }
         | _ -> raise.error (unsupported_module_access (`Type field))))
     | t -> make_t ~loc t
   in
@@ -106,3 +119,22 @@ let reduction ~raise =
 
 let name = __MODULE__
 let decompile ~raise:_ = Nothing
+
+open Unit_test_helpers.Ty_expr
+
+let%expect_test "module_app" =
+  {|
+  (T_module_open_in
+    ((module_path A)
+    (field
+      (T_module_open_in
+       ((module_path V)
+        (field (T_app ((constr (T_var t)) (type_args ((T_var v))))))
+        (field_as_open false))))
+    (field_as_open false)))
+   |}
+  |-> compile;
+  [%expect {|
+    (T_module_app
+     ((constr ((module_path (A V)) (field t) (field_as_open false)))
+      (type_args ((T_var v))))) |}]
