@@ -21,12 +21,26 @@ let and : (a: &apos;a, b: nat) => nat
 
 `'a` can either be an `int` or `nat`.
 
+It can also be used with `bytes`. But the signature might be a bit different.
+
+`val and : bytes -> bytes -> bytes`
+
 A bitwise `and` operation.
 
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 const zero : nat = Bitwise.and (2n, 1n)
+const two_bytes : bytes = Bitwise.and (0x11, 0x10)
+```
+
+Input
+```bash
+❯ ligo compile expression --deprecate pascaligo "Bitwise.and (0x11, 0x10)"
+```
+Output
+```bash
+0x10
 ```
 
 </Syntax>
@@ -34,6 +48,16 @@ const zero : nat = Bitwise.and (2n, 1n)
 
 ```cameligo
 let zero : nat = Bitwise.and 2n 1n
+let two_bytes : bytes = Bitwise.and 0x11 0x10
+```
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.and 0x11 0x10"
+```
+Output
+```bash
+0x10
 ```
 
 </Syntax>
@@ -42,6 +66,18 @@ let zero : nat = Bitwise.and 2n 1n
 
 ```jsligo
 let zero: nat = Bitwise.and(2 as nat, 1 as nat);
+let two_bytes : bytes = Bitwise.and(0x11, 0x10)
+```
+
+
+Input
+```bash
+❯ ligo compile expression jsligo "Bitwise.and(0x11, 0x10)"
+```
+
+Output
+```bash
+0x10
 ```
 
 </Syntax>
@@ -60,17 +96,45 @@ let or: (a: nat, b: nat) => nat
 
 A bitwise `or` operation.
 
+It can also be used with `bytes`. But the signature might be a bit different.
+
+`val or : bytes -> bytes -> bytes`
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-const three : nat = Bitwise.or (2n, 1n)
+const five : nat = Bitwise.or (4n, 1n)
+const three_bytes : bytes = Bitwise.or (0x11, 0x10)
+```
+
+
+Input
+```bash
+❯ ligo compile expression --deprecate pascaligo "Bitwise.or (0x11, 0x10)"
+```
+
+Output
+```bash
+0x11
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let three : nat = Bitwise.or 2n 1n
+let five : nat = Bitwise.or 4n 1n
+let three_bytes : bytes = Bitwise.or 0x11 0x10
+```
+
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.or 0x11 0x10"
+```
+
+Output
+```bash
+0x11
 ```
 
 </Syntax>
@@ -78,8 +142,21 @@ let three : nat = Bitwise.or 2n 1n
 <Syntax syntax="jsligo">
 
 ```jsligo
-let three: nat = Bitwise.or(2 as nat, 1 as nat);
+let five: nat = Bitwise.or(4 as nat, 1 as nat);
+let three_bytes : bytes = Bitwise.or(0x11, 0x10)
 ```
+
+
+Input
+```bash
+❯ ligo compile expression jsligo "Bitwise.or(0x11, 0x10)"
+```
+
+Output
+```bash
+0x11
+```
+
 
 </Syntax>
 
@@ -96,10 +173,27 @@ let xor: (a: nat, b: nat) => nat
 
 A bitwise `xor` operation.
 
+It can also be used with `bytes`. But the signature might be a bit different.
+
+`val xor : bytes -> bytes -> bytes`
+
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 const three : nat = Bitwise.xor (2n, 1n)
+const one_byte : bytes = Bitwise.xor (0x11, 0x10)
+```
+
+
+Input
+```bash
+❯ ligo compile expression --deprecate pascaligo "Bitwise.or (0x11, 0x10)"
+```
+
+Output
+```bash
+0x01
 ```
 
 </Syntax>
@@ -107,6 +201,18 @@ const three : nat = Bitwise.xor (2n, 1n)
 
 ```cameligo
 let three : nat = Bitwise.xor 2n 1n
+let one_byte : bytes = Bitwise.xor 0x11 0x10
+```
+
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.xor 0x11 0x10"
+```
+
+Output
+```bash
+0x01
 ```
 
 </Syntax>
@@ -114,7 +220,19 @@ let three : nat = Bitwise.xor 2n 1n
 <Syntax syntax="jsligo">
 
 ```jsligo group=other
-let three: nat = Bitwise.xor(2 as nat, 1 as nat);
+let three : nat = Bitwise.xor(2 as nat, 1 as nat)
+let one_byte : bytes = Bitwise.xor(0x11, 0x10)
+```
+
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.xor(0x11, 0x10)"
+```
+
+Output
+```bash
+0x01
 ```
 
 </Syntax>
@@ -132,10 +250,25 @@ let shift_left: (a: nat, b: nat) => nat
 
 A bitwise shift left operation.
 
+It can also be used with `bytes`. But the signature might be a bit different.
+
+`val shift_left : bytes -> nat -> bytes`
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 const four : nat = Bitwise.shift_left (2n, 1n)
+const five_one_two : bytes = Bitwise.shift_left (0x0100, 1n)
+```
+
+Input
+```bash
+❯ ligo compile expression --deprecated pascaligo "Bitwise.shift_left (0x0100, 1n)"
+```
+
+Output
+```bash
+0x000200
 ```
 
 </Syntax>
@@ -143,6 +276,17 @@ const four : nat = Bitwise.shift_left (2n, 1n)
 
 ```cameligo
 let four : nat = Bitwise.shift_left 2n 1n
+let five_one_two : bytes = Bitwise.shift_left 0x0100 1n
+```
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.shift_left 0x0100 1n"
+```
+
+Output
+```bash
+0x000200
 ```
 
 </Syntax>
@@ -150,7 +294,18 @@ let four : nat = Bitwise.shift_left 2n 1n
 <Syntax syntax="jsligo">
 
 ```jsligo
-let four: nat = Bitwise.shift_left(2 as nat, 1 as nat);
+let four : nat = Bitwise.shift_left(2 as nat, 1 as nat)
+let five_one_two : bytes = Bitwise.shift_left(0x0100, 1 as nat)
+```
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.shift_left(0x01, 1 as nat)"
+```
+
+Output
+```bash
+0x000200
 ```
 
 </Syntax>
@@ -168,26 +323,66 @@ let shift_right: (a: nat, b: nat) => nat
 
 A bitwise shift right operation.
 
+It can also be used with `bytes`. But the signature might be a bit different.
+
+`val shift_right : bytes -> nat -> bytes`
+
+
 <Syntax syntax="pascaligo">
 
 ```pascaligo
 const one : nat = Bitwise.shift_right (2n, 1n)
+const zero_bytes : bytes = Bitwise.shift_right (0x01, 1n)
+```
+
+Input
+```bash
+❯ ligo compile expression --deprecated pascaligo "Bitwise.shift_right (0x01, 1n)"
+```
+
+Output
+```bash
+0x00
 ```
 
 </Syntax>
 
 <Syntax syntax="cameligo">
 
+
 ```cameligo
 let one : nat = Bitwise.shift_right 2n 1n
+let zero_bytes : bytes = Bitwise.shift_right 0x01 1n
 ```
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.shift_right 0x01 1n"
+```
+
+Output
+```bash
+0x00
+```
+
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo
-let one: nat = Bitwise.shift_right(2 as nat, 1 as nat);
+let one : nat = Bitwise.shift_right(2 as nat, 1 as nat)
+let zero_bytes : bytes = Bitwise.shift_right(0x01, 1 as nat)
+```
+
+Input
+```bash
+❯ ligo compile expression cameligo "Bitwise.shift_right(0x01, 1 as nat)"
+```
+
+Output
+```bash
+0x00
 ```
 
 </Syntax>
