@@ -5,6 +5,7 @@ import { LigoDebugContext } from './LigoDebugContext'
 import { LigoProtocolClient } from './LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
 import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage } from './ui'
+import * as path from 'path'
 
 function createLogDir(logDir: string): void | undefined {
 	if (!fs.existsSync(logDir)) {
@@ -21,10 +22,12 @@ export type ConfigField
 	| "michelsonEntrypoint"
 	| "parameter"
 	| "storage"
+	| "program"
 	;
 
 export type ConfigCommand
 	= "AskOnStart"
+	| "CurrentFile"
 	;
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -37,7 +40,23 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 	}
 
 	private async resolveConfig(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
-		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+		const currentWorkspacePath: Maybe<vscode.Uri> = vscode.workspace.workspaceFolders?.[0].uri;
+
+		let defaultPath: Maybe<string>;
+		if (path.isAbsolute(config.program)) {
+			defaultPath = config.program;
+		} else if (isDefined(currentWorkspacePath)) {
+			defaultPath = vscode.Uri.joinPath(currentWorkspacePath, config.program).fsPath;
+		}
+
+		const currentFilePath: Maybe<string> =
+			await tryExecuteCommand(
+				"program",
+				"CurrentFile",
+				config.program,
+				async () => vscode.window.activeTextEditor?.document.fileName,
+				defaultPath
+			);
 
 		if (!isDefined(currentFilePath)) {
 			throw new Error("Can't find current file");
@@ -147,7 +166,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.type = 'ligo'
 				config.name = 'Launch LIGO'
 				config.request = 'launch'
-				config.program = '${file}'
+				config.program = '(*@CurrentFile@*)'
 				config.entrypoint = '(*@AskOnStart@*)'
 				config.parameter = '(*@AskOnStart@*)'
 				config.storage = '(*@AskOnStart@*)'
@@ -158,7 +177,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.type ??= 'ligo'
 		config.request ??= 'launch'
 		config.stopOnEntry ??= true
-		config.program ??= '${file}'
+		config.program ??= '(*@CurrentFile@*)'
 		config.entrypoint ??= '(*@AskOnStart@*)'
 		config.parameterLang ??= 'LIGO'
 		config.storageLang ??= 'LIGO'
