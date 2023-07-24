@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added an ability to specify the main contract path in the debugger's configuration. Now you can put there either a relative or absolute path.\\n\\n\\n"
+merge_request: '2759'
+title: "[#1979] Allow user to specify a path to the main contract file"
+type: added
+            
