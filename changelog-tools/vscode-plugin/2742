@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nSo far, `ligo-vscode` could only suggest the static Linux binary as an install/upgrade method for users. Now, it can also suggest the static Linux binary (Linux), NPM (macOS), Yarn (macOS), AUR (Arch-based Linux distros), and Homebrew (macOS).\\n\\n"
+merge_request: '2742'
+title: "[#1810] Suggest LIGO upgrade based on install method"
+type: added
+            

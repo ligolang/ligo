@@ -1,7 +1,6 @@
 import * as vscode from 'vscode'
+import { Maybe } from './common'
 import * as ex from './exceptions'
-
-export type Maybe<T> = T | undefined
 
 const extensionState = new Map<string, Maybe<string>>();
 export function initializeExtensionState() {

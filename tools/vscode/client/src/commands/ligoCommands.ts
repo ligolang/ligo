@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { LanguageClient } from 'vscode-languageclient/node'
-import { createRememberingInputBox, createQuickPickBox, Maybe } from '../ui'
+import { createRememberingInputBox, createQuickPickBox } from '../ui'
 import {
-  CommandRequiredArguments, executeCommand,
+  CommandRequiredArguments, executeCommand, ligoBinaryInfo
 } from './common';
+import { Maybe } from '../common'
 import * as ex from '../exceptions'
 
 /* eslint-disable no-bitwise */
@@ -27,8 +28,6 @@ export type SilentCompilationOptions = {
   onPath: Maybe<string>,
   flags: string[]
 }
-
-export const ligoBinaryInfo = { name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }
 
 const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<string>) => {
   if (projectRootDirectory) {

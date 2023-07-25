@@ -1,12 +1,11 @@
+import * as os from 'os'
 import * as vscode from 'vscode'
 import { LanguageClient, RequestType } from 'vscode-languageclient/node'
 import { extname, join, dirname } from 'path';
 import { existsSync } from 'fs'
 import { execFileSync } from 'child_process';
 
-import { Maybe } from '../ui'
-
-import { extensions } from '../common'
+import { extensions, Maybe } from '../common'
 
 import * as ex from '../exceptions'
 
@@ -41,6 +40,11 @@ function extToDialect(ext: string) {
   }
 }
 
+export function findBinaryPath(binaryName: string): string {
+  const find = os.platform() === 'win32' ? 'where.exe' : 'which'
+  return execFileSync(find, [binaryName]).toString().trim().split('\n')[0]
+}
+
 export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfiguration) {
   let binaryPath = config.get<string>(info.path)
   if (binaryPath) {
@@ -48,15 +52,13 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
   }
 
   try {
-    vscode.window.showWarningMessage(`'${info.name}' binary not found through the configuration for the Visual Studio Code extension. Using PATH.`)
-
-    binaryPath = execFileSync('which', [info.name]).toString().trim()
-
-    vscode.window.showWarningMessage(`${info.path} variable was updated to ${binaryPath}`)
+    vscode.window.showWarningMessage(`'${info.name}' binary not found through the LIGO configuration. Searching in PATH.`)
+    binaryPath = findBinaryPath(info.name)
     config.update(info.path, binaryPath)
+    vscode.window.showWarningMessage(`'${info.path}' variable was updated to ${binaryPath}`)
     return binaryPath
   } catch {
-    throw new ex.BinaryNotFoundExtension(info.name)
+    throw new ex.BinaryNotFoundException(info.name)
   }
 }
 

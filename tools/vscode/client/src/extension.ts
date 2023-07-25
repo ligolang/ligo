@@ -12,10 +12,10 @@ import {
 } from 'vscode-languageclient/node';
 
 import { registerCommands } from './command'
-import { ligoBinaryInfo } from './commands/ligoCommands'
 import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
+import { BinaryNotFoundException } from './exceptions'
 
 import { extensions } from './common'
 import { changeLastContractPath, getBinaryPath, ligoBinaryInfo } from './commands/common';
@@ -76,7 +76,17 @@ function initializeStatusBarButton(
 
 export async function activate(context: vscode.ExtensionContext) {
   const config = vscode.workspace.getConfiguration()
-  const ligoPath = getBinaryPath(ligoBinaryInfo, config)
+  let ligoPath: string
+  try {
+    ligoPath = getBinaryPath(ligoBinaryInfo, config)
+  } catch (err) {
+    if (err instanceof BinaryNotFoundException) {
+      ligoPath = undefined
+    } else {
+      throw err
+    }
+  }
+
   const serverOptions: ServerOptions = {
     command: ligoPath,
     args: ["lsp"],
@@ -127,7 +137,9 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCommands(client);
 
   // Start the client. This will also launch the server
-  client.start();
+  if (ligoPath) {
+    client.start()
+  }
 }
 
 export function deactivate(): Thenable<void> | undefined {
