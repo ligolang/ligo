@@ -7,27 +7,23 @@ In the future, this package will be deprecated and joined with the LIGO Language
 
 ## Connecting the `ligo` executable
 
+You will need the `ligo` executable available on your computer. You can find out more from the [installation instructions](https://www.ligolang.org/docs/intro/installation/).
+
 You can specify a path to the `ligo` executable in `settings.json`. The debugger will look for it in the following order:
 1. The debugger will use this path if this field is filled.
 2. If this field is blank, the debugger will try to find the `ligo` executable in the `$PATH` variable.
 3. Otherwise, the debugger will use the path from the `$LIGO_BINARY_PATH` variable.
 
-Also, if you prefer using `ligo` from the docker image then you can specify a path to the next script which runs `ligo` from docker:
+Also, if you prefer using `ligo` from the Docker image then you can specify a path to the next script which runs `ligo` from Docker:
+
 ```sh
 #!/bin/sh
 docker run --rm -v $(pwd):$(pwd) -w $(pwd) ligolang/ligo:{ligo-version} "$@"
 ```
-where `{ligo-version}` is your preferred `ligo` version (e.g. `0.59.0`).
 
-At this moment running `ligo` from docker is slow, so, it's better to use static binary.
+where `{ligo-version}` is your preferred `ligo` version (e.g. `0.70.1`).
 
-For MacOS users, you might need to build LIGO from the repository.
-
-1. Install the LIGO Debugger VS Code extension.
-2. Clone the LIGO repo from https://gitlab.com/ligolang/ligo/-/tree/0.59.0?ref_type=tags and checkout the 0.59.0 branch.
-3. Follow the [INSTALL.md](https://gitlab.com/ligolang/ligo/-/blob/0.59.0/INSTALL.md). In there, you will find the instructions and dependencies to build LIGO.
-4. After running `make build`, you will be able to find LIGO in `_build/install/default/bin/ligo`. Copy this to somewhere easy to find.
-5. In the VS Code settings, set the path to LIGO binary to the one where LIGO is. Alternatively, you can put `ligo` in your `PATH`.
+At this moment running `ligo` from Docker is slow, so it's better to use the static binary.
 
 ## Functionality support
 
