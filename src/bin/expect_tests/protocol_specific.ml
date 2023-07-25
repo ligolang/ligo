@@ -116,7 +116,8 @@ let%expect_test _ =
    will change *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "mumbai" ];
-  [%expect {|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } }

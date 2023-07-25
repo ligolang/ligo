@@ -540,10 +540,10 @@ and build_view_aggregated ~raise
       Ast_aggregated.get_t_pair input_ty)
   in
   match agg_views with
-  | Some ([ name ], expr) ->
-    entry_point, (parameter_ty, storage_ty), name, expr
+  | Some ([ name ], expr) -> entry_point, (parameter_ty, storage_ty), name, expr
   | _ ->
-    raise.error (`Self_ast_aggregated_tracer
+    raise.error
+      (`Self_ast_aggregated_tracer
         (Self_ast_aggregated.Errors.corner_case "Could not find compiled view"))
 
 

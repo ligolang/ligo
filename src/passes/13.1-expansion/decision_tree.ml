@@ -744,20 +744,23 @@ let compile
             vars_projs
             ~init:body
             ~f:(fun body { bound_var = to_subst; new_var; ascr } ->
-                (if mut then O.e_let_mut_in else O.e_let_in)
-                  { let_binder = Binder.make to_subst ascr;
-                    rhs = O.e_variable new_var ascr ~loc:Location.generated;
-                    let_result = body;
-                    (* ??? *)
-                    attributes = { inline = false;
-                                   no_mutation = false;
-                                   view = false;
-                                   entry = false;
-                                   public = false;
-                                   hidden = false;
-                                   thunk = false } }
-                  body_type
-                  ~loc:Location.generated)
+              (if mut then O.e_let_mut_in else O.e_let_in)
+                { let_binder = Binder.make to_subst ascr
+                ; rhs = O.e_variable new_var ascr ~loc:Location.generated
+                ; let_result = body
+                ; (* ??? *)
+                  attributes =
+                    { inline = false
+                    ; no_mutation = false
+                    ; view = false
+                    ; entry = false
+                    ; public = false
+                    ; hidden = false
+                    ; thunk = false
+                    }
+                }
+                body_type
+                ~loc:Location.generated)
         in
         names, (to_simple_pattern matchee_type pattern, body))
   in

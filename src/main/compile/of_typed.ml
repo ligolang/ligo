@@ -195,7 +195,8 @@ let rec list_declarations
   =
   let is_generated_main b =
     let v = Binder.get_var b in
-    (not (Value_var.is_generated v)) && String.is_prefix ~prefix:"$" (Value_var.to_name_exn v)
+    (not (Value_var.is_generated v))
+    && String.is_prefix ~prefix:"$" (Value_var.to_name_exn v)
   in
   let should_skip b = skip_generated && is_generated_main b in
   List.fold_left
@@ -215,7 +216,9 @@ let rec list_declarations
              && not (should_skip binder)
           then Binder.get_var binder :: prev
           else prev
-        else if not (should_skip binder) then Binder.get_var binder :: prev else prev
+        else if not (should_skip binder)
+        then Binder.get_var binder :: prev
+        else prev
       | D_module_include _ -> assert false (* What TODO here ? *)
       | D_module
           { module_binder; module_ = { module_content = M_struct m; _ }; module_attr; _ }

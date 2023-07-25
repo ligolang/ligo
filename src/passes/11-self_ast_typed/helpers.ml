@@ -206,7 +206,6 @@ and map_declaration m (x : declaration) =
     return @@ D_module_include (map_expression_in_module_expr m module_)
 
 
-
 and map_decl m d = map_declaration m d
 and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
 
@@ -709,8 +708,7 @@ end = struct
     | E_assign { binder; expression } ->
       let fvs = self expression in
       { fvs with mutSet = VarSet.add (Binder.get_var binder) fvs.mutSet }
-    | E_coerce { anno_expr; _ } ->
-      self anno_expr
+    | E_coerce { anno_expr; _ } -> self anno_expr
     | E_for { binder; start; final; incr; f_body } ->
       let f_body_fvs = self f_body in
       let f_body_fvs =

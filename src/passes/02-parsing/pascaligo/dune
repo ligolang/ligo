@@ -20,9 +20,11 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir-recover
-      --external-tokens Lexing_pascaligo.Token.MenhirInterpreter
-      Parser.cmly))))
+   (run
+    menhir-recover
+    --external-tokens
+    Lexing_pascaligo.Token.MenhirInterpreter
+    Parser.cmly))))
 
 ;; Build of the PascaLIGO parser as a library
 

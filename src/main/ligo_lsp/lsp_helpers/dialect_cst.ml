@@ -25,8 +25,6 @@ type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.ra
 
 exception Fatal_cst_error of string
 
-
-
 module Config = Preprocessing_cameligo.Config
 module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
 module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)

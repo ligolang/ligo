@@ -2136,9 +2136,9 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     fail
     @@ Errors.generic_error
          term.location
-         "Coerce not supported: coerce expressions should be translated \
-          before being interpreted. This could mean that the expression that you are \
-          trying to interpret is too generic, try adding a type annotation."
+         "Coerce not supported: coerce expressions should be translated before being \
+          interpreted. This could mean that the expression that you are trying to \
+          interpret is too generic, try adding a type annotation."
   | E_type_inst _ ->
     fail
     @@ Errors.generic_error

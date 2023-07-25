@@ -116,7 +116,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_mut_in
-          ~loc:loc
+          ~loc
           { is_rec = false
           ; type_params
           ; lhs = List.Ne.singleton pattern
@@ -128,7 +128,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:loc
+          ~loc
           { is_rec = false
           ; type_params
           ; lhs = List.Ne.singleton pattern
@@ -140,13 +140,13 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:loc
+          ~loc
           { is_rec; type_params; lhs = pattern; rhs_type; rhs = let_rhs; body = x })
   | D_fun { is_rec; fun_name; type_params; parameters; ret_type; return } ->
     Binding
       (fun x ->
         e_let_in
-          ~loc:loc
+          ~loc
           { is_rec
           ; type_params
           ; lhs = List.Ne.singleton (p_var ~loc:(Variable.get_location fun_name) fun_name)
@@ -155,18 +155,12 @@ let rec decl : declaration -> Statement_result.t =
           ; body = x
           })
   | D_module { name; mod_expr; annotation = _TODO } ->
-    Binding
-      (fun x ->
-        e_mod_in
-          ~loc:loc
-          { module_name = name; rhs = mod_expr; body = x })
+    Binding (fun x -> e_mod_in ~loc { module_name = name; rhs = mod_expr; body = x })
   | D_signature { name = _; sig_expr = _ } -> Binding Fun.id
   | D_type { name; type_expr } ->
     Binding
       (fun x ->
-        e_type_in
-          ~loc:loc
-          { type_decl = { name; type_expr; params = None }; body = x })
+        e_type_in ~loc { type_decl = { name; type_expr; params = None }; body = x })
   | D_import (Import_all_as _ | Import_selected _) | D_module_include _ ->
     failwith "can't parse"
   | D_multi_var _ | D_multi_const _ | D_type_abstraction _ ->
@@ -176,7 +170,7 @@ let rec decl : declaration -> Statement_result.t =
     Binding
       (fun x ->
         e_let_in
-          ~loc:loc
+          ~loc
           { is_rec = false
           ; type_params = None
           ; lhs
@@ -199,11 +193,13 @@ and instr ~raise : instruction -> Statement_result.t =
  fun i ->
   let loc = get_i_loc i in
   match get_i i with
-  | I_return expr_opt -> Return (Option.value expr_opt ~default:(e_unit ~loc:Location.generated))
+  | I_return expr_opt ->
+    Return (Option.value expr_opt ~default:(e_unit ~loc:Location.generated))
   | I_block block' ->
     let block = get_b block' in
     (match Statement_result.merge_block (List.Ne.map (statement ~raise) block) with
-    | Binding f -> Binding (fun hole -> let_ignore_in (f (e_unit ~loc:Location.generated)) hole)
+    | Binding f ->
+      Binding (fun hole -> let_ignore_in (f (e_unit ~loc:Location.generated)) hole)
     | Return _ as res -> res
     | Control_flow _ ->
       raise.error (unsupported_control_flow block')
@@ -261,9 +257,7 @@ and instr ~raise : instruction -> Statement_result.t =
     (* optim cases *)
     | x, None when Statement_result.(is_not_returning x) ->
       let cond =
-        e_cond
-          ~loc
-          { test; ifso = Statement_result.to_expression ifso_res; ifnot = None }
+        e_cond ~loc { test; ifso = Statement_result.to_expression ifso_res; ifnot = None }
       in
       Binding (fun hole -> let_unit_in cond hole)
     | x, Some ifnot_res
@@ -316,8 +310,7 @@ and instr ~raise : instruction -> Statement_result.t =
 
 and block_to_expression ~raise block =
   Statement_result.(
-    to_expression
-    @@ merge_block (List.Ne.map (statement ~raise) (get_b block)))
+    to_expression @@ merge_block (List.Ne.map (statement ~raise) (get_b block)))
 
 
 and statement ~raise : statement -> Statement_result.t =
