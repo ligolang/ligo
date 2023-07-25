@@ -6,6 +6,7 @@ package:
 	# Prerequisites: the Haskell adapter executable must be present
 	rm -rf build
 	mkdir -p build
+	yarn install
 	yarn package --out=build
 
 install-plugin: package

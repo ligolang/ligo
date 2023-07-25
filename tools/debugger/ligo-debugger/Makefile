@@ -13,6 +13,7 @@ clean:
 	rm -rf $$(stack path --local-install-root)/bin/ligo-debugger
 
 build:
+	$(MAKE) -C grammar generate
 	stack build $(STACK_DEV_OPTIONS)
 
 .PHONY: all clean build FORCE
