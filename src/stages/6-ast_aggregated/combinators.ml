@@ -289,7 +289,6 @@ let is_t__type_ t = Option.is_some (get_t__type_ t)
 
 let is_t_mutez t = is_t_tez t
 
-
 let ez_e_record (lst : (Label.t * expression) list) : expression_content =
   E_record (Record.of_list lst)
 

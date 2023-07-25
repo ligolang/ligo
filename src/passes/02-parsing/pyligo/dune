@@ -20,9 +20,11 @@
  (action
   (with-stdout-to
    %{targets}
-   (run menhir-recover
-      --external-tokens Lexing_pyligo.Token.MenhirInterpreter
-      Parser.cmly))))
+   (run
+    menhir-recover
+    --external-tokens
+    Lexing_pyligo.Token.MenhirInterpreter
+    Parser.cmly))))
 
 ;; Build of the PyLIGO parser as a library
 

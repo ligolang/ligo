@@ -188,7 +188,9 @@ let decompiler_ty_expr_tests =
           "Erased quantifier (inferred)"
           (* [∀ a : *] is erased here since it can't be a part of CST type expression.
              Such behavior is useful for LSP hovers. *)
-      ; code = "let x (type a) (v : a option) : bool = match v with | None -> False | Some _ -> True"
+      ; code =
+          "let x (type a) (v : a option) : bool = match v with | None -> False | Some _ \
+           -> True"
       ; expected = "a option -> bool"
       ; syntax = CameLIGO
       }

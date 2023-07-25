@@ -235,10 +235,10 @@ let rec swap_expression : Scope.swapper -> expression -> expression =
     let binder = swap_mut_binder swaper binder in
     let expression = self expression in
     return @@ E_assign { binder; expression }
-  | E_coerce { anno_expr ; type_annotation } ->
+  | E_coerce { anno_expr; type_annotation } ->
     let anno_expr = self anno_expr in
     let type_annotation = self_type type_annotation in
-    return @@ E_coerce { anno_expr ; type_annotation }
+    return @@ E_coerce { anno_expr; type_annotation }
   | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
     let let_binder = swap_mut_pattern swaper let_binder in
     let rhs = self rhs in

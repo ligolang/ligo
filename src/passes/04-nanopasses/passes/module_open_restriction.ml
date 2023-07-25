@@ -56,7 +56,7 @@ let compile ~raise =
           ~loc
           { type_args; constr = { module_path; field; field_as_open = false } }
       | _ -> make_t ~loc t)
-    | T_module_open_in { module_path; field ; field_as_open = false } ->
+    | T_module_open_in { module_path; field; field_as_open = false } ->
       (match get_t_var field with
       | Some v ->
         t_module_access
@@ -134,7 +134,8 @@ let%expect_test "module_app" =
     (field_as_open false)))
    |}
   |-> compile;
-  [%expect {|
+  [%expect
+    {|
     (T_module_app
      ((constr ((module_path (A V)) (field t) (field_as_open false)))
       (type_args ((T_var v))))) |}]

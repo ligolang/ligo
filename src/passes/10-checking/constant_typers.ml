@@ -359,8 +359,11 @@ let of_type ({ mode_annot; types } : Annot.t) : _ t =
              let () =
                update_worklist
                |> List.iter ~f:(fun (i, type_, f, expr) ->
-                      let expr = E.(let%bind expr = expr in
-                                    f expr) in
+                      let expr =
+                        E.(
+                          let%bind expr = expr in
+                          f expr)
+                      in
                       Hashtbl.set output_args ~key:i ~data:(type_, expr))
              in
              return (checked, ret_type))
@@ -998,23 +1001,17 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:
-               [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ]) )
+             ~types:[ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc () ]) )
     ; ( C_OR
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:
-               [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ]) )
+             ~types:[ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc () ]) )
     ; ( C_XOR
       , of_type
           (create
              ~mode_annot:[ Inferred; Inferred ]
-             ~types:
-               [ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc ()
-               ]) )
+             ~types:[ t_bool ~loc () ^-> t_bool ~loc () ^~> t_bool ~loc () ]) )
     ; ( C_LAND
       , of_type
           (create

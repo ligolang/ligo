@@ -54,7 +54,9 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
        let open Option.Monad_infix in
        get_type vdef
        >>= fun type_expression ->
-       let location = Def.Def_location.of_loc (use_var_name_if_availiable type_expression).location in
+       let location =
+         Def.Def_location.of_loc (use_var_name_if_availiable type_expression).location
+       in
        (match location with
        | StdLib _ | Virtual _ ->
          None (* We can't return any position to user: type of this vdef is inferred *)

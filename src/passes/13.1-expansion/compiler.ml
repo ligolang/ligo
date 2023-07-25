@@ -109,7 +109,8 @@ and compile_matching
     -> (I.expression, I.type_expression) I.Match_expr.match_case list -> O.expression
   =
  fun ~loc ?attributes ~mut matchee cases ->
-  ignore loc; (* TODO? *)
+  ignore loc;
+  (* TODO? *)
   let matchee_type = matchee.type_expression in
   let var = Value_var.fresh ~loc:Location.generated ~name:"match_" () in
   let match_expr =

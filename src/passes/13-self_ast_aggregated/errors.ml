@@ -197,6 +197,7 @@ let error_ppformat
         snippet_pp
         loc)
 
+
 let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
  fun e ->
   let open Simple_utils.Error in
@@ -321,9 +322,6 @@ let error_json : self_ast_aggregated_error -> Simple_utils.Error.t =
     let content = make_content ~message ~location () in
     make ~stage ~content
   | `Self_ast_aggregated_unsolved_coerce location ->
-    let message =
-      Format.sprintf
-        "Unsolved coercion."
-    in
+    let message = Format.sprintf "Unsolved coercion." in
     let content = make_content ~message ~location () in
     make ~stage ~content

@@ -71,8 +71,7 @@ let preprocess_raw_input
 
 type file_path = string
 
-module Make (Config : Preprocessor.Config.S) =
-struct
+module Make (Config : Preprocessor.Config.S) = struct
   module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
   module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
   module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
@@ -82,7 +81,6 @@ end
 module Pascaligo = Make (Preprocessing_pascaligo.Config)
 module Cameligo = Make (Preprocessing_cameligo.Config)
 module Jsligo = Make (Preprocessing_jsligo.Config)
-
 
 let parse_and_abstract_pascaligo
     ~(raise : (Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise)

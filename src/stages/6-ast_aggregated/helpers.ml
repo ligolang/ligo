@@ -304,8 +304,7 @@ end = struct
       union (self rhs) fv2
     | E_assign { binder; expression } ->
       union (singleton_mut_var (Binder.get_var binder)) (self expression)
-    | E_coerce { anno_expr ; _ } ->
-      self anno_expr
+    | E_coerce { anno_expr; _ } -> self anno_expr
     | E_deref v -> singleton_mut_var v
     | E_for { binder; start; final; incr; f_body } ->
       unions [ self start; self final; self incr; remove binder (self f_body) ]

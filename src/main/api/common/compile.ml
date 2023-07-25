@@ -502,7 +502,7 @@ let view (raw_options : Raw_options.t) source view_name michelson_code_format =
           BuildSystem.Source_input.(
             Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
       in
-      let { name ; value } : Build.view_michelson =
+      let ({ name; value } : Build.view_michelson) =
         Build.build_view ~raise ~options entry_point module_ view_name source
       in
       let compiled_view = Ligo_compile.Of_michelson.build_view ~raise name value in

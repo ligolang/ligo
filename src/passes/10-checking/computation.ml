@@ -615,7 +615,6 @@ type subtype_error = unify_error
 module O = Ast_typed
 module E = Elaboration
 
-
 let rec subtype ~(received : Type.t) ~(expected : Type.t)
     : (O.expression -> O.expression Elaboration.t, _, _) t
   =
@@ -693,10 +692,14 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
   | T_construct { constructor = Bytes; _ }, _
   | T_construct { constructor = List; _ }, _
   | T_construct { constructor = Set; _ }, _
-  | T_construct { constructor = Map; _ }, _ when Option.is_some (Type.get_t_bool expected) ->
-    return E.(fun hole ->
-        let%bind expected = decode expected in
-        return @@ O.e_coerce ~loc { anno_expr = hole ; type_annotation = expected } expected)
+  | T_construct { constructor = Map; _ }, _
+    when Option.is_some (Type.get_t_bool expected) ->
+    return
+      E.(
+        fun hole ->
+          let%bind expected = decode expected in
+          return
+          @@ O.e_coerce ~loc { anno_expr = hole; type_annotation = expected } expected)
   | _, _ ->
     let%bind () = unify received expected in
     return E.return

@@ -1502,7 +1502,8 @@ and infer_declaration (decl : I.declaration)
       let self = remove_non_public in
       match inferred_sig with
       | [] -> []
-      | Signature.S_value (_, _, attr) :: k when not attr.public && not attr.entry -> self k
+      | Signature.S_value (_, _, attr) :: k when (not attr.public) && not attr.entry ->
+        self k
       | Signature.S_type (_, _, attr) :: k when not attr.public -> self k
       | Signature.S_module (_, _, attr) :: k when not attr.public -> self k
       | x :: k -> x :: self k

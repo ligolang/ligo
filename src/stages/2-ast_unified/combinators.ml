@@ -270,10 +270,7 @@ let let_ignore_in rhs body =
     }
 
 
-let block_of_statements stmts =
-  make_b ~loc:Location.generated stmts
-
-
+let block_of_statements stmts = make_b ~loc:Location.generated stmts
 let e_pair ~loc l r = e_tuple ~loc (Simple_utils.List.Ne.of_list [ l; r ])
 
 let e_record_ez ~loc (lst : (string * expr) list) =

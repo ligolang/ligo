@@ -621,15 +621,13 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"add"
             ~kind:CompletionItemKind.Variable
-            ~detail:
-              "(_: int) => (_: int) => storage"
+            ~detail:"(_: int) => (_: int) => storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create
             ~label:"sub"
             ~kind:CompletionItemKind.Variable
-            ~detail:
-              "(_: int) => (_: int) => storage"
+            ~detail:"(_: int) => (_: int) => storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create
@@ -935,15 +933,13 @@ let test_cases_pascaligo =
         [ CompletionItem.create
             ~label:"add"
             ~kind:CompletionItemKind.Variable
-            ~detail:
-              "int -> int -> storage"
+            ~detail:"int -> int -> storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create
             ~label:"sub"
             ~kind:CompletionItemKind.Variable
-            ~detail:
-              "int -> int -> storage"
+            ~detail:"int -> int -> storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create

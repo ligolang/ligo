@@ -77,31 +77,31 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "14 land 2" ];
-  [%expect{|
+  [%expect {|
     Invalid type(s)
     Cannot unify "int" with "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "14n lor 2" ];
-  [%expect{|
+  [%expect {|
     Invalid type(s)
     Cannot unify "int" with "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "14 lor 2n" ];
-  [%expect{|
+  [%expect {|
     Invalid type(s)
     Cannot unify "int" with "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "14n lxor 2" ];
-  [%expect{|
+  [%expect {|
     Invalid type(s)
     Cannot unify "int" with "nat". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "cameligo"; "14 lxor 2n" ];
-  [%expect{|
+  [%expect {|
     Invalid type(s)
     Cannot unify "int" with "nat". |}]
 

@@ -35,8 +35,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "implicit_cast.jsligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     3 |}]
 
 let%expect_test _ =
@@ -48,8 +47,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "implicit_cast.mligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     True |}]
 
 let%expect_test _ =
@@ -61,8 +59,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "implicit_cast.mligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     True |}]
 
 let%expect_test _ =

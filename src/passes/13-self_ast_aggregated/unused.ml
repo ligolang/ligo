@@ -74,7 +74,7 @@ let rec defuse_of_expr defuse expr : defuse =
       (M.add (Binder.get_var binder) true M.empty, [])
       (defuse_of_expr defuse expression)
   | E_deref var -> M.add var true defuse, []
-  | E_coerce { anno_expr ; _ } -> defuse_of_expr defuse anno_expr
+  | E_coerce { anno_expr; _ } -> defuse_of_expr defuse anno_expr
   | E_for { binder; start; final; incr; f_body } ->
     defuse_unions
       defuse
