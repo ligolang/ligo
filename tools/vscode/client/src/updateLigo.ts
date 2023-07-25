@@ -9,7 +9,14 @@ import * as vscode from 'vscode'
 import {
   LanguageClient,
 } from 'vscode-languageclient/node'
+import { extensionName, Maybe } from './common'
 import { getBinaryPath, ligoBinaryInfo } from './commands/common'
+import { BinaryNotFoundException } from './exceptions'
+
+import detectInstaller from 'detect-installer'
+import { Readable } from 'stream'
+
+type TagName = 'Static Linux binary' | 'Ligo Windows installer'
 
 /* eslint-disable camelcase */
 /**
@@ -18,7 +25,7 @@ import { getBinaryPath, ligoBinaryInfo } from './commands/common'
  */
 type Release = {
   name: string
-  tag_name: string
+  tag_name: TagName
   released_at: string
   assets: {
     links: [
@@ -31,73 +38,98 @@ type Release = {
 }
 /* eslint-enable camelcase */
 
-export async function installLigo(client: LanguageClient, ligoPath: string, latest: Release): Promise<boolean> {
-  const asset = latest.assets.links.find((download) => download.name === 'Static Linux binary')
+/** Stop LIGO, wait a bit, perform the action, then start LIGO again. The action will possibly fail with ETXTBSY otherwise. */
+async function withClientRestart<T>(client: LanguageClient, action: () => T): Promise<T> {
+  if (client.isRunning()) {
+    await client.stop()
+  }
+  const clientStopWaitTime = 2000
+  await new Promise(resolve => setTimeout(resolve, clientStopWaitTime))
+  let result = action()
+  await client.start()
+  return result
+}
+
+async function updateLigoPath(config: vscode.WorkspaceConfiguration, path: string): Promise<void> {
+  return await config.update(
+    'ligoLanguageServer.ligoBinaryPath',
+    path,
+    vscode.ConfigurationTarget.Global,
+    true,
+  )
+}
+
+export async function copyLigoBinary(
+  config: vscode.WorkspaceConfiguration,
+  client: LanguageClient,
+  ligoPath: string,
+  payload: Buffer,
+): Promise<boolean> {
+  return await withClientRestart(client, async () => {
+    try {
+      const fileOptions = {
+        encoding: 'binary' as BufferEncoding,
+      }
+
+      fs.writeFileSync(ligoPath, payload, fileOptions)
+      fs.chmodSync(ligoPath, 0o755)
+      await updateLigoPath(config, ligoPath)
+      vscode.window.showInformationMessage(
+        `LIGO installed at: ${path.resolve(ligoPath)}. Please restart VS Code to use LIGO LSP.`,
+      )
+      return true
+    } catch (err) {
+      vscode.window.showErrorMessage(`Could not install LIGO: ${err.message}`)
+      return false
+    }
+  })
+}
+
+export async function downloadLigo(latest: Release, targetAsset: TagName): Promise<Maybe<Buffer>> {
+  const asset = latest.assets.links.find((download) => download.name === targetAsset)
   if (!asset) {
-    await vscode.window.showErrorMessage('Could not find a download for a static Linux binary.')
-    return false
+    await vscode.window.showErrorMessage(`Could not find a download for ${targetAsset}.`)
+    return undefined
   }
 
-  const fileOptions = {
-    encoding: 'binary' as BufferEncoding,
-  }
-
-  return vscode.window.withProgress(
+  return await vscode.window.withProgress(
     {
       cancellable: true,
       location: vscode.ProgressLocation.Notification,
-      title: 'Downloading static Linux binary for LIGO',
+      title: `Downloading ${targetAsset}`,
     },
-    async (progress, cancelToken) => axios.default
-      .get(
+    async (progress, cancelToken) => {
+      const controller = new AbortController()
+      const response: axios.AxiosResponse<Readable, any> = await axios.default.get(
         asset.direct_asset_url,
         {
-          responseType: 'arraybuffer',
-          cancelToken: new axios.default.CancelToken(cancelToken.onCancellationRequested),
-          onDownloadProgress: (progressEvent) => {
-            const increment = Math.round((progressEvent.loaded / progressEvent.total) * 100)
-            const newState = {
-              increment,
-              message: `${increment}%`,
-            }
-            progress.report(newState)
-          },
+          responseType: 'stream',
+          signal: controller.signal
         },
       )
-      .then((res) => {
-        if (cancelToken.isCancellationRequested) {
-          vscode.window.showInformationMessage('LIGO installation cancelled.')
-          return false
-        }
+      let loaded = 0
+      const chunks = []
+      return await new Promise((resolve, reject) => {
+        const stream = response.data
+        const total = response.headers['content-length']
+        stream.on('end', () => resolve(Buffer.concat(chunks)))
+        stream.on('error', (err) => reject(err))
+        stream.on('data', (chunk) => {
+          if (cancelToken.isCancellationRequested) {
+            controller.abort()
+            vscode.window.showInformationMessage('LIGO download cancelled.')
+            reject()
+          }
 
-        // Stop LIGO, wait a bit, perform the installation, then start LIGO
-        // again. The installation will likely fail with ETXTBSY otherwise.
-        const stopWaitTime = 2000
-        client.stop()
-          .then((_: void) => new Promise(resolve => setTimeout(resolve, stopWaitTime)))
-          .then((_: void) => {
-            let success = false
-            try {
-              fs.writeFileSync(ligoPath, Buffer.from(res.data), fileOptions)
-              vscode.window.showInformationMessage(`LIGO installed at: ${path.resolve(ligoPath)}`)
-              success = true
-            } catch (err) {
-              vscode.window.showErrorMessage(`Could not install LIGO: ${err.message}`)
-            }
+          chunks.push(Buffer.from(chunk))
 
-            client.start()
-            return success
-          })
+          loaded += chunk.length
+          const percentage = (part: number): number => part * 100. / total
+          const increment = percentage(chunk.length)
+          progress.report({ increment, message: `${Math.round(percentage(loaded))}%` })
+        })
       })
-      .catch((err) => {
-        if (axios.default.isCancel(err)) {
-          vscode.window.showInformationMessage('LIGO download cancelled.')
-        }
-
-        vscode.window.showErrorMessage(`Could not download LIGO: ${err.message}`)
-        return false
-      }),
-  )
+    })
 }
 
 async function getLigoReleases(): Promise<Release[] | undefined> {
@@ -133,8 +165,335 @@ function openLigoReleases(): Thenable<boolean> {
     })
 }
 
+function mkTerminal(): vscode.Terminal {
+  const terminal = vscode.window.createTerminal('LIGO Installer')
+  terminal.show(false)
+  return terminal
+}
+
+const ligoTempDownloadTemplate: string = path.join(os.tmpdir(), 'ligo-bin-')
+
+async function runBrewInstaller(client: LanguageClient): Promise<null> {
+  const terminal = mkTerminal()
+  terminal.sendText(`brew tap ligolang/ligo https://gitlab.com/ligolang/ligo.git`)
+  await withClientRestart(client, () => terminal.sendText(`brew install ligolang/ligo/ligo`))
+  return null
+}
+
+async function runBrewUpgrade(client: LanguageClient): Promise<null> {
+  const terminal = mkTerminal()
+  terminal.sendText(`brew update`)
+  await withClientRestart(client, () => terminal.sendText(`brew upgrade ligolang/ligo/ligo`))
+  return null
+}
+
+async function runWindowsGuiInstaller(client: LanguageClient, latestRelease: Release): Promise<null> {
+  const runAsAdmin = (command: string): string =>
+    void execFileSync(
+      'powershell',
+      [`Start-Process -FilePath ${command} -Verb RunAs -PassThru -Wait`],
+    )
+
+  const payload = await downloadLigo(latestRelease, 'Ligo Windows installer').catch(_ => undefined)
+  if (!payload) {
+    return null
+  }
+
+  const showErrorMessage = (err: string) =>
+    vscode.window.showErrorMessage(`Error installing LIGO with Windows installer: ${err}`)
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+    if (err) {
+      showErrorMessage(err.message)
+      return null
+    }
+
+    const fileOptions = {
+      encoding: 'binary' as BufferEncoding,
+    }
+
+    const installer = path.join(dir, 'ligo-installer.exe')
+    fs.writeFileSync(installer, payload, fileOptions)
+    await withClientRestart(client, async () => {
+      try {
+        runAsAdmin(installer)
+        vscode.window.showInformationMessage(`LIGO installed. Please restart VS Code to use LIGO LSP.`)
+      } catch (err) {
+        showErrorMessage(err.message)
+      }
+    })
+  })
+  return null
+}
+
+async function runWindowsGuiUpgrade(client: LanguageClient, latestRelease: Release): Promise<null> {
+  return runWindowsGuiInstaller(client, latestRelease)
+}
+
+const npmWindowsTag = 'windows'
+const npmMacOsIntelTag = 'macos-intel'
+const npmMacOsM1Tag = 'macos-m1'
+
+function getNpmMacOsTag(): 'macos-m1' | 'macos-intel' {
+  try {
+    const arch = execFileSync('uname', ['-m']).toString().trim()
+    switch (arch) {
+      case 'arm64':
+        return npmMacOsM1Tag
+      case 'x86_64':
+      default:
+        return npmMacOsIntelTag
+    }
+  } catch {
+    return npmMacOsIntelTag
+  }
+}
+
+async function runNpmImpl(client: LanguageClient, platform: NodeJS.Platform, useYarn: boolean, isInstall: boolean): Promise<null> {
+  const command =
+    useYarn
+      ? `yarn global ${isInstall ? 'add' : 'upgrade'}`
+      : `npm ${isInstall ? 'install' : 'update'} --global`
+
+  async function run(tag: string): Promise<void> {
+    const terminal = mkTerminal()
+    // Examples:
+    // yarn global add ligolang@macos-intel
+    // npm update --global ligolang
+    return await withClientRestart(
+      client,
+      () => terminal.sendText(`${command} ligolang${isInstall ? `@${tag}` : ``}`),
+    )
+  }
+
+  if (platform === 'win32') {
+    run(npmWindowsTag)
+  } else if (platform === 'darwin') {
+    run(getNpmMacOsTag())
+  } else {
+    const name = useYarn ? 'Yarn' : 'NPM'
+    const procedure = isInstall ? 'install' : 'upgrade'
+    vscode.window.showErrorMessage(`Unsupported platform ${platform} for ${name} ${procedure}.`)
+  }
+  return null
+}
+
+async function runNpmInstaller(client: LanguageClient, platform: NodeJS.Platform, useYarn: boolean): Promise<null> {
+  return runNpmImpl(client, platform, useYarn, true)
+}
+
+async function runNpmUpgrade(client: LanguageClient, platform: NodeJS.Platform, useYarn: boolean): Promise<null> {
+  return runNpmImpl(client, platform, useYarn, false)
+}
+
+async function runPacmanInstaller(client: LanguageClient): Promise<null> {
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+    if (err) {
+      vscode.window.showErrorMessage(`Error installing LIGO with pacman: ${err.message}`)
+      return null
+    }
+
+    const terminal = mkTerminal()
+    terminal.sendText(`git clone https://aur.archlinux.org/ligo-bin.git ${dir}`)
+    terminal.sendText(`cd ${dir}`)
+    await withClientRestart(client, () => terminal.sendText(`makepkg --syncdeps --install`))
+  })
+  return null
+}
+
+async function runPacmanUpgrade(client: LanguageClient): Promise<null> {
+  return runPacmanInstaller(client)
+}
+
+async function runStaticLinuxBinaryInstaller(
+  client: LanguageClient,
+  config: vscode.WorkspaceConfiguration,
+  ligoPath: Maybe<string>,
+  latestRelease: Release
+): Promise<TagName | null> {
+  const payload = await downloadLigo(latestRelease, 'Static Linux binary').catch(_ => undefined)
+  if (!payload) {
+    return null
+  }
+
+  if (!ligoPath) {
+    const uris = await vscode.window.showOpenDialog({
+      title: 'Directory to install LIGO',
+      openLabel: 'Select',
+      canSelectMany: false,
+      canSelectFiles: false,
+      canSelectFolders: true,
+    })
+    if (!uris || uris.length === 0) {
+      vscode.window.showErrorMessage('LIGO install cancelled')
+      return null
+    }
+
+    ligoPath = path.join(uris[0].fsPath, 'ligo')
+  }
+
+  if (await copyLigoBinary(config, client, ligoPath, payload)) {
+    return latestRelease.tag_name
+  }
+  return null
+}
+
+async function runStaticLinuxBinaryUpgrade(
+  client: LanguageClient,
+  config: vscode.WorkspaceConfiguration,
+  ligoPath: string,
+  latestRelease: Release
+): Promise<TagName | null> {
+  return runStaticLinuxBinaryInstaller(client, config, ligoPath, latestRelease)
+}
+
+type LinuxInstallMethod = "npm" | "pacman" | "yarn" | null
+type MacOSInstallMethod = "brew" | "npm" | "yarn" | null
+type WindowsInstallMethod = "GUI Installer" | "npm" | "yarn" | null
+type InstallMethod = LinuxInstallMethod | MacOSInstallMethod | WindowsInstallMethod
+
+type ChosenUpgradeMethod = 'Static Binary' | 'Upgrade' | 'Open Downloads' | 'Cancel'
+type ChosenInstallMethod = 'Static Binary' | 'GUI installer' | 'NPM' | 'Yarn' | 'Homebrew' | 'AUR' | 'Open Downloads' | 'Choose path' | 'Cancel'
+
+async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<ChosenInstallMethod> {
+  type DefaultOptions = 'Choose path' | 'Open Downloads' | 'Cancel'
+  const defaultOptions: DefaultOptions[] = ['Choose path', 'Open Downloads', 'Cancel']
+  switch (platform) {
+    case 'win32': {
+      const windowsOptions: ('GUI installer' | DefaultOptions)[] =
+        ['GUI installer', ...defaultOptions]
+      return vscode.window.showErrorMessage(message, ...windowsOptions)
+    }
+    case 'linux': {
+      // TODO: we may as well suggest the debian package
+      const linuxOptions: ('Static Binary' | 'AUR' | DefaultOptions)[] =
+        ['Static Binary', 'AUR', ...defaultOptions]
+      return vscode.window.showErrorMessage(message, ...linuxOptions)
+    }
+    case 'darwin': {
+      const macosOptions: ('NPM' | 'Yarn' | 'Homebrew' | DefaultOptions)[] =
+        ['NPM', 'Yarn', 'Homebrew', ...defaultOptions]
+      return vscode.window.showErrorMessage(message, ...macosOptions)
+    }
+    default:
+      return vscode.window.showErrorMessage(message, ...defaultOptions)
+  }
+}
+
+async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMethod, message: string): Promise<ChosenUpgradeMethod> {
+  switch (installer) {
+    case 'GUI Installer':
+      return await vscode.window.showInformationMessage(
+        `${message} Let ${extensionName} download and run LIGO's installer to upgrade?`,
+        'Upgrade',
+        'Open Downloads',
+        'Cancel',
+      )
+    case 'brew':
+    case 'npm':
+    case 'pacman':
+    case 'yarn':
+      return await vscode.window.showInformationMessage(
+        `${message} Let ${extensionName} run ${installer} to upgrade?`,
+        'Upgrade',
+        'Open Downloads',
+        'Cancel',
+      )
+    default:
+      if (platform === 'linux') {
+        return await vscode.window.showInformationMessage(
+          `${message} If you use the static Linux binary, please select "Static Binary", otherwise "Open Downloads".`,
+          'Static Binary',
+          'Open Downloads',
+          'Cancel',
+        )
+      } else {
+        return await vscode.window.showInformationMessage(
+          `${message} Please consider upgrading it.`,
+          'Open Downloads',
+          'Cancel',
+        )
+      }
+  }
+}
+
+async function runInstaller(
+  client: LanguageClient,
+  config: vscode.WorkspaceConfiguration,
+  platform: NodeJS.Platform,
+  answer: ChosenInstallMethod,
+): Promise<boolean> {
+  switch (answer) {
+    case 'Static Binary': {
+      const latestRelease = await getLatestLigoRelease()
+      return !!await runStaticLinuxBinaryInstaller(client, config, undefined, latestRelease)
+    }
+    case 'GUI installer': {
+      const latestRelease = await getLatestLigoRelease()
+      return !!await runWindowsGuiInstaller(client, latestRelease)
+    }
+    case 'AUR':
+      return !!await runPacmanInstaller(client)
+    case 'NPM':
+      return !!await runNpmInstaller(client, platform, false)
+    case 'Yarn':
+      return !!await runNpmInstaller(client, platform, true)
+    case 'Homebrew':
+      return !!await runBrewInstaller(client)
+    case 'Choose path': {
+      const uris = await vscode.window.showOpenDialog({
+        title: 'Path to LIGO',
+        openLabel: 'Select',
+        canSelectMany: false,
+      })
+      if (!uris || uris.length === 0) {
+        return false
+      }
+
+      await updateLigoPath(config, uris[0].fsPath)
+      await updateLigoImpl(client, config)
+      return true
+    }
+    case 'Open Downloads':
+      openLigoReleases()
+      return false
+    case 'Cancel':
+    default:
+      return false
+  }
+}
+
+async function runUpgrade(
+  client: LanguageClient,
+  config: vscode.WorkspaceConfiguration,
+  ligoPath: string,
+  latestRelease: Release,
+  platform: NodeJS.Platform,
+  installer: InstallMethod,
+  answer: ChosenUpgradeMethod,
+): Promise<string | null> {
+  switch (answer) {
+    case 'Static Binary': return await runStaticLinuxBinaryUpgrade(client, config, ligoPath, latestRelease)
+    case 'Upgrade':
+      switch (installer) {
+        case 'brew': return await runBrewUpgrade(client)
+        case 'GUI Installer': return await runWindowsGuiUpgrade(client, latestRelease)
+        case 'npm': return await runNpmUpgrade(client, platform, false)
+        case 'pacman': return await runPacmanUpgrade(client)
+        case 'yarn': return await runNpmUpgrade(client, platform, true)
+        default: return null
+      }
+    case 'Open Downloads':
+      openLigoReleases()
+      return null
+    case 'Cancel':
+    default:
+      return null
+  }
+}
+
 async function promptLigoUpdate(
   client: LanguageClient,
+  config: vscode.WorkspaceConfiguration,
   ligoPath: string,
   installedVersionIdentifier: string | number,
 ): Promise<string | number> {
@@ -160,40 +519,12 @@ async function promptLigoUpdate(
       vscode.window.showErrorMessage(`Unknown version: ${installedVersionIdentifier}`)
   }
 
-  let answer: string
-  switch (os.platform()) {
-    case 'linux':
-      answer = await vscode.window.showInformationMessage(
-        'A new LIGO version is available. If you use the static Linux binary, please select "Static Linux Binary", otherwise "Open Downloads".',
-        'Static Linux Binary',
-        'Open Downloads',
-        'Cancel',
-      )
-      break
-    default:
-      answer = await vscode.window.showInformationMessage(
-        'A new LIGO version is available. Please consider upgrading it.',
-        'Open Downloads',
-        'Cancel',
-      )
-      break
-  }
+  const installer: InstallMethod = await detectInstaller({ cwd: process.cwd() }).catch(_ => null)
+  const platform: NodeJS.Platform = os.platform()
+  const answer = await askUserToUpgrade(platform, installer, 'A new LIGO version is available.')
+  const tagName = await runUpgrade(client, config, ligoPath, latestRelease, platform, installer, answer)
 
-  switch (answer) {
-    case 'Static Linux Binary':
-      if (await installLigo(client, ligoPath, latestRelease)) {
-        return latestRelease.tag_name
-      }
-      break
-    case 'Open Downloads':
-      openLigoReleases()
-      break
-    case 'Cancel':
-    default:
-      break
-  }
-
-  return installedVersionIdentifier
+  return tagName || installedVersionIdentifier
 }
 
 export default async function updateLigo(client: LanguageClient): Promise<void> {
@@ -210,59 +541,33 @@ async function showUpdateError(
   ligoPath: string,
   config: vscode.WorkspaceConfiguration
 ): Promise<boolean> {
-  const answer = await
-    (suggestUpdate
-      ? vscode.window.showErrorMessage(
-        errorMessage,
-        'Download static Linux binary',
-        'Choose path',
-        'Download',
-        'Cancel',
-      )
-      : vscode.window.showErrorMessage(
-        errorMessage,
-        'Choose path',
-        'Download',
-        'Cancel',
-      ))
+  const platform = os.platform()
+  const installer = await detectInstaller({ cwd: process.cwd() }).catch(_ => null)
 
-  switch (answer) {
-    case 'Download static Linux binary':
-      const latestRelease = await getLatestLigoRelease()
-      return await installLigo(client, ligoPath, latestRelease)
-    case 'Choose path': {
-      const uris = await vscode.window.showOpenDialog({ canSelectMany: false })
-      if (!uris || uris.length === 0) {
-        return false
-      }
-
-      await config.update(
-        'ligoLanguageServer.ligoBinaryPath',
-        uris[0].fsPath,
-        vscode.ConfigurationTarget.Global,
-        true,
-      )
-      await updateLigoImpl(client, config)
-      return true
-    }
-    case 'Download':
-      openLigoReleases()
-      return false
-    case 'Cancel':
-    default:
-      return false
+  if (suggestUpdate) {
+    const latestRelease = getLatestLigoRelease()
+    const answer: ChosenUpgradeMethod = await askUserToUpgrade(platform, installer, errorMessage)
+    return !!await runUpgrade(client, config, ligoPath, await latestRelease, platform, installer, answer)
+  } else {
+    const answer: ChosenInstallMethod = await askUserToInstall(platform, errorMessage)
+    return await runInstaller(client, config, platform, answer)
   }
 }
 
 async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceConfiguration): Promise<void> {
-  const ligoPath = getBinaryPath(ligoBinaryInfo, config)
+  let ligoPath: string
+  try {
+    ligoPath = getBinaryPath(ligoBinaryInfo, config)
+  } catch (err) {
+    if (err instanceof BinaryNotFoundException) {
+      ligoPath = undefined
+    } else {
+      throw err
+    }
+  }
 
   let data: string
   try {
-    if (!ligoPath) {
-      throw new Error('Undefined path')
-    }
-
     data = execFileSync(ligoPath, ['--version']).toString().trim()
   } catch (err) {
     const isLikelyNotFoundError = /ENOENT/.test(err.message)
@@ -278,7 +583,7 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
 
     const shouldContinue = await showUpdateError(
       client,
-      `Could not find a LIGO installation on your computer or the installation is invalid: ${err.message}. ${hint}`,
+      `Could not find a LIGO installation on your computer or the installation is invalid. Pick one of the available installation methods. Details: ${err.message}. ${hint}`,
       false,
       ligoPath,
       config,
@@ -301,7 +606,7 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
     await showUpdateError(
       client,
       'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.',
-      os.platform() === 'linux',
+      true,
       ligoPath,
       config,
     )
@@ -311,7 +616,7 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
   async function validateSemver(version: string) {
     const semverTest = semver.valid(semver.coerce(version))
     if (semverTest) {
-      const newVersion = await promptLigoUpdate(client, ligoPath, semverTest)
+      const newVersion = await promptLigoUpdate(client, config, ligoPath, semverTest)
       switch (typeof newVersion) {
         case 'string':
           if (semver.lt(newVersion, '0.61.0')) {
@@ -336,15 +641,15 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
         return
       }
 
-      const newVersion = promptLigoUpdate(client, ligoPath, date)
+      const newVersion = promptLigoUpdate(client, config, ligoPath, date)
       switch (typeof newVersion) {
         case 'string':
           validateSemver(version)
           break;
         case 'number':
-          // TODO: Replace with actual LIGO release date with LIGO LSP.
+          // LIGO 0.61.0 release date
           // Note: month is 0-indexed
-          if (newVersion < Date.UTC(2023, 2 - 1, 14)) {
+          if (newVersion < Date.UTC(2023, 3 - 1, 1)) {
             return await unsupportedVersion()
           }
           break

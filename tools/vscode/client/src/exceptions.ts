@@ -1,4 +1,4 @@
-export class BinaryNotFoundExtension extends Error {
+export class BinaryNotFoundException extends Error {
   binaryName: string;
 
   constructor(binaryName) {
@@ -18,7 +18,7 @@ export class UnknownLigoDialectExtensionException extends Error {
   }
 }
 
-export class UnknownCommandTypeExtension extends Error {
+export class UnknownCommandTypeException extends Error {
   constructor() {
     super('Encountered Unknown command type')
   }
