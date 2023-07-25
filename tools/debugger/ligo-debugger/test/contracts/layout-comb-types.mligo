@@ -7,5 +7,5 @@ type combed = [@layout comb]
 let default_value = { a = 0 ; b = 1n ; c = "" }
 
 let main (_, s : unit * int) : operation list * int =
-  let val = default_value in
-  (([] : operation list), s + val.a + val.b + String.length val.c)
+  let v = default_value in
+  (([] : operation list), s + v.a + v.b + String.length v.c)

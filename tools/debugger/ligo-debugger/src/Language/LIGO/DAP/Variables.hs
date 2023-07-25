@@ -97,7 +97,7 @@ getInnerTypeFromConstant i = \case
     } -> LigoType (_ltcParameters ^? ix i)
   _ -> LigoType Nothing
 
-getInnerFieldFromRecord :: Text -> LigoType -> Maybe LigoTableField
+getInnerFieldFromRecord :: Text -> LigoType -> Maybe LigoTypeExpression
 getInnerFieldFromRecord name = \case
   LigoTypeResolved LigoTypeExpression
     { _lteTypeContent = LTCRecord
@@ -109,7 +109,7 @@ getInnerFieldFromRecord name = \case
   _ -> Nothing
 
 getInnerTypeFromRecord :: Text -> LigoType -> LigoType
-getInnerTypeFromRecord = LigoType ... fmap _ltfAssociatedType ... getInnerFieldFromRecord
+getInnerTypeFromRecord = LigoType ... getInnerFieldFromRecord
 
 getInnerTypeFromSum :: Text -> LigoType -> LigoType
 getInnerTypeFromSum name = \case
@@ -119,7 +119,7 @@ getInnerTypeFromSum name = \case
             { _lttFields = hm
             }
         )
-    } -> LigoType $ _ltfAssociatedType <$> hm HM.!? name
+    } -> LigoType $ hm HM.!? name
   _ -> LigoType Nothing
 
 getEpAddressChildren :: Lang -> EpAddress -> [Variable]
@@ -174,14 +174,9 @@ buildSubVars lang = \case
           values
           (show <$> [1 :: Int ..])
       Nothing -> do
-        case getRecordOrderMb typ value of
-          Just order -> do
-            forM order \(name, (t, v)) -> do
-              buildVariable lang (LigoValue t v) (toString name)
-          Nothing -> do
-            forM (toPairs record) \(name, v) -> do
-              let innerType = getInnerTypeFromRecord name typ
-              buildVariable lang (LigoValue innerType v) (toString name)
+        forM (toPairs record) \(LLabel name, v) -> do
+          let innerType = getInnerTypeFromRecord name typ
+          buildVariable lang (LigoValue innerType v) (toString name)
     LVConstructor (ctor, value) ->
       let innerType = getInnerTypeFromSum ctor typ in
       (:[]) <$> buildVariable lang (LigoValue innerType value) (toString ctor)

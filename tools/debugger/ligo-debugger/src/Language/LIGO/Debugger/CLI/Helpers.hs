@@ -138,7 +138,7 @@ instance (SingI u) => Buildable (Name u) where
           functionWithIndex = L.last splitted
           index = T.takeWhileEnd (/= '_') functionWithIndex
           moduleName
-            | null moduleParts = ""
+            | null moduleParts || (T.isPrefixOf "Mangled" <$> safeHead moduleParts) == Just True = ""
             | otherwise = T.intercalate "." moduleParts <> "."
           -- This @breakOnEnd@ shouldn't crash because of
           -- "T.any (== '_') functionWithIndex" check in guard above.
@@ -147,10 +147,13 @@ instance (SingI u) => Buildable (Name u) where
       buildUnique name =
         -- Some variables may look like "varName#123". We want to strip that identifier.
         if T.all isDigit suffix
-        then build $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') name
-        else build name
+        then build $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') strippedMangledModule
+        else build strippedMangledModule
         where
           suffix = T.takeWhileEnd (/= '#') name
+          strippedMangledModule
+            | "Mangled" `T.isPrefixOf` name = T.drop 1 . T.dropWhile (/= '.') $ name
+            | otherwise = name
 
 newtype LigoJSON (n :: Nat) a = LigoJSON a
 

@@ -150,16 +150,15 @@ type LigoTypeSum = LigoTypeTable
 type LigoTypeRecord = LigoTypeTable
 
 data LigoTypeTable = LigoTypeTable
-  { _lttFields :: HM.HashMap Text LigoTableField
-  , _lttLayout  :: Maybe LigoLayout
+  { _lttFields  :: HM.HashMap Text LigoTypeExpression
+  , _lttLayout  :: LigoLayout
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTypeTable
 
 data LigoLayout
-  = LTree
-  | LComb
+  = LLInner [LigoLayout]
+  | LLField Text
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
@@ -201,24 +200,6 @@ data LigoTypeForAll = LigoTypeForAll
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
   deriving (FromJSON) via LigoJSON 4 LigoTypeForAll
-
--- | Record field type value.
--- ```
--- { "type_content": ["T_record", { "key": LigoTableField } ] }
--- ```
-data LigoTableField = LigoTableField
-  { -- | Declaration position (don't ask me I too don't know what actual
-    -- position is this since from all the example it's somewhat always 0).
-    _ltfDeclPos        :: Int
-    -- | How the value is represented in michelson, currently ignored
-    -- during parsing.
-  , _lrfMichelsonAnnotation :: Value
-  , -- | The type itself.
-    _ltfAssociatedType :: LigoTypeExpression
-  }
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTableField
 
 -- | Location of definition.
 -- ```
@@ -280,11 +261,6 @@ data LigoTypeExpression = LigoTypeExpression
     -- | `"location"`
   , _lteLocation    :: LigoRange
   ---- 4th stage specific
-  , _lteSugar       :: Maybe Value
-  ---- 5th stage specific
-      -- | `"type_meta"`
-  , _lteTypeMeta    :: Maybe LigoTypeExpression
-    -- | `"orig_var"`
   , _lteOrigVar     :: Maybe LigoTypeVariable
   }
   deriving stock (Generic, Show, Eq, Data)
@@ -629,6 +605,25 @@ instance FromJSON LigoString where
     , constructorTagModifier = drop 2
     }
 
+instance FromJSON LigoTypeTable where
+  parseJSON = withObject "LigoTypeTable" \o -> do
+    _lttFields <- parseFields =<< o .: "fields"
+    _lttLayout <- o .: "layout"
+    pure LigoTypeTable{..}
+    where
+      parseFields :: [Value] -> Parser (HashMap Text LigoTypeExpression)
+      parseFields = pure . HM.fromList <=< mapM parseElem
+
+      parseElem :: Value -> Parser (Text, LigoTypeExpression)
+      parseElem = withArray "TypeTableField" \arr -> do
+        case V.toList arr of
+          [ctor, content] -> do
+            (_ :: Value, ctorValue) <- parseJSON ctor
+            ctorName <- parseFromStringOrNumber ctorValue
+            typeExpr <- parseJSON content
+            pure (ctorName, typeExpr)
+          _ -> fail "Expected two element array"
+
 -- [ "t_variable", ...]
 instance FromJSON LigoTypeContent where
   parseJSON = genericParseJSON defaultOptions
@@ -646,10 +641,19 @@ instance FromJSON LigoRange where
     }
 
 instance FromJSON LigoLayout where
-  parseJSON val = asum
-    [ LTree <$ guardOneElemList "L_tree" val
-    , LComb <$ guardOneElemList "L_comb" val
-    ]
+  parseJSON = withArray "LigoLayout" \arr -> do
+    case V.toList arr of
+      [String ctor, val]
+        | ctor == "Inner" -> LLInner <$> parseJSON val
+        | ctor == "Field" ->
+            case val of
+              Object obj -> do
+                (_ :: Value, nameValue) <- obj .: "name"
+                name <- parseFromStringOrNumber nameValue
+                pure $ LLField name
+              _ -> fail [int||Expected object in constructor "Field"|]
+        | otherwise -> fail [int||Unexpected constructor #{ctor}|]
+      _ -> fail "Expected a two element array"
 
 instance FromJSON (LigoVariable u) where
   parseJSON = fmap LigoVariable . parseJSON
@@ -759,6 +763,14 @@ instance Buildable LigoError where
 -- Helpers
 ----------------------------------------------------------------------------
 
+parseFromStringOrNumber :: Value -> Parser Text
+parseFromStringOrNumber val = asum
+  [ do
+      TextualNumber (n :: Int) <- parseJSON val
+      pure $ pretty n
+  , parseJSON val
+  ]
+
 guardOneElemList :: Text -> Value -> Parser ()
 guardOneElemList expected = withArray (toString expected) \arr -> do
   case V.length arr of
@@ -845,14 +857,14 @@ fromLigoType st = \case
         make' (st, TProduct (fromLigoTypeExpression <$> tupleTypes))
       Nothing ->
         let record' = fromLigoTable FieldProduct record in
-        let ligoLayout = fromMaybe LTree (_lttLayout record) in
+        let ligoLayout = _lttLayout record in
         make' (st, TRecord (ligoLayoutToLayout ligoLayout) record')
 
   LTCSum sum ->
     case fromLigoTable FieldSum sum of
       [] -> mkErr "malformed sum type, please report this as a bug"
       v : vs ->
-        let ligoLayout = fromMaybe LTree (_lttLayout sum) in
+        let ligoLayout = _lttLayout sum in
         make' (st, TSum (ligoLayoutToLayout ligoLayout) (v :| vs))
 
   LTCSingleton literalValue -> fromLigoTypeLiteralValue literalValue
@@ -878,12 +890,29 @@ fromLigoType st = \case
     tryConvertToTuple :: LigoTypeTable -> Maybe [LigoTypeExpression]
     tryConvertToTuple LigoTypeTable{..} =
       forM [0..HM.size _lttFields - 1] \i ->
-        _ltfAssociatedType <$> _lttFields HM.!? show i
+        _lttFields HM.!? show i
 
     ligoLayoutToLayout :: LigoLayout -> Layout
-    ligoLayoutToLayout = \case
-      LTree -> Tree
-      LComb -> Comb
+    ligoLayoutToLayout layoutTree
+      | depth layoutTree > 1 || (length ctorOrder <= 2 && isSorted ctorOrder) = Tree
+      | otherwise = Comb
+      where
+        depth :: LigoLayout -> Int
+        depth = \case
+          LLField{} -> 0
+          LLInner children -> 1 + maximum (0 :| map depth children)
+
+        isSorted = \case
+          [] -> True
+          [_] -> True
+          x : xs@(y : _) -> x <= y && isSorted xs
+
+        ctorOrder = getOrderFromLayoutTree layoutTree
+
+    getOrderFromLayoutTree :: LigoLayout -> [Text]
+    getOrderFromLayoutTree = \case
+      LLField ctor -> [ctor]
+      LLInner children -> foldMap getOrderFromLayoutTree children
 
     fromLigoTypeLiteralValue :: LigoTypeLiteralValue -> LIGO Info
     fromLigoTypeLiteralValue = \case
@@ -928,20 +957,23 @@ fromLigoType st = \case
       make' (st, TApply n p)
 
     fromLigoTable fieldKind x =
-      map (uncurry (fromLigoTableField fieldKind)) $ sortBy comp $ toPairs $ _lttFields x
+      map (uncurry (fromLigoTableField fieldKind)) ctorsAndFields
       where
-        comp :: (Text, LigoTableField) -> (Text, LigoTableField) -> Ordering
-        comp (_, LigoTableField{_ltfDeclPos = lhs}) (_, LigoTableField{_ltfDeclPos = rhs}) = compare lhs rhs
+        ctorsAndFields :: [(Text, LigoTypeExpression)]
+        ctorsAndFields = _lttLayout x
+          & getOrderFromLayoutTree
+          <&> do \ctor -> (ctor,) <$> HM.lookup ctor (_lttFields x)
+          & catMaybes
 
     fromLigoTableField
       :: FieldKind
       -> Text
-      -> LigoTableField
+      -> LigoTypeExpression
       -> LIGO Info
-    fromLigoTableField fieldKind name LigoTableField {..} =
+    fromLigoTableField fieldKind name typeExpr =
       let n = fromLigoPrimitive (NameField fieldKind) name in
       -- FIXME: Type annotation is optional.
-      let type' = Just $ fromLigoTypeExpression _ltfAssociatedType in
+      let type' = Just $ fromLigoTypeExpression typeExpr in
       case fieldKind of
         FieldSum     -> make' (st, Variant n type')
         FieldProduct -> make' (st, TField  n type')
@@ -993,8 +1025,6 @@ mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
 mkTypeExpression content = LigoTypeExpression
   { _lteTypeContent = content
   , _lteLocation = LRVirtual "dummy"
-  , _lteSugar = Nothing
-  , _lteTypeMeta = Nothing
   , _lteOrigVar = Nothing
   }
 
@@ -1019,18 +1049,7 @@ mkArrowType domain codomain = mkTypeExpression $ LTCArrow $
 infixr 2 ~>
 
 mkTypeTable :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeTable
-mkTypeTable layout keyValues = keyValues
-  & zipWith (\i (str, expr) -> (str, (i, expr))) [0..]
-  & map (second $ uncurry mkTableField)
-  & HM.fromList
-  & flip LigoTypeTable (Just layout)
-  where
-    mkTableField :: Int -> LigoTypeExpression -> LigoTableField
-    mkTableField declPos expr = LigoTableField
-      { _ltfDeclPos = declPos
-      , _lrfMichelsonAnnotation = Null
-      , _ltfAssociatedType = expr
-      }
+mkTypeTable layout keyValues = LigoTypeTable (HM.fromList keyValues) layout
 
 mkRecordType :: LigoLayout -> [(Text, LigoTypeExpression)] -> LigoTypeExpression
 mkRecordType layout keyValues = mkTypeTable layout keyValues
@@ -1046,10 +1065,15 @@ mkSimpleConstantType :: Text -> LigoTypeExpression
 mkSimpleConstantType typ = mkConstantType typ []
 
 mkPairType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression
-mkPairType fstElem sndElem = mkRecordType LTree
+mkPairType fstElem sndElem = mkRecordType pairLayout
   [ ("0", fstElem)
   , ("1", sndElem)
   ]
+  where
+    pairLayout = LLInner
+      [ LLField "0"
+      , LLField "1"
+      ]
 
 -- | Prettify @LigoType@ in provided dialect.
 buildType :: Lang -> LigoType -> Doc

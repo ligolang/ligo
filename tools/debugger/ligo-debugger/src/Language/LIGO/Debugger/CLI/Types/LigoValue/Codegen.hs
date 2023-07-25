@@ -181,8 +181,8 @@ generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType
         [int||
         let () =
           type t = #{typ} in
-          let val = Test.parse_michelson {| #{replacedVal} |} in
-          let dec : t = Test.decompile val in
+          let v = Test.parse_michelson {| #{replacedVal} |} in
+          let dec : t = Test.decompile v in
           Test.print (Test.to_json dec)
         |]
   _ -> noDecompilation

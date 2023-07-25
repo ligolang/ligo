@@ -178,8 +178,8 @@ instance HasSpecificMessages LIGO where
                 Just [LVList ops, st] -> do
                   let (fstType, sndType) = maybe (LigoType Nothing, LigoType Nothing) (bimap LigoType LigoType) do
                         LTCRecord LigoTypeTable{..} <- _lteTypeContent <$> unLigoType ligoType
-                        let fstTyp = _ltfAssociatedType <$> HM.lookup "0" _lttFields
-                        let sndTyp = _ltfAssociatedType <$> HM.lookup "1" _lttFields
+                        let fstTyp = HM.lookup "0" _lttFields
+                        let sndTyp = HM.lookup "1" _lttFields
                         pure (fstTyp, sndTyp)
                   pure
                     ( blockListF (buildLigoValue fstType <$> ops)

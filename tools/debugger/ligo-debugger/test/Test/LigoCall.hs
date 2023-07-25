@@ -150,10 +150,6 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
       let boolValue = T.SomeValue $ T.toVal False
       let stringValue = T.SomeValue $ T.toVal [mt|ligo string|]
 
-      let boolType = LigoTypeResolved $ mkSumType LTree
-            [ ("True", unitType')
-            , ("False", unitType')
-            ]
       let stringType = LigoTypeResolved $ mkSimpleConstantType "String"
 
       let typesAndValues =
@@ -175,36 +171,45 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
   , testGroup "Decompile structures"
       [ testCase "Decompile record" do
           let recordVal = T.SomeValue $ T.toVal ((42 :: Integer, [mt|str|]), True)
-          let recordType = LigoTypeResolved $ mkRecordType LTree
+
+          let recordLayout = LLInner
+                [ LLInner
+                    [ LLField "a"
+                    , LLField "b"
+                    ]
+                , LLField "c"
+                ]
+
+          let recordType = LigoTypeResolved $ mkRecordType recordLayout
                 [ ("a", intType')
                 , ("b", mkSimpleConstantType "String")
-                , ("c", mkSumType LTree [("True", unitType'), ("False", unitType')])
+                , ("c", boolType')
                 ]
 
           decompiled <- decompileValues [(recordType, recordVal)]
 
           let expected = LVRecord $ HM.fromList
-                [ ("a", LVCt $ LCInt "42")
-                , ("b", LVCt $ LCString "str")
-                , ("c", LVCt $ LCBool True)
+                [ (LLabel "a", LVCt $ LCInt "42")
+                , (LLabel "b", LVCt $ LCString "str")
+                , (LLabel "c", LVCt $ LCBool True)
                 ]
 
           [expected] @?= decompiled
 
       , testCase "Decompile record with layout comb" do
           let recordVal = T.SomeValue $ T.toVal (42 :: Integer, ([mt|str|], True))
-          let recordType = LigoTypeResolved $ mkRecordType LComb
+          let recordType = LigoTypeResolved $ mkRecordType (combLayout ["a", "b", "c"])
                 [ ("a", intType')
                 , ("b", mkSimpleConstantType "String")
-                , ("c", mkSumType LTree [("True", unitType'), ("False", unitType')])
+                , ("c", boolType')
                 ]
 
           decompiled <- decompileValues [(recordType, recordVal)]
 
           let expected = LVRecord $ HM.fromList
-                [ ("a", LVCt $ LCInt "42")
-                , ("b", LVCt $ LCString "str")
-                , ("c", LVCt $ LCBool True)
+                [ (LLabel "a", LVCt $ LCInt "42")
+                , (LLabel "b", LVCt $ LCString "str")
+                , (LLabel "c", LVCt $ LCBool True)
                 ]
 
           [expected] @?= decompiled
@@ -233,7 +238,16 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
   , testGroup "Sum types"
       [ testCase "Decompile sum with default layout" do
           let sumVal = T.SomeValue $ T.toVal (Left @_ @() $ Right @Integer [mt|str|])
-          let sumType = LigoTypeResolved $ mkSumType LTree
+
+          let sumLayout = LLInner
+                [ LLInner
+                    [ LLField "A"
+                    , LLField "B"
+                    ]
+                , LLField "C"
+                ]
+
+          let sumType = LigoTypeResolved $ mkSumType sumLayout
                 [ ("A", intType')
                 , ("B", mkSimpleConstantType "String")
                 , ("C", unitType')
@@ -245,7 +259,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
 
       , testCase "Decompile sum with layout comb" do
           let sumVal = T.SomeValue $ T.toVal (Right @Integer $ Left @_ @() [mt|str|])
-          let sumType = LigoTypeResolved $ mkSumType LComb
+          let sumType = LigoTypeResolved $ mkSumType (combLayout ["A", "B", "C"])
                 [ ("A", intType')
                 , ("B", mkSimpleConstantType "String")
                 , ("C", unitType')
@@ -300,12 +314,20 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
                 , Right @Integer (Left @_ @MText [timestampQuote|1970-01-01T00:01:40Z|])
                 )
 
-      let complexType = LigoTypeResolved $ mkSumType LTree
+      let innerRecordLayout = LLInner
+            [ LLInner
+                [ LLField "ch"
+                , LLField "s"
+                ]
+            , LLField "state"
+            ]
+
+      let complexType = LigoTypeResolved $ mkSumType (twoElemTreeLayout "Go" "Nop")
             [ ( "Go"
-              , mkRecordType LTree
+              , mkRecordType innerRecordLayout
                   [ ("ch", mkSimpleConstantType "Chain_id")
                   , ( "state"
-                    , mkSumType LComb
+                    , mkSumType (combLayout ["B", "A", "C"])
                         [ ("B", intType')
                         , ("A", mkSimpleConstantType "Timestamp")
                         , ("C", mkSimpleConstantType "String")
@@ -323,9 +345,9 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
       let expected = LVConstructor
             ( "Go"
             , LVRecord $ HM.fromList
-                [ ("ch", LVCt $ LCChainId "\0\0\0\0")
-                , ("state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
-                , ("s", LVCt $ LCString "large")
+                [ (LLabel "ch", LVCt $ LCChainId "\0\0\0\0")
+                , (LLabel "state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
+                , (LLabel "s", LVCt $ LCString "large")
                 ]
             )
 

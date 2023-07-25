@@ -289,8 +289,8 @@ getParameterStorageAndOpsTypes (LigoTypeResolved typ) =
     LTCArrow LigoTypeArrow{..} <- pure $ _lteTypeContent typ
     LTCRecord LigoTypeTable{..} <- pure $ _lteTypeContent _ltaType1
 
-    param <- _ltfAssociatedType <$> _lttFields HM.!? "0"
-    st <- _ltfAssociatedType <$> _lttFields HM.!? "1"
+    param <- _lttFields HM.!? "0"
+    st <- _lttFields HM.!? "1"
     pure (LigoTypeResolved param, LigoTypeResolved st, LigoTypeResolved _ltaType2)
 getParameterStorageAndOpsTypes _ = (LigoType Nothing, LigoType Nothing, LigoType Nothing)
 

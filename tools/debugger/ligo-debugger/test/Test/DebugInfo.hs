@@ -121,6 +121,14 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
+            [LigoStackEntryNoVar intType]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [LigoStackEntryNoVar intType]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
             [LigoStackEntryVar "s" intType]
             ?- SomeInstr dummyInstr
 
@@ -191,11 +199,6 @@ test_SourceMapper = testGroup "Reading source mapper"
             (Range (LigoPosition 4 4) (LigoPosition 4 25) file)
             operationList
             ?- SomeInstr (T.Nested $ T.NIL @'T.TOperation)
-
-        , LigoMereLocInfo
-            (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
-            resultType
-            ?- SomeInstr T.PAIR
 
         , LigoMereLocInfo
             (Range (LigoPosition 4 4) (LigoPosition 4 29) file)
@@ -285,7 +288,7 @@ test_Function_call_locations = testGroup "Function call locations"
   in
   [ testCase "Locations for built-ins" do
       let expectedLocs =
-            [ ((2, 12), (2, 18)) -- "is_nat" location
+            [ ((2, 10), (2, 16)) -- "is_nat" location
             , ((3, 11), (3, 17)) -- "assert" location
             , ((9, 12), (9, 21)) -- "List.fold" location
             ]

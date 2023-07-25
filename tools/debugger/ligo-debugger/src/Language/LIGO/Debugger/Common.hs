@@ -18,7 +18,6 @@ module Language.LIGO.Debugger.Common
   , getMetaMbAndUnwrap
   , isLocationForFunctionCall
   , isScopeForStatements
-  , isStandaloneOrTupleArgument
   , shouldIgnoreMeta
   , buildType
   , ExpressionSourceLocation (..)
@@ -45,8 +44,9 @@ import Morley.Michelson.Interpret (StkEl (seValue))
 import Morley.Michelson.Parser (MichelsonSource (MSFile), utypeQ)
 import Morley.Michelson.Text (MText)
 import Morley.Michelson.Typed
-  (Constrained (SomeValue), EpAddress (..), Instr (DIG, DUP, DUPN, Nested, Nop, PUSH, SWAP, UNIT),
-  SomeValue, Value, Value' (..), pattern (:#), pattern ConcreteMeta, withValueTypeSanity)
+  (Constrained (SomeValue), EpAddress (..),
+  Instr (DIG, DUP, DUPN, LAMBDA, Nested, Nop, PUSH, SWAP, UNIT), SomeValue, Value, Value' (..),
+  pattern (:#), pattern ConcreteMeta, withValueTypeSanity)
 import Morley.Michelson.Untyped qualified as U
 import Morley.Tezos.Address (KindedAddress (ImplicitAddress), ta)
 import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
@@ -54,8 +54,8 @@ import Morley.Tezos.Address.Kinds (AddressKind (AddressKindImplicit))
 import Duplo (layer, leq, spineTo)
 
 import Language.LIGO.AST
-  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, NameDecl, Pattern,
-  QualifiedName, Verbatim)
+  (Binding, CaseOrDefaultStm, Constant, Ctor, Expr, LIGO, ModuleAccess, Pattern, QualifiedName,
+  Verbatim)
 import Language.LIGO.AST qualified as AST
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Error
@@ -378,29 +378,6 @@ isScopeForStatements isLambdaLoc node
   | Just AST.BFunction{} <- layer node = not isLambdaLoc
   | otherwise = False
 
--- | Checks that a given sequence of nested nodes
--- is standalone or tuple argument.
-isStandaloneOrTupleArgument :: [LIGO ParsedInfo] -> Bool
-isStandaloneOrTupleArgument = \case
-  (layer @NameDecl -> Just{}) : xs -> isStandaloneOrTupleArgumentImpl xs
-  xs -> isStandaloneOrTupleArgumentImpl xs
-  where
-    isStandaloneOrTupleArgumentImpl :: [LIGO ParsedInfo] -> Bool
-    isStandaloneOrTupleArgumentImpl = \case
-      -- Locations for function declaration arguments.
-      (layer @Pattern -> Just{}) : (layer @Pattern -> Just pat) : (isFunctionDecl -> True) : _
-          -- Argument has type annotation.
-        | AST.IsAnnot{} <- pat -> True
-          -- Argument is just in parentheses.
-        | AST.IsParen{} <- pat -> True
-
-      _ -> False
-
-    isFunctionDecl :: LIGO ParsedInfo -> Bool
-    isFunctionDecl (layer @Binding -> Just AST.BFunction{}) = True
-    isFunctionDecl (layer @Expr -> Just AST.Lambda{}) = True
-    isFunctionDecl _ = False
-
 -- | Sometimes we want to ignore metas for some instructions.
 shouldIgnoreMeta :: Range -> Instr i o -> HashMap FilePath (LIGO ParsedInfo) -> Bool
 shouldIgnoreMeta range instr parsedContracts = shouldIgnoreMetaByInstruction || shouldIgnoreMetaByLocation
@@ -447,6 +424,11 @@ shouldIgnoreMeta range instr parsedContracts = shouldIgnoreMetaByInstruction || 
         (layer @Binding -> Just AST.BFunction{}) : node : _
           | isTopLevel node -> pass
 
+        -- Locations for functions in JsLIGO.
+        (layer @Expr -> Just AST.Lambda{}) : node : _
+          | Just AST.BFunction{} <- layer @Binding node -> pass
+          | Just AST.BConst{} <- layer @Binding node -> pass
+
         -- Locations for @Seq@ nodes. An example in CameLIGO:
         --
         -- @
@@ -483,11 +465,21 @@ shouldIgnoreMeta range instr parsedContracts = shouldIgnoreMetaByInstruction || 
         (layer @AST.Name -> Just{}) : _ -> pass
         (layer @QualifiedName -> Just{}) : _ -> pass
 
-        nodes
-          | isStandaloneOrTupleArgument nodes -> pass
-          | otherwise -> empty
+        _ -> empty
 
     shouldIgnoreMetaByInstruction = case instr of
+      -- Locations for let-expressions now point to
+      -- its bodies. For example:
+      --
+      -- @
+      -- let foo (a, b) = a + b in ...
+      -- @
+      -- @foo@ will have a @a + b@ location. So, in
+      -- these cases locations are ambiguous and the only
+      -- way to detect them is to ignore by @LAMBDA@ instr.
+      Nested LAMBDA{} -> True
+      Nested (LAMBDA{} :# _) -> True
+
       -- @PUSH@es have location metas that point to constants.
       -- E.g. @PUSH int 42@ may have a location of @42@.
       --
