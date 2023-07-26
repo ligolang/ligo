@@ -15,6 +15,7 @@ let validate_json_file file_name =
 let schema_test_positive
     ?(no_colour = false)
     ?(with_types = false)
+    ?(defs_only = false)
     ?(speed = `Quick)
     source_file
   =
@@ -27,10 +28,10 @@ let schema_test_positive
     match
       Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
         options
-        source_file
-        json
-        no_colour
-        ()
+        ~source_file
+        ~display_format:json
+        ~no_colour
+        ~defs_only
     with
     | Ok (res_str, _) ->
       write res_str;
@@ -43,6 +44,7 @@ let schema_test_positive
 let schema_test_negative
     ?(no_colour = false)
     ?(with_types = false)
+    ?(defs_only = false)
     ?(speed = `Quick)
     ?(expected_status = Some true)
     ?error_cnt
@@ -58,10 +60,10 @@ let schema_test_negative
       match
         Lsp_helpers.Ligo_interface.Get_scope.get_scope_cli_result
           options
-          source_file
-          json
-          no_colour
-          ()
+          ~source_file
+          ~display_format:json
+          ~no_colour
+          ~defs_only
       with
       | Ok (res_str, _) ->
         res_str, true (* Alcotest.fail "None errors are detected in negative test" *)

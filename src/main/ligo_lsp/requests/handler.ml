@@ -174,7 +174,6 @@ Also returns default value if `get_scope` for this file fails, unless
 `return_default_if_no_info = false` was specified
 *)
 let with_cached_doc
-    ?(return_default_if_no_info = true)
     (path : Path.t)
     (default : 'a) (* Default value in case cached doc not found *)
     (f : Ligo_interface.file_data -> 'a Handler.t)
@@ -182,22 +181,18 @@ let with_cached_doc
   =
   let@ docs = ask_docs_cache in
   match Docs_cache.find docs path with
-  | Some file_data ->
-    if (not return_default_if_no_info) || file_data.get_scope_info.has_info
-    then f file_data
-    else return default
+  | Some file_data -> f file_data
   | None -> return default
 
 
 let with_cached_doc_pure
-    ?(return_default_if_no_info : bool option)
     (path : Path.t)
     (default : 'a)
     (f : Ligo_interface.file_data -> 'a)
     : 'a Handler.t
   =
   let f' = return <@ f in
-  with_cached_doc ?return_default_if_no_info path default f'
+  with_cached_doc path default f'
 
 
 (** Like with_cached_doc, but parses a CST from code. If `strict` is passed, error
@@ -217,7 +212,7 @@ let with_cst
     (f : Dialect_cst.t -> 'a Handler.t)
     : 'a Handler.t
   =
-  with_cached_doc ~return_default_if_no_info:false path default
+  with_cached_doc path default
   @@ fun { syntax; code; _ } ->
   match Dialect_cst.get_cst ~strict ~file:path syntax code with
   | Error err ->

@@ -45,7 +45,7 @@ let partition_simple_diagnostics
 
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
-let get_diagnostics : Ligo_interface.get_scope_info -> simple_diagnostic list =
+let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list =
  fun { errors; warnings; _ } ->
   let open Option.Let_syntax in
   let mk_diag region message severity =

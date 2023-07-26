@@ -20,6 +20,7 @@ type t =
   ; self_pass : bool
   ; only_ep : bool
   ; skip_generated : bool
+  ; defs_only : bool
   ; (* Test framework *)
     test : bool
   ; steps : int
@@ -64,6 +65,7 @@ module Default_options = struct
   let with_types = false
   let self_pass = false
   let skip_generated = false
+  let defs_only = false
 
   (* Test framework *)
   let test = false
@@ -108,6 +110,7 @@ let make
     ?(cli_expr_inj = Default_options.cli_expr_inj)
     ?(protocol_version = Default_options.protocol_version)
     ?(no_stdlib = Default_options.no_stdlib)
+    ?(defs_only = Default_options.defs_only)
     ?(disable_michelson_typechecking = Default_options.disable_michelson_typechecking)
     ?(experimental_disable_optimizations_for_debugging =
       Default_options.experimental_disable_optimizations_for_debugging)
@@ -139,6 +142,7 @@ let make
   ; with_types
   ; self_pass
   ; skip_generated
+  ; defs_only
   ; (* Test framework *)
     test
   ; steps

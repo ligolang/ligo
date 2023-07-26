@@ -34,9 +34,8 @@ let get_all_references_grouped_by_file
     : Def_location.t -> Docs_cache.t -> (Path.t * Range.t Sequence.t) Sequence.t
   =
  fun location get_scope_buffers ->
-  let go (_path, { get_scope_info; _ }) =
-    let defs = get_scope_info.definitions in
-    get_references location @@ Sequence.of_list defs
+  let go (_path, { definitions; _ }) =
+    get_references location @@ Sequence.of_list definitions
   in
   get_scope_buffers
   |> Docs_cache.to_alist
@@ -59,8 +58,8 @@ let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t
  fun pos file ->
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc file None
-  @@ fun { get_scope_info; _ } ->
-  when_some (Go_to_definition.get_definition pos file get_scope_info.definitions)
+  @@ fun { definitions; _ } ->
+  when_some (Go_to_definition.get_definition pos file definitions)
   @@ fun definition ->
   let references = get_all_references (Def.get_location definition) get_scope_buffers in
   let@ () = send_debug_msg @@ "On references request on " ^ Path.to_string file in
