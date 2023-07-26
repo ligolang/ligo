@@ -6,33 +6,46 @@ open Imports
 module Get_scope = Get_scope
 open Get_scope
 
-type nonrec get_scope_info = get_scope_info
+type nonrec defs_and_diagnostics = defs_and_diagnostics
+type scopes = Scopes.scopes
 
 (** To support dirty files, we store some data about files in memory *)
 type file_data =
   { syntax : Syntax_types.t
   ; code : string
-  ; get_scope_info : get_scope_info
+  ; definitions : Def.t list
   }
 
-let get_scope : deprecated:bool -> Path.t -> string -> get_scope_info =
- fun ~deprecated path source ->
+let lsp_raw_options : deprecated:bool -> Path.t -> Compiler_options.Raw_options.t =
+ fun ~deprecated path ->
   (* packages - project_root [later] *)
   let file = Path.to_string path in
   (* #include - Pass lib or dirs *)
   let dir_name = Filename.dirname file in
   (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
   let project_root = Some dir_name in
-  let compiler_options =
-    Compiler_options.Raw_options.make
-      ~with_types:true
-      ~libraries:[ dir_name ]
-      ~deprecated
-      ~project_root
-      ()
-  in
-  unfold_get_scope
-  @@ get_scope_trace compiler_options (Raw_input_lsp { file; code = source }) ()
+  Compiler_options.Raw_options.make
+    ~with_types:true
+    ~libraries:[ dir_name ]
+    ~deprecated
+    ~project_root
+    ()
+
+
+let get_defs_and_diagnostics
+    : deprecated:bool -> code:string -> Path.t -> defs_and_diagnostics
+  =
+ fun ~deprecated ~code path ->
+  let options = lsp_raw_options ~deprecated path in
+  get_defs_and_diagnostics options (Raw_input_lsp { file = Path.to_string path; code })
+
+
+let get_scopes
+    : definitions:Def.t list -> deprecated:bool -> code:string -> Path.t -> Scopes.scopes
+  =
+ fun ~definitions ~deprecated ~code path ->
+  let options = lsp_raw_options ~deprecated path in
+  get_scopes options (Raw_input_lsp { file = Path.to_string path; code }) definitions
 
 
 type pp_mode =

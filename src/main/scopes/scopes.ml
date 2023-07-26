@@ -1,6 +1,5 @@
 open Ligo_prim
 open Types
-module AST = Ast_core
 module VVar = Value_var
 module TVar = Type_var
 module MVar = Module_var
@@ -23,13 +22,34 @@ module PP = PP
 type def = Types.def
 type scopes = Types.scopes
 
-let scopes
-    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise -> with_types:bool
+let defs
+    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> AST.module_ -> def list * scopes
+    -> prg:Ast_core.module_ -> with_types:bool -> def list
   =
- fun ~raise ~with_types ~options ~stdlib prg ->
+ fun ~raise ~options ~stdlib ~prg ~with_types ->
   let stdlib_decls, stdlib_core = stdlib in
+  let stdlib_defs =
+    if options.no_stdlib
+    then []
+    else (
+      let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
+      Definitions.Of_Stdlib.definitions stdlib_core |> Types_pass.patch stdlib_core_types)
+  in
+  Definitions.definitions prg stdlib_defs
+  |> (if with_types
+     then Types_pass.patch (Types_pass.resolve ~raise ~options ~stdlib_decls prg)
+     else Fn.id)
+  |> References.patch (References.declarations (stdlib_core @ prg))
+  |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
+
+
+let scopes
+    :  options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
+    -> prg:Ast_core.module_ -> definitions:def list -> scopes
+  =
+ fun ~options ~stdlib ~prg ~definitions ->
+  let _stdlib_decls, stdlib_core = stdlib in
   let stdlib_defs, env_preload_decls =
     if options.no_stdlib
     then [], []
@@ -39,17 +59,17 @@ let scopes
          |> Types_pass.patch stdlib_core_types)
       , stdlib_core )
   in
-  let defs =
-    Definitions.definitions prg stdlib_defs
-    |> (if with_types
-       then Types_pass.patch (Types_pass.resolve ~raise ~options ~stdlib_decls prg)
-       else Fn.id)
-    |> References.patch (References.declarations (stdlib_core @ prg))
-    |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
-  in
-  let scopes =
-    Scopes_pass.Of_Ast.declarations ~env_preload_decls prg
-    |> Scopes_pass.to_old_scopes (flatten_defs defs @ stdlib_defs)
-    |> fix_shadowing_in_scopes
-  in
-  defs, scopes
+  Scopes_pass.Of_Ast.declarations ~env_preload_decls prg
+  |> Scopes_pass.to_old_scopes (flatten_defs definitions @ stdlib_defs)
+  |> fix_shadowing_in_scopes
+
+
+let defs_and_scopes
+    :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
+    -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
+    -> prg:Ast_core.module_ -> with_types:bool -> def list * scopes
+  =
+ fun ~raise ~options ~stdlib ~prg ~with_types ->
+  let definitions = defs ~raise ~options ~stdlib ~prg ~with_types in
+  let scopes = scopes ~options ~stdlib ~prg ~definitions in
+  definitions, scopes

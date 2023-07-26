@@ -9,9 +9,9 @@ let on_req_rename : string -> Position.t -> Path.t -> WorkspaceEdit.t Handler.t 
  fun new_name pos file ->
   let@ get_scope_buffers = ask_docs_cache in
   with_cached_doc file (WorkspaceEdit.create ())
-  @@ fun { get_scope_info; _ } ->
+  @@ fun { definitions; _ } ->
   let@ value =
-    when_some' (Go_to_definition.get_definition pos file get_scope_info.definitions)
+    when_some' (Go_to_definition.get_definition pos file definitions)
     @@ fun definition ->
     let references =
       References.get_all_references_grouped_by_file

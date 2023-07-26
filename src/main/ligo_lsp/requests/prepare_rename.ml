@@ -26,5 +26,4 @@ let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
 let on_req_prepare_rename : Position.t -> Path.t -> Range.t option Handler.t =
  fun pos file ->
   with_cached_doc file None
-  @@ fun { get_scope_info; _ } ->
-  return @@ prepare_rename pos file get_scope_info.definitions
+  @@ fun { definitions; _ } -> return @@ prepare_rename pos file definitions

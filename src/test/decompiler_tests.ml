@@ -22,11 +22,12 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list =
       ~syntax:(Syntax.to_string syntax)
       ()
   in
-  let errors, _, scopes_and_defs =
-    Lsp_helpers.Ligo_interface.Get_scope.get_scope_trace
+  let ({ errors; warnings = _; definitions }
+        : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
+    =
+    Lsp_helpers.Ligo_interface.Get_scope.get_defs_and_diagnostics
       options
       (Raw_input_lsp { file = "test" ^ Syntax.to_ext syntax; code })
-      ()
   in
   if not (List.is_empty errors)
   then (
@@ -37,9 +38,7 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list =
            ~display_format:Human_readable
     in
     failf "%a" formatter errors);
-  match scopes_and_defs with
-  | None -> fail "get-scope failed"
-  | Some (defs, _scopes) -> defs
+  definitions
 
 
 type decompiler_test_ty_expr =

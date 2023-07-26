@@ -18,11 +18,13 @@ let on_doc : Path.t -> string -> unit Handler.t =
     | Some s -> return s
   in
   let@ { deprecated; max_number_of_problems; _ } = ask_config in
-  let new_state = Ligo_interface.get_scope ~deprecated file contents in
+  let ({ definitions; _ } as defs_and_diagnostics : defs_and_diagnostics) =
+    Ligo_interface.get_defs_and_diagnostics ~deprecated ~code:contents file
+  in
   Docs_cache.set
     get_scope_buffers
     ~key:file
-    ~data:{ get_scope_info = new_state; syntax; code = contents };
+    ~data:{ definitions; syntax; code = contents };
   let deprecation_warnings =
     match syntax with
     | PascaLIGO ->
@@ -35,7 +37,7 @@ let on_doc : Path.t -> string -> unit Handler.t =
     | CameLIGO | JsLIGO -> []
   in
   let diags_by_file =
-    let simple_diags = Diagnostics.get_diagnostics new_state in
+    let simple_diags = Diagnostics.get_diagnostics defs_and_diagnostics in
     Diagnostics.partition_simple_diagnostics
       file
       (Some max_number_of_problems)

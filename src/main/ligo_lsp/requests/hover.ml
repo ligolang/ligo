@@ -66,8 +66,8 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
  fun pos file ->
   with_cached_doc file None
-  @@ fun { get_scope_info; syntax; _ } ->
-  when_some' (Go_to_definition.get_definition pos file get_scope_info.definitions)
+  @@ fun { definitions; syntax; _ } ->
+  when_some' (Go_to_definition.get_definition pos file definitions)
   @@ fun definition ->
   let@ hover_string = hover_string syntax definition in
   (* Since a hover contents is a Markdown code block (e.g. starts with "```cameligo"), the text editor
