@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nMade various improvements to the JsLIGO syntax highlighting.\\n\\n"
+merge_request: '2766'
+title: "[#1739] JsLIGO syntax highlighting for Vim"
+type: added
+            

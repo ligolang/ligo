@@ -12,7 +12,7 @@ module Name = struct
   let comma                     = "comma"
   let lowercase_identifier      = "lowercaseidentifier"
   let uppercase_identifier      = "uppercaseidentifier"
-  let module_access             = "moduleaccess "
+  let module_access             = "moduleaccess"
   let module_alias              = "modulealias"
   let module_declaration        = "moduledeclaration"
   let object_or_block           = "objectorblock"
@@ -21,6 +21,9 @@ module Name = struct
   let object_property_int       = "objectpropertyint"
   let object_property_string    = "objectpropertystring"
   let attribute                 = "attribute"
+  let parentheses               = "parentheses"
+  let case                      = "case"
+  let ternary                   = "ternary"
   (* Types *)
   let type_binder               = "typebinder"
   let type_definition           = "typedefinition"
@@ -28,7 +31,7 @@ module Name = struct
   let type_annotation_field     = "typeannotationfield"
   let type_as                   = "typeas"
   let type_name                 = "typename"
-  let type_generic_binder       = "typegenericbinder"
+  let type_generic              = "typegeneric"
   let type_parentheses          = "typeparentheses"
   let type_operator             = "typeoperator"
   let type_int                  = "typeint"
@@ -40,6 +43,7 @@ end
 let syntax_highlighting =
   let open Core in
   let type_core_patterns = [
+    Name_ref Name.keywords;
     Name_ref Name.uppercase_identifier;
     Name_ref Name.type_operator;
     Name_ref Name.type_name;
@@ -48,6 +52,7 @@ let syntax_highlighting =
     Name_ref Name.type_variant;
     Name_ref Name.type_product;
     Name_ref Name.type_binder;
+    Name_ref Name.type_generic;
     String_ref;
   ] in
   {
@@ -153,7 +158,7 @@ let syntax_highlighting =
       ]
     };
     syntax_patterns = [
-      (* TODO: Name.lowercase_identifier; *)
+      (* TODO: Name_ref Name.lowercase_identifier; *)
       Name_ref Name.attribute;
       Name_ref Name.uppercase_identifier;
       Name_ref Name.macro;
@@ -168,6 +173,9 @@ let syntax_highlighting =
       Name_ref Name.type_annotation;
       Name_ref Name.type_as;
       Name_ref Name.object_or_block;
+      Name_ref Name.parentheses;
+      Name_ref Name.case;
+      Name_ref Name.ternary;
     ];
     repository = [
       {
@@ -178,15 +186,11 @@ let syntax_highlighting =
         }
       };
       Helpers.macro;
-      (* FIXME: breaks on patterns *)
       {
         name = Name.let_binding;
         kind = Match {
-          match_ = [
-            (Regexp.let_binding_match1_jsligo, Some Keyword);
-            (Regexp.let_binding_match2_jsligo, Some FunctionName)
-          ];
-          match_name = None
+          match_name = None;
+          match_ = [(Regexp.let_binding_match1_jsligo, Some Keyword)];
         }
       };
       {
@@ -223,6 +227,16 @@ let syntax_highlighting =
         kind = Match {
           match_name = None;
           match_ = [(Regexp.comma_match, None)];
+        }
+      };
+      {
+        (* Otherwise : is interpreted as a type annotation. *)
+        name = Name.ternary;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.ternary_begin_jsligo, Some Operator)];
+          end_ = [(Regexp.ternary_end_jsligo, Some Operator)];
+          patterns = [Self_ref];
         }
       };
       {
@@ -283,11 +297,33 @@ let syntax_highlighting =
         }
       };
       {
+        name = Name.parentheses;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.parentheses_begin, None)];
+          end_ = [(Regexp.parentheses_end, None)];
+          patterns = [
+            Name_ref Name.type_fun_param;
+            Name_ref Name.comma;
+            Self_ref;
+          ];
+        }
+      };
+      {
+        name = Name.case;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.case_begin_jsligo, Some Conditional)];
+          end_ = [(Regexp.case_end_jsligo, Some Operator)];
+          patterns = [Self_ref];
+        }
+      };
+      {
         name = Name.object_property_ctor;
         kind = Begin_end {
           meta_name = None;
           begin_ = [
-            (Regexp.identifier_constructor_match, Some Label);
+            (Regexp.property_ctor_match_jsligo, Some Label);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -299,7 +335,7 @@ let syntax_highlighting =
         kind = Begin_end {
           meta_name = None;
           begin_ = [
-            (Regexp.int_literal_match, Some Number);
+            (Regexp.property_int_match_jsligo, Some Number);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -311,7 +347,7 @@ let syntax_highlighting =
         kind = Begin_end {
           meta_name = None;
           begin_ = [
-            (Regexp.string_literal_match, Some String);
+            (Regexp.property_string_match_jsligo, Some String);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -323,7 +359,7 @@ let syntax_highlighting =
         kind = Begin_end {
           meta_name = None;
           begin_ = [
-            (Regexp.let_binding_match2_jsligo, None);
+            (Regexp.property_match_jsligo, Some Identifier);
             (Regexp.property_expr_begin_jsligo, Some Operator);
           ];
           end_ = [(Regexp.property_expr_end_jsligo, None)];
@@ -384,23 +420,12 @@ let syntax_highlighting =
         }
       };
       {
-        name = Name.type_name;
-        kind = Match {
-          match_name = Some Type;
-          match_ = [(Regexp.type_name_match_jsligo, None)];
-        }
-      };
-      {
-        name = Name.type_generic_binder;
+        name = Name.type_generic;
         kind = Begin_end {
-          (*
-            n.b.: We use Type instead of Type_var since we can't easily
-            disambiguate between the two in JsLIGO.
-          *)
           meta_name = None;
           begin_ = [(Regexp.chevron_begin, None)];
           end_ = [(Regexp.chevron_end, None)];
-          patterns = [Name_ref Name.comma; Name_ref Name.type_name];
+          patterns = Name_ref Name.comma :: type_core_patterns
         }
       };
       (*
@@ -423,7 +448,16 @@ let syntax_highlighting =
         name = Name.type_fun_param;
         kind = Match {
           match_name = None;
-          match_ = [(Regexp.identifier_annotation_positive_lookahead, None)];
+          match_ = [(Regexp.identifier_annotation_positive_lookahead, Some Identifier)];
+        }
+      };
+      {
+        name = Name.type_name;
+        kind = Match {
+          (* n.b.: We use Type instead of Type_var since we can't easily
+             disambiguate between the two in JsLIGO. *)
+          match_name = Some Type;
+          match_ = [(Regexp.type_name_match_jsligo, None)];
         }
       };
       {

@@ -24,11 +24,7 @@ let let_binding_match1_ligo: Core.regexp = {
   vim      = "\\<function\\>";
 }
 
-let let_binding_match2_ligo: Core.regexp = {
-  emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)";
-  textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)";
-  vim      = "\\<[a-zA-Z$_][a-zA-Z0-9$_]*\\>";
-}
+let let_binding_match2_ligo: Core.regexp = let_binding_match3
 
 let lambda_begin: Core.regexp = {
   emacs    = "\\\\b\\\\(fun\\\\)\\\\b";
@@ -199,12 +195,10 @@ let const_or_var: Core.regexp = {
   vim      = "\\<\\(const\\|var\\)\\>"
 }
 
-(* TODO: add regexps for emacs & vim later *)
-
 let attributes_match_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\(@[a-zA-Z][a-zA-Z0-9_:.@%]*\\\\)";
   textmate = "(@[a-zA-Z][a-zA-Z0-9_:.@%]*)";
-  vim      = ""
+  vim      = "\\(@[a-zA-Z][a-zA-Z0-9_:.@%]*\\)";
 }
 
 let let_binding_match1_jsligo: Core.regexp = {
@@ -215,6 +209,14 @@ let let_binding_match1_jsligo: Core.regexp = {
 
 let let_binding_match2_jsligo: Core.regexp = let_binding_match3
 
+let case_begin_jsligo: Core.regexp = {
+  emacs    = "\\\\b\\\\(case\\\\|default\\\\)\\\\b";
+  textmate = "\\b(case|default)\\b";
+  vim      = "\\<\\(case\\|default\\)\\>";
+}
+
+let case_end_jsligo: Core.regexp = colon_match
+
 let identifier_annotation_positive_lookahead: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)\\\\b[:space:]*:";
@@ -223,57 +225,57 @@ let identifier_annotation_positive_lookahead: Core.regexp = {
 }
 
 let keywords_match_jsligo: Core.regexp = {
-  emacs    = "";
-  textmate = "\\b(export|import|from|as)\\b";
-  vim      = "";
+  emacs    = "\\\\b\\\\(export\\\\|import\\\\|from\\\\|implements\\\\|contract_of\\\\|parameter_of\\\\)\\\\b";
+  textmate = "\\b(export|import|from|implements|contract_of|parameter_of)\\b";
+  vim      = "\\<\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\)\\>";
 }
 
 let control_keywords_match_jsligo: Core.regexp = {
-  emacs    = "";
-  textmate = "\\b(switch|case|default|if|else|for|of|while|return|break)\\b";
-  vim      = ""
+  emacs    = "\\\\b\\\\(switch\\\\|if\\\\|else\\\\|for\\\\|of\\\\|while\\\\|return\\\\|break\\\\)\\\\b";
+  textmate = "\\b(switch|if|else|for|of|while|return|break)\\b";
+  vim      = "\\<\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\)\\>";
 }
 
 let operators_match_jsligo: Core.regexp = {
-  emacs    = "";
-  textmate = "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b";
-  vim      = ""
+  emacs    = "\\\\b\\\\(-\\\\|+\\\\|%\\\\|&&\\\\||\\\\||==\\\\|!=\\\\|<=\\\\|>=\\\\|<\\\\|>\\\\|\\\\*\\\\|/\\\\|=\\\\|!\\\\|\\\\*=\\\\|/=\\\\|%=\\\\|+=\\\\|-=\\\\)\\\\b";
+  textmate = "\\b(-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|\\/|=|!|\\*=|\\/=|%=|\\+=|-=)\\b";
+  vim      = "\\<\\(-\\|+\\|%\\|&&\\||\\||==\\|!=\\|<=\\|>=\\|<\\|>\\|\\*\\|/\\|=\\|!\\|\\*=\\|/=\\|%=\\|+=\\|-=\\)\\>";
 }
 
 let module_alias_match1_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b\\\\(import\\\\)\\\\b";
   textmate = "\\b(import)\\b";
-  vim      = ""
+  vim      = "\\<\\(import\\)\\>";
 }
 
 let module_alias_match2_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
-  vim      = ""
+  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\>"
 }
 
 let module_declaration_match1_jsligo: Core.regexp = {
-  emacs    = "";
-  textmate = "\\b(namespace)\\b";
-  vim      = ""
+  emacs    = "\\\\b\\\\(namespace\\\\|interface\\\\)\\\\b";
+  textmate = "\\b(namespace|interface)\\b";
+  vim      = "\\<\\(namespace\\|interface\\)\\>";
 }
 
 let module_declaration_match2_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b\\\\([A-Z][a-zA-Z0-9_$]*\\\\)\\\\b";
   textmate = "\\b([A-Z][a-zA-Z0-9_$]*)\\b";
-  vim      = ""
+  vim      = "\\<\\([A-Z][a-zA-Z0-9_$]*\\)\\>";
 }
 
 let module_match1_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b\\\\([A-Z][\\.a-zA-Z0-9_$]*\\\\)\\\\.";
   textmate = "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.";
-  vim      = ""
+  vim      = "\\<\\([A-Z][\\.a-zA-Z0-9_$]*\\).";
 }
 
 let module_match2_jsligo: Core.regexp = {
-  emacs    = "";
+  emacs    = "\\\\b\\\\([a-zA-Z0-9_$]*\\\\)\\\\b";
   textmate = "\\b([a-zA-Z0-9_$]*)\\b";
-  vim      = ""
+  vim      = "\\<\\([a-zA-Z0-9_$]*\\)\\>";
 }
 
 (* follow(property) = RBRACE COMMA *)
@@ -281,9 +283,9 @@ let property_expr_begin_jsligo: Core.regexp = colon_match
 
 let property_expr_end_jsligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
-  emacs    = ",\\\\|}";
-  textmate = "(?=,|})";
-  vim      = "\\(,\\|})\\@=";
+  emacs    = ",\\\\|;\\\\|}";
+  textmate = "(?=,|;|})";
+  vim      = "\\(,\\|;\\|}\\)\\@=";
 }
 
 let int_literal_match: Core.regexp = {
@@ -296,6 +298,42 @@ let string_literal_match: Core.regexp = {
   emacs    = "\\\\\\\"\\\\.*\\\\\\\"";
   textmate = "(\\\".*\\\")";
   vim      = "\\\".*\\\"";
+}
+
+let ternary_begin_jsligo: Core.regexp = {
+  emacs    = "?";
+  textmate = "(\\?)";
+  vim      = "?";
+}
+
+let ternary_end_jsligo: Core.regexp = colon_match
+
+let property_ctor_match_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = identifier_constructor_match.textmate ^ "(?=\\s*:)";
+  vim      = identifier_constructor_match.vim ^ "\\(\\s*:\\)\\@=";
+}
+
+let property_int_match_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = int_literal_match.textmate ^ "(?=\\s*:)";
+  vim      = int_literal_match.vim ^ "\\(\\s*:\\)\\@=";
+}
+
+let property_string_match_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = string_literal_match.textmate ^ "(?=\\s*:)";
+  vim      = string_literal_match.vim ^ "\\(\\s*:\\)\\@=";
+}
+
+let property_match_jsligo: Core.regexp = {
+  (* FIXME: Emacs doesn't support positive look-ahead *)
+  emacs    = "";
+  textmate = let_binding_match2_jsligo.textmate ^ "(?=\\s*:)";
+  vim      = let_binding_match2_jsligo.vim ^ "\\(\\s*:\\)\\@=";
 }
 
 (* Types *)
@@ -379,14 +417,18 @@ let type_field_annotation_end: Core.regexp = {
   vim      = "\\(}\\|;\\)\\@=";
 }
 
-(* follow(type_decl) = SEMI RBRACE Else EOF Default Case *)
+(*
+  follow(type_decl) = SEMI RBRACE Else EOF Default Case
+  I add a few other cases that break because of ASI:
+    Type Let Const Namespace Interface Export Import
+*)
 let type_definition_begin_jsligo: Core.regexp = type_definition_match
 
 let type_definition_end_jsligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
-  emacs    = ";\\\\|}\\\\|\\\\b\\\\(else\\\\|default\\\\|case\\\\)\\\\b";
-  textmate = "(?=;|}|\\b(else|default|case)\\b)";
-  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\)\\>\\)\\@="
+  emacs    = "";
+  textmate = "(?=;|}|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)";
+  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\|type\\|let\\|const\\|namespace\\|interface\\|export\\|import\\)\\>\\)\\@="
 }
 
 let type_name_match_jsligo: Core.regexp = {
@@ -411,7 +453,7 @@ let type_annotation_end_jsligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = ")\\\\|=>\\\\|,\\\\|}\\\\|=";
   textmate = "(?=\\)|=>|,|}|=)";
-  vim      = "\\()\\|=>\\|,\\}\\|=\\)\\@=";
+  vim      = "\\()\\|=>\\|,\\|}\\|=\\)\\@=";
 }
 
 (*
@@ -438,8 +480,8 @@ let type_as_begin_jsligo: Core.regexp = {
 let type_as_end_jsligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "";
-  textmate = "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
-  vim      = "\\(;\\|)\\|%=\\|\\]\\|}\\|+=\\|\\*=\\|-=\\|=\\|/=\\|,\\|:\\|\\(else\\|default\\|case\\|as\\)\\)\\@=";
+  textmate = "(?=;|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)";
+  vim      = "\\(;\\|%=\\|]\\|}\\|+=\\|\\*=\\|-=\\|=\\|\\/=\\|,\\|:\\|\\<\\(else\\|default\\|case\\|as\\)\\>\\)\\@=";
 }
 
 let type_binder_positive_lookahead_ligo: Core.regexp = {

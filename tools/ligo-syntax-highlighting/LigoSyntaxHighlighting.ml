@@ -102,19 +102,18 @@ let output: string -> string -> string -> string -> _ Term.ret = fun vscode_dire
   else if not (Sys.is_directory textmate_directory) then
     `Error (false, "Not a valid directory to output TextMate files")
   else (
-    let syntaxes_without_jsligo = [
+    let syntaxes = [
+      ("jsligo", JsLIGO.syntax_highlighting);
       ("ligo", PascaLIGO.syntax_highlighting);
       ("mligo", CameLIGO.syntax_highlighting);
     ] in
-    let syntaxes = ("jsligo", JsLIGO.syntax_highlighting) :: syntaxes_without_jsligo in
-
     let* _ = vscode_syntax_highlighting vscode_directory syntaxes in
     print_endline "Success (Visual Studio Code)";
     let* _ = textmate_syntax_highlighting textmate_directory syntaxes in
     print_endline "Success (TextMate)";
-    let* _ = vim_syntax_highlighting vim_directory syntaxes_without_jsligo in
+    let* _ = vim_syntax_highlighting vim_directory syntaxes in
     print_endline "Success (Vim)";
-    let* _ = emacs_syntax_highlighting emacs_directory syntaxes_without_jsligo in
+    let* _ = emacs_syntax_highlighting emacs_directory syntaxes in
     print_endline "Success (Emacs)";
     let () = print_endline "Successfully generated syntaxes" in
     `Ok ()
