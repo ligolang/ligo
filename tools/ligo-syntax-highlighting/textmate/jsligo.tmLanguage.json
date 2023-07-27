@@ -22,7 +22,10 @@
     { "include": "#moduledeclaration" },
     { "include": "#typeannotation" },
     { "include": "#typeas" },
-    { "include": "#objectorblock" }
+    { "include": "#objectorblock" },
+    { "include": "#parentheses" },
+    { "include": "#case" },
+    { "include": "#ternary" }
   ],
   "repository": {
     "string0": {
@@ -70,19 +73,16 @@
       "captures": {}
     },
     "letbinding": {
-      "match": "\\b(let|const)\\b\\s*\\s*\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
-      "captures": {
-        "2": { "name": "entity.name.function.jsligo" },
-        "1": { "name": "keyword.other.jsligo" }
-      }
+      "match": "\\b(let|const)\\b\\s*",
+      "captures": { "1": { "name": "keyword.other.jsligo" } }
     },
     "keywords": {
-      "match": "\\b(export|import|from|as)\\b",
+      "match": "\\b(export|import|from|implements|contract_of|parameter_of)\\b",
       "captures": { "1": { "name": "keyword.other.jsligo" } }
     },
     "controlkeywords": {
       "name": "keyword.control.jsligo",
-      "match": "\\b(switch|case|default|if|else|for|of|while|return|break)\\b",
+      "match": "\\b(switch|if|else|for|of|while|return|break)\\b",
       "captures": {}
     },
     "numericliterals": {
@@ -92,11 +92,22 @@
     },
     "operators": {
       "name": "keyword.operator.jsligo",
-      "match": "\\b(\\-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|/|=|!|\\*=|/=|%=|\\+=|\\-=)\\b",
+      "match": "\\b(-|\\+|%|&&|\\|\\||==|!=|<=|>=|<|>|\\*|\\/|=|!|\\*=|\\/=|%=|\\+=|-=)\\b",
       "captures": {}
     },
     "semicolon": { "match": "(;)", "captures": {} },
     "comma": { "match": "(,)", "captures": {} },
+    "ternary": {
+      "begin": "(\\?)",
+      "end": "(:)",
+      "beginCaptures": { "1": { "name": "keyword.operator.jsligo" } },
+      "endCaptures": { "1": { "name": "keyword.operator.jsligo" } },
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
+    },
     "uppercaseidentifier": {
       "match": "\\b([A-Z][a-zA-Z0-9_$]*)\\b",
       "captures": { "1": { "name": "entity.name.type.jsligo" } }
@@ -105,7 +116,7 @@
       "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b",
       "captures": { "1": { "name": "variable.jsligo" } }
     },
-    "moduleaccess ": {
+    "moduleaccess": {
       "match": "\\b([A-Z][\\.a-zA-Z0-9_$]*)\\.\\s*\\b([a-zA-Z0-9_$]*)\\b",
       "captures": {
         "2": { "name": "variable.jsligo" },
@@ -120,7 +131,7 @@
       }
     },
     "moduledeclaration": {
-      "match": "\\b(namespace)\\b",
+      "match": "\\b(namespace|interface)\\b",
       "captures": { "1": { "name": "keyword.other.jsligo" } }
     },
     "objectorblock": {
@@ -139,9 +150,33 @@
         { "include": "$self" }
       ]
     },
+    "parentheses": {
+      "begin": "(\\()",
+      "end": "(\\))",
+      "beginCaptures": {},
+      "endCaptures": {},
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "#typefunparam" },
+        { "include": "#comma" },
+        { "include": "$self" }
+      ]
+    },
+    "case": {
+      "begin": "\\b(case|default)\\b",
+      "end": "(:)",
+      "beginCaptures": { "1": { "name": "keyword.control.jsligo" } },
+      "endCaptures": { "1": { "name": "keyword.operator.jsligo" } },
+      "patterns": [
+        { "include": "#line_comment" },
+        { "include": "#block_comment" },
+        { "include": "$self" }
+      ]
+    },
     "objectpropertyctor": {
-      "begin": "\\b([A-Z][a-zA-Z0-9_$]*)\\b\\s*(:)",
-      "end": "(?=,|})",
+      "begin": "\\b([A-Z][a-zA-Z0-9_$]*)\\b(?=\\s*:)\\s*(:)",
+      "end": "(?=,|;|})",
       "beginCaptures": {
         "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "variable.other.enummember.jsligo" }
@@ -154,8 +189,8 @@
       ]
     },
     "objectpropertyint": {
-      "begin": "\\b([0-9]+)\\b\\s*(:)",
-      "end": "(?=,|})",
+      "begin": "\\b([0-9]+)\\b(?=\\s*:)\\s*(:)",
+      "end": "(?=,|;|})",
       "beginCaptures": {
         "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "constant.numeric.jsligo" }
@@ -168,8 +203,8 @@
       ]
     },
     "objectpropertystring": {
-      "begin": "(\\\".*\\\")\\s*(:)",
-      "end": "(?=,|})",
+      "begin": "(\\\".*\\\")(?=\\s*:)\\s*(:)",
+      "end": "(?=,|;|})",
       "beginCaptures": {
         "2": { "name": "keyword.operator.jsligo" },
         "1": { "name": "string.quoted.double.jsligo" }
@@ -182,9 +217,12 @@
       ]
     },
     "objectproperty": {
-      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(:)",
-      "end": "(?=,|})",
-      "beginCaptures": { "2": { "name": "keyword.operator.jsligo" } },
+      "begin": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b(?=\\s*:)\\s*(:)",
+      "end": "(?=,|;|})",
+      "beginCaptures": {
+        "2": { "name": "keyword.operator.jsligo" },
+        "1": { "name": "variable.jsligo" }
+      },
       "endCaptures": {},
       "patterns": [
         { "include": "#line_comment" },
@@ -205,12 +243,13 @@
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
-      "end": "(?=;|}|\\b(else|default|case)\\b)",
+      "end": "(?=;|}|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)",
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -219,6 +258,7 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]
@@ -231,6 +271,7 @@
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -239,18 +280,20 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]
     },
     "typeannotationfield": {
       "begin": "(:)",
-      "end": "(?=,|})",
+      "end": "(?=,|;|})",
       "beginCaptures": { "1": { "name": "keyword.operator.jsligo" } },
       "endCaptures": {},
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -259,18 +302,20 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]
     },
     "typeas": {
       "begin": "\\b(as)\\b",
-      "end": "(?=;|\\)|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)",
+      "end": "(?=;|%=|\\]|}|\\+=|\\*=|-=|=|/=|,|:|\\b(else|default|case|as)\\b)",
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [
         { "include": "#line_comment" },
         { "include": "#block_comment" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -279,6 +324,7 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]
@@ -288,12 +334,7 @@
       "match": "(=>|\\.|\\|)",
       "captures": {}
     },
-    "typename": {
-      "name": "entity.name.type.jsligo",
-      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
-      "captures": {}
-    },
-    "typegenericbinder": {
+    "typegeneric": {
       "begin": "(<)",
       "end": "(>)",
       "beginCaptures": {},
@@ -302,11 +343,27 @@
         { "include": "#line_comment" },
         { "include": "#block_comment" },
         { "include": "#comma" },
-        { "include": "#typename" }
+        { "include": "#keywords" },
+        { "include": "#uppercaseidentifier" },
+        { "include": "#typeoperator" },
+        { "include": "#typename" },
+        { "include": "#typeparentheses" },
+        { "include": "#typeint" },
+        { "include": "#typevariant" },
+        { "include": "#typeproduct" },
+        { "include": "#typebinder" },
+        { "include": "#typegeneric" },
+        { "include": "#string0" },
+        { "include": "#string1" }
       ]
     },
     "typefunparam": {
       "match": "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b\\s*(?=:)",
+      "captures": { "1": { "name": "variable.jsligo" } }
+    },
+    "typename": {
+      "name": "entity.name.type.jsligo",
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b",
       "captures": {}
     },
     "typeparentheses": {
@@ -320,6 +377,7 @@
         { "include": "#typefunparam" },
         { "include": "#typeannotation" },
         { "include": "#comma" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -328,6 +386,7 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]
@@ -346,6 +405,7 @@
         { "include": "#line_comment" },
         { "include": "#block_comment" },
         { "include": "#comma" },
+        { "include": "#keywords" },
         { "include": "#uppercaseidentifier" },
         { "include": "#typeoperator" },
         { "include": "#typename" },
@@ -354,6 +414,7 @@
         { "include": "#typevariant" },
         { "include": "#typeproduct" },
         { "include": "#typebinder" },
+        { "include": "#typegeneric" },
         { "include": "#string0" },
         { "include": "#string1" }
       ]

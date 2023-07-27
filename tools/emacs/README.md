@@ -1,6 +1,6 @@
 # Emacs plugin for LIGO
 
-This plugin features syntax highlighting and `lsp-mode` support for PascaLIGO and CameLIGO.
+This plugin features syntax highlighting and `lsp-mode` support for JsLIGO, CameLIGO, and PascaLIGO.
 
 For the LSP to work, you need to install `lsp-mode` and put `ligo` executable in PATH.
 
@@ -14,8 +14,13 @@ Put `ligo-mode.el` to the emacs load path, and add the following lines to your `
 
 ```lisp
 (add-to-list 'load-path "<LIGO_MODE_DIR>")
+(add-to-list 'auto-mode-alist '("\\.ligo\\'" . ligo-pascal-mode))
+(add-to-list 'auto-mode-alist '("\\.pligo\\'" . ligo-pascal-mode))
 (add-to-list 'auto-mode-alist '("\\.mligo\\'" . ligo-caml-mode))
-(autoload 'ligo-caml-mode "ligo-mode" "LIGO caml mode" t)
+(add-to-list 'auto-mode-alist '("\\.jsligo\\'" . ligo-javascript-mode))
+(autoload 'ligo-pascal-mode "ligo-mode" "PascalLIGO mode" t)
+(autoload 'ligo-caml-mode "ligo-mode" "CameLIGO mode" t)
+(autoload 'ligo-javascript-mode "ligo-mode" "JsLIGO mode" t)
 ```
 
 Alternatively, run `M-x update-directory-autoloads` against `<LIGO_MODE_DIR>`, outputting to `<LIGO_MODE_DIR>/ligo-mode-autoloads.el`, and then your config becomes:

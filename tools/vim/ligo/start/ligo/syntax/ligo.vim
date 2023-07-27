@@ -73,7 +73,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " function
-syntax match function_ "\<[a-zA-Z$_][a-zA-Z0-9$_]*\>" contained 
+syntax match function_ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
 highlight link function_ Statement 
 syntax match function "\<function\>" nextgroup=function_ skipempty skipwhite
 highlight link function Keyword 
