@@ -14,19 +14,19 @@ export default class LigoServer implements vscode.Disposable {
 	adapterProcess: cp.ChildProcess
 	adapterIsDead: boolean = false
 
-	private createAdapterProcess(command: string, args: ReadonlyArray<string>) {
-		this.adapterProcess = cp.spawn(command, args)
+	private createAdapterProcess(cwd: string, command: string, args: ReadonlyArray<string>) {
+		this.adapterProcess = cp.spawn(command, args, { cwd })
 		if (!this.adapterProcess || !this.adapterProcess.pid) {
 			this.showError("Couldn't run debugger adapter")
 		}
 	}
 
-	public constructor(command: string, args: ReadonlyArray<string>) {
+	public constructor(cwd: string, command: string, args: ReadonlyArray<string>) {
 		if (!fs.existsSync(command)) {
 			this.showError("Couldn't find debugger adapter executable")
 		}
 
-		this.createAdapterProcess(command, args)
+		this.createAdapterProcess(cwd, command, args)
 
 		// start listening on a random named pipe path
 		const pipeName = "ligo-debugger-pipe-" + randomBytes(10).toString('hex')
@@ -45,7 +45,7 @@ export default class LigoServer implements vscode.Disposable {
 			const requestsListener = (bytes: Buffer) => {
 				// If adapter got killed then we need to reanimate this process
 				if (this.adapterIsDead) {
-					this.createAdapterProcess(command, args)
+					this.createAdapterProcess(cwd, command, args)
 					this.adapterProcess.stdout.on('data', responsesListener)
 					this.adapterIsDead = false
 				}

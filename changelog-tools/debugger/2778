@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with the debugger start on MacOS. Now you can launch it without any problems.\\n\\n\\n"
+merge_request: '2778'
+title: "[Chore] Fix the debugger on MacOS"
+type: fixed
+            
