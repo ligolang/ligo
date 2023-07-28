@@ -19,6 +19,7 @@ type tools =
   { with_types : bool
   ; self_pass : bool
   ; no_colour : bool
+  ; json_download : bool option
   }
 
 type test_framework =
@@ -93,6 +94,7 @@ let make
     { with_types = raw_options.with_types
     ; self_pass = raw_options.self_pass
     ; no_colour = raw_options.no_colour
+    ; json_download = raw_options.json_download
     }
   in
   let test_framework =

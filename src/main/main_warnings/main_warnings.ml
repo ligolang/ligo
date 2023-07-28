@@ -28,6 +28,16 @@ type all =
   | `Use_meta_ligo of Location.t
   | `Self_ast_aggregated_warning_bad_self_type of
     Ast_aggregated.type_expression * Ast_aggregated.type_expression * Location.t
+  | `Metadata_cannot_parse of Location.t
+  | `Metadata_no_empty_key of Location.t
+  | `Metadata_tezos_storage_not_found of Location.t * string
+  | `Metadata_not_valid_URI of Location.t * string
+  | `Metadata_slash_not_valid_URI of Location.t * string
+  | `Metadata_invalid_JSON of Location.t * string
+  | `Metadata_error_JSON_object of string
+  | `Metadata_hash_fails of string * string
+  | `Metadata_json_download of string
+  | `Metadata_error_download of string
   ]
 
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
@@ -194,7 +204,67 @@ let pp
         Ast_aggregated.PP.type_expression
         got
         Ast_aggregated.PP.type_expression
-        expected)
+        expected
+    | `Metadata_cannot_parse loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Cannot parse metadata big-map. @]"
+        snippet_pp
+        loc
+    | `Metadata_no_empty_key loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Empty key in metadata big-map is mandatory. @]"
+        snippet_pp
+        loc
+    | `Metadata_tezos_storage_not_found (loc, key) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Could not find key %s in storage's metadata. @]"
+        snippet_pp
+        loc
+        key
+    | `Metadata_not_valid_URI (loc, uri) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Could not find a valid URI %s in storage's metadata empty \
+         key. @]"
+        snippet_pp
+        loc
+        uri
+    | `Metadata_slash_not_valid_URI (loc, uri) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Slash ('/') not in a valid position in URI: \"%s\", use \
+         instead \"%%2F\". @]"
+        snippet_pp
+        loc
+        uri
+    | `Metadata_invalid_JSON (loc, e) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Could not parse JSON in storage's metadata: \"%s\". @]"
+        snippet_pp
+        loc
+        e
+    | `Metadata_error_JSON_object e ->
+      Format.fprintf f "@[<hv>Warning: Error in JSON in storage's metadata: %s. @]" e
+    | `Metadata_hash_fails (computed, given) ->
+      Format.fprintf
+        f
+        "@[<hv>Warning: Hash mismatch in metadata's JSON document: got %s, when given \
+         %s. @]"
+        computed
+        given
+    | `Metadata_json_download s ->
+      Format.fprintf
+        f
+        "@[<hv>Warning: Metadata in storage points to %s document.@ Hint: If you want to \
+         allow download and check it, pass `--allow-json-download`. To prevent this \
+         message from appearing, pass `--disallow-json-download`.@.@]"
+        s
+    | `Metadata_error_download s ->
+      Format.fprintf f "@[<hv>Warning: Could not download JSON in URL: %s.@.@]" s)
 
 
 let to_warning : all -> Simple_utils.Warning.t =
@@ -364,6 +434,59 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"aggregation" ~content
+  | `Metadata_cannot_parse location ->
+    let message = Format.sprintf "Cannot parse big-map metadata." in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_no_empty_key location ->
+    let message = Format.sprintf "Empty key in metadata big-map is mandatory." in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_tezos_storage_not_found (location, key) ->
+    let message = Format.sprintf "Could not find key %s in storage's metadata." key in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_not_valid_URI (location, uri) ->
+    let message =
+      Format.sprintf "Could not find a valid URI %s in storage's metadata empty key." uri
+    in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_slash_not_valid_URI (location, uri) ->
+    let message = Format.sprintf "Slash ('/') not in a valid position in URI: %s." uri in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_invalid_JSON (location, e) ->
+    let message = Format.sprintf "Could not parse JSON in storage's metadata: \"%s\"" e in
+    let content = make_content ~message ~location () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_error_JSON_object e ->
+    let message = Format.sprintf "Error in JSON in storage's metadata: %s" e in
+    let content = make_content ~message ~location:Location.generated () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_hash_fails (computed, given) ->
+    let message =
+      Format.sprintf
+        "Hash mismatch in metadata's JSON document: got %s, when given %s."
+        computed
+        given
+    in
+    let content = make_content ~message ~location:Location.generated () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_json_download s ->
+    let message =
+      Format.sprintf
+        "Metadata in storage points to %s document. If you want to allow download and \
+         check it, pass `--allow-json-download`. To prevent this message from appearing, \
+         pass `--disallow-json-download`."
+        s
+    in
+    let content = make_content ~message ~location:Location.generated () in
+    make ~stage:"metadata_check" ~content
+  | `Metadata_error_download s ->
+    let message = Format.sprintf "Warning: Could not download JSON in URL: %s" s in
+    let content = make_content ~message ~location:Location.generated () in
+    make ~stage:"metadata_check" ~content
 
 
 let to_json : all -> Yojson.Safe.t =

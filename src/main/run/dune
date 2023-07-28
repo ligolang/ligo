@@ -4,6 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
+  cohttp-lwt-unix
   simple-utils
   parsing
   ast_core

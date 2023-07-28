@@ -18,6 +18,7 @@ type t =
   ; (* Tools *)
     with_types : bool
   ; self_pass : bool
+  ; json_download : bool option
   ; only_ep : bool
   ; skip_generated : bool
   ; defs_only : bool
@@ -64,6 +65,7 @@ module Default_options = struct
   let only_ep = false
   let with_types = false
   let self_pass = false
+  let json_download = None
   let skip_generated = false
   let defs_only = false
 
@@ -91,6 +93,7 @@ let make
     ?(warning_as_error = Default_options.warning_as_error)
     ?(no_colour = Default_options.no_colour)
     ?(no_metadata_check = Default_options.no_metadata_check)
+    ?(json_download = Default_options.json_download)
     ?(deprecated = Default_options.deprecated)
     ?(warn_unused_rec = Default_options.warn_unused_rec)
     ?(warn_infinite_loop = Default_options.warn_infinite_loop)
@@ -141,6 +144,7 @@ let make
     only_ep
   ; with_types
   ; self_pass
+  ; json_download
   ; skip_generated
   ; defs_only
   ; (* Test framework *)
