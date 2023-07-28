@@ -77,14 +77,30 @@ const ExpressionManagerModal = ({
     }
   }, [currentTab, isOpen, managerType, modalRef, projectManager]);
 
+  const extractEntrypoint = (input: string): string => {
+    const regex = /[^.]+$/;
+    const match = regex.exec(input);
+    return match ? match[0] : input;
+  };
+
+  const extractModule = (input: string): string => {
+    if (!input.includes(".")) return "";
+    const regex = /^[^.]+/;
+    const match = regex.exec(input);
+    return match ? match[0] : input;
+  };
+
   const onCreate = async () => {
     setLoading(true);
 
+    const entrypoint = extractEntrypoint(name);
+    const module = extractModule(name);
+
     await (managerType === "dryRun"
       ? WebIdeApi.dryRun({
-          entrypoint: name,
+          entrypoint,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          project: { sourceFiles: files, main: projectManager.mainFilePath },
+          project: { sourceFiles: files, main: projectManager.mainFilePath, module },
           storage,
           parameters: params,
         })
