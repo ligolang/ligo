@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('ligo', documentProvider));
 
-	server = new LigoServer(adapterPath, [])
+	server = new LigoServer(context.extensionPath, adapterPath, [])
 	client = new LigoProtocolClient(server.address())
 
 	context.subscriptions.push(
