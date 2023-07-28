@@ -209,6 +209,8 @@ let%expect_test _ =
 
     === flags ===
 
+      [--allow-json-download]    . Allow LIGO to download JSON files for metadata
+                                   check.
       [--amount INT]             . the tezos amount the Michelson interpreter will
                                    use for the transaction.
       [--balance INT]            . the balance the Michelson interpreter will use
@@ -217,6 +219,8 @@ let%expect_test _ =
                                  . A list of global constants that will be assumed
                                    in the context, separated by ','
       [--deprecated]             . enable deprecated language PascaLIGO
+      [--disallow-json-download] . Disallow LIGO to download JSON files for metadata
+                                   check (and do not show message).
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and

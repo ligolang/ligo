@@ -340,6 +340,23 @@ let typecheck_map_contract ?(environment = dummy_environment ()) contract =
   | Ok (map, _) -> Lwt_result_syntax.return @@ (map, contract)
   | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
 
+(* This function checks that running `view_code` on a stack with `input_ty` and `storage_ty`, it
+   ends up with `output_ty` (and also verifies any restriction enforced in views) *)
+let typecheck_view ?(environment = dummy_environment ()) input_ty output_ty storage_ty view_code =
+  let (>>=) = Lwt_syntax.(let*) in
+  let legacy = false in
+  let elab_conf = Script_ir_translator_config.{ type_logger = None ; legacy ; keep_extra_types_for_interpreter_logging = false } in
+  let view = { view_code; input_ty; output_ty } in
+  parse_michelson_ty ~tezos_context:environment.tezos_context storage_ty >>= fun storage_ty ->
+  match storage_ty with
+  | Ok (Ex_ty storage_ty) ->
+    Script_ir_translator.parse_view ~elab_conf environment.tezos_context storage_ty view >>= fun x -> (
+    match x with
+    | Ok (map, _) -> Lwt_result_syntax.return @@ ()
+    | Error errs -> Lwt.return @@ Error (Alpha_environment.wrap_tztrace errs)
+  )
+  | Error errs -> Lwt.return @@ Error errs
+
 type 'a interpret_res =
   | Succeed of 'a
   | Fail of Script_repr.expr

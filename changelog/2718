@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nNew checks for metadata TZIP-16 are included.\\n\\nThis is a breaking change, as now metadata type compliance is disabled by default and `--no-metadata-check` flag no longer exists.\\n\\nTo verify TZIP-16 compliance, pass the flag `--verify-tzip16` to compilation sub-commands (particularly `compile storage`).\\n\\n"
+merge_request: '2718'
+title: "Metadata TZIP-16: add warning on metadata URI/JSON when compiling storage (Michelson)"
+type: breaking
+            
