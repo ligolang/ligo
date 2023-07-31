@@ -22,8 +22,6 @@ include:
   - '/.ci/.gitlab-ci-changelog.yml'
   # jobs for managing process around release
   - '/.ci/.gitlab-ci-release.yml'
-  # Manage NPM build
-  - '/.ci/.gitlab-ci-npm.yml'
   # Manage pipeline related to webide
   - '/.ci/.gitlab-ci-webide.yml'
   # CI jobs for projects from 'tools'
@@ -107,9 +105,6 @@ docker_build:
       --build-arg=ci_commit_timestamp=$CI_COMMIT_TIMESTAMP
       --build-arg=changelog_path=changelog.txt
       -t ${LIGO_IMAGE_TAG} --target ligo
-    # Copy JSOO PoC IDE
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}-builder):/ligo/npm ./ligo-npm
-    - docker cp $(docker create ${LIGO_IMAGE_TAG}-builder):/ligo/jsoo/dist ./ligo-demo-ide
     - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
@@ -125,8 +120,6 @@ docker_build:
   artifacts:
     expose_as: "Ligo docker image - light -"
     paths:
-      - ligo-npm
-      - ligo-demo-ide
       - ligo.tar.gz
       - ligo_ci.tar.gz
 

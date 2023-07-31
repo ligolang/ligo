@@ -16,14 +16,6 @@ Dockerfile.*
 docker
 .devcontainer
 
-# Esy / Windows
-_esy
-esy.json
-esy.lock
-static.esy.json
-static.esy.esy.lock
-*.dll
-
 # nix
 
 *.nix

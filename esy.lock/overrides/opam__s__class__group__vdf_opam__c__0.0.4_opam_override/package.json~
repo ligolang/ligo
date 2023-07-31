@@ -1,9 +1,0 @@
-{
-  "build": [
-    [
-      "bash",
-      "-c",
-      "#{os == 'windows' ? 'patch -p1 < winpatch.patch' : 'true' }"
-    ]
-  ]
-}
