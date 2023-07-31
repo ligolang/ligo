@@ -70,7 +70,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 
 		const entrypoints: string[] =
-			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).entrypoints.reverse();
+			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).body.entrypoints.reverse();
 
 		const entrypoint: string =
 			await tryExecuteCommand(
@@ -80,7 +80,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				() => getEntrypoint(
 					this.context,
 					async (entrypoint) => {
-						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).message;
+						return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).body?.errorMessage;
 					},
 					entrypoints
 				)
@@ -88,7 +88,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.entrypoint = entrypoint;
 
 		const contractMetadata: ContractMetadata =
-			(await this.client.sendMsg('getContractMetadata', { entrypoint })).contractMetadata;
+			(await this.client.sendMsg('getContractMetadata', { entrypoint })).body;
 
 		const michelsonEntrypoint: Maybe<string> =
 			await tryExecuteCommand(
@@ -108,7 +108,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 					'validateValue',
 					{ value, category, valueLang, pickedMichelsonEntrypoint: michelsonEntrypoint }
 				)
-			).message;
+			).body?.errorMessage;
 		}
 
 		const [parameter, parameterLang]: [string, InputValueLang] =

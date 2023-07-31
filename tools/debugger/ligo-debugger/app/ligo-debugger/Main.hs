@@ -2,10 +2,20 @@ module Main
   ( main
   ) where
 
-import Morley.Debugger.DAP.IO (withDebuggerMain)
 import Morley.Util.Main (wrapMain)
 
-import Language.LIGO.Debugger.Handlers.Impl (LIGO)
+import Protocol.DAP (compileHandlers)
+import Protocol.DAP.Serve.IO
+  (ServingRequestsOptions (..), defaultRequestsServingOptions, servingRequestsIO)
+
+import Language.LIGO.Debugger.Handlers.Impl (ligoHandlers)
+import Morley.Debugger.DAP.RIO (logMessage)
+import Morley.Debugger.DAP.Types (newRioContext)
 
 main :: IO ()
-main = wrapMain $ withDebuggerMain @LIGO
+main = wrapMain $ do
+  ctx <- newRioContext
+  usingReaderT ctx $ servingRequestsIO defaultRequestsServingOptions
+    { log = usingReaderT ctx . logMessage
+    }
+    \stopAdapter -> compileHandlers (ligoHandlers stopAdapter)

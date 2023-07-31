@@ -33,6 +33,7 @@ default-extensions:
   - NamedFieldPuns
   - NumDecimals
   - OverloadedStrings
+  - OverloadedLabels
   - PackageImports
   - QuantifiedConstraints
   - QuasiQuotes
@@ -88,11 +89,14 @@ library:
     - morley
     - morley-debugger
     - mtl
+    - named
     - nyan-interpolation
     - nyan-interpolation-core
     - process
     - reflection
     - process-extras
+    - record-dot-preprocessor
+    - record-hasfield
     - regex-tdfa
     - scientific
     - semver
@@ -113,6 +117,9 @@ library:
     - vector
     - vinyl
     - witherable
+
+  build-tools:
+    - record-dot-preprocessor:record-dot-preprocessor
 
   source-dirs:
     - src/
@@ -173,6 +180,7 @@ tests:
       - morley
       - morley-debugger
       - mtl
+      - named
       - singletons
       - tasty
       - tasty-golden
@@ -192,4 +200,6 @@ tests:
       - -rtsopts
       - '"-with-rtsopts=-N -A64m -AL256m"'
 
-    build-tools: tasty-discover:tasty-discover
+    build-tools:
+      - tasty-discover:tasty-discover
+      - record-dot-preprocessor:record-dot-preprocessor

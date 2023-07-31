@@ -243,7 +243,7 @@ data ContractRunData =
   )
   => ContractRunData
   { crdProgram :: FilePath
-  , crdEntrypoint :: Maybe String
+  , crdEntrypoint :: Maybe Text
   , crdParam :: param
   , crdStorage :: st
   }
@@ -254,12 +254,12 @@ data TestCtx = TestCtx
   }
 
 -- | Doesn't log anything.
-dummyLoggingFunction :: (Monad m) => String -> m ()
+dummyLoggingFunction :: (Monad m) => Text -> m ()
 dummyLoggingFunction = const $ pure ()
 
 mkSnapshotsForImpl
   :: HasCallStack
-  => (String -> IO ())
+  => (Text -> IO ())
   -> Maybe RemainingSteps
   -> ContractRunData
   -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique), LigoType, LigoTypesVec)
@@ -308,7 +308,7 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
   his <-
     collectInterpretSnapshots
       file
-      (fromString entrypoint)
+      entrypoint
       contract
       T.unsafeEpcCallRoot
       (T.toVal param)
@@ -345,7 +345,7 @@ withSnapshots (allLocs, his, ep, ligoTypesVec) action =
   evalWriterT $ evalStateT (runReaderT action $ TestCtx ligoTypesVec ep) (initDebuggerState his allLocs)
 
 testWithSnapshotsImpl
-  :: (String -> IO ())
+  :: (Text -> IO ())
   -> Maybe RemainingSteps
   -> ContractRunData
   -> ReaderT TestCtx (HistoryReplayM (InterpretSnapshot 'Unique) IO) ()

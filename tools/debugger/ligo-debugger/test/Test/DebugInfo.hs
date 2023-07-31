@@ -54,7 +54,7 @@ collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unCo
 -- | Run the given contract + entrypoint, build code with embedded ligo metadata.
 buildSourceMapper
   :: FilePath
-  -> String
+  -> Text
   -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet Range, LigoType, LigoTypesVec)
 buildSourceMapper file entrypoint = do
   ligoMapper <- compileLigoContractDebug entrypoint file

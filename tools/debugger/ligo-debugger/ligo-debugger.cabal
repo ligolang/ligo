@@ -1,6 +1,6 @@
 cabal-version: 2.0
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -82,6 +82,7 @@ library
       NamedFieldPuns
       NumDecimals
       OverloadedStrings
+      OverloadedLabels
       PackageImports
       QuantifiedConstraints
       QuasiQuotes
@@ -107,6 +108,8 @@ library
       grammar/camligo/src/scanner.c
       grammar/jsligo/src/parser.c
       grammar/jsligo/src/scanner.c
+  build-tool-depends:
+      record-dot-preprocessor:record-dot-preprocessor
   build-depends:
       aeson
     , ansi-terminal
@@ -130,10 +133,13 @@ library
     , morley-debugger
     , morley-prelude
     , mtl
+    , named
     , nyan-interpolation
     , nyan-interpolation-core
     , process
     , process-extras
+    , record-dot-preprocessor
+    , record-hasfield
     , reflection
     , regex-tdfa
     , scientific
@@ -194,6 +200,7 @@ executable ligo-debugger
       NamedFieldPuns
       NumDecimals
       OverloadedStrings
+      OverloadedLabels
       PackageImports
       QuantifiedConstraints
       QuasiQuotes
@@ -230,6 +237,7 @@ test-suite ligo-debugger-test
       Test.DebugInfo
       Test.DelayedValues
       Test.Functions
+      Test.Handlers
       Test.LigoCall
       Test.Navigation
       Test.Pretty
@@ -272,6 +280,7 @@ test-suite ligo-debugger-test
       NamedFieldPuns
       NumDecimals
       OverloadedStrings
+      OverloadedLabels
       PackageImports
       QuantifiedConstraints
       QuasiQuotes
@@ -290,7 +299,8 @@ test-suite ligo-debugger-test
       ViewPatterns
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-implicit-prelude -Wno-partial-fields -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -threaded -eventlog -rtsopts "-with-rtsopts=-N -A64m -AL256m"
   build-tool-depends:
-      tasty-discover:tasty-discover
+      record-dot-preprocessor:record-dot-preprocessor
+    , tasty-discover:tasty-discover
   build-depends:
       Diff
     , HUnit
@@ -309,6 +319,7 @@ test-suite ligo-debugger-test
     , morley-debugger
     , morley-prelude
     , mtl
+    , named
     , nyan-interpolation
     , nyan-interpolation-core
     , singletons

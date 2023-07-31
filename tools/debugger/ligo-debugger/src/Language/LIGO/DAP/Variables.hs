@@ -1,3 +1,5 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+
 -- This code is copypasted from Morley.Debugger.DAP.Variables
 module Language.LIGO.DAP.Variables
   ( createVariables
@@ -10,10 +12,11 @@ import Control.Lens hiding ((...))
 import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Fmt.Buildable (pretty)
+import Named (defaults, paramF, (!))
+
+import Protocol.DAP qualified as DAP
 
 import Morley.Debugger.Core (DebugPrintMode (DpmEvaluated, DpmNormal), debugBuild)
-import Morley.Debugger.Protocol.DAP (Variable)
-import Morley.Debugger.Protocol.DAP qualified as DAP
 import Morley.Michelson.Typed
   (Constrained (SomeValue), EntrypointCallT (..), EpAddress (..), SingI,
   SomeEntrypointCallT (SomeEpc), Value, Value' (..))
@@ -26,42 +29,42 @@ import Language.LIGO.Debugger.CLI
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: Lang -> [(Text, LigoOrMichValue)] -> VariableBuilder Int
+createVariables :: Lang -> [(Text, LigoOrMichValue)] -> VariableBuilder DAP.VariableId
 createVariables lang varsAndNames = do
   topVars <-
-    forM varsAndNames \(toString -> name, ligoOrMichValue) -> do
+    forM varsAndNames \(name, ligoOrMichValue) -> do
       buildVariable lang ligoOrMichValue name
   insertVars topVars
 
-type VariableBuilder a = State (Int, Map Int [DAP.Variable]) a
+type VariableBuilder a = State (Int, Map DAP.VariableId [DAP.Variable]) a
 
-runBuilder :: VariableBuilder a -> (a, Map Int [DAP.Variable])
+runBuilder :: VariableBuilder a -> (a, Map DAP.VariableId [DAP.Variable])
 runBuilder act = (res, vars)
   where
     (res, (_, vars)) = usingState (1, mempty) act
 
-insertToIndex :: Int -> [DAP.Variable] -> VariableBuilder Int
+insertToIndex :: DAP.VariableId -> [DAP.Variable] -> VariableBuilder DAP.VariableId
 insertToIndex idx vars = do
   _2 %= M.insertWith (\added cur -> cur <> added) idx vars
   pure idx
 
-insertVars :: [DAP.Variable] -> VariableBuilder Int
+insertVars :: [DAP.Variable] -> VariableBuilder DAP.VariableId
 insertVars vars = do
   -- <<%= modifies state and returns previous value
-  nextIdx <- _1 <<%= (+1)
+  (DAP.VariableId -> nextIdx) <- _1 <<%= (+1)
   _2 %= M.insert nextIdx vars
   return nextIdx
 
-createVariable :: String -> String -> Lang -> LigoType -> Maybe String -> Maybe String -> Variable
-createVariable name varText lang typ menuContext evaluateName = DAP.defaultVariable
-  { DAP.nameVariable = name
-  , DAP.valueVariable = varText
-  , DAP.typeVariable = pretty (buildType lang typ)
-  , DAP.__vscodeVariableMenuContextVariable = menuContext
-  , DAP.evaluateNameVariable = evaluateName
-  }
+createVariable :: Text -> Text -> Lang -> LigoType -> Maybe Text -> Maybe Text -> DAP.Variable
+createVariable name varText lang typ menuContext evaluateName = DAP.mk @DAP.Variable
+  ! #name name
+  ! #value varText
+  ! paramF #type (pretty . buildTypeExpr lang <$> unLigoType typ)
+  ! paramF #__vscodeVariableMenuContext menuContext
+  ! paramF #evaluateName evaluateName
+  ! defaults
 
-buildVariable :: Lang -> LigoOrMichValue -> String -> VariableBuilder Variable
+buildVariable :: Lang -> LigoOrMichValue -> Text -> VariableBuilder DAP.Variable
 buildVariable lang v name = do
   let
     varText = pretty $ debugBuild DpmNormal (lang, v)
@@ -86,8 +89,8 @@ buildVariable lang v name = do
     [] -> return var
     _ -> do
       idx <- insertVars subVars
-      return $ var
-        { DAP.variablesReferenceVariable = idx
+      return $ (var :: DAP.Variable)
+        { DAP.variablesReference = idx
         }
 
 getInnerTypeFromConstant :: Int -> LigoType -> LigoType
@@ -122,7 +125,7 @@ getInnerTypeFromSum name = \case
     } -> LigoType $ hm HM.!? name
   _ -> LigoType Nothing
 
-getEpAddressChildren :: Lang -> EpAddress -> [Variable]
+getEpAddressChildren :: Lang -> EpAddress -> [DAP.Variable]
 getEpAddressChildren lang EpAddress'{..} =
   if isDefEpName eaEntrypoint
   then []
@@ -131,7 +134,7 @@ getEpAddressChildren lang EpAddress'{..} =
     addr = createVariable "address" (pretty eaAddress) lang (LigoType Nothing) Nothing Nothing
     ep = createVariable "entrypoint" (pretty eaEntrypoint) lang (LigoType Nothing) Nothing Nothing
 
-buildSubVars :: Lang -> LigoOrMichValue -> VariableBuilder [Variable]
+buildSubVars :: Lang -> LigoOrMichValue -> VariableBuilder [DAP.Variable]
 buildSubVars lang = \case
   MichValue typ (SomeValue michValue) -> case michValue of
     VOption Nothing -> return []
@@ -145,11 +148,11 @@ buildSubVars lang = \case
     VMap m -> do
       forM (toPairs m) \(k, v) -> do
         let name = pretty $ debugBuild DpmNormal k
-        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) (toString name)
+        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) name
     VBigMap _id m -> do
       forM (toPairs m) \(k, v) -> do
         let name = pretty $ debugBuild DpmNormal k
-        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) (toString name)
+        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) name
     VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
       pure $ getEpAddressChildren lang EpAddress'{..}
     VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
@@ -158,8 +161,8 @@ buildSubVars lang = \case
   LigoValue typ ligoValue -> case ligoValue of
     LVCt (LCContract LigoContract{..})
       | Just entrypoint <- lcEntrypoint -> do
-          let addr = createVariable "address" (toString lcAddress) lang (LigoType Nothing) Nothing Nothing
-          let ep = createVariable "entrypoint" (toString entrypoint) lang (LigoType Nothing) Nothing Nothing
+          let addr = createVariable "address" lcAddress lang (LigoType Nothing) Nothing Nothing
+          let ep = createVariable "entrypoint" entrypoint lang (LigoType Nothing) Nothing Nothing
           return [addr, ep]
       | otherwise -> return []
     LVList lst ->
@@ -170,16 +173,16 @@ buildSubVars lang = \case
         zipWithM
           do \val n ->
               let innerType = getInnerTypeFromRecord n typ in
-              buildVariable lang (LigoValue innerType val) (toString n)
+              buildVariable lang (LigoValue innerType val) n
           values
           (show <$> [1 :: Int ..])
       Nothing -> do
         forM (toPairs record) \(LLabel name, v) -> do
           let innerType = getInnerTypeFromRecord name typ
-          buildVariable lang (LigoValue innerType v) (toString name)
+          buildVariable lang (LigoValue innerType v) name
     LVConstructor (ctor, value) ->
       let innerType = getInnerTypeFromSum ctor typ in
-      (:[]) <$> buildVariable lang (LigoValue innerType value) (toString ctor)
+      (:[]) <$> buildVariable lang (LigoValue innerType value) ctor
     LVSet s ->
       let innerType = getInnerTypeFromConstant 0 typ in
       zipWithM (buildVariable lang . LigoValue innerType) s (show <$> [1 :: Int ..])
@@ -188,7 +191,7 @@ buildSubVars lang = \case
         let keyType = getInnerTypeFromConstant 0 typ
         let valueType = getInnerTypeFromConstant 1 typ
 
-        let name = pretty @_ @String $ debugBuild DpmNormal (lang, LigoValue keyType k)
+        let name = pretty @_ @Text $ debugBuild DpmNormal (lang, LigoValue keyType k)
         buildVariable lang (LigoValue valueType v) name
     _ -> return []
   _ -> return []
