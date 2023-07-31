@@ -13,7 +13,7 @@ In this tutorial, we will go through the following step :
 
 # Setting up the development environment.
 
-At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
+At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX. You can still use Ligo on windows through our docker image
 More on [installation](../../intro/installation.md) and [editor support](../../intro/editor-support.md)
 
 Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be useful for testing or for small project. However, it doesn't scale well for bigger size project as you won't be able to spread your project across multiple files and use your own libraries.

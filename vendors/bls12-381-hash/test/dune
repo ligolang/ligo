@@ -1,7 +1,0 @@
-(tests
- (names test_poseidon test_rescue test_anemoi test_griffin)
- (modules test_poseidon test_rescue test_anemoi test_griffin)
- (package bls12-381-hash)
- (flags -w +3)
- (modes native)
- (libraries bls12-381-hash bls12-381 alcotest))

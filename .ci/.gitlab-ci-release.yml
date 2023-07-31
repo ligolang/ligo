@@ -121,7 +121,6 @@ release:
     - docker_extract
     - changelog
     - initialize-git
-    - esy-windows
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -139,7 +138,6 @@ release:
           --description "$(cat release-notes.md)" \
           --assets-link '{"name": "Static Linux binary", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo"}' \
           --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}' \
-          --assets-link '{"name": "Ligo Windows installer", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo_installer.exe"}'
       fi
     - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
 
@@ -370,19 +368,6 @@ create-AUR-package:
     - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null )
       when: always
 
-update_esy_version:
-  stage: tooling
-  rules:
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ &&  $TRIGGER_DOC_UPDATE != null) 
-      when: always
-    - if: ($CI_COMMIT_BRANCH =~ /^release/ && $DRY_RUN_RELEASE != null)
-      when: always
-  script:
-    - ./.ci/scripts/versioning/update_esy_version.sh esy.json $(./.ci/scripts/versioning/determine_esy_version.sh esy.json not-applicable true)
-  artifacts:
-    paths:
-      - esy.json
-
 calculate_nix_SRI:
   stage: tooling
   rules:
@@ -426,12 +411,10 @@ update-repository-status:
     - ./.ci/scripts/versioning_website.sh $RELEASE_VERSION
     - LAST_TAG_JOB_ID=`./.ci/scripts/release_metadata/read_release_metadata.sh LAST_TAG_JOB_ID`
     - ./.ci/scripts/update_distribution_references_with_release.sh $LAST_TAG_JOB_ID $RELEASE_VERSION $SRI_LIGO_BINARY_HASH
-    - git add tools/webide-new/ligo-webide-backend/Dockerfile esy.json vendors/tezos-ligo HomebrewFormula/ gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
+    - git add tools/webide-new/ligo-webide-backend/Dockerfile vendors/tezos-ligo HomebrewFormula/ gitlab-pages/docs/tutorials/. gitlab-pages/docs/intro/installation.md gitlab-pages/website/versioned_docs/. gitlab-pages/website/versioned_sidebars/. gitlab-pages/website/versions.json tools/webide/Dockerfile gitlab-pages/docs/manpages
     - git commit -m "[Bot] Docs $RELEASE_VERSION"
     - git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME
   needs:
-    - job: update_esy_version
-      artifacts: true
     - job: docker_extract
     - job: calculate_nix_SRI
     - job: initialize-ssh

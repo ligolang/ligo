@@ -10,7 +10,7 @@ RUN apk update && apk upgrade && apk --no-cache add \
   build-base snappy-dev alpine-sdk \
   bash ncurses-dev xz m4 git pkgconfig findutils rsync \
   gmp-dev libev-dev libressl-dev linux-headers pcre-dev perl zlib-dev hidapi-dev \
-  libffi-dev nodejs npm \
+  libffi-dev \
   cargo py3-pip cmake  \
   && pip3 install jsonschema \
   # install opam:
@@ -44,15 +44,6 @@ COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 
-# JSOO
-COPY jsoo /ligo/jsoo
-COPY Makefile /ligo
-COPY npm /ligo/npm
-COPY examples /ligo/examples
-COPY 0001-Nairobi-JSOO-Gas-free.patch /ligo
-COPY 0002-JSOO-Use-lib_hacl-compatible-with-hacl-star-0.4.1.patch /ligo
-
-
 # Run tests
 RUN opam exec -- dune runtest --profile static --no-buffer \
 # Coverage (only the overall)
@@ -77,19 +68,12 @@ RUN LIGO_VERSION=$(/ligo/scripts/version.sh) opam exec -- dune build -p ligo --p
   && cp /ligo/_build/install/default/bin/ligo /tmp/ligo \
   # Run doc
   && opam exec -- dune build @doc
-RUN npm i -g webpack-cli
-RUN cd /ligo && opam exec -- make build-demo-webide
-RUN cd /ligo/npm && rm /ligo/npm/ligolang-*.tgz ; npm i && npm run build && npm pack
-RUN cd /ligo/examples/ligojs && npm i && npm run build:webpack
-
-FROM esydev/esy:nightly-alpine as esy
 
 # TODO see also ligo-docker-large in nix build
 FROM alpine:3.18 as ligo
 # This variable is used for analytics to determine if th execution of the compiler is inside docker or not
 ENV DOCKER_EXECUTION=true
 
-COPY --from=esy . .
 WORKDIR /root/
 RUN chmod 755 /root # so non-root users inside container can see and execute /root/ligo
 COPY --from=0 /tmp/ligo /root/ligo

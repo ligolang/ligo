@@ -121,35 +121,4 @@ Or if you want the development version, replace the version above with `next`.
 Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
 
 </TabItem>
-<TabItem value="windows">
-
-> **Disclaimer**
->
-> Windows version is beta quality and is still working in progress. Please report any issues found
-> and feature requests.
-
-### via NPM
-Windows users can install LIGO via NPM.
-
-```sh
-npm i -g ligolang@windows
-```
-
-### via GUI installer
-
-You can download the installer from [here hosted on our Gitlab](https://gitlab.com/ligolang/ligo/-/jobs/4736572090/artifacts/raw/ligo_installer.exe?inline=false).
-
-#### Prerequisite
-
-The installer use `nodejs` you will need to [install](https://nodejs.org/en/download/) it if it's not already done. 
-
-#### Working around the "unrecognised app" warning screen
-
-The installer hasn't been signed with a recognized Windows Developer ID. So for now, you might see the following.
-![Unrecognised App Warning](/img/windows-unrecognised.png)
-
-For now, you'll have to click on `More info`, and then, `Run anyway`.
-![Run Anyway](/img/windows-more-info-clicked.png)
-
-</TabItem>
 </Tabs>
