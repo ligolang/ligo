@@ -1,0 +1,136 @@
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [ StackFrame:
+      sfName: IncDec.reset
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
+      sfStack: []
+    , StackFrame:
+      sfName: IncDec.<module main>
+      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 100
+        , StackItem:
+          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [ StackFrame:
+      sfName: IncDec.reset
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:7
+      sfStack: []
+    , StackFrame:
+      sfName: IncDec.<module main>
+      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 100
+        , StackItem:
+          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
+InterpretSnapshot:
+  isStatus: running / expression evaluated ({ } : operation list)
+  isStackFrames:
+    [ StackFrame:
+      sfName: IncDec.reset
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:7
+      sfStack: []
+    , StackFrame:
+      sfName: IncDec.<module main>
+      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 100
+        , StackItem:
+          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
+InterpretSnapshot:
+  isStatus: running / expression evaluated (Pair { } 0 : operation list * int)
+  isStackFrames:
+    [ StackFrame:
+      sfName: IncDec.reset
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
+      sfStack: []
+    , StackFrame:
+      sfName: IncDec.<module main>
+      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 100
+        , StackItem:
+          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [ StackFrame:
+      sfName: IncDec.reset
+      sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of 
+          siValue: Pair { } 0
+        , StackItem:
+          siLigoDesc: elem ? of 
+          siValue: 100 ]
+    , StackFrame:
+      sfName: IncDec.<module main>
+      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem s of int
+          siValue: 100
+        , StackItem:
+          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]

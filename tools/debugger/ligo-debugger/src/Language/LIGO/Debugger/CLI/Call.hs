@@ -290,29 +290,35 @@ withMapLigoExc = flip catches
 
 -- | When user picks an entrypoint we want to be sure that
 -- the contract will compile with it.
-checkCompilation :: (HasLigoClient m) => Text -> FilePath -> m ()
-checkCompilation entrypoint file = void $ withMapLigoExc $
+checkCompilation :: (HasLigoClient m) => EntrypointName -> FilePath -> m ()
+checkCompilation EntrypointName{..} file = void $ withMapLigoExc $
   callLigoBS Nothing
-    [ "compile", "contract"
-    , "--no-warn"
-    , "-e", strArg entrypoint
-    , strArg file
-    ] Nothing
+    do concat
+        [ ["compile", "contract"]
+        , ["--no-warn"]
+        , guard (not $ T.null enModule      ) >> ["-m", strArg enModule]
+        , guard (enName /= generatedMainName) >> ["-e", strArg enName]
+        , [strArg file]
+        ]
+    Nothing
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: forall m. (HasLigoClient m) => Text -> FilePath -> m (LigoMapper 'Unique)
-compileLigoContractDebug entrypoint file = withMapLigoExc $
+compileLigoContractDebug :: forall m. (HasLigoClient m) => EntrypointName -> FilePath -> m (LigoMapper 'Unique)
+compileLigoContractDebug EntrypointName{..} file = withMapLigoExc $
   callLigoBS Nothing
-    [ "compile", "contract"
-    , "--no-warn"
-    , "--michelson-format", "json"
-    , "--michelson-comments", "location"
-    , "--michelson-comments", "env"
-    , "-e", strArg entrypoint
-    , "--experimental-disable-optimizations-for-debugging"
-    , "--disable-michelson-typechecking"
-    , strArg file
-    ] Nothing
+    do concat
+        [ ["compile", "contract"]
+        , ["--no-warn"]
+        , ["--michelson-format", "json"]
+        , ["--michelson-comments", "location"]
+        , ["--michelson-comments", "env"]
+        , guard (not $ T.null enModule      ) >> ["-m", strArg enModule]
+        , guard (enName /= generatedMainName) >> ["-e", strArg enName]
+        , ["--experimental-disable-optimizations-for-debugging"]
+        , ["--disable-michelson-typechecking"]
+        , [strArg file]
+        ]
+    Nothing
     >>= either (throwIO . LigoDecodeException "decoding source mapper" . toText) pure
       . Aeson.eitherDecode
 

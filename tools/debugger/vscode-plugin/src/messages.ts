@@ -40,14 +40,12 @@ export interface SetProgramPathRequest extends DebugProtocol.Request {
 }
 
 export interface SetProgramPathArguments {
-	body: {
-		program: string
-	}
+	program: string
 }
 
 export interface SetProgramPathResponse extends DebugProtocol.Response {
 	body: {
-		entrypoints: [string]
+		entrypoints: [string, string][]
 	}
 }
 

@@ -646,9 +646,9 @@ setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
   atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
     { lsProgram = Just req.program
     }
-
   LigoSetProgramPathResponse
     { entrypoints = unEntrypoints
+        <&> \ep@EntrypointName{..} -> ([int||#{enModule}.#{enName}|], pretty ep)
     }
     `respondAndAlso` do
 
@@ -658,7 +658,7 @@ setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
 validateEntrypointHandler :: DAP.Handler (RIO LIGO)
 validateEntrypointHandler = mkLigoHandler \req@LigoValidateEntrypointRequest{} -> do
   program <- getProgram
-  result <- try @_ @LigoCallException (checkCompilation req.entrypoint program)
+  result <- try @_ @LigoCallException (checkCompilation (mkEntrypointName req.entrypoint) program)
 
   respond $ ligoValidateFromEither (first pretty result)
 
@@ -670,9 +670,11 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
   unlessM (doesFileExist program) $
     throwIO $ ConfigurationException [int||Contract file not found: #{toText program}|]
 
+  let entrypointName = mkEntrypointName req.entrypoint
+
   -- Here we're catching exception explicitly in order to store it
   -- inside language server state and rethrow it in @initDebuggerSession@
-  try (compileLigoContractDebug req.entrypoint program) >>= \case
+  try (compileLigoContractDebug entrypointName program) >>= \case
     Left (LigoCallException msg) -> do
       -- Since we're packing this exception in @handleGetContractMetadata@
       -- when calling @compileLigoContractDebug@ this exception signalizes
@@ -705,8 +707,13 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
 
         let
           paramNotes = cParamNotes contract
+          handleImplicit
+              -- If the user wants to use module entrypoint then it would be
+              -- convenient to exclude default Michelson entrypoint.
+            | enName entrypointName == generatedMainName = U.WithoutImplicitDefaultEp
+            | otherwise = U.WithImplicitDefaultEp
           michelsonEntrypoints =
-            T.flattenEntrypoints U.WithImplicitDefaultEp paramNotes
+            T.flattenEntrypoints handleImplicit paramNotes
 
         atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
           { lsCollectedRunInfo = Just $ onlyContractRunInfo contract
@@ -808,7 +815,6 @@ initDebuggerSession
   :: LigoLaunchRequest
   -> RIO LIGO (DAPSessionState (InterpretSnapshot 'Unique))
 initDebuggerSession req = do
-  entrypoint <- checkArgument "entrypoint" req.entrypoint
   program <- getProgram
 
   CollectedRunInfo
@@ -853,7 +859,6 @@ initDebuggerSession req = do
     withRunInIO \unlifter ->
       collectInterpretSnapshots
         program
-        entrypoint
         contract
         epc
         param
@@ -920,8 +925,3 @@ initDebuggerState his allLocs = DebuggerState
         (\locs -> mkDebugSource $ map fst $ toList @(Set _) locs)
         (groupSourceLocations $ toList allLocs)
   }
-
-checkArgument :: MonadIO m => Text -> Maybe a -> m a
-checkArgument _    (Just a) = pure a
-checkArgument name Nothing  = throwIO $ ConfigurationException
-  [int||Required configuration option "#{name}" not found in launch.json.|]

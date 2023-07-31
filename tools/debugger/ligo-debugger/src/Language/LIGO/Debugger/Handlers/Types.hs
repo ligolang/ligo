@@ -118,7 +118,7 @@ data LigoValidateConfigRequest = LigoValidateConfigRequest
   } deriving stock (Eq, Show, Generic)
 
 data LigoSetProgramPathResponse = LigoSetProgramPathResponse
-  { entrypoints :: [Text]
+  { entrypoints :: [(Text, Text)]
   } deriving stock (Show, Eq, Generic)
 
 data LigoValidateResponse

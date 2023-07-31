@@ -263,7 +263,7 @@ export async function createRememberingQuickPick (
 export async function getEntrypoint (
 		context: LigoDebugContext,
 		validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
-		entrypointsList: string[]
+		entrypointsList: [string, string][]
 	) : Promise<Maybe<string>> {
 
 		interface State {
@@ -271,7 +271,9 @@ export async function getEntrypoint (
 		}
 
 		async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<State>) {
-			const entrypoints: QuickPickItem[] = entrypointsList.map(label => ({ label }));
+			type MarkedQuickPickItem = { realName : string } & QuickPickItem;
+
+			const entrypoints: MarkedQuickPickItem[] = entrypointsList.map(([ep, pretty]) => ({ realName: ep, label: pretty }));
 
 			const remembered = context.workspaceState.lastEntrypoint();
 
@@ -290,7 +292,7 @@ export async function getEntrypoint (
 				return;
 			}
 
-			let activeItem: Maybe<QuickPickItem>;
+			let activeItem: Maybe<MarkedQuickPickItem>;
 			if (isDefined(remembered.value)) {
 				for (let entrypoint of entrypoints) {
 					if (entrypoint.label === remembered.value) {
@@ -300,21 +302,21 @@ export async function getEntrypoint (
 				}
 			}
 
-			const pick: QuickPickItem = await input.showQuickPick({
+			const pick: MarkedQuickPickItem = await input.showQuickPick({
 				totalSteps: 1,
 				items: entrypoints,
 				activeItem,
 				placeholder: "Choose an entrypoint to run"
 			});
 
-			const validateResult = await validateEntrypoint(pick.label);
+			const validateResult = await validateEntrypoint(pick.realName);
 			if (validateResult) {
 				vscode.window.showWarningMessage(validateResult);
 				input.doNotRecordStep();
 				return (input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state);
 			} else {
 				remembered.value = pick.label;
-				state.ref.pickedEntrypoint = pick.label;
+				state.ref.pickedEntrypoint = pick.realName;
 			}
 		}
 
