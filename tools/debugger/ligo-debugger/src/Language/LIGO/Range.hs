@@ -26,6 +26,8 @@ module Language.LIGO.Range
   )
   where
 
+import Unsafe qualified
+
 import Control.Lens (makeLenses)
 import Data.Aeson (FromJSON (parseJSON), withObject, (.:))
 import Data.ByteString qualified as BS
@@ -35,6 +37,8 @@ import Fmt.Buildable (Buildable, build)
 
 import Duplo.Lattice
 import Duplo.Pretty
+
+import Morley.Debugger.Core.Common (IsSourceLoc (..), SrcLoc (..))
 
 import Util
 
@@ -54,6 +58,12 @@ data LigoPosition = LigoPosition
     -- ^ 1-indexed column number
   } deriving stock (Eq, Ord, Generic, Data)
     deriving anyclass (NFData, Hashable)
+
+instance IsSourceLoc LigoPosition where
+  toCanonicalLoc (LigoPosition l c) =
+    SrcLoc (Unsafe.fromIntegral $ l - 1) (Unsafe.fromIntegral $ c - 1)
+  fromCanonicalLoc (SrcLoc l c) =
+    LigoPosition (Unsafe.fromIntegral $ l + 1) (Unsafe.fromIntegral $ c + 1)
 
 -- | A continuous location in text. This includes information to the file as
 -- seen by the user (i.e.: before preprocessing).

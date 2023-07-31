@@ -411,7 +411,7 @@ data LigoMapper u = LigoMapper
   , lmMichelsonCode :: Micheline.Expression
   }
 
-newtype EntrypointsList = EntrypointsList { unEntrypoints :: [String] }
+newtype EntrypointsList = EntrypointsList { unEntrypoints :: [Text] }
   deriving newtype (Buildable)
 
 -- | Node representing ligo error with additional meta
@@ -1075,18 +1075,20 @@ mkPairType fstElem sndElem = mkRecordType pairLayout
       , LLField "1"
       ]
 
--- | Prettify @LigoType@ in provided dialect.
+-- | Prettify 'LigoType' in provided dialect.
 buildType :: Lang -> LigoType -> Doc
-buildType lang LigoType{..} = case unLigoType of
-  Nothing -> ""
-  Just typExpr ->
-    let
-      tree = fromLigoTypeFull $ LTFResolved typExpr
-      ppr = fromMaybe "" $ asum
-        [ lppDialect lang <$> layer @AST.Type tree
-        , lppDialect lang <$> layer @AST.TypeName tree
-        ]
-    in show ppr
+buildType lang LigoType{..} = maybe "" (buildTypeExpr lang) unLigoType
+
+-- | Prettify 'LigoTypeExpression' in provided dialect.
+buildTypeExpr :: Lang -> LigoTypeExpression -> Doc
+buildTypeExpr lang typExpr =
+  let
+    tree = fromLigoTypeFull $ LTFResolved typExpr
+    ppr = fromMaybe "" $ asum
+      [ lppDialect lang <$> layer @AST.Type tree
+      , lppDialect lang <$> layer @AST.TypeName tree
+      ]
+  in show ppr
 
 -- | If we have malformed LIGO contract then we'll see
 -- in error @ligo@ binary output a red-colored text
@@ -1124,7 +1126,7 @@ makeConciseLigoIndexedInfo vec indexedInfo =
 parseEntrypointsList :: Text -> Maybe EntrypointsList
 parseEntrypointsList (lines -> parts) = do
   entrypoints <- safeTail >=> safeInit $ parts
-  pure $ EntrypointsList (toString <$> entrypoints)
+  pure $ EntrypointsList entrypoints
   where
     safeTail :: [a] -> Maybe [a]
     safeTail = fmap tail . nonEmpty

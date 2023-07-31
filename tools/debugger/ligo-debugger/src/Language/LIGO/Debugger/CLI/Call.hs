@@ -290,7 +290,7 @@ withMapLigoExc = flip catches
 
 -- | When user picks an entrypoint we want to be sure that
 -- the contract will compile with it.
-checkCompilation :: (HasLigoClient m) => String -> FilePath -> m ()
+checkCompilation :: (HasLigoClient m) => Text -> FilePath -> m ()
 checkCompilation entrypoint file = void $ withMapLigoExc $
   callLigoBS Nothing
     [ "compile", "contract"
@@ -300,7 +300,7 @@ checkCompilation entrypoint file = void $ withMapLigoExc $
     ] Nothing
 
 -- | Run ligo to compile the contract with all the necessary debug info.
-compileLigoContractDebug :: forall m. (HasLigoClient m) => String -> FilePath -> m (LigoMapper 'Unique)
+compileLigoContractDebug :: forall m. (HasLigoClient m) => Text -> FilePath -> m (LigoMapper 'Unique)
 compileLigoContractDebug entrypoint file = withMapLigoExc $
   callLigoBS Nothing
     [ "compile", "contract"

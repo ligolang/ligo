@@ -17,13 +17,11 @@ module Language.LIGO.Debugger.CLI.Exception
 
 import Data.Default (Default (def))
 import Data.Text qualified as Text
-import Fmt.Buildable (Buildable, FromDoc, build, fmt, pretty)
+import Fmt.Buildable (Buildable, FromDoc, build, pretty)
 import GHC.IO.Exception qualified as IOException
 import System.Exit (ExitCode)
 import Text.Interpolation.Nyan hiding (rmode')
 import Util
-
-import Morley.Debugger.Protocol.DAP qualified as DAP
 
 import Language.LIGO.Debugger.CLI.Types
 
@@ -206,12 +204,6 @@ instance Buildable LigoDecodeException where
 
 instance Exception LigoDecodeException where
   displayException = pretty
-
--- TODO: move this instance to morley-debugger
-instance FromDoc DAP.Message where
-  fmt txt = DAP.defaultMessage
-    { DAP.formatMessage = fmt txt
-    }
 
 instance Exception ConfigurationException where
   displayException (ConfigurationException msg) = pretty msg

@@ -23,15 +23,15 @@ packages:
     commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa
     git: https://github.com/brendanhay/semver.git
 - completed:
-    commit: c75aa2d6c050855cd606f245ad13bf2f870881a2
+    commit: 98c0a812f5529a0e3791f56f4051249210a0a905
     git: https://gitlab.com/morley-framework/morley-debugger.git
     name: morley-debugger
     pantry-tree:
-      sha256: c572b9ea5ff14e1fd6c123964839ae6c41a3d332f3959c4f0cae612ec0145e01
-      size: 11555
+      sha256: 5d26057db90e6da9e57649b20f8e093182ac24beccadc8228ef7d77930023100
+      size: 12747
     version: 0.4.0
   original:
-    commit: c75aa2d6c050855cd606f245ad13bf2f870881a2
+    commit: 98c0a812f5529a0e3791f56f4051249210a0a905
     git: https://gitlab.com/morley-framework/morley-debugger.git
 - completed:
     hackage: base58-bytestring-0.1.0@sha256:a1da72ee89d5450bac1c792d9fcbe95ed7154ab7246f2172b57bd4fd9b5eab79,1913

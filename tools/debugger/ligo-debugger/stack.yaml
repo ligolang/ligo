@@ -14,7 +14,7 @@ extra-deps:
   commit: 540990acfd2d4aaffa17a8337cbfa9a38cb3f2aa  # master with quasi-quoter
 # Morley Debugger and its dependencies
 - git: https://gitlab.com/morley-framework/morley-debugger.git
-  commit: c75aa2d6c050855cd606f245ad13bf2f870881a2  # master
+  commit: 98c0a812f5529a0e3791f56f4051249210a0a905  # master
 - base58-bytestring-0.1.0
 - monad-stm-0.1.0.2
 - git: https://github.com/serokell/base-noprelude.git

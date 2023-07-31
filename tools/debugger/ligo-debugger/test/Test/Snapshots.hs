@@ -650,7 +650,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "Check snapshot collection logging" \step -> do
       anyWritten <- newIORef False
 
-      let logger :: String -> IO ()
+      let logger :: Text -> IO ()
           logger = const $ writeIORef anyWritten True
 
       let file = contractsDir </> "noop.mligo"
@@ -2000,12 +2000,12 @@ test_Snapshots = testGroup "Snapshots collection"
 
 -- | Special options for checking contract.
 data CheckingOptions = CheckingOptions
-  { coEntrypoint :: Maybe String
+  { coEntrypoint :: Maybe Text
   , coCheckSourceLocations :: Bool
   , coCheckEntrypointsList :: Bool
   } deriving stock (Show)
 
-coEntrypointL :: Lens' CheckingOptions (Maybe String)
+coEntrypointL :: Lens' CheckingOptions (Maybe Text)
 coEntrypointL = lens
   do \CheckingOptions{..} -> coEntrypoint
   do \(CheckingOptions _ locs eps) ep -> CheckingOptions ep locs eps

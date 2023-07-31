@@ -40,11 +40,15 @@ export interface SetProgramPathRequest extends DebugProtocol.Request {
 }
 
 export interface SetProgramPathArguments {
-	program: string
+	body: {
+		program: string
+	}
 }
 
 export interface SetProgramPathResponse extends DebugProtocol.Response {
-	entrypoints: [string]
+	body: {
+		entrypoints: [string]
+	}
 }
 
 // ValidateEntrypoint //
@@ -59,7 +63,9 @@ export interface ValidateEntrypointArguments {
 }
 
 export interface ValidateEntrypointResponse extends DebugProtocol.Response {
-	message?: string
+	body?: {
+		errorMessage: string
+	}
 }
 
 // ValidateValue //
@@ -79,7 +85,9 @@ export interface ValidateValueRequest extends DebugProtocol.Request {
 }
 
 export interface ValidateValueResponse extends DebugProtocol.Response {
-	message?: string
+	body?: {
+		errorMessage: string
+	}
 }
 
 // GetContractMetadata //
@@ -94,7 +102,7 @@ export interface GetContractMetadataArguments {
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
-	contractMetadata: ContractMetadata
+	body: ContractMetadata
 }
 
 // ValidateConfig //

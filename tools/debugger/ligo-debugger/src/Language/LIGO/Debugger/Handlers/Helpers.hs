@@ -5,10 +5,8 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import Control.Concurrent.STM (throwSTM, writeTChan)
 import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError, withExceptT)
-import Control.Monad.STM.Class (MonadSTM (..))
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
 import Data.Singletons (SingI, demote)
@@ -23,8 +21,7 @@ import Morley.Debugger.Core.Common (typeCheckingForDebugger)
 import Morley.Debugger.Core.Navigate (SourceLocation)
 import Morley.Debugger.DAP.LanguageServer qualified as MD
 import Morley.Debugger.DAP.Types
-  (DAPOutputMessage (..), DAPSpecificResponse (..), HandlerEnv (..),
-  HasSpecificMessages (LanguageServerStateExt), RIO, RioContext (..))
+  (HasSpecificMessages (LanguageServerStateExt), MonadRIO, RioContext (..))
 import Morley.Michelson.Interpret (RemainingSteps)
 import Morley.Michelson.Parser qualified as P
 import Morley.Michelson.TypeCheck (typeVerifyTopLevelType)
@@ -122,15 +119,10 @@ instance Buildable LigoLanguageServerState where
     Debugging program: #{lsProgram}
     |]
 
-writeResponse :: DAPSpecificResponse ext -> RIO ext ()
-writeResponse msg = do
-  ch <- asks _rcOutputChannel
-  atomically $ writeTChan ch (DAPResponse msg)
-
 withMichelsonEntrypoint
   :: (MonadIO m)
   => T.Contract param st
-  -> Maybe String
+  -> Maybe Text
   -> (forall arg. SingI arg => T.Notes arg -> T.EntrypointCallT param arg -> m a)
   -> m a
 withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
@@ -140,7 +132,7 @@ withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
     Nothing -> pure U.DefEpName
     -- extension may return default entrypoints as "default"
     Just "default" -> pure U.DefEpName
-    Just ep -> U.buildEpName (toText $ firstLetterToLowerCase ep)
+    Just ep -> U.buildEpName (toText $ firstLetterToLowerCase $ toString ep)
       & first noParseEntrypointErr
       & fromEither
 
@@ -206,16 +198,10 @@ parseValue ctxContractPath category val valueLang ligoType = runExceptT do
       |]
     & liftEither
 
-getServerState :: RIO ext (LanguageServerStateExt ext)
+getServerState :: MonadRIO ext m => m (LanguageServerStateExt ext)
 getServerState =
   asks _rcLSState >>= readTVarIO >>=
     maybe (throwIO uninitLanguageServerExc) pure
-
--- | Get server state in handler's context
-getServerStateH :: (MonadReader (HandlerEnv ext) m, MonadSTM m) => m (LanguageServerStateExt ext)
-getServerStateH =
-  asks heLSState >>= liftSTM . readTVar >>=
-    maybe (liftSTM $ throwSTM uninitLanguageServerExc) pure
 
 uninitLanguageServerExc :: PluginCommunicationException
 uninitLanguageServerExc =
@@ -226,62 +212,47 @@ expectInitialized errMsg maybeM = maybeM >>= \case
   Nothing -> throwIO $ PluginCommunicationException errMsg
   Just val -> pure val
 
-expectInitializedH :: (Monad m, MonadSTM m) => Text -> m (Maybe a) -> m a
-expectInitializedH errMsg maybeM = maybeM >>= \case
-  Nothing -> liftSTM $ throwSTM $ PluginCommunicationException errMsg
-  Just val -> pure val
-
 getProgram
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext FilePath
+  => MonadRIO ext m => m FilePath
 getProgram = "Program is not initialized" `expectInitialized` (lsProgram <$> getServerState)
 
 getCollectedRunInfo
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext CollectedRunInfo
+  => MonadRIO ext m => m CollectedRunInfo
 getCollectedRunInfo =
   "Collected run info is not initialized" `expectInitialized` (lsCollectedRunInfo <$> getServerState)
 
 getAllLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (Set SourceLocation)
+  => MonadRIO ext m => m (Set SourceLocation)
 getAllLocs = "All locs are not initialized" `expectInitialized` (lsAllLocs <$> getServerState)
 
 getParsedContracts
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (HashMap FilePath (LIGO ParsedInfo))
+  => MonadRIO ext m => m (HashMap FilePath (LIGO ParsedInfo))
 getParsedContracts =
   "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
 
 getLambdaLocs
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (HashSet Range)
+  => MonadRIO ext m => m (HashSet Range)
 getLambdaLocs = "Lambda locs are not initialized" `expectInitialized` (lsLambdaLocs <$> getServerState)
 
 getMaxStepsMb
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext (Maybe RemainingSteps)
+  => MonadRIO ext m => m (Maybe RemainingSteps)
 getMaxStepsMb = lsMaxSteps <$> getServerState
 
 getEntrypointType
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext LigoType
+  => MonadRIO ext m => m LigoType
 getEntrypointType = "Entrypoint type is not initialized" `expectInitialized` (lsEntrypointType <$> getServerState)
-
-getEntrypointTypeH
-  :: (MonadReader (HandlerEnv ext) m, MonadSTM m, LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => m LigoType
-getEntrypointTypeH = "Entrypoint type is not initialized" `expectInitializedH` (lsEntrypointType <$> getServerStateH)
 
 getLigoTypesVec
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => RIO ext LigoTypesVec
+  => MonadRIO ext m => m LigoTypesVec
 getLigoTypesVec = "Ligo types are not initialized" `expectInitialized` (lsLigoTypesVec <$> getServerState)
-
-getLigoTypesVecH
-  :: (MonadReader (HandlerEnv ext) m, MonadSTM m, LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => m LigoTypesVec
-getLigoTypesVecH = "Ligo types are not initialized" `expectInitializedH` (lsLigoTypesVec <$> getServerStateH)
 
 getParameterStorageAndOpsTypes :: LigoType -> (LigoType, LigoType, LigoType)
 getParameterStorageAndOpsTypes (LigoTypeResolved typ) =

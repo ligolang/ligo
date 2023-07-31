@@ -30,7 +30,7 @@ class (Exception e, KnownSymbol (ExceptionTag e)) => DebuggerException e where
   shouldInterruptDebuggingSession :: Bool
 
   -- | Additional data that will be provided to the plugin.
-  debuggerExceptionData :: e -> Map String String
+  debuggerExceptionData :: e -> Map Text Text
   debuggerExceptionData _ = mempty
 
 -- | Classification of exceptions by who is guilty in that it occured.

@@ -83,7 +83,7 @@ data GoldenActionContext = GoldenActionContext
 --   (e.g. a dependency bump, pretty printer change, stepping or breakpoints logic
 --   changes, try to put those in separate commits).
 goldenTestWithSnapshotsImpl
-  :: (String -> IO ())
+  :: (Text -> IO ())
      -- ^ What to do with logs.
   -> TestName
      -- ^ Name of the test suite, pass it here instead of 'testCase'.

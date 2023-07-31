@@ -29,6 +29,7 @@ import Fmt.Buildable (Buildable, FromDoc, build)
 import Fmt.Utils (Doc)
 import GHC.Generics (Generic (Rep))
 import GHC.TypeLits (Nat)
+import Protocol.DAP qualified as DAP
 import System.Environment (getEnv)
 import System.IO.Error (isDoesNotExistError)
 import Text.Interpolation.Nyan hiding (rmode')
@@ -64,6 +65,9 @@ instance HasLigoClient IO where
     pure def
       { _lceClientPath
       }
+
+instance HasLigoClient m => HasLigoClient (DAP.EventSubmitIO m) where
+  getLigoClientEnv = lift getLigoClientEnv
 
 -- | Type marker, which stores information about
 -- hashes presence in variable names.

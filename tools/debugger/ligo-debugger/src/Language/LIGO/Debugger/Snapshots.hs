@@ -241,7 +241,7 @@ data CollectorState m = CollectorState
     -- ^ Ranges of recorded expression snapshots.
     -- Note that these ranges refer only to snapshots, that
     -- have @EventExpressionPreview@ event.
-  , csLoggingFunction :: String -> m ()
+  , csLoggingFunction :: Text -> m ()
     -- ^ Function for logging some useful debugging info.
   , csMainFunctionName :: Name 'Unique
     -- ^ Name of main entrypoint.
@@ -323,10 +323,10 @@ makePrisms ''InterpretEvent
 statusExpressionEvaluatedP :: Traversal' InterpretStatus SomeValue
 statusExpressionEvaluatedP = _InterpretRunning . _EventExpressionEvaluated . _2 . _Just
 
-logMessage :: (Monad m) => (ForInternalUse => String) -> CollectingEvalOp m ()
+logMessage :: (Monad m) => (ForInternalUse => Text) -> CollectingEvalOp m ()
 logMessage msg = logMessageM (pure msg)
 
-logMessageM :: (Monad m) => (ForInternalUse => CollectingEvalOp m String) -> CollectingEvalOp m ()
+logMessageM :: (Monad m) => (ForInternalUse => CollectingEvalOp m Text) -> CollectingEvalOp m ()
 logMessageM mkMsg = do
   logger <- use csLoggingFunctionL
   msg <- itIsForInternalUse mkMsg
@@ -747,7 +747,7 @@ collectInterpretSnapshots
   -> Value st
   -> ContractEnv m
   -> HashMap FilePath (LIGO ParsedInfo)
-  -> (String -> m ())
+  -> (Text -> m ())
   -> HashSet Range
   -> Bool -- ^ should we track steps amount
   -> LigoTypesVec
