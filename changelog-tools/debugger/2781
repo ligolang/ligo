@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added an ability to pick a module entrypoint in the debugger. Now the user can pick a module name in a quickpick and after that choose an interesting Michelson entrypoint.\\n\\n\\n"
+merge_request: '2781'
+title: "[#1980] Support module entrypoints in the debugger"
+type: added
+            
