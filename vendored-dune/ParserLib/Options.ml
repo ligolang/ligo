@@ -10,6 +10,8 @@ module type S =
     val cst            : bool
     val recovery       : bool
     val used_tokens    : bool
+    val layout         : bool
+    val regions        : bool
     val trace_recovery : string option option
   end
 
@@ -19,11 +21,13 @@ module MakeDefault (Options : LexerLib.Options.S) =
   struct
     include Options
 
-    let mono = false
-    let pretty = false
-    let cst = false
-    let recovery = true
+    let mono           = false
+    let pretty         = false
+    let cst            = false
+    let recovery       = true
     let trace_recovery = None
-    let used_tokens = false
-    let width = None
+    let used_tokens    = false
+    let width          = None
+    let layout         = true
+    let regions        = true
   end

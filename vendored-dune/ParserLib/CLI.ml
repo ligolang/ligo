@@ -27,11 +27,16 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let make_help buffer : Buffer.t =
       let options = [
         "      --mono           Use Menhir monolithic API";
-        "      --cst            Print the CST";
+        "Pretty-printing:";
         "      --pretty         Pretty-print the input";
         "      --width=<n>      Width for --pretty";
+        "CST printing:";
+        "      --cst            Print the CST";
+        "      --no-layout      With --cst, do not print the tree layout";
+        "      --no-regions     With --cst, do not print the source regions";
+        "Error recovery:";
         "      --recovery       Enable error recovery";
-        "Debug options:";
+        "Debugging:";
         "      --used-tokens    Print the tokens up to the syntax error";
         "      --trace-recovery[=<file>]";
         "                       Enable verbose printing of intermediate steps\n                       of the error recovery algorithm to output_file\n                       if provided, or stdout otherwise"
@@ -44,11 +49,21 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
 
     (* Specifying the command-line options a la GNU *)
 
-    let mono       = ref false
-    and pretty     = ref false
-    and width      = ref (None : int option)
-    and cst        = ref false
-    and recovery   = ref false
+    (* Monolithic API and error recovery *)
+
+    let mono     = ref false
+    and recovery = ref false
+
+    (* Pretty-printing options *)
+
+    and pretty = ref false
+    and width  = ref (None : int option)
+
+    (* CST printing options *)
+
+    and cst     = ref false
+    and layout  = ref true
+    and regions = ref true
 
     (* Debug options *)
 
@@ -98,6 +113,8 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         noshort, "pretty",         set pretty true, None;
         noshort, "width",          None, Some set_width;
         noshort, "cst",            set cst true, None;
+        noshort, "no-layout",      set layout false, None;
+        noshort, "no-regions",     set regions false, None;
         noshort, "recovery",       set recovery true, None;
         noshort, "trace-recovery", set trace_recovery (Some None),
                                    Some set_trace_recovery;
@@ -132,6 +149,7 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
        and we finally restore [Sys.argv] from its original copy. *)
 
     module SSet = Argv.SSet
+
     let opt_wo_arg =
       let open SSet in
       empty
@@ -141,6 +159,8 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
       |> add "--recovery"
       |> add "--trace-recovery"
       |> add "--used-tokens"
+      |> add "--no-layout"
+      |> add "--no-regions"
 
       (* The following options are present in all CLI *)
 
@@ -177,11 +197,13 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
 
     (* Re-exporting immutable fields with their CLI value *)
 
-    let mono        = !mono
-    and pretty      = !pretty
-    and cst         = !cst
-    and recovery    = !recovery
-    and width       = !width
+    let mono     = !mono
+    and pretty   = !pretty
+    and width    = !width
+    and cst      = !cst
+    and layout   = !layout
+    and regions  = !regions
+    and recovery = !recovery
 
     (* Debug options *)
 
@@ -193,18 +215,21 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
     let make_cli buffer : Buffer.t =
       (* Options "help", "version" and "cli" are not given. *)
       let options = [
-        sprintf "mono         = %b" mono;
-        sprintf "pretty       = %b" pretty;
-        sprintf "width        = %s" (print_width width);
-        sprintf "cst          = %b" cst;
-        sprintf "recovery     = %b" recovery;
-        sprintf "used_tokens  = %b" used_tokens;
-        sprintf "trace_recovery = %s" (print_trace_recovery trace_recovery)] in
-    begin
-      Buffer.add_string buffer (String.concat ~sep:"\n" options);
-      Buffer.add_char   buffer '\n';
-      buffer
-    end
+        sprintf "mono           = %b" mono;
+        sprintf "pretty         = %b" pretty;
+        sprintf "width          = %s" (print_width width);
+        sprintf "cst            = %b" cst;
+        sprintf "layout         = %b" layout;
+        sprintf "regions        = %b" regions;
+        sprintf "recovery       = %b" recovery;
+        sprintf "used_tokens    = %b" used_tokens;
+        sprintf "trace_recovery = %s" (print_trace_recovery trace_recovery)]
+      in
+      begin
+        Buffer.add_string buffer (String.concat ~sep:"\n" options);
+        Buffer.add_char   buffer '\n';
+        buffer
+      end
 
     (* STATUS *)
 
@@ -239,6 +264,8 @@ module Make (LexerParams: LexerLib.CLI.PARAMETERS) : PARAMETERS =
         let recovery       = recovery
         let trace_recovery = trace_recovery
         let used_tokens    = used_tokens
+        let layout         = layout
+        let regions        = regions
       end
 
     module Status =

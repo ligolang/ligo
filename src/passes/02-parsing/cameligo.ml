@@ -60,14 +60,23 @@ module Make (Options : Options.S) =
         Preprocessor.CLI.MakeDefault (Config) in
       let module LexerParams =
         LexerLib.CLI.MakeDefault (PreprocParams) in
-      let module Options = LexerParams.Options in
-      let tree   =
-        parse_file ?jsligo ?preprocess ?project_root
-                   ~raise buffer file_path in
+      let module ParserParams =
+        ParserLib.CLI.MakeDefault (LexerParams) in
+      let module Options =
+        struct
+          include LexerParams.Options
+          let layout  = true
+          let regions = true
+        end in
+      let tree  = parse_file ?jsligo ?preprocess ?project_root
+                             ~raise buffer file_path in
       let buffer = Buffer.create 59 in
+      let open Options in
       let state  = Tree.mk_state
                      ~buffer
-                     ~offsets:Options.offsets
-                     Options.mode
+                     ~layout
+                     ~regions:Options.regions
+                     ~offsets
+                     mode
       in Cst_cameligo.Print.to_buffer state tree
   end

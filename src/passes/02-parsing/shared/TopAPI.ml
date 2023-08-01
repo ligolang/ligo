@@ -30,7 +30,12 @@ module type PRINTER =
     type state
 
     val mk_state :
-      ?buffer:Buffer.t -> offsets:bool -> [`Point | `Byte] -> state
+      ?buffer:Buffer.t ->
+      regions:bool ->
+      layout:bool ->
+      offsets:bool ->
+      [`Point | `Byte] ->
+      state
 
     type ('src, 'dst) printer = state -> 'src -> 'dst
 
@@ -162,10 +167,13 @@ module Make
         if Options.cst then
           (* Printing the syntax tree as ASCII *)
           let buffer = Buffer.create 2000 in
+          let open Options in
           let state  = Print.mk_state
                          ~buffer
-                         ~offsets:Options.offsets
-                         Options.mode in
+                         ~layout
+                         ~regions
+                         ~offsets
+                         mode in
           let string = Print.to_string state tree
           in Std.(add_line std.out string)
 
@@ -239,8 +247,8 @@ module Make
                 else
                   MainParser.incr_from_channel ~no_colour (module ParErr) stdin
                   |> mk_single std
-            in std, result in
-
+            in std, result
+          in
           let from_file file =
             let std = Std.empty in
             let result =
@@ -253,10 +261,10 @@ module Make
                 else
                   MainParser.incr_from_file ~no_colour (module ParErr) file
                   |> mk_single std
-            in std, result in
-
-          let file_path = Lexbuf.file_from_input input in
-
+            in std, result
+          in
+          let file_path = Lexbuf.file_from_input input
+          in
           if String.(file_path = "")
           then from_stdin ()
           else from_file file_path
