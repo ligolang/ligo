@@ -411,7 +411,13 @@ data LigoMapper u = LigoMapper
   , lmMichelsonCode :: Micheline.Expression
   }
 
-newtype EntrypointsList = EntrypointsList { unEntrypoints :: [Text] }
+data EntrypointName = EntrypointName
+  { enModule :: Text
+  , enName :: Text
+  } deriving stock (Show, Eq, Ord, Generic, Data)
+    deriving anyclass (NFData)
+
+newtype EntrypointsList = EntrypointsList { unEntrypoints :: [EntrypointName] }
   deriving newtype (Buildable)
 
 -- | Node representing ligo error with additional meta
@@ -741,6 +747,22 @@ instance FromJSON (LigoMapper 'Unique) where
         str@(String val) -> parseOnly scientific (T.encodeUtf8 val)
           & either (const str) Number
         other -> other
+
+-- This @Buildable@ instance handles only generated
+-- main functions for module entrypoints.
+-- For example:
+-- 1. someFoo -> someFoo
+-- 2. SomeModule.$main -> SomeModule
+-- 3. $main -> Current module
+instance Buildable EntrypointName where
+  build EntrypointName{..}
+    | not (T.null enModule) && enName /= generatedMainName = [int||#{enModule}.#{enName}|]
+    | not (T.null enModule) || enName /= generatedMainName =
+        [int||#{enModule}#{if enName == generatedMainName then "" else enName}|]
+    | otherwise = [int||Current module|]
+
+instance IsString EntrypointName where
+  fromString = mkEntrypointName . toText
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -1104,6 +1126,12 @@ buildLigoTypeF typ = case sing @u of
   SUnique -> build typ
   SConcise -> buildType Caml typ
 
+mkEntrypointName :: Text -> EntrypointName
+mkEntrypointName txt =
+  let enName = T.takeWhileEnd (/= '.') txt in
+  let enModule = T.dropEnd (T.length enName + 1) txt in
+  EntrypointName{..}
+
 makeLensesWith postfixLFields ''LigoExposedStackEntry
 makeLensesWith postfixLFields ''LigoIndexedInfo
 makePrisms ''LigoStackEntry
@@ -1126,7 +1154,7 @@ makeConciseLigoIndexedInfo vec indexedInfo =
 parseEntrypointsList :: Text -> Maybe EntrypointsList
 parseEntrypointsList (lines -> parts) = do
   entrypoints <- safeTail >=> safeInit $ parts
-  pure $ EntrypointsList entrypoints
+  pure $ EntrypointsList (mkEntrypointName <$> entrypoints)
   where
     safeTail :: [a] -> Maybe [a]
     safeTail = fmap tail . nonEmpty

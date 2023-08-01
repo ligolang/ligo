@@ -69,7 +69,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
 		await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 
-		const entrypoints: string[] =
+		const entrypoints: [string, string][] =
 			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).body.entrypoints.reverse();
 
 		const entrypoint: string =
