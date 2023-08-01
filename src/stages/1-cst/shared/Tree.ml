@@ -28,16 +28,20 @@ let sprintf = Printf.sprintf
    its parent?) *)
 
 type state = <
+  regions  : bool;
+  layout   : bool;
   offsets  : bool;
-  mode     : [ `Point | `Byte ];
+  mode     : [`Point | `Byte];
   buffer   : Buffer.t;
   pad_path : string;
   pad_node : string;
   pad      : int -> int -> state
 >
 
-let mk_state ?(buffer = Buffer.create 131) ~offsets mode =
-  object
+let mk_state ?(buffer = Buffer.create 131) ~regions ~layout ~offsets mode =
+  object (self)
+    method regions  = regions
+    method layout   = layout
     method offsets  = offsets
     method mode     = mode
     method buffer   = buffer
@@ -47,8 +51,10 @@ let mk_state ?(buffer = Buffer.create 131) ~offsets mode =
     method pad_node = pad_node
 
     method pad arity rank =
-      {<pad_path = pad_node ^ if rank = arity - 1 then "└ " else "├ ";
-        pad_node = pad_node ^ if rank = arity - 1 then "  " else "| ">}
+      if layout then
+        {< pad_path = pad_node ^ if rank = arity - 1 then "└ " else "├ ";
+           pad_node = pad_node ^ if rank = arity - 1 then "  " else "| ">}
+      else self
   end
 
 let to_buffer (state: state) = state#buffer
@@ -64,7 +70,9 @@ type 'a printer = state -> 'a -> unit
 (* PRINTING NODES (trees without children) *)
 
 let compact state (region : Region.t) =
-  region#compact ~offsets:state#offsets state#mode
+  if state#regions then
+    region#compact ~offsets:state#offsets state#mode |> sprintf " (%s)"
+  else ""
 
 let make_node ?region state root =
   let node =
@@ -72,7 +80,7 @@ let make_node ?region state root =
       None -> sprintf "%s%s\n" state#pad_path root
     | Some region ->
         let region = compact state region in
-        sprintf "%s%s (%s)\n" state#pad_path root region
+        sprintf "%s%s%s\n" state#pad_path root region
   in Buffer.add_string state#buffer node
 
 let make_literal state (wrap : string Wrap.t) =
@@ -154,14 +162,14 @@ type lexeme = string
 
 let make_string state (wrap : string Wrap.t) =
   let region = compact state wrap#region in
-  let node   = sprintf "%s%S (%s)\n" state#pad_path wrap#payload region
+  let node   = sprintf "%s%S%s\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
 
 (* Verbatim strings *)
 
 let make_verbatim state (wrap : string Wrap.t) =
   let region = compact state wrap#region in
-  let node   = sprintf "%s{|%s|} (%s)\n" state#pad_path wrap#payload region
+  let node   = sprintf "%s{|%s|}%s\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
 
 (* Numbers *)

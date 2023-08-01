@@ -26,7 +26,12 @@ module type PRINTER =
     type state
 
     val mk_state :
-      ?buffer:Buffer.t -> offsets:bool -> [`Point | `Byte] -> state
+      ?buffer:Buffer.t ->
+      regions:bool ->
+      layout:bool ->
+      offsets:bool ->
+      [`Point | `Byte] ->
+      state
 
     type ('src, 'dst) printer = state -> 'src -> 'dst
 

@@ -21,7 +21,12 @@ module Wrap = Lexing_shared.Wrap
 type state
 
 val mk_state :
-  ?buffer:Buffer.t -> offsets:bool -> [ `Byte | `Point ] -> state
+  ?buffer:Buffer.t ->
+  regions:bool ->
+  layout:bool ->
+  offsets:bool ->
+  [ `Byte | `Point ] ->
+  state
 
 val to_buffer : state -> Buffer.t
 
