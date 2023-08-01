@@ -101,92 +101,113 @@ module MakeParser
 
     (* Generic parser *)
 
-    let gen_parser ?(jsligo=None) ?(preprocess=true) ?project_root ~raise
-                   ?file_path buffer
-      : CST.tree =
+    module type ParserLexer = sig
+      module Parser : ParserLib.LowAPI.S
+        with type token = Token.t and type tree = CST.tree
+      module Lexer : Lexing_shared.TopAPI.S
+      module DefaultPreprocParams : Preprocessor.CLI.PARAMETERS
+    end
+
+    module type ParserLexerOptions = sig
+      val jsligo : file_path option option
+      val preprocess : bool
+      val project_root : file_path option
+      val raise : raise
+      val file_path : file_path option
+    end
+
+    module ParserLexerGenerator
+      (Options : ParserLexerOptions) : ParserLexer = struct
       (* Instantiating the general lexer of LexerLib *)
-
+      open Options
       let preprocess_opt   = preprocess
-      and project_root_opt = project_root
-      and jsligo_opt       = jsligo
-      in
-      let module Warning =
-        struct
-          let add = raise.Trace.warning
+      let project_root_opt = project_root
+      let jsligo_opt       = jsligo
+        module Warning =
+          struct
+            let add = raise.Trace.warning
+          end
+        module DefaultPreprocParams =
+          Preprocessor.CLI.MakeDefault (Config)
+        module PreprocParams =
+          struct
+            module Config = Config
+            module Status = DefaultPreprocParams.Status
+            module Options: Preprocessor.Options.S =
+              struct
+                include DefaultPreprocParams.Options
+
+                let input = file_path
+                let project_root = project_root_opt
+              end
+          end
+
+        module Preproc = PreprocAPI.Make (PreprocParams)
+
+        module LexerParams =
+          struct
+            include LexerLib.CLI.MakeDefault (PreprocParams)
+
+            module Options =
+              struct
+                include Options
+
+                let preprocess = preprocess_opt
+                let jsligo = jsligo_opt
+              end
+          end
+
+        module Lexer =
+          LexerAPI.Make
+            (Preproc) (LexerParams) (Token)
+            (UnitPasses) (TokenPasses) (Warning)
+
+        (* Adapting the lexer of the LexerLib to the one expected by the
+          [ParserLib.LowAPI.Make] *)
+
+        module MainLexer =
+          struct
+            include Lexer
+
+            let scan_token ~no_colour lexbuf =
+              match scan_token ~no_colour lexbuf with
+                Ok _ as ok -> ok
+              | Error {message; _} -> Error message
+          end
+
+        (* Instantiating the parser of LexerLib *)
+
+        module NoDebug =
+          struct
+            let mode           = `Point
+            let trace_recovery = None
+          end
+
+        module Parser =
+          ParserLib.LowAPI.Make (MainLexer) (Parser) (NoDebug)
+
         end
-      in
-      let module DefaultPreprocParams =
-        Preprocessor.CLI.MakeDefault (Config)
-      in
-      let module PreprocParams =
-        struct
-          module Config = Config
-          module Status = DefaultPreprocParams.Status
-          module Options: Preprocessor.Options.S =
-            struct
-              include DefaultPreprocParams.Options
 
-              let input = file_path
-              let project_root = project_root_opt
-            end
-        end in
-
-      let module Preproc = PreprocAPI.Make (PreprocParams) in
-
-      let module LexerParams =
-        LexerLib.CLI.MakeDefault (PreprocParams) in
-
-      let module LexerParams =
-        struct
-          include LexerParams
-
-          module Options =
-            struct
-              include LexerParams.Options
-
-              let preprocess = preprocess_opt
-              let jsligo = jsligo_opt
-            end
-        end in
-
-      let module MainLexer =
-        LexerAPI.Make
-          (Preproc) (LexerParams) (Token)
-          (UnitPasses) (TokenPasses) (Warning) in
-
-      (* Adapting the lexer of the LexerLib to the one expected by the
-         [ParserLib.LowAPI.Make] *)
-
-      let module Lexer =
-        struct
-          include MainLexer
-
-          let scan_token ~no_colour lexbuf =
-            match scan_token ~no_colour lexbuf with
-              Ok _ as ok -> ok
-            | Error {message; _} -> Error message
-        end in
-
-      (* Instantiating the parser of LexerLib *)
-
-      let module NoDebug =
-        struct
-          let mode           = `Point
-          let trace_recovery = None
-        end in
-
-      let module MainParser =
-        ParserLib.LowAPI.Make (Lexer) (Parser) (NoDebug) in
+    let gen_parser ?(jsligo=None) ?(preprocess=true) ?project_root ~raise
+                ?file_path buffer : CST.tree =
+      let module Options : ParserLexerOptions = struct
+        let jsligo = jsligo
+        let preprocess = preprocess
+        let project_root = project_root
+        let raise = raise
+        let file_path = file_path
+      end in
+      let module ParserLexer = ParserLexerGenerator (Options) in
 
       (* Running the parser in error recovery mode *)
 
       let tree =
         let string    = Buffer.contents buffer in
         let lexbuf    = Lexing.from_string string in
-        let no_colour = DefaultPreprocParams.Options.no_colour in
+        let no_colour = ParserLexer.DefaultPreprocParams.Options.no_colour in
         let        () = Lexbuf.reset ?file:file_path lexbuf in
-        let        () = Lexer.clear () in
-        MainParser.recov_from_lexbuf ~no_colour (module ParErr) lexbuf
+        let        () = ParserLexer.Lexer.clear () in
+        ParserLexer.Parser.recov_from_lexbuf ~no_colour (module ParErr) lexbuf
 
       in lift ~raise tree
 

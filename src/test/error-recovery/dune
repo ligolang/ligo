@@ -1,3 +1,11 @@
+(library
+ (name error_recovery)
+ (public_name ligo.lsp_test.error_recovery)
+ (libraries
+  ligo
+  ligo.unix)
+ (preprocess (pps ppx_let)))
+
 (alias
  (name recovery-test)
  (deps

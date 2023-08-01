@@ -1,16 +1,9 @@
-(rule
- (alias runtest)
- (deps
-  (:script ../../test.sh)
-  (glob_files *.jsligo)
-  (glob_files original/*.jsligo)
-  ../../../../passes/02-parsing/jsligo/ParserMain.exe)
- (action
-  (progn
-   (run
-    bash
-    %{script}
-    --dialect=jsligo
-    --test-type=simple
-    --dune-workspace=%{workspace_root})
-   (diff? results.csv.expected results.csv))))
+(library
+ (name simple_jsligo_test)
+ (public_name ligo.lsp_test.error_recovery.simple_jsligo_test)
+ (inline_tests
+  (deps
+   (glob_files *.jsligo)
+   (glob_files original/*.jsligo)))
+ (libraries error_recovery)
+ (preprocess (pps ppx_expect)))
