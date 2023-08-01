@@ -5,6 +5,10 @@ let pwd = Caml.Sys.getcwd ()
 let () = Caml.Sys.chdir "../../test/contracts/polymorphism/"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; test "monomorphisation_let.mligo" ];
+  [%expect {| { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
