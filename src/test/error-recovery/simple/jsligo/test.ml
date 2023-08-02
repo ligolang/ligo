@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_simple_jsligo" =
   printf "%s" @@ Error_recovery.test_jsligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 8, 224, 50, 191, 11, ./extra_arrow_in_lambda.jsligo
     FAIL : can't recover test file./extra_colon_in_return_type.jsligo

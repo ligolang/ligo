@@ -6,4 +6,5 @@
    (glob_files *.jsligo)
    (glob_files original/*.jsligo)))
  (libraries error_recovery)
- (preprocess (pps ppx_expect)))
+ (preprocess
+  (pps ppx_expect)))

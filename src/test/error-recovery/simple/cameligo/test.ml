@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_simple_cameligo" =
   printf "%s" @@ Error_recovery.test_cameligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 5, 39, 25, 94, 3, ./case_kw_instead_of_match_kw.mligo
     PASS, 16, 71, 71, 177, 0, ./extra_arrow_in_case_expr.mligo
