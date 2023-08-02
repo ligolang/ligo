@@ -6,4 +6,5 @@
    (glob_files *.ligo)
    (glob_files original/*.ligo)))
  (libraries error_recovery)
- (preprocess (pps ppx_expect)))
+ (preprocess
+  (pps ppx_expect)))

@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_fuzzing_cameligo" =
   printf "%s" @@ Error_recovery.test_cameligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 30, 133, 41, 252, 8, ./1annotated_michelson_record_tree.mligo
     PASS, 10, 57, 1, 148, 1, ./1condition.mligo

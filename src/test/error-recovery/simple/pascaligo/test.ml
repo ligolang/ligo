@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_simple_pascaligo" =
   printf "%s" @@ Error_recovery.test_pascaligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 0, 0, 0, 0, 0, ./extra_arrow_in_case_expr.ligo
     PASS, 0, 0, 0, 0, 0, ./extra_colon_in_const_decl.ligo

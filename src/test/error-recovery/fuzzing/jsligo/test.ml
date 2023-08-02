@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_fuzzing_jsligo" =
   printf "%s" @@ Error_recovery.test_jsligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 119, 715, 335, 461, 51, ./16tuples_sequences_functions.jsligo
     PASS, 71, 742, 298, 675, 45, ./1high-order.jsligo

@@ -1,6 +1,7 @@
 let%expect_test "error_recovery_fuzzing_pascaligo" =
   printf "%s" @@ Error_recovery.test_pascaligo ();
-  [%expect {|
+  [%expect
+    {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
     PASS, 86, 578, 302, 1695, 23, ./1loop.ligo
     PASS, 24, 166, 14, 133, 2, ./1loop7.ligo
