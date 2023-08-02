@@ -239,9 +239,7 @@ instance HasSpecificMessages LIGO where
 
       writeStoppedEvent reason label = do
         let hitBreakpointIds = case reason of
-              -- Wait for this issue to be resolved:
-              -- https://gitlab.com/morley-framework/morley-debugger/-/issues/91
-              -- BreakpointPaused ids -> unBreakpointId <$> one ids
+              BreakpointPaused ids -> Just ids
               _ -> Nothing
 
         (mDesc, mLongDesc) <- usingReaderT dapState $ magnify dsDebuggerState $

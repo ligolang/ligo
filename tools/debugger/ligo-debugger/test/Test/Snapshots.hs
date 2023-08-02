@@ -456,7 +456,7 @@ test_Snapshots = testGroup "Snapshots collection"
         goAndCheckLinePosition 7
 
         liftIO $ step "check that \"s2\" is not inlined"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         checkSnapshot \snap -> do
           let stackItems = snap ^?! isStackFramesL . ix 0 . sfStackL
           let s2ItemMb = stackItems

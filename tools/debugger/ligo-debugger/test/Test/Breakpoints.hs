@@ -5,9 +5,11 @@ module Test.Breakpoints
 import Test.Tasty (TestTree)
 import Test.Util
 import Test.Util.Options (minor)
+import Text.Interpolation.Nyan hiding (rmode')
 
 import Morley.Debugger.Core.Breakpoint qualified as N
 import Morley.Debugger.Core.Common (SrcLoc (..))
+import Morley.Debugger.Core.Navigate (Direction (..))
 import Morley.Debugger.Core.Navigate qualified as N
 import Morley.Debugger.Core.Snapshots qualified as N
 import Morley.Debugger.DAP.Types.Morley ()
@@ -31,21 +33,21 @@ test_test = minor <$>
         N.switchBreakpoint (MSFile file) (SrcLoc 5 0)
 
         liftIO $ step "Visiting 1st breakpoint"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           -- here and further we don't expect any concrete column number
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 2 2)
 
         liftIO $ step "Visiting 2nd breakpoint"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning (EventExpressionPreview GeneralExpression)
           -- here and further we don't expect any concrete column number
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 2 11)
 
         liftIO $ step "Visiting 3rd breakpoint"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 5 2)
@@ -105,7 +107,7 @@ test_test = minor <$>
         N.switchBreakpoint (MSFile nestedFile2) (SrcLoc 1 0)
 
         liftIO $ step "Go to first breakpoint"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -115,7 +117,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Calculate arguments"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -125,7 +127,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (switch file)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -135,7 +137,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (go to start file)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -145,7 +147,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at statement"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -155,7 +157,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at function call"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -165,7 +167,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Calculate arguments"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -175,7 +177,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (nested file, statement)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -185,7 +187,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (go to start file)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -195,7 +197,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at statement"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -205,7 +207,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at function call"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -215,7 +217,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Calculate arguments"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -225,7 +227,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at function call"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -235,7 +237,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at statement"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -245,7 +247,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop inside tuple"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -255,7 +257,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at second element"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -265,7 +267,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at \"what\" call"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -275,7 +277,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Calculate arguments for \"what\""
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -284,7 +286,7 @@ test_test = minor <$>
               (SrcLoc 9 79)
             )
 
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -293,7 +295,7 @@ test_test = minor <$>
               (SrcLoc 9 79)
             )
 
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -302,7 +304,7 @@ test_test = minor <$>
               (SrcLoc 9 72)
             )
 
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -312,7 +314,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at statement"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -322,7 +324,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Stop at \"strange\" call"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -332,7 +334,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Calculate arguments for \"strange\""
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -342,7 +344,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (more nested file)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -352,7 +354,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to next breakpoint (go back)"
-        goToNextBreakpoint
+        goToNextBreakpoint Forward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -362,7 +364,7 @@ test_test = minor <$>
             )
 
         liftIO $ step "Go to previous breakpoint"
-        goToPreviousBreakpoint
+        goToNextBreakpoint Backward
         N.frozen do
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
@@ -370,4 +372,42 @@ test_test = minor <$>
               (SrcLoc 1 2)
               (SrcLoc 1 19)
             )
+
+    -- Cover regression in
+    -- https://gitlab.com/morley-framework/morley-debugger/-/issues/91
+  , testCaseSteps "Breakpoint ids in different files are unique" \step -> do
+      let modulePath = contractsDir </> "module_contracts"
+      let file = modulePath </> "importer.mligo"
+      let nestedFile  = modulePath </> "imported.mligo"
+      let nestedFile2 = modulePath </> "imported2.jsligo"
+      let runData = ContractRunData
+            { crdProgram = file
+            , crdEntrypoint = Nothing
+            , crdParam = ()
+            , crdStorage = 5 :: Integer
+            }
+
+      testWithSnapshots runData do
+        N.switchBreakpoint (MSFile file) (SrcLoc 7 0)
+        N.switchBreakpoint (MSFile nestedFile) (SrcLoc 18 0)
+        N.switchBreakpoint (MSFile nestedFile2) (SrcLoc 3 0)
+        N.switchBreakpoint (MSFile nestedFile2) (SrcLoc 9 0)
+
+        liftIO $ step "Fly through all the breakpoints"
+        -- Doing a bit more steps than breakpoints just in case
+        let stepsNum = 6
+        visitedBreakpoints <- replicateM stepsNum (goToNextBreakpointLine' Forward)
+        let uniqueBreakpointsNum = length (ordNub visitedBreakpoints)
+        if
+          | uniqueBreakpointsNum == 4 -> pass
+          | uniqueBreakpointsNum < 4 ->
+            liftIO $ assertFailure [int||
+              Visited only #{uniqueBreakpointsNum} breakpoints, expected 4
+            |]
+          | uniqueBreakpointsNum == stepsNum ->
+            liftIO $ assertFailure [int||
+              All breakpoints seem to have unique ids, something's odd
+            |]
+          | otherwise -> pass
+
   ]
