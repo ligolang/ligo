@@ -243,9 +243,6 @@ data CollectorState m = CollectorState
     -- have @EventExpressionPreview@ event.
   , csLoggingFunction :: Text -> m ()
     -- ^ Function for logging some useful debugging info.
-  , csMainFunctionName :: Name 'Unique
-    -- ^ Name of main entrypoint.
-    -- We need to store it in order not to create an extra stack frame.
   , csLastRangeMb :: Maybe Range
     -- ^ Last range. We can use it to get
     -- the latest position where some
@@ -505,22 +502,25 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
 
           forM_ (lmAllFuncNames meta) \name -> do
             let sfName = pretty name
-            loc <- use $ csActiveStackFrameL . sfLocL
+
+            curStackFrame <- use csActiveStackFrameL
+            let loc = curStackFrame ^. sfLocL
+
             let newStackFrame = StackFrame
                   { sfLoc = loc
                   , sfStack = []
                   , ..
                   }
 
-            mainFunctionName <- use csMainFunctionNameL
-
-            unless (name `compareUniqueNames` mainFunctionName) do
-              logMessage
-                [int||
-                  Created new stack frame #{newStackFrame}
-                |]
-
-              csStackFramesL %= cons newStackFrame
+            -- Sometimes debugging starts not in the main function (e.g. calculating top-level values).
+            -- We assign to this stack frame a @<start>@ name. When we're
+            -- going to do the first @EXEC@ then we're entering the main function.
+            --
+            -- So, we need to replace the name of the @<start>@ stack frame with
+            -- actual main entrypoint one.
+            if curStackFrame ^. sfNameL == beforeMainStackFrameName
+            then csActiveStackFrameL . sfNameL .= sfName
+            else csStackFramesL %= cons newStackFrame
 
           newStack <- runInstr instr stack
 
@@ -734,13 +734,18 @@ runCollectInterpretSnapshots act env initSt initStorage =
           , ..
           }
 
+-- | Sometimes before calling an entrypoint
+-- we may step through some top-levels. It would be
+-- convenient to assign this name to the first stack frame.
+beforeMainStackFrameName :: Text
+beforeMainStackFrameName = "<start>"
+
 -- | Execute contract similarly to 'interpret' function, but in result
 -- produce an entire execution history.
 collectInterpretSnapshots
   :: forall m cp st arg.
      (MonadUnliftIO m, MonadActive m)
   => FilePath
-  -> Text
   -> Contract cp st
   -> EntrypointCallT cp arg
   -> Value arg
@@ -754,7 +759,6 @@ collectInterpretSnapshots
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile
-  entrypoint
   Contract{..}
   epc
   param
@@ -778,7 +782,7 @@ collectInterpretSnapshots
       collSt = CollectorState
         { csInterpreterState = initSt
         , csStackFrames = one StackFrame
-            { sfName = entrypoint
+            { sfName = beforeMainStackFrameName
             , sfStack = []
             , sfLoc = Range
               { _rFile = mainFile
@@ -791,7 +795,6 @@ collectInterpretSnapshots
         , csRecordedStatementRanges = HS.empty
         , csRecordedExpressionRanges = HS.empty
         , csLoggingFunction = logger
-        , csMainFunctionName = Name entrypoint
         , csLastRangeMb = Nothing
         , csLambdaLocs = lambdaLocs
         , csCheckStepsAmount = trackMaxSteps

@@ -265,7 +265,7 @@ mkSnapshotsForImpl
   -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique), LigoType, LigoTypesVec)
 mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
   let entrypoint = mEntrypoint ?: "main"
-  ligoMapper <- compileLigoContractDebug entrypoint file
+  ligoMapper <- compileLigoContractDebug (mkEntrypointName $ toText entrypoint) file
   (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles, lambdaLocs, entrypointType, ligoTypesVec) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v
@@ -308,7 +308,6 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param ::
   his <-
     collectInterpretSnapshots
       file
-      entrypoint
       contract
       T.unsafeEpcCallRoot
       (T.toVal param)

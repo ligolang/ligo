@@ -11,6 +11,7 @@ module Test.Navigation
   , test_values_inside_switch_and_match_with_are_statements
   , test_local_function_assignments_are_statements
   , test_record_update_is_statement
+  , test_Module_entrypoints
   , test_Next_golden
   , test_StepOut_golden
   , test_Continue_golden
@@ -196,6 +197,35 @@ test_record_update_is_statement =
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)
+
+test_Module_entrypoints :: TestTree
+test_Module_entrypoints = testGroup "Module entrypoints"
+  [ goldenTestWithSnapshots [int||Module entrypoint #{paramName}|]
+    "StepIn"
+    ContractRunData
+      { crdProgram = contractsDir </> "module-entrypoints.mligo"
+      , crdEntrypoint = Just "IncDec.$main"
+      , crdParam = param
+      , crdStorage = 100 :: Integer
+      }
+    (dumpAllSnapshotsWithStep doStep)
+  | (param, paramName) <-
+      [ (decrementParam, "decrement" :: Text)
+      , (incrementParam, "increment")
+      , (resetParam, "reset")
+      ]
+  ]
+  where
+    decrementParam :: Either (Either Integer Integer) ()
+    decrementParam = Left $ Left 42
+
+    incrementParam :: Either (Either Integer Integer) ()
+    incrementParam = Left $ Right 42
+
+    resetParam :: Either (Either Integer Integer) ()
+    resetParam = Right ()
+
+    doStep = processLigoStep (CStepIn GExpExt)
 
 test_Next_golden :: TestTree
 test_Next_golden = testGroup "Next" do
