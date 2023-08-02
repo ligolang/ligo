@@ -26,7 +26,7 @@ module Test.Util
   , genStepGranularity
     -- * Helpers for breakpoints
   , goToNextBreakpoint
-  , goToPreviousBreakpoint
+  , goToNextBreakpointLine'
   , goesAfter
   , goesBetween
   , isAtLine
@@ -78,13 +78,11 @@ import Text.Interpolation.Nyan hiding (rmode')
 import Text.Interpolation.Nyan.Core (RMode (..))
 import Text.Show qualified
 
-import Morley.Debugger.Core.Breakpoint
-  (BreakpointSelector (NextBreak), continueUntilBreakpoint, reverseContinue)
 import Morley.Debugger.Core.Common (SrcLoc (..))
 import Morley.Debugger.Core.Navigate
-  (DebuggerState (..), Direction (Backward, Forward), FrozenPredicate (FrozenPredicate),
-  HistoryReplay, HistoryReplayM, NavigableSnapshot (getExecutedPosition), SourceLocation,
-  SourceLocation' (SourceLocation), curSnapshot, evalWriterT, frozen, moveTill)
+  (BreakpointId, DebuggerState (..), Direction, FrozenPredicate (FrozenPredicate), HistoryReplay,
+  HistoryReplayM, MovementResult (..), NavigableSnapshot (getExecutedPosition), SourceLocation,
+  SourceLocation' (..), curSnapshot, evalWriterT, frozen, moveTill)
 import Morley.Michelson.Interpret (RemainingSteps)
 import Morley.Michelson.Runtime (ContractState (..))
 import Morley.Michelson.Runtime.Dummy (dummyMaxSteps)
@@ -195,6 +193,16 @@ compareWithCurLocation oldSrcLoc = FrozenPredicate do
   Just pos <- getExecutedPosition
   guard (pos /= oldSrcLoc)
 
+compareWithCurLine
+  :: (MonadState (DebuggerState (InterpretSnapshot u)) m)
+  => SourceLocation -> FrozenPredicate (DebuggerState (InterpretSnapshot u)) m ()
+compareWithCurLine oldSrcLoc = FrozenPredicate do
+  Just pos <- getExecutedPosition
+  guard . not $ and
+    [ _slPath pos == _slPath oldSrcLoc
+    , slLine (_slStart pos) == slLine (_slStart oldSrcLoc)
+    ]
+
 goesAfter
   :: (MonadState (DebuggerState is) m, NavigableSnapshot is)
   => SrcLoc -> FrozenPredicate (DebuggerState is) m ()
@@ -222,19 +230,41 @@ isAtLine line =
     (SrcLoc line 0)
     (SrcLoc (line + 1) 0)
 
-goToNextBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
-goToNextBreakpoint = do
+goToNextBreakpoint'
+  :: (HistoryReplay (InterpretSnapshot u) m, HasCallStack)
+  => Direction -> m BreakpointId
+goToNextBreakpoint' dir = do
   oldSrcLocMb <- frozen getExecutedPosition
-  case oldSrcLocMb of
-    Just oldSrcLoc -> void $ moveTill Forward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
-    Nothing -> void $ continueUntilBreakpoint NextBreak
+  outcome <- moveTill dir do
+    maybe true compareWithCurLocation oldSrcLocMb
+    isAtBreakpoint
+  case outcome of
+    MovedSuccessfully reason -> pure reason
+    _ -> error "Unexpectedly end of execution"
 
-goToPreviousBreakpoint :: (HistoryReplay (InterpretSnapshot u) m) => m ()
-goToPreviousBreakpoint = do
+goToNextBreakpoint
+  :: (HistoryReplay (InterpretSnapshot u) m, HasCallStack)
+  => Direction -> m ()
+goToNextBreakpoint dir = void (goToNextBreakpoint' dir)
+
+goToNextBreakpointLine'
+  :: (HistoryReplay (InterpretSnapshot u) m, HasCallStack)
+  => Direction -> m BreakpointId
+goToNextBreakpointLine' dir = do
   oldSrcLocMb <- frozen getExecutedPosition
-  case oldSrcLocMb of
-    Just oldSrcLoc -> void $ moveTill Backward (isAtBreakpoint >> compareWithCurLocation oldSrcLoc)
-    Nothing -> void $ reverseContinue NextBreak
+  outcome <- moveTill dir do
+    maybe true compareWithCurLine oldSrcLocMb
+    isAtBreakpoint
+  case outcome of
+    MovedSuccessfully reason -> pure reason
+    _ -> error "Unexpectedly end of execution"
+
+-- Yet unused, but will likely be helpful, and leaving it is more consistent
+-- with 'goToNextBreakpoint'
+_goToNextBreakpointLine
+  :: (HistoryReplay (InterpretSnapshot u) m, HasCallStack)
+  => Direction -> m ()
+_goToNextBreakpointLine dir = void (goToNextBreakpointLine' dir)
 
 data ContractRunData =
   forall param st.

@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nBreakpoints hit during stepping are now highlighted in the `BREAKPOINTS` pane.\\n\\n"
+merge_request: '2736'
+title: "Use fix for breakpoints"
+type: added
+            
