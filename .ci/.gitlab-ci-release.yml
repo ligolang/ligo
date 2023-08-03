@@ -137,7 +137,7 @@ release:
           --name "Release $CI_COMMIT_TAG" \
           --description "$(cat release-notes.md)" \
           --assets-link '{"name": "Static Linux binary", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo"}' \
-          --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}' \
+          --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}'
       fi
     - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
 

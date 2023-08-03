@@ -120,7 +120,7 @@ function main (const p : bool; const s : storage) : return is {
 <Syntax syntax="cameligo">
 
 ```cameligo group=failwith
-let main (p, s : bool * unit) =
+let main (p, s : bool * unit) : operation list * unit =
   let () = assert_with_error p "My custom error message."
   in [], s
 ```

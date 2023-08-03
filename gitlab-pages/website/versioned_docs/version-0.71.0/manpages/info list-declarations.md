@@ -29,6 +29,9 @@ The path to root of the project.
 **--skip-analytics**
 Avoid ligo analytics publication. Configurable with environment variable LIGO_SKIP_ANALYTICS too
 
+**--skip-generated**
+Skip generated declarations
+
 **--syntax SYNTAX**
 the syntax that will be used. Currently supported syntaxes are "cameligo" and "jsligo". By default, the syntax is guessed from the extension (.mligo and .jsligo respectively). (alias: -s)
 
