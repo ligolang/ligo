@@ -11,6 +11,8 @@ let sub (n, store : int * storage) : storage = store - n
 
 let main (action, store : parameter * storage) : return =
   [],
-  match action with
-    Increment n -> add (n, store)
-  | Decrement n -> sub (n, store)
+  (match action with
+     Increment n -> add (n, store)
+   | Decrement n -> sub (n, store))
+
+[@view] let v1 (n, store : int * storage) : int = store + n

@@ -24,7 +24,7 @@ Get the balance for the contract.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit; const s : tez) : list (operation) * tez is
+function check (const p : unit; const s : tez) : list (operation) * tez is
   (nil, Tezos.get_balance ())
 ```
 
@@ -32,7 +32,7 @@ function main (const p : unit; const s : tez) : list (operation) * tez is
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p,s : unit * tez) = [], Tezos.get_balance()
+let check (p,s : unit * tez) = [], Tezos.get_balance()
 ```
 
 </Syntax>
@@ -40,7 +40,7 @@ let main (p,s : unit * tez) = [], Tezos.get_balance()
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = (p: unit, s: tez):[list<operation>, tez] =>
+let check = (p: unit, s: tez):[list<operation>, tez] =>
   [list([]), Tezos.get_balance()];
 ```
 
@@ -223,14 +223,14 @@ Get the address that initiated the current transaction.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) is Tezos.get_sender()
+function check (const p : unit) is Tezos.get_sender()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) = Tezos.get_sender ()
+let check (p : unit) = Tezos.get_sender ()
 ```
 
 </Syntax>
@@ -238,7 +238,7 @@ let main (p : unit) = Tezos.get_sender ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let main = (p : unit) => Tezos.get_sender ();
+let check = (p : unit) => Tezos.get_sender ();
 ```
 
 </Syntax>
@@ -261,7 +261,7 @@ Get the address associated with a value of type `contract`.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : key_hash) is {
+function check (const p : key_hash) is {
   const c = Tezos.implicit_account (p)
 } with Tezos.address (c)
 ```
@@ -270,7 +270,7 @@ function main (const p : key_hash) is {
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : key_hash) =
+let check (p : key_hash) =
   let c = Tezos.implicit_account p
   in Tezos.address c
 ```
@@ -280,7 +280,7 @@ let main (p : key_hash) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let main = (p : key_hash) => {
+let check = (p : key_hash) => {
   let c = Tezos.implicit_account(p);
   return Tezos.address(c);
 };
@@ -305,14 +305,14 @@ Get the address of the currently running contract.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) is Tezos.get_self_address()
+function check (const p : unit) is Tezos.get_self_address()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) = Tezos.get_self_address ()
+let check (p : unit) = Tezos.get_self_address ()
 ```
 
 </Syntax>
@@ -320,7 +320,7 @@ let main (p : unit) = Tezos.get_self_address ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let main = (p : unit) => Tezos.get_self_address();
+let check = (p : unit) => Tezos.get_self_address();
 ```
 
 </Syntax>
@@ -343,7 +343,7 @@ you are not using entrypoints: use "%default"
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) is {
+function check (const p : unit) is {
   const c = Tezos.self ("%default");
 } with c
 ```
@@ -352,7 +352,7 @@ function main (const p : unit) is {
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) = Tezos.self("%default")
+let check (p : unit) = Tezos.self("%default")
 ```
 
 </Syntax>
@@ -360,7 +360,7 @@ let main (p : unit) = Tezos.self("%default")
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-let main = (p: unit) => Tezos.self("%default");
+let check = (p: unit) => Tezos.self("%default");
 ```
 
 </Syntax>
@@ -381,7 +381,7 @@ See also: http://tezos.gitlab.io/user/glossary.html#implicit-account
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const kh : key_hash) is
+function check (const kh : key_hash) is
   Tezos.implicit_account (kh)
 ```
 
@@ -389,7 +389,7 @@ function main (const kh : key_hash) is
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (kh : key_hash) = Tezos.implicit_account kh
+let check (kh : key_hash) = Tezos.implicit_account kh
 ```
 
 </Syntax>
@@ -397,7 +397,7 @@ let main (kh : key_hash) = Tezos.implicit_account kh
 <Syntax syntax="jsligo">
 
 ```jsligo group=i
-let main = (kh: key_hash) => Tezos.implicit_account(kh);
+let check = (kh: key_hash) => Tezos.implicit_account(kh);
 ```
 
 </Syntax>
@@ -442,14 +442,14 @@ current transaction.
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function main (const p : unit) is Tezos.get_source()
+function check (const p : unit) is Tezos.get_source()
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p : unit) = Tezos.get_source ()
+let check (p : unit) = Tezos.get_source ()
 ```
 
 </Syntax>
@@ -457,7 +457,7 @@ let main (p : unit) = Tezos.get_source ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=j
-let main = (p : unit) => Tezos.get_source();
+let check = (p : unit) => Tezos.get_source();
 ```
 
 </Syntax>
