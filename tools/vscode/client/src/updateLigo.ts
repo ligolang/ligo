@@ -505,7 +505,7 @@ async function promptLigoUpdate(
   switch (typeof installedVersionIdentifier) {
     // Semantic version
     case 'string':
-      if (semver.gte(installedVersionIdentifier, latestRelease.tag_name)) {
+      if (semver.eq(installedVersionIdentifier, latestRelease.tag_name)) {
         return installedVersionIdentifier
       }
       break
@@ -605,7 +605,7 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
   async function unsupportedVersion<T>(): Promise<T> {
     await showUpdateError(
       client,
-      'You need LIGO version 0.61.0 or greater so that `ligo lsp` may work. Closing the language server. Please update and try again.',
+      'You need LIGO version 0.61.0 or newer so that `ligo lsp` may work. Closing the language server. Please update and try again.',
       true,
       ligoPath,
       config,
@@ -619,7 +619,7 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
       const newVersion = await promptLigoUpdate(client, config, ligoPath, semverTest)
       switch (typeof newVersion) {
         case 'string':
-          if (semver.lt(newVersion, '0.61.0')) {
+          if (semver.neq(newVersion, '0.0.20230804') && semver.lt(newVersion, '0.61.0')) {
             return await unsupportedVersion()
           }
           break
