@@ -30,6 +30,7 @@ let default_config : config =
 class lsp_server =
   object (self)
     inherit Linol_lwt.Jsonrpc2.server as super
+    method spawn_query_handler = Linol_lwt.spawn
     val mutable config : config = default_config
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
