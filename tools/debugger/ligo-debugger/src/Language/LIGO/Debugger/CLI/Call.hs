@@ -31,6 +31,7 @@ import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
 import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
+import Data.SemVer.QQ qualified
 import Data.Text qualified as T
 import Data.Text qualified as Text
 import Fmt.Buildable (Buildable, build, pretty)
@@ -440,7 +441,7 @@ instance Buildable VersionSupport where
 
 -- | See how much do we support the provided version of @ligo@.
 isSupportedVersion :: SemVer.Version -> VersionSupport
-isSupportedVersion ver = fromMaybe VersionSupported $ asum
+isSupportedVersion ver = fromMaybe fullSupport $ asum
   -- List of rules to detect an unsupported version.
   --
   -- Rules in `docs/ligo-versions.md` make sure that this function
@@ -454,8 +455,14 @@ isSupportedVersion ver = fromMaybe VersionSupported $ asum
   --   ?- noSupport
   -- @
   [
+    -- The latest LIGO version. We hardcode it because
+    -- from @semver@'s point of view it's lower than
+    -- the minimal supported one.
+    ver == [Data.SemVer.QQ.version|0.0.20230804|]
+      ?- fullSupport
+
     -- Debug information in the necessary format is not available in old versions
-    ver < minimalSupportedVersion
+  , ver < minimalSupportedVersion
       ?- noSupport
 
     -- Future versions that we didn't check yet
@@ -470,6 +477,7 @@ isSupportedVersion ver = fromMaybe VersionSupported $ asum
 
     noSupport = VersionUnsupported
     partialSupport = VersionPartiallySupported
+    fullSupport = VersionSupported
 
   -- Implementation note: in case in the future we'll want to provide the users
   -- with the full list of supported versions, we can define rules in terms of
