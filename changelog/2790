@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nBump version to 0.0.20230804 to follow LIGO's version and make the extension recognize this LIGO version.\\n\\n"
+merge_request: '2790'
+title: "[Chore] Fix updating the newest version of LIGO"
+type: fixed
+            
