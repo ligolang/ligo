@@ -60,11 +60,11 @@ pin-depends: [
 
   [
     "linol.0.4"
-    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+    "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191"
   ]
   [
     "linol-lwt.0.4"
-    "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763"
+    "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191"
   ]
   [
     "ocaml-recovery-parser.0.2.4"

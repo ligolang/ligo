@@ -75,7 +75,7 @@ depends: [
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
-  # dev dependencies (not labels as { dev } since this feature doesn't work 
+  # dev dependencies (not labels as { dev } since this feature doesn't work
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
   # 0.24.1 release
@@ -142,6 +142,6 @@ pin-depends: [
   [ "octez-mec.dev" "./vendors/tezos-ligo/opam" ]
   [ "octez-distributed-internal.dev" "./vendors/tezos-ligo/opam" ]
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
-  [ "linol.0.4" "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763" ]
-  [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git#439534e0c5b7a3fbf93ba05fae7d171426153763" ]
+  [ "linol.0.4" "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191" ]
+  [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191" ]
 ]

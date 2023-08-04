@@ -3083,7 +3083,8 @@ module Lsp_server = struct
         Logs.set_level (Some Logs.Debug);
         let s = new Server.lsp_server in
         let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-        let task = Linol_lwt.Jsonrpc2.run server in
+        let shutdown () = Caml.(s#get_status = `ReceivedExit) in
+        let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
         Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
         match Linol_lwt.run task with
         | () -> Ok ("", "")
