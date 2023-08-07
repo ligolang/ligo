@@ -79,6 +79,8 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
     | SEQ -> ELogic (CompExpr (Equal (binop ghost_eq)))
     | LTGT -> ELogic (CompExpr (Neq (binop ghost_ne)))
     | DPIPE -> ELogic (BoolExpr (Or (binop ghost_bool_or)))
+    | DEQ -> ELogic (CompExpr (Equal (binop ghost_eq2)))
+    | EQ_SLASH_EQ -> ELogic (CompExpr (Neq (binop ghost_ne)))
     | DCOLON
     | WORD_LSL
     | WORD_LSR
@@ -93,8 +95,6 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
     | WORD_MOD
     | WORD_NOT
     | WORD_AND
-    | DEQ
-    | EQ_SLASH_EQ
     | CARET -> failwith "Impossible")
   | E_unary_op { operator; arg } ->
     let unop op : 'a CST.wrap CST.un_op CST.reg = w @@ CST.{ op; arg } in
@@ -116,6 +116,12 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
     CST.EAnnot
       (w @@ (CST.EArith (Int (ghost_int x)), ghost_as, CST.TVar (ghost_ident "tez")))
   | E_module_open_in m -> EModA (w @@ decompile_mod_path m)
+  | E_application { lamb; args } ->
+    CST.ECall
+      (w
+      @@ ( lamb
+         , CST.Multiple
+             (w @@ CST.{ lpar = ghost_lpar; rpar = ghost_rpar; inside = args, [] }) ))
   | expr when AST.expr_is_not_initial expr ->
     Helpers.failwith_not_initial_node_decompiler @@ `Expr e
   | _ ->
