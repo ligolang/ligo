@@ -5,23 +5,25 @@ module LC = Ligo_interpreter.Combinators
 open Ligo_prim
 
 let get_syntax ~raise ~support_pascaligo syntax loc =
-  match syntax with
-  | Some syntax -> syntax
-  | None ->
-    (match Location.get_file loc with
+  let of_syntax () =
+    match syntax with
+    | Some syntax -> syntax
     | None -> raise.error (Errors.generic_error loc "Could not detect syntax")
-    | Some r ->
-      let file = r#file in
-      let syntax =
-        Simple_utils.Trace.to_stdlib_result
-          (Syntax.of_string_opt
-             ~support_pascaligo
-             (Syntax_types.Syntax_name "auto")
-             (Some file))
-      in
-      (match syntax with
-      | Ok (r, _) -> r
-      | Error _ -> raise.error (Errors.generic_error loc "Could not detect syntax")))
+  in
+  match Location.get_file loc with
+  | None -> of_syntax ()
+  | Some r ->
+    let file = r#file in
+    let syntax =
+      Simple_utils.Trace.to_stdlib_result
+        (Syntax.of_string_opt
+           ~support_pascaligo
+           (Syntax_types.Syntax_name "auto")
+           (Some file))
+    in
+    (match syntax with
+    | Ok (r, _) -> r
+    | Error _ -> of_syntax ())
 
 
 let mutate_some_contract

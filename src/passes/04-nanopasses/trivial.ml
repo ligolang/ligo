@@ -603,6 +603,7 @@ end = struct
       in
       ret @@ E_for_in (ForAny { pattern; collection; block = fe_body })
     | E_constant x -> ret @@ E_constant x
+    | E_application { lamb; args } -> ret @@ E_application { lamb; args }
     | _ ->
       (* TODO : one day :) *)
       assert false

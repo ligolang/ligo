@@ -105,6 +105,7 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
   | E_literal (Literal_nat x) -> CST.E_Nat (ghost_nat x)
   | E_literal (Literal_mutez x) -> CST.E_Mutez (ghost_mutez @@ Z.to_int64 x)
   | E_module_open_in m -> E_ModPath (w @@ decompile_mod_path m)
+  | E_application { lamb; args } -> CST.E_App (w @@ (lamb, (args, [])))
   | expr when AST.expr_is_not_initial expr ->
     Helpers.failwith_not_initial_node_decompiler @@ `Expr e
   | _ ->
