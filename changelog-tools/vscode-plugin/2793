@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed syntax highlighting mistake when a type declaration without an ending semicolon was followed by a declaration with an attribute.\\n\\n"
+merge_request: '2793'
+title: "[Chore] Fix JsLIGO ASI + attribute on type decl"
+type: fixed
+            

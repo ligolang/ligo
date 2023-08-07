@@ -46,7 +46,7 @@ syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=>\|
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(;\|}\|\<\(else\|default\|case\|type\|let\|const\|namespace\|interface\|export\|import\)\>\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(;\|}\|@\|\<\(else\|default\|case\|type\|let\|const\|namespace\|interface\|export\|import\)\>\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
 highlight link typedefinition_ Keyword 
 
 " typebinder

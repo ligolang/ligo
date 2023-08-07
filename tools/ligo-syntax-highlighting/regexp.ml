@@ -420,15 +420,15 @@ let type_field_annotation_end: Core.regexp = {
 (*
   follow(type_decl) = SEMI RBRACE Else EOF Default Case
   I add a few other cases that break because of ASI:
-    Type Let Const Namespace Interface Export Import
+    Type Let Const Namespace Interface Export Import Attr
 *)
 let type_definition_begin_jsligo: Core.regexp = type_definition_match
 
 let type_definition_end_jsligo: Core.regexp = {
   (* FIXME: Emacs doesn't support positive look-ahead *)
   emacs    = "";
-  textmate = "(?=;|}|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)";
-  vim      = "\\(;\\|}\\|\\<\\(else\\|default\\|case\\|type\\|let\\|const\\|namespace\\|interface\\|export\\|import\\)\\>\\)\\@="
+  textmate = "(?=;|}|@|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)";
+  vim      = "\\(;\\|}\\|@\\|\\<\\(else\\|default\\|case\\|type\\|let\\|const\\|namespace\\|interface\\|export\\|import\\)\\>\\)\\@="
 }
 
 let type_name_match_jsligo: Core.regexp = {
