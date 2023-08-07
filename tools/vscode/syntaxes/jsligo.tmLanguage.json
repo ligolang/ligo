@@ -243,7 +243,7 @@
     },
     "typedefinition": {
       "begin": "\\b(type)\\b",
-      "end": "(?=;|}|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)",
+      "end": "(?=;|}|@|\\b(else|default|case|type|let|const|namespace|interface|export|import)\\b)",
       "beginCaptures": { "1": { "name": "keyword.other.jsligo" } },
       "endCaptures": {},
       "patterns": [
