@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nFixes the docker image which was missing esy\\n\\n"
+merge_request: '2797'
+title: "Get back esy from Docker image"
+type: fixed
+            
