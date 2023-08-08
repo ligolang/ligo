@@ -15,10 +15,10 @@ import {
 	ValidateEntrypointResponse,
 	ValidateValueArguments,
 	ValidateValueResponse,
-	SetSteppingGranularityArguments,
-	SetSteppingGranularityResponse,
 	SetLigoConfigArguments,
 	SetLigoConfigResponse,
+	ResolveConfigFromLigoResponse,
+	ResolveConfigFromLigoArguments,
 } from "./messages";
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import stream from 'stream'
@@ -30,7 +30,8 @@ import { SteppingGranularity } from "./ui";
 import * as ncp from 'copy-paste';
 
 type LigoSpecificRequest
-	= 'initializeLogger'
+	= 'resolveConfigFromLigo'
+	| 'initializeLogger'
 	| 'setLigoConfig'
 	| 'setProgramPath'
 	| 'validateEntrypoint'
@@ -345,6 +346,7 @@ export class LigoProtocolClient extends ProtocolClient {
 		});
 	}
 
+	sendMsg(command: 'resolveConfigFromLigo', args: ResolveConfigFromLigoArguments): Promise<ResolveConfigFromLigoResponse>
 	sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
 	sendMsg(command: 'setLigoConfig', args: SetLigoConfigArguments): Promise<SetLigoConfigResponse>
 	sendMsg(command: 'setProgramPath', args: SetProgramPathArguments): Promise<SetProgramPathResponse>

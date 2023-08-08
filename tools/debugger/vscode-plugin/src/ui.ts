@@ -9,10 +9,12 @@
 
 // Useful UI elements which is used to make the plugin more pleasant to use.
 
+import path from 'path';
 import * as vscode from 'vscode';
 import { QuickPickItem } from 'vscode';
-import { Maybe, Ref, isDefined, InputBoxType, InputValueLang, InputValidationResult, ContractMetadata, impossible } from './base'
+import { Maybe, Ref, isDefined, InputBoxType, InputValueLang, InputValidationResult, ContractMetadata, impossible, getCurrentWorkspacePath } from './base'
 import { LigoDebugContext, ValueAccess } from './LigoDebugContext'
+import * as fs from 'fs'
 
 export type SteppingGranularity
 	= 'statement'
@@ -259,6 +261,52 @@ export async function createRememberingQuickPick (
 			return newVal?.label;
 		})
 	}
+
+export async function getConfigPath(context: LigoDebugContext): Promise<Maybe<string>> {
+	interface State {
+		pickedConfigPath?: string;
+	}
+
+	async function askForConfigPath(input: MultiStepInput<State>, state: Ref<State>) {
+		const rememberedValue = context.workspaceState.lastConfigPath();
+
+		let lastValue = "";
+		if (isDefined(rememberedValue.value)) {
+			lastValue = rememberedValue.value;
+		}
+
+		const result = await input.showInputBox({
+			placeholder: "Config path",
+			totalSteps: 1,
+			value: lastValue,
+			prompt: "Write a path to LIGO config file (or just close this input box if you want to use launch.json config)",
+			validate: async (configPath) => {
+				if (!fs.existsSync(configPath)) {
+					return "Config file doesn't exist";
+				} else {
+					const extension = path.extname(configPath);
+					switch (extension) {
+						case ".mligo":
+						case ".jsligo":
+							break;
+						default:
+							return `Expected .mligo or .jsligo extension. Got: ${extension}`;
+					}
+				}
+			},
+			ignoreFocusOut: true
+		});
+
+		rememberedValue.value = result;
+
+		state.ref.pickedConfigPath = result;
+	}
+
+	const result: State =
+		await MultiStepInput.run((input, state) => askForConfigPath(input, state), {});
+
+	return result.pickedConfigPath;
+}
 
 export async function getEntrypoint (
 		context: LigoDebugContext,
@@ -828,4 +876,60 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
 	public dispose() {
 		this.emitter.dispose();
 	}
+}
+
+export async function createConfigSnippet(context: LigoDebugContext): Promise<boolean> {
+	return vscode.window.showSaveDialog({
+		defaultUri: getCurrentWorkspacePath(),
+		filters: {
+			LIGO: ['jsligo', 'mligo']
+		},
+	}).then(async pickedFile => {
+		if (isDefined(pickedFile)) {
+			const lang = path.extname(pickedFile.fsPath);
+
+			switch (lang) {
+				case ".mligo":
+				case ".jsligo":
+					break;
+				default:
+					let actualLang = lang == "" ? "<none>" : lang;
+					const errorMessage = [
+						"Expected a file to have an extension .mligo or .jsligo",
+						`Got: ${actualLang}`
+					].join("\n");
+
+					vscode.window.showErrorMessage(
+						errorMessage,
+						{ modal: true },
+					);
+					return false;
+			}
+
+			const pathToSnippet = vscode.Uri.file(context.asAbsolutePath("resources/config_snippets/config" + lang));
+			const snippetContents = await vscode.workspace.fs.readFile(pathToSnippet);
+
+			const workspaceEdit = new vscode.WorkspaceEdit();
+			workspaceEdit.createFile(pickedFile, {
+				contents: snippetContents,
+				overwrite: true
+			});
+
+			await vscode.workspace.applyEdit(workspaceEdit);
+
+			await vscode.workspace
+				.openTextDocument(pickedFile)
+				.then(config => {
+					vscode.window.showTextDocument(config);
+				});
+
+			vscode.window.showInformationMessage("Don't forget to update your launch.json config",
+				{ modal: true, detail: "Add a path or a (*@AskOnStart@*) command to your config file into the 'configPath' field." }
+			);
+
+			return true;
+		}
+
+		return false;
+	});
 }

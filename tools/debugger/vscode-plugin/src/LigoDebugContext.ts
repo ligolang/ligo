@@ -89,12 +89,20 @@ export class LigoDebugLocalStorage extends AbstractLigoDebugStorage {
         return this.access("quickpick", "entrypoint")
     }
 
+    lastConfigPath(): ValueAccess<string> {
+        return this.access("inputbox", "config", "path");
+    }
+
     lastParameterOrStorageValue(type: "parameter", entrypoint: string, michelsonEntrypoint?: string)
         : ValueAccess<[string, InputValueType]>;
     lastParameterOrStorageValue(type: "storage", entrypoint: string): ValueAccess<[string, InputValueType]>;
     lastParameterOrStorageValue(type: InputBoxType, entrypoint: string, michelsonEntrypoint?: string)
         : ValueAccess<[string, InputValueType]> {
         return this.access("quickpick", "switch", "button", type, entrypoint, michelsonEntrypoint)
+    }
+
+    askedForLigoConfig(): ValueAccess<boolean> {
+        return this.access("ask", "for", "ligo", "config");
     }
 }
 

@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { platform } from 'process'
+import { Maybe } from './base'
 
 // Server to forward requests from the debugger adapter to the process stdin and
 // stdout of the process to the client.
@@ -14,14 +15,14 @@ export default class LigoServer implements vscode.Disposable {
 	adapterProcess: cp.ChildProcess
 	adapterIsDead: boolean = false
 
-	private createAdapterProcess(cwd: string, command: string, args: ReadonlyArray<string>) {
+	private createAdapterProcess(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>) {
 		this.adapterProcess = cp.spawn(command, args, { cwd })
 		if (!this.adapterProcess || !this.adapterProcess.pid) {
 			this.showError("Couldn't run debugger adapter")
 		}
 	}
 
-	public constructor(cwd: string, command: string, args: ReadonlyArray<string>) {
+	public constructor(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>) {
 		if (!fs.existsSync(command)) {
 			this.showError("Couldn't find debugger adapter executable")
 		}

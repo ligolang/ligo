@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-MIT-OA
 
 import { execFileSync } from 'child_process';
+import path from 'path';
 import * as vscode from 'vscode';
 import { ConfigCommand, ConfigField } from './LigoDebugConfigurationProvider';
 
@@ -37,6 +38,33 @@ export function getCommand(str: Maybe<string>): Maybe<string> {
       return matches[1];
     }
   }
+}
+
+export interface LigoLaunchRequest {
+  noDebug?: boolean
+  program?: string
+  michelsonEntrypoint?: string
+  storage?: string
+  entrypoint?: string
+  parameter?: string
+  contractEnv?: LigoContractEnv
+}
+
+export interface LigoContractEnv {
+  now?: string
+  balance?: number
+  amount?: number
+  self?: string
+  source?: string
+  sender?: string
+  chainId?: string
+  level?: number
+  votingPowers?: VotingPowers
+}
+
+export interface VotingPowers {
+  kind: "simple"
+  contents: Map<string, number>
 }
 
 export interface MichelsonEntrypoints {
@@ -96,13 +124,14 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
   expectedExtractedCommand: ConfigCommand,
   configItem: T,
   resultPromise: () => Promise<Maybe<T>>,
-  defaultItem: T = configItem
-): Promise<T> {
+  defaultItem: T = configItem,
+  shouldInterruptOnClose = true,
+): Promise<Maybe<T>> {
   const extractedCommand = getCommand(configItem);
   if (isDefined(extractedCommand)) {
     if (extractedCommand === expectedExtractedCommand) {
       const result : Maybe<T> = await resultPromise();
-      if (!isDefined(result)) {
+      if (!isDefined(result) && shouldInterruptOnClose) {
         // If user decided to close entrypoint quickpick
         // then we want to stop debugging session immediately.
         // We can do this by throwing something (tried to throw `Error`
@@ -121,4 +150,8 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
 
 export function impossible(x: never) {
   throw new Error("An impossible happened! Value: " + x)
+}
+
+export function getCurrentWorkspacePath(): Maybe<vscode.Uri> {
+  return vscode.workspace.workspaceFolders?.[0].uri;;
 }

@@ -6,8 +6,8 @@ import LigoDebugAdapterServerDescriptorFactory from './LigoDebugAdapterDescripto
 import LigoDebugConfigurationProvider from './LigoDebugConfigurationProvider'
 import { LigoProtocolClient, GranularityFillingTrackerFactory } from './LigoProtocolClient'
 import LigoServer from './LigoServer'
-import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, DebugSteppingGranularityStatus } from './ui'
-import { Ref, Maybe, getBinaryPath, getCommand, isDefined, InputValueType, InputValidationResult} from './base'
+import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage, DebugSteppingGranularityStatus, createConfigSnippet } from './ui'
+import { Ref, Maybe, getBinaryPath, getCommand, isDefined, InputValueType, InputValidationResult, getCurrentWorkspacePath} from './base'
 import { LigoDebugContext } from './LigoDebugContext'
 import { LigoDebugAdapterTrackerFactory } from './LigoDebugAdapterTrackerFactory'
 
@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('ligo', documentProvider));
 
-	server = new LigoServer(context.extensionPath, adapterPath, [])
+	server = new LigoServer(getCurrentWorkspacePath()?.fsPath, adapterPath, [])
 	client = new LigoProtocolClient(server.address())
 
 	context.subscriptions.push(
@@ -70,6 +70,11 @@ export function activate(context: vscode.ExtensionContext) {
 			'ligo',
 			new LigoDebugAdapterTrackerFactory(),
 		)
+	);
+
+	vscode.commands.registerCommand(
+		'extension.ligo-debugger.createLigoConfig',
+		() => createConfigSnippet(ligoDebugContext)
 	);
 }
 

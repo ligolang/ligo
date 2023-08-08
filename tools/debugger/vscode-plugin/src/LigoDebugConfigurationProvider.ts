@@ -4,8 +4,7 @@ import { ContractMetadata, getBinaryPath, InputValueLang, isDefined, Maybe, tryE
 import { LigoDebugContext } from './LigoDebugContext'
 import { LigoProtocolClient } from './LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
-import { createRememberingQuickPick, getEntrypoint, getParameterOrStorage } from './ui'
-import * as path from 'path'
+import { createConfigSnippet, createRememberingQuickPick, getConfigPath, getEntrypoint, getParameterOrStorage } from './ui'
 
 function createLogDir(logDir: string): void | undefined {
 	if (!fs.existsSync(logDir)) {
@@ -23,6 +22,7 @@ export type ConfigField
 	| "parameter"
 	| "storage"
 	| "program"
+	| "configPath"
 	;
 
 export type ConfigCommand
@@ -39,15 +39,51 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		this.context = context;
 	}
 
-	private async resolveConfig(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
-		const currentWorkspacePath: Maybe<vscode.Uri> = vscode.workspace.workspaceFolders?.[0].uri;
+	private async tryToResolveConfigFromLigo(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
+		const pluginConfig = vscode.workspace.getConfiguration();
+		const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
+		const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
+		await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 
-		let defaultPath: Maybe<string>;
-		if (path.isAbsolute(config.program)) {
-			defaultPath = config.program;
-		} else if (isDefined(currentWorkspacePath)) {
-			defaultPath = vscode.Uri.joinPath(currentWorkspacePath, config.program).fsPath;
+		const configPath: Maybe<string> =
+			await tryExecuteCommand(
+				"configPath",
+				"AskOnStart",
+				config.configPath,
+				() => getConfigPath(this.context),
+				config.configPath,
+				false,
+			);
+
+		if (isDefined(configPath)) {
+			const resolvedConfig =
+				(await this.client.sendMsg('resolveConfigFromLigo', { configPath })).body;
+
+			config.program = resolvedConfig.program ?? "(*@CurrentFile@*)";
+			config.michelsonEntrypoint = resolvedConfig.michelsonEntrypoint;
+			config.entrypoint = resolvedConfig.entrypoint ?? "(*@AskOnStart@*)";
+			config.contractEnv = resolvedConfig.contractEnv;
+
+			if (isDefined(resolvedConfig.parameter)) {
+				config.parameter = resolvedConfig.parameter;
+				config.parameterLang = "Michelson";
+			} else {
+				config.parameter = "(*@AskOnStart@*)";
+			}
+
+			if (isDefined(resolvedConfig.storage)) {
+				config.storage = resolvedConfig.storage;
+				config.storageLang = "Michelson";
+			} else {
+				config.storage = "(*@AskOnStart@*)";
+			}
 		}
+
+		return config;
+	}
+
+	private async resolveConfig(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
+		const defaultPath: Maybe<string> = config.program;
 
 		const currentFilePath: Maybe<string> =
 			await tryExecuteCommand(
@@ -63,11 +99,6 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		}
 
 		await this.client.sendMsg('initializeLogger', { file: currentFilePath, logDir: config.logDir });
-
-		const pluginConfig = vscode.workspace.getConfiguration();
-		const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
-		const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
-		await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 
 		const entrypoints: [string, string][] =
 			(await this.client.sendMsg('setProgramPath', { program: currentFilePath })).body.entrypoints.reverse();
@@ -155,12 +186,16 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		return config;
 	}
 
+	private configDoesntExist(config: vscode.DebugConfiguration): boolean {
+		return !config.type && !config.request && !config.name;
+	}
+
 	async resolveDebugConfiguration(
 		_folder: vscode.WorkspaceFolder | undefined,
 		config: vscode.DebugConfiguration,
 		_token?: vscode.CancellationToken,
 	): Promise<vscode.DebugConfiguration> {
-		if (!config.type && !config.request && !config.name) {
+		if (this.configDoesntExist(config)) {
 			const editor = vscode.window.activeTextEditor
 			if (editor && (editor.document.languageId === 'mligo' || editor.document.languageId === 'jsligo')) {
 				config.type = 'ligo'
@@ -170,6 +205,13 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 				config.entrypoint = '(*@AskOnStart@*)'
 				config.parameter = '(*@AskOnStart@*)'
 				config.storage = '(*@AskOnStart@*)'
+				config.configPath = '(*@AskOnStart@*)'
+			}
+		} else if (!isDefined(config.configPath)) {
+			const askedForConfig = this.context.workspaceState.askedForLigoConfig();
+			if (!isDefined(askedForConfig) || !askedForConfig.value) {
+				const created = await createConfigSnippet(this.context);
+				askedForConfig.value = created;
 			}
 		}
 
@@ -181,6 +223,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 		config.entrypoint ??= '(*@AskOnStart@*)'
 		config.parameterLang ??= 'LIGO'
 		config.storageLang ??= 'LIGO'
+		config.configPath ??= '(*@AskOnStart@*)'
 
 		if (config.logDir === '') {
 			config.logDir = undefined
@@ -188,6 +231,8 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 
 		const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
 		if (currentFilePath) {
+			config = await this.tryToResolveConfigFromLigo(config);
+
 			const { logDir } = config
 			// Create logDir if needed
 			if (logDir) {
