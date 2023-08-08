@@ -9,7 +9,8 @@ cd "$( dirname "${BASH_SOURCE[0]}" )"/..
 
 
 TEMP_VERSION="{}"
-mapfile -t VERSIONS < <(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -Vr; git log --format=format:%H | tail -n 1)
+# Keep only 45 latest version to limit cpu consuming during changelog generation
+mapfile -t VERSIONS < <(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -Vr | head -n 45; git log --format=format:%H | tail -n 1)
 
 PREV_VERSION=HEAD
 # if a file is corrupted and doesn't respect format, we don't want to stop de pipeline
