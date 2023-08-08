@@ -86,6 +86,12 @@ type all =
   | `Test_expected_to_fail
   | `Test_not_expected_to_fail
   | `Test_repl of string list * string list
+  | `Resolve_config_type_mismatch of
+    string
+    * string
+    * Ast_typed.type_expression
+    * (Format.formatter -> Ast_typed.type_expression -> unit)
+  | `Resolve_config_corner_case of string
   | `Repl_unexpected
   ]
 [@@deriving poly_constructor]

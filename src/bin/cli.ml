@@ -2138,6 +2138,34 @@ let get_scope =
     <*> no_stdlib)
 
 
+let resolve_config =
+  let f source_file display_format () =
+    let raw_options = Raw_options.make () in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"info_resolve-config"
+        ~raw_options
+        ~source_file
+        ()
+    in
+    return_result
+      ~skip_analytics:true
+      ~cli_analytics
+      ~return
+      ~display_format
+      ~no_colour:true
+      ~warning_as_error:raw_options.warning_as_error
+    @@ Api.Info.resolve_config raw_options source_file
+  in
+  let summary = "Resolves a config for the LIGO debugger" in
+  let readme () =
+    "This sub-command resolves a configuration written in LIGO which can be used for the \
+     LIGO debugger.\n\n\
+    \    For more information, read the debugger's read me."
+  in
+  Command.basic ~summary ~readme (f <$> source_file <*> display_format)
+
+
 let info_group =
   let summary = "tools to get information from contracts" in
   Command.group
@@ -2145,6 +2173,7 @@ let info_group =
     [ "list-declarations", list_declarations
     ; "measure-contract", measure_contract
     ; "get-scope", get_scope
+    ; "resolve-config", resolve_config
     ]
 
 
