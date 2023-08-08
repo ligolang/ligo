@@ -5,10 +5,14 @@ module Language.LIGO.Debugger.Error
   , DebuggerExceptionType(..)
 
   , ImpossibleHappened(..)
+
+  , handleJSONException
   ) where
 
+import Data.Aeson (decode)
 import Fmt.Buildable (Buildable, FromDoc, build, pretty)
 import GHC.TypeLits (KnownSymbol, Symbol)
+import UnliftIO (MonadUnliftIO, handle, throwIO)
 
 import Language.LIGO.Debugger.CLI.Exception
 import Language.LIGO.Extension
@@ -112,6 +116,11 @@ instance DebuggerException LigoDecodeException where
   debuggerExceptionType _ = MidLigoLayerException
   shouldInterruptDebuggingSession = False
 
+instance DebuggerException LigoResolveConfigException where
+  type ExceptionTag LigoResolveConfigException = "LigoResolveConfig"
+  debuggerExceptionType _ = UserException
+  shouldInterruptDebuggingSession = False
+
 instance DebuggerException ConfigurationException where
   type ExceptionTag ConfigurationException = "Configuration"
   debuggerExceptionType _ = UserException
@@ -126,3 +135,18 @@ instance DebuggerException LigoCallException where
   type ExceptionTag LigoCallException = "LigoCall"
   debuggerExceptionType _ = LigoLayerException
   shouldInterruptDebuggingSession = False
+
+----------------------------------------------------------------------------
+-- Helpers
+----------------------------------------------------------------------------
+
+-- | Handle @LigoClientFailureException@, try to decode it from JSON
+-- and wrap it's contents with provided constructor.
+handleJSONException :: (DebuggerException exc, MonadUnliftIO m) => (Text -> exc) -> m a -> m a
+handleJSONException ctor = handle \e@LigoClientFailureException{..} -> do
+  let excBody = encodeUtf8 cfeStderr
+  case decode excBody of
+    Just [LigoJSONException{..}] -> do
+      let rewrap = ctor (ljecMessage ljeContent)
+      throwIO rewrap
+    _ -> throwIO e
