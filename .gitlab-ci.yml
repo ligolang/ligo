@@ -291,7 +291,7 @@ algolia-crawl:
     # We want to trigger the job after page:deploy to reindex the website but job can't depends on page:deploy. So we put a artificial sleep of 10 seconds before triggering algolia crawler to be sure that it'll works
     - |
       sleep 20
-      curl -X post  -H "Content-Type: application/json" --user ${ALGOLIA_CRAWLER_ID}:${ALGOLIA_CRAWLER_TOKEN} https://crawler.algolia.com/api/1/crawlers/bb0597ba-5abc-45ba-bdf9-99f8152e87b0/reindex
+      curl -X POST  -H "Content-Type: application/json" --user ${ALGOLIA_CRAWLER_ID}:${ALGOLIA_CRAWLER_TOKEN} https://crawler.algolia.com/api/1/crawlers/bb0597ba-5abc-45ba-bdf9-99f8152e87b0/reindex
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       changes:
