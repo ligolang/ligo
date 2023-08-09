@@ -31,7 +31,6 @@ import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
 import Data.Map qualified as M
 import Data.SemVer qualified as SemVer
-import Data.SemVer.QQ qualified
 import Data.Text qualified as T
 import Data.Text qualified as Text
 import Fmt.Buildable (Buildable, build, pretty)
@@ -454,21 +453,13 @@ isSupportedVersion ver = fromMaybe fullSupport $ asum
   -- ver == [Data.SemVer.QQ.version|0.1.2|]
   --   ?- noSupport
   -- @
-  [
-    -- The latest LIGO version. We hardcode it because
-    -- from @semver@'s point of view it's lower than
-    -- the minimal supported one.
-    ver == [Data.SemVer.QQ.version|0.0.20230804|]
-      ?- fullSupport
-
-    -- Debug information in the necessary format is not available in old versions
-  , ver < minimalSupportedVersion
+  [ -- Debug information in the necessary format is not available in old versions
+    ver < minimalSupportedVersion
       ?- noSupport
 
     -- Future versions that we didn't check yet
   , ver > recommendedVersion  -- don't hesitate to replace this with a higher constant
       ?- partialSupport
-
   ]
   where
     infix 0 ?-
