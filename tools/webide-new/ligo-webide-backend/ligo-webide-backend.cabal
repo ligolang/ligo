@@ -29,6 +29,7 @@ library
       Method.LigoVersion
       Method.ListDeclarations
       Method.ListTemplates
+      Method.RunTest
       Schema.CompileExpressionRequest
       Schema.CompileRequest
       Schema.CompilerResponse
@@ -38,6 +39,7 @@ library
       Schema.GistCreateUpdateRequest
       Schema.ListDeclarationsRequest
       Schema.ListDeclarationsResponse
+      Schema.RunTestRequest
       Server
       Source
       SwaggerSchema

@@ -13,13 +13,15 @@
  */
 
 
-import { Configuration } from './configuration';
-import globalAxios, { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import type { Configuration } from './configuration';
+import type { AxiosPromise, AxiosInstance, AxiosRequestConfig } from 'axios';
+import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
 import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from './common';
+import type { RequestArgs } from './base';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from './base';
+import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
 
 /**
  * 
@@ -52,6 +54,8 @@ export interface CompileExpressionRequest {
      */
     'protocol'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -89,6 +93,8 @@ export interface CompileRequest {
      */
     'storage'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -166,6 +172,8 @@ export interface DryRunRequest {
      */
     'storage': string;
 }
+
+
 /**
  * 
  * @export
@@ -272,6 +280,33 @@ export interface Project {
      */
     'sourceFiles': Array<SourceFile>;
 }
+/**
+ * 
+ * @export
+ * @interface RunTestRequest
+ */
+export interface RunTestRequest {
+    /**
+     * 
+     * @type {DisplayFormat}
+     * @memberof RunTestRequest
+     */
+    'displayFormat'?: DisplayFormat;
+    /**
+     * 
+     * @type {Project}
+     * @memberof RunTestRequest
+     */
+    'project': Project;
+    /**
+     * 
+     * @type {string}
+     * @memberof RunTestRequest
+     */
+    'testFilePath': string;
+}
+
+
 /**
  * 
  * @export
@@ -554,6 +589,39 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @param {RunTestRequest} [runTestRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        runTestPost: async (runTestRequest?: RunTestRequest, options: AxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/run-test`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json;charset=utf-8';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(runTestRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -642,6 +710,16 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listTemplatesPost(options);
             return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
         },
+        /**
+         * 
+         * @param {RunTestRequest} [runTestRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async runTestPost(runTestRequest?: RunTestRequest, options?: AxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.runTestPost(runTestRequest, options);
+            return createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration);
+        },
     }
 };
 
@@ -721,6 +799,15 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         listTemplatesPost(options?: any): AxiosPromise<Array<string>> {
             return localVarFp.listTemplatesPost(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {RunTestRequest} [runTestRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        runTestPost(runTestRequest?: RunTestRequest, options?: any): AxiosPromise<string> {
+            return localVarFp.runTestPost(runTestRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -816,6 +903,17 @@ export class DefaultApi extends BaseAPI {
      */
     public listTemplatesPost(options?: AxiosRequestConfig) {
         return DefaultApiFp(this.configuration).listTemplatesPost(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {RunTestRequest} [runTestRequest] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public runTestPost(runTestRequest?: RunTestRequest, options?: AxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).runTestPost(runTestRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

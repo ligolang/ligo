@@ -19,12 +19,12 @@ let
   };
 
   openapi-generator-cli-6 = openapi-generator-cli.overrideAttrs (oa: rec {
-      version = "6.2.0";
+      version = "6.6.0";
       jarfilename = "${oa.pname}-${version}.jar";
       src = fetchurl {
         url =
           "mirror://maven/org/openapitools/${oa.pname}/${version}/${jarfilename}";
-        sha256 = "sha256-YHB+LIk4qUJ49iFggdcGfQ8b7O2MjrEnfmJemlnM0to=";
+        sha256 = "sha256-lxj/eETolGLHXc2bIKNRNvbbJXv+G4dNseMALpneRgk=";
       };
   });
   openapi-client = swagger-file: runCommand "openapi-client" {

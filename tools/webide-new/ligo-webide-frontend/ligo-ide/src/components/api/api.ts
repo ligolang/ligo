@@ -85,4 +85,5 @@ export const WebIdeApi = {
   createUpdateGist: DefaultApiFactory(undefined, baseUrl, mkAxios()).createUpdateGistPost,
   listTemplates: DefaultApiFactory(undefined, baseUrl, mkAxios()).listTemplatesPost,
   ligoVersion: DefaultApiFactory(undefined, baseUrl, mkAxios()).ligoVersionPost,
+  runTest: DefaultApiFactory(undefined, baseUrl, mkAxios()).runTestPost,
 };

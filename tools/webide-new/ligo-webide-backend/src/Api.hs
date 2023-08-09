@@ -6,6 +6,7 @@ import Servant.Swagger.UI (SwaggerSchemaUI)
 import Schema.CompileExpressionRequest (CompileExpressionRequest)
 import Schema.CompileRequest (CompileRequest)
 import Schema.CompilerResponse (CompilerResponse)
+import Schema.RunTestRequest (RunTestRequest)
 import Schema.DeployScript (DeployScript)
 import Schema.DryRunRequest (DryRunRequest)
 import Schema.GenerateDeployScriptRequest (GenerateDeployScriptRequest)
@@ -15,6 +16,7 @@ import Schema.ListDeclarationsResponse (ListDeclarationsResponse)
 
 type API =
        "compile" :> ReqBody '[JSON] CompileRequest :> Post '[JSON] CompilerResponse
+  :<|> "run-test" :> ReqBody '[JSON] RunTestRequest :> Post '[JSON] CompilerResponse
   :<|> "generate-deploy-script" :> ReqBody '[JSON] GenerateDeployScriptRequest :> Post '[JSON] DeployScript
   :<|> "compile-expression" :> ReqBody '[JSON] CompileExpressionRequest :> Post '[JSON] CompilerResponse
   :<|> "dry-run" :> ReqBody '[JSON] DryRunRequest :> Post '[JSON] CompilerResponse

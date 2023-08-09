@@ -381,6 +381,19 @@ export default class ProjectManager {
     });
   }
 
+  async getFiles(entryFilePath: string) {
+    const entryFile = await fileOps.readFile(entryFilePath);
+    const existingPaths = new Set<string>([entryFilePath]);
+    const resultMap = new Map<string, string>();
+    await this.getContractsRecursively(entryFilePath, entryFile, resultMap, existingPaths);
+    return Array.from(resultMap).map(([filePath, source]: [string, string]) => {
+      return {
+        filePath,
+        source,
+      };
+    });
+  }
+
   async getContractsRecursively(
     path: string,
     content: string,
@@ -664,11 +677,27 @@ export default class ProjectManager {
   lint() {}
 
   async compile(sourceFile?: string, finalCall?: () => void) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     await this.project.saveAll();
     this.toggleTerminal(true);
 
     try {
-      await compilerManager.build(this);
+      await compilerManager.compile(this);
+    } catch {
+      if (finalCall) {
+        finalCall();
+      }
+      return false;
+    }
+    return true;
+  }
+
+  async runTest(sourceFile: string, finalCall?: () => void) {
+    await this.project.saveAll();
+    this.toggleTerminal(true);
+
+    try {
+      await compilerManager.runTest(this, sourceFile);
     } catch {
       if (finalCall) {
         finalCall();

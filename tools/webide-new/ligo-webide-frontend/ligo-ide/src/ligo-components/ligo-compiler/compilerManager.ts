@@ -23,7 +23,7 @@ export class CompilerManager {
     }
   }
 
-  async build(projectManager: ProjectManager) {
+  async compile(projectManager: ProjectManager) {
     if (!(await projectManager.isMainValid())) {
       notification.error(
         "No Main File",
@@ -159,6 +159,48 @@ export class CompilerManager {
     }
 
     return { type: "success", message: amendedBuildPath };
+  }
+
+  async runTest(projectManager: ProjectManager, entryFilePath: string) {
+    this.notification = notification.info("Testing Project", "Testing...", 3);
+    let contractFiles = [];
+    try {
+      contractFiles = await projectManager.getFiles(entryFilePath);
+    } catch (e) {
+      if (e instanceof Error) {
+        notification.error("Tests error", e.message);
+      } else {
+        console.error(JSON.stringify(e));
+      }
+      return;
+    }
+
+    if (CompilerManager.terminal) {
+      CompilerManager.terminal.writeCmdToTerminal(`ligo run test ${entryFilePath}`);
+    }
+    const req = {
+      testFilePath: entryFilePath,
+      project: {
+        sourceFiles: contractFiles,
+        main: projectManager.mainFilePath,
+      },
+    };
+
+    WebIdeApi.runTest(req)
+      .then((resp) => {
+        if (CompilerManager.terminal) {
+          CompilerManager.terminal.writeToTerminal(resp.data.replace(/\n/g, "\n\r"));
+        }
+      })
+      .catch((e) => {
+        if (e instanceof Error && CompilerManager.terminal) {
+          const reg = /(\r\n?|\n|\t)/g;
+          const ntext = e.message.replace(reg, "\r\n");
+          CompilerManager.terminal.writeToTerminal(`\n${ntext}\n\r\n\r`);
+        } else {
+          console.error(JSON.stringify(e));
+        }
+      });
   }
 }
 
