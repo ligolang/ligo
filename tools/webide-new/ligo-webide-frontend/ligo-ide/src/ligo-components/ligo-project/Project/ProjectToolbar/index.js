@@ -6,6 +6,7 @@ import keypairManager from "~/base-components/keypair";
 import DeployScriptModal from "./DeployScriptModal";
 import DeployModal from "./DeployModal";
 import CompileModal from "./CompileModal";
+import RunTestModal from "./RunTestModal";
 import ExpressionManagerModal from "./ExpressionManagerModal";
 import { networkManager } from "~/ligo-components/ligo-network";
 import notification from "~/base-components/notification";
@@ -21,6 +22,7 @@ export default class ProjectToolbar extends PureComponent {
     this.deployScriptModalRef = React.createRef();
     this.deployModalRef = React.createRef();
     this.expressionManagerModal = React.createRef();
+    this.runTestModalRef = React.createRef();
     this.compileModalRef = React.createRef();
     this.state = {
       isExpressionManagerModalOpen: false,
@@ -68,6 +70,17 @@ export default class ProjectToolbar extends PureComponent {
     this.setState({ isPreDeploy: false });
   };
 
+  runTestModalOpen = () => {
+    this.setState({
+      currentTab: this.props.editor.current.tabs.current.currentTab.path,
+    });
+    this.runTestModalRef.current.openModal();
+  };
+
+  runTest = async (projectManager, testFilePath) => {
+    projectManager.runTest(testFilePath, this.props.finalCall);
+  };
+
   expressionExecutionModal = (type) => {
     this.setState({
       currentTab: this.props.editor.current.tabs.current.currentTab.path,
@@ -109,6 +122,14 @@ export default class ProjectToolbar extends PureComponent {
           isExpanded={isExpanded}
         />
         <ToolbarButton
+          id="run-test"
+          icon="fas fa-palette"
+          tooltip="Run tests"
+          readOnly={readOnly}
+          onClick={() => this.runTestModalOpen()}
+          isExpanded={isExpanded}
+        />
+        <ToolbarButton
           id="dry-run"
           icon="fas fa-sun"
           tooltip="Dry Run"
@@ -139,6 +160,12 @@ export default class ProjectToolbar extends PureComponent {
           mainFilePath={this.state.mainFilePath}
           onCompile={(doNotShow) => this.compileContract(projectManager, doNotShow)}
           isPreDeploy={this.state.isPreDeploy}
+        />
+        <RunTestModal
+          modalRef={this.runTestModalRef}
+          filePathToTest={this.state.currentTab}
+          projectManager={projectManager}
+          onTest={(testFilePath) => this.runTest(projectManager, testFilePath)}
         />
         <DeployScriptModal
           modalRef={this.deployScriptModalRef}

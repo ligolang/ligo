@@ -145,7 +145,7 @@
         frontend-tscompile = frontendCheck "yarn run tscompile";
         frontend-tslint = frontendCheck "yarn run tslint";
         frontend-openapi = pkgs.runCommand "frontend-api-check" {} ''
-          diff -q ${backend-generated-openapi} ${frontend.src}/src/components/api/generated
+          diff ${backend-generated-openapi} ${frontend.src}/src/components/api/generated
           touch $out
         '';
       };

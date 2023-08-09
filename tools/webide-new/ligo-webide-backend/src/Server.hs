@@ -20,6 +20,7 @@ import Common (WebIDEM)
 import Config (ServerConfig(..))
 import Error (LigoCompilerError, MorleyError, convertToServerError, customFormatters)
 import Method.Compile (compile)
+import Method.RunTest (runTest)
 import Method.CompileExpression (compileExpression)
 import Method.CreateGist (createGist)
 import Method.DryRun (dryRun)
@@ -52,6 +53,7 @@ mkApp config =
     server :: Server SwaggeredAPI
     server = swaggerSchemaUIServer webIdeOpenApi :<|> hoistServer (Proxy @API) hoist
       (    compile
+      :<|> runTest
       :<|> generateDeployScript
       :<|> compileExpression
       :<|> dryRun
