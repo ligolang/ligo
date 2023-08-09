@@ -5,7 +5,7 @@ cabal-version: 2.0
 -- see: https://github.com/sol/hpack
 
 name:           ligo-debugger
-version:        0.0.0
+version:        0.71.1
 license:        MIT
 license-file:   LICENSE
 build-type:     Simple

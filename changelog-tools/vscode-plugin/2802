@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nRelease 0.0.20230804 was an accident. Undo the changes from a previous MR.\\n\\n"
+merge_request: '2802'
+title: "[Chore] Undo changes to 0.0.20230804"
+type: fixed
+            
