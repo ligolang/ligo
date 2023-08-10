@@ -899,7 +899,8 @@ module T =
     (* FROM TOKENS TO TOKEN STRINGS AND REGIONS *)
 
     let comments (w : _ Wrap.t) =
-      if Caml.(w#comments = []) then "" else " + comments"
+      if Caml.(w#comments = [] && w#line_comment = None) then ""
+      else " + comment(s)"
 
     let proj_token = function
       (* Preprocessing directives *)
