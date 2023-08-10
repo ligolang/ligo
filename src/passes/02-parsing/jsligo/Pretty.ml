@@ -54,13 +54,13 @@ let pp_comments = function
 
 (* Tokens *)
 
-let pp_line_comment_opt prefix = function
-  None -> prefix
-| Some comment -> prefix ^^ space ^^ pp_line_comment comment
+let pp_line_comment_opt ?(sep = empty) prefix = function
+  Some comment -> prefix ^^ space ^^ pp_line_comment comment ^^ hardline
+| None -> prefix ^^ sep
 
-let token (t : string Wrap.t) : document =
+let token ?(sep = empty) (t : string Wrap.t) : document =
   let prefix = pp_comments t#comments ^/^ string t#payload
-  in pp_line_comment_opt prefix t#line_comment
+  in pp_line_comment_opt ~sep prefix t#line_comment
 
 (* Enclosed documents *)
 
@@ -125,7 +125,7 @@ let pp_nsepseq :
     let hd, tl = elements in
     let rec separate_map = function
       []            -> empty
-    | (sep', x)::xs -> token sep' ^^ sep ^^ printer x ^^ separate_map xs
+    | (sep', x)::xs -> token ~sep sep' ^^ printer x ^^ separate_map xs
     in printer hd ^^ separate_map tl
 
 (* Enclosed structures *)

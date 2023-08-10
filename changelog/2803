@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n[JsLIGO] Fixed pretty-printing of line comments within conditionals.\\n\\n"
+merge_request: '2803'
+title: "[JsLIGO] Fixed pretty-printing of line comments"
+type: fixed
+            
