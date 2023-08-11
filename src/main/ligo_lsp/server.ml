@@ -34,14 +34,18 @@ class lsp_server =
     val storage_invalidated : bool ref = ref true
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
+    (** Stores the path to the last ligo.json file, if found. *)
+    val last_project_file : Path.t option ref = ref None
+
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
       let file = DocumentUri.to_path document.uri in
       run_handler
-        { notify_back = Normal (document.uri, notify_back)
+        { notify_back = Normal notify_back
         ; config
         ; docs_cache = get_scope_buffers
+        ; last_project_file
         }
       @@ Requests.on_doc file content
 
@@ -56,9 +60,10 @@ class lsp_server =
         : unit IO.t =
       let file = DocumentUri.to_path document.uri in
       run_handler
-        { notify_back = Normal (document.uri, notify_back)
+        { notify_back = Normal notify_back
         ; config
         ; docs_cache = get_scope_buffers
+        ; last_project_file
         }
       @@ Requests.on_doc ~changes file new_content
 
@@ -184,41 +189,84 @@ class lsp_server =
       ; completionProvider = self#config_completion
       }
 
-    method! on_notification_unhandled
-        : notify_back:Linol_lwt.Jsonrpc2.notify_back -> Client_notification.t -> unit IO.t
-        =
-      let open IO in
-      fun ~notify_back -> function
+    method! on_notification
+        : notify_back:(Server_notification.t -> unit IO.t)
+          -> server_request:Linol_lwt.Jsonrpc2.send_request
+          -> Client_notification.t
+          -> unit IO.t =
+      fun ~notify_back ~server_request ->
+        let new_notify_back =
+          new Linol_lwt.Jsonrpc2.notify_back
+            ~notify_back
+            ~server_request
+            ~workDoneToken:None
+            ~partialResultToken:None
+            ()
+        in
+        let ( let* ) = IO.( let* ) in
+        function
         | Client_notification.Initialized ->
           (match client_capabilities.workspace with
           | None -> IO.return ()
-          | Some { didChangeConfiguration; _ } ->
-            (match didChangeConfiguration with
-            | None -> IO.return ()
-            | Some { dynamicRegistration } ->
-              (match dynamicRegistration with
-              | None | Some false -> IO.return ()
-              | Some true ->
-                let register_change_configuration : Registration.t =
-                  { id = "ligoChangeConfiguration"
-                  ; method_ = "workspace/didChangeConfiguration"
-                  ; registerOptions = Some `Null
-                  }
-                in
-                let* _req_id =
-                  notify_back#send_request
-                    (Server_request.ClientRegisterCapability
-                       { registrations = [ register_change_configuration ] })
-                    (function
-                      | Error err ->
-                        notify_back#send_log_msg ~type_:MessageType.Error err.message
-                      | Ok () -> IO.return ())
-                in
-                IO.return ())))
+          | Some { didChangeConfiguration; didChangeWatchedFiles; _ } ->
+            let configuration_registration_opt =
+              match didChangeConfiguration with
+              | None -> None
+              | Some { dynamicRegistration } ->
+                (match dynamicRegistration with
+                | None | Some false -> None
+                | Some true ->
+                  Some
+                    (Registration.create
+                       ~id:"ligoChangeConfiguration"
+                       ~method_:"workspace/didChangeConfiguration"
+                       ~registerOptions:`Null
+                       ()))
+            in
+            let watcher_registration_opt =
+              match didChangeWatchedFiles with
+              | None -> None
+              | Some { dynamicRegistration; _ } ->
+                (match dynamicRegistration with
+                | None | Some false -> None
+                | Some true ->
+                  let pattern = Format.sprintf "**/%s" Project_root.ligoproject in
+                  let ligo_project_watcher =
+                    Lsp.Types.FileSystemWatcher.create ~globPattern:(`Pattern pattern) ()
+                  in
+                  let filewatcher =
+                    Lsp.Types.DidChangeWatchedFilesRegistrationOptions.create
+                      ~watchers:[ ligo_project_watcher ]
+                  in
+                  Some
+                    (Registration.create
+                       ~id:"ligoFileWatcher"
+                       ~method_:"workspace/didChangeWatchedFiles"
+                       ~registerOptions:
+                         (Lsp.Types.DidChangeWatchedFilesRegistrationOptions.yojson_of_t
+                            filewatcher)
+                       ()))
+            in
+            let registrations =
+              List.filter_map
+                ~f:Fn.id
+                [ configuration_registration_opt; watcher_registration_opt ]
+            in
+            if List.is_empty registrations
+            then IO.return ()
+            else
+              let* _req_id =
+                new_notify_back#send_request
+                  (Server_request.ClientRegisterCapability { registrations })
+                  (function
+                    | Error err ->
+                      new_notify_back#send_log_msg ~type_:MessageType.Error err.message
+                    | Ok () -> IO.return ())
+              in
+              IO.return ())
         | Client_notification.ChangeConfiguration _ ->
-          (* FIXME: When we have a configuration change, we are getting `null`
-             for some reason. Explicitly ask for the configuration as a
-             workaround. *)
+          (* FIXME: When we have a configuration change, we are getting `null` for some
+             reason. Explicitly ask for the configuration as a workaround. *)
           (match client_capabilities.workspace with
           | None -> IO.return ()
           | Some { configuration; _ } ->
@@ -226,19 +274,19 @@ class lsp_server =
             | None | Some false -> IO.return ()
             | Some true ->
               let* _req_id =
-                notify_back#send_request
+                new_notify_back#send_request
                   (Server_request.WorkspaceConfiguration
                      { items =
                          [ ConfigurationItem.create ~section:"ligoLanguageServer" () ]
                      })
                   (function
                     | Error err ->
-                      notify_back#send_log_msg ~type_:MessageType.Error err.message
+                      new_notify_back#send_log_msg ~type_:MessageType.Error err.message
                     | Ok [ config ] ->
                       IO.return (self#decode_apply_ligo_language_server config)
                     | Ok configs ->
                       let* () =
-                        notify_back#send_log_msg
+                        new_notify_back#send_log_msg
                           ~type_:MessageType.Warning
                           (Format.asprintf
                              "Expected 1 workspace configuration, but got %d. Attempting \
@@ -252,7 +300,16 @@ class lsp_server =
                         (List.iter ~f:self#decode_apply_ligo_language_server configs))
               in
               IO.return ()))
-        | n -> super#on_notification_unhandled ~notify_back n
+        | Client_notification.DidChangeWatchedFiles { changes } ->
+          let* () =
+            new_notify_back#send_log_msg ~type_:MessageType.Log "DidChangeWatchedFiles"
+          in
+          if List.exists changes ~f:(fun { type_ = _; uri } ->
+                 let path = Path.to_string (DocumentUri.to_path uri) in
+                 Filename.(basename path = Project_root.ligoproject))
+          then last_project_file := None;
+          IO.return ()
+        | notification -> super#on_notification ~notify_back ~server_request notification
 
     method! on_request
         : type r.  notify_back:(Server_notification.t -> unit IO.t)
@@ -260,26 +317,44 @@ class lsp_server =
                   -> id:Req_id.t
                   -> r Client_request.t
                   -> r IO.t =
-      fun ~notify_back ~server_request ~id (r : _ Client_request.t) ->
-        let run ~uri ~default =
+      fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
+        let run ~(uri : DocumentUri.t) ~(default : r) (handler : r Handler.t) : r IO.t =
           let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
+          (* If the project root changed, let's repopulate the cache by running
+             [Requests.on_doc] again. *)
+          let repopulate_cache : unit Handler.t =
+            let file = DocumentUri.to_path uri in
+            match Docs_cache.find get_scope_buffers file with
+            (* Shouldn't happen because [Requests.on_doc] should trigger and populate the
+               cache. *)
+            | None -> pass
+            | Some { code; _ } ->
+              let last_project_file = !last_project_file in
+              if Option.equal
+                   Path.equal
+                   last_project_file
+                   (Project_root.get_project_root file)
+              then pass
+              else Requests.on_doc ?changes:None file code
+          in
           if self#is_request_enabled method_
           then
             run_handler
               { notify_back =
                   Normal
-                    ( uri
-                    , new Linol_lwt.Jsonrpc2.notify_back
-                        ~uri
-                        ~notify_back
-                        ~server_request
-                        ~workDoneToken:None
-                        ~partialResultToken:None
-                        () )
+                    (new Linol_lwt.Jsonrpc2.notify_back
+                       ~uri
+                       ~notify_back
+                       ~server_request
+                       ~workDoneToken:None
+                       ~partialResultToken:None
+                       ())
               ; config
               ; docs_cache = get_scope_buffers
+              ; last_project_file
               }
-          else Fun.const @@ IO.return default
+              (bind repopulate_cache (fun () -> handler))
+          else IO.return default
         in
         match r with
         | Client_request.TextDocumentFormatting { textDocument; options; _ } ->

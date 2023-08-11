@@ -47,6 +47,17 @@ let concat : t -> string -> t =
 let get_extension : t -> string option = snd <@ Filename.split_extension <@ to_string
 let get_syntax = Syntax.of_ext_opt <@ get_extension
 
+(** Searches for a file in a directory and all parental directories *)
+let rec find_file_in_dir_and_parents dir file =
+  let potential_file = concat dir file in
+  if Caml.Sys.file_exists (to_string potential_file)
+  then Some potential_file
+  else (
+    let parent = dirname dir in
+    (* e.g.: [dirname "/" = "/"] *)
+    if equal parent dir then None else find_file_in_dir_and_parents parent file)
+
+
 let pp (ppf : Format.formatter) : t -> unit =
   Format.fprintf ppf "%s" <@ to_string_with_canonical_drive_letter
 

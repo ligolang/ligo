@@ -26,15 +26,9 @@ let get_config_json
     try `Json (Yojson.Safe.from_file (Path.to_string file)) with
     | Yojson.Json_error exn -> `Decode_error exn
   in
-  let rec go dir =
-    let potential_file = Path.concat dir config_file_name in
-    if Caml.Sys.file_exists (Path.to_string potential_file)
-    then yojson_from_file_safe potential_file
-    else if Path.equal (Path.dirname dir) dir (* e.g. dirname "/" = "/" *)
-    then `File_not_found
-    else go @@ Path.dirname dir
-  in
-  go @@ Path.dirname path
+  match Path.find_file_in_dir_and_parents (Path.dirname path) config_file_name with
+  | Some file -> yojson_from_file_safe file
+  | None -> `File_not_found
 
 
 (** Expects absolute path to LIGO file, searches for pretty printer configuration file

@@ -23,7 +23,7 @@ type config =
 
 (** We can send diagnostics to user or just save them to list in case of testing *)
 type notify_back_mockable =
-  | Normal of DocumentUri.t * Linol_lwt.Jsonrpc2.notify_back
+  | Normal of Linol_lwt.Jsonrpc2.notify_back
       (** Contains the current URI (coming from the LSP method) that will be
           used for publishing diagnostics as well as the class that may be used
           for interacting with the LSP client. *)
@@ -36,6 +36,7 @@ type handler_env =
   { notify_back : notify_back_mockable
   ; config : config
   ; docs_cache : Docs_cache.t
+  ; last_project_file : Path.t option ref
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -78,6 +79,10 @@ let ask : handler_env Handler.t = Handler IO.return
 let ask_notify_back : notify_back_mockable Handler.t = fmap (fun x -> x.notify_back) ask
 let ask_config : config Handler.t = fmap (fun x -> x.config) ask
 let ask_docs_cache : Docs_cache.t Handler.t = fmap (fun x -> x.docs_cache) ask
+
+let ask_last_project_file : Path.t option ref Handler.t =
+  fmap (fun x -> x.last_project_file) ask
+
 
 (** Sequencing handlers *)
 
@@ -128,7 +133,7 @@ let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Hand
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal (_uri, nb) ->
+  | Normal nb ->
     let@ { logging_verbosity; _ } = ask_config in
     if Caml.(type_ <= logging_verbosity)
     then lift_IO @@ nb#send_log_msg ~type_ s
@@ -140,10 +145,14 @@ let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
 let send_diagnostic (uri : DocumentUri.t) (s : Diagnostic.t list) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal (original_uri, nb) ->
+  | Normal nb ->
+    let old_uri = nb#get_uri in
     let () = nb#set_uri uri in
     let@ () = lift_IO (nb#send_diagnostic s) in
-    let () = nb#set_uri original_uri in
+    (match old_uri with
+    (* FIXME: linol doesn't allow setting [None], change it when it'll be fixed there *)
+    | None -> ()
+    | Some old_uri -> nb#set_uri old_uri);
     pass
   | Mock diagnostics ->
     return
@@ -160,10 +169,45 @@ let send_debug_msg : string -> unit Handler.t = send_log_msg ~type_:MessageType.
 let send_message ?(type_ : MessageType.t = Info) (message : string) : unit Handler.t =
   let@ nb = ask_notify_back in
   match nb with
-  | Normal (_uri, nb) ->
+  | Normal nb ->
     lift_IO
       (nb#send_notification @@ ShowMessage (ShowMessageParams.create ~message ~type_))
   | Mock _ -> return ()
+
+
+type unlift_IO = { unlift_IO : 'a. 'a Handler.t -> 'a IO.t }
+
+let with_run_in_IO : (unlift_IO -> 'b IO.t) -> 'b Handler.t =
+ fun inner -> Handler (fun env -> inner { unlift_IO = (fun x -> run_handler env x) })
+
+
+let send_request
+    (request : 'a Server_request.t)
+    (handler : ('a, Jsonrpc.Response.Error.t) result -> unit Handler.t)
+    : unit Handler.t
+  =
+  let@ nb = ask_notify_back in
+  match nb with
+  | Normal nb ->
+    fmap ignore
+    @@ with_run_in_IO
+    @@ fun { unlift_IO } -> nb#send_request request (unlift_IO <@ handler)
+  | Mock _ -> pass
+
+
+let send_message_with_buttons
+    ~(message : string)
+    ~(options : string list)
+    ~(type_ : MessageType.t)
+    ~(handler : (MessageActionItem.t option, Jsonrpc.Response.Error.t) result -> unit t)
+    : unit Handler.t
+  =
+  let actions = List.map options ~f:(fun title -> MessageActionItem.create ~title) in
+  let smr =
+    Server_request.ShowMessageRequest
+      (ShowMessageRequestParams.create ~actions ~message ~type_ ())
+  in
+  send_request smr handler
 
 
 (**
@@ -214,6 +258,7 @@ let with_cst
   @@ fun { syntax; code; _ } ->
   match
     Ligo_api.Dialect_cst.get_cst
+      ?project_root:(Option.map ~f:Path.to_string @@ Project_root.get_project_root path)
       ~strict
       ~file:(Path.to_string path)
       syntax
