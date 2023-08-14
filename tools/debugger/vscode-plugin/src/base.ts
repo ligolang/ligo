@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LicenseRef-MIT-OA
 
 import { execFileSync } from 'child_process';
-import path from 'path';
 import * as vscode from 'vscode';
 import { ConfigCommand, ConfigField } from './LigoDebugConfigurationProvider';
 
@@ -130,7 +129,7 @@ export async function tryExecuteCommand<T extends Maybe<string>>(
   const extractedCommand = getCommand(configItem);
   if (isDefined(extractedCommand)) {
     if (extractedCommand === expectedExtractedCommand) {
-      const result : Maybe<T> = await resultPromise();
+      const result: Maybe<T> = await resultPromise();
       if (!isDefined(result) && shouldInterruptOnClose) {
         // If user decided to close entrypoint quickpick
         // then we want to stop debugging session immediately.
