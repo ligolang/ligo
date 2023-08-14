@@ -104,7 +104,8 @@ instance HasLigoClient (RIO LIGO) where
 
 ligoCustomHandlers :: DAP.HandlersSet (RIO LIGO)
 ligoCustomHandlers =
-  [ initializeLoggerHandler
+  [ resolveConfigFromLigo
+  , initializeLoggerHandler
   , setLigoConfigHandler
   , setProgramPathHandler
   , validateEntrypointHandler
@@ -560,6 +561,10 @@ decompileValue convertInfo@(PreLigoConvertInfo val typ) manager = do
 
   mLigoVal <- DV.compute manager convertInfo
   pure $ fromMaybe ToBeComputed mLigoVal
+
+resolveConfigFromLigo :: DAP.Handler (RIO LIGO)
+resolveConfigFromLigo = mkLigoHandler \req@LigoResolveConfigFromLigoRequest{} ->
+  respond =<< resolveConfig req.configPath
 
 initializeLoggerHandler :: DAP.Handler (RIO LIGO)
 initializeLoggerHandler = mkLigoHandler \req@LigoInitializeLoggerRequest{} -> do

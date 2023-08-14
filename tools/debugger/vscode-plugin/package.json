@@ -18,12 +18,10 @@
         "ligo"
     ],
     "engines": {
-        "vscode": "^1.67.0"
+        "vscode": "^1.79.2"
     },
     "activationEvents": [
-        "onDebugResolve:ligo",
-        "onCommand:extension.ligo-debugger.switchSteppingGranularity",
-        "onCommand:extension.ligo-debugger.useLastSteppingGranularity"
+        "onDebugResolve:ligo"
     ],
 
     "icon": "logo.png",
@@ -92,6 +90,11 @@
                             "storage"
                         ],
                         "properties": {
+                            "configPath": {
+                                "type": "string",
+                                "description": "A path to a debugger configuration file written in LIGO",
+                                "default": "(*@AskOnStart@*)"
+                            },
                             "program": {
                                 "type": "string",
                                 "description": "Path to contract code",
@@ -262,6 +265,11 @@
                 "command": "extension.ligo-debugger.useLastSteppingGranularity",
                 "title": "Debug: Switch to last stepping granularity",
                 "description": "Changes stepping granularity to the previously selected one"
+            },
+            {
+                "command": "extension.ligo-debugger.createLigoConfig",
+                "title": "Debug: Create configuration in LIGO for the debugger",
+                "description": "Creates a configuration in LIGO. You can pick a dialect of the config that you're interested in."
             }
         ],
         "keybindings": [
@@ -287,7 +295,7 @@
     "devDependencies": {
         "@types/copy-paste": "1.1.30",
         "@types/node": "^15.14.9",
-        "@types/vscode": "^1.67.0",
+        "@types/vscode": "^1.79.2",
         "@typescript-eslint/eslint-plugin": "^4.33.0",
         "@typescript-eslint/parser": "^4.27.0",
         "copy-paste": "1.5.3",

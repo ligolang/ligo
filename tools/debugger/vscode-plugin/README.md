@@ -152,6 +152,42 @@ All these fields are optional. Let's describe what they mean:
 8. `chainId`. The value returned by `Tezos.get_chain_id()`. Default: `"NetXH12Aer3be93"`.
 9. `votingPowers`. At this moment only the `simple` kind is supported. In the `contents` field you should specify key hashes and their voting powers. Default: `{ "kind": "simple", "contents": { "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "100" } }`.
 
+### Providing configuration in LIGO
+You can also provide a configuration using one of the LIGO dialects. It could be done by using `Debug: Create configuration in LIGO for the debugger` command (`Ctrl + Shift + P` shortcut for opening the command palette). It will ask you for a directory where the config would be created and for a config name. Note, that it will **overwrite** the file with the same name.
+
+An example of the config (in `CameLIGO`):
+```ocaml
+let contract_env =
+  { now           = "2020-01-01T00:00:00Z"
+  ; balance       = 1tez
+  ; amount        = 2tez
+  ; self          = "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b"
+  ; source        = "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"
+  ; sender        = "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"
+  ; chain_id      = "NetXH12Aer3be93"
+  ; level         = 10000
+  ; voting_powers = Map.literal
+      [ "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr", 40
+      ; "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY", 60
+      ]
+  }
+
+let config =
+  { parameter            = "*parameter value*"
+  ; storage              = "*storage value*"
+  ; program              = "*path to program*"
+  ; entrypoint           = "*entrypoint name*"
+  ; michelson_entrypoint = "*Michelson entrypoint name*"
+  ; log_dir              = "*log directory*"
+  ; contract_env         = contract_env
+  }
+```
+Note, that all these fields are optional and you can omit them. The debugger will ask for them if they're needed (e.g. an entrypoint or parameter). The only required object here is `config`.
+
+**Don't forget to add a path to the LIGO config into your `launch.json` configuration (`configPath` field). The debugger doesn't do this automatically. You can set (\*@AskOnStart@\*) command there and the debugger will ask you for a config path.**
+
+Also, the LIGO configuration will overlap the existing `launch.json` one. For example, if you haven't specified the `now` field in the `contract_env` but you have it in the `launch.json`, then it will be set to default value.
+
 ## Stepping
 
 Use the available `Next`, `StepIn`, and other commands to go over the contract execution.

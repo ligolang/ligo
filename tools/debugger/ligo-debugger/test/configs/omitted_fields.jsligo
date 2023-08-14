@@ -1,0 +1,14 @@
+const contract_env =
+  { now           : "2020-01-01T00:00:00Z"
+  , balance       : 1 as tez
+  , amount        : 2 as tez
+  , self          : "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b"
+  , source        : "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"
+  }
+
+const config =
+  { parameter            : "some_param"
+  , michelson_entrypoint : "default"
+  , log_dir              : "tmp/contract.log"
+  , contract_env         : contract_env
+  }

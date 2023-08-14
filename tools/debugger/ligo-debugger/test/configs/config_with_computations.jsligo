@@ -1,0 +1,18 @@
+#import "common.mligo" "Common"
+
+const mult = (a, b) => a * b
+
+const parameter = () => {
+  let a = mult(100, 2);
+  let b = Common.some_string;
+  return {a, b};
+};
+
+const config =
+  { parameter : parameter()
+  , storage : unit
+  , entrypoint : Common.entrypoint
+  , contract_env :
+      { amount : Common.some_tez
+      }
+  }
