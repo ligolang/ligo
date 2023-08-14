@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added an ability to create the debugger's configs in LIGO. For more information read the debugger's `README.md`.\\n\\n\\n"
+merge_request: '2800'
+title: "[#1978] Allow specifying configs in LIGO in the debugger"
+type: added
+            
