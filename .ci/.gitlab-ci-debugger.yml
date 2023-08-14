@@ -83,9 +83,7 @@ debugger-build:
 
 debugger-weeder:
   stage: tools-check
-  rules: &debugger_mr_dev
-    - !reference [.debugger_mr_changes]
-    - !reference [.dev]
+  rules: *debugger_mr_dev
   needs: [debugger-build]
   script:
     - cd ./tools/debugger
@@ -94,7 +92,8 @@ debugger-weeder:
 
 debugger-test-ligo-recommended:
   stage: tools-check
-  rules: *debugger_mr_dev
+  rules:
+    - !reference [.vscode_production]
   needs: [debugger-build]
   variables:
     LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/recommended"
