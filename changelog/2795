@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nImprove typechecker inference across contextual expressions (e.g. `let .. in`, `type .. in`, `module .. in`)\\n\\n"
+merge_request: '2795'
+title: "new checking rules on contextual expressions"
+type: added
+            

@@ -410,6 +410,34 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
     let%bind cases = check_cases cases matchee_type type_ in
     let%bind match_expr = compile_match matchee cases matchee_type in
     const match_expr
+  | E_let_in { let_binder; rhs; let_result; attributes }, _ ->
+    let%bind rhs_type, rhs = infer rhs in
+    let%bind frag, let_binder =
+      With_frag.run @@ check_pattern ~mut:false let_binder rhs_type
+    in
+    let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
+    const
+      E.(
+        let%bind let_result = let_result
+        and let_binder = let_binder
+        and rhs = rhs in
+        return @@ O.E_let_in { let_binder; rhs; let_result; attributes })
+  | E_mod_in { module_binder; rhs; let_result }, _ ->
+    let%bind rhs_sig, rhs = infer_module_expr rhs in
+    let%bind let_result =
+      def_module [ module_binder, rhs_sig ] ~on_exit:Drop ~in_:(check let_result type_)
+    in
+    const
+      E.(
+        let%bind let_result = let_result
+        and rhs = rhs in
+        return @@ O.E_mod_in { module_binder; rhs; let_result })
+  | E_type_in { type_binder; rhs; let_result }, _ ->
+    let%bind rhs = With_default_layout.evaluate_type rhs in
+    let%bind let_result =
+      def_type [ type_binder, rhs ] ~on_exit:Drop ~in_:(check let_result type_)
+    in
+    return let_result
   | _ ->
     let%bind type_', expr = infer expr in
     let%bind f =
