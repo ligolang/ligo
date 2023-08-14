@@ -4,6 +4,7 @@ module Language.LIGO.Debugger.CLI.Call
   , compileLigoExpression
   , getAvailableEntrypoints
   , decompileLigoValues
+  , resolveConfig
 
     -- * Helpers
   , preprocess
@@ -23,10 +24,12 @@ module Language.LIGO.Debugger.CLI.Call
   , UnsupportedLigoVersionException (..)
   ) where
 
+import Control.Arrow ((>>>))
 import Data.Aeson
-  (FromJSON (parseJSON), KeyValue ((.=)), ToJSON, Value, eitherDecode', eitherDecodeStrict', object)
+  (FromJSON (parseJSON), KeyValue ((.=)), ToJSON (toJSON), Value, eitherDecode',
+  eitherDecodeStrict', object, withObject, (.:?))
 import Data.Aeson qualified as Aeson
-import Data.Aeson.Types (parseEither)
+import Data.Aeson.Types (Parser, parseEither)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
 import Data.Map qualified as M
@@ -57,6 +60,7 @@ import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.ParseTree
 
 import Util
@@ -377,6 +381,46 @@ decompileLigoValues typesAndValues = withMapLigoExc do
     decodeOutput :: LByteString -> m [Maybe LigoValue]
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo decompile" . toText) pure
       . Aeson.eitherDecode
+
+resolveConfig :: forall m. (HasLigoClient m) => FilePath -> m LigoLaunchRequest
+resolveConfig configPath = withMapLigoExc do
+  handleJSONException LigoResolveConfigException $
+    callLigoBS Nothing
+      [ "info", "resolve-config"
+      , "--format", "json"
+      , strArg configPath
+      ] Nothing
+      >>= decodeOutput
+  where
+    decodeOutput :: LByteString -> m LigoLaunchRequest
+    decodeOutput bts = either (throwIO . LigoDecodeException "decoding config from ligo" . toText) pure do
+      value <- Aeson.eitherDecode bts
+      parseEither parseLaunchRequest value
+
+    parseLaunchRequest :: Value -> Parser LigoLaunchRequest
+    parseLaunchRequest = withObject "config" \o -> do
+      let noDebug = Nothing
+      logDir <- o .:? "log_dir"
+      program <- o .:? "program"
+      michelsonEntrypoint <- o .:? "michelson_entrypoint"
+      storage <- o .:? "storage"
+      entrypoint <- o .:? "entrypoint"
+      parameter <- o .:? "parameter"
+      contractEnv <- traverse parseContractEnv =<< o .:? "contract_env"
+      pure LigoLaunchRequest{..}
+      where
+        parseContractEnv :: Value -> Parser LigoContractEnv
+        parseContractEnv = replaceTextualNumbers >>> withObject "contract env" \o -> do
+          now <- o .:? "now"
+          balance <- o .:? "balance"
+          amount <- o .:? "amount"
+          self <- o .:? "self"
+          source <- o .:? "source"
+          sender <- o .:? "sender"
+          chainId <- o .:? "chain_id"
+          level <- o .:? "level"
+          votingPowers <- o .:? "voting_powers"
+          pure LigoContractEnv{..}
 
 -- Versions
 ----------------------------------------------------------------------------

@@ -1,17 +1,32 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
-import { ContractMetadata, InputValueLang } from './base'
+import { ContractMetadata, InputValueLang, LigoLaunchRequest } from './base'
 import { SteppingGranularity } from './ui'
+
+// ResolveConfigFromLigo //
+
+export interface ResolveConfigFromLigoRequest extends DebugProtocol.Request {
+  command: 'resolveConfigFromLigo'
+  arguments: ResolveConfigFromLigoArguments
+}
+
+export interface ResolveConfigFromLigoArguments {
+  configPath: string
+}
+
+export interface ResolveConfigFromLigoResponse extends DebugProtocol.Response {
+  body: LigoLaunchRequest
+}
 
 // InitializeLogger //
 
 export interface InitializeLoggerRequest extends DebugProtocol.Request {
-	command: 'initializeLogger'
-	arguments: InitializeLoggerArguments
+  command: 'initializeLogger'
+  arguments: InitializeLoggerArguments
 }
 
 export interface InitializeLoggerArguments {
-	file: string
-	logDir?: string
+  file: string
+  logDir?: string
 }
 
 export interface InitializeLoggerResponse extends DebugProtocol.Response {
@@ -20,13 +35,13 @@ export interface InitializeLoggerResponse extends DebugProtocol.Response {
 // SetLigoConfig //
 
 export interface SetLigoConfigArguments {
-	binaryPath?: string
-	maxSteps?: number
+  binaryPath?: string
+  maxSteps?: number
 }
 
 export interface SetLigoConfigRequest extends DebugProtocol.Request {
-	command: 'setLigoConfig'
-	arguments: SetLigoConfigArguments
+  command: 'setLigoConfig'
+  arguments: SetLigoConfigArguments
 }
 
 export interface SetLigoConfigResponse extends DebugProtocol.Response {
@@ -35,35 +50,35 @@ export interface SetLigoConfigResponse extends DebugProtocol.Response {
 // SetProgramPath //
 
 export interface SetProgramPathRequest extends DebugProtocol.Request {
-	command: 'setProgramPath'
-	arguments: SetProgramPathArguments
+  command: 'setProgramPath'
+  arguments: SetProgramPathArguments
 }
 
 export interface SetProgramPathArguments {
-	program: string
+  program: string
 }
 
 export interface SetProgramPathResponse extends DebugProtocol.Response {
-	body: {
-		entrypoints: [string, string][]
-	}
+  body: {
+    entrypoints: [string, string][]
+  }
 }
 
 // ValidateEntrypoint //
 
 export interface ValidateEntrypointRequest extends DebugProtocol.Request {
-	command: 'validateEntrypoint'
-	arguments: ValidateEntrypointArguments
+  command: 'validateEntrypoint'
+  arguments: ValidateEntrypointArguments
 }
 
 export interface ValidateEntrypointArguments {
-	entrypoint: string
+  entrypoint: string
 }
 
 export interface ValidateEntrypointResponse extends DebugProtocol.Response {
-	body?: {
-		errorMessage: string
-	}
+  body?: {
+    errorMessage: string
+  }
 }
 
 // ValidateValue //
@@ -71,51 +86,51 @@ export interface ValidateEntrypointResponse extends DebugProtocol.Response {
 export type ValidateValueCategory = "parameter" | "storage"
 
 export interface ValidateValueArguments {
-	value: string
-	category: ValidateValueCategory
-	valueLang: InputValueLang
-	pickedMichelsonEntrypoint?: string
+  value: string
+  category: ValidateValueCategory
+  valueLang: InputValueLang
+  pickedMichelsonEntrypoint?: string
 }
 
 export interface ValidateValueRequest extends DebugProtocol.Request {
-	command: 'validateValue'
-	arguments: ValidateValueArguments;
+  command: 'validateValue'
+  arguments: ValidateValueArguments;
 }
 
 export interface ValidateValueResponse extends DebugProtocol.Response {
-	body?: {
-		errorMessage: string
-	}
+  body?: {
+    errorMessage: string
+  }
 }
 
 // GetContractMetadata //
 
 export interface GetContractMetadataRequest extends DebugProtocol.Request {
-	command: 'getContractMetadata'
-	arguments: GetContractMetadataArguments;
+  command: 'getContractMetadata'
+  arguments: GetContractMetadataArguments;
 }
 
 export interface GetContractMetadataArguments {
-	entrypoint: string | null
+  entrypoint: string | null
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
-	body: ContractMetadata
+  body: ContractMetadata
 }
 
 // ValidateConfig //
 
 export interface ValidateConfigArguments {
-	michelsonEntrypoint?: string
-	parameter: string
-	parameterLang: InputValueLang
-	storage: string
-	storageLang: InputValueLang
+  michelsonEntrypoint?: string
+  parameter: string
+  parameterLang: InputValueLang
+  storage: string
+  storageLang: InputValueLang
 }
 
 export interface ValidateConfigRequest extends DebugProtocol.Request {
-	command: 'validateConfig'
-	arguments: ValidateConfigArguments
+  command: 'validateConfig'
+  arguments: ValidateConfigArguments
 }
 
 export interface ValidateConfigResponse extends DebugProtocol.Response {
@@ -124,12 +139,12 @@ export interface ValidateConfigResponse extends DebugProtocol.Response {
 // SetSteppingGranularity //
 
 export interface SetSteppingGranularityArguments {
-	granularity: SteppingGranularity
+  granularity: SteppingGranularity
 }
 
 export interface SetSteppingGranularityRequest extends DebugProtocol.Request {
-	command: 'SetSteppingGranularity'
-	arguments: SetSteppingGranularityArguments;
+  command: 'SetSteppingGranularity'
+  arguments: SetSteppingGranularityArguments;
 }
 
 export interface SetSteppingGranularityResponse extends DebugProtocol.Response {

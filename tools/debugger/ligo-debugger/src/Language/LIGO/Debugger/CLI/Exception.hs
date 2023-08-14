@@ -7,14 +7,18 @@ module Language.LIGO.Debugger.CLI.Exception
   , LigoClientFailureException (..)
   , LigoDecodedExpectedClientFailureException (..)
   , LigoIOException (..)
+  , LigoJSONException (..)
+  , LigoJSONExceptionContent (..)
   , LigoMalformedJSONException (..)
   , LigoPreprocessFailedException (..)
   , LigoDecodeException (..)
   , ConfigurationException (..)
   , LigoCallException (..)
+  , LigoResolveConfigException (..)
   , PluginCommunicationException (..)
   ) where
 
+import Data.Aeson (FromJSON (parseJSON), withObject, (.:), (.:?))
 import Data.Default (Default (def))
 import Data.Text qualified as Text
 import Fmt.Buildable (Buildable, FromDoc, build, pretty)
@@ -58,6 +62,38 @@ data LigoIOException = LigoIOException
   , lieDescription :: Text
   } deriving anyclass (LigoException)
     deriving stock (Show)
+
+----------------------------------------------------------------------------
+-- JSON helper exception
+----------------------------------------------------------------------------
+
+-- | Arbitrary exception from the @LIGO@ binary
+-- in JSON format.
+data LigoJSONException = LigoJSONException
+  { ljeStatus :: Text
+  , ljeStage :: Text
+  , ljeContent :: LigoJSONExceptionContent
+  } deriving stock (Show, Generic)
+
+data LigoJSONExceptionContent = LigoJSONExceptionContent
+  { ljecMessage :: Text
+  , ljecLocation :: Maybe LigoRange
+  , ljecChildren :: Maybe LigoJSONException
+  } deriving stock (Show, Generic)
+
+instance FromJSON LigoJSONException where
+  parseJSON = withObject "LigoJSONException" \o -> do
+    ljeStatus <- o .: "status"
+    ljeStage <- o .: "stage"
+    ljeContent <- o .: "content"
+    pure LigoJSONException{..}
+
+instance FromJSON LigoJSONExceptionContent where
+  parseJSON = withObject "LigoJSONExceptionContent" \o -> do
+    ljecMessage <- o .: "message"
+    ljecLocation <- o .:? "location"
+    ljecChildren <- o .:? "children"
+    pure LigoJSONExceptionContent{..}
 
 ----------------------------------------------------------------------------
 -- Errors that may fail due to changes in ligo compiler
@@ -185,6 +221,11 @@ newtype ConfigurationException = ConfigurationException Text
 newtype LigoCallException = LigoCallException { leMessage :: Text }
   deriving newtype (Eq, Show, FromDoc)
 
+-- | Something went wrong in the debugger's configuration
+-- written in @LIGO@.
+newtype LigoResolveConfigException = LigoResolveConfigException { lrceMessage :: Text }
+  deriving newtype (Eq, Show, FromDoc)
+
 -- | Some unexpected error in communication with the plugin.
 newtype PluginCommunicationException = PluginCommunicationException Text
   deriving newtype (Show, Buildable, FromDoc)
@@ -196,6 +237,12 @@ instance Buildable LigoCallException where
   build LigoCallException{..} = build $ replaceANSI leMessage
 
 instance Exception LigoCallException where
+  displayException = pretty
+
+instance Buildable LigoResolveConfigException where
+  build LigoResolveConfigException{..} = build lrceMessage
+
+instance Exception LigoResolveConfigException where
   displayException = pretty
 
 instance Buildable LigoDecodeException where

@@ -298,6 +298,7 @@ instance Exception SomeDebuggerException where
       , SomeDebuggerException <$> fromException @PluginCommunicationException e
       , SomeDebuggerException <$> fromException @ImpossibleHappened e
       , SomeDebuggerException <$> fromException @LigoIOException e
+      , SomeDebuggerException <$> fromException @LigoResolveConfigException e
       , cast @_ @SomeDebuggerException e'
       ]
 

@@ -66,3 +66,28 @@ let list_declarations (raw_options : Raw_options.t) source_file =
           prg
       in
       (source_file, declarations), [] )
+
+
+let resolve_config (raw_options : Raw_options.t) source_file =
+  ( Resolve_config.config_format
+  , fun ~raise ->
+      let syntax =
+        Syntax.of_string_opt
+          ~support_pascaligo:raw_options.deprecated
+          ~raise
+          (Syntax_name raw_options.syntax)
+          (Some source_file)
+      in
+      let options =
+        let protocol_version =
+          Helpers.protocol_to_variant ~raise raw_options.protocol_version
+        in
+        Compiler_options.make
+          ~raw_options
+          ~syntax
+          ~protocol_version
+          ~has_env_comments:false
+          ()
+      in
+      let config = Resolve_config.resolve_config ~raise ~options syntax source_file in
+      config, [] )

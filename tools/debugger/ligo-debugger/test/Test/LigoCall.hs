@@ -12,17 +12,22 @@ import Fmt (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
 import Test.Util.Options (minor)
+import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO.Exception (try)
 import Unsafe qualified
 
+import Morley.Debugger.DAP.Types (MichelsonJson (..))
 import Morley.Michelson.Parser (MichelsonSource (MSName))
 import Morley.Michelson.Text (MText, mt)
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as U
+import Morley.Tezos.Address (Constrained (Constrained), ImplicitAddress, ta, unImplicitAddress)
 import Morley.Tezos.Core
-  (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote)
+  (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote, tz)
 
 import Language.LIGO.Debugger.CLI
+import Language.LIGO.Debugger.Handlers.Types
+import Language.LIGO.Extension
 import Language.LIGO.Range
 
 test_Compilation :: TestTree
@@ -358,3 +363,128 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
     decompileValues typesAndValues = do
       decompiledValues <- decompileLigoValues typesAndValues
       pure $ catMaybes decompiledValues
+
+test_config_resolution :: TestTree
+test_config_resolution = testGroup "LIGO config resolution"
+  let configsPath = "test" </> "configs" in
+
+  let checkResolutionWithExt
+        :: FilePath
+        -> FilePath
+        -> LigoLaunchRequest
+        -> IO (Either LigoResolveConfigException ())
+      checkResolutionWithExt configName ext expected = try do
+        let fullPath = configsPath </> configName <.> ext
+        resolveConfig fullPath @@?= expected
+  in
+  let checkResolution configName expected =
+        [ checkResolutionWithExt configName ext expected
+        | ext <- supportedExtensions
+        ] & nonEmpty
+          & fromMaybe (error "Expected list to be non-empty")
+          & foldl1 \ma mb -> ((,) <$> ma <*> mb) >>= \case
+              (Left exc, Left{}) -> pure (Left exc)
+              (Right{}, Right{}) -> pure pass
+              _ -> assertFailure "Expected result for all extensions to be the same"
+  in
+  [ testCase "Full config" do
+      let expectedConfiguration = LigoLaunchRequest
+            { noDebug = Nothing
+            , logDir = Just "tmp/contract.log"
+            , program = Just "main.mligo"
+            , michelsonEntrypoint = Just "default"
+            , storage = Just [int||"some_storage"|]
+            , entrypoint = Just "main"
+            , parameter = Just [int||"some_param"|]
+            , contractEnv = Just LigoContractEnv
+                { now = Just $ MichelsonJson [timestampQuote|2020-01-01T00:00:00Z|]
+                , balance = Just $ MichelsonJson [tz|1|]
+                , amount = Just $ MichelsonJson [tz|2|]
+                , self = Just [ta|KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b|]
+                , source = Just $ Constrained [ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|]
+                , sender = Just $ Constrained [ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|]
+                , chainId = Just $ MichelsonJson $ unsafe $ parseChainId "NetXH12Aer3be93"
+                , level = Just $ MichelsonJson 10000
+                , votingPowers = Just $ mkVotingPowers
+                        [ ([ta|tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr|], 40)
+                        , ([ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|], 60)
+                        ]
+                }
+            }
+
+      res <- checkResolution "full_config" expectedConfiguration
+      res @? isRight
+
+  , testCase "Omit some fields in the config" do
+      let expectedConfiguration = LigoLaunchRequest
+            { noDebug = Nothing
+            , logDir = Just "tmp/contract.log"
+            , program = Nothing
+            , michelsonEntrypoint = Just "default"
+            , storage = Nothing
+            , entrypoint = Nothing
+            , parameter = Just [int||"some_param"|]
+            , contractEnv = Just LigoContractEnv
+                { now = Just $ MichelsonJson [timestampQuote|2020-01-01T00:00:00Z|]
+                , balance = Just $ MichelsonJson [tz|1|]
+                , amount = Just $ MichelsonJson [tz|2|]
+                , self = Just [ta|KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b|]
+                , source = Just $ Constrained [ta|tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY|]
+                , sender = Nothing
+                , chainId = Nothing
+                , level = Nothing
+                , votingPowers = Nothing
+                }
+            }
+
+      res <- checkResolution "omitted_fields" expectedConfiguration
+      res @? isRight
+
+  , testCase "Config with computations" do
+      let expectedConfiguration = LigoLaunchRequest
+            { noDebug = Nothing
+            , logDir = Nothing
+            , program = Nothing
+            , michelsonEntrypoint = Nothing
+            , storage = Just [int||Unit|]
+            , entrypoint = Just [int||main|]
+            , parameter = Just [int||(Pair 200 "just a regular string")|]
+            , contractEnv = Just LigoContractEnv
+                { now = Nothing
+                , balance = Nothing
+                , amount = Just $ MichelsonJson [tz|3|]
+                , self = Nothing
+                , source = Nothing
+                , sender = Nothing
+                , chainId = Nothing
+                , level = Nothing
+                , votingPowers = Nothing
+                }
+            }
+
+      res <- checkResolution "config_with_computations" expectedConfiguration
+      res @? isRight
+
+  , testCase "Malformed config" do
+      -- We don't care about this value since the
+      -- config in this test is malformed.
+      let expectedConfiguration = LigoLaunchRequest
+            { noDebug = Nothing
+            , logDir = Nothing
+            , program = Nothing
+            , michelsonEntrypoint = Nothing
+            , storage = Nothing
+            , entrypoint = Nothing
+            , parameter = Nothing
+            , contractEnv = Nothing
+            }
+
+      res <- checkResolution "malformed_config" expectedConfiguration
+      res @? isLeft
+  ]
+  where
+    mkVotingPowers :: [(ImplicitAddress, Natural)] -> VotingPowersConfig
+    mkVotingPowers = SimpleVotingPowers
+      . SimpleVotingPowersInfo
+      . M.fromList
+      . map (bimap (MichelsonJson . unImplicitAddress) MichelsonJson)

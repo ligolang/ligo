@@ -16,10 +16,8 @@ import Data.Aeson
 import Data.Aeson qualified as Aeson
 import Data.Aeson.KeyMap (toAscList)
 import Data.Aeson.KeyMap qualified as Aeson
-import Data.Aeson.Parser (scientific)
 import Data.Aeson.Types (Parser)
 import Data.Aeson.Types qualified as Aeson
-import Data.Attoparsec.ByteString (parseOnly)
 import Data.Char (toLower)
 import Data.Data (Data)
 import Data.Default (Default (..))
@@ -29,12 +27,10 @@ import Data.List qualified as List
 import Data.List.NonEmpty (singleton)
 import Data.Singletons.TH (SingI (..))
 import Data.Text qualified as T
-import Data.Text.Encoding qualified as T
 import Data.Vector qualified as V
 import Debug qualified
 import Fmt.Buildable (Buildable, blockListF, build, nameF, pretty, unlinesF)
 import Fmt.Utils (Doc)
-import Generics.SYB (everywhere, mkT)
 import System.Console.ANSI
   (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
   SGR (Reset, SetColor, SetConsoleIntensity))
@@ -741,12 +737,6 @@ instance FromJSON (LigoMapper 'Unique) where
     lmTypes <- parseJSON . replaceTextualNumbers =<< o .: "types"
     lmLocations <- mich .: "locations"
     return LigoMapper{..}
-    where
-      replaceTextualNumbers :: Value -> Value
-      replaceTextualNumbers = everywhere $ mkT \case
-        str@(String val) -> parseOnly scientific (T.encodeUtf8 val)
-          & either (const str) Number
-        other -> other
 
 -- This @Buildable@ instance handles only generated
 -- main functions for module entrypoints.

@@ -10,3 +10,4 @@ module Transpile_with_ast = Transpile_with_ast
 module Run = Run
 module Info = Info
 module Print = Print
+module Resolve_config = Resolve_config
