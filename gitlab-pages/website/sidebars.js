@@ -57,8 +57,8 @@ const sidebars = {
         ],
       },
       "advanced/entrypoints-contracts",
-      //TODO "contract/views",
-      // "contract/events",
+      "contract/views",
+      "contract/events",
       "tutorials/start-a-project-from-a-template",
     ],
     "Testing and Debugging": [

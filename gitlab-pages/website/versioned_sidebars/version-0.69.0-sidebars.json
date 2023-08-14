@@ -42,6 +42,8 @@
         ]
       },
       "advanced/entrypoints-contracts",
+      "contract/views",
+      "contract/events",
       "tutorials/start-a-project-from-a-template"
     ],
     "Testing and Debugging": [
