@@ -162,6 +162,7 @@ let typed_prod =
     ; type_file "export_newline.jsligo"
     ; type_file "ppx_helpers.mligo"
     ; type_file "contextual_expressions_typing.mligo"
+    ; type_file "contextual_expressions_typing.jsligo"
     ]
 
 
