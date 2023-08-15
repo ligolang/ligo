@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2809'
+title: "Internal: add missing case `E_let_mut_in` for contextual expressions checking"
+type: fixed
+            

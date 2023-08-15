@@ -422,6 +422,18 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         and let_binder = let_binder
         and rhs = rhs in
         return @@ O.E_let_in { let_binder; rhs; let_result; attributes })
+  | E_let_mut_in { let_binder; rhs; let_result; attributes }, _ ->
+    let%bind rhs_type, rhs = infer rhs in
+    let%bind frag, let_binder =
+      With_frag.run @@ check_pattern ~mut:true let_binder rhs_type
+    in
+    let%bind let_result = def_frag frag ~on_exit:Drop ~in_:(check let_result type_) in
+    const
+      E.(
+        let%bind let_result = let_result
+        and let_binder = let_binder
+        and rhs = rhs in
+        return @@ O.E_let_mut_in { let_binder; rhs; let_result; attributes })
   | E_mod_in { module_binder; rhs; let_result }, _ ->
     let%bind rhs_sig, rhs = infer_module_expr rhs in
     let%bind let_result =
