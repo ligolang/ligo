@@ -410,7 +410,7 @@ let lte = 4 <= 3;
 In LIGO, only values of the same type can be compared. Moreover, not
 all values of the same type can be compared, only those with
 *comparable types*, which is a concept lifted from
-Michelson. Comparable types include, for instance, `int`, `nat`,
+Michelson. Comparable types include, for instance, `int`, `nat`, `bytes`
 `string`, `tez`, `timestamp`, `address`, etc. As an example of
 non-comparable types: maps, sets or lists are not comparable: if you
 wish to compare them, you will have to write your own comparison
@@ -498,6 +498,68 @@ let h = (a != b);
 
 </Syntax>
 
+### Comparing bytes
+
+
+<Syntax syntax="pascaligo">
+
+To check if the following operators have the expected result use 
+`ligo compile expression --deprecated pascaligo "a OP b"`
+
+Usage:
+
+```pascaligo group=d
+const a : bytes  = 0x1001
+const b : bytes  = 0x1000
+const c : bool = (a = b)
+const d : bool = (a > b)
+const e : bool = (a < b)
+const f : bool = (a <= b)
+const g : bool = (a >= b)
+const h : bool = (a =/= b)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+To check if the following operators have the expected result use 
+`ligo compile expression cameligo "a OP b"`
+
+Usage:
+
+```cameligo group=d
+let a : bytes  = 0x1001
+let b : bytes  = 0x1000
+let c : bool = (a = b)
+let d : bool = (a > b)
+let e : bool = (a < b)
+let f : bool = (a <= b)
+let g : bool = (a >= b)
+let h : bool = (a <> b)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+
+To check if the following operators have the expected result use 
+`ligo compile expression jsligo "a OP b"`
+
+Usage:
+
+```jsligo group=d
+let a = 0x1001;
+let b = 0x1000;
+let c = (a == b);
+let d = (a > b);
+let e = (a < b);
+let f = (a <= b);
+let g = (a >= b);
+let h = (a != b);
+```
+
+</Syntax>
+
 ### Comparing tez
 
 > 💡 Comparing `tez` values is especially useful when dealing with an
@@ -505,7 +567,7 @@ let h = (a != b);
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=d
+```pascaligo group=e
 const a : tez  = 5mutez
 const b : tez  = 10mutez
 const c : bool = (a = b) // False
@@ -514,7 +576,7 @@ const c : bool = (a = b) // False
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=d
+```cameligo group=e
 let a : tez  = 5mutez
 let b : tez  = 10mutez
 let c : bool = (a = b) // false
@@ -524,7 +586,7 @@ let c : bool = (a = b) // false
 
 <Syntax syntax="jsligo">
 
-```jsligo group=d
+```jsligo group=e
 let a: tez  = 5 as mutez;
 let b: tez  = 10 as mutez;
 let c = (a == b); // false

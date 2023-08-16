@@ -285,6 +285,10 @@ val get_and_update&lt;key,value&gt; : key -> option (value) -> big_map (key, val
 val get_and_update : 'key -> 'value option -> ('key, 'value) big_map -> value option * ('key, 'value) big_map
 </SyntaxTitle>
 
+<SyntaxTitle syntax="jsligo">
+let get_and_update: (key: &apos;key, value: option&lt;&apos;value&gt;, big_map: big_map&lt;&apos;key, &apos;value&gt;) => [option&lt;&apos;value&gt;, big_map&lt;&apos;key, &apos;value&gt;]
+</SyntaxTitle>
+
 Similar to `update` but it also returns the value that was previously stored in the big_map
 
 <SyntaxTitle syntax="pascaligo">

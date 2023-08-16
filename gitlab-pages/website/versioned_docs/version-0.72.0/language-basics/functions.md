@@ -434,13 +434,6 @@ let closure_example = i => {
 
 ## Recursive functions
 
-LIGO functions are not recursive by default, the user need to specify
-that the function is recursive.
-
-At the moment, recursive function are limited to one, e.g., a tuple,
-parameter and recursion is limited to __tail recursion__, that is, the
-recursive call should be the last expression of the function.
-
 <Syntax syntax="pascaligo">
 In PascaLIGO, recursive functions are defined using the `recursive`
 keyword:
@@ -467,6 +460,8 @@ let rec fibo (n, n_1, n_0 : int * int * int) : int =
 </Syntax>
 
 <Syntax syntax="jsligo">
+
+In JsLigo, recursive functions are defined and called using the same syntax as non-recursive functions.
 
 ```jsligo group=d
 let sum = (n: int, acc: int): int => {
