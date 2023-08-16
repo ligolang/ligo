@@ -1,3 +1,3 @@
 #import "../e/g/h/bar.jsligo" "Bar"
 
-const originate = () : address => Bar.originate ()
+export const originate = () : address => Bar.originate ()

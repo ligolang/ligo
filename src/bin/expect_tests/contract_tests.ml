@@ -1482,7 +1482,23 @@ let%expect_test _ =
         7 | import Foo = Bar.Foo
                          ^^^^^^^
 
-       Module "Bar.Foo" not found. |}]
+       Module "Bar.Foo" not found. |}];
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "y"
+    ; "--init-file"
+    ; bad_contract "modules_export_importer.jsligo"
+    ];
+  [%expect
+    {|
+      File "../../test/contracts/negative/modules_export_importer.jsligo", line 3, characters 10-13:
+        2 |
+        3 | const y : M.t = M.x;
+                      ^^^
+
+      Type "t" not found. |}]
 
 (* Test compile contract with Big_map.get_and_update for Hangzhou *)
 let%expect_test _ =

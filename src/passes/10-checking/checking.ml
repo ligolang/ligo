@@ -1538,16 +1538,6 @@ and infer_declaration (decl : I.declaration)
   | D_module
       { module_binder; module_; module_attr = { public; hidden } as attr; annotation } ->
     let%bind inferred_sig, module_ = infer_module_expr module_ in
-    let rec remove_non_public inferred_sig =
-      let self = remove_non_public in
-      match inferred_sig with
-      | [] -> []
-      | Signature.S_value (_, _, attr) :: k when (not attr.public) && not attr.entry ->
-        self k
-      | Signature.S_type (_, _, attr) :: k when not attr.public -> self k
-      | Signature.S_module (_, _, attr) :: k when not attr.public -> self k
-      | x :: k -> x :: self k
-    in
     let%bind annoted_sig =
       match annotation with
       | None ->
@@ -1605,6 +1595,14 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
           return (decl @ decls)) )
 
 
+and remove_non_public (sig_ : Signature.t) =
+  List.filter sig_ ~f:(function
+      | Signature.S_value (_, _, attr) -> attr.public || attr.entry
+      | Signature.S_type (_, _, attr) -> attr.public
+      | Signature.S_module (_, _, attr) -> attr.public
+      | _ -> true)
+
+
 (* Turns out we merge multiple programs together before this point, which raises error
    when we try doing Location.cover! This is a code smell from our build system *)
 (* let loc_of_program (program : I.program) =
@@ -1622,6 +1620,7 @@ let type_program_with_signature ~raise ~options ?env program =
     (let%map.C signature, program = infer_module program in
      E.(
        let%bind program = program in
+       let signature = remove_non_public signature in
        let%bind signature = decode_signature signature in
        return (program, signature)))
     ~raise

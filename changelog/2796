@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nWhen importing a file with `#import`, every definition was imported, even those not marked with `export` explicitly in JsLIGO, e.g. in previous versions we had:\\n\\n```\\n$ ligo compile expression jsligo y --init-file modules_export_importer.jsligo\\n42\\n\\n$ cat modules_export_imported.jsligo \\ntype t = int;\\n\\nconst x : t = 42;\\n$ cat modules_export_importer.jsligo \\n#import \"modules_export_imported.jsligo\" \"M\"\\n\\nconst y : M.t = M.x;\\n\\n```\\n\\nAfter this change, `export` is needed in JsLIGO to effectively export a declaration:\\n\\n```\\n$ ligo compile expression jsligo y --init-file modules_export_importer.jsligo     \\nFile \"modules_export_importer.jsligo\", line 3, characters 10-13:\\n  2 | \\n  3 | const y : M.t = M.x;\\n\\nType \"t\" not found. \\n\\n```\\n\\nThe same applies for CameLIGO: after this change, declarations marked with `@private` are not exported.\\n\\n"
+merge_request: '2796'
+title: "File import: make `export` mandatory to export values/types/namespaces when importing modules from other files"
+type: breaking
+            

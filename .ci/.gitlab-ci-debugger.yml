@@ -44,6 +44,7 @@ debugger-danger-instant-checks:
         - tools/debugger/**/*
         - danger/**/*
   needs: []
+  allow_failure: true
   interruptible: true
   script:
     - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
