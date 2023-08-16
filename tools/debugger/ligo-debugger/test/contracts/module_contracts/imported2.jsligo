@@ -1,4 +1,4 @@
-const strange = ([a, b, c] : [int, int, int]) : int => {
+export const strange = ([a, b, c] : [int, int, int]) : int => {
   let acc : int = 0;
 
   let i : int = 1;
