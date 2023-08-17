@@ -120,9 +120,7 @@ module Command = struct
         -> LT.value tezos_command
     | Get_last_originations : unit -> LT.value tezos_command
     | Get_last_events : string * LT.type_expression -> LT.value tezos_command
-    | Compile_contract_from_file :
-        string * string * string list * Z.t option
-        -> LT.value tezos_command
+    | Compile_contract_from_file : string * string * Z.t option -> LT.value tezos_command
     | Read_contract_from_file :
         Location.t * LT.calltrace * string
         -> LT.value tezos_command
@@ -403,9 +401,8 @@ module Command = struct
       | _ ->
         raise.error
         @@ Errors.generic_error Location.generated "Trying to measure a non-contract")
-    | Compile_contract_from_file (source_file, entry_point, views, _mutation) ->
+    | Compile_contract_from_file (source_file, entry_point, _mutation) ->
       let options = Compiler_options.set_entry_point options [ entry_point ] in
-      let options = Compiler_options.set_views options views in
       let options = Compiler_options.set_test_flag options false in
       let main, views =
         Michelson_backend.compile_contract_file
@@ -413,7 +410,6 @@ module Command = struct
           ~options
           source_file
           [ entry_point ]
-          views
       in
       let views =
         match views with

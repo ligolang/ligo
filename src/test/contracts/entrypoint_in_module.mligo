@@ -18,7 +18,6 @@ module Foo = struct
    | Decrement (n) -> sub store n
    | Reset         -> 0)
   [@view] let foo (i : int) (store : storage) : int = i + store
-  let bar (i : int) (store : storage) : int = 1 + i + store
 end
 
 [@view] let bor (i : int) (store : storage) : int = 1 + i + store

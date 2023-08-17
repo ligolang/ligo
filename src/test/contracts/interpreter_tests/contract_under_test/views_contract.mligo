@@ -1,6 +1,6 @@
 type 'a return = operation list * 'a
 
-let sto_plus_n (n : int) (s: int) : int = s + n + 1
+[@view] let sto_plus_n (n : int) (s: int) : int = s + n + 1
 
 let main_calling (addr : address) (_s : int) : int return =
   let x : int option = Tezos.call_view "sto_plus_n" 1 addr in

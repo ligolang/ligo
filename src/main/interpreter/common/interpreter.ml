@@ -1137,20 +1137,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
          catch_env)
   | C_TEST_TRY_WITH, _ -> fail @@ error_type ()
   | ( C_TEST_COMPILE_CONTRACT_FROM_FILE
-    , [ V_Ct (C_string contract_file); V_Ct (C_string entryp); V_List views; mutation ] )
-    ->
+    , [ V_Ct (C_string contract_file); V_Ct (C_string entryp); mutation ] ) ->
     let@ mod_res = Get_mod_res () in
     let contract_file = resolve_contract_file ~mod_res ~source_file ~contract_file in
-    let views =
-      List.map
-        ~f:(fun x -> trace_option ~raise (Errors.corner_case ()) @@ get_string x)
-        views
-    in
     let* mutation =
       monad_option (Errors.generic_error loc "Expected option")
       @@ LC.get_nat_option mutation
     in
-    let>> code = Compile_contract_from_file (contract_file, entryp, views, mutation) in
+    let>> code = Compile_contract_from_file (contract_file, entryp, mutation) in
     return @@ code
   | C_TEST_COMPILE_CONTRACT_FROM_FILE, _ -> fail @@ error_type ()
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN

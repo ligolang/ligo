@@ -16,8 +16,7 @@ let proxy (p,_ : param * store) : operation list * store
         | Super_not_funny v -> Integer (Option.unopt (Tezos.call_view "super_not_funny" () v)))
 
 let test_basic =
-  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" 
-    ["basic" ; "not_funny" ; "get_storage" ; "get_address" ; "super_not_funny"] (Test.eval 999) 1tez in
+  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" (Test.eval 999) 1tez in
   let ta, _mcontr, _size = Test.originate_uncurried proxy (Integer 1) 1tez in 
   let proxy_addr = Test.to_contract ta |> Tezos.address in
   let _ = Test.transfer proxy_addr (Test.eval (Basic (addr, addr))) 1tez in
@@ -25,8 +24,7 @@ let test_basic =
   s = (Integer 999)
 
 let test_not_funny =
-  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" 
-    ["basic" ; "not_funny" ; "get_storage" ; "get_address" ; "super_not_funny"] (Test.eval 999) 1tez in
+  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" (Test.eval 999) 1tez in
   let ta, _mcontr, _size = Test.originate_uncurried proxy (Integer 1) 1tez in 
   let proxy_addr = Test.to_contract ta |> Tezos.address in
   let _ = Test.transfer proxy_addr (Test.eval (Not_funny addr)) 1tez in
@@ -34,8 +32,7 @@ let test_not_funny =
   s = (Integer 999)
 
 let test_get_storage =
-  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" 
-    ["basic" ; "not_funny" ; "get_storage" ; "get_address" ; "super_not_funny"] (Test.eval 999) 1tez in
+  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" (Test.eval 999) 1tez in
   let ta, _mcontr, _size = Test.originate_uncurried proxy (Integer 1) 1tez in 
   let proxy_addr = Test.to_contract ta |> Tezos.address in
   let _ = Test.transfer proxy_addr (Test.eval (Get_storage addr)) 1tez in
@@ -43,8 +40,7 @@ let test_get_storage =
   s = (Integer 999)
 
 let test_get_address =
-  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" 
-    ["basic" ; "not_funny" ; "get_storage" ; "get_address" ; "super_not_funny"] (Test.eval 999) 1tez in
+  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" (Test.eval 999) 1tez in
   let ta, _mcontr, _size = Test.originate_uncurried proxy (Integer 1) 1tez in 
   let proxy_addr = Test.to_contract ta |> Tezos.address in
   let _ = Test.transfer proxy_addr (Test.eval (Get_address addr)) 1tez in
@@ -52,8 +48,7 @@ let test_get_address =
   s = Address proxy_addr
 
 let test_super_not_funny =
-  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" 
-    ["basic" ; "not_funny" ; "get_storage" ; "get_address" ; "super_not_funny"] (Test.eval 999) 1tez in
+  let addr, _contr, _size = Test.originate_from_file "./views_using_view.jsligo" "main" (Test.eval 999) 1tez in
   let ta, _mcontr, _size = Test.originate_uncurried proxy (Integer 1) 1tez in 
   let proxy_addr = Test.to_contract ta |> Tezos.address in
   let _ = Test.transfer proxy_addr (Test.eval (Super_not_funny addr)) 1tez in

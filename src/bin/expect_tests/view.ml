@@ -9,51 +9,8 @@ let%expect_test _ =
     { parameter unit ;
       storage int ;
       code { CDR ; NIL operation ; PAIR } ;
-      view "v1" int int { UNPAIR ; PUSH int 1 ; SWAP ; DIG 2 ; ADD ; ADD } } |}]
-
-(* not warning is expected because the annotated view is still being included in the contract *)
-let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "view.mligo"; "--views"; "v1,v2" ];
-  [%expect
-    {|
-    { parameter unit ;
-      storage int ;
-      code { CDR ; NIL operation ; PAIR } ;
       view "v1" int int { UNPAIR ; PUSH int 1 ; SWAP ; DIG 2 ; ADD ; ADD } ;
       view "v2" int int { CDR ; PUSH int 2 ; ADD } } |}]
-
-(* the following should trigger a warning because an annotated view is being ignored *)
-let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "view.mligo"; "--views"; "v2" ];
-  [%expect
-    {|
-    File "../../test/contracts/view.mligo", line 3, characters 12-14:
-      2 |
-      3 | [@view] let v1 (n : int) (s: int) : int = s + n + 1
-                      ^^
-      4 | let v2 (_ : int) (s: int) : int = s + 2
-
-    Warning: This view will be ignored, command line option override [
-    view] annotation
-
-    { parameter unit ;
-      storage int ;
-      code { CDR ; NIL operation ; PAIR } ;
-      view "v2" int int { CDR ; PUSH int 2 ; ADD } } |}]
-
-(* bad view type *)
-let%expect_test _ =
-  run_ligo_bad [ "compile"; "contract"; contract "view.mligo"; "--views"; "v1,bad_view" ];
-  [%expect
-    {|
-    File "../../test/contracts/view.mligo", line 5, characters 4-12:
-      4 | let v2 (_ : int) (s: int) : int = s + 2
-      5 | let bad_view (_ : int) (_: nat) : nat = 1n
-              ^^^^^^^^
-      6 |
-
-    Invalid type for view "main#11".
-    Cannot find "int" as storage. |}]
 
 (* view + #import : no view expected *)
 let%expect_test _ =
@@ -83,34 +40,23 @@ let%expect_test _ =
 
 (* view restrictions on primitives *)
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "view_restrictions.mligo"; "--views"; "bad_view1" ];
+  run_ligo_bad [ "compile"; "contract"; bad_test "view_restrictions1.mligo" ];
   [%expect
-    {| 
-    File "../../test/contracts/view_restrictions.mligo", line 7, characters 10-70:
-      6 | let bad_view1 (n : int) (s : int) : int =
-      7 |   let _ = Tezos.create_contract main (None : key_hash option) 0mutez 2 in
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   s + n + 1
+    {|
+    File "../../test/contracts/negative/view_restrictions1.mligo", line 1, character 0:
+    ../../test/contracts/negative/view_restrictions1.mligo: No such file or directory. |}]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile"; "contract"; bad_test "view_restrictions2.mligo" ];
+  [%expect
+    {|
     View rule violated:
           - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas)
           - Tezos.self can't be used because the entry-point does not make sense in a view |}]
 
 let%expect_test _ =
-  run_ligo_bad
-    [ "compile"; "contract"; contract "view_restrictions.mligo"; "--views"; "bad_view2" ];
-  [%expect
-    {| 
-    View rule violated:
-          - Tezos.create_contract ; Tezos.set_delegate and Tezos.transaction cannot be used because they are stateful (expect in lambdas)
-          - Tezos.self can't be used because the entry-point does not make sense in a view |}]
-
-let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "view_restrictions.mligo"; "--views"; "ok_view" ];
-  [%expect
-    {| 
+  run_ligo_good [ "compile"; "contract"; contract "view_restrictions.mligo" ];
+  [%expect{|
     { parameter unit ;
       storage int ;
       code { CDR ; NIL operation ; PAIR } ;

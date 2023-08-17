@@ -84,15 +84,6 @@ let dummy : Stacking.meta =
   { location = Location.dummy; env = []; binder = None; source_type = None }
 
 
-let build_view ~raise name (view : Stacking.compiled_expression) =
-  let view_param_ty, ret_ty =
-    trace_option ~raise (main_view_not_a_function name)
-    @@ (* remitodo error specific to views*)
-    Self_michelson.fetch_views_ty view.expr_ty
-  in
-  Value_var.to_name_exn name, view_param_ty, ret_ty, view.expr
-
-
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise
     :  protocol_version:Environment.Protocols.t -> ?enable_typed_opt:bool

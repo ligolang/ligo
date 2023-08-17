@@ -8,25 +8,6 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "view"; contract "off_view.mligo"; "va"; "-e"; "maina" ];
-  [%expect {|
-    { UNPAIR ; SIZE ; ADD } |}];
-  run_ligo_good [ "compile"; "view"; contract "off_view.mligo"; "vb"; "-e"; "mainb" ];
-  [%expect {|
-    { UNPAIR ; SIZE ; ADD ; INT } |}];
-  run_ligo_bad [ "compile"; "view"; contract "off_view.mligo"; "va"; "-e"; "mainb" ];
-  [%expect
-    {|
-    File "../../test/contracts/off_view.mligo", line 4, characters 4-6:
-      3 |
-      4 | let va (p : string) (s : int) : int = String.length p + s
-              ^^
-      5 | let vb (p : string) (s : nat) : int = int (String.length p + s)
-
-    Invalid type for view "mainb#9".
-    Cannot find "nat" as storage. |}]
-
-let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
@@ -2569,27 +2550,15 @@ let%expect_test _ =
     ; contract "entrypoint_in_module.mligo"
     ; "-m"
     ; "C"
-    ; "-v"
-    ; "bar"
     ];
-  [%expect
-    {|
-    File "../../test/contracts/entrypoint_in_module.mligo", line 20, characters 14-17:
-     19 |    | Reset         -> 0)
-     20 |   [@view] let foo (i : int) (store : storage) : int = i + store
-                        ^^^
-     21 |   let bar (i : int) (store : storage) : int = 1 + i + store
-
-    Warning: This view will be ignored, command line option override [
-    view] annotation
-
+  [%expect{|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
              IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
              NIL operation ;
              PAIR } ;
-      view "bar" int int { UNPAIR ; PUSH int 1 ; ADD ; ADD } } |}]
+      view "foo" int int { UNPAIR ; ADD } } |}]
 
 let%expect_test _ =
   run_ligo_bad
