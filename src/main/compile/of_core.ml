@@ -9,9 +9,7 @@ type form =
       ; module_path : Module_var.t list
       }
   | View of
-      { (* views declared as command line arguments if any *)
-        command_line_views : string list option
-      ; (* contract main function name *)
+      { (* contract main function name *)
         contract_entry : Value_var.t
       ; contract_type : Self_ast_typed.Helpers.contract_type
       ; module_path : Module_var.t list
@@ -22,11 +20,10 @@ let specific_passes ~raise ~options cform prg =
   | Contract { entrypoints; module_path } ->
     ignore options;
     Self_ast_typed.all_contract ~raise entrypoints module_path prg
-  | View { command_line_views; contract_entry; module_path; contract_type } ->
+  | View { contract_entry; module_path; contract_type } ->
     let prg =
       Self_ast_typed.all_view
         ~raise
-        command_line_views
         contract_entry
         module_path
         contract_type

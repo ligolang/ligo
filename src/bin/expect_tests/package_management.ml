@@ -12,8 +12,7 @@ let%expect_test _ =
     ; "originate_contract"
     ; "--no-warn"
     ];
-  [%expect
-    {|
+  [%expect{|
     Everything at the top-level was executed.
     - test exited with value KT1FkMmuVEwqHBM9SniT3LRAsERV6cdZz9p2(None). |}]
 

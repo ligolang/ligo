@@ -528,36 +528,6 @@ let annotate_with_attribute ~raise
   prg
 
 
-(* strip_view_annotations [p] remove all the [@view] annotation in top-level declarations of program [p] *)
-let strip_view_annotations p =
-  let f (attr : ValueAttr.t) =
-    if attr.view then Some { attr with view = false } else None
-  in
-  update_attribute_annotations f p
-
-
-(* annotate_with_view [p] [binders] for all names in [binders] decorates the top-level declaration of program [p] with the annotation [@view]
-  if the name matches with declaration binder. if a name is unmatched, fails.
-
-   e.g:
-    annotate_with_view [p] ["a";"b"]
-
-    let a = <..>
-    let b = <..>
-    let b = <..>
-    let c = <..>
-      |->
-    [@view] let a = <..>
-    let b = <..>
-    [@view] let b = <..>
-    let c = <..>
-*)
-let annotate_with_view ~raise : string list -> Ast_typed.program -> Ast_typed.program =
- fun names prg ->
-  let f (attr : ValueAttr.t) = { attr with view = true } in
-  annotate_with_attribute ~raise f names prg
-
-
 (* strip_entry_annotations [p] remove all the [@entry] annotation in top-level declarations of program [p] *)
 let strip_entry_annotations p =
   let f (attr : ValueAttr.t) =

@@ -59,11 +59,6 @@ let source_file =
   Command.Param.(anon (name %: create_arg_type Fn.id))
 
 
-let view_name =
-  let name = "VIEW" in
-  Command.Param.(anon (name %: create_arg_type Fn.id))
-
-
 let package_name =
   let name = "PACKAGE_NAME" in
   Command.Param.(anon (maybe (name %: string)))
@@ -160,11 +155,11 @@ let nanopass =
 let on_chain_views : _ Command.Param.t =
   let open Command.Param in
   let doc =
-    "VIEWS A list of declaration name that will be compiled as on-chain views, separated \
-     by ','"
+    "VIEWS (this command is deprecated) A list of declaration name that will be compiled \
+     as on-chain views, separated by ','"
   in
   let spec =
-    optional_with_default Default_options.views
+    optional_with_default []
     @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string
   in
   flag ~doc ~aliases:[ "v" ] "--views" spec
@@ -649,7 +644,6 @@ let compile_file =
         ~entry_point
         ~module_
         ~syntax
-        ~views
         ~protocol_version
         ~disable_michelson_typechecking
         ~experimental_disable_optimizations_for_debugging
@@ -689,6 +683,7 @@ let compile_file =
          (Api.Compile.File source_file)
          michelson_format
          michelson_comments
+         views
   in
   let summary = "compile a contract." in
   let readme () =
@@ -1123,118 +1118,6 @@ let compile_constant =
     <*> libraries)
 
 
-let compile_view =
-  let f
-      source_file
-      view_name
-      entry_point
-      module_
-      syntax
-      protocol_version
-      display_format
-      disable_michelson_typechecking
-      experimental_disable_optimizations_for_debugging
-      enable_typed_opt
-      no_stdlib
-      michelson_format
-      output_file
-      show_warnings
-      warning_as_error
-      no_colour
-      no_metadata_check
-      deprecated
-      skip_analytics
-      constants
-      file_constants
-      project_root
-      transpiled
-      warn_unused_rec
-      warn_infinite_loop
-      libraries
-      ()
-    =
-    let raw_options =
-      Raw_options.make
-        ~entry_point
-        ~module_
-        ~syntax
-        ~protocol_version
-        ~disable_michelson_typechecking
-        ~experimental_disable_optimizations_for_debugging
-        ~enable_typed_opt
-        ~no_stdlib
-        ~warning_as_error
-        ~no_colour
-        ~no_metadata_check
-        ~deprecated
-        ~constants
-        ~file_constants
-        ~project_root
-        ~transpiled
-        ~warn_unused_rec
-        ~warn_infinite_loop
-        ~libraries
-        ()
-    in
-    let cli_analytics =
-      Analytics.generate_cli_metrics_with_syntax_and_protocol
-        ~command:"compile_view"
-        ~raw_options
-        ~source_file
-        ()
-    in
-    return_result
-      ~skip_analytics
-      ~cli_analytics
-      ~return
-      ~show_warnings
-      ~display_format
-      ~no_colour
-      ~warning_as_error:raw_options.warning_as_error
-      ?output_file
-    @@ Api.Compile.view
-         raw_options
-         (Api.Compile.File source_file)
-         view_name
-         michelson_format
-  in
-  let summary = "compile a view." in
-  let readme () =
-    "This sub-command compiles a view to Michelson code. It expects a source file and a \
-     view function that has the type of a view: \"parameter * storage -> result\"."
-  in
-  Command.basic
-    ~summary
-    ~readme
-    (f
-    <$> source_file
-    <*> view_name
-    <*> entry_point
-    <*> module_
-    <*> syntax
-    <*> protocol_version
-    <*> display_format
-    <*> disable_michelson_typechecking
-    <*> experimental_disable_optimizations_for_debugging
-    <*> enable_michelson_typed_opt
-    <*> no_stdlib
-    <*> michelson_code_format
-    <*> output_file
-    <*> warn
-    <*> werror
-    <*> no_colour
-    <*> no_metadata_check
-    <*> deprecated
-    <*> skip_analytics
-    <*> constants
-    <*> file_constants
-    <*> project_root
-    <*> transpiled
-    <*> warn_unused_rec
-    <*> warn_infinite_loop
-    <*> libraries)
-
-
 let compile_group =
   Command.group ~summary:"compile a ligo program to michelson"
   @@ [ "contract", compile_file
@@ -1242,7 +1125,6 @@ let compile_group =
      ; "parameter", compile_parameter
      ; "storage", compile_storage
      ; "constant", compile_constant
-     ; "view", compile_view
      ]
 
 
@@ -2001,7 +1883,6 @@ let measure_contract =
   let f
       source_file
       entry_point
-      views
       syntax
       protocol_version
       display_format
@@ -2022,7 +1903,6 @@ let measure_contract =
         ~entry_point
         ~syntax
         ~protocol_version
-        ~views
         ~warning_as_error
         ~project_root
         ~deprecated
@@ -2060,7 +1940,6 @@ let measure_contract =
     (f
     <$> source_file
     <*> entry_point
-    <*> on_chain_views
     <*> syntax
     <*> protocol_version
     <*> display_format

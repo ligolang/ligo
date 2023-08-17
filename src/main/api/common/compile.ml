@@ -40,7 +40,7 @@ type source =
   | Text of string * Syntax_types.t
   | File of Path.t
 
-let contract (raw_options : Raw_options.t) source michelson_code_format michelson_comments
+let contract (raw_options : Raw_options.t) source michelson_code_format michelson_comments views
   =
   ( Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments
   , fun ~raise ->
@@ -54,6 +54,7 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
             (Syntax_name raw_options.syntax)
             (Some source_file)
       in
+      Deprecation.view_cli ~raise syntax views ;
       let protocol_version =
         Helpers.protocol_to_variant ~raise raw_options.protocol_version
       in
@@ -63,7 +64,6 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
       in
       let Compiler_options.
             { disable_michelson_typechecking = disable_typecheck
-            ; views
             ; constants
             ; file_constants
             ; _
@@ -85,7 +85,7 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
             Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
       in
       let Build.{ entrypoint; views } =
-        Build.build_contract ~raise ~options entry_point module_ views source
+        Build.build_contract ~raise ~options entry_point module_ source
       in
       let code = entrypoint.value in
       let views = List.map ~f:(fun { name; value } -> name, value) views in
@@ -480,35 +480,3 @@ let storage
           michelson_value
       in
       no_comment michelson_value, [] )
-
-
-let view (raw_options : Raw_options.t) source view_name michelson_code_format =
-  ( Formatter.Michelson_formatter.view_michelson_format michelson_code_format
-  , fun ~raise ->
-      let syntax =
-        match source with
-        | Text (_source_code, syntax) -> syntax
-        | File source_file ->
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
-      in
-      let protocol_version =
-        Helpers.protocol_to_variant ~raise raw_options.protocol_version
-      in
-      let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
-      let Compiler_options.{ entry_point; module_; _ } = options.frontend in
-      let source =
-        match source with
-        | File filename -> BuildSystem.Source_input.From_file filename
-        | Text (source_code, syntax) ->
-          BuildSystem.Source_input.(
-            Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
-      in
-      let ({ name; value } : Build.view_michelson) =
-        Build.build_view ~raise ~options entry_point module_ view_name source
-      in
-      let compiled_view = Ligo_compile.Of_michelson.build_view ~raise name value in
-      compiled_view, [] )

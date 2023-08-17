@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nDeprecation: views can no longer be declared through the CLI. One must one the view annotation in the source\\n\\n"
+merge_request: '2805'
+title: "[Deprecation] View declaration through CLI"
+type: breaking
+            

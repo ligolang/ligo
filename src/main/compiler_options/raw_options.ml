@@ -35,7 +35,6 @@ type t =
   ; experimental_disable_optimizations_for_debugging : bool
   ; enable_typed_opt : bool
   ; without_run : bool
-  ; views : string list
   ; constants : string list
   ; file_constants : string option
   }
@@ -84,7 +83,6 @@ module Default_options = struct
   let experimental_disable_optimizations_for_debugging = false
   let enable_typed_opt = false
   let without_run = false
-  let views = []
   let constants = []
   let file_constants = None
 end
@@ -119,7 +117,6 @@ let make
       Default_options.experimental_disable_optimizations_for_debugging)
     ?(enable_typed_opt = Default_options.enable_typed_opt)
     ?(without_run = Default_options.without_run)
-    ?(views = Default_options.views)
     ?(constants = Default_options.constants)
     ?(file_constants = Default_options.file_constants)
     ()
@@ -160,7 +157,6 @@ let make
   ; experimental_disable_optimizations_for_debugging
   ; enable_typed_opt
   ; without_run
-  ; views
   ; constants
   ; file_constants
   }

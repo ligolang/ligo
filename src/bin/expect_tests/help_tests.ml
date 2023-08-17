@@ -109,8 +109,9 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                and .jsligo respectively).
   [--transpiled]             . Disable checks that are unapplicable to
                                transpiled contracts.
-  [--views VIEWS], -v        . A list of declaration name that will be compiled
-                               as on-chain views, separated by ','
+  [--views VIEWS], -v        . (this command is deprecated) A list of
+                               declaration name that will be compiled as
+                               on-chain views, separated by ','
   [--warn-infinite-loop]     . warn about infinite loop
   [--warn-unused-rec]        . warn about unused recursion in a recursive
                                function
