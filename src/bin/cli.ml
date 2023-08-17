@@ -428,6 +428,13 @@ let deprecated =
   flag ~doc name no_arg
 
 
+let function_body =
+  let open Command.Param in
+  let name = "--function-body" in
+  let doc = "compile expression as a function body" in
+  flag ~doc name no_arg
+
+
 let display_format =
   let open Command.Param in
   let open Simple_utils.Display in
@@ -854,6 +861,7 @@ let compile_expression =
       warn_unused_rec
       warn_infinite_loop
       libraries
+      function_body
       ()
     =
     let raw_options =
@@ -870,6 +878,7 @@ let compile_expression =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
+        ~function_body
         ()
     in
     let cli_analytics =
@@ -916,7 +925,8 @@ let compile_expression =
     <*> project_root
     <*> warn_unused_rec
     <*> warn_infinite_loop
-    <*> libraries)
+    <*> libraries
+    <*> function_body)
 
 
 let compile_storage =

@@ -101,6 +101,10 @@ let t_pair ~loc a b : type_expression =
   ez_t_record ~loc [ Label.of_int 0, a; Label.of_int 1, b ]
 
 
+let t_tuple ~loc ts : type_expression =
+  ez_t_record ~loc @@ Record.(tuple_of_record @@ record_of_tuple ts)
+
+
 let t_unforged_ticket ~loc ty : type_expression =
   ez_t_record
     ~loc
@@ -384,6 +388,7 @@ let e_a_variable ~loc v ty = e_variable ~loc v ty
 let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
 let e_a_lambda ~loc l in_ty out_ty = e_lambda ~loc l (t_arrow ~loc in_ty out_ty ())
 let e_a_recursive ~loc l = e_recursive ~loc l l.fun_type
+let e_a_matching ~loc matchee cases t = e_matching ~loc { matchee; cases } t
 
 let e_a_let_in ~loc let_binder rhs let_result attributes =
   e_let_in ~loc { let_binder; rhs; let_result; attributes } (get_type let_result)
@@ -560,3 +565,66 @@ let get_e_string t =
   match t with
   | E_literal (Literal_string s) -> Some Ligo_string.(extract s)
   | _ -> None
+
+
+(* Wrap a variable `f` of type `a1 -> ... -> an -> b`
+   to an expression `fun (a1, ..., an) -> f a1 ... an : a1 * ... * an -> b` *)
+let uncurry_wrap e =
+  let loc = e.location in
+  let type_ = e.type_expression in
+  let rec destruct_type type_ =
+    match get_t_arrow type_ with
+    | Some { type1; type2 } ->
+      let args, result = destruct_type type2 in
+      (type1, type2) :: args, result
+    | None -> [], type_
+  in
+  let f (type_, result) =
+    let var = Value_var.fresh ~loc ~name:"arg" () in
+    Binder.make var type_, result
+  in
+  let args, result = destruct_type type_ in
+  let args_binders = List.map ~f args in
+  let make_expr expr (binder, result) =
+    e_a_application
+      ~loc
+      expr
+      (e_a_variable ~loc (Binder.get_var binder) (Binder.get_ascr binder))
+      result
+  in
+  let expr = List.fold_left ~init:e ~f:make_expr args_binders in
+  let args_var = Value_var.fresh ~loc ~name:"args" () in
+  let tuple = t_tuple ~loc (List.map ~f:(fun (t, _) -> t) args) in
+  let args_param = Param.make args_var tuple in
+  let args_expr = e_a_variable ~loc args_var tuple in
+  let expr =
+    e_a_matching
+      ~loc:Location.generated
+      args_expr
+      [ { pattern =
+            Location.wrap
+              ~loc:Location.generated
+              Pattern.(
+                P_tuple
+                  (List.map
+                     ~f:(fun (b, _) -> Location.wrap ~loc:Location.generated @@ P_var b)
+                     args_binders))
+        ; body = expr
+        }
+      ]
+      result
+  in
+  let expr =
+    e_a_lambda
+      ~loc
+      { binder = args_param; output_type = result; result = expr }
+      tuple
+      result
+  in
+  expr
+
+
+let uncurry_wrap e =
+  match get_t_arrow e.type_expression with
+  | Some _ -> uncurry_wrap e
+  | None -> e

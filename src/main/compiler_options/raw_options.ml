@@ -37,6 +37,7 @@ type t =
   ; without_run : bool
   ; constants : string list
   ; file_constants : string option
+  ; function_body : bool
   }
 
 module Default_options = struct
@@ -85,6 +86,7 @@ module Default_options = struct
   let without_run = false
   let constants = []
   let file_constants = None
+  let function_body = false
 end
 
 let make
@@ -119,6 +121,7 @@ let make
     ?(without_run = Default_options.without_run)
     ?(constants = Default_options.constants)
     ?(file_constants = Default_options.file_constants)
+    ?(function_body = Default_options.function_body)
     ()
   =
   { (* Formatter *)
@@ -159,4 +162,5 @@ let make
   ; without_run
   ; constants
   ; file_constants
+  ; function_body
   }

@@ -11,6 +11,30 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
+    ; "cameligo"
+    ; "va"
+    ; "--init-file"
+    ; contract "off_view_expression.mligo"
+    ; "--function-body"
+    ];
+  [%expect {|
+    { UNPAIR ; SIZE ; ADD } |}];
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "vb"
+    ; "--init-file"
+    ; contract "off_view_expression.mligo"
+    ; "--function-body"
+    ];
+  [%expect {|
+    { UNPAIR ; SIZE ; ADD ; INT } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
     ; "jsligo"
     ; "f(list([1,2,3,4,5]))"
     ; "--init-file"

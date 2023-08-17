@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nAdd a new flag --function-body to CLI `compile expression` command to compile function bodies (useful for compiling views)\\n"
+merge_request: '2811'
+title: "Compilation: add `--function-body` to expression compilation"
+type: added
+            
