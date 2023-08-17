@@ -508,6 +508,7 @@ let%expect_test _ =
                                  . A file with a JSON list of strings with Michelson
                                    code. Those Michelson values will be registered
                                    as global constants in the context.
+      [--function-body]          . compile expression as a function body
       [--init-file FILENAME]     . the path to the smart contract file to be used
                                    for context initialization.
       [--library LIBS], -l       . A comma-separated list of paths to directories

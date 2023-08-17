@@ -118,3 +118,32 @@ let compile_expression ~raise
   in
   let expr_ty = compile_type e.type_expression in
   ({ expr_ty; expr } : Program.compiled_expression)
+
+
+let compile_expression_function ~raise
+    : options:Compiler_options.t -> expression -> compiled_expression
+  =
+ fun ~options e ->
+  let protocol_version = options.backend.protocol_version in
+  let input_ty, _ =
+    trace ~raise self_mini_c_tracer @@ Self_mini_c.get_t_function e.type_expression
+  in
+  let expr : anon_function =
+    trace ~raise self_mini_c_tracer @@ Self_mini_c.get_function_or_eta_expand e
+  in
+  let expr =
+    { expr with
+      body =
+        trace ~raise self_mini_c_tracer @@ Self_mini_c.all_expression options expr.body
+    }
+  in
+  let de_bruijn =
+    trace ~raise scoping_tracer
+    @@ Scoping.translate_closed_function ~proto:protocol_version expr input_ty
+  in
+  let de_bruijn = Stacking.Program.compile_function_body de_bruijn in
+  let expr =
+    Self_michelson.optimize protocol_version ~has_comment:(has_comment options) de_bruijn
+  in
+  let expr_ty = compile_type e.type_expression in
+  ({ expr_ty; expr } : Program.compiled_expression)

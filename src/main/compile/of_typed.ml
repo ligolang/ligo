@@ -12,6 +12,7 @@ let compile_expression_in_context
     ?(self_pass = true)
     ?(self_program = true)
     ?(contract_pass = false)
+    ?(force_uncurry = false)
     : Ast_typed.program -> Ast_typed.expression -> Ast_aggregated.expression
   =
  fun ctxt exp ->
@@ -51,6 +52,7 @@ let compile_expression_in_context
       @@ Self_ast_aggregated.all_contract ~options parameter_ty storage_ty exp)
     else exp
   in
+  let exp = if force_uncurry then Ast_aggregated.Combinators.uncurry_wrap exp else exp in
   if self_pass then Self_ast_aggregated.remove_check_self exp else exp
 
 

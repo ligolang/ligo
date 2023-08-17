@@ -51,6 +51,7 @@ type backend =
                                true, empty seqs {} with comments will
                                not be erased during optimisation *)
   ; no_colour : bool
+  ; function_body : bool
   }
 
 type common = { deprecated : bool }
@@ -123,6 +124,7 @@ let make
     ; file_constants = raw_options.file_constants
     ; has_env_comments
     ; no_colour = raw_options.no_colour
+    ; function_body = raw_options.function_body
     }
   in
   let common = { deprecated = raw_options.deprecated } in

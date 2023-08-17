@@ -398,13 +398,16 @@ let build_expression ~raise
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      ~force_uncurry:options.backend.function_body
       init_prg
       typed_exp
   in
   let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c_exp = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
   let stacking_exp =
-    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
+    if options.backend.function_body
+    then Ligo_compile.Of_mini_c.compile_expression_function ~raise ~options mini_c_exp
+    else Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
   in
   { expression = stacking_exp; ast_type = aggregated.type_expression }
 

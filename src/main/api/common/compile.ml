@@ -141,7 +141,7 @@ let expression (raw_options : Raw_options.t) expression init_file michelson_form
           ~has_env_comments:false
           ()
       in
-      let Compiler_options.{ without_run; _ } = options.backend in
+      let Compiler_options.{ without_run; function_body; _ } = options.backend in
       let Compiler_options.{ constants; file_constants; _ } = options.backend in
       let file_constants = read_file_constants ~raise file_constants in
       let constants = constants @ file_constants in
@@ -151,7 +151,7 @@ let expression (raw_options : Raw_options.t) expression init_file michelson_form
       let mich =
         no_comment
         @@
-        if without_run
+        if without_run || function_body
         then Run.clean_expression expression.expr
         else (
           let options =
