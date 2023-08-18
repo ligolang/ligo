@@ -5,4 +5,5 @@ module EURO =
       (([] : operation list), add(p, s))
   end
 
+[@entry]
 let main (_, s : unit * int) : operation list * int = EURO.main(s, s + 2)

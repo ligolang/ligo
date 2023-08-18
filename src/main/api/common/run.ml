@@ -77,6 +77,7 @@ let test_expression (raw_options : Raw_options.t) expr source_file =
 
 let dry_run
     (raw_options : Raw_options.t)
+    entry_point
     source_file
     parameter
     storage
@@ -98,8 +99,9 @@ let dry_run
           (Syntax_name raw_options.syntax)
           (Some source_file)
       in
+      Deprecation.entry_cli ~raise syntax entry_point;
       let options = Compiler_options.make ~protocol_version ~syntax ~raw_options () in
-      let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+      let Compiler_options.{ module_; _ } = options.frontend in
       let module_path = Build.parse_module_path ~loc:Location.dummy module_ in
       let typed_prg =
         Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
@@ -107,8 +109,7 @@ let dry_run
       let contract_info, typed_contract =
         Trace.trace ~raise Main_errors.self_ast_typed_tracer
         @@ Ligo_compile.Of_core.specific_passes
-             ~options
-             (Ligo_compile.Of_core.Contract { entrypoints = entry_point; module_path })
+             (Ligo_compile.Of_core.Contract module_path)
              typed_prg
       in
       let entry_point, _contract_type = contract_info in
@@ -286,6 +287,7 @@ let evaluate_call
 let evaluate_expr
     (raw_options : Raw_options.t)
     source_file
+    exp
     amount
     balance
     sender
@@ -307,10 +309,8 @@ let evaluate_expr
         in
         Compiler_options.make ~protocol_version ~raw_options ~syntax ()
       in
-      let Compiler_options.{ entry_point; _ } = options.frontend in
-      let entry_point = List.hd_exn entry_point in
       let Build.{ expression; ast_type } =
-        Build.build_expression ~raise ~options syntax entry_point (Some source_file)
+        Build.build_expression ~raise ~options syntax exp (Some source_file)
       in
       let options =
         Run.make_dry_run_options

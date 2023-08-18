@@ -107,7 +107,7 @@
                             },
                             "entrypoint": {
                                 "type": "string",
-                                "description": "Entry point of the contract (`main` method)",
+                                "description": "Module entry point of the contract",
                                 "default": "(*@AskOnStart@*)"
                             },
                             "michelsonEntrypoint": {

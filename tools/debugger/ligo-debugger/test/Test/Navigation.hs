@@ -335,7 +335,7 @@ test_Continue_golden = testGroup "Continue"
       do
         switchBreakpoint
           (MSFile $ crdProgram $ basicCaseRun Caml)
-          (SrcLoc 11 0)
+          (SrcLoc 12 0)
 
         [int||Breakpoint is set at `f` & `g` call|]
         dumpAllSnapshotsWithStep doStep

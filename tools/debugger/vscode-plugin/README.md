@@ -55,12 +55,12 @@ Also some notes:
 
 ## Running the debugger
 
-You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO entrypoint in your `launch.json` with `(*@AskOnStart@*)`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
+You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO module entrypoint in your `launch.json` with `(*@AskOnStart@*)`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
 ```json
 "entrypoint": "(*@AskOnStart@*)" <-- will ask you to choose an entrypoint via quickpick
 ```
 ```json
-"entrypoint": "main_1" <-- will use "main_1" as entrypoint
+"entrypoint": "Main1" <-- will use "Main1" as module entrypoint
 ```
 
 Use F11 (or press "Step Into") to step through LIGO code in details.

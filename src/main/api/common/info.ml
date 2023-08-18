@@ -3,7 +3,7 @@ module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
 module Formatter = Ligo_formatter
 
-let measure_contract (raw_options : Raw_options.t) source_file =
+let measure_contract (raw_options : Raw_options.t) entry_point source_file =
   ( Formatter.contract_size_format
   , fun ~raise ->
       let protocol_version =
@@ -16,13 +16,13 @@ let measure_contract (raw_options : Raw_options.t) source_file =
           (Syntax_name raw_options.syntax)
           (Some source_file)
       in
+      Deprecation.entry_cli ~raise syntax entry_point;
       let options = Compiler_options.make ~protocol_version ~raw_options ~syntax () in
-      let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+      let Compiler_options.{ module_; _ } = options.frontend in
       let Build.{ entrypoint; views } =
         Build.build_contract
           ~raise
           ~options
-          entry_point
           module_
           (Build.Source_input.From_file source_file)
       in

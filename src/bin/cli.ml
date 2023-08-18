@@ -33,11 +33,23 @@ let create_arg_type ?key of_string =
 let entry_point =
   let open Command.Param in
   let name = "e" in
-  let doc = "ENTRY-POINT the entry-point that will be compiled." in
+  let doc =
+    "ENTRY-POINT (this command is deprecated) the entry-point that will be compiled."
+  in
   let spec =
-    optional_with_default Default_options.entry_point
+    optional_with_default []
     @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string
   in
+  flag ~doc ~aliases:[ "--entry-point" ] name spec
+
+
+let parameter_entrypoint =
+  let open Command.Param in
+  let name = "e" in
+  let doc =
+    "ENTRY-POINT the entry-point to be matched against the parameter expression"
+  in
+  let spec = optional string in
   flag ~doc ~aliases:[ "--entry-point" ] name spec
 
 
@@ -648,7 +660,6 @@ let compile_file =
     =
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~module_
         ~syntax
         ~protocol_version
@@ -687,6 +698,7 @@ let compile_file =
       ?output_file
     @@ Api.Compile.contract
          raw_options
+         entry_point
          (Api.Compile.File source_file)
          michelson_format
          michelson_comments
@@ -734,7 +746,7 @@ let compile_file =
 let compile_parameter =
   let f
       source_file
-      entry_point
+      parameter_entrypoint_opt
       module_
       expression
       syntax
@@ -763,7 +775,6 @@ let compile_parameter =
     let raw_options =
       Raw_options.make
         ~syntax
-        ~entry_point
         ~module_
         ~protocol_version
         ~warning_as_error
@@ -794,6 +805,7 @@ let compile_parameter =
       ?output_file
     @@ Api.Compile.parameter
          raw_options
+         parameter_entrypoint_opt
          source_file
          expression
          amount
@@ -814,7 +826,7 @@ let compile_parameter =
     ~readme
     (f
     <$> source_file
-    <*> entry_point
+    <*> parameter_entrypoint
     <*> module_
     <*> expression "parameter"
     <*> syntax
@@ -970,7 +982,6 @@ let compile_storage =
     in
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~module_
         ~syntax
         ~protocol_version
@@ -1004,6 +1015,7 @@ let compile_storage =
       ?output_file
     @@ Api.Compile.storage
          raw_options
+         entry_point
          source_file
          expression
          amount
@@ -1480,7 +1492,6 @@ let dry_run =
     =
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~module_
         ~syntax
         ~protocol_version
@@ -1509,6 +1520,7 @@ let dry_run =
       ~warning_as_error:raw_options.warning_as_error
     @@ Api.Run.dry_run
          raw_options
+         entry_point
          source_file
          parameter
          storage
@@ -1649,7 +1661,7 @@ let evaluate_call =
 let evaluate_expr =
   let f
       source_file
-      entry_point
+      exp
       amount
       balance
       sender
@@ -1671,7 +1683,6 @@ let evaluate_expr =
     =
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~syntax
         ~protocol_version
         ~warning_as_error
@@ -1697,7 +1708,7 @@ let evaluate_expr =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Run.evaluate_expr raw_options source_file amount balance sender source now
+    @@ Api.Run.evaluate_expr raw_options source_file exp amount balance sender source now
   in
   let summary = "evaluate a given definition." in
   let readme () =
@@ -1710,7 +1721,7 @@ let evaluate_expr =
     ~readme
     (f
     <$> source_file
-    <*> entry_point
+    <*> expression "EXPR"
     <*> amount
     <*> balance
     <*> sender
@@ -1910,7 +1921,6 @@ let measure_contract =
     =
     let raw_options =
       Raw_options.make
-        ~entry_point
         ~syntax
         ~protocol_version
         ~warning_as_error
@@ -1937,7 +1947,7 @@ let measure_contract =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Info.measure_contract raw_options source_file
+    @@ Api.Info.measure_contract raw_options entry_point source_file
   in
   let summary = "measure a contract's compiled size in bytes." in
   let readme () =

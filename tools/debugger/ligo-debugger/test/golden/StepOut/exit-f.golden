@@ -11,7 +11,7 @@ InterpretSnapshot:
           siValue: 1 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@12:18-12:23
+      sfLoc: test/contracts/functions-visiting.mligo@13:18-13:23
       sfStack:
         [ StackItem:
           siLigoDesc: elem s2 of int
@@ -33,7 +33,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@12:18-12:23
+      sfLoc: test/contracts/functions-visiting.mligo@13:18-13:23
       sfStack:
         [ StackItem:
           siLigoDesc: elem s2 of int
@@ -55,7 +55,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@13:4-13:29
+      sfLoc: test/contracts/functions-visiting.mligo@14:4-14:29
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

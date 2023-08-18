@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nDeprecation: entry-points can no longer be declared through the CLI. One must one the entry annotation in the source\\n"
+merge_request: '2814'
+title: "Deprecate CLI entry declaration"
+type: breaking
+            

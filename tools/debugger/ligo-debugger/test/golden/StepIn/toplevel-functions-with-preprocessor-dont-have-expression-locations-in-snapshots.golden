@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:3-9:42
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:3-10:42
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -28,7 +28,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -53,7 +53,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:27-9:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:27-10:41
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -78,7 +78,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -103,7 +103,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:34-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:34-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -128,7 +128,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:34-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:34-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -153,7 +153,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -188,7 +188,7 @@ InterpretSnapshot:
           siValue: 0 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -223,7 +223,7 @@ InterpretSnapshot:
           siValue: 0 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:31-9:40
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -248,7 +248,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:27-9:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:27-10:41
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -273,7 +273,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:25
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -298,7 +298,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:25
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -323,7 +323,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -348,7 +348,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/contract-with-preprocessor.mligo@9:4-9:41
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

@@ -12,7 +12,4 @@ let%expect_test _ =
   [%expect
     {|
     ../../test/contracts/entry_contract_for_list_declaration.jsligo declarations:
-    Foo.$main
-    Foo.reset
-    Foo.decrement
-    Foo.increment |}]
+    Foo.$main |}]

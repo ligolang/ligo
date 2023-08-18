@@ -1,3 +1,4 @@
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let s1_opt : int option = None in
   let s2_opt : string option = None in

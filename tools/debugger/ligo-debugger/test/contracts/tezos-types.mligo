@@ -1,5 +1,6 @@
 let empty () : 42 sapling_state = (Tezos.sapling_empty_state : 42 sapling_state)
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let s1 = Tezos.get_balance() in
   let s2 = Tezos.get_now() in

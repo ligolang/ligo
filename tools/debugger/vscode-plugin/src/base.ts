@@ -154,3 +154,11 @@ export function impossible(x: never) {
 export function getCurrentWorkspacePath(): Maybe<vscode.Uri> {
   return vscode.workspace.workspaceFolders?.[0].uri;;
 }
+
+export function generatedEntrypointName(module: string): string {
+  if (module == "") {
+    return "$main";
+  } else {
+    return module + ".$main";
+  }
+}

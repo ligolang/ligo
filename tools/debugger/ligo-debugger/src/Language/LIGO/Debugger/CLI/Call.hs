@@ -300,8 +300,7 @@ checkCompilation EntrypointName{..} file = void $ withMapLigoExc $
     do concat
         [ ["compile", "contract"]
         , ["--no-warn"]
-        , guard (not $ T.null enModule      ) >> ["-m", strArg enModule]
-        , guard (enName /= generatedMainName) >> ["-e", strArg enName]
+        , guard (not $ T.null enModule) >> ["-m", strArg enModule]
         , [strArg file]
         ]
     Nothing
@@ -316,8 +315,7 @@ compileLigoContractDebug EntrypointName{..} file = withMapLigoExc $
         , ["--michelson-format", "json"]
         , ["--michelson-comments", "location"]
         , ["--michelson-comments", "env"]
-        , guard (not $ T.null enModule      ) >> ["-m", strArg enModule]
-        , guard (enName /= generatedMainName) >> ["-e", strArg enName]
+        , guard (not $ T.null enModule) >> ["-m", strArg enModule]
         , ["--experimental-disable-optimizations-for-debugging"]
         , ["--disable-michelson-typechecking"]
         , [strArg file]

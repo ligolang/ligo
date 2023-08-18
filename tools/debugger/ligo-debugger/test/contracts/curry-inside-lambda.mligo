@@ -1,3 +1,4 @@
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let lambdaFun =
     fun (a, b : int * int) ->

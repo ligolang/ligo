@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:3-4:19
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:3-5:19
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -13,7 +13,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:13-4:19
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:13-5:19
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -23,17 +23,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@4:13-4:19
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem s of int
-          siValue: 0 ] ]
-InterpretSnapshot:
-  isStatus: running / faced statement
-  isStackFrames:
-    [ StackFrame:
-      sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:3-5:14
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:13-5:19
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -53,7 +43,17 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:3-7:29
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:3-7:14
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem s of int
+          siValue: 0 ] ]
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:3-8:29
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -63,7 +63,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -73,7 +73,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -83,7 +83,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:4-7:25
+      sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

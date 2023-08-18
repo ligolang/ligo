@@ -3,6 +3,7 @@ let rec f(n, m : nat * (nat,string) big_map) : (nat,string) big_map =
     | None -> m
     | Some i -> f(i, Big_map.add i "" m)
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let s2 = s + 42 in
   let s3 = s2 * s2 * 2 in

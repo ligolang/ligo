@@ -51,8 +51,8 @@ test_Compilation = testGroup "Getting debug info"
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) mainType ]
-        , [ LigoMereLocInfo ((1, 1) <-> (4, 30)) mainType ]
+        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) mainType ]
+        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) mainType ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]
@@ -100,7 +100,7 @@ test_EntrypointsCollection = testGroup "Getting entrypoints"
       let file = contractsDir </> "two-entrypoints.mligo"
 
       EntrypointsList res <- getAvailableEntrypoints file
-      res @~=? ["main1", "main2"]
+      res @~=? ["Main1.$main", "Main2.$main"]
 
   , testCase "Zero entrypoints" do
       let file = contractsDir </> "no-entrypoint.mligo"

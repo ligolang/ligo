@@ -3,4 +3,4 @@
 
 let tata = A.toto + B.titi
 
-let foo = B.f ((),3)
+let foo = B.main ((),3)

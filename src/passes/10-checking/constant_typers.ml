@@ -1373,7 +1373,6 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
              ~mode_annot:[ Checked; Checked; Checked; Checked ]
              ~types:
                [ t_string ~loc ()
-                 ^-> t_string ~loc ()
                  ^-> t_option (t_nat ~loc ()) ~loc ()
                  ^~> t_ast_contract ~loc ()
                ]) )

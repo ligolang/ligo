@@ -2,6 +2,7 @@
 
 let fst (p : int * int) : int = p.0
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let fact = IMP.fac(1, s) in
   let lst = [1;2;3;4] in

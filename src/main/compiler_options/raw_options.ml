@@ -10,7 +10,6 @@ type t =
   ; warn_infinite_loop : bool
   ; (* Frontend *)
     syntax : string
-  ; entry_point : string list
   ; module_ : string
   ; libraries : string list
   ; project_root : string option
@@ -55,7 +54,6 @@ module Default_options = struct
 
   (* Frontend *)
   let syntax = "auto"
-  let entry_point = []
   let module_ = ""
   let libraries = []
   let project_root = None
@@ -98,7 +96,6 @@ let make
     ?(warn_unused_rec = Default_options.warn_unused_rec)
     ?(warn_infinite_loop = Default_options.warn_infinite_loop)
     ?(syntax = Default_options.syntax)
-    ?(entry_point = Default_options.entry_point)
     ?(module_ = Default_options.module_)
     ?(libraries = Default_options.libraries)
     ?(project_root = Default_options.project_root)
@@ -135,7 +132,6 @@ let make
   ; warn_infinite_loop
   ; (* Frontend *)
     syntax
-  ; entry_point
   ; module_
   ; libraries
   ; project_root

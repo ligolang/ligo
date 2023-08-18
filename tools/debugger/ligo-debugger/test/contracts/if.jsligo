@@ -1,3 +1,4 @@
+@entry
 const main = ([_, s] : [unit, int]) : [list<operation>, int] => {
   let s2 = 0;
 

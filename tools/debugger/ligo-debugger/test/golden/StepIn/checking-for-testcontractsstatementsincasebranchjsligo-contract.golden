@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@2:3-2:13
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@3:3-3:13
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -16,7 +16,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@3:10-3:11
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@4:10-4:11
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of (False of (unit) | True of (unit))
@@ -35,7 +35,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@5:7-5:18
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@6:7-6:18
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of (False of (unit) | True of (unit))
@@ -57,7 +57,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@12:3-12:49
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:3-13:49
       sfStack:
         [ StackItem:
           siLigoDesc: elem s2 of int
@@ -70,7 +70,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/statements-in-case-branch.jsligo@12:12-12:39
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@13:12-13:39
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

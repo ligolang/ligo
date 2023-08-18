@@ -433,16 +433,15 @@ type contract_michelson =
 type view_michelson = (Ligo_prim.Value_var.t, Stacking.compiled_expression) named
 
 let rec build_contract_aggregated ~raise
-    : options:Compiler_options.t -> string list -> string -> Source_input.code_input -> _
+    : options:Compiler_options.t -> string -> Source_input.code_input -> _
   =
- fun ~options entry_points module_ source ->
+ fun ~options module_ source ->
   let module_path = parse_module_path ~loc module_ in
   let typed_prg = qualified_typed ~raise ~options source in
   let contract_info, typed_contract =
     trace ~raise self_ast_typed_tracer
     @@ Ligo_compile.Of_core.specific_passes
-         ~options
-         (Ligo_compile.Of_core.Contract { entrypoints = entry_points; module_path })
+         (Ligo_compile.Of_core.Contract module_path)
          typed_prg
   in
   let entry_point, contract_type = contract_info in
@@ -452,7 +451,7 @@ let rec build_contract_aggregated ~raise
         { contract_entry = entry_point; module_path; contract_type }
     in
     trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes ~options form typed_prg
+    @@ Ligo_compile.Of_core.specific_passes form typed_prg
   in
   let aggregated =
     Ligo_compile.Of_typed.apply_to_entrypoint_contract
@@ -484,14 +483,14 @@ let rec build_contract_aggregated ~raise
 
 
 and build_contract_stacking ~raise
-    :  options:Compiler_options.t -> string list -> string -> Source_input.code_input
+    :  options:Compiler_options.t -> string -> Source_input.code_input
     -> _
        * (Stacking.compiled_expression * _)
        * ((Value_var.t * Stacking.compiled_expression) list * _)
   =
- fun ~options entry_points module_ source ->
+ fun ~options module_ source ->
   let entrypoint, _, aggregated, agg_views =
-    build_contract_aggregated ~raise ~options entry_points module_ source
+    build_contract_aggregated ~raise ~options module_ source
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
@@ -501,9 +500,9 @@ and build_contract_stacking ~raise
 
 
 (* building a contract in michelson *)
-and build_contract ~raise ~options entry_point module_ source =
+and build_contract ~raise ~options module_ source =
   let entrypoint, (contract, _), (views, _) =
-    build_contract_stacking ~raise ~options entry_point module_ source
+    build_contract_stacking ~raise ~options module_ source
   in
   let entrypoint = { name = entrypoint; value = contract } in
   let views = List.map ~f:(fun (name, value) -> { name; value }) views in
@@ -511,14 +510,9 @@ and build_contract ~raise ~options entry_point module_ source =
 
 
 (* Meta ligo needs contract and views as aggregated programs *)
-and build_contract_meta_ligo ~raise ~options entry_point file_name =
+and build_contract_meta_ligo ~raise ~options file_name =
   let entry_point, (_, contract), (_, views) =
-    build_contract_stacking
-      ~raise
-      ~options
-      entry_point
-      ""
-      (Source_input.From_file file_name)
+    build_contract_stacking ~raise ~options "" (Source_input.From_file file_name)
   in
   entry_point, contract, views
 

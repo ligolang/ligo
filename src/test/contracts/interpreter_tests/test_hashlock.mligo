@@ -3,7 +3,7 @@
 
 let originate storage balance =
   let storage = Test.eval storage in
-  let addr, ctr, size = Test.originate_from_file "../hashlock.mligo" "main" storage balance in
+  let addr, ctr, size = Test.originate_from_file "../hashlock.mligo" storage balance in
   ((Test.cast_address addr : (Hashlock.parameter, Hashlock.storage) typed_address), ctr, size)
 
 let test_commit =

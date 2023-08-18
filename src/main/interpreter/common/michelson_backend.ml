@@ -403,10 +403,8 @@ let compile_contract_ast_multi ~raise ~options ~tezos_context main views =
   Tezos_utils.Micheline.Micheline.map_node (fun _ -> ()) (fun x -> x) contract
 
 
-let compile_contract_file ~raise ~options source_file entry_point =
-  let _, aggregated, views =
-    Build.build_contract_meta_ligo ~raise ~options entry_point source_file
-  in
+let compile_contract_file ~raise ~options source_file =
+  let _, aggregated, views = Build.build_contract_meta_ligo ~raise ~options source_file in
   aggregated, views
 
 

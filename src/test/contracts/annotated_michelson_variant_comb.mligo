@@ -1,13 +1,16 @@
-type comb_two = [@layout comb]
+type comb_two =
+  [@layout comb]
   | [@annot anbfoo] Foo of int
   | [@annot anabar] Bar of string
 
-type comb_three = [@layout comb]
+type comb_three =
+  [@layout comb]
   | [@annot ana] A of int
   | [@annot anb] B of string
   | [@annot anc] C of nat
 
-type comb_five = [@layout comb]
+type comb_five =
+  [@layout comb]
   | [@annot an_One] One of int
   | [@annot an_Two] Two of string
   | [@annot an_Three] Three of bool
@@ -15,26 +18,35 @@ type comb_five = [@layout comb]
   | [@annot an_Five] Five of int
 
 type parameter = unit
+
 type op_list = operation list
 
+module Main_comb_two = struct
+  let main (_, store : parameter * comb_two) : op_list * comb_two =
+    let o =
+      match store with
+        Foo _ -> Bar "foo"
+      | Bar _ -> Foo 1 in
+    ([] : operation list), o
 
-let main_comb_two (action, store : parameter * comb_two ) : op_list * comb_two =
-  let o = match store with
-    | Foo i -> Bar "foo"
-    | Bar j -> Foo 1
-  in
- ([] : operation list), o
+end
 
-let main_comb_three (action, store : parameter * comb_three ) : op_list * comb_three =
-  let o = (C 1n) in
-  ([] : operation list), o
+module Main_comb_three = struct
+  let main (_, _ : parameter * comb_three) : op_list * comb_three =
+    let o = (C 1n) in
+    ([] : operation list), o
 
-let main_comb_five (action, store : parameter * comb_five ) : op_list * comb_five =
-  let o = match store with
-    | One a -> Five (1)
-    | Two a -> Four (2n)
-    | Three a -> Three (true)
-    | Four a -> Two ("lol")
-    | Five a -> One 1
-  in
-  ([] : operation list), o
+end
+
+module Main_comb_five = struct
+  let main (_, store : parameter * comb_five) : op_list * comb_five =
+    let o =
+      match store with
+        One _ -> Five (1)
+      | Two _ -> Four (2n)
+      | Three _ -> Three (true)
+      | Four _ -> Two ("lol")
+      | Five _ -> One 1 in
+    ([] : operation list), o
+
+end
