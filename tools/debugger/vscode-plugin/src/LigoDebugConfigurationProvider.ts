@@ -1,6 +1,6 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
-import { ContractMetadata, getBinaryPath, InputValueLang, isDefined, Maybe, tryExecuteCommand } from './base'
+import { ContractMetadata, generatedEntrypointName, getBinaryPath, InputValueLang, isDefined, Maybe, tryExecuteCommand } from './base'
 import { LigoDebugContext } from './LigoDebugContext'
 import { LigoProtocolClient } from './LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
@@ -114,7 +114,8 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
             return (await this.client.sendMsg('validateEntrypoint', { entrypoint })).body?.errorMessage;
           },
           entrypoints
-        )
+        ),
+        generatedEntrypointName(config.entrypoint),
       );
     config.entrypoint = entrypoint;
 

@@ -46,7 +46,7 @@ let type_program_string ~raise ~options ?context syntax expression =
   typed, core
 
 
-let type_expression ~raise ~options ?annotation syntax expression init_prog =
+let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression init_prog =
   let meta = Of_source.make_meta syntax in
   (* TODO: should be computed outside *)
   let c_unit_exp, _ =
@@ -62,6 +62,15 @@ let type_expression ~raise ~options ?annotation syntax expression init_prog =
     match annotation with
     | None -> core_exp
     | Some ann -> Ast_core.e_ascription ~loc:core_exp.location core_exp ann
+  in
+  let core_exp =
+    match wrap_variant with
+    | None -> core_exp
+    | Some ctor ->
+      Ast_core.e_constructor
+        ~loc:core_exp.location
+        (Ligo_prim.Label.of_string (String.capitalize ctor))
+        core_exp
   in
   let typed_exp =
     Of_core.compile_expression ~raise ~options ~context:init_prog core_exp

@@ -781,33 +781,35 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 16-19:
-      1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
+      1 | let main (_u : (int set) set) (s : unit) : operation list * unit =
                           ^^^
-      2 |
+      2 |   ([] : operation list), s
 
     This type is used inside:
     File "../../test/contracts/negative/not_comparable.mligo", line 1, characters 15-24:
-      1 | let main (_u : (int set) set) (s : unit) : operation list * unit = ([] : operation list), s
+      1 | let main (_u : (int set) set) (s : unit) : operation list * unit =
                          ^^^^^^^^^
-      2 |
+      2 |   ([] : operation list), s
 
     The set constructor needs a comparable type argument, but it was given a non-comparable one. |}]
 
 let%expect_test _ =
   run_ligo_bad
-    [ "compile"; "contract"; bad_contract "not_comparable.mligo"; "-e"; "main2" ];
+    [ "compile"; "contract"; bad_contract "not_comparable.mligo"; "-m"; "Main2" ];
   [%expect
     {|
-    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 17-20:
-      2 |
-      3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
-                           ^^^
+    File "../../test/contracts/negative/not_comparable.mligo", line 5, characters 18-21:
+      4 | module Main2 = struct
+      5 |   let main (_u : (int set) ticket) (s : unit) : operation list * unit =
+                            ^^^
+      6 |     ([] : operation list), s
 
     This type is used inside:
-    File "../../test/contracts/negative/not_comparable.mligo", line 3, characters 16-25:
-      2 |
-      3 | let main2 (_u : (int set) ticket) (s : unit) : operation list * unit = ([] : operation list), s
-                          ^^^^^^^^^
+    File "../../test/contracts/negative/not_comparable.mligo", line 5, characters 17-26:
+      4 | module Main2 = struct
+      5 |   let main (_u : (int set) ticket) (s : unit) : operation list * unit =
+                           ^^^^^^^^^
+      6 |     ([] : operation list), s
 
     The ticket constructor needs a comparable type argument, but it was given a non-comparable one. |}]
 
@@ -1361,8 +1363,7 @@ let%expect_test _ =
 
 (* check annotations' capitalization *)
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "annotation_cases.mligo"; "-e"; "main1" ];
+  run_ligo_good [ "compile"; "contract"; contract "annotation_cases.mligo"; "-m"; "A" ];
   [%expect
     {|
     { parameter (pair (pair (nat %AAA) (nat %fooB)) (nat %cCC)) ;
@@ -1370,8 +1371,7 @@ let%expect_test _ =
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "annotation_cases.mligo"; "-e"; "main2" ];
+  run_ligo_good [ "compile"; "contract"; contract "annotation_cases.mligo"; "-m"; "B" ];
   [%expect
     {|
     { parameter (or (or (nat %AAA) (nat %fooB)) (nat %cCC)) ;
@@ -2141,77 +2141,66 @@ let%expect_test _ =
     [ "compile"
     ; "contract"
     ; contract "michelson_typed_opt.mligo"
-    ; "-e"
-    ; "main2"
+    ; "-m"
+    ; "A"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect
-    {|
+  [%expect{|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }  |}]
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "contract"
     ; contract "michelson_typed_opt.mligo"
-    ; "-e"
-    ; "main3"
+    ; "-m"
+    ; "B"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect
-    {|
+  [%expect{|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } }
-           |}]
+      code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "contract"
     ; contract "michelson_typed_opt.mligo"
-    ; "-e"
-    ; "main4"
+    ; "-m"
+    ; "C"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect
-    {|
+  [%expect{|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
-           |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-e"; "main2" ];
-  [%expect
-    {|
+    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "A" ];
+  [%expect{|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
-           |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-e"; "main3" ];
-  [%expect
-    {|
+    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "B" ];
+  [%expect{|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
-           |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-e"; "main4" ];
-  [%expect
-    {|
+    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "C" ];
+  [%expect{|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
-      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } }
-           |}]
+      code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -2569,13 +2558,9 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"
-    ; "contract"
-    ; contract "entrypoint_in_module.mligo"
-    ; "-m"
-    ; "C"
-    ];
-  [%expect{|
+    [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "C" ];
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2620,67 +2605,38 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"; "parameter"; contract "top_level_entry.mligo"; "42"; "-e"; "increment" ];
   [%expect {|
-      42 |}];
+      (Left (Right 42)) |}];
   run_ligo_good
     [ "compile"
     ; "parameter"
     ; contract "top_level_entry.mligo"
     ; "Increment 42"
-    ; "-e"
-    ; "increment,decrement"
     ];
-  [%expect {|
-      (Right 42) |}];
+  [%expect{| (Left (Right 42)) |}];
   run_ligo_good
     [ "compile"
     ; "parameter"
     ; contract "top_level_entry.mligo"
     ; "Decrement 21"
-    ; "-e"
-    ; "increment,decrement,reset"
     ];
-  [%expect {|
-      (Left (Left 21)) |}];
+  [%expect{| (Left (Left 21)) |}];
   run_ligo_good
-    [ "compile"; "storage"; contract "top_level_entry.mligo"; "42"; "-e"; "increment" ];
-  [%expect {|
-      42 |}];
+    [ "compile"; "storage"; contract "top_level_entry.mligo"; "42" ];
+  [%expect{| 42 |}];
   run_ligo_good
     [ "compile"
     ; "storage"
     ; contract "top_level_entry.mligo"
     ; "42"
-    ; "-e"
-    ; "increment,decrement"
     ];
-  [%expect {|
-  42 |}];
+  [%expect{| 42 |}];
   run_ligo_good
     [ "compile"
     ; "storage"
     ; contract "top_level_entry.mligo"
     ; "42"
-    ; "-e"
-    ; "increment,decrement,reset"
     ];
-  [%expect {|
-      42 |}]
-
-let%expect_test _ =
-  run_ligo_good [ "compile"; "parameter"; contract "two_contracts.mligo"; "()" ];
-  [%expect {|
-      Unit |}];
-  run_ligo_good [ "compile"; "storage"; contract "two_contracts.mligo"; "false" ];
-  [%expect {|
-      False |}];
-  run_ligo_good
-    [ "compile"; "parameter"; contract "two_contracts.mligo"; "\"Hello\""; "-e"; "ep2" ];
-  [%expect {|
-      "Hello" |}];
-  run_ligo_good
-    [ "compile"; "storage"; contract "two_contracts.mligo"; "42 * 2"; "-e"; "ep2" ];
-  [%expect {|
-      84 |}]
+  [%expect{| 42 |}]
 
 let%expect_test _ =
   run_ligo_good

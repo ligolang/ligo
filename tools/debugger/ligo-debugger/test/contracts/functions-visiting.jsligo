@@ -7,6 +7,7 @@ const g = (): int => {
     const y = 10 + 10
     return y
 }
+@entry
 const main = ([_, s] : [unit, int]) : [list<operation>, int] => {
     const s2 = s + 1;
     const s3 = g() + f(s2);

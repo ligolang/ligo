@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@10:3-13:16
+      sfLoc: test/contracts/record-update-is-statement.mligo@11:3-14:16
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -14,7 +14,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@11:11-11:18
+      sfLoc: test/contracts/record-update-is-statement.mligo@12:11-12:18
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -25,7 +25,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@12:17-12:36
+      sfLoc: test/contracts/record-update-is-statement.mligo@13:17-13:36
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -36,7 +36,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@15:3-15:38
+      sfLoc: test/contracts/record-update-is-statement.mligo@16:3-16:38
       sfStack:
         [ StackItem:
           siLigoDesc:
@@ -47,7 +47,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@15:4-15:37
+      sfLoc: test/contracts/record-update-is-statement.mligo@16:4-16:37
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

@@ -117,7 +117,8 @@ This sub-command compiles a contract to Michelson code. It expects a source file
                                function
   [--werror]                 . treat warnings as errors
   [-e ENTRY-POINT], --entry-point
-                             . the entry-point that will be compiled.
+                             . (this command is deprecated) the entry-point that
+                               will be compiled.
   [-m MODULE], --module      . the entry-point will be compiled from that
                                module.
   [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
@@ -188,7 +189,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
-                                 . the entry-point that will be compiled.
+                                 . the entry-point to be matched against the
+                                   parameter expression
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
@@ -264,7 +266,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
-                                 . the entry-point that will be compiled.
+                                 . (this command is deprecated) the entry-point that
+                                   will be compiled.
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
@@ -363,7 +366,8 @@ let%expect_test _ =
                                    function
       [--werror]                 . treat warnings as errors
       [-e ENTRY-POINT], --entry-point
-                                 . the entry-point that will be compiled.
+                                 . (this command is deprecated) the entry-point that
+                                   will be compiled.
       [-m MODULE], --module      . the entry-point will be compiled from that
                                    module.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
@@ -432,7 +436,7 @@ let%expect_test _ =
     {|
     evaluate a given definition.
 
-      ligo run evaluate-expr SOURCE_FILE
+      ligo run evaluate-expr SOURCE_FILE EXPR_EXPRESSION
 
     This sub-command evaluates a LIGO definition. The context is initialized from a source file where the definition is written. The interpretation is done using a Michelson interpreter.
 
@@ -472,8 +476,6 @@ let%expect_test _ =
       [--warn-unused-rec]        . warn about unused recursion in a recursive
                                    function
       [--werror]                 . treat warnings as errors
-      [-e ENTRY-POINT], --entry-point
-                                 . the entry-point that will be compiled.
       [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
                                    the LIGO environment (mumbai ,
                                    nairobi). By default, the current protocol

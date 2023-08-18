@@ -6,6 +6,7 @@ module TestId =
       end
   end
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let poly_troll42_ = 15 in
   let foo (type a) : a list = ([] : a list) in

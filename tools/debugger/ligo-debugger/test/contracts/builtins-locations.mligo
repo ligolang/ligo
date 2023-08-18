@@ -1,3 +1,4 @@
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let v = is_nat s in
   let () = assert true in

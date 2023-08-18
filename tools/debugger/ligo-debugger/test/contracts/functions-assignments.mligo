@@ -2,6 +2,7 @@ let add (a, b : int * int) : int = a + b
 
 let foo (a, b : int * int) : int = (a + b) * (a - b)
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let inner (a, b : int * int) : int = a * b in
   let s1 = add (s, s + 2) in

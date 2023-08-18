@@ -7,7 +7,6 @@ module Raw_options = Raw_options
 
 type frontend =
   { syntax : Syntax_types.t option
-  ; entry_point : string list
   ; module_ : string
   ; libraries : string list
   ; project_root : string option
@@ -83,7 +82,6 @@ let make
   let frontend =
     { syntax
     ; libraries = raw_options.libraries
-    ; entry_point = raw_options.entry_point
     ; module_ = raw_options.module_
     ; project_root = raw_options.project_root
     ; transpiled = raw_options.transpiled
@@ -132,11 +130,6 @@ let make
 
 
 let set_test_flag opts test = { opts with middle_end = { opts.middle_end with test } }
-
-let set_entry_point opts entry_point =
-  { opts with frontend = { opts.frontend with entry_point } }
-
-
 let set_syntax opts syntax = { opts with frontend = { opts.frontend with syntax } }
 
 let set_no_stdlib opts no_stdlib =

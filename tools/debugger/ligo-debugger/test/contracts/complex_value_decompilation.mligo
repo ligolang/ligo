@@ -15,6 +15,7 @@ type ep =
 
 let test_val : ep = Go ( { ch = ("NetXH12Aer3be93" : chain_id) ; state = A ("1970-01-01T00:01:40Z" : timestamp) ; s = "large" } )
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let v = test_val in
   let l =

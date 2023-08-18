@@ -31,8 +31,6 @@ let%expect_test _ =
     ; "contract"
     ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_2.mligo"
-    ; "--entry-point"
-    ; "f"
     ];
   [%expect
     {|
@@ -48,8 +46,6 @@ let%expect_test _ =
     ; "contract"
     ; "--no-color"
     ; "../../test/contracts/negative/error_function_annotation_3.mligo"
-    ; "--entry-point"
-    ; "f"
     ];
   [%expect
     {|

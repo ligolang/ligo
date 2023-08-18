@@ -336,7 +336,7 @@ export async function getEntrypoint(
 
         throw new Error(msg);
       }
-      state.ref.pickedEntrypoint = entrypoints[0].label;
+      state.ref.pickedEntrypoint = entrypoints[0].realName;
       return;
     }
 

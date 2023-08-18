@@ -3,7 +3,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@2:3-2:43
+      sfLoc: test/contracts/local-function-assignments.mligo@3:3-3:43
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
@@ -13,7 +13,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@3:3-3:25
+      sfLoc: test/contracts/local-function-assignments.mligo@4:3-4:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem foo of int * int -> int
@@ -38,7 +38,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@3:12-3:25
+      sfLoc: test/contracts/local-function-assignments.mligo@4:12-4:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem foo of int * int -> int
@@ -63,7 +63,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: foo
-      sfLoc: test/contracts/local-function-assignments.mligo@2:38-2:43
+      sfLoc: test/contracts/local-function-assignments.mligo@3:38-3:43
       sfStack:
         [ StackItem:
           siLigoDesc: elem b of int
@@ -73,7 +73,7 @@ InterpretSnapshot:
           siValue: 0 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@3:16-3:24
+      sfLoc: test/contracts/local-function-assignments.mligo@4:16-4:24
       sfStack:
         [ StackItem:
           siLigoDesc: elem foo of int * int -> int
@@ -98,7 +98,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@4:3-4:44
+      sfLoc: test/contracts/local-function-assignments.mligo@5:3-5:44
       sfStack:
         [ StackItem:
           siLigoDesc: elem s1 of int
@@ -111,7 +111,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@5:3-5:25
+      sfLoc: test/contracts/local-function-assignments.mligo@6:3-6:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
@@ -128,7 +128,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@5:12-5:25
+      sfLoc: test/contracts/local-function-assignments.mligo@6:12-6:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
@@ -145,7 +145,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: bar
-      sfLoc: test/contracts/local-function-assignments.mligo@4:39-4:44
+      sfLoc: test/contracts/local-function-assignments.mligo@5:39-5:44
       sfStack:
         [ StackItem:
           siLigoDesc: elem b of int
@@ -155,7 +155,7 @@ InterpretSnapshot:
           siValue: 0 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@5:19-5:24
+      sfLoc: test/contracts/local-function-assignments.mligo@6:19-6:24
       sfStack:
         [ StackItem:
           siLigoDesc: elem bar of int -> int -> int
@@ -172,7 +172,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@6:3-6:57
+      sfLoc: test/contracts/local-function-assignments.mligo@7:3-7:57
       sfStack:
         [ StackItem:
           siLigoDesc: elem s2 of int
@@ -188,7 +188,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@7:3-7:26
+      sfLoc: test/contracts/local-function-assignments.mligo@8:3-8:26
       sfStack:
         [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
@@ -224,7 +224,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@7:12-7:26
+      sfLoc: test/contracts/local-function-assignments.mligo@8:12-8:26
       sfStack:
         [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
@@ -260,7 +260,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: baz
-      sfLoc: test/contracts/local-function-assignments.mligo@6:48-6:57
+      sfLoc: test/contracts/local-function-assignments.mligo@7:48-7:57
       sfStack:
         [ StackItem:
           siLigoDesc: elem c of int
@@ -273,7 +273,7 @@ InterpretSnapshot:
           siValue: 2 ]
     , StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@7:20-7:25
+      sfLoc: test/contracts/local-function-assignments.mligo@8:20-8:25
       sfStack:
         [ StackItem:
           siLigoDesc: elem baz of int -> int * int -> int
@@ -309,7 +309,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@8:3-8:40
+      sfLoc: test/contracts/local-function-assignments.mligo@9:3-9:40
       sfStack:
         [ StackItem:
           siLigoDesc: elem s3 of int
@@ -325,7 +325,7 @@ InterpretSnapshot:
   isStackFrames:
     [ StackFrame:
       sfName: main
-      sfLoc: test/contracts/local-function-assignments.mligo@8:4-8:39
+      sfLoc: test/contracts/local-function-assignments.mligo@9:4-9:39
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 

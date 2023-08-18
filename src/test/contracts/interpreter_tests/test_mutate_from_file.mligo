@@ -9,5 +9,4 @@ let tester ((a, _, _) : address * michelson_contract * int) : unit =
 
 let test =
     let fn = "adder.mligo" in
-    let e = "main" in
-    Test.originate_from_file_and_mutate_all fn e (Test.eval 0) 0tez tester
+    Test.originate_from_file_and_mutate_all fn (Test.eval 0) 0tez tester

@@ -184,7 +184,7 @@ let apply_to_entrypoint_view ~raise ~options
   Self_ast_aggregated.remove_check_self e
 
 
-(* 
+(*
   if only_ep, we only list the declarations with types fiting an entrypoint
   TODO (when we have module signature): extract declaration names from sig type
   Notes: a Ast_typed.program, would have to hold a signature too..
@@ -207,7 +207,8 @@ let rec list_declarations
       match el.wrap_content with
       | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; attr; _ }
       | D_value { binder; attr; _ }
-        when attr.entry && not (should_skip binder) -> Binder.get_var binder :: prev
+        when attr.entry && (not (should_skip binder)) && not only_ep ->
+        Binder.get_var binder :: prev
       | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; attr; expr }
       | D_value { binder; attr; expr }
         when not attr.hidden ->
@@ -215,7 +216,8 @@ let rec list_declarations
         then
           if is_some
                (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content)
-             && not (should_skip binder)
+             && (not (should_skip binder))
+             && is_generated_main binder
           then Binder.get_var binder :: prev
           else prev
         else if not (should_skip binder)

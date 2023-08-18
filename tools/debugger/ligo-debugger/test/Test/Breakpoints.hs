@@ -29,28 +29,28 @@ test_test = minor <$>
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (MSFile file) (SrcLoc 2 0)
-        N.switchBreakpoint (MSFile file) (SrcLoc 5 0)
+        N.switchBreakpoint (MSFile file) (SrcLoc 3 0)
+        N.switchBreakpoint (MSFile file) (SrcLoc 6 0)
 
         liftIO $ step "Visiting 1st breakpoint"
         goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
           -- here and further we don't expect any concrete column number
-          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 2 2)
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 3 2)
 
         liftIO $ step "Visiting 2nd breakpoint"
         goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning (EventExpressionPreview GeneralExpression)
           -- here and further we don't expect any concrete column number
-          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 2 11)
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 3 11)
 
         liftIO $ step "Visiting 3rd breakpoint"
         goToNextBreakpoint Forward
         N.frozen do
           isStatus <$> N.curSnapshot @@?= InterpretRunning EventFacedStatement
-          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 5 2)
+          view N.slStart <<$>> N.getExecutedPosition @@?= Just (SrcLoc 6 2)
 
         -- TODO: uncomment this when visiting multiple source locations is available in morley-debugger
 
@@ -95,10 +95,10 @@ test_test = minor <$>
       let nestedFile2 = modulePath </> "imported2.jsligo"
 
       testWithSnapshots runData do
-        N.switchBreakpoint (MSFile file) (SrcLoc 5 0)
-        N.switchBreakpoint (MSFile file) (SrcLoc 7 0)
+        N.switchBreakpoint (MSFile file) (SrcLoc 6 0)
         N.switchBreakpoint (MSFile file) (SrcLoc 8 0)
         N.switchBreakpoint (MSFile file) (SrcLoc 9 0)
+        N.switchBreakpoint (MSFile file) (SrcLoc 10 0)
 
         N.switchBreakpoint (MSFile nestedFile) (SrcLoc 8 0)
         N.switchBreakpoint (MSFile nestedFile) (SrcLoc 13 0)
@@ -112,8 +112,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 5 13)
-              (SrcLoc 5 26)
+              (SrcLoc 6 13)
+              (SrcLoc 6 26)
             )
 
         liftIO $ step "Calculate arguments"
@@ -122,8 +122,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 5 21)
-              (SrcLoc 5 25)
+              (SrcLoc 6 21)
+              (SrcLoc 6 25)
             )
 
         liftIO $ step "Go to next breakpoint (switch file)"
@@ -142,8 +142,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 5 13)
-              (SrcLoc 5 26)
+              (SrcLoc 6 13)
+              (SrcLoc 6 26)
             )
 
         liftIO $ step "Stop at statement"
@@ -152,8 +152,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 7 2)
-              (SrcLoc 7 30)
+              (SrcLoc 8 2)
+              (SrcLoc 8 30)
             )
 
         liftIO $ step "Stop at function call"
@@ -162,8 +162,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 7 15)
-              (SrcLoc 7 30)
+              (SrcLoc 8 15)
+              (SrcLoc 8 30)
             )
 
         liftIO $ step "Calculate arguments"
@@ -172,8 +172,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 7 23)
-              (SrcLoc 7 29)
+              (SrcLoc 8 23)
+              (SrcLoc 8 29)
             )
 
         liftIO $ step "Go to next breakpoint (nested file, statement)"
@@ -192,48 +192,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 7 15)
-              (SrcLoc 7 30)
-            )
-
-        liftIO $ step "Stop at statement"
-        goToNextBreakpoint Forward
-        N.frozen do
-          N.getExecutedPosition @@?= Just
-            (N.SourceLocation
-              (MSFile file)
-              (SrcLoc 8 2)
-              (SrcLoc 8 45)
-            )
-
-        liftIO $ step "Stop at function call"
-        goToNextBreakpoint Forward
-        N.frozen do
-          N.getExecutedPosition @@?= Just
-            (N.SourceLocation
-              (MSFile file)
-              (SrcLoc 8 19)
-              (SrcLoc 8 45)
-            )
-
-        liftIO $ step "Calculate arguments"
-        goToNextBreakpoint Forward
-        N.frozen do
-          N.getExecutedPosition @@?= Just
-            (N.SourceLocation
-              (MSFile file)
-              (SrcLoc 8 27)
-              (SrcLoc 8 44)
-            )
-
-        liftIO $ step "Stop at function call"
-        goToNextBreakpoint Forward
-        N.frozen do
-          N.getExecutedPosition @@?= Just
-            (N.SourceLocation
-              (MSFile file)
-              (SrcLoc 8 19)
-              (SrcLoc 8 45)
+              (SrcLoc 8 15)
+              (SrcLoc 8 30)
             )
 
         liftIO $ step "Stop at statement"
@@ -243,7 +203,47 @@ test_test = minor <$>
             (N.SourceLocation
               (MSFile file)
               (SrcLoc 9 2)
-              (SrcLoc 9 81)
+              (SrcLoc 9 45)
+            )
+
+        liftIO $ step "Stop at function call"
+        goToNextBreakpoint Forward
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (MSFile file)
+              (SrcLoc 9 19)
+              (SrcLoc 9 45)
+            )
+
+        liftIO $ step "Calculate arguments"
+        goToNextBreakpoint Forward
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (MSFile file)
+              (SrcLoc 9 27)
+              (SrcLoc 9 44)
+            )
+
+        liftIO $ step "Stop at function call"
+        goToNextBreakpoint Forward
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (MSFile file)
+              (SrcLoc 9 19)
+              (SrcLoc 9 45)
+            )
+
+        liftIO $ step "Stop at statement"
+        goToNextBreakpoint Forward
+        N.frozen do
+          N.getExecutedPosition @@?= Just
+            (N.SourceLocation
+              (MSFile file)
+              (SrcLoc 10 2)
+              (SrcLoc 10 81)
             )
 
         liftIO $ step "Stop inside tuple"
@@ -252,8 +252,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 3)
-              (SrcLoc 9 80)
+              (SrcLoc 10 3)
+              (SrcLoc 10 80)
             )
 
         liftIO $ step "Stop at second element"
@@ -262,8 +262,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 26)
-              (SrcLoc 9 80)
+              (SrcLoc 10 26)
+              (SrcLoc 10 80)
             )
 
         liftIO $ step "Stop at \"what\" call"
@@ -272,8 +272,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 55)
-              (SrcLoc 9 80)
+              (SrcLoc 10 55)
+              (SrcLoc 10 80)
             )
 
         liftIO $ step "Calculate arguments for \"what\""
@@ -282,8 +282,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 64)
-              (SrcLoc 9 79)
+              (SrcLoc 10 64)
+              (SrcLoc 10 79)
             )
 
         goToNextBreakpoint Forward
@@ -291,8 +291,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 74)
-              (SrcLoc 9 79)
+              (SrcLoc 10 74)
+              (SrcLoc 10 79)
             )
 
         goToNextBreakpoint Forward
@@ -300,8 +300,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 67)
-              (SrcLoc 9 72)
+              (SrcLoc 10 67)
+              (SrcLoc 10 72)
             )
 
         goToNextBreakpoint Forward
@@ -309,8 +309,8 @@ test_test = minor <$>
           N.getExecutedPosition @@?= Just
             (N.SourceLocation
               (MSFile file)
-              (SrcLoc 9 64)
-              (SrcLoc 9 79)
+              (SrcLoc 10 64)
+              (SrcLoc 10 79)
             )
 
         liftIO $ step "Stop at statement"
@@ -388,7 +388,7 @@ test_test = minor <$>
             }
 
       testWithSnapshots runData do
-        N.switchBreakpoint (MSFile file) (SrcLoc 7 0)
+        N.switchBreakpoint (MSFile file) (SrcLoc 8 0)
         N.switchBreakpoint (MSFile nestedFile) (SrcLoc 18 0)
         N.switchBreakpoint (MSFile nestedFile2) (SrcLoc 3 0)
         N.switchBreakpoint (MSFile nestedFile2) (SrcLoc 9 0)

@@ -40,7 +40,13 @@ type source =
   | Text of string * Syntax_types.t
   | File of Path.t
 
-let contract (raw_options : Raw_options.t) source michelson_code_format michelson_comments views
+let contract
+    (raw_options : Raw_options.t)
+    entry_point
+    source
+    michelson_code_format
+    michelson_comments
+    views
   =
   ( Formatter.Michelson_formatter.michelson_format michelson_code_format michelson_comments
   , fun ~raise ->
@@ -54,7 +60,8 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
             (Syntax_name raw_options.syntax)
             (Some source_file)
       in
-      Deprecation.view_cli ~raise syntax views ;
+      Deprecation.view_cli ~raise syntax views;
+      Deprecation.entry_cli ~raise syntax entry_point;
       let protocol_version =
         Helpers.protocol_to_variant ~raise raw_options.protocol_version
       in
@@ -71,7 +78,7 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
         =
         options.backend
       in
-      let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+      let Compiler_options.{ module_; _ } = options.frontend in
       let source_filename =
         match source with
         | Text (_source_code, _syntax) -> ""
@@ -85,7 +92,7 @@ let contract (raw_options : Raw_options.t) source michelson_code_format michelso
             Raw { id = "source_of_text" ^ Syntax.to_ext syntax; code = source_code })
       in
       let Build.{ entrypoint; views } =
-        Build.build_contract ~raise ~options entry_point module_ source
+        Build.build_contract ~raise ~options module_ source
       in
       let code = entrypoint.value in
       let views = List.map ~f:(fun { name; value } -> name, value) views in
@@ -209,11 +216,12 @@ let typed_contract_and_expression
     ~(options : Compiler_options.t)
     ~syntax
     ~source_file
+    ?entrypoint_ctor
     ~expression
     check_type
   =
   let Compiler_options.{ constants; file_constants; _ } = options.backend in
-  let Compiler_options.{ entry_point; module_; _ } = options.frontend in
+  let Compiler_options.{ module_; _ } = options.frontend in
   let file_constants = read_file_constants ~raise file_constants in
   let constants = constants @ file_constants in
   let module_path = Build.parse_module_path ~loc module_ in
@@ -223,8 +231,7 @@ let typed_contract_and_expression
   let (entry_point, contract_type), app_typed_prg =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
     @@ Ligo_compile.Of_core.specific_passes
-         ~options
-         (Ligo_compile.Of_core.Contract { entrypoints = entry_point; module_path })
+         (Ligo_compile.Of_core.Contract module_path)
          typed_prg
   in
   let app_typed_sig = Ast_typed.Misc.to_signature app_typed_prg in
@@ -242,6 +249,7 @@ let typed_contract_and_expression
         Ligo_compile.Utils.type_expression
           ~raise
           ~options
+          ?wrap_variant:entrypoint_ctor
           ~annotation
           syntax
           expression
@@ -251,6 +259,7 @@ let typed_contract_and_expression
           Ligo_compile.Utils.type_expression
             ~raise
             ~options
+            ?wrap_variant:entrypoint_ctor
             syntax
             expression
             app_typed_sig
@@ -270,6 +279,7 @@ let typed_contract_and_expression
 
 let parameter
     (raw_options : Raw_options.t)
+    (parameter_entrypoint_opt : string option)
     source_file
     expression
     amount
@@ -306,6 +316,7 @@ let parameter
           ~syntax
           ~source_file
           ~expression
+          ?entrypoint_ctor:parameter_entrypoint_opt
           Check_parameter
       in
       let (_ : Mini_c.meta Run.Michelson.michelson) =
@@ -374,6 +385,7 @@ let parameter
 
 let storage
     (raw_options : Raw_options.t)
+    entry_point
     source_file
     expression
     amount
@@ -395,6 +407,7 @@ let storage
           (Syntax_name raw_options.syntax)
           (Some source_file)
       in
+      Deprecation.entry_cli ~raise syntax entry_point;
       let options =
         Compiler_options.make
           ~raw_options

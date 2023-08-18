@@ -1,3 +1,4 @@
+[@entry]
 let main (p, s : nat ticket * int) : operation list * int =
   let kek = Tezos.get_now () in
   let ((_, (value, _)), _) = Tezos.read_ticket p in

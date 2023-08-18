@@ -3,6 +3,7 @@ type variants =
   | Variant2
   | Variant3 of int option
 
+[@entry]
 let main (p, s : variants * int) : operation list * int =
   let s2 = begin match p with
     | Variant1 x -> s + x

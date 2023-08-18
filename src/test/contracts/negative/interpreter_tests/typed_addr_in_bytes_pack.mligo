@@ -1,6 +1,6 @@
 let originate_record () =
     let storage = Test.compile_value () in
-    let (addr, _, _) = Test.originate_from_file "./unit_contract.mligo" "main" storage 0tez in
+    let (addr, _, _) = Test.originate_from_file "./unit_contract.mligo" storage 0tez in
     let taddr : (unit, unit) typed_address = Test.cast_address addr in
     let contr = Test.to_contract taddr in
     {

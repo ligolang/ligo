@@ -1,3 +1,4 @@
+[@entry]
 let main (_, s : unit * int option) : operation list * int option =
   let s2 = match s with
     | Some x -> x + 1

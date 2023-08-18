@@ -6,6 +6,7 @@ type storage =
 
 let defStorage : storage = { a = 42 ; b = "str" ; c = False }
 
+[@entry]
 let main (_, s : unit * storage) : operation list * storage =
   let newStorage =
     match Some () with

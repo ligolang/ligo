@@ -10,6 +10,7 @@ let addOption (a, b : int option * int option) : int option =
     | None -> b
   end
 
+[@entry]
 let main (_, s : unit * int) : operation list * int =
   let s1 = s + s in
   let s1 = Some (s1 * 2) in

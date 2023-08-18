@@ -2,44 +2,45 @@ type param = int;
 
 // ---------------------------------------------------------------------------
 // no metadata here
-type storage_1 = {
-  data: int
-};
-type ret_1 = [list<operation>, storage_1];
 
-const entry_no_metadata = (_p : param, s : storage_1) : ret_1 =>
-  [list([]), s];
+namespace Entry_no_metadata {
+  type storage_1 = { data: int };
+  type ret_1 = [list<operation>, storage_1];
+  const main = (_p: param, s: storage_1): ret_1 => [list([]), s]
+};
 
 // ---------------------------------------------------------------------------
 // metadata with incorrect format
-type storage_2 = {
-  data: int,
-  metadata: nat,
+
+namespace Entry_invalid_metadata_1 {
+  type storage_2 = {
+    data: int,
+    metadata: nat
+  };
+  type ret_2 = [list<operation>, storage_2];
+  const main = (_p: param, s: storage_2): ret_2 => [list([]), s]
 };
-type ret_2 = [list<operation>, storage_2];
-
-const entry_invalid_metadata_1  = (_p : param, s : storage_2) : ret_2 =>
-  [list([]), s];
-
 
 // ---------------------------------------------------------------------------
 // metadata with incorrect format (big_map with reversed params)
-type storage_3 = {
-  data: int,
-  metadata: big_map<bytes, string>;
-};
-type ret_3 = [list<operation>, storage_3];
 
-const entry_invalid_metadata_2  = (_p : param, s : storage_3) : ret_3 =>
-  [list([]), s];
+namespace Entry_invalid_metadata_2 {
+  type storage_3 = {
+    data: int,
+    metadata: big_map<bytes, string>
+  };
+  type ret_3 = [list<operation>, storage_3];
+  const main = (_p: param, s: storage_3): ret_3 => [list([]), s]
+};
 
 // ---------------------------------------------------------------------------
 // metadata with correct format
-type storage_4 = {
-  data: int,
-  metadata: big_map<string, bytes>;
-};
-type ret_4 = [list<operation>, storage_4];
 
-const entry_valid_metadata  = (_p : param, s : storage_4) : ret_4 =>
-  [list([]), s];
+namespace Entry_valid_metadata {
+  type storage_4 = {
+    data: int,
+    metadata: big_map<string, bytes>
+  };
+  type ret_4 = [list<operation>, storage_4];
+  const main = (_p: param, s: storage_4): ret_4 => [list([]), s]
+};

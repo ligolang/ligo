@@ -1,3 +1,4 @@
+@entry
 let main = ([p, s] : [string, int]) : [list<operation>, int] => {
   let s2 = 0;
   switch(p) {
