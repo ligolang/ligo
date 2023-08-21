@@ -19,7 +19,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (or (int %anbfoo) (string %anabar)) ;
       code { CDR ;
@@ -35,7 +36,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (or (int %ana) (or (string %anb) (nat %anc))) ;
       code { DROP ; PUSH nat 1 ; RIGHT string ; RIGHT int ; NIL operation ; PAIR } } |}];
@@ -46,7 +48,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage
         (or (int %an_One)
@@ -74,7 +77,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{| ( LIST_EMPTY() , Bar("foo") ) |}];
+  [%expect {| ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -84,7 +87,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{| ( LIST_EMPTY() , C(+1) ) |}];
+  [%expect {| ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -94,7 +97,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{| ( LIST_EMPTY() , Five(1) ) |}]
+  [%expect {| ( LIST_EMPTY() , Five(1) ) |}]
 
 (*TREE*)
 let%expect_test _ =
@@ -105,7 +108,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (or (string %anabar) (int %anbfoo)) ;
       code { CDR ;
@@ -121,7 +125,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (or (or (int %ana) (string %anb)) (nat %anc)) ;
       code { DROP ; PUSH nat 1 ; RIGHT (or int string) ; NIL operation ; PAIR } } |}];
@@ -132,7 +137,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage
         (or (or (or (int %an_Five) (nat %an_Four)) (or (int %an_One) (bool %an_Three)))
@@ -161,7 +167,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect {|
     ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good
     [ "run"
@@ -172,7 +178,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect {|
     ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good
     [ "run"
@@ -183,5 +189,5 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect {|
     ( LIST_EMPTY() , Five(1) ) |}]

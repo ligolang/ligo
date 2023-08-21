@@ -2,7 +2,8 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "fake.mligo"; "-v"; "v" ];
-  [%expect {|
+  [%expect
+    {|
     View declaration through CLI is deprecated.
     Please use annotations in the source:
 
@@ -11,7 +12,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "fake.jsligo"; "-v"; "v" ];
-  [%expect {|
+  [%expect
+    {|
     View declaration through CLI is deprecated.
     Please use annotations in the source:
 
@@ -20,7 +22,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "fake.mligo"; "-e"; "e" ];
-  [%expect {|
+  [%expect
+    {|
     Entry-point declaration through CLI is deprecated.
     Please use annotations in the source:
 
@@ -29,7 +32,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "fake.jsligo"; "-e"; "e" ];
-  [%expect {|
+  [%expect
+    {|
     Entry-point declaration through CLI is deprecated.
     Please use annotations in the source:
 

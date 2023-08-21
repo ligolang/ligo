@@ -13,7 +13,13 @@ let all_contract ~raise module_path (prg : Ast_typed.program) =
   (main_name, contract_type), prg
 
 
-let all_view ~(raise : (_,_) Simple_utils.Trace.raise) main_name module_path contract_type prg =
+let all_view
+    ~(raise : (_, _) Simple_utils.Trace.raise)
+    main_name
+    module_path
+    contract_type
+    prg
+  =
   let module_ = Helpers.get_module module_path prg in
   let () =
     match

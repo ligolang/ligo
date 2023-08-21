@@ -15,8 +15,8 @@
   tar-unix
   decompress.gz
   ligo.formatter)
-  (preprocess
-    (pps ppx_yojson_conv ppx_let)))
+ (preprocess
+  (pps ppx_yojson_conv ppx_let)))
 
 (rule
  (targets changelog.ml)

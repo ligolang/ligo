@@ -565,18 +565,12 @@ let rec error_ppformat
     | `Resolve_config_type_mismatch (field, expected_type, got, type_formatter) ->
       Format.fprintf
         f
-        "Type mismatch in field %s\n\
-        Expected an expression of %s type\n\
-        Got: %a"
+        "Type mismatch in field %s\nExpected an expression of %s type\nGot: %a"
         field
         expected_type
         type_formatter
         got
-    | `Resolve_config_corner_case err ->
-      Format.fprintf
-        f
-        "Corner case: %s"
-        err)
+    | `Resolve_config_corner_case err -> Format.fprintf f "Corner case: %s" err)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -778,6 +772,7 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Resolve_config_corner_case err ->
     let content = make_content ~message:(Format.asprintf "Corner case: %s" err) () in
     [ make ~stage:"resolve_config" ~content ]
+
 
 let error_jsonformat : Types.all -> Yojson.Safe.t =
  fun e ->

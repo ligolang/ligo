@@ -56,7 +56,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "view_restrictions.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { CDR ; NIL operation ; PAIR } ;

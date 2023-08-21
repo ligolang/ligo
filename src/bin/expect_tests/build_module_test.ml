@@ -51,7 +51,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "B.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { PUSH int 1 ;
@@ -85,7 +86,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "D.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage int ;
       code { PUSH int 1 ;
@@ -116,7 +118,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "D.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage int ;
       code { PUSH int 1 ;
@@ -159,7 +162,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "expression"; "cameligo"; "tata"; "--init-file"; contract "C.mligo" ];
-  [%expect{| 44 |}]
+  [%expect {| 44 |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C1.mligo" ];
@@ -170,7 +173,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "C_test.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test exited with value (). |}]
 

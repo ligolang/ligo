@@ -2145,7 +2145,8 @@ let%expect_test _ =
     ; "A"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
@@ -2159,7 +2160,8 @@ let%expect_test _ =
     ; "B"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
       code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
@@ -2173,31 +2175,32 @@ let%expect_test _ =
     ; "C"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "A" ];
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "A" ];
+  [%expect
+    {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "B" ];
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "B" ];
+  [%expect
+    {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good
-    [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "C" ];
-  [%expect{|
+  run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "C" ];
+  [%expect
+    {|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
@@ -2607,36 +2610,17 @@ let%expect_test _ =
   [%expect {|
       (Left (Right 42)) |}];
   run_ligo_good
-    [ "compile"
-    ; "parameter"
-    ; contract "top_level_entry.mligo"
-    ; "Increment 42"
-    ];
-  [%expect{| (Left (Right 42)) |}];
+    [ "compile"; "parameter"; contract "top_level_entry.mligo"; "Increment 42" ];
+  [%expect {| (Left (Right 42)) |}];
   run_ligo_good
-    [ "compile"
-    ; "parameter"
-    ; contract "top_level_entry.mligo"
-    ; "Decrement 21"
-    ];
-  [%expect{| (Left (Left 21)) |}];
-  run_ligo_good
-    [ "compile"; "storage"; contract "top_level_entry.mligo"; "42" ];
-  [%expect{| 42 |}];
-  run_ligo_good
-    [ "compile"
-    ; "storage"
-    ; contract "top_level_entry.mligo"
-    ; "42"
-    ];
-  [%expect{| 42 |}];
-  run_ligo_good
-    [ "compile"
-    ; "storage"
-    ; contract "top_level_entry.mligo"
-    ; "42"
-    ];
-  [%expect{| 42 |}]
+    [ "compile"; "parameter"; contract "top_level_entry.mligo"; "Decrement 21" ];
+  [%expect {| (Left (Left 21)) |}];
+  run_ligo_good [ "compile"; "storage"; contract "top_level_entry.mligo"; "42" ];
+  [%expect {| 42 |}];
+  run_ligo_good [ "compile"; "storage"; contract "top_level_entry.mligo"; "42" ];
+  [%expect {| 42 |}];
+  run_ligo_good [ "compile"; "storage"; contract "top_level_entry.mligo"; "42" ];
+  [%expect {| 42 |}]
 
 let%expect_test _ =
   run_ligo_good
