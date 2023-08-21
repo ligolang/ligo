@@ -404,10 +404,7 @@ module Command = struct
     | Compile_contract_from_file (source_file, _mutation) ->
       let options = Compiler_options.set_test_flag options false in
       let main, views =
-        Michelson_backend.compile_contract_file
-          ~raise
-          ~options
-          source_file
+        Michelson_backend.compile_contract_file ~raise ~options source_file
       in
       let views =
         match views with

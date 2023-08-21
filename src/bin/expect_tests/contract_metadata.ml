@@ -26,7 +26,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_1" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 20, characters 16-19:
      19 |      data : int;
      20 |      metadata : nat
@@ -45,7 +46,8 @@ let%expect_test _ =
   let storage = "{ data  = 42; metadata = 33n}" in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 20, characters 16-19:
      19 |      data : int;
      20 |      metadata : nat
@@ -65,7 +67,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_1" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.jsligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 18, characters 14-17:
      17 |     data: int,
      18 |     metadata: nat
@@ -84,7 +87,8 @@ let%expect_test _ =
   let storage = "{ data  : 42, metadata : (33 as nat)}" in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.jsligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 18, characters 14-17:
      17 |     data: int,
      18 |     metadata: nat
@@ -106,7 +110,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_2" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 34, characters 16-31:
      33 |      data : int;
      34 |      metadata : (bytes, string) big_map
@@ -127,7 +132,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 34, characters 16-31:
      33 |      data : int;
      34 |      metadata : (bytes, string) big_map
@@ -147,7 +153,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_2" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.jsligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 30, characters 14-36:
      29 |     data: int,
      30 |     metadata: big_map<bytes, string>
@@ -168,7 +175,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.jsligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 30, characters 14-36:
      29 |     data: int,
      30 |     metadata: big_map<bytes, string>
@@ -190,7 +198,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_3" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 48, characters 33-48:
      47 |      data : int;
      48 |      [@annot metadata] notdata : (bytes, string) big_map
@@ -211,7 +220,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 48, characters 33-48:
      47 |      data : int;
      48 |      [@annot metadata] notdata : (bytes, string) big_map
@@ -240,7 +250,8 @@ let%expect_test _ =
     ; entrypoint
     ; "good_storage"
     ];
-  [%expect{|
+  [%expect
+    {|
     (Pair 42
           { Elt "" 0x74657a6f732d73746f726167653a68656c6c6f253246776f726c64 ;
             Elt "hello/world"
@@ -253,7 +264,8 @@ let%expect_test _ =
     ; entrypoint
     ; "ipfs_storage"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Metadata in storage points to an IPFS document.
     Hint: If you want to allow download and check it, pass `--allow-json-download`. To prevent this message from appearing, pass `--disallow-json-download`.
 
@@ -268,7 +280,8 @@ let%expect_test _ =
     ; entrypoint
     ; "good_http_storage"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Metadata in storage points to an HTTP document.
     Hint: If you want to allow download and check it, pass `--allow-json-download`. To prevent this message from appearing, pass `--disallow-json-download`.
 
@@ -284,7 +297,8 @@ let%expect_test _ =
     ; "good_http_storage"
     ; "--disallow-json-download"
     ];
-  [%expect{|
+  [%expect
+    {|
     (Pair 42
           { Elt ""
                 0x68747470733a2f2f697066732e696f2f697066732f516d534263385175796e55376241725547746a774352685a55624a795a51417272637a4b6e714d37685a50746656 }) |}];
@@ -297,7 +311,8 @@ let%expect_test _ =
     ; "good_http_sha256_storage"
     ; "--disallow-json-download"
     ];
-  [%expect{|
+  [%expect
+    {|
     (Pair 42
           { Elt ""
                 0x7368613235363a2f2f3078316637633766646533393162633436613238636439386137373733336662653539323731393064626535343933666538313234346565323964633632343537372f68747470733a253246253246697066732e696f25324669706673253246516d534263385175796e55376241725547746a774352685a55624a795a51417272637a4b6e714d37685a50746656 }) |}];
@@ -310,7 +325,8 @@ let%expect_test _ =
     ; "bad_http_sha256_storage"
     ; "--disallow-json-download"
     ];
-  [%expect{|
+  [%expect
+    {|
     (Pair 42
           { Elt ""
                 0x7368613235363a2f2f3078666637633766646533393162633436613238636439386137373733336662653539323731393064626535343933666538313234346565323964633632343537372f68747470733a253246253246697066732e696f25324669706673253246516d534263385175796e55376241725547746a774352685a55624a795a51417272637a4b6e714d37685a50746656 }) |}];
@@ -322,7 +338,8 @@ let%expect_test _ =
     ; entrypoint
     ; "good_tezos_sha256_storage"
     ];
-  [%expect{|
+  [%expect
+    {|
     (Pair 42
           { Elt ""
                 0x7368613235363a2f2f3078316637633766646533393162633436613238636439386137373733336662653539323731393064626535343933666538313234346565323964633632343537372f74657a6f732d73746f726167653a6d ;
@@ -336,7 +353,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_tezos_sha256_storage"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Hash mismatch in metadata's JSON document: got 1f7c7fde391bc46a28cd98a77733fbe5927190dbe5493fe81244ee29dc624577, when given ff7c7fde391bc46a28cd98a77733fbe5927190dbe5493fe81244ee29dc624577.
     (Pair 42
           { Elt ""
@@ -351,7 +369,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_storage0"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Slash ('/') not in a valid position in URI: "hello/invalid_not_http", use instead "%2F".
     (Pair 42
           { Elt "" 0x74657a6f732d73746f726167653a68656c6c6f2f696e76616c69645f6e6f745f68747470 ;
@@ -368,7 +387,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_storage1"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Could not find a valid URI haha in storage's metadata empty key.
     (Pair 42
           { Elt "" 0x68616861 ;
@@ -381,7 +401,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_storage2"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Could not find key haha in storage's metadata.
     (Pair 42
           { Elt "" 0x74657a6f732d73746f726167653a68616861 ;
@@ -394,7 +415,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_storage3"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Could not parse JSON in storage's metadata: "Line 1, bytes 0-7:
     Invalid token 'nojson!'".
     (Pair 42
@@ -407,7 +429,8 @@ let%expect_test _ =
     ; entrypoint
     ; "bad_storage4"
     ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Error in JSON in storage's metadata: could not successfully typecheck the view "get-allowance-for-user" w.r.t. to parameter, returntType and storage of the contract.
     (Pair 42
           { Elt "" 0x74657a6f732d73746f726167653a68656c6c6f253246776f726c64 ;
@@ -417,7 +440,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_valid_metadata" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (big_map %metadata string bytes)) ;
       code { CDR ; NIL operation ; PAIR } } |}];
@@ -426,14 +450,16 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Empty key in metadata big-map is mandatory.
     (Pair 42 { Elt "titi" 0x24 ; Elt "toto" 0x42 }) |}]
 
 let%expect_test _ =
   let entrypoint = "Entry_valid_metadata" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.jsligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (big_map %metadata string bytes)) ;
       code { CDR ; NIL operation ; PAIR } } |}];
@@ -442,7 +468,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.jsligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     Warning: Empty key in metadata big-map is mandatory.
     (Pair 42 { Elt "titi" 0x24 ; Elt "toto" 0x42 }) |}]
 
@@ -459,7 +486,8 @@ let%expect_test _ =
     ; "-m"
     ; entrypoint
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (nat %metadata)) ;
       code { CDR ; NIL operation ; PAIR } } |}];
@@ -473,7 +501,7 @@ let%expect_test _ =
     ; entrypoint
     ; storage
     ];
-  [%expect{| (Pair 42 33) |}]
+  [%expect {| (Pair 42 33) |}]
 
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_1" in
@@ -485,7 +513,8 @@ let%expect_test _ =
     ; "-m"
     ; entrypoint
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage (pair (int %data) (nat %metadata)) ;
       code { CDR ; NIL operation ; PAIR } } |}];
@@ -499,4 +528,4 @@ let%expect_test _ =
     ; entrypoint
     ; storage
     ];
-  [%expect{| (Pair 42 33) |}]
+  [%expect {| (Pair 42 33) |}]

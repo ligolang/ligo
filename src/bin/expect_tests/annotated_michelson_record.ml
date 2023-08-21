@@ -11,7 +11,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (pair (int %anbfoo) (string %anabar)) ;
       code { CDR ; DUP ; CAR ; UPDATE 1 ; NIL operation ; PAIR } } |}];
@@ -22,7 +23,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (pair (int %ana) (string %anb) (nat %anc)) ;
       code { DROP ;
@@ -39,7 +41,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage
         (pair (int %an_One) (string %an_Two) (bool %an_Three) (nat %an_Four) (int %an_Five)) ;
@@ -55,7 +58,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect {|
     ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
   run_ligo_good
     [ "run"
@@ -66,7 +69,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect {|
     ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
   run_ligo_good
     [ "run"
@@ -77,7 +80,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     ( LIST_EMPTY() ,
       record[five -> 1 , four -> +2 , one -> 1 , three -> True(unit) , two -> ""] ) |}]
 
@@ -90,7 +94,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (pair (string %anbar) (int %anfoo)) ;
       code { CDR ; DUP ; CDR ; UPDATE 2 ; NIL operation ; PAIR } } |}];
@@ -101,7 +106,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (pair (pair (int %ana) (string %anb)) (nat %anc)) ;
       code { DROP ;
@@ -119,7 +125,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage
         (pair (pair (pair (int %an_Five) (nat %an_Four)) (int %an_One) (bool %an_Three))
@@ -136,7 +143,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect{| ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
+  [%expect {| ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -146,7 +153,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect{| ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
+  [%expect {| ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -156,7 +163,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect{|
+  [%expect
+    {|
     ( LIST_EMPTY() ,
       record[five -> 1 , four -> +2 , one -> 1 , three -> True(unit) , two -> ""] ) |}]
 
