@@ -76,6 +76,22 @@ let package_name =
   Command.Param.(anon (maybe (name %: string)))
 
 
+let named_arg_package_name =
+  let open Command.Param in
+  let name = "--package-name" in
+  let doc = "Name of the package on which publish/unpublish is executed" in
+  let spec = optional string in
+  flag ~doc name spec
+
+
+let named_arg_package_version =
+  let open Command.Param in
+  let name = "--package-version" in
+  let doc = "Version of the package on which publish/unpublish is executed" in
+  let spec = optional string in
+  flag ~doc name spec
+
+
 let expression purpose =
   let name = purpose ^ "_EXPRESSION" in
   Command.Param.(anon (name %: string))
@@ -2925,7 +2941,7 @@ let install =
     (f <$> package_name <*> cache_path <*> ligo_registry <*> skip_analytics)
 
 
-let publish =
+let registry_publish =
   let summary = "[BETA] publish the LIGO package declared in package.json" in
   let readme () =
     "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the \
@@ -2946,6 +2962,30 @@ let publish =
     <*> project_root
     <*> dry_run_flag
     <*> ligo_bin_path
+    <*> skip_analytics)
+
+
+let registry_unpublish =
+  let summary = "[BETA] unpublish the LIGO package" in
+  let readme () = "[BETA] Unpublishes a package from the registry" in
+  let cli_analytic = Analytics.generate_cli_metric ~command:"unpublish" in
+  let f package_name package_version ligo_registry ligorc_path skip_analytics () =
+    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    @@ fun () ->
+    Unpublish.unpublish
+      ~name:package_name
+      ~version:package_version
+      ~ligo_registry
+      ~ligorc_path
+  in
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> named_arg_package_name
+    <*> named_arg_package_version
+    <*> ligo_registry
+    <*> ligorc_path
     <*> skip_analytics)
 
 
@@ -2974,6 +3014,15 @@ let login =
     @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path
   in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
+
+
+let registry_group =
+  Command.group ~summary:"Commands to interact with Ligo Package Registry"
+  @@ [ "login", login
+     ; "add-user", add_user
+     ; "publish", registry_publish
+     ; "unpublish", registry_unpublish
+     ]
 
 
 module Lsp_server = struct
@@ -3069,11 +3118,9 @@ let main =
      ; "changelog", changelog
      ; "print", print_group
      ; "install", install
-     ; "publish", publish
-     ; "add-user", add_user
-     ; "login", login
      ; "lsp", lsp
      ; "analytics", analytics
+     ; "registry", registry_group
      ]
 
 

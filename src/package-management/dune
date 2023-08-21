@@ -1,0 +1,5 @@
+(library
+ (name package_management)
+ (libraries cli_helpers)
+ (preprocess
+  (pps ppx_deriving_yojson)))

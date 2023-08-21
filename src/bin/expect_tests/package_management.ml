@@ -449,7 +449,7 @@ let ligo_bin_path = "../../../../../install/default/bin/ligo"
 let () = Caml.Sys.chdir "publish_invalid_main"
 
 let%expect_test _ =
-  run_ligo_bad [ "publish"; "--dry-run" ];
+  run_ligo_bad [ "registry"; "publish"; "--dry-run" ];
   [%expect
     {|
     ==> Reading manifest... Done
@@ -461,7 +461,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_invalid_main2"
 
 let%expect_test _ =
-  run_ligo_bad [ "publish"; "--dry-run" ];
+  run_ligo_bad [ "registry"; "publish"; "--dry-run" ];
   [%expect
     {|
     ==> Reading manifest... Done
@@ -473,7 +473,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_invalid_storage"
 
 let%expect_test _ =
-  run_ligo_bad [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_bad [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   [%expect
     {|
     ==> Reading manifest... Done
@@ -516,7 +516,7 @@ let remove_dynamic_info_from_log log =
 let () = Caml.Sys.chdir "publish_lib_lt_1mb"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run" ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run" ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -538,7 +538,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_contract_lt_1mb"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -560,7 +560,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_contract_gt_1mb"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -582,7 +582,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_contract_slash_in_pkg_name"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -604,7 +604,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "test_ligoignore"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -626,7 +626,7 @@ let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "test_ligoignore_with_empty_lines"
 
 let%expect_test _ =
-  run_ligo_good [ "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
+  run_ligo_good [ "registry"; "publish"; "--dry-run"; "--ligo-bin-path"; ligo_bin_path ];
   let dry_run_log = remove_dynamic_info_from_log [%expect.output] in
   print_endline dry_run_log;
   [%expect
@@ -643,5 +643,73 @@ let%expect_test _ =
         package size:  *** B
         unpacked size: *** B
         total files:   2 |}]
+
+let spawn_unpublish_mock_server () =
+  let port = 8000 in
+  Lwt.async @@ fun () -> Unpublish_mock_server.server_lwt port
+
+
+let () = Caml.Sys.chdir pwd
+(* Spawns a mock server with a single package called @foo/bar-pkg with two versions
+   1.0.4
+   1.0.5
+ *)
+
+let () = spawn_unpublish_mock_server ()
+
+(* Tries to unpublish version 1.0.5 *)
+let%expect_test _ =
+  run_ligo_good
+    [ "registry"
+    ; "unpublish"
+    ; "--package-name"
+    ; "@foo/bar-pkg"
+    ; "--package-version"
+    ; "1.0.5"
+    ; "--registry"
+    ; "http://localhost:8000/-/api"
+    ; "--ligorc-path"
+    ; "./.ligorc"
+    ];
+  [%expect {|
+    ==> Checking auth token... Done
+    ==> Unpublishing package... Done |}]
+
+(* Unpublishing the only version remaining, 1.0.4. Equivalent to unpublishing the entire package *)
+let%expect_test _ =
+  run_ligo_good
+    [ "registry"
+    ; "unpublish"
+    ; "--package-name"
+    ; "@foo/bar-pkg"
+    ; "--package-version"
+    ; "1.0.4"
+    ; "--registry"
+    ; "http://localhost:8000/-/api"
+    ; "--ligorc-path"
+    ; "./.ligorc"
+    ];
+  [%expect
+    {|
+    ==> Checking auth token... Done
+    ==> Package @foo/bar-pkg has only one version 1.0.4. Unpublishing the entire package..... Done |}]
+
+(* Try to unpublish again, this time, only failing *)
+let%expect_test _ =
+  run_ligo_bad
+    [ "registry"
+    ; "unpublish"
+    ; "--package-name"
+    ; "@foo/bar-pkg"
+    ; "--registry"
+    ; "http://localhost:8000/-/api"
+    ; "--ligorc-path"
+    ; "./.ligorc"
+    ];
+  [%expect
+    {|
+    ==> Checking auth token... Done
+    ==> Deleting package completely...
+    Package not found |}]
 
 let () = Caml.Sys.chdir pwd
