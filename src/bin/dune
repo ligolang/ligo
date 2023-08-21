@@ -15,6 +15,7 @@
   repl
   install
   publish
+  unpublish
   user
   ligo.cli_helpers
   ligo_api)
@@ -35,25 +36,19 @@
  (modules install))
 
 (library
+ (name unpublish)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries package_management)
+ (preprocess
+  (pps ppx_deriving_yojson))
+ (modules unpublish))
+
+(library
  (name publish)
  (instrumentation
   (backend bisect_ppx))
- (libraries
-  cli_helpers
-  simple-utils
-  lwt
-  lwt.unix
-  tar
-  tar-unix
-  decompress.gz
-  bigstringaf
-  base64
-  cohttp-lwt-unix
-  yojson
-  digestif
-  ligo.unix)
- (preprocess
-  (pps ppx_deriving_yojson))
+ (libraries package_management)
  (modules publish))
 
 (library

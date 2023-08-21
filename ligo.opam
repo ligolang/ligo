@@ -71,6 +71,7 @@ depends: [
   "qcheck-alcotest"
   "irmin-pack"
   "pure-splitmix"
+  "cohttp-server-lwt-unix"
   "resto-cohttp-self-serving-client"
   "tezos-rust-libs"
   "crunch"

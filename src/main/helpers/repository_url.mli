@@ -3,6 +3,6 @@ type t = private
   ; url : string
   ; directory : string option
   }
+[@@deriving yojson]
 
 val parse : Yojson.Safe.t -> (t, string) result
-val to_yojson : t -> Yojson.Safe.t

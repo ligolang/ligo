@@ -1,6 +1,13 @@
 (library
  (name cli_expect_tests)
- (libraries simple-utils cli ligo.unix ligo.api)
+ (modules
+  :standard
+  \
+  unpublish_mock_server
+  pkg_one_version_v5
+  pkg_one_version_v4
+  pkg_two_versions)
+ (libraries unpublish_mock_server simple-utils cli ligo.unix ligo.api)
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri)
   (flags
@@ -16,3 +23,12 @@
    (source_tree ../../test/lexer)))
  (preprocess
   (pps ppx_expect)))
+
+(library
+ (name unpublish_mock_server)
+ (modules
+  unpublish_mock_server
+  pkg_one_version_v5
+  pkg_one_version_v4
+  pkg_two_versions)
+ (libraries core cohttp-lwt-unix cohttp cohttp-server-lwt-unix lwt))

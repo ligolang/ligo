@@ -14,7 +14,7 @@ module Bugs = struct
       let email = Util.to_string_option @@ Util.member "email" json in
       Ok { url; email }
     with
-    | e -> Error e
+    | _ -> Error "Failed to parse url and email from json"
 
 
   let to_yojson { url; email } =
@@ -30,6 +30,14 @@ module Semver = struct
 
   let equal v1 v2 = compare v1 v2 = 0
   let to_yojson s = `String (to_string s)
+
+  let of_yojson y =
+    match y with
+    | `String s ->
+      (match of_string s with
+      | Some s -> Ok s
+      | None -> Error "Semver.of_yojson failed: Semver.of_string failed")
+    | _ -> Error "Semver.of_yojson failed: didn't received String as expected"
 end
 
 type t =
@@ -50,7 +58,7 @@ type t =
   ; ligo_manifest_path : string
   ; bugs : Bugs.t
   }
-[@@deriving to_yojson]
+[@@deriving yojson]
 
 let validate_storage ~ligo_bin_path ~main ~storage_fn ~storage_arg () =
   match storage_fn, storage_arg with

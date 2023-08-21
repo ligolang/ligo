@@ -5,7 +5,7 @@ type t =
   ; url : string
   ; directory : string option
   }
-[@@deriving of_yojson]
+[@@deriving yojson]
 
 let to_yojson t =
   let { type_; url; directory } = t in
@@ -17,6 +17,15 @@ let to_yojson t =
     | None -> []
   in
   `Assoc (type_ @ url @ directory)
+
+
+let of_yojson = function
+  | `Assoc
+      [ ("type", `String type_); ("url", `String url); ("directory", `String directory) ]
+    -> Ok { type_; url; directory = Some directory }
+  | `Assoc [ ("type", `String type_); ("url", `String url) ] ->
+    Ok { type_; url; directory = None }
+  | _ -> Error "Repository_url.of_yojson: invalid json format received"
 
 
 type type_url =

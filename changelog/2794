@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "Group `publish`, `login` and `add-user` commands under a `ligo registry` subcommand.Add `ligo registry unpublish` command to remove a package or a specific version of it from the registry\\nSummary\\n\\n```\\n  [--package-name Name]      . of the package on which publish/unpublish is\\n                               executed\\n  [--package-version Version]\\n                             . of the package on which publish/unpublish is\\n                               executed\\n\\n```\\n\\nTo unpublish a package, run `ligo registry unpublish --package-name <name> --package-version <version>` from anywhere on the CLI (not necessarily from within a project)\\n\\nExamples,\\n\\n\\n```\\nligo registry unpublish --package-name foo --package-version 1.0.0\\n\\n```\\n\\n`--package-version` is optional, omitting which the entire package is unpublished.\\n\\n"
+merge_request: '2794'
+title: "CLI: adds unpublish command to remove a package from registry"
+type: added
+            

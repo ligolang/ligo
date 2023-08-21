@@ -1,9 +1,11 @@
 module Bugs : sig
-  type t [@@deriving to_yojson]
+  type t [@@deriving yojson]
 end
 
 module Semver : sig
-  type t [@@deriving to_yojson]
+  include module type of Semver
+
+  type t [@@deriving yojson]
 
   val to_string : t -> string
 end
@@ -26,7 +28,7 @@ type t =
   ; ligo_manifest_path : string
   ; bugs : Bugs.t
   }
-[@@deriving to_yojson]
+[@@deriving yojson]
 
 val validate : ligo_bin_path:string -> t -> (unit, string) result
 val read : project_root:string option -> (t, string) result
