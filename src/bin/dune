@@ -98,32 +98,3 @@
  (flags -open Core)
  (modules runligo)
  (package ligo))
-
-;; Make sure the vendored Tezos is gas free to build testing
-;; framework for browser
-
-(executable
- (name js_main)
- (ocamlc_flags -g)
- (js_of_ocaml
-  (link_flags "--source-map-root=%{project_root}")
-  (javascript_files
-   threads.js
-   others.js
-   bls12-polynomial.js
-   stdint.js
-   digestif.js))
- (libraries
-  core
-  simple-utils-js
-  simple-utils-js.http_uri
-  zarith_stubs_js
-  integers_stubs_js
-  ctypes_stubs_js
-  ligo_api
-  ligo.main_interpreter
-  js_of_ocaml)
- (modes js)
- (preprocess
-  (pps js_of_ocaml-ppx))
- (modules js_main))
