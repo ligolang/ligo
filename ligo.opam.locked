@@ -197,6 +197,7 @@ depends: [
   "mirage-crypto-rng" {= "0.10.7"}
   "mirage-no-solo5" {= "1"}
   "mirage-no-xen" {= "1"}
+  "msgpck" {= "1.7"}
   "mtime" {= "1.4.0"}
   "num" {= "1.4"}
   "ocaml" {= "4.14.0"}

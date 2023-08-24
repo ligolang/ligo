@@ -13,6 +13,7 @@ module Language.LIGO.Range
   , interval
   , merged
   , point
+  , isLigoStdLib
 
     -- * Lenses
   , rStart
@@ -29,9 +30,12 @@ module Language.LIGO.Range
 import Unsafe qualified
 
 import Control.Lens (makeLenses)
-import Data.Aeson (FromJSON (parseJSON), withObject, (.:))
+import Control.MessagePack (withMsgMap, (.:))
+import Control.Monad.Validate (MonadValidate (..))
 import Data.ByteString qualified as BS
 import Data.Data (Data)
+import Data.MessagePack (MessagePack, Object (..))
+import Data.MessagePack.Types (MessagePack (fromObjectWith, toObject))
 import Debug qualified
 import Fmt.Buildable (Buildable, build)
 
@@ -49,6 +53,14 @@ point l c = Range (LigoPosition l c) (LigoPosition l c) ""
 -- `colSt` (inclusively) to `colFin` (exclusively).
 interval :: Int -> Int -> Int -> Range
 interval line colSt colFin = Range (LigoPosition line colSt) (LigoPosition line colFin) ""
+
+-- | LIGO debug output, when optimizations are disabled, may mention locations
+-- referring to LIGO's standard library that defines bindings to every single
+-- Michelson instruction.
+-- LIGO teams says that we should just ignore such locations.
+isLigoStdLib :: FilePath -> Bool
+isLigoStdLib path =
+  path == ""
 
 -- | Position in a file.
 data LigoPosition = LigoPosition
@@ -95,19 +107,20 @@ instance Pretty Range where
 instance Buildable Range where
   build = Debug.show . pp
 
-instance FromJSON Range where
-  parseJSON = withObject "LIGO location range" \o -> do
+instance MessagePack Range where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LIGO location range" \o -> do
     (file, startPos) <- parseLoc =<< o .: "start"
     (file', endPos) <- parseLoc =<< o .: "stop"
     when (file /= file') $
-      fail "Can't handle a range spanning through multiple files"
+      refute "Can't handle a range spanning through multiple files"
     return $ Range startPos endPos file
     where
-      parseLoc = withObject "location" \o -> do
+      parseLoc = withMsgMap "location" \o -> do
         file <- o .: "file"
         TextualNumber line <- o .: "line"
         TextualNumber col  <- o .: "col"
-        when (line < 1) $ fail "Line number is zero"
+        when (line < 1 && (not . isLigoStdLib) file) $ refute "Line number is zero"
         return (file, LigoPosition line (col + 1))
 
 -- | Like 'Range', but includes information on the preprocessed range of the

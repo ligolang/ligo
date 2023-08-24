@@ -496,7 +496,7 @@ let michelson_code_format =
   let docv = "--michelson-format" in
   let doc =
     "CODE_FORMAT format that will be used by compile-contract for the resulting \
-     Michelson. Available formats are 'text' (default), 'json' and 'hex'."
+     Michelson. Available formats are 'text' (default), 'json', 'msgpack' and 'hex'."
   in
   flag ~doc docv
   @@ optional_with_default `Text
@@ -505,6 +505,7 @@ let michelson_code_format =
   | "text" -> `Text
   | "json" -> `Json
   | "hex" -> `Hex
+  | "msgpack" -> `Msgpack
   | _ -> failwith "todo"
 
 

@@ -403,12 +403,29 @@ preprocessContract con@U.Contract{..} =
   let
     ctx = U.mkEntrypointsMap WithImplicitDefaultEp contractParameter
     U.ParameterType t rootAnn = contractParameter
-    mappedOpsInMonad = replaceOpWithMeta contractCode
-    mappedOpsE = runExcept $ runReaderT mappedOpsInMonad ctx
-  in mappedOpsE <&> \ops -> con
+    mapViewM U.View{..} = do
+      replacedOp <- replaceOpWithMeta viewCode
+      pure $
+        U.View
+          { U.viewArgument = replaceTy viewArgument
+          , U.viewReturn = replaceTy viewReturn
+          , U.viewCode = replacedOp
+          , ..
+          }
+
+    preprocessAct = do
+      ops <- replaceOpWithMeta contractCode
+      let U.ViewsSet mp = contractViews
+      mappedViewsSet <- U.ViewsSet <$> traverse mapViewM mp
+      pure (ops, mappedViewsSet)
+
+    preprocessResult = runExcept $ runReaderT preprocessAct ctx
+
+  in preprocessResult <&> \(ops, viewsSet) -> con
       { U.contractCode = ops
       , U.contractParameter = U.ParameterType (replaceTy t) rootAnn
       , U.contractStorage = replaceTy contractStorage
+      , U.contractViews = viewsSet
       }
 
 -- | Read LIGO's debug output and produce

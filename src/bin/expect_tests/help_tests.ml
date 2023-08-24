@@ -88,7 +88,7 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [--michelson-format CODE_FORMAT]
                              . format that will be used by compile-contract for
                                the resulting Michelson. Available formats are
-                               'text' (default), 'json' and 'hex'.
+                               'text' (default), 'json', 'msgpack' and 'hex'.
   [--no-color]               . disable coloring in CLI output
   [--no-metadata-check]      . disable TZIP-16 metadata compliance check
   [--no-stdlib]              . disable stdlib inclusion.
@@ -161,7 +161,7 @@ let%expect_test _ =
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
-                                   'text' (default), 'json' and 'hex'.
+                                   'text' (default), 'json', 'msgpack' and 'hex'.
       [--no-color]               . disable coloring in CLI output
       [--no-warn]                . disable warning messages
       [--now TIMESTAMP]          . the NOW value the Michelson interpreter will use
@@ -237,7 +237,7 @@ let%expect_test _ =
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
-                                   'text' (default), 'json' and 'hex'.
+                                   'text' (default), 'json', 'msgpack' and 'hex'.
       [--no-color]               . disable coloring in CLI output
       [--no-metadata-check]      . disable TZIP-16 metadata compliance check
       [--no-warn]                . disable warning messages
@@ -515,7 +515,7 @@ let%expect_test _ =
       [--michelson-format CODE_FORMAT]
                                  . format that will be used by compile-contract for
                                    the resulting Michelson. Available formats are
-                                   'text' (default), 'json' and 'hex'.
+                                   'text' (default), 'json', 'msgpack' and 'hex'.
       [--no-color]               . disable coloring in CLI output
       [--no-stdlib]              . disable stdlib inclusion.
       [--no-warn]                . disable warning messages

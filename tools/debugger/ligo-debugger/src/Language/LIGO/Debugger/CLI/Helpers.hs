@@ -28,6 +28,7 @@ import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Generics (everywhere, mkT)
 import Data.List qualified as L
+import Data.MessagePack (MessagePack (..), Object (..))
 import Data.Singletons.TH
 import Data.Text qualified as T
 import Data.Text.Encoding qualified as T
@@ -169,6 +170,10 @@ instance (SingI u) => Buildable (Name u) where
             | "Mangled" `T.isPrefixOf` name = T.drop 1 . T.dropWhile (/= '.') $ name
             | otherwise = name
           prettyName = T.replace generatedMainName "<module main>" strippedMangledModule
+
+instance MessagePack (Name u) where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = fmap Name . fromObjectWith cfg
 
 newtype LigoJSON (n :: Nat) a = LigoJSON a
 
