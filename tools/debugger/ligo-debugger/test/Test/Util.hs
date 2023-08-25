@@ -58,6 +58,7 @@ module Test.Util
   , unitType'
   , boolType'
   , intType
+  , unitType
   , boolType
   , twoElemTreeLayout
   , combLayout
@@ -458,6 +459,9 @@ boolType' = mkSumType (twoElemTreeLayout "True" "False")
   [ ("True", unitType')
   , ("False", unitType')
   ]
+
+unitType :: LigoType
+unitType = LigoTypeResolved unitType'
 
 intType :: LigoType
 intType = LigoTypeResolved intType'

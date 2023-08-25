@@ -1,3 +1,3 @@
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   (([] : operation list), s)

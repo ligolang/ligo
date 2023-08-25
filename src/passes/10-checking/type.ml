@@ -598,22 +598,16 @@ let should_uncurry_entry entry_ty =
   let is_t_list_operation listop = Option.is_some @@ assert_t_list_operation listop in
   match get_t_arrow entry_ty with
   | Some { type1 = tin; type2 = return } ->
-    (match get_t_tuple tin, get_t_tuple return with
-    | Some [ parameter; storage ], Some [ listop; storage' ] ->
-      if is_t_list_operation listop && equal storage storage'
-      then `No (parameter, storage)
-      else `Bad
-    | _ ->
-      let parameter = tin in
-      (match get_t_arrow return with
-      | Some { type1 = storage; type2 = return } ->
-        (match get_t_pair return with
-        | Some (listop, storage') ->
-          if is_t_list_operation listop && equal storage storage'
-          then `Yes (parameter, storage)
-          else `Bad
-        | _ -> `Bad)
-      | None -> `Bad))
+    let parameter = tin in
+    (match get_t_arrow return with
+    | Some { type1 = storage; type2 = return } ->
+      (match get_t_pair return with
+      | Some (listop, storage') ->
+        if is_t_list_operation listop && equal storage storage'
+        then `Yes (parameter, storage)
+        else `Bad
+      | _ -> `Bad)
+    | None -> `Bad)
   | None -> `Bad
 
 

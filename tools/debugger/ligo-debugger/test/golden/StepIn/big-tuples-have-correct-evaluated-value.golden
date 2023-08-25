@@ -7,7 +7,67 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -17,7 +77,67 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus:
     running / expression evaluated (Pair (Pair (Pair 1 2) (Pair 3 4)) 5 : int * int * int * int * int)
@@ -28,7 +148,67 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -53,7 +233,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -78,7 +318,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -103,7 +403,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -128,7 +488,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -153,7 +573,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -178,7 +658,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -203,7 +743,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (1 : int)
   isStackFrames:
@@ -228,7 +828,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (3 : int)
   isStackFrames:
@@ -253,7 +913,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (6 : int)
   isStackFrames:
@@ -278,7 +998,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (10 : int)
   isStackFrames:
@@ -303,7 +1083,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (15 : int)
   isStackFrames:
@@ -328,7 +1168,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -353,7 +1253,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
@@ -378,7 +1338,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair { } 15 : operation list * int)
   isStackFrames:
@@ -403,7 +1423,67 @@ InterpretSnapshot:
           siValue: 1
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -416,4 +1496,64 @@ InterpretSnapshot:
           siValue: Pair { } 15
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/tuple-with-size-five.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { DROP;
+              LAMBDA
+                int
+                (pair (list operation) int)
+                { {  };
+                  { { PUSH int 5 };
+                    { { { PUSH int 4 }; { PUSH int 3 }; PAIR };
+                      { { PUSH int 2 }; { PUSH int 1 }; PAIR };
+                      PAIR };
+                    PAIR };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 2;
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  DIG 4;
+                  {  };
+                  { { {  };
+                      { { SWAP };
+                        { { DIG 2 };
+                          { { DIG 3 }; { { DIG 4 }; { DIG 5 }; ADD }; ADD };
+                          ADD };
+                        ADD };
+                      ADD };
+                    { NIL operation };
+                    PAIR } } } ] ]

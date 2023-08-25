@@ -13,6 +13,6 @@ let example =
   { simple_field = "123" ; complex_field = nested }
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   let a = example.complex_field.inner_field1 in
   (([] : operation list), s + a)

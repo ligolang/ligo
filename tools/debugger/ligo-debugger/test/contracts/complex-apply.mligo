@@ -4,5 +4,5 @@ let myFunc (a, b : int * int) =
   add5(a, b)
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   (([] : operation list), myFunc(s, s + 2))

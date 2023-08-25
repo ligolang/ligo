@@ -1,4 +1,4 @@
 @entry
-let main = ([p, _] : [int, bool]) : [list<operation>, bool] => {
+let main = (p : int, _:  bool) : [list<operation>, bool] => {
   return [(list([]) as list<operation>), p > 0]
 };

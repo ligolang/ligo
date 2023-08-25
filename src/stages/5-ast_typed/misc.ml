@@ -174,22 +174,16 @@ let should_uncurry_entry entry_ty =
   in
   match Combinators.get_t_arrow entry_ty with
   | Some { type1 = tin; type2 = return } ->
-    (match Combinators.get_t_tuple tin, Combinators.get_t_tuple return with
-    | Some [ parameter; storage ], Some [ listop; storage' ] ->
-      if is_t_list_operation listop && type_expression_eq (storage, storage')
-      then `No (parameter, storage)
-      else `Bad
-    | _ ->
-      let parameter = tin in
-      (match Combinators.get_t_arrow return with
-      | Some { type1 = storage; type2 = return } ->
-        (match Combinators.get_t_pair return with
-        | Some (listop, storage') ->
-          if is_t_list_operation listop && type_expression_eq (storage, storage')
-          then `Yes (parameter, storage)
-          else `Bad
-        | _ -> `Bad)
-      | None -> `Bad))
+    let parameter = tin in
+    (match Combinators.get_t_arrow return with
+    | Some { type1 = storage; type2 = return } ->
+      (match Combinators.get_t_pair return with
+      | Some (listop, storage') ->
+        if is_t_list_operation listop && type_expression_eq (storage, storage')
+        then `Yes (parameter, storage)
+        else `Bad
+      | _ -> `Bad)
+    | None -> `Bad)
   | None -> `Bad
 
 
@@ -201,13 +195,7 @@ let should_uncurry_view ~storage_ty view_ty =
     | Some { type1 = storage; type2 = return }
       when Option.is_some (assert_type_expression_eq (storage_ty, storage)) ->
       `Yes (tin, storage, return)
-    | _ ->
-      (match Combinators.get_t_tuple tin with
-      | Some [ arg; storage ]
-        when Option.is_some (assert_type_expression_eq (storage_ty, storage)) ->
-        `No (arg, storage, return)
-      | Some [ _; storage ] -> `Bad_storage storage
-      | _ -> `Bad))
+    | _ -> `Bad)
   | None -> `Bad_not_function
 
 

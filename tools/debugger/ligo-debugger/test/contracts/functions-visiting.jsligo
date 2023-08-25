@@ -8,7 +8,7 @@ const g = (): int => {
     return y
 }
 @entry
-const main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+const main = (_ : unit, s : int) : [list<operation>, int] => {
     const s2 = s + 1;
     const s3 = g() + f(s2);
     return [(list([]) as list<operation>), s3]

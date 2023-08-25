@@ -85,8 +85,8 @@ test_SourceMapper = testGroup "Reading source mapper"
             collectContractMetas parsedContracts contract
 
       let unitIntTuple' = mkPairType
-            (mkSimpleConstantType "Unit")
-            (mkSimpleConstantType "Int")
+            unitType'
+            intType'
 
       let unitIntTuple = LigoTypeResolved unitIntTuple'
 
@@ -96,36 +96,13 @@ test_SourceMapper = testGroup "Reading source mapper"
       let resultType' = mkPairType operationList' intType'
       let resultType = LigoTypeResolved resultType'
 
-      let mainType = LigoTypeResolved $ unitIntTuple' ~> resultType'
+      let curriedMainType = LigoTypeResolved $ unitType' ~> intType' ~> resultType'
+      let uncurriedMainType = LigoTypeResolved $ unitIntTuple' ~> resultType'
 
       nonEmptyMetasAndInstrs
         @?=
         [ LigoMereEnvInfo
             [LigoHiddenStackEntry]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar unitIntTuple]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar unitIntTuple]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar intType]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar intType]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar intType]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [LigoStackEntryNoVar intType]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
@@ -211,7 +188,60 @@ test_SourceMapper = testGroup "Reading source mapper"
                 )
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "main" mainType
+            [ LigoStackEntryVar "main" curriedMainType
+            , LigoHiddenStackEntry
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitIntTuple
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitIntTuple
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryNoVar intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryNoVar intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar intType
+            , LigoStackEntryNoVar unitType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryNoVar intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar intType
+            , LigoStackEntryNoVar unitType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryVar "main" uncurriedMainType
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr

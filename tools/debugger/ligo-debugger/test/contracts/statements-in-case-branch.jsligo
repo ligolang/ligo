@@ -1,5 +1,5 @@
 @entry
-let main = ([p, s] : [string, int]) : [list<operation>, int] => {
+let main = (p : string, s : int) : [list<operation>, int] => {
   let s2 = 0;
   switch(p) {
     case "Variant1":

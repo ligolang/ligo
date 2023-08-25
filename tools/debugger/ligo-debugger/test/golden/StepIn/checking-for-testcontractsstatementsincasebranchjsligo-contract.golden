@@ -10,7 +10,67 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem p of string
-          siValue: "Variant1" ] ]
+          siValue: "Variant1" ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of string
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc: elem main of string -> int -> operation list * int
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { { PUSH int 0 };
+                {  };
+                { { PUSH bool False };
+                  {  };
+                  { { { PUSH bool False };
+                      { { PUSH string "Variant1" };
+                        { DUP 6 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP 2;
+                         { { { PUSH int 42 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { { PUSH bool False } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { {  };
+                      { { PUSH string "Variant2" };
+                        { DIG 4 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP;
+                         { { { PUSH int 44 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { {  } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { { SWAP }; { SWAP }; ADD };
+                    { NIL operation };
+                    PAIR } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -29,7 +89,67 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem p of string
-          siValue: "Variant1" ] ]
+          siValue: "Variant1" ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of string
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc: elem main of string -> int -> operation list * int
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { { PUSH int 0 };
+                {  };
+                { { PUSH bool False };
+                  {  };
+                  { { { PUSH bool False };
+                      { { PUSH string "Variant1" };
+                        { DUP 6 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP 2;
+                         { { { PUSH int 42 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { { PUSH bool False } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { {  };
+                      { { PUSH string "Variant2" };
+                        { DIG 4 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP;
+                         { { { PUSH int 44 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { {  } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { { SWAP }; { SWAP }; ADD };
+                    { NIL operation };
+                    PAIR } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -51,7 +171,67 @@ InterpretSnapshot:
           siValue: 0
         , StackItem:
           siLigoDesc: elem p of string
-          siValue: "Variant1" ] ]
+          siValue: "Variant1" ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of string
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc: elem main of string -> int -> operation list * int
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { { PUSH int 0 };
+                {  };
+                { { PUSH bool False };
+                  {  };
+                  { { { PUSH bool False };
+                      { { PUSH string "Variant1" };
+                        { DUP 6 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP 2;
+                         { { { PUSH int 42 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { { PUSH bool False } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { {  };
+                      { { PUSH string "Variant2" };
+                        { DIG 4 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP;
+                         { { { PUSH int 44 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { {  } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { { SWAP }; { SWAP }; ADD };
+                    { NIL operation };
+                    PAIR } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -64,7 +244,67 @@ InterpretSnapshot:
           siValue: 42
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of string
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc: elem main of string -> int -> operation list * int
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { { PUSH int 0 };
+                {  };
+                { { PUSH bool False };
+                  {  };
+                  { { { PUSH bool False };
+                      { { PUSH string "Variant1" };
+                        { DUP 6 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP 2;
+                         { { { PUSH int 42 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { { PUSH bool False } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { {  };
+                      { { PUSH string "Variant2" };
+                        { DIG 4 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP;
+                         { { { PUSH int 44 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { {  } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { { SWAP }; { SWAP }; ADD };
+                    { NIL operation };
+                    PAIR } } } } ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -77,4 +317,64 @@ InterpretSnapshot:
           siValue: Pair { } 42
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/statements-in-case-branch.jsligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of string
+          siValue: "Variant1"
+        , StackItem:
+          siLigoDesc: elem main of string -> int -> operation list * int
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              { { PUSH int 0 };
+                {  };
+                { { PUSH bool False };
+                  {  };
+                  { { { PUSH bool False };
+                      { { PUSH string "Variant1" };
+                        { DUP 6 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP 2;
+                         { { { PUSH int 42 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { { PUSH bool False } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { {  };
+                      { { PUSH string "Variant2" };
+                        { DIG 4 };
+                        { COMPARE; EQ } };
+                      OR };
+                    {  };
+                    {  };
+                    {  };
+                    IF { DROP;
+                         { { { PUSH int 44 }; { DUP 2 }; ADD } };
+                         {  };
+                         {  };
+                         { {  } };
+                         {  };
+                         {  } }
+                       { {  } };
+                    {  };
+                    { { SWAP }; { SWAP }; ADD };
+                    { NIL operation };
+                    PAIR } } } } ] ]

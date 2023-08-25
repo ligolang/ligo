@@ -13,5 +13,5 @@ let defStorage(s: string): storage =
 let defEmptyStorage = defStorage ""
 
 [@entry]
-let main(_, s: unit * storage) =
+let main() (s : storage) =
     (([] : operation list), s)

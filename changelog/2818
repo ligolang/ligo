@@ -1,0 +1,7 @@
+
+author: alistair.obrien
+description: "\\n\\nDeprecate uncurried entrypoints and views\\n\\n"
+merge_request: '2818'
+title: "Deprecate uncurried entrypoints and views"
+type: breaking
+            

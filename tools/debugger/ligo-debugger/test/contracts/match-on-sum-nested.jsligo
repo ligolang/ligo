@@ -4,7 +4,7 @@ type variants =
   | ["Variant3", option<int>];
 
 @entry
-let main = ([p, s] : [variants, int]) : [list<operation>, int] => {
+let main = (p : variants, s: int) : [list<operation>, int] => {
   const s2 = match(p, {
     Variant1: (x : int) => s + x,
     Variant2: () => 0,
