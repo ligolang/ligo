@@ -1,5 +1,5 @@
 @entry
-let not_main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+let not_main = (_ : unit, s : int) : [list<operation>, int] => {
   let s1 = s + 42;
 
   return [(list([]) as list<operation>), s1]

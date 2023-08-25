@@ -22,7 +22,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -47,7 +94,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
@@ -72,7 +166,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -97,7 +238,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -122,7 +310,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
@@ -147,7 +382,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair 0 42 : int * int)
   isStackFrames:
@@ -172,7 +454,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -207,7 +536,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
@@ -242,7 +618,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (42 : int)
   isStackFrames:
@@ -267,7 +690,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
   isStackFrames:
@@ -292,7 +762,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
   isStackFrames:
@@ -317,7 +834,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (Pair { } 42 : operation list * int)
   isStackFrames:
@@ -342,7 +906,54 @@ InterpretSnapshot:
               {  };
               SWAP;
               {  };
-              { {  }; { SWAP }; ADD } } ] ]
+              { {  }; { SWAP }; ADD } } ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -355,4 +966,51 @@ InterpretSnapshot:
           siValue: Pair { } 42
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0 ] ]
+          siValue: 0 ]
+    , StackFrame:
+      sfName: main
+      sfLoc: test/contracts/contract-with-preprocessor.mligo@1:1-1:1
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of int
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem ? of unit
+          siValue: Unit
+        , StackItem:
+          siLigoDesc: elem main of unit -> int -> operation list * int
+          siValue:
+            { PUSH
+                (lambda (pair int int) int)
+                { {  };
+                  {  };
+                  UNPAIR;
+                  {  };
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  SWAP;
+                  {  };
+                  { {  }; { SWAP }; ADD } };
+              PAIR;
+              { CAR;
+                {  };
+                {  };
+                LAMBDA
+                  (pair (lambda (pair int int) int) int)
+                  (pair (list operation) int)
+                  { UNPAIR;
+                    SWAP;
+                    {  };
+                    { { { { { PUSH int 42 }; { DUP 2 }; ADD }; { SWAP }; PAIR };
+                        { SWAP };
+                        SWAP;
+                        EXEC };
+                      { NIL operation };
+                      PAIR } };
+                DUP 2;
+                APPLY;
+                SWAP;
+                DROP } } ] ]

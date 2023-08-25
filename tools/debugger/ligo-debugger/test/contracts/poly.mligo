@@ -7,7 +7,7 @@ module TestId =
   end
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   let poly_troll42_ = 15 in
   let foo (type a) : a list = ([] : a list) in
   let int_list = 42 :: (foo : int list) in

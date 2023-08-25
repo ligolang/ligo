@@ -1,5 +1,5 @@
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   // TODO: make this function curried when location meta for `x + y` is fixed.
   let f (x, y : int * int) : int = x + y in
   let a = 42 in

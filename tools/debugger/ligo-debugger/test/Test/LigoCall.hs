@@ -37,22 +37,23 @@ test_Compilation = testGroup "Getting debug info"
       let (a, b) <-> (c, d) = Range (LigoPosition a b) (LigoPosition c d) file
       res <- compileLigoContractDebug "main" file
 
-      let mainType = LigoTypeResolved $
-            mkPairType
-              unitType'
-              intType'
-            ~>
-            mkPairType
-              (mkConstantType "List" [mkSimpleConstantType "Operation"])
-              intType'
+      let returnType = mkPairType
+            (mkConstantType "List" [mkSimpleConstantType "Operation"])
+            intType'
+
+      let uncurriedMainType = LigoTypeResolved $
+            mkPairType unitType' intType' ~> returnType
+
+      let curriedMainType = LigoTypeResolved $
+            unitType' ~> intType' ~> returnType
 
       take 15 (makeConciseLigoIndexedInfo (lmTypes res) <$> toList (lmLocations res)) @?= mconcat
         [ replicate 7 LigoEmptyLocationInfo
 
         , [ LigoMereEnvInfo [LigoHiddenStackEntry] ]
 
-        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) mainType ]
-        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) mainType ]
+        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) uncurriedMainType ]
+        , [ LigoMereLocInfo ((1, 1) <-> (5, 30)) curriedMainType ]
 
         , replicate 5 LigoEmptyLocationInfo
         ]

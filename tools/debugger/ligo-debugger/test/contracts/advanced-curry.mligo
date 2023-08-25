@@ -8,5 +8,5 @@ let apply (f : int -> int -> int -> int -> int) (a, b, c, d : int * int * int * 
 let act (a : int) (b : int) (c : int) (d : int) = a + b + c + d
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   (([] : operation list), apply act (s, s + 2, s + 3, s + 4))

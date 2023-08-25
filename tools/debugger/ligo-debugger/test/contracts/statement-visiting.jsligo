@@ -1,5 +1,5 @@
 @entry
-const main = ([_, s] : [unit, int]) : [list<operation>, int] => {
+const main = (_ : unit, s : int) : [list<operation>, int] => {
   let acc : int = 0;
 
   let i : int = 0;

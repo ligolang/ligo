@@ -6,4 +6,4 @@ module EURO =
   end
 
 [@entry]
-let main (_, s : unit * int) : operation list * int = EURO.main(s, s + 2)
+let main () (s : int) : operation list * int = EURO.main(s, s + 2)

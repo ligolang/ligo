@@ -117,4 +117,4 @@ const init = (p : [address, nat], store: storage) : return_ => {
 };
 
 @view
-const feedback = ([_, store] : [unit, storage]) : string => { return store.feedback };
+const feedback = (_: unit, store: storage) : string => { return store.feedback };

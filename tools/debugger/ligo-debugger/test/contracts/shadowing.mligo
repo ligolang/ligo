@@ -11,7 +11,7 @@ let addOption (a, b : int option * int option) : int option =
   end
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   let s1 = s + s in
   let s1 = Some (s1 * 2) in
   let s2 = Some (s + 28) in

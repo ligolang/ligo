@@ -10,7 +10,7 @@ let get_verbatim () = {|100|}
 let get_const () = EURO.some_const
 
 [@entry]
-let main (_, s : unit * int) : operation list * int =
+let main () (s : int) : operation list * int =
   let some_int = Some (1000 - 7) in
   let res =
     match some_int with
