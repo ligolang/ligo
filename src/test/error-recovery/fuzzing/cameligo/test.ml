@@ -22,6 +22,6 @@ let%expect_test "error_recovery_fuzzing_cameligo" =
     PASS, 34, 120, 38, 78, 5, ./4check_signature.mligo
     PASS, 32, 126, 38, 143, 8, ./4fibo.mligo
     PASS, 25, 170, 18, 79, 3, ./4k.mligo
-    PASS, 10, 126, 10, 14, 2, ./4michelson_or_tree.mligo
+    PASS, 10, 128, 12, 16, 2, ./4michelson_or_tree.mligo
     PASS, 23, 158, 42, 100, 5, ./4super-counter.mligo
     PASS, 169, 1116, 198, 815, 40, ./4ticket_wallet.mligo |}]

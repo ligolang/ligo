@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nFixed the formatting (a.k.a. pretty-printing) of signatures in module declarations.\\n\\n"
+merge_request: '2826'
+title: "[CameLIGO] Signature annotations in module declarations were not pretty-printed."
+type: fixed
+            

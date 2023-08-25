@@ -532,6 +532,7 @@ let declaration : Eq.declaration -> Folding.declaration =
     ret @@ D_type_abstraction { name; params; type_expr }
   | D_Module { value = { name; module_expr; annotation; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
+    let annotation = Option.map annotation ~f:snd in
     ret @@ D_module { name; mod_expr = module_expr; annotation }
   | D_Signature { value = { name; signature_expr; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
