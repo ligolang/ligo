@@ -9,32 +9,48 @@ module Location = Simple_utils.Location
 include Flag.No_arg ()
 
 let compile ~raise:_ =
+  (* given a declaration, we extract all visibility attributes (in reverse order) *)
+  let rec extract_visibility : _ -> _ =
+   fun d ->
+    match d with
+    | D_attr ((Attribute.{ key = "public" | "private"; value = _ } as attr), d) ->
+      let d = get_d d in
+      let vattrs, d = extract_visibility d in
+      vattrs @ [ attr ], d
+    | D_attr (attr, d) ->
+      let loc = get_d_loc d in
+      let d = get_d d in
+      let vattrs, d = extract_visibility d in
+      vattrs, D_attr (attr, make_d ~loc @@ d)
+    | _ -> [], d
+  in
   let declaration : _ declaration_ -> declaration =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
-    | D_export d -> d_attr ~loc (Attribute.{ key = "public"; value = None }, d)
+    | D_export d ->
+      (* if marked as export, we turn it into public *)
+      let loc = get_d_loc d in
+      let _, d = extract_visibility (get_d d) in
+      d_attr ~loc (Attribute.{ key = "public"; value = None }, make_d ~loc d)
     | d -> make_d ~loc d
-  in
-  let rec no_visibility
-      :  (declaration, expr, ty_expr, pattern, mod_expr, sig_expr) declaration_content_
-      -> bool
-    =
-   fun e ->
-    match e with
-    | D_attr (Attribute.{ key = "public" | "private"; value = _ }, _) | D_export _ ->
-      false
-    | D_attr (_, d) -> no_visibility (Location.unwrap d.fp)
-    | _ -> true
   in
   let program_entry
       : (program_entry, declaration, instruction) program_entry_ -> program_entry
     =
    fun e ->
     match e with
-    | PE_declaration d when no_visibility (Location.unwrap d.fp) ->
-      let loc = Location.generated in
-      pe_declaration (d_attr ~loc (Attribute.{ key = "private"; value = None }, d))
+    | PE_declaration d ->
+      (match extract_visibility (get_d d) with
+      | [], dc ->
+        (* if no visibility, we set it to private *)
+        let loc = get_d_loc d in
+        pe_declaration
+          (d_attr ~loc (Attribute.{ key = "private"; value = None }, make_d ~loc dc))
+      | vattr :: _, dc ->
+        (* otherwise, we just keep the inner most visibility *)
+        let loc = get_d_loc d in
+        pe_declaration (d_attr ~loc (vattr, make_d ~loc dc)))
     | e -> make_pe e
   in
   Fold { idle_fold with declaration; program_entry }
