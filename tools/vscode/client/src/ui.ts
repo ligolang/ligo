@@ -45,7 +45,7 @@ export async function createRememberingInputBox(options: InputBoxOptions): Promi
     }
     return newVal
   });
-  if (!res) {
+  if (res === null || res === undefined) {
     throw new ex.UserInterruptionException()
   }
   return res;
