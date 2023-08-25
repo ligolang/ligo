@@ -58,6 +58,7 @@ type _ sing =
   | S_kwd_fun : kwd_fun sing
   | S_kwd_if : kwd_if sing
   | S_kwd_in : kwd_in sing
+  | S_kwd_include : kwd_include sing
   | S_kwd_land : kwd_land sing
   | S_kwd_let : kwd_let sing
   | S_kwd_lor : kwd_lor sing
@@ -390,6 +391,7 @@ let fold
   | S_kwd_fun -> process @@ node -| S_wrap S_lexeme
   | S_kwd_if -> process @@ node -| S_wrap S_lexeme
   | S_kwd_in -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_include -> process @@ node -| S_wrap S_lexeme
   | S_kwd_land -> process @@ node -| S_wrap S_lexeme
   | S_kwd_let -> process @@ node -| S_wrap S_lexeme
   | S_kwd_lor -> process @@ node -| S_wrap S_lexeme
@@ -484,14 +486,18 @@ let fold
     ; kwd_end -| S_kwd_end ]
   | S_module_decl ->
     let { kwd_module; name; annotation; eq; module_expr} = node in
-    ignore annotation;
     process_list
     [ kwd_module -| S_kwd_module
     ; name -| S_module_name
+    ; annotation -| S_option (S_tuple_2 (S_colon, S_signature_expr))
     ; eq -| S_equal
     ; module_expr -| S_module_expr ]
   | S_module_include ->
-    assert false
+    let {kwd_include; module_expr} = node in
+    process_list
+    [ kwd_include -| S_kwd_include
+    ; module_expr -| S_module_expr
+    ]
   | S_module_expr -> process
     (match node with
       M_Body node -> node -| S_reg S_module_body

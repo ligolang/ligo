@@ -169,8 +169,13 @@ and print_D_Module state (node : module_decl reg) =
   in Tree.make state ~region "D_Module" children
 
 and mk_children_module_decl (node : module_decl) =
-  Tree.[mk_child make_literal      node.name;
-        mk_child print_module_expr node.module_expr]
+  let {kwd_module=_; name; annotation; eq=_; module_expr} = node in
+  Tree.[mk_child     make_literal       name;
+        mk_child_opt print_module_annot annotation;
+        mk_child     print_module_expr  module_expr]
+
+and print_module_annot state (node : colon * signature_expr) =
+  print_signature_expr state (snd node)
 
 and print_module_expr state = function
   M_Body       e -> print_M_Body       state e

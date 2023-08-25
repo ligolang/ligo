@@ -335,11 +335,16 @@ and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
 (* Module declaration (structure) *)
 
 and print_D_Module state (node : module_decl reg) =
-  let {kwd_module; name; eq; module_expr; annotation=_} = node.value in
+  let {kwd_module; name; eq; module_expr; annotation} = node.value in
   let name        = print_ident name
   and module_expr = print_module_expr state module_expr
-  in group (token kwd_module ^^ space ^^ name ^^ space ^^ token eq
-            ^^ space ^^ module_expr)
+  and sig_expr    =
+    match annotation with
+      None -> empty
+    | Some (colon, sig_) ->
+        token colon ^^ space ^/^ print_signature_expr state sig_ ^^ space
+  in group (token kwd_module ^^ space ^^ name ^^ space ^^ sig_expr
+            ^^ token eq ^^ space ^^ module_expr)
 
 and print_D_Module_include state (node : module_include reg) =
   let {kwd_include ; module_expr} = node.value in
@@ -369,8 +374,8 @@ and print_D_Signature state (node : signature_decl reg) =
   let {kwd_module; kwd_type; name; eq; signature_expr} = node.value in
   let name        = print_ident name
   and signature_expr = print_signature_expr state signature_expr
-  in group (token kwd_module ^^ space ^^ token kwd_type ^^ space ^^ name ^^ space ^^ token eq
-            ^^ space ^^ signature_expr)
+  in group (token kwd_module ^^ space ^^ token kwd_type ^^ space
+            ^^ name ^^ space ^^ token eq ^^ space ^^ signature_expr)
 
 and print_signature_expr state = function
   S_Sig  e -> print_S_sig  state e

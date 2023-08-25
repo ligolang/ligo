@@ -532,7 +532,7 @@ structure:
     in {region; value} }
 
 module_constraint:
-  ":" signature_expr { $2 }
+  ":" signature_expr { $1,$2 }
 
 signature_decl:
   "module" "type" module_name "=" signature_expr {

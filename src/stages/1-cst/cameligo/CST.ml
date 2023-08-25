@@ -175,7 +175,7 @@ and type_params = kwd_type * variable nseq
 and module_decl = {
   kwd_module  : kwd_module;
   name        : module_name;
-  annotation  : signature_expr option;
+  annotation  : (colon * signature_expr) option;
   eq          : equal;
   module_expr : module_expr
 }
