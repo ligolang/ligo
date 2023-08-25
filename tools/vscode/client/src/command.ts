@@ -105,19 +105,6 @@ const LigoCommands = {
       async () => LigoCommands.CompileContract.run(client),
     ),
   },
-  SilentCompileContract: {
-    name: 'ligo.silentCompileContract',
-    run: async (
-      client: LanguageClient,
-      options: lc.SilentCompilationOptions
-    ) => lc.executeSilentCompileContract(client, options),
-    register: (client: LanguageClient) => vscode.commands.registerCommand(
-      LigoCommands.SilentCompileContract.name,
-      async (
-        options: lc.SilentCompilationOptions,
-      ) => LigoCommands.SilentCompileContract.run(client, options),
-    ),
-  },
   CompileStorage: {
     name: 'ligo.compileStorage',
     run: async (client: LanguageClient) => lc.executeCompileStorage(client).catch(reportException),
@@ -213,6 +200,4 @@ export function registerCommands(client: LanguageClient) {
   // Tezos commands
   LigoCommands.Deploy.register(client);
   LigoCommands.GenerateDeployScript.register(client);
-  // Additional commands
-  LigoCommands.SilentCompileContract.register(client);
 }

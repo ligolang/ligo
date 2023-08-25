@@ -45,24 +45,6 @@ const withDeprecated = (args: string[]) => {
   return args
 }
 
-export async function executeSilentCompileContract(
-  client: LanguageClient,
-  options: SilentCompilationOptions,
-) {
-  let args = ['compile', 'contract', '-e', options.entrypoint].concat(options.flags)
-  if (options.onPath) {
-    args = args.concat(['--output-file', options.onPath])
-  }
-
-  return executeCommand(
-    ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated(args.concat(path))),
-    client,
-    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
-    options.printToConsole,
-  )
-}
-
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
   client: LanguageClient,
