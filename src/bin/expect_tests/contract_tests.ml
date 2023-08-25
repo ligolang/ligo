@@ -11,6 +11,17 @@ let%expect_test _ =
   run_ligo_good
     [ "compile"
     ; "expression"
+    ; "jsligo"
+    ; "y"
+    ; "--init-file"
+    ; contract "import_export/h.jsligo"
+    ];
+  [%expect {| 42 |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
     ; "cameligo"
     ; "va"
     ; "--init-file"

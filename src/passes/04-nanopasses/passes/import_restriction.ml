@@ -6,6 +6,21 @@ module Location = Simple_utils.Location
 include Flag.No_arg ()
 
 let compile ~raise =
+  (* given a declaration, we extract all visibility attributes (in reverse order) *)
+  let rec extract_visibility : _ -> _ =
+   fun d ->
+    match d with
+    | D_attr ((Attribute.{ key = "public" | "private"; value = _ } as attr), d) ->
+      let d = get_d d in
+      let vattrs, d = extract_visibility d in
+      vattrs @ [ attr ], d
+    | D_attr (attr, d) ->
+      let loc = get_d_loc d in
+      let d = get_d d in
+      let vattrs, d = extract_visibility d in
+      vattrs, D_attr (attr, make_d ~loc @@ d)
+    | _ -> [], d
+  in
   let declaration : _ declaration_ -> declaration =
    fun d ->
     let loc = Location.get_location d in
@@ -25,10 +40,23 @@ let compile ~raise =
           in
           m_path ~loc module_path
         in
-        d_module ~loc { name = alias; mod_expr; annotation = None })
+        let wrap d = make_d ~loc @@ D_attr ({ key = "public"; value = None }, d) in
+        wrap @@ d_module ~loc { name = alias; mod_expr; annotation = None })
     | d -> make_d ~loc d
   in
-  Fold { idle_fold with declaration }
+  let program_entry
+      : (program_entry, declaration, instruction) program_entry_ -> program_entry
+    =
+   fun e ->
+    match e with
+    | PE_declaration d ->
+      let loc = get_d_loc d in
+      (match extract_visibility (get_d @@ d) with
+      | [], dc -> pe_declaration @@ make_d ~loc dc
+      | attr :: _, dc -> pe_declaration @@ make_d ~loc @@ D_attr (attr, make_d ~loc dc))
+    | e -> make_pe e
+  in
+  Fold { idle_fold with declaration; program_entry }
 
 
 let reduction ~raise =
