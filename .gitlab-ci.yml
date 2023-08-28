@@ -25,7 +25,7 @@ include:
   # Manage pipeline related to webide
   - '/.ci/.gitlab-ci-webide.yml'
   # CI jobs for projects from 'tools'
-  - '/.ci/.gitlab-ci-lsp.yml'
+  - '/.ci/.gitlab-ci-vscode-extension.yml'
   - '/.ci/.gitlab-ci-debugger.yml'
   - '/.ci/.gitlab-ci-webide-new.yml'
   # CI manage notification

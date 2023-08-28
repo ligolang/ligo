@@ -19,7 +19,8 @@
     "activationEvents": [
         "onLanguage:ligo",
         "onLanguage:mligo",
-        "onLanguage:jsligo"
+        "onLanguage:jsligo",
+        "onDebugResolve:ligo"
     ],
     "icon": "logo.png",
     "main": "./client/out/extension",
@@ -140,6 +141,14 @@
                     ],
                     "default": null,
                     "description": "Sets custom max line width for a formatted file. Default is 80. If a custom `printWidth` is set in `.ligopretty` file, this setting has no effect (see [the README.md](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md)). Requires LIGO 0.67.0 or newer."
+                },
+                "ligoDebugger.maxSteps": {
+                    "scope": "resource",
+                    "type": ["integer", "null"],
+                    "default": 1000,
+                    "minimum": 1,
+                    "maximum": 18446744073709551615,
+                    "description": "Maximum number of steps in contract. Leave it blank if you want an infinite amount of steps."
                 }
             }
         },
@@ -203,6 +212,216 @@
                 "command": "ligo.silentCompileContract",
                 "title": "LIGO: Silently compile contract",
                 "description": "Compiles the current LIGO contract without UI interactions. Additional compile flags can be provided through an array."
+            },
+            {
+                "command": "extension.ligo-debugger.switchSteppingGranularity",
+                "title": "Debug: Switch stepping granularity",
+                "description": "Changes granularity used by StepIn and other buttons"
+            },
+            {
+                "command": "extension.ligo-debugger.useLastSteppingGranularity",
+                "title": "Debug: Switch to last stepping granularity",
+                "description": "Changes stepping granularity to the previously selected one"
+            },
+            {
+                "command": "extension.ligo-debugger.createLigoConfig",
+                "title": "Debug: Create configuration in LIGO for the debugger",
+                "description": "Creates a configuration in LIGO. You can pick a dialect of the config that you're interested in."
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "extension.ligo-debugger.useLastSteppingGranularity",
+                "key": "ctrl+f10",
+                "mac": "cmd+f10"
+            }
+        ],
+        "breakpoints": [
+            {
+                "language": "mligo"
+            },
+            {
+                "language": "jsligo"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "ligo",
+                "label": "LIGO Debugger",
+                "languages": [
+                    "mligo",
+                    "jsligo"
+                ],
+                "configurationAttributes": {
+                    "launch": {
+                        "required": [
+                            "parameter",
+                            "storage"
+                        ],
+                        "properties": {
+                            "configPath": {
+                                "type": "string",
+                                "description": "A path to a debugger configuration file written in LIGO",
+                                "default": "(*@AskOnStart@*)"
+                            },
+                            "program": {
+                                "type": "string",
+                                "description": "Path to contract code",
+                                "default": "(*@CurrentFile@*)"
+                            },
+                            "stopOnEntry": {
+                                "type": "boolean",
+                                "description": "Whether to automatically stop after launch",
+                                "default": true
+                            },
+                            "entrypoint": {
+                                "type": "string",
+                                "description": "Module entry point of the contract",
+                                "default": "(*@AskOnStart@*)"
+                            },
+                            "michelsonEntrypoint": {
+                                "type": "string",
+                                "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
+                                "default": "(*@AskOnStart@*)"
+                            },
+                            "parameter": {
+                                "type": "string",
+                                "description": "Parameter value.",
+                                "default": "(*@AskOnStart@*)"
+                            },
+                            "parameterLang": {
+                                "type": "string",
+                                "description": "Language of parameter ('LIGO' or 'Michelson')",
+                                "default": "LIGO"
+                            },
+                            "storage": {
+                                "type": "string",
+                                "description": "Initial storage value.",
+                                "default": "(*@AskOnStart@*)"
+                            },
+                            "storageLang": {
+                                "type": "string",
+                                "description": "Language of storage ('LIGO' or 'Michelson')",
+                                "default": "LIGO"
+                            },
+                            "logDir": {
+                                "type": "string",
+                                "description": "Path to a directory where the debug adapter will create a logging file",
+                                "default": "/tmp/ligo-debugger"
+                            },
+                            "contractEnv": {
+                                "type": "object",
+                                "description": "Constants that form the contract environment",
+                                "properties": {
+                                    "now": {
+                                        "default": "2020-01-01T00:00:00Z",
+                                        "description": "Value returned by `Tezos.get_now()`"
+                                    },
+                                    "level": {
+                                        "default": 0,
+                                        "description": "Value returned by `Tezos.get_level()`"
+                                    },
+                                    "sender": {
+                                        "type": "string",
+                                        "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+                                        "description": "Value returned by `Tezos.get_sender()`"
+                                    },
+                                    "source": {
+                                        "type": "string",
+                                        "default": "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY",
+                                        "description": "Value returned by `Tezos.get_source()`"
+                                    },
+                                    "self": {
+                                        "type": "string",
+                                        "default": "KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b",
+                                        "description": "Value returned by `Tezos.get_self_address()`"
+                                    },
+                                    "amount": {
+                                        "default": 0,
+                                        "description": "Value returned by `Tezos.get_amount()`"
+                                    },
+                                    "balance": {
+                                        "default": 0,
+                                        "description": "Value returned by `Tezos.get_balance()`"
+                                    },
+                                    "chainId": {
+                                        "type": "string",
+                                        "default": "NetXH12Aer3be93",
+                                        "description": "Value returned by `Tezos.get_chain_id()`"
+                                    },
+                                    "votingPowers": {
+                                        "type": "object",
+                                        "description": "Voting power distribution, affects `Tezos.voting_power` and `Tezos.get_total_voting_power()`",
+                                        "properties": {
+                                            "kind": {
+                                                "enum": "simple"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                        "type": "ligo",
+                        "request": "launch",
+                        "name": "Launch LIGO",
+                        "logDir": "",
+                        "entrypoint": "(*@AskOnStart@*)",
+                        "parameter": "(*@AskOnStart@*)",
+                        "storage": "(*@AskOnStart@*)"
+                    }
+                ],
+                "configurationSnippets": [
+                    {
+                        "label": "LIGO: Simple",
+                        "description": "Minimalistic LIGO Debugger configuration",
+                        "body": {
+                            "type": "ligo",
+                            "request": "launch",
+                            "name": "Launch ${1:LIGO contract}",
+                            "entrypoint": "${2|(*@AskOnStart@*)|}",
+                            "parameter": "${3|(*@AskOnStart@*)|}",
+                            "storage": "${4|(*@AskOnStart@*)|}"
+                        }
+                    },
+                    {
+                        "label": "LIGO: Custom",
+                        "description": "LIGO debugger configuration with all values customized",
+                        "body": {
+                            "type": "ligo",
+                            "request": "launch",
+                            "name": "Launch ${1:LIGO contract}",
+                            "logDir": "",
+                            "program": "${2|(*@CurrentFile@*)|}",
+                            "stopOnEntry": true,
+                            "michelsonEntrypoint": "${3|(*@AskOnStart@*),default|}",
+                            "entrypoint": "${4|(*@AskOnStart@*)|}",
+                            "parameter": "${5|(*@AskOnStart@*)|}",
+                            "parameterLang": "LIGO",
+                            "storage": "${6|(*@AskOnStart@*)|}",
+                            "storageLang": "LIGO",
+                            "contractEnv": {
+                                "now": "${7:${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}T${CURRENT_HOUR}:${CURRENT_MINUTE}:${CURRENT_SECOND}Z}",
+                                "level": "${8:10000}",
+                                "sender": "${9:tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY}",
+                                "source": "${10:$8}",
+                                "self": "${11:KT1XQcegsEtio9oGbLUHA8SKX4iZ2rpEXY9b}",
+                                "amount": "${12:0}",
+                                "balance": "${13:1000000}",
+                                "chainId": "${14:NetXH12Aer3be93}",
+                                "votingPowers": {
+                                    "kind": "simple",
+                                    "contents": {
+                                        "tz1aZcxeRT4DDZZkYcU3vuBaaBRtnxyTmQRr": "100$0"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
             }
         ]
     },
@@ -222,6 +441,8 @@
         "@airgap/beacon-sdk": "^3.0.0",
         "@taquito/signer": "^17.0.0",
         "@taquito/taquito": "^17.0.0",
+        "@vscode/debugadapter-testsupport": "1.55.1",
+        "@vscode/debugprotocol": "1.55.1",
         "axios": "^1.4.0",
         "detect-installer": "git+https://github.com/ligolang/detect-installer.git",
         "fs-extra": "^11.1.0",
@@ -238,6 +459,7 @@
         "@types/vscode": "^1.78.0",
         "@typescript-eslint/eslint-plugin": "^4.27.0",
         "@typescript-eslint/parser": "^4.27.0",
+        "@vscode/debugadapter": "1.55.1",
         "@vscode/test-electron": "^2.3.0",
         "@vscode/vsce": "^2.19.0",
         "chai": "^4.3.7",
