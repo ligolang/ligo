@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\n\\nDeprecate `main` contracts. Single entry-point contract will now require a `[@entry]`/`@entry` annotation\\n\\n"
+merge_request: '2810'
+title: "New design for code generation and contract typing/kinding"
+type: breaking
+            

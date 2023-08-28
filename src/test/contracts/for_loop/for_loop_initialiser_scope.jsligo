@@ -1,5 +1,6 @@
+@entry
 const main = (_: unit, _: int): [list<operation>, int] => {
-  for (let c = 0 ; c < 10 ; ) {
+  for (let c = 0; c < 10;) {
     c++
   };
   return [list([]), c]

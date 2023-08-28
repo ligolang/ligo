@@ -1,3 +1,4 @@
+@entry
 const main = (_u : unit, _b : address) : [list <operation>, address] => {
   let c : contract<int> = Option.unopt(Tezos.get_entrypoint_opt ("%foo", Tezos.get_sender()));
   return [list([]) as list <operation>, Tezos.address(c)];

@@ -105,17 +105,30 @@ let decode_attribute (attr : Context.Attrs.Value.t) : O.sig_item_attribute =
   { entry = attr.entry; view = attr.view }
 
 
-let rec decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature =
-  let decode_item (item : Context.Signature.item) : O.sig_item list =
-    match item with
-    | S_value (var, type_, attr) ->
-      [ S_value (var, decode ~raise type_ subst, decode_attribute attr) ]
-    | S_type (var, type_, _attr) -> [ S_type (var, decode ~raise type_ subst) ]
-    | S_module (var, sig_, _attr) ->
-      [ S_module (var, decode_signature ~raise sig_ subst) ]
-    | S_module_type _ -> []
+let rec decode_sig_item (item : Context.Signature.item) ~raise subst : O.sig_item option =
+  match item with
+  | S_value (var, type_, attr) ->
+    Some (S_value (var, decode ~raise type_ subst, decode_attribute attr))
+  | S_type (var, type_, _attr) -> Some (S_type (var, decode ~raise type_ subst))
+  | S_module (var, sig_, _attr) ->
+    Some (S_module (var, decode_signature ~raise sig_ subst))
+  | S_module_type _ -> None
+
+
+and decode_sig_sort (sort : Context.Signature.sort) ~raise subst : O.signature_sort =
+  match sort with
+  | Ss_module -> Ss_module
+  | Ss_contract { storage; parameter } ->
+    Ss_contract
+      { storage = decode ~raise storage subst; parameter = decode ~raise parameter subst }
+
+
+and decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature =
+  let sig_items =
+    List.filter_map ~f:(fun item -> decode_sig_item item ~raise subst) sig_.items
   in
-  List.concat_map ~f:decode_item sig_
+  let sig_sort = decode_sig_sort sig_.sort ~raise subst in
+  { sig_items; sig_sort }
 
 
 let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =

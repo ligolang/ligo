@@ -1,3 +1,4 @@
+@entry
 const main = (_: unit, _: int): [list<operation>, int] => {
   let y = 0;
   for (let _b = 0; ; ) ;

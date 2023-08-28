@@ -68,6 +68,7 @@ type all =
   | `Main_decompile_typed of Checking.Errors.typer_error
   | `Main_entrypoint_not_a_function
   | `Main_entrypoint_not_found
+  | `Main_declaration_not_found
   | `Main_view_not_a_function of Value_var.t
   | `Main_view_rule_violated of Location.t
   | `Main_invalid_balance of string

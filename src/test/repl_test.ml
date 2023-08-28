@@ -108,7 +108,7 @@ let test_long ~raise ~raw_options () =
     ; "#import \"contracts/build/B.mligo\" \"MYMOD\""
     ; "MYMOD.toto"
     ; "MYMOD.A.toto"
-    ; "let f (x : int) = MYMOD.main (unit, x)"
+    ; "let f (x : int) = MYMOD.main unit x"
     ; "f 4"
     ; "module EURO = struct\n\
        type t = nat\n\

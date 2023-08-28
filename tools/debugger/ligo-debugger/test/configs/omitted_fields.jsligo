@@ -6,7 +6,7 @@ const contract_env =
   , source        : "tz1hTK4RYECTKcjp2dddQuRGUX5Lhse3kPNY"
   }
 
-const config =
+export const config =
   { parameter            : "some_param"
   , michelson_entrypoint : "default"
   , log_dir              : "tmp/contract.log"

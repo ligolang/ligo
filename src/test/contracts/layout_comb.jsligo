@@ -14,6 +14,7 @@ type storage_t =
 
 type return_t = [list<operation>, storage_t];
    
+@entry
 const main = (action: action_t, _: storage_t): return_t =>
     [
         list([]),

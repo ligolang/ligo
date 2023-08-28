@@ -69,7 +69,6 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Single_switch_block) ~flag:always ~arg:()
   ; entry (module Export_declaration) ~flag:export_declaration ~arg:()
   ; entry (module Top_level_restriction) ~flag:always ~arg:()
-  ; entry (module Contract_hack) ~flag:always ~arg:()
   ; entry (module Pattern_restriction) ~flag:always ~arg:()
   ; entry (module Unpuning) ~flag:always ~arg:()
   ; entry (module Module_open_restriction) ~flag:always ~arg:()

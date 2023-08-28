@@ -1,4 +1,4 @@
-const config =
+export const config =
   { parameter : "param"
   , storage : "stor"
   , entrypoint : 42 // malformed fields

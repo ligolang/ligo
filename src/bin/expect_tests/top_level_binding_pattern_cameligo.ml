@@ -4,53 +4,45 @@ let contract file = test ("top_level_patterns/contracts/" ^ file)
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/nested_record.mligo" ];
-  [%expect {|
-    202 bytes |}]
+  [%expect {| 202 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/nested_tuple.mligo" ];
-  [%expect {|
-    210 bytes |}]
+  [%expect{| 210 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/record_tuple.mligo" ];
-  [%expect {|
-    210 bytes |}]
+  [%expect{| 210 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/record.mligo" ];
-  [%expect {|
-    98 bytes |}]
+  [%expect{| 98 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_record.mligo" ];
-  [%expect {| 511 bytes |}]
+  [%expect{| 511 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_tuple.mligo" ];
-  [%expect {| 511 bytes |}]
+  [%expect{| 511 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/tuple_record.mligo" ];
-  [%expect {|
-    202 bytes |}]
+  [%expect{| 202 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/tuple.mligo" ];
-  [%expect {|
-    98 bytes |}]
+  [%expect{| 98 bytes |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "info"; "measure-contract"; contract "cameligo/constr_tuple_destructuring.mligo" ];
-  [%expect {|
-    58 bytes |}]
+  [%expect{| 58 bytes |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "info"; "measure-contract"; contract "cameligo/constr_record_destructuring.mligo" ];
-  [%expect {|
-    58 bytes |}]
+  [%expect{| 58 bytes |}]
 
 (* Testing *)
 
@@ -251,18 +243,18 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 6-7:
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 5-6:
       2 |
-      3 | let { b } = { b = Option.unopt (Tezos.create_ticket "one" 10n) }
-                ^
+      3 | let {b} = {b = Option.unopt (Tezos.create_ticket "one" 10n)}
+               ^
       4 |
     :
     Warning: variable cannot be used more than once.
 
-    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 6-7:
+    File "../../test/contracts/top_level_patterns/negative/cameligo/ticket_record.mligo", line 3, characters 5-6:
       2 |
-      3 | let { b } = { b = Option.unopt (Tezos.create_ticket "one" 10n) }
-                ^
+      3 | let {b} = {b = Option.unopt (Tezos.create_ticket "one" 10n)}
+               ^
       4 |
     :
     Warning: variable cannot be used more than once.

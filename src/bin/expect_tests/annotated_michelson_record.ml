@@ -58,8 +58,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect {|
-    ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
+  [%expect {| ( LIST_EMPTY() , record[bar -> "bar" , foo -> 2] ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -69,8 +68,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect {|
-    ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
+  [%expect {| ( LIST_EMPTY() , record[a -> 1 , b -> "" , c -> +1] ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"

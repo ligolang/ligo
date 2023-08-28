@@ -7,4 +7,6 @@ type union_b =
 | B of nat
 
 (* no warning is expected here since the constructor parameter of A in union_b do not match the one of union_a *)
-let main = fun (() , (_: union_b)) -> ([]: operation list) , A 1n
+
+[@entry]
+let main = fun () (_ : union_b) -> ([] : operation list), A 1n

@@ -25,8 +25,7 @@ let%expect_test _ =
     ; "--project-root"
     ; "using_scope_pkg_project"
     ];
-  [%expect {|
-    95 bytes |}]
+  [%expect {| 95 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -398,8 +397,12 @@ let%expect_test _ =
     ; "--project-root"
     ; "include_include"
     ];
-  [%expect {|
+  [%expect
+    {|
     include_include/main.mligo declarations:
+    $contract
+    $views
+    $main
     main
     hello |}]
 

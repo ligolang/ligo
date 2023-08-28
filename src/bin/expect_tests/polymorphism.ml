@@ -84,9 +84,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; test "ctrct.mligo" ];
-  [%expect
-    {|
-    { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+  [%expect {| { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test.mligo" ];
@@ -427,23 +425,21 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; test "monomorphisation_fail2.mligo" ];
   [%expect
     {|
-    File "./monomorphisation_fail2.mligo", line 2, character 2 to line 8, character 6:
+    File "./monomorphisation_fail2.mligo", line 2, character 2 to line 7, character 3:
       1 | let nested (type a) =
       2 |   let x (type b) =
             ^^^^^^^^^^^^^^^^
       3 |     let y (type c) =
           ^^^^^^^^^^^^^^^^^^^^
-      4 |       let z =
-          ^^^^^^^^^^^^^
-      5 |         (failwith("nested") : a -> b -> c)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      6 |       in z
+      4 |       let z = (failwith ("nested") : a -> b -> c) in
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |       z in
           ^^^^^^^^^^
-      7 |     in y
+      6 |     y in
           ^^^^^^^^
-      8 |   in x
-          ^^^^^^
-      9 |
+      7 |   x
+          ^^^
+      8 |
 
     Cannot monomorphise the expression. |}]
 

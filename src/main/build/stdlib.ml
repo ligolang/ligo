@@ -6,7 +6,11 @@ type t =
   ; content_core : Ast_core.program
   }
 
-let empty = { content_typed = []; content_core = [] }
+let empty =
+  { content_typed = { pr_module = []; pr_sig = { sig_items = []; sig_sort = Ss_module } }
+  ; content_core = []
+  }
+
 
 module Cache = struct
   (* LanguageMap are used to cache compilation of standard libs across :

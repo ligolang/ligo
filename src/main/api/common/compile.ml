@@ -228,20 +228,41 @@ let typed_contract_and_expression
   let typed_prg =
     Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
   in
-  let (entry_point, contract_type), app_typed_prg =
+  let app_typed_prg =
     Trace.trace ~raise Main_errors.self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes
-         (Ligo_compile.Of_core.Contract module_path)
-         typed_prg
+    @@ Self_ast_typed.all_program typed_prg
   in
-  let app_typed_sig = Ast_typed.Misc.to_signature app_typed_prg in
-  let Self_ast_typed.Helpers.{ parameter = parameter_ty; storage = storage_ty } =
-    contract_type
+  let _, ctrct_sig =
+    let sig_ = Ast_typed.to_extended_signature typed_prg in
+    Trace.trace_option
+      ~raise
+      (Main_errors.self_ast_typed_tracer @@ `Self_ast_typed_not_a_contract module_)
+      (Ast_typed.get_contract_signature sig_ module_path)
   in
+  let ctrct_sig =
+    { ctrct_sig with
+      parameter =
+        (* to handle single entrypoints:
+        parameter type for single entry-point contracts such as
+        `[@entry] let main (p:p) (s:s) = ...`
+        are now compiled to `| Main of p`
+        This representation do not yet persist up until the michelson representation
+        due to "optimisations" :  `| Main of p` compiles to `p`
+        When using `compile parameter /path/to/file` without using the -e CLI option,
+        we assume the given expression is of type `p` and not `| Main of p`   
+        *)
+        (match
+           Option.map (Ast_typed.get_t_sum ctrct_sig.parameter) ~f:Ast_typed.Row.to_alist
+         with
+        | Some [ (_, ty) ] -> ty
+        | _ -> ctrct_sig.parameter)
+    }
+  in
+  let app_typed_sig = Ast_typed.to_signature app_typed_prg.pr_module in
   let annotation =
     match check_type with
-    | Runned_result.Check_storage -> Checking.untype_type_expression storage_ty
-    | Check_parameter -> Checking.untype_type_expression parameter_ty
+    | Runned_result.Check_storage -> Checking.untype_type_expression ctrct_sig.storage
+    | Check_parameter -> Checking.untype_type_expression ctrct_sig.parameter
   in
   let typed_expr =
     Trace.try_with
@@ -259,6 +280,7 @@ let typed_contract_and_expression
           Ligo_compile.Utils.type_expression
             ~raise
             ~options
+            ~annotation
             ?wrap_variant:entrypoint_ctor
             syntax
             expression
@@ -268,13 +290,12 @@ let typed_contract_and_expression
           Ligo_compile.Of_typed.assert_equal_contract_type
             ~raise
             check_type
-            entry_point
-            app_typed_prg
+            ctrct_sig
             typed_param
         in
         typed_param)
   in
-  typed_expr, app_typed_prg, constants, contract_type, entry_point, module_path
+  typed_expr, app_typed_prg, constants, ctrct_sig, module_path
 
 
 let parameter
@@ -309,7 +330,7 @@ let parameter
           ~has_env_comments:false
           ()
       in
-      let typed_param, app_typed_prg, constants, contract_type, entry_point, module_path =
+      let typed_param, app_typed_prg, constants, contract_type, module_path =
         typed_contract_and_expression
           ~raise
           ~options
@@ -325,7 +346,6 @@ let parameter
             ~raise
             ~options:options.middle_end
             app_typed_prg
-            entry_point
             module_path
             contract_type
         in
@@ -347,6 +367,7 @@ let parameter
         Ligo_compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
+          None
           app_typed_prg
           typed_param
       in
@@ -358,15 +379,6 @@ let parameter
       in
       let compiled_param =
         Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param
-      in
-      let module_ = Self_ast_typed.Helpers.get_module module_path app_typed_prg in
-      let () =
-        Ligo_compile.Of_typed.assert_equal_contract_type
-          ~raise
-          Check_parameter
-          entry_point
-          module_
-          typed_param
       in
       let options =
         Run.make_dry_run_options
@@ -416,7 +428,7 @@ let storage
           ~has_env_comments:false
           ()
       in
-      let typed_store, app_typed_prg, constants, contract_type, entry_point, module_path =
+      let typed_store, app_typed_prg, constants, contract_type, module_path =
         typed_contract_and_expression
           ~raise
           ~options
@@ -430,9 +442,7 @@ let storage
           Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
             ~raise
             ~options:options.middle_end
-            ~contract_pass:true
             app_typed_prg
-            entry_point
             module_path
             contract_type
         in
@@ -454,6 +464,7 @@ let storage
         Ligo_compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
+          None
           app_typed_prg
           typed_store
       in
@@ -465,15 +476,6 @@ let storage
       in
       let compiled_param =
         Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_param
-      in
-      let module_ = Self_ast_typed.Helpers.get_module module_path app_typed_prg in
-      let () =
-        Ligo_compile.Of_typed.assert_equal_contract_type
-          ~raise
-          Check_storage
-          entry_point
-          module_
-          typed_store
       in
       let michelson_value =
         let options =

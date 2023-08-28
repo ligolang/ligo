@@ -8,44 +8,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc:
-            elem main of unit -> { a: int; b: string; c: (False of (unit) | True of (unit));
-                    } -> operation list * { a: int;
-                                              b: string; c: (False of (unit) | True of (unit));
-                                          }
-          siValue:
-            { DROP;
-              LAMBDA
-                (pair (pair int string) bool)
-                (pair (list operation) (pair int string) bool)
-                { {  };
-                  { { { UNIT }; SOME };
-                    {  };
-                    IF_NONE
-                      { {  }; {  } }
-                      { DROP;
-                        {  };
-                        {  };
-                        { {  };
-                          {  };
-                          { { {  }; {  }; {  }; PUSH bool True; UPDATE 2 };
-                            {  };
-                            {  } } } };
-                    {  };
-                    { {  }; { NIL operation }; PAIR } } } } ] ]
+          siValue: Pair (Pair 0 "\"str\"") False ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -56,44 +19,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc:
-            elem main of unit -> { a: int; b: string; c: (False of (unit) | True of (unit));
-                    } -> operation list * { a: int;
-                                              b: string; c: (False of (unit) | True of (unit));
-                                          }
-          siValue:
-            { DROP;
-              LAMBDA
-                (pair (pair int string) bool)
-                (pair (list operation) (pair int string) bool)
-                { {  };
-                  { { { UNIT }; SOME };
-                    {  };
-                    IF_NONE
-                      { {  }; {  } }
-                      { DROP;
-                        {  };
-                        {  };
-                        { {  };
-                          {  };
-                          { { {  }; {  }; {  }; PUSH bool True; UPDATE 2 };
-                            {  };
-                            {  } } } };
-                    {  };
-                    { {  }; { NIL operation }; PAIR } } } } ] ]
+          siValue: Pair (Pair 0 "\"str\"") False ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -104,44 +30,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc:
-            elem main of unit -> { a: int; b: string; c: (False of (unit) | True of (unit));
-                    } -> operation list * { a: int;
-                                              b: string; c: (False of (unit) | True of (unit));
-                                          }
-          siValue:
-            { DROP;
-              LAMBDA
-                (pair (pair int string) bool)
-                (pair (list operation) (pair int string) bool)
-                { {  };
-                  { { { UNIT }; SOME };
-                    {  };
-                    IF_NONE
-                      { {  }; {  } }
-                      { DROP;
-                        {  };
-                        {  };
-                        { {  };
-                          {  };
-                          { { {  }; {  }; {  }; PUSH bool True; UPDATE 2 };
-                            {  };
-                            {  } } } };
-                    {  };
-                    { {  }; { NIL operation }; PAIR } } } } ] ]
+          siValue: Pair (Pair 0 "\"str\"") False ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -152,44 +41,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem newStorage of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") True ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc:
-            elem main of unit -> { a: int; b: string; c: (False of (unit) | True of (unit));
-                    } -> operation list * { a: int;
-                                              b: string; c: (False of (unit) | True of (unit));
-                                          }
-          siValue:
-            { DROP;
-              LAMBDA
-                (pair (pair int string) bool)
-                (pair (list operation) (pair int string) bool)
-                { {  };
-                  { { { UNIT }; SOME };
-                    {  };
-                    IF_NONE
-                      { {  }; {  } }
-                      { DROP;
-                        {  };
-                        {  };
-                        { {  };
-                          {  };
-                          { { {  }; {  }; {  }; PUSH bool True; UPDATE 2 };
-                            {  };
-                            {  } } } };
-                    {  };
-                    { {  }; { NIL operation }; PAIR } } } } ] ]
+          siValue: Pair (Pair 0 "\"str\"") True ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -202,41 +54,4 @@ InterpretSnapshot:
           siValue: { { }; Pair 0 "\"str\""; True }
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: Pair (Pair 0 "\"str\"") False ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/record-update-is-statement.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc:
-            elem main of unit -> { a: int; b: string; c: (False of (unit) | True of (unit));
-                    } -> operation list * { a: int;
-                                              b: string; c: (False of (unit) | True of (unit));
-                                          }
-          siValue:
-            { DROP;
-              LAMBDA
-                (pair (pair int string) bool)
-                (pair (list operation) (pair int string) bool)
-                { {  };
-                  { { { UNIT }; SOME };
-                    {  };
-                    IF_NONE
-                      { {  }; {  } }
-                      { DROP;
-                        {  };
-                        {  };
-                        { {  };
-                          {  };
-                          { { {  }; {  }; {  }; PUSH bool True; UPDATE 2 };
-                            {  };
-                            {  } } } };
-                    {  };
-                    { {  }; { NIL operation }; PAIR } } } } ] ]
+          siValue: Pair (Pair 0 "\"str\"") False ] ]

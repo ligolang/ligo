@@ -2,6 +2,7 @@ module CST = Cst.Jsligo
 module AST = Ast_unified
 module Helpers = Unification_shared.Helpers
 open Simple_utils
+open Simple_utils.Function
 open Lexing_jsligo.Token
 
 let rec folder =
@@ -31,8 +32,11 @@ and decompile_pattern p = AST.Catamorphism.cata_pattern ~f:folder p
 
 and decompile_attr : AST.Attribute.t -> CST.attribute =
  fun { key; value } -> ghost_attr key (Option.map ~f:(fun x -> Attr.String x) value)
+
+
 (* ^ XXX Attr.String or Attr.Ident? *)
 
+and decompile_mvar x = Format.asprintf "%a" AST.Mod_variable.pp x
 
 and decompile_mod_path
     : type a.
@@ -40,13 +44,15 @@ and decompile_mod_path
       -> a CST.module_access
   =
  fun { module_path; field; field_as_open = _ } ->
-  let f = Format.asprintf "%a" AST.Mod_variable.pp in
   let module_name =
     (* FIXME should create nested `CST.module_access` instead, this is a workaround
        created because `CST.module_access` will accept module path soon.
        It works correctly for pretty printers, but the CST itself is incorrect,
        because it contains one module name with dots instead of nested module applications *)
-    ghost_ident @@ String.concat ~sep:"." @@ List.map ~f @@ Utils.nseq_to_list module_path
+    ghost_ident
+    @@ String.concat ~sep:"."
+    @@ List.map ~f:decompile_mvar
+    @@ Utils.nseq_to_list module_path
   in
   (* XXX: What is [field_as_open]?? Do we expect module path with more than 1 element here? *)
   CST.{ module_name; selector = ghost_dot; field }
@@ -284,6 +290,11 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     failwith
       "Decompiler: T_fun is not initial for JsLIGO, should be transformed to T_named_fun \
        via backwards nanopass"
+  | T_contract_parameter x ->
+    let lst =
+      Utils.nsepseq_of_nseq (List.Ne.map (Wrap.ghost <@ decompile_mvar) x) ~sep:ghost_dot
+    in
+    TParameter (w lst)
   (* This node is not initial,
   i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,
   so type declaration that contains expression with abstraction should be transformed to

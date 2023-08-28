@@ -90,6 +90,7 @@ and 'self ty_expr_ = 'self type_expression_
 and 'self type_expression_content_ =
   | T_attr of Attribute.t * 'self (* [@a] x *)
   | T_var of Ty_variable.t (* x *)
+  | T_contract_parameter of Mod_variable.t Simple_utils.List.Ne.t
   | T_constant of string [@not_initial]
   | T_prod of 'self Simple_utils.List.Ne.t (* x * y *)
   | T_app of ('self, 'self) Type_app.t (* x y *)

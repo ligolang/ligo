@@ -236,6 +236,7 @@ end = struct
            { x with attributes = conv_exp_attr ~raise location x.attributes attr }
     | E_literal x -> ret @@ E_literal x
     | E_variable x -> ret @@ E_variable x
+    | E_contract x -> ret @@ E_contract x
     | E_record_pun fields ->
       let x =
         List.map
@@ -344,6 +345,7 @@ end = struct
     match Location.unwrap t with
     | T_attr (_, ty) -> ty
     | T_var v -> ret @@ T_variable v
+    | T_contract_parameter x -> ret @@ T_contract_parameter x
     | T_constant t ->
       (match Ligo_prim.Literal_types.of_string_opt t with
       | Some t -> ret @@ T_constant (t, Ligo_prim.Literal_types.to_arity t)
@@ -374,7 +376,7 @@ end = struct
     | T_record r -> ret @@ T_record r
     | T_abstraction abs -> ret @@ T_abstraction abs
     | T_for_all forall -> ret @@ T_for_all forall
-    | _ -> invariant @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t)
+    | _ -> invariant @@ Format.asprintf "To_core : %a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t)
 
 
   and pattern
@@ -624,6 +626,7 @@ end = struct
     in
     match ty.type_content with
     | T_variable v -> ret @@ T_var v
+    | T_contract_parameter x -> ret @@ T_contract_parameter x
     | T_constant (t, _) -> ret @@ T_constant (Ligo_prim.Literal_types.to_string t)
     | T_app { type_operator; arguments } ->
       ignore type_operator.module_path;

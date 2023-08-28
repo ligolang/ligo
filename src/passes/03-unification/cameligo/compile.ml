@@ -442,13 +442,9 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       ret
       @@ T_module_open_in
            { module_path = TODO_do_in_parsing.mvar hd; field; field_as_open })
-  | T_Parameter { value; _ } ->
-    ret
-    @@ T_module_access
-         { module_path = (nseq_map TODO_do_in_parsing.mvar <@ nsepseq_to_nseq) value
-         ; field = Ligo_prim.Type_var.of_input_var ~loc "$parameter"
-         ; field_as_open = false
-         }
+  | T_Parameter x ->
+    let path = nsepseq_map TODO_do_in_parsing.mvar x.value in
+    ret @@ T_contract_parameter (nsepseq_to_nseq path)
 
 
 let rec pattern : Eq.pattern -> Folding.pattern =

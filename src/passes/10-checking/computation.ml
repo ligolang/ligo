@@ -61,8 +61,17 @@ and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item =
     Context.Signature.S_module (v, encode_signature sig_, Context.Attrs.Module.default)
 
 
+and encode_sig_sort (sort : Ast_typed.signature_sort) : Context.Signature.sort =
+  match sort with
+  | Ss_module -> Ss_module
+  | Ss_contract { storage; parameter } ->
+    Ss_contract { storage = encode storage; parameter = encode parameter }
+
+
 and encode_signature (sig_ : Ast_typed.signature) : Context.Signature.t =
-  List.map ~f:encode_sig_item sig_
+  { items = List.map ~f:encode_sig_item sig_.sig_items
+  ; sort = encode_sig_sort sig_.sig_sort
+  }
 
 
 and encode_sig_item_attribute (attr : Ast_typed.sig_item_attribute)
@@ -76,13 +85,18 @@ let ctx_init_of_sig ?env () =
   match env with
   | None -> Context.empty
   | Some (env : Ast_typed.signature) ->
+    (* envs should be modules not contracts *)
+    assert (
+      match env.sig_sort with
+      | Ss_contract _ -> false
+      | Ss_module -> true);
     let f ctx decl =
       match decl with
       | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ty)
       | S_type (v, ty) -> Context.add_type ctx v (encode ty)
       | S_module (v, sig_) -> Context.add_module ctx v (encode_signature sig_)
     in
-    List.fold env ~init:Context.empty ~f
+    List.fold env.sig_items ~init:Context.empty ~f
 
 
 let run_elab t ~raise ~options ~loc ?env () =

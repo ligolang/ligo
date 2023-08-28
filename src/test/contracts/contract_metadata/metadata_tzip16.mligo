@@ -6,7 +6,8 @@ type param = int
 module Entry_no_metadata = struct
   type storage = {data : int}
 
-  let main (_p, s : param * storage) : operation list * storage = [], s
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
 
 end
 
@@ -20,7 +21,8 @@ module Entry_invalid_metadata_1 = struct
      metadata : nat
     }
 
-  let main (_p, s : param * storage) : operation list * storage = [], s
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
 
 end
 
@@ -34,7 +36,8 @@ module Entry_invalid_metadata_2 = struct
      metadata : (bytes, string) big_map
     }
 
-  let main (_p, s : param * storage) : operation list * storage = [], s
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
 
 end
 
@@ -48,7 +51,8 @@ module Entry_invalid_metadata_3 = struct
      [@annot metadata] notdata : (bytes, string) big_map
     }
 
-  let main (_p, s : param * storage) : operation list * storage = [], s
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
 
 end
 
@@ -62,7 +66,8 @@ module Entry_valid_metadata = struct
      metadata : (string, bytes) big_map
     }
 
-  let main (_p, s : param * storage) : operation list * storage = [], s
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
 
   let off_view (p : int) (s : storage) : int = p + s.data
 

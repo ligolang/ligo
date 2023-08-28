@@ -18,7 +18,7 @@ const contract_env =
     )
   }
 
-const config =
+export const config =
   { parameter            : "*parameter value*"
   , storage              : "*storage value*"
   , program              : "*path to program*"

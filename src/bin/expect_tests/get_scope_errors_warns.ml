@@ -228,102 +228,101 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [  ] File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
-    [ storage#1:5-12 x#6:9-10  ] File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
-    [ storage#1:5-12 foo#6:4-7 x#7:9-10  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13  ] File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#11:6-7  ] File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 3-5
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 8-17
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#10:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 25-39
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7 s#9:12-13 x#12:6-7  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
-    [ storage#1:5-12 foo#6:4-7 bar#7:4-7  ]
+    [  ] File "../../test/contracts/warning_unused.mligo", line 2, character 2 to line 5, character 3
+    [ storage#1:5-12 x#7:9-10  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
+    [ storage#1:5-12 foo#7:4-7 x#9:9-10  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 10-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 14, characters 10-15
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#14:6-7  ] File "../../test/contracts/warning_unused.mligo", line 15, characters 10-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 3-5
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 8-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 25-39
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 26-27
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 37-38
 
     Variable definitions:
-    (foo#6:4-7 -> foo)
-    Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 4-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
-    Content: |resolved: int -> int|
-    references:
-      File "../../test/contracts/warning_unused.mligo", line 11, characters 10-13
-    Mod Path =
-    Def Type = Global
-    (x#6:9-10 -> x)
-    Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 9-10
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
-    Content: |core: int|
-    references:
-      File "../../test/contracts/warning_unused.mligo", line 6, characters 20-21
-    Mod Path =
-    Def Type = Parameter
-    (bar#7:4-7 -> bar)
+    (foo#7:4-7 -> foo)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 4-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
     Content: |resolved: int -> int|
     references:
-      File "../../test/contracts/warning_unused.mligo", line 12, characters 10-13
+      File "../../test/contracts/warning_unused.mligo", line 14, characters 10-13
     Mod Path =
     Def Type = Global
     (x#7:9-10 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-29
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
     Content: |core: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
     Mod Path =
     Def Type = Parameter
-    (main#9:4-8 -> main)
-    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-8
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, character 2 to line 13, character 39
-    Content: |resolved: ( int *
-                          record[x -> int , y -> int({ name: x }, { name: y })] ) ->
+    (bar#9:4-7 -> bar)
+    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
+    Content: |resolved: int -> int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 15, characters 10-13
+    Mod Path =
+    Def Type = Global
+    (x#9:9-10 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 9-10
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
+    Content: |core: int|
+    references:
+      File "../../test/contracts/warning_unused.mligo", line 9, characters 20-21
+    Mod Path =
+    Def Type = Parameter
+    (main#12:4-8 -> main)
+    Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 4-8
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
+    Content: |resolved: int -> record[x -> int ,
+                                      y -> int({ name: x }, { name: y })] ->
     ( list (operation) *
       record[x -> int , y -> int({ name: x }, { name: y })] )|
     references: []
     Mod Path =
     Def Type = Global
-    (s#9:12-13 -> s)
-    Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 12-13
-    Body Range:
+    (s#12:20-21 -> s)
+    Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 20-21
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
     Content: |core: storage|
     references:
-      File "../../test/contracts/warning_unused.mligo", line 10, characters 10-11 ,
-      File "../../test/contracts/warning_unused.mligo", line 12, characters 14-15 ,
-      File "../../test/contracts/warning_unused.mligo", line 13, characters 26-27
+      File "../../test/contracts/warning_unused.mligo", line 13, characters 10-11 ,
+      File "../../test/contracts/warning_unused.mligo", line 15, characters 14-15 ,
+      File "../../test/contracts/warning_unused.mligo", line 16, characters 26-27
     Mod Path =
-    Def Type = Local
-    (x#10:6-7 -> x)
-    Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 6-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 10, characters 10-17
+    Def Type = Parameter
+    (x#13:6-7 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 13, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, characters 10-17
     Content: |resolved: int|
     references:
-      File "../../test/contracts/warning_unused.mligo", line 11, characters 14-15
+      File "../../test/contracts/warning_unused.mligo", line 14, characters 14-15
     Mod Path =
     Def Type = Local
-    (x#11:6-7 -> x)
-    Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 6-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 11, characters 10-15
+    (x#14:6-7 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 14, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 14, characters 10-15
     Content: |resolved: int|
     references: []
     Mod Path =
     Def Type = Local
-    (x#12:6-7 -> x)
-    Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 6-7
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 10-17
+    (x#15:6-7 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 15, characters 6-7
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 15, characters 10-17
     Content: |resolved: int|
     references:
-      File "../../test/contracts/warning_unused.mligo", line 13, characters 37-38
+      File "../../test/contracts/warning_unused.mligo", line 16, characters 37-38
     Mod Path =
     Def Type = Local
     Type definitions:
     (storage#1:5-12 -> storage)
     Range: File "../../test/contracts/warning_unused.mligo", line 1, characters 5-12
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 1, character 15 to line 4, character 1
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 2, character 2 to line 5, character 3
     Content: : |record[x -> int , y -> int]|
     references:
-      File "../../test/contracts/warning_unused.mligo", line 9, characters 22-29
+      File "../../test/contracts/warning_unused.mligo", line 12, characters 24-31
     Module definitions: |}];
   run_ligo_good
     [ "info"

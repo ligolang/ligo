@@ -97,7 +97,7 @@ let%expect_test _ =
     {|
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 8-9:
       2 |
-      3 | const { b } = { b : Option.unopt(Tezos.create_ticket("one", 10 as nat)) }
+      3 | const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
                   ^
       4 |
     :
@@ -105,7 +105,7 @@ let%expect_test _ =
 
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_record.jsligo", line 3, characters 8-9:
       2 |
-      3 | const { b } = { b : Option.unopt(Tezos.create_ticket("one", 10 as nat)) }
+      3 | const { b } = { b: Option.unopt(Tezos.create_ticket("one", 10 as nat)) };
                   ^
       4 |
     :
@@ -135,14 +135,14 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 7-8:
-      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1]
+      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1];
                  ^
       2 |
     :
     Warning: variable cannot be used more than once.
 
     File "../../test/contracts/top_level_patterns/negative/jsligo/ticket_tuple.jsligo", line 1, characters 7-8:
-      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1]
+      1 | const [b, _] = [Option.unopt(Tezos.create_ticket("one", 10 as nat)), 1];
                  ^
       2 |
     :

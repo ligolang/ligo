@@ -11,6 +11,8 @@ struct
     }
   [@@deriving equal, compare, yojson, sexp]
 
+  let find_type (t : 'a t) (l : Label.t) : 'a option = Label.Map.find t.fields l
+
   let invariant t =
     Invariant.invariant [%here] t [%sexp_of: _] (fun () ->
         Option.iter (L.fields t.layout) ~f:(fun fields ->

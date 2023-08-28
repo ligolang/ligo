@@ -70,14 +70,24 @@ end
 
 module Signature = struct
   module T = struct
-    type t = item list
+    type t =
+      { items : item list
+      ; sort : sort
+      }
 
     and item =
       | S_value of Value_var.t * Type.t * Attrs.Value.t
       | S_type of Type_var.t * Type.t * Attrs.Type.t
       | S_module of Module_var.t * t * Attrs.Module.t
       | S_module_type of Module_var.t * Module_type.t
-    [@@deriving compare, hash]
+
+    and sort =
+      | Ss_module
+      | Ss_contract of
+          { storage : Type.t
+          ; parameter : Type.t
+          }
+    [@@deriving equal, compare, hash]
   end
 
   include T
@@ -85,12 +95,18 @@ module Signature = struct
   let hashable : t hashable = (module Phys_hashable (T))
   let find_map t ~f = List.find_map (List.rev t) ~f
 
+  let get_contract_sort s =
+    match s with
+    | Ss_contract { parameter; storage } -> Some (parameter, storage)
+    | Ss_module -> None
+
+
   let get_value =
     memoize2
       hashable
       (module Value_var)
       (fun t var ->
-        (find_map t ~f:(function
+        (find_map t.items ~f:(function
             | S_value (var', type_, attr) when Value_var.equal var var' ->
               Some (type_, attr)
             | _ -> None) [@landmark "get_value"]))
@@ -101,7 +117,7 @@ module Signature = struct
       hashable
       (module Type_var)
       (fun t tvar ->
-        (find_map t ~f:(function
+        (find_map t.items ~f:(function
             | S_type (tvar', type_, _) when Type_var.equal tvar tvar' -> Some type_
             | _ -> None) [@landmark "get_type"]))
 
@@ -111,7 +127,7 @@ module Signature = struct
       hashable
       (module Module_var)
       (fun t mvar ->
-        (find_map t ~f:(function
+        (find_map t.items ~f:(function
             | S_module (mvar', sig_, _) when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
@@ -121,29 +137,15 @@ module Signature = struct
       hashable
       (module Module_var)
       (fun t mvar ->
-        (find_map t ~f:(function
+        (find_map t.items ~f:(function
             | S_module_type (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
-  let rec equal_item : item -> item -> bool =
-   fun item1 item2 ->
-    match item1, item2 with
-    | S_value (var1, type1, attr1), S_value (var2, type2, attr2) ->
-      Value_var.equal var1 var2 && Type.equal type1 type2 && Attrs.Value.equal attr1 attr2
-    | S_type (tvar1, type1, attr1), S_type (tvar2, type2, attr2) ->
-      Type_var.equal tvar1 tvar2 && Type.equal type1 type2 && Attrs.Type.equal attr1 attr2
-    | S_module (mvar1, sig1, attr1), S_module (mvar2, sig2, attr2) ->
-      Module_var.equal mvar1 mvar2 && equal sig1 sig2 && Attrs.Module.equal attr1 attr2
-    | _, _ -> false
-
-
-  and equal t1 t2 = List.equal equal_item t1 t2
-
   let to_type_mapi =
     let next = ref 0 in
     memoize hashable (fun t ->
-        (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+        (List.fold_right t.items ~init:Type_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
              | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:(!next, type_)
@@ -153,7 +155,7 @@ module Signature = struct
   let to_module_mapi =
     let next = ref 0 in
     memoize hashable (fun t ->
-        (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+        (List.fold_right t.items ~init:Module_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
              | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:(!next, t)
@@ -162,7 +164,7 @@ module Signature = struct
 
   let to_type_map =
     memoize hashable (fun t ->
-        (List.fold_right t ~init:Type_var.Map.empty ~f:(fun item map ->
+        (List.fold_right t.items ~init:Type_var.Map.empty ~f:(fun item map ->
              match item with
              | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:type_
              | _ -> map) [@landmark "to_type_map"]))
@@ -170,7 +172,7 @@ module Signature = struct
 
   let to_module_map =
     memoize hashable (fun t ->
-        (List.fold_right t ~init:Module_var.Map.empty ~f:(fun item map ->
+        (List.fold_right t.items ~init:Module_var.Map.empty ~f:(fun item map ->
              match item with
              | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:t
              | _ -> map) [@landmark "to_module_map"]))
@@ -197,7 +199,21 @@ module Signature = struct
         Format.fprintf ppf "module type %a = %a" Module_var.pp mvar Module_type.pp sig_
 
 
-    and pp ppf t = Format.fprintf ppf "@[<v>sig@,%a@,end@]" (list ~pp:pp_item) t
+    and pp_sort ppf sort =
+      match sort with
+      | Ss_module -> ()
+      | Ss_contract { storage; parameter } ->
+        Format.fprintf
+          ppf
+          "@[[@@contract { storage = %a; parameter = %a }]@]"
+          Type.pp
+          storage
+          Type.pp
+          parameter
+
+
+    and pp ppf t =
+      Format.fprintf ppf "@[<v>sig@,%a@,end%a@]" (list ~pp:pp_item) t.items pp_sort t.sort
   end
 end
 
@@ -540,6 +556,13 @@ module Apply = struct
     | S_module_type (mvar, sig') -> S_module_type (mvar, sig')
 
 
+  and sig_sort ctx (sig_sort : Signature.sort) : Signature.sort =
+    match sig_sort with
+    | Ss_module -> Ss_module
+    | Ss_contract { storage; parameter } ->
+      Ss_contract { storage = type_ ctx storage; parameter = type_ ctx parameter }
+
+
   and sig_ ctx (sig_ : Signature.t) : Signature.t =
     let no_exists_eq = function
       | C_value _
@@ -553,7 +576,9 @@ module Apply = struct
       | _ -> false
     in
     (* Only do something if there are texists_eq or lexists_eq *)
-    if List.for_all ~f:no_exists_eq ctx then sig_ else List.map sig_ ~f:(sig_item ctx)
+    if List.for_all ~f:no_exists_eq ctx
+    then sig_
+    else { items = List.map sig_.items ~f:(sig_item ctx); sort = sig_sort ctx sig_.sort }
 end
 
 let equal_item : item -> item -> bool =
@@ -1099,10 +1124,16 @@ end = struct
 
 
   and signature ~ctx sig_ =
-    match sig_ with
-    | [] -> true
-    | item :: sig_ ->
-      signature_item ~ctx item && signature ~ctx:(add_signature_item ctx item) sig_
+    List.for_all ~f:(signature_item ~ctx) sig_.items && signature_sort ~ctx sig_.sort
+
+
+  and signature_sort ~ctx (sig_sort : Signature.sort) =
+    match sig_sort with
+    | Ss_module -> true
+    | Ss_contract { storage; parameter } ->
+      (match type_ ~ctx storage, type_ ~ctx parameter with
+      | Some Type, Some Type -> true
+      | _ -> false)
 
 
   and signature_item ~ctx (sig_item : Signature.item) =

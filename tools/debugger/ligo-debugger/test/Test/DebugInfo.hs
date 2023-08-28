@@ -85,7 +85,7 @@ test_SourceMapper = testGroup "Reading source mapper"
             collectContractMetas parsedContracts contract
 
       let unitIntTuple' = mkPairType
-            unitType'
+            (mkSumType (LLField "Main") [("Main", unitType')])
             intType'
 
       let unitIntTuple = LigoTypeResolved unitIntTuple'
@@ -227,21 +227,42 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryNoVar unitType
+            [ LigoStackEntryVar "p" unitType
             , LigoStackEntryNoVar intType
             , LigoStackEntryVar "main" curriedMainType
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryNoVar intType
-            , LigoStackEntryNoVar unitType
+            [ LigoStackEntryVar "s" intType
+            , LigoStackEntryVar "p" unitType
             , LigoStackEntryVar "main" curriedMainType
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "main" uncurriedMainType
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryVar "s" intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryVar "s" intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitIntTuple
+            , LigoStackEntryVar "s" intType
+            , LigoStackEntryVar "main" curriedMainType
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryVar "<module main>" uncurriedMainType
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr

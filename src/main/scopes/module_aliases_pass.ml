@@ -74,6 +74,7 @@ let rec expression : AST.expression -> t -> env -> t =
  fun e m_alias env ->
   match e.expression_content with
   | E_variable _ -> m_alias
+  | E_contract _ -> m_alias
   | E_module_accessor _ -> m_alias
   | E_literal _ -> m_alias
   | E_constant { arguments; cons_name = _ } ->

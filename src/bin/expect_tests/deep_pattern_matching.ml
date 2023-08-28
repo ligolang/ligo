@@ -561,34 +561,32 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "nested_record_sum.mligo" ];
-  [%expect {| 142 bytes |}]
+  [%expect{| 142 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_I.mligo" ];
-  [%expect {|
-    354 bytes |}]
+  [%expect{| 354 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_T.mligo" ];
-  [%expect {|
-    468 bytes |}]
+  [%expect{| 468 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_V.mligo" ];
   [%expect
     {|
-    File "../../test/contracts//deep_pattern_matching/edge_case_V.mligo", line 6, character 7 to line 10, character 20:
-      5 | let main (p : p) (_ : int) : operation list * int =
-      6 |   [], (match p with
-                 ^^^^^^^^^^^^^
-      7 |     A,A,A,_,_,_ -> 1
-          ^^^^^^^^^^^^^^^^^^^^
-      8 |   | B,_,_,A,A,_ -> 2
-          ^^^^^^^^^^^^^^^^^^^^
-      9 |   | _,B,_,B,_,A -> 3
-          ^^^^^^^^^^^^^^^^^^^^
-     10 |   | _,_,B,_,B,B -> 4)
-          ^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts//deep_pattern_matching/edge_case_V.mligo", line 10, character 3 to line 14, character 26:
+      9 |   [],
+     10 |   (match p with
+             ^^^^^^^^^^^^
+     11 |      A, A, A, _, _, _ -> 1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     12 |    | B, _, _, A, A, _ -> 2
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     13 |    | _, B, _, B, _, A -> 3
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     14 |    | _, _, B, _, B, B -> 4)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -598,20 +596,20 @@ let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_S.mligo" ];
   [%expect
     {|
-    File "../../test/contracts//deep_pattern_matching/edge_case_S.mligo", line 6, character 7 to line 11, character 31:
-      5 | let main (p : p) (_ : int) : operation list * int =
-      6 |   [], (match p with
-                 ^^^^^^^^^^^^
-      7 |     A, A, _, _, _, _, _, _ -> 1
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      8 |   | _, _, A, A, _, _, _, _ -> 2
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      9 |   | _, _, _, _, A, A, _, _ -> 3
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     10 |   | _, _, _, _, _, _, A, A -> 4
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-     11 |   | A, B, A, B, A, B, A, B -> 5)
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "../../test/contracts//deep_pattern_matching/edge_case_S.mligo", line 10, character 3 to line 15, character 32:
+      9 |   [],
+     10 |   (match p with
+             ^^^^^^^^^^^^
+     11 |      A, A, _, _, _, _, _, _ -> 1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     12 |    | _, _, A, A, _, _, _, _ -> 2
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     13 |    | _, _, _, _, A, A, _, _ -> 3
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     14 |    | _, _, _, _, _, _, A, A -> 4
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     15 |    | A, B, A, B, A, B, A, B -> 5)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Error : this pattern-matching is not exhaustive.
     Here are examples of cases that are not matched:
@@ -619,38 +617,37 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; good_test "pm_ticket.mligo" ];
-  [%expect
-    {|
-    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 28-33:
-      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
-      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+  [%expect{|
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 9, characters 28-33:
+      8 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      9 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
                                       ^^^^^
     :
     Warning: unused variable "mynat".
     Hint: replace it by "_mynat" to prevent this warning.
 
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 9, characters 14-17:
+      8 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
+      9 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+                        ^^^
+    :
+    Warning: unused variable "myt".
+    Hint: replace it by "_myt" to prevent this warning.
+
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 8, characters 14-17:
-      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
-      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
+      7 |   match p with
+      8 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
                         ^^^
+      9 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
     :
     Warning: unused variable "myt".
     Hint: replace it by "_myt" to prevent this warning.
 
-    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 7, characters 14-17:
-      6 |   match p with
-      7 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
-                        ^^^
-      8 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
-    :
-    Warning: unused variable "myt".
-    Hint: replace it by "_myt" to prevent this warning.
-
-    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 5, characters 32-33:
-      4 |
-      5 | let main = fun (p : parameter) (s: storage) ->
+    File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 6, characters 32-33:
+      5 | [@entry]
+      6 | let main = fun (p : parameter) (s: storage) ->
                                           ^
-      6 |   match p with
+      7 |   match p with
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
@@ -667,8 +664,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "bug_report.mligo" ];
-  [%expect {| 468 bytes |}]
+  [%expect{| 468 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "mini_shifumi.mligo" ];
-  [%expect {| 368 bytes |}]
+  [%expect{| 368 bytes |}]

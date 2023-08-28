@@ -6,9 +6,9 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "annot_ignored.mligo" ];
   [%expect
     {|
-             { parameter unit ;
-               storage (pair (nat %token_id) (list address)) ;
-               code { CDR ; NIL operation ; PAIR } } |}]
+    { parameter unit ;
+      storage (pair (nat %token_id) (list address)) ;
+      code { CDR ; NIL operation ; PAIR } } |}]
 
 (*COMB*)
 let%expect_test _ =
@@ -77,7 +77,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect {| ( LIST_EMPTY() , Bar("foo") ) |}];
+  [%expect {|
+    ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -87,7 +88,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect {| ( LIST_EMPTY() , C(+1) ) |}];
+  [%expect {|
+    ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -97,7 +99,8 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect {| ( LIST_EMPTY() , Five(1) ) |}]
+  [%expect {|
+    ( LIST_EMPTY() , Five(1) ) |}]
 
 (*TREE*)
 let%expect_test _ =
@@ -167,8 +170,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_two"
     ];
-  [%expect {|
-    ( LIST_EMPTY() , Bar("foo") ) |}];
+  [%expect {| ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -178,8 +180,7 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_three"
     ];
-  [%expect {|
-    ( LIST_EMPTY() , C(+1) ) |}];
+  [%expect {| ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good
     [ "run"
     ; "dry-run"
@@ -189,5 +190,4 @@ let%expect_test _ =
     ; "-m"
     ; "Main_comb_five"
     ];
-  [%expect {|
-    ( LIST_EMPTY() , Five(1) ) |}]
+  [%expect {| ( LIST_EMPTY() , Five(1) ) |}]

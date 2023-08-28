@@ -31,6 +31,7 @@ module A = struct
   | One of r1
   | Two of r2
 
+  [@entry]
   let main (p : p) (_ : nat) : operation list * nat =
     ([],
      (match p with
@@ -44,6 +45,7 @@ module B = struct
   | Onee of r1
   | Three of r3
 
+  [@entry]
   let main (p : p) (_ : nat) : operation list * nat =
     ([],
      (match p with
@@ -57,6 +59,7 @@ module C = struct
   | Oneee of r1
   | Four of r4
 
+  [@entry]
   let main (p : p) (_ : nat) : operation list * nat =
     ([],
      (match p with

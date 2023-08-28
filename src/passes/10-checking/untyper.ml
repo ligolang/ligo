@@ -67,6 +67,7 @@ and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
   let return e = e in
   match ec with
   | E_literal l -> return (e_literal ~loc l)
+  | E_contract x -> return (e_contract ~loc x ())
   | E_constant { cons_name; arguments } ->
     let lst' = List.map ~f:self arguments in
     return (e_constant ~loc cons_name lst')

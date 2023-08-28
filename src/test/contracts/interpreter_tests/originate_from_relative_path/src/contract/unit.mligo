@@ -1,2 +1,2 @@
-let main (_,_ : unit * unit) : operation list * unit =
-  ([], ())
+[@entry]
+let main () () : operation list * unit = ([], ())

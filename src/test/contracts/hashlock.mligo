@@ -61,6 +61,7 @@ let reveal (p : reveal) (s : storage) : return =
         else (failwith "Your commitment did not match the storage hash."
               : return)
 
+[@entry]
 let main (p : parameter) (s : storage) : return =
   match p with
   | Commit c -> commit c s

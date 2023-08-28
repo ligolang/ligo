@@ -71,14 +71,32 @@ module Separate (Params : Params) = struct
 
   module AST = struct
     type t = Ast_typed.program
-
-    let link t1 t2 = t1 @ t2
-
     type interface = Ast_typed.signature
 
-    let link_interface t1 t2 = t1 @ t2
+    let link_interface
+        Ast_typed.{ sig_sort = ss1; sig_items = si1 }
+        Ast_typed.{ sig_sort = ss2; sig_items = si2 }
+      =
+      let open Ast_typed in
+      let sig_sort =
+        match ss1, ss2 with
+        | Ss_contract x, Ss_module | Ss_module, Ss_contract x -> Ss_contract x
+        | Ss_contract x, Ss_contract y ->
+          ignore (x, y);
+          (* interesting  *) assert false
+        | _ -> Ss_module
+      in
+      { sig_sort; sig_items = si1 @ si2 }
 
-    type environment = Ast_typed.signature
+
+    let link
+        Ast_typed.{ pr_module = m1; pr_sig = s1 }
+        Ast_typed.{ pr_module = m2; pr_sig = s2 }
+      =
+      Ast_typed.{ pr_module = m1 @ m2; pr_sig = link_interface s1 s2 }
+
+
+    type environment = Ast_typed.sig_item list
 
     let init_env : environment = []
 
@@ -86,47 +104,62 @@ module Separate (Params : Params) = struct
       =
      fun module_binder module_intf env ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
-      env @ [ S_module (module_binder, module_intf) ]
+      let module_sig =
+        Ast_typed.signature_make
+          ~sig_items:module_intf.sig_items
+          ~sig_sort:module_intf.sig_sort
+      in
+      env @ [ S_module (module_binder, module_sig) ]
 
 
     let add_interface_to_environment : interface -> environment -> environment =
-     fun intf env -> List.fold intf ~init:env ~f:(fun env decl -> env @ [ decl ])
+     fun intf env ->
+      List.fold intf.sig_items ~init:env ~f:(fun env decl -> env @ [ decl ])
 
 
     let make_module_in_ast : module_name -> t -> interface -> t -> t =
      fun module_binder module_ast module_intf ast ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
-      Location.wrap
-        ~loc
-        Ast_typed.(
-          D_module
-            { module_binder
-            ; module_ =
-                { module_content = Module_expr.M_struct module_ast
-                ; signature = module_intf
-                ; module_location = loc
-                }
-            ; module_attr = { public = true; hidden = true }
-            ; annotation = ()
-            })
-      :: ast
+      let new_decl =
+        Location.wrap
+          ~loc
+          Ast_typed.(
+            D_module
+              { module_binder
+              ; module_ =
+                  { module_content = Module_expr.M_struct module_ast.pr_module
+                  ; signature =
+                      Ast_typed.signature_make
+                        ~sig_items:module_intf.sig_items
+                        ~sig_sort:module_intf.sig_sort
+                  ; module_location = loc
+                  }
+              ; module_attr = { public = true; hidden = true }
+              ; annotation = ()
+              })
+      in
+      { ast with pr_module = new_decl :: ast.pr_module }
 
 
     let make_module_in_interface : module_name -> interface -> interface -> interface =
      fun module_binder module_intf ast ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
-      S_module (module_binder, module_intf) :: ast
+      let new_item =
+        Ast_typed.S_module
+          ( module_binder
+          , Ast_typed.signature_make
+              ~sig_items:module_intf.sig_items
+              ~sig_sort:module_intf.sig_sort )
+      in
+      { ast with sig_items = new_item :: ast.sig_items }
   end
 
   let lib_ast : unit -> AST.t = fun () -> std_lib.content_typed
-
-  let lib_interface : unit -> AST.interface =
-   fun () -> Ast_typed.Misc.to_signature (lib_ast ())
-
+  let lib_interface : unit -> AST.interface = fun () -> (lib_ast ()).pr_sig
 
   let compile
       :  AST.environment -> file_name -> meta_data -> compilation_unit
-      -> AST.t * AST.environment
+      -> AST.t * AST.interface
     =
    fun env file_name meta c_unit ->
     let syntax =
@@ -139,10 +172,13 @@ module Separate (Params : Params) = struct
     let options = Compiler_options.set_syntax options (Some syntax) in
     let module_ = Ligo_compile.Utils.to_core ~raise ~options ~meta c_unit file_name in
     let module_ = Helpers.inject_declaration ~options ~raise syntax module_ in
-    let module_, signature =
-      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context:env module_
+    let prg =
+      let context =
+        Ast_typed.signature_make ~sig_items:env ~sig_sort:Ast_typed.ss_module
+      in
+      Ligo_compile.Of_core.typecheck_with_signature ~raise ~options ~context module_
     in
-    module_, signature
+    prg, prg.pr_sig
 end
 
 module Infer (Params : Params) = struct
@@ -228,11 +264,8 @@ let get_top_level_syntax ~options ?filename () : Syntax_types.t =
     | None -> failwith "Top-level syntax not found")
 
 
-let dependency_graph ~raise
-    :  options:Compiler_options.t -> ?cform:Ligo_compile.Of_core.form
-    -> Source_input.file_name -> _
-  =
- fun ~options ?cform:_ filename ->
+let dependency_graph ~raise : options:Compiler_options.t -> Source_input.file_name -> _ =
+ fun ~options filename ->
   let open Build_core (struct
     let raise = raise
     let options = options
@@ -360,13 +393,9 @@ let qualified_typed_str ~raise : options:Compiler_options.t -> string -> Ast_typ
 
 
 let qualified_typed_with_signature ~raise
-    :  options:Compiler_options.t -> Source_input.code_input
-    -> Ast_typed.program * Ast_typed.signature
+    : options:Compiler_options.t -> Source_input.code_input -> Ast_typed.program
   =
- fun ~options source ->
-  let prg = qualified_typed ~raise ~options source in
-  let signature = Ast_typed.Misc.to_signature prg in
-  prg, signature
+ fun ~options source -> qualified_typed ~raise ~options source
 
 
 type expression_michelson =
@@ -387,18 +416,19 @@ let build_expression ~raise
     Option.value_map file_name_opt ~f ~default
   in
   let typed_exp =
-    Ligo_compile.Utils.type_expression
-      ~raise
-      ~options
-      syntax
-      expression
-      (Ast_typed.Misc.to_signature init_prg)
+    let init_sig =
+      (* can't use the contract signature directly because
+         it would force users to export declaration in Jsligo *)
+      Ast_typed.to_signature init_prg.pr_module
+    in
+    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_sig
   in
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
       ~force_uncurry:options.backend.function_body
+      None
       init_prg
       typed_exp
   in
@@ -438,96 +468,80 @@ let rec build_contract_aggregated ~raise
  fun ~options module_ source ->
   let module_path = parse_module_path ~loc module_ in
   let typed_prg = qualified_typed ~raise ~options source in
-  let contract_info, typed_contract =
-    trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes
-         (Ligo_compile.Of_core.Contract module_path)
-         typed_prg
+  let typed_prg =
+    trace ~raise self_ast_typed_tracer @@ Self_ast_typed.all_program typed_prg
   in
-  let entry_point, contract_type = contract_info in
-  let _, typed_views =
-    let form =
-      Ligo_compile.Of_core.View
-        { contract_entry = entry_point; module_path; contract_type }
-    in
-    trace ~raise self_ast_typed_tracer
-    @@ Ligo_compile.Of_core.specific_passes form typed_prg
-  in
-  let aggregated =
-    Ligo_compile.Of_typed.apply_to_entrypoint_contract
-      ~raise
-      ~options:options.middle_end
-      ~contract_pass:true
-      typed_contract
-      entry_point
-      module_path
-  in
-  let agg_views =
-    match typed_views with
-    | [] -> None
-    | _ -> build_aggregated_views ~raise ~options ~contract_type module_path typed_views
-  in
-  let parameter_ty, storage_ty =
+  let _sig, contract_sig =
+    let sig_ = Ast_typed.to_extended_signature typed_prg in
     trace_option
       ~raise
-      (`Self_ast_aggregated_tracer
-        (Self_ast_aggregated.Errors.corner_case "Could not recover types from contract"))
-      (let open Simple_utils.Option in
-      let open Ast_aggregated in
-      let* { type1 = input_ty; _ } =
-        Ast_aggregated.get_t_arrow aggregated.type_expression
-      in
-      Ast_aggregated.get_t_pair input_ty)
+      (`Self_ast_typed_tracer (Self_ast_typed.Errors.not_a_contract module_))
+      (Ast_typed.Misc.get_contract_signature sig_ module_path)
   in
-  entry_point, (parameter_ty, storage_ty), aggregated, agg_views
+  let aggregated =
+    Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
+      ~raise
+      ~options:options.middle_end
+      typed_prg
+      module_path
+      contract_sig
+  in
+  let agg_views =
+    build_aggregated_views
+      ~raise
+      ~options
+      ~storage_ty:contract_sig.storage
+      module_path
+      typed_prg
+  in
+  contract_sig, aggregated, agg_views
 
 
 and build_contract_stacking ~raise
     :  options:Compiler_options.t -> string -> Source_input.code_input
     -> _
-       * (Stacking.compiled_expression * _)
-       * ((Value_var.t * Stacking.compiled_expression) list * _)
   =
  fun ~options module_ source ->
-  let entrypoint, _, aggregated, agg_views =
+  let _, aggregated, agg_views =
     build_contract_aggregated ~raise ~options module_ source
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
   let contract = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
   let views = build_views ~raise ~options agg_views in
-  entrypoint, (contract, aggregated), (views, agg_views)
+  (contract, aggregated), (views, agg_views)
 
 
 (* building a contract in michelson *)
 and build_contract ~raise ~options module_ source =
-  let entrypoint, (contract, _), (views, _) =
+  let (contract, _), (views, _) =
     build_contract_stacking ~raise ~options module_ source
   in
-  let entrypoint = { name = entrypoint; value = contract } in
+  let entrypoint = { name = Magic_vars.generated_main ; value = contract } in
   let views = List.map ~f:(fun (name, value) -> { name; value }) views in
   { entrypoint; views }
 
 
 (* Meta ligo needs contract and views as aggregated programs *)
 and build_contract_meta_ligo ~raise ~options file_name =
-  let entry_point, (_, contract), (_, views) =
+  let (_, contract), (_, views) =
     build_contract_stacking ~raise ~options "" (Source_input.From_file file_name)
   in
-  entry_point, contract, views
+  contract, views
 
 
-and build_aggregated_views ~raise ~contract_type
-    :  options:Compiler_options.t -> Module_var.t list -> Ast_typed.program
-    -> (Value_var.t list * Ast_aggregated.expression) option
+and build_aggregated_views ~raise
+    :  options:Compiler_options.t -> storage_ty:Ast_typed.ty_expr -> Module_var.t list
+    -> Ast_typed.program -> (Value_var.t list * Ast_aggregated.expression) option
   =
- fun ~options module_path contract ->
-  let contract, view_info =
+ fun ~options ~storage_ty module_path contract ->
+  let module_upd_views, view_info =
     Self_ast_typed.Helpers.update_module
       module_path
-      (Ast_typed.fetch_views_in_program ~storage_ty:contract_type.storage)
-      contract
+      (Ast_typed.fetch_views_in_module ~storage_ty)
+      contract.pr_module
   in
+  let contract = { contract with pr_module = module_upd_views } in
   match view_info with
   | [] -> None
   | _ ->

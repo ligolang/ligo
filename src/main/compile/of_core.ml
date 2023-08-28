@@ -3,51 +3,28 @@ open Simple_utils.Trace
 open Ligo_prim
 module Location = Simple_utils.Location
 
-type form =
-  | Contract of Module_var.t list
-  | View of
-      { (* contract main function name *)
-        contract_entry : Value_var.t
-      ; contract_type : Self_ast_typed.Helpers.contract_type
-      ; module_path : Module_var.t list
-      }
-
-let specific_passes ~raise cform prg =
-  match cform with
-  | Contract module_path -> Self_ast_typed.all_contract ~raise module_path prg
-  | View { contract_entry; module_path; contract_type } ->
-    let prg =
-      Self_ast_typed.all_view ~raise contract_entry module_path contract_type prg
-    in
-    (contract_entry, contract_type), prg
-
-
 let typecheck_with_signature
     ~raise
     ~(options : Compiler_options.t)
     ?(context : Ast_typed.signature option)
     ?(self_pass : bool = false)
     (p : Ast_core.program)
-    : Ast_typed.program * Ast_typed.signature
+    : Ast_typed.program
   =
-  let typed, signature =
+  let prg =
     trace ~raise checking_tracer
-    @@ Checking.type_program_with_signature ~options:options.middle_end ?env:context p
+    @@ Checking.type_program ~options:options.middle_end ?env:context p
   in
-  let typed =
-    if self_pass
-    then
-      trace ~raise self_ast_typed_tracer
-      @@ fun ~raise -> Self_ast_typed.all_program ~raise typed
-    else typed
-  in
-  typed, signature
+  if self_pass
+  then
+    trace ~raise self_ast_typed_tracer
+    @@ fun ~raise -> Self_ast_typed.all_program ~raise prg
+  else prg
 
 
 let typecheck
     ~raise
     ~(options : Compiler_options.t)
-    ?(cform : form option)
     ?(context : Ast_typed.signature option)
     (p : Ast_core.program)
     : Ast_typed.program
@@ -56,18 +33,7 @@ let typecheck
     trace ~raise checking_tracer
     @@ Checking.type_program ~options:options.middle_end ?env:context p
   in
-  let typed =
-    trace ~raise self_ast_typed_tracer
-    @@ fun ~raise -> Self_ast_typed.all_program ~raise typed
-  in
-  let applied =
-    match cform with
-    | None -> typed
-    | Some cform ->
-      trace ~raise self_ast_typed_tracer
-      @@ fun ~raise -> snd @@ specific_passes ~raise cform typed
-  in
-  applied
+  trace ~raise self_ast_typed_tracer (Self_ast_typed.all_program typed)
 
 
 let compile_expression

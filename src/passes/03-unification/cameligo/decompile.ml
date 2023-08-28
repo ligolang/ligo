@@ -2,6 +2,7 @@ module CST = Cst.Cameligo
 module AST = Ast_unified
 module Helpers = Unification_shared.Helpers
 open Simple_utils
+open Simple_utils.Function
 module Label = Ligo_prim.Label
 open Lexing_cameligo.Token
 
@@ -27,6 +28,7 @@ and decompile_program p = AST.Catamorphism.cata_program ~f:folder p
 and decompile_expression e = AST.Catamorphism.cata_expr ~f:folder e
 and decompile_pattern p = AST.Catamorphism.cata_pattern ~f:folder p
 and decompile_type_expression t = AST.Catamorphism.cata_ty_expr ~f:folder t
+and decompile_mvar x = Format.asprintf "%a" AST.Mod_variable.pp x
 
 (* Helpers *)
 
@@ -335,6 +337,11 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       @@ decompile_mod_path { module_path; field = decompile_tvar field; field_as_open })
   | T_disc_union _ -> failwith "Decompiler: disc unions should appear only in JsLIGO"
   | T_named_fun _ -> failwith "Decompiler: Named arguments should appear only in JsLIGO"
+  | T_contract_parameter x ->
+    let lst =
+      Utils.nsepseq_of_nseq (List.Ne.map (Wrap.ghost <@ decompile_mvar) x) ~sep:ghost_dot
+    in
+    T_Parameter (w lst)
   (* This node is not initial,
   i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,
   so type declaration that contains expression with abstraction should be transformed to

@@ -24,6 +24,16 @@ let check_entrypoint_annotation_format ~raise ep (exp : expression) =
   | _ -> raise.error @@ Errors.bad_format_entrypoint_ann ep exp.location
 
 
+let find_annot_type layout content entrypoint =
+  let content =
+    List.map
+      ~f:(fun (entrypoint, associated_type) ->
+        annotation_or_label layout entrypoint, associated_type)
+      content
+  in
+  List.Assoc.find content ~equal:String.equal entrypoint
+
+
 let self_typing ~raise : contract_type -> expression -> bool * contract_type * expression =
  fun dat e ->
   let bad_self_err t =
@@ -50,19 +60,33 @@ let self_typing ~raise : contract_type -> expression -> bool * contract_type * e
     in
     let entrypoint_t =
       match dat.parameter.type_content with
-      | T_sum _ as t when String.equal "default" (String.uncapitalize entrypoint) ->
+      | T_sum cmap as t when String.equal "default" (String.uncapitalize entrypoint) ->
+        let t =
+          match Record.to_list cmap.fields with
+          | [ (_single_entry, t) ] -> t.type_content
+          | _ -> t
+        in
         { dat.parameter with type_content = t }
       | T_sum cmap ->
-        let content = Record.to_list cmap.fields in
-        let content =
-          List.map
-            ~f:(fun (entrypoint, associated_type) ->
-              annotation_or_label cmap.layout entrypoint, associated_type)
-            content
+        let content, layout =
+          trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
+          @@
+          match Record.to_list cmap.fields with
+          | [ (_single_entry, t) ] ->
+            (* to handle single entrypoints:
+              parameter type for single entry-point contracts such as
+              `[@entry] let main (p:p) (s:s) = ...`
+              are now compiled to `| Main of p`
+              This representation do not yet persist up until the michelson representation
+              due to "optimisations" :  `| Main of p` compiles to `p` *)
+            let open Simple_utils.Option in
+            let* row = Ast_aggregated.get_t_sum t in
+            Some (Record.to_list row.fields, row.layout)
+          | x -> Some (x, cmap.layout)
         in
         let associated_type =
           trace_option ~raise (Errors.unmatched_entrypoint entrypoint_exp.location)
-          @@ List.Assoc.find content ~equal:String.equal entrypoint
+          @@ find_annot_type layout content entrypoint
         in
         associated_type
       | t -> { dat.parameter with type_content = t }

@@ -52,6 +52,7 @@ module Of_Ast = struct
     in
     match e.expression_content with
     | E_variable _ -> add_current_expr scopes
+    | E_contract _ -> add_current_expr scopes
     | E_module_accessor _ -> add_current_expr scopes
     (* TODO : Should we recursively call on the maccess.element ? *)
     | E_literal _ -> add_current_expr scopes (* c.f. match.mligo:3 *)

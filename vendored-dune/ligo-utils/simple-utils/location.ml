@@ -136,6 +136,13 @@ let get_file : t -> Region.t option = function
   | File r -> Some r
   | _ -> None
 
+let cover_until_file_change : t -> t -> t = fun a b ->
+  match a , b with
+  | File _ , Virtual _ -> a
+  | Virtual _ , _ -> b
+  | File rega , File regb when String.equal rega#file regb#file -> File (Region.cover rega regb)
+  | File _ , File _ -> a
+
 let order : t -> t -> int = fun a b ->
   match a, b with
   | File a , File b -> if Region.lt a b then 1 else -1

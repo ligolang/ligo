@@ -43,6 +43,7 @@ let rec assert_value_eq ((a, b) : expression * expression) : unit option =
   | E_ascription a, _b' -> assert_value_eq (a.anno_expr, b)
   | _a', E_ascription b -> assert_value_eq (a, b.anno_expr)
   | E_variable _, _
+  | E_contract _, _
   | E_lambda _, _
   | E_type_abstraction _, _
   | E_application _, _

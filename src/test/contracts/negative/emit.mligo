@@ -1,3 +1,4 @@
-let main (_,_ : unit * string ) : operation list * string =
+[@entry]
+let main () (_ : string) : operation list * string =
   let x = "%lol" in
-  [Tezos.emit x 12],x
+  [Tezos.emit x 12], x

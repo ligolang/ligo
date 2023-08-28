@@ -31,6 +31,12 @@ and type_content : formatter -> type_content -> unit =
  fun ppf te ->
   match te with
   | T_variable tv -> Type_var.pp ppf tv
+  | T_contract_parameter x ->
+    Format.fprintf
+      ppf
+      "Parameter_of(%a)"
+      Simple_utils.PP_helpers.(list_sep Module_var.pp (const "."))
+      (List.Ne.to_list x)
   | T_constant (t, _) -> string ppf (Literal_types.to_string t)
   | T_sum row -> Row.PP.sum_type type_expression layout ppf row
   | T_record row -> Row.PP.record_type type_expression layout ppf row
@@ -56,6 +62,12 @@ and expression_content ppf (ec : expression_content) =
   match ec with
   | E_literal l -> Literal_value.pp ppf l
   | E_variable n -> Value_var.pp ppf n
+  | E_contract n ->
+    Format.fprintf
+      ppf
+      "Contract_of(%a)"
+      Simple_utils.PP_helpers.(list_sep Module_var.pp (const "."))
+      (List.Ne.to_list n)
   | E_application a -> Application.pp expression ppf a
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant c -> Constant.pp expression ppf c

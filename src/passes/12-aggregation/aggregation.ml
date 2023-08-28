@@ -14,4 +14,8 @@ let compile_program ~raise
   Compiler.compile Compiler.Data.empty hole program
 
 
+let compile_type : Ast_typed.type_expression -> Ast_aggregated.type_expression =
+  Compiler.compile_type
+
+
 let decompile : Ast_aggregated.expression -> Ast_typed.expression = Decompiler.decompile

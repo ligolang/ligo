@@ -28,6 +28,7 @@ type parameter = unit
 type op_list = operation list
 
 module Main_comb_two = struct
+  [@entry]
   let main (_ : parameter) (store : comb_two) : op_list * comb_two =
     let o = store.foo in
     let oo = {store with foo = o} in
@@ -36,6 +37,7 @@ module Main_comb_two = struct
 end
 
 module Main_comb_three = struct
+  [@entry]
   let main (_ : parameter) (_ : comb_three) : op_list * comb_three =
     ([] : operation list),
     {
@@ -47,6 +49,7 @@ module Main_comb_three = struct
 end
 
 module Main_comb_five = struct
+  [@entry]
   let main (_ : parameter) (store : comb_five) : op_list * comb_five =
     ([] : operation list), store
 

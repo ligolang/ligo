@@ -51,6 +51,7 @@ module Pattern_decl = Pattern_decl (Pattern) (ValueAttr)
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t
+  | E_contract of Module_var.t Simple_utils.List.Ne.t
   | E_literal of Literal_value.t
   | E_constant of
       expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
@@ -120,7 +121,24 @@ and sig_item_attribute =
   ; view : bool
   }
 
-and signature = sig_item list
+and signature =
+  { sig_items : sig_item list
+  ; sig_sort : signature_sort
+  }
+
+and contract_sig =
+  { storage : ty_expr
+  ; parameter : ty_expr
+  }
+
+and signature_sort =
+  | Ss_module
+  | Ss_contract of contract_sig
 
 type module_ = decl list [@@deriving eq, compare, yojson, hash]
-type program = declaration list [@@deriving eq, compare, yojson, hash]
+
+type program =
+  { pr_module : module_
+  ; pr_sig : signature
+  }
+[@@deriving eq, compare, yojson, hash]

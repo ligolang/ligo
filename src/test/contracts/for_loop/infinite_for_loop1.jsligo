@@ -1,7 +1,8 @@
+@entry
 const main = (_: unit, _: int): [list<operation>, int] => {
   let x = 1;
-  for ( ; ; ) {
-    let _ = unit;
+  for ( ;;) {
+    let _ = unit
   };
   return [list([]), x]
 };

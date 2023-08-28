@@ -1,28 +1,26 @@
 type planetType =
-  | { kind: "Tellurian" }
-  | { kind: "Gaseous" }
-  | { kind: "Other" };
+  { kind: "Tellurian" } | { kind: "Gaseous" } | { kind: "Other" };
 
 type planet = {
   name: string;
-  planetType: planetType;
-  lord: option<address>;
+  planetType;
+  lord: option<address>
 };
 
-
+@entry
 const main = (p: planet, _: int): [list<operation>, int] => {
-    let state = 0;
-    let planetType = p.planetType;
-    switch(planetType.kind) {
+  let state = 0;
+  let planetType = p.planetType;
+  switch (planetType.kind) {
     case "Tellurian":
       state += 1;
-      break
+      break;
     case "Gaseous":
       state -= 2;
-      break
+      break;
     case "Other":
       state = 0;
-      break
-    }
-    return [list([]), state]
-} 
+      break;
+  };
+  return [list([]), state]
+};

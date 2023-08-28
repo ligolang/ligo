@@ -14,7 +14,7 @@ const contract_env =
     )
   }
 
-const config =
+export const config =
   { parameter            : "some_param"
   , storage              : "some_storage"
   // all these tests should return the same config.

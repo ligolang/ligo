@@ -6,6 +6,7 @@ type param = int;
 namespace Entry_no_metadata {
   type storage_1 = { data: int };
   type ret_1 = [list<operation>, storage_1];
+  @entry
   const main = (_p: param, s: storage_1): ret_1 => [list([]), s]
 };
 
@@ -18,6 +19,7 @@ namespace Entry_invalid_metadata_1 {
     metadata: nat
   };
   type ret_2 = [list<operation>, storage_2];
+  @entry
   const main = (_p: param, s: storage_2): ret_2 => [list([]), s]
 };
 
@@ -30,6 +32,7 @@ namespace Entry_invalid_metadata_2 {
     metadata: big_map<bytes, string>
   };
   type ret_3 = [list<operation>, storage_3];
+  @entry
   const main = (_p: param, s: storage_3): ret_3 => [list([]), s]
 };
 
@@ -42,5 +45,6 @@ namespace Entry_valid_metadata {
     metadata: big_map<string, bytes>
   };
   type ret_4 = [list<operation>, storage_4];
+  @entry
   const main = (_p: param, s: storage_4): ret_4 => [list([]), s]
 };

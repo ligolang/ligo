@@ -1,3 +1,4 @@
+[@entry]
 let main (_p : unit) (s : unit) : operation list * unit =
   let f (x : unit) : unit = x in
   let s2 : unit = f s in

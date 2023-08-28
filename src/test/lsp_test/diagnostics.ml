@@ -140,7 +140,7 @@ let test_cases =
                \"ttop2\" but could be of type \"ttop\".\n\
                Hint: You might want to add a type annotation. \n"
           ; location =
-              { range = interval 64 14 23
+              { range = interval 85 14 23
               ; path = Path.from_relative "contracts/warning_sum_types.mligo"
               }
           }
@@ -150,7 +150,7 @@ let test_cases =
                but could be of type \"ta\".\n\
                Hint: You might want to add a type annotation. \n"
           ; location =
-              { range = interval 65 14 21
+              { range = interval 87 14 21
               ; path = Path.from_relative "contracts/warning_sum_types.mligo"
               }
           }

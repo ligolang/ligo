@@ -404,7 +404,7 @@ let compile_contract_ast_multi ~raise ~options ~tezos_context main views =
 
 
 let compile_contract_file ~raise ~options source_file =
-  let _, aggregated, views = Build.build_contract_meta_ligo ~raise ~options source_file in
+  let aggregated, views = Build.build_contract_meta_ligo ~raise ~options source_file in
   aggregated, views
 
 
