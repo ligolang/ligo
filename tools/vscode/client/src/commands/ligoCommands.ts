@@ -45,24 +45,6 @@ const withDeprecated = (args: string[]) => {
   return args
 }
 
-export async function executeSilentCompileContract(
-  client: LanguageClient,
-  options: SilentCompilationOptions,
-) {
-  let args = ['compile', 'contract', '-e', options.entrypoint].concat(options.flags)
-  if (options.onPath) {
-    args = args.concat(['--output-file', options.onPath])
-  }
-
-  return executeCommand(
-    ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated(args.concat(path))),
-    client,
-    CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
-    options.printToConsole,
-  )
-}
-
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
   client: LanguageClient,
@@ -70,12 +52,12 @@ export async function executeCompileContract(
   format: Maybe<string> = 'text',
   showOutput = true,
 ): Promise<CompileContractResult> {
-  if (!entrypoint) {
+  if (entrypoint === null || entrypoint === undefined) {
     entrypoint = await createRememberingInputBox({
       title: 'Entrypoint',
       placeHolder: 'Enter entrypoint to compile',
       rememberingKey: 'compile-contract',
-      defaultValue: 'main',
+      defaultValue: '',
     });
   }
 
@@ -93,7 +75,7 @@ export async function executeCompileContract(
       'compile',
       'contract',
       path,
-      '-e',
+      '-m',
       entrypoint,
       '--michelson-format',
       format,
@@ -118,12 +100,12 @@ export async function executeCompileStorage(
   storage: Maybe<string> = undefined,
   showOutput = true,
 ): Promise<CompileStorageResult> {
-  if (!entrypoint) {
+  if (entrypoint === null || entrypoint === undefined) {
     entrypoint = await createRememberingInputBox({
       title: 'Entrypoint',
       placeHolder: 'Enter entrypoint to compile',
       rememberingKey: 'storage-entrypoint',
-      defaultValue: 'main',
+      defaultValue: '',
     });
   }
   if (!storage) {
@@ -148,7 +130,7 @@ export async function executeCompileStorage(
       'storage',
       path,
       storage,
-      '-e',
+      '-m',
       entrypoint,
       '--michelson-format',
       format,
@@ -210,7 +192,7 @@ export async function executeDryRun(client: LanguageClient) {
     title: 'Entrypoint',
     placeHolder: 'Enter entrypoint to compile',
     rememberingKey: 'dry-run-entrypoint',
-    defaultValue: 'main',
+    defaultValue: '',
   });
   const maybeParameter = await createRememberingInputBox({
     title: 'Parameter',
@@ -233,7 +215,7 @@ export async function executeDryRun(client: LanguageClient) {
       path,
       maybeParameter,
       maybeStorage,
-      '-e',
+      '-m',
       maybeEntrypoint,
     ])),
     client,
@@ -268,11 +250,11 @@ export async function executeEvaluateFunction(client: LanguageClient) {
 }
 
 export async function executeEvaluateValue(client: LanguageClient) {
-  const maybeEntrypoint = await createRememberingInputBox({
-    title: 'Entrypoint',
-    placeHolder: 'Enter an value or a function to compile',
+  const maybeValue = await createRememberingInputBox({
+    title: 'Value',
+    placeHolder: 'Enter value to evaluate',
     rememberingKey: 'call-value',
-    defaultValue: '',
+    defaultValue: 'main',
   });
 
   return executeCommand(
@@ -281,8 +263,7 @@ export async function executeEvaluateValue(client: LanguageClient) {
       'run',
       'evaluate-expr',
       path,
-      '-e',
-      maybeEntrypoint,
+      maybeValue,
     ])),
     client,
   )

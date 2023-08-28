@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFix the usage of the deprecated `-e` flag in the extension. We now use `-m` to pass the module. For the top-level entry point, just give the empty string.\\n\\nIn addition, the silent compile contract command was removed.\\n\\n"
+merge_request: '2828'
+title: "[Chore] Replace bigarray tests"
+type: fixed
+            
