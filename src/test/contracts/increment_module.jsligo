@@ -1,23 +1,26 @@
 type storage = int;
 
-type parameter =
-  ["Increment", int]
-| ["Decrement", int]
-| ["Reset"];
+type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"];
 
 type ret = [list<operation>, storage];
 
-const add = (store : storage, delta : int) : storage => store + delta;
-const sub = (store : storage, delta : int) : storage => store - delta;
+const add = (store: storage, delta: int): storage => store + delta;
+
+const sub = (store: storage, delta: int): storage => store - delta;
 
 namespace C {
-
-  const main = (action : parameter, store : storage) : ret => {
-   return [list([]) as list<operation>,
-   match (action, {
-    Increment:(n: int) => add (store, n),
-    Decrement:(n: int) => sub (store, n),
-    Reset    :()  => 0})]
-  };
-
-}
+  @entry
+  const main = (action: parameter, store: storage): ret => {
+    return [
+      list([]) as list<operation>,
+      match(
+        action,
+        {
+          Increment: (n: int) => add(store, n),
+          Decrement: (n: int) => sub(store, n),
+          Reset: () => 0
+        }
+      )
+    ]
+  }
+};

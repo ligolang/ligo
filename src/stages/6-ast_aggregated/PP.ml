@@ -13,8 +13,8 @@ let rec type_content : Format.formatter -> type_content -> unit =
  fun ppf tc ->
   match tc with
   | T_variable tv -> Type_var.pp ppf tv
-  | T_sum row -> Row.PP.sum_type type_expression (fun _ _ -> ()) ppf row
-  | T_record row -> Row.PP.record_type type_expression (fun _ _ -> ()) ppf row
+  | T_sum row -> Row.PP.sum_type type_expression Layout.pp ppf row
+  | T_record row -> Row.PP.record_type type_expression Layout.pp ppf row
   | T_arrow a -> Arrow.pp type_expression ppf a
   | T_constant tc -> type_injection ppf tc
   | T_singleton x -> Literal_value.pp ppf x

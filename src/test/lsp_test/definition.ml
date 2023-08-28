@@ -63,7 +63,7 @@ let test_cases =
     }
   ; { test_name = "Imported identifier"
     ; file_with_reference = "contracts/build/B.mligo"
-    ; reference = Position.create ~line:6 ~character:19
+    ; reference = Position.create ~line:7 ~character:19
     ; file_with_definition = Path.from_relative "contracts/build/A.mligo"
     ; definition = Some (interval 0 4 8)
     ; type_definition = false

@@ -4,5 +4,6 @@ let f = [%Michelson ({|
 UNIT
 } |} : unit -> unit)]
 
+[@entry]
 let main (_ : unit) (s : unit) : operation list * unit =
   (([] : operation list), f s)

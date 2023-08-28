@@ -2,8 +2,7 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; test "option_map.mligo" ];
-  [%expect
-    {|
+  [%expect{|
     { parameter unit ;
       storage (option int) ;
       code { CDR ;
@@ -21,8 +20,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; test "option_map.mligo" ];
-  [%expect
-    {|
+  [%expect{|
     { parameter unit ;
       storage (option int) ;
       code { CDR ;

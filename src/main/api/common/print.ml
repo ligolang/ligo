@@ -161,10 +161,14 @@ let ast_typed (raw_options : Raw_options.t) source_file =
          let typed = Build.unqualified_typed ~raise ~options Env source_file in
       *)
       if self_pass
-      then
-        ( Trace.trace ~raise Main_errors.self_ast_typed_tracer
-          @@ Self_ast_typed.all_program typed
-        , [] )
+      then (
+        let prg =
+          Trace.trace
+            ~raise
+            Main_errors.self_ast_typed_tracer
+            (Self_ast_typed.all_program typed)
+        in
+        prg, [])
       else typed, [] )
 
 
@@ -193,6 +197,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file =
           ~raise
           ~options:options.middle_end
           ~self_pass
+          None
           typed
           (Ast_typed.e_a_unit ~loc ())
       , [] ) )
@@ -224,6 +229,7 @@ let ast_expanded (raw_options : Raw_options.t) source_file =
           ~raise
           ~options:options.middle_end
           ~self_pass
+          None
           typed
           (Ast_typed.e_a_unit ~loc ())
       in
@@ -256,6 +262,7 @@ let mini_c (raw_options : Raw_options.t) source_file optimize =
           Compile.Of_typed.compile_expression_in_context
             ~raise
             ~options:options.middle_end
+            None
             typed
             (Ast_typed.e_a_unit ~loc ())
         in
@@ -264,7 +271,7 @@ let mini_c (raw_options : Raw_options.t) source_file optimize =
         Mini_c.Formatter.Raw mini_c, []
       | Some entry_point ->
         let expr =
-          Compile.Of_typed.apply_to_entrypoint
+          Compile.Of_typed.apply_to_var
             ~raise
             ~options:options.middle_end
             typed

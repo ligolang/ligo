@@ -7,11 +7,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "protocol_dalphanet.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/protocol_dalphanet.mligo", line 12, characters 22-23:
-     11 |
-     12 | let main (p : bls_l) (s : bool) : operation list * bool =
+    File "../../test/contracts/protocol_dalphanet.mligo", line 18, characters 22-23:
+     17 | [@entry]
+     18 | let main (p : bls_l) (s : bool) : operation list * bool =
                                 ^
-     13 |  (([] : operation list), Tezos.pairing_check p)
+     19 |   (([] : operation list), Tezos.pairing_check p)
     :
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
@@ -29,11 +29,11 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/sapling.mligo", line 8, characters 27-32:
-      7 |
-      8 | let main (tr : parameter) (store : storage) : return =
+    File "../../test/contracts/sapling.mligo", line 10, characters 27-32:
+      9 | [@entry]
+     10 | let main (tr : parameter) (store : storage) : return =
                                      ^^^^^
-      9 |  ([] : operation list),
+     11 |   ([] : operation list),
     :
     Warning: unused variable "store".
     Hint: replace it by "_store" to prevent this warning.
@@ -52,10 +52,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; contract "rollup.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/rollup.mligo", line 1, characters 14-34:
-      1 | let main (_ : tx_rollup_l2_address) (_ :  unit ) : operation list * unit =
+    File "../../test/contracts/rollup.mligo", line 2, characters 14-34:
+      1 | [@entry]
+      2 | let main (_ : tx_rollup_l2_address) (_ : unit) : operation list * unit =
                         ^^^^^^^^^^^^^^^^^^^^
-      2 |   (failwith "roll up !" : operation list * unit)
+      3 |   (failwith "roll up !" : operation list * unit)
 
     Type "tx_rollup_l2_address" not found. |}];
   run_ligo_good [ "compile"; "contract"; contract "min_block_time.mligo" ];
@@ -85,9 +86,9 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/emit.mligo", line 3, characters 3-18:
-      2 |   let x = "%lol" in
-      3 |   [Tezos.emit x 12],x
+    File "../../test/contracts/negative/emit.mligo", line 4, characters 3-18:
+      3 |   let x = "%lol" in
+      4 |   [Tezos.emit x 12], x
              ^^^^^^^^^^^^^^^
 
     Invalid event tag.
@@ -120,5 +121,4 @@ let%expect_test _ =
     {|
     { parameter unit ;
       storage unit ;
-      code { DROP ; UNIT ; NIL operation ; PAIR } }
-    |}]
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]

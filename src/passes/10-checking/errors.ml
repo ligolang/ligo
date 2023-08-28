@@ -154,6 +154,11 @@ type typer_error =
   | `Typer_signature_not_found_entry of Value_var.t * Location.t
   | `Typer_signature_not_match_value of Value_var.t * Type.t * Type.t * Location.t
   | `Typer_signature_not_match_type of Type_var.t * Type.t * Type.t * Location.t
+  | `Typer_not_a_contract of Location.t
+  | `Typer_not_an_entrypoint of Type.t * Location.t
+  | `Typer_storage_do_not_match of
+    Value_var.t * Type.t * Value_var.t * Type.t * Location.t
+  | `Typer_duplicate_entrypoint of Value_var.t * Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -164,6 +169,24 @@ let extract_loc_and_message : typer_error -> Location.t * string =
   let name_tbl = Type.Type_var_name_tbl.create () in
   let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
   match a with
+  | `Typer_duplicate_entrypoint (v, loc) ->
+    loc, Format.asprintf "@[<hv>Duplicate entry-point %a@]" Value_var.pp v
+  | `Typer_storage_do_not_match (ep_1, storage_1, ep_2, storage_2, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv>Storage types do not match for different entrypoints:@.- %a : %a@.- %a : \
+         %a@]"
+        Value_var.pp
+        ep_1
+        Type.pp
+        storage_1
+        Value_var.pp
+        ep_2
+        Type.pp
+        storage_2 )
+  | `Typer_not_an_entrypoint (t, loc) ->
+    loc, Format.asprintf "@[<hv>Not an entrypoint: %a@]" Type.pp t
+  | `Typer_not_a_contract loc -> loc, Format.asprintf "@[<hv>Not a contract@]"
   | `Typer_mut_var_captured (var, loc) ->
     ( loc
     , Format.asprintf

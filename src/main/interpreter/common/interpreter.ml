@@ -2158,6 +2158,7 @@ let eval_expression ~raise ~steps ~options
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      None
       prg
       expr
   in
@@ -2171,27 +2172,28 @@ let eval_expression ~raise ~steps ~options
 
 let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env =
  fun prg ->
-  let decl_lst = prg in
-  (* Pass over declarations, for each "test"-prefixed one, add a new
-     declaration and in the end, gather all of them together *)
-  let aux decl r =
-    let ds, defs = r in
-    let loc = Location.get_location decl in
-    match decl.Location.wrap_content with
-    | Ast_typed.D_irrefutable_match
-        { pattern = { wrap_content = P_var binder; _ }; expr; _ }
-    | Ast_typed.D_value { binder; expr; _ } ->
-      let var = Binder.get_var binder in
-      if (not (Value_var.is_generated var))
-         && Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test"
-      then (
-        let expr = Ast_typed.(e_a_variable ~loc var expr.type_expression) in
-        (* TODO: check that variables are unique, as they are ignored *)
-        decl :: ds, (binder, expr.type_expression) :: defs)
-      else decl :: ds, defs
-    | _ -> decl :: ds, defs
+  let decl_lst = prg.pr_module in
+  let lst =
+    (* Pass over declarations, for each "test"-prefixed one, add a new
+       declaration and in the end, gather all of them together *)
+    let aux decl =
+      let loc = Location.get_location decl in
+      match decl.Location.wrap_content with
+      | Ast_typed.D_irrefutable_match
+          { pattern = { wrap_content = P_var binder; _ }; expr; _ }
+      | Ast_typed.D_value { binder; expr; _ } ->
+        let var = Binder.get_var binder in
+        if (not (Value_var.is_generated var))
+           && Base.String.is_prefix (Value_var.to_name_exn var) ~prefix:"test"
+        then (
+          let expr = Ast_typed.(e_a_variable ~loc var expr.type_expression) in
+          (* TODO: check that variables are unique, as they are ignored *)
+          Some (binder, expr.type_expression))
+        else None
+      | _ -> None
+    in
+    List.filter_map ~f:aux decl_lst
   in
-  let decl_lst, lst = List.fold_right ~f:aux ~init:([], []) decl_lst in
   (* Compile new context *)
   let f (n, t) r =
     let var = Binder.get_var n in
@@ -2201,7 +2203,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env 
   in
   let map = List.fold_right lst ~f ~init:Record.empty in
   let expr = Ast_typed.e_a_record ~loc:Location.dummy map in
-  match eval_expression ~raise ~steps ~options decl_lst expr with
+  match eval_expression ~raise ~steps ~options { prg with pr_module = decl_lst } expr with
   | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in

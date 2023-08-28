@@ -146,11 +146,11 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "type_B.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/build/type_B.mligo", line 5, characters 5-6:
-      4 | \tlet s = s + 1 in
-      5 | \tlet p = p ^ "titi" in
+    File "../../test/contracts/build/type_B.mligo", line 5, characters 6-7:
+      4 |   let s = s + 1 in
+      5 |   let p = p ^ "titi" in
                 ^
-      6 | \t([] : operation list), s
+      6 |   ([] : operation list), s
     :
     Warning: unused variable "p".
     Hint: replace it by "_p" to prevent this warning.
@@ -235,8 +235,7 @@ let%expect_test _ =
     ; "--library"
     ; "test_libraries/lib/parameter,test_libraries/lib/storage"
     ];
-  [%expect {|
-    (Right (Left "Hello")) |}];
+  [%expect {| (Right (Left "Hello")) |}];
   run_ligo_good
     [ "compile"
     ; "storage"
@@ -245,7 +244,6 @@ let%expect_test _ =
     ; "--library"
     ; "test_libraries/lib/parameter,test_libraries/lib/storage"
     ];
-  [%expect {|
-    42 |}]
+  [%expect {| 42 |}]
 
 let () = Caml.Sys.chdir pwd

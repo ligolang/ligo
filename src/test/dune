@@ -83,10 +83,10 @@
    "%{pos}"
    (run ./contract_test.exe)))
  (deps
-  (glob_files contracts/*)
+  (glob_files_rec contracts/*)
   (:pos
-   (glob_files contracts/positive/*))
-  (glob_files contracts/negative/*)
+   (glob_files_rec contracts/positive/*))
+  (glob_files_rec contracts/negative/*)
   (glob_files preprocessor/*)))
 
 (rule

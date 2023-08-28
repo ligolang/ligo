@@ -1,36 +1,34 @@
-type t = { foo : int , bar : int }
+type t = {
+  foo: int,
+  bar: int
+};
 
-let coucou = (storage : t) : t => {
+const coucou = (storage: t): t => {
   let number = 2;
-  
-  let id = (x : int) : int => x;
-  
+  let id = (x: int): int => x;
   /* parameter shadows fun_name: simple */
-  let toto = (toto:int) : int => {
+
+  let toto = (toto: int): int => {
     let number = toto;
-    return number + 1;
+    return number + 1
   };
-
   /* parameter shadows fun_name: complex */
-  let foo = (foo : ((p:int) => int)) : int => {
-    let foox = foo(0);
-    return foox;
-  };
-  
-  /* fun_name shadowed in body */
-  let bar = (x : int) : t => {
-    let bar = x;
-    return { ...storage, bar : bar };
-  };
-  
-  let n = toto(number)  + foo(id);
-  
-  return bar(n); 
-}
 
-let main = (_ : unit, storage : t) : [list<operation>, t] => {
-  return [
-    (list([]) as list<operation>), 
-    coucou(storage)
-  ];
-}
+  let foo = (foo: ((p: int) => int)): int => {
+    let foox = foo(0);
+    return foox
+  };
+  /* fun_name shadowed in body */
+
+  let bar = (x: int): t => {
+    let bar = x;
+    return { ...storage, bar: bar }
+  };
+  let n = toto(number) + foo(id);
+  return bar(n)
+};
+
+@entry
+const main = (_: unit, storage: t): [list<operation>, t] => {
+  return [(list([]) as list<operation>), coucou(storage)]
+};

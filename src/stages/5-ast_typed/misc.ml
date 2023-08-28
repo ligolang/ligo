@@ -119,7 +119,7 @@ and assert_literal_eq ((a, b) : Literal_value.t * Literal_value.t) : unit option
   | Literal_bls12_381_fr _, _ -> None
 
 
-let rec get_entry (lst : program) (name : Value_var.t) : expression option =
+let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
   let aux x =
     match Location.unwrap x with
     | D_value
@@ -299,11 +299,11 @@ let uncurry_wrap ~loc ~type_ var =
   some @@ expr
 
 
-let rec fetch_views_in_program ~storage_ty
-    : program -> program * (type_expression * type_expression Binder.t) list
+let rec fetch_views_in_module ~storage_ty
+    : module_ -> module_ * (type_expression * type_expression Binder.t) list
   =
  fun prog ->
-  let aux declt ((prog, views) : program * _) =
+  let aux declt ((prog, views) : module_ * _) =
     let return () = declt :: prog, views in
     let loc = Location.get_location declt in
     match Location.unwrap declt with
@@ -351,15 +351,72 @@ let rec fetch_views_in_program ~storage_ty
         , (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
           :: views ))
     | D_module_include { module_content = M_struct x; _ } ->
-      fetch_views_in_program ~storage_ty x
+      fetch_views_in_module ~storage_ty x
     | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ ->
       return ()
   in
   List.fold_right ~f:aux ~init:([], []) prog
 
 
-let to_signature (program : program) : signature =
-  List.fold program ~init:[] ~f:(fun ctx decl ->
+let get_path_signature : signature -> Module_var.t list -> signature option =
+ fun prg_sig mods ->
+  let open Simple_utils.Option in
+  List.fold
+    mods
+    ~f:(fun acc el ->
+      let* acc in
+      List.find_map acc.sig_items ~f:(function
+          | S_module (m, sig_) when Module_var.equal el m -> Some sig_
+          | _ -> None))
+    ~init:(Some prg_sig)
+
+
+let get_contract_signature
+    : signature -> Module_var.t list -> (signature * contract_sig) option
+  =
+ fun prg_sig mods ->
+  let open Simple_utils.Option in
+  let* sig_ = get_path_signature prg_sig mods in
+  match sig_.sig_sort with
+  | Ss_contract csig -> return @@ (sig_, csig)
+  | _ -> None
+
+
+let get_sig_value
+    :  Module_var.t list -> Value_var.t -> signature
+    -> (ty_expr * sig_item_attribute) option
+  =
+ fun path v sig_ ->
+  let open Simple_utils.Option in
+  let* sig_ = get_path_signature sig_ path in
+  List.find_map sig_.sig_items ~f:(function
+      | S_value (v', ty, attr) when Value_var.equal v v' -> Some (ty, attr)
+      | _ -> None)
+
+
+let get_entrypoint_parameter_type
+    : Label.t option -> type_expression -> type_expression option
+  =
+ fun label parameter_ty ->
+  let open Simple_utils.Option in
+  let* rows = Combinators.get_t_sum parameter_ty in
+  let lst = Row.to_alist rows in
+  match lst with
+  | [ (_single_entry, ty) ] when Option.is_none label -> Some ty
+  | _ ->
+    let* label in
+    Row.find_type rows label
+
+
+let get_entrypoint_storage_type : program -> Module_var.t list -> type_expression option =
+ fun prg mods ->
+  let open Simple_utils.Option in
+  let* _, { storage; _ } = get_contract_signature prg.pr_sig mods in
+  return storage
+
+
+let to_sig_items (module_ : module_) : sig_item list =
+  List.fold module_ ~init:[] ~f:(fun ctx decl ->
       match Location.unwrap decl with
       | D_irrefutable_match { pattern; expr = _; attr = { view; entry; _ } } ->
         List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
@@ -368,6 +425,15 @@ let to_signature (program : program) : signature =
         ctx @ [ S_value (Binder.get_var binder, expr.type_expression, { view; entry }) ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
         ctx @ [ S_type (type_binder, type_expr) ]
-      | D_module_include x -> x.signature
+      | D_module_include x -> x.signature.sig_items
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
         ctx @ [ S_module (module_binder, module_.signature) ])
+
+
+let to_signature (module_ : module_) : signature =
+  let sig_items = to_sig_items module_ in
+  { sig_items; sig_sort = Ss_module }
+
+
+let to_extended_signature (prg : program) : signature =
+  { sig_items = to_sig_items prg.pr_module; sig_sort = prg.pr_sig.sig_sort }

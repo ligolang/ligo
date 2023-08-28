@@ -9,27 +9,27 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-  File "../../test/contracts/for_loop/infinite_for_loop1.jsligo", line 3, character 2 to line 5, character 3:
-    2 |   let x = 1;
-    3 |   for ( ; ; ) {
-          ^^^^^^^^^^^^^
-    4 |     let _ = unit;
-        ^^^^^^^^^^^^^^^^^
-    5 |   };
-        ^^^
-    6 |   return [list([]), x]
+    File "../../test/contracts/for_loop/infinite_for_loop1.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let x = 1;
+      4 |   for ( ;;) {
+            ^^^^^^^^^^^
+      5 |     let _ = unit
+          ^^^^^^^^^^^^^^^^
+      6 |   };
+          ^^^
+      7 |   return [list([]), x]
 
-  Warning: A boolean conditional expression is expected.
-  Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-  { parameter unit ;
-    storage int ;
-    code { DROP ;
-           PUSH bool True ;
-           LOOP { PUSH bool True ; DUP ; IF {} {} } ;
-           PUSH int 1 ;
-           NIL operation ;
-           PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             PUSH int 1 ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -38,15 +38,15 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-    File "../../test/contracts/for_loop/infinite_for_loop2.jsligo", line 3, character 2 to line 5, character 3:
-      2 |   let y = 0;
-      3 |   for ( ; ; y++) {
+    File "../../test/contracts/for_loop/infinite_for_loop2.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let y = 0;
+      4 |   for ( ; ; y++) {
             ^^^^^^^^^^^^^^^^
-      4 |     let _ = unit;
+      5 |     let _ = unit;
           ^^^^^^^^^^^^^^^^^
-      5 |   }
+      6 |   }
           ^^^
-      6 |   return [list([]), y]
+      7 |   return [list([]), y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -67,15 +67,15 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-    File "../../test/contracts/for_loop/infinite_for_loop3.jsligo", line 3, character 2 to line 5, character 3:
-      2 |   let y = 0;
-      3 |   for (let b = 0; ; ) {
+    File "../../test/contracts/for_loop/infinite_for_loop3.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let y = 0;
+      4 |   for (let b = 0; ; ) {
             ^^^^^^^^^^^^^^^^^^^^^
-      4 |     let _ = b;
+      5 |     let _ = b;
           ^^^^^^^^^^^^^^
-      5 |   }
+      6 |   }
           ^^^
-      6 |   return [list([]), y]
+      7 |   return [list([]), y]
 
     Warning: A boolean conditional expression is expected.
     Otherwise this leads to an infinte loop.
@@ -96,27 +96,27 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-      File "../../test/contracts/for_loop/infinite_for_loop4.jsligo", line 3, character 2 to line 5, character 3:
-        2 |   let y = 0;
-        3 |   for (y = 0; ; ) {
-              ^^^^^^^^^^^^^^^^^
-        4 |     let _ = y;
-            ^^^^^^^^^^^^^^
-        5 |   }
-            ^^^
-        6 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop4.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let y = 0;
+      4 |   for (y = 0; ; ) {
+            ^^^^^^^^^^^^^^^^^
+      5 |     let _ = y;
+          ^^^^^^^^^^^^^^
+      6 |   }
+          ^^^
+      7 |   return [list([]), y]
 
-      Warning: A boolean conditional expression is expected.
-      Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-      { parameter unit ;
-        storage int ;
-        code { DROP ;
-               PUSH int 0 ;
-               PUSH bool True ;
-               LOOP { PUSH bool True ; DUP ; IF {} {} } ;
-               NIL operation ;
-               PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -125,29 +125,29 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-        File "../../test/contracts/for_loop/infinite_for_loop5.jsligo", line 3, character 2 to line 5, character 3:
-          2 |   let x = 0;
-          3 |   for (let y = 0 ; ; y++) {
-                ^^^^^^^^^^^^^^^^^^^^^^^^^
-          4 |     let _ = y;
-              ^^^^^^^^^^^^^^
-          5 |   }
-              ^^^
-          6 |   return [list([]), x]
+    File "../../test/contracts/for_loop/infinite_for_loop5.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let x = 0;
+      4 |   for (let y = 0 ; ; y++) {
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |     let _ = y;
+          ^^^^^^^^^^^^^^
+      6 |   }
+          ^^^
+      7 |   return [list([]), x]
 
-        Warning: A boolean conditional expression is expected.
-        Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-        { parameter unit ;
-          storage int ;
-          code { DROP ;
-                 PUSH int 0 ;
-                 PUSH bool True ;
-                 LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
-                 DROP ;
-                 PUSH int 0 ;
-                 NIL operation ;
-                 PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             DROP ;
+             PUSH int 0 ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -156,27 +156,27 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-          File "../../test/contracts/for_loop/infinite_for_loop6.jsligo", line 3, character 2 to line 5, character 3:
-            2 |   let y = 0;
-            3 |   for (y = 0 ; ; y++) {
-                  ^^^^^^^^^^^^^^^^^^^^^
-            4 |     let _ = y;
-                ^^^^^^^^^^^^^^
-            5 |   }
-                ^^^
-            6 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop6.jsligo", line 4, character 2 to line 6, character 3:
+      3 |   let y = 0;
+      4 |   for (y = 0 ; ; y++) {
+            ^^^^^^^^^^^^^^^^^^^^^
+      5 |     let _ = y;
+          ^^^^^^^^^^^^^^
+      6 |   }
+          ^^^
+      7 |   return [list([]), y]
 
-          Warning: A boolean conditional expression is expected.
-          Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-          { parameter unit ;
-            storage int ;
-            code { DROP ;
-                   PUSH int 0 ;
-                   PUSH bool True ;
-                   LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
-                   NIL operation ;
-                   PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -185,23 +185,23 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-            File "../../test/contracts/for_loop/infinite_for_loop7.jsligo", line 3, characters 2-13:
-              2 |   let y = 0;
-              3 |   for ( ; ; ) ;
-                    ^^^^^^^^^^^
-              4 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop7.jsligo", line 4, characters 2-13:
+      3 |   let y = 0;
+      4 |   for ( ; ; ) ;
+            ^^^^^^^^^^^
+      5 |   return [list([]), y]
 
-            Warning: A boolean conditional expression is expected.
-            Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-            { parameter unit ;
-              storage int ;
-              code { DROP ;
-                     PUSH bool True ;
-                     LOOP { PUSH bool True ; DUP ; IF {} {} } ;
-                     PUSH int 0 ;
-                     NIL operation ;
-                     PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             PUSH int 0 ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -210,23 +210,23 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-              File "../../test/contracts/for_loop/infinite_for_loop8.jsligo", line 3, characters 2-16:
-                2 |   let y = 0;
-                3 |   for ( ; ; y++) ;
-                      ^^^^^^^^^^^^^^
-                4 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop8.jsligo", line 4, characters 2-16:
+      3 |   let y = 0;
+      4 |   for ( ; ; y++) ;
+            ^^^^^^^^^^^^^^
+      5 |   return [list([]), y]
 
-              Warning: A boolean conditional expression is expected.
-              Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-              { parameter unit ;
-                storage int ;
-                code { DROP ;
-                       PUSH int 0 ;
-                       PUSH bool True ;
-                       LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
-                       NIL operation ;
-                       PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -235,23 +235,23 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-                File "../../test/contracts/for_loop/infinite_for_loop9.jsligo", line 3, characters 2-22:
-                  2 |   let y = 0;
-                  3 |   for (let _b = 0; ; ) ;
-                        ^^^^^^^^^^^^^^^^^^^^
-                  4 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop9.jsligo", line 4, characters 2-22:
+      3 |   let y = 0;
+      4 |   for (let _b = 0; ; ) ;
+            ^^^^^^^^^^^^^^^^^^^^
+      5 |   return [list([]), y]
 
-                Warning: A boolean conditional expression is expected.
-                Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-                { parameter unit ;
-                  storage int ;
-                  code { DROP ;
-                         PUSH bool True ;
-                         LOOP { PUSH bool True ; DUP ; IF {} {} } ;
-                         PUSH int 0 ;
-                         NIL operation ;
-                         PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             PUSH int 0 ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -260,23 +260,23 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-                  File "../../test/contracts/for_loop/infinite_for_loop10.jsligo", line 3, characters 2-17:
-                    2 |   let y = 0;
-                    3 |   for (y = 0; ; ) ;
-                          ^^^^^^^^^^^^^^^
-                    4 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop10.jsligo", line 4, characters 2-17:
+      3 |   let y = 0;
+      4 |   for (y = 0; ; ) ;
+            ^^^^^^^^^^^^^^^
+      5 |   return [list([]), y]
 
-                  Warning: A boolean conditional expression is expected.
-                  Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-                  { parameter unit ;
-                    storage int ;
-                    code { DROP ;
-                           PUSH int 0 ;
-                           PUSH bool True ;
-                           LOOP { PUSH bool True ; DUP ; IF {} {} } ;
-                           NIL operation ;
-                           PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF {} {} } ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -285,25 +285,25 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-                    File "../../test/contracts/for_loop/infinite_for_loop11.jsligo", line 3, characters 2-25:
-                      2 |   let x = 0;
-                      3 |   for (let y = 0 ; ; y++) ;
-                            ^^^^^^^^^^^^^^^^^^^^^^^
-                      4 |   return [list([]), x]
+    File "../../test/contracts/for_loop/infinite_for_loop11.jsligo", line 4, characters 2-25:
+      3 |   let x = 0;
+      4 |   for (let y = 0 ; ; y++) ;
+            ^^^^^^^^^^^^^^^^^^^^^^^
+      5 |   return [list([]), x]
 
-                    Warning: A boolean conditional expression is expected.
-                    Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-                    { parameter unit ;
-                      storage int ;
-                      code { DROP ;
-                             PUSH int 0 ;
-                             PUSH bool True ;
-                             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
-                             DROP ;
-                             PUSH int 0 ;
-                             NIL operation ;
-                             PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             DROP ;
+             PUSH int 0 ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_good
     [ "compile"
     ; "contract"
@@ -312,31 +312,31 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-                      File "../../test/contracts/for_loop/infinite_for_loop12.jsligo", line 3, characters 2-21:
-                        2 |   let y = 0;
-                        3 |   for (y = 0 ; ; y++) ;
-                              ^^^^^^^^^^^^^^^^^^^
-                        4 |   return [list([]), y]
+    File "../../test/contracts/for_loop/infinite_for_loop12.jsligo", line 4, characters 2-21:
+      3 |   let y = 0;
+      4 |   for (y = 0 ; ; y++) ;
+            ^^^^^^^^^^^^^^^^^^^
+      5 |   return [list([]), y]
 
-                      Warning: A boolean conditional expression is expected.
-                      Otherwise this leads to an infinte loop.
+    Warning: A boolean conditional expression is expected.
+    Otherwise this leads to an infinte loop.
 
-                      { parameter unit ;
-                        storage int ;
-                        code { DROP ;
-                               PUSH int 0 ;
-                               PUSH bool True ;
-                               LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
-                               NIL operation ;
-                               PAIR } } |}];
+    { parameter unit ;
+      storage int ;
+      code { DROP ;
+             PUSH int 0 ;
+             PUSH bool True ;
+             LOOP { PUSH bool True ; DUP ; IF { PUSH int 1 ; DIG 2 ; ADD ; SWAP } {} } ;
+             NIL operation ;
+             PAIR } } |}];
   run_ligo_bad
     [ "compile"; "contract"; test "for_loop/for_loop_initialiser_scope.jsligo" ];
   [%expect
     {|
-                      File "../../test/contracts/for_loop/for_loop_initialiser_scope.jsligo", line 5, characters 20-21:
-                        4 |   };
-                        5 |   return [list([]), c]
-                                                ^
-                        6 | };
+    File "../../test/contracts/for_loop/for_loop_initialiser_scope.jsligo", line 6, characters 20-21:
+      5 |   };
+      6 |   return [list([]), c]
+                              ^
+      7 | };
 
-                      Variable "c" not found. |}]
+    Variable "c" not found. |}]

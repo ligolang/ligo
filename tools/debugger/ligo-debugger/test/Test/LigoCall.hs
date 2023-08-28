@@ -42,7 +42,10 @@ test_Compilation = testGroup "Getting debug info"
             intType'
 
       let uncurriedMainType = LigoTypeResolved $
-            mkPairType unitType' intType' ~> returnType
+            mkPairType
+              (mkSumType (LLField "Main") [("Main", unitType')])
+              intType'
+            ~> returnType
 
       let curriedMainType = LigoTypeResolved $
             unitType' ~> intType' ~> returnType

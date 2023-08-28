@@ -94,6 +94,12 @@ and expression_content ppf (ec : expression_content) =
   match ec with
   | E_literal l -> Literal_value.pp ppf l
   | E_variable n -> Value_var.pp ppf n
+  | E_contract n ->
+    Format.fprintf
+      ppf
+      "Contract_of(%a)"
+      Simple_utils.PP_helpers.(list_sep Module_var.pp (const "."))
+      (List.Ne.to_list n)
   | E_application a -> Application.pp expression ppf a
   | E_constructor c -> Constructor.pp expression ppf c
   | E_constant c -> Constant.pp expression ppf c
@@ -203,8 +209,37 @@ and sig_item ppf (d : sig_item) =
 
 
 and signature ppf (sig_ : signature) : unit =
-  Format.fprintf ppf "@[<v>sig@[<v1>@,%a@]@,end@]" (list_sep sig_item (tag "@,")) sig_
+  Format.fprintf
+    ppf
+    "@[<v>sig : %a@,@[<v1>@,%a@]@,end@]"
+    signature_sort
+    sig_.sig_sort
+    (list_sep sig_item (tag "@,"))
+    sig_.sig_items
+
+
+and signature_sort ppf (sig_ : signature_sort) : unit =
+  match sig_ with
+  | Ss_module -> ()
+  | Ss_contract { storage; parameter } ->
+    Format.fprintf
+      ppf
+      "@[<v> < @, storage : %a @, parameter : %a >@]"
+      type_expression
+      storage
+      type_expression
+      parameter
+
+
+let program_with_sig ?(use_hidden = false) ppf (p : program) =
+  Format.fprintf
+    ppf
+    "@[<v>@,%a @,:@, %a@]"
+    (list_sep (declaration ~use_hidden) (tag "@,"))
+    p.pr_module
+    signature
+    p.pr_sig
 
 
 let program ?(use_hidden = false) ppf (p : program) =
-  list_sep (declaration ~use_hidden) (tag "@,") ppf p
+  list_sep (declaration ~use_hidden) (tag "@,") ppf p.pr_module

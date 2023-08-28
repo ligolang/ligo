@@ -14,6 +14,7 @@ module T = struct
 
 
   let join (Label l1) (Label l2) = Label (l1 ^ l2)
+  let create x = Label x
 end
 
 include T

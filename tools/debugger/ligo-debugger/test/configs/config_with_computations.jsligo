@@ -8,7 +8,7 @@ const parameter = () => {
   return {a, b};
 };
 
-const config =
+export const config =
   { parameter : parameter()
   , storage : unit
   , entrypoint : Common.entrypoint

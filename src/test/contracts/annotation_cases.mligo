@@ -6,6 +6,7 @@ module A = struct
      [@annot cCC] fooC : nat
     }
 
+  [@entry]
   let main (_ : parameter1) (_ : unit) : operation list * unit =
     (([] : operation list), ())
 
@@ -17,6 +18,7 @@ module B = struct
   | FooB of nat
   | [@annot cCC] FooC of nat
 
+  [@entry]
   let main (_ : parameter2) (_ : unit) : operation list * unit =
     (([] : operation list), ())
 

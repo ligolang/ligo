@@ -26,7 +26,7 @@ module Of_Ast_typed = struct
 
   let rec extract_binding_types_from_signature : t -> Ast_typed.signature -> t =
    fun bindings sig_ ->
-    List.fold sig_ ~init:bindings ~f:(fun bindings -> function
+    List.fold sig_.sig_items ~init:bindings ~f:(fun bindings -> function
       | S_value (v, t, _) -> add_bindings bindings [ v, t ]
       | S_type _ -> bindings
       | S_module (_, sig_) -> extract_binding_types_from_signature bindings sig_)
@@ -50,6 +50,7 @@ module Of_Ast_typed = struct
       | E_record _
       | E_accessor _
       | E_update _
+      | E_contract _
       | E_constant _ -> return []
       | E_type_inst _ -> return []
       | E_coerce _ -> return []
@@ -184,7 +185,7 @@ module Of_Ast_core = struct
   let rec expression : t -> Ast_core.expression -> t =
    fun bindings expr ->
     match expr.expression_content with
-    | E_literal _ | E_variable _ | E_module_accessor _ -> bindings
+    | E_literal _ | E_variable _ | E_module_accessor _ | E_contract _ -> bindings
     | E_raw_code { code; _ } -> expression bindings code
     | E_constant { arguments; _ } -> List.fold arguments ~init:bindings ~f:expression
     | E_application { lamb; args } ->
@@ -307,7 +308,11 @@ module Typing_env = struct
         let bindings =
           Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
         in
-        let type_env = tenv.type_env @ Ast_typed.Misc.to_signature [ decl ] in
+        let type_env =
+          { tenv.type_env with
+            sig_items = tenv.type_env.sig_items @ Ast_typed.Misc.to_sig_items [ decl ]
+          }
+        in
         let decls = tenv.decls @ [ decl ] in
         let () = List.iter ws ~f:raise.warning in
         { type_env; bindings; decls }
@@ -323,7 +328,9 @@ module Typing_env = struct
     =
     ignore options;
     match
-      Simple_utils.Trace.to_stdlib_result @@ Self_ast_typed.all_program tenv.decls
+      Simple_utils.Trace.to_stdlib_result
+      @@ Self_ast_typed.all_program
+           Ast_typed.{ pr_sig = tenv.type_env; pr_module = tenv.decls }
     with
     | Ok (_, ws) -> List.iter ws ~f:raise.warning
     | Error (e, ws) ->
@@ -365,7 +372,7 @@ let resolve
     -> Ast_core.program -> t
   =
  fun ~raise ~options ~stdlib_decls prg ->
-  let tenv = Typing_env.init stdlib_decls in
+  let tenv = Typing_env.init stdlib_decls.pr_module in
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
   let bindings = tenv.bindings in

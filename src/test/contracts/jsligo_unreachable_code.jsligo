@@ -1,25 +1,24 @@
-
-const reach_1 = (_n : int) : string => {
+const reach_1 = (_n: int): string => {
   let _x = "Reachable code";
-  return "end";
-}
+  return "end"
+};
 
-const unreach_1 = (_n : int) : string => {
+const unreach_1 = (_n: int): string => {
   return "end";
-  let _x = "Unreachable post-return code that should trigger a warning";
-}
+  let _x = "Unreachable post-return code that should trigger a warning"
+};
 
-const unreach_2 = (n : int) : string => {
+const unreach_2 = (n: int): string => {
   if (n == 42) {
     let _x = "Reachable code";
-    return "a";
+    return "a"
   } else {
     return "b";
-    let _x = "Unreachable post-return code that should trigger a warning";
+    let _x = "Unreachable post-return code that should trigger a warning"
   }
-}
+};
 
-const unreach_3 = (n : int) : string => {
+const unreach_3 = (n: int): string => {
   let output = "";
   switch (n) {
     case 1:
@@ -27,6 +26,8 @@ const unreach_3 = (n : int) : string => {
       break;
       output = "Unreachable post-break code that should trigger a warnings";
     case 2:
+
+
     case 3:
       let _x = "Reachable code";
       return "end";
@@ -38,55 +39,28 @@ const unreach_3 = (n : int) : string => {
     default:
       let _x = "Reachable code";
   };
-  return output;
-}
+  return output
+};
 
-const unreach_4 = (_n : int) : string => {
+const unreach_4 = (_n: int): string => {
   return "end";
-  return "Unreachable post-return code that should trigger a warnings";
-}
-
+  return "Unreachable post-return code that should trigger a warnings"
+};
 
 const unreach_5 = (x: string, y: string): string => {
-  if (x > y) 
-
-      return x
-  
-  else
-
-    return y
-
+  if (x > y) return x else return y;
   return "Unreachable post-return code that should trigger a warnings"
-}
-
+};
 
 const unreach_6 = (x: string, y: string, z: string): string => {
-  if (x > y)
-    
-    if (x > z)
+  if (x > y) if (x > z) return x else return z else if (y > z) return y else return z;
+  return "Unreachable post-return code that should trigger a warnings"
+};
 
-      return x
-
-    else 
-
-      return z
-
-  else
-
-    if (y > z)
-
-      return y
-
-    else 
-
-      return z
-
-  return "Unreachable post-return code that should trigger a warnings";
-}
-
-const main = (_ : int, s : int) : [list <operation>, int] => {
+@entry
+const main = (_: int, s: int): [list<operation>, int] => {
   return [
-   (list([]) as list <operation>),    // No operations
-   s
-  ];
-}
+    (list([]) as list<operation>), // No operations
+    s
+  ]
+};

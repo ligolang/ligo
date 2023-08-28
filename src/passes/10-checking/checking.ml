@@ -77,6 +77,15 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     return @@ Type.{ type_ with location = loc }
   in
   match type_.type_content with
+  | T_contract_parameter x ->
+    let%bind { items = _; sort } =
+      Context.get_module_of_path_exn x ~error:(fun loc ->
+          unbound_module (List.Ne.to_list x) loc)
+    in
+    let%bind parameter, _ =
+      raise_opt ~error:not_a_contract @@ Signature.get_contract_sort sort
+    in
+    lift parameter
   | T_arrow { type1; type2 } ->
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
@@ -204,10 +213,6 @@ and evaluate_row ~default_layout ({ fields; layout } : I.row) : (Type.row, 'err,
 
 
 and evaluate_layout (layout : Layout.t) : Type.layout = L_concrete layout
-
-(* let evaluate_type_with_lexists type_ = *)
-(*   let open C in *)
-(*   evaluate_type ~default_layout:lexists type_ *)
 
 module With_default_layout = struct
   let evaluate_type_ = evaluate_type
@@ -463,7 +468,9 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
         f expr)
 
 
-and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C.t =
+and infer_expression (expr : I.expression)
+    : (Type.t * O.expression E.t, typer_error, _) C.t
+  =
   let open C in
   let open Let_syntax in
   let check expr type_ = check_expression expr type_ in
@@ -503,6 +510,16 @@ and infer_expression (expr : I.expression) : (Type.t * O.expression E.t, _, _) C
         | Immutable -> return (O.E_variable var)
         | Mutable -> return (O.E_deref var))
       type_
+  | E_contract x ->
+    let%bind { items = _; sort } =
+      Context.get_module_of_path_exn x ~error:(fun loc ->
+          unbound_module (List.Ne.to_list x) loc)
+    in
+    let%bind parameter, storage =
+      raise_opt ~error:not_a_contract @@ Signature.get_contract_sort sort
+    in
+    let contract_ty = Type.t_contract_of parameter storage in
+    const E.(return (O.E_contract x)) contract_ty
   | E_lambda lambda -> infer_lambda lambda
   | E_application { lamb; args } ->
     let%bind lamb_type, lamb = infer lamb in
@@ -1434,7 +1451,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
     List.fold_right tvars ~init:(return ([], items)) ~f:instantiate_tvar
   in
   let%bind items, entries = cast_items inferred_sig items in
-  return (insts @ items, entries)
+  return ({ Signature.items = insts @ items; sort = inferred_sig.sort }, entries)
 
 
 and infer_module_expr (mod_expr : I.module_expr)
@@ -1542,7 +1559,6 @@ and infer_declaration (decl : I.declaration)
       match annotation with
       | None ->
         (* For non-annoted signatures, we use the one inferred *)
-        let%bind inferred_sig = Generator.make_main_signature inferred_sig in
         return @@ remove_non_public inferred_sig
       | Some signature_expr ->
         (* For annoted signtures, we evaluate the signature, cast the inferred signature to it, and check that all entries implemented where declared *)
@@ -1550,7 +1566,6 @@ and infer_declaration (decl : I.declaration)
           With_default_layout.evaluate_signature_expr signature_expr
         in
         let%bind annoted_sig, _entries = cast_signature inferred_sig annoted_sig in
-        let%bind annoted_sig = Generator.make_main_signature annoted_sig in
         return @@ remove_non_public annoted_sig
     in
     const
@@ -1574,65 +1589,89 @@ and infer_declaration (decl : I.declaration)
       E.(
         let%bind module_ = module_ in
         return @@ O.D_module_include module_)
-      sig_
+      sig_.items
 
 
 and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =
   let open C in
   let open Let_syntax in
-  match module_ with
-  | [] -> return ([], E.return [])
-  | decl :: module_ ->
-    let%bind sig_, decl = infer_declaration decl in
-    let%bind tl_sig_, decls =
-      def_sig_item sig_ ~on_exit:Lift_sig ~in_:(infer_module module_)
+  let rec loop (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =
+    match module_ with
+    | [] ->
+      (* By default, we assume that the module is a module *)
+      return ({ Signature.items = []; sort = Ss_module }, E.return [])
+    | decl :: module_ ->
+      let%bind sig_items, decl = infer_declaration decl in
+      let%bind sig_', decls =
+        def_sig_item sig_items ~on_exit:Lift_sig ~in_:(loop module_)
+      in
+      return
+        ( { sig_' with items = sig_items @ sig_'.items }
+        , E.(
+            let%bind decl = decl
+            and decls = decls in
+            return (decl @ decls)) )
+  in
+  let%bind inferred_module_sig, module_expr = loop module_ in
+  (* A module is said to have a 'contract'ual signature if:
+      - it contains at least 1 entrypoint
+      - it contains zero or more views
+   *)
+  let entrypoints =
+    List.filter_map inferred_module_sig.items ~f:(function
+        | S_value (var, type_, attr) when attr.entry -> Some (var, type_)
+        | _ -> None)
+  in
+  match List.Ne.of_list_opt entrypoints with
+  | None -> return (inferred_module_sig, module_expr)
+  | Some entrypoints ->
+    (* FIXME: This could be improved by using unification to unify the storage
+       types together, permitting more programs to type check. *)
+    let%bind parameter, storage =
+      match Type.parameter_from_entrypoints entrypoints with
+      | Error (`Duplicate_entrypoint v) -> C.raise (duplicate_entrypoint v)
+      | Error (`Not_entry_point_form ep_type) -> C.raise (not_an_entrypoint ep_type)
+      | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
+        C.raise (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+      | Ok (p, s) -> return (p, s)
     in
     return
-      ( sig_ @ tl_sig_
-      , E.(
-          let%bind decl = decl
-          and decls = decls in
-          return (decl @ decls)) )
+      ({ inferred_module_sig with sort = Ss_contract { storage; parameter } }, module_expr)
 
 
 and remove_non_public (sig_ : Signature.t) =
-  List.filter sig_ ~f:(function
-      | Signature.S_value (_, _, attr) -> attr.public || attr.entry
-      | Signature.S_type (_, _, attr) -> attr.public
-      | Signature.S_module (_, _, attr) -> attr.public
-      | _ -> true)
+  let items =
+    List.filter sig_.items ~f:(function
+        | Signature.S_value (_, _, attr) -> attr.public || attr.entry
+        | Signature.S_type (_, _, attr) -> attr.public
+        | Signature.S_module (_, _, attr) -> attr.public
+        | _ -> true)
+  in
+  { sig_ with items }
 
 
 (* Turns out we merge multiple programs together before this point, which raises error
-   when we try doing Location.cover! This is a code smell from our build system *)
-(* let loc_of_program (program : I.program) =
-  match program with
-  | [] -> assert false
-  | decl :: decls ->
-    List.fold_right
-      decls
-      ~f:(fun decl loc -> Location.cover loc decl.location)
-      ~init:decl.location *)
+   when we try doing Location.cover! This is a code smell from our build system
+   Note: still trying with cover_until_file_change
+   *)
+let loc_of_program =
+  List.fold ~init:Location.generated ~f:(fun acc el ->
+      Location.(cover_until_file_change acc el.location))
 
-let type_program_with_signature ~raise ~options ?env program =
-  let loc = Location.generated in
+
+let type_program ~raise ~options ?env program =
   C.run_elab
     (let%map.C signature, program = infer_module program in
      E.(
        let%bind program = program in
        let signature = remove_non_public signature in
        let%bind signature = decode_signature signature in
-       return (program, signature)))
+       return { Ast_typed.pr_module = program; pr_sig = signature }))
     ~raise
     ~options
-    ~loc
+    ~loc:(loc_of_program program)
     ?env
     ()
-
-
-let type_program ~raise ~options ?env program =
-  let program, _ = type_program_with_signature ~raise ~options ?env program in
-  program
 
 
 let type_declaration ~raise ~options ?env decl =

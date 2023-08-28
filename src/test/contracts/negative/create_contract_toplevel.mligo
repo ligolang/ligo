@@ -1,5 +1,6 @@
 type return = operation list * string
 
+[@entry]
 let main (_ : string) (store : string) : return =
   let toto : operation * address = Tezos.create_contract
     (fun (_p : nat) (_s : string) -> (([] : operation list), store))

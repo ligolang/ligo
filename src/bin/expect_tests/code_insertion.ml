@@ -10,11 +10,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_michelson_insertion_1.mligo" ];
   [%expect
     {test|
-File "../../test/contracts/negative/bad_michelson_insertion_1.mligo", line 4, characters 29-72:
-  3 | let main (p : nat) (s : nat) : operation list * nat =
-  4 |   let f : nat * nat -> nat = [%Michelson ({| ADD |} : nat * nat -> nat)]
+File "../../test/contracts/negative/bad_michelson_insertion_1.mligo", line 5, characters 29-72:
+  4 | let main (p : nat) (s : nat) : operation list * nat =
+  5 |   let f : nat * nat -> nat = [%Michelson ({| ADD |} : nat * nat -> nat)] in
                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  5 |   in [], f (p, s)
+  6 |   [], f (p, s)
 
 Raw Michelson must be seq (with curly braces {}), got: ADD. |test}]
 

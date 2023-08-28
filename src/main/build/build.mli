@@ -28,7 +28,7 @@ module Separate : functor (Params : Params) -> sig
   module AST : sig
     type t = Ast_typed.program
     type interface = Ast_typed.signature
-    type environment = Ast_typed.signature
+    type environment = Ast_typed.sig_item list
   end
 end
 
@@ -74,15 +74,14 @@ val qualified_typed_with_signature
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
   -> Source_input.code_input
-  -> Ast_typed.program * Ast_typed.signature
+  -> Ast_typed.program
 
 val build_contract_meta_ligo
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
   -> string
-  -> Ligo_prim__Var.Value_var.t
-     * Ast_aggregated.Types.expression
-     * (Ligo_prim__Var.Value_var.t list * Ast_aggregated.Types.expression) option
+  -> Ast_aggregated.expression
+     * (Ligo_prim.Value_var.t list * Ast_aggregated.expression) option
 
 val parse_module_path
   :  loc:Stdlib.Location.t
@@ -100,7 +99,6 @@ val build_expression
 val dependency_graph
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
-  -> ?cform:Ligo_compile.Of_core.form
   -> string
   -> Graph__Persistent.Digraph.Concrete(BuildSystem__Types.Node).t
      * (string * Ligo_compile.Helpers.meta * Buffer.t * (string * string) list)

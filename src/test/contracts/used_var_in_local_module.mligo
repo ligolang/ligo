@@ -1,8 +1,10 @@
 let x =
-    let a = 1 in
-    module B = struct 
-        let y = a
-    end in
-    B.y
+  let a = 1 in
+  module B = struct
+    let y = a
 
-let main (_ : unit * int) : operation list * int = [], x
+  end in
+  B.y
+
+[@entry]
+let main () (_ : int) : operation list * int = [], x

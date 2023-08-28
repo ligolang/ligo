@@ -125,6 +125,7 @@ let rec defs_of_expr : AST.expression -> string list -> def list -> def list =
   match e.expression_content with
   (* Base *)
   | E_variable v -> acc
+  | E_contract x -> acc
   | E_literal l -> acc
   | E_constant c -> acc
   | E_application { lamb; args } -> self lamb mod_path @@ self args mod_path acc

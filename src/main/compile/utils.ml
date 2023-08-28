@@ -46,7 +46,7 @@ let type_program_string ~raise ~options ?context syntax expression =
   typed, core
 
 
-let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression init_prog =
+let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression init_sig =
   let meta = Of_source.make_meta syntax in
   (* TODO: should be computed outside *)
   let c_unit_exp, _ =
@@ -59,11 +59,6 @@ let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression 
   let unified = Of_c_unit.compile_expression ~raise ~meta c_unit_exp in
   let core_exp = Of_unified.compile_expression ~raise ~options unified in
   let core_exp =
-    match annotation with
-    | None -> core_exp
-    | Some ann -> Ast_core.e_ascription ~loc:core_exp.location core_exp ann
-  in
-  let core_exp =
     match wrap_variant with
     | None -> core_exp
     | Some ctor ->
@@ -72,13 +67,24 @@ let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression 
         (Ligo_prim.Label.of_string (String.capitalize ctor))
         core_exp
   in
-  let typed_exp =
-    Of_core.compile_expression ~raise ~options ~context:init_prog core_exp
+  let core_exp =
+    match annotation with
+    | None -> core_exp
+    | Some ann -> 
+      Ast_core.e_ascription ~loc:core_exp.location core_exp ann
   in
+  let typed_exp = Of_core.compile_expression ~raise ~options ~context:init_sig core_exp in
   typed_exp
 
 
-let compile_contract_input ~raise ~options parameter storage syntax init_prog =
+let compile_contract_input
+    ~raise
+    ~options
+    parameter
+    storage
+    syntax
+    (init_prog : Ast_typed.program)
+  =
   let meta = Of_source.extract_meta syntax in
   let (parameter, _), (storage, _) =
     Of_source.compile_contract_input ~raise ~options ~meta parameter storage
@@ -86,17 +92,15 @@ let compile_contract_input ~raise ~options parameter storage syntax init_prog =
   let unified = Of_c_unit.compile_contract_input ~raise ~meta parameter storage in
   let core = Of_unified.compile_expression ~raise ~options unified in
   let typed =
-    Of_core.compile_expression
-      ~raise
-      ~options
-      ~context:(Ast_typed.Misc.to_signature init_prog)
-      core
+    let context = Ast_typed.to_signature init_prog.pr_module in
+    Of_core.compile_expression ~raise ~options ~context core
   in
   let aggregated =
     Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
       ~self_program:false
+      None
       init_prog
       typed
   in

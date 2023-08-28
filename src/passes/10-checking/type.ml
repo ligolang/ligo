@@ -566,13 +566,18 @@ let pp =
 
 
 (* Helpers for generators *)
-let build_entry_type p_ty s_ty =
+let t_entrypoint p_ty s_ty =
   let loc = Location.generated in
   t_arrow
     ~loc
     (t_pair ~loc p_ty s_ty ())
     (t_pair ~loc (t_list ~loc (t_operation ~loc ()) ()) s_ty ())
     ()
+
+
+let t_contract_of p_ty s_ty =
+  let loc = Location.generated in
+  t_pair ~loc (t_entrypoint p_ty s_ty) (t_views ~loc s_ty ()) ()
 
 
 let get_t_inj (t : t) (v : Literal_types.t) : t list option =
@@ -616,12 +621,22 @@ let parameter_from_entrypoints
     -> ( t * t
        , [> `Not_entry_point_form of t
          | `Storage_does_not_match of Value_var.t * t * Value_var.t * t
+         | `Duplicate_entrypoint of Value_var.t
          ] )
        result
   =
- fun ((entrypoint, entrypoint_type), rest) ->
+ fun entrypoints ->
   let equal_t = equal in
   let open Result.Let_syntax in
+  let%bind () =
+    (* check entrypoints have no duplicates *)
+    entrypoints
+    |> Simple_utils.List.Ne.to_list
+    |> List.find_a_dup ~compare:(fun a b -> Value_var.compare (fst a) (fst b))
+    |> Option.value_map ~default:(Result.Ok ()) ~f:(fun (x, _ty) ->
+           Result.Error (`Duplicate_entrypoint x))
+  in
+  let (entrypoint, entrypoint_type), rest = entrypoints in
   let%bind parameter, storage =
     match should_uncurry_entry entrypoint_type with
     | `Yes (parameter, storage) | `No (parameter, storage) ->

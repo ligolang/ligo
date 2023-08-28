@@ -161,6 +161,7 @@ let compile_groups ~raise filename grp_list =
         Ligo_compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
+          None
           typed
           (Ast_typed.e_a_unit ~loc ())
       in

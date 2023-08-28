@@ -19,9 +19,9 @@ type self_ast_typed_error =
   | `Self_ast_typed_corner_case of string
   | `Self_ast_typed_bad_contract_io of
     Value_var.t * Ast_typed.type_expression * Location.t
-  | `Self_ast_typed_bad_view_io of Value_var.t * Location.t
+  | `Self_ast_typed_bad_view_io of Module_var.t * Location.t
   | `Self_ast_typed_bad_view_storage of
-    Value_var.t * Ast_typed.type_expression * Location.t
+    Module_var.t * Ast_typed.type_expression * Location.t
   | `Self_ast_typed_expected_list_operation of
     Value_var.t * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_expected_same_entry of
@@ -37,12 +37,12 @@ type self_ast_typed_error =
   | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_storage_view_contract of
     Location.t
-    * Value_var.t
+    * Module_var.t
     * Value_var.t
     * Ast_typed.type_expression
     * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [ `In | `Out ]
-  | `Self_ast_typed_annotated_declaration_shadowed of Location.t
+  | `Self_ast_typed_not_a_contract of string
   ]
 [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
 
@@ -58,12 +58,10 @@ let error_ppformat
   match display_format with
   | Human_readable | Dev ->
     (match a with
-    | `Self_ast_typed_annotated_declaration_shadowed loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.This declaration holds an annotation and is later shadowed.@]"
-        snippet_pp
-        loc
+    | `Self_ast_typed_not_a_contract str ->
+      (match str with
+      | "" -> Format.fprintf f "File is not a contract"
+      | _ -> Format.fprintf f "%s is not a contract" str)
     | `Self_ast_typed_storage_view_contract (loc, main_name, view_name, ct, vt) ->
       Format.fprintf
         f
@@ -75,7 +73,7 @@ let error_ppformat
         view_name
         Ast_typed.PP.type_expression
         vt
-        Value_var.pp
+        Module_var.pp
         main_name
         Ast_typed.PP.type_expression
         ct
@@ -159,7 +157,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
         snippet_pp
         loc
-        Value_var.pp
+        Module_var.pp
         entrypoint
     | `Self_ast_typed_bad_view_storage (entrypoint, storage_ty, loc) ->
       Format.fprintf
@@ -167,7 +165,7 @@ let error_ppformat
         "@[<hv>%a@.Invalid type for view \"%a\".@.Cannot find \"%a\" as storage. @]"
         snippet_pp
         loc
-        Value_var.pp
+        Module_var.pp
         entrypoint
         Ast_typed.PP.type_expression
         storage_ty
@@ -244,9 +242,9 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
  fun e ->
   let open Simple_utils.Error in
   match e with
-  | `Self_ast_typed_annotated_declaration_shadowed location ->
-    let message = "This declaration holds an annotation and is later shadowed." in
-    let content = make_content ~message ~location () in
+  | `Self_ast_typed_not_a_contract _ ->
+    let message = "No contract found" in
+    let content = make_content ~message () in
     make ~stage ~content
   | `Self_ast_typed_storage_view_contract (location, main_name, view_name, ct, vt) ->
     let message =
@@ -257,7 +255,7 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
         view_name
         Ast_typed.PP.type_expression
         vt
-        Value_var.pp
+        Module_var.pp
         main_name
         Ast_typed.PP.type_expression
         ct
@@ -350,7 +348,7 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
     let message =
       Format.asprintf
         "Invalid type for view \"%a\".@.An view must be a function."
-        Value_var.pp
+        Module_var.pp
         entrypoint
     in
     let content = make_content ~message ~location () in
@@ -359,7 +357,7 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
     let message =
       Format.asprintf
         "Invalid type for view \"%a\".@.Cannot find \"%a\" as storage."
-        Value_var.pp
+        Module_var.pp
         entrypoint
         Ast_typed.PP.type_expression
         storage_ty

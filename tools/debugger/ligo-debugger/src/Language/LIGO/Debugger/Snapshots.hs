@@ -57,6 +57,7 @@ import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
 import Data.HashSet qualified as HS
 import Data.List.NonEmpty (cons)
+import Data.Text qualified as Text
 import Data.Vinyl (Rec (..))
 import Fmt.Buildable (Buildable, build, pretty)
 import Text.Interpolation.Nyan hiding (rmode')
@@ -501,26 +502,35 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
           oldStackFrames <- use csStackFramesL
 
           forM_ (lmAllFuncNames meta) \name -> do
-            let sfName = pretty name
+            let Name uniqueName = name
 
-            curStackFrame <- use csActiveStackFrameL
-            let loc = curStackFrame ^. sfLocL
+            -- We don't want to create a stack frame for "Some.Module.$name"
+            -- functions since they contain not so interesting for the debugging
+            -- info (parameter, storage and "main" function). They will appear
+            -- in the latter stack frames.
+            unless (generatedMainName `Text.isSuffixOf` uniqueName) do
+              let sfName = pretty name
 
-            let newStackFrame = StackFrame
-                  { sfLoc = loc
-                  , sfStack = []
-                  , ..
-                  }
+              curStackFrame <- use csActiveStackFrameL
+              let loc = curStackFrame ^. sfLocL
 
-            -- Sometimes debugging starts not in the main function (e.g. calculating top-level values).
-            -- We assign to this stack frame a @<start>@ name. When we're
-            -- going to do the first @EXEC@ then we're entering the main function.
-            --
-            -- So, we need to replace the name of the @<start>@ stack frame with
-            -- actual main entrypoint one.
-            if curStackFrame ^. sfNameL == beforeMainStackFrameName
-            then csActiveStackFrameL . sfNameL .= sfName
-            else csStackFramesL %= cons newStackFrame
+              let newStackFrame = StackFrame
+                    { sfLoc = loc
+                    , sfStack = []
+                    , ..
+                    }
+
+              -- Sometimes debugging starts not in the main function (e.g. calculating top-level values).
+              -- We assign to this stack frame a @<start>@ name. When we're
+              -- going to do the first @EXEC@ then we're entering the main function.
+              --
+              -- So, we need to replace the name of the @<start>@ stack frame with
+              -- actual main entrypoint one.
+              let currentName = curStackFrame ^. sfNameL
+
+              if currentName == beforeMainStackFrameName
+              then csActiveStackFrameL . sfNameL .= sfName
+              else csStackFramesL %= cons newStackFrame
 
           newStack <- runInstr instr stack
 

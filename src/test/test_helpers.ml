@@ -173,11 +173,12 @@ let pack_payload ~raise (program : Ast_typed.program) (payload : Ast_unified.exp
   let code =
     let core = expression_to_core ~raise payload in
     let typed =
-      Ligo_compile.Of_core.compile_expression
-        ~raise
-        ~options
-        ~context:(Ast_typed.Misc.to_signature program)
-        core
+      let context =
+        (* can't use the contract signature directly because
+         it would force users to export declaration in Jsligo *)
+        Ast_typed.to_signature program.pr_module
+      in
+      Ligo_compile.Of_core.compile_expression ~raise ~options ~context core
     in
     let aggregated =
       Ligo_compile.Of_typed.compile_expression ~raise ~options:options.middle_end typed
@@ -242,17 +243,18 @@ let typed_program_with_imperative_input_to_michelson
   in
   let app = Ligo_compile.Of_core.apply entry_point core in
   let typed_app =
-    Ligo_compile.Of_core.compile_expression
-      ~raise
-      ~options
-      ~context:(Ast_typed.Misc.to_signature program)
-      app
+    let context =
+      (* can't use the contract signature directly because
+       it would force users to export declaration in Jsligo *)
+      Ast_typed.to_signature program.pr_module
+    in
+    Ligo_compile.Of_core.compile_expression ~raise ~options ~context app
   in
-  (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      None
       program
       typed_app
   in
@@ -275,17 +277,19 @@ let typed_program_with_imperative_input_to_michelson_twice
   let core2 = expression_to_core ~raise input2 in
   let app = Ligo_compile.Of_core.apply_twice entry_point core1 core2 in
   let typed_app =
-    Ligo_compile.Of_core.compile_expression
-      ~raise
-      ~options
-      ~context:(Ast_typed.Misc.to_signature program)
-      app
+    let context =
+      (* can't use the contract signature directly because
+       it would force users to export declaration in Jsligo *)
+      Ast_typed.to_signature program.pr_module
+    in
+    Ligo_compile.Of_core.compile_expression ~raise ~options ~context app
   in
   (* let compiled_applied = Ligo_compile.Of_typed.compile_expression ~raise typed_app in *)
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      None
       program
       typed_app
   in
@@ -474,7 +478,7 @@ let expect_evaluate ~raise (program : Ast_typed.program) entry_point expecter =
   trace ~raise (test_run_tracer entry_point)
   @@
   let aggregated =
-    Ligo_compile.Of_typed.apply_to_entrypoint
+    Ligo_compile.Of_typed.apply_to_var
       ~raise
       ~options:options.middle_end
       program
@@ -585,13 +589,22 @@ let expect_eq_b_bool a b c =
 
 
 let compile_main ~raise f () =
+  let typed_prg = get_program ~raise f () in
+  let typed_prg =
+    Simple_utils.Trace.trace ~raise self_ast_typed_tracer
+    @@ Self_ast_typed.all_program typed_prg
+  in
+  let _, contract_info =
+    Option.value_exn ~message:"not a contract"
+    @@ Ast_typed.get_contract_signature (Ast_typed.to_extended_signature typed_prg) []
+  in
   let agg =
-    Ligo_compile.Of_typed.apply_to_entrypoint_contract
+    Ligo_compile.Of_typed.apply_to_entrypoint_with_contract_type
       ~raise
       ~options:options.middle_end
-      (get_program ~raise f ())
-      (Ligo_prim.Value_var.of_input_var ~loc "main")
+      typed_prg
       []
+      contract_info
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise agg in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in

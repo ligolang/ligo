@@ -26,7 +26,17 @@ module Attrs : sig
 end
 
 module Signature : sig
-  type t = item list
+  type t =
+    { items : item list
+    ; sort : sort
+    }
+
+  and sort =
+    | Ss_module
+    | Ss_contract of
+        { storage : Type.t
+        ; parameter : Type.t
+        }
 
   and item =
     | S_value of Value_var.t * Type.t * Attrs.Value.t
@@ -34,6 +44,7 @@ module Signature : sig
     | S_module of Module_var.t * t * Attrs.Module.t
     | S_module_type of Module_var.t * Module_type.t
 
+  val get_contract_sort : sort -> (Type.t * Type.t) option
   val get_value : t -> Value_var.t -> (Type.t * Attrs.Value.t) option
   val get_type : t -> Type_var.t -> Type.t option
   val get_module : t -> Module_var.t -> t option

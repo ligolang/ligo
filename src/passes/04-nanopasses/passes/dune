@@ -35,7 +35,6 @@
   initial_node_check
   loop_variable
   top_level_restriction
-  contract_hack
   constructor_application
   sum_type_helper_generator
   standalone_constructor_removal

@@ -59,6 +59,7 @@ let check_message (param : check_message_pt) (s : storage) : return =
       else {s with counter = s.counter + 1n}
     in message unit, s
 
+[@entry]
 let main (action : parameter) (store : storage) : return =
   match action with
     CheckMessage (p) -> check_message p store

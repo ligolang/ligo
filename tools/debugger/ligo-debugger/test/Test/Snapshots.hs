@@ -132,91 +132,57 @@ test_Snapshots = testGroup "Snapshots collection"
             operationListType = LigoTypeResolved operationListType'
             opsAndStorageType = LigoTypeResolved $
               mkPairType operationListType' intType'
-
-            -- TODO: fix uncurried main stackframe
-            uncurriedStackFrame =
-              let appliedMain = T.mkVLam @'T.TUnit
-                    $ T.RfNormal
-                    $    T.DROP
-                    T.:# T.LAMBDA
-                            ( T.RfNormal $
-                                 T.Nested T.Nop
-                            T.:# T.Nested
-                                  ( T.Nested
-                                      (    T.Nested (T.PUSH @'T.TInt (T.VInt 42))
-                                      T.:# T.Nested T.SWAP
-                                      T.:# (T.ADD @'T.TInt)
-                                      )
-                                  T.:# T.Nested T.Nop
-                                  T.:# T.Nested
-                                          (    T.Nested T.Nop
-                                          T.:# T.Nested (T.NIL @'T.TOperation)
-                                          T.:# T.PAIR
-                                          )
-                                  )
-                            )
-              in
-              let storageParamAndAppliedMain =
-                    [ ( Nothing
-                      , SomeLorentzValue (0 :: Integer)
-                      )
-                    , ( Nothing
-                      , SomeLorentzValue ()
-                      )
-                    , ( Just LigoVariable
-                        { lvName = "main"
-                        }
-                      , SomeLorentzValue appliedMain
-                      )
-                    ]
-              in
-              ( Range (LigoPosition 1 1) (LigoPosition 1 1) file
-              , storageParamAndAppliedMain
-              )
           in
           [ ( InterpretRunning . EventExpressionEvaluated intType . Just $
                 SomeLorentzValue (42 :: Integer)
-            , ( Range (LigoPosition 3 12) (LigoPosition 3 18) file
+            , one
+              ( Range (LigoPosition 3 12) (LigoPosition 3 18) file
               , stackWithS
-              ) : one uncurriedStackFrame
+              )
             )
 
           , ( InterpretRunning EventFacedStatement
-            , ( Range (LigoPosition 4 3) (LigoPosition 4 30) file
+            , one
+              ( Range (LigoPosition 4 3) (LigoPosition 4 30) file
               , stackWithS2
-              ) : one uncurriedStackFrame
+              )
             )
 
           , ( InterpretRunning (EventExpressionPreview GeneralExpression)
-            , ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
+            , one
+              ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
               , stackWithS2
-              ) : one uncurriedStackFrame
+              )
             )
 
           , ( InterpretRunning (EventExpressionPreview GeneralExpression)
-            , ( Range (LigoPosition 4 4) (LigoPosition 4 25) file
+            , one
+              ( Range (LigoPosition 4 4) (LigoPosition 4 25) file
               , stackWithS2
-              ) : one uncurriedStackFrame
+              )
             )
 
           , ( InterpretRunning . EventExpressionEvaluated operationListType . Just $
                 SomeLorentzValue ([] :: [T.Operation])
-            , ( Range (LigoPosition 4 4) (LigoPosition 4 25) file
+            , one
+              ( Range (LigoPosition 4 4) (LigoPosition 4 25) file
               , stackWithS2
-              ) : one uncurriedStackFrame
+              )
             )
 
           , ( InterpretRunning . EventExpressionEvaluated opsAndStorageType . Just $
                 SomeLorentzValue ([] :: [T.Operation], 42 :: Integer)
-            , ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
+            , one
+              ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
               , stackWithS2
-              ) : one uncurriedStackFrame
+              )
             )
 
            , ( InterpretTerminatedOk $ ContractFinalStack (contractOut :& RNil)
-            , ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
+            , one
+              ( Range (LigoPosition 4 4) (LigoPosition 4 29) file
               , lastStack
-              ) : one uncurriedStackFrame
+              )
             )
 
           ]
@@ -845,15 +811,14 @@ test_Snapshots = testGroup "Snapshots collection"
             , crdStorage = 0 :: Integer
             }
 
-      -- TODO: fix uncurried main stackframe
       testWithSnapshots runData do
         moveTill Forward $ isAtLine 1
         liftIO $ step [int||Check stack frame names on entering "recursive"|]
-        checkSnapshot ((@=?) ["recursive", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["recursive", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcLoc 4 0)
         liftIO $ step [int||Check that we have only "main" stack frame after leaving function|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Calling local function" \step -> do
       let file = contractsDir </> "local-function.mligo"
@@ -868,11 +833,11 @@ test_Snapshots = testGroup "Snapshots collection"
         move Forward
 
         liftIO $ step [int||Check that we have only one "main" stack frame|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
         moveTill Forward $ isAtLine 3
         liftIO $ step [int||Check that we have "f" stack frame on entering local function|]
-        checkSnapshot ((@=?) ["f", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["f", "main"] . getStackFrameNames)
 
   , testCaseSteps "Function calling other function" \step -> do
       let file = contractsDir </> "function-calling-function.mligo"
@@ -886,11 +851,11 @@ test_Snapshots = testGroup "Snapshots collection"
       testWithSnapshots runData do
         moveTill Forward $ isAtLine 2
         liftIO $ step [int||Calling top level function "complex"|]
-        checkSnapshot ((@=?) ["complex", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["complex", "main"] . getStackFrameNames)
 
         moveTill Forward $ isAtLine 0
         liftIO $ step [int||Calling function "add" from "complex"|]
-        checkSnapshot ((@=?) ["add", "complex", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "complex", "main"] . getStackFrameNames)
 
   , testCaseSteps "Lambda parameter" \step -> do
       let file = contractsDir </> "lambda-parameter.mligo"
@@ -922,14 +887,14 @@ test_Snapshots = testGroup "Snapshots collection"
                 (namesCheck stackFrameNames)
 
       step [int||Check that all snapshots have exactly one stack frame with name "main"|]
-      testWithSnapshots runData $ stackFramesCheck (all (== ["main", "main"]))
+      testWithSnapshots runData $ stackFramesCheck (all (== ["main"]))
 
       step [int||Check that all snapshots with failing lambda|]
       testWithSnapshots runDataFailing $ stackFramesCheck \names ->
         let
           initElems = Unsafe.init names
           lastElem = Unsafe.last names
-        in all (== ["main", "main"]) initElems && lastElem == ["p", "p", "main", "main"]
+        in all (== ["main"]) initElems && lastElem == ["p", "p", "p", "main"]
 
   , testCaseSteps "Check variables in stack frames" \step -> do
       let dir = contractsDir </> "module_contracts"
@@ -1000,7 +965,7 @@ test_Snapshots = testGroup "Snapshots collection"
                       } : _
             } | loc1 /= loc2 -> pass
           snap -> unexpectedSnapshot snap
-        checkSnapshot ((@=?) ["EURO.main", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["EURO.main", "main"] . getStackFrameNames)
 
   , testCaseSteps "Stack frames in a contract with partially applied function" \step -> do
       let file = contractsDir </> "apply.mligo"
@@ -1015,11 +980,11 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $ isAtLine 0
 
         liftIO $ step [int||Check stack frames after entering "add5"|]
-        checkSnapshot ((@=?) ["add", "add5", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "add5", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcLoc 7 0)
         liftIO $ step [int||Check stack frames after leaving "add5"|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Partially applied function inside top level function" \step -> do
       let file = contractsDir </> "complex-apply.mligo"
@@ -1036,12 +1001,12 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $ isAtLine 1
 
         liftIO $ step [int||Go into "add5"|]
-        checkSnapshot ((@=?) ["add", "add5", "myFunc", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "add5", "myFunc", "main"] . getStackFrameNames)
 
         moveTill Forward $ goesAfter (SrcLoc 6 0)
 
         liftIO $ step [int||Leave "myFunc"|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "2 times curried function" \step -> do
       let file = contractsDir </> "curry.mligo"
@@ -1056,18 +1021,18 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $ isAtLine 7
 
         liftIO $ step [int||Check stack frames for inner "sub"|]
-        checkSnapshot ((@=?) ["sub", "f", "partApplied", "applyOp", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["sub", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
 
         moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check stack frames for inner "add"|]
-        checkSnapshot ((@=?) ["add", "f", "partApplied", "applyOp", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "f", "partApplied", "applyOp", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcLoc 12 0)
 
         liftIO $ step [int||Leave "applyOp" functions|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "2 times curried function inside lambda" \step -> do
       let file = contractsDir </> "curry-inside-lambda.mligo"
@@ -1087,20 +1052,20 @@ test_Snapshots = testGroup "Snapshots collection"
 
         -- Actually here should be only one stack frame with name "f"
         -- but LIGO source mapper treats these "f"s from this contract as different.
-        checkSnapshot ((@=?) ["sub", "f", "f", "apply", "lambdaFun", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["sub", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
 
         moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check "add" stack frames inside "lambdaFun"|]
 
         -- The same here.
-        checkSnapshot ((@=?) ["add", "f", "f", "apply", "lambdaFun", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcLoc 8 0)
 
         liftIO $ step [int||Leave "lambdaFun"|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , testCaseSteps "Multiple currying" \step -> do
       let file = contractsDir </> "advanced-curry.mligo"
@@ -1117,13 +1082,13 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step [int||Check stack frames in inner "act"|]
 
         -- The same as in the test above.
-        checkSnapshot ((@=?) ["act", "f", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["act", "f", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcLoc 10 0)
 
         liftIO $ step [int||Check stack frames after leaving "act"|]
-        checkSnapshot ((@=?) ["main", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["main"] . getStackFrameNames)
 
   , minor $ testCaseSteps "Skipping constant evaluation and not skipping statement" \step -> do
       let file = contractsDir </> "constant-assignment.mligo"

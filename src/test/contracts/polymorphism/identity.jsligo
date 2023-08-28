@@ -2,35 +2,29 @@ type storage = int;
 
 type parameter = unit;
 
-const id = <P>(x : P) => {
-    const id_1 = <Q>(y : Q) => {
-        const id_2 = <R>(z : R) => {
-            return z;
-        };
-        return id_2(y);
-    }
-    return id_1(x);
+const id = <P>(x: P) => {
+    const id_1 = <Q>(y: Q) => {
+        const id_2 = <R>(z: R) => { return z };
+        return id_2(y)
+    };
+    return id_1(x)
 };
 
-const ident = <P>(x : P) => {
-    const ident_1 = <P>(y : P) => {
-        const ident_2 = <P>(z : P) => {
-            return z;
-        };
-        return ident_2(y);
-    }
-    return ident_1(x);
+const ident = <P>(x: P) => {
+    const ident_1 = <P>(y: P) => {
+        const ident_2 = <P>(z: P) => { return z };
+        return ident_2(y)
+    };
+    return ident_1(x)
 };
 
-const snd : <T, U>(x : T, y : U) => U = <T, U>(_ : T, y : U) : U => y
+const snd = <T, U>(_: T, y: U): U => y;
 
-const x : int = snd("Hello", id(1) + ident(1));
+const x: int = snd("Hello", id(1) + ident(1));
 
-type return_ = [list <operation>, storage];
+type return_ = [list<operation>, storage];
 
-const main = (_ : parameter, _ : storage) : return_ => {
- return [
-   (list([]) as list <operation>), x
-  ]
+@entry
+const main = (_: parameter, _: storage): return_ => {
+    return [(list([]) as list<operation>), x]
 };
-

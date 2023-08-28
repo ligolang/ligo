@@ -22,6 +22,7 @@ type parameter = unit
 type op_list = operation list
 
 module Main_comb_two = struct
+  [@entry]
   let main () (store : comb_two) : op_list * comb_two =
     let o =
       match store with
@@ -32,6 +33,7 @@ module Main_comb_two = struct
 end
 
 module Main_comb_three = struct
+  [@entry]
   let main () (_ : comb_three) : op_list * comb_three =
     let o = (C 1n) in
     ([] : operation list), o
@@ -39,6 +41,7 @@ module Main_comb_three = struct
 end
 
 module Main_comb_five = struct
+  [@entry]
   let main () (store : comb_five) : op_list * comb_five =
     let o =
       match store with

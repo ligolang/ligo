@@ -29,6 +29,7 @@ let resolve (first, second : decoded_player_action * decoded_player_action)
     | Cisor, Cisor -> None in
   result
 
+[@entry]
 let main
   ((first, second) : decoded_player_action * decoded_player_action)
   (_ : player option)

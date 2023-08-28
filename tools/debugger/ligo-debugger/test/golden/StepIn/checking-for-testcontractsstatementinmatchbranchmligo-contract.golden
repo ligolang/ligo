@@ -7,34 +7,7 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
@@ -44,34 +17,7 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -84,34 +30,7 @@ InterpretSnapshot:
           siValue: Some 42
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -124,34 +43,7 @@ InterpretSnapshot:
           siValue: Some 42
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -164,34 +56,7 @@ InterpretSnapshot:
           siValue: 42
         , StackItem:
           siLigoDesc: elem s of int
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -201,34 +66,7 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem b of int
-          siValue: 42 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 42 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -241,31 +79,4 @@ InterpretSnapshot:
           siValue: Pair { } 42
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/statement-in-match-branch.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { {  };
-                  { { { PUSH int 42 }; SOME };
-                    {  };
-                    { {  };
-                      {  };
-                      IF_NONE
-                        { {  }; {  } }
-                        { {  }; {  }; { { SWAP }; { SWAP }; ADD } };
-                      {  };
-                      { {  }; { NIL operation }; PAIR } } } } } ] ]
+          siValue: 0 ] ]

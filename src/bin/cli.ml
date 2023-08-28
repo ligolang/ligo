@@ -3125,6 +3125,7 @@ let main =
 
 
 let run ?argv () =
+  Printexc.record_backtrace true;
   let build_info =
     Format.sprintf
       "Protocol built-in: %s"
@@ -3136,12 +3137,4 @@ let run ?argv () =
   | Done -> 0
   | Compileur_Error -> 1
   | Exception exn ->
-    let message msg =
-      Format.eprintf "An internal error ocurred. Please, contact the developers.@.";
-      if !is_dev then Format.eprintf "%s.@." msg;
-      Format.pp_print_flush Format.err_formatter ();
-      2
-    in
-    (match exn with
-    | Failure msg -> message msg
-    | exn -> message (Exn.to_string exn))
+      ignore is_dev ; raise exn

@@ -1,7 +1,5 @@
-open Errors
 open Ligo_prim
 open Ast_typed
-open Simple_utils.Trace
 open Ast_typed.Helpers
 module Pair = Simple_utils.Pair
 
@@ -14,7 +12,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a =
   let self_type = Fun.const in
   let init = f init e in
   match e.expression_content with
-  | E_literal _ | E_variable _ | E_raw_code _ | E_module_accessor _ -> init
+  | E_literal _ | E_variable _ | E_contract _ | E_raw_code _ | E_module_accessor _ -> init
   | E_constant { arguments = lst; cons_name = _ } ->
     let res = List.fold ~f:self ~init lst in
     res
@@ -167,7 +165,8 @@ let rec map_expression : 'err mapper -> expression -> expression =
     let rhs = self rhs in
     let let_result = self let_result in
     return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
-  | (E_deref _ | E_literal _ | E_variable _ | E_raw_code _) as e' -> return e'
+  | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' ->
+    return e'
 
 
 and map_expression_in_module_expr
@@ -210,86 +209,14 @@ and map_decl m d = map_declaration m d
 and map_module : 'err mapper -> module_ -> module_ = fun m -> List.map ~f:(map_decl m)
 
 and map_program : 'err mapper -> program -> program =
- fun m -> List.map ~f:(map_declaration m)
-
-
-let fetch_entry_type ~raise : string -> program -> type_expression * Location.t =
- fun main_fname m ->
-  let aux (declt : declaration) =
-    match Location.unwrap declt with
-    | D_value { binder; expr; attr = _ }
-    | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr; attr = _ }
-      -> if Value_var.is_name (Binder.get_var binder) main_fname then Some expr else None
-    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> None
-  in
-  let main_decl_opt = List.find_map ~f:aux @@ List.rev m in
-  let expr =
-    trace_option ~raise (corner_case ("Entrypoint '" ^ main_fname ^ "' does not exist"))
-    @@ main_decl_opt
-  in
-  expr.type_expression, expr.location
-
-
-type contract_type =
-  { parameter : Ast_typed.type_expression
-  ; storage : Ast_typed.type_expression
-  }
-
-(* get_module [mp] [p] looks for the module struct to which module
-   path [mp] points in program [p] *)
-let get_module module_path decls =
-  let rec get_module module_path decls =
-    match decls, module_path with
-    | _, [] -> `Found (List.rev decls)
-    | [], _ -> `Not_found module_path
-    | decl :: rest, m :: ms ->
-      (match Location.unwrap decl with
-      | D_module
-          { module_binder
-          ; module_ = { module_content = M_struct inner_decls; _ }
-          ; module_attr = _
-          ; annotation = ()
-          }
-        when Module_var.equal module_binder m ->
-        let found = get_module ms (List.rev inner_decls) in
-        (match found with
-        | `Found data -> `Found data
-        | `Not_found module_path -> get_module module_path rest)
-      | D_module
-          { module_binder
-          ; module_ = { module_content = M_variable module_var; _ }
-          ; module_attr = _
-          ; annotation = ()
-          }
-        when Module_var.equal module_binder m -> get_module (module_var :: ms) rest
-      | D_module
-          { module_binder
-          ; module_ = { module_content = M_module_path module_path'; _ }
-          ; module_attr = _
-          ; annotation = ()
-          }
-        when Module_var.equal module_binder m ->
-        get_module (List.Ne.to_list module_path' @ ms) rest
-      | _ -> get_module module_path rest)
-  in
-  let decls = List.rev decls in
-  match get_module module_path decls with
-  | `Found decls -> decls
-  | `Not_found f ->
-    failwith
-      (Format.asprintf
-         "Module %a not found with last %a"
-         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
-         module_path
-         Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
-         f)
+ fun m p -> { p with pr_module = List.map ~f:(map_declaration m) p.pr_module }
 
 
 (* update_module [mp] [f] [p] looks for the module struct to which
    module path [mp] points in program [p] and replaces it by applying
    [f] to [mp] *)
-let update_module (type a) module_path (f : program -> program * a) (prg : program)
-    : program * a
+let update_module (type a) module_path (f : module_ -> module_ * a) (module_ : module_)
+    : module_ * a
   =
   let rec find_module acc module_path decls =
     match decls, module_path with
@@ -338,8 +265,7 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
         find_module (decl :: acc) (List.Ne.to_list module_path' @ ms) rest
       | _ -> find_module (decl :: acc) module_path rest)
   in
-  let prg = List.rev prg in
-  match find_module [] module_path prg with
+  match find_module [] module_path (List.rev module_) with
   | `Updated prg -> prg
   | `Not_here f ->
     failwith
@@ -349,213 +275,6 @@ let update_module (type a) module_path (f : program -> program * a) (prg : progr
          module_path
          Simple_utils.PP_helpers.(list_sep_d Module_var.pp)
          f)
-
-
-let fetch_contract_type ~raise
-    :  Value_var.t -> Module_var.t list -> program
-    -> program * expression_variable * contract_type
-  =
- fun main_fname module_path m ->
-  let aux declt (prog, contract_type_opt) =
-    let return () = declt :: prog, contract_type_opt in
-    let loc = Location.get_location declt in
-    match Location.unwrap declt with
-    | D_value ({ binder; expr; attr = _ } as dvalue) when Option.is_none contract_type_opt
-      ->
-      let var = Binder.get_var binder in
-      if Value_var.equal var main_fname
-      then (
-        match Ast_typed.uncurry_wrap ~loc ~type_:expr.type_expression var with
-        | Some expr ->
-          let binder = Binder.set_var binder (Value_var.fresh_like var) in
-          let binder = Binder.set_ascr binder expr.type_expression in
-          (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
-          ( (Location.wrap ~loc:declt.location @@ D_value dvalue)
-            :: (Location.wrap ~loc:declt.location @@ D_value { dvalue with binder; expr })
-            :: prog
-          , Some (Binder.get_var binder, expr) )
-        | None ->
-          ( (Location.wrap ~loc:declt.location @@ D_value dvalue) :: prog
-          , Some (Binder.get_var binder, expr) ))
-      else return ()
-    | D_irrefutable_match
-        ({ pattern = { wrap_content = P_var binder; _ } as pattern; expr; attr = _ } as
-        dirref)
-      when Option.is_none contract_type_opt ->
-      let var = Binder.get_var binder in
-      if Value_var.equal var main_fname
-      then (
-        match Ast_typed.uncurry_wrap ~loc ~type_:expr.type_expression var with
-        | Some expr ->
-          let binder = Binder.set_var binder (Value_var.fresh_like var) in
-          let binder = Binder.set_ascr binder expr.type_expression in
-          let pattern = Pattern.{ pattern with wrap_content = P_var binder } in
-          (* Add both `main` and the new `main#FRESH` version that calls `main` but it's curried *)
-          ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref)
-            :: (Location.wrap ~loc:declt.location
-               @@ D_irrefutable_match { dirref with expr; pattern })
-            :: prog
-          , Some (Binder.get_var binder, expr) )
-        | None ->
-          ( (Location.wrap ~loc:declt.location @@ D_irrefutable_match dirref) :: prog
-          , Some (Binder.get_var binder, expr) ))
-      else return ()
-    | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ | D_module_include _ ->
-      return ()
-  in
-  let run m = List.fold_right ~f:aux ~init:([], None) m in
-  let m, main_decl_opt = update_module module_path run m in
-  let main_decl =
-    trace_option
-      ~raise
-      (corner_case
-         (Format.asprintf "Entrypoint %a does not exist" Value_var.pp main_fname : string))
-    @@ main_decl_opt
-  in
-  let var, expr = main_decl in
-  match expr.type_expression.type_content with
-  | T_arrow { type1; type2 } ->
-    (match Ast_typed.Combinators.(get_t_pair type1, get_t_pair type2) with
-    | Some (parameter, storage), Some (listop, storage') ->
-      let () =
-        trace_option ~raise (expected_list_operation main_fname listop expr)
-        @@ Ast_typed.assert_t_list_operation listop
-      in
-      let () =
-        trace_option ~raise (expected_same_entry main_fname storage storage' expr)
-        @@ Ast_typed.assert_type_expression_eq (storage, storage')
-      in
-      let () =
-        trace_option ~raise (expected_non_vars_in_storage main_fname storage expr)
-        @@ Ast_typed.assert_no_type_vars storage
-      in
-      let () =
-        trace_option ~raise (expected_non_vars_in_parameter main_fname parameter expr)
-        @@ Ast_typed.assert_no_type_vars parameter
-      in
-      (* TODO: on storage/parameter : assert_storable, assert_passable? *)
-      m, var, { parameter; storage }
-    | _ ->
-      raise.error
-      @@ bad_contract_io main_fname expr.type_expression (Value_var.get_location var))
-  | _ ->
-    raise.error
-    @@ bad_contract_io main_fname expr.type_expression (Value_var.get_location var)
-
-
-(* get_shadowed_decl [prg] [predicate] returns the location of the last shadowed annotated top-level declaration of program [prg] if any
-   [predicate] defines the annotation (or set of annotation) you want to match on
-*)
-let get_shadowed_decl : program -> (ValueAttr.t -> bool) -> Location.t option =
- fun prg predicate ->
-  let aux ((seen, shadows) : Value_var.t list * Location.t list) (x : declaration) =
-    match Location.unwrap x with
-    | D_value { binder; attr; _ } ->
-      (match List.find seen ~f:(Value_var.equal (Binder.get_var binder)) with
-      | Some x -> seen, Value_var.get_location x :: shadows
-      | None ->
-        if predicate attr then Binder.get_var binder :: seen, shadows else seen, shadows)
-    | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; attr; _ } ->
-      (match List.find seen ~f:(Value_var.equal (Binder.get_var binder)) with
-      | Some x -> seen, Value_var.get_location x :: shadows
-      | None ->
-        if predicate attr then Binder.get_var binder :: seen, shadows else seen, shadows)
-    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> seen, shadows
-  in
-  let _, shadows = List.fold ~f:aux ~init:([], []) prg in
-  match shadows with
-  | [] -> None
-  | hd :: _ -> Some hd
-
-
-let update_attribute_annotations
-    : (ValueAttr.t -> ValueAttr.t option) -> program -> program
-  =
- fun pred m ->
-  let aux (x : declaration) =
-    match Location.unwrap x with
-    | D_value ({ attr; _ } as decl) when Option.is_some (pred attr) ->
-      let attr = Option.value_exn @@ pred attr in
-      { x with wrap_content = D_value { decl with attr } }
-    | D_irrefutable_match ({ attr; _ } as decl) when Option.is_some (pred attr) ->
-      let attr = Option.value_exn @@ pred attr in
-      { x with wrap_content = D_irrefutable_match { decl with attr } }
-    | D_module_include _ | D_module _ | D_type _ | D_value _ | D_irrefutable_match _ -> x
-  in
-  List.map ~f:aux m
-
-
-let annotate_with_attribute ~raise
-    :  (ValueAttr.t -> ValueAttr.t) -> string list -> Ast_typed.program
-    -> Ast_typed.program
-  =
- fun upd names prg ->
-  let prg, not_found =
-    List.fold_right
-      prg
-      ~init:([], names)
-      ~f:(fun (x : declaration) ((prg, names) : Ast_typed.program * string list) ->
-        let continue = x :: prg, names in
-        match Location.unwrap x with
-        | D_value ({ binder; _ } as decl) ->
-          (match List.find names ~f:(Value_var.is_name @@ Binder.get_var binder) with
-          | Some found ->
-            let decorated =
-              { x with wrap_content = D_value { decl with attr = upd decl.attr } }
-            in
-            decorated :: prg, List.remove_element ~compare:String.compare found names
-          | None -> continue)
-        | D_irrefutable_match
-            ({ pattern = { wrap_content = P_var binder; _ }; _ } as decl) ->
-          (match List.find names ~f:(Value_var.is_name @@ Binder.get_var binder) with
-          | Some found ->
-            let decorated =
-              { x with
-                wrap_content = D_irrefutable_match { decl with attr = upd decl.attr }
-              }
-            in
-            decorated :: prg, List.remove_element ~compare:String.compare found names
-          | None -> continue)
-        | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> continue)
-  in
-  let () =
-    match not_found with
-    | [] -> ()
-    | not_found :: _ ->
-      raise.error
-        (corner_case (Format.asprintf "Name %s does not exist" not_found : string))
-  in
-  prg
-
-
-(* strip_entry_annotations [p] remove all the [@entry] annotation in top-level declarations of program [p] *)
-let strip_entry_annotations p =
-  let f (attr : ValueAttr.t) =
-    if attr.entry then Some { attr with entry = false } else None
-  in
-  update_attribute_annotations f p
-
-
-(* annotate_with_entry [p] [binders] for all names in [binders] decorates the top-level declaration of program [p] with the annotation [@entry]
-  if the name matches with declaration binder. if a name is unmatched, fails.
-
-   e.g:
-    annotate_with_entry [p] ["a";"b"]
-
-    let a = <..>
-    let b = <..>
-    let b = <..>
-    let c = <..>
-      |->
-    [@entry] let a = <..>
-    let b = <..>
-    [@entry] let b = <..>
-    let c = <..>
-*)
-let annotate_with_entry ~raise : string list -> Ast_typed.program -> Ast_typed.program =
- fun names prg ->
-  let f (attr : ValueAttr.t) = { attr with entry = true } in
-  annotate_with_attribute ~raise f names prg
 
 
 (* TODO: this is unused ; used this instead of Contract_passes.get_fv_program I think??? *)
@@ -614,6 +333,12 @@ end = struct
    fun e ->
     let self = get_fv_expr in
     match e.expression_content with
+    | E_contract x ->
+      { modVarSet = ModVarSet.of_list (List.Ne.to_list x)
+      ; moduleEnv = VarMap.empty
+      ; varSet = VarSet.empty
+      ; mutSet = VarSet.empty
+      }
     | E_variable v ->
       { modVarSet = ModVarSet.empty
       ; moduleEnv = VarMap.empty
@@ -836,7 +561,7 @@ module Declaration_mapper = struct
       let rhs = self rhs in
       let let_result = self let_result in
       return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
-    | (E_deref _ | E_literal _ | E_variable _ | E_raw_code _) as e' -> return e'
+    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' -> return e'
 
 
   and map_expression_in_module_expr

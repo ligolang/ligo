@@ -53,6 +53,8 @@ let failwith (type a b) (x : a) = [%michelson ({| { FAILWITH } |} x : b)]
 type bool = True | False
 type 'a option = Some of 'a | None
 
+type ('p, 's) entrypoint = 'p * 's -> operation list * 's
+
 module Tezos = struct
 
   let get_balance (_u : unit) : tez = [%michelson ({| { BALANCE } |} : tez)]

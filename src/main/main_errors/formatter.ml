@@ -241,6 +241,11 @@ let rec error_ppformat
         f
         "@[<hv>Invalid command line argument. @.The provided entrypoint is not found in \
          the contract.@]"
+    | `Main_declaration_not_found ->
+      Format.fprintf
+        f
+        "@[<hv>Invalid command line argument. @.The provided declaration is not found in \
+         the file.@]"
     | `Main_invalid_balance a ->
       Format.fprintf
         f
@@ -712,6 +717,9 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
     [ make ~stage:"top-level glue" ~content ]
   | `Main_view_rule_violated location ->
     let content = make_content ~message:"view rule violated" ~location () in
+    [ make ~stage:"top-level glue" ~content ]
+  | `Main_declaration_not_found ->
+    let content = make_content ~message:"Missing declaration" () in
     [ make ~stage:"top-level glue" ~content ]
   | `Main_entrypoint_not_found ->
     let content = make_content ~message:"Missing entrypoint" () in

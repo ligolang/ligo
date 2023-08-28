@@ -22,6 +22,7 @@ let { a = (a4, a5, a6)
 
 type storage = nat * int * string
 
+[@entry]
 let main (_ : unit) (_ : storage) : operation list * storage
   = [], ( a1 + b2 + c3 + a4 + b5 + c6
         , a2 + b1 + c2 + a5 + b4 + c5

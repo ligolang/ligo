@@ -26,7 +26,7 @@ type parameter = {
 
 type return = operation list * storage
 
-
+[@entry]
 let main (p : parameter) (s : storage) : return =
   let payload : payload = p.payload in
   let s =

@@ -8,6 +8,7 @@ type storage = {
 
 type return = operation list * storage
 
+[@entry]
 let main (_ : parameter) (store : storage) : return =
   (* Multiple evaluations of Tezos.get_now () give different values *)
   let my_now : timestamp = Tezos.get_now () in

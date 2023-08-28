@@ -55,17 +55,13 @@ let build_expression ~raise
   =
  fun ~options syntax expression init_prg ->
   let typed_exp =
-    Ligo_compile.Utils.type_expression
-      ~raise
-      ~options
-      syntax
-      expression
-      (Ast_typed.Misc.to_signature init_prg)
+    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
   in
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
       ~options:options.middle_end
+      None
       init_prg
       typed_exp
   in

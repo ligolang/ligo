@@ -227,6 +227,13 @@ let rec expression : AST.expression -> references -> env -> references =
  fun e refs env ->
   match e.expression_content with
   | E_variable v -> References.add_vvar v env refs
+  | E_contract mods ->
+    let usages =
+      mods
+      |> List.Ne.to_list
+      |> List.map ~f:(fun x -> x, `Usage (Module_var.get_location x))
+    in
+    References.add_module_usages usages refs
   | E_module_accessor { module_path; element } ->
     let refs, _, _ =
       resolve_module_alias_and_update_mvar_references
@@ -325,6 +332,13 @@ and type_expression : AST.type_expression -> references -> env -> references =
  fun te refs env ->
   match te.type_content with
   | T_variable tv -> References.add_tvar tv env refs
+  | T_contract_parameter mods ->
+    let usages =
+      mods
+      |> List.Ne.to_list
+      |> List.map ~f:(fun x -> x, `Usage (Module_var.get_location x))
+    in
+    References.add_module_usages usages refs
   | T_constant _ -> refs (* FIXME *)
   | T_module_accessor { module_path; element } ->
     let refs, _, _ =

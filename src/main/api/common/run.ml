@@ -64,12 +64,7 @@ let test_expression (raw_options : Raw_options.t) expr source_file =
         Option.value_map source_file ~f ~default
       in
       let typed =
-        Ligo_compile.Utils.type_expression
-          ~raise
-          ~options
-          syntax
-          expr
-          (Ast_typed.Misc.to_signature init_prg)
+        Ligo_compile.Utils.type_expression ~raise ~options syntax expr init_prg.pr_sig
       in
       let b, v = Interpreter.eval_expression ~raise ~steps ~options init_prg typed in
       (b, [ "eval", v ]), [] )
@@ -106,20 +101,25 @@ let dry_run
       let typed_prg =
         Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
       in
-      let contract_info, typed_contract =
+      let typed_contract =
         Trace.trace ~raise Main_errors.self_ast_typed_tracer
-        @@ Ligo_compile.Of_core.specific_passes
-             (Ligo_compile.Of_core.Contract module_path)
-             typed_prg
+        @@ Self_ast_typed.all_program typed_prg
       in
-      let entry_point, _contract_type = contract_info in
       let aggregated_prg =
-        Compile.Of_typed.apply_to_entrypoint_contract
+        let _sig, contract_sig =
+          Trace.trace_option
+            ~raise
+            (`Self_ast_aggregated_tracer
+              (Self_ast_aggregated.Errors.corner_case
+                 "Could not recover types from contract"))
+            (Ast_typed.Misc.get_contract_signature typed_prg.pr_sig module_path)
+        in
+        Compile.Of_typed.apply_to_entrypoint_with_contract_type
           ~raise
           ~options:options.middle_end
           typed_contract
-          entry_point
           module_path
+          contract_sig
       in
       let expanded_prg = Compile.Of_aggregated.compile_expression ~raise aggregated_prg in
       let mini_c_prg = Compile.Of_expanded.compile_expression ~raise expanded_prg in
@@ -255,16 +255,13 @@ let evaluate_call
       in
       let app = Compile.Of_core.apply entry_point core_param in
       let typed_app =
-        Compile.Of_core.compile_expression
-          ~raise
-          ~options
-          ~context:(Ast_typed.Misc.to_signature init_prog)
-          app
+        Compile.Of_core.compile_expression ~raise ~options ~context:init_prog.pr_sig app
       in
       let app_aggregated =
         Compile.Of_typed.compile_expression_in_context
           ~raise
           ~options:options.middle_end
+          None
           init_prog
           typed_app
       in

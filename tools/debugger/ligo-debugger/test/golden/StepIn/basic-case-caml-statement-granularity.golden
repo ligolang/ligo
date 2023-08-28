@@ -18,59 +18,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -91,59 +39,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
@@ -164,59 +60,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -244,59 +88,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -324,59 +116,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -404,59 +144,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
   isStackFrames:
@@ -477,59 +165,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -554,59 +190,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -634,59 +218,7 @@ InterpretSnapshot:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
                 {  };
-                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -696,59 +228,7 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem s3 of int
-          siValue: 221 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+          siValue: 221 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -761,56 +241,4 @@ InterpretSnapshot:
           siValue: Pair { } 221
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: 0 ]
-    , StackFrame:
-      sfName: main
-      sfLoc: test/contracts/functions-visiting.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc: elem ? of int
-          siValue: 0
-        , StackItem:
-          siLigoDesc: elem ? of unit
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem main of unit -> int -> operation list * int
-          siValue:
-            { PUSH
-                (pair (lambda unit int) (lambda int int))
-                (Pair
-                   { DROP;
-                     { { PUSH int 10 }; { PUSH int 10 }; ADD };
-                     {  };
-                     {  } }
-                   { {  };
-                     { { { PUSH int 100 }; { SWAP }; ADD };
-                       {  };
-                       { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } });
-              PAIR;
-              { UNPAIR;
-                UNPAIR;
-                DIG 2;
-                DROP;
-                {  };
-                {  };
-                LAMBDA
-                  (pair (pair (lambda unit int) (lambda int int)) int)
-                  (pair (list operation) int)
-                  { UNPAIR;
-                    UNPAIR;
-                    DIG 2;
-                    {  };
-                    { { { PUSH int 1 }; { SWAP }; ADD };
-                      {  };
-                      { { { {  }; { DIG 2 }; SWAP; EXEC };
-                          { { UNIT }; { DIG 2 }; SWAP; EXEC };
-                          ADD };
-                        {  };
-                        { {  }; { NIL operation }; PAIR } } } };
-                DUP 3;
-                DUP 3;
-                PAIR;
-                APPLY;
-                SWAP;
-                DIG 2;
-                DROP 2 } } ] ]
+          siValue: 0 ] ]

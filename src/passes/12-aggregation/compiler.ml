@@ -322,8 +322,8 @@ and build_context : Data.t -> O.context =
 
 
 and compile : Data.t -> I.expression -> I.program -> O.program =
- fun data hole module_ ->
-  let data = compile_declarations data [] module_ in
+ fun data hole program ->
+  let data = compile_declarations data [] program.pr_module in
   let hole = compile_expression data.env hole in
   build_context data, hole
 
@@ -429,6 +429,7 @@ and compile_expression : Data.env -> ?debug_path:Data.path -> I.expression -> O.
   in
   match expr.expression_content with
   (* resolving variable names *)
+  | I.E_contract _ -> assert false (* reduced in self_ast_typed *)
   | I.E_variable v ->
     let v = Data.resolve_variable env v in
     return (O.E_variable v)

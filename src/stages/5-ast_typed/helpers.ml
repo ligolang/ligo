@@ -137,8 +137,8 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> 'a * express
     | E_while w ->
       let res, w = While_loop.fold_map self init w in
       res, return @@ E_while w
-    | (E_deref _ | E_literal _ | E_variable _ | E_module_accessor _) as e' ->
-      init, return e')
+    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_module_accessor _) as e'
+      -> init, return e')
 
 
 and fold_map_case
@@ -202,7 +202,9 @@ and fold_map_expression_in_module_expr
 
 
 let fold_map_program : 'a fold_mapper -> 'a -> program -> 'a * program =
- fun m init -> List.fold_map ~f:(fold_map_declaration m) ~init
+ fun m init p ->
+  let res, module_ = List.fold_map ~f:(fold_map_declaration m) ~init p.pr_module in
+  res, { p with pr_module = module_ }
 
 
 let rec fold_type_expression
@@ -219,6 +221,8 @@ let rec fold_type_expression
   | T_singleton _ -> init
   | T_abstraction { type_; _ } | T_for_all { type_; _ } -> self type_ ~init
 
+
+let map_expression f prg = snd @@ fold_map_program (fun () exp -> true, (), f exp) () prg
 
 (* An [IdMap] is a [Map] augmented with an [id] field (which is wrapped around the map [value] field).
   Using a map instead of a list makes shadowed modules inaccessible,
@@ -266,25 +270,31 @@ end
 (* of module IdMap *)
 
 (* get_views [p] looks for top-level declaration annotated with [@view] in program [p] and return declaration data *)
-let rec get_views : program -> (Value_var.t * Location.t) list =
+let get_views : program -> (Value_var.t * Location.t) list =
  fun p ->
-  let f
-      : declaration -> (Value_var.t * Location.t) list -> (Value_var.t * Location.t) list
-    =
-   fun { wrap_content = decl; location = _ } acc ->
-    match decl with
-    | D_value { binder; expr = _; attr } when attr.view ->
-      let var = Binder.get_var binder in
-      (var, Value_var.get_location var) :: acc
-    | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr = _; attr }
-      when attr.view ->
-      let var = Binder.get_var binder in
-      (var, Value_var.get_location var) :: acc
-    | D_module_include { module_content = M_struct x; _ } -> get_views x
-    | D_type _ | D_module _ | D_value _ | D_irrefutable_match _ | D_module_include _ ->
-      acc
+  let rec loop module_ =
+    let f
+        :  declaration -> (Value_var.t * Location.t) list
+        -> (Value_var.t * Location.t) list
+      =
+     fun { wrap_content = decl; location = _ } acc ->
+      match decl with
+      | D_value { binder; expr = _; attr } when attr.view ->
+        let var = Binder.get_var binder in
+        (var, Value_var.get_location var) :: acc
+      | D_irrefutable_match
+          { pattern = { wrap_content = P_var binder; _ }; expr = _; attr }
+        when attr.view ->
+        let var = Binder.get_var binder in
+        (var, Value_var.get_location var) :: acc
+      | D_module_include { module_content = M_struct x; _ } -> loop x
+      | D_type _ | D_module _ | D_value _ | D_irrefutable_match _ | D_module_include _ ->
+        acc
+    in
+    (* TODO: This would be easier to use the signature instead of the module *)
+    List.fold_right ~init:[] ~f module_
   in
-  List.fold_right ~init:[] ~f p
+  loop p.pr_module
 
 
 let fetch_view_type : declaration -> (type_expression * type_expression Binder.t) option =

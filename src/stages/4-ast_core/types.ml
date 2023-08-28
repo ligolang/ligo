@@ -7,6 +7,7 @@ module Row = Row.With_optional_layout
 type type_content =
   | T_variable of Type_var.t
   | T_constant of Literal_types.t * int
+  | T_contract_parameter of Module_var.t List.Ne.t
   | T_sum of row
   | T_record of row
   | T_arrow of ty_expr Arrow.t
@@ -42,6 +43,7 @@ module Let_in = Let_in.Make (Pattern) (Value_attr)
 type expression_content =
   (* Base *)
   | E_variable of Value_var.t
+  | E_contract of Module_var.t Simple_utils.List.Ne.t
   | E_literal of Literal_value.t
   | E_constant of
       expr Constant.t (* For language constants, like (Cons hd tl) or (plus i j) *)
