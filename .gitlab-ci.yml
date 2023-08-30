@@ -61,17 +61,6 @@ changelog:
       - release-notes.md
       - release-notes.txt
 
-to_dos:
-  stage: pretooling
-  only:
-    - merge_requests
-    - /^.*-run-dev$/
-  script:
-    - ./scripts/list-to-dos.sh > to-dos.html
-  artifacts:
-    paths:
-      - to-dos.html
-
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
   stage: build
