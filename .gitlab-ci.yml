@@ -78,9 +78,8 @@ docker_build:
       artifacts: true
   script:
     - git submodule update --init --recursive # because of a gitlab caching issue
-    # Because JSOO artifacts are only present in ligo-builder stage.
-    # ligo-builder stage is discarded during the creation of ligo image for consumers
-    # so that we can offer them a leaner image with just necessary ligo tools
+    # Used to remove code between TAG_REMOVE_IN_CASE_OF_MR in dockerfile
+    - .ci/scripts/pipeline_optimization/mr_dockerfile_pre_process.sh
     - DOCKER_BUILDKIT=1 docker build .
       --build-arg=ci_commit_tag=$CI_COMMIT_TAG
       --build-arg=ci_commit_sha=$CI_COMMIT_SHA
