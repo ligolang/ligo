@@ -26,7 +26,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_1" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 21, characters 16-19:
      20 |      data : int;
      21 |      metadata : nat
@@ -45,7 +46,8 @@ let%expect_test _ =
   let storage = "{ data  = 42; metadata = 33n}" in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 21, characters 16-19:
      20 |      data : int;
      21 |      metadata : nat
@@ -65,7 +67,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_1" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.jsligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 19, characters 14-17:
      18 |     data: int,
      19 |     metadata: nat
@@ -84,7 +87,8 @@ let%expect_test _ =
   let storage = "{ data  : 42, metadata : (33 as nat)}" in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.jsligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 19, characters 14-17:
      18 |     data: int,
      19 |     metadata: nat
@@ -106,7 +110,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_2" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 36, characters 16-31:
      35 |      data : int;
      36 |      metadata : (bytes, string) big_map
@@ -127,7 +132,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 36, characters 16-31:
      35 |      data : int;
      36 |      metadata : (bytes, string) big_map
@@ -147,7 +153,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_2" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.jsligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 32, characters 14-36:
      31 |     data: int,
      32 |     metadata: big_map<bytes, string>
@@ -168,7 +175,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.jsligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.jsligo", line 32, characters 14-36:
      31 |     data: int,
      32 |     metadata: big_map<bytes, string>
@@ -190,7 +198,8 @@ let%expect_test _ =
 let%expect_test _ =
   let entrypoint = "Entry_invalid_metadata_3" in
   run_ligo_good [ "compile"; "contract"; test "metadata_tzip16.mligo"; "-m"; entrypoint ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 51, characters 33-48:
      50 |      data : int;
      51 |      [@annot metadata] notdata : (bytes, string) big_map
@@ -211,7 +220,8 @@ let%expect_test _ =
   in
   run_ligo_good
     [ "compile"; "storage"; test "metadata_tzip16.mligo"; "-m"; entrypoint; storage ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/contract_metadata/metadata_tzip16.mligo", line 51, characters 33-48:
      50 |      data : int;
      51 |      [@annot metadata] notdata : (bytes, string) big_map

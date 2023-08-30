@@ -3137,4 +3137,5 @@ let run ?argv () =
   | Done -> 0
   | Compileur_Error -> 1
   | Exception exn ->
-      ignore is_dev ; raise exn
+    ignore is_dev;
+    raise exn

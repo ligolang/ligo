@@ -2,7 +2,8 @@ open Cli_expect
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; test "jsligo_unreachable_code.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/jsligo_unreachable_code.jsligo", line 8, characters 6-71:
       7 |   return "end";
       8 |   let _x = "Unreachable post-return code that should trigger a warning"

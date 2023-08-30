@@ -561,15 +561,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "nested_record_sum.mligo" ];
-  [%expect{| 142 bytes |}]
+  [%expect {| 142 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_I.mligo" ];
-  [%expect{| 354 bytes |}]
+  [%expect {| 354 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_T.mligo" ];
-  [%expect{| 468 bytes |}]
+  [%expect {| 468 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_V.mligo" ];
@@ -617,7 +617,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; good_test "pm_ticket.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts//deep_pattern_matching/pm_ticket.mligo", line 9, characters 28-33:
       8 |     | { myt = myt ; mynat = mynat } , None -> (([]: operation list), mynat)
       9 |     | { myt = myt ; mynat = mynat } , Some x -> (([]: operation list), x)
@@ -664,8 +665,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "bug_report.mligo" ];
-  [%expect{| 468 bytes |}]
+  [%expect {| 468 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "mini_shifumi.mligo" ];
-  [%expect{| 368 bytes |}]
+  [%expect {| 368 bytes |}]

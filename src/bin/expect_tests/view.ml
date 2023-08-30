@@ -90,7 +90,6 @@ let%expect_test _ =
       code { CDR ; NIL operation ; PAIR } ;
       view "v1" int int { UNPAIR ; PUSH int 1 ; SWAP ; DIG 2 ; ADD ; ADD } } |}]
 
-
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "views_using_view.jsligo" ];
   [%expect

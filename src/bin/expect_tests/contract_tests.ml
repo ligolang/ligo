@@ -464,7 +464,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "ticket_wallet.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter
         (or (ticket %receive unit)
             (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
@@ -839,7 +840,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_toplevel.mligo" ];
-  [%expect {|
+  [%expect
+    {|
 File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, character 35 to line 9, character 8:
   4 | let main (_ : string) (store : string) : return =
   5 |   let toto : operation * address = Tezos.create_contract
@@ -856,7 +858,8 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
 
 Not all free variables could be inlined in Tezos.create_contract usage: gen#242. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/create_contract_var.mligo", line 9, characters 22-23:
       8 |     Tezos.create_contract
       9 |       (fun (p : nat) (s : int) -> (([] : operation list), a))
@@ -902,7 +905,8 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#242.
              CONS ;
              PAIR } } |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_modfv.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/negative/create_contract_modfv.mligo", line 11, characters 22-23:
      10 |     Tezos.create_contract
      11 |       (fun (p : nat) (s : string) -> (([] : operation list), Foo.store))
@@ -946,7 +950,8 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#242.
 
     Not all free variables could be inlined in Tezos.create_contract usage: gen#243. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/negative/create_contract_no_inline.mligo", line 5, characters 30-31:
       4 |
       5 | let dummy_contract (p : nat) (s : int) : return = (([] : operation list), foo)
@@ -1008,7 +1013,8 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#242.
 
     Not all free variables could be inlined in Tezos.create_contract usage: foo#257. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/create_contract.mligo", line 7, characters 22-23:
       6 |     Tezos.create_contract
       7 |       (fun (p : nat) (s : string) -> (([] : operation list), "one"))
@@ -1056,7 +1062,8 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#242.
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract.mligo" ];
-  [%expect {|
+  [%expect
+    {|
 File "../../test/contracts/negative/bad_contract.mligo", line 1, character 0 to line 6, character 69:
   1 | type storage = int
       ^^^^^^^^^^^^^^^^^^
@@ -1073,7 +1080,8 @@ File "../../test/contracts/negative/bad_contract.mligo", line 1, character 0 to 
 
 Not an entrypoint: nat -> int -> int |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract2.mligo" ];
-  [%expect {|
+  [%expect
+    {|
 File "../../test/contracts/negative/bad_contract2.mligo", line 1, character 0 to line 8, character 77:
   1 | type storage = int
       ^^^^^^^^^^^^^^^^^^
@@ -1094,7 +1102,8 @@ File "../../test/contracts/negative/bad_contract2.mligo", line 1, character 0 to
 
 Not an entrypoint: nat -> int -> ( string * int ) |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_contract3.mligo" ];
-  [%expect {|
+  [%expect
+    {|
 File "../../test/contracts/negative/bad_contract3.mligo", line 1, character 0 to line 9, character 32:
   1 | type storage = int
       ^^^^^^^^^^^^^^^^^^
@@ -1137,7 +1146,8 @@ let%expect_test _ =
   let lines = List.take lines 4 in
   let output = String.concat ~sep:"\n" lines in
   print_string output;
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { LAMBDA (pair unit unit unit unit) unit { DROP ; UNIT } ;
@@ -1187,7 +1197,8 @@ let%expect_test _ =
 (* Edo combs example *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "edo_combs.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/edo_combs.mligo", line 13, characters 22-23:
      12 | [@entry]
      13 | let main (p : param) (s : int) : operation list * int =
@@ -1203,7 +1214,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "warning_duplicate3.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (pair (nat %c) (nat %ck)) ;
       storage int ;
       code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
@@ -1229,7 +1241,8 @@ let%expect_test _ =
 (* never test for CameLIGO *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "never.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
       code { UNPAIR ;
@@ -1240,7 +1253,8 @@ let%expect_test _ =
 (* never test for JsLIGO *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "never.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (never %extend) (int %increment)) ;
       storage int ;
       code { UNPAIR ;
@@ -1251,7 +1265,8 @@ let%expect_test _ =
 (* annotations and self *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "self_annotations.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (unit %foo) (unit %b)) ;
       storage unit ;
       code { DROP ;
@@ -1267,7 +1282,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "error_self_annotations.mligo" ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/error_self_annotations.mligo", line 7, characters 10-45:
       6 | let main (_ : param) (_ : unit) : operation list * unit =
       7 |   let c = (Tezos.self ("%a") : unit contract) in
@@ -1280,7 +1296,8 @@ let%expect_test _ =
 (* entrypoint check *)
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "bad_get_entrypoint.mligo" ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/bad_get_entrypoint.mligo", line 4, character 4 to line 7, character 28:
       3 |   let v =
       4 |     (Tezos.get_entrypoint_opt
@@ -1301,20 +1318,23 @@ let%expect_test _ =
 (* using test in compilation *)
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "compile_test.mligo" ];
-  [%expect {|
+  [%expect
+    {|
     Invalid usage of a Test primitive: cannot be translated to Michelson. |}]
 
 (* remove unused declarations *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "remove_unused_module.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "remove_unused_toptup.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { CDR ; PUSH nat 2 ; PUSH nat 1 ; DIG 2 ; ADD ; ADD ; NIL operation ; PAIR } } |}]
@@ -1342,14 +1362,16 @@ let%expect_test _ =
 (* check annotations' capitalization *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "annotation_cases.mligo"; "-m"; "A" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (pair (pair (nat %AAA) (nat %fooB)) (nat %cCC)) ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "annotation_cases.mligo"; "-m"; "B" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (nat %AAA) (nat %fooB)) (nat %cCC)) ;
       storage unit ;
       code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -1405,7 +1427,8 @@ let%expect_test _ =
 (* literal type "casting" inside modules *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "literal_type_cast.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage timestamp ;
       code { DROP ; PUSH timestamp 0 ; NIL operation ; PAIR } } |}]
@@ -1482,7 +1505,8 @@ let%expect_test _ =
 (* Test compile contract with Big_map.get_and_update for Hangzhou *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "ticket_wallet.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter
         (or (ticket %receive unit)
             (pair %send (contract %destination (ticket unit)) (nat %amount) (address %ticketer))) ;
@@ -1576,7 +1600,8 @@ let%expect_test _ =
     ; "--michelson-comments"
     ; "env"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { { /* _ */ } ;
@@ -1635,16 +1660,16 @@ let%expect_test _ =
   (* hmm, just checking that there is no error, should not use
      ppx_expect... *)
   let _ = [%expect.output] in
-  [%expect{||}]
+  [%expect {||}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; contract "module_contract_simple.mligo"; "999" ];
-  [%expect{| 999 |}]
+  [%expect {| 999 |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "parameter"; contract "module_contract_simple.mligo"; "Add 999" ];
-  [%expect{| (Left (Left 999)) |}]
+  [%expect {| (Left (Left 999)) |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1653,12 +1678,12 @@ let%expect_test _ =
     ; contract "module_contract_complex.mligo"
     ; "{ number = 999 ; previous_action = Reset }"
     ];
-  [%expect{| (Pair 999 (Left (Right Unit))) |}]
+  [%expect {| (Pair 999 (Left (Right Unit))) |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "parameter"; contract "module_contract_complex.mligo"; "Add 999" ];
-  [%expect{| (Left (Left 999)) |}]
+  [%expect {| (Left (Left 999)) |}]
 
 (* Global constants *)
 
@@ -1669,7 +1694,8 @@ let%expect_test _ =
     ; contract "global_constant.mligo"
     ; "--disable-michelson-typechecking"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { CDR ;
@@ -1685,7 +1711,8 @@ let%expect_test _ =
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { CDR ;
@@ -1702,7 +1729,7 @@ let%expect_test _ =
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
     ];
-  [%expect{| Unit |}]
+  [%expect {| Unit |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1713,7 +1740,7 @@ let%expect_test _ =
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
     ];
-  [%expect{| 128 |}]
+  [%expect {| 128 |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1724,7 +1751,7 @@ let%expect_test _ =
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
     ];
-  [%expect{| 42 |}]
+  [%expect {| 42 |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1735,7 +1762,7 @@ let%expect_test _ =
     ; "--file-constants"
     ; contract_resource "const.json"
     ];
-  [%expect{| 42 |}]
+  [%expect {| 42 |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1773,7 +1800,7 @@ let%expect_test _ =
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
     ];
-  [%expect{| (Pair 1 { PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }) |}]
+  [%expect {| (Pair 1 { PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }) |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1784,7 +1811,7 @@ let%expect_test _ =
     ; "--file-constants"
     ; contract_resource "const.json"
     ];
-  [%expect{| (Pair 1 { PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }) |}]
+  [%expect {| (Pair 1 { PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }) |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -1840,7 +1867,8 @@ let%expect_test _ =
 (* Example contracts from getting-started *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "increment.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -1850,7 +1878,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "increment.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -1882,7 +1911,8 @@ let%expect_test _ =
 (* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_capitalized_entrypoint.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -1902,12 +1932,12 @@ let%expect_test _ =
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "parameter"; contract "increment_with_test.mligo"; "z.1" ];
-  [%expect{| (Left (Right 32)) |}]
+  [%expect {| (Left (Right 32)) |}]
 
 (* Test compiling storage in a file which uses test primitives *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; contract "increment_with_test.mligo"; "z.0 + 10" ];
-  [%expect{| 42 |}]
+  [%expect {| 42 |}]
 
 (* Test compiling expression with curried recursive function *)
 let%expect_test _ =
@@ -1925,7 +1955,8 @@ let%expect_test _ =
 (* Test compiling contract with curried recursive function *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "recursion_uncurry.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter int ;
       storage string ;
       code { LEFT string ;
@@ -1950,7 +1981,8 @@ let%expect_test _ =
 (* Compiling contract with non-tail recursion *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "lambdarec.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (list int) ;
       storage (list int) ;
       code { LAMBDA_REC
@@ -2074,7 +2106,8 @@ let%expect_test _ =
 (* voting power *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "voting.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter key ;
       storage (pair nat nat) ;
       code { CAR ;
@@ -2095,7 +2128,8 @@ let%expect_test _ =
     ; "A"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
@@ -2109,7 +2143,8 @@ let%expect_test _ =
     ; "B"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
       code { CAR ; IF_LEFT {} {} ; CAR ; NIL operation ; PAIR } } |}]
@@ -2123,28 +2158,32 @@ let%expect_test _ =
     ; "C"
     ; "--enable-michelson-typed-opt"
     ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "A" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %one (nat %x) (int %y)) (pair %two (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "B" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %onee (nat %x) (int %y)) (pair %three (nat %x) (int %z))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_typed_opt.mligo"; "-m"; "C" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (pair %four (nat %x) (timestamp %y)) (pair %oneee (nat %x) (int %y))) ;
       storage nat ;
       code { CAR ; IF_LEFT { CAR } { CAR } ; NIL operation ; PAIR } } |}]
@@ -2199,7 +2238,8 @@ Toplevel let declaration is silently changed to const declaration.
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "thunk.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter string ;
       storage string ;
       code { CDR ;
@@ -2221,7 +2261,8 @@ let%expect_test _ =
 (* check compiling many (more than 10) views *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "call_view_impure.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -2235,7 +2276,8 @@ let%expect_test _ =
 (* check compiling view call for a non-literal *)
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "call_view_not_litstr.mligo" ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/call_view_not_litstr.mligo", line 4, character 10 to line 8, character 21:
       3 |   let u =
       4 |     match (Tezos.call_view
@@ -2336,7 +2378,8 @@ let%expect_test _ =
 (* get_entrypoint_opt in uncurried language *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "get_entrypoint.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage address ;
       code { DROP ;
@@ -2355,12 +2398,13 @@ let%expect_test _ =
 (* make sure that in compile storage/expression we can check SELF *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "storage"; contract "self_annotations.mligo"; "()" ];
-  [%expect{| Unit |}]
+  [%expect {| Unit |}]
 
 (* check tag in Tezos.emit *)
 let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_contract "emit_bad_tag.mligo" ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/emit_bad_tag.mligo", line 3, characters 3-31:
       2 | let main (_ : unit) (_ : string) : operation list * string =
       3 |   [Tezos.emit "%hello world" 12], "bye"
@@ -2379,13 +2423,13 @@ let%expect_test _ =
     ; contract "annotated_storage_and_parameter.mligo"
     ; "Map.empty"
     ];
-  [%expect{| {} |}]
+  [%expect {| {} |}]
 
 (* make sure that in compile parameter we annotate the type *)
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "parameter"; contract "annotated_storage_and_parameter.mligo"; "[]" ];
-  [%expect{| {} |}]
+  [%expect {| {} |}]
 
 (* make sure that in compile parameter we do not allow polymorphic type *)
 let%expect_test _ =
@@ -2400,7 +2444,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "disc_union_vbar.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/disc_union_vbar.jsligo", line 14, characters 10-20:
      13 |   let planetType = p.planetType;
      14 |   switch (planetType.kind) {
@@ -2444,7 +2489,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "layout_comb.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (unit %a) (or (int %b) (pair %c int int))) ;
       storage (pair (int %x) (int %y) (int %z)) ;
       code { CAR ;
@@ -2459,7 +2505,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "contract_type_vars_let_fun.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage (list int) ;
       code { DROP ;
@@ -2475,7 +2522,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "used_var_in_local_module.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage int ;
       code { DROP ; PUSH int 1 ; NIL operation ; PAIR } } |}]
@@ -2483,7 +2531,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "C" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2495,7 +2544,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "C" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2513,8 +2563,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad
     [ "compile"; "contract"; contract "entrypoint_in_module.mligo"; "-m"; "Barrau" ];
-  [%expect
-    {|
+  [%expect {|
     Barrau is not a contract |}]
 
 let%expect_test _ =
@@ -2526,12 +2575,12 @@ let%expect_test _ =
     ; "-m"
     ; "C"
     ];
-  [%expect{| (Left (Right 32)) |}]
+  [%expect {| (Left (Right 32)) |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "storage"; contract "entrypoint_in_module.mligo"; "5"; "-m"; "C" ];
-  [%expect{| 5 |}]
+  [%expect {| 5 |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -2561,12 +2610,13 @@ let%expect_test _ =
     ; "-m"
     ; "C"
     ];
-  [%expect{| ( LIST_EMPTY() , 42 ) |}]
+  [%expect {| ( LIST_EMPTY() , 42 ) |}]
 
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "entrypoint_in_module.jsligo"; "-m"; "M.C" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -2605,7 +2655,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "increment_module.jsligo"; "-m"; "C" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -3020,7 +3071,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "increment_prefix.jsligo"; "-m"; "IncDec" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter (or (or (unit %decrement) (unit %increment)) (unit %reset)) ;
       storage int ;
       code { UNPAIR ;
@@ -3030,13 +3082,15 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "test"; contract "increment_prefix.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     Everything at the top-level was executed.
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     { parameter unit ;
       storage string ;
       code { CDR ;
@@ -3071,14 +3125,16 @@ let%expect_test _ =
              NIL operation ;
              PAIR } } |}];
   run_ligo_good [ "run"; "test"; contract "reverse_string_for_loop.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     "reverse"
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
 let%expect_test "duplicate entrypoints" =
   run_ligo_bad [ "compile"; "contract"; bad_contract "duplicate_entrypoints.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/negative/duplicate_entrypoints.mligo", line 1, character 13 to line 6, character 3:
       1 | module Foo = struct
                        ^^^^^^
