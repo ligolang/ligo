@@ -14,6 +14,7 @@ const foo = (xs : storage) : storage => {
   return list([[res.p, res.q]]);
 }
 
-const main = ([_action, store] : [unit, storage]) : return_ => {
+@entry
+const main = (_action : unit, store : storage) : return_ => {
   return [list([]) as list<operation>, foo (store)]
 };

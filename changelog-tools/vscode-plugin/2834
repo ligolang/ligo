@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed a bug where -m would be passed without an entrypoint if compiling a top-level entrypoint.\\n\\n"
+merge_request: '2834'
+title: "[Chore] Fix VSCode tests"
+type: fixed
+            

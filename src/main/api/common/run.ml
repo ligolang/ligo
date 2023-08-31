@@ -255,7 +255,11 @@ let evaluate_call
       in
       let app = Compile.Of_core.apply entry_point core_param in
       let typed_app =
-        Compile.Of_core.compile_expression ~raise ~options ~context:init_prog.pr_sig app
+        Compile.Of_core.compile_expression
+          ~raise
+          ~options
+          ~context:(Ast_typed.to_signature init_prog.pr_module)
+          app
       in
       let app_aggregated =
         Compile.Of_typed.compile_expression_in_context

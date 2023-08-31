@@ -1,1 +1,2 @@
-let main (p, _ : unit * unit) : operation list * unit = [], p
+[@entry]
+let main (p : unit) (_ : unit) : operation list * unit = [], p

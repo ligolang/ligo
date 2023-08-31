@@ -61,25 +61,22 @@ export async function executeCompileContract(
     });
   }
 
+  const formats = ['text', 'hex', 'json']
   if (!format) {
-    format = await createQuickPickBox(['text', 'hex', 'json'], 'Format', 'Compilation format')
+    format = await createQuickPickBox(formats, 'Format', 'Compilation format')
   }
 
-  if (format !== 'text' && format !== 'hex' && format !== 'json') {
-    throw new ex.InvalidChoiceException(format, ['text', 'hex', 'json'])
+  if (!formats.includes(format)) {
+    throw new ex.InvalidChoiceException(format, formats)
   }
 
   const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'compile',
-      'contract',
-      path,
-      '-m',
-      entrypoint,
-      '--michelson-format',
-      format,
-    ])),
+      ['compile', 'contract', path],
+      Boolean(entrypoint) ? ['-m', entrypoint] : [],
+      ['--michelson-format', format],
+    ].flat())),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
@@ -126,15 +123,10 @@ export async function executeCompileStorage(
   const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'compile',
-      'storage',
-      path,
-      storage,
-      '-m',
-      entrypoint,
-      '--michelson-format',
-      format,
-    ])),
+      ['compile', 'storage', path, storage],
+      Boolean(entrypoint) ? ['-m', entrypoint] : [],
+      ['--michelson-format', format],
+    ].flat())),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
@@ -152,12 +144,9 @@ export async function executeCompileExpression(client: LanguageClient) {
   const declarations = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'info',
-      'list-declarations',
-      path,
-      '--format',
-      'json',
-    ])),
+      ['info', 'list-declarations', path],
+      ['--format', 'json'],
+    ].flat())),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     false,
@@ -173,13 +162,9 @@ export async function executeCompileExpression(client: LanguageClient) {
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => (syntax: string) => withProjectRootFlag(withDeprecated([
-      'compile',
-      'expression',
-      syntax,
-      maybeExpression,
-      '--init-file',
-      path,
-    ])),
+      ['compile', 'expression', syntax, maybeExpression],
+      ['--init-file', path],
+    ].flat())),
     client,
     CommandRequiredArguments.Path
     | CommandRequiredArguments.Ext
@@ -210,14 +195,9 @@ export async function executeDryRun(client: LanguageClient) {
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'run',
-      'dry-run',
-      path,
-      maybeParameter,
-      maybeStorage,
-      '-m',
-      maybeEntrypoint,
-    ])),
+      ['run', 'dry-run', path, maybeParameter, maybeStorage],
+      Boolean(maybeEntrypoint) ? ['-m', maybeEntrypoint] : [],
+    ].flat())),
     client,
   )
 }
@@ -239,12 +219,8 @@ export async function executeEvaluateFunction(client: LanguageClient) {
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'run',
-      'evaluate-call',
-      path,
-      maybeEntrypoint,
-      maybeExpr,
-    ])),
+      ['run', 'evaluate-call', path, maybeEntrypoint, maybeExpr],
+    ].flat())),
     client,
   )
 }
@@ -260,11 +236,8 @@ export async function executeEvaluateValue(client: LanguageClient) {
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag(withDeprecated([
-      'run',
-      'evaluate-expr',
-      path,
-      maybeValue,
-    ])),
+      ['run', 'evaluate-expr', path, maybeValue],
+    ].flat())),
     client,
   )
 }

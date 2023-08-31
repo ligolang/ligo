@@ -4,7 +4,7 @@ let contract basename = "../../test/contracts/" ^ basename
 
 let%expect_test _ =
   run_ligo_good [ "run"; "dry-run"; contract "subtle_nontail_fail.mligo"; "()"; "()" ];
-  [%expect{| failed with: "This contract always fails" |}]
+  [%expect {| failed with: "This contract always fails" |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "interpret"; "assert(1=1)"; "--syntax"; "cameligo" ];

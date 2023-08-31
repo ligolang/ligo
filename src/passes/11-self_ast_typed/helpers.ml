@@ -561,7 +561,8 @@ module Declaration_mapper = struct
       let rhs = self rhs in
       let let_result = self let_result in
       return @@ E_let_mut_in { let_binder; rhs; let_result; attributes }
-    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' -> return e'
+    | (E_deref _ | E_literal _ | E_variable _ | E_contract _ | E_raw_code _) as e' ->
+      return e'
 
 
   and map_expression_in_module_expr

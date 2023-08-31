@@ -498,8 +498,7 @@ let rec build_contract_aggregated ~raise
 
 
 and build_contract_stacking ~raise
-    :  options:Compiler_options.t -> string -> Source_input.code_input
-    -> _
+    : options:Compiler_options.t -> string -> Source_input.code_input -> _
   =
  fun ~options module_ source ->
   let _, aggregated, agg_views =
@@ -517,7 +516,7 @@ and build_contract ~raise ~options module_ source =
   let (contract, _), (views, _) =
     build_contract_stacking ~raise ~options module_ source
   in
-  let entrypoint = { name = Magic_vars.generated_main ; value = contract } in
+  let entrypoint = { name = Magic_vars.generated_main; value = contract } in
   let views = List.map ~f:(fun (name, value) -> { name; value }) views in
   { entrypoint; views }
 

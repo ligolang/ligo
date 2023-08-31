@@ -9,6 +9,7 @@ open Types
    `ppx_woo` (`@@deriving ez`) *)
 type signature_sort = [%import: Types.signature_sort] [@@deriving ez]
 type signature = [%import: Types.signature] [@@deriving ez]
+
 type expression_content = [%import: Types.expression_content]
 [@@deriving
   ez
