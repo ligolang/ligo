@@ -8,7 +8,7 @@ if ! git diff --exit-code --quiet; then
 fi
 
 # Run `dune fmt` on the whole project
-dune build @fmt --auto-promote
+opam exec -- dune build @fmt --auto-promote
 
 # Check if `dune fmt` made any changes to the files
 if git diff --exit-code; then
@@ -16,6 +16,7 @@ if git diff --exit-code; then
 else
   echo "Some files were formatted. Please review the changes."
   echo "You can use 'git diff' to see the changes made by dune fmt."
+  echo "If your git index was containing some unstaged files, they are into your stash, run git stash pop to retrieve them"
   exit 1
 fi
 
