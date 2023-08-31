@@ -54,12 +54,20 @@ RUN opam exec -- dune runtest --profile static --no-buffer \
   && opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
 
 # Version info and changelog
+##################
+# Code between TAG_REMOVE_IN_CASE_OF_MR is used for the ligo changelog command. It's useful 
+# to trace the used version in case of debugging or usage of next tag. But it'll create divergence on cache for each commit.
+# So we remove it to optimize CI in case of MR.
+# To debug your MR you can build it locally, or remove the line which remove lines in CI
+##################
+### TAG_REMOVE_IN_CASE_OF_MR ###
 ARG ci_commit_tag
 ARG ci_commit_sha
 ARG ci_commit_timestamp
 ENV CI_COMMIT_TAG=$ci_commit_tag
 ENV CI_COMMIT_SHA=$ci_commit_sha
 ENV CI_COMMIT_TIMESTAMP=$ci_commit_timestamp
+### TAG_REMOVE_IN_CASE_OF_MR ###
 
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
