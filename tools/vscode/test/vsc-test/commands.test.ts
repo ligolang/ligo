@@ -115,12 +115,12 @@ suite('LIGO: Commands work', () => {
       output: /\( LIST_EMPTY\(\) , unit \)/,
     },
     evaluateFunction: {
-      argument: 'unit, unit',
-      output: /\( LIST_EMPTY\(\) , unit \)/,
+      argument: 'unit',
+      output: /"\[lambda of type: \(lambda unit \(pair \(list operation\) unit\)\) \]"/,
     },
     evaluateValue: {
       value: 'main',
-      output: /"\[lambda of type: \(lambda \(pair unit unit\) \(pair \(list operation\) unit\)\) \]"/,
+      output: /"\[lambda of type: \(lambda unit \(lambda unit \(pair \(list operation\) unit\)\)\) \]"/,
     },
   }))
 })

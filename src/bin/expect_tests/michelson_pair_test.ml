@@ -4,7 +4,8 @@ let contract basename = "../../test/contracts/" ^ basename
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.mligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree.mligo", line 7, characters 26-31:
       6 | [@entry]
       7 | let main (action : unit) (store : storage) : return =
@@ -36,7 +37,8 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "michelson_pair_tree.jsligo" ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/michelson_pair_tree.jsligo", line 10, characters 28-33:
       9 | @entry
      10 | const main = (action: unit, store: storage): return_ => {

@@ -75,7 +75,11 @@ let apply_to_entrypoint_with_contract_type ~raise ~options
     let open Ast_typed in
     match module_path with
     | [] -> e_a_variable ~loc Ligo_prim.Magic_vars.generated_main ty
-    | _ -> e_module_accessor ~loc { module_path; element = Ligo_prim.Magic_vars.generated_main } ty
+    | _ ->
+      e_module_accessor
+        ~loc
+        { module_path; element = Ligo_prim.Magic_vars.generated_main }
+        ty
   in
   compile_expression_in_context ~raise ~options (Some contract_type) prg ep_expr
 

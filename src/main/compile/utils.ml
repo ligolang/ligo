@@ -70,8 +70,7 @@ let type_expression ~raise ~options ?annotation ?wrap_variant syntax expression 
   let core_exp =
     match annotation with
     | None -> core_exp
-    | Some ann -> 
-      Ast_core.e_ascription ~loc:core_exp.location core_exp ann
+    | Some ann -> Ast_core.e_ascription ~loc:core_exp.location core_exp ann
   in
   let typed_exp = Of_core.compile_expression ~raise ~options ~context:init_sig core_exp in
   typed_exp

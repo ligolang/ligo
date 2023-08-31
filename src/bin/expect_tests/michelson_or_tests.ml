@@ -13,7 +13,8 @@ let%expect_test _ =
     ; "unit"
     ; "(M_left (1) : storage)"
     ];
-  [%expect{|
+  [%expect
+    {|
     File "../../test/contracts/double_michelson_or.mligo", line 9, characters 6-9:
       8 |   let foo = (M_right ("one") : storage) in
       9 |   let bar = (M_right 1 : foobar) in

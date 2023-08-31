@@ -376,7 +376,8 @@ end = struct
     | T_record r -> ret @@ T_record r
     | T_abstraction abs -> ret @@ T_abstraction abs
     | T_for_all forall -> ret @@ T_for_all forall
-    | _ -> invariant @@ Format.asprintf "To_core : %a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t)
+    | _ ->
+      invariant @@ Format.asprintf "To_core : %a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t)
 
 
   and pattern
