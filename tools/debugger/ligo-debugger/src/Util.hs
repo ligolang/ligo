@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE InstanceSigs, UndecidableInstances #-}
 
 module Util
   ( groupByKey
@@ -27,6 +27,7 @@ module Util
   , validate
   ) where
 
+import Control.Monad.Validate (MonadValidate, refute)
 import Data.Aeson (FromJSON)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as Key
@@ -36,6 +37,8 @@ import Data.Bitraversable (bitraverse)
 import Data.Char qualified as Char
 import Data.List (groupBy, singleton)
 import Data.Map.Internal qualified as MI
+import Data.MessagePack (Config, DecodeError, MessagePack, Object (..), decodeError)
+import Data.MessagePack.Types (MessagePack (fromObjectWith, toObject))
 import Data.Reflection (Given, give, given)
 import Data.Scientific qualified as Sci
 import Data.SemVer qualified as SemVer
@@ -196,7 +199,7 @@ rmode' = RMode pretty
 
 -- | Sometimes numbers are carried as strings in order to fit into
 -- common limits for sure.
-newtype TextualNumber a = TextualNumber a
+newtype TextualNumber a = TextualNumber { unTextualNumber :: a }
   deriving stock Functor
   deriving newtype NFData
 
@@ -214,6 +217,27 @@ instance Integral a => FromJSON (TextualNumber a) where
       fromIntegralNoOverflow i
         & either (fail . displayException) (pure . TextualNumber)
     other -> Aeson.unexpected other
+
+instance Integral a => MessagePack (TextualNumber a) where
+  toObject _ = const ObjectNil
+  fromObjectWith
+    :: forall m
+     . (MonadValidate DecodeError m)
+    => Config
+    -> Object
+    -> m (TextualNumber a)
+  fromObjectWith _ = \case
+    ObjectStr t -> do
+      i <- readMaybe @Integer (toString t)
+        & maybe (refute "expected a number") pure
+      castNumber i
+    ObjectInt n -> castNumber n
+    ObjectWord n -> castNumber n
+    _ -> refute "Unexpected type"
+    where
+      castNumber :: (Integral b) => b -> m (TextualNumber a)
+      castNumber n = fromIntegralNoOverflow n
+        & either (refute . decodeError . displayException) (pure . TextualNumber)
 
 instance {-# OVERLAPPABLE #-} (FromDoc a) => FromBuilder a where
   fromBuilder = pretty

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, StandaloneKindSignatures, UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 -- | Types coming from @ligo@ executable.
 module Language.LIGO.Debugger.CLI.Types
@@ -9,22 +10,23 @@ import Prelude hiding (Element, Product (..), sum)
 
 import Control.Lens (AsEmpty (..), Each (each), _head, makePrisms, prism)
 import Control.Lens.Prism (_Just)
+import Control.MessagePack
+  (asumMsg, guardMsg, withMsgArray, withMsgMap, withMsgText, withMsgVariant, wrapMonadFail, (.!=),
+  (.:!), (.:), (.:?))
+import Control.Monad.Validate (MonadValidate, refute)
 import Data.Aeson
   (FromJSON (..), Options (constructorTagModifier, fieldLabelModifier, sumEncoding),
-  SumEncoding (TwoElemArray), Value (..), defaultOptions, genericParseJSON, withArray, withObject,
-  (.:!), (.:))
-import Data.Aeson qualified as Aeson
-import Data.Aeson.KeyMap (toAscList)
-import Data.Aeson.KeyMap qualified as Aeson
+  SumEncoding (TwoElemArray), Value (..), defaultOptions, genericParseJSON, withArray)
 import Data.Aeson.Types (Parser)
-import Data.Aeson.Types qualified as Aeson
 import Data.Char (toLower)
 import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Foldable qualified
 import Data.HashMap.Strict qualified as HM
 import Data.List qualified as List
-import Data.List.NonEmpty (singleton)
+import Data.Map qualified as M
+import Data.MessagePack
+  (DecodeError, MessagePack (fromObjectWith, toObject), Object (..), decodeError)
 import Data.Singletons.TH (SingI (..))
 import Data.Text qualified as T
 import Data.Vector qualified as V
@@ -34,10 +36,16 @@ import Fmt.Utils (Doc)
 import System.Console.ANSI
   (Color (Red), ColorIntensity (Dull), ConsoleIntensity (BoldIntensity), ConsoleLayer (Foreground),
   SGR (Reset, SetColor, SetConsoleIntensity))
+import Text.Hex (decodeHex)
 import Text.Interpolation.Nyan (int)
 import Util
 
+import Morley.Micheline
+  (Annotation, MichelinePrimAp (..), MichelinePrimitive, StringEncode (..), TezosBigNum,
+  annotFromText)
+import Morley.Micheline.Expression (Exp (..))
 import Morley.Micheline.Expression qualified as Micheline
+import Morley.Util.ByteString (HexJSONByteString (..))
 import Morley.Util.Lens
 
 import Duplo
@@ -79,7 +87,7 @@ data LigoTypeContent
     -- Common for 4th and 5th stage
     --
     -- @T_variable@
-  = LTCVariable LigoTypeVariable
+  = LTCVariable Text
   | LTCSum LigoTypeSum
     -- | @T_record@
   | LTCRecord LigoTypeRecord
@@ -87,11 +95,6 @@ data LigoTypeContent
   | LTCArrow LigoTypeArrow
     -- | @T_singleton@
   | LTCSingleton LigoTypeLiteralValue
-  | LTCAbstraction LigoTypeForAll
-  | LTCForAll LigoTypeForAll
-    -- 4th stage specific
-  | LTCApp LigoTypeApp
-  | LTCModuleAccessor LigoTypeModuleAccessor
     -- | 5th stage specific
     -- @T_constant@
   | LTCConstant LigoTypeConstant
@@ -115,8 +118,6 @@ data LigoTypeLiteralValue
   | LTLVBls_381G1 Text
   | LTLVBls_381G2 Text
   | LTLVBls_381Fr Text
-  | LTLVChest Text
-  | LTLVChestKey Text
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
 
@@ -125,22 +126,6 @@ data LigoString
   | LSVerbatim Text
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
-
-data LigoTypeApp = LigoTypeApp
-  { _ltaTypeOperator :: LigoTypeVariable
-  , _ltaArguments    :: [LigoTypeExpression]
-  }
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTypeApp
-
-data LigoTypeModuleAccessor = LigoTypeModuleAccessor
-  { _ltmaModulePath :: [LigoModuleVariable]
-  , _ltmaElement    :: LigoTypeVariable
-  }
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 4 LigoTypeModuleAccessor
 
 type LigoTypeSum = LigoTypeTable
 type LigoTypeRecord = LigoTypeTable
@@ -160,12 +145,10 @@ data LigoLayout
 
 data LigoTypeConstant = LigoTypeConstant
   { _ltcParameters :: [LigoTypeExpression]
-  , _ltcLanguage   :: Text
-  , _ltcInjection  :: NonEmpty Text
+  , _ltcInjection  :: Text
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTypeConstant
 
 data LigoTypeArrow = LigoTypeArrow
   -- "type2" -> "type1"
@@ -174,7 +157,6 @@ data LigoTypeArrow = LigoTypeArrow
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTypeArrow
 
 data LigoVar = LigoVar
   { _lvName      :: Text
@@ -185,17 +167,6 @@ data LigoVar = LigoVar
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
   deriving (FromJSON) via LigoJSON 2 LigoVar
-
-type LigoTypeVariable = LigoVar
-type LigoModuleVariable = LigoVar
-
-data LigoTypeForAll = LigoTypeForAll
-  { _ltfaTyBinder :: LigoTypeVariable
-  , _ltfaType_    :: LigoTypeExpression
-  }
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 4 LigoTypeForAll
 
 -- | Location of definition.
 -- ```
@@ -254,18 +225,15 @@ data LigoTypeExpression = LigoTypeExpression
     -- { "type_content": [ <name>, LigoTypeContentInner ] }
     -- ```
     _lteTypeContent :: LigoTypeContent
-    -- | `"location"`
-  , _lteLocation    :: LigoRange
   ---- 4th stage specific
-  , _lteOrigVar     :: Maybe LigoTypeVariable
+  , _lteOrigVar     :: Maybe Text
   }
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData, Hashable)
-  deriving (FromJSON) via LigoJSON 3 LigoTypeExpression
 
 newtype LigoTypesVec = LigoTypesVec { unLigoTypesVec :: Vector LigoTypeExpression }
   deriving stock (Data, Generic)
-  deriving newtype (Show, NFData, FromJSON)
+  deriving newtype (Show, NFData)
 
 newtype LigoType = LigoType { unLigoType :: Maybe LigoTypeExpression }
   deriving stock (Data)
@@ -517,7 +485,7 @@ data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   , _lvdsBodyRange  :: LigoRange
     -- | The type itself
     -- `"t"`
-  , _lvdsT          :: LigoTypeFull
+  , _lvdsT          :: Value
     -- | We parse it in chunks of 2, each odd element of the array is a name for
     -- the corresponding element which is `LigoRangeInner`.
     -- ```
@@ -558,7 +526,7 @@ data LigoTypeDefinitionScope = LigoTypeDefinitionScope
     -- | Definition body location
     -- `"body_location"`
   , _ltdsBodyRange :: LigoRange
-  , _ltdsContent   :: LigoTypeExpression
+  , _ltdsContent   :: Value
   }
   deriving stock (Generic, Show)
   deriving (FromJSON) via LigoJSON 4 LigoTypeDefinitionScope
@@ -582,57 +550,24 @@ instance FromJSON LigoErrorContent where
   parseJSON (String t) = pure $ LigoErrorContent t Nothing
   parseJSON o = genericParseJSON defaultOptions{fieldLabelModifier = drop 5 . toSnakeCase} o
 
--- { "core" : ... }
-instance FromJSON LigoTypeFull where
-  parseJSON = withObject "LigoTypeFull" \o -> case toAscList o of
-    [("core"      , value)] -> LTFCore     <$> parseJSON value
-    [("resolved"  , value)] -> LTFResolved <$> parseJSON value
-    [("unresolved", Null )] -> pure LTFUnresolved
-    _ -> fail "wrong `LigoTypeFull` format"
-
-instance FromJSON LigoTypeLiteralValue where
-  parseJSON val = asum
-    [ twoElemParser val
-    , LTLVUnit <$ guardOneElemList "Literal_unit" val
-    ]
-    where
-      twoElemParser = genericParseJSON defaultOptions
-        { sumEncoding = TwoElemArray
-        , constructorTagModifier = ("Literal" ++) . toSnakeCase . drop 4
-        }
-
-instance FromJSON LigoString where
-  parseJSON = genericParseJSON defaultOptions
-    { sumEncoding = TwoElemArray
-    , constructorTagModifier = drop 2
-    }
-
-instance FromJSON LigoTypeTable where
-  parseJSON = withObject "LigoTypeTable" \o -> do
+instance MessagePack LigoTypeTable where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = withMsgMap "LigoTypeTable" \o -> do
     _lttFields <- parseFields =<< o .: "fields"
     _lttLayout <- o .: "layout"
     pure LigoTypeTable{..}
     where
-      parseFields :: [Value] -> Parser (HashMap Text LigoTypeExpression)
+      parseFields :: (MonadValidate DecodeError m) => [Object] -> m (HashMap Text LigoTypeExpression)
       parseFields = pure . HM.fromList <=< mapM parseElem
 
-      parseElem :: Value -> Parser (Text, LigoTypeExpression)
-      parseElem = withArray "TypeTableField" \arr -> do
+      parseElem :: (MonadValidate DecodeError m) => Object -> m (Text, LigoTypeExpression)
+      parseElem = withMsgArray "TypeTableField" \arr -> do
         case V.toList arr of
           [ctor, content] -> do
-            (_ :: Value, ctorValue) <- parseJSON ctor
-            ctorName <- parseFromStringOrNumber ctorValue
-            typeExpr <- parseJSON content
+            (_ :: Object, ctorName) <- fromObjectWith cfg ctor
+            typeExpr <- fromObjectWith cfg content
             pure (ctorName, typeExpr)
-          _ -> fail "Expected two element array"
-
--- [ "t_variable", ...]
-instance FromJSON LigoTypeContent where
-  parseJSON = genericParseJSON defaultOptions
-    { sumEncoding = TwoElemArray
-    -- "LTCVariable" -> "t_variable"
-    , constructorTagModifier = ('T' :) . toSnakeCase . drop 3
-    }
+          _ -> refute "Expected two element array"
 
 -- [ "Virtual", ...]
 instance FromJSON LigoRange where
@@ -642,23 +577,24 @@ instance FromJSON LigoRange where
     , constructorTagModifier = drop 2
     }
 
-instance FromJSON LigoLayout where
-  parseJSON = withArray "LigoLayout" \arr -> do
+instance MessagePack LigoLayout where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = withMsgArray "LigoLayout" \arr -> do
     case V.toList arr of
-      [String ctor, val]
-        | ctor == "Inner" -> LLInner <$> parseJSON val
+      [ObjectStr ctor, val]
+        | ctor == "Inner" -> LLInner <$> fromObjectWith cfg val
         | ctor == "Field" ->
             case val of
-              Object obj -> do
-                (_ :: Value, nameValue) <- obj .: "name"
-                name <- parseFromStringOrNumber nameValue
+              ObjectMap (M.fromList . toList -> obj) -> do
+                (_ :: Object, name) <- obj .: "name"
                 pure $ LLField name
-              _ -> fail [int||Expected object in constructor "Field"|]
-        | otherwise -> fail [int||Unexpected constructor #{ctor}|]
-      _ -> fail "Expected a two element array"
+              _ -> refute $ decodeError [int||Expected object in constructor "Field"|]
+        | otherwise -> refute $ decodeError [int||Unexpected constructor #{ctor}|]
+      _ -> refute "Expected a two element array"
 
-instance FromJSON (LigoVariable u) where
-  parseJSON = fmap LigoVariable . parseJSON
+instance MessagePack (LigoVariable u) where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = fmap LigoVariable . fromObjectWith cfg
 
 instance Buildable LigoTypeRef where
   build (LigoTypeRef i) =  [int||type##{i}|]
@@ -675,11 +611,13 @@ instance (SingI u) => Buildable (LigoExposedStackEntry u) where
     let declB = maybe (build unknownVariable) build decl
     in [int||elem #{declB} of #{buildLigoTypeF @u ty}|]
 
-instance FromJSON LigoTypeRef where
-  parseJSON val = parseJSON val >>= \(TextualNumber n) -> pure $ LigoTypeRef n
+instance MessagePack LigoTypeRef where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg val = fromObjectWith cfg val >>= \(TextualNumber n) -> pure $ LigoTypeRef n
 
-instance FromJSON (LigoExposedStackEntry 'Unique) where
-  parseJSON = withObject "LIGO exposed stack entry" \o -> do
+instance MessagePack (LigoExposedStackEntry 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LIGO exposed stack entry" \o -> do
     leseType <- o .:! "source_type"
     leseDeclaration <- o .:! "name"
     return LigoExposedStackEntry{..}
@@ -689,13 +627,14 @@ instance (SingI u) => Buildable (LigoStackEntry u) where
     LigoStackEntry ese   -> build ese
     LigoHiddenStackEntry -> "<hidden elem>"
 
-instance FromJSON (LigoStackEntry 'Unique) where
-  parseJSON v = case v of
-    Aeson.Null       -> pure LigoHiddenStackEntry
-    Aeson.Object o
-      | Aeson.null o -> pure LigoHiddenStackEntry
-      | otherwise    -> LigoStackEntry <$> parseJSON v
-    other            -> Aeson.unexpected other
+instance MessagePack (LigoStackEntry 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg v = case v of
+    ObjectNil     -> pure LigoHiddenStackEntry
+    ObjectMap o
+      | V.null o  -> pure LigoHiddenStackEntry
+      | otherwise -> LigoStackEntry <$> fromObjectWith cfg v
+    _             -> refute "Unexpected value"
 
 instance Default (LigoIndexedInfo u) where
   def = LigoEmptyLocationInfo
@@ -709,8 +648,9 @@ instance (SingI u) => Buildable (LigoIndexedInfo u) where
       , case typ of { Just ty -> Just [int||source type: #{buildLigoTypeF @u ty}|] ; _ -> Nothing }
       ]
 
-instance FromJSON (LigoIndexedInfo 'Unique) where
-  parseJSON = withObject "location info" \o -> do
+instance MessagePack (LigoIndexedInfo 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "location info" \o -> do
     liiLocation <- o .:! "location"
     liiEnvironment <- o .:! "environment"
     liiSourceType <-  o .:! "source_type"
@@ -724,19 +664,117 @@ instance AsEmpty (LigoIndexedInfo u) where
 instance {-# OVERLAPPING #-} (SingI u) => Buildable [LigoIndexedInfo u] where
   build = blockListF
 
-instance FromJSON (LigoMapper 'Unique) where
-  parseJSON = withObject "ligo output" \o -> do
+instance MessagePack Micheline.Expression where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg v = asumMsg
+    [ ExpSeq () <$> fromObjectWith cfg v
+    , ExpPrim () <$> fromObjectWith cfg v
+    , ExpString () <$> withMsgMap "ExpressionString" (.: "string") v
+    , ExpInt () . unStringEncode <$> withMsgMap "ExpressionInt" (.: "int") v
+    , ExpBytes () . unHexJSONByteString <$> withMsgMap "ExpressionBytes" (.: "bytes") v
+    ]
+
+instance MessagePack (Exp x) => MessagePack (MichelinePrimAp x) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "Prim" \v -> MichelinePrimAp
+    <$> v .: "prim"
+    <*> v .:? "args"   .!= []
+    <*> v .:? "annots" .!= []
+
+instance MessagePack MichelinePrimitive where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgText "MichelinePrimitive" \t ->
+    either (refute . decodeError . toString) pure $ readEither ("Prim_" <> t)
+
+instance MessagePack Annotation where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgText "Annotation" (wrapMonadFail "Cannot parse annotation" . annotFromText)
+
+instance MessagePack TezosBigNum where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = fmap StringEncode . withMsgText "TezosBigNum" \txt ->
+    maybe (refute "Failed to parse string") pure $ readMaybe (toString txt)
+
+instance MessagePack HexJSONByteString where
+  toObject _ = const ObjectNil
+  fromObjectWith _ =
+    withMsgText "Hex-encoded bytestring" \t ->
+      case decodeHex t of
+        Nothing -> refute "Invalid hex encoding"
+        Just res -> pure (HexJSONByteString res)
+
+instance MessagePack (LigoMapper 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "ligo output" \o -> do
     mich <- o .: "michelson"
     lmMichelsonCode <- mich .: "expression"
-
-    -- Here we are inlining types in @source_type@ fields.
-    --
-    -- Also, we need to replace textual numbers with fair
-    -- json ones because the json-schema from source mapper
-    -- differs from @ligo info get-scopes@ one in this place.
-    lmTypes <- parseJSON . replaceTextualNumbers =<< o .: "types"
+    lmTypes <- o .: "types"
     lmLocations <- mich .: "locations"
     return LigoMapper{..}
+
+instance MessagePack LigoTypesVec where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = fmap LigoTypesVec . fromObjectWith cfg
+
+instance MessagePack LigoTypeExpression where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LigoTypeExpression" \o -> do
+    _lteTypeContent <- o .: "type_content"
+    _lteOrigVar <- o .:? "orig_var"
+    pure LigoTypeExpression{..}
+
+instance MessagePack LigoTypeContent where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = withMsgVariant "LigoTypeContent" \(name, arg) -> asumMsg
+    [ LTCVariable    <$> (guardMsg (name == "T_variable"   ) >> fromObjectWith cfg arg)
+    , LTCSum         <$> (guardMsg (name == "T_sum"        ) >> fromObjectWith cfg arg)
+    , LTCRecord      <$> (guardMsg (name == "T_record"     ) >> fromObjectWith cfg arg)
+    , LTCArrow       <$> (guardMsg (name == "T_arrow"      ) >> fromObjectWith cfg arg)
+    , LTCSingleton   <$> (guardMsg (name == "T_singleton"  ) >> fromObjectWith cfg arg)
+    , LTCConstant    <$> (guardMsg (name == "T_constant"   ) >> fromObjectWith cfg arg)
+    ]
+
+instance MessagePack LigoTypeArrow where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LigoTypeArrow" \o -> do
+    _ltaType1 <- o .: "type1"
+    _ltaType2 <- o .: "type2"
+    pure LigoTypeArrow{..}
+
+instance MessagePack LigoTypeLiteralValue where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = withMsgVariant "LigoTypeLiteralValue" \(name, arg) -> asumMsg
+    [ LTLVUnit                        <$   guardMsg (name == "Literal_unit"        )
+    , LTLVInt       . unTextualNumber <$> (guardMsg (name == "Literal_int"         ) >> fromObjectWith cfg arg)
+    , LTLVNat       . unTextualNumber <$> (guardMsg (name == "Literal_nat"         ) >> fromObjectWith cfg arg)
+    , LTLVTimestamp . unTextualNumber <$> (guardMsg (name == "Literal_timestamp"   ) >> fromObjectWith cfg arg)
+    , LTLVMutez     . unTextualNumber <$> (guardMsg (name == "Literal_mutez"       ) >> fromObjectWith cfg arg)
+    , LTLVString                      <$> (guardMsg (name == "Literal_string"      ) >> fromObjectWith cfg arg)
+    , LTLVBytes                       <$> (guardMsg (name == "Literal_bytes"       ) >> fromObjectWith cfg arg)
+    , LTLVAddress                     <$> (guardMsg (name == "Literal_address"     ) >> fromObjectWith cfg arg)
+    , LTLVSignature                   <$> (guardMsg (name == "Literal_signature"   ) >> fromObjectWith cfg arg)
+    , LTLVKey                         <$> (guardMsg (name == "Literal_key"         ) >> fromObjectWith cfg arg)
+    , LTLVKeyHash                     <$> (guardMsg (name == "Literal_key_hash"    ) >> fromObjectWith cfg arg)
+    , LTLVChainId                     <$> (guardMsg (name == "Literal_chain_id"    ) >> fromObjectWith cfg arg)
+    , LTLVOperation                   <$> (guardMsg (name == "Literal_operation"   ) >> fromObjectWith cfg arg)
+    , LTLVBls_381G1                   <$> (guardMsg (name == "Literal_bls12_381_g1") >> fromObjectWith cfg arg)
+    , LTLVBls_381G2                   <$> (guardMsg (name == "Literal_bls12_381_g2") >> fromObjectWith cfg arg)
+    , LTLVBls_381Fr                   <$> (guardMsg (name == "Literal_bls12_381_fr") >> fromObjectWith cfg arg)
+    ]
+
+instance MessagePack LigoString where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = withMsgVariant "LigoString" \(name, arg) -> asumMsg
+    [ LSStandard <$> (guardMsg (name == "Standard") >> fromObjectWith cfg arg)
+    , LSVerbatim <$> (guardMsg (name == "Verbatim") >> fromObjectWith cfg arg)
+    ]
+
+instance MessagePack LigoTypeConstant where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LigoTypeConstant" \o -> do
+    _ltcParameters <- o .: "parameters"
+    _ltcInjection <- o .: "injection"
+    pure LigoTypeConstant{..}
 
 -- This @Buildable@ instance handles only generated
 -- main functions for module entrypoints.
@@ -774,14 +812,6 @@ instance Buildable LigoError where
 ----------------------------------------------------------------------------
 -- Helpers
 ----------------------------------------------------------------------------
-
-parseFromStringOrNumber :: Value -> Parser Text
-parseFromStringOrNumber val = asum
-  [ do
-      TextualNumber (n :: Int) <- parseJSON val
-      pure $ pretty n
-  , parseJSON val
-  ]
 
 guardOneElemList :: Text -> Value -> Parser ()
 guardOneElemList expected = withArray (toString expected) \arr -> do
@@ -849,7 +879,7 @@ fromLigoTypeFull = \case
 fromLigoTypeExpression :: LigoTypeExpression -> LIGO Info
 fromLigoTypeExpression
   LigoTypeExpression {..} =
-    let st = putElem (fromLigoRangeOrDef _lteLocation) defaultState in
+    let st = putElem (point 0 0) defaultState in
     fromLigoType st _lteTypeContent
 
 fromLigoType
@@ -859,7 +889,7 @@ fromLigoType
 fromLigoType st = \case
   LTCConstant LigoTypeConstant {..} ->
     -- See: https://gitlab.com/ligolang/ligo/-/issues/1478
-    fromLigoConstant (head _ltcInjection & over _head toLower) _ltcParameters
+    fromLigoConstant (_ltcInjection & over _head toLower) _ltcParameters
 
   LTCVariable variable -> fromLigoVariable variable
 
@@ -880,21 +910,6 @@ fromLigoType st = \case
         make' (st, TSum (ligoLayoutToLayout ligoLayout) (v :| vs))
 
   LTCSingleton literalValue -> fromLigoTypeLiteralValue literalValue
-  LTCAbstraction _ -> mkErr "unsupported type Abstraction"    -- TODO not used
-
-  LTCForAll LigoTypeForAll{..} ->
-    let tyVar = fromLigoTypeExpression _ltfaType_ in
-    make' (st, TVariable tyVar)
-
-  LTCModuleAccessor LigoTypeModuleAccessor{..} ->
-    let path = map (fromLigoPrimitive NameModule . _lvName) _ltmaModulePath in
-    let element = fromLigoVariable _ltmaElement in
-    make' (st, ModuleAccess path element)
-
-  LTCApp LigoTypeApp{..} ->
-    let n = fromLigoVariable _ltaTypeOperator in
-    let p = fromLigoTypeExpression <$> _ltaArguments in
-    make' (st, TApply n p)
 
   LTCArrow LigoTypeArrow {..} ->
     make' (st, TArrow (fromLigoTypeExpression _ltaType1) (fromLigoTypeExpression _ltaType2))
@@ -944,16 +959,14 @@ fromLigoType st = \case
       LTLVBls_381G1 bts -> make' (st, CBytes bts)
       LTLVBls_381G2 bts -> make' (st, CBytes bts)
       LTLVBls_381Fr bts -> make' (st, CBytes bts)
-      LTLVChest bts -> make' (st, CBytes bts)
-      LTLVChestKey bts -> make' (st, CBytes bts)
 
     fromLigoString :: LigoString -> LIGO Info
     fromLigoString = \case
       LSStandard str -> make' (st, CString str)
       LSVerbatim str -> make' (st, Verbatim str)
 
-    fromLigoVariable :: LigoVar -> LIGO Info
-    fromLigoVariable = fromLigoPrimitive NameType . _lvName
+    fromLigoVariable :: Text -> LIGO Info
+    fromLigoVariable = fromLigoPrimitive NameType
 
     fromLigoPrimitive :: NameKind -> Text -> LIGO Info
     fromLigoPrimitive = \case
@@ -1036,7 +1049,6 @@ stripSuffixHashVariable var = LigoVariable $ pretty var
 mkTypeExpression :: LigoTypeContent -> LigoTypeExpression
 mkTypeExpression content = LigoTypeExpression
   { _lteTypeContent = content
-  , _lteLocation = LRVirtual "dummy"
   , _lteOrigVar = Nothing
   }
 
@@ -1044,8 +1056,7 @@ mkConstantType :: Text -> [LigoTypeExpression] -> LigoTypeExpression
 mkConstantType typeName parameters = mkTypeExpression $ LTCConstant $
   LigoTypeConstant
     { _ltcParameters = parameters
-    , _ltcLanguage = "Michelson"
-    , _ltcInjection = singleton typeName
+    , _ltcInjection = typeName
     }
 
 mkArrowType :: LigoTypeExpression -> LigoTypeExpression -> LigoTypeExpression

@@ -87,3 +87,8 @@ extra-deps:
 - run-st-0.1.1.0
 - zigzag-0.0.1.0
 - contiguous-0.6.1.1
+#msgpack
+- msgpack-types-0.3.2
+- monad-validate-1.2.0.1
+- msgpack-binary-0.0.16
+- msgpack-arbitrary-0.1.3

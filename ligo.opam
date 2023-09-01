@@ -40,6 +40,7 @@ depends: [
   "tar-unix"
   "lambda-term"
   "parse-argv"
+  "msgpck"
   # Tezos libs
   "tezos-base"
   "tezos-crypto"

@@ -9,7 +9,6 @@ module Language.LIGO.Debugger.Common
   , getStatementLocs
   , isRedundantIndexedInfo
   , stkElValue
-  , isLigoStdLib
   , errorValueType
   , errorAddress
   , ReplacementException (..)
@@ -61,7 +60,7 @@ import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Product (Contains)
-import Language.LIGO.Range (LigoPosition (..), Range (..), getRange)
+import Language.LIGO.Range (LigoPosition (..), Range (..), getRange, isLigoStdLib)
 
 -- | Type of meta that we embed in Michelson contract to later use it
 -- in debugging.
@@ -292,14 +291,6 @@ isRedundantIndexedInfo LigoIndexedInfo{..} = isNothing $ asum
 
   , void liiEnvironment
   ]
-
--- | LIGO debug output, when optimizations are disabled, may mention locations
--- referring to LIGO's standard library that defines bindings to every single
--- Michelson instruction.
--- LIGO teams says that we should just ignore such locations.
-isLigoStdLib :: FilePath -> Bool
-isLigoStdLib path =
-  path == ""
 
 errorValueType :: U.Ty
 errorValueType = [utypeQ|pair address string|]

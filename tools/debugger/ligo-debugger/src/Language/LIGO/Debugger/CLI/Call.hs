@@ -33,6 +33,7 @@ import Data.Aeson.Types (Parser, parseEither)
 import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
 import Data.Map qualified as M
+import Data.MessagePack (errorMessages, unpackEither)
 import Data.SemVer qualified as SemVer
 import Data.Text qualified as T
 import Data.Text qualified as Text
@@ -301,6 +302,8 @@ checkCompilation EntrypointName{..} file = void $ withMapLigoExc $
         [ ["compile", "contract"]
         , ["--no-warn"]
         , guard (not $ T.null enModule) >> ["-m", strArg enModule]
+        , ["--experimental-disable-optimizations-for-debugging"]
+        , ["--disable-michelson-typechecking"]
         , [strArg file]
         ]
     Nothing
@@ -312,7 +315,7 @@ compileLigoContractDebug EntrypointName{..} file = withMapLigoExc $
     do concat
         [ ["compile", "contract"]
         , ["--no-warn"]
-        , ["--michelson-format", "json"]
+        , ["--michelson-format", "msgpack"]
         , ["--michelson-comments", "location"]
         , ["--michelson-comments", "env"]
         , guard (not $ T.null enModule) >> ["-m", strArg enModule]
@@ -321,8 +324,8 @@ compileLigoContractDebug EntrypointName{..} file = withMapLigoExc $
         , [strArg file]
         ]
     Nothing
-    >>= either (throwIO . LigoDecodeException "decoding source mapper" . toText) pure
-      . Aeson.eitherDecode
+    >>= either (throwIO . LigoDecodeException "decoding source mapper" . unlines . fmap toText . errorMessages) pure
+      . unpackEither
 
 -- | Run ligo to compile expression into Michelson in the context of the
 -- given file.
