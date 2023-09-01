@@ -206,13 +206,19 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
         config.entrypoint = '(*@AskOnStart@*)'
         config.parameter = '(*@AskOnStart@*)'
         config.storage = '(*@AskOnStart@*)'
-        config.configPath = '(*@AskOnStart@*)'
       }
     } else if (!isDefined(config.configPath)) {
       const askedForConfig = this.context.workspaceState.askedForLigoConfig();
       if (!isDefined(askedForConfig) || !askedForConfig.value) {
-        const created = await createConfigSnippet(this.context);
-        askedForConfig.value = created;
+        vscode.window.showInformationMessage(
+          'LIGO configuration not found. Create a launch configuration file?',
+          'Yes',
+        ).then(async result => {
+          if (isDefined(result)) {
+            const created = await createConfigSnippet(this.context);
+            askedForConfig.value = created;
+          }
+        });
       }
     }
 
@@ -224,7 +230,6 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     config.entrypoint ??= '(*@AskOnStart@*)'
     config.parameterLang ??= 'LIGO'
     config.storageLang ??= 'LIGO'
-    config.configPath ??= '(*@AskOnStart@*)'
 
     if (config.logDir === '') {
       config.logDir = undefined

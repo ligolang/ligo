@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fix a bug with the config creation file manager. Now it shows a pop-up message that offers you to create a config in LIGO if you debug a contract for the first time.\\n\\n\\n"
+merge_request: '2839'
+title: "[#1978] Fix a bug with config creation file manager"
+type: fixed
+            
