@@ -1,5 +1,5 @@
 (* Transforming ALL comments into attributes or embedding them in the
-   next preprocessing directive as JsLIGO comments *)
+   next preprocessing directive as PascaLIGO comments *)
 
 (* Vendor dependencies *)
 
@@ -28,9 +28,17 @@ let rec comments_to_attr acc = function
 | tokens -> acc, tokens
 
 let rec hook_comments_to_dir directive acc = function
-  Token.(BlockCom w | LineCom w) :: tokens ->
-    let value     = sprintf "/*%s*/" w#payload in
-    let comment   = Region.{value; region = w#region} in
+  Token.(BlockCom _ | LineCom _) as comment :: tokens ->
+    let comment   = match comment with
+      BlockCom w -> `BlockComment
+        (
+        Region.{value = Preprocessing_pascaligo.Config.block, w#payload;
+        region = w#region})
+    | LineCom w -> `LineComment
+       (
+       Region.{value = Preprocessing_pascaligo.Config.line, w#payload; region = w#region})
+    | _ -> failwith "hook_comments_to_dir: impossible"
+    in
     let directive = Directive.add_comment comment directive
     in hook_comments_to_dir directive acc tokens
 | tokens -> Token.Directive directive :: acc, tokens
