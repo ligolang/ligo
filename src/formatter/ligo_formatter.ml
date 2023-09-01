@@ -82,6 +82,7 @@ let new_project_format : 'a format =
 module Michelson_formatter = struct
   open Tezos_utils.Michelson
   open Simple_utils
+  module Row = Row.With_layout
 
   let pp_hex ppf michelson =
     let hex = Proto_alpha_utils.Memory_proto_alpha.to_hex michelson in
@@ -92,6 +93,7 @@ module Michelson_formatter = struct
     [ `Text
     | `Json
     | `Hex
+    | `Msgpack
     ]
 
   type michelson_comments =
@@ -116,8 +118,31 @@ module Michelson_formatter = struct
     ; source_type : int option
     }
 
+  type shrunk_type_content =
+    | T_variable of string
+    | T_constant of shrunk_type_injection
+    | T_sum of shrunk_type_expression Row.t
+    | T_record of shrunk_type_expression Row.t
+    | T_arrow of shrunk_type_expression Arrow.t
+    | T_singleton of Literal_value.t
+    (* They shouldn't appear in the source mapper
+       but let's leave them for the consistency *)
+    | T_abstraction of Ast_typed.type_expression Abstraction.t
+    | T_for_all of Ast_typed.type_expression Abstraction.t
+
+  and shrunk_type_injection =
+    { injection : string
+    ; parameters : shrunk_type_expression list
+    }
+
+  and shrunk_type_expression =
+    { type_content : shrunk_type_content
+    ; orig_var : string option
+    }
+  [@@deriving yojson]
+
   type shrunk_result =
-    { types : Ast_typed.type_expression list
+    { types : shrunk_type_expression list
     ; michelson : (shrunk_meta, string) Tezos_micheline.Micheline.node
     }
 
@@ -165,15 +190,25 @@ module Michelson_formatter = struct
     | `Int n -> `String (string_of_int n)
 
 
+  let rec json_to_msgpack : Data_encoding.Json.t -> Msgpck.t =
+    let open Msgpck in
+    function
+    | `O kvs -> of_map @@ List.map kvs ~f:(fun (k, v) -> of_string k, json_to_msgpack v)
+    | `Bool b -> of_bool b
+    | `Float n -> of_float n
+    | `A lst -> of_list @@ List.map lst ~f:json_to_msgpack
+    | `Null -> of_nil
+    | `String str -> of_string str
+
+
   let location_to_json (location : Location.t) : Data_encoding.Json.t option =
     if Location.is_virtual location
     then None
     else Some (yojson_to_json (Location.to_human_yojson location))
 
 
-  let source_type_to_json (source_type : Ast_typed.type_expression) : Data_encoding.Json.t
-    =
-    yojson_to_json (Ast_typed.type_expression_to_yojson source_type)
+  let source_type_to_json (source_type : shrunk_type_expression) : Data_encoding.Json.t =
+    yojson_to_json (shrunk_type_expression_to_yojson source_type)
 
 
   let json_object (vals : (string * Data_encoding.Json.t option) list)
@@ -263,7 +298,37 @@ module Michelson_formatter = struct
         (fun prim -> prim)
         node
     in
-    { types = TypeSet.elements type_set; michelson = node }
+    let rec shrink_type ({ type_content; orig_var; _ } : Ast_typed.type_expression)
+        : shrunk_type_expression
+      =
+      let open Ligo_prim in
+      let orig_var = Option.map ~f:Type_var.to_name_exn orig_var in
+      let shrink_type_content : Ast_typed.type_content -> shrunk_type_content = function
+        | T_variable var_name ->
+          let var_name =
+            if Type_var.is_generated var_name
+            then "<generated>"
+            else Type_var.to_name_exn var_name
+          in
+          T_variable var_name
+        | T_constant { injection; parameters; _ } ->
+          let injection = Literal_types.to_string injection in
+          let parameters = List.map ~f:shrink_type parameters in
+          T_constant { injection; parameters }
+        | T_sum row_expr -> T_sum (Row.With_layout.map shrink_type row_expr)
+        | T_record row_expr -> T_record (Row.With_layout.map shrink_type row_expr)
+        | T_arrow { type1; type2 } ->
+          let type1 = shrink_type type1 in
+          let type2 = shrink_type type2 in
+          T_arrow { type1; type2 }
+        | T_singleton literal_val -> T_singleton literal_val
+        | T_abstraction abstr_ty_expr -> T_abstraction abstr_ty_expr
+        | T_for_all abstr_ty_expr -> T_for_all abstr_ty_expr
+      in
+      let type_content = shrink_type_content type_content in
+      { type_content; orig_var }
+    in
+    { types = List.map ~f:shrink_type @@ TypeSet.elements type_set; michelson = node }
 
 
   let variable_meta_to_json : shrunk_variable_meta -> Data_encoding.Json.t = function
@@ -306,27 +371,38 @@ module Michelson_formatter = struct
       if location || env then Some meta_encoding else None
 
 
-  let pp_result_json michelson_comments ppf result =
+  let result_to_json michelson_comments result =
     let json = get_json ?comment:(comment_encoding michelson_comments) result.michelson in
-    let json =
-      if michelson_comments.env
-      then
-        `O
-          [ "types", `A (List.map ~f:source_type_to_json result.types)
-          ; "michelson", json
-          ]
-      else json
-    in
+    if michelson_comments.env
+    then
+      `O [ "types", `A (List.map ~f:source_type_to_json result.types); "michelson", json ]
+    else json
+
+
+  let pp_result_msgpack michelson_comments ppf result =
+    let msgpack = json_to_msgpack @@ result_to_json michelson_comments result in
+    Format.fprintf ppf "%s" (Buffer.contents @@ Msgpck.BytesBuf.to_string msgpack)
+
+
+  let pp_result_json michelson_comments ppf result =
+    let json = result_to_json michelson_comments result in
     Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
 
 
-  let pp_view_json ppf (parameter, returnType, code) =
+  let view_to_json (parameter, returnType, code) =
     let code_json : Data_encoding.json = get_json code in
     let returnType_json : Data_encoding.json = get_json returnType in
     let parameter_json : Data_encoding.json = get_json parameter in
-    let json : Data_encoding.json =
-      `O [ "parameter", parameter_json; "returnType", returnType_json; "code", code_json ]
-    in
+    `O [ "parameter", parameter_json; "returnType", returnType_json; "code", code_json ]
+
+
+  let pp_view_msgpack ppf view =
+    let msgpack = json_to_msgpack @@ view_to_json view in
+    Format.fprintf ppf "%s" (Buffer.contents @@ Msgpck.BytesBuf.to_string msgpack)
+
+
+  let pp_view_json ppf view =
+    let json : Data_encoding.json = view_to_json view in
     Format.fprintf ppf "%s" (Data_encoding.Json.to_string ~minify:true json)
 
 
@@ -348,6 +424,7 @@ module Michelson_formatter = struct
           pp_comment ~comment:(comment michelson_comments) ppf result.michelson
       | `Json -> pp_result_json michelson_comments
       | `Hex -> fun ppf result -> pp_hex ppf result.michelson
+      | `Msgpack -> pp_result_msgpack michelson_comments
     in
     match display_format with
     | Human_readable | Dev ->
@@ -372,6 +449,9 @@ module Michelson_formatter = struct
     | `Json ->
       let code_as_str = Format.asprintf "%a" (pp_result_json michelson_comments) a in
       `Assoc [ "json_code", `String code_as_str ]
+    | `Msgpack ->
+      let code_as_str = Format.asprintf "%a" (pp_result_msgpack michelson_comments) a in
+      `Assoc [ "msgpack_code", `String code_as_str ]
 
 
   let convert_michelson_comments
@@ -422,6 +502,7 @@ module Michelson_formatter = struct
       | `Text -> fun ppf (_, _, code) -> pp_comment ~comment:(fun _ -> None) ppf code
       | `Json -> pp_view_json
       | `Hex -> fun ppf (_, _, code) -> pp_hex ppf code
+      | `Msgpack -> pp_view_msgpack
     in
     match display_format with
     | Human_readable | Dev ->
@@ -443,6 +524,11 @@ module Michelson_formatter = struct
     | `Json ->
       let code_as_str = Format.asprintf "%a" pp_view_json (parameter, returnType, code) in
       `Assoc [ "json_code", `String code_as_str ]
+    | `Msgpack ->
+      let code_as_str =
+        Format.asprintf "%a" pp_view_msgpack (parameter, returnType, code)
+      in
+      `Assoc [ "msgpack_code", `String code_as_str ]
 
 
   let view_result_format

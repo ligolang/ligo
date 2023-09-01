@@ -397,7 +397,7 @@ buildLigoValue' lang mode ligoType = \case
   where
     typesFromConstantAndName = do
       LTCConstant LigoTypeConstant{..} <- _lteTypeContent <$> unLigoType ligoType
-      pure (_ltcParameters, T.toLower $ head _ltcInjection)
+      pure (_ltcParameters, T.toLower _ltcInjection)
 
     innerTypeFromConstant = LigoType (listToMaybe . fst =<< typesFromConstantAndName)
     (keyType, valueType) = maybe (LigoType Nothing, LigoType Nothing) (bimap LigoType LigoType)

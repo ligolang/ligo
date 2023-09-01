@@ -14,6 +14,7 @@ library
   exposed-modules:
       Control.AbortingThreadPool
       Control.DelayedValues
+      Control.MessagePack
       Debug
       Language.LIGO.AST
       Language.LIGO.AST.Common
@@ -127,11 +128,15 @@ library
     , fmt
     , free
     , hashable
+    , hex-text
     , lens
     , monad-stm
+    , monad-validate
     , morley
     , morley-debugger
     , morley-prelude
+    , msgpack-binary
+    , msgpack-types
     , mtl
     , named
     , nyan-interpolation

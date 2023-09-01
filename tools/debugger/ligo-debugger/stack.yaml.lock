@@ -409,6 +409,34 @@ packages:
       size: 600
   original:
     hackage: contiguous-0.6.1.1
+- completed:
+    hackage: msgpack-types-0.3.2@sha256:32d4682a9ef3f454a336183ef918f266c25caf50a2d645e9ccae435d95afab62,2175
+    pantry-tree:
+      sha256: b2243826182182f0e50bab640fafd731e637374632c60e0a23408ed80d19a01c
+      size: 1061
+  original:
+    hackage: msgpack-types-0.3.2
+- completed:
+    hackage: monad-validate-1.2.0.1@sha256:5a100da896f11ca4b7c123da85decbedeb46c37054a097f258ac911e715cb68d,2587
+    pantry-tree:
+      sha256: 034ee4de9765e38b763f5d73b236cc112205728e680cefbfe12d2882accc3264
+      size: 611
+  original:
+    hackage: monad-validate-1.2.0.1
+- completed:
+    hackage: msgpack-binary-0.0.16@sha256:ff25964e5d340731a213afc70d65d8dd799513ab50035fb755752391659ff912,2707
+    pantry-tree:
+      sha256: 44b3b407651ddfcc73530c77600d685cff80c949c0c72cab3972e82abd29088b
+      size: 819
+  original:
+    hackage: msgpack-binary-0.0.16
+- completed:
+    hackage: msgpack-arbitrary-0.1.3@sha256:1699fdb03a96b2d98603a69554a11060307f9b88dd6ca18afce4786d46a45070,1781
+    pantry-tree:
+      sha256: 8cfe25b09657574c880693c56aa3d7f0981471b781162829d7c50469473b8dbc
+      size: 598
+  original:
+    hackage: msgpack-arbitrary-0.1.3
 snapshots:
 - completed:
     sha256: a27a5761890ade44d7dd21a5f5f93c87e60b9c063655fff835d69dd1071474f0

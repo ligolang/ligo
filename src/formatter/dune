@@ -7,4 +7,7 @@
   tezos-utils
   proto-alpha-utils
   ast_typed
-  mini_c))
+  mini_c
+  msgpck)
+ (preprocess
+  (pps ppx_deriving_yojson)))

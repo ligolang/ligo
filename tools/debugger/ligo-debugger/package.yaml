@@ -85,10 +85,14 @@ library:
     - fmt
     - free
     - hashable
+    - hex-text
     - lens
     - monad-stm
+    - monad-validate
     - morley
     - morley-debugger
+    - msgpack-binary
+    - msgpack-types
     - mtl
     - named
     - nyan-interpolation
