@@ -21,13 +21,14 @@ type tokens = Token.t list
 (* Filter (right to left) *)
 
 let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
-  Directive w -> (
-    let region, value =
+  Directive w ->
+    let comment =
       match comment with
-        Wrap.Block Region.{region; value} -> region, value
-      | Wrap.Line  Region.{region; value} -> region, value in
-    let reg = Region.{value; region} in
-    Directive (Directive.add_comment reg w))
+        Wrap.Block {region; value = c} ->
+          `BlockComment Region.{region; value = Preprocessing_jsligo.Config.block, c}
+        | Wrap.Line {region; value = c} ->
+          `LineComment  Region.{region; value = Preprocessing_jsligo.Config.line, c}
+    in Directive (Directive.add_comment comment w)
 
   (* Comments *)
 

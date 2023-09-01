@@ -52,6 +52,26 @@ type message     = string
 type variable    = string
 type flag        = Push | Pop
 
+type block_comment_delimiters = <opening : string; closing : string> option
+type line_comment_delimiter   = string option
+
+type block_comment = [`BlockComment of (block_comment_delimiters * string) Region.reg]
+type line_comment = [`LineComment of (line_comment_delimiter * string) Region.reg]
+
+type comment = [ block_comment | line_comment ]
+
+let pp_comment : [< block_comment | line_comment ] -> string = function
+    `BlockComment Region.{value = (delim, content); _} ->
+      let opening, closing = match delim with
+        None -> "", ""
+      | Some delim -> delim#opening, delim#closing
+      in opening ^ content ^ closing
+  | `LineComment Region.{value = (delim, content)} ->
+      let opening = Option.value ~default:"" delim
+      in opening ^ content
+
+type error_message = string
+
 (* Endings of preprocessing directives *)
 
 type ending = [
@@ -63,13 +83,13 @@ type ending = [
 type include_directive = <
   region            : Region.t;
   file_path         : file_path Region.reg;
-  trailing_comment  : string Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> include_directive;
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> include_directive;
   set_file_path     : file_path Region.reg -> include_directive
 >
 
-let mk_include ?previous_comments ?trailing_comment dir_region file_path
+let mk_include ?previous_comment ?trailing_comment dir_region file_path
   : include_directive =
   object
     method region : Region.t = dir_region
@@ -79,10 +99,10 @@ let mk_include ?previous_comments ?trailing_comment dir_region file_path
 
     method set_file_path file_path = {< file_path >}
 
-    method trailing_comment : message Region.reg option = trailing_comment
+    method trailing_comment : line_comment option = trailing_comment
 
-    val previous_comments : string Region.reg list =
-      Option.to_list previous_comments
+    val previous_comments : comment list =
+      Option.to_list previous_comment
 
     method previous_comments = previous_comments
 
@@ -96,13 +116,13 @@ type import_directive = <
   region            : Region.t;
   file_path         : file_path Region.reg;
   module_name       : module_name Region.reg;
-  trailing_comment  : message Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> import_directive;
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> import_directive;
   set_file_path     : file_path Region.reg -> import_directive
 >
 
-  let mk_import ?previous_comments ?trailing_comment dir_region
+  let mk_import ?previous_comment ?trailing_comment dir_region
                 file_path module_name : import_directive =
   object
     method region : Region.t = dir_region
@@ -113,10 +133,10 @@ type import_directive = <
     method set_file_path file_path = {< file_path >}
 
     method module_name      : module_name Region.reg = module_name
-    method trailing_comment : string Region.reg option = trailing_comment
+    method trailing_comment : line_comment option = trailing_comment
 
-    val previous_comments : string Region.reg list =
-      Option.to_list previous_comments
+    val previous_comments : comment list =
+      Option.to_list previous_comment
 
     method previous_comments = previous_comments
 
@@ -129,23 +149,23 @@ type import_directive = <
 type bool_expr = <
   region            : Region.t;
   expression        : E_AST.t;
-  trailing_comment  : string Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> bool_expr
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> bool_expr
 >
 
 type if_directive   = bool_expr
 type elif_directive = bool_expr
 
-let mk_bool_expr ?previous_comments ?trailing_comment dir_region expr
+let mk_bool_expr ?previous_comment ?trailing_comment dir_region expr
   : bool_expr =
   object
     method region           : Region.t = dir_region
     method expression       : E_AST.t = expr
-    method trailing_comment : message Region.reg option = trailing_comment
+    method trailing_comment : line_comment option = trailing_comment
 
-    val previous_comments : string Region.reg list =
-      Option.to_list previous_comments
+    val previous_comments : comment list =
+      Option.to_list previous_comment
 
     method previous_comments = previous_comments
 
@@ -156,19 +176,29 @@ let mk_bool_expr ?previous_comments ?trailing_comment dir_region expr
 (* #define and #undef *)
 
 type symbol = <
-  region           : Region.t;
-  symbol           : variable Region.reg;
-  trailing_comment : message Region.reg option
+  region            : Region.t;
+  symbol            : variable Region.reg;
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> symbol
 >
 
 type define_directive = symbol
 type undef_directive  = symbol
 
-let mk_symbol ?trailing_comment dir_region sym =
+let mk_symbol ?previous_comment ?trailing_comment dir_region sym =
   object
     method region           : Region.t = dir_region
     method symbol           : variable Region.reg = sym
-    method trailing_comment : message Region.reg option = trailing_comment
+    method trailing_comment : line_comment option = trailing_comment
+
+    val previous_comments : comment list =
+      Option.to_list previous_comment
+
+    method previous_comments = previous_comments
+
+    method add_previous_com com =
+      {< previous_comments = com :: previous_comments >}
   end
 
 (* #error *)
@@ -229,7 +259,7 @@ let project = function
     let dir_region = incl#region
     and file_reg   = incl#file_path.Region.value
     and trailer    = match incl#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_Include (%S, %S)" file_reg trailer
 
@@ -238,7 +268,7 @@ let project = function
     and file_reg   = imp#file_path.Region.value
     and mod_reg    = imp#module_name.Region.value
     and trailer    = match imp#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_Import (%S, %S, %S)" file_reg mod_reg trailer
 
@@ -246,7 +276,7 @@ let project = function
     let dir_region = if_dir#region
     and ast        = E_AST.to_string if_dir#expression
     and trailer    = match if_dir#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_If (%S, %S)" ast trailer
 
@@ -254,7 +284,7 @@ let project = function
     let dir_region = elif_dir#region
     and ast        = E_AST.to_string elif_dir#expression
     and trailer    = match elif_dir#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_Elif (%S, %S)" ast trailer
 
@@ -266,7 +296,7 @@ let project = function
     let dir_region = sym#region
     and sym_reg    = sym#symbol.Region.value
     and trailer    = match sym#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_Define (%s, %S)" sym_reg trailer
 
@@ -274,7 +304,7 @@ let project = function
     let dir_region = sym#region
     and sym_reg    = sym#symbol.Region.value
     and trailer    = match sym#trailing_comment with
-                       Some comment -> comment.Region.value
+                       Some comment -> pp_comment comment
                      | None         -> "" in
     dir_region, sprintf "PP_Undef (%s, %S)" sym_reg trailer
 
@@ -305,48 +335,68 @@ let to_string ~offsets mode directive =
 
 let to_lexeme = function
   PP_Include incl ->
-    let comments   = List.map ~f:(fun x -> x.value) incl#previous_comments in
-    let comments   = Core.String.concat ~sep:"\n" comments in
-    let dir_region = incl#region
-    and file_reg   = incl#file_path in
-    let value      = sprintf "#include %S" file_reg.value in
-    let value      = if String.(comments = "") then value
-                     else comments ^ "\n\n" ^ value
-    and region     = Region.cover dir_region file_reg.region
+    let previous_comments   = List.map ~f:pp_comment incl#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = incl#region
+    and file_reg            = incl#file_path
+    and trailing_comment    = match incl#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               =
+      sprintf "#include %S%s" file_reg.value trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
+    and region              = Region.cover dir_region file_reg.region
     in Region.{value; region}
 
 | PP_Import imp ->
-    let comments   = List.map ~f:(fun x -> x.value) imp#previous_comments in
-    let comments   = Core.String.concat ~sep:"\n" comments in
-    let dir_region = imp#region
-    and file_reg   = imp#file_path
-    and mod_reg    = imp#module_name in
-    let value      = sprintf "#import %S %S" file_reg.value mod_reg.value in
-    let value      = if String.(comments = "") then value
-                     else comments ^ "\n\n" ^ value
-    and region     = Region.cover dir_region mod_reg.region
+    let previous_comments   = List.map ~f:pp_comment imp#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = imp#region
+    and file_reg            = imp#file_path
+    and mod_reg             = imp#module_name
+    and trailing_comment    = match imp#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               = sprintf
+      "#import %S %S%s" file_reg.value mod_reg.value trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
+    and region              = Region.cover dir_region mod_reg.region
     in Region.{value; region}
 
 | PP_If if_dir ->
-    let comments   = List.map ~f:(fun x -> x.value) if_dir#previous_comments in
-    let comments   = Core.String.concat ~sep:"\n" comments in
-    let dir_region = if_dir#region
-    and ast        = if_dir#expression in
-    let value      = sprintf "#if %s" (E_AST.to_string ast) in
-    let value      = if String.(comments = "") then value
-                     else comments ^ "\n\n" ^ value
-    and region     = Region.cover dir_region (E_AST.to_region ast)
+    let previous_comments   = List.map ~f:pp_comment if_dir#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = if_dir#region
+    and ast                 = if_dir#expression
+    and trailing_comment    = match if_dir#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               =
+      sprintf "#if %s%s" (E_AST.to_string ast) trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
+    and region              = Region.cover dir_region (E_AST.to_region ast)
     in Region.{value; region}
 
 | PP_Elif elif_dir ->
-    let comments   = List.map ~f:(fun x -> x.value) elif_dir#previous_comments in
-    let comments   = Core.String.concat ~sep:"\n" comments in
-    let dir_region = elif_dir#region
-    and ast        = elif_dir#expression in
-    let value      = sprintf "#elif %s" (E_AST.to_string ast) in
-    let value      = if String.(comments = "") then value
-                     else comments ^ "\n\n" ^ value
-    and region     = Region.cover dir_region (E_AST.to_region ast)
+    let previous_comments   = List.map ~f:pp_comment elif_dir#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = elif_dir#region
+    and ast                 = elif_dir#expression
+    and trailing_comment    = match elif_dir#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               =
+      sprintf "#elif %s%s" (E_AST.to_string ast) trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
+    and region              = Region.cover dir_region (E_AST.to_region ast)
     in Region.{value; region}
 
 | PP_Else region ->
@@ -356,17 +406,33 @@ let to_lexeme = function
     Region.{value = sprintf "#endif"; region}
 
 | PP_Define sym ->
-    let dir_region = sym#region
-    and sym_reg    = sym#symbol in
-    let value      = sprintf "#define %s" sym_reg.value
+    let previous_comments   = List.map ~f:pp_comment sym#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = sym#region
+    and sym_reg             = sym#symbol
+    and trailing_comment    = match sym#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               = sprintf "#define %s%s" sym_reg.value trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
     and region     = Region.cover dir_region sym_reg.region
     in Region.{value; region}
 
 | PP_Undef sym ->
-    let dir_region = sym#region
-    and sym_reg    = sym#symbol in
-    let value      = sprintf "#undef %s" sym_reg.value
-    and region     = Region.cover dir_region sym_reg.region
+    let previous_comments   = List.map ~f:pp_comment sym#previous_comments in
+    let previous_comments   = Core.String.concat ~sep:"\n" previous_comments in
+    let dir_region          = sym#region
+    and sym_reg             = sym#symbol
+    and trailing_comment    = match sym#trailing_comment with
+      None -> ""
+    | Some c -> sprintf " %s" (pp_comment c)
+    in
+    let value               = sprintf "#undef %s%s" sym_reg.value trailing_comment in
+    let value               = if String.(previous_comments = "") then value
+                              else previous_comments ^ "\n\n" ^ value
+    and region              = Region.cover dir_region sym_reg.region
     in Region.{value; region}
 
 | PP_Error (dir_region, msg_reg) ->
@@ -398,14 +464,20 @@ let add_comment comment = function
 | PP_Import  d -> PP_Import  (d#add_previous_com comment)
 | PP_If      d -> PP_If      (d#add_previous_com comment)
 | PP_Elif    d -> PP_Elif    (d#add_previous_com comment)
-| dir          -> dir
+| PP_Define  d -> PP_Define  (d#add_previous_com comment)
+| PP_Undef   d -> PP_Undef   (d#add_previous_com comment)
+| (PP_Endif _ | PP_Else _ | PP_Linemarker _) as dir -> dir
+(* TODO: add previous and trailing comments to PP_Endif and PP_Else *)
+
 
 let get_comments = function
   PP_Include d -> d#previous_comments
 | PP_Import  d -> d#previous_comments
 | PP_If      d -> d#previous_comments
 | PP_Elif    d -> d#previous_comments
-| _            -> []
+| PP_Define  d -> d#previous_comments
+| PP_Undef   d -> d#previous_comments
+| (PP_Endif _ | PP_Else _ | PP_Linemarker _) -> []
 
 (* END OF HEADER *)
 }
@@ -458,10 +530,13 @@ and scan_in_string opening acc state = parse
 and trailing_comment state = parse
   blank+ { let state, _ = state#sync lexbuf
            in trailing_comment state lexbuf }
-| "//" ['\032'-'\255']* {
-        let state, comment = state#sync lexbuf in
+| ("//" as delim) (['\032'-'\255']* as contents) {
+        let state, Region.{region; _} = state#sync lexbuf in
         let* state, ending = clear_line state lexbuf
-        in Ok (state, Some comment, ending) }
+        in Ok
+          (state,
+          Some (`LineComment Region.{region; value = Some delim, contents}),
+          ending) }
 | nl  { let state', reg = state#newline lexbuf
         in Ok (state, None, `EOL (state', reg)) }
 | eof { let state', reg = state#sync lexbuf
@@ -602,8 +677,14 @@ and scan_flag state = parse
         let stop   = state#pos in
         let region = Region.make ~start:hash_pos ~stop in
         let bool_expr =
-          mk_bool_expr ?trailing_comment region ast in
-        Ok (state, bool_expr, mk_dir bool_expr, ending)
+          (* FIXME the "//" is included to commit string by E_Parser,
+             so we have to use empty delimeter here. This is a workaround,
+             we should refactor it so E_Parser creates a [line_comment]  *)
+          let mk_comment Region.{region; value} =
+            `LineComment Region.{region; value = (None, value)} in
+          let trailing_comment = Option.map ~f:mk_comment trailing_comment in
+          mk_bool_expr ?trailing_comment region ast
+        in Ok (state, bool_expr, mk_dir bool_expr, ending)
 
   let scan_if   = scan_expr (fun bool_expr -> PP_If   bool_expr)
   let scan_elif = scan_expr (fun bool_expr -> PP_Elif bool_expr)

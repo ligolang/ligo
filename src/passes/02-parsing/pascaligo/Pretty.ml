@@ -168,11 +168,7 @@ and print_type_annotation thread (_, type_expr : type_annotation) =
 (* Preprocessing directives *)
 
 and print_D_Directive (node: Directive.t) =
-  let comments  = Directive.get_comments node in
-  let comments  = List.map ~f:(fun x -> x.value) comments in
-  let comments  = separate_map hardline string comments in
-  let directive = string (Directive.to_lexeme node).Region.value
-  in comments ^/^ directive
+  string (Directive.to_lexeme node).Region.value
 
 (* Function declaration *)
 

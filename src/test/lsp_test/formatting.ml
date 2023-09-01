@@ -53,6 +53,12 @@ let test_cases =
     ; expected =
         Some "contracts/lsp/with_ligopretty/folding_range_for_loop_formatted.jsligo"
     }
+  ; { file_path = "contracts/lsp/format_me_comments.mligo"
+    ; expected = Some "contracts/lsp/formatted_comments.mligo"
+    }
+  ; { file_path = "contracts/lsp/format_me_comments.jsligo"
+    ; expected = Some "contracts/lsp/formatted_comments.jsligo"
+    }
   ]
 
 

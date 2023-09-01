@@ -9,8 +9,21 @@ module Pos    = Simple_utils.Pos
 
 type file_path   = string
 type module_name = string
-type message     = string
-type variable    = string
+
+(* Like [Wrap.comment], but also stores the delimeters
+   making the [pp_comment] possible *)
+type block_comment_delimiters = <opening : string; closing : string> option
+type line_comment_delimiter   = string option
+
+type block_comment = [`BlockComment of (block_comment_delimiters * string) Region.reg]
+type line_comment = [`LineComment of (line_comment_delimiter * string) Region.reg]
+
+
+type comment = [ block_comment | line_comment ]
+
+
+type variable      = string
+type error_message = string
 
 (* Endings of preprocessing directives *)
 
@@ -26,15 +39,16 @@ type ending = [
 type include_directive = <
   region            : Region.t;
   file_path         : file_path Region.reg;
-  trailing_comment  : string Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> include_directive;
+  trailing_comment  : line_comment option;
+    (** Trailing block comments like [#include "x" (* y *)] are not supported *)
+  previous_comments : comment list;
+  add_previous_com  : comment -> include_directive;
   set_file_path     : file_path Region.reg -> include_directive
 >
 
 val mk_include :
-  ?previous_comments:string Region.reg ->
-  ?trailing_comment:message Region.reg ->
+  ?previous_comment:comment ->
+  ?trailing_comment:line_comment ->
   Region.t -> file_path Region.reg -> include_directive
 
 (* #import *)
@@ -48,15 +62,15 @@ type import_directive = <
   region            : Region.t;
   file_path         : file_path Region.reg;
   module_name       : module_name Region.reg;
-  trailing_comment  : message Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> import_directive;
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> import_directive;
   set_file_path     : file_path Region.reg -> import_directive
 >
 
 val mk_import :
-  ?previous_comments:string Region.reg ->
-  ?trailing_comment:message Region.reg ->
+  ?previous_comment:comment ->
+  ?trailing_comment:line_comment ->
   Region.t ->
   file_path Region.reg ->
   module_name Region.reg -> import_directive
@@ -69,17 +83,17 @@ val mk_import :
 type bool_expr = <
   region            : Region.t;
   expression        : E_AST.t;
-  trailing_comment  : string Region.reg option;
-  previous_comments : string Region.reg list;
-  add_previous_com  : string Region.reg -> bool_expr
+  trailing_comment  : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> bool_expr
 >
 
 type if_directive   = bool_expr
 type elif_directive = bool_expr
 
 val mk_bool_expr :
-  ?previous_comments:string Region.reg ->
-  ?trailing_comment:message Region.reg ->
+  ?previous_comment:comment ->
+  ?trailing_comment:line_comment ->
   Region.t ->
   E_AST.t -> if_directive
 
@@ -91,14 +105,17 @@ val mk_bool_expr :
 type symbol = <
   region           : Region.t;
   symbol           : variable Region.reg;
-  trailing_comment : message Region.reg option
+  trailing_comment : line_comment option;
+  previous_comments : comment list;
+  add_previous_com  : comment -> symbol
 >
 
 type define_directive = symbol
 type undef_directive  = symbol
 
 val mk_symbol :
-  ?trailing_comment:message Region.reg ->
+  ?previous_comment:comment ->
+  ?trailing_comment:line_comment ->
   Region.t ->
   variable Region.reg -> symbol
 
@@ -160,8 +177,8 @@ val to_string : offsets:bool -> [`Byte | `Point] -> t -> string
 
 (* EMBEDDING PREVIOUS COMMENTS *)
 
-val add_comment  : string Region.reg -> t -> t
-val get_comments : t -> string Region.reg list
+val add_comment  : comment -> t -> t
+val get_comments : t -> comment list
 
 (* SCANNERS *)
 
@@ -199,7 +216,7 @@ val scan_undef :
 
 val scan_error :
   Pos.t -> State.t -> Lexing.lexbuf ->
-  (State.t * message Region.reg * t * ending, error) result
+  (State.t * error_message Region.reg * t * ending, error) result
 
 val scan_linemarker :
   Pos.t -> string Region.reg -> State.t -> Lexing.lexbuf ->

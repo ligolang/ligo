@@ -10,6 +10,7 @@
   simple-utils
   LexerLib
   ;; LIGO
+  preprocessing_cameligo
   lexing_shared
   mh_ml_tokens)
  (modules Token Comments Self))
