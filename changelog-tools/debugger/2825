@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Make a preprocessing stage in the debugger faster by reducing the source mapper's output and changing it from JSON to MessagePack.\\n\\n\\n"
+merge_request: '2825'
+title: "[#1819] Optimize source mapper's output"
+type: performance
+            
