@@ -640,6 +640,25 @@
     "@typescript-eslint/types" "4.33.0"
     eslint-visitor-keys "^2.0.0"
 
+"@vscode/debugadapter-testsupport@1.55.1":
+  version "1.55.1"
+  resolved "https://registry.yarnpkg.com/@vscode/debugadapter-testsupport/-/debugadapter-testsupport-1.55.1.tgz#29f0a8dc196fc0ae38663c8fb125796565aef0c6"
+  integrity sha512-GomchM/pPPJSGVa6c6tTM56/W6Ol3tELeppDTF/ICHgbeXa2VKAxJPHNdHvjg+JA1ZROgBpO67NyZKaYsyj+7A==
+  dependencies:
+    "@vscode/debugprotocol" "1.55.1"
+
+"@vscode/debugadapter@1.55.1":
+  version "1.55.1"
+  resolved "https://registry.yarnpkg.com/@vscode/debugadapter/-/debugadapter-1.55.1.tgz#639d8be24301914f9e6fb0f106867faea3064e7e"
+  integrity sha512-UeiEpSVNZSeRvLWluaJ+Qo2el/QD2o3t7JSQBu/0TEG3s98Ib3ihYaFk5uGugmITNTSBClMMs7UXieACRcOFlA==
+  dependencies:
+    "@vscode/debugprotocol" "1.55.1"
+
+"@vscode/debugprotocol@1.55.1":
+  version "1.55.1"
+  resolved "https://registry.yarnpkg.com/@vscode/debugprotocol/-/debugprotocol-1.55.1.tgz#4207488f9dfeae9ab5eb785139bbc1bf5d845b33"
+  integrity sha512-tEOY1KxSACd77JFfoipYvLZdVdrTnXBiVgS7zKDmAQxxmVsKPERB6HOXDijoWi1wUjFx+K7plXCtweX+k5Fc/g==
+
 "@vscode/test-electron@^2.3.0":
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/@vscode/test-electron/-/test-electron-2.3.3.tgz#e648700d5848eccfda99efa5d839356cfbe8cd4e"

@@ -100,15 +100,7 @@
 
             ligo-debugger = ligo-debugger-exec (haskellPkgs);
             inherit ligo-debugger-static ligo-debugger-darwin;
-
-            ligo-debugger-extension = pkgs.callPackage ./vscode-plugin {
-              ligo-debugger = ligo-debugger-crossplatform;
-            };
-
-            ligo-debugger-extension-nix = pkgs.callPackage ./vscode-plugin {
-              # Well, this one is the nix one, we don't make it portable.
-              ligo-debugger = archOut.packages.ligo-debugger;
-            };
+            inherit ligo-debugger-crossplatform;
           };
 
           inherit ligo-debugger-components;

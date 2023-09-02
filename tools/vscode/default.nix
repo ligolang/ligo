@@ -3,6 +3,7 @@
 , zip
 , unzip
 , findutils
+, ligo-debugger
 }:
 let
   package = yarn2nix-moretea.mkYarnPackage {
@@ -15,6 +16,9 @@ let
     preBuild = ''
       # broken link fest
       rm deps/$pname/$pname
+
+      mkdir -p deps/$pname/bin
+      cp -Lr ${ligo-debugger}/bin/. deps/$pname/bin
     '';
 
     postBuild = ''

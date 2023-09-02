@@ -135,27 +135,3 @@ debugger-test-ligo-minimal-supported:
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
   allow_failure: true
-
-vscode-debugger-extension:
-  stage: tooling
-  rules:
-    - !reference [.debugger_mr_changes]
-    - !reference [.dev]
-    - !reference [.vscode_production]
-  needs: []
-  script:
-    - nix build $FLAKE_FLAGS ./tools/debugger#ligo-debugger-extension
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-debugger-extension.vsix
-  artifacts:
-    paths:
-      - ligo-debugger-extension.vsix
-
-vscode-debugger-extension-publish:
-  stage: push
-  rules:
-    - !reference [.vscode_production]
-  needs: [vscode-debugger-extension]
-  when: manual
-  script:
-    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix develop ./tools/vsce --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token

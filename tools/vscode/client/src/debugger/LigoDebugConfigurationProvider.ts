@@ -41,7 +41,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
 
   private async tryToResolveConfigFromLigo(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
     const pluginConfig = vscode.workspace.getConfiguration();
-    const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoDebugger.ligoBinaryPath' }, pluginConfig);
+    const binaryPath = getBinaryPath({ name: 'ligo', path: 'ligoLanguageServer.ligoBinaryPath' }, pluginConfig);
     const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
     await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 

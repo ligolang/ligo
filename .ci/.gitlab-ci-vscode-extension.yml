@@ -1,4 +1,4 @@
-## LSP/Squirrel
+## LSP/Squirrel and Debugger
 
 include:
   - '/.ci/.gitlab-ci-tools-common.yml'
@@ -66,7 +66,7 @@ emacs-lsp-client-test:
     - cask install
     - cask emacs --batch -L . -l tests/configuration-test.el -f ert-run-tests-batch
 
-vscode-lsp-extension:
+vscode-extension:
   stage: tooling
   rules:
     - !reference [.vscode_extension_mr_changes]
@@ -80,11 +80,11 @@ vscode-lsp-extension:
     paths:
       - ligo-extension.vsix
 
-vscode-lsp-extension-publish:
+vscode-extension-publish:
   stage: push
   rules:
     - !reference [.vscode_production]
-  needs: [vscode-lsp-extension]
+  needs: [vscode-extension]
   when: manual
   script:
     - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
