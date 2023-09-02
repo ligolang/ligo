@@ -5,22 +5,73 @@ title: Main function and Entrypoints
 
 import Syntax from '@theme/Syntax';
 
-## Access Functions
+## Entry points
 
-A LIGO contract is made of a series of constant and function
+A LIGO smart contract is made of a series of constant and function
 declarations. Only functions having a special type can be called when
-the contract is activated: we call them *main functions*. A main
+the contract is activated: we call them *entry points*. An entry point
 function takes two parameters, the *contract parameter* and the
 *on-chain storage*, and returns a pair made of a *list of operations*
-and a (new) storage.
+and a (new) storage value.
+
+A smart contract can export more than one entry point function.
+An entry point can be selected by specifying its name when calling the contract.
+For example, the following contract exports two functions, named `increment` and `decrement`.
+The `increment` function can be called by passing `Increment (10)` to the contract (notice the capitalization of `Increment`).
+More examples on how to perform this call are given below.
+
+<Syntax syntax="jsligo">
+
+```jsligo group=incdec
+namespace IncDec {
+  type storage = int;
+  type ret = [list<operation>, storage];
+
+  // Three entrypoints
+
+  @entry
+  const increment = (delta : int, store : storage) : ret =>
+    [list([]), store + delta];
+
+  @entry
+  const decrement = (delta : int, store : storage) : ret =>
+    [list([]), store - delta];
+
+  @entry
+  const reset = (_ : unit, _ : storage) : ret =>
+    [list([]), 0];
+};
+```
+
+</Syntax>
+
+<Syntax syntax="cameligo">
+
+```cameligo group=incdec
+module IncDec = struct
+  type storage = int
+  type return = operation list * storage
+
+  (* Three entrypoints *)
+  [@entry] let increment (delta : int) (store : storage) : return =
+    [], store + delta
+  [@entry] let decrement (delta : int) (store : storage) : return =
+    [], store - delta
+  [@entry] let reset (() : unit) (_ : storage) : return =
+    [], 0
+end
+```
+
+</Syntax>
 
 When the contract is originated, the initial value of the storage is
-provided. When a main function is later called, only the parameter is
-provided, but the type of a main function contains both.
+provided. When an entry point is later called, only the parameter is
+provided by the user, and the blockchain (or testing framework)
+supplies the current storage value as a second argument.
 
 The type of the contract parameter and the storage are up to the
-contract designer, but the type for list operations is not. The return
-type of a main function is as follows, assuming that the type
+contract designer, but the type for the list of operations is not.
+The return type of an entry point is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
 
@@ -50,64 +101,139 @@ type return_ = [list<operation>, storage];
 
 </Syntax>
 
-The contract storage can only be modified by activating a main
-function: given the state of the storage *on-chain*, a main function
+The contract storage can only be modified by activating an entry point:
+given the state of the storage *on-chain*, an entry point function
 specifies how to create another state for it, depending on the
 contract's parameter.
 
-Here is an example where the storage is a single natural number that
-is updated by the parameter.
+## Calling a contract
 
-<Syntax syntax="pascaligo">
+### Using the dry-run command
 
-```pascaligo group=a
-type parameter is nat
-type storage is nat
-type return is list (operation) * storage
+In order to call the `increment` entry point of the smart contract, we can pass the `-m IncDec` option to specify the module and the `-e increment` option to specify the entry point.
 
-function save (const action : parameter; const store : storage) : return is
-  (nil, store)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=a
-type parameter = nat
-type storage = nat
-type return = operation list * storage
-
-let main (action : parameter) (store : storage) : return =
-  ([], store)
+```shell
+ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo '5' '0' 
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-```jsligo group=a
-type parameter = nat;
-type storage = nat;
-type return_ = [list<operation>, storage];
-
-const main = (action: parameter, store: storage): return_ =>
-  [list([]), store];
+```shell
+ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo '5' '0' 
 ```
 
 </Syntax>
 
-## Entrypoints
+In the command above, `0` is the initial `storage`, and `5` is the `delta` argument.
 
-In LIGO, the design pattern is to have *one* main function called
-`main`, that dispatches the control flow according to its
-parameter. Those functions called for those actions are called
-*entrypoints*.
+### Calling an on-chain contract
+
+When a contract is deployed on-chain, the Michelson value for the parameter can be obtained with:
+
+<Syntax syntax="cameligo">
+
+```shell
+ligo compile parameter -m IncDec gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo 'Increment(5)'
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile parameter -m IncDec gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo 'Increment(5)'
+```
+
+</Syntax>
+
+In the command above, `Increment` is the (capitalized) name of the entry point to call, and `5` is the `delta` argument.
+
+### Using the WebIDE
+
+<Syntax syntax="cameligo">
+
+![Clicking on Dry Run in the WebIDE](img-entrypoint-contracts/webide-mligo.png)
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+![Clicking on Dry Run in the WebIDE](img-entrypoint-contracts/webide-jsligo.png)
+
+</Syntax>
+
+### Using the `ligo run test` command
+
+A LIGO program can instantiate a new contract (or obtain an existing contract from its address),
+and call one of its entry points by passing e.g. the parameter `Increment(5).
+
+<Syntax syntax="cameligo">
+
+```jsligo skip
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo" "C"
+
+let test =
+  let (ta, _, _) = Test.originate_module (contract_of C.IncDec) 0 (0tez) in
+  let c : C.IncDec parameter_of contract = Test.to_contract ta in
+  let _ = Test.transfer_to_contract_exn c (Increment 42) (0tez) in
+  assert (42 = Test.get_storage(ta))
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo skip
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
+
+const test = (() => {
+  let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0 as tez);
+  let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
+  let _ = Test.transfer_to_contract_exn(c, Increment(42), 0 as tez);
+  assert(42 == Test.get_storage(ta));
+})();
+```
+
+</Syntax>
+
+The file above can be run with e.g. the `ligo run test` sub-command.
+
+<Syntax syntax="cameligo">
+
+```shell
+ligo run test gitlab-pages/docs/advanced/src/entrypoints-contracts/test.mligo
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+ligo run test gitlab-pages/docs/advanced/src/entrypoints-contracts/test.jsligo
+```
+
+</Syntax>
+
+## Main function
+
+For more control over the contract's API, it used to be possible to declare
+*one* main function called `main`, that dispatches the control flow
+according to its parameter. When declaring *entrypoints* using the
+`@entry` annotation, LIGO automatically generates a `main` function,
+but it used to be possible to write such a function by hand instead of using
+the `@entry` facility.
+
+**This feature is now deprecated, future versions of LIGO will not allow the declaration of a single `main` function. A workaround is given at the end of this section.**
 
 As an analogy, in the C programming language, the `main` function is
 the unique main function and any function called from it would be an
 entrypoint.
 
-The parameter of the contract is then a variant type, and, depending
+Usually, the parameter of the contract is then a variant type, and, depending
 on the constructors of that type, different functions in the contract
 are called. In other terms, the unique main function dispatches the
 control flow depending on a *pattern matching* on the contract
@@ -119,7 +245,7 @@ contract, either the counter or the name is updated.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=b
+```pascaligo group=contract_main
 type parameter is
   Action_A of nat
 | Action_B of string
@@ -148,7 +274,7 @@ function main (const action : parameter; const store : storage): return is
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=b
+```cameligo group=contract_main
 type parameter =
   Action_A of nat
 | Action_B of string
@@ -176,12 +302,12 @@ let main (action : parameter) (store: storage) : return =
 
 <Syntax syntax="jsligo">
 
-```jsligo group=b
-type parameter =
+```jsligo group=contract_main
+export type parameter =
 | ["Action_A", nat]
 | ["Action_B", string];
 
-type storage = {
+export type storage = {
   counter : nat,
   name    : string
 };
@@ -194,11 +320,64 @@ const entry_A = (n: nat, store: storage): return_ =>
 const entry_B = (s: string, store: storage): return_ =>
   [list([]), {...store, name: s}];
 
-const main = (action: parameter, store: storage): return_ =>
+export const main = (action: parameter, store: storage): return_ =>
   match(action, {
     Action_A: n => entry_A(n, store),
     Action_B: s => entry_B(s, store)
   });
+```
+
+</Syntax>
+
+### Workaround for the deprecation of the `main` function
+
+In most cases, adding `[@entry]` for CameLIGO or `// @entry` for JsLIGO aboce the existing `main`
+function should suffice. However in cases where it is not possible or desiarable to convert an
+existing `contract_main` contract to the new `@entry` format (e.g. generated code or a code review
+process that forbids making changes to an already-audited file), the deprecation can be circumvented
+by adding a proxy file which declares a single entry point and calls the existing `main` function, as
+follows:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=contract_main_proxy
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main.mligo" "C"
+
+module Proxy = struct
+
+  [@entry]
+  let proxy (p : C.parameter) (s : C.storage) : operation list * C.storage =
+    C.main p s
+
+end
+```
+
+The contract can then be compiled using the following command:
+
+```shell
+ligo compile contract -m Proxy contract_main_proxy.mligo
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=contract_main_proxy
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main.jsligo" "C"
+
+namespace Proxy {
+
+  // @entry
+  const proxy = (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+    C.main(p, s)
+
+}
+```
+
+The contract can then be compiled using the following command:
+
+```shell
+ligo compile contract -m Proxy contract_main_proxy.jsligo
 ```
 
 </Syntax>
@@ -321,6 +500,11 @@ that is, follows a first in, first out ordering, and the dequeuing
 only starts at the normal end of a contract (no failure). That is why
 we speak of "contract invocations" instead of "calls".
 
+It is possible to obtain the behaviour of normal function "calls" using
+*views*, which are pure functions that do not modify the callee's on-chain
+state. However, this section describes inter-contract invocations which
+are queued, and may modify the callee's state.
+
 The following example shows how a contract can invoke another by
 emitting a transaction operation at the end of an entrypoint.
 
@@ -338,8 +522,8 @@ contract.
 ```pascaligo skip
 // counter.ligo
 type parameter is
-  Increment of nat
-| Decrement of nat
+  Increment of int
+| Decrement of int
 | Reset
 
 type storage is unit
@@ -351,8 +535,8 @@ type return is list (operation) * storage
 // proxy.ligo
 
 type parameter is
-  Increment of nat
-| Decrement of nat
+  Increment of int
+| Decrement of int
 | Reset
 
 type storage is unit
@@ -371,7 +555,7 @@ function proxy (const action : parameter; const store : storage): return is {
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
 
-  const mock_param : parameter = Increment (5n);
+  const _mock_param : parameter = Increment (5);
   const op = Tezos.transaction (action, 0tez, counter);
 } with (list[op], store)
 ```
@@ -383,8 +567,8 @@ function proxy (const action : parameter; const store : storage): return is {
 // counter.mligo
 
 type parameter =
-  Increment of nat
-| Decrement of nat
+  Increment of int
+| Decrement of int
 | Reset
 
 // ...
@@ -394,8 +578,8 @@ type parameter =
 // proxy.mligo
 
 type parameter =
-  Increment of nat
-| Decrement of nat
+  Increment of int
+| Decrement of int
 | Reset
 
 type storage = unit
@@ -412,7 +596,7 @@ let proxy (action, store : parameter * storage) : return =
   in
   (* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. *)
-  let mock_param = Increment (5n) in
+  let mock_param = Increment 5 in
   let op = Tezos.transaction action 0tez counter
   in [op], store
 ```
@@ -425,8 +609,8 @@ let proxy (action, store : parameter * storage) : return =
 // counter.jsligo
 
 type parameter =
-| ["Increment", nat]
-| ["Decrement", nat]
+| ["Increment", int]
+| ["Decrement", int]
 | ["Reset"];
 
 // ...
@@ -436,8 +620,8 @@ type parameter =
 // proxy.jsligo
 
 type parameter =
-| ["Increment", nat]
-| ["Decrement", nat]
+| ["Increment", int]
+| ["Decrement", int]
 | ["Reset"];
 
 type storage = unit;
@@ -454,7 +638,7 @@ const proxy = (action: parameter, store: storage): return_ => {
     });
   /* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. */
-  let mock_param = Increment(5 as nat);
+  let mock_param = Increment(5);
   let op = Tezos.transaction(action, 0 as tez, counter);
   return [list([op]), store];
 };

@@ -621,7 +621,7 @@ val get_contract_with_error : address -> string -> 'param contract
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let get_contract_with_error : (a: address,s: string) => contract&lt;&apos;param&gt;&gt;
+let get_contract_with_error : (a: address,s: string) => contract&lt;&apos;param&gt;
 </SyntaxTitle>
 
 Get a contract from an address.
