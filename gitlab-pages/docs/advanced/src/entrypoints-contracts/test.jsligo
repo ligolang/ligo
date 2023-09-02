@@ -1,0 +1,8 @@
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
+
+const test = (() => {
+  let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0 as tez);
+  let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
+  let _ = Test.transfer_to_contract_exn(c, Increment(42), 0 as tez);
+  assert(42 == Test.get_storage(ta));
+})();
