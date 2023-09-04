@@ -237,7 +237,7 @@ For instance, to test the `add` function you can run
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo run interpret "IncDec.increment(10,32)" --init-file starting.mligo
+ligo run interpret "IncDec.increment 10 32" --init-file starting.mligo
 ```
 
 </Syntax>
