@@ -88,7 +88,7 @@ let fv_folder =
       in
       remove fun_name fv_lamb
     | E_match { expr; cases } ->
-      let f Case.{ pattern; rhs } = diff rhs pattern in
+      let f Case.{ pattern; rhs } = diff rhs (Option.value ~default:empty pattern) in
       union expr (unions @@ List.map (List.Ne.to_list cases) ~f)
     | _ -> fold_expr_ union fv_ty union union union empty expr
   in

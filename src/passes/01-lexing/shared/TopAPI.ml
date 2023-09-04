@@ -232,8 +232,8 @@ module Make
       match Options.command with
         Some `Copy ->
           let f unit =
-            Unit.to_lexeme ~token_to_lexeme:Token.to_lexeme unit
-            |> Std.(add_string std.out)
+            List.iter ~f:Std.(add_string std.out)
+              (Unit.to_lexeme ~token_to_lexeme:Token.to_lexeme unit)
           in List.iter ~f lexemes; Std.(add_nl std.out)
       | _ -> ()
 

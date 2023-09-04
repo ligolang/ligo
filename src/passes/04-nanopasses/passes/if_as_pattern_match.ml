@@ -14,11 +14,13 @@ let compile ~raise:_ =
       let cases =
         List.Ne.of_list
           [ Case.
-              { pattern = p_variant ~loc:(get_e_loc ifso) (Label.of_string "True") None
+              { pattern =
+                  Some (p_variant ~loc:(get_e_loc ifso) (Label.of_string "True") None)
               ; rhs = ifso
               }
           ; Case.
-              { pattern = p_variant ~loc:(get_e_loc ifso) (Label.of_string "False") None
+              { pattern =
+                  Some (p_variant ~loc:(get_e_loc ifso) (Label.of_string "False") None)
               ; rhs = Option.value_map ifnot ~default:(e_unit ~loc) ~f:Fun.id
               }
           ]

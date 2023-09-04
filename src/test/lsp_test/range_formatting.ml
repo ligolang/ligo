@@ -131,7 +131,7 @@ let test_cases_jsligo =
         ; range = r
         ; expected =
             Some
-              ( "const increment = (b: int): int => ((a: int): int => a + 1)(b);"
+              ( "const increment = (b: int): int => ((a: int): int => a + 1)(b)"
               , range (2, 0) (3, 62) )
         })
     @ List.map
@@ -140,7 +140,7 @@ let test_cases_jsligo =
           { file_path = "contracts/lsp/format_me.jsligo"
           ; range = r
           ; expected =
-              Some ("const with_semicolon = [1 + 2 * 3, M.fold_test];", interval 5 0 52)
+              Some ("const with_semicolon = [1 + 2 * 3, M.fold_test]", interval 5 0 51)
           })
     @ List.map
         [ range (6, 0) (13, 0); range (7, 0) (12, 27) ]
@@ -150,7 +150,7 @@ let test_cases_jsligo =
           ; expected =
               Some
                 ( "const incr_map = (l: list<int>): list<int> => List.map((i: int) => i \
-                   + 1, l);"
+                   + 1, l)"
                 , range (7, 0) (12, 27) )
           })
   in
@@ -162,9 +162,9 @@ let test_cases_jsligo =
         ; range = r
         ; expected =
             Some
-              ( "const increment = (b: int): int => ((a: int): int => a + 1)(b);\n\n\
-                 const with_semicolon = [1 + 2 * 3, M.fold_test];"
-              , range (2, 0) (5, 52) )
+              ( "const increment = (b: int): int => ((a: int): int => a + 1)(b)\n\
+                 const with_semicolon = [1 + 2 * 3, M.fold_test]"
+              , range (2, 0) (5, 51) )
         })
     @ List.map
         [ range (5, 0) (13, 0); range (5, 0) (12, 27) ]
@@ -173,13 +173,14 @@ let test_cases_jsligo =
           ; range = r
           ; expected =
               Some
-                ( "const with_semicolon = [1 + 2 * 3, M.fold_test];\n\n\
+                ( "const with_semicolon = [1 + 2 * 3, M.fold_test]\n\
                    const incr_map = (l: list<int>): list<int> => List.map((i: int) => i \
-                   + 1, l);"
+                   + 1, l)"
                 , range (5, 0) (12, 27) )
           })
   in
-  let test_whole_file =
+  (* FIXME #2024 <- dont forget to uncomment in line below *)
+  (* let test_whole_file =
     [ { file_path = "contracts/lsp/format_me.jsligo"
       ; range = Range.whole_file
       ; expected =
@@ -188,8 +189,10 @@ let test_cases_jsligo =
             , range (0, 0) (12, 27) )
       }
     ]
-  in
-  tests_no_statements @ tests_one_declaration @ tests_two_declarations @ test_whole_file
+  in *)
+  tests_no_statements
+  @ tests_one_declaration
+  @ tests_two_declarations (* @ test_whole_file *)
 
 
 let tests : string * unit Alcotest.test_case list =

@@ -11,7 +11,7 @@ type flags =
   ; duplicate_identifier : bool
   ; for_to_while_loop : bool
   ; restrict_projection : bool
-  ; export_declaration : bool
+  ; export : bool
   ; special_unit_constructor : bool
   ; freeze_operators : Syntax_types.t
   ; constructor_application : Syntax_types.t
@@ -34,7 +34,7 @@ let passes ~(flags : flags) : (module T) list =
       ; duplicate_identifier
       ; for_to_while_loop
       ; restrict_projection
-      ; export_declaration
+      ; export
       ; special_unit_constructor
       ; list_as_function
       ; array_to_tuple
@@ -66,10 +66,17 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Duplicate_identifier) ~flag:duplicate_identifier ~arg:()
   ; entry (module Linear_signature) ~flag:always ~arg:()
   ; entry (module Restrict_projections) ~flag:restrict_projection ~arg:()
+  ; entry (module Break_continue_outside) ~flag:always ~arg:()
   ; entry (module Single_switch_block) ~flag:always ~arg:()
-  ; entry (module Export_declaration) ~flag:export_declaration ~arg:()
+  ; entry (module Export_program_entry) ~flag:export ~arg:()
+  ; entry (module Export_declaration) ~flag:export ~arg:()
   ; entry (module Top_level_restriction) ~flag:always ~arg:()
+  ; entry
+      (module Pattern_constructor_application)
+      ~flag:always
+      ~arg:pattern_constructor_application
   ; entry (module Pattern_restriction) ~flag:always ~arg:()
+  ; entry (module Pattern_heuristic) ~flag:always ~arg:()
   ; entry (module Unpuning) ~flag:always ~arg:()
   ; entry (module Module_open_restriction) ~flag:always ~arg:()
   ; entry (module Import_restriction) ~flag:always ~arg:()
@@ -78,10 +85,6 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module T_constant) ~flag:always ~arg:()
   ; entry (module T_arg) ~flag:always ~arg:()
   ; entry (module Constructor_application) ~flag:always ~arg:constructor_application
-  ; entry
-      (module Pattern_constructor_application)
-      ~flag:always
-      ~arg:pattern_constructor_application
   ; entry (module Standalone_constructor_removal) ~flag:always ~arg:()
   ; entry (module Special_unit_constructor) ~flag:special_unit_constructor ~arg:()
   ; entry (module Type_abstraction_declaration) ~flag:always ~arg:()
@@ -94,7 +97,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Of_file) ~flag:always ~arg:mod_res
   ; entry (module List_as_function) ~flag:list_as_function ~arg:()
   ; entry (module Array_to_tuple) ~flag:array_to_tuple ~arg:()
-  ; entry (module Match_as_function) ~flag:match_as_function ~arg:()
+  ; entry (module Match_tc39) ~flag:match_as_function ~arg:()
   ; entry (module Object_to_record) ~flag:object_to_record ~arg:()
   ; entry (module Hack_literalize_jsligo) ~flag:hack_literalize_jsligo ~arg:()
   ; entry (module Restrict_t_app) ~flag:always ~arg:()
@@ -139,7 +142,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; duplicate_identifier
   ; for_to_while_loop = options.frontend.warn_infinite_loop
   ; restrict_projection = is_jsligo
-  ; export_declaration = is_jsligo
+  ; export = is_jsligo
   ; special_unit_constructor = is_pascaligo
   ; list_as_function = is_jsligo
   ; array_to_tuple = is_jsligo

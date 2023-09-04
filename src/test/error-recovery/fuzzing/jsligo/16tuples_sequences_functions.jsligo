@@ -1,12 +1,12 @@
- let a = 1 ;
- let b = ( 1 [ ; of
- let c - 2 as mutez break ) ; {
+ const a = 1 ;
+ const b = ( 1 [ ; of
+ const c - 2 as mutez break ) ; {
  d = ( 1 as nat ) + ( 2 as nat ) ;
- let e = ( 1 ) + ( type as ) if !=
+ const e = ( 1 ) + ( type as ) if !=
  = [ a , c ] ;
- let g = [ + 1 , c ] ;
+ const g = [ + 1 , c ] ;
 
- let type = ( a : int , b : int ) : % int => fuzzing_ident + ) b ;
+ const type = ( a : int , b : int ) : % int => fuzzing_ident + ) b ;
  j = ( a : int , b : int ) | as int => a - b ;
 
 
@@ -15,9 +15,9 @@
 
 
  n = ( a : int ) : int => a + 1 ;
- let o = ( % : int ) : int => a + 1 ;
- let n2 = ( a + int , _b : int ) : int => a ) + 1 ;
- let o2 = ( a : , _b : int ) : int => a + 1 ; case
+ const o = ( % : int ) : int => a + 1 ;
+ const n2 = ( a + int , _b : int ) : int => a ) + 1 ;
+ const o2 = ( a : , _b : int ) : int => a + 1 ; case
 
 
 

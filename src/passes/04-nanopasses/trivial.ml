@@ -260,6 +260,17 @@ end = struct
            { matchee = expr
            ; cases =
                List.map (List.Ne.to_list cases) ~f:(function I.Case.{ pattern; rhs } ->
+                   let default : O.type_expression option O.Pattern.t =
+                     Location.wrap
+                       ~loc:rhs.location
+                       O.Pattern.(
+                         P_var
+                           Ligo_prim.Binder.(
+                             make
+                               (I.Variable.fresh ~loc:rhs.location ~name:"default" ())
+                               None))
+                   in
+                   let pattern = Option.value ~default pattern in
                    O.Match_expr.{ pattern; body = rhs })
            }
     | E_annot (anno_expr, type_annotation) ->
@@ -450,6 +461,7 @@ end = struct
     | PE_declaration d -> d
     | PE_preproc_directive _ -> Location.wrap ~loc:Location.generated (dummy_top_level ())
     | PE_top_level_instruction _ -> invariant "pe"
+    | PE_export _ -> invariant "pe"
 
 
   and mod_expr : (O.module_expr, O.program) I.mod_expr_ -> O.module_expr =

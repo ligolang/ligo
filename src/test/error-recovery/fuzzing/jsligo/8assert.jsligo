@@ -1,9 +1,9 @@
- let main = ( [ if , s ] : [ bool , unit ] ) : [ list < operation > , unit 0x42 ] => {
- let _ : unit = assert ( p ) ;
+ const main = ( [ if , s ] : [ bool , unit ] ) : [ list < operation > , unit 0x42 ] => {
+ const _ : unit = assert ( p ) ;
  return [ ( list ( [ ] ) as list < operation > ) , s ] ;
  } ;
 
- let some = ( o : option < unit > ) : unit => {
+ const some = ( o : option < unit > ) : unit => {
  assert_some ( o ) ,
  } ;
 

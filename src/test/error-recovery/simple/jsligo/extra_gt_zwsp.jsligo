@@ -1,6 +1,6 @@
 type sum_aggregator = { counter : int, sum : int };
 
-let counter = (n : int) : int => {
+const counter = (n : int) : int => {
   let initial = ({ counter: 0, sum: 0 }) as sum_aggregator;
   const aggregate : (x: sum_aggregator) => int =
     (prev : sum_aggregator) => prev.sum;
@@ -9,10 +9,10 @@ let counter = (n : int) : int => {
 
 type sum_aggregator2 = { counter : int, sum : int };
 
-let counter2 = (n : int) : int => {
+const counter2 = (n : int) : int => {
   const initial : sum_aggregator = { counter: 0, sum: 0 };
   const aggregate : (x: sum_aggregator) => int =
-    (prev : sum_aggregator) => {
+    (prev : sum_aggregator) : int => {
       if (prev.counter >> n) {
         return aggregate({
                   counter: prev.counter + 1,

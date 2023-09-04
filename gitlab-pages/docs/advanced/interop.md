@@ -564,38 +564,32 @@ type test = {
 };
 
 let make_concrete_sum = (r: z_to_v): z_or =>
-  match(r, {
-    Z: () => M_left(unit),
-    Y: () => M_right(M_left(unit)),
-    X: () => M_right (M_right (M_left(unit))),
-    W: () => M_right (M_right (M_right(M_left(unit)))),
-    V: () => M_right (M_right (M_right(M_right(unit))))
-  });
+  match(r) {
+    when(Z()): M_left(unit);
+    when(Y()): M_right(M_left(unit));
+    when(X()): M_right (M_right (M_left(unit)));
+    when(W()): M_right (M_right (M_right(M_left(unit))));
+    when(V()): M_right (M_right (M_right(M_right(unit))))
+  };
 
 
 let make_concrete_record = (r: test) =>
   [r.z, r.y, r.x, r.w, r.v];
 
 let make_abstract_sum = (z_or: z_or): z_to_v =>
-  match(z_or, {
-    M_left: (n: unit) => Z(),
-    M_right: (y_or: y_or) => {
-      return match(y_or, {
-        M_left: (n: unit) => Y(),
-        M_right: (x_or: x_or) => {
-          return match(x_or, {
-            M_left: (n: unit) => X(),
-            M_right: (w_or: w_or_v) => {
-              return match(w_or, {
-                M_left: (n: unit) => W(),
-                M_right: (n: unit) => V()
-              })
+  match(z_or) {
+    when(M_left(n)): Z();
+    when(M_right(y_or)): match(y_or) {
+        when(M_left(n)): Y();
+        when(M_right(x_or)): match(x_or) {
+            when(M_left(n)): X();
+            when(M_right(w_or)): match(w_or) {
+                when(M_left(n)): W();
+                when(M_right(n)): V()
             }
-          })
         }
-      })
     }
-  });
+  };
 
 let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) =>  ({z,y,x,w,v});
 ```
@@ -653,10 +647,11 @@ type parameter =
  | ["Right", int];
 
 let main = (p: parameter, x: storage): [list<operation>, storage] =>
-  [list ([]), match(p, {
-    Left: (i: int) => x - i,
-    Right: (i: int) => x + i
-  })];
+  [list ([]), match(p) {
+    when(Left(i)): x - i;
+    when(Right(i)): x + i
+   }
+  ];
 
 ```
 
@@ -718,10 +713,10 @@ type x = | ["Left", int];
 
 let main = (p: parameter, s: storage): [list<operation>, storage] => {
   let contract =
-    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), {
-      Some: c => c,
-      None: () => failwith ("contract does not match")
-    });
+    match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address)) {
+      when(Some(c)): c;
+      when(None()): failwith ("contract does not match")
+    };
   return [
     list([Tezos.transaction(Left(2), 2 as mutez, contract)]),
     s];

@@ -33,7 +33,7 @@
  (public_name ligo.parsing.pascaligo)
  (instrumentation
   (backend bisect_ppx))
- (modules Parser ParErr Pretty RecoverParser JsLIGO)
+ (modules Parser ParErr Pretty RecoverParser)
  (libraries
   ;; LIGO
   lexing_pascaligo
@@ -52,6 +52,8 @@
   (:standard \ -open Core)
   (-open
    Cst_pascaligo ;; for CST in Parser.mli
+   -open
+   Cst_shared ;; for Nodes in Parser.mli
    -open
    Lexing_shared)))
 

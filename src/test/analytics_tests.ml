@@ -397,23 +397,6 @@ let test_print_dependency_graph ~raise:_ () =
   check_analytics expected_registry_output_regex expected_agg_registry_content_regex
 
 
-let test_transpile_contract ~raise:_ () =
-  let expected_registry_output_regex = Str.regexp ".*" in
-  let expected_agg_registry_content_regex =
-    Str.regexp
-      ".*ligo_cli_command{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", \
-       version=\".*\", command=\"transpile_contract\"} \
-       1.*ligo_cli_transpile{user=\"[a-z0-9-]+\", repository=\"[a-z0-9-]+\", \
-       version=\".*\", command=\"transpile_contract\", old_syntax=\"PascaLIGO\", \
-       new_syntax=\"jsligo\"} 1.*"
-  in
-  let _ =
-    run_ligo
-      [ "transpile"; "contract"; "contracts/example.ligo"; "--to-syntax"; "jsligo" ]
-  in
-  check_analytics expected_registry_output_regex expected_agg_registry_content_regex
-
-
 let test_init_contract ~raise:_ () =
   let expected_registry_output_regex = Str.regexp ".*" in
   let expected_agg_registry_content_regex =
@@ -468,7 +451,6 @@ let main =
     ; test "print ast_aggregated" test_print_ast_aggregated
     ; test "print ast_expanded" test_print_ast_expanded
     ; test "print mini_c" test_print_mini_c *)
-    ; test "transpile contract" test_transpile_contract
     ; test "init library" test_init_library
     ; test "init contract" test_init_contract
     ]

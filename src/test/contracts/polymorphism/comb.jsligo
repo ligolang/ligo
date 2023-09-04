@@ -3,27 +3,27 @@ type dup<a> = [a, a];
 const diag = <T>(x : T) => [x, x];
 
 const _rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
-  match(xs, list([
-  ([]) => acc,
-  ([x,... xs]) => _rev([xs, list([x,...acc])])
-  ]));
+  match(xs) {
+    when([]): acc;
+    when([z,...zs]): _rev([zs, list([z,...acc])])
+  };
 
 const rev = <T>(xs : list<T>) : list<T> => _rev([xs, (list([]) as list<T>)]);
 
 
 const _zip = <T,U>([xs, ys, acc] : [list<T>, list<U>, list<[T, U]>]) : list<[T, U]> =>
-  match(xs, list([
-  ([] : list<T>) =>
-       match(ys, list([
-       ([] : list<U>) => acc,
-       ([_y, ..._ys] : list<U>)  => (failwith ("oops") as list<[T, U]>)
-       ])),
-  ([x, ...xs] : list<T>) =>
-        match(ys, list([
-        ([] : list<U>) => (failwith ("oops") as list<[T, U]>),
-        ([y, ...ys] : list<U>) => _zip([xs, ys, list([[x, y], ...acc])])
-        ]))
-  ]));
+  match(xs) {
+    when([]):
+       match(ys) {
+         when([]): acc;
+         when([_y, ..._ys]): (failwith ("oops") as list<[T, U]>)
+       };
+    when([z, ...zs]):
+        match(ys) {
+          when([]): (failwith ("oops") as list<[T, U]>);
+          when([w, ...ws]): _zip([zs, ws, list([[z, w], ...acc])])
+        };
+  };
 
 const zip = <T,U>(xs : list<T>) => ((ys : list<U>) : list<[T, U]> => rev (_zip ([xs, ys, (list([]) as list<[T, U]>)])));
 

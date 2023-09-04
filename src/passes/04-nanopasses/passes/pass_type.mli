@@ -3,6 +3,8 @@ type raise_t = (Errors.t, Main_warnings.all) Simple_utils.Trace.raise
 
 (* [pass_kind] represents morphism over unified AST *)
 type pass_kind = Morphing.pass_kind =
+  | Seq : pass_kind * pass_kind -> pass_kind
+  | Ignore : pass_kind -> pass_kind
   (*
     [Fold] for a catamorphism: leaf-to-root fold over unified AST.
     it accepts f-algebras (on all unified AST sorts)

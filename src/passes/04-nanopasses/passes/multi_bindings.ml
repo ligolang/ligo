@@ -7,7 +7,10 @@ include Flag.No_arg ()
 
 let rec wrap_multi_bindings
     : type a.
-      default:a -> wrap:(loc:Location.t -> declaration -> a) -> declaration -> a list
+      default:(a -> a)
+      -> wrap:(loc:Location.t -> declaration -> a)
+      -> declaration
+      -> a list
   =
  fun ~default ~wrap d ->
   let loc_of_sdecl Simple_decl.{ type_params = _; pattern; rhs_type; let_rhs } =
@@ -35,7 +38,7 @@ let rec wrap_multi_bindings
         let loc = loc_of_sdecl x in
         wrap ~loc @@ d_var ~loc x)
       (List.Ne.to_list x)
-  | _ -> [ default ]
+  | _ -> [ default (wrap ~loc:(get_d_loc d) d) ]
 
 
 let block : _ block_ -> block =
@@ -57,7 +60,12 @@ let block : _ block_ -> block =
    fun stmt acc ->
     let extended =
       (* turn one statement into multiple one in case it's a multi declaration *)
-      let f d = wrap_multi_bindings ~default:stmt ~wrap:(fun ~loc d -> s_decl ~loc d) d in
+      let f d =
+        wrap_multi_bindings
+          ~default:(Fun.const stmt)
+          ~wrap:(fun ~loc d -> s_decl ~loc d)
+          d
+      in
       dig_attr stmt ~f
     in
     extended @ acc
@@ -68,24 +76,23 @@ let block : _ block_ -> block =
 
 let program : _ program_ -> program =
  fun prg ->
-  let dig_attr : program_entry -> f:(declaration -> _ program_) -> program_entry list =
+  let dig_attr : program_entry -> f:(declaration -> _ list) -> program_entry list =
    fun pe ~f ->
-    let rec aux pe acc : program_entry list =
+    let rec aux pe : program_entry list =
       match get_pe pe with
-      | PE_attr (attr, pe) ->
-        let lst = aux pe [] in
-        List.map lst ~f:(fun pe -> pe_attr attr pe) @ acc
-      | PE_declaration d -> f d @ acc
-      | x -> make_pe x :: acc
+      | PE_attr (attr, pe) -> List.map ~f:(pe_attr attr) (aux pe)
+      | PE_export pe -> List.map ~f:pe_export (aux pe)
+      | PE_declaration d -> f d
+      | x -> [ make_pe x ]
     in
-    aux pe []
+    aux pe
   in
   let f : program_entry -> _ program_ -> _ program_ =
    fun pe acc ->
     let extended =
       (* turn one program entry into multiple one in case it's a multi declaration *)
       let f d =
-        wrap_multi_bindings ~default:pe ~wrap:(fun ~loc:_ d -> pe_declaration d) d
+        wrap_multi_bindings ~default:Fun.id ~wrap:(fun ~loc:_ d -> pe_declaration d) d
       in
       dig_attr pe ~f
     in

@@ -15,14 +15,14 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match1.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 9 to line 4, character 4:
+    File "../../test/contracts/negative/pattern_match1.jsligo", line 2, character 9 to line 4, character 3:
       1 | let test_foo = (x : test_exec_result) : string => {
-      2 |   return match(x, {
+      2 |   return match(x) {
                    ^^^^^^^^^^
-      3 |     Fail: (_ : test_exec_error) => "",
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      4 |   });
-          ^^^^
+      3 |     when(Fail(_)): ""
+          ^^^^^^^^^^^^^^^^^^^^^
+      4 |   };
+          ^^^
       5 | }
 
     Error : this pattern-matching is not exhaustive.
@@ -33,11 +33,11 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match2.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 13-15:
-      2 |   match(x, {
-      3 |     Success: () => "",
-                       ^^
-      4 |     Fail: (_ : test_exec_error) => ""
+    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 16-18:
+      2 |   match(x) {
+      3 |     when(Success()): "";
+                          ^^
+      4 |     when(Fail(_)): ""
 
     Pattern not of the expected type "nat". |}]
 
@@ -45,30 +45,31 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match5.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match5.jsligo", line 2, character 2 to line 5, character 4:
+    File "../../test/contracts/negative/pattern_match5.jsligo", line 2, character 2 to line 5, character 3:
       1 | let test_foo = (x : test_exec_result) : string => {
-      2 |   match(x, {
+      2 |   match(x) {
             ^^^^^^^^^^
-      3 |     Success: (x : nat, y : nat) => "",
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      4 |     Fail: (_ : test_exec_error) => ""
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |   });
-          ^^^^
+      3 |     when(Success(x, y)): "";
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      4 |     when(Fail(_)): ""
+          ^^^^^^^^^^^^^^^^^^^^^
+      5 |   };
+          ^^^
       6 | }
 
     Invalid type(s)
-    Cannot unify "( nat * nat )" with "nat". |}]
+    Cannot unify "( ^a * ^b )" with "nat".
+    Hint: "^a", "^b" represent placeholder type(s). |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match3.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 4-11:
-      3 |     Success: (_ : nat) => "",
-      4 |     Failure: (_ : test_exec_error) => ""
-              ^^^^^^^
-      5 |   });
+    File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 16-19:
+      3 |     when(Success(_)): "";
+      4 |     when(Failure(_)): ""
+                          ^^^
+      5 |   };
 
     Pattern not of the expected type "test_exec_result". |}]
 
@@ -76,17 +77,17 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match6.jsligo" ];
   [%expect
     {|
-  File "../../test/contracts/negative/pattern_match6.jsligo", line 7, character 19 to line 10, character 10:
-    6 |     return match(state, {
-    7 |         S1: () => (match(action, {
-                           ^^^^^^^^^^^^^^^
-    8 |             A: () => S1(),
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^
-    9 |             B: () => S2()
-        ^^^^^^^^^^^^^^^^^^^^^^^^^
-   10 |         })),
-        ^^^^^^^^^^
-   11 |         S2: () => (match(action, {
+  File "../../test/contracts/negative/pattern_match6.jsligo", line 7, character 20 to line 10, character 9:
+    6 |     return match (state) {
+    7 |         when(S1()): match (action) {
+                            ^^^^^^^^^^^^^^^^
+    8 |             when(A()): S1();
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    9 |             when(B()): S2()
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   10 |         };
+        ^^^^^^^^^
+   11 |         when(S2()): match (action) {
 
   Error : this pattern-matching is not exhaustive.
   Here are examples of cases that are not matched:

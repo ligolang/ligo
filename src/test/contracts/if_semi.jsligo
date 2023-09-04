@@ -13,10 +13,10 @@ const main = (action: parameter, store: storage) : [ list<operation> , storage ]
   if (true) {
     return [
       list([]),    // No operations
-      (match (action, {
-        Increment: n => add (store, n),
-        Decrement: n => sub (store, n),
-        Reset:     ()  => 0}))
+      match (action) {
+        when(Increment(n)): add (store, n);
+        when(Decrement(n)): sub (store, n);
+        when(Reset()): 0; }
       ]
   }
   return failwith("Not Allowed");
@@ -28,10 +28,10 @@ const main2 = (action: parameter, store: storage) : [ list<operation> , storage 
 
  return [
    list([]),    // No operations
-   (match (action, {
-    Increment: n => add (store, n),
-    Decrement: n => sub (store, n),
-    Reset:     ()  => 0}))
+   match (action) {
+    when(Increment(n)): add (store, n);
+    when(Decrement(n)): sub (store, n);
+    when(Reset()): 0; }
   ]
   } // comment should also work
   return failwith("Not Allowed");
@@ -43,10 +43,10 @@ const main3 = (action: parameter, store: storage) : [ list<operation> , storage 
 
  return [
    list([]),    // No operations
-   (match (action, {
-    Increment: n => add (store, n),
-    Decrement: n => sub (store, n),
-    Reset:     ()  => 0}))
+   match (action) {
+    when(Increment(n)): add (store, n);
+    when(Decrement(n)): sub (store, n);
+    when(Reset()): 0; }
   ]
   } // Comment then else should be fine too
   else {
@@ -60,10 +60,10 @@ const main4 = (action: parameter, store: storage) : [ list<operation> , storage 
 
  return [
    list([]),    // No operations
-   (match (action, {
-    Increment: n => add (store, n),
-    Decrement: n => sub (store, n),
-    Reset:     ()  => 0}))
+   match (action) {
+    when(Increment(n)): add (store, n);
+    when(Decrement(n)): sub (store, n);
+    when(Reset()): 0; }
   ]
   } /* Block comments as well */
   // and even multiple comments

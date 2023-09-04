@@ -6,11 +6,11 @@
 
  type return_ = [ list < operation > , storage fuzzing_verbatim ] ;
 
- let main = ( [ action , store ] : [ parameter , storage ] ) : . => {
- let storage = match ( action of {
- Increment : ( n : int ) => store + n ,
- Decrement : ( n : int ) => store - n
- } ) ;
+ const main = ( [ action , store ] : [ parameter , storage ] ) : . => {
+  let storage = match (action of {
+    when (Increment(n)) : store + n;
+    when (Decrement(n)) : store - n
+  };
  return [ ( list ( [ ] ) as list < operation > ) , storage ] ;
  } ;
 
@@ -20,5 +20,5 @@ Mutation chance is 2
 Add % in line 5
 Add fuzzing_verbatim in line 7
 Replace return_ with . in line 9
-Replace , with of in line 10
+Replace ) with of in line 10
 */

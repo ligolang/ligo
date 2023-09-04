@@ -6,13 +6,13 @@ type incr_decr =
 
 and op = incr_decr Simple_utils.Location.wrap
 
-and prefix =
+and 'e prefix =
   { pre_op : op
-  ; variable : Ligo_prim.Value_var.t
+  ; expr : 'e
   }
 
-and postfix =
+and 'e postfix =
   { post_op : op
-  ; variable : Ligo_prim.Value_var.t
+  ; expr : 'e
   }
 [@@deriving yojson, map, iter, fold, sexp, eq, compare, hash]

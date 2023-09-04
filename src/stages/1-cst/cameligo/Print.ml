@@ -64,16 +64,16 @@ and print_declaration state = function
 | D_Let       d -> print_D_Let       state d
 | D_Module    d -> print_D_Module    state d
 | D_Type      d -> print_D_Type      state d
-| D_Module_include d -> print_D_Module_include state d
+| D_Include   d -> print_D_Include   state d
 | D_Signature d -> print_D_Signature state d
 
 (* SIGNATURE DECLARATIONS *)
 
 and print_sig_item state = function
-  S_Attr     d -> print_S_Attr       state d
-| S_Value    d -> print_S_Value      state d
-| S_Type     d -> print_S_Type       state d
-| S_Type_var d -> print_S_Type_var   state d
+  S_Attr    d -> print_S_Attr    state d
+| S_Value   d -> print_S_Value   state d
+| S_Type    d -> print_S_Type    state d
+| S_TypeVar d -> print_S_TypeVar state d
 
 (* Attributed declaration *)
 
@@ -125,10 +125,10 @@ and print_type_params state (node : type_params par) =
 and print_type_annotation state (_, type_expr) =
   Tree.make_unary state "<type>" print_type_expr type_expr
 
-and print_D_Module_include state node =
+and print_D_Include state node =
   let Region.{value; region} = node in
   let children = mk_children_module_include value
-  in Tree.make state ~region "D_Module_include" children
+  in Tree.make state ~region "D_Include" children
 
 and mk_children_module_include (node : module_include) =
   Tree.[ mk_child print_module_expr node.module_expr]
@@ -197,11 +197,10 @@ and print_M_Var state (node : module_name) =
 and print_module_path :
   'a.'a Tree.printer -> Tree.root -> Tree.state -> 'a module_path reg -> unit =
   fun print root state {value; region} ->
-    let children =
-      (List.map ~f:Tree.(mk_child make_literal)
-       @@ Utils.nsepseq_to_list value.module_path)
-      @ [Tree.mk_child print value.field]
-    in Tree.make state root ~region children
+  let children = Tree.(
+    mk_children_nsepseq make_literal value.module_path
+    @ [Tree.mk_child print value.field])
+  in Tree.make state root ~region children
 
 (* Signature declaration *)
 
@@ -251,30 +250,30 @@ and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
 
 (* Type declarations (signature) *)
 
-and print_S_Type_var state (node : (kwd_type * variable) reg) =
+and print_S_TypeVar state (node : (kwd_type * variable) reg) =
   let Region.{value; region} = node in
   let _kwd_type, var = value in
   let children = Tree.[mk_child make_literal var]
-  in Tree.make ~region state "S_Type_var" children
+  in Tree.make ~region state "S_TypeVar" children
 
 (* TYPE EXPRESSIONS *)
 
 and print_type_expr state = function
-  T_App       t -> print_T_App       state t
-| T_Arg       t -> print_T_Arg       state t
-| T_Attr      t -> print_T_Attr      state t
-| T_Cart      t -> print_T_Cart      state t
-| T_Fun       t -> print_T_Fun       state t
-| T_Int       t -> print_T_Int       state t
-| T_ModPath   t -> print_T_ModPath   state t
-| T_Par       t -> print_T_Par       state t
-| T_Record    t -> print_T_Record    state t
-| T_String    t -> print_T_String    state t
-| T_Variant   t -> print_T_Variant   state t
-| T_Var       t -> print_T_Var       state t
-| T_Parameter t -> print_T_Parameter state t
+  T_App         t -> print_T_App         state t
+| T_Arg         t -> print_T_Arg         state t
+| T_Attr        t -> print_T_Attr        state t
+| T_Cart        t -> print_T_Cart        state t
+| T_Fun         t -> print_T_Fun         state t
+| T_Int         t -> print_T_Int         state t
+| T_ModPath     t -> print_T_ModPath     state t
+| T_Par         t -> print_T_Par         state t
+| T_ParameterOf t -> print_T_ParameterOf state t
+| T_Record      t -> print_T_Record      state t
+| T_String      t -> print_T_String      state t
+| T_Var         t -> print_T_Var         state t
+| T_Variant     t -> print_T_Variant     state t
 
-(* Constructor application *)
+(* Application of type constructors *)
 
 and print_T_App state (node : (type_expr * type_ctor_arg) reg) =
   let Region.{value; region} = node in
@@ -339,6 +338,12 @@ and print_T_ModPath state (node : type_expr module_path reg) =
 and print_T_Par state (node : type_expr par) =
   Tree.make_unary state "T_Par" print_type_expr node.value.inside
 
+(* Type parameter *)
+
+and print_T_ParameterOf state (node : (module_name, dot) nsepseq reg) =
+  let Region.{value; region} = node in
+  Tree.(of_nsepseq state ~region "T_ParameterOf" make_literal value)
+
 (* Record types *)
 
 and print_T_Record state (node : field_decl reg record) =
@@ -356,8 +361,8 @@ and print_field_decl state (node : field_decl reg) =
 
 (* Type string *)
 
-and print_T_String state (node : lexeme wrap) =
-  Tree.(make_unary state "T_String" make_verbatim node)
+and print_T_String state (node : string_literal) =
+  Tree.make_string "T_String" state node
 
 (* Variant types *)
 
@@ -370,8 +375,7 @@ and print_variant state (node : variant reg) =
   let {attributes; ctor; ctor_args} = value in
   let children = Tree.mk_child_opt print_of_type_expr ctor_args
                  :: mk_children_attr attributes in
-  let root = ctor#payload in
-  Tree.make ~region state root children
+  Tree.make ~region state ctor#payload children
 
 and print_of_type_expr state (_, type_expr) =
   print_type_expr state type_expr
@@ -380,12 +384,6 @@ and print_of_type_expr state (_, type_expr) =
 
 and print_T_Var state (node : variable) =
   Tree.(make_unary state "T_Var" make_literal node)
-
-(* Type parameter *)
-
-and print_T_Parameter state (node : (module_name, dot) nsepseq reg) =
-  let Region.{value; region} = node in
-  Tree.(of_nsepseq state ~region "T_Parameter" make_literal value)
 
 (* PATTERNS *)
 
@@ -398,6 +396,7 @@ and print_pattern state = function
 | P_Bytes    p -> print_P_Bytes    state p
 | P_Cons     p -> print_P_Cons     state p
 | P_Ctor     p -> print_P_Ctor     state p
+| P_False    p -> print_P_False    state p
 | P_Int      p -> print_P_Int      state p
 | P_List     p -> print_P_List     state p
 | P_ModPath  p -> print_P_ModPath  state p
@@ -406,11 +405,12 @@ and print_pattern state = function
 | P_Par      p -> print_P_Par      state p
 | P_Record   p -> print_P_Record   state p
 | P_String   p -> print_P_String   state p
+| P_True     p -> print_P_True     state p
 | P_Tuple    p -> print_P_Tuple    state p
 | P_Typed    p -> print_P_Typed    state p
+| P_Unit     p -> print_P_Unit     state p
 | P_Var      p -> print_P_Var      state p
 | P_Verbatim p -> print_P_Verbatim state p
-| P_Unit     p -> print_P_Unit     state p
 
 (* A constructor application (or constant constructor) in patterns *)
 
@@ -451,6 +451,11 @@ and print_P_Cons state (node : (pattern * cons * pattern) reg) =
 and print_P_Ctor state (node : ctor) =
   let region = node#region in
   Tree.(make_unary ~region state "P_Ctor" make_literal node)
+
+(* "false" as pattern *)
+
+and print_P_False state (node : false_const) =
+  Tree.make_node ~region:node#region state "P_False"
 
 (* Integers in patterns *)
 
@@ -540,7 +545,12 @@ and print_update_lens state = function
 (* String literals as patterns *)
 
 and print_P_String state (node : lexeme wrap) =
-  Tree.(make_unary state "P_String" make_string node)
+  Tree.make_string "P_String" state node
+
+(* "true" as pattern *)
+
+and print_P_True state (node : true_const) =
+  Tree.make_node ~region:node#region state "P_True"
 
 (* The pattern matching a tuple *)
 
@@ -558,6 +568,12 @@ and print_P_Typed state (node : typed_pattern reg) =
     mk_child print_type_annotation type_annot]
   in Tree.make state "P_Typed" ~region children
 
+(* Unit pattern *)
+
+and print_P_Unit state (node : the_unit reg) =
+  let Region.{region; _} = node in
+  Tree.make_node ~region state "P_Unit"
+
 (* A pattern variable *)
 
 and print_P_Var state (node : variable) =
@@ -566,13 +582,7 @@ and print_P_Var state (node : variable) =
 (* A verbatim string *)
 
 and print_P_Verbatim state (node : lexeme wrap) =
-  Tree.(make_unary state "P_Verbatim" make_string node)
-
-(* Unit pattern *)
-
-and print_P_Unit state (node : the_unit reg) =
-  let Region.{region; _} = node in
-  Tree.make_node ~region state "P_Unit"
+  Tree.make_verbatim "P_Verbatim" state node
 
 (* EXPRESSIONS *)
 
@@ -581,62 +591,64 @@ and print_P_Unit state (node : the_unit reg) =
    that the sections below follow the alphabetical order too. *)
 
 and print_expr state = function
-  E_Add      e -> print_E_Add      state e
-| E_And      e -> print_E_And      state e
-| E_App      e -> print_E_App      state e
-| E_Assign   e -> print_E_Assign   state e
-| E_Attr     e -> print_E_Attr     state e
-| E_Bytes    e -> print_E_Bytes    state e
-| E_Cat      e -> print_E_Cat      state e
-| E_CodeInj  e -> print_E_CodeInj  state e
-| E_Cond     e -> print_E_Cond     state e
-| E_Contract e -> print_E_Contract state e
-| E_Ctor     e -> print_E_Ctor     state e
-| E_Cons     e -> print_E_Cons     state e
-| E_Div      e -> print_E_Div      state e
-| E_Equal    e -> print_E_Equal    state e
-| E_For      e -> print_E_For      state e
-| E_ForIn    e -> print_E_ForIn    state e
-| E_Fun      e -> print_E_Fun      state e
-| E_Geq      e -> print_E_Geq      state e
-| E_Gt       e -> print_E_Gt       state e
-| E_Int      e -> print_E_Int      state e
-| E_Land     e -> print_E_Land     state e
-| E_Leq      e -> print_E_Leq      state e
-| E_LetIn    e -> print_E_LetIn    state e
-| E_LetMutIn e -> print_E_LetMutIn state e
-| E_List     e -> print_E_List     state e
-| E_Lor      e -> print_E_Lor      state e
-| E_Lsl      e -> print_E_Lsl      state e
-| E_Lsr      e -> print_E_Lsr      state e
-| E_Lt       e -> print_E_Lt       state e
-| E_Lxor     e -> print_E_Lxor     state e
-| E_Match    e -> print_E_Match    state e
-| E_Mod      e -> print_E_Mod      state e
-| E_ModIn    e -> print_E_ModIn    state e
-| E_ModPath  e -> print_E_ModPath  state e
-| E_Mult     e -> print_E_Mult     state e
-| E_Mutez    e -> print_E_Mutez    state e
-| E_Nat      e -> print_E_Nat      state e
-| E_Neg      e -> print_E_Neg      state e
-| E_Neq      e -> print_E_Neq      state e
-| E_Not      e -> print_E_Not      state e
-| E_Or       e -> print_E_Or       state e
-| E_Par      e -> print_E_Par      state e
-| E_Proj     e -> print_E_Proj     state e
-| E_Record   e -> print_E_Record   state e
-| E_String   e -> print_E_String   state e
-| E_Sub      e -> print_E_Sub      state e
-| E_Tuple    e -> print_E_Tuple    state e
-| E_Typed    e -> print_E_Typed    state e
-| E_TypeIn   e -> print_E_TypeIn   state e
-| E_Unit     e -> print_E_Unit     state e
-| E_Update   e -> print_E_Update   state e
-| E_Var      e -> print_E_Var      state e
-| E_Verbatim e -> print_E_Verbatim state e
-| E_Seq      e -> print_E_Seq      state e
-| E_RevApp   e -> print_E_RevApp   state e
-| E_While    e -> print_E_While    state e
+  E_Add        e -> print_E_Add        state e
+| E_And        e -> print_E_And        state e
+| E_App        e -> print_E_App        state e
+| E_Assign     e -> print_E_Assign     state e
+| E_Attr       e -> print_E_Attr       state e
+| E_Bytes      e -> print_E_Bytes      state e
+| E_Cat        e -> print_E_Cat        state e
+| E_CodeInj    e -> print_E_CodeInj    state e
+| E_Cond       e -> print_E_Cond       state e
+| E_ContractOf e -> print_E_ContractOf state e
+| E_Ctor       e -> print_E_Ctor       state e
+| E_Cons       e -> print_E_Cons       state e
+| E_Div        e -> print_E_Div        state e
+| E_Equal      e -> print_E_Equal      state e
+| E_False      e -> print_E_False      state e
+| E_For        e -> print_E_For        state e
+| E_ForIn      e -> print_E_ForIn      state e
+| E_Fun        e -> print_E_Fun        state e
+| E_Geq        e -> print_E_Geq        state e
+| E_Gt         e -> print_E_Gt         state e
+| E_Int        e -> print_E_Int        state e
+| E_Land       e -> print_E_Land       state e
+| E_Leq        e -> print_E_Leq        state e
+| E_LetIn      e -> print_E_LetIn      state e
+| E_LetMutIn   e -> print_E_LetMutIn   state e
+| E_List       e -> print_E_List       state e
+| E_Lor        e -> print_E_Lor        state e
+| E_Lsl        e -> print_E_Lsl        state e
+| E_Lsr        e -> print_E_Lsr        state e
+| E_Lt         e -> print_E_Lt         state e
+| E_Lxor       e -> print_E_Lxor       state e
+| E_Match      e -> print_E_Match      state e
+| E_Mod        e -> print_E_Mod        state e
+| E_ModIn      e -> print_E_ModIn      state e
+| E_ModPath    e -> print_E_ModPath    state e
+| E_Mult       e -> print_E_Mult       state e
+| E_Mutez      e -> print_E_Mutez      state e
+| E_Nat        e -> print_E_Nat        state e
+| E_Neg        e -> print_E_Neg        state e
+| E_Neq        e -> print_E_Neq        state e
+| E_Not        e -> print_E_Not        state e
+| E_Or         e -> print_E_Or         state e
+| E_Par        e -> print_E_Par        state e
+| E_Proj       e -> print_E_Proj       state e
+| E_Record     e -> print_E_Record     state e
+| E_String     e -> print_E_String     state e
+| E_Sub        e -> print_E_Sub        state e
+| E_True       e -> print_E_True       state e
+| E_Tuple      e -> print_E_Tuple      state e
+| E_Typed      e -> print_E_Typed      state e
+| E_TypeIn     e -> print_E_TypeIn     state e
+| E_Unit       e -> print_E_Unit       state e
+| E_Update     e -> print_E_Update     state e
+| E_Var        e -> print_E_Var        state e
+| E_Verbatim   e -> print_E_Verbatim   state e
+| E_Seq        e -> print_E_Seq        state e
+| E_RevApp     e -> print_E_RevApp     state e
+| E_While      e -> print_E_While      state e
 
 (* Arithmetic addition *)
 
@@ -655,7 +667,7 @@ and print_bin_op state root (node : 'op bin_op reg) =
 and print_E_And state (node : bool_and bin_op reg) =
   print_bin_op state "E_And" node
 
-(* Constructor application (or constant constructor) as expressions *)
+(* Data constructor application or function call *)
 
 and print_E_App state (node : (expr * expr nseq) reg) =
   let Region.{value; region} = node in
@@ -715,9 +727,9 @@ and print_code state (node : expr) =
 
 (* Contract of expression *)
 
-and print_E_Contract state (node : (module_name, dot) nsepseq reg) =
+and print_E_ContractOf state (node : (module_name, dot) nsepseq reg) =
   let Region.{region; value} = node in
-  Tree.(of_nsepseq ~region state "E_Contract" make_literal value)
+  Tree.(of_nsepseq ~region state "E_ContractOf" make_literal value)
 
 (* Conditional expressions *)
 
@@ -755,6 +767,11 @@ and print_E_Div state (node : slash bin_op reg) =
 
 and print_E_Equal state (node : equal bin_op reg) =
   print_bin_op state "E_Equal" node
+
+(* "false" as expression *)
+
+and print_E_False state (node : false_const) =
+  Tree.make_node ~region:node#region state "E_False"
 
 (* For loops *)
 
@@ -963,7 +980,11 @@ and print_E_Par state (node : expr par) =
 
 and print_E_Proj state (node : projection reg) =
   let Region.{value; region} = node in
-  Tree.of_nsepseq state ~region "E_Proj" print_selection value.field_path
+  let {record_or_tuple; selector=_; field_path} = value in
+  let children = Tree.(
+      mk_child print_expr record_or_tuple
+      :: mk_children_nsepseq print_selection field_path)
+  in Tree.make state ~region "E_Proj" children
 
 and print_selection state = function
   FieldName name -> print_FieldName state name
@@ -991,12 +1012,17 @@ and print_field_expr state (node : (field_name, equal, expr) field) =
 (* String literals *)
 
 and print_E_String state (node : lexeme wrap) =
-  Tree.(make_unary state "E_String" make_string node)
+  Tree.make_string "E_String" state node
 
 (* Arithmetic subtraction *)
 
 and print_E_Sub state (node : minus bin_op reg) =
   print_bin_op state "E_Sub" node
+
+(* "true" as expression *)
+
+and print_E_True state (node : true_const) =
+  Tree.make_node ~region:node#region state "E_True"
 
 (* Tuple of expression *)
 
@@ -1060,7 +1086,7 @@ and print_E_Var state (node : variable) =
 (* Verbatim strings *)
 
 and print_E_Verbatim state (node : lexeme wrap) =
-  Tree.(make_unary state "E_Verbatim" make_verbatim node)
+  Tree.make_verbatim "E_Verbatim" state node
 
 (* Sequence *)
 

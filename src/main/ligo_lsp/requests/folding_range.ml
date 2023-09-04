@@ -46,7 +46,10 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
   let get_range : some_node -> FoldingRange.t fold_control =
    fun (Some_node (x, b)) ->
     match b with
-    | S_reg (S_import _) -> Continue (mk_imports x.region)
+    | S_reg (S_import_alias _) -> Continue (mk_imports x.region) (* FIXME *)
+    | S_reg (S_import_all_as _) -> Continue (mk_imports x.region)
+    | S_reg (S_import_from _) -> Continue (mk_imports x.region)
+    | S_reg (S_import_decl _) -> Continue (mk_imports x.region)
     | S_reg _ -> Continue (mk_region x.region)
     | _ -> Skip
   in

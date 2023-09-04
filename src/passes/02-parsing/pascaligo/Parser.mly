@@ -94,6 +94,7 @@ open Simple_utils.Region
 module CST = Cst_pascaligo.CST
 open! CST
 module Wrap = Lexing_shared.Wrap
+module Nodes = Cst_shared.Nodes
 
 (* UTILITIES
 
@@ -102,6 +103,9 @@ module Wrap = Lexing_shared.Wrap
    to be written in a certain way to remain LR, and that way did not
    make it easy in the semantic action to collate the information into
    CST nodes. *)
+
+let nseq_to_region = Nodes.nseq_to_region
+let nsepseq_to_region = Nodes.nsepseq_to_region
 
 let mk_reg region value = Region.{region; value}
 
@@ -127,7 +131,7 @@ let mk_mod_path :
         trans ((prev_sep, item) :: seq, next_sep) others in
     let list, last_dot = trans ([], sep) tail in
     let module_path = first, List.rev list in
-    let region = CST.nseq_to_region (fun (x,_) -> x#region) nseq in
+    let region = nseq_to_region (fun (x,_) -> x#region) nseq in
     let region = Region.cover region (to_region field)
     and value = {module_path; selector=last_dot; field}
     in {value; region}
@@ -412,11 +416,11 @@ top_declaration:
 | "<directive>"    { D_Directive       $1 } (* Only at top-level *)
 
 declaration:
-  type_decl    { D_Type     $1 }
-| const_decl   { D_Const    $1 }
-| fun_decl     { D_Fun      $1 }
-| module_decl  { D_Module   $1 }
-| attr_decl    { D_Attr     $1 }
+  type_decl    { D_Type   $1 }
+| const_decl   { D_Const  $1 }
+| fun_decl     { D_Fun    $1 }
+| module_decl  { D_Module $1 }
+| attr_decl    { D_Attr   $1 }
 
 (* Attributed declaration *)
 
@@ -456,13 +460,13 @@ sum_type:
       match $2 with
         None -> $1.region, []
       | Some long ->
-          let stop = CST.nseq_to_region (fun (_,v) -> v.region) long
+          let stop = nseq_to_region (fun (_,v) -> v.region) long
           in cover $1.region stop, Utils.nseq_to_list long in
     let value = {lead_vbar = None; variants = ($1, tail)}
     in T_Sum {region; value}
    }
 | attributes long_variants { (* Attributes of the sum type *)
-    let region    = CST.nseq_to_region (fun (_,v) -> v.region) $2 in
+    let region    = nseq_to_region (fun (_,v) -> v.region) $2 in
     let (lead_vbar, short_variant), list = $2 in
     let variants  = short_variant, list in
     let value     = {lead_vbar = Some lead_vbar; variants} in
@@ -534,7 +538,7 @@ core_type:
 | type_ctor_app   { T_App    $1 }
 | record_type     { T_Record $1 }
 | par(type_expr)  { T_Par    $1 }
-| qualified_type  { $1          }
+| qualified_type
 | attr_type       { $1 }
 
 (* Attributed core types *)
@@ -1252,7 +1256,7 @@ left_expr:
 map_lookup:
   path_expr nseq(brackets(expr)) {
     let to_region (x : expr brackets reg) = expr_to_region x.value.inside in
-    let stop   = CST.nseq_to_region to_region $2 in
+    let stop   = nseq_to_region to_region $2 in
     let region = cover (expr_to_region $1) stop
     and value : CST.map_lookup = {map=$1; keys=$2}
     in E_MapLookup {region; value} }

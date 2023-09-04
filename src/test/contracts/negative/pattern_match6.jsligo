@@ -3,14 +3,14 @@ type action = ["A"]  | ["B"]  | ["C"];
 type state  = ["S1"] | ["S2"]
 
 let do_something = ([state, action]:[state,action]) : state => {
-    return match(state, {
-        S1: () => (match(action, {
-            A: () => S1(),
-            B: () => S2()
-        })),
-        S2: () => (match(action, {
-            A: () => S2(),
-            B: () => S1()
-        })),
-    });
+    return match (state) {
+        when(S1()): match (action) {
+            when(A()): S1();
+            when(B()): S2()
+        };
+        when(S2()): match (action) {
+            when(A()): S2();
+            when(B()): S1()
+        }
+    };
 };

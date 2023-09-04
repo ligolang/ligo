@@ -77,11 +77,11 @@ type return_ = [list<operation>, storage];
 let main = (action: parameter, store: storage) : return_ => {
   return [
     list([]),
-    match(action, {
-      Increment: n => store + n,
-      Decrement: n => store - n,
-      Reset:     ()       => 0
-    })
+    match(action) {
+      when(Increment(n)): store + n;
+      when(Decrement(n)): store - n;
+      when(Reset()): 0
+    }
   ];
 };
 ```

@@ -6,6 +6,11 @@ type assignment_operator =
   | Min_eq
   | Plus_eq
   | Mod_eq
+  | BitAnd_eq
+  | BitOr_eq
+  | BitXor_eq
+  | BitSl_eq
+  | BitSr_eq
 
 and operator =
   | Eq

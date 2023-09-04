@@ -141,14 +141,19 @@ type variable    = lexeme wrap
 type fun_name    = lexeme wrap
 type member_name = lexeme wrap
 type module_name = lexeme wrap
-
 type type_name   = lexeme wrap
 type class_name  = lexeme wrap
 type ctor        = lexeme wrap
-
 type language    = lexeme reg   (* Not [wrap] *)
 
 type attribute   = Attr.t reg
+
+type string_literal   = lexeme wrap
+type int_literal      = (lexeme * Z.t) wrap
+type nat_literal      = int_literal
+type bytes_literal    = (lexeme * Hex.t) wrap
+type mutez_literal    = (lexeme * Int64.t) wrap
+type verbatim_literal = lexeme wrap
 
 (* Parentheses *)
 
@@ -470,20 +475,20 @@ and case_stmt = {
    add or modify some, please make sure they remain in order. *)
 
 and pattern =
-  P_Attr     of (attribute * pattern)                (*   [@var] x *)
-| P_Bytes    of (lexeme * Hex.t) wrap                (*     0xFFFA *)
-| P_Ctor     of pattern ctor_call reg                (* C(x,y=_)   *)
-| P_Int      of (lexeme * Z.t) wrap                  (*         42 *)
-| P_ModPath  of pattern module_path reg              (*      m.n.x *)
-| P_Mutez    of (lexeme * Int64.t) wrap              (*     5mutez *)
-| P_Nat      of (lexeme * Z.t) wrap                  (*         4n *)
-| P_Par      of pattern par reg                      (*    (`C, 4) *)
-| P_String   of lexeme wrap                          (*   "string" *)
-| P_Tuple    of pattern tuple                        (*     (1, x) *)
-| P_Typed    of typed_pattern reg                    (*  (x : int) *)
-| P_Var      of variable                             (*          x *)
-| P_Variant  of pattern ctor_call reg                (*      `C(1) *)
-| P_Verbatim of lexeme wrap                          (*    {|foo|} *)
+  P_Attr     of (attribute * pattern)    (*   [@var] x *)
+| P_Bytes    of bytes_literal            (*     0xFFFA *)
+| P_Ctor     of pattern ctor_call reg    (*   C(x,y=_) *)
+| P_Int      of int_literal              (*         42 *)
+| P_ModPath  of pattern module_path reg  (*      m.n.x *)
+| P_Mutez    of mutez_literal            (*     5mutez *)
+| P_Nat      of nat_literal              (*         4n *)
+| P_Par      of pattern par reg          (*    (`C, 4) *)
+| P_String   of string_literal           (*   "string" *)
+| P_Tuple    of pattern tuple            (*     (1, x) *)
+| P_Typed    of typed_pattern reg        (*  (x : int) *)
+| P_Var      of variable                 (*          x *)
+| P_Variant  of pattern ctor_call reg    (*      `C(1) *)
+| P_Verbatim of verbatim_literal         (*    {|foo|} *)
 
 (* Tuples *)
 
@@ -526,17 +531,17 @@ and typed_pattern = {
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_Attr    of (attribute * type_expr)             (*        [@a] t *)
-| T_Class   of class_type reg                      (*  m.C [int, D] *)
-| T_Cart    of cartesian reg                       (*   x * (y * z) *)
-| T_Fun     of fun_type reg                        (*        x -> y *)
-| T_Int     of (lexeme * Z.t) wrap                 (*            42 *)
-| T_ModPath of type_expr module_path reg           (*   a.b.(x * y) *)
-| T_Par     of type_expr par reg                   (*           (t) *)
-| T_String  of lexeme wrap                         (*           "x" *)
-| T_Sum     of sum_type reg                        (*      A | B[t] *)
-| T_Tuple   of type_expr tuple                     (*    (x, (y, z) *)
-| T_Var     of variable                            (*             x *)
+  T_Attr    of (attribute * type_expr)    (*        [@a] t *)
+| T_Class   of class_type reg             (*  m.C [int, D] *)
+| T_Cart    of cartesian reg              (*   x * (y * z) *)
+| T_Fun     of fun_type reg               (*        x -> y *)
+| T_Int     of int_literal                (*            42 *)
+| T_ModPath of type_expr module_path reg  (*   a.b.(x * y) *)
+| T_Par     of type_expr par reg          (*           (t) *)
+| T_String  of string_literal             (*           "x" *)
+| T_Sum     of sum_type reg               (*      A | B[t] *)
+| T_Tuple   of type_expr tuple            (*    (x, (y, z) *)
+| T_Var     of variable                   (*             x *)
 
 (* Functional types *)
 
@@ -565,55 +570,55 @@ and variant = attribute list * class_type reg
    add or modify some, please make sure they remain in order. *)
 
 and expr =
-  E_Add        of plus bin_op reg            (* x + y          *)
-| E_And        of kwd_and bin_op reg         (* x and y        *)
-| E_Attr       of (attribute * expr)         (* [@a] (x,y)     *)
-| E_BitAnd     of ampersand bin_op reg       (* x & y          *)
-| E_BitNot     of tilde un_op reg            (* ~x             *)
-| E_BitOr      of vbar bin_op reg            (* x | y          *)
-| E_BitXor     of caret bin_op reg           (* x ^ y          *)
-| E_BitLShift  of lshift bin_op reg          (* x << 4         *)
-| E_BitRShift  of rshift bin_op reg          (* x >> 4         *)
-| E_Bytes      of (lexeme * Hex.t) wrap      (* 0xFFFA         *)
-| E_Call       of call                       (* m.f (x,y)      *)
+  E_Add        of plus bin_op reg       (* x + y                *)
+| E_And        of kwd_and bin_op reg    (* x and y              *)
+| E_Attr       of (attribute * expr)    (* [@a] (x,y)           *)
+| E_BitAnd     of ampersand bin_op reg  (* x & y                *)
+| E_BitNot     of tilde un_op reg       (* ~x                   *)
+| E_BitOr      of vbar bin_op reg       (* x | y                *)
+| E_BitXor     of caret bin_op reg      (* x ^ y                *)
+| E_BitLShift  of lshift bin_op reg     (* x << 4               *)
+| E_BitRShift  of rshift bin_op reg     (* x >> 4               *)
+| E_Bytes      of bytes_literal         (* 0xFFFA               *)
+| E_Call       of call                  (* m.f (x,y)            *)
 | E_CodeInj    of code_inj reg
-| E_Ctor       of expr ctor_call reg         (* Foo(Incr(x))   *)
-| E_Equal      of eq2 bin_op reg             (* x == y         *)
-| E_Exp        of exp bin_op reg             (* x**2           *)
-| E_Fun        of fun_expr reg               (* lambda x: x    *)
-| E_Geq        of ge bin_op reg              (* x >= y         *)
-| E_Gt         of gt bin_op reg              (* x > y          *)
-| E_IfElse     of if_else reg                (* x if b else y  *)
-| E_Int        of (lexeme * Z.t) wrap        (* 42             *)
-| E_IntDiv     of slash2 bin_op reg          (* 16 // 3        *)
-| E_Leq        of le bin_op reg              (* x <= y         *)
-| E_List       of list_expr                  (* (4,5,4)        *)
-| E_ListCompr  of list_comprehension         (* [x for x in e] *)
-| E_Lt         of lt bin_op reg              (* x < y          *)
-| E_Map        of map_expr                   (* {"a": 1}       *)
-| E_MapCompr   of map_comprehension    (* {k:v for (k,v) in e} *)
-| E_MapLookup  of map_lookup reg             (* m.n["a"][j]    *)
-| E_Match      of match_expr reg             (* match e:       *)
-| E_Mod        of percent bin_op reg         (* x % n          *)
-| E_ModPath    of expr module_path reg       (* m.n.x          *)
-| E_Mult       of times bin_op reg           (* x * y          *)
-| E_Mutez      of (lexeme * Int64.t) wrap    (* 5mutez         *)
-| E_Nat        of (lexeme * Z.t) wrap        (* 4n             *)
-| E_Neg        of minus un_op reg            (* -a             *)
-| E_Neq        of ne bin_op reg              (* x != y         *)
-| E_Not        of kwd_not un_op reg          (* not x          *)
-| E_Or         of kwd_or bin_op reg          (* x or y         *)
-| E_Par        of expr par reg               (* (x - m.y)      *)
-| E_Proj       of projection reg             (* e.x.1          *)
-| E_Set        of set_expr                   (* {x, 1}         *)
-| E_SetCompr   of set_comprehension          (* {x for x in e} *)
-| E_String     of lexeme wrap                (* "string"       *)
-| E_Sub        of minus bin_op reg           (* a - b          *)
-| E_Tuple      of expr tuple                 (* (1, x)         *)
-| E_Typed      of typed_expr par reg         (* (x : int)      *)
-| E_Var        of variable                   (* x              *)
-| E_Variant    of expr ctor_call reg         (* `Foo(Incr(x))  *)
-| E_Verbatim   of lexeme wrap                (* {|foo|}        *)
+| E_Ctor       of expr ctor_call reg    (* Foo(Incr(x))         *)
+| E_Equal      of eq2 bin_op reg        (* x == y               *)
+| E_Exp        of exp bin_op reg        (* x**2                 *)
+| E_Fun        of fun_expr reg          (* lambda x: x          *)
+| E_Geq        of ge bin_op reg         (* x >= y               *)
+| E_Gt         of gt bin_op reg         (* x > y                *)
+| E_IfElse     of if_else reg           (* x if b else y        *)
+| E_Int        of int_literal           (* 42                   *)
+| E_IntDiv     of slash2 bin_op reg     (* 16 // 3              *)
+| E_Leq        of le bin_op reg         (* x <= y               *)
+| E_List       of list_expr             (* (4,5,4)              *)
+| E_ListCompr  of list_comprehension    (* [x for x in e]       *)
+| E_Lt         of lt bin_op reg         (* x < y                *)
+| E_Map        of map_expr              (* {"a": 1}             *)
+| E_MapCompr   of map_comprehension     (* {k:v for (k,v) in e} *)
+| E_MapLookup  of map_lookup reg        (* m.n["a"][j]          *)
+| E_Match      of match_expr reg        (* match e:             *)
+| E_Mod        of percent bin_op reg    (* x % n                *)
+| E_ModPath    of expr module_path reg  (* m.n.x                *)
+| E_Mult       of times bin_op reg      (* x * y                *)
+| E_Mutez      of mutez_literal         (* 5mutez               *)
+| E_Nat        of nat_literal           (* 4n                   *)
+| E_Neg        of minus un_op reg       (* -a                   *)
+| E_Neq        of ne bin_op reg         (* x != y               *)
+| E_Not        of kwd_not un_op reg     (* not x                *)
+| E_Or         of kwd_or bin_op reg     (* x or y               *)
+| E_Par        of expr par reg          (* (x - m.y)            *)
+| E_Proj       of projection reg        (* e.x.1                *)
+| E_Set        of set_expr              (* {x, 1}               *)
+| E_SetCompr   of set_comprehension     (* {x for x in e}       *)
+| E_String     of string_literal        (* "string"             *)
+| E_Sub        of minus bin_op reg      (* a - b                *)
+| E_Tuple      of expr tuple            (* (1, x)               *)
+| E_Typed      of typed_expr par reg    (* (x : int)            *)
+| E_Var        of variable              (* x                    *)
+| E_Variant    of expr ctor_call reg    (* `Foo(Incr(x))        *)
+| E_Verbatim   of verbatim_literal      (* {|foo|}              *)
 
 (* List comprehension *)
 
@@ -666,7 +671,7 @@ and projection = {
 
 and selection =
   MemberName of member_name
-| Component of (lexeme * Z.t) wrap
+| Component  of int_literal
 
 (* Typed expression *)
 
@@ -789,21 +794,6 @@ and lambda_expr = {
 }
 
 (* PROJECTING REGIONS *)
-
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
-let nsepseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last (to_region <@ snd) tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,

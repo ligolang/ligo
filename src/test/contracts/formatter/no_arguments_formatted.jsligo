@@ -1,2 +1,3 @@
-let a_function_with_a_very_long_name_which_spans_the_entire_line_and_so_the_parameters_must_be_broken_up_on_shorter_lines_in_order_to_display_them = ()
-  : int => { return 0 };
+let a_function_with_a_very_long_name_which_spans_the_entire_line_and_so_the_parameters_must_be_broken_up_on_shorter_lines_in_order_to_display_them = (): int => {
+  return 0;
+}

@@ -29,9 +29,8 @@ module Make (Options : Options.S) =
 
     let filters : t = [
       ES6FUN.filter;
-      ES6FUN_hook.filter;
-      SEMI.filter;
-      SEMI_hook.filter;
+      PARAMS.filter;
+      SEMI_ELSE.filter;
       Attributes.filter;
       Comments.filter
     ]

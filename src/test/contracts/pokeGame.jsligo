@@ -23,9 +23,9 @@ const poke = (_p : unit, store: storage): return_ => {
       ticketOwnership
     );
 
-  return match(t, {
-    None: () => failwith("User does not have tickets => not allowed"),
-    Some: (_t: ticket<string>) => [
+  return match(t) {
+    when(None()): failwith("User does not have tickets => not allowed");
+    when(Some(_t)): [
       list([]) as list<operation>,
       {
         //let t burn
@@ -37,8 +37,8 @@ const poke = (_p : unit, store: storage): return_ => {
         ),
         ticketOwnership: tom,
       }
-    ]
-  });
+    ];
+  };
 };
 
 @no_mutation
@@ -61,11 +61,11 @@ const pokeAndGetFeedback = (oracleAddress : address, store : storage) => {
     oracleAddress
   );
 
-  return match(t, {
-    None: () => failwith("User does not have tickets => not allowed"),
-    Some: (_t: ticket<string>) =>
-      match(feedbackOpt, {
-        Some: (feedback: string) => {
+  return match(t) {
+    when (None()): failwith("User does not have tickets => not allowed");
+    when (Some(_t)):
+      match (feedbackOpt) {
+        when (Some(feedback)): do {
           let feedbackMessage = { receiver: oracleAddress, feedback: feedback };
           return [
             list([]) as list<operation>,
@@ -79,11 +79,10 @@ const pokeAndGetFeedback = (oracleAddress : address, store : storage) => {
               ticketOwnership: tom,
             }
           ]
-        },
-        None: () =>
-          failwith("Cannot find view feedback on given oracle address"),
-      }),
-  });
+        };
+        when (None()): failwith("Cannot find view feedback on given oracle address");
+      };
+  };
 };
 
 @entry

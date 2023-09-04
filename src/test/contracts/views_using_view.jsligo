@@ -27,6 +27,6 @@ const super_not_funny = (_: unit, s: storage): storage =>
 const main = (action: parameter, _store: storage): return_ => {
   return [
     (list([]) as list<operation>), // No operations
-    (match(action, { Default: () => 0 }))
+    (match(action) { when(Default()): 0 })
   ]
 };

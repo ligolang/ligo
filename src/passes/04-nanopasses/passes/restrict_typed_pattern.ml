@@ -50,6 +50,15 @@ let compile ~raise:_ =
           return @@ List.map ~f:(fun (ty, p) -> annot_if_pvar ty p) pty
         in
         Option.value_map p_typed_opt ~default:p' ~f:(fun lst -> p_tuple ~loc lst)
+      | P_tuple_with_ellipsis ptup ->
+        let p_typed_opt =
+          let open Simple_utils.Option in
+          let* ty_opts = get_t_record_raw ty in
+          let* tys = Option.all (Non_linear_rows.get_tys ty_opts) in
+          let* pty = List.zip_opt tys ptup in
+          return @@ List.map ~f:(fun (ty, { pattern; _ }) -> annot_if_pvar ty pattern) pty
+        in
+        Option.value_map p_typed_opt ~default:p' ~f:(fun lst -> p_tuple ~loc lst)
       | P_pun_record prec ->
         let p_typed_opt =
           let open Simple_utils.Option in

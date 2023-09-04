@@ -17,6 +17,8 @@ type t =
   | `Small_passes_michelson_type_wrong of string * ty_expr
   | `Small_passes_wrong_lvalue of expr
   | `Small_passes_unsupported_return of statement list
+  | `Small_passes_unsupported_break of Location.t
+  | `Small_passes_unsupported_continue of Location.t
   | `Small_passes_unsupported_control_flow of block
   | `Small_passes_unsupported_top_level_statement of instruction
   | `Small_passes_unsupported_import of declaration
@@ -35,6 +37,8 @@ type t =
   | `Small_passes_bad_format_literal of expr * string
   | `Small_passes_duplicate_identifier of Variable.t
   | `Small_passes_duplicate_ty_identifier of Ty_variable.t
+  | `Small_passes_only_variable_in_prefix of expr
+  | `Small_passes_only_variable_in_postfix of expr
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -109,6 +113,18 @@ let error_ppformat
       Format.fprintf
         f
         "@[<hv>%a@.Return statement is currently not supported in this position@]"
+        snippet_pp
+        loc
+    | `Small_passes_unsupported_break loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Break statement is not supported in that position@]"
+        snippet_pp
+        loc
+    | `Small_passes_unsupported_continue loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Continue statement is currently not supported@]"
         snippet_pp
         loc
     | `Small_passes_unsupported_control_flow block ->
@@ -207,7 +223,19 @@ let error_ppformat
       Format.fprintf f "@[<hv>%a@ Duplicate identifier. @]" snippet_pp loc
     | `Small_passes_duplicate_ty_identifier x ->
       let loc = Ty_variable.get_location x in
-      Format.fprintf f "@[<hv>%a@ Duplicate identifier. @]" snippet_pp loc)
+      Format.fprintf f "@[<hv>%a@ Duplicate identifier. @]" snippet_pp loc
+    | `Small_passes_only_variable_in_prefix e ->
+      Format.fprintf
+        f
+        "@[<hv>%a@ Only variables are accepted in prefix operators. @]"
+        snippet_pp
+        (get_e_loc e)
+    | `Small_passes_only_variable_in_postfix e ->
+      Format.fprintf
+        f
+        "@[<hv>%a@ Only variables are accepted in postfix operators. @]"
+        snippet_pp
+        (get_e_loc e))
 
 
 let error_json : t -> Simple_utils.Error.t =
@@ -280,6 +308,19 @@ let error_json : t -> Simple_utils.Error.t =
         ~message:"Return statement is currently not supported in this position"
         ~location
         ()
+    in
+    make ~stage ~content
+  | `Small_passes_unsupported_break location ->
+    let content =
+      make_content
+        ~message:"Break statement is not supported in that position"
+        ~location
+        ()
+    in
+    make ~stage ~content
+  | `Small_passes_unsupported_continue location ->
+    let content =
+      make_content ~message:"Continue statement is currently not supported" ~location ()
     in
     make ~stage ~content
   | `Small_passes_unsupported_control_flow block ->
@@ -396,5 +437,15 @@ let error_json : t -> Simple_utils.Error.t =
   | `Small_passes_unsupported_disc_union_type ty ->
     let location = get_t_loc ty in
     let message = "Unsupported disc union type" in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_only_variable_in_prefix e ->
+    let location = get_e_loc e in
+    let message = "Only variables are accepted in prefix operators" in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_only_variable_in_postfix e ->
+    let location = get_e_loc e in
+    let message = "Only variables are accepted in postfix operators" in
     let content = make_content ~message ~location () in
     make ~stage ~content

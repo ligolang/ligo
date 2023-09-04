@@ -7,34 +7,33 @@ type parameter =
 
 type return_ = [list <operation>, storage];
 
-let add = ([store, delta] : [storage, int]) : storage => store + delta;
-let sub = ([store, delta] : [storage, int]) : storage => store - delta;
+const add = ([store, delta] : [storage, int]) : storage => store + delta;
+const sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
-let main = (action: parameter, store: storage) : return_ => {
+const main = (action: parameter, store: storage) : return_ => {
  return [
    (list([]) as list <operation>),    // No operations
-   (match (action, {
-    Increment: (n: int) => add ([store, n]),
-    Decrement: (n: int) => sub ([store, n]),
-    Reset:     ()  => 0}))
+   (match (action) {
+    when(Increment(n)): add ([store, n]);
+    when(Decrement(n)): sub ([store, n]);
+    when(Reset()): 0; })
   ]
 };
 
 
-let _test = () : test_exec_error_balance_too_low => {
+const _test = () : test_exec_error_balance_too_low => {
   let initial_storage = 42 as int;
   let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
   let r = Test.transfer_to_contract(contr, (Increment (1)), 100000000 as tez);
-  return match(r, {
-    Success: (n : nat) => failwith("Success"),
-    Fail: (e : test_exec_error) => 
-     match (e, {
-       Rejected: (x: [michelson_program, address]) => failwith("Rejected"),
-       Balance_too_low : (x : test_exec_error_balance_too_low) => { Test.log(x.spend_request); Test.log(x.contract_balance); return x; },
-       Other: (s: string) => failwith("Other")
-     })
-  });
+  return match(r) {
+    when(Success(_n)): failwith("Success");
+    when(Fail(e)): match (e) {
+       when(Rejected(_x)): failwith("Rejected");
+       when(Balance_too_low(x)): ((x: test_exec_error_balance_too_low) => { Test.log(x.spend_request); Test.log(x.contract_balance); return x; })(x);
+       when(Other(_s)): failwith("Other");
+     };
+  };
 };
 
-let test = _test();
+const test = _test();

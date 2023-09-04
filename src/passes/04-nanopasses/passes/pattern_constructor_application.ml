@@ -40,10 +40,19 @@ let name = __MODULE__
 
 let compile ~raise:_ =
   let syntax = get_flag () in
-  let pattern : _ pattern_ -> pattern =
+  let pattern : (pattern, ty_expr) pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
     match Location.unwrap p with
+    | P_ctor_app
+        ({ fp = { wrap_content = P_literal (Literal_string ctor_name); _ } }, args) ->
+      let args =
+        match args with
+        | [] -> None
+        | [ u ] -> Some u
+        | _ -> Some (p_tuple ~loc args)
+      in
+      p_variant ~loc (Label.of_string (Ligo_string.extract ctor_name)) args
     | P_app (c, args) ->
       (match get_p c with
       | P_ctor c

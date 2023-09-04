@@ -11,6 +11,7 @@
   map_lookup
   errors
   unit_test_helpers
+  break_continue_outside
   single_switch_block
   t_constant
   t_arg
@@ -22,7 +23,7 @@
   linear_signature
   restrict_t_app
   list_as_function
-  match_as_function
+  match_tc39
   hack_literalize_jsligo
   t_app_michelson_types
   reverse_application
@@ -39,6 +40,7 @@
   sum_type_helper_generator
   standalone_constructor_removal
   pattern_constructor_application
+  pattern_heuristic
   object_to_record
   array_to_tuple
   let_syntax
@@ -47,6 +49,7 @@
   linearity
   external_hack
   of_file
+  export_program_entry
   export_declaration
   import_restriction
   projections

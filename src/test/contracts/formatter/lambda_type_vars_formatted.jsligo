@@ -1,4 +1,4 @@
-const id = <T>(x: T): T => x;
+const id = <T>(x: T): T => x
 
 const a_lot_of_type_parameters = <
   Parameter1,
@@ -6,4 +6,4 @@ const a_lot_of_type_parameters = <
   Parameter3,
   Parameter4
 >() =>
-  0;
+  0

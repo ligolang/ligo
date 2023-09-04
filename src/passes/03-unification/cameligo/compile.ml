@@ -62,18 +62,6 @@ module TODO_do_in_parsing = struct
         { region; value = nsepseq_of_nseq ~sep:Lexing_cameligo.Token.ghost_comma l }
 
 
-  let nest_projection compile_selection value region hd tl =
-    let field_path =
-      match List.rev tl with
-      | (_, el) :: tl -> el, tl
-      | _ -> assert false
-    in
-    O.E_proj
-      { struct_ = I.E_Proj { value = { value with field_path }; region }
-      ; path = compile_selection hd
-      }
-
-
   (* the I.field_path_assignment type is slightly different from other syntaxes:
      - no lenses ; labels are string ; the Path case *)
   let update_rhs (compile_lens, compile_selection) updates =
@@ -191,6 +179,8 @@ let rec expr : Eq.expr -> Folding.expr =
   (* we keep parenthesis so that the backward pass which add parenthesis is done only once for all syntaxes (?) *)
   | E_Par par -> expr par.value.inside
   | E_Unit _ -> ret @@ E_literal Literal_unit
+  | E_False _ -> ret @@ E_constr (Ligo_prim.Label.of_string "False")
+  | E_True _ -> ret @@ E_constr (Ligo_prim.Label.of_string "True")
   | E_Bytes x -> ret @@ E_literal (Literal_bytes (Hex.to_bytes (snd x#payload)))
   | E_Cat c -> compile_bin_op CARET c
   | E_String str ->
@@ -242,11 +232,9 @@ let rec expr : Eq.expr -> Folding.expr =
     let record = sepseq_to_list record.inside in
     let fields = List.map ~f:compile_field record in
     ret @@ E_record_pun fields
-  | E_Proj { value = { record_or_tuple; field_path; _ } as value; region } ->
-    (match nsepseq_rev field_path with
-    | one, [] -> ret @@ E_proj { struct_ = record_or_tuple; path = compile_selection one }
-    | hd, tl ->
-      ret @@ TODO_do_in_parsing.nest_projection compile_selection value region hd tl)
+  | E_Proj { value = { record_or_tuple; field_path; _ }; region } ->
+    let field_path = nsepseq_map compile_selection field_path in
+    ret @@ E_proj (record_or_tuple, nsepseq_to_list @@ field_path)
   | E_ModPath { value; _ } ->
     let I.{ module_path; selector = _; field } = value in
     let module_path =
@@ -293,7 +281,9 @@ let rec expr : Eq.expr -> Folding.expr =
     let cases, loc2 = r_split clauses in
     let loc = Location.cover (Location.lift region) loc2 in
     let cases =
-      let compile_case_clause I.{ pattern; rhs; _ } = O.Case.{ pattern; rhs } in
+      let compile_case_clause I.{ pattern; rhs; _ } =
+        O.Case.{ pattern = Some pattern; rhs }
+      in
       nseq_map (compile_case_clause <@ r_fst) @@ nsepseq_to_nseq cases
     in
     Location.wrap ~loc @@ O.E_match { expr = subject; cases }
@@ -332,7 +322,7 @@ let rec expr : Eq.expr -> Folding.expr =
     | Some nelst ->
       let seq = nsepseq_to_list nelst in
       ret @@ E_sequence seq)
-  | E_Contract c ->
+  | E_ContractOf c ->
     ret @@ E_contract (List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c.value))
   | E_Assign { value = { binder; expr = expression; _ }; _ } ->
     let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.var binder) None in
@@ -442,8 +432,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       ret
       @@ T_module_open_in
            { module_path = TODO_do_in_parsing.mvar hd; field; field_as_open })
-  | T_Parameter x ->
-    let path = nsepseq_map TODO_do_in_parsing.mvar x.value in
+  | T_ParameterOf { value; _ } ->
+    let path = nsepseq_map TODO_do_in_parsing.mvar value in
     ret @@ T_contract_parameter (nsepseq_to_nseq path)
 
 
@@ -454,6 +444,8 @@ let rec pattern : Eq.pattern -> Folding.pattern =
   match p with
   | P_Ctor v -> ret @@ O.P_ctor (TODO_do_in_parsing.labelize v)
   | P_Unit _ -> ret @@ P_unit
+  | P_False _ -> ret @@ P_ctor (Ligo_prim.Label.of_string "False")
+  | P_True _ -> ret @@ P_ctor (Ligo_prim.Label.of_string "True")
   | P_Var p -> ret @@ P_var (TODO_do_in_parsing.var p)
   | P_Int v -> ret @@ P_literal (Literal_int (snd (w_fst v)))
   | P_Nat v -> ret @@ P_literal (Literal_nat (snd (w_fst v)))
@@ -533,8 +525,7 @@ let declaration : Eq.declaration -> Folding.declaration =
   | D_Signature { value = { name; signature_expr; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
     ret @@ D_signature { name; sig_expr = signature_expr }
-  | D_Module_include { value = { module_expr; _ }; _ } ->
-    ret @@ D_module_include module_expr
+  | D_Include { value = { module_expr; _ }; _ } -> ret @@ D_module_include module_expr
 
 
 let mod_expr : Eq.mod_expr -> Folding.mod_expr =
@@ -582,7 +573,7 @@ let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
   | S_Type { region; value = _, v, _, ty } ->
     let loc = Location.lift region in
     Location.wrap ~loc (O.S_type (TODO_do_in_parsing.tvar v, ty))
-  | S_Type_var { region; value = _, v } ->
+  | S_TypeVar { region; value = _, v } ->
     let loc = Location.lift region in
     Location.wrap ~loc (O.S_type_var (TODO_do_in_parsing.tvar v))
   | S_Attr { region; value = attr, si } ->

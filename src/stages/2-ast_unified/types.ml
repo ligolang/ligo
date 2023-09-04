@@ -20,7 +20,9 @@ module Field = Nano_prim.Field
 module Array_repr = Nano_prim.Array_repr
 module Object_ = Nano_prim.Object_
 module Selection = Nano_prim.Selection
-module Projection = Ligo_prim.Accessor (Nano_prim.Selection)
+module Match_tc39 = Nano_prim.Match_tc39
+
+(* module Projection = Ligo_prim.Accessor (Nano_prim.Selection) *)
 module Update = Nano_prim.Update
 module Param = Nano_prim.Param
 module Poly_fun = Nano_prim.Poly_fun
@@ -135,6 +137,11 @@ and 'self list_pattern =
   | Cons of 'self * 'self
   | List of 'self list
 
+and 'self element_pattern =
+  { ellipsis : bool
+  ; pattern : 'self
+  }
+
 and ('self, 'ty_expr) pattern_content_ =
   | P_unit
   | P_typed of 'ty_expr * 'self
@@ -143,12 +150,14 @@ and ('self, 'ty_expr) pattern_content_ =
   | P_list of 'self list_pattern
   | P_variant of Label.t * 'self option
   | P_tuple of 'self list
+  | P_tuple_with_ellipsis of 'self element_pattern list
   | P_pun_record of (Label.t, 'self) Field.t list
   | P_rest of Label.t
   | P_attr of Attribute.t * 'self
   | P_mod_access of (Mod_variable.t Simple_utils.List.Ne.t, 'self) Mod_access.t
   | P_app of 'self * 'self option
   | P_ctor of Label.t
+  | P_ctor_app of 'self Simple_utils.List.Ne.t
   | P_var_typed of 'ty_expr * Variable.t [@not_initial]
 [@@deriving
   map
@@ -183,6 +192,7 @@ and ('self, 'expr, 'pattern, 'statement, 'block) instruction_content_ =
   | I_return of 'expr option [@sexp.option]
   | I_switch of ('expr, 'block) Switch.t
   | I_break
+  | I_continue
   | I_assign of Variable.t * 'expr [@not_initial]
 [@@deriving
   map
@@ -201,8 +211,10 @@ type ('self, 'instruction, 'declaration) statement_ =
 
 and ('self, 'instruction, 'declaration) statement_content_ =
   | S_attr of (Attribute.t * 'self)
+  | S_export of 'declaration
   | S_instr of 'instruction
   | S_decl of 'declaration
+  | S_directive of unit (* directive ignored for now *)
 [@@deriving
   map
   , fold
@@ -341,8 +353,9 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_array of
       'self Array_repr.t (* [1, 2, 3] , [42] , [] , [2 ...3] (specific to jsligo) *)
   | E_object of 'self Object_.t (* {a : 1, b : 2}  ; { a ... n } *)
+  | E_object_update of 'self Object_.update
   | E_list of 'self list (* [ 1; 2; 3; 4; 5] *)
-  | E_proj of 'self Projection.t (* x.y.1   y is a field name, 1 is a tuple component *)
+  | E_proj of 'self * 'self Selection.t list (* x.y.1 *)
   | E_module_open_in of
       (Mod_variable.t Simple_utils.List.Ne.t, 'self) Mod_access.t (* M.N.a or M.N.(a.x)*)
   | E_update of 'self Update.t
@@ -355,6 +368,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_applied_constructor of 'self Constructor.t (* MyCtor (42, 43, 44), PascaLigo only *)
   | E_call of 'self * 'self list Location.wrap (* f (x, y) ; f x y *)
   | E_match of ('self, 'pattern, 'self) Case.t (* match e with | A -> ... | B -> ... *)
+  | E_match_tc39 of ('self, 'pattern) Match_tc39.t
   | E_annot of ('self * 'ty_expr) (* 42 : int *)
   | E_cond of ('self, 'self) Cond.t (* if b then 42 else 24 *)
   | E_set of 'self list (* set [x; 1] *)
@@ -366,6 +380,7 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_mod_in of ('self, 'mod_expr) Mod_in.t (* module M = struct let x = 42 end in M.x *)
   | E_raw_code of 'self Raw_code.t
   | E_block_with of ('self, 'block) Block_with.t (* { let x = 1 ; x := 2 } with x *)
+  | E_do of 'block
   | E_struct_assign_chainable of
       'self Assign_chainable.structural (* x := y ; which has the type of x/y *)
   | E_let_mut_in of ('pattern, 'self, 'ty_expr) Let_binding.t (* let mut x = 1 *)
@@ -391,8 +406,8 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_module_access of (Mod_variable.t Simple_utils.List.Ne.t, Variable.t) Mod_access.t
       [@not_initial]
   | E_match_block of ('self, 'pattern, 'block) Case.t [@not_initial]
-  | E_prefix of Prefix_postfix.prefix
-  | E_postfix of Prefix_postfix.postfix
+  | E_prefix of 'self Prefix_postfix.prefix
+  | E_postfix of 'self Prefix_postfix.postfix
 [@@deriving
   map
   , fold
@@ -410,6 +425,7 @@ type ('self, 'declaration, 'instruction) program_entry_ =
   | PE_declaration of 'declaration
   | PE_top_level_instruction of 'instruction
   | PE_preproc_directive of unit (* directive ignored for now *)
+  | PE_export of 'self
 [@@deriving
   map
   , fold

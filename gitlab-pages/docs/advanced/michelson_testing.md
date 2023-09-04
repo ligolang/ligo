@@ -74,9 +74,9 @@ type return_ = [list<operation>, storage];
 
 const main = ([action, store]: [parameter, storage]): return_ => {
  return [list([]) as list<operation>,    // No operations
-  match(action, {
-    Append: (s: string) => store + s
-  })]
+  match(action) {
+    when(Append(s)): store + s
+  }]
 };
 ```
 

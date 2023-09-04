@@ -6,10 +6,10 @@ type return_ = [list <operation>, taco_shop_storage];
 let buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
-    match (Map.find_opt (taco_kind_index, taco_shop_storage), {
-      Some: (k:taco_supply) => k,
-      None: (_:unit) => (failwith ("Unknown kind of taco") as taco_supply)
-    }) ;
+    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
+      when(Some(k)): k;
+      when(None()): (failwith ("Unknown kind of taco") as taco_supply)
+    };
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
   if (Tezos.get_amount() != current_purchase_price) {

@@ -21,14 +21,39 @@ type        'a    nseq = 'a * 'a list
 type ('a,'sep) nsepseq = 'a * ('sep * 'a) list
 type ('a,'sep)  sepseq = ('a,'sep) nsepseq option
 
+type ('a,'sep) nsep_or_term = [
+  `Sep  of ('a,'sep) nsepseq
+| `Term of ('a * 'sep) nseq
+]
+
+type ('a,'sep) sep_or_term = ('a,'sep) nsep_or_term option
+
+type ('a,'sep) nsep_or_pref = [
+  `Sep  of ('a,'sep) nsepseq
+| `Pref of ('sep * 'a) nseq
+]
+
 (* Consing *)
 
 let nseq_cons x (hd,tl) = x, hd::tl
+
 let nsepseq_cons x sep (hd,tl) = x, (sep,hd)::tl
 
 let sepseq_cons x sep = function
           None -> x, []
 | Some (hd,tl) -> x, (sep,hd)::tl
+
+let nsep_or_term_cons x sep = function
+  `Sep  s -> `Sep (nsepseq_cons x sep s)
+| `Term s -> `Term (nseq_cons (x,sep) s)
+
+let sep_or_term_cons x sep = function
+  None   -> `Term ((x,sep), [])
+| Some s -> nsep_or_term_cons x sep s
+
+let nsep_or_pref_cons x sep = function
+  `Sep  s -> `Sep (nsepseq_cons x sep s)
+| `Pref s -> `Pref (nseq_cons (sep,x) s)
 
 (* Rightwards iterators *)
 
@@ -37,9 +62,22 @@ let nseq_foldl f a (hd,tl) = List.fold_left ~f ~init:a (hd::tl)
 let nsepseq_foldl f a (hd,tl) =
   List.fold_left ~f:(fun a (_,e) -> f a e) ~init:(f a hd) tl
 
-let sepseq_foldl f a = function
-    None -> a
-| Some s -> nsepseq_foldl f a s
+let sepseq_foldl f i = function
+    None -> i
+| Some s -> nsepseq_foldl f i s
+
+let nsep_or_term_foldl f i = function
+  `Sep  s -> nsepseq_foldl f i s
+| `Term s -> nseq_foldl (fun a (x,_) -> f a x) i s
+
+let sep_or_term_foldl f i = function
+  None -> i
+| Some s -> nsep_or_term_foldl f i s
+
+let nsep_or_pref_foldl f i = function
+  `Sep  s -> nsepseq_foldl f i s
+| `Pref s -> nseq_foldl (fun a (_,x) -> f a x) i s
+
 
 let nseq_iter f (hd,tl) = List.iter ~f (hd::tl)
 
@@ -48,6 +86,18 @@ let nsepseq_iter f (hd,tl) = f hd; List.iter ~f:(f <@ snd) tl
 let sepseq_iter f = function
     None -> ()
 | Some s -> nsepseq_iter f s
+
+let nsep_or_term_iter f = function
+  `Sep  s -> nsepseq_iter f s
+| `Term s -> nseq_iter (fun (x,_) -> f x) s
+
+let sep_or_term_iter f = function
+  None -> ()
+| Some s -> nsep_or_term_iter f s
+
+let nsep_or_pref_iter f = function
+  `Sep  s -> nsepseq_iter f s
+| `Pref s -> nseq_iter (fun (_,x) -> f x) s
 
 (* Reversing *)
 
@@ -69,6 +119,18 @@ let sepseq_rev = function
       None -> None
 | Some seq -> Some (nsepseq_rev seq)
 
+let nsep_or_term_rev = function
+  `Sep  s -> `Sep (nsepseq_rev s)
+| `Term s -> `Term (nseq_rev s)
+
+let sep_or_term_rev = function
+  None   -> None
+| Some s -> Some (nsep_or_term_rev s)
+
+let nsep_or_pref_rev = function
+  `Sep  s -> `Sep (nsepseq_rev s)
+| `Pref s -> `Pref (nseq_rev s)
+
 (* Leftwards iterators *)
 
 let nseq_foldr f (hd,tl) init = List.fold_right ~f (hd::tl) ~init
@@ -78,6 +140,18 @@ let nsepseq_foldr f (hd,tl) a = f hd (List.fold_right ~f:(f <@ snd) tl ~init:a)
 let sepseq_foldr f = function
     None -> fun a -> a
 | Some s -> nsepseq_foldr f s
+
+let nsep_or_term_foldr f = function
+  `Sep  s -> nsepseq_foldr f s
+| `Term s -> nseq_foldr (fun (x,_) -> f x) s
+
+let sep_or_term_foldr f = function
+  None   -> fun i -> i
+| Some s -> nsep_or_term_foldr f s
+
+let nsep_or_pref_foldr f = function
+  `Sep  s -> nsepseq_foldr f s
+| `Pref s -> nseq_foldr (fun (_,x) -> f x) s
 
 (* Maps *)
 
@@ -89,6 +163,18 @@ let nsepseq_map f (hd,tl) =
 let sepseq_map f = function
       None -> None
 | Some seq -> Some (nsepseq_map f seq)
+
+let nsep_or_term_map f = function
+  `Sep  s -> `Sep (nsepseq_map f s)
+| `Term s -> `Term (nseq_map (fun (x, term) -> (f x, term)) s)
+
+let sep_or_term_map f = function
+  None   -> None
+| Some s -> Some (nsep_or_term_map f s)
+
+let nsep_or_pref_map f = function
+  `Sep  s -> `Sep (nsepseq_map f s)
+| `Pref s -> `Pref (nseq_map (fun (pref, x) -> (pref, f x)) s)
 
 (* Conversions to lists *)
 
@@ -103,30 +189,32 @@ let sepseq_to_list = function
     None -> []
 | Some s -> nsepseq_to_list s
 
-(* Conversions to non-empty lists *)
-
 let nsepseq_to_nseq (hd, tl) = hd, (List.map ~f:snd tl)
+
+let nsep_or_term_to_list = function
+  `Sep  s -> nsepseq_to_list s
+| `Term s -> List.map ~f:fst (nseq_to_list s)
+
+let sep_or_term_to_list = function
+  None -> []
+| Some seq -> nsep_or_term_to_list seq
+
+let nsep_or_pref_to_list = function
+  `Sep s -> nsepseq_to_list s
+| `Pref (hd,tl) -> List.map ~f:snd (hd::tl)
 
 (* Convertions of lists *)
 
-let list_to_nsepseq_opt (lst : 'a list) (sep : 's) : ('a, 's) nsepseq option =
-  match lst with
-  | [] -> None
-  | hd :: tl -> Some (hd, List.map ~f:(fun e -> sep, e) tl)
-
-
 let list_to_sepseq (lst : 'a list) (sep : 's) : ('a, 's) sepseq =
   match lst with
-  | [] -> None
-  | _ -> list_to_nsepseq_opt lst sep
+    [] -> None
+  | hd :: tl -> Some (hd, List.map ~f:(fun e -> sep, e) tl)
 
 (* Map and concatenate lists *)
 
-let nseq_concat_map nseq ~f = List.concat_map (nseq_to_list nseq) ~f
-
-let sepseq_concat_map sepseq ~f = List.concat_map (sepseq_to_list sepseq) ~f
-
-let nsepseq_concat_map nsepseq ~f = List.concat_map (nsepseq_to_list nsepseq) ~f
+let    nseq_concat_map s ~f = List.concat_map (nseq_to_list    s) ~f
+let  sepseq_concat_map s ~f = List.concat_map (sepseq_to_list  s) ~f
+let nsepseq_concat_map s ~f = List.concat_map (nsepseq_to_list s) ~f
 
 (* Modules based on [String], like sets and maps. *)
 
@@ -177,6 +265,7 @@ let trace text = function
 let highlight msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
 
 (* When failing to parse a specifed JSON format *)
+
 let error_yojson_format format =
   Error ("Invalid JSON value.
           An object with the following specification is expected:"

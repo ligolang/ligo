@@ -1,1 +1,1 @@
-let main = (): unit => { return unit };
+let main = (): unit => { return unit; };

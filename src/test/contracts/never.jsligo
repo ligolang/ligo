@@ -7,13 +7,11 @@ const main = (action: parameter, store: storage): [list<operation>, storage] => 
   return [
     (list([]) as list<operation>),
     (
-      match(
-        action,
+      match(action)
         {
-          Increment: (n: int) => store + n,
-          Extend: (k: never) => (Tezos.never(k) as storage)
+          when(Increment(n)): store + n;
+          when(Extend(k)): (Tezos.never(k) as storage);
         }
-      )
     )
   ]
 };

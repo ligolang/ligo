@@ -9,18 +9,18 @@ type s = {
   d : list<list<list<int>>>
 };
 
-let s_a : s = { a: 42, b: false };
+const s_a : s = { a: 42, b: false, c: "foo", d:list(list(list(5))) };
 
-let s_b = { ...s_a, a: 32 };
+const s_b = { ...s_a, a: 32 };
 
 type return_ = [list<operation>, storage];
 
-let hd = (x : list<int>) : int => {
-  return match(x, list([
-    ([] : list<int>) => -1,
-    ([x, ...xs] : list<int>) => x
-  ]));
+const hd = (x : list<int>) : int => {
+  return match(x) {
+    when ([] : list<int>) : -1;
+    when ([x, ...xs] : list<int>) : x
+  };
 };
 
-let main = (a : parameter b : storage) : return_ =>
+const main = (a : parameter b : storage) : return_ =>
   [list([]) as list<operation>, (hd(a) + (b + 8) * 11)]

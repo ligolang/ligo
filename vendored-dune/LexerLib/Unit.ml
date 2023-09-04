@@ -28,5 +28,5 @@ let to_string ~token_to_string ~offsets mode = function
 
 let to_lexeme ~token_to_lexeme = function
   `Token token -> token_to_lexeme token
-| `Markup markup -> Markup.to_lexeme markup
-| `Directive directive -> (Directive.to_lexeme directive).Region.value
+| `Markup markup -> [Markup.to_lexeme markup]
+| `Directive directive -> [(Directive.to_lexeme directive).Region.value]

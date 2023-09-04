@@ -1,15 +1,15 @@
- let id_string = ( p : string ) : option < string > => {
- let packed : bytes = Bytes . pack ( p ) ;
+ const id_string = ( p : string ) : option < string > => {
+ const packed : bytes = Bytes . pack ( p ) ;
  return ( ( Bytes . unpack ( packed ) ) as option < string > ) ;
  } ;
 
- let id_int = ( , : int ) : option < int > => {
- let packed : bytes = Bytes . pack ( p ) ;
+ const id_int = ( , : int ) : option < int > => {
+ const packed : bytes = Bytes . pack ( p ) ;
  return ( ( Bytes . unpack ( packed ) ) as option < int > ) ;
  } ;
 
- let id_address = ( p : address type ) : option < address > => {
- let packed : bytes = Bytes . pack ( p ) ; /
+ const id_address = ( p : address type ) : option < address > => {
+ const packed : bytes = Bytes . pack ( p ) ; /
  return ( ( Bytes . unpack ( packed ) ) as option < address > ) ;
  } ;
 

@@ -134,6 +134,15 @@ let mk_children_sepseq print ?root =
 let mk_children_nseq print ?root =
   mk_children_list print ?root <@ Utils.nseq_to_list
 
+let mk_children_sep_or_term print ?root =
+  mk_children_list print ?root <@ Utils.sep_or_term_to_list
+
+let mk_children_nsep_or_term print ?root =
+  mk_children_list print ?root <@ Utils.nsep_or_term_to_list
+
+let mk_children_nsep_or_pref print ?root =
+  mk_children_list print ?root <@ Utils.nsep_or_pref_to_list
+
 (* PRINTING UNARY TREES *)
 
 let make_unary ?region state root print node =
@@ -154,23 +163,43 @@ let of_sepseq ?region state root print =
 let of_nseq ?region state root print =
   of_list ?region state root print <@ Utils.nseq_to_list
 
+let of_nsep_or_term ?region state root print = function
+  `Sep s -> of_nsepseq ?region state root print s
+| `Term (hd, tl) ->
+     of_list ?region state root print @@ List.map ~f:fst (hd::tl)
+
+let of_sep_or_term ?region state root print = function
+  None -> ()
+| Some s -> of_nsep_or_term ?region state root print s
+
+let of_nsep_or_pref ?region state root print = function
+  `Sep s -> of_nsepseq ?region state root print s
+| `Pref (hd, tl) ->
+     of_list ?region state root print @@ List.map ~f:snd (hd::tl)
+
 (* PRINTING LEAVES *)
 
 type lexeme = string
 
 (* Strings *)
 
-let make_string state (wrap : string Wrap.t) =
+let make_string state (wrap : string Wrap.t) : unit =
   let region = compact state wrap#region in
   let node   = sprintf "%s%S%s\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
 
+let make_string root state (wrap : string Wrap.t) =
+  make_unary state root make_string wrap
+
 (* Verbatim strings *)
 
-let make_verbatim state (wrap : string Wrap.t) =
+let make_verbatim state (wrap : string Wrap.t) : unit =
   let region = compact state wrap#region in
   let node   = sprintf "%s{|%s|}%s\n" state#pad_path wrap#payload region
   in Buffer.add_string state#buffer node
+
+let make_verbatim root state (wrap : string Wrap.t) =
+  make_unary state root make_verbatim wrap
 
 (* Numbers *)
 

@@ -181,28 +181,6 @@ File "../../test/lexer/Lexing/invalid_symbol.jsligo", line 1, characters 16-17:
                       ^
 File name expected in a string literal.
 |test}];
-  (* Wrong nat syntax *)
-  run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/Lexing/wrong_nat_syntax.jsligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/Lexing/wrong_nat_syntax.jsligo", line 1, characters 14-16:
-  1 | let x : nat = 0n;
-                    ^^
-Wrong nat syntax.
-Example: "12334 as nat".
-|test}];
-  (* Wrong mutez syntax *)
-  run_ligo_bad
-    [ "compile"; "contract"; "../../test/lexer/Lexing/wrong_mutez_syntax.jsligo" ];
-  [%expect
-    {test|
-File "../../test/lexer/Lexing/wrong_mutez_syntax.jsligo", line 1, characters 14-20:
-  1 | let x : tez = 5mutez;
-                    ^^^^^^
-Wrong mutez syntax.
-Example: "1234 as mutez".
-|test}];
   (* Wrong lang syntax *)
   run_ligo_bad
     [ "compile"; "contract"; "../../test/lexer/Lexing/wrong_lang_syntax.jsligo" ];

@@ -1,4 +1,4 @@
 type storage = int;
 
-let main = ([p, s] : [int, storage]) : [list <operation>, storage] =>
+const main = ([p, s] : [int, storage]) : [list <operation>, storage] =>
   [(list([]) as list <operation>), p + s];

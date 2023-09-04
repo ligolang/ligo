@@ -152,16 +152,19 @@ module TODO_unify_in_cst = struct
       { operator = Location.wrap ~loc:(w_snd kwd) Operators.CONTAINS; left; right }
 
 
-  let nested_proj : AST.expr -> (CST.selection, CST.dot) nsepseq -> AST.expr =
+  let nested_proj ~loc : AST.expr -> (CST.selection, CST.dot) nsepseq -> AST.expr =
    fun init field_path ->
     (* projections could be nested ? *)
-    List.fold (nsepseq_to_list field_path) ~init ~f:(fun acc -> function
-      | FieldName name ->
+    let f = function
+      | (FieldName name : CST.selection) ->
         let name, loc = w_split name in
-        e_proj ~loc { struct_ = acc; path = FieldName (Label.of_string name) }
-      | Component comp ->
-        let index, loc = w_split comp in
-        e_proj ~loc { struct_ = acc; path = Component_num index })
+        Selection.FieldName (Label.of_string name)
+      | (Component comp : CST.selection) ->
+        let index, _ = w_split comp in
+        Selection.Component_num index
+    in
+    let field_path = nsepseq_map f field_path in
+    e_proj ~loc init @@ nsepseq_to_list field_path
 
 
   let update_rhs : (CST.expr -> AST.expr) -> CST.expr -> AST.expr AST.Update.field list =
@@ -436,7 +439,7 @@ and compile_case_clause
  fun f c ->
   let pattern = compile_pattern c.pattern in
   let rhs = f c.rhs in
-  { pattern; rhs }
+  { pattern = Some pattern; rhs }
 
 
 and compile_case : type a b. (a -> b) -> a CST.case -> (_, _, b) AST.Case.t =
@@ -604,10 +607,10 @@ and compile_expression : CST.expr -> AST.expr =
     let _, _loc = w_split op in
     e_unary_op ~loc AST.{ operator = Location.wrap ~loc sign; arg = self arg }
   in
-  let translate_projection : CST.projection -> AST.expr =
+  let translate_projection ~loc : CST.projection -> AST.expr =
    fun proj ->
     let expr = self proj.record_or_tuple in
-    TODO_unify_in_cst.nested_proj expr proj.field_path
+    TODO_unify_in_cst.nested_proj ~loc expr proj.field_path
   in
   return
   @@
@@ -671,8 +674,8 @@ and compile_expression : CST.expr -> AST.expr =
     in
     e_record_pun fields ~loc
   | E_Proj proj ->
-    let proj, _loc = r_split proj in
-    translate_projection proj
+    let proj, loc = r_split proj in
+    translate_projection ~loc proj
   | E_ModPath ma ->
     let ma, loc = r_split ma in
     let module_path =

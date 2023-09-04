@@ -2,7 +2,7 @@ type storage = int;
 
 type parameter = list<int>;
 
-let quarter = (n : int) : string => {
+const quarter = (n : int) : string => {
   let output = "";
   switch (n) {
     case 1:
@@ -34,5 +34,5 @@ let quarter = (n : int) : string => {
 
 type return_ = [list<operation>, storage];
 
-let main = ([a, b] : [parameter, storage]) : return_ =>
+const main = ([a, b] : [parameter, storage]) : return_ =>
   [list([]) as list<operation>, 0]

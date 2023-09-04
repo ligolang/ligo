@@ -3,9 +3,9 @@ type parameter =
 | ["Sub", int];
 
 let main = ([action, store]: [parameter, int]) : int => {
-  let store2 = match (action, {
-    Add: (n: int) => { n = 42; return n; },
-    Sub: (n: int) => { n = 42; return -n; }
-  });  
+  let store2 = match (action) {
+    when(Add(n)): do { n = 42; return n; };
+    when(Sub(n)): do { n = 42; return -n; };
+  };
   return store2;
 };

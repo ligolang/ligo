@@ -462,10 +462,10 @@ type color =
 | ["Default"];
 
 let int_of_color = (c : color) : int =>
-  match(c, {
-    RGB: rgb => 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36,
-    Gray: i => 232 + i,
-    Default: () => 0 });
+  match(c) {
+    when(RGB(rgb)): 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36;
+    when(Gray(i)): 232 + i;
+    when(Default()): 0 };
 ```
 
 </Syntax>
@@ -547,10 +547,10 @@ function weird_length (const v : list (int)) : int is
 
 ```jsligo group=pm_lists
 let weird_length = (v : list<int>) : int =>
-  match(v, list([
-    ([] : list<int>) => -1,
-    ([hd, ...tl] : list<int>) => 1 + int(List.length(tl))
-  ]));
+  match(v) {
+    when([]): -1;
+    when([hd, ...tl]): 1 + int(List.length(tl))
+  };
 ```
 
 </Syntax>

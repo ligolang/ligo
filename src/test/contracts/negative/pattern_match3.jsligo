@@ -1,6 +1,6 @@
 let test_foo = (x : test_exec_result) : string => {
-  match(x, {
-    Success: (_ : nat) => "",
-    Failure: (_ : test_exec_error) => ""
-  });
+  match(x) {
+    when(Success(_)): "";
+    when(Failure(_)): ""
+  };
 }

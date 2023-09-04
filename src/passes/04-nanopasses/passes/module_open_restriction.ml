@@ -9,13 +9,13 @@ include Flag.No_arg ()
 
 let rec dig_proj_until_var ~raise ~f proj =
   match get_e_proj proj with
-  | Some { struct_; path } ->
+  | Some (struct_, path) ->
     let struct_ =
       match get_e_variable struct_ with
       | Some v -> f v
       | None -> dig_proj_until_var ~raise ~f struct_
     in
-    e_proj ~loc:(get_e_loc proj) { struct_; path }
+    e_proj ~loc:(get_e_loc proj) struct_ path
   | None -> raise.error (unsupported_module_access (`Expr proj))
 
 

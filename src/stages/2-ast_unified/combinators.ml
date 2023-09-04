@@ -8,6 +8,8 @@ type ('a, 'b, 'c, 'd, 'e) expression_content_ =
         [ ("make_e", fun ~loc content : expr -> { fp = Location.wrap ~loc content })
         ; ("get_e", fun (x : Types.expr) -> Location.unwrap x.fp)
         ; ("get_e_loc", fun (x : Types.expr) -> Location.get_location x.fp)
+        ; ( "destruct_e"
+          , fun (x : Types.expr) -> Location.get_location x.fp, Location.unwrap x.fp )
         ]
     ; wrap_constructor = ("expression_content_", fun ~loc content -> make_e ~loc content)
     ; wrap_get = "expression_content_", get_e
@@ -20,6 +22,8 @@ type ('a, 'b) pattern_content_ = [%import: ('a, 'b) Types.pattern_content_]
         [ ("make_p", fun ~loc content : pattern -> { fp = Location.wrap ~loc content })
         ; ("get_p", fun (x : Types.pattern) -> Location.unwrap x.fp)
         ; ("get_p_loc", fun (x : Types.pattern) -> Location.get_location x.fp)
+        ; ( "destruct_p"
+          , fun (x : Types.pattern) -> Location.get_location x.fp, Location.unwrap x.fp )
         ]
     ; wrap_constructor = ("pattern_content_", fun ~loc content -> make_p ~loc content)
     ; wrap_get = "pattern_content_", get_p
@@ -32,6 +36,8 @@ type 'a type_expression_content_ = [%import: 'a Types.type_expression_content_]
         [ ("make_t", fun ~loc content : ty_expr -> { fp = Location.wrap ~loc content })
         ; ("get_t", fun (x : Types.ty_expr) -> Location.unwrap x.fp)
         ; ("get_t_loc", fun (x : Types.ty_expr) -> Location.get_location x.fp)
+        ; ( "destruct_t"
+          , fun (x : Types.ty_expr) -> Location.get_location x.fp, Location.unwrap x.fp )
         ]
     ; wrap_constructor =
         ("type_expression_content_", fun ~loc content -> make_t ~loc content)
@@ -46,6 +52,9 @@ type ('a, 'b, 'c, 'd, 'e, 'f) declaration_content_ =
         [ ("make_d", fun ~loc content : declaration -> { fp = Location.wrap ~loc content })
         ; ("get_d", fun (x : Types.declaration) -> Location.unwrap x.fp)
         ; ("get_d_loc", fun (x : Types.declaration) -> Location.get_location x.fp)
+        ; ( "destruct_d"
+          , fun (x : Types.declaration) ->
+              Location.get_location x.fp, Location.unwrap x.fp )
         ]
     ; wrap_constructor =
         ( "declaration_content_"
@@ -62,6 +71,9 @@ type ('a, 'b, 'c) statement_content_ = [%import: ('a, 'b, 'c) Types.statement_co
               { fp = (Location.wrap ~loc content : ('a, 'b, 'c) Types.statement_) } )
         ; ("get_s", fun (x : Types.statement) -> Location.unwrap x.fp)
         ; ("get_s_loc", fun (x : Types.statement) -> Location.get_location x.fp)
+        ; ( "destruct_s"
+          , fun (x : Types.statement) -> Location.get_location x.fp, Location.unwrap x.fp
+          )
         ]
     ; wrap_constructor =
         ("statement_content_", fun ~loc statement_content -> make_s ~loc statement_content)
@@ -98,6 +110,9 @@ type ('a, 'b, 'c, 'd, 'e) instruction_content_ =
         [ ("make_i", fun ~loc content : instruction -> { fp = Location.wrap ~loc content })
         ; ("get_i", fun (x : Types.instruction) -> Location.unwrap x.fp)
         ; ("get_i_loc", fun (x : Types.instruction) -> Location.get_location x.fp)
+        ; ( "destruct_i"
+          , fun (x : Types.instruction) ->
+              Location.get_location x.fp, Location.unwrap x.fp )
         ]
     ; wrap_constructor =
         ( "instruction_content_"
@@ -233,11 +248,11 @@ end
 let e_unopt ~loc matchee none_body (var_some, some_body) =
   let some_case =
     let pattern = p_variant ~loc (Label "Some") (Some (p_var ~loc var_some)) in
-    Case.{ pattern; rhs = some_body }
+    Case.{ pattern = Some pattern; rhs = some_body }
   in
   let none_case =
     let pattern = p_variant ~loc (Label "None") None in
-    Case.{ pattern; rhs = none_body }
+    Case.{ pattern = Some pattern; rhs = none_body }
   in
   e_match ~loc { expr = matchee; cases = some_case, [ none_case ] }
 

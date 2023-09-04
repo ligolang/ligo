@@ -116,10 +116,10 @@ type return_ = [list<operation>, taco_shop_storage];
 let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
   // Retrieve the taco_kind from the contract's storage or fail
   let taco_kind : taco_supply =
-    match ((Map.find_opt (taco_kind_index, taco_shop_storage)), {
-      Some: (kind : taco_supply) => kind,
-      None: () => (failwith ("Unknown kind of taco.") as taco_supply)
-  });
+    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
+      when(Some(kind)): kind;
+      when(None()): (failwith ("Unknown kind of taco.") as taco_supply)
+  };
 
   let current_purchase_price : tez =
     taco_kind.max_price / taco_kind.current_stock;
@@ -234,10 +234,10 @@ let receiver : unit contract =
 ```jsligo group=ex1
 let ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address)
 let receiver : contract<unit> =
-  match ((Tezos.get_contract_opt(ownerAddress) as option<contract<unit>>), {
-    Some: (contract : contract<unit>) => contract,
-    None: () => (failwith ("Not a contract") as contract<unit>)
-  })
+  match (Tezos.get_contract_opt(ownerAddress) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): (failwith ("Not a contract") as contract<unit>)
+  }
 ```
 
 </Syntax>
@@ -403,10 +403,10 @@ let ownerAddress =
 let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage]) : return_ => {
   // Retrieve the taco_kind from the contract's storage or fail
   let taco_kind : taco_supply =
-    match ((Map.find_opt (taco_kind_index, taco_shop_storage)), {
-      Some: (kind : taco_supply) => kind,
-      None: () => (failwith ("Unknown kind of taco.") as taco_supply)
-  });
+    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
+      when(Some(kind)): kind;
+      when(None()): (failwith ("Unknown kind of taco.") as taco_supply)
+  };
 
   let current_purchase_price : tez =
     taco_kind.max_price / taco_kind.current_stock;
@@ -423,10 +423,10 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
   let new_taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
 
   let receiver : contract<unit> =
-    match ((Tezos.get_contract_opt (ownerAddress) as option<contract<unit>>), {
-      Some: (contract : contract<unit>) => contract,
-      None: () => (failwith ("Not a contract") as contract<unit>)
-  });
+    match (Tezos.get_contract_opt (ownerAddress) as option<contract<unit>>) {
+      when(Some(contract)): contract;
+      when(None()): (failwith ("Not a contract") as contract<unit>)
+  };
 
   let payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver);
   let operations : list<operation> = list([payoutOperation]);
@@ -566,24 +566,24 @@ let ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address)
 let donationAddress = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address)
 
 let receiver : contract<unit> =
-  match (((Tezos.get_contract_opt (ownerAddress)) as option<contract<unit>>), {
-    Some: (contract : contract<unit>) => contract,
-    None: () => ((failwith ("Not a contract")) as contract<unit>)
-  });
+  match ((Tezos.get_contract_opt (ownerAddress)) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): ((failwith ("Not a contract")) as contract<unit>)
+  };
 
 let donationReceiver : contract<unit>  =
-  match (((Tezos.get_contract_opt (donationAddress)) as option<contract<unit>>), {
-    Some: (contract : contract<unit>) => contract,
-    None: () => ((failwith ("Not a contract")) as contract<unit>)
-  })
+  match ((Tezos.get_contract_opt (donationAddress)) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): ((failwith ("Not a contract")) as contract<unit>)
+  }
 
 let donationAmount = ((Tezos.get_amount ()) / (10 as nat)) as tez;
 
 // Pedro will get 90% of the amount
-let op1 = match (((Tezos.get_amount ()) - donationAmount), {
-  Some: (x : tez) => Tezos.transaction (unit, x, receiver),
-  None: () => failwith ("Insufficient balance")
-});
+let op1 = match ((Tezos.get_amount ()) - donationAmount) {
+  when(Some(x)): Tezos.transaction (unit, x, receiver);
+  when(None()): failwith ("Insufficient balance")
+};
 let op2 = Tezos.transaction (unit, donationAmount, donationReceiver)
 let operations : list<operation> = list([ op1 , op2 ])
 ```

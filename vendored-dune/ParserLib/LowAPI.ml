@@ -17,7 +17,7 @@ module type TOKEN =
     type token
     type t = token
 
-    val to_lexeme : token -> string
+    val to_lexeme : token -> string list
     val to_region : token -> Region.t
     val is_eof    : token -> bool
   end
@@ -454,7 +454,9 @@ module Make (Lexer  : LEXER)
 
         let print_element = None
 
-        let print_token t = print @@ Lexer.Token.to_lexeme t
+        let print_token t =
+          let lexemes = Lexer.Token.to_lexeme t
+          in List.iter ~f:print lexemes
       end
 
     module type PRINTER = Merlin_recovery.PRINTER with module I = Inter

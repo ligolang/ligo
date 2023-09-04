@@ -54,7 +54,7 @@ module type S =
        by the module [UnlexerGen] to transform the textual
        representation of a token (not a lexeme) into a lexeme. *)
 
-    val to_lexeme : token -> lexeme
+    val to_lexeme : token -> lexeme list
     val to_string : offsets:bool -> [`Byte | `Point] -> token -> string
     val to_region : token -> Region.t
     val concrete  : string -> lexeme

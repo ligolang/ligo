@@ -50,9 +50,9 @@
  (flags
   (:standard \ -open Core)
   (-open
-   Simple_utils
-   -open
    Cst_pyligo ;; for CST in Parser.mli
+   -open
+   Cst_shared ;; for Nodes in Parser.mli
    -open
    Lexing_shared)))
 

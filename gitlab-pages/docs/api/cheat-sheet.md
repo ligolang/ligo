@@ -968,10 +968,10 @@ Variant *(pattern)* matching
 
 ```jsligo group=variants
 let a: action = Increment(5)
-let result: int = match(a, {
-  Increment: (n: int) => n + 1,
-  Decrement: (n: int) => n - 1
-})
+let result: int = match(a) {
+  when(Increment(n)): n + 1;
+  when(Decrement(n)): n - 1
+}
 ```
 
 </div>
@@ -1025,10 +1025,10 @@ let destinationAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
 let contract : contract<unit> =
-  match (Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>, {
-    Some: (contract: contract<unit>) => contract,
-    None: () => (failwith("no contract") as contract<unit>)
-  })
+  match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): (failwith("no contract") as contract<unit>)
+  }
 ```
 
 </div>

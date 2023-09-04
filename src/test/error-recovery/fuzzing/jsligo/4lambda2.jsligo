@@ -4,7 +4,7 @@
 
 
 
- let main = ( [ _unit , _storage ] : [ => unit , ] ) : unit =>
+ const main = ( [ _unit , _storage ] : [ => unit , ] ) : unit =>
  ( ( f : ( ( a : unit ) => unit ) ) => f ( unit ) ) ( ( _useless : unit ) => unit ) ;
 
 /*

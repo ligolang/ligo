@@ -43,7 +43,7 @@ let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
   let rec aux (lhs : expr) (cpath : expr Selection.t list) =
     match get_e lhs with
     | E_variable v -> v, cpath
-    | E_proj { struct_; path } -> aux struct_ (path :: cpath)
+    | E_proj (struct_, path) -> aux struct_ (path @ cpath)
     | E_map_lookup { map; keys } ->
       let sels =
         List.map ~f:(fun e -> Selection.Component_expr e) (List.Ne.to_list keys)
@@ -298,8 +298,8 @@ let%expect_test "compile" =
     (I_struct_assign
       ((lhs_expr
         (E_proj
-          ((struct_ (E_map_lookup ((map (E_variable m)) (keys ((EXPR1))))))
-           (path (FieldName (Label bar))))))
+          (E_map_lookup ((map (E_variable m)) (keys ((EXPR1)))))
+          ((FieldName (Label bar)))))
        (rhs_expr (EXPR2))))
   |}
   |-> compile;
@@ -311,7 +311,7 @@ let%expect_test "compile" =
         (E_constant
          ((cons_name C_MAP_FIND_OPT) (arguments ((EXPR1) (E_variable m))))))
        (cases
-        (((pattern (P_variant (Label Some) ((P_var gen))))
+        (((pattern ((P_variant (Label Some) ((P_var gen)))))
           (rhs
            (E_constant
             ((cons_name C_MAP_ADD)
@@ -320,7 +320,7 @@ let%expect_test "compile" =
                (E_record_update
                 ((struct_ (E_variable gen)) (label (Label bar)) (update (EXPR2))))
                (E_variable m)))))))
-         ((pattern (P_variant (Label None) ())) (rhs (E_variable m))))))))
+         ((pattern ((P_variant (Label None) ()))) (rhs (E_variable m))))))))
 |}]
 
 let%expect_test "compile_wrong_lvalue" =

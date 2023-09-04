@@ -29,35 +29,17 @@ let contract source_file to_syntax from_syntax output_file =
             (Syntax_name to_syntax)
             output_file
       in
-      let c_unit = Compile.Utils.buffer_from_path source_file in
       let buffer =
         let open Trace in
-        let open Main_errors in
-        match from_syntax, to_syntax with
-        | PascaLIGO, JsLIGO ->
-          let module Options = struct
-            include Options
-
-            let jsligo = Some output_file
-          end
-          in
-          let module Parse = Parsing.Pascaligo.Make (Options) in
-          let old_cst =
-            trace ~raise parser_tracer
-            @@ Parse.parse_file ~preprocess:false c_unit source_file
-          in
-          let new_cst = Parsing_pascaligo.JsLIGO.of_cst old_cst in
-          Parsing.Jsligo.pretty_print Parsing.Jsligo.Pretty.default_state new_cst
-        | _ ->
-          if Syntax_types.equal from_syntax to_syntax
-          then
-            raise.error
-            @@ Main_errors.main_transpilation_same_source_and_dest_syntax
-                 (Syntax.to_string from_syntax)
-          else
-            raise.error
-            @@ Main_errors.main_transpilation_unsupported_syntaxes
-                 (Syntax.to_string from_syntax)
-                 (Syntax.to_string to_syntax)
+        if Syntax_types.equal from_syntax to_syntax
+        then
+          raise.error
+          @@ Main_errors.main_transpilation_same_source_and_dest_syntax
+               (Syntax.to_string from_syntax)
+        else
+          raise.error
+          @@ Main_errors.main_transpilation_unsupported_syntaxes
+               (Syntax.to_string from_syntax)
+               (Syntax.to_string to_syntax)
       in
       buffer, [] )

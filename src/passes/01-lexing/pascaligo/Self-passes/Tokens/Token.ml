@@ -143,25 +143,25 @@ module T =
     let to_lexeme = function
       (* Directives *)
 
-      Directive d -> (Directive.to_lexeme d).Region.value
+      Directive d -> [(Directive.to_lexeme d).Region.value]
 
       (* Comments *)
 
-    | LineCom t  -> sprintf "// %s" t#payload
-    | BlockCom t -> sprintf "(* %s *)" t#payload
+    | LineCom t  -> [sprintf "// %s" t#payload]
+    | BlockCom t -> [sprintf "(* %s *)" t#payload]
 
       (* Literals *)
 
-    | String t   -> sprintf "%S" t#payload (* Escaped *)
-    | Verbatim t -> String.escaped t#payload
-    | Bytes t    -> fst t#payload
+    | String t   -> [sprintf "%S" t#payload] (* Escaped *)
+    | Verbatim t -> [String.escaped t#payload]
+    | Bytes t    -> [fst t#payload]
     | Int t
-    | Nat t      -> fst t#payload
-    | Mutez t    -> fst t#payload
+    | Nat t      -> [fst t#payload]
+    | Mutez t    -> [fst t#payload]
     | Ident t
-    | UIdent t   -> t#payload
-    | Attr t     -> Attr.to_lexeme t#payload
-    | Lang lang  -> "[%" ^ lang#payload.value
+    | UIdent t   -> [t#payload]
+    | Attr t     -> [Attr.to_lexeme t#payload]
+    | Lang lang  -> ["[%" ^ lang#payload.value]
 
     (* Symbols *)
 
@@ -233,15 +233,15 @@ module T =
     | Type      t
     | Var       t
     | While     t
-    | With      t -> t#payload
+    | With      t -> [t#payload]
 
     (* Virtual tokens *)
 
-    | ZWSP _ -> ""
+    | ZWSP _ -> [""]
 
     (* End-Of-File *)
 
-    | EOF _ -> ""
+    | EOF _ -> [""]
 
     (* KEYWORDS *)
 
@@ -370,7 +370,9 @@ module T =
           `Ok map -> map
         | `Duplicate -> map in
       let apply map mk_kwd =
-        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+        let lexemes = to_lexeme (mk_kwd Region.ghost) in
+        List.fold_left ~f:(fun map lex -> add map (lex, mk_kwd))
+                       ~init:map lexemes
       in List.fold_left ~f:apply ~init:SMap.empty keywords
 
     (* Ghost keywords *)
@@ -559,8 +561,10 @@ module T =
         match SMap.add ~key ~data map with
           `Ok map -> map
         | `Duplicate -> map in
-      let apply map mk_kwd =
-        add map (to_lexeme (mk_kwd Region.ghost), mk_kwd)
+      let apply map mk_sym =
+        let lexemes = to_lexeme (mk_sym Region.ghost) in
+        List.fold_left ~f:(fun map lex -> add map (lex, mk_sym))
+                       ~init:map lexemes
       in List.fold_left ~f:apply ~init:SMap.empty symbols
 
     (* Ghost symbols *)

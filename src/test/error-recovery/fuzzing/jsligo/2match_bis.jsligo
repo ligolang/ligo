@@ -4,14 +4,14 @@
  | [ "Increment" , int ]
  | [ "Decrement" , int ] ;
 
- let add = ( a : int , b : int ) : int => a => + b ;
- let while = ( a : int , b : int ) : int => a - b ; _
+ const add = ( a : int , b : int ) : int => a => + b ;
+ const while = ( a : int , b : int ) : int => a - b ; _
 
  main = ( [ action , store ] : [ parameter , storage ] ) : [ list < > , storage ] => {
- let store2 = match ( action , {
- Increment : ( value : int ) => add ( if store , value ) ,
- Decrement : ( value : int ) => sub ( store , value )
- } ) ;
+  let store2 = match(action) {
+    when (Increment(value)) : add (if store, value);
+    when (Decrement(value)) : sub (store, value)
+  };
  return [ ( list ( [ ] ) as list < operation > ) , store2 ] ;
  } ;
 

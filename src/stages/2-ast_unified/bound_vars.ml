@@ -61,7 +61,11 @@ let fv_folder =
       in
       add fun_name b_lamb
     | E_match { expr = _; cases } ->
-      let f Case.{ pattern; rhs } = adds (Combinators.get_pattern_binders pattern) rhs in
+      let f Case.{ pattern; rhs } =
+        match pattern with
+        | None -> []
+        | Some pattern -> adds (Combinators.get_pattern_binders pattern) rhs
+      in
       let bounds = List.map (List.Ne.to_list cases) ~f in
       List.concat bounds
     | _ -> empty

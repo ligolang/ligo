@@ -25,4 +25,4 @@ val to_string :
   token_to_string:('token formatter) -> 'token t formatter
 
 val to_lexeme :
-  token_to_lexeme:('token -> string) -> 'token t -> string
+  token_to_lexeme:('token -> string list) -> 'token t -> string list

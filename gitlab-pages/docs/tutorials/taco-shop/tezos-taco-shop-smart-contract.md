@@ -455,10 +455,10 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) : re
 let buy_taco2 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind =
-    match (Map.find_opt (taco_kind_index, taco_shop_storage), {
-      Some: (k:taco_supply) => k,
-      None: (_:unit) => (failwith ("Unknown kind of taco") as taco_supply)
-    }) ;
+    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
+      when(Some(k)): k;
+      when(None()): (failwith ("Unknown kind of taco") as taco_supply)
+    };
   /* Update the storage decreasing the stock by 1n */
   let taco_shop_storage_ = Map.update (
     taco_kind_index,
@@ -545,10 +545,10 @@ let buy_taco (taco_kind_index, taco_shop_storage : nat * taco_shop_storage) =
 let buy_taco3 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : return_ => {
   /* Retrieve the taco_kind from the contracts storage or fail */
   let taco_kind : taco_supply =
-    match (Map.find_opt (taco_kind_index, taco_shop_storage), {
-      Some: k => k,
-      None: _x => failwith ("Unknown kind of taco")
-    }) ;
+    match (Map.find_opt (taco_kind_index, taco_shop_storage)) {
+      when(Some(k)): k;
+      when(None()): failwith ("Unknown kind of taco")
+    };
   let current_purchase_price : tez = taco_kind.max_price / taco_kind.current_stock ;
   /* We won't sell tacos if the amount is not correct */
   if ((Tezos.get_amount ()) != current_purchase_price) {
@@ -691,15 +691,15 @@ let test =
 
 let assert_string_failure = (res: test_exec_result, expected: string) => {
   let expected_bis = Test.eval (expected) ;
-  match (res, {
-    Fail: (x: test_exec_error) => (
-      match (x, {
-        Rejected: (x:[michelson_program,address]) => assert (Test.michelson_equal (x[0], expected_bis)),
-        Balance_too_low: (_: { contract_too_low : address , contract_balance : tez , spend_request : tez }) => failwith ("contract failed for an unknown reason"),
-        Other: (_:string) => failwith ("contract failed for an unknown reason")
-      })),
-    Success: (_:nat) => failwith ("bad price check")
-  } );
+  match (res) {
+    when(Fail(x)):
+      match (x) {
+        when(Rejected(y)): assert (Test.michelson_equal (y[0], expected_bis));
+        when(Balance_too_low(_)): failwith ("contract failed for an unknown reason");
+        when(Other(_)): failwith ("contract failed for an unknown reason")
+      };
+    when(Success(_)): failwith ("bad price check")
+  };
 } ;
 
 let test = ((_: unit): unit => {
@@ -719,19 +719,20 @@ let test = ((_: unit): unit => {
 
   /* Auxiliary function for testing equality in maps */
   let eq_in_map = (r: taco_supply, m: taco_shop_storage, k: nat) =>
-    match(Map.find_opt(k, m), {
-     None: () => false,
-     Some: (v : taco_supply) => v.current_stock == r.current_stock && v.max_price == r.max_price }) ;
+    match(Map.find_opt(k, m)) {
+     when(None()): false;
+     when(Some(v)): v.current_stock == r.current_stock && v.max_price == r.max_price };
 
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
   let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 1 as tez) ;
-  let _u = match (ok_case, {
-    Success: (_:nat) => {
+  let _u = match (ok_case) {
+    when(Success(_)): do {
       let storage = Test.get_storage (pedro_taco_shop_ta) ;
       assert (eq_in_map({ current_stock : 49 as nat, max_price : 50 as tez }, storage, 1 as nat) &&
-              eq_in_map({ current_stock : 20 as nat, max_price : 75 as tez }, storage, 2 as nat)); },
-    Fail: (_: test_exec_error) => failwith ("ok test case failed")
-  }) ;
+              eq_in_map({ current_stock : 20 as nat, max_price : 75 as tez }, storage, 2 as nat));
+    };
+    when(Fail(_)):failwith ("ok test case failed")
+  };
 
   /* Purchasing an unregistred Taco */
   let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1 as tez) ;

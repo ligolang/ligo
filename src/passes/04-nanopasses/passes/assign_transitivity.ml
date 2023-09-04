@@ -24,6 +24,11 @@ let computation ~loc v r op =
         | Min_eq -> C_POLYMORPHIC_SUB
         | Plus_eq -> C_POLYMORPHIC_ADD
         | Mod_eq -> C_MOD
+        | BitAnd_eq -> C_AND
+        | BitOr_eq -> C_OR
+        | BitXor_eq -> C_XOR
+        | BitSl_eq -> C_LSL
+        | BitSr_eq -> C_LSR
       in
       computation op
   in

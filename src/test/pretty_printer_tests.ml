@@ -57,7 +57,7 @@ let test { test_name; actual; expected } =
         Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
   in
   Alcotest.(check string)
-    "Formatted contents of the files should be equal"
+    (Format.asprintf "Formatted contents of the files (%s) should be equal" actual)
     (In_channel.read_all expected)
     (Buffer.contents formatted_contents)
 
