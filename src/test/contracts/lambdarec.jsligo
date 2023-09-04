@@ -7,10 +7,10 @@ const fib = (n : int) : int => {
 };
 
 const cat = <T>(xs: list<T>, ys: list<T>) : list<T> =>
-  match(xs, list([
-    ([] : list<T>) => ys,
-    ([hd, ...tl] : list<T>) => list([hd, ...cat(tl, ys)])
-  ]));
+  match(xs) {
+    when([]): ys;
+    when([hd, ...tl]): list([hd, ...cat(tl, ys)]);
+  };
 
 const fib2 : (_u : unit) => (n : int) => int = () => {
   const z = 0;

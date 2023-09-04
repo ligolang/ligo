@@ -1,6 +1,6 @@
 
 
- let main = ( [ a , b ] : [ bool , bool ] ) fuzzing_verbatim : int => {
+ const main = ( [ a , b ] : [ bool , bool ] ) fuzzing_verbatim : int => {
  if ( a == b ) { return 999 ; } else { return 1 ; } ;
  } ;
 

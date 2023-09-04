@@ -158,10 +158,10 @@ nsepseq(X,Sep):
   X                    {                 $1,        [] }
 | X Sep nsepseq(X,Sep) { let h,t = $3 in $1, ($2,h)::t }
 
-(* The rule [sep_or_term(item,sep)] ("separated or terminated list")
-   parses a non-empty list of items separated by [sep], and optionally
-   terminated by [sep]. The following rules were inspired by the
-   following blog post by Pottier:
+(* The rule [sep_or_term_list(item,sep)] ("separated or terminated
+   list") parses a non-empty list of items separated by [sep], and
+   optionally terminated by [sep]. The following rules were inspired
+   by the following blog post by Pottier:
 
    http://gallium.inria.fr/blog/lr-lists/
 *)
@@ -240,11 +240,11 @@ top_declaration:
 | "<directive>" { D_Directive $1 } (* Only at top-level *)
 
 declaration:
-  type_decl      { D_Type   $1 }
-| let_decl       { D_Let    $1 }
-| module_decl    { D_Module $1 }
-| attr_decl      { D_Attr   $1 }
-| module_include { D_Module_include $1 }
+  type_decl      { D_Type      $1 }
+| let_decl       { D_Let       $1 }
+| module_decl    { D_Module    $1 }
+| attr_decl      { D_Attr      $1 }
+| module_include { D_Include   $1 }
 | signature_decl { D_Signature $1 }
 
 (* Attributed declarations *)
@@ -338,7 +338,7 @@ parameter_of_type:
   nsepseq(module_name,".") "parameter_of" {
     let start  = nsepseq_to_region (fun x -> x#region) $1 in
     let region = cover start $2#region
-    in T_Parameter {region; value=$1} }
+    in T_ParameterOf {region; value=$1} }
 
 (* Variant types.
 
@@ -504,8 +504,8 @@ parameters:
 module_include:
   "include" module_expr {
     let stop   = module_expr_to_region $2 in
-    let region = cover $1#region stop in
-    let value  = {kwd_include=$1; module_expr=$2}
+    let region = cover $1#region stop
+    and value  = {kwd_include=$1; module_expr=$2}
     in {region; value} }
 
 (* Top-level module declaration *)
@@ -567,7 +567,7 @@ sig_item:
   }
 | "type" type_name {
     let region = cover $1#region $2#region
-    in S_Type_var {region; value=$1,$2}
+    in S_TypeVar {region; value=$1,$2}
   }
 | "[@attr]" sig_item {
     let region = cover $1#region (sig_item_to_region $2)
@@ -643,20 +643,26 @@ cons_pattern_level:
 | core_pattern { $1 }
 
 core_pattern:
-  "<int>"                      { P_Int      $1 }
-| "<nat>"                      { P_Nat      $1 }
-| "<bytes>"                    { P_Bytes    $1 }
-| "<string>"                   { P_String   $1 }
-| "<verbatim>"                 { P_Verbatim $1 }
-| "<mutez>"                    { P_Mutez    $1 }
-| "_" | variable               { P_Var      $1 }
+  "_" | variable               { P_Var      $1 }
 | unit                         { P_Unit     $1 }
 | list_pattern                 { P_List     $1 }
 | ctor_app_pattern             { P_App      $1 }
 | record_pattern(core_pattern) { P_Record   $1 }
 | attr_pattern                 { P_Attr     $1 }
+| literal_pattern
 | in_pattern
 | qualified_pattern            { $1            }
+
+%inline
+literal_pattern:
+  "<int>"      { P_Int      $1 }
+| "<nat>"      { P_Nat      $1 }
+| "<bytes>"    { P_Bytes    $1 }
+| "<string>"   { P_String   $1 }
+| "<verbatim>" { P_Verbatim $1 }
+| "<mutez>"    { P_Mutez    $1 }
+| "true"       { P_True     $1 }
+| "false"      { P_False    $1 }
 
 (* Parenthesised patterns *)
 
@@ -886,7 +892,6 @@ fun_expr(right_expr):
                   rhs_type=$4; arrow=$5; body=$6}
     in E_Fun {region; value} }
 
-
 (* For loops *)
 
 for_expr:
@@ -895,58 +900,34 @@ for_expr:
 
 for_int_expr:
   "for" index "=" expr direction expr block {
-    let kwd_for  = $1 in
-    let equal    = $3 in
-    let stop     = $7.region in
-    let region   = cover kwd_for#region stop in
-    let value    = {kwd_for;
-                    index     = $2;
-                    equal;
-                    bound1    = $4;
-                    direction = $5;
-                    bound2    = $6;
-                    body      = $7}
+    let region = cover $1#region $7.region in
+    let value  = {kwd_for=$1; index=$2; equal=$3; bound1=$4;
+                  direction=$5; bound2=$6; body=$7}
     in E_For {region; value} }
 
 index:
   variable { $1 }
 
 direction:
-  "upto"   { Upto $1 }
+  "upto"   { Upto   $1 }
 | "downto" { Downto $1 }
 
 block:
   "do" ioption(series) "done" {
-    let kwd_do   = $1 in
-    let kwd_done = $3 in
-    let value    = {kwd_do;
-                    seq_expr = $2;
-                    kwd_done} in
-    let region   = cover kwd_do#region
-                         kwd_done#region
+    let region = cover $1#region $3#region
+    and value  = {kwd_do=$1; seq_expr=$2; kwd_done=$3}
     in {region; value} }
 
 for_in_expr:
   "for" pattern "in" expr block {
-    let kwd_for = $1 in
-    let kwd_in  = $3 in
-    let stop    = $5.region in
-    let region  = cover kwd_for#region stop in
-    let value   = {kwd_for;
-                   pattern    = $2;
-                   kwd_in;
-                   collection = $4;
-                   body       = $5}
+    let region = cover $1#region $5.region in
+    let value  = {kwd_for=$1; pattern=$2; kwd_in=$3; collection=$4; body=$5}
     in E_ForIn {region; value} }
 
 while_expr:
   "while" expr block {
-    let kwd_while = $1 in
-    let stop      = $3.region in
-    let region    = cover kwd_while#region stop in
-    let value     = {kwd_while;
-                     cond = $2;
-                     body = $3}
+    let region = cover $1#region $3.region
+    and value  = {kwd_while=$1; cond=$2; body=$3}
     in E_While {region; value} }
 
 %inline
@@ -1029,7 +1010,7 @@ app_expr:
 | "contract_of" nsepseq(module_name,".") {
     let stop   = nsepseq_to_region (fun x -> x#region) $2 in
     let region = cover $1#region stop
-    in E_Contract {region; value=$2} }
+    in E_ContractOf {region; value=$2} }
 
 arguments:
   nseq(no_attr_expr) { $1 }
@@ -1041,13 +1022,7 @@ core_expr:
 | no_attr_expr        { $1 }
 
 no_attr_expr:
-  "<int>"         { E_Int      $1 }
-| "<nat>"         { E_Nat      $1 }
-| "<mutez>"       { E_Mutez    $1 }
-| "<string>"      { E_String   $1 }
-| "<verbatim>"    { E_Verbatim $1 }
-| "<bytes>"       { E_Bytes    $1 }
-| unit            { E_Unit     $1 }
+  unit            { E_Unit     $1 }
 | list_of(expr)   { E_List     $1 }
 | record_expr     { E_Record   $1 }
 | code_inj        { E_CodeInj  $1 }
@@ -1055,7 +1030,21 @@ no_attr_expr:
 | sequence_expr   { E_Seq      $1 }
 | record_update   { E_Update   $1 }
 | ctor            { E_Ctor     $1 }
+| literal_expr
 | path_expr       { $1 }
+
+(* Literal expressions *)
+
+%inline
+literal_expr:
+  "<int>"      { E_Int      $1 }
+| "<nat>"      { E_Nat      $1 }
+| "<mutez>"    { E_Mutez    $1 }
+| "<string>"   { E_String   $1 }
+| "<verbatim>" { E_Verbatim $1 }
+| "<bytes>"    { E_Bytes    $1 }
+| "true"       { E_True     $1 }
+| "false"      { E_False    $1 }
 
 (* Code injection *)
 
@@ -1080,8 +1069,7 @@ typed_expr:
       * a single variable in a nested module: "A.B.a"
       * nested fields and compoments from a variable: "a.0.1.b"
       * same within a nested module: "A.B.a.0.1.b"
-      * nested fields and components from an expression: "(e).a.0.1.b"
- *)
+      * nested fields and components from an expression: "(e).a.0.1.b" *)
 
 path_expr:
   module_path(selected) { E_ModPath (mk_mod_path $1 expr_to_region) }

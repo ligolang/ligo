@@ -1,5 +1,5 @@
 let test_foo = (x : test_exec_result) : string => {
-  return match(x, {
-    Fail: (_ : test_exec_error) => "",
-  });
+  return match(x) {
+    when(Fail(_)): ""
+  };
 }

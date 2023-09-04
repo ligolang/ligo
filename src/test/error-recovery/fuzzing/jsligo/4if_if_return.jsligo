@@ -1,5 +1,5 @@
- let foo = ( input : int ) : int => {
- let a = 2 ;
+ const foo = ( input : int ) : int => {
+ const a = 2 ;
  if ( input > 1000 ) {
  return 1000 ;
  } ;

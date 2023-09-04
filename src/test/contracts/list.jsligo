@@ -9,10 +9,10 @@ let y : list <int> = list([3, 4, 5]);
 let z : list <int> = list([2, ...y]);
 
 let main = (p : parameter, s : storage) : returnx => {
-  let storage = match (p, list([
-    ([]: parameter) => s,
-    ([hd, ...tl]: parameter) => [s[0] + hd, tl]
-  ]));
+  let storage = match (p) {
+    when([]): s;
+    when([hd, ...tl]): [s[0] + hd, tl]
+  };
   return [(list([]) as list<operation>), storage];
 };
 

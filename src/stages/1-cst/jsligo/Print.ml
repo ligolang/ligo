@@ -17,8 +17,9 @@ open CST (* THE ONLY GLOBAL OPENING *)
 
 (* UTILITIES *)
 
-type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq
-type ('a, 'sep)  sepseq = ('a, 'sep) Utils.sepseq
+let (<@) = Utils.(<@)
+
+type ('a,'sep) sep_or_term = ('a,'sep) Utils.sep_or_term
 
 let print_attribute state (node : Attr.t wrap) =
   let key, val_opt = node#payload in
@@ -39,935 +40,1255 @@ let print_attribute state (node : Attr.t wrap) =
 let mk_children_attr (node : Attr.t wrap list) =
   Tree.mk_children_list print_attribute ~root:"<attributes>" node
 
-(* Preprocessing directives *)
+(* Preprocessing directives as statements *)
 
-let print_Directive state (node : Directive.t) =
+let print_S_Directive state (node : Directive.t) =
   let region, string = Directive.project node in
-  Tree.make_unary state "Directive" Tree.make_node ~region string
+  Tree.(make_unary state "S_Directive" make_node ~region string)
 
 (* PRINTING THE CST *)
 
 let rec print_cst state (node : cst) =
-  Tree.of_nseq state "<cst>" print_toplevel_statement node.statements
+  Tree.of_nseq state "<cst>" (fun state -> print_statement state <@ fst)
+               node.statements
 
-(* TOP-LEVEL *)
+(* DECLARATIONS *)
 
-and print_toplevel_statement state = function
-  TopLevel  s -> print_TopLevel  state s
-| Directive s -> print_Directive state s
+and print_declaration state = function
+  D_Fun       d -> print_D_Fun       state d
+| D_Import    d -> print_D_Import    state d
+| D_Interface d -> print_D_Interface state d
+| D_Namespace d -> print_D_Namespace state d
+| D_Type      d -> print_D_Type      state d
+| D_Value     d -> print_D_Value     state d
 
-and print_TopLevel state (stmt, _) = print_statement state stmt
+(* Function declaration *)
 
-(* STATEMENTS *)
-
-and print_statement state = function
-  SBlock     s -> print_SBlock     state s
-| SExpr      s -> print_SExpr      state s
-| SCond      s -> print_SCond      state s
-| SReturn    s -> print_SReturn    state s
-| SLet       s -> print_SLet       state s
-| SConst     s -> print_SConst     state s
-| SType      s -> print_SType      state s
-| SSwitch    s -> print_SSwitch    state s
-| SBreak     s -> print_SBreak     state s
-| SInterface s -> print_SInterface state s
-| SNamespace s -> print_SNamespace state s
-| SExport    s -> print_SExport    state s
-| SImport    s -> print_SImport    state s
-| SForOf     s -> print_SForOf     state s
-| SWhile     s -> print_SWhile     state s
-| SFor       s -> print_SFor       state s
-
-(* Interface entry *)
-
-and print_interface_entry state = function
-  IType      s -> print_IType      state s
-| IType_var  s -> print_IType_var  state s
-| IConst     s -> print_IConst     state s
-
-(* Blocks *)
-
-and print_SBlock state (node: (statement, semi) nsepseq braces reg) =
-  let Region.{region; value} = node in
-  Tree.of_nsepseq state ~region "SBlock" print_statement value.inside
-
-(* Expression as a statement *)
-
-and print_SExpr state (node: attributes * expr) =
-  let attributes, expr = node in
-  let children = mk_children_attr attributes
-               @ [Tree.mk_child print_expr expr]
-  in Tree.make state "SExpr" children
-
-(* Conditional statement *)
-
-and print_SCond state (node: cond_statement reg) =
+and print_D_Fun state (node: fun_decl reg) =
   let Region.{value; region} = node in
-
-  let print_ifso state (node: statement) =
-    Tree.make_unary state "<true>" print_statement node
-
-  and print_ifnot state (node: kwd_else * statement) =
-    Tree.make_unary state "<false>" print_statement (snd node) in
-
+  let {kwd_function=_; fun_name; type_vars; parameters;
+       rhs_type; fun_body} = value in
   let children = Tree.[
-    mk_child     print_expr  value.test.inside;
-    mk_child     print_ifso  value.ifso;
-    mk_child_opt print_ifnot value.ifnot]
-  in Tree.make ~region state "SCond" children
+    mk_child     make_literal        fun_name;
+    mk_child_opt print_type_vars     type_vars;
+    mk_child     print_fun_params    parameters;
+    mk_child_opt print_rhs_type      rhs_type;
+    mk_child     print_decl_fun_body fun_body]
+  in Tree.make ~region state "D_Fun" children
 
-(* Return statement *)
-
-and print_SReturn state (node: return reg) =
+and print_fun_params state (node: fun_params) =
   let Region.{value; region} = node in
-  let children = Tree.[mk_child_opt print_expr value.expr]
-  in Tree.make ~region state "SReturn" children
+  Tree.of_sep_or_term ~region state "<parameters>" print_pattern value.inside
+
+and print_decl_fun_body state (node : statements braces) =
+  Tree.of_nseq state "<body>"
+    (fun state -> print_statement state <@ fst) node.value.inside
+
+(* Import declaration *)
+
+and print_D_Import state (node: import_decl) =
+  Tree.make_unary state "D_Import" print_import_decl node
+
+and print_import_decl state = function
+  ImportAlias d -> print_ImportAlias state d
+| ImportAllAs d -> print_ImportAllAs state d
+| ImportFrom  d -> print_ImportFrom  state d
+
+and print_ImportAlias state (node: import_alias reg) =
+  let Region.{value; region} = node in
+  let {kwd_import=_; alias; equal=_; namespace_path} = value in
+  let children = Tree.[
+    mk_child print_alias               alias;
+    mk_child print_namespace_selection namespace_path]
+  in Tree.make ~region state "ImportAlias" children
+
+and print_alias state (node: namespace_name) =
+  Tree.(make_unary state "<alias>" make_literal node)
+
+and print_namespace_path :
+  'a.'a Tree.printer -> Tree.root -> Tree.state -> 'a namespace_path reg -> unit =
+  fun print root state {value; region} ->
+    let children = Tree.(
+        mk_children_nsepseq make_literal value.namespace_path
+      @ [Tree.mk_child print value.property])
+    in Tree.make state root ~region children
+
+and print_ImportAllAs state (node: import_all_as reg) =
+  let Region.{value; region} = node in
+  let {kwd_import=_; times=_; kwd_as=_; alias;
+       kwd_from=_; file_path} = value in
+  let children = Tree.[
+    mk_child print_alias     alias;
+    mk_child print_file_path file_path]
+  in Tree.make ~region state "ImportAllAs" children
+
+and print_file_path state (node: string wrap) =
+  Tree.(make_unary state "<file path>" make_literal node)
+
+and print_ImportFrom state (node: import_from reg) =
+  let Region.{value; region} = node in
+  let {kwd_import=_; imported; kwd_from=_; file_path} = value in
+  let children = Tree.[
+    mk_child print_imported  imported;
+    mk_child print_file_path file_path]
+  in Tree.make ~region state "ImportFrom" children
+
+and print_imported state (node: (property_name, comma) sep_or_term braces) =
+  let Region.{region; value} = node in
+  Tree.(of_sep_or_term state ~region "<namespace path>"
+                       make_literal value.inside)
+
+(* Interface declaration *)
+
+and print_D_Interface state (node : interface_decl reg) =
+  let Region.{region; value} = node in
+  let {kwd_interface=_; intf_name; intf_body} = value in
+  let children = Tree.(mk_child make_literal intf_name)
+                 :: mk_children_intf_body intf_body
+  in Tree.make ~region state "D_Interface" children
+
+and mk_children_intf_body (node: intf_body) =
+  Tree.mk_children_sep_or_term print_intf_entry node.value.inside
+
+and print_intf_entry state = function
+  I_Attr  e -> print_I_Attr  state e
+| I_Type  e -> print_I_Type  state e
+| I_Const e -> print_I_Const state e
+
+and print_I_Attr state (node : attribute * intf_entry) =
+  let attribute, entry = node in
+  let children = Tree.[
+    mk_child print_attribute  attribute;
+    mk_child print_intf_entry entry]
+  in Tree.make state "I_Attr" children
+
+and print_I_Type state (node : intf_type reg) =
+  let Region.{region; value} = node in
+  let {kwd_type=_; type_name; type_rhs} = value in
+  let children = Tree.[
+    mk_child     make_literal   type_name;
+    mk_child_opt print_type_rhs type_rhs]
+  in Tree.make ~region state "I_Type" children
+
+and print_type_rhs state (node : equal * type_expr) =
+  print_type_expr state (snd node)
+
+and print_I_Const state (node : intf_const reg) =
+  let Region.{value; region} = node in
+  let {kwd_const=_; const_name; const_type} = value in
+  let children = Tree.[
+    mk_child make_literal          const_name;
+    mk_child print_type_annotation const_type]
+  in Tree.make ~region state "I_Const" children
+
+(* Modules *)
+
+and print_D_Namespace state (node: namespace_decl reg) =
+  let Region.{value; region} = node in
+  let {kwd_namespace=_; namespace_name; namespace_type; namespace_body} =
+    value in
+  let children = Tree.[
+    mk_child     print_namespace_name namespace_name;
+    mk_child_opt print_interface      namespace_type;
+    mk_child     print_statements     namespace_body.value.inside]
+  in Tree.make ~region state "D_Namespace" children
+
+and print_namespace_name state (node: namespace_name) =
+  Tree.(make_unary state "<namespace>" make_literal node)
+
+and print_interface state (node: interface) =
+  let Region.{value; region} = node in
+  let _kwd_implements, intf_expr = value in
+  Tree.make_unary ~region state "<interface>" print_intf_expr intf_expr
+
+and print_intf_expr state = function
+  I_Body i -> print_I_Body state i
+| I_Path i -> print_I_Path state i
+
+and print_I_Body state (node: intf_body) =
+  Tree.make state "I_Body" (mk_children_intf_body node)
+
+and print_I_Path state = print_namespace_selection state
+
+and print_namespace_selection state = function
+  M_Path  p -> print_M_Path  state p
+| M_Alias p -> print_M_Alias state p
+
+and print_M_Path state (node: namespace_name namespace_path reg) =
+  print_namespace_path Tree.make_literal "M_Path" state node
+
+and print_M_Alias state (node: namespace_name) =
+  Tree.(make_unary state "M_Alias" make_literal node)
+
+(* Type declaration *)
+
+and print_D_Type state (node: type_decl reg) =
+  let Region.{value; region} = node in
+  let {kwd_type=_; type_vars; name; eq=_; type_expr} = value in
+  let children = Tree.[
+    mk_child     make_literal    name;
+    mk_child_opt print_type_vars type_vars;
+    mk_child     print_type_expr type_expr]
+  in Tree.make state ~region "D_Type" children
 
 (* Value declaration *)
 
-and print_SLet state (node: let_decl reg) =
+and print_D_Value state (node: value_decl reg) =
   let Region.{region; value} = node in
-  let children = mk_children_bindings value.bindings
-               @ mk_children_attr     value.attributes
-  in Tree.make state ~region "SLet" children
+  let {kind; bindings} = value in
+  let children = Tree.mk_child print_var_kind kind
+                 :: mk_children_bindings bindings
+  in Tree.make state ~region "D_Value" children
 
-and mk_children_bindings (node: (val_binding reg, comma) nsepseq) =
+and print_var_kind state = function
+  `Let   kwd_let   -> Tree.make_literal state kwd_let
+| `Const kwd_const -> Tree.make_literal state kwd_const
+
+and mk_children_bindings (node: (val_binding reg, comma) Utils.nsepseq) =
   Tree.mk_children_nsepseq print_val_binding node
 
 and print_val_binding state (node: val_binding reg) =
   let Region.{region; value} = node in
-
-  let print_binders state (node: pattern) =
-    Tree.make_unary state "<binders>" print_pattern node
-
-  and print_type_params state (node: type_generics) =
-    let Region.{region; value} = node in
-    let seq = value.inside in
-    Tree.(of_nsepseq state ~region "<parameters>" make_literal seq)
-
-  and print_rhs state (node: expr) =
-    Tree.make_unary state "<rhs>" print_expr node in
+  let {pattern; type_vars; rhs_type; eq=_; rhs_expr} = value in
 
   let children = Tree.[
-    mk_child     print_binders         value.binders;
-    mk_child_opt print_type_params     value.type_params;
-    mk_child_opt print_type_annotation value.lhs_type;
-    mk_child     print_rhs             value.expr]
+    mk_child     print_binders         pattern;
+    mk_child_opt print_type_vars       type_vars;
+    mk_child_opt print_type_annotation rhs_type;
+    mk_child     print_rhs             rhs_expr]
   in Tree.make state ~region "<binding>" children
 
-and print_type_annotation state (_, type_expr) =
-  Tree.make_unary state "<type>" print_type_expr type_expr
+and print_rhs state (node: expr) =
+  Tree.make_unary state "<rhs>" print_expr node
 
-(* Constant declaration *)
+and print_binders state (node: pattern) =
+  Tree.make_unary state "<binders>" print_pattern node
 
-and print_SConst state (node: const_decl reg) =
+and print_type_vars state (node: type_vars) =
   let Region.{region; value} = node in
-  let children = mk_children_bindings value.bindings
-               @ mk_children_attr     value.attributes
-  in Tree.make state ~region "SConst" children
+  let seq = value.inside in
+  Tree.(of_sep_or_term state ~region "<type vars>" make_literal seq)
 
-(* Type declaration *)
+and print_type_annotation state (node : type_annotation) =
+  Tree.make_unary state "<type>" print_type_expr (snd node)
 
-and print_SType state (node: type_decl reg) =
-  let Region.{value; region} = node in
+(* TYPE EXPRESSIONS *)
 
-  let print_type_vars state (node: (type_var, comma) nsepseq chevrons reg) =
-    let Region.{region; value} = node in
-    let seq = value.inside in
-    Tree.(of_nsepseq state ~region "<parameters>" make_literal seq) in
+and print_type_expr state = function
+  T_App         t -> print_T_App          state t
+| T_Array       t -> print_T_Array        state t
+| T_Attr        t -> print_T_Attr         state t
+| T_Fun         t -> print_T_Fun          state t
+| T_Int         t -> print_T_Int          state t
+| T_NamePath    t -> print_T_NamePath     state t
+| T_Object      t -> print_T_Object       state t
+| T_Par         t -> print_T_Par          state t
+| T_ParameterOf  t -> print_T_ParameterOf state t
+| T_String      t -> print_T_String       state t
+| T_Union       t -> print_T_Union        state t
+| T_Var         t -> print_T_Var          state t
+| T_Variant     t -> print_T_Variant      state t
 
-  let children = Tree.[
-    mk_child     make_literal    value.name;
-    mk_child_opt print_type_vars value.params;
-    mk_child     print_type_expr value.type_expr]
-  @ mk_children_attr value.attributes
-  in Tree.make state ~region "SType" children
+(* Application of type constructors *)
 
-(* Value declarations (signature) *)
-
-and print_IConst state (node : (attributes * kwd_const * variable * colon * type_expr) reg) =
-  let Region.{value; region} = node in
-  let attributes, _kwd_val, var, _colon, type_expr = value in
-  let children = Tree.[mk_child make_literal var;
-                       mk_child print_type_expr type_expr] @
-                 mk_children_attr attributes
-  in Tree.make ~region state "IConst" children
-
-(* Type declarations (signature) *)
-
-and print_IType state (node : (attributes * kwd_type * variable * equal * type_expr) reg) =
-  let Region.{value; region} = node in
-  let attributes, _kwd_type, var, _eq, type_expr = value in
-  let children = Tree.[mk_child make_literal var;
-                       mk_child print_type_expr type_expr] @
-                 mk_children_attr attributes
-  in Tree.make ~region state "IType" children
-
-(* Type declarations (signature) *)
-
-and print_IType_var state (node : (attributes * kwd_type * variable) reg) =
-  let Region.{value; region} = node in
-  let attributes, _kwd_type, var = value in
-  let children = Tree.[mk_child make_literal var] @
-                 mk_children_attr attributes
-  in Tree.make ~region state "IType_var" children
-
-(* Switch statement *)
-
-and print_SSwitch state (node: switch reg) =
-  let Region.{value; region} = node in
-
-  let print_subject_expr state (node: expr) =
-    Tree.make_unary state "<subject>" print_expr node in
-
-  let children = Tree.(mk_child print_subject_expr value.expr
-                       :: mk_children_nseq print_case value.cases)
-  in Tree.make state ~region "SSwitch" children
-
-and print_case state = function
-  Switch_case         c -> print_Switch_case         state c
-| Switch_default_case c -> print_Switch_default_case state c
-
-and print_Switch_case state (node: switch_case) =
-  let children = Tree.[
-    mk_child     print_expr       node.expr;
-    mk_child_opt print_statements node.statements]
-  in Tree.make state "Switch_case" children
-
-and print_statements state (node: statements) =
-  Tree.of_nsepseq state "<statements>" print_statement node
-
-and print_Switch_default_case state (node: switch_default_case) =
-  Tree.of_sepseq state "Switch_default_case" print_statement node.statements
-
-and print_SBreak state (node: kwd_break) =
-  Tree.make_node ~region:node#region state "SBreak"
-
-(* Namespaces *)
-
-and print_SNamespace state (node: namespace_statement reg) =
-  let Region.{value; region} = node in
-  let _, module_name, annotation_opt, statements, attributes = value in
-  let statements = statements.value.inside in
-  let children = Tree.[
-    mk_child print_namespace  module_name;
-    mk_child_opt print_interface_annotation annotation_opt;
-    mk_child print_statements statements]
-  @ mk_children_attr attributes
-  in Tree.make ~region state "SNamespace" children
-
-and print_interface_annotation state (node: interface_annotation) =
-  let Region.{value; region} = node in
-  let _, interface_expr = value in
-  let children = Tree.[mk_child print_interface_expr interface_expr]
-  in Tree.make ~region state "<interface_annotation>" children
-
-and print_namespace state (node: module_name) =
-  Tree.(make_unary state "<namespace>" make_literal node)
-
-(* Interfaces *)
-
-and print_SInterface state (node: interface_statement reg) =
-  let Region.{value; region} = node in
-  let _, module_name, interface_entries, attributes = value in
-  let interface_entries = interface_entries.value.inside in
-  let children = Tree.[
-    mk_child print_interface  module_name;
-    mk_child print_interface_entries interface_entries]
-  @ mk_children_attr attributes
-  in Tree.make ~region state "SInterface" children
-
-and print_interface state (node: module_name) =
-  Tree.(make_unary state "<interface>" make_literal node)
-
-and print_interface_expr state = function
-  IInterface b -> print_interface_body state b
-| IPath p      -> print_interface_path state p
-
-and print_interface_entries state (node: interface_entries) =
-  Tree.of_nsepseq state "<interface_entries>" print_interface_entry node
-
-and print_interface_body state (node: interface_body) =
-  let Region.{value; region} = node in
-  Tree.make_unary state ~region "<interface_body>" print_interface_entries value.inside
-
-and print_interface_path state (node: (module_name, dot) nsepseq reg) =
-  let Region.{value; region} = node in
-  Tree.make_unary state ~region "<interface_path>" print_module_path value
-
-(* Export statements *)
-
-and print_SExport state (node: (kwd_export * statement) reg) =
-  let Region.{value; region} = node in
-  Tree.make_unary ~region state "SExport" print_statement (snd value)
-
-(* Import statements *)
-
-and print_SImport state (node: import reg) =
-  let Region.{value; region} = node in
-  Tree.make_unary ~region state "SImport" print_import value
-
-and print_import state = function
-  Import_rename   i -> print_Import_rename   state i
-| Import_all_as   i -> print_Import_all_as   state i
-| Import_selected i -> print_Import_selected state i
-
-and print_Import_rename state (node: import_rename) =
-  let children = Tree.[
-    mk_child make_literal      node.kwd_import;
-    mk_child print_alias       node.alias;
-    mk_child print_module_path node.module_path]
-  in Tree.make state "Import_rename" children
-
-and print_alias state (node: module_name) =
-  Tree.(make_unary state "<alias>" make_literal node)
-
-and print_module_path state (node: (module_name, dot) nsepseq) =
-  Tree.(of_nsepseq state "<module path>" make_literal node)
-
-and print_Import_all_as state (node: import_all_as) =
-  let children = Tree.[
-    mk_child print_alias    node.alias;
-    mk_child print_dir_path node.module_path]
-  in Tree.make state "Import_all_as" children
-
-and print_dir_path state (node: string wrap) =
-  Tree.(make_unary state "<module path>" make_literal node)
-
-and print_Import_selected state (node: import_selected) =
-  let children = Tree.[
-    mk_child print_imported node.imported;
-    mk_child print_dir_path node.module_path]
-  in Tree.make state "Import_selected" children
-
-and print_imported state (node: (field_name, comma) nsepseq braces reg) =
+and print_T_App state (node: (type_expr * type_ctor_args) reg) =
   let Region.{region; value} = node in
-  Tree.(of_nsepseq state ~region "<module path>"
-          make_literal value.inside)
+  let type_ctor, args = value in
+  let args = args.value.inside in
+  let children = Tree.(
+    mk_child print_type_expr type_ctor
+    :: mk_children_nsep_or_term ~root:"<arguments>" print_type_expr args)
+  in Tree.make state ~region "T_App" children
 
-(* For-loops *)
+(* Attributed type expression *)
 
-and print_SForOf state (node: for_of reg) =
-  let Region.{value; region} = node in
-
-  let print_index_kind state (node: index_kind) =
-    match node with
-      `Let   kwd_let   -> Tree.make_literal state kwd_let
-    | `Const kwd_const -> Tree.make_literal state kwd_const in
-
+and print_T_Attr state (node : attribute * type_expr) =
+  let attribute, type_expr = node in
   let children = Tree.[
-    mk_child print_index_kind value.index_kind;
-    mk_child make_literal     value.index;
-    mk_child print_expr       value.expr;
-    mk_child print_statement  value.statement]
-  in Tree.make state ~region "SForOf" children
+    mk_child print_attribute attribute;
+    mk_child print_type_expr type_expr]
+  in Tree.make state "T_Attr"children
 
-and print_SFor state (node: for_stmt reg) =
+(* Array types *)
+
+and print_T_Array state (node : array_type) =
   let Region.{value; region} = node in
-  
-  let children = 
-    mk_children_attr value.attributes @
-    Tree.[
-      mk_child_opt print_statement  value.initialiser;
-      mk_child_opt print_expr value.condition;] @
-    Tree.mk_children_nsepseq_opt print_expr value.afterthought @
-    [Tree.mk_child_opt print_statement value.statement]
-  in Tree.make state ~region "SFor" children
+  Tree.of_nsep_or_term ~region state "T_Array" print_type_expr value.inside
 
-(* While-loops *)
+(* Functional types *)
 
-and print_SWhile state (node: while_stmt reg) =
+and print_T_Fun state (node : fun_type) =
   let Region.{value; region} = node in
+  let params, _, codomain = value in
+  let children =
+    Tree.mk_children_sep_or_term print_fun_type_param params.value.inside
+  @ [Tree.mk_child print_codomain codomain]
+  in Tree.make state "T_Fun" ~region children
+
+and print_fun_type_param state (node: fun_type_param reg) =
+  let Region.{region; value} = node in
+  let pattern, type_annotation = value in
   let children = Tree.[
-    mk_child print_expr      value.expr;
-    mk_child print_statement value.statement]
-  in Tree.make state ~region "SWhile" children
+    mk_child print_pattern         pattern;
+    mk_child print_type_annotation type_annotation]
+  in Tree.make ~region state "<parameter>" children
+
+and print_codomain state (node: type_expr) =
+  Tree.make_unary state "<codomain>" print_type_expr node
+
+(* The integer type *)
+
+and print_T_Int state (node : int_literal) =
+  Tree.make_int "T_Int" state node
+
+(* Namespace paths in type expressions *)
+
+and print_T_NamePath state (node : type_expr namespace_path reg) =
+  print_namespace_path print_type_expr "T_NamePath" state node
+
+(* Parenthesised type expressions *)
+
+and print_T_Par state (node : type_expr par) =
+  Tree.make_unary state "T_Par" print_type_expr node.value.inside
+
+(* Type parameter *)
+
+and print_T_ParameterOf state (node : parameter_of_type reg) =
+  let {kwd_parameter_of=_; namespace_path} = node.value in
+  Tree.make_unary state "T_ParameterOf" print_namespace_selection
+                  namespace_path
+
+and print_T_Object state (node : type_expr _object) =
+  print_object print_type_expr "T_Object" state node
+
+and print_object :
+  'a.'a Tree.printer -> Tree.root -> Tree.state -> 'a _object -> unit =
+  fun print root state {value; region} ->
+    Tree.of_sep_or_term ~region state root (print_property print) value.inside
+
+and print_property :
+  'a.'a Tree.printer -> Tree.state -> 'a property reg -> unit =
+  fun print_rhs state property ->
+    let Region.{value; region} = property in
+    let {attributes; property_id; property_rhs} = value in
+    let print_rhs state = print_rhs state <@ snd in
+    let children = Tree.[
+      mk_child     print_property_id property_id;
+      mk_child_opt print_rhs      property_rhs]
+    @ mk_children_attr attributes
+    in Tree.make ~region state "<property>" children
+
+and print_property_id state = function
+  F_Name i -> print_F_Name state i
+| F_Int  i -> print_F_Int  state i
+| F_Str  i -> print_F_Str  state i
+
+and print_F_Name state (node: property_name) =
+  Tree.(make_unary state "F_Name" make_literal node)
+
+and print_F_Int state (node: int_literal) =
+  Tree.make_int "F_Int" state node
+
+and print_F_Str state (node: string_literal) =
+  Tree.make_string "F_Str" state node
+
+(* Type string *)
+
+and print_T_String state (node: string_literal) =
+  Tree.make_string "T_String" state node
+
+(* Discriminated unions *)
+
+and print_T_Union state (node: union_type) =
+  let Region.{region; value} = node
+  and print = print_object print_type_expr "<subset>" in
+  Tree.of_nsep_or_pref ~region state "T_Union" print value
+
+(* Type variable *)
+
+and print_T_Var state (node : variable) =
+  Tree.(make_unary state "T_Var" make_literal node)
+
+(* Variant types *)
+
+and print_T_Variant state (node : variant_type) =
+  let Region.{value; region} = node in
+  Tree.of_nsep_or_pref ~region state "T_Variant" print_variant value
+
+and print_variant state (node : variant) =
+  let {attributes; tuple} = node in
+  let Region.{region; value} = tuple in
+  let _, app = value in
+  let ctor, ctor_params =
+    match app with
+      ZeroArg ctor -> ctor, []
+    | MultArg brackets ->
+        let app = brackets.value.inside in
+        match app with
+         `Sep p -> p
+        | `Term ((ctor,_), ctor_params) ->
+             ctor, List.map ~f:(fun (x,y) -> (y,x)) ctor_params in
+  let print state (_, arg) = print_type_expr state arg in
+  let children =
+    Tree.(mk_child print_type_expr ctor) ::
+    Tree.mk_children_list print ~root:"<parameters>" ctor_params
+    @ mk_children_attr attributes
+  in Tree.make ~region state "<variant>" children
 
 (* PATTERNS *)
 
 and print_pattern state = function
-  PRest     p -> print_PRest     state p
-| PAssign   p -> print_PAssign   state p
-| PVar      p -> print_PVar      state p
-| PConstr   p -> print_PConstr   state p
-| PDestruct p -> print_PDestruct state p
-| PObject   p -> print_PObject   state p
-| PArray    p -> print_PArray    state p
+  P_Attr     p -> print_P_Attr     state p
+| P_Array    p -> print_P_Array    state p
+| P_Bytes    p -> print_P_Bytes    state p
+| P_CtorApp  p -> print_P_CtorApp  state p
+| P_False    p -> print_P_False    state p
+| P_Int      p -> print_P_Int      state p
+| P_Mutez    p -> print_P_Mutez    state p
+| P_NamePath p -> print_P_NamePath state p
+| P_Nat      p -> print_P_Nat      state p
+| P_Object   p -> print_P_Object   state p
+| P_String   p -> print_P_String   state p
+| P_True     p -> print_P_True     state p
+| P_Typed    p -> print_P_Typed    state p
+| P_Var      p -> print_P_Var      state p
+| P_Verbatim p -> print_P_Verbatim state p
 
-(* Rest pattern *)
+(* Attributes patterns *)
 
-and print_PRest state (node: rest_pattern reg) =
-  Tree.(make_unary state "PRest" make_literal node.value.rest)
-
-(* Assignment pattern *)
-
-and print_PAssign state (node: assign_pattern reg) =
-  let Region.{region; value} = node in
+and print_P_Attr state (node : attribute * pattern) =
+  let attribute, pattern = node in
   let children = Tree.[
-    mk_child make_literal value.property;
-    mk_child print_expr   value.value]
-  in Tree.make state ~region "PAssign" children
+    mk_child print_attribute attribute;
+    mk_child print_pattern   pattern]
+  in Tree.make state "P_Attr" children
 
-(* Pattern variable *)
+(* Bytes as literals in patterns *)
 
-and print_PVar state (node: var_pattern reg) =
-  let Region.{region; value} = node in
-  let children =
-    Tree.(mk_child make_literal value.variable)
-  :: mk_children_attr value.attributes
-  in Tree.make state ~region "PVar" children
+and print_P_Bytes state (node: (lexeme * Hex.t) wrap) =
+  Tree.make_bytes "P_Bytes" state node
 
-(* Data constructor as a pattern *)
+(* Application of data constructors in patterns *)
 
-and print_PConstr state (node: variable) =
-  Tree.(make_unary state "PConstr" make_literal node)
+and print_P_CtorApp state (node: pattern ctor_app reg) =
+  print_ctor_app print_pattern "P_CtorApp" state node
 
-(* Destructuring pattern *)
+(* "false" as a pattern *)
 
-and print_PDestruct state (node: destruct reg) =
-  let Region.{region; value} = node in
+and print_P_False state (node : false_const) =
+  Tree.make_node ~region:node#region state "P_False"
+
+(* Integers in patterns *)
+
+and print_P_Int state (node : (lexeme * Z.t) wrap) =
+  Tree.make_int "P_Int" state node
+
+(* Mutez in patterns *)
+
+and print_P_Mutez state (node : (lexeme * Int64.t) wrap) =
+  Tree.make_mutez "P_Mutez" state node
+
+(* Qualified patterns *)
+
+and print_P_NamePath state (node : pattern namespace_path reg) =
+  print_namespace_path print_pattern "P_NamePath" state node
+
+(* Natural numbers in patterns *)
+
+and print_P_Nat state (node : (lexeme * Z.t) wrap) =
+  Tree.make_int "P_Nat" state node
+
+(* Record patterns *)
+
+and print_P_Object state (node: pattern _object) =
+  let Region.{value; region} = node in
+  let print = print_property print_pattern in
+  Tree.of_sep_or_term ~region state "P_Object" print value.inside
+
+(* String literals as patterns *)
+
+and print_P_String state (node : lexeme wrap) =
+  Tree.make_string "P_String" state node
+
+(* "true" as an expression *)
+
+and print_P_True state (node : true_const) =
+  Tree.make_node ~region:node#region state "P_True"
+
+(* Tuple patterns *)
+
+and print_P_Array state (node: pattern _array) =
+  print_array print_pattern "P_Array" state node
+
+and print_array :
+  'a.'a Tree.printer -> Tree.root -> Tree.state -> 'a _array -> unit =
+  fun print root state brackets ->
+    let Region.{region; value} = brackets in
+    let elements = value.inside in
+    Tree.of_sep_or_term ~region state root (print_element print) elements
+
+and print_element :
+  'a.'a Tree.printer -> Tree.state -> 'a element -> unit =
+  fun print state -> function
+    None, element -> print state element
+  | Some _ellipsis, element -> Tree.make_unary state "..." print element
+
+(* Typed pattern (function parameter) *)
+
+and print_P_Typed state (node : typed_pattern reg) =
+  let Region.{value; region} = node in
+  let pattern, (_, type_expr) = value in
   let children = Tree.[
-    mk_child make_literal      value.property;
-    mk_child print_val_binding value.target]
-  in Tree.make state ~region "PDestruct" children
+    mk_child print_pattern   pattern;
+    mk_child print_type_expr type_expr]
+  in Tree.make state ~region "P_Typed" children
 
-and print_PObject state (node: object_pattern) =
-  let Region.{region; value} = node in
-  Tree.of_nsepseq state ~region "PObject" print_pattern value.inside
+(* A pattern variable *)
 
-and print_PArray state (node: array_pattern) =
-  let Region.{region; value} = node in
-  Tree.of_nsepseq state ~region "PArray" print_pattern value.inside
+and print_P_Var state (node : variable) =
+  Tree.(make_unary state "P_Var" make_literal node)
 
-(* TYPES *)
+(* A verbatim string as a pattern *)
 
-and print_type_expr state = function
-  TProd      t -> print_TProd      state t
-| TSum       t -> print_TSum       state t
-| TObject    t -> print_TObject    state t
-| TApp       t -> print_TApp       state t
-| TFun       t -> print_TFun       state t
-| TPar       t -> print_TPar       state t
-| TVar       t -> print_TVar       state t
-| TString    t -> print_TString    state t
-| TModA      t -> print_TModA      state t
-| TInt       t -> print_TInt       state t
-| TDisc      t -> print_TDisc      state t
-| TParameter t -> print_TParameter state t
-
-(* Product types *)
-
-and print_TProd state (node: cartesian) =
-  let Region.{region; value} = node.inside in
-  let children =
-    Tree.mk_children_nsepseq print_type_expr value.inside
-    @ mk_children_attr node.attributes
-  in Tree.make state ~region "TProd" children
-
-(* Variant types *)
-
-and print_TSum state (node: sum_type reg) =
-  let Region.{region; value} = node in
-  let children =
-    Tree.mk_children_nsepseq print_variant value.variants.value
-  @ mk_children_attr value.attributes
-  in Tree.make state ~region "TSum" children
-
-and print_variant state (node: variant reg) =
-  let children_attr = mk_children_attr node.value.attributes in
-  let components = node.value.tuple.value.inside in
-  let ctor = components.constr
-  and args = components.params in
-  let mk_tree = Tree.make state ~region:ctor#region ctor#payload in
-  match args with
-    None -> mk_tree children_attr
-  | Some (_, args) ->
-      let children =
-        Tree.mk_children_nsepseq print_type_expr args @ children_attr
-      in mk_tree children
-
-(* Object types *)
-
-and print_TObject state (node: obj_type) =
-  let Region.{value; region} = node in
-  let children =
-    Tree.mk_children_nsepseq print_field_decl value.ne_elements
-    @ mk_children_attr value.attributes
-  in Tree.make state ~region "TObject" children
-
-and print_field_decl state (node: field_decl reg) =
-  let Region.{region; value} = node in
-  let children = Tree.[
-    mk_child make_literal    value.field_name;
-    mk_child print_type_expr value.field_type]
-  @ mk_children_attr value.attributes
-  in Tree.make state ~region "<field>" children
-
-(* Application of type constructors *)
-
-and print_TApp state (node: (type_constr * type_params) reg) =
-  let Region.{region; value} = node in
-  let ctor, params = value in
-  let args = Tree.mk_children_nsepseq ~root:"<arguments>"
-               print_type_expr params.value.inside in
-  let children = Tree.(mk_child make_literal ctor :: args)
-  in Tree.make state ~region "TApp" children
-
-(* Functional type *)
-
-and print_TFun state (node: (fun_type_args * arrow * type_expr) reg) =
-  let Region.{value; region} = node in
-  let domain, _, codomain = value in
-
-  let print_fun_type_arg state (node: fun_type_arg) =
-    let children = Tree.[
-        mk_child make_literal    node.name;
-        mk_child print_type_expr node.type_expr]
-    in Tree.make state "<parameter>" children in
-
-  let print_fun_type_args state (node: (fun_type_arg, comma) nsepseq par) =
-    Tree.of_nsepseq state "<parameters>" print_fun_type_arg node.inside
-
-  and print_codomain state (node: type_expr) =
-    Tree.make_unary state "<result>" print_type_expr node in
-
-  let children = Tree.[
-    mk_child print_fun_type_args domain;
-    mk_child print_codomain      codomain]
-  in Tree.make state ~region "TFun" children
-
-(* Parenthesised type *)
-
-and print_TPar state (node: type_expr par reg) =
-  let Region.{region; value} = node in
-  Tree.make_unary state ~region "TPar" print_type_expr value.inside
-
-(* Type variable *)
-
-and print_TVar state (node: variable) =
-  Tree.(make_unary state "TVar" make_literal node)
-
-(* Type string *)
-
-and print_TString state (node: lexeme wrap) =
-  Tree.(make_unary state "TString" make_string node)
-
-(* Type from module path *)
-
-and print_TModA state (node: type_expr module_access reg) =
-  let Region.{value; region} = node in
-  let children = Tree.[
-    mk_child make_literal    value.module_name;
-    mk_child print_type_expr value.field]
-  in Tree.make state ~region "TModA" children
-
-(* Integer type *)
-
-and print_TInt state (node: (lexeme * Z.t) wrap) =
-  Tree.make_int "TInt" state node
-
-(* Discriminated unions *)
-
-and print_TDisc state (node: (obj_type, vbar) nsepseq) =
-  Tree.of_nsepseq state "TDisc" print_obj_type node
-
-and print_obj_type state (node: obj_type) =
-  let Region.{value; region} = node in
-  let children =
-    Tree.mk_children_nsepseq print_field_decl value.ne_elements
-    @ mk_children_attr value.attributes
-  in Tree.make state ~region "<object type>" children
-
-(* Parameter of *)
-
-and print_TParameter state (node: (module_name, dot) nsepseq reg) =
-  let Region.{value; region} = node in
-  Tree.(of_nsepseq state ~region "TParameter" make_literal value)
+and print_P_Verbatim state (node : lexeme wrap) =
+  Tree.make_verbatim "P_Verbatim" state node
 
 (* EXPRESSIONS *)
 
 and print_expr state = function
-  EAnnot    e -> print_EAnnot    state e
-| EArith    e -> print_EArith    state e
-| EArray    e -> print_EArray    state e
-| EAssign   e -> print_EAssign   state e
-| EBytes    e -> print_EBytes    state e
-| ECall     e -> print_ECall     state e
-| ECodeInj  e -> print_ECodeInj  state e
-| EConstr   e -> print_EConstr   state e
-| EContract e -> print_EContract state e
-| EFun      e -> print_EFun      state e
-| ELogic    e -> print_ELogic    state e
-| EModA     e -> print_EModA     state e
-| EObject   e -> print_EObject   state e
-| EPar      e -> print_EPar      state e
-| EPrefix   e -> print_EPrefix   state e
-| EPostfix  e -> print_EPostfix  state e
-| EProj     e -> print_EProj     state e
-| ESeq      e -> print_ESeq      state e
-| EString   e -> print_EString   state e
-| ETernary  e -> print_ETernary  state e
-| EUnit     e -> print_EUnit     state e
-| EVar      e -> print_EVar      state e
+  E_Add        e -> print_E_Add        state e
+| E_AddEq      e -> print_E_AddEq      state e
+| E_And        e -> print_E_And        state e
+| E_App        e -> print_E_App        state e
+| E_Array      e -> print_E_Array      state e
+| E_ArrowFun   e -> print_E_ArrowFun   state e
+| E_Assign     e -> print_E_Assign     state e
+| E_Attr       e -> print_E_Attr       state e
+| E_BitAnd     e -> print_E_BitAnd     state e
+| E_BitAndEq   e -> print_E_BitAndEq   state e
+| E_BitNeg     e -> print_E_BitNeg     state e
+| E_BitOr      e -> print_E_BitOr      state e
+| E_BitOrEq    e -> print_E_BitOrEq    state e
+| E_BitSl      e -> print_E_BitSl      state e
+| E_BitSlEq    e -> print_E_BitSlEq    state e
+| E_BitSr      e -> print_E_BitSr      state e
+| E_BitSrEq    e -> print_E_BitSrEq    state e
+| E_BitXor     e -> print_E_BitXor     state e
+| E_BitXorEq   e -> print_E_BitXorEq   state e
+| E_Bytes      e -> print_E_Bytes      state e
+| E_CodeInj    e -> print_E_CodeInj    state e
+| E_ContractOf e -> print_E_ContractOf state e
+| E_CtorApp    e -> print_E_CtorApp    state e
+| E_Div        e -> print_E_Div        state e
+| E_DivEq      e -> print_E_DivEq      state e
+| E_Do         e -> print_E_Do         state e
+| E_Equal      e -> print_E_Equal      state e
+| E_False      e -> print_E_False      state e
+| E_Function   e -> print_E_Function   state e
+| E_Geq        e -> print_E_Geq        state e
+| E_Gt         e -> print_E_Gt         state e
+| E_Int        e -> print_E_Int        state e
+| E_Leq        e -> print_E_Leq        state e
+| E_Lt         e -> print_E_Lt         state e
+| E_Match      e -> print_E_Match      state e
+| E_Mult       e -> print_E_Mult       state e
+| E_MultEq     e -> print_E_MultEq     state e
+| E_Mutez      e -> print_E_Mutez      state e
+| E_NamePath   e -> print_E_NamePath   state e
+| E_Nat        e -> print_E_Nat        state e
+| E_Neg        e -> print_E_Neg        state e
+| E_Neq        e -> print_E_Neq        state e
+| E_Not        e -> print_E_Not        state e
+| E_Object     e -> print_E_Object     state e
+| E_Or         e -> print_E_Or         state e
+| E_Par        e -> print_E_Par        state e
+| E_PostDecr   e -> print_E_PostDecr   state e
+| E_PostIncr   e -> print_E_PostIncr   state e
+| E_PreDecr    e -> print_E_PreDecr    state e
+| E_PreIncr    e -> print_E_PreIncr    state e
+| E_Proj       e -> print_E_Proj       state e
+| E_Rem        e -> print_E_Rem        state e
+| E_RemEq      e -> print_E_RemEq      state e
+| E_String     e -> print_E_String     state e
+| E_Sub        e -> print_E_Sub        state e
+| E_SubEq      e -> print_E_SubEq      state e
+| E_Ternary    e -> print_E_Ternary    state e
+| E_True       e -> print_E_True       state e
+| E_Typed      e -> print_E_Typed      state e
+| E_Update     e -> print_E_Update     state e
+| E_Var        e -> print_E_Var        state e
+| E_Verbatim   e -> print_E_Verbatim   state e
+| E_Xor        e -> print_E_Xor        state e
 
-(* Functional expressions *)
+(* Arithmetic addition *)
 
-and print_EFun state (node: fun_expr reg) =
+and print_E_Add state (node : plus bin_op reg) =
+  print_bin_op state "E_Add" node
+
+and print_bin_op state root (node : 'op bin_op reg) =
   let Region.{value; region} = node in
-
-  let print_fun_param state (node: expr) =
-    Tree.make_unary state "<parameters>" print_expr node
-
-  and print_FunctionBody state (node: statements braces reg) =
-    let Region.{region; value} = node in
-    Tree.of_nsepseq state ~region "FunctionBody" print_statement value.inside
-
-  and print_ExpressionBody state (node: expr) =
-    Tree.make_unary state "ExpressionBody" print_expr node in
-
-  let print_body state = function
-    FunctionBody   e -> print_FunctionBody   state e
-  | ExpressionBody e -> print_ExpressionBody state e in
-
   let children = Tree.[
-    mk_child     print_fun_param       value.parameters;
-    mk_child_opt print_type_annotation value.lhs_type;
-    mk_child     print_body            value.body]
-  in Tree.make state ~region "EFun" children
+    mk_child print_expr value.arg1;
+    mk_child print_expr value.arg2]
+  in Tree.make state root ~region children
+
+(* Addition & assignment *)
+
+and print_E_AddEq state (node: plus_eq bin_op reg) =
+  print_bin_op state "E_AddPlus" node
+
+(* Boolean conjunction *)
+
+and print_E_And state (node : bool_and bin_op reg) =
+  print_bin_op state "E_And" node
+
+(* Data constructor application or function call *)
+
+and print_E_App state (node : (expr * arguments) reg) =
+  let Region.{value; region} = node in
+  let fun_or_ctor, args = value
+  and mk_func state =
+    Tree.make_unary state "<fun or ctor>" print_expr
+  and mk_args state (node : arguments) =
+    let Region.{region; value} = node in
+    match value.inside with
+      None -> Tree.make_node ~region state "()"
+    | Some args -> Tree.of_nsepseq state "<arguments>" print_expr args
+  in
+  let children = Tree.[
+    mk_child mk_func fun_or_ctor;
+    mk_child mk_args args]
+  in Tree.make state "E_App" ~region children
+
+(* Assignment *)
+
+and print_E_Assign state (node: equal bin_op reg) =
+  print_bin_op state "E_Assign" node
+
+(* Attributed expressions *)
+
+and print_E_Attr state (node : attribute * expr) =
+  let attribute, expr = node in
+  let children = Tree.[
+    mk_child print_attribute attribute;
+    mk_child print_expr      expr]
+  in Tree.make state "E_Attr" children
+
+(* Bitwise conjunction *)
+
+and print_E_BitAnd state (node : bit_and bin_op reg) =
+  print_bin_op state "E_BitAnd" node
+
+(* Bitwise conjunction & Assignment *)
+
+and print_E_BitAndEq state (node : bit_and_eq bin_op reg) =
+  print_bin_op state "E_BitAndEq" node
+
+(* Bitwise negation *)
+
+and print_E_BitNeg state (node : bit_neg un_op reg) =
+  print_un_op state "E_Neg" node
+
+(* Bitwise disjunction *)
+
+and print_E_BitOr state (node : bit_or bin_op reg) =
+  print_bin_op state "E_Or" node
+
+(* Bitwise disjunction & Assignment *)
+
+and print_E_BitOrEq state (node : bit_or_eq bin_op reg) =
+  print_bin_op state "E_OrEq" node
+
+(* Bitwise left shift *)
+
+and print_E_BitSl state (node : bit_sl bin_op reg) =
+  print_bin_op state "E_BitSl" node
+
+(* Bitwise left shift & Assignment *)
+
+and print_E_BitSlEq state (node : bit_sl_eq bin_op reg) =
+  print_bin_op state "E_BitSlEq" node
+
+(* Bitwise right shift *)
+
+and print_E_BitSr state (node : bit_sr bin_op reg) =
+  print_bin_op state "E_BitSr" node
+
+(* Bitwise right shift & Assignment *)
+
+and print_E_BitSrEq state (node : bit_sr_eq bin_op reg) =
+  print_bin_op state "E_BitSrEq" node
+
+(* Bitwise exclusive disjunction *)
+
+and print_E_BitXor state (node : bit_xor bin_op reg) =
+  print_bin_op state "E_BitXor" node
+
+(* Bitwise exclusive disjunction *)
+
+and print_E_BitXorEq state (node : bit_xor_eq bin_op reg) =
+  print_bin_op state "E_BitXorEq" node
+
+(* Bytes as expressions *)
+
+and print_E_Bytes state (node : (lexeme * Hex.t) wrap) =
+  Tree.make_bytes "E_Bytes" state node
+
+(* Code Injection *)
+
+and print_E_CodeInj state (node : code_inj reg) =
+  let Region.{value; region} = node in
+  let {language; code} = value in
+  let children = Tree.[
+    mk_child print_language language;
+    mk_child print_code     code]
+  in Tree.make state "E_CodeInj" ~region children
+
+and print_language state (node : language) =
+  Tree.(make_unary state "<language>" make_literal node)
+
+and print_code state (node : expr) =
+  Tree.make_unary state "<code>" print_expr node
+
+(* Contract of expression *)
+
+and print_E_ContractOf state (node: contract_of_expr reg) =
+  let {kwd_contract_of=_; namespace_path} = node.value in
+  let path = namespace_path.value.inside in
+  Tree.make_unary state "E_ContractOf" print_namespace_selection path
+
+(* Application of data constructor as expressions *)
+
+and print_E_CtorApp state (node : expr ctor_app reg) =
+  print_ctor_app print_expr "E_CtorApp" state node
+
+and print_ctor_app :
+  'a.'a Tree.printer -> Tree.root -> Tree.state -> 'a ctor_app reg -> unit =
+  fun print root state {region; value} ->
+  let _, app = value in
+  let ctor, ctor_params =
+    match app with
+      ZeroArg ctor -> ctor, []
+    | MultArg brackets ->
+        let app = brackets.value.inside in
+        match app with
+          `Sep p -> p
+        | `Term ((ctor,_), ctor_params) ->
+          ctor, List.map ~f:(fun (x,y) -> (y,x)) ctor_params in
+  let print' state (_, arg) = print state arg in
+  let children =
+    Tree.(mk_child print ctor) ::
+    Tree.mk_children_list print' ~root:"<parameters>" ctor_params
+  in Tree.make ~region state root children
+
+(* The Euclidean quotient *)
+
+and print_E_Div state (node : slash bin_op reg) =
+  print_bin_op state "E_Div" node
+
+(* Euclidean quotient & assignment *)
+
+and print_E_DivEq state (node: div_eq bin_op reg) =
+  print_bin_op state "E_DivEq" node
+
+(* Do expressions *)
+
+and print_E_Do state (node : do_expr reg) =
+  let Region.{region; value} = node in
+  let {kwd_do=_; statements} = value in
+  let stmts = statements.value.inside in
+  Tree.of_nseq ~region state "E_Do"
+               (fun state -> print_statement state <@ fst) stmts
+
+(* Equality *)
+
+and print_E_Equal state (node : equal_cmp bin_op reg) =
+  print_bin_op state "E_Equal" node
+
+(* "false" as an expression *)
+
+and print_E_False state (node : false_const) =
+  Tree.make_node ~region:node#region state "E_False"
+
+(* Functional expressions introduced with the keyword "function" *)
+
+and print_E_Function state (node : function_expr reg) =
+  let Region.{value; region} = node in
+  let {kwd_function=_; type_vars; parameters; rhs_type; fun_body} = value in
+  let children = Tree.[
+    mk_child_opt print_type_vars        type_vars;
+    mk_child     print_arrow_fun_params parameters;
+    mk_child_opt print_rhs_type         rhs_type;
+    mk_child     print_fun_body         fun_body]
+  in Tree.make ~region state "E_Function" children
+
+and print_rhs_type state (node: type_annotation) =
+  Tree.make_unary state "<rhs type>" print_type_expr (snd node)
+
+and print_arrow_fun_params state = function
+  ParParams  p -> print_ParParams  state p
+| NakedParam p -> print_NakedParam state p
+
+and print_ParParams state (node: (pattern, comma) sep_or_term par) =
+  let Region.{value; region} = node in
+  Tree.of_sep_or_term ~region state "ParParams" print_pattern value.inside
+
+and print_NakedParam state (node: pattern) =
+  Tree.(make_unary state "NakedParam" print_pattern node)
+
+and print_fun_body state = function
+  StmtBody b -> print_StmtBody state b
+| ExprBody b -> print_ExprBody state b
+
+and print_StmtBody state (node: statements braces) =
+  Tree.of_nseq state "StmtBody"
+               (fun state -> print_statement state <@ fst) node.value.inside
+
+and print_ExprBody state (node: expr) =
+  Tree.make_unary state "ExprBody" print_expr node
+
+(* Greater or Equal *)
+
+and print_E_Geq state (node : geq bin_op reg) =
+  print_bin_op state "E_Geq" node
+
+(* Greater Than *)
+
+and print_E_Gt state (node : gt bin_op reg) =
+  print_bin_op state "E_Gt" node
+
+(* Integer literals as expressions *)
+
+and print_E_Int state (node : (lexeme * Z.t) wrap) =
+  Tree.make_int "E_Int" state node
+
+(* Lower or Equal *)
+
+and print_E_Leq state (node : leq bin_op reg) =
+  print_bin_op state "E_Leq" node
+
+(* Lower Than *)
+
+and print_E_Lt state (node : lt bin_op reg) =
+  print_bin_op state "E_lt" node
+
+(* Pattern matching *)
+
+and print_E_Match state (node : match_expr reg) =
+  let Region.{value; region} = node in
+  let {kwd_match=_; subject; clauses} = value in
+  let subject = subject.value.inside
+  and clauses = clauses.value.inside in
+  let children = Tree.[
+    mk_child print_subject       subject;
+    mk_child print_match_clauses clauses]
+  in Tree.make state ~region "E_Match" children
+
+and print_match_clauses state = function
+  AllClauses    c -> print_AllClauses    state c
+| DefaultClause c -> print_DefaultClause state c
+
+and print_AllClauses state (node : all_match_clauses) =
+  let normal_clauses, default_clause_opt = node in
+  let children = Tree.(
+    mk_children_nseq print_match_clause normal_clauses
+    @ [mk_child_opt print_match_default default_clause_opt])
+  in Tree.make state "AllClauses" children
+
+and print_DefaultClause state (node : match_default reg) =
+  print_match_default state node
+
+and print_match_clause state (node : match_clause reg) =
+  let Region.{value; region} = node in
+  let {kwd_when=_; filter; colon=_; clause_expr} = value in
+  let children = Tree.[
+    mk_child print_pattern  filter.value.inside;
+    mk_child print_expr     clause_expr]
+  in Tree.make ~region state "<clause>" children
+
+and print_match_default state (node : match_default reg) =
+  let Region.{value; region} = node in
+  let {kwd_default=_; colon=_; default_expr} = value in
+  Tree.make_unary state ~region "DefaultClause" print_expr default_expr
+
+(* Arithmetic modulo *)
+
+and print_E_Rem state (node : remainder bin_op reg) =
+  print_bin_op state "E_Rem" node
+
+(* Arithmetic modulo & assignment *)
+
+and print_E_RemEq state (node: rem_eq bin_op reg) =
+  print_bin_op state "E_RemEq" node
+
+(* Qualified expression *)
+
+and print_E_NamePath state (node : expr namespace_path reg) =
+  print_namespace_path print_expr "E_NamePath" state node
+
+(* Multiplication *)
+
+and print_E_Mult state (node : times bin_op reg) =
+  print_bin_op state "E_Mult" node
+
+(* Mutez literals *)
+
+and print_E_Mutez state (node : (lexeme * Int64.t) wrap) =
+  Tree.make_mutez "E_Mutez" state node
+
+(* Natural numbers *)
+
+and print_E_Nat state (node : (lexeme * Z.t) wrap) =
+  Tree.make_nat "E_Nat" state node
+
+(* Arithmetic negation *)
+
+and print_E_Neg state (node : minus un_op reg) =
+  print_un_op state "E_Neg" node
+
+and print_un_op state root (node : 'op un_op reg) =
+  let Region.{value; region} = node in
+  Tree.make_unary state root ~region print_expr value.arg
+
+(* Inequality *)
+
+and print_E_Neq state (node : neq bin_op reg) =
+  print_bin_op state "E_Neq" node
+
+(* Logical negation *)
+
+and print_E_Not state (node : bool_neg un_op reg) =
+  print_un_op state "E_Not" node
+
+(* Logical disjunction *)
+
+and print_E_Or state (node : bool_or bin_op reg) =
+  print_bin_op state "E_Or" node
 
 (* Parenthesised expressions *)
 
-and print_EPar state (node: expr par reg) =
-  let Region.{region; value} = node in
-  Tree.make_unary state ~region "EPar" print_expr value.inside
-
-(* Sequence expressions *)
-
-and print_ESeq state (node: (expr, comma) nsepseq reg) =
+and print_E_Par state (node : expr par) =
   let Region.{value; region} = node in
-  Tree.of_nsepseq state ~region "ESeq" print_expr value
+  Tree.make_unary state "E_Par" ~region print_expr value.inside
 
-(* Value variables *)
+(* Increments & decrements *)
 
-and print_EVar state (node: variable) =
-  Tree.(make_unary state "EVar" make_literal node)
+and print_E_PostDecr state (node : decrement un_op reg) =
+  print_un_op state "E_PostDecr" node
 
-(* Qualified values (through a module path) *)
+and print_E_PostIncr state (node: increment un_op reg) =
+  print_un_op state "E_PostIncr" node
 
-and print_EModA state (node: expr module_access reg) =
+and print_E_PreDecr state (node: decrement un_op reg) =
+  print_un_op state "E_PreDecr" node
+
+and print_E_PreIncr state (node: increment un_op reg) =
+  print_un_op state "E_PreIncr" node
+
+(* Projections *)
+
+and print_E_Proj state (node : projection reg) =
   let Region.{value; region} = node in
-  let children = Tree.[
-    mk_child make_literal value.module_name;
-    mk_child print_expr   value.field]
-  in Tree.make state ~region "EModA" children
+  let {object_or_array; property_path} = value in
+  let children = Tree.(
+       mk_child         print_expr      object_or_array
+    :: mk_children_nseq print_selection property_path)
+  in Tree.make state ~region "E_Proj" children
 
-(* Boolean expressions *)
+and print_selection state = function
+  PropertyName s -> print_PropertyName state s
+| PropertyStr  s -> print_PropertyStr  state s
+| Component    s -> print_Component    state s
 
-and print_ELogic state = function
-  BoolExpr e -> print_BoolExpr state e
-| CompExpr e -> print_CompExpr state e
+and print_PropertyName state (node : dot * property_name) =
+  Tree.(make_unary state "PropertyName" make_literal (snd node))
 
-(* Boolean operators *)
+and print_PropertyStr state (node : string_literal brackets) =
+  Tree.(make_string "PropertyStr" state node.value.inside)
 
-and print_BoolExpr state = function
-  Or  e -> print_Or  state e
-| And e -> print_And state e
-| Not e -> print_Not state e
+and print_Component state (node : int_literal brackets) =
+  Tree.(make_int "Component" state node.value.inside)
 
-and print_Or state (node: bool_or bin_op reg) =
-  let Region.{region; value} = node in
-  let children = Tree.[
-    mk_child print_expr value.arg1;
-    mk_child print_expr value.arg2]
-  in Tree.make state ~region "Or" children
+(* Record expressions *)
 
-and print_And state (node: bool_and bin_op reg) =
-  let Region.{region; value} = node in
-  let children = Tree.[
-    mk_child print_expr value.arg1;
-    mk_child print_expr value.arg2]
-  in Tree.make state ~region "And" children
+and print_E_Object state (node: expr _object) =
+  print_object print_expr "E_Object" state node
 
-and print_Not state (node: negate un_op reg) =
-  let Region.{region; value} = node in
-  Tree.make_unary state ~region "Not" print_expr value.arg
+(* Strings as expressions *)
 
-(* Boolean comparisons *)
+and print_E_String state (node: lexeme wrap) =
+  Tree.make_string "E_String" state node
 
-and print_CompExpr state = function
-  Lt    e -> print_Lt    state e
-| Leq   e -> print_Leq   state e
-| Gt    e -> print_Gt    state e
-| Geq   e -> print_Geq   state e
-| Equal e -> print_Equal state e
-| Neq   e -> print_Neq   state e
+(* Arithmetic subtraction *)
 
-and print_bin_op :
-  type a.Tree.root -> Tree.state -> a bin_op reg -> unit =
-  fun root state node ->
-    let Region.{region; value} = node in
-    let children = Tree.[
-      mk_child print_expr value.arg1;
-      mk_child print_expr value.arg2]
-    in Tree.make state ~region root children
+and print_E_Sub state (node: minus bin_op reg) =
+  print_bin_op state "E_Sub" node
 
-and print_Lt state (node: lt bin_op reg) =
-  print_bin_op "Lt" state node
+(* Subtraction & assignment *)
 
-and print_Leq state (node: leq bin_op reg) =
-  print_bin_op "Leq" state node
+and print_E_SubEq state (node: minus_eq bin_op reg) =
+  print_bin_op state "E_SubEq" node
 
-and print_Gt state (node: gt bin_op reg) =
-  print_bin_op "Gt" state node
+(* Ternary conditional expression *)
 
-and print_Geq state (node: geq bin_op reg) =
-  print_bin_op "Geq" state node
-
-and print_Equal state (node: equal_cmp bin_op reg) =
-  print_bin_op "Equal" state node
-
-and print_Neq state (node: neq bin_op reg) =
-  print_bin_op "Neq" state node
-
-(* Arithmetic expressions *)
-
-and print_EArith state = function
-  Add  e -> print_Add  state e
-| Sub  e -> print_Sub  state e
-| Mult e -> print_Mult state e
-| Div  e -> print_Div  state e
-| Mod  e -> print_Mod  state e
-| Neg  e -> print_Neg  state e
-| Int  e -> print_Int  state e
-
-and print_Add state (node: plus bin_op reg) =
-  print_bin_op "Add" state node
-
-and print_Sub state (node: minus bin_op reg) =
-  print_bin_op "Sub" state node
-
-and print_Mult state (node: times bin_op reg) =
-  print_bin_op "Mult" state node
-
-and print_Div state (node: slash bin_op reg) =
-  print_bin_op "Div" state node
-
-and print_Mod state (node: modulo bin_op reg) =
-  print_bin_op "Mod" state node
-
-and print_Neg state (node: minus un_op reg) =
-  print_un_op "Neg" state node
-
-and print_un_op :
-  type a.Tree.root -> Tree.state -> a un_op reg -> unit =
-  fun root state node ->
-    let Region.{region; value} = node in
-    let children = Tree.[mk_child print_expr value.arg]
-    in Tree.make state ~region root children
-
-and print_Int state (node: (lexeme * Z.t) wrap) =
-  Tree.make_int "Int" state node
-
-(* Function calls *)
-
-and print_ECall state (node: (expr * arguments) reg) =
+and print_E_Ternary state (node: ternary reg) =
   let Region.{value; region} = node in
-  let func, args = value in
-
-  let print_Multiple state (node: (expr, comma) nsepseq par reg) =
-    let Region.{region; value} = node in
-    Tree.of_nsepseq state ~region "Multiple" print_expr value.inside
-
-  and print_Unit state (node: the_unit reg) =
-    Tree.make_node state ~region:node.region "Unit" in
-
-  let print_arguments state = function
-      Multiple e -> print_Multiple state e
-    | Unit     e -> print_Unit     state e in
-
+  let {condition; qmark=_; truthy; colon=_; falsy} = value in
+  let print_truthy state (node: expr) =
+    Tree.make_unary state "<true>" print_expr node
+  and print_falsy state (node: expr) =
+    Tree.make_unary state "<false>" print_expr node in
   let children = Tree.[
-    mk_child print_expr      func;
-    mk_child print_arguments args]
-  in Tree.make state ~region "ECall" children
+    mk_child print_expr   condition;
+    mk_child print_truthy truthy;
+    mk_child print_falsy  falsy]
+  in Tree.make state ~region "E_Ternary" children
 
-(* Byte values *)
+(* Multiplication & Assignment *)
 
-and print_EBytes state (node: (lexeme * Hex.t) wrap) =
-  Tree.make_bytes "EBytes" state node
+and print_E_MultEq state (node: times_eq bin_op reg) =
+  print_bin_op state "E_MultEq" node
 
-(* Arrays *)
+(* "true" as an expression *)
 
-and print_EArray state (node: (array_item, comma) sepseq brackets reg) =
-  let Region.{region; value} = node in
-  Tree.of_sepseq state ~region "EArray" print_array_item value.inside
+and print_E_True state (node : true_const) =
+  Tree.make_node ~region:node#region state "E_True"
 
-and print_array_item state = function
-  Expr_entry e -> print_Expr_entry state e
-| Rest_entry e -> print_Rest_entry state e
+(* Tuple of expressions *)
 
-and print_Expr_entry state (node: expr) =
-  Tree.make_unary state "Expr_entry" print_expr node
+and print_E_Array state (node: expr _array) =
+  print_array print_expr "E_Array" state node
 
-and print_Rest_entry state (node: array_item_rest reg) =
-  let Region.{region; value} = node in
-  Tree.make_unary state ~region "Rest_entry" print_expr value.expr
+(* Arrow functions *)
 
-(* Object expressions *)
-
-and print_EObject state (node: object_expr) =
-  let Region.{region; value} = node in
-  Tree.of_nsepseq state ~region "EObject" print_property value.inside
-
-and print_property state = function
-  Punned_property e -> print_Punned_property state e
-| Property        e -> print_Property        state e
-| Property_rest   e -> print_Property_rest   state e
-
-and print_Punned_property state (node: expr reg) =
+and print_E_ArrowFun state (node : arrow_fun_expr reg) =
   let Region.{value; region} = node in
-  Tree.make_unary state ~region "Punned_property" print_expr value
-
-and print_Property state (node: property2 reg) =
-  let Region.{region; value} = node in
+  let {type_vars; parameters; rhs_type; arrow=_; fun_body} = value in
   let children = Tree.[
-    mk_child print_expr value.name;
-    mk_child print_expr value.value]
-  in Tree.make state ~region "Property" children
+    mk_child_opt print_type_vars        type_vars;
+    mk_child     print_arrow_fun_params parameters;
+    mk_child_opt print_rhs_type         rhs_type;
+    mk_child     print_fun_body         fun_body]
+  in Tree.make ~region state "E_ArrowFun" children
 
-and print_Property_rest state (node: property_rest reg) =
-  let Region.{region; value} = node in
-  Tree.make_unary state ~region "Property_rest" print_expr value.expr
+(* Typed expressions *)
 
-(* String expressions *)
-
-and print_EString state = function
-  String   e -> Tree.(make_unary state "String" make_string e)
-| Verbatim e -> Tree.(make_unary state "Verbatim" make_verbatim e)
-
-(* Projection *)
-
-and print_EProj state (node: projection reg) =
-  let Region.{region; value} = node in
-
-  let print_proj_field state (node: expr) =
-    Tree.make_unary state "<field name>"print_expr node
-
-  and print_FieldName state (node: selection_field_name reg) =
-    let Region.{region; value} = node in
-    Tree.(make_unary state ~region "FieldName" make_literal value.value)
-
-  and print_Component state (node: expr brackets reg) =
-    let Region.{region; value} = node in
-    Tree.make_unary state ~region "Component" print_expr value.inside in
-
-  let print_proj_select state = function
-    FieldName e -> print_FieldName state e
-  | Component e -> print_Component state e in
-
-  let children = Tree.[
-    mk_child print_proj_field  value.expr;
-    mk_child print_proj_select value.selection]
-  in Tree.make state ~region "EProj" children
-
-(* Assignment expression *)
-
-and print_EAssign state (node: expr * operator reg * expr) =
-  let arg1, op, arg2 = node in
-  let op_txt : string =
-    match op.value with
-      Eq                           -> "Eq"
-    | Assignment_operator Times_eq -> "Times_eq"
-    | Assignment_operator Div_eq   -> "Div_eq"
-    | Assignment_operator Min_eq   -> "Min_eq"
-    | Assignment_operator Plus_eq  -> "Plus_eq"
-    | Assignment_operator Mod_eq   -> "Mod_eq" in
-  let children = Tree.[
-    mk_child make_node  op_txt;
-    mk_child print_expr arg1;
-    mk_child print_expr arg2]
-  in Tree.make state "EAssign" children
-
-(* Prefix operators *)
-
-and print_EPrefix state = function
-  {value = {variable; update_type=Increment op}; region} ->
-    let children = Tree.[
-      mk_child (make_node ~region:op#region) "Increment";
-      mk_child make_literal variable]
-    in Tree.make ~region state "EPrefix" children
-| {value = {variable; update_type=Decrement op}; region} ->
-    let children = Tree.[
-      mk_child (make_node ~region:op#region) "Decrement";
-      mk_child make_literal variable]
-    in Tree.make ~region state "EPrefix" children
-
-(* Postfix operators *)
-
-and print_EPostfix state = function
-  {value = {variable; update_type=Increment op}; region} ->
-    let children = Tree.[
-      mk_child (make_node ~region:op#region) "Increment";
-      mk_child make_literal variable]
-    in Tree.make ~region state "EPostfix" children
-| {value = {variable; update_type=Decrement op}; region} ->
-    let children = Tree.[
-      mk_child (make_node ~region:op#region) "Decrement";
-      mk_child make_literal variable]
-    in Tree.make ~region state "EPostfix" children
-
-(* Constructor applications *)
-
-and print_EConstr state (node: (constr * expr option) reg) =
-  let Region.{region; value} = node in
-  let ctor, arg_opt = value in
-  let children = Tree.[
-    mk_child     make_literal ctor;
-    mk_child_opt print_expr   arg_opt]
-  in Tree.make state ~region "EConstr" children
-
-(* Contract *)
-
-and print_EContract state (node: (module_name, dot) nsepseq reg) =
-  let Region.{region; value} = node in
-  Tree.(of_nsepseq state ~region "EContract" make_literal value)
-
-(* Annotated expressions *)
-
-and print_EAnnot state (node: annot_expr reg) =
+and print_E_Typed state (node: typed_expr reg) =
   let Region.{value; region} = node in
   let expr, _, type_expr = value in
   let children = Tree.[
-    mk_child print_expr expr;
+    mk_child print_expr      expr;
     mk_child print_type_expr type_expr]
-  in Tree.make state ~region "EAnnot" children
+  in Tree.make state ~region "E_Typed" children
 
-(* Unit value *)
+(* Record functional updates *)
 
-and print_EUnit state (node: the_unit reg) =
-  Tree.make_node state ~region:node.region "EUnit"
+and print_E_Update state (node: update_expr braces) =
+  let Region.{region; value} = node in
+  let {ellipsis=_; _object; sep=_; updates} = value.inside in
+  let print_updates state (node: (expr property reg, semi) sep_or_term) =
+    let print = print_property print_expr in
+    Tree.of_sep_or_term state "<updates>" print node in
+  let children = Tree.[
+    mk_child print_expr    _object;
+    mk_child print_updates updates]
+  in Tree.make state ~region "E_Update" children
 
-(* Code injection *)
+(* Variables denoting expressions *)
 
-and print_ECodeInj state (node: code_inj reg) =
+and print_E_Var state (node: variable) =
+  Tree.(make_unary state "E_Var" make_literal node)
+
+(* Verbatim strings as expressions *)
+
+and print_E_Verbatim state (node: verbatim_literal) =
+  Tree.make_verbatim "E_Verbatim" state node
+
+(* Logical exclusive disjunction *)
+
+and print_E_Xor state (node : bool_xor bin_op reg) =
+  print_bin_op state "E_Xor" node
+
+(* STATEMENTS *)
+
+and print_statement state = function
+  S_Attr      s -> print_S_Attr      state s
+| S_Block     s -> print_S_Block     state s
+| S_Break     s -> print_S_Break     state s
+| S_Continue  s -> print_S_Continue  state s
+| S_Decl      s -> print_S_Decl      state s
+| S_Directive s -> print_S_Directive state s
+| S_Export    s -> print_S_Export    state s
+| S_Expr      s -> print_S_Expr      state s
+| S_For       s -> print_S_For       state s
+| S_ForOf     s -> print_S_ForOf     state s
+| S_If        s -> print_S_If        state s
+| S_Return    s -> print_S_Return    state s
+| S_Switch    s -> print_S_Switch    state s
+| S_While     s -> print_S_While     state s
+
+(* Attributed statement *)
+
+and print_S_Attr state (node: attribute * statement) =
+  let attribute, stmt = node in
+  let children = Tree.[
+    mk_child print_attribute attribute;
+    mk_child print_statement stmt]
+  in Tree.make state "S_Attr" children
+
+(* Block of statements *)
+
+and print_S_Block state (node: statements braces) =
+  let Region.{region; value} = node in
+  let stmts = value.inside in
+  Tree.of_nseq ~region state "S_Block"
+               (fun state -> print_statement state <@ fst) stmts
+
+(* Break statement *)
+
+and print_S_Break state (node: kwd_break) =
+  Tree.make_node ~region:node#region state "S_Break"
+
+(* Continue statement *)
+
+and print_S_Continue state (node : kwd_continue) =
+  Tree.make_node ~region:node#region state "S_Continue"
+
+(* Conditional statement *)
+
+and print_S_If state (node: if_stmt reg) =
   let Region.{value; region} = node in
-  Tree.make_unary state ~region "ECodeInj" print_expr value.code
+  let {kwd_if=_; test; if_so; if_not} = value in
 
-(* Ternary conditional operator *)
+  let print_if_so state (node: statement * semi option) =
+    Tree.make_unary state "<true>" print_statement (fst node)
 
-and print_ETernary state (node: ternary reg) =
-  let Region.{value; region} = node in
-
-  let print_truthy state (node: expr) =
-    Tree.make_unary state "<true>" print_expr node
-
-  and print_falsy state (node: expr) =
-    Tree.make_unary state "<false>" print_expr node in
+  and print_if_not state (node: kwd_else * statement) =
+    Tree.make_unary state "<false>" print_statement (snd node) in
 
   let children = Tree.[
-    mk_child print_expr   value.condition;
-    mk_child print_truthy value.truthy;
-    mk_child print_falsy  value.falsy]
-  in Tree.make state ~region "ETernary" children
+    mk_child     print_expr   test.value.inside;
+    mk_child     print_if_so  if_so;
+    mk_child_opt print_if_not if_not]
+  in Tree.make ~region state "S_If" children
+
+(* Declaration as a statement *)
+
+and print_S_Decl state (node: declaration) =
+  Tree.make_unary state "S_Decl" print_declaration node
+
+(* Export statement *)
+
+and print_S_Export state (node: export_stmt reg) =
+  let Region.{value; region} = node in
+  Tree.make_unary ~region state "S_Export" print_declaration (snd value)
+
+(* Expression as a statement *)
+
+and print_S_Expr state (node: expr) =
+  Tree.make_unary state "S_Expr" print_expr node
+
+(* For-loop statement *)
+
+and print_S_For state (node: for_stmt reg) =
+  let Region.{value; region} = node in
+  let {kwd_for=_; range; for_body} : for_stmt = value in
+  let range = range.value.inside in
+  let {initialiser; semi1=_; condition; semi2=_; afterthought} = range in
+  let print_initialiser state = Tree.make_unary state "<init>" print_statement
+  and print_cond state = Tree.make_unary state "<cond>" print_expr in
+  let open Tree in
+  let children = [
+    mk_child_opt print_initialiser initialiser;
+    mk_child_opt print_cond        condition]
+  @ mk_children_nsepseq_opt ~root:"<afterthought>" print_expr afterthought
+  @ [mk_child_opt print_loop_body for_body]
+  in make state ~region "S_For" children
+
+and print_loop_body state = Tree.make_unary state "<body>" print_statement
+
+(* ForOf-loop statement *)
+
+and print_S_ForOf state (node: for_of_stmt reg) =
+  let Region.{value; region} = node in
+  let {kwd_for=_; range; for_of_body} = value in
+  let range = range.value.inside in
+  let {index_kind; index; kwd_of=_; expr} = range in
+  let print_index state = function
+    `Let _,   var -> Tree.(make_unary state "let"   make_literal var)
+  | `Const _, var -> Tree.(make_unary state "const" make_literal var) in
+  let children = Tree.[
+    mk_child print_index     (index_kind, index);
+    mk_child print_expr      expr;
+    mk_child print_loop_body for_of_body]
+  in Tree.make ~region state "S_ForOf" children
+
+(* return statement *)
+
+and print_S_Return state (node: return_stmt reg) =
+  let Region.{value; region} = node in
+  match snd value with
+    None -> Tree.make_node ~region state "S_Return"
+  | Some e -> Tree.make_unary ~region state "S_Return" print_expr e
+
+(* Switch statement *)
+
+and print_S_Switch state (node: switch_stmt reg) =
+  let Region.{region; value} = node in
+  let {kwd_switch=_; subject; cases} = value in
+  let subject = subject.value.inside
+  and cases   = cases.value.inside in
+  let children = Tree.[
+    mk_child print_subject subject;
+    mk_child print_cases   cases]
+  in Tree.make state ~region "S_Switch" children
+
+and print_subject state (node: expr) =
+  Tree.make_unary state "<subject>" print_expr node
+
+and print_cases state = function
+  AllCases c -> print_AllCases state c
+| Default  c -> print_Default  state c
+
+and print_AllCases state (node: all_cases) =
+  let normal_cases, default_case_opt = node in
+  let children = Tree.(
+    mk_children_nseq print_case normal_cases
+    @ [mk_child_opt print_switch_default default_case_opt])
+  in Tree.make state "AllCases" children
+
+and print_case state (node: switch_case reg) =
+  let Region.{value; region} = node in
+  let {kwd_case=_; expr; colon=_; case_body} = value in
+  let children = Tree.[
+    mk_child     print_expr       expr;
+    mk_child_opt print_statements case_body]
+  in Tree.make ~region state "<case>" children
+
+and print_Default state (node: switch_default reg) =
+  print_switch_default state node
+
+and print_switch_default state (node: switch_default reg) =
+  let Region.{value; region} = node in
+  let {kwd_default=_; colon=_; default_body} = value in
+  match default_body with
+    None -> Tree.make_node ~region state "<empty default>"
+  | Some stmts ->
+      Tree.make_unary ~region state "Default" print_statements stmts
+
+and print_statements state (node: statements) =
+  Tree.of_nseq state "<statements>"
+               (fun state -> print_statement state <@ fst) node
+
+(* While-loop statement *)
+
+and print_S_While state (node: while_stmt reg) =
+  let Region.{region; value} = node in
+  let {kwd_while=_; invariant; while_body} = value in
+  let children = Tree.[
+    mk_child print_expr      invariant.value.inside;
+    mk_child print_statement while_body]
+  in Tree.make state ~region "S_While" children
 
 (* PRINTING (client-slide) *)
 

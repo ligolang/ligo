@@ -168,10 +168,10 @@ let get_defs_completions
       let open Cst_jsligo.Fold in
       let collect (Some_node (node, sing)) =
         match sing with
-        | S_reg S_namespace_statement
+        | S_reg S_namespace_decl
           when Range.(contains_position pos (of_region node.region)) ->
-          let _, name, _, _, _ = node.value in
-          Continue name
+          let ({ namespace_name; _ } : Cst_jsligo.CST.namespace_decl) = node.value in
+          Continue namespace_name
         | _ -> Skip
       in
       fold [] (Fn.flip List.cons) collect cst
@@ -589,36 +589,45 @@ let complete_fields
         ~f:(fun (dot, lexeme) -> dot.range.start, lexeme.range.start)
     in
     let rec linearize_expr : expr -> (variable, dot) Either.t list = function
-      | EVar name -> [ Either.First name ]
-      | EProj proj -> linearize_projection proj
-      | EModA access -> linearize_module_access_expr access
-      | EPar expr -> linearize_expr expr.value.inside
-      (*| EObject obj -> expr.value.inside._*)
+      | E_Var name -> [ Either.First name ]
+      | E_Proj proj -> linearize_projection proj
+      | E_NamePath access -> linearize_module_access_expr access
+      | E_Par expr ->
+        linearize_expr expr.value.inside
+        (*| EObject obj -> expr.value.inside._*)
+        (* TODO? *)
       | _ -> []
-    and linearize_module_access_expr (access : expr module_access reg)
+    and linearize_module_access_expr (access : expr namespace_path reg)
         : (variable, dot) Either.t list
       =
-      Either.First access.value.module_name
-      :: Either.Second access.value.selector
-      :: linearize_expr access.value.field
+      linearize_nsepseq access.value.namespace_path
+      @ (Either.Second access.value.selector :: linearize_expr access.value.property)
+    and linearize_nsepseq (nsepseq : ('a, 'b) Utils.nsepseq) : ('a, 'b) Either.t list =
+      match nsepseq with
+      | a, r ->
+        Either.First a
+        :: List.concat_map ~f:(fun (a, b) -> [ Either.Second a; Either.First b ]) r
+    and linearize_selection (property_path : selection) : (variable, dot) Either.t list =
+      match property_path with
+      | PropertyName (dot, name) -> [ Either.Second dot; Either.First name ]
+      | _ -> []
     and linearize_projection (proj : projection reg) : (variable, dot) Either.t list =
-      match proj.value.selection with
-      | FieldName { value = { dot; value }; region = _ } ->
-        linearize_expr proj.value.expr @ [ Either.Second dot; Either.First value ]
-      | Component _ -> []
+      match proj.value with
+      | { object_or_array; property_path } ->
+        linearize_expr object_or_array
+        @ List.concat_map ~f:linearize_selection (Utils.nseq_to_list property_path)
     in
     let rec linearize_type_expr : type_expr -> (variable, dot) Either.t list = function
-      | TVar name -> [ Either.First name ]
-      | TModA access -> linearize_module_access_type_expr access
-      | TPar expr -> linearize_type_expr expr.value.inside
+      | T_Var name -> [ Either.First name ]
+      | T_NamePath access -> linearize_module_access_type_expr access
+      | T_Par expr -> linearize_type_expr expr.value.inside
       (*| TObject obj -> expr.value.inside._*)
       | _ -> []
-    and linearize_module_access_type_expr (access : type_expr module_access reg)
+    and linearize_module_access_type_expr (access : type_expr namespace_path reg)
         : (variable, dot) Either.t list
       =
-      Either.First access.value.module_name
-      :: Either.Second access.value.selector
-      :: linearize_type_expr access.value.field
+      linearize_nsepseq access.value.namespace_path
+      @ (Either.Second access.value.selector :: linearize_type_expr access.value.property)
     in
     let rec either_list_to_nsepseq
         : ('a, 'sep) Either.t list -> ('a, 'sep) Simple_utils.Utils.nsepseq option
@@ -668,7 +677,10 @@ let complete_fields
     in
     let complete_jsligo
         (node :
-          (expr module_access reg, type_expr module_access reg, projection reg) expr_kind)
+          ( expr namespace_path reg
+          , type_expr namespace_path reg
+          , projection reg )
+          expr_kind)
         : CompletionItem.t list option
       =
       match
@@ -700,9 +712,9 @@ let complete_fields
       match sing with
       | S_reg S_projection when is_reg_node_of_interest node ->
         Continue (complete_jsligo (Projection node))
-      | S_reg (S_module_access S_expr) when is_reg_node_of_interest node ->
+      | S_reg (S_namespace_path S_expr) when is_reg_node_of_interest node ->
         Continue (complete_jsligo (Module_path_expr node))
-      | S_reg (S_module_access S_type_expr) when is_reg_node_of_interest node ->
+      | S_reg (S_namespace_path S_type_expr) when is_reg_node_of_interest node ->
         Continue (complete_jsligo (Module_path_type_expr node))
       | _ -> Skip
     in

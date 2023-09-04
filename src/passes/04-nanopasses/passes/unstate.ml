@@ -304,6 +304,7 @@ and instr ~raise : instruction -> Statement_result.t =
     let w = While.map Fun.id (block_to_expression ~raise) w in
     Binding (fun hole -> let_unit_in (e_while ~loc w) hole)
   | I_break -> Binding (fun hole -> let_unit_in (e_unit ~loc:Location.generated) hole)
+  | I_continue -> raise.error (unsupported_continue loc)
   | I_struct_assign _ | I_remove _ | I_patch _ | I_switch _ | I_for_of _ | I_for_stmt _ ->
     failwith "removed"
 
@@ -319,8 +320,10 @@ and statement ~raise : statement -> Statement_result.t =
   | S_attr (attr, x) ->
     let s = statement ~raise x in
     Statement_result.merge (Binding (fun x -> e_attr ~loc:(get_e_loc x) (attr, x))) s
+  | S_export d -> decl d (* export is ignored, here it should not happen? *)
   | S_instr i -> instr ~raise i
   | S_decl d -> decl d
+  | S_directive () -> Binding (fun x -> x)
 
 
 let compile ~raise =
@@ -341,6 +344,9 @@ let compile ~raise =
         append block_res (singleton @@ Statement_result.Return expr)
       in
       let res = Statement_result.(to_expression (merge_block block_with_res)) in
+      { fp = { res.fp with location = loc } }
+    | E_do block ->
+      let res = block_to_expression ~raise block in
       { fp = { res.fp with location = loc } }
     | e -> make_e ~loc e
   in

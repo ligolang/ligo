@@ -7,9 +7,9 @@ type parameter =
 type return_ = [list <operation>, storage];
 
 let main = (action : parameter, store: storage) : return_ => {
-  let store2 = store + match (action, {
-    Add: (n: int) => n,
-    Sub: (n: int) => -n
+  let store2 = store + (match (action) {
+    when(Add(n)): n;
+    when(Sub(n)): -n;
   });
   return [(list([]) as list <operation>), store2];
 };

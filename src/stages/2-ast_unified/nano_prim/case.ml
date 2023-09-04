@@ -1,5 +1,5 @@
 type ('pattern, 'branch) clause =
-  { pattern : 'pattern
+  { pattern : 'pattern option
   ; rhs : 'branch
   }
 

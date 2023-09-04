@@ -5,14 +5,14 @@ type variants =
 
 @entry
 let main = (p : variants, s: int) : [list<operation>, int] => {
-  const s2 = match(p, {
-    Variant1: (x : int) => s + x,
-    Variant2: () => 0,
-    Variant3: (p2 : option<int>) => match(p2, {
-      Some: (x : int) => s + 3 * x,
-      None: () => s
-    })
-  });
+  const s2 = match (p) {
+    when(Variant1(x)): s + x;
+    when(Variant2): 0;
+    when(Variant3(p2)): match(p2) {
+      when(Some(x)): s + 3 * x;
+      when(None): s
+    };
+  };
 
   return [(list([]) as list<operation>), s2]
 };

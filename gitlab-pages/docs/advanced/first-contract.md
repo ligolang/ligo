@@ -108,10 +108,10 @@ const sub = (n: int, store: storage): storage => store - n;
 
 const main = (action: parameter, store: storage): return_ =>
   [list([]),
-    (match (action, {
-     Increment: n => add (n, store),
-     Decrement: n => sub (n, store)
-    }))];
+    match (action) {
+     when(Increment(n)): add (n, store);
+     when(Decrement(n)): sub (n, store)
+    }];
 ```
 
 </Syntax>

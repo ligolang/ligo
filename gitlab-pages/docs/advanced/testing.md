@@ -138,10 +138,10 @@ const sub = (store: storage, delta: int): storage => store - delta;
 const main = (action: parameter, store: storage) : @return => {
   return [
     list([]) as list<operation>,    // No operations
-    match(action, {
-      Increment:(n: int) => add (store, n),
-      Decrement:(n: int) => sub (store, n),
-      Reset: ()          => 0})
+    match(action) {
+      when(Increment(n)): add (store, n);
+      when(Decrement(n)): sub (store, n);
+      when(Reset()): 0}
   ]
 };
 ```
@@ -530,13 +530,13 @@ type unforged_storage = option< unforged_ticket<bytes> >
 
 const main = (_: unit, s: storage) : [ list<operation> , storage] => {
   let x =
-    match (s, {
-      Some: (ticket: ticket<bytes>) => {
+    match (s) {
+      when(Some(ticket)): ((ticket: ticket<bytes>) => {
         let [_ , t] = Tezos.read_ticket (ticket) ;
         return Some (t)
-      },
-      None: () => { return None () }
-    });
+      })(ticket);
+      when(None()): None()
+    };
   return [list ([]), x]
 };
 
@@ -549,17 +549,16 @@ const test_originate_contract_ = () : unit => {
 
   /* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity */
 
-  match (unforged_storage, {
-  Some: (x: unforged_ticket<bytes>) => {
-    let _ = Test.log (["unforged_ticket", x]) ;
-    let { ticketer , value , amount } = x ;
-    let _ = assert (value == ticket_info[0]) ;
-    let _ = assert (amount == ticket_info[1]) ;
-    return unit
-  },
-  None: () => failwith ("impossible")
+  match (unforged_storage) {
+    when(Some(x)): do {
+      let _ = Test.log (["unforged_ticket", x]) ;
+      let { ticketer , value , amount } = x ;
+      let _ = assert (value == ticket_info[0]) ;
+      let _ = assert (amount == ticket_info[1]) ;
+      return unit
+    };
+    when(None()): failwith ("impossible")
   }
-  )
 };
 
 const test_originate_contract = test_originate_contract_ ();
@@ -919,10 +918,11 @@ let sub = (store: storage, delta: int): storage => store - delta;
 let main = (action: parameter, store: storage) : @return => {
   return [
     list([]) as list<operation>,    // No operations
-    match(action, {
-      Increment:(n: int) => add (store, n),
-      Decrement:(n: int) => sub (store, n),
-      Reset: ()          => 0})
+    match(action) {
+      when(Increment(n)): add (store, n);
+      when(Decrement(n)): sub (store, n);
+      when(Reset()): 0
+    }
   ]
 };
 ```

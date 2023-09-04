@@ -138,7 +138,7 @@ and print_D_Fun state (node: fun_decl reg) =
     mk_child     print_ret_expr    node.return]
   in Tree.make state "D_Fun" children
 
-and print_recursive state (node : lexeme wrap) =
+and print_recursive state (node : keyword) =
   Tree.make_literal state node
 
 and print_type_params state (node : type_params chevrons reg) =
@@ -269,7 +269,7 @@ and print_T_Fun state (node: (type_expr * arrow * type_expr) reg) =
 
 (* The integer type *)
 
-and print_T_Int state (node: (lexeme * Z.t) wrap) =
+and print_T_Int state (node: int_literal) =
   Tree.make_int "T_Int" state node
 
 (* Module paths in type expressions *)
@@ -309,8 +309,8 @@ and print_field_decl state (node: field_decl reg) =
 
 (* The string type *)
 
-and print_T_String state (node: lexeme wrap) =
-  Tree.(make_unary state "T_String" make_string node)
+and print_T_String state (node: string_literal) =
+  Tree.make_string "T_String" state node
 
 (* Sum types *)
 
@@ -642,7 +642,7 @@ and print_P_Attr state (node: attribute * pattern) =
 
 (* Bytes as literals in patterns *)
 
-and print_P_Bytes state (node: (lexeme * Hex.t) wrap) =
+and print_P_Bytes state (node: bytes_literal) =
   Tree.make_bytes "P_Bytes" state node
 
 (* List consing in patterns *)
@@ -663,7 +663,7 @@ and print_P_Ctor state (node: ctor) =
 
 (* Integers in patterns *)
 
-and print_P_Int state (node: (lexeme * Z.t) wrap) =
+and print_P_Int state (node: int_literal) =
   Tree.make_int "P_Int" state node
 
 (* Module paths in patterns *)
@@ -678,12 +678,12 @@ and print_P_List state (node: pattern compound reg) =
 
 (* Mutez in patterns *)
 
-and print_P_Mutez state (node: (lexeme * Int64.t) wrap) =
+and print_P_Mutez state (node: mutez_literal) =
   Tree.make_mutez "P_Mutez" state node
 
 (* Natural numbers in patterns *)
 
-and print_P_Nat state (node: (lexeme * Z.t) wrap) =
+and print_P_Nat state (node: nat_literal) =
   Tree.make_int "P_Nat" state node
 
 (* The pattern for the empty list *)
@@ -739,8 +739,8 @@ and print_lens state (node: field_lens) =
 
 (* String literals as patterns *)
 
-and print_P_String state (node: lexeme wrap) =
-  Tree.(make_unary state "P_String" make_string node)
+and print_P_String state (node: string_literal) =
+  Tree.make_string "P_String" state node
 
 (* The pattern matching a tuple *)
 
@@ -765,8 +765,8 @@ and print_P_Var state (node: variable) =
 
 (* A verbatim string in patterns *)
 
-and print_P_Verbatim state (node: lexeme wrap) =
-  Tree.(make_unary state "P_Verbatim" make_string node)
+and print_P_Verbatim state (node: verbatim_literal) =
+  Tree.make_string "P_Verbatim" state node
 
 (* EXPRESSIONS *)
 
@@ -879,7 +879,7 @@ and print_E_Block state (node: block_with reg) =
 
 (* Bytes as expressions *)
 
-and print_E_Bytes state (node: (lexeme * Hex.t) wrap) =
+and print_E_Bytes state (node: bytes_literal) =
   Tree.make_bytes "E_Bytes" state node
 
 (* Case expressions *)
@@ -957,7 +957,7 @@ and print_E_Gt state (node: gt bin_op reg) =
 
 (* Integer literals as expressions *)
 
-and print_E_Int state (node: (lexeme * Z.t) wrap) =
+and print_E_Int state (node: int_literal) =
   Tree.make_int "E_Int" state node
 
 (* Lower or Equal *)
@@ -1021,12 +1021,12 @@ and print_E_Mult state (node: times bin_op reg) =
 
 (* Literal mutez as expressions *)
 
-and print_E_Mutez state (node: (lexeme * Int64.t) wrap) =
+and print_E_Mutez state (node: mutez_literal) =
   Tree.make_mutez "E_Mutez" state node
 
 (* Natural numbers as expressions *)
 
-and print_E_Nat state (node: (lexeme * Z.t) wrap) =
+and print_E_Nat state (node: nat_literal) =
   Tree.make_nat "E_Nat" state node
 
 (* Arithmetic negation *)
@@ -1077,7 +1077,7 @@ and print_selection state = function
 and print_FieldName state (node: field_name) =
   Tree.(make_unary state "FieldName" make_literal node)
 
-and print_Component state (node: (lexeme * Z.t) wrap) =
+and print_Component state (node: int_literal) =
   Tree.make_int "Component" state node
 
 (* Record expression defined intensionally (that is, by listing all
@@ -1106,8 +1106,8 @@ and print_E_SetMem state (node: set_membership reg) =
 
 (* String literals as expressions *)
 
-and print_E_String state (node: lexeme wrap) =
-  Tree.(make_unary state "E_String" make_string node)
+and print_E_String state (node: string_literal) =
+  Tree.make_string "E_String" state node
 
 (* Arithmetic subtraction *)
 
@@ -1140,14 +1140,13 @@ and print_E_Update state (node: update reg) =
 
 (* Expression variables *)
 
-and print_E_Var state (node: lexeme wrap) =
+and print_E_Var state (node: variable) =
   Tree.(make_unary state "E_Var" make_literal node)
 
 (* Verbatim strings as expressions *)
 
-and print_E_Verbatim state (node: lexeme wrap) =
-  Tree.(make_unary state "E_Verbatim" make_verbatim node)
-
+and print_E_Verbatim state (node: verbatim_literal) =
+  Tree.make_verbatim "E_Verbatim" state node
 
 (* PRINTING (client-slide) *)
 

@@ -193,9 +193,8 @@ module Make (Options : Options.S) (Token : Token.S) =
     (* Identifiers *)
 
     let mk_ident state buffer =
-      let state, Region.{region; value} = state#sync buffer in
-      let token = Token.mk_ident value region
-      in token, state
+      let state, Region.{region; value} = state#sync buffer
+      in Token.mk_ident value region, state
 
     (* Attributes *)
 
@@ -204,25 +203,22 @@ module Make (Options : Options.S) (Token : Token.S) =
       and value =
         match value with
           None        -> None
-        | Some string -> Some (Attr.String string) in
-      let token = Token.mk_attr ~key ?value region
-      in token, state
+        | Some string -> Some (Attr.String string)
+      in Token.mk_attr ~key ?value region, state
 
     let mk_id_attr key ?value state buffer =
       let state, Region.{region; _} = state#sync buffer
       and value =
         match value with
           None      -> None
-        | Some name -> Some (Attr.Ident name) in
-      let token = Token.mk_attr ~key ?value region
-      in token, state
+        | Some name -> Some (Attr.Ident name)
+      in Token.mk_attr ~key ?value region, state
 
     (* Data constructors and module names *)
 
     let mk_uident state buffer =
-      let state, Region.{region; value} = state#sync buffer in
-      let token = Token.mk_uident value region
-      in token, state
+      let state, Region.{region; value} = state#sync buffer
+      in Token.mk_uident value region, state
 
     (* Code injection *)
 
@@ -249,9 +245,9 @@ module Make (Options : Options.S) (Token : Token.S) =
     (* End-of-File *)
 
     let mk_eof state buffer =
-      let state, Region.{region; _} = state#sync buffer in
-      let token = Token.mk_eof region
-      in token, state
+      let state, Region.{region; _} = state#sync buffer
+      in Token.mk_eof region, state
+
 
 (* END HEADER *)
 }
@@ -296,7 +292,7 @@ let     common_sym =   ";" | "," | "(" | ")"  | "[" | "]"  | "{" | "}"
 let  pascaligo_sym = "->" | "=/=" | "#" | ":=" | "^"
 let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^"
 let     jsligo_sym =   "..." | "?" | "!" | "%" | "==" | "!=" | "+=" | "-="
-                     | "*=" | "/="| "%=" | "=>" | "++" | "--"
+                     | "*=" | "/="| "%=" | "=>" | "++" | "--" | "#"
 let     pyligo_sym = "->" | "^"   | "**"  | "//" | "%"  | "@"  | "|" | "&"
                    | "~"  | "`"   | "\\"
                    | "==" | "!=" | "+=" | "-="
@@ -324,20 +320,20 @@ rule scan state = parse
       in scan_verbatim verb_close thread state lexbuf |> mk_verbatim
     else mk_sym state lexbuf }
 
-| "[@" str_attr "]"  { mk_str_attr key ?value state lexbuf }
-| "[@" id_attr  "]"  { mk_id_attr  key ?value state lexbuf }
-| ident | ext_ident  { mk_ident               state lexbuf }
-| uident             { mk_uident              state lexbuf }
-| bytes              { mk_bytes bytes         state lexbuf }
-| nat "n"            { mk_nat   nat           state lexbuf }
-| nat "mutez"        { mk_mutez nat           state lexbuf }
-| nat tz_or_tez      { mk_tez   nat tez       state lexbuf }
-| natural            { mk_int                 state lexbuf }
-| symbol             { mk_sym                 state lexbuf }
-| eof                { mk_eof                 state lexbuf }
-| code_inj           { mk_lang  start lang    state lexbuf }
-| decimal tz_or_tez  { mk_tez_dec integral fractional
-                                          tez state lexbuf }
+| "[@" str_attr "]" { mk_str_attr key ?value state lexbuf }
+| "[@" id_attr  "]" { mk_id_attr  key ?value state lexbuf }
+| ident | ext_ident { mk_ident               state lexbuf }
+| uident            { mk_uident              state lexbuf }
+| bytes             { mk_bytes    bytes      state lexbuf }
+| nat "n"           { mk_nat      nat        state lexbuf }
+| nat "mutez"       { mk_mutez    nat        state lexbuf }
+| nat tz_or_tez     { mk_tez      nat tez    state lexbuf }
+| natural           { mk_int                 state lexbuf }
+| symbol            { mk_sym                 state lexbuf }
+| eof               { mk_eof                 state lexbuf }
+| code_inj          { mk_lang     start lang state lexbuf }
+| decimal tz_or_tez { mk_tez_dec integral
+                              fractional tez state lexbuf }
 
 | _ as c { let _, Region.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }

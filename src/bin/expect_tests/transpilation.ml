@@ -2,50 +2,11 @@ open Cli_expect
 
 (* ---------- Basic transpilation test -------------------------------------- *)
 let%expect_test _ =
-  run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "jsligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/example.ligo", line 27, characters 31-47:
-     26 | function main (const action : parameter; const store : storage) : return is
-     27 |  ((nil : list (operation)),    // No operations
-                                         ^^^^^^^^^^^^^^^^
-     28 |   case action of [
-    Warning: Attribute dropped.
-    // @comment
-    "
-      This file is toy example contract in PascaLIGO.
-      It has been introduced for testing transpilation from PascaLIGO to JsLIGO.
-    "
-    // @comment " This is testnew.ligo"
-    type storage = int;
-
-    type parameter =
-      ["Increment", int] | ["Decrement", int] | ["Reset"];
-
-    type @return = [list<operation>, storage];
-
-    // @comment " Two entrypoints"
-    const add = (store: storage, delta: int): storage =>
-      store + delta;
-
-    const sub = (store: storage, delta: int): storage =>
-      store - delta;
-
-    // @comment
-    " Main access point that dispatches to the entrypoints according to
-       the smart contract parameter. "
-    const main = (action: parameter, store: storage): @return =>
-      [
-        list([]) as list<operation>,
-        match(
-          action,
-          {
-            Increment: n => add(store, n),
-            Decrement: n => sub(store, n),
-            Reset: () => 0
-          }
-        )
-      ]; |}]
+    Invalid syntaxes.
+    Syntactic-level transpilation from pascaligo to jsligo is not supported. |}]
 
 (* ---------- Tests for CLI options for syntax ------------------------------ *)
 
@@ -61,15 +22,11 @@ let%expect_test _ =
 (* Should suceed since output file is explicitely provided,
    even if [--to-syntax] is not *)
 let%expect_test _ =
-  run_ligo_good [ "transpile"; "contract"; test "example.ligo"; "-o"; "dest.jsligo" ];
+  run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "-o"; "dest.jsligo" ];
   [%expect
     {|
-    File "../../test/contracts/example.ligo", line 27, characters 31-47:
-     26 | function main (const action : parameter; const store : storage) : return is
-     27 |  ((nil : list (operation)),    // No operations
-                                         ^^^^^^^^^^^^^^^^
-     28 |   case action of [
-    Warning: Attribute dropped. |}]
+    Invalid syntaxes.
+    Syntactic-level transpilation from pascaligo to jsligo is not supported. |}]
 
 (* ---------- Tests for (un)supported syntaxes ------------------------------ *)
 

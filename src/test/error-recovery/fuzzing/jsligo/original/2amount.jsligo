@@ -1,4 +1,4 @@
-let check_ = (_ : unit) : int => {
+const check_ = (_ : unit) : int => {
   if (Tezos.get_amount() == (100 as tez)) {
     return 42;
   } else {

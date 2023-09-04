@@ -9,8 +9,8 @@ module Location = Simple_utils.Location
 *)
 include Flag.No_arg ()
 
-let last_is_return (b : block option) =
-  Option.value_map b ~default:false ~f:(fun b ->
+let last_is_return =
+  Option.value_map ~default:false ~f:(fun b ->
       let stmt = get_b b in
       let is_return s =
         match get_s_instr s with
@@ -18,6 +18,12 @@ let last_is_return (b : block option) =
         | Some i -> Option.is_some @@ get_i_return i
       in
       is_return (List.Ne.last stmt))
+
+
+let block_of_default_case ~loc block_opt =
+  let s_return = List.Ne.singleton @@ s_instr ~loc (i_return ~loc None) in
+  Option.value_map block_opt ~default:(make_b ~loc s_return) ~f:(fun block ->
+      make_b ~loc (List.Ne.append (get_b block) s_return))
 
 
 let compile ~raise:_ =
@@ -32,31 +38,16 @@ let compile ~raise:_ =
         get_i_switch instr
       in
       (match single_switch_opt with
-      | Some Switch.{ cases; switchee } ->
-        let loc_sw = get_s_loc one in
-        let cases = List.Ne.to_list cases in
-        let default_opt =
-          List.find_map cases ~f:(function
-              | Switch_default_case x when last_is_return x -> x
-              | _ -> None)
+      | Some { subject; cases = Switch.AllCases (cases, Some def) }
+        when last_is_return def ->
+        let sw =
+          s_instr ~loc @@ i_switch ~loc { subject; cases = AllCases (cases, None) }
         in
-        (match default_opt with
-        | Some default_block ->
-          let default_block = get_b default_block in
-          let cases_no_default =
-            List.filter cases ~f:(function
-                | Switch_case _ -> true
-                | Switch_default_case _ -> false)
-          in
-          (match List.Ne.of_list_opt cases_no_default with
-          | None -> block_of_statements default_block
-          | Some cases ->
-            let switch =
-              s_instr ~loc:loc_sw @@ i_switch ~loc:loc_sw { cases; switchee }
-            in
-            block_of_statements (List.Ne.cons switch default_block))
-        | None -> make_b ~loc b.wrap_content)
-      | None -> make_b ~loc b.wrap_content)
+        let def_block = block_of_default_case ~loc def in
+        make_b ~loc (sw, List.Ne.to_list @@ get_b def_block)
+      | Some { subject; cases = Switch.Default def } when last_is_return def ->
+        block_of_default_case ~loc def
+      | Some _ | None -> make_b ~loc b.wrap_content)
     | _ -> make_b ~loc b.wrap_content
   in
   Fold { idle_fold with block }
@@ -71,16 +62,18 @@ let%expect_test _ =
     {|
       ((S_instr
         (I_switch
-        ((switchee (E_variable n))
+        ((subject (E_variable n))
           (cases
-          ((Switch_case (EXPR) ((BLOCK1)))
-            (Switch_default_case (((STATEMENT1) (S_instr (I_return ())))))))))))
+            (AllCases
+              (((expr (EXPR)) (case_body (BLOCK1))))
+              ((((STATEMENT1) (S_instr (I_return ())))))))))))
     |}
     |-> compile;
     [%expect
       {|
         ((S_instr
           (I_switch
-           ((switchee (E_variable n)) (cases ((Switch_case (EXPR) ((BLOCK1))))))))
-         (STATEMENT1) (S_instr (I_return ())))
+           ((subject (E_variable n))
+            (cases (AllCases (((expr (EXPR)) (case_body (BLOCK1)))) ())))))
+         (STATEMENT1) (S_instr (I_return ())) (S_instr (I_return ())))
       |}])

@@ -88,6 +88,10 @@ module Ne = struct
   let iter f (hd, tl : _ t) = f hd ; List.iter ~f tl
   let map f (hd, tl : _ t) = f hd, List.map ~f tl
   let fold_left ~f ~init (hd, tl : _ t) = List.fold_left ~f ~init:(f init hd) tl
+  let rec fold_right1 ~f (hd, tl : _ t) =
+    match tl with
+    | [] -> hd
+    | (hdtl :: tltl) -> f hd @@ fold_right1 ~f (hdtl, tltl)
   let fold_right ~f ~init (hd, tl : _ t) = f hd (List.fold_right ~f ~init tl)
   let fold_map ~f ~init (hd, tl : _ t) =
     let init,hd = f init hd in

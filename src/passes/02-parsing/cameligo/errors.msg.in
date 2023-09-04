@@ -2908,7 +2908,7 @@ contract: Type Ident EQ UIdent DOT With
 ## module_path(__anonymous_5) -> module_name DOT . type_name [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF Directive COMMA Attr ARROW ]
 ## module_path(__anonymous_6) -> module_name DOT . module_path(__anonymous_6) [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF Directive COMMA Attr ARROW ]
 ## module_path(__anonymous_6) -> module_name DOT . par(type_expr) [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF Directive COMMA Attr ARROW ]
-## nsepseq(module_name,DOT) -> module_name DOT . nsepseq(module_name,DOT) [ Parameter ]
+## nsepseq(module_name,DOT) -> module_name DOT . nsepseq(module_name,DOT) [ ParameterOf ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_name DOT
@@ -3507,7 +3507,7 @@ interactive_expr: Verbatim GT With
 ## Ends in an error in state: 506.
 ##
 ## bin_op(comp_expr_level,GT,cat_expr_level) -> comp_expr_level GT . cat_expr_level [ With VBAR Upto Type Then SEMI RPAR REV_APP RBRACKET RBRACE Or NE Module Let LT LE Include In GT End Else EQ EOF Downto Done Do Directive COMMA COLON BOOL_OR BOOL_AND Attr ]
-## ge -> GT . ZWSP EQ [ Verbatim UIdent String Not Nat Mutez MINUS Lang LPAR LBRACKET LBRACE Int Ident Contract Bytes Begin Attr ]
+## ge -> GT . ZWSP EQ [ Verbatim UIdent String Not Nat Mutez MINUS Lang LPAR LBRACKET LBRACE Int Ident ContractOf Bytes Begin Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level GT
@@ -3834,7 +3834,7 @@ contract: Type Ident EQ String TIMES UIdent With
 ##
 ## Ends in an error in state: 63.
 ##
-## parameter_of_type -> nsepseq(module_name,DOT) . Parameter [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF Directive COMMA Attr ARROW ]
+## parameter_of_type -> nsepseq(module_name,DOT) . ParameterOf [ Val VBAR UIdent Type TIMES SEMI RPAR RBRACE Module Let Include In Ident End EQ EOF Directive COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## nsepseq(module_name,DOT)
@@ -6403,7 +6403,7 @@ interactive_expr: Bytes GT ZWSP ZWSP
 ##
 ## Ends in an error in state: 507.
 ##
-## ge -> GT ZWSP . EQ [ Verbatim UIdent String Not Nat Mutez MINUS Lang LPAR LBRACKET LBRACE Int Ident Contract Bytes Begin Attr ]
+## ge -> GT ZWSP . EQ [ Verbatim UIdent String Not Nat Mutez MINUS Lang LPAR LBRACKET LBRACE Int Ident ContractOf Bytes Begin Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## GT ZWSP
@@ -7783,20 +7783,20 @@ Ill-formed parenthesised expression.
 At this point, if the expression is complete, a closing parenthesis
 ')' is expected.
 
-interactive_expr: Contract ZWSP
+interactive_expr: ContractOf ZWSP
 ##
 ## Ends in an error in state: 400.
 ##
-## app_expr -> Contract . nsepseq(module_name,DOT) [ With VBAR Upto Type Then TIMES SLASH SEMI RPAR REV_APP RBRACKET RBRACE PLUS Or NE Module Mod MINUS Lxor Lsr Lsl Lor Let Land LT LE Include In GT End Else EQ EOF Downto Done Do Directive CONS COMMA COLON CARET BOOL_OR BOOL_AND Attr ]
+## app_expr -> ContractOf . nsepseq(module_name,DOT) [ With VBAR Upto Type Then TIMES SLASH SEMI RPAR REV_APP RBRACKET RBRACE PLUS Or NE Module Mod MINUS Lxor Lsr Lsl Lor Let Land LT LE Include In GT End Else EQ EOF Downto Done Do Directive CONS COMMA COLON CARET BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Contract
+## ContractOf
 ##
 
 Ill-formed module as contract.
 At this point, the qualified name of the module is expected.
 
-interactive_expr: Contract UIdent DOT ZWSP
+interactive_expr: ContractOf UIdent DOT ZWSP
 ##
 ## Ends in an error in state: 403.
 ##
@@ -7809,7 +7809,7 @@ interactive_expr: Contract UIdent DOT ZWSP
 Ill-formed module qualification.
 At this point, a module name is expected.
 
-interactive_expr: UIdent Parameter
+interactive_expr: UIdent ParameterOf
 ##
 ## Ends in an error in state: 426.
 ##
@@ -7829,7 +7829,7 @@ interactive_expr: UIdent Parameter
 Ill-formed selection of a value from a module.
 At this point, the selection operator '.' is expected.
 
-interactive_expr: Match UIdent With UIdent Parameter
+interactive_expr: Match UIdent With UIdent ParameterOf
 ##
 ## Ends in an error in state: 344.
 ##

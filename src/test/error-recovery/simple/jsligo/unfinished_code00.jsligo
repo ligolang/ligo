@@ -21,25 +21,26 @@ type parameter = ["Commit", bytes] | ["Reveal", reveal];
 type return_ = [list<operation>, storage];
 /* We use hash-commit so that a baker can not steal */
 
-let commit = ([p, s] : [bytes, storage]) : return_ => {
+const  commit = ([p, s] : [bytes, storage]) : return_ => {
   const commit : commit =
     { date: Tezos.get_now() + 86400, salted_hash: p };
   const updated_map : commit_set =
-    Big_map.update(Tezos.get_sender()(Some (commit)), s.commits);
+    Big_map.update(Tezos.get_sender(), (Some (commit)), s.commits);
   const s_ = {...s, commits: updated_map};
-  return [([] as list<operation>), s_]
+  return [(list([]) as list<operation>), s_]
 }
   
-let reveal = ([p, s] : [reveal, storage]) : return_ => {
+const reveal = ([p, s] : [reveal, storage]) : return_ => {
   const foo = /* TODO */ ;
+  const sender = Tezos.get_sender();
   if (!s.unused) {
      failwith("This contract has already been used.");
   } else {
     const commit : commit =
-      match(Big_map.find_opt(sender, s.commits), {
-        Some: (c: commit) => c,
-        None: () => failwith("You have not made a commitment to hash against yet.")
-      });
+      match(Big_map.find_opt(sender, s.commits)) {
+        when (Some(c)) : c;
+        when (None()) : failwith("You have not made a commitment to hash against yet.")
+      };
     if (Tezos.get_now() < commit.date) {
       failwith("It has not been 24 hours since your commit yet.");
     } else {
@@ -59,8 +60,8 @@ let reveal = ([p, s] : [reveal, storage]) : return_ => {
   }
 };
 
-let main = ([p, s] : [parameter, storage]) : return_ =>
-  match(p, {
-    Commit: (c: bytes) => commit([c, s]),
-    Reveal: (r: reveal) => reveal([r, s])
-  });
+const  main = ([p, s] : [parameter, storage]) : return_ =>
+  match(p) {
+    when (Commit (c)) : commit([c, s]);
+    when (Reveal (r)) : reveal([r, s])
+  };

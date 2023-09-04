@@ -13,7 +13,7 @@ module type TOKEN =
     type token
     type t = token
 
-    val to_lexeme : token -> string
+    val to_lexeme : token -> string list
     val to_region : token -> Region.t
     val is_eof    : token -> bool
   end

@@ -1,9 +1,9 @@
 type t = ["One", int] | ["Two", nat] | ["Three"]
 
 let s = (x : t) : unit => 
-  match(x, {
-    One:   (a : int) => unit,
-    Two:   (c : nat) => unit,
-    One:   (b : int) => unit,
-    Three: () => unit
-  })
+  match(x) {
+    when(One(a)): unit;
+    when(Two(c)): unit;
+    when(One(b)): unit;
+    when(Three()): unit
+  }

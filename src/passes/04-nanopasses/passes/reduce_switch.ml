@@ -5,7 +5,11 @@ open Simple_utils.Function
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
+
+(* Reduce the switch instruction to a series of if statements *)
 include Flag.No_arg ()
+
+let name = __MODULE__
 
 type group =
   { case_values : expr list
@@ -26,7 +30,6 @@ let split_break stmts : statement list * bool =
   in
   let bef, _ = List.split_while ~f stmts in
   let has_break =
-    (* REMITODO: clean up (implem not correct.. use *fold_) *)
     let folder =
       Catamorphism.
         { statement =
@@ -74,50 +77,28 @@ let split_break stmts : statement list * bool =
   this function will throw if a default case is
   not in last position, but parser would not accept that
 *)
-let group_cases cases : group list * default_case =
+let group_cases (cases : (expr, block) Switch.switch_case list) : group list =
   let open Switch in
-  let impossible () = failwith "imposible: parser wouldn't parse" in
   let groups =
     let break x y =
-      match x, y with
-      | Switch_case (_, None), Switch_case (_, None)
-      | Switch_case (_, None), Switch_case (_, Some _) -> false
-      | Switch_case (_, Some _), Switch_case _ -> true
-      | _, Switch_default_case _ -> true
-      | Switch_default_case _, _ -> impossible ()
+      match x.case_body, y.case_body with
+      | None, None | None, Some _ -> false
+      | Some _, _ -> true
     in
-    List.group ~break (List.Ne.to_list cases)
+    List.group ~break cases
   in
-  let cases, default =
-    List.split_while
-      ~f:(function
-        | [ Switch_default_case _ ] -> false
-        | _ -> true)
-      groups
-  in
-  let cases =
-    (* aggregate groups value and statement *)
-    List.map cases ~f:(fun lst ->
-        let rec agg (values, stmts) = function
-          | Switch_default_case _ :: _ -> impossible ()
-          | Switch_case (value, None) :: tl -> agg (value :: values, stmts) tl
-          | Switch_case (value, Some block) :: tl ->
-            if List.is_empty tl
-            then value :: values, List.Ne.to_list (get_b block)
-            else impossible ()
-          | [] -> values, stmts
-        in
-        let case_values, body = agg ([], []) lst in
-        { case_values; body })
-  in
-  let default =
-    match default with
-    | [] -> None
-    | [ [ Switch_default_case block_opt ] ] ->
-      Option.map block_opt ~f:(fun block -> List.Ne.to_list @@ get_b block)
-    | _ -> impossible ()
-  in
-  cases, default
+  (* aggregate groups value and statement *)
+  List.map groups ~f:(fun lst ->
+      let rec agg (values, stmts) = function
+        | { expr = value; case_body = None } :: tl -> agg (value :: values, stmts) tl
+        | { expr = value; case_body = Some block } :: tl ->
+          if List.is_empty tl
+          then value :: values, List.Ne.to_list (get_b block)
+          else assert false
+        | [] -> values, stmts
+      in
+      let case_values, body = agg ([], []) lst in
+      { case_values; body })
 
 
 (* return all the statements before a break instruction, and append
@@ -146,11 +127,25 @@ let test_clause_of_statements ~loc stmts : _ Test_clause.t =
   | None -> ClauseInstr (default_stmt ~loc)
 
 
-let switch_to_decl loc switchee cases =
+let switch_to_decl loc Switch.{ subject; cases } =
+  let cases, default_stmts_opt =
+    match cases with
+    | Switch.AllCases (cases, default) ->
+      let default_stmts_opt =
+        Option.value_map default ~default:None ~f:(fun x ->
+            Some (Option.value_map x ~default:[] ~f:(List.Ne.to_list <@ get_b)))
+      in
+      List.Ne.to_list cases, default_stmts_opt
+    | Switch.Default default ->
+      let default_stmts_opt =
+        Option.value_map default ~default:[] ~f:(List.Ne.to_list <@ get_b)
+      in
+      [], Some default_stmts_opt
+  in
   let eq a b = e_constant ~loc { cons_name = C_EQ; arguments = [ a; b ] } in
   let or_ a b = e_constant ~loc { cons_name = C_OR; arguments = [ a; b ] } in
   let not_ a = e_constant ~loc { cons_name = C_NOT; arguments = [ a ] } in
-  let cases, default_opt = group_cases cases in
+  let cases = group_cases cases in
   let ft = Variable.fresh ~loc ~name:"fallthrough" () in
   let ft_var = e_variable ~loc ft in
   let ft_decl =
@@ -166,13 +161,13 @@ let switch_to_decl loc switchee cases =
         let test_var = e_variable ~loc test_ in
         let test_decl =
           (* build one matching condition for each groups:
-            `switchee == v1 || <...> || switchee == vN || ft`
+            `subject == v1 || <...> || subject == vN || ft`
           *)
           let test =
             (* don't take fallthrough into account for the first case *)
             let init = if Int.equal i 0 then e_false ~loc else ft_var in
             List.fold group.case_values ~init ~f:(fun acc val_ ->
-                or_ (eq switchee val_) acc)
+                or_ (eq subject val_) acc)
           in
           simpl_const_decl ~loc test_ test
         in
@@ -194,8 +189,8 @@ let switch_to_decl loc switchee cases =
       - always if there is no other case,
       - `ft || !(g1 || .. || gN)` otherwise
     *)
-    let tests = List.map ~f:fst grouped_switch_cases in
-    Option.value_map default_opt ~default:[] ~f:(fun default_stmts ->
+    Option.value_map default_stmts_opt ~default:[] ~f:(fun default_stmts ->
+        let tests = List.map ~f:fst grouped_switch_cases in
         match tests with
         | [] -> until_break ~loc ft_var default_stmts
         | hd :: tl ->
@@ -217,11 +212,9 @@ let reduce_clause : _ Test_clause.t -> _ Test_clause.t = function
   | ClauseBlock b -> ClauseBlock b
   | ClauseInstr i ->
     (match get_i_switch i with
-    | Some { switchee; cases } ->
+    | Some sw ->
       ClauseBlock
-        (block_of_statements
-        @@ List.Ne.of_list
-        @@ switch_to_decl (get_i_loc i) switchee cases)
+        (block_of_statements @@ List.Ne.of_list @@ switch_to_decl (get_i_loc i) sw)
     | None -> ClauseInstr i)
 
 
@@ -236,7 +229,7 @@ let compile ~raise:_ =
           match get_s stmt with
           | S_instr i ->
             (match get_i i with
-            | I_switch { switchee; cases } -> switch_to_decl (get_i_loc i) switchee cases
+            | I_switch s -> switch_to_decl (get_i_loc i) s
             | I_cond ({ ifso; ifnot; _ } as cond) ->
               let stmt =
                 s_instr ~loc
@@ -272,5 +265,4 @@ let reduction ~raise =
   }
 
 
-let name = __MODULE__
 let decompile ~raise:_ = Nothing

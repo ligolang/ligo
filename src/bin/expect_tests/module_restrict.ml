@@ -24,16 +24,22 @@ let%expect_test _ =
     File "../../test/contracts/negative/modules_access_not_open1.jsligo", line 1, characters 12-13:
       1 | let y = A.B.(x.z)
                       ^
-    Ill-formed selection of a value in a module.
-    At this point, the qualified name of a value is expected. |}];
+    Ill-formed namespace selection.
+    At this point, one of the following is expected:
+      * a namespace name;
+      * a string denoting a constructor;
+      * an object or array. |}];
   run_ligo_bad [ "print"; "ast-core"; bad_test "modules_access_not_open2.jsligo" ];
   [%expect
     {|
     File "../../test/contracts/negative/modules_access_not_open2.jsligo", line 1, characters 12-13:
       1 | let x = A.B.(x + y)
                       ^
-    Ill-formed selection of a value in a module.
-    At this point, the qualified name of a value is expected. |}]
+    Ill-formed namespace selection.
+    At this point, one of the following is expected:
+      * a namespace name;
+      * a string denoting a constructor;
+      * an object or array. |}]
 
 (*
   run_ligo_bad

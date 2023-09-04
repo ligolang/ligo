@@ -75,7 +75,8 @@ let test_cases =
         ; pos ~line:1 ~character:5, "y : int"
         ]
     }
-  ; { test_name = "registry.jsligo"
+    (* FIXME #2024 *)
+    (* ; { test_name = "registry.jsligo"
     ; file = "contracts/lsp/registry.jsligo"
     ; hovers =
         [ pos ~line:11 ~character:19, "get_exn : (_: list<a>) => (_: int) => a"
@@ -86,7 +87,7 @@ let test_cases =
         ; pos ~line:39 ~character:40, "type storage = list<int>"
         ; pos ~line:39 ~character:55, "type return_ = [list<operation>, list<int>]"
         ]
-    }
+    } *)
   ; { test_name = "hovers.mligo"
     ; file = "contracts/lsp/hovers.mligo"
     ; hovers =

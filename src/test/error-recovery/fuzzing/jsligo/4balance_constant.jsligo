@@ -12,10 +12,10 @@
 
  type storage = tez ;
 
- let main3 = ( [ _unit , _storage ] : [ unit , storage ] ) : [ list < operation > , tez ] =>
+ const main3 = ( [ _unit , _storage ] : [ unit , storage ] ) : [ list < operation > , tez ] =>
  [ ( list [ ] ) as list < operation > ) , Tezos . balance ] ;
 
- let main = ( x : [ unit storage ] ) : [ list < operation > , tez ] => main3 ( [ x [ 0 ] , x [ 1 ] ] ) ;
+ const main = ( x : [ unit storage ] ) : [ list < operation > , tez ] => main3 ( [ x [ 0 ] , x [ 1 ] ] ) ;
 
 /*
 Mutation chance is 4

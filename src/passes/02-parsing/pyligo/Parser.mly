@@ -14,10 +14,13 @@ open Simple_utils.Region
 module CST = Cst_pyligo.CST
 open! CST
 module Wrap = Lexing_shared.Wrap
+module Nodes = Cst_shared.Nodes
 
 (* UTILITIES *)
 
 let (<@) f g x = f (g x)
+let nseq_to_region = Nodes.nseq_to_region
+let nsepseq_to_region = Nodes.nsepseq_to_region
 
 (* Computing stop region of optional node *)
 
@@ -438,7 +441,7 @@ var_decl:
 
 class_decl:
   "class" class_name ioption(superclasses) ":" class_body {
-    let stop   = CST.nseq_to_region (member_decl_to_region <@ snd) $5 in
+    let stop   = nseq_to_region (member_decl_to_region <@ snd) $5 in
     let region = cover $1#region stop
     and value  = {kwd_class=$1; name=$2; superclasses=$3;
                   colon=$4; class_body=$5}

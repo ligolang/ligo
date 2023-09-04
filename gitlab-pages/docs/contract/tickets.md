@@ -151,10 +151,10 @@ let ta, tb =
 
 ```jsligo group=manip_ticket
 let [ta, tb] =
-  match(Tezos.split_ticket(my_ticket1, [6 as nat, 4 as nat]), {
-    None: () => failwith("amt_a + amt_v != amt"),
-    Some: split_tickets => split_tickets
-  });
+  match(Tezos.split_ticket(my_ticket1, [6 as nat, 4 as nat])) {
+    when(None()): failwith("amt_a + amt_v != amt");
+    when(Some(split_tickets)): split_tickets
+  };
 ```
 
 </Syntax>

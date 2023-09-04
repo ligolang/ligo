@@ -19,6 +19,16 @@ let compile ~raise =
           | Rest_entry e -> raise.error @@ unsupported_rest_property e
         in
         e_tuple ~loc (List.Ne.map f (hd, tl)))
+    | E_block_poly_fun { type_params; parameters = []; ret_type; body } ->
+      let parameters : pattern Param.t list =
+        [ { param_kind = `Const; pattern = make_p ~loc P_unit } ]
+      in
+      e_block_poly_fun ~loc { type_params; parameters; ret_type; body }
+    | E_poly_fun { type_params; parameters = []; ret_type; body } ->
+      let parameters : pattern Param.t list =
+        [ { param_kind = `Const; pattern = make_p ~loc P_unit } ]
+      in
+      e_poly_fun ~loc { type_params; parameters; ret_type; body }
     | e -> make_e ~loc e
   in
   Fold { idle_fold with expr }

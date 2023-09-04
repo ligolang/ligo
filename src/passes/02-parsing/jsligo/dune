@@ -53,6 +53,8 @@
   (-open
    Cst_jsligo ;; for CST in Parser.mli
    -open
+   Cst_shared ;; for Nodes in Parser.mli
+   -open
    Lexing_shared)))
 
 ;; Local build of a standalone parser for JsLIGO

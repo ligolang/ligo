@@ -5,34 +5,31 @@ type allowances = big_map<[address, address], nat>;
 /* (sender,account) -> value */
 
 type storage = {
-  tokens,
-  allowances,
-  total_amount: nat
+  tokens: tokens,
+  allowances: allowances,
+  total_amount: nat,
 };
 
 type transfer = {
   address_from: address,
   address_to: address,
-  value: nat
+  value: nat,
 };
 
-type approve = {
-  spender: address,
-  value: nat
-};
+type approve = { spender: address, value: nat, };
 
 type getAllowance = {
   owner: address,
   spender: address,
-  callback: contract<nat>
+  callback: contract<nat>,
 };
 
 type getBalance = {
   owner: address,
-  callback: contract<nat>
+  callback: contract<nat>,
 };
 
-type getTotalSupply = { callback: contract<nat> };
+type getTotalSupply = { callback: contract<nat>, };
 
 type action =
   | ["Transfer", transfer]
@@ -41,11 +38,13 @@ type action =
   | ["GetBalance", getBalance]
   | ["GetTotalSupply", getTotalSupply];
 
-let transfer = ([p, s]: [transfer, storage])
-  : [list<operation>, storage] => {
+let transfer = ([p, s]: [transfer, storage]): [
+  list<operation>,
+  storage
+] => {
   let new_allowances = 0;
   if (Tezos.get_sender() == p.address_from) {
-    new_allowances = s.allowances
+    new_allowances = s.allowances;
   } else {
     let opt =
       Big_map.find_opt(
@@ -53,36 +52,36 @@ let transfer = ([p, s]: [transfer, storage])
         s.allowances
       );
     let authorized_value: nat =
-      match(
-        opt,
-        {
-          Some: (value: nat) => value,
-          None: () => (0 as nat)
-        }
-      );
+      match(opt) {
+        when (Some(value)):
+          value
+        when (None):
+          (0 as nat)
+      };
     if (authorized_value < p.value) {
-      failwith("Not Enough Allowance") as allowances
+      (failwith("Not Enough Allowance") as allowances);
     } else {
-      new_allowances =
-        Big_map.update(
+      new_allowances
+      = Big_map.update(
           [Tezos.get_sender(), p.address_from],
           (Some(abs(authorized_value - p.value))),
           s.allowances
-        )
-    }
+        );
+    };
   };
   let opt = Big_map.find_opt(p.address_from, s.tokens);
   let sender_balance: nat =
-    match(
-      opt,
-      {
-        Some: (value: nat) => value,
-        None: () => (0 as nat)
-      }
-    );
+    match(opt) {
+      when (Some(value)):
+        value
+      when (None):
+        (0 as nat)
+    };
   if (sender_balance < p.value) {
-    failwith("Not Enough Balance") as
-      [list<operation>, storage]
+    (
+      failwith("Not Enough Balance") as
+        [list<operation>, storage]
+    );
   } else {
     let new_tokens =
       Big_map.update(
@@ -92,13 +91,12 @@ let transfer = ([p, s]: [transfer, storage])
       );
     let opt = Big_map.find_opt(p.address_to, s.tokens);
     let receiver_balance: nat =
-      match(
-        opt,
-        {
-          Some: (value: nat) => value,
-          None: () => (0 as nat)
-        }
-      );
+      match(opt) {
+        when (Some(value)):
+          value
+        when (None):
+          (0 as nat)
+      };
     let new_tokens2 =
       Big_map.update(
         p.address_to,
@@ -112,27 +110,23 @@ let transfer = ([p, s]: [transfer, storage])
         tokens: new_tokens2,
         allowances: new_allowances
       }
-    ]
-  }
+    ];
+  };
 };
 
-const main20 = ([action, store]: [parameter, storage])
-  : return_ =>
-  match(
-    action,
-    {
-      Action_A: n => entry_A([n, store]),
-      Action_B: (s: string) => entry_B([s, store])
-    }
-  );
+const main20 = ([action, store]: [parameter, storage]): return_ =>
+  match(action) {
+    when (Action_A(n)):
+      entry_A([n, store])
+    when (Action_B(s)):
+      entry_B([s, store])
+  };
 
-const main21 = ([action, store]: [parameter, storage])
-  : return_ =>
-  match(
-    action,
-    {
-      Action_A: n => entry_A([n, store]),
-      Action_B: s => entry_B([s, store])
-    }
-  );
+const main21 = ([action, store]: [parameter, storage]): return_ =>
+  match(action) {
+    when (Action_A(n)):
+      entry_A([n, store])
+    when (Action_B(s)):
+      entry_B([s, store])
+  };
 

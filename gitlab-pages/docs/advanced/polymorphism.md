@@ -181,10 +181,10 @@ let rev (type a) (xs : a list) : a list =
 ```jsligo group=poly
 const rev = <T>(xs : list<T>) : list<T> => {
   const rev = <T>([xs, acc] : [list<T>, list<T>]) : list<T> =>
-    match(xs, list([
-    ([] : list<T>) => acc,
-    ([x,... xs] : list<T>) => rev([xs, list([x,...acc])])
-    ]));
+    match(xs) {
+      when([]): acc;
+      when([y,...ys]): rev([ys, list([y,...acc])])
+    };
 
   return rev([xs, (list([]) as list<T>)]);
 };

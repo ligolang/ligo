@@ -128,6 +128,16 @@ val mk_children_sepseq :
 val mk_children_nseq :
   'a printer -> ?root:root -> 'a Utils.nseq -> child list
 
+val mk_children_sep_or_term :
+  'a printer -> ?root:root -> ('a,_) Utils.sep_or_term -> child list
+
+val mk_children_nsep_or_term :
+  'a printer -> ?root:root -> ('a,_) Utils.nsep_or_term -> child list
+
+val mk_children_nsep_or_pref :
+  'a printer -> ?root:root -> ('a,_) Utils.nsep_or_pref -> child list
+
+
 (* PRINTING LISTS AND SEQUENCES *)
 
 (* The call [of_list ?region state ?root print list] prints a tree of
@@ -167,12 +177,36 @@ val of_nseq :
   -> 'a Utils.nseq
   -> unit
 
+val of_sep_or_term :
+  ?region:Region.t
+  -> state
+  -> root
+  -> 'a printer
+  -> ('a,_) Utils.sep_or_term
+  -> unit
+
+val of_nsep_or_term :
+  ?region:Region.t
+  -> state
+  -> root
+  -> 'a printer
+  -> ('a,_) Utils.nsep_or_term
+  -> unit
+
+val of_nsep_or_pref :
+  ?region:Region.t
+  -> state
+  -> root
+  -> 'a printer
+  -> ('a,_) Utils.nsep_or_pref
+  -> unit
+
 (* PRINTING TOKENS (NODES) *)
 
 type lexeme = string
 
-val make_string   : string Wrap.t printer
-val make_verbatim : string Wrap.t printer
+val make_string   : root -> string Wrap.t printer
+val make_verbatim : root -> string Wrap.t printer
 val make_int      : root -> (lexeme *     Z.t) Wrap.t printer
 val make_nat      : root -> (lexeme *     Z.t) Wrap.t printer
 val make_bytes    : root -> (lexeme *   Hex.t) Wrap.t printer

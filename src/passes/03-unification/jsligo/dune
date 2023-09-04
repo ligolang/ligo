@@ -6,6 +6,5 @@
   simple-utils
   tezos-utils
   cst
-  parsing
   ast_unified
   predefined))

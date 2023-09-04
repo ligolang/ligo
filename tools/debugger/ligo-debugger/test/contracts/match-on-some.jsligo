@@ -1,9 +1,9 @@
 @entry
 let main = (_ : unit, s : option<int>) : [list<operation>, option<int>] => {
-  const s2 = match(s, {
-    Some: (x : int) => x + 1,
-    None: () => 0
-  });
+  const s2 = match (s) {
+    when(Some(x)): x + 1;
+    when(None): 0;
+  };
 
   return [(list([]) as list<operation>), Some(s2)]
 };

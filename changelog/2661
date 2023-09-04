@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n#### New pattern matching in JsLIGO\\n\\nIt follows a variant of [tc39 proposal pattern matching](https://github.com/tc39/proposal-pattern-matching).\\n\\nE.g.\\n\\n```ts\\nmatch (action) {\\n    when(Add(n)): n;\\n    when(Sub(n)): -n;\\n  }\\n\\n```\\n\\n\\n\\n"
+merge_request: '2661'
+title: "[JsLIGO] Refactoring of the CST and grammar"
+type: breaking
+            

@@ -17,9 +17,9 @@ let extract_directives_cameligo (cst : Parsing.Cameligo.CST.t)
 let extract_directives_jsligo (cst : Parsing.Jsligo.CST.t) : Preprocessor.Directive.t list
   =
   List.filter_map ~f:(function
-      | Cst_jsligo.CST.Directive d -> Some d
+      | Cst_jsligo.CST.S_Directive d -> Some d
       | _ -> None)
-  @@ Simple_utils.Utils.nseq_to_list cst.statements
+  @@ (Simple_utils.Utils.nseq_to_list cst.statements |> List.map ~f:fst)
 
 
 let extract_directives_pascaligo (cst : Parsing.Pascaligo.CST.t)

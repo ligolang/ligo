@@ -231,10 +231,10 @@ This is how we express _nullability_ in LIGO: instead of using a special ad-hoc 
 let x = Some (5);
 
 let x_or_zero  =
-  match(x, {
-    Some: value => value,
-    None: () => 0
-  });
+  match(x) {
+    when(Some(value)): value;
+    when(None()): 0
+  };
 ```
 
 </Syntax>
@@ -381,10 +381,10 @@ type parameter = ["Increment"] | ["Decrement"];
 type storage = int;
 
 let main = (p: parameter, s: storage): [list<operation>, int] => {
-  return match(p, {
-    Increment: () => [list([]), s + 1],
-    Decrement: () => [list([]), s - 1]
-  });
+  return match(p) {
+    when(Increment()): [list([]), s + 1];
+    when(Decrement()): [list([]), s - 1]
+  };
 };
 ```
 
@@ -434,10 +434,10 @@ type parameter = ["Add", int] | ["Subtract", int];
 type storage = int;
 
 let main = (p : parameter, s : storage): [list<operation>, int] => {
-  return match(p, {
-    Add: n => [list([]), s + n],
-    Subtract: n => [list([]), s - n]
-  });
+  return match(p) {
+    when(Add(n)): [list([]), s + n];
+    when(Subtract(n)): [list([]), s - n]
+  };
 };
 ```
 
@@ -514,10 +514,10 @@ type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
 
 let main = (param: parameter, storage: int) : [list<operation>, int] => {
   const op = list ([]) ;
-  return match(param, {
-    MultiplyBy4: () => [op, multiplyBy4(storage)],
-    MultiplyBy16: () => [op, multiplyBy4(multiplyBy4(storage))]
-  });
+  return match(param) {
+    when(MultiplyBy4()): [op, multiplyBy4(storage)];
+    when(MultiplyBy16()): [op, multiplyBy4(multiplyBy4(storage))]
+  };
 };
 ```
 
@@ -580,9 +580,9 @@ type parameter = | ["Compute", (c : int) => int];
 type storage = int;
 
 let main = (p: parameter, s: storage): [list<operation>, int] => {
-  return match(p, {
-    Compute: (func : (c : int) => int) => [list([]), func(s)]
-  });
+  return match(p) {
+    when(Compute(func)): [list([]), func(s)]
+  };
 };
 ```
 
@@ -654,18 +654,18 @@ type storage = { fn : option<((x : int) => int)>, value : int };
 type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
 
 let call = (fn: option<((x : int) => int)>, value: int) : int => {
-  return match(fn, {
-    Some: f => f(value),
-    None: () => failwith("Lambda is not set")
-  })
+  return match(fn) {
+    when(Some(f)): f(value);
+    when(None()): failwith("Lambda is not set")
+  }
 };
 
 let main = (p : parameter, s: storage) : [list<operation>, storage] => {
   let newStorage =
-    match(p, {
-      SetFunction: fn => ({...s, fn: Some (fn)}),
-      CallFunction: () => ({...s, value: call(s.fn, s.value)})
-    });
+    match(p) {
+      when(SetFunction(fn)): ({...s, fn: Some (fn)});
+      when(CallFunction()): ({...s, value: call(s.fn, s.value)})
+    };
   return [list([]), newStorage]
 };
 ```
@@ -769,10 +769,10 @@ let treasury = (p : unit, s : storage) => {
   // Then we find our beneficiary's `handleRewards` entrypoint:
   let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
   let beneficiary =
-    match(beneficiaryOpt, {
-     Some: contract => contract,
-     None: () => failwith("Beneficiary does not exist")
-    });
+    match(beneficiaryOpt) {
+     when(Some(contract)): contract;
+     when(None()): failwith("Beneficiary does not exist")
+    };
 
   // Then we prepare the internal operation we want to perform
   let operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);

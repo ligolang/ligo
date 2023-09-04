@@ -3,7 +3,7 @@ type fooBarBaz =
 | ["Baz"];
 
 let check = (f : fooBarBaz) : int =>
-  match(f, {
-    Bar: (i: int) => i,
-    Baz: () => -1
-  });
+  match(f) {
+    when(Bar(i)): i;
+    when(Baz()): -1
+  };

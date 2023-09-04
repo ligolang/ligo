@@ -115,7 +115,7 @@ In order to call the `increment` entry point of the smart contract, we can pass 
 <Syntax syntax="cameligo">
 
 ```shell
-ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo '5' '0' 
+ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo '5' '0'
 ```
 
 </Syntax>
@@ -123,7 +123,7 @@ ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoin
 <Syntax syntax="jsligo">
 
 ```shell
-ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo '5' '0' 
+ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo '5' '0'
 ```
 
 </Syntax>
@@ -320,11 +320,11 @@ const entry_A = (n: nat, store: storage): return_ =>
 const entry_B = (s: string, store: storage): return_ =>
   [list([]), {...store, name: s}];
 
-export const main = (action: parameter, store: storage): return_ =>
-  match(action, {
-    Action_A: n => entry_A(n, store),
-    Action_B: s => entry_B(s, store)
-  });
+const main = (action: parameter, store: storage): return_ =>
+  match(action) {
+    when(Action_A(n)): entry_A(n, store);
+    when(Action_B(s)): entry_B(s, store)
+  };
 ```
 
 </Syntax>
@@ -632,10 +632,10 @@ const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 
 const proxy = (action: parameter, store: storage): return_ => {
   let counter =
-    match (Tezos.get_contract_opt(dest), {
-      Some: contract => contract,
-      None: () => failwith("Contract not found.")
-    });
+    match (Tezos.get_contract_opt(dest)) {
+      when(Some(contract)): contract;
+      when(None()): failwith("Contract not found.")
+    };
   /* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. */
   let mock_param = Increment(5);

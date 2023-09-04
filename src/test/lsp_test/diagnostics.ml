@@ -102,10 +102,16 @@ let test_cases =
     ; file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
-          ; message =
-              "Ill-formed expression.\nAt this point, an expression is expected.\n"
+          ; message = "Variable \"ghost_ident\" not found. "
           ; location =
-              { range = interval 4 15 18
+              { range = point 4 18
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Error
+          ; message = "Variable \"ghost_ident\" not found. "
+          ; location =
+              { range = point 4 14
               ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
               }
           }
@@ -117,9 +123,26 @@ let test_cases =
               }
           }
         ; { severity = DiagnosticSeverity.Error
-          ; message = "Variable \"_#N\" not found. "
+          ; message =
+              "Ill-formed expression.\nAt this point, an expression is expected.\n"
           ; location =
-              { range = point 4 14
+              { range = interval 4 15 18
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Error
+          ; message =
+              "Ill-formed value declaration.\n\
+               At this point, a pattern is expected, e.g. a variable.\n"
+          ; location =
+              { range = point 4 18
+              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Warning
+          ; message = "Toplevel let declaration is silently changed to const declaration."
+          ; location =
+              { range = interval 4 15 18
               ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
               }
           }

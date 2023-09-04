@@ -13,8 +13,10 @@ let%expect_test _ =
       4 |     };
               ^
       5 |     output = output + "World";
-    Ill-formed switch statement.
-    At this point, a case starting with the keyword 'case' is expected. |}]
+    Ill-formed switch.
+    At this point, one of the following is expected:
+      * the keyword 'case' introducing a new case;
+      * the keyword 'default' introducing the default case. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -29,8 +31,9 @@ let%expect_test _ =
      10 |       case 3:
                 ^^^^
      11 |         output = output + "@@@";
-    Ill-formed switch statement.
-    At this point, if the case is complete, one of the following is expected:
+    Ill-formed switch.
+    At this point, if the case is complete, one of the following is
+    expected:
       * another case;
       * a closing brace '}' if no more cases. |}]
 
@@ -47,8 +50,9 @@ let%expect_test _ =
      14 |       default:
                 ^^^^^^^
      15 |         output = output + "***";
-    Ill-formed switch statement.
-    At this point, if the case is complete, one of the following is expected:
+    Ill-formed switch.
+    At this point, if the case is complete, one of the following is
+    expected:
       * another case;
       * a closing brace '}' if no more cases. |}]
 
@@ -65,10 +69,8 @@ let%expect_test _ =
       3 |     break;
               ^^^^^
       4 |     return output;
-    Ill-formed block of statements.
-    At this point, one of the following is expected:
-      * another statement;
-      * a closing brace '}' if no more statements. |}]
+
+    Break statement is not supported in that position |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -83,8 +85,8 @@ let%expect_test _ =
       4 |         break;
                   ^^^^^
       5 |     } else {
-    Ill-formed block of statements.
-    At this point, the first statement is expected. |}]
+
+    Break statement is not supported in that position |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -99,8 +101,8 @@ let%expect_test _ =
       6 |                 break;
                           ^^^^^
       7 |             } else {
-    Ill-formed block of statements.
-    At this point, the first statement is expected. |}]
+
+    Break statement is not supported in that position |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -115,7 +117,5 @@ let%expect_test _ =
       7 |                 break;
                           ^^^^^
       8 |             };
-    Ill-formed block of statements.
-    At this point, one of the following is expected:
-      * another statement;
-      * a closing brace '}' if no more statements. |}]
+
+    Break statement is not supported in that position |}]

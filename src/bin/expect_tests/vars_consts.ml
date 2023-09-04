@@ -10,10 +10,10 @@ let%expect_test _ =
   [%expect
     {|
     File "../../test/contracts/negative/vars_consts/match.jsligo", line 7, characters 23-24:
-      6 |   let store2 = match (action, {
-      7 |     Add: (n: int) => { n = 42; return n; },
+      6 |   let store2 = match (action) {
+      7 |     when(Add(n)): do { n = 42; return n; };
                                  ^
-      8 |     Sub: (n: int) => { n = 42; return -n; }
+      8 |     when(Sub(n)): do { n = 42; return -n; };
 
     Mutable variable "n" not found. |}]
 

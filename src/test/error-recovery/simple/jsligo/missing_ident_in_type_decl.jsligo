@@ -1,9 +1,9 @@
 namespace EURO {
   export type = nat;
-  export let add = ([a, b]: [t, t]): t => a + b;
+  export const add = ([a, b]: [t, t]): t => a + b;
   export namespace CONST {
-    export let zero: t = 0 as nat;
-    export let one: t = 1 as nat;
+    export const zero: t = 0 as nat;
+    export const one: t = 1 as nat;
   };
 };
 
@@ -11,5 +11,5 @@ import US_DOLLAR = EURO;
 
 type storage = EURO.t;
 
-let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
-  [list([]) as list<operation>, EURO.add(store, EURO.one)];
+const main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
+  [list([]) as list<operation>, EURO.add([store, EURO.CONST.one])];

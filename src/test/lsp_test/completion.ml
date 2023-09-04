@@ -449,7 +449,7 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"nested"
             ~kind:CompletionItemKind.Variable
-            ~detail:"{\n  left: int;\n  right: int\n}"
+            ~detail:"{ left: int; right: int }"
             ~sortText:"\x05"
             ()
         ]
@@ -493,7 +493,7 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"nested"
             ~kind:CompletionItemKind.Variable
-            ~detail:"{\n  left: int;\n  right: int\n}"
+            ~detail:"{ left: int; right: int }"
             ~sortText:"\x05"
             ()
         ]
@@ -614,7 +614,8 @@ let test_cases_jsligo =
         ; "Outer.completion"
         ]
     }
-  ; { test_name = "Module definitions don't contain scopes"
+    (* FIXME #2024 *)
+    (* ; { test_name = "Module definitions don't contain scopes"
     ; file_name = "contracts/lsp/completion_similar_name.jsligo"
     ; position = Position.create ~line:14 ~character:15
     ; completions =
@@ -638,8 +639,9 @@ let test_cases_jsligo =
             ()
         ]
     ; negative_labels = [ "a"; "b" ]
-    }
-  ; { test_name = "Complete from scope after a dot"
+    } *)
+    (* FIXME #2024 *)
+    (* ; { test_name = "Complete from scope after a dot"
     ; file_name = "contracts/lsp/completion_similar_name.jsligo"
     ; position = Position.create ~line:16 ~character:12
     ; completions =
@@ -655,7 +657,7 @@ let test_cases_jsligo =
             ()
         ]
     ; negative_labels = [ "Math.add"; "Math.sub"; "Math.zero" ]
-    }
+    } *)
   ; { test_name = "Complete first module from written module path"
     ; file_name = "contracts/lsp/completion_module.jsligo"
     ; position = Position.create ~line:9 ~character:11

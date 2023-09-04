@@ -81,13 +81,13 @@ let back = ([param, store] : [unit, storage]) : [list<operation>, storage] => { 
     return failwith ("Deadline passed.");
   }
   else {
-    return match(Map.find_opt (Tezos.get_sender(), store.backers), {
-      None: () => {
+    return match(Map.find_opt (Tezos.get_sender(), store.backers)) {
+      when(None()): do {
         let backers = Map.update(Tezos.get_sender(), Some(Tezos.get_amount()), store.backers);
         return [no_op, {...store, backers:backers}];
-      },
-      Some: x => [no_op, store]
-    })
+      };
+      when(Some(x)): [no_op, store]
+    }
   };
 };
 ```

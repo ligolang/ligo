@@ -86,22 +86,26 @@ let compile ~raise =
     let loc = get_i_loc i in
     let opt =
       let open Simple_utils.Option in
-      let* { switchee; cases } = get_i_switch i in
-      let cases = List.Ne.to_list cases in
-      let* { struct_; path } = get_e_proj switchee in
+      let* { subject; cases } = get_i_switch i in
+      let* struct_, path = get_e_proj subject in
       let* matchee_var = get_e_variable struct_ in
-      let* proj_name = Selection.get_field_name path in
+      let proj_name =
+        match path with
+        | [ FieldName s ] -> s
+        | _ -> failwith "TODO disc_union_types"
+      in
       let* cases =
-        Option.all
-        @@ List.map
-             ~f:(function
-               | Switch_case (case, b) ->
-                 let* lit = get_e_literal case in
-                 (match lit with
-                 | Literal_string x -> Some (Simple_utils.Ligo_string.extract x, b)
-                 | _ -> None)
-               | Switch_default_case _ -> (* not allowed *) None)
-             cases
+        match cases with
+        | Switch.AllCases (b, _) ->
+          let lst =
+            List.map (List.Ne.to_list b) ~f:(fun Switch.{ expr; case_body } ->
+                let* lit = get_e_literal expr in
+                match lit with
+                | Literal_string x -> Some (Simple_utils.Ligo_string.extract x, case_body)
+                | _ -> None)
+          in
+          Option.all lst
+        | Switch.Default _ -> None
       in
       let* { ty = matching_ty; _ } =
         List.find registered_unions ~f:(fun { label; id_set; _ } ->
@@ -120,7 +124,7 @@ let compile ~raise =
                    | None -> ClauseInstr (i_skip ~loc)
                    | Some block -> ClauseBlock block
                  in
-                 Case.{ pattern; rhs })
+                 Case.{ pattern = Some pattern; rhs })
         in
         let expr = e_annot ~loc:(get_e_loc struct_) (struct_, matching_ty) in
         i_case ~loc { expr; cases }

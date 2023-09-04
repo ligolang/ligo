@@ -131,6 +131,8 @@ let combine_checks : type a. a dyn_reduction_check list -> a -> unit =
 
 
 type pass_kind =
+  | Seq : pass_kind * pass_kind -> pass_kind
+  | Ignore : pass_kind -> pass_kind
   | Fold : Catamorphism.idle_fold -> pass_kind
   | Refold_acc : 'a pass_fold * 'a pass_unfold -> pass_kind
   | Check : Iter.iter -> pass_kind
@@ -145,16 +147,19 @@ type 'ast morphers =
   ; iter : f:Iter.iter -> 'ast -> unit
   }
 
-let mk_morph : pass_kind -> 'b morphers -> 'b -> 'b =
- fun pass_kind { cata; hylo = h_cata, h_ana; iter } ->
+let rec mk_morph : pass_kind -> 'b morphers -> 'b -> 'b =
+ fun pass_kind ({ cata; hylo = h_cata, h_ana; iter } as morph) b ->
   match pass_kind with
-  | Fold f -> cata ~f
-  | Refold_acc (fold, unfold) -> h_ana ~f:unfold <@ h_cata ~f:fold
+  | Fold f -> cata ~f b
+  | Seq (p, q) -> mk_morph q morph (mk_morph p morph b)
+  | Ignore p ->
+    let _ = mk_morph p morph b in
+    b
+  | Refold_acc (fold, unfold) -> (h_ana ~f:unfold <@ h_cata ~f:fold) b
   | Check pass ->
-    fun x ->
-      iter ~f:pass x;
-      x
-  | Nothing -> Fun.id
+    iter ~f:pass b;
+    b
+  | Nothing -> b
 
 
 let _type__morphers =

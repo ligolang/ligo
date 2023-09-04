@@ -44,8 +44,12 @@ let gen_getters : ty_expr option Non_linear_rows.t * Location.t -> declaration l
              ~loc
              { expr = ev_x
              ; cases =
-                 ( { pattern = p_variant ~loc label (Some p_x); rhs = e_some ~loc ev_x }
-                 , [ { pattern = p_var ~loc (Variable.fresh ~loc ()); rhs = e_none ~loc }
+                 ( { pattern = Some (p_variant ~loc label (Some p_x))
+                   ; rhs = e_some ~loc ev_x
+                   }
+                 , [ { pattern = Some (p_var ~loc (Variable.fresh ~loc ()))
+                     ; rhs = e_none ~loc
+                     }
                    ] )
              }
          in
@@ -160,11 +164,11 @@ let%expect_test "compile" =
          (E_match
           ((expr (E_variable x))
            (cases
-            (((pattern (P_variant (Label Foo) ((P_var x))))
+            (((pattern ((P_variant (Label Foo) ((P_var x)))))
               (rhs
                (E_applied_constructor
                 ((constructor (Label Some)) (element (E_variable x))))))
-             ((pattern (P_var gen))
+             ((pattern ((P_var gen)))
               (rhs
                (E_applied_constructor
                 ((constructor (Label None)) (element (E_literal Literal_unit))))))))))))))
@@ -175,11 +179,11 @@ let%expect_test "compile" =
          (E_match
           ((expr (E_variable x))
            (cases
-            (((pattern (P_variant (Label Bar) ((P_var x))))
+            (((pattern ((P_variant (Label Bar) ((P_var x)))))
               (rhs
                (E_applied_constructor
                 ((constructor (Label Some)) (element (E_variable x))))))
-             ((pattern (P_var gen))
+             ((pattern ((P_var gen)))
               (rhs
                (E_applied_constructor
                 ((constructor (Label None)) (element (E_literal Literal_unit))))))))))))))

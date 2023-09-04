@@ -50,7 +50,7 @@
 
 (* Literals *)
 
-%token     <Preprocessor.Directive.t> Directive "<directive>" [@recover.expr mk_Directive $loc]
+%token     <Preprocessor.Directive.t> Directive "<directive>"
 %token                <string Wrap.t> String    "<string>"    [@recover.expr mk_string    $loc]
 %token                <string Wrap.t> Verbatim  "<verbatim>"  [@recover.expr mk_verbatim  $loc]
 %token      <(string * Hex.t) Wrap.t> Bytes     "<bytes>"     [@recover.expr mk_bytes     $loc]

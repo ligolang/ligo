@@ -727,10 +727,10 @@ let force_access (key, moves : address * register) : move =
 
 ```jsligo group=maps
 let force_access = (key: address, moves: register) => {
-  return match(Map.find_opt (key, moves), {
-   Some: move => move,
-   None: () => failwith("No move.")
-  });
+  return match(Map.find_opt (key, moves)) {
+   when(Some(move)): move;
+   when(None()): failwith("No move.")
+  };
 };
 ```
 

@@ -1,5 +1,5 @@
- let check_signature = const param : [ key , signature , bytes ] ) : bool => {
- let [ pk , signed , msg ] = param ;
+ const check_signature = const param : [ key , signature , bytes ] ) : bool => {
+ const [ pk , signed , msg ] = param ;
  return Crypto . check ( pk , signed , msg ) ;
  } ;
 

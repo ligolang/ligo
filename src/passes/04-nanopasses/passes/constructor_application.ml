@@ -38,6 +38,22 @@ let compile ~raise:_ =
             e_tuple ~loc lst
         in
         e_applied_constructor ~loc { constructor; element }
+      | E_literal (Literal_string constructor) ->
+        let element =
+          match args with
+          | None -> e_unit ~loc
+          | Some (one, []) -> one
+          | Some lst ->
+            let loc =
+              List.fold
+                ~init:Location.generated
+                ~f:Location.cover
+                (List.map ~f:get_e_loc (List.Ne.to_list lst))
+            in
+            e_tuple ~loc lst
+        in
+        let constructor = Label.of_string (Ligo_string.extract constructor) in
+        e_applied_constructor ~loc { constructor; element }
       | _ -> failwith "impossible: parsing invariant")
     | e -> make_e ~loc e
   in

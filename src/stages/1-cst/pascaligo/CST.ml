@@ -26,9 +26,8 @@ type lexeme = string
 
 (* Keywords of PascaLIGO *)
 
-(* IMPORTANT: The types are sorted alphabetically, except the generic
-   [keyword]. If you add or modify some, please make sure they remain
-   in order. *)
+(* IMPORTANT: The types are sorted alphabetically. If you add or
+   modify some, please make sure they remain in order. *)
 
 type kwd_and       = lexeme wrap
 type kwd_begin     = lexeme wrap
@@ -111,12 +110,24 @@ type eof = lexeme wrap
 (* Literals *)
 
 type variable    = lexeme wrap
+type type_param  = lexeme wrap
+type type_name   = lexeme wrap
+type type_var    = lexeme wrap
 type module_name = lexeme wrap
 type field_name  = lexeme wrap
 type ctor        = lexeme wrap
 
 type attribute   = Attr.t wrap
 type language    = lexeme Region.reg wrap
+
+type string_literal   = lexeme wrap
+type int_literal      = (lexeme * Z.t) wrap
+type nat_literal      = int_literal
+type bytes_literal    = (lexeme * Hex.t) wrap
+type mutez_literal    = (lexeme * Int64.t) wrap
+type verbatim_literal = lexeme wrap
+
+type keyword = lexeme wrap
 
 (* Parentheses *)
 
@@ -178,7 +189,7 @@ and const_decl = {
   terminator  : semi option
 }
 
-and type_params = (variable, comma) nsepseq
+and type_params = (type_param, comma) nsepseq
 
 and parameters = (param_decl reg, comma) sepseq par reg
 
@@ -228,8 +239,8 @@ and module_body = {
 
 and type_decl = {
   kwd_type   : kwd_type;
-  name       : variable;
-  params     : variable tuple option;
+  name       : type_name;
+  params     : type_param tuple option;
   kwd_is     : kwd_is;
   type_expr  : type_expr;
   terminator : semi option
@@ -247,13 +258,13 @@ and type_expr =
 | T_Attr    of (attribute * type_expr)             (*          [@a] x *)
 | T_Cart    of cartesian                           (*     x * (y * z) *)
 | T_Fun     of (type_expr * arrow * type_expr) reg (*          x -> y *)
-| T_Int     of (lexeme * Z.t) wrap                 (*              42 *)
+| T_Int     of int_literal                         (*              42 *)
 | T_ModPath of type_expr module_path reg           (*     A.B.(x * y) *)
 | T_Par     of type_expr par reg                   (*        (x -> y) *)
 | T_Record  of field_decl reg compound reg (* record [a; [@a1] b : t] *)
-| T_String  of lexeme wrap                         (*           "foo" *)
+| T_String  of string_literal                      (*           "foo" *)
 | T_Sum     of sum_type reg                        (* [@a] A | B of t *)
-| T_Var     of variable                            (*               t *)
+| T_Var     of type_var                            (*               t *)
 
 (* Application of type constructors *)
 
@@ -274,7 +285,7 @@ and 'a module_path = {
 (* Compound constructs (lists, sets, records, maps) *)
 
 and 'a compound = {
-  kind       : lexeme wrap;
+  kind       : keyword;
   opening    : lbracket;
   elements   : ('a, semi) sepseq;
   terminator : semi option;
@@ -478,22 +489,22 @@ and while_loop = {
 and pattern =
   P_App      of (pattern * pattern tuple option) reg (*    C (x,y) *)
 | P_Attr     of (attribute * pattern)                (*   [@var] x *)
-| P_Bytes    of (lexeme * Hex.t) wrap                (*     0xFFFA *)
+| P_Bytes    of bytes_literal                        (*     0xFFFA *)
 | P_Cons     of (pattern * sharp * pattern) reg      (*      x # y *)
 | P_Ctor     of ctor                                 (*          C *)
-| P_Int      of (lexeme * Z.t) wrap                  (*         42 *)
+| P_Int      of int_literal                          (*         42 *)
 | P_List     of pattern compound reg                 (* list [4;x] *)
 | P_ModPath  of pattern module_path reg              (*      M.N.x *)
-| P_Mutez    of (lexeme * Int64.t) wrap              (*     5mutez *)
-| P_Nat      of (lexeme * Z.t) wrap                  (*         4n *)
+| P_Mutez    of mutez_literal                        (*     5mutez *)
+| P_Nat      of nat_literal                          (*         4n *)
 | P_Nil      of kwd_nil                              (*        nil *)
 | P_Par      of pattern par reg                      (*     (C, 4) *)
 | P_Record   of record_pattern                  (* record [x=y; z] *)
-| P_String   of lexeme wrap                          (*   "string" *)
+| P_String   of string_literal                       (*   "string" *)
 | P_Tuple    of pattern tuple                        (*     (1, x) *)
 | P_Typed    of typed_pattern reg                    (*  (x : int) *)
 | P_Var      of variable                             (*          x *)
-| P_Verbatim of lexeme wrap                          (*    {|foo|} *)
+| P_Verbatim of verbatim_literal                     (*    {|foo|} *)
 
 (* Record pattern *)
 
@@ -546,7 +557,7 @@ and expr =
 | E_Attr      of (attribute * expr)             (* [@a] (x,y)      *)
 | E_BigMap    of binding reg compound reg
 | E_Block     of block_with reg
-| E_Bytes     of (lexeme * Hex.t) wrap          (* 0xFFFA          *)
+| E_Bytes     of bytes_literal                  (* 0xFFFA          *)
 | E_Case      of expr case reg
 | E_Cat       of caret bin_op reg               (* "Hello" ^ world *)
 | E_CodeInj   of code_inj reg
@@ -558,7 +569,7 @@ and expr =
 | E_Fun       of fun_expr reg                   (* fun x -> x      *)
 | E_Geq       of geq bin_op reg                 (* x >= y          *)
 | E_Gt        of gt bin_op reg                  (* x > y           *)
-| E_Int       of (lexeme * Z.t) wrap            (* 42              *)
+| E_Int       of int_literal                    (* 42              *)
 | E_Leq       of leq bin_op reg                 (* x <= y          *)
 | E_List      of expr compound reg              (* list [4;5]      *)
 | E_Lt        of lt bin_op reg                  (* x < y           *)
@@ -567,8 +578,8 @@ and expr =
 | E_Mod       of kwd_mod bin_op reg             (* x mod n         *)
 | E_ModPath   of expr module_path reg           (* M.N.x           *)
 | E_Mult      of times bin_op reg               (* x * y           *)
-| E_Mutez     of (lexeme * Int64.t) wrap        (* 5mutez          *)
-| E_Nat       of (lexeme * Z.t) wrap            (* 4n              *)
+| E_Mutez     of mutez_literal                  (* 5mutez          *)
+| E_Nat       of nat_literal                    (* 4n              *)
 | E_Neg       of minus un_op reg                (* -a              *)
 | E_Neq       of neq bin_op reg                 (* x =/= y         *)
 | E_Nil       of kwd_nil                        (* nil             *)
@@ -579,13 +590,13 @@ and expr =
 | E_Record    of record_expr                    (* record [x=7]    *)
 | E_Set       of expr compound reg              (* set [x; 1]      *)
 | E_SetMem    of set_membership reg             (* x contains y    *)
-| E_String    of lexeme wrap                    (* "string"        *)
+| E_String    of string_literal                 (* "string"        *)
 | E_Sub       of minus bin_op reg               (* a - b           *)
 | E_Tuple     of expr tuple                     (* (1, x)          *)
 | E_Typed     of typed_expr par reg             (* (x : int)       *)
 | E_Update    of update reg                     (* x with y        *)
 | E_Var       of variable                       (* x               *)
-| E_Verbatim  of lexeme wrap                    (* {|foo|}         *)
+| E_Verbatim  of verbatim_literal               (* {|foo|}         *)
 
 (* Map binding *)
 
@@ -613,7 +624,7 @@ and projection = {
 
 and selection =
   FieldName of field_name
-| Component of (lexeme * Z.t) wrap
+| Component of int_literal
 
 (* Binary and unary arithmetic operators *)
 
@@ -681,21 +692,6 @@ and update = {
 }
 
 (* PROJECTING REGIONS *)
-
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
-let nsepseq_to_region to_region (hd, tl) =
-  Region.cover (to_region hd) (last (to_region <@ snd) tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
