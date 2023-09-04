@@ -45,7 +45,7 @@ import Test.Util.Golden
 basicCaseRun :: Lang -> ContractRunData
 basicCaseRun dialect = ContractRunData
   { crdProgram = contractsDir </> "functions-visiting" <.> langExtension dialect
-  , crdEntrypoint = Nothing
+  , crdModuleName = Nothing
   , crdParam = ()
   , crdStorage = 0 :: Integer
   }
@@ -77,7 +77,7 @@ test_Seq_node_doesn't_have_location =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "seq-nodes-without-locations.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
@@ -94,7 +94,7 @@ test_constant_as_statement =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "constant_as_statement.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
@@ -111,7 +111,7 @@ test_top_level_function_with_preprocessor_don't_have_locations =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "contract-with-preprocessor.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
@@ -128,7 +128,7 @@ test_big_tuples_have_correct_evaluated_value =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "tuple-with-size-five.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
@@ -145,14 +145,14 @@ test_values_inside_switch_and_match_with_are_statements =
   testGroup "Values inside \"switch\" and \"match ... with\" are statements" $
     [ ContractRunData
       { crdProgram = contractsDir </> "statement-in-match-branch.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
 
     , ContractRunData
       { crdProgram = contractsDir </> "statements-in-case-branch.jsligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = [mt|Variant1|]
       , crdStorage = 0 :: Integer
       }
@@ -169,7 +169,7 @@ test_local_function_assignments_are_statements =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "local-function-assignments.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = 0 :: Integer
       }
@@ -186,7 +186,7 @@ test_record_update_is_statement =
   let
     runData = ContractRunData
       { crdProgram = contractsDir </> "record-update-is-statement.mligo"
-      , crdEntrypoint = Nothing
+      , crdModuleName = Nothing
       , crdParam = ()
       , crdStorage = ((0 :: Integer, [mt|"str"|]), False)
       }
@@ -204,7 +204,7 @@ test_Module_entrypoints = testGroup "Module entrypoints"
     "StepIn"
     ContractRunData
       { crdProgram = contractsDir </> "module-entrypoints.mligo"
-      , crdEntrypoint = Just "IncDec.$main"
+      , crdModuleName = Just "IncDec.$main"
       , crdParam = param
       , crdStorage = 100 :: Integer
       }
@@ -347,19 +347,19 @@ test_StepBackReversed :: IO TestTree
 test_StepBackReversed = fmap (testGroup "Step back is the opposite to Next") $
   [ ContractRunData
     { crdProgram = contractsDir </> "simple-ops.mligo"
-    , crdEntrypoint = Nothing
+    , crdModuleName = Nothing
     , crdParam = ()
     , crdStorage = 0 :: Integer
     }
   , ContractRunData
     { crdProgram = contractsDir </> "functions-assignments.mligo"
-    , crdEntrypoint = Nothing
+    , crdModuleName = Nothing
     , crdParam = ()
     , crdStorage = 0 :: Integer
     }
   , ContractRunData
     { crdProgram = contractsDir </> "module_contracts" </> "importer.mligo"
-    , crdEntrypoint = Nothing
+    , crdModuleName = Nothing
     , crdParam = ()
     , crdStorage = 0 :: Integer
     }

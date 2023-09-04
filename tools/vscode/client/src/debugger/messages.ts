@@ -60,22 +60,22 @@ export interface SetProgramPathArguments {
 
 export interface SetProgramPathResponse extends DebugProtocol.Response {
   body: {
-    entrypoints: [string, string][]
+    moduleNames: [string, string][]
   }
 }
 
-// ValidateEntrypoint //
+// ValidateModuleName //
 
-export interface ValidateEntrypointRequest extends DebugProtocol.Request {
-  command: 'validateEntrypoint'
-  arguments: ValidateEntrypointArguments
+export interface ValidateModuleNameRequest extends DebugProtocol.Request {
+  command: 'validateModuleName'
+  arguments: ValidateModuleNameArguments
 }
 
-export interface ValidateEntrypointArguments {
-  entrypoint: string
+export interface ValidateModuleNameArguments {
+  moduleName: string
 }
 
-export interface ValidateEntrypointResponse extends DebugProtocol.Response {
+export interface ValidateModuleNameResponse extends DebugProtocol.Response {
   body?: {
     errorMessage: string
   }
@@ -89,7 +89,7 @@ export interface ValidateValueArguments {
   value: string
   category: ValidateValueCategory
   valueLang: InputValueLang
-  pickedMichelsonEntrypoint?: string
+  pickedEntrypoint: string
 }
 
 export interface ValidateValueRequest extends DebugProtocol.Request {
@@ -111,7 +111,7 @@ export interface GetContractMetadataRequest extends DebugProtocol.Request {
 }
 
 export interface GetContractMetadataArguments {
-  entrypoint: string | null
+  moduleName: string
 }
 
 export interface GetContractMetadataResponse extends DebugProtocol.Response {
@@ -121,7 +121,7 @@ export interface GetContractMetadataResponse extends DebugProtocol.Response {
 // ValidateConfig //
 
 export interface ValidateConfigArguments {
-  michelsonEntrypoint?: string
+  entrypoint: string
   parameter: string
   parameterLang: InputValueLang
   storage: string

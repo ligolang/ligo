@@ -96,7 +96,6 @@ instance Hashable PreLigoConvertInfo where
 data LigoLanguageServerState = LigoLanguageServerState
   { lsProgram :: Maybe FilePath
   , lsCollectedRunInfo :: Maybe CollectedRunInfo
-  , lsEntrypoint :: Maybe String  -- ^ @main@ method to use
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
   , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
@@ -122,27 +121,29 @@ instance Buildable LigoLanguageServerState where
 withMichelsonEntrypoint
   :: (MonadIO m)
   => T.Contract param st
-  -> Maybe Text
+  -> Text
   -> (forall arg. SingI arg => T.Notes arg -> T.EntrypointCallT param arg -> m a)
   -> m a
-withMichelsonEntrypoint contract@T.Contract{} mEntrypoint cont = do
+withMichelsonEntrypoint contract@T.Contract{} entrypoint cont = do
   let noParseEntrypointErr = ConfigurationException .
         [int|m|Could not parse entrypoint: #{id}|]
-  michelsonEntrypoint <- case mEntrypoint of
-    Nothing -> pure U.DefEpName
-    -- extension may return default entrypoints as "default"
-    Just "default" -> pure U.DefEpName
-    Just ep -> U.buildEpName (toText $ firstLetterToLowerCase $ toString ep)
+  michelsonEntrypoint <- case entrypoint of
+    ep -> U.buildEpName (toText $ firstLetterToLowerCase $ toString ep)
       & first noParseEntrypointErr
       & fromEither
 
   let noEntrypointErr = ConfigurationException $
         [int||Entrypoint `#{michelsonEntrypoint}` not found|]
-  T.MkEntrypointCallRes notes call <-
-    T.mkEntrypointCall michelsonEntrypoint (cParamNotes contract)
-    & maybe (throwIO noEntrypointErr) pure
 
-  cont notes call
+  when (U.isDefEpName michelsonEntrypoint) do
+    throwIO noEntrypointErr
+
+  do
+    T.MkEntrypointCallRes notes call <-
+      T.mkEntrypointCall michelsonEntrypoint (cParamNotes contract)
+      & maybe (throwIO noEntrypointErr) pure
+
+    cont notes call
   where
     -- LIGO has constructors starting from capital letters,
     -- however in Michelson they appear as field annotations starting from

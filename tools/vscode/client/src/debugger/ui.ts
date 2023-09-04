@@ -232,7 +232,7 @@ export async function createRememberingQuickPick(
 ): Promise<Maybe<string>> {
 
   const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
-  const entrypoints = currentFilePath && contractMetadata.michelsonEntrypoints
+  const entrypoints = currentFilePath && contractMetadata.entrypoints
   const pickerOptions: QuickPickItem[] =
     entrypoints ?
       Object.entries(entrypoints).map(([name, _michelsonType]) => {
@@ -308,43 +308,38 @@ export async function getConfigPath(context: LigoDebugContext): Promise<Maybe<st
   return result.pickedConfigPath;
 }
 
-export async function getEntrypoint(
+export async function getModuleName(
   context: LigoDebugContext,
-  validateEntrypoint: (entrypoint: string) => Promise<Maybe<string>>,
-  entrypointsList: [string, string][]
+  validateModuleName: (entrypoint: string) => Promise<Maybe<string>>,
+  moduleNamesList: [string, string][]
 ): Promise<Maybe<string>> {
 
   interface State {
-    pickedEntrypoint?: string;
+    pickedModuleName?: string;
   }
 
-  async function askForEntrypoint(input: MultiStepInput<State>, state: Ref<State>) {
+  async function askForModuleName(input: MultiStepInput<State>, state: Ref<State>) {
     type MarkedQuickPickItem = { realName: string } & QuickPickItem;
 
-    const entrypoints: MarkedQuickPickItem[] = entrypointsList.map(([ep, pretty]) => ({ realName: ep, label: pretty }));
+    const moduleNames: MarkedQuickPickItem[] = moduleNamesList.map(([modName, pretty]) => ({ realName: modName, label: pretty }));
 
-    const remembered = context.workspaceState.lastEntrypoint();
+    const remembered = context.workspaceState.lastModuleName();
 
-    if (entrypoints.length <= 1) {
-      if (entrypoints.length === 0) {
-        var msg = "Given contract doesn't have any entrypoints."
-
-        const file = vscode.window.activeTextEditor?.document.uri.fsPath
-        if (isDefined(file) && file.endsWith(".jsligo")) {
-          msg += "\n\nMake sure your main function is declared with `const`, not `let`, and has a type appropriate for an entrypoint."
-        }
+    if (moduleNames.length <= 1) {
+      if (moduleNames.length === 0) {
+        var msg = "Given contract doesn't have any modules."
 
         throw new Error(msg);
       }
-      state.ref.pickedEntrypoint = entrypoints[0].realName;
+      state.ref.pickedModuleName = moduleNames[0].realName;
       return;
     }
 
     let activeItem: Maybe<MarkedQuickPickItem>;
     if (isDefined(remembered.value)) {
-      for (let entrypoint of entrypoints) {
-        if (entrypoint.label === remembered.value) {
-          activeItem = entrypoint;
+      for (let moduleName of moduleNames) {
+        if (moduleName.label === remembered.value) {
+          activeItem = moduleName;
           break;
         }
       }
@@ -352,28 +347,28 @@ export async function getEntrypoint(
 
     const pick: MarkedQuickPickItem = await input.showQuickPick({
       totalSteps: 1,
-      items: entrypoints,
+      items: moduleNames,
       activeItem,
-      placeholder: "Choose an entrypoint to run"
+      placeholder: "Choose a module name to run"
     });
 
-    const validateResult = await validateEntrypoint(pick.realName);
+    const validateResult = await validateModuleName(pick.realName);
     if (validateResult) {
       vscode.window.showWarningMessage(validateResult);
       input.doNotRecordStep();
-      return (input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state);
+      return (input: MultiStepInput<State>, state: Ref<State>) => askForModuleName(input, state);
     } else {
       remembered.value = pick.label;
-      state.ref.pickedEntrypoint = pick.realName;
+      state.ref.pickedModuleName = pick.realName;
     }
   }
 
   const result: State =
     await MultiStepInput.run(
-      (input: MultiStepInput<State>, state: Ref<State>) => askForEntrypoint(input, state), {}
+      (input: MultiStepInput<State>, state: Ref<State>) => askForModuleName(input, state), {}
     );
 
-  return result.pickedEntrypoint;
+  return result.pickedModuleName;
 }
 
 export async function getParameterOrStorage(
@@ -382,9 +377,9 @@ export async function getParameterOrStorage(
   inputBoxType: InputBoxType,
   placeHolder: string,
   prompt: string,
-  ligoEntrypoint: string,
+  moduleName: string,
   contractMetadata: ContractMetadata,
-  michelsonEntrypoint: Maybe<string>
+  entrypoint: string
 ): Promise<Maybe<[string, InputValueLang]>> {
 
   const totalSteps = 1;
@@ -394,11 +389,11 @@ export async function getParameterOrStorage(
   switch (inputBoxType) {
     case "parameter":
       // Consider picked entrypoint in the key to remember value depending on an entrypoint
-      rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint, michelsonEntrypoint);
+      rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, moduleName, entrypoint);
       michelsonType = contractMetadata.parameterMichelsonType;
       break;
     case "storage":
-      rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, ligoEntrypoint);
+      rememberedVal = context.workspaceState.lastParameterOrStorageValue(inputBoxType, moduleName, entrypoint);
       michelsonType = contractMetadata.storageMichelsonType;
       break;
   }
@@ -442,8 +437,8 @@ export async function getParameterOrStorage(
     }
 
     let placeholderExtra: string = ''
-    if (inputBoxType == "parameter" && michelsonEntrypoint) {
-      placeholderExtra = " for '" + michelsonEntrypoint + "' entrypoint";
+    if (inputBoxType == "parameter" && entrypoint) {
+      placeholderExtra = " for '" + entrypoint + "' entrypoint";
     }
 
     const [previousVal, _] = rememberedVal.value

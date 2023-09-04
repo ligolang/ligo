@@ -7,8 +7,8 @@ let contract_env =
   }
 
 let config =
-  { parameter            = "some_param"
-  ; michelson_entrypoint = "default"
-  ; log_dir              = "tmp/contract.log"
-  ; contract_env         = contract_env
+  { parameter    = "some_param"
+  ; module_name  = "default"
+  ; log_dir      = "tmp/contract.log"
+  ; contract_env = contract_env
   }
