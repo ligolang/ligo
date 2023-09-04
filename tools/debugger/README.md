@@ -7,9 +7,9 @@ A debugger for LIGO contracts for VSCode IDE.
 It consists of two parts:
 
 * Haskell backend in [`ligo-debugger`](./ligo-debugger) folder.
-* VSCode extension in [`vscode-plugin`](./vscode-plugin) folder.
+* VSCode extension in [`lsp`](https://gitlab.com/ligolang/lsp/) repository.
 
-See [`vscode-plugin/README.md`](./vscode-plugin/README.md) for more detailed instructions on how to launch and use the debugger.
+See the [Debugger](#debugger) section for more detailed instructions on how to launch and use the debugger.
 
 ## How to build
 

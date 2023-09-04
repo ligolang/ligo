@@ -55,7 +55,7 @@ LIGO libraries can be published to [LIGO's registry](https://packages.ligolang.o
 Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
 
 Pre-requites:
-1. Install esy ([link](https://esy.sh/docs/en/getting-started.html))
+1. Install esy ([link](https://esy.sh/docs/getting-started))
 
 ### Workflow
 
