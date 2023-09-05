@@ -110,8 +110,7 @@ let test_cases =
     ; definition = None
     ; type_definition = true
     }
-    (* FIXME 2024 *)
-    (* ; { test_name = "Registry package imported identifier"
+  ; { test_name = "Registry package imported identifier"
     ; file_with_reference = "contracts/lsp/registry.jsligo"
     ; reference = Position.create ~line:8 ~character:20
     ; file_with_definition =
@@ -124,7 +123,7 @@ let test_cases =
              ~file_path:(Filename.concat "lib" "bigarray.mligo")
     ; definition = Some (interval 27 4 11)
     ; type_definition = false
-    } *)
+    }
   ]
 
 
