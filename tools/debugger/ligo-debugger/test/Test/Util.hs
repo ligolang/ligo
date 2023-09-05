@@ -274,7 +274,7 @@ data ContractRunData =
   )
   => ContractRunData
   { crdProgram :: FilePath
-  , crdEntrypoint :: Maybe Text
+  , crdModuleName :: Maybe Text
   , crdParam :: param
   , crdStorage :: st
   }
@@ -294,9 +294,9 @@ mkSnapshotsForImpl
   -> Maybe RemainingSteps
   -> ContractRunData
   -> IO (Set SourceLocation, InterpretHistory (InterpretSnapshot 'Unique), LigoType, LigoTypesVec)
-mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mEntrypoint (param :: param) (st :: st)) = do
-  let entrypoint = mEntrypoint ?: "$main"
-  ligoMapper <- compileLigoContractDebug (mkEntrypointName $ toText entrypoint) file
+mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mModuleName (param :: param) (st :: st)) = do
+  let moduleName = mModuleName ?: "$main"
+  ligoMapper <- compileLigoContractDebug (mkModuleName $ toText moduleName) file
   (exprLocs, T.SomeContract (contract@T.Contract{} :: T.Contract cp' st'), allFiles, lambdaLocs, entrypointType, ligoTypesVec) <-
     case readLigoMapper ligoMapper of
       Right v -> pure v

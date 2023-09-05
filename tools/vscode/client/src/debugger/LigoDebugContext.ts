@@ -4,7 +4,7 @@
 // Utilities for managing debugger context.
 
 import * as vscode from 'vscode';
-import { Maybe, isDefined, InputBoxType } from './base'
+import { Maybe, isDefined, InputBoxType, InputValueLang } from './base'
 
 // Our wrapper over ExtensionContext that provides custom set of operations.
 export class LigoDebugContext {
@@ -85,20 +85,17 @@ export class LigoDebugLocalStorage extends AbstractLigoDebugStorage {
     super(state);
   }
 
-  lastEntrypoint(): ValueAccess<string> {
-    return this.access("quickpick", "entrypoint")
+  lastModuleName(): ValueAccess<string> {
+    return this.access("quickpick", "module", "name");
   }
 
   lastConfigPath(): ValueAccess<string> {
     return this.access("inputbox", "config", "path");
   }
 
-  lastParameterOrStorageValue(type: "parameter", entrypoint: string, michelsonEntrypoint?: string)
-    : ValueAccess<[string, InputValueType]>;
-  lastParameterOrStorageValue(type: "storage", entrypoint: string): ValueAccess<[string, InputValueType]>;
-  lastParameterOrStorageValue(type: InputBoxType, entrypoint: string, michelsonEntrypoint?: string)
-    : ValueAccess<[string, InputValueType]> {
-    return this.access("quickpick", "switch", "button", type, entrypoint, michelsonEntrypoint)
+  lastParameterOrStorageValue(type: InputBoxType, moduleName: string, entrypoint: string)
+    : ValueAccess<[string, InputValueLang]> {
+    return this.access("quickpick", "switch", "button", type, moduleName, entrypoint)
   }
 
   askedForLigoConfig(): ValueAccess<boolean> {

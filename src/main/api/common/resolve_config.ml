@@ -42,8 +42,8 @@ type config =
   { parameter : evaluated_michelson option
   ; storage : evaluated_michelson option
   ; program : string option
+  ; module_name : string option
   ; entrypoint : string option
-  ; michelson_entrypoint : string option
   ; log_dir : string option
   ; contract_env : contract_env option
   }
@@ -153,12 +153,11 @@ let resolve_config ~raise ~options syntax init_file =
   let parameter = Option.map ~f:fst @@ get_field_opt "parameter" in
   let storage = Option.map ~f:fst @@ get_field_opt "storage" in
   let program = Option.map ~f:(extract_string "program") @@ get_field_opt "program" in
+  let module_name =
+    Option.map ~f:(extract_string "module_name") @@ get_field_opt "module_name"
+  in
   let entrypoint =
     Option.map ~f:(extract_string "entrypoint") @@ get_field_opt "entrypoint"
-  in
-  let michelson_entrypoint =
-    Option.map ~f:(extract_string "michelson_entrypoint")
-    @@ get_field_opt "michelson_entrypoint"
   in
   let log_dir = Option.map ~f:(extract_string "log_dir") @@ get_field_opt "log_dir" in
   let contract_env =
@@ -210,7 +209,7 @@ let resolve_config ~raise ~options syntax init_file =
     in
     return { now; level; sender; source; self; amount; balance; chain_id; voting_powers }
   in
-  { parameter; storage; program; entrypoint; michelson_entrypoint; log_dir; contract_env }
+  { parameter; storage; program; module_name; entrypoint; log_dir; contract_env }
 
 
 let config_format : config Display.format =

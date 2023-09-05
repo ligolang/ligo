@@ -23,7 +23,7 @@ test_test = minor <$>
       let file = contractsDir </> "simple-ops-sequence.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 5 :: Integer
             }
@@ -86,7 +86,7 @@ test_test = minor <$>
       let file = modulePath </> "importer.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 5 :: Integer
             }
@@ -382,7 +382,7 @@ test_test = minor <$>
       let nestedFile2 = modulePath </> "imported2.jsligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 5 :: Integer
             }

@@ -18,11 +18,11 @@ let contract_env =
   }
 
 let config =
-  { parameter            = "*parameter value*"
-  ; storage              = "*storage value*"
-  ; program              = "*path to program*"
-  ; entrypoint           = "*entrypoint name*"
-  ; michelson_entrypoint = "*Michelson entrypoint name*"
-  ; log_dir              = "*log directory*"
-  ; contract_env         = contract_env
+  { parameter    = "*parameter value*"
+  ; storage      = "*storage value*"
+  ; program      = "*path to program*"
+  ; module_name  = "*module name*"
+  ; entrypoint   = "*entrypoint name*"
+  ; log_dir      = "*log directory*"
+  ; contract_env = contract_env
   }

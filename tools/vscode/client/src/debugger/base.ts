@@ -42,9 +42,9 @@ export function getCommand(str: Maybe<string>): Maybe<string> {
 export interface LigoLaunchRequest {
   noDebug?: boolean
   program?: string
-  michelsonEntrypoint?: string
-  storage?: string
   entrypoint?: string
+  storage?: string
+  moduleName?: string
   parameter?: string
   contractEnv?: LigoContractEnv
 }
@@ -66,14 +66,14 @@ export interface VotingPowers {
   contents: Map<string, number>
 }
 
-export interface MichelsonEntrypoints {
+export interface Entrypoints {
   [entrypoint: string]: string
 }
 
 export interface ContractMetadata {
   parameterMichelsonType: string
   storageMichelsonType: string
-  michelsonEntrypoints: MichelsonEntrypoints
+  entrypoints: Entrypoints
 }
 
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>
@@ -155,7 +155,7 @@ export function getCurrentWorkspacePath(): Maybe<vscode.Uri> {
   return vscode.workspace.workspaceFolders?.[0].uri;;
 }
 
-export function generatedEntrypointName(module: string): string {
+export function generatedModuleName(module: string): string {
   if (module == "") {
     return "$main";
   } else {

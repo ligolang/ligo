@@ -11,8 +11,8 @@ import {
   SetProgramPathResponse,
   ValidateConfigArguments,
   ValidateConfigResponse,
-  ValidateEntrypointArguments,
-  ValidateEntrypointResponse,
+  ValidateModuleNameArguments,
+  ValidateModuleNameResponse,
   ValidateValueArguments,
   ValidateValueResponse,
   SetLigoConfigArguments,
@@ -34,7 +34,7 @@ type LigoSpecificRequest
   | 'initializeLogger'
   | 'setLigoConfig'
   | 'setProgramPath'
-  | 'validateEntrypoint'
+  | 'validateModuleName'
   | 'getContractMetadata'
   | 'validateValue'
   | 'validateConfig'
@@ -101,6 +101,27 @@ function showLargeErrorMessage<S, T extends string>(
   });
 }
 
+export function showErrorWithOpenLaunchJson(message: string) {
+  showLargeErrorMessage(
+    "Launch configuration problem",
+    [message],
+    async _ => {
+      const workspaceFolders: Maybe<readonly vscode.WorkspaceFolder[]> = vscode.workspace.workspaceFolders;
+      if (isDefined(workspaceFolders)) {
+        // Workspace with ligo project
+        let currentWorkspace = workspaceFolders[0];
+        let pathToLaunchJson = vscode.Uri.joinPath(currentWorkspace.uri, ".vscode", "launch.json");
+        vscode.workspace
+          .openTextDocument(pathToLaunchJson)
+          .then(config => {
+            vscode.window.showTextDocument(config);
+          });
+      }
+    },
+    "Open launch.json",
+  );
+}
+
 export function processErrorResponse(response: DebugProtocol.ErrorResponse): void {
   if (!isDefined(response.body.error)) {
     return
@@ -132,24 +153,7 @@ export function processErrorResponse(response: DebugProtocol.ErrorResponse): voi
       return;
 
     case "Configuration":
-      showLargeErrorMessage(
-        "Launch configuration problem",
-        [formattedMessage],
-        async _ => {
-          const workspaceFolders: Maybe<readonly vscode.WorkspaceFolder[]> = vscode.workspace.workspaceFolders;
-          if (isDefined(workspaceFolders)) {
-            // Workspace with ligo project
-            let currentWorkspace = workspaceFolders[0];
-            let pathToLaunchJson = vscode.Uri.joinPath(currentWorkspace.uri, ".vscode", "launch.json");
-            vscode.workspace
-              .openTextDocument(pathToLaunchJson)
-              .then(config => {
-                vscode.window.showTextDocument(config);
-              });
-          }
-        },
-        "Open launch.json",
-      );
+      showErrorWithOpenLaunchJson(formattedMessage);
       return;
   }
 
@@ -350,7 +354,7 @@ export class LigoProtocolClient extends ProtocolClient {
   sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
   sendMsg(command: 'setLigoConfig', args: SetLigoConfigArguments): Promise<SetLigoConfigResponse>
   sendMsg(command: 'setProgramPath', args: SetProgramPathArguments): Promise<SetProgramPathResponse>
-  sendMsg(command: 'validateEntrypoint', args: ValidateEntrypointArguments): Promise<ValidateEntrypointResponse>
+  sendMsg(command: 'validateModuleName', args: ValidateModuleNameArguments): Promise<ValidateModuleNameResponse>
   sendMsg(command: 'getContractMetadata', args: GetContractMetadataArguments): Promise<GetContractMetadataResponse>
   sendMsg(command: 'validateValue', args: ValidateValueArguments): Promise<ValidateValueResponse>
   sendMsg(command: 'validateConfig', args: ValidateConfigArguments): Promise<ValidateConfigResponse>

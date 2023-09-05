@@ -274,14 +274,14 @@
                                 "description": "Whether to automatically stop after launch",
                                 "default": true
                             },
-                            "entrypoint": {
+                            "moduleName": {
                                 "type": "string",
-                                "description": "Module entry point of the contract",
+                                "description": "Module to compile the contract",
                                 "default": "(*@AskOnStart@*)"
                             },
-                            "michelsonEntrypoint": {
+                            "entrypoint": {
                                 "type": "string",
-                                "description": "Michelson entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
+                                "description": "Entrypoint to call. If specified, as parameter you should enter argument of this entrypoint.",
                                 "default": "(*@AskOnStart@*)"
                             },
                             "parameter": {
@@ -369,6 +369,7 @@
                         "request": "launch",
                         "name": "Launch LIGO",
                         "logDir": "",
+                        "moduleName": "(*@AskOnStart@*)",
                         "entrypoint": "(*@AskOnStart@*)",
                         "parameter": "(*@AskOnStart@*)",
                         "storage": "(*@AskOnStart@*)"
@@ -382,9 +383,10 @@
                             "type": "ligo",
                             "request": "launch",
                             "name": "Launch ${1:LIGO contract}",
-                            "entrypoint": "${2|(*@AskOnStart@*)|}",
-                            "parameter": "${3|(*@AskOnStart@*)|}",
-                            "storage": "${4|(*@AskOnStart@*)|}"
+                            "moduleName": "${2|(*@AskOnStart@*)|}",
+                            "entrypoint": "${3|(*@AskOnStart@*)|}",
+                            "parameter": "${4|(*@AskOnStart@*)|}",
+                            "storage": "${5|(*@AskOnStart@*)|}"
                         }
                     },
                     {
@@ -397,8 +399,8 @@
                             "logDir": "",
                             "program": "${2|(*@CurrentFile@*)|}",
                             "stopOnEntry": true,
-                            "michelsonEntrypoint": "${3|(*@AskOnStart@*),default|}",
-                            "entrypoint": "${4|(*@AskOnStart@*)|}",
+                            "entrypoint": "${3|(*@AskOnStart@*)|}",
+                            "moduleName": "${4|(*@AskOnStart@*)|}",
                             "parameter": "${5|(*@AskOnStart@*)|}",
                             "parameterLang": "LIGO",
                             "storage": "${6|(*@AskOnStart@*)|}",

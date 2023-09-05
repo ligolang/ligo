@@ -52,7 +52,7 @@ import Duplo
   (Apply, Cofree ((:<)), Comonad (extract), Element, Lattice (leq), Tree, inject, layer, text)
 
 import Language.LIGO.AST.Pretty hiding (Doc)
-import Language.LIGO.AST.Skeleton hiding (Name)
+import Language.LIGO.AST.Skeleton hiding (ModuleName, Name)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Diagnostic
@@ -375,13 +375,13 @@ data LigoMapper u = LigoMapper
   , lmMichelsonCode :: Micheline.Expression
   }
 
-data EntrypointName = EntrypointName
+data ModuleName = ModuleName
   { enModule :: Text
   , enName :: Text
   } deriving stock (Show, Eq, Ord, Generic, Data)
     deriving anyclass (NFData)
 
-newtype EntrypointsList = EntrypointsList { unEntrypoints :: [EntrypointName] }
+newtype ModuleNamesList = ModuleNamesList { unModuleNamesList :: [ModuleName] }
   deriving newtype (Buildable)
 
 -- | Node representing ligo error with additional meta
@@ -782,15 +782,15 @@ instance MessagePack LigoTypeConstant where
 -- 1. someFoo -> someFoo
 -- 2. SomeModule.$main -> SomeModule
 -- 3. $main -> Current module
-instance Buildable EntrypointName where
-  build EntrypointName{..}
+instance Buildable ModuleName where
+  build ModuleName{..}
     | not (T.null enModule) && enName /= generatedMainName = [int||#{enModule}.#{enName}|]
     | not (T.null enModule) || enName /= generatedMainName =
         [int||#{enModule}#{if enName == generatedMainName then "" else enName}|]
     | otherwise = [int||Current module|]
 
-instance IsString EntrypointName where
-  fromString = mkEntrypointName . toText
+instance IsString ModuleName where
+  fromString = mkModuleName . toText
 
 ----------------------------------------------------------------------------
 -- Pretty
@@ -973,7 +973,7 @@ fromLigoType st = \case
       NameType -> make' . (st,) . TypeName
       NameField FieldSum -> make' . (st,) . Ctor
       NameField FieldProduct -> make' . (st,) . FieldName
-      NameModule -> make' . (st,) . ModuleName
+      NameModule -> make' . (st,) . AST.ModuleName
 
     fromLigoConstant name [] = fromLigoPrimitive NameType name
     fromLigoConstant name params =
@@ -1127,11 +1127,11 @@ buildLigoTypeF typ = case sing @u of
   SUnique -> build typ
   SConcise -> buildType Caml typ
 
-mkEntrypointName :: Text -> EntrypointName
-mkEntrypointName txt =
+mkModuleName :: Text -> ModuleName
+mkModuleName txt =
   let enName = T.takeWhileEnd (/= '.') txt in
   let enModule = T.dropEnd (T.length enName + 1) txt in
-  EntrypointName{..}
+  ModuleName{..}
 
 makeLensesWith postfixLFields ''LigoExposedStackEntry
 makeLensesWith postfixLFields ''LigoIndexedInfo
@@ -1152,10 +1152,10 @@ makeConciseLigoIndexedInfo vec indexedInfo =
     , liiSourceType = readLigoType vec <$> liiSourceType indexedInfo
     }
 
-parseEntrypointsList :: Text -> Maybe EntrypointsList
-parseEntrypointsList (lines -> parts) = do
-  entrypoints <- safeTail >=> safeInit $ parts
-  pure $ EntrypointsList (mkEntrypointName <$> entrypoints)
+parseModuleNamesList :: Text -> Maybe ModuleNamesList
+parseModuleNamesList (lines -> parts) = do
+  moduleNames <- safeTail >=> safeInit $ parts
+  pure $ ModuleNamesList (mkModuleName <$> moduleNames)
   where
     safeTail :: [a] -> Maybe [a]
     safeTail = fmap tail . nonEmpty
