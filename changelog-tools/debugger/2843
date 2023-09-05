@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Made 2 renamings in the LIGO debugger launch configuration:\\n`entrypoint` -> `moduleName`;`michelsonEntrypoint` -> `entrypoint`.\\n\\n"
+merge_request: '2843'
+title: "[Chore] Rename `entrypoint` and `michelsonEntrypoint`"
+type: added
+            
