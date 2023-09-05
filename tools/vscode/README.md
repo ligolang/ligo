@@ -168,10 +168,10 @@ Also some notes:
 
 You can press F5 to start debugging a LIGO contract. Upon the launch of the debugger, you will be asked for a value for the parameter, and a value for the storage. You can provide a LIGO module entrypoint in your `launch.json` with `(*@AskOnStart@*)`. It will ask you to choose an entrypoint for your contract. If you want to hardcode it, then you can write it in this field.
 ```json
-"entrypoint": "(*@AskOnStart@*)" <-- will ask you to choose an entrypoint via quickpick
+"moduleName": "(*@AskOnStart@*)" <-- will ask you to choose an entrypoint via quickpick
 ```
 ```json
-"entrypoint": "Main1" <-- will use "Main1" as module entrypoint
+"moduleName": "Main1" <-- will use "Main1" as module entrypoint
 ```
 
 Use F11 (or press "Step Into") to step through LIGO code in details.
@@ -201,34 +201,24 @@ It is possible to refer to constants declared in the contract and even call func
 
 In case you need to supply a value in the lower-level Michelson format, just use switch button in the top right corner of input box.
 
-### Specifying a Michelson entrypoint
+### Specifying a LIGO entrypoint
 
-When the parameter of your contract has multiple constructors, normally you can just pass something like `Constructor1 5` as a parameter.
-
-In case of nested constructors, it might be simpler to specify the bottom-most constructor name (which generally must be unique across the contract) and its argument.
-The underlying Michelson engine allows for this.
-
-To make it work, set `michelsonEntrypoint` field to the entrypoint name.
-Example:
-
+Entrypoints in LIGO are marked with `@entry` annotation. For example:
 ```ocaml
-type subparameterX =
-  | CallX1 of int
-  | CallX2 of string
+[@entry]
+let increment (a : int) (st : storage) : ret = ...
 
-type parameter =
-  | CallX of subparameterX
-  | CallY
+[@entry]
+let decrement (a : int) (st : storage) : ret = ...
 ```
-
-With such a contract, you can specify in `launch.json`:
-
+If you want to debug a specific entrypoint then you can use `entrypoint` field in `launch.json`. Example:
 ```json
 {
-    "michelsonEntrypoint": "CallX1",
-    "parameter": 5
+  "entrypoint": "increment",
+  "parameter": 42
 }
 ```
+You can omit it or use `(*@AskOnStart@*)`. In both cases, it will ask you for an entrypoint if your contract has more than one.
 
 ### Passing a custom environment
 The debugger supports providing a custom environment for your contracts. You can customize it in the `contractEnv` field. An example of configuration:
@@ -284,13 +274,13 @@ let contract_env =
   }
 
 let config =
-  { parameter            = "*parameter value*"
-  ; storage              = "*storage value*"
-  ; program              = "*path to program*"
-  ; entrypoint           = "*entrypoint name*"
-  ; michelson_entrypoint = "*Michelson entrypoint name*"
-  ; log_dir              = "*log directory*"
-  ; contract_env         = contract_env
+  { parameter    = "*parameter value*"
+  ; storage      = "*storage value*"
+  ; program      = "*path to program*"
+  ; module_name  = "*module name*"
+  ; entrypoint   = "*entrypoint name*"
+  ; log_dir      = "*log directory*"
+  ; contract_env = contract_env
   }
 ```
 Note, that all these fields are optional and you can omit them. The debugger will ask for them if they're needed (e.g. an entrypoint or parameter). The only required object here is `config`.
@@ -314,12 +304,12 @@ Use `Ctrl + F10` (`Cmd + F10` on Mac) to switch between the last and currently s
 
 ## FAQ
 
+### I've set `"moduleName": "(*@AskOnStart@*)"` in the configuration, and I'm still not asked for a module name when starting a debug session.
+
+We automatically detect the list of module names in the file, and in case it contains only one, we skip the selection stage.
+Make sure that your module name is a valid one.
+
 ### I've set `"entrypoint": "(*@AskOnStart@*)"` in the configuration, and I'm still not asked for an entrypoint when starting a debug session.
-
-We automatically detect the list of entrypoints in the file, and in case it contains only one entrypoint, we skip the selection stage.
-Make sure that your function is a valid entrypoint.
-
-### I've set `"michelsonEntrypoint": "(*@AskOnStart@*)"` in the configuration, and I'm still not asked for a Michelson entrypoint when starting a debug session.
 
 We automatically detect the list of entrypoints in the contract, and in case it contains only one entrypoint, we skip the selection stage.
 

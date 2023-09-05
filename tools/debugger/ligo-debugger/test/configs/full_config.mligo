@@ -14,11 +14,11 @@ let contract_env =
   }
 
 let config =
-  { parameter            = "some_param"
-  ; storage              = "some_storage"
-  ; program              = "main.mligo"
-  ; entrypoint           = "main"
-  ; michelson_entrypoint = "default"
-  ; log_dir              = "tmp/contract.log"
-  ; contract_env         = contract_env
+  { parameter    = "some_param"
+  ; storage      = "some_storage"
+  ; program      = "main.mligo"
+  ; entrypoint   = "main"
+  ; module_name  = "default"
+  ; log_dir      = "tmp/contract.log"
+  ; contract_env = contract_env
   }

@@ -15,13 +15,13 @@ const contract_env =
   }
 
 export const config =
-  { parameter            : "some_param"
-  , storage              : "some_storage"
+  { parameter    : "some_param"
+  , storage      : "some_storage"
   // all these tests should return the same config.
   // So, program here has .mligo ext.
-  , program              : "main.mligo"
-  , entrypoint           : "main"
-  , michelson_entrypoint : "default"
-  , log_dir              : "tmp/contract.log"
-  , contract_env         : contract_env
+  , program      : "main.mligo"
+  , entrypoint   : "main"
+  , module_name  : "default"
+  , log_dir      : "tmp/contract.log"
+  , contract_env : contract_env
   }

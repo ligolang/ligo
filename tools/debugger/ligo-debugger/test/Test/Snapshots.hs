@@ -59,7 +59,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -190,7 +190,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "not-main-entry-point.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Just "not_main"
+            , crdModuleName = Just "not_main"
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -211,7 +211,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "simple-ops.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 42 :: Integer
               }
@@ -237,7 +237,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "match-on-some.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = Just (5 :: Integer)
             }
@@ -256,7 +256,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "shadowing.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 4 :: Integer
             }
@@ -326,7 +326,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let nestedFile2 = modulePath </> "imported2.jsligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 10 :: Integer
             }
@@ -396,7 +396,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "not-inlined-fst.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -418,7 +418,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "funcs-and-vars-no-inline.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 4 :: Integer
             }
@@ -476,7 +476,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "built-ins.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -513,7 +513,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "poly.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -549,7 +549,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "functions-assignments.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -580,7 +580,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "statement-visiting.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -601,7 +601,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file2 = contractsDir </> "statement-visiting.jsligo"
       let runData2 = ContractRunData
             { crdProgram = file2
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 3 :: Integer
             }
@@ -625,7 +625,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "infinite_contract.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 42 :: Integer
             }
@@ -656,7 +656,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "noop.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -675,7 +675,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "if.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 4 :: Integer
               }
@@ -722,7 +722,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "bool.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = 5 :: Integer
               , crdStorage = False
               }
@@ -749,7 +749,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "if.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 6 :: Integer
               }
@@ -781,7 +781,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "variables-in-pattern-match.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -806,7 +806,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "recursive.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -824,7 +824,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "local-function.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -843,7 +843,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "function-calling-function.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -862,14 +862,14 @@ test_Snapshots = testGroup "Snapshots collection"
 
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = L.mkLambda $ L.unpair @_ @_ @'[] L.# L.add @Integer @Integer
             , crdStorage = 0 :: Integer
             }
 
       let runDataFailing = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = L.mkLambda $
                 L.drop L.# L.push [L.mt|Stick bugged lol|] L.# L.failWith
                   :: L.Lambda (Integer, Integer) Integer
@@ -904,7 +904,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -945,7 +945,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "two-functions-with-main-name.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -971,7 +971,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "apply.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -990,7 +990,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "complex-apply.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1012,7 +1012,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "curry.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1038,7 +1038,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "curry-inside-lambda.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1071,7 +1071,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "advanced-curry.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1094,7 +1094,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "constant-assignment.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1126,7 +1126,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "computations-in-list.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = [] :: [Integer]
             }
@@ -1158,7 +1158,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "complex-storage.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = ((0, 0), [mt|""|]) :: ((Integer, Natural), MText)
               }
@@ -1200,7 +1200,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "sum-type.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = Left 42 :: Either Integer ()
               , crdStorage = 0 :: Integer
               }
@@ -1229,7 +1229,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "complex-function-type.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1259,7 +1259,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "polymorphic-function.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1295,7 +1295,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "nested-structure-type.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1333,7 +1333,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "sum-with-record-type.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1376,7 +1376,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "never-type.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1402,7 +1402,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "types-from-stdlib.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1452,7 +1452,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "polymorphic-types.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1488,7 +1488,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "shadowed-types.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1517,7 +1517,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "tezos-types.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1571,7 +1571,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "layout-comb-types.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1606,7 +1606,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "builtins-locations.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 10 :: Integer
             }
@@ -1691,7 +1691,7 @@ test_Snapshots = testGroup "Snapshots collection"
       let file = contractsDir </> "contract-with-unit.mligo"
       let runData = ContractRunData
             { crdProgram = file
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1736,7 +1736,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "last-statement-in-function.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1749,7 +1749,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "last-statement-in-let-in.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1763,7 +1763,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "statement-in-match-branch.mligo"
         let runData = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1776,7 +1776,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "statements-in-if.mligo"
         let runData1 = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 0 :: Integer
               }
@@ -1788,7 +1788,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         let runData2 = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = ()
               , crdStorage = 15 :: Integer
               }
@@ -1802,7 +1802,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let file = contractsDir </> "statements-in-case-branch.jsligo"
         let runData1 = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = [L.mt|Variant1|]
               , crdStorage = 0 :: Integer
               }
@@ -1813,7 +1813,7 @@ test_Snapshots = testGroup "Snapshots collection"
 
         let runData2 = ContractRunData
               { crdProgram = file
-              , crdEntrypoint = Nothing
+              , crdModuleName = Nothing
               , crdParam = [L.mt|Variant2|]
               , crdStorage = 0 :: Integer
               }
@@ -1826,7 +1826,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "EventExpressionPreview is skipped after EventFacedStatement" \step -> do
       let runData = ContractRunData
             { crdProgram = contractsDir </> "evaluated-event-after-statement.mligo"
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1863,7 +1863,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "Decompile values in snapshot" \step -> do
       let runData = ContractRunData
             { crdProgram = contractsDir </> "complex_value_decompilation.mligo"
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1903,7 +1903,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "Check max steps" \step -> do
       let runData = ContractRunData
             { crdProgram = contractsDir </> "simple-ops.mligo"
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1925,7 +1925,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "Check new storage in LIGO format" \step -> do
       let runData = ContractRunData
             { crdProgram = contractsDir </> "complex-storage.mligo"
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = ((0 :: Integer, 0 :: Natural), [mt|!|])
             }
@@ -1963,7 +1963,7 @@ test_Snapshots = testGroup "Snapshots collection"
   , testCaseSteps "Check evaluated record in LIGO format" \step -> do
       let runData = ContractRunData
             { crdProgram = contractsDir </> "record-evaluated.mligo"
-            , crdEntrypoint = Nothing
+            , crdModuleName = Nothing
             , crdParam = ()
             , crdStorage = 0 :: Integer
             }
@@ -1998,15 +1998,15 @@ test_Snapshots = testGroup "Snapshots collection"
 
 -- | Special options for checking contract.
 data CheckingOptions = CheckingOptions
-  { coEntrypoint :: Maybe EntrypointName
+  { coModuleName           :: Maybe ModuleName
   , coCheckSourceLocations :: Bool
   , coCheckEntrypointsList :: Bool
   } deriving stock (Show)
 
-coEntrypointL :: Lens' CheckingOptions (Maybe EntrypointName)
-coEntrypointL = lens
-  do \CheckingOptions{..} -> coEntrypoint
-  do \(CheckingOptions _ locs eps) ep -> CheckingOptions ep locs eps
+coModuleNameL :: Lens' CheckingOptions (Maybe ModuleName)
+coModuleNameL = lens
+  do \CheckingOptions{..} -> coModuleName
+  do \(CheckingOptions _ locs eps) modName -> CheckingOptions modName locs eps
 
 coCheckSourceLocationsL :: Lens' CheckingOptions Bool
 coCheckSourceLocationsL = lens
@@ -2016,7 +2016,7 @@ coCheckSourceLocationsL = lens
 instance Default CheckingOptions where
   def =
     CheckingOptions
-      { coEntrypoint = Nothing
+      { coModuleName           = Nothing
       , coCheckSourceLocations = True
       , coCheckEntrypointsList = True
       }
@@ -2035,7 +2035,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
 
       ligoMapper <-
         compileLigoContractDebug
-          (fromMaybe "$main" coEntrypoint)
+          (fromMaybe "$main" coModuleName)
           (contractsDir </> contractName)
 
       (locations, _, _, _, _, _) <-
@@ -2055,7 +2055,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
               assertFailure [int||Unexpected source location in loc field of #{srcLoc} in contract #{contractName}|]
 
       when coCheckEntrypointsList do
-        try @_ @SomeException (getAvailableEntrypoints (contractsDir </> contractName)) >>= \case
+        try @_ @SomeException (getAvailableModules (contractsDir </> contractName)) >>= \case
           Right _ -> pass
           Left exc -> do
             assertFailure [int||Something unexpected happened with contract #{contractName}:
@@ -2071,19 +2071,19 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       , ("self", def & coCheckSourceLocationsL .~ False)
       , ("iterate-big-map", def & coCheckSourceLocationsL .~ False)
       , ("big-map-storage", def & coCheckSourceLocationsL .~ False)
-      , ("two-entrypoints", def & coEntrypointL ?~ "Main1.$main")
+      , ("two-module-names", def & coModuleNameL ?~ "Main1.$main")
       , ("if-no-else", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("statement-visiting", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("computations-in-list", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("complex-function-type", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("builtins-locations", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
-      , ("module-entrypoints", def & coEntrypointL ?~ "IncDec.$main")
+      , ("module-entrypoints", def & coModuleNameL ?~ "IncDec.$main")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.
     badContracts :: [FilePath]
     badContracts = combine contractsDir <$>
-      [ "no-entrypoint.mligo" -- this file doesn't have any entrypoint
+      [ "no-modules.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported.mligo" -- this file doesn't have any entrypoint
       , "module_contracts" </> "imported2.jsligo" -- this file doesn't have any entrypoint
       , "malformed.mligo" -- incorrect contract

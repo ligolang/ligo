@@ -11,7 +11,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoInitializeLoggerRequest (..)
   , LigoSetLigoConfigRequest (..)
   , LigoSetProgramPathRequest (..)
-  , LigoValidateEntrypointRequest (..)
+  , LigoValidateModuleNameRequest (..)
   , LigoGetContractMetadataRequest (..)
   , LigoValidateValueRequest (..)
   , LigoValidateConfigRequest (..)
@@ -47,14 +47,14 @@ data LigoLaunchRequest = LigoLaunchRequest
     -- | Path to LIGO source file.
   , program             :: Maybe FilePath
 
-    -- | Name of the michelson entrypoint to debug.
-  , michelsonEntrypoint :: Maybe Text
+    -- | Name of the entrypoint to debug.
+  , entrypoint          :: Maybe Text
 
     -- | Storage value for contract.
   , storage             :: Maybe Text
 
-    -- | Entry point of the contract (@main@ method).
-  , entrypoint          :: Maybe Text
+    -- | Module name to compile the contract.
+  , moduleName          :: Maybe Text
 
     -- | Parameter value for contract.
   , parameter           :: Maybe Text
@@ -99,36 +99,36 @@ data LigoSetProgramPathRequest = LigoSetProgramPathRequest
   { program :: FilePath
   } deriving stock (Eq, Show, Generic)
 
-data LigoValidateEntrypointRequest = LigoValidateEntrypointRequest
-  { entrypoint :: Text
+data LigoValidateModuleNameRequest = LigoValidateModuleNameRequest
+  { moduleName :: Text
   } deriving stock (Eq, Show, Generic)
 
 data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
-  { entrypoint :: Text
-    -- ^ LIGO entrypoint to be used.
+  { moduleName :: Text
+    -- ^ LIGO module name to be used.
   } deriving stock (Eq, Show, Generic)
 
 data LigoValidateValueRequest = LigoValidateValueRequest
-  { value                     :: Text
+  { value            :: Text
     -- ^ Value to check.
-  , category                  :: Text
+  , category         :: Text
     -- ^ Category of the value (e.g. @parameter@).
-  , valueLang                 :: Text
+  , valueLang        :: Text
     -- ^ Language of value (@LIGO@ or @Michelson@)
-  , pickedMichelsonEntrypoint :: Maybe Text
-    -- ^ Special michelson entrypoint that will be used.
+  , pickedEntrypoint :: Text
+    -- ^ Special @LIGO@ entrypoint that will be used.
   } deriving stock (Eq, Show, Generic)
 
 data LigoValidateConfigRequest = LigoValidateConfigRequest
-  { michelsonEntrypoint :: Maybe Text
-  , parameter           :: Text
-  , parameterLang       :: Text
-  , storage             :: Text
-  , storageLang         :: Text
+  { entrypoint    :: Text
+  , parameter     :: Text
+  , parameterLang :: Text
+  , storage       :: Text
+  , storageLang   :: Text
   } deriving stock (Eq, Show, Generic)
 
 data LigoSetProgramPathResponse = LigoSetProgramPathResponse
-  { entrypoints :: [(Text, Text)]
+  { moduleNames :: [(Text, Text)]
   } deriving stock (Show, Eq, Generic)
 
 data LigoValidateResponse
@@ -146,7 +146,7 @@ ligoValidateFromEither = \case
 data ContractMetadata = ContractMetadata
   { parameterMichelsonType :: MD.JsonFromBuildable U.ParameterType
   , storageMichelsonType   :: MD.JsonFromBuildable U.Ty
-  , michelsonEntrypoints   :: MD.Entrypoints
+  , entrypoints            :: MD.Entrypoints
   } deriving stock (Eq, Generic, Show)
     deriving Buildable via (GenericBuildable ContractMetadata)
 
@@ -191,7 +191,7 @@ concatMapM (deriveFromJSON Aeson.defaultOptions)
   , ''LigoInitializeLoggerRequest
   , ''LigoSetLigoConfigRequest
   , ''LigoSetProgramPathRequest
-  , ''LigoValidateEntrypointRequest
+  , ''LigoValidateModuleNameRequest
   , ''LigoGetContractMetadataRequest
   , ''LigoValidateValueRequest
   , ''LigoValidateConfigRequest
@@ -217,9 +217,9 @@ instance IsRequest LigoSetProgramPathRequest where
   type CommandFor LigoSetProgramPathRequest = "setProgramPath"
   type ResponseFor LigoSetProgramPathRequest = LigoSetProgramPathResponse
 
-instance IsRequest LigoValidateEntrypointRequest where
-  type CommandFor LigoValidateEntrypointRequest = "validateEntrypoint"
-  type ResponseFor LigoValidateEntrypointRequest = LigoValidateResponse
+instance IsRequest LigoValidateModuleNameRequest where
+  type CommandFor LigoValidateModuleNameRequest = "validateModuleName"
+  type ResponseFor LigoValidateModuleNameRequest = LigoValidateResponse
 
 instance IsRequest LigoGetContractMetadataRequest where
   type CommandFor LigoGetContractMetadataRequest = "getContractMetadata"
