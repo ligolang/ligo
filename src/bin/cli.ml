@@ -626,14 +626,6 @@ let ligorc_path =
   flag ~doc name spec
 
 
-let ligo_bin_path =
-  let open Command.Param in
-  let name = "--ligo-bin-path" in
-  let doc = "PATH path to LIGO executable." in
-  let spec = optional_with_default Caml.Sys.executable_name string in
-  flag ~doc name spec
-
-
 module Api = Ligo_api
 
 let ( <*> ) = Command.Param.( <*> )
@@ -2949,10 +2941,10 @@ let registry_publish =
      registry server"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"publish" in
-  let f ligo_registry ligorc_path project_root dry_run ligo_bin_path skip_analytics () =
+  let f ligo_registry ligorc_path project_root dry_run skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
     @@ fun () ->
-    Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path
+    Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run
   in
   Command.basic
     ~summary
@@ -2962,7 +2954,6 @@ let registry_publish =
     <*> ligorc_path
     <*> project_root
     <*> dry_run_flag
-    <*> ligo_bin_path
     <*> skip_analytics)
 
 

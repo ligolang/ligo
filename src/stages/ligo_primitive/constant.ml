@@ -141,6 +141,7 @@ type constant' =
   | C_TEST_NEW_ACCOUNT [@only_interpreter]
   | C_TEST_BAKER_ACCOUNT [@only_interpreter]
   | C_TEST_REGISTER_DELEGATE [@only_interpreter]
+  | C_TEST_STAKE [@only_interpreter]
   | C_TEST_BAKE_UNTIL_N_CYCLE_END [@only_interpreter]
   | C_TEST_GET_VOTING_POWER [@only_interpreter]
   | C_TEST_GET_TOTAL_VOTING_POWER [@only_interpreter]

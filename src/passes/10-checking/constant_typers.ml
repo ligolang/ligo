@@ -1351,6 +1351,13 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create
              ~mode_annot:[ Checked ]
              ~types:[ t_key_hash ~loc () ^~> t_unit ~loc () ]) )
+    ; ( C_TEST_STAKE
+      , of_type
+          (create
+             ~mode_annot:[ Checked ; Checked ]
+             ~types:[ t_key_hash ~loc ()
+                      ^-> t_mutez ~loc ()
+                      ^~> t_unit ~loc () ]) )
     ; ( C_TEST_BAKE_UNTIL_N_CYCLE_END
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_nat ~loc () ^~> t_unit ~loc () ]) )

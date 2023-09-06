@@ -14,8 +14,6 @@ depends: [
   "core" {>= "v0.15.0" & < "v0.16.0"}
   "core_kernel" { >= "v0.15.0" & < "v0.16.0"}
   # Tooling
-  "js_of_ocaml"
-  "js_of_ocaml-lwt"
   "odoc" { build }
   "ocamlfind" { build }
   "dune" { build & >= "3.6.1" }
@@ -26,7 +24,6 @@ depends: [
   "coq" { build & >= "8.12" & < "8.14" }
   # I/O
   "bos"
-  "tezos-clic"
   "qcheck"
   "terminal_size"
   "pprint"
@@ -41,12 +38,7 @@ depends: [
   "lambda-term"
   "parse-argv"
   "msgpck"
-  # Tezos libs
-  "tezos-base"
-  "tezos-crypto"
-  "tezos-micheline"
   # PPXs
-  "js_of_ocaml-ppx"
   "ppx_deriving"
   "ppx_deriving_yojson"
   "ppx_yojson_conv"
@@ -67,7 +59,6 @@ depends: [
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "2.3.0" }
   # dependencies of vendored dependencies
-  "bls12-381"
   "alcotest-lwt"
   "qcheck-alcotest"
   "irmin-pack"
@@ -77,6 +68,16 @@ depends: [
   "tezos-rust-libs"
   "crunch"
   "class_group_vdf"
+  "data-encoding" { >= "0.7.1" & < "1.0.0" }
+  "hex"
+  "lwt-canceler"
+  "seqes"
+  "ctypes_stubs_js"
+  "hacl-star-raw"
+  "hacl-star"
+  "secp256k1-internal"
+  "mtime" { >= "1.4.0" & < "2.0.0" }
+  "zarith" { >= "1.12" & < "1.13" }
   # dev dependencies (not labels as { dev } since this feature doesn't work
   # currently https://github.com/ocaml/opam/issues/5177).
   # Also sticking to 0.21.0 for ocamlformat since ocamlformat-rpc doesn't have a
@@ -96,53 +97,6 @@ build: [
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 pin-depends: [
-  [ "tezos-base.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-clic.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-016.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-base.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-b-c-ux.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-client-commands.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-context.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-crypto.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-error-monad.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-event-logging.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-hacl.dev" "./vendors/tezos-ligo/opam"]
-  [ "tz-lwtres-std.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-micheline.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup-commands.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-mockup-proxy.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-mock-reg.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-p2p.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-p2p-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-017.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-protocol-compiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tpe.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tp-plugin-016.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-proxy.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc-http.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-rpc-http-client.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tz-rpc-h-c-ux.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-sapling.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-shell-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-signer-backends.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-signer-services.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-stdlib.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-stdlib-unix.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-test-helpers.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-version.dev" "./vendors/tezos-ligo/opam" ]
-  [ "tezos-workers.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-plonk.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-bls12-381-polynomial.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-bls12-381-signature.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-bls12-381-hash.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-plompiler.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-distributed-lwt-internal.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-polynomial.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-mec.dev" "./vendors/tezos-ligo/opam" ]
-  [ "octez-distributed-internal.dev" "./vendors/tezos-ligo/opam" ]
   [ "ocaml-recovery-parser.0.2.4" "git+https://github.com/serokell/ocaml-recovery-parser.git#0.2.4" ]
   [ "linol.0.4" "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191" ]
   [ "linol-lwt.0.4" "git+https://github.com/c-cube/linol.git#09311ae258c55c53c62cb5eda3641682e61fe191" ]

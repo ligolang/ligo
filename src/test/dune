@@ -26,7 +26,7 @@
   interpreter
   alcotest
   tezos-utils
-  tezos-crypto
+  octez-libs.tezos-crypto
   ligo_api
   cli
   prometheus

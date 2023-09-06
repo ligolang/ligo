@@ -26,13 +26,13 @@ let publish ~ligo_registry ~manifest ~body ~token =
   handle_server_response ~name:manifest.name response body
 
 
-let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run ~ligo_bin_path =
+let publish ~ligo_registry ~ligorc_path ~project_root ~dry_run =
   let* manifest =
     with_logging ~before:"Reading manifest" (fun () -> read_manifest ~project_root)
   in
   let* () =
     with_logging ~before:"Validating manifest file" (fun () ->
-        validate_manifest ~ligo_bin_path manifest)
+        validate_manifest manifest)
   in
   let* project_root =
     with_logging ~before:"Finding project root" (fun () -> get_project_root project_root)

@@ -606,10 +606,10 @@ let%expect_test _ =
     3800000000000mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3800011000000mutez
+    3800005999999mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3800022000000mutez
+    3800011999998mutez
     4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -619,14 +619,14 @@ let%expect_test _ =
   [%expect
     {|
     "STARTING BALANCE AND VOTING POWER"
-    950000000000mutez
-    0n
+    0mutez
+    1000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    950011000000mutez
-    0n
+    5999999mutez
+    1000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    950022000000mutez
-    0n
+    11999998mutez
+    1000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -845,7 +845,7 @@ let%expect_test _ =
     {|
     edpktom5rsehpEY6Kp2NShwsnpaaEjWxKFMJ3Rjp99VMJuHS93wxD6
     Everything at the top-level was executed.
-    - test exited with value Success (1968n). |}]
+    - test exited with value Success (1722n). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_tickets_and_bigmaps.mligo" ];
@@ -1355,8 +1355,8 @@ let%expect_test _ =
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
-    95000000000mutez
-    100000000000n |}]
+    100000000000mutez
+    0n |}]
 
 let pwd = Caml.Sys.getcwd ()
 let () = Caml.Sys.chdir "../../test/contracts/negative/interpreter_tests/"

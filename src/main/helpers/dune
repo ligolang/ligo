@@ -37,6 +37,7 @@
   ligo.unix
   ligo.analytics
   ligo.api
+  ligo.compiler_options
   re)
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri ligo.api))

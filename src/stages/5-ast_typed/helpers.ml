@@ -261,6 +261,7 @@ module IdMap = struct
             (* This is is used in [filter_values], to return a list of matching values in chronological order *)
       ; value : 'a
       }
+    [@@warning "-69"]
 
     type 'a t = 'a id_wrapped Map.t
     type 'a kvi_list = (key * 'a * int) list

@@ -62,9 +62,9 @@ let test2 =
   let tz = fun (n:nat) ->
     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
   in
-  let () = Test.assert ((Test.get_balance bsa0) = 7600tez) in
-  let () = Test.assert ((Test.get_balance bsa1) = 2mutez) in
-  let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 2n)) in
+  let () = Test.assert ((Test.get_balance bsa0) = 2000tez) in
+  let () = Test.assert ((Test.get_balance bsa1) = 0mutez) in
+  let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 0n)) in
   let () = Test.assert ((Test.get_balance bsa2) = 3800000tez) in
   let () = Test.assert ((Test.get_balance bsa3) = 3800000000000mutez) in
   ()

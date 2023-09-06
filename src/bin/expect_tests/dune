@@ -16,6 +16,7 @@
   ; stop-on-error do not work with expect tests yet, but maybe one day ?
   (deps
    (env_var EXPECT_ONLY_TEST)
+   (sandbox preserve_file_kind)
    (source_tree
     ../../../gitlab-pages/website/src/components/HomepageCodeExamples)
    (source_tree ../../test/contracts)

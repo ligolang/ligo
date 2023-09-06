@@ -1,13 +1,11 @@
 (library
-  (name tezos_utils)
-  (public_name tezos-utils)
-  (libraries
-    tezos-error-monad
-    tezos-micheline
-    tezos-base
-    data-encoding
-    simple-utils
-    base
-  )
- (flags (:standard -open Core ))
-)
+ (name tezos_utils)
+ (public_name tezos-utils)
+ (libraries
+  octez-libs.tezos-micheline
+  octez-libs.tezos-base
+  data-encoding
+  simple-utils
+  base)
+ (flags
+  (:standard -open Core)))

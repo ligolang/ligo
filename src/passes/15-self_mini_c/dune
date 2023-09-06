@@ -3,7 +3,7 @@
  (public_name ligo.self_mini_c)
  (instrumentation
   (backend bisect_ppx))
- (libraries mini_c tezos-hacl compiler_options)
+ (libraries mini_c octez-libs.tezos-hacl compiler_options)
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess

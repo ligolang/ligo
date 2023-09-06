@@ -1,13 +1,9 @@
 (library
-  (name proto_pre_alpha_utils)
-  (public_name proto-pre-alpha-utils)
-  (libraries
-    tezos-error-monad
-    tp-017
-    tp-016
-    tezos-memory-proto-pre-alpha
-    data-encoding
-    simple-utils
-    tezos-utils
-  )
-)
+ (name proto_pre_alpha_utils)
+ (public_name proto-pre-alpha-utils)
+ (libraries
+  tezos-protocol-018-Proxford
+  tezos-memory-proto-pre-alpha
+  data-encoding
+  simple-utils
+  tezos-utils))
