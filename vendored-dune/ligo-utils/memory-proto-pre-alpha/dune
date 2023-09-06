@@ -1,9 +1,9 @@
 (library
-  (name memory_proto_pre_alpha)
-  (public_name tezos-memory-proto-pre-alpha)
-  (libraries
-    tpe
-    tp-016
-    tc-016
-    tp-016.parameters
-    tz-016-test-helpers))
+ (name memory_proto_pre_alpha)
+ (public_name tezos-memory-proto-pre-alpha)
+ (libraries
+  tezos-protocol-alpha
+  tezos-protocol-018-Proxford
+  tezos-client-018-Proxford
+  tezos-protocol-018-Proxford.parameters
+  tezos-018-Proxford-test-helpers))

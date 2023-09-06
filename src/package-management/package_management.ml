@@ -475,8 +475,8 @@ let read_manifest ~project_root =
   Result.map_error manifest ~f:(fun e -> e, "")
 
 
-let validate_manifest ~ligo_bin_path manifest =
-  match LigoManifest.validate ~ligo_bin_path manifest with
+let validate_manifest manifest =
+  match LigoManifest.validate manifest with
   | Ok () -> Ok ()
   | Error e -> Error (e, "")
 

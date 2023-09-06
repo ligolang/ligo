@@ -8,6 +8,9 @@
 (vendored_dirs vendored-dune vendors)
 
 (env
+ (dev
+  (flags
+   (:standard -w -67)))
  (_
   (js_of_ocaml
    (compilation_mode whole_program)

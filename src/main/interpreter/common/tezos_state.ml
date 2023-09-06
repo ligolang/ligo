@@ -236,10 +236,7 @@ let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
     in
     fst
     @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
-    @@ Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel
-         alpha_context
-         ~legacy:false
-         x
+    @@ Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel alpha_context x
   in
   let storage_type =
     Tezos_micheline.Micheline.(
@@ -325,11 +322,11 @@ let extract_origination_from_result
     let aux (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
       | Internal_operation_result
-          ({ source = Contract source; _ }, Applied (IOrigination_result x)) ->
+          ({ sender = Contract sender; _ }, Applied (IOrigination_result x)) ->
         let originated_contracts =
           List.map ~f:(contract_of_hash ~raise) x.originated_contracts
         in
-        [ source, originated_contracts ]
+        [ sender, originated_contracts ]
       | _ -> []
     in
     let x = List.map ~f:aux internal_operation_results in
@@ -360,9 +357,9 @@ let extract_event_from_result
     let aux acc (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
       | Internal_operation_result
-          ( { operation = Event { tag; payload; ty }; source = Contract source; _ }
+          ( { operation = Event { tag; payload; ty }; sender = Contract sender; _ }
           , Applied (IEvent_result _) ) ->
-        ( source
+        ( sender
         , Entrypoint_repr.to_string tag
         , canonical_to_ligo payload
         , canonical_to_ligo ty )
@@ -388,10 +385,10 @@ let extract_lazy_storage_diff_from_result
       } ->
     let aux (x : Apply_internal_results.packed_internal_operation_result) =
       match x with
-      | Internal_operation_result ({ source = _; _ }, Applied (IOrigination_result x)) ->
+      | Internal_operation_result ({ sender = _; _ }, Applied (IOrigination_result x)) ->
         [ x.lazy_storage_diff ]
       | Internal_operation_result
-          ( { source = _; _ }
+          ( { sender = _; _ }
           , Applied (ITransaction_result (Transaction_to_contract_result x)) ) ->
         [ x.lazy_storage_diff ]
       | _ -> []
@@ -573,7 +570,7 @@ let get_single_tx_result_gas
         { operation_result =
             Applied
               ( Transaction_result (Transaction_to_contract_result { consumed_gas; _ })
-              | Transaction_result (Transaction_to_tx_rollup_result { consumed_gas; _ })
+              | Transaction_result (Transaction_to_sc_rollup_result { consumed_gas; _ })
               | Origination_result { consumed_gas; _ }
               | Delegation_result { consumed_gas; _ }
               | Register_global_constant_result { consumed_gas; _ } )
@@ -664,6 +661,31 @@ let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
   let operation =
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
     @@ Op.delegation ~gas_limit:Max ~force_reveal:true (B ctxt.raw) contract (Some pkh)
+  in
+  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  | Success (ctxt, _) -> ctxt
+  | Fail errs -> raise.error (target_lang_error loc calltrace errs)
+
+
+let stake ~raise ~loc ~calltrace (ctxt : context) pkh amt =
+  let open Tezos_alpha_test_helpers in
+  let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
+  let amt = Int64.of_int (Z.to_int amt) in
+  let source = unwrap_source ~raise ~loc ~calltrace contract in
+  let entrypoint = Tezos_raw_protocol.Entrypoint_repr.stake in
+  let operation : Tezos_raw_protocol.Alpha_context.packed_operation =
+    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+    @@
+    (* TODO: might let user choose here *)
+    Op.transaction
+      ~force_reveal:true
+      ~gas_limit:Max
+      ~fee:(Test_tez.of_int 0)
+        ~entrypoint
+        (B ctxt.raw)
+        source
+        contract
+        (Test_tez.of_mutez_exn amt)
   in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
@@ -885,10 +907,6 @@ let init
     ?bootstrap_contracts
     ?level
     ?cost_per_byte
-    ?liquidity_baking_subsidy
-    ?endorsing_reward_per_slot
-    ?baking_reward_bonus_per_slot
-    ?baking_reward_fixed_portion
     ?origination_size
     ?blocks_per_cycle
     ?initial_timestamp
@@ -932,6 +950,7 @@ let init
   in
   let accounts = accounts @ baker_accounts in
   let raw =
+    (* TODO: Add other parameters? *)
     Block.genesis
       ?commitments
       ~consensus_threshold
@@ -939,10 +958,6 @@ let init
       ?bootstrap_contracts
       ?level
       ?cost_per_byte
-      ?liquidity_baking_subsidy
-      ?endorsing_reward_per_slot
-      ?baking_reward_bonus_per_slot
-      ?baking_reward_fixed_portion
       ?origination_size
       ?blocks_per_cycle
       ?initial_timestamp

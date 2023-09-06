@@ -3,7 +3,7 @@
  (public_name ligo.backend)
  (instrumentation
   (backend bisect_ppx))
- (libraries simple-utils zarith hex tezos-hacl)
+ (libraries simple-utils zarith hex octez-libs.tezos-hacl)
  (inline_tests
   (libraries simple-utils-unix.http_uri simple-utils-unix))
  (preprocess

@@ -1,10 +1,10 @@
 (library
-  (name memory_proto_alpha)
-  (public_name tezos-memory-proto-alpha)
-  (libraries
-    tpe
-    tp-017
-    tc-017
-    tp-017.parameters
-    tp-017.environment
-    tz-017-test-helpers))
+ (name memory_proto_alpha)
+ (public_name tezos-memory-proto-alpha)
+ (libraries
+  octez-libs.tezos-protocol-environment
+  tezos-protocol-018-Proxford
+  tezos-client-018-Proxford
+  tezos-protocol-018-Proxford.parameters
+  tezos-protocol-018-Proxford.environment
+  tezos-018-Proxford-test-helpers))

@@ -31,7 +31,7 @@ let _, first_contract =
 let op_list ~raise =
   let open Memory_proto_alpha.Protocol.Alpha_context in
   let open Proto_alpha_utils in
-  let source =
+  let sender =
     Destination.Contract
       (Trace.trace_alpha_tzresult ~raise (fun _ -> Main_errors.test_internal __LOC__)
       @@ Contract.of_b58check "KT1DUMMYDUMMYDUMMYDUMMYDUMMYDUMu2oHG")
@@ -49,7 +49,7 @@ let op_list ~raise =
       : Memory_proto_alpha.Protocol.Script_typed_ir.packed_internal_operation
     =
     Memory_proto_alpha.Protocol.Script_typed_ir.(
-      Internal_operation { source; operation; nonce = 0 })
+      Internal_operation { sender; operation; nonce = 0 })
   in
   let opbytes =
     let contents =
