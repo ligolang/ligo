@@ -13,7 +13,7 @@ In this tutorial, we will go through the following step :
 
 # Setting up the development environment.
 
-At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX as the windows native binary is still in preparation. You can still use Ligo on windows through our docker image
+At the present moment, we recommend the user to develop on a UNIX system, GNU/Linux or MacOSX. You can still use Ligo on windows through our docker image
 More on [installation](../../intro/installation.md) and [editor support](../../intro/editor-support.md)
 
 Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). This can be useful for testing or for small project. However, it doesn't scale well for bigger size project as you won't be able to spread your project across multiple files and use your own libraries.
@@ -24,10 +24,10 @@ Alternatively, you can decide to use our [webide](https://ide.ligolang.org/). Th
 
 The `ligo` executable is statically linked. It should run on most modern Linux distributions.
 
-You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/4884590379/artifacts/raw/ligo), make it executable, and you are done!
+You can get the rolling release [here](https://gitlab.com/ligolang/ligo/-/jobs/5037774024/artifacts/raw/ligo), make it executable, and you are done!
 
 ```zsh
-wget https://gitlab.com/ligolang/ligo/-/jobs/4884590379/artifacts/raw/ligo
+wget https://gitlab.com/ligolang/ligo/-/jobs/5037774024/artifacts/raw/ligo
 chmod +x ./ligo
 ```
 
@@ -50,7 +50,7 @@ brew install ligolang/ligo/ligo
 ### Debian Linux package installation
 
 A `.deb` package containing the static `ligo` executable is also available.
-First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/4884590379/artifacts/raw/ligo.deb), and then install using:
+First, download [the package](https://gitlab.com/ligolang/ligo/-/jobs/5037774024/artifacts/raw/ligo.deb), and then install using:
 
 ```zsh
 sudo apt install ./ligo.deb

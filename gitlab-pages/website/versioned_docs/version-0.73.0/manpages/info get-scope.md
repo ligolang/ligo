@@ -8,6 +8,9 @@ ligo info get-scope SOURCE_FILE
 This sub-command returns the environment for a given file in JSON format. It does not use the build system.
 
 ### FLAGS
+**--defs-only**
+Gets only list of definitions (without scopes).
+
 **--deprecated**
 enable deprecated language PascaLIGO
 

@@ -685,6 +685,35 @@ $ ligo publish --dry-run
 
 This will only display the report on the command line what it would have done in the case of `ligo publish`.
 
+## Unpublishing Packages
+
+Packages can be published in two ways,
+
+1. Completely delete the entry
+2. Only unpublish a specific version
+
+`unpublish` is that subcommand, grouped under `registry` subcommand, removes a package or a specific version of it from the registry
+
+Summary
+```
+  [--package-name Name]      . of the package on which publish/unpublish is
+                               executed
+  [--package-version Version]
+                             . of the package on which publish/unpublish is
+                               executed
+```
+
+To unpublish a package, run `ligo registry unpublish --package-name <name> --package-version <version>` from anywhere on the CLI (not necessarily from within a project)
+
+Examples,
+
+```
+ligo registry unpublish --package-name foo --package-version 1.0.0
+```
+
+If `--package-version` is skipped, the entire package is unpublished.
+
+
 
 ## Notes
 

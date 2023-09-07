@@ -8,6 +8,9 @@ ligo compile storage SOURCE_FILE STORAGE_EXPRESSION
 This sub-command compiles an initial storage for a given contract to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract.
 
 ### FLAGS
+**--allow-json-download**
+Allow LIGO to download JSON files for metadata check.
+
 **--amount INT**
 the tezos amount the Michelson interpreter will use for the transaction.
 
@@ -19,6 +22,9 @@ A list of global constants that will be assumed in the context, separated by ','
 
 **--deprecated**
 enable deprecated language PascaLIGO
+
+**--disallow-json-download**
+Disallow LIGO to download JSON files for metadata check (and do not show message).
 
 **--display-format FORMAT**
 the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile. (alias: --format)

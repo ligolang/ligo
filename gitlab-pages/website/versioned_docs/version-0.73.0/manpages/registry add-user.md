@@ -1,7 +1,7 @@
 
 ### SYNOPSIS
 ```
-ligo add-user
+ligo registry add-user
 ```
 
 ### DESCRIPTION

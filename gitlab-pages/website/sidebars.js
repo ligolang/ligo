@@ -192,23 +192,18 @@ const sidebars = {
       },
       {
         "type": "doc",
-        "label": "ligo add-user",
-        "id": "manpages/add-user"
-      },
-      {
-        "type": "doc",
         "label": "ligo install",
         "id": "manpages/install"
       },
       {
-        "type": "doc",
-        "label": "ligo login",
-        "id": "manpages/login"
-      },
-      {
-        "type": "doc",
-        "label": "ligo publish",
-        "id": "manpages/publish"
+        "type": "category",
+        "label": "ligo registry",
+        "items": [
+          "manpages/registry add-user",
+          "manpages/registry login",
+          "manpages/registry publish",
+          "manpages/registry unpublish"
+        ]
       },
       {
         "type": "doc",
