@@ -1,7 +1,7 @@
 
 ### SYNOPSIS
 ```
-ligo publish
+ligo registry publish
 ```
 
 ### DESCRIPTION
@@ -10,9 +10,6 @@ ligo publish
 ### FLAGS
 **--dry-run**
 don't publish changes to LIGO registry.
-
-**--ligo-bin-path PATH**
-path to LIGO executable.
 
 **--ligorc-path PATH**
 path to .ligorc file.

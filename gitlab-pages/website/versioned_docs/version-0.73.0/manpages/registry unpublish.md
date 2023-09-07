@@ -1,15 +1,21 @@
 
 ### SYNOPSIS
 ```
-ligo login
+ligo registry unpublish
 ```
 
 ### DESCRIPTION
-[BETA] Prompt the user for credentials to creates a login session with the registry server
+[BETA] Unpublishes a package from the registry
 
 ### FLAGS
 **--ligorc-path PATH**
 path to .ligorc file.
+
+**--package-name Name**
+of the package on which publish/unpublish is executed
+
+**--package-version Version**
+of the package on which publish/unpublish is executed
 
 **--registry URL**
 The url to a LIGO registry.
