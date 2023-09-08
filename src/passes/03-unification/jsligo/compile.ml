@@ -760,9 +760,8 @@ and declaration : Eq.declaration -> Folding.declaration =
       let* tvs = sep_or_term_to_nelist type_vars.value.inside in
       return (List.Ne.map TODO_do_in_parsing.tvar tvs)
     in
-    let ret_type = Option.map ~f:snd rhs_type in
     let pattern : I.pattern = P_Var fun_name in
-    return @@ O.D_multi_const ({ type_params; pattern; rhs_type = ret_type; let_rhs }, [])
+    return @@ O.D_multi_const ({ type_params; pattern; rhs_type = None; let_rhs }, [])
 
 
 and program_entry : Eq.program_entry -> Folding.program_entry =
