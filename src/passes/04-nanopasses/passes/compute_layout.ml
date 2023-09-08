@@ -60,7 +60,8 @@ let compile_row ~f layout_attr_opt (lst : ty_expr option Non_linear_rows.t) =
 let compile_row_sum ~loc =
   compile_row ~f:(fun (label, Non_linear_rows.{ associated_type; attributes; _ }) ->
       let ty =
-        Option.value_or_thunk associated_type ~default:(fun () -> tv_unit ~loc ())
+        Option.value_or_thunk associated_type ~default:(fun () ->
+            tv_unit ~loc:Location.generated ())
       in
       label, ty, attributes)
 

@@ -387,8 +387,6 @@ let%expect_test _ =
     Body Range: File "", line 7, characters 12-28
     Content: : |unit|
     references:
-      File "", line 54, characters 12-24 ,
-      File "", line 55, characters 17-34 ,
       File "", line 61, characters 24-28 ,
       File "", line 62, characters 23-27 ,
       File "", line 63, characters 20-24 ,
@@ -417,7 +415,6 @@ let%expect_test _ =
       File "", line 254, characters 30-34 ,
       File "", line 259, characters 66-70 ,
       File "", line 260, characters 66-70 ,
-      File "", line 288, characters 21-41 ,
       File "", line 300, characters 35-39 ,
       File "", line 303, characters 33-37 ,
       File "", line 306, characters 27-31 ,
@@ -452,32 +449,26 @@ let%expect_test _ =
       File "", line 420, characters 20-22 ,
       File "", line 459, characters 31-35 ,
       File "", line 459, characters 47-51 ,
-      File "", line 460, characters 20-62 ,
       File "", line 463, characters 44-48 ,
       File "", line 463, characters 98-102 ,
       File "", line 471, characters 31-35 ,
       File "", line 471, characters 47-51 ,
-      File "", line 472, characters 20-62 ,
       File "", line 475, characters 44-48 ,
       File "", line 475, characters 98-102 ,
       File "", line 490, characters 31-35 ,
       File "", line 490, characters 47-51 ,
-      File "", line 491, characters 20-62 ,
       File "", line 495, characters 44-48 ,
       File "", line 495, characters 103-107 ,
       File "", line 510, characters 31-35 ,
       File "", line 510, characters 47-51 ,
-      File "", line 511, characters 20-62 ,
       File "", line 515, characters 44-48 ,
       File "", line 515, characters 103-107 ,
       File "", line 532, characters 31-35 ,
       File "", line 532, characters 47-51 ,
-      File "", line 533, characters 20-62 ,
       File "", line 537, characters 44-48 ,
       File "", line 537, characters 103-107 ,
       File "", line 554, characters 31-35 ,
       File "", line 554, characters 47-51 ,
-      File "", line 555, characters 20-62 ,
       File "", line 559, characters 44-48 ,
       File "", line 559, characters 103-107 ,
       File "", line 567, characters 26-30 ,
@@ -489,7 +480,8 @@ let%expect_test _ =
       File "", line 580, characters 27-31 ,
       File "", line 600, characters 52-56 ,
       File "", line 603, characters 51-55 ,
-      File "", line 603, characters 76-80
+      File "", line 603, characters 76-80 ,
+
     (operation#10:5-14 -> operation)
     Range: File "", line 10, characters 5-14
     Body Range: File "", line 10, characters 17-38

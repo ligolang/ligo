@@ -675,17 +675,16 @@ let stake ~raise ~loc ~calltrace (ctxt : context) pkh amt =
   let entrypoint = Tezos_raw_protocol.Entrypoint_repr.stake in
   let operation : Tezos_raw_protocol.Alpha_context.packed_operation =
     Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
-    @@
-    (* TODO: might let user choose here *)
+    @@ (* TODO: might let user choose here *)
     Op.transaction
       ~force_reveal:true
       ~gas_limit:Max
       ~fee:(Test_tez.of_int 0)
-        ~entrypoint
-        (B ctxt.raw)
-        source
-        contract
-        (Test_tez.of_mutez_exn amt)
+      ~entrypoint
+      (B ctxt.raw)
+      source
+      contract
+      (Test_tez.of_mutez_exn amt)
   in
   match bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
