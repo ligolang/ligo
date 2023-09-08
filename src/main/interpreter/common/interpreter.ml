@@ -1422,7 +1422,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> v = Register_delegate (loc, calltrace, pkh) in
     return @@ v
   | C_TEST_REGISTER_DELEGATE, _ -> fail @@ error_type ()
-  | C_TEST_STAKE, [ V_Ct (C_key_hash pkh) ; V_Ct (C_mutez amt) ] ->
+  | C_TEST_STAKE, [ V_Ct (C_key_hash pkh); V_Ct (C_mutez amt) ] ->
     let>> v = Stake (loc, calltrace, pkh, amt) in
     return @@ v
   | C_TEST_STAKE, _ -> fail @@ error_type ()

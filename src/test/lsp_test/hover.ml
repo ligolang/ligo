@@ -62,6 +62,7 @@ let get_hover_test ({ test_name; file; hovers } : hover_test) : unit Alcotest.te
    - #1676 add tests for hovers on constructors and record fields
    - #1965 add tests for e.g. `compose_endo` from `hovers.mligo`
 *)
+(* TODO JsLIGO tests *)
 let test_cases =
   let pos = Position.create in
   [ { test_name = "simple.mligo"
@@ -117,6 +118,7 @@ let test_cases =
         ; ( pos ~line:77 ~character:28
           , "type 'v proxy_address =\n  ('v * nat * address, unit) typed_address" )
         ; pos ~line:79 ~character:8, "type 'v p = 'v proxy_address"
+        ; pos ~line:83 ~character:20, "type int_endo = IntEndo of (int -> int)"
         ]
         @ List.map
             ~f:(fun p ->

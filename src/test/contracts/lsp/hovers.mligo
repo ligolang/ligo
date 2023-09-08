@@ -78,3 +78,7 @@ let z = Tezos.create_contract (fun x y -> ([], x + y))
 type t = Test.Proxy_ticket.proxy_address
 
 type 'v p = 'v Test.Proxy_ticket.proxy_address
+
+type int_endo_option =
+| No_int_endo
+| Some_int_endo of int_endo
