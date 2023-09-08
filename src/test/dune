@@ -32,7 +32,10 @@
   prometheus
   prometheus_format
   prometheus_push
-  lsp_test_requests))
+  lsp_test_requests
+  package_management
+  lwt
+  lwt.unix))
 
 (rule
  (alias doc-test)
@@ -66,7 +69,8 @@
   (glob_files contracts/vars_consts/*)
   (glob_files contracts/positive/*)
   (glob_files contracts/negative/*)
-  (glob_files preprocessor/*)))
+  (glob_files preprocessor/*)
+  (glob_files install_tests/workflow/*)))
 
 (rule
  (alias vendors_test)

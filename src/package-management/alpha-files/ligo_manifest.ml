@@ -2,43 +2,9 @@ module Util = Yojson.Safe.Util
 
 let ( let* ) x f = Result.bind x ~f
 
-module Bugs = struct
-  type t =
-    { url : string
-    ; email : string option
-    }
-
-  let of_yojson json =
-    try
-      let url = Util.to_string @@ Util.member "url" json in
-      let email = Util.to_string_option @@ Util.member "email" json in
-      Ok { url; email }
-    with
-    | _ -> Error "Failed to parse url and email from json"
-
-
-  let to_yojson { url; email } =
-    `Assoc
-      ([ "url", `String url ]
-      @ Option.value_map email ~default:[] ~f:(fun email -> [ "email", `String email ]))
-
-  (* If required validate `email` & url` *)
-end
-
-module Semver = struct
-  include Semver
-
-  let equal v1 v2 = compare v1 v2 = 0
-  let to_yojson s = `String (to_string s)
-
-  let of_yojson y =
-    match y with
-    | `String s ->
-      (match of_string s with
-      | Some s -> Ok s
-      | None -> Error "Semver.of_yojson failed: Semver.of_string failed")
-    | _ -> Error "Semver.of_yojson failed: didn't received String as expected"
-end
+open Package_management_external_libs
+open Package_management_shared
+module Semver = Ligo_semver
 
 type t =
   { name : string
@@ -65,17 +31,9 @@ let validate_storage ~main ~storage_fn ~storage_arg () =
   | Some storage_fn, Some storage_arg ->
     let raw_options = Compiler_options.Raw_options.make () in
     let expression = Format.sprintf "%s %s" storage_fn storage_arg in
-    let _, run_me = Ligo_api.Compile.storage
-         raw_options
-         []
-         main
-         expression
-         "0"
-         "0"
-         None
-         None
-         None
-         `Json in
+    let _, run_me =
+      Ligo_api.Compile.storage raw_options [] main expression "0" "0" None None None `Json
+    in
     (match Simple_utils.Trace.to_stdlib_result run_me with
     | Ok _ -> Ok ()
     | Error _ ->

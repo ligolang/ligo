@@ -11,10 +11,3 @@ val git_clone : project_url:string -> project_name:string -> command
 val git_checkout : dir_path:string -> ref:string -> command
 val where : cmd:string -> command
 val which : cmd:string -> command
-
-val ligo_compile_storage
-  :  ?ligo:string
-  -> main:string
-  -> expression:string
-  -> unit
-  -> command

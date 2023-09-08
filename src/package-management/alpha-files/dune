@@ -1,0 +1,15 @@
+(library
+ (name package_management_alpha_files)
+ (libraries
+  core
+  package_management_external_libs
+  package_management_shared
+  package_management_alpha_shared
+  lwt
+  lwt.unix
+  ligo_unix
+  cli_helpers)
+ ;; cli_helpers because we need Syntax module from there. Syntax module is used in the validation of manifest files.
+ (preprocess
+  (pps ppx_deriving_yojson ppx_inline_test))
+ (synopsis "Modules processing manifest and lock files"))

@@ -12,23 +12,17 @@ let home_directory () =
 let putenv ~key ~data = putenv key data
 let mkdir ~perm dir = mkdir dir perm
 
-let mkdir_p ~perm dir =
-  let rec dirs dir =
-    if dir = Filename.dirname dir
-    then []
-    else Filename.basename dir :: dirs (Filename.dirname dir)
-  in
-  let dirs = dirs dir in
-  let _ =
-    List.fold_right
-      (fun dir dirs ->
-        let dir = if dir = String.empty then dir else Filename.concat dirs dir in
-        let () =
-          try mkdir ~perm dir with
-          | Unix_error ((EEXIST | EISDIR), _, _) -> ()
-        in
-        dir)
-      dirs
-      String.empty
-  in
-  ()
+let rec mkdir_p ~perm dir =
+  match Sys.file_exists dir with
+  | true -> ()
+  | false ->
+     let parent = Filename.dirname dir in
+     if not (String.equal parent dir) then
+       if Sys.file_exists parent then
+         Sys.mkdir dir perm
+       else
+         begin
+           mkdir_p ~perm parent;
+           Sys.mkdir dir perm
+         end
+     else ()

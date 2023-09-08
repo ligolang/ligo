@@ -1,11 +1,94 @@
 module LigoRC = Ligo_rc
-module LigoManifest = Ligo_manifest
 module LigoIgnore = Ligo_ignore
-module RepositoryUrl = Repository_url
 module Constants = Constants
-module Semver = LigoManifest.Semver
 module Trace = Simple_utils.Trace
 module Display = Simple_utils.Display
+
+type unzip_error = UnableToUnzip
+
+let unzip fname =
+  let in_fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
+  let file_size = (Ligo_unix.stat fname).st_size in
+  let buffer_len = De.io_buffer_size in
+  let i = De.bigstring_create De.io_buffer_size in
+  let o = De.bigstring_create De.io_buffer_size in
+  let r = Buffer.create 0x1000 in
+  let p = ref 0 in
+  let refill buf =
+    let len = min (file_size - !p) buffer_len in
+    if len <= 0
+    then 0
+    else (
+      let bytes = Bytes.create len in
+      let len = Ligo_unix.read in_fd bytes 0 len in
+      Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len;
+      p := !p + len;
+      len)
+  in
+  let flush buf len =
+    let str = Bigstringaf.substring buf ~off:0 ~len in
+    Buffer.add_string r str
+  in
+  match Gz.Higher.uncompress ~refill ~flush i o with
+  | Ok _ ->
+    let bytes = Buffer.contents_bytes r in
+    let nbytes = Bytes.length bytes in
+    let fname = Format.sprintf "%s.tar" (Caml.Filename.remove_extension fname) in
+    let out_fd = Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666 in
+    let mbytes = Ligo_unix.write out_fd bytes 0 nbytes in
+    let () = Ligo_unix.close in_fd in
+    let () = Ligo_unix.close out_fd in
+    if nbytes = mbytes then Ok fname else Error UnableToUnzip
+  | Error (`Msg _) ->
+    let () = Ligo_unix.close in_fd in
+    Error UnableToUnzip
+
+
+let touch f = Ligo_unix.openfile f [ Ligo_unix.O_CREAT ] 0o666 |> Ligo_unix.close
+
+let untar ~dest_dir fname =
+  let fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
+  let move f =
+    let f = Filename.concat dest_dir f in
+    let () = Ligo_unix.mkdir_p ~perm:0o755 (Filename.dirname f) in
+    let () = touch f in
+    f
+  in
+  let () = Tar_unix.Archive.extract move fd in
+  Ligo_unix.close fd
+
+
+module Checksum : sig
+  type error = IntegrityMismatch
+
+  val string_of_error : error -> string
+  val sha1_bytes : bytes -> string
+  val sha1 : string -> string
+  val check_integrity : string -> expected:string -> (unit, error) result
+end = struct
+  type error = IntegrityMismatch
+
+  let string_of_error = function
+    | IntegrityMismatch -> "Error : integrity checksum failed"
+
+
+  let sha1_bytes s = s |> Digestif.SHA1.digest_bytes |> Digestif.SHA1.to_hex
+  let sha1 s = s |> Digestif.SHA1.digest_string |> Digestif.SHA1.to_hex
+
+  let check_integrity fname ~expected =
+    let fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
+    let file_size = (Ligo_unix.stat fname).st_size in
+    let buf = Bytes.create file_size in
+    let rec read idx =
+      let len = if idx + 512 > file_size then file_size - idx else 512 in
+      let _ = Ligo_unix.read fd buf idx len in
+      if len < 512 then () else read (idx + len)
+    in
+    let () = read 0 in
+    let () = Ligo_unix.close fd in
+    let got = sha1_bytes buf in
+    if String.equal got expected then Ok () else Error IntegrityMismatch
+end
 
 let find_project_root () =
   let pwd = Caml.Sys.getcwd in

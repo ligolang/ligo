@@ -30,6 +30,3 @@ let git_clone ~project_url ~project_name =
 
 
 let git_checkout ~dir_path ~ref = "", [| "git"; "--git-dir"; dir_path; "checkout"; ref |]
-
-let ligo_compile_storage ?(ligo = "ligo") ~main ~expression () =
-  "", [| ligo; "compile"; "storage"; main; expression |]
