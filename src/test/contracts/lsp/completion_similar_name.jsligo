@@ -4,10 +4,10 @@ type storage = { number: int, previous_action: action };
 
 namespace Math {
   const add = (a: int, b: int): storage =>
-    { number: a + b, previous_action: Add(b) }
+    ({ number: a + b, previous_action: Add(b) })
 
   const sub = (a: int, b: int): storage =>
-    { number: a - b, previous_action: Sub(b) }
+    ({ number: a - b, previous_action: Sub(b) })
 
   const zero = { number: 0, previous_action: Reset() }
 }
