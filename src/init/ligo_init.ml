@@ -7,6 +7,7 @@ module Trace = Simple_utils.Trace
 module Constants = Cli_helpers.Constants
 module T = Core
 module Formatter = Ligo_formatter
+module Checksum = Cli_helpers.Checksum
 
 type project_entity =
   [ `LIBRARY
@@ -18,10 +19,10 @@ module RegistryTemplate : sig
     | PackageNotFound
     | ServerError
     | InvalidPackageInfo of string
-    | IntegrityMismatch
     | InvalidTemplateType
     | UnableToDownload
     | UnableToUnzip
+    | IntegrityMismatch of Cli_helpers.Checksum.error
 
   val string_of_error : error -> string
 
@@ -46,21 +47,21 @@ end = struct
     | PackageNotFound
     | ServerError
     | InvalidPackageInfo of string
-    | IntegrityMismatch
     | InvalidTemplateType
     | UnableToDownload
     | UnableToUnzip
+    | IntegrityMismatch of Cli_helpers.Checksum.error
 
   let string_of_error = function
     | PackageNotFound -> "Error: Package not found in registry"
     | ServerError -> "Error: registry server error"
     | InvalidPackageInfo s -> Format.sprintf "Error: Invalid package info\n%s" s
-    | IntegrityMismatch -> "Error: integrity checksum failed"
     | InvalidTemplateType ->
       "Error: mis-match of template type.\n\
        Hint: Please check the ligo command `ligo init contract`/`ligo init library"
     | UnableToDownload -> "Error: unable to downloading template"
     | UnableToUnzip -> "Error: unable to write unzipped data to file"
+    | IntegrityMismatch e -> Checksum.string_of_error e
 
 
   let ( let@ ) x f = Result.bind ~f x
@@ -139,31 +140,13 @@ end = struct
     | _ -> Error InvalidTemplateType
 
 
-  let sha1 s = s |> Digestif.SHA1.digest_string |> Digestif.SHA1.to_hex
-  let sha1_bytes s = s |> Digestif.SHA1.digest_bytes |> Digestif.SHA1.to_hex
-
-  let check_integrity fname ~expected =
-    let fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
-    let file_size = (Ligo_unix.stat fname).st_size in
-    let buf = Bytes.create file_size in
-    let rec read idx =
-      let len = if idx + 512 > file_size then file_size - idx else 512 in
-      let _ = Ligo_unix.read fd buf idx len in
-      if len < 512 then () else read (idx + len)
-    in
-    let () = read 0 in
-    let () = Ligo_unix.close fd in
-    let got = sha1_bytes buf in
-    if String.equal got expected then Ok () else Error IntegrityMismatch
-
-
   let download_tarball : uri:Uri.t -> (string, error) result Lwt.t =
    fun ~uri ->
     let* resp, body = Client.get uri in
     let code = Cohttp.Code.code_of_status resp.status in
     if Cohttp.Code.is_success code
     then (
-      let fname = sha1 (Uri.to_string uri) in
+      let fname = Cli_helpers.Checksum.sha1 (Uri.to_string uri) in
       let dest = Caml.Filename.temp_file fname ".tgz" in
       let stream = Body.to_stream body in
       let* () =
@@ -174,60 +157,6 @@ end = struct
     else Lwt.return_error UnableToDownload
 
 
-  let unzip fname =
-    let in_fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
-    let file_size = (Ligo_unix.stat fname).st_size in
-    let buffer_len = De.io_buffer_size in
-    let i = De.bigstring_create De.io_buffer_size in
-    let o = De.bigstring_create De.io_buffer_size in
-    let r = Buffer.create 0x1000 in
-    let p = ref 0 in
-    let refill buf =
-      let len = min (file_size - !p) buffer_len in
-      if len <= 0
-      then 0
-      else (
-        let bytes = Bytes.create len in
-        let len = Ligo_unix.read in_fd bytes 0 len in
-        Bigstringaf.blit_from_bytes bytes ~src_off:0 buf ~dst_off:0 ~len;
-        p := !p + len;
-        len)
-    in
-    let flush buf len =
-      let str = Bigstringaf.substring buf ~off:0 ~len in
-      Buffer.add_string r str
-    in
-    match Gz.Higher.uncompress ~refill ~flush i o with
-    | Ok _ ->
-      let bytes = Buffer.contents_bytes r in
-      let nbytes = Bytes.length bytes in
-      let fname = Format.sprintf "%s.tar" (Caml.Filename.remove_extension fname) in
-      let out_fd =
-        Ligo_unix.openfile fname [ Ligo_unix.O_CREAT; Ligo_unix.O_RDWR ] 0o666
-      in
-      let mbytes = Ligo_unix.write out_fd bytes 0 nbytes in
-      let () = Ligo_unix.close in_fd in
-      let () = Ligo_unix.close out_fd in
-      if nbytes = mbytes then Ok fname else Error UnableToUnzip
-    | Error (`Msg _) ->
-      let () = Ligo_unix.close in_fd in
-      Error UnableToUnzip
-
-
-  let touch f = Ligo_unix.openfile f [ Ligo_unix.O_CREAT ] 0o666 |> Ligo_unix.close
-
-  let untar ~dest_dir fname =
-    let fd = Ligo_unix.openfile fname [ Ligo_unix.O_RDONLY ] 0 in
-    let move f =
-      let f = Filename.concat dest_dir f in
-      let () = Ligo_unix.mkdir_p ~perm:0o755 (Filename.dirname f) in
-      let () = touch f in
-      f
-    in
-    let () = Tar_unix.Archive.extract move fd in
-    Ligo_unix.close fd
-
-
   let normalize_project_name = Str.(global_replace (regexp "/") "_")
 
   let init ~kind ~template ~project_name ?version ~registry () =
@@ -235,10 +164,19 @@ end = struct
     let@ { _type; tarball; shasum } = get_fields ?version info in
     let@ () = validate_template_type kind _type in
     let@ tarball = Lwt_main.run (download_tarball ~uri:tarball) in
-    let@ () = check_integrity tarball ~expected:shasum in
-    let@ unzipped = unzip tarball in
+    let@ _ =
+      Checksum.check_integrity tarball ~expected:shasum
+      |> function
+      | Ok _ -> Ok ()
+      | Error e -> Error (IntegrityMismatch e)
+    in
+    let@ unzipped =
+      match Cli_helpers.unzip tarball with
+      | Error Cli_helpers.UnableToUnzip -> Error UnableToUnzip
+      | Ok buffer -> Ok buffer
+    in
     let project_name = normalize_project_name project_name in
-    let () = untar ~dest_dir:project_name unzipped in
+    let () = Cli_helpers.untar ~dest_dir:project_name unzipped in
     Ok project_name
 end
 

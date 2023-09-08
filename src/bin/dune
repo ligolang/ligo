@@ -32,7 +32,24 @@
  (name install)
  (instrumentation
   (backend bisect_ppx))
- (libraries cli_helpers simple-utils lwt lwt.unix yojson)
+ (libraries
+  cli_helpers
+  simple-utils
+  lwt
+  lwt.unix
+  yojson
+  cohttp-lwt
+  cohttp
+  cohttp-lwt-unix
+  ligo_init
+  ligo_unix
+  package_management
+  str
+  fpath
+  bos
+  semver)
+ (preprocess
+  (pps ppx_deriving_yojson))
  (modules install))
 
 (library

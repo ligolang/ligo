@@ -1,0 +1,7 @@
+
+author: shubham-kumar
+description: "Removing esy from ligo package management - phase 1. This encompasses installing and updating packages from package.json. While trying to maintain compatibility with the current pre-processor (hence `_esy` and `esy.lock` still remains the names of the directories for `index.json` and `installation.json`) This doesn't include ad-hoc addition of packages to a ligo project using `ligo install <pkg-name>`\\n\\nTo use the new package manager use `--package-management-alpha` flag\\n\\n"
+merge_request: '2785'
+title: "Remove Esy usage for package management in install.ml with the following..."
+type: added
+            

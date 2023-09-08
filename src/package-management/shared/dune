@@ -1,0 +1,7 @@
+(library
+ (name package_management_shared)
+ (libraries package_management_external_libs core yojson uri)
+ (preprocess
+  (pps ppx_deriving_yojson ppx_inline_test))
+ (synopsis
+  "Shared modules and functions in package_management sub-libraries"))

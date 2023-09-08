@@ -626,6 +626,15 @@ let ligorc_path =
   flag ~doc name spec
 
 
+let package_management_alpha =
+  let open Command.Param in
+  let name = "--package-management-alpha" in
+  let doc =
+    "enable installing packages without esy, some features might not be supported"
+  in
+  flag ~doc name no_arg
+
+
 module Api = Ligo_api
 
 let ( <*> ) = Command.Param.( <*> )
@@ -2924,14 +2933,34 @@ let install =
      in package.json"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"install" in
-  let f package_name cache_path ligo_registry skip_analytics () =
+  let f
+      project_root
+      package_name
+      cache_path
+      ligo_registry
+      package_management_alpha
+      skip_analytics
+      ()
+    =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> Install.install ~package_name ~cache_path ~ligo_registry
+    @@ fun () ->
+    Install.install
+      ~project_root
+      ~package_name
+      ~cache_path
+      ~ligo_registry
+      ~package_management_alpha
   in
   Command.basic
     ~summary
     ~readme
-    (f <$> package_name <*> cache_path <*> ligo_registry <*> skip_analytics)
+    (f
+    <$> project_root
+    <*> package_name
+    <*> cache_path
+    <*> ligo_registry
+    <*> package_management_alpha
+    <*> skip_analytics)
 
 
 let registry_publish =
@@ -2943,8 +2972,7 @@ let registry_publish =
   let cli_analytic = Analytics.generate_cli_metric ~command:"publish" in
   let f ligo_registry ligorc_path project_root dry_run skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () ->
-    Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run
+    @@ fun () -> Publish.publish ~ligo_registry ~ligorc_path ~project_root ~dry_run
   in
   Command.basic
     ~summary

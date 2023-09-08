@@ -1,14 +1,8 @@
-module Bugs : sig
-  type t [@@deriving yojson]
-end
+(** Module dealing with ligo manifest (package.json) *)
 
-module Semver : sig
-  include module type of Semver
-
-  type t [@@deriving yojson]
-
-  val to_string : t -> string
-end
+open Package_management_external_libs
+open Package_management_shared
+module Semver = Ligo_semver
 
 type t =
   { name : string
@@ -30,5 +24,8 @@ type t =
   }
 [@@deriving yojson]
 
+(** Returns validation errors if any, present in the project's ligo manifest. Note that, this doesn't include parsing error - this function takes a valid [t] that parsed correctly, but could contain bad semantics *)
 val validate : t -> (unit, string) result
+
+(** Returns a [t] for a project situated at [project_root] *)
 val read : project_root:string option -> (t, string) result

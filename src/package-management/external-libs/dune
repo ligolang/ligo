@@ -1,0 +1,4 @@
+(library
+ (name package_management_external_libs)
+ (libraries semver core yojson)
+ (synopsis "External libraries used for ligo package management"))

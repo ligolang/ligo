@@ -1,5 +1,10 @@
 (library
  (name package_management)
- (libraries cli_helpers)
+ (libraries
+  cli_helpers
+  registry
+  package_management_external_libs
+  package_management_alpha_files
+  package_management_shared)
  (preprocess
-  (pps ppx_deriving_yojson)))
+  (pps ppx_deriving_yojson ppx_inline_test)))

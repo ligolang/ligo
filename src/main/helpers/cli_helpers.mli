@@ -1,9 +1,20 @@
 module LigoRC = Ligo_rc
-module LigoManifest = Ligo_manifest
 module LigoIgnore = Ligo_ignore
-module RepositoryUrl = Repository_url
 module Constants = Constants
-module Semver = LigoManifest.Semver
+
+type unzip_error = UnableToUnzip
+
+val unzip : string -> (string, unzip_error) result
+val untar : dest_dir:string -> string -> unit
+
+module Checksum : sig
+  type error = IntegrityMismatch
+
+  val string_of_error : error -> string
+  val sha1_bytes : bytes -> string
+  val sha1 : string -> string
+  val check_integrity : string -> expected:string -> (unit, error) result
+end
 
 val find_project_root : unit -> string option
 
