@@ -12,6 +12,17 @@ let%expect_test _ =
     [ "compile"
     ; "expression"
     ; "jsligo"
+    ; "foo"
+    ; "--init-file"
+    ; contract "function_ascr.jsligo"
+    ];
+  [%expect {| {} |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
     ; "y"
     ; "--init-file"
     ; contract "import_export/h.jsligo"
