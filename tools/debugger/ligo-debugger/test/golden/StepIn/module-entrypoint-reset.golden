@@ -11,7 +11,8 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+            elem ? of ([@layout comb] |
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
           siValue: Unit
         , StackItem:
           siLigoDesc: elem s of int
@@ -37,7 +38,8 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+            elem ? of ([@layout comb] |
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
           siValue: Unit
         , StackItem:
           siLigoDesc: elem s of int
@@ -63,7 +65,8 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+            elem ? of ([@layout comb] |
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
           siValue: Unit
         , StackItem:
           siLigoDesc: elem s of int
@@ -89,7 +92,8 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+            elem ? of ([@layout comb] |
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
           siValue: Unit
         , StackItem:
           siLigoDesc: elem s of int
@@ -121,7 +125,8 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem ? of (Decrement of (int) | Increment of (int) | Reset of (unit)) * int
+            elem ? of ([@layout comb] |
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
           siValue: Unit
         , StackItem:
           siLigoDesc: elem s of int

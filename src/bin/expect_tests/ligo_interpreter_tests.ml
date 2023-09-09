@@ -704,18 +704,18 @@ let%expect_test _ =
   [%expect
     {|
     Everything at the top-level was executed.
-    - test_x exited with value (KT1E7ftEB5z7eL6SET1dBWbg2Tf1VXaLtHyv , { parameter unit ;
+    - test_x exited with value (KT1RCTMT7fm32ZVaTT5pqtNnPsRvbMxkpVMd , { parameter unit ;
       storage
-        (pair (pair (big_map %metadata string bytes) (set %participants address))
-              (map %secrets address bool)) ;
+        (pair (set %participants address)
+              (map %secrets address bool)
+              (big_map %metadata string bytes)) ;
       code { CDR ;
              PUSH bool True ;
              DUP 2 ;
              CAR ;
-             CDR ;
              ITER { SWAP ;
                     DUP 3 ;
-                    CDR ;
+                    GET 3 ;
                     DIG 2 ;
                     GET ;
                     IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
@@ -723,7 +723,6 @@ let%expect_test _ =
              PUSH bool True ;
              DUP 2 ;
              CAR ;
-             CDR ;
              ITER { SWAP ;
                     EMPTY_MAP address bool ;
                     DIG 2 ;
@@ -731,7 +730,7 @@ let%expect_test _ =
                     IF_NONE { PUSH bool False ; AND } { DROP ; PUSH bool True ; AND } } ;
              DROP ;
              NIL operation ;
-             PAIR } } , 222). |}]
+             PAIR } } , 226). |}]
 
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_read_contract.mligo" ];
@@ -870,7 +869,7 @@ let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_to_json.mligo" ];
   [%expect
     {|
-    ["typed_address","KT1CHLcGYthioYYsY5dETp1m7rm7FdX9HH1K"]
+    ["typed_address","KT19SRGEVxDMKdou6Fu7vZrtPy6X9GB7Dwna"]
     ["record",[[["Label","bar"],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo"],["constant",["int","42"]]]]] |}]
 
 (*
@@ -962,9 +961,9 @@ let%expect_test _ =
   [%expect
     {test|
     Deployed the contract:
-    { parameter (or (int %add) (int %sub)) ;
+    { parameter (or (int %sub) (int %add)) ;
       storage int ;
-      code { UNPAIR ; IF_LEFT { ADD } { SWAP ; SUB } ; NIL operation ; PAIR } ;
+      code { UNPAIR ; IF_LEFT { SWAP ; SUB } { ADD } ; NIL operation ; PAIR } ;
       view "get" unit int { CDR } ;
       view "get_diff" int int { UNPAIR ; SWAP ; SUB } }
     With storage: 0

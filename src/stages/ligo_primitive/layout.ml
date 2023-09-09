@@ -11,7 +11,25 @@ and field =
   }
 [@@deriving equal, compare, yojson, hash, sexp]
 
-let comb fields = Inner (List.map fields ~f:(fun field -> Field field))
+let comb fields =
+  (* this is a hack to get tuple values to work properly when their
+     type is only inferred, e.g. in the "usage_orig" example in
+     gitlab-pages/docs/advanced/testing.md ... TODO?
+
+     perhaps a better fix is to allow record values to specify their
+     layout, and then to specify the correct tuple layout in
+     desugar_tuple_to_record in desugaring pass? *)
+  let is_int field =
+    Option.is_some (int_of_string_opt (Label.to_string field.name)) in
+  let fields =
+    if List.for_all fields ~f:is_int
+    then
+      List.sort
+        ~compare:(fun field1 field2 -> Label.compare field1.name field2.name)
+        fields
+    else
+      fields in
+  Inner (List.map fields ~f:(fun field -> Field field))
 
 let rec of_append_tree' : field Simple_utils.Tree.Append.t' -> t = function
   | Leaf field -> Field field
@@ -23,14 +41,27 @@ let of_append_tree : field Simple_utils.Tree.Append.t -> t = function
   | Full node -> of_append_tree' node
 
 
+
 let tree fields =
   let fields =
     List.sort ~compare:(fun field1 field2 -> Label.compare field1.name field2.name) fields
   in
   of_append_tree (Simple_utils.Tree.Append.of_list fields)
 
+(* evil hack to avoid unraveling dependencies on [default] *)
+let legacy_layout_flag =
+  match Sys.getenv "LIGO_LEGACY_LAYOUT_TREE" with
+  | Some _ -> true
+  | None -> false
 
-let default = tree
+let default =
+  if legacy_layout_flag
+  then tree
+  else comb
+
+let default_of_labels : Label.t list -> field f = fun lst ->
+  let layout_fields = List.map ~f:(fun name -> { name ; annot = None }) lst in
+    default layout_fields
 
 let rec fields t =
   match t with

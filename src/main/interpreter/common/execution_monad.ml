@@ -367,8 +367,8 @@ module Command = struct
         in
         let rej_data =
           LC.v_record
-            [ "contract_too_low", contract_too_low
-            ; "contract_balance", contract_balance
+            [ "contract_balance", contract_balance
+            ; "contract_too_low", contract_too_low
             ; "spend_request", spend_request
             ]
         in

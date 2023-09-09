@@ -246,7 +246,9 @@ const sidebars = {
       "faq/catch-error-view",
       "faq/cameligo-ocaml-syntax-diff",
       "faq/tezos-now-advance-time",
-      "faq/transpile-pascaligo-to-jsligo"
+      "faq/transpile-pascaligo-to-jsligo",
+      "faq/layout-comb-how",
+      "faq/layout-comb-why"
     ]
   }
 };

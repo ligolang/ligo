@@ -67,7 +67,7 @@ let%expect_test _ =
     (foo_record#1:5-15 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 5-15
     Body Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 18-43
-    Content: : |record[bar -> int , foo -> int]|
+    Content: : |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
     references: []
     Module definitions:
     Errors:
@@ -276,10 +276,9 @@ let%expect_test _ =
     (main#12:4-8 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 4-8
     Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
-    Content: |resolved: int -> record[x -> int ,
-                                      y -> int({ name: x }, { name: y })] ->
-    ( list (operation) *
-      record[x -> int , y -> int({ name: x }, { name: y })] )|
+    Content: |resolved: int -> record[x -> int , y -> int] -> ( list (operation) *
+                                                                record[x -> int ,
+                                                                       y -> int] )|
     references: []
     Mod Path =
     Def Type = Global
@@ -320,7 +319,7 @@ let%expect_test _ =
     (storage#1:5-12 -> storage)
     Range: File "../../test/contracts/warning_unused.mligo", line 1, characters 5-12
     Body Range: File "../../test/contracts/warning_unused.mligo", line 2, character 2 to line 5, character 3
-    Content: : |record[x -> int , y -> int]|
+    Content: : |record[x -> int , y -> int({ name: x }, { name: y })]|
     references:
       File "../../test/contracts/warning_unused.mligo", line 12, characters 24-31
     Module definitions: |}];

@@ -73,6 +73,8 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
 
 let ez_t_sum ~loc ?layout lst =
   (* inconsistent naming conventions, but [t_sum_ez] is already taken *)
+  let layout = match layout with Some x -> x | None -> Layout.default_of_labels (List.map ~f:fst lst) in
+  let layout = Some layout in
   let row = Row.of_alist_exn ~layout lst in
   make_t ~loc @@ T_sum row
 
@@ -84,7 +86,7 @@ let t_sum_ez ~loc ?layout (lst : (string * type_expression) list) : type_express
 
 
 let t_bool ~loc () : type_expression =
-  t_sum_ez ~loc [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
+  t_sum_ez ~loc [ "False", t_unit ~loc (); "True", t_unit ~loc () ]
 
 
 let get_t_bool (t : type_expression) : unit option =

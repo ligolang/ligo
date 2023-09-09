@@ -4,35 +4,35 @@ let contract file = test ("top_level_patterns/contracts/" ^ file)
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/nested_record.mligo" ];
-  [%expect {| 202 bytes |}]
+  [%expect {| 208 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/nested_tuple.mligo" ];
-  [%expect {| 210 bytes |}]
+  [%expect {| 216 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/record_tuple.mligo" ];
-  [%expect {| 210 bytes |}]
+  [%expect {| 216 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/record.mligo" ];
-  [%expect {| 98 bytes |}]
+  [%expect {| 104 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_record.mligo" ];
-  [%expect {| 511 bytes |}]
+  [%expect {| 517 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/ticket_tuple.mligo" ];
-  [%expect {| 511 bytes |}]
+  [%expect {| 517 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/tuple_record.mligo" ];
-  [%expect {| 202 bytes |}]
+  [%expect {| 208 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; contract "cameligo/tuple.mligo" ];
-  [%expect {| 98 bytes |}]
+  [%expect {| 104 bytes |}]
 
 let%expect_test _ =
   run_ligo_good

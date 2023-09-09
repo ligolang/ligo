@@ -146,7 +146,9 @@ let%expect_test _ =
     (user#1:5-9 -> user)
     Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, characters 5-9
     Body Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, character 12 to line 5, character 1
-    Content: : |record[id -> nat , is_admin -> bool , name -> string]|
+    Content: : |record[id -> nat ,
+                       is_admin -> bool ,
+                       name -> string({ name: id }, { name: is_admin }, { name: name })]|
     references:
       File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 7, characters 14-18
     Module definitions:

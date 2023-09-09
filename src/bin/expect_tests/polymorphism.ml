@@ -144,7 +144,7 @@ let%expect_test _ =
     ; "--init-file"
     ; test "use_monad.mligo"
     ];
-  [%expect {| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect {| { Pair 3 4 5 ; Pair 4 3 5 } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -155,7 +155,7 @@ let%expect_test _ =
     ; "--init-file"
     ; test "use_monad_set.mligo"
     ];
-  [%expect {| { Pair (Pair 3 4) 5 ; Pair (Pair 4 3) 5 } |}]
+  [%expect {| { Pair 3 4 5 ; Pair 4 3 5 } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -167,7 +167,7 @@ let%expect_test _ =
     ; test "use_monad.jsligo"
     ];
   [%expect {|
-    { Pair (Pair 3 4) 5 ; Pair (Pair 6 8) 10 } |}]
+    { Pair 3 4 5 ; Pair 6 8 10 } |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -229,8 +229,8 @@ let%expect_test _ =
   [%expect
     {|
     { parameter string ;
-      storage (pair (string %name) (pair %state int (sapling_state 8))) ;
-      code { UNPAIR ; SWAP ; CDR ; SWAP ; PAIR ; NIL operation ; PAIR } } |}]
+      storage (pair (pair %state int (sapling_state 8)) (string %name)) ;
+      code { UNPAIR ; SWAP ; CAR ; PAIR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_good

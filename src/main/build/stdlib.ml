@@ -70,14 +70,18 @@ let type_ ~options x =
 
 let get : options:Compiler_options.t -> unit -> t =
  fun ~options () ->
+  let def str = "#define " ^ str ^ "\n" in
   let std =
-    let def str = "#define " ^ str ^ "\n" in
     match options.middle_end.protocol_version with
     | Environment.Protocols.Mumbai -> def "MUMBAI"
     | Environment.Protocols.Nairobi -> def "NAIROBI"
   in
+  let legacy_layout_tree =
+    if Ligo_prim.Layout.legacy_layout_flag
+    then def "LEGACY_LAYOUT_TREE"
+    else "" in
   let lib = Ligo_lib.get () in
-  let curry_content_core = compile ~options (std ^ lib) in
+  let curry_content_core = compile ~options (std ^ legacy_layout_tree ^ lib) in
   let curry_content_typed = type_ ~options curry_content_core in
   { content_typed = curry_content_typed; content_core = curry_content_core }
 

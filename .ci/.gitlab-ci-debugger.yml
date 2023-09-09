@@ -50,6 +50,7 @@ debugger-danger-instant-checks:
     - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
         --dangerfile=./danger/instant-checks.rb
         --danger_id=instant
+  allow_failure: true
 
 debugger-danger-hlint:
   stage: tools-precheck

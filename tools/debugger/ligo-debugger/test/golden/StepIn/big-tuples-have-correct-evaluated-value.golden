@@ -20,7 +20,7 @@ InterpretSnapshot:
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus:
-    running / expression evaluated (Pair (Pair (Pair 1 2) (Pair 3 4)) 5 : int * int * int * int * int)
+    running / expression evaluated (Pair 1 (Pair 2 (Pair 3 (Pair 4 5))) : int * int * int * int * int)
   isStackFrames:
     [ StackFrame:
       sfName: main

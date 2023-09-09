@@ -44,17 +44,15 @@ let compile_row ~f layout_attr_opt (lst : ty_expr option Non_linear_rows.t) =
           in
           Ligo_prim.Layout.{ name; annot = a })
     in
-    let has_row_annots = List.exists lst ~f:(fun (_, _, a) -> not (List.is_empty a)) in
-    match layout_attr_opt, has_row_annots with
-    | Some Attribute.{ key = "layout"; value = Some "tree" }, _ ->
-      Some (Ligo_prim.Layout.tree lfields)
-    | Some Attribute.{ key = "layout"; value = Some "comb" }, _ ->
-      Some (Ligo_prim.Layout.comb lfields)
-    | _, true -> Some (Ligo_prim.Layout.default lfields)
-    | _ -> None
+    match layout_attr_opt with
+    | Some Attribute.{ key = "layout"; value = Some "tree" } ->
+      Ligo_prim.Layout.tree lfields
+    | Some Attribute.{ key = "layout"; value = Some "comb" } ->
+      Ligo_prim.Layout.comb lfields
+    | _ -> Ligo_prim.Layout.default lfields
   in
   let fields = List.map ~f:(fun (a, b, _) -> a, b) lst in
-  Row.of_alist_exn ~layout fields
+  Row.of_alist_exn ~layout:(Some layout) fields
 
 
 let compile_row_sum ~loc =
@@ -147,6 +145,10 @@ module Normalize_no_layout = struct
     [%expect
       {|
       (T_record
-       ((fields (((Label x) (T_var x)) ((Label y) (T_var y)))) (layout ())))
+       ((fields (((Label x) (T_var x)) ((Label y) (T_var y))))
+        (layout
+         ((Inner
+           ((Field ((name (Label x)) (annot ())))
+            (Field ((name (Label y)) (annot ())))))))))
     |}]
 end

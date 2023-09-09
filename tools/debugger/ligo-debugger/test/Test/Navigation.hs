@@ -188,7 +188,7 @@ test_record_update_is_statement =
       { crdProgram = contractsDir </> "record-update-is-statement.mligo"
       , crdModuleName = Nothing
       , crdParam = ()
-      , crdStorage = ((0 :: Integer, [mt|"str"|]), False)
+      , crdStorage = (0 :: Integer, [mt|"str"|], False)
       }
 
     doStep = processLigoStep (CStepIn GStmt)
@@ -216,14 +216,14 @@ test_Module_entrypoints = testGroup "Module entrypoints"
       ]
   ]
   where
-    decrementParam :: Either (Either Integer Integer) ()
-    decrementParam = Left $ Left 42
+    decrementParam :: Either () (Either Integer Integer)
+    decrementParam = Right $ Left 42
 
-    incrementParam :: Either (Either Integer Integer) ()
-    incrementParam = Left $ Right 42
+    incrementParam :: Either () (Either Integer Integer)
+    incrementParam = Right $ Right 42
 
-    resetParam :: Either (Either Integer Integer) ()
-    resetParam = Right ()
+    resetParam :: Either () (Either Integer Integer)
+    resetParam = Left ()
 
     doStep = processLigoStep (CStepIn GExpExt)
 
