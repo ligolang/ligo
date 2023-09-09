@@ -219,12 +219,12 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    { parameter (or (or (nat %a) (int %b)) (or (string %c) (bool %d))) ;
+    { parameter (or (nat %a) (or (int %b) (or (string %c) (bool %d)))) ;
       storage nat ;
       code { UNPAIR ;
              IF_LEFT
-               { IF_LEFT { ADD } { DROP } }
-               { IF_LEFT { DROP } { DROP } } ;
+               { ADD }
+               { IF_LEFT { DROP } { IF_LEFT { DROP } { DROP } } } ;
              NIL operation ;
              PAIR } } |}];
   run_ligo_good
@@ -235,7 +235,7 @@ let%expect_test _ =
     ; "--library"
     ; "test_libraries/lib/parameter,test_libraries/lib/storage"
     ];
-  [%expect {| (Right (Left "Hello")) |}];
+  [%expect {| (Right (Right (Left "Hello"))) |}];
   run_ligo_good
     [ "compile"
     ; "storage"

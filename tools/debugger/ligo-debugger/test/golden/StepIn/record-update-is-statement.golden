@@ -7,8 +7,9 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ] ]
+            elem s of [@layout comb]
+              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+          siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -18,8 +19,9 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ] ]
+            elem s of [@layout comb]
+              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+          siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -29,8 +31,9 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem s of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") False ] ]
+            elem s of [@layout comb]
+              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+          siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
   isStackFrames:
@@ -40,8 +43,9 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
-            elem newStorage of { a: int; b: string; c: (False of (unit) | True of (unit)); }
-          siValue: Pair (Pair 0 "\"str\"") True ] ]
+            elem newStorage of [@layout comb]
+              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+          siValue: Pair 0 (Pair "\"str\"" True) ] ]
 InterpretSnapshot:
   isStatus: terminated ok
   isStackFrames:
@@ -51,7 +55,7 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc: elem ? of 
-          siValue: { { }; Pair 0 "\"str\""; True }
+          siValue: { { }; 0; "\"str\""; True }
         , StackItem:
           siLigoDesc: elem ? of 
-          siValue: Pair (Pair 0 "\"str\"") False ] ]
+          siValue: Pair 0 (Pair "\"str\"" False) ] ]

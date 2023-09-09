@@ -1160,22 +1160,14 @@ test_Snapshots = testGroup "Snapshots collection"
               { crdProgram = file
               , crdModuleName = Nothing
               , crdParam = ()
-              , crdStorage = ((0, 0), [mt|""|]) :: ((Integer, Natural), MText)
+              , crdStorage = (0, 0, [mt|""|]) :: (Integer, Natural, MText)
               }
 
         testWithSnapshots runData do
           -- Skip arguments
           void $ move Forward
 
-          let expectedLayout = LLInner
-                [ LLInner
-                    [ LLField "a"
-                    , LLField "b"
-                    ]
-                , LLField "c"
-                ]
-
-          let expectedType = LigoTypeResolved $ mkRecordType expectedLayout
+          let expectedType = LigoTypeResolved $ mkRecordType (combLayout ["a", "b", "c"])
                 [ ("a", intType')
                 , ("b", mkSimpleConstantType "nat")
                 , ("c", mkSimpleConstantType "string")
@@ -1305,10 +1297,10 @@ test_Snapshots = testGroup "Snapshots collection"
             isAtLine 16
 
           let expectedComplexType = LigoTypeResolved
-                $ mkRecordType (twoElemTreeLayout "simple_field" "complex_field")
+                $ mkRecordType (combLayout ["simple_field", "complex_field"])
                     [ ("simple_field", mkSimpleConstantType "String")
                     , ("complex_field"
-                      , mkRecordType (twoElemTreeLayout "inner_field1" "inner_field2")
+                      , mkRecordType (combLayout ["inner_field1", "inner_field2"])
                           [ ("inner_field1", intType')
                           , ("inner_field2", intType')
                           ]
@@ -1927,7 +1919,7 @@ test_Snapshots = testGroup "Snapshots collection"
             { crdProgram = contractsDir </> "complex-storage.mligo"
             , crdModuleName = Nothing
             , crdParam = ()
-            , crdStorage = ((0 :: Integer, 0 :: Natural), [mt|!|])
+            , crdStorage = (0 :: Integer, 0 :: Natural, [mt|!|])
             }
 
       testWithSnapshots runData do

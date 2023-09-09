@@ -561,7 +561,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "nested_record_sum.mligo" ];
-  [%expect {| 142 bytes |}]
+  [%expect {| 148 bytes |}]
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_I.mligo" ];
@@ -569,7 +569,7 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "info"; "measure-contract"; good_test "edge_case_T.mligo" ];
-  [%expect {| 468 bytes |}]
+  [%expect {| 448 bytes |}]
 
 let%expect_test _ =
   run_ligo_bad [ "info"; "measure-contract"; good_test "edge_case_V.mligo" ];
@@ -653,11 +653,11 @@ let%expect_test _ =
     Warning: unused variable "s".
     Hint: replace it by "_s" to prevent this warning.
 
-    { parameter (pair (pair (nat %mynat) (ticket %myt int)) (option nat)) ;
+    { parameter (pair (pair (ticket %myt int) (nat %mynat)) (option nat)) ;
       storage nat ;
       code { CAR ;
              UNPAIR ;
-             CAR ;
+             CDR ;
              SWAP ;
              IF_NONE {} { SWAP ; DROP } ;
              NIL operation ;

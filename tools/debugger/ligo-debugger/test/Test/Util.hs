@@ -8,6 +8,7 @@ module Test.Util
   , AST.langExtension
   , pattern SomeLorentzValue
   , rmode'
+  , legacyMode
 
     -- * Test utilities
   , (@?=)
@@ -71,6 +72,7 @@ import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
+import System.Environment (setEnv, unsetEnv)
 import System.FilePath ((<.>), (</>))
 import Test.HUnit (Assertion)
 import Test.HUnit.Lang qualified as HUnit
@@ -490,3 +492,13 @@ twoElemTreeLayout a b = LLInner
 
 combLayout :: [Text] -> LigoLayout
 combLayout = LLInner . fmap LLField
+
+-- | LIGO now has @layout:comb for types by default.
+-- This combinator allows to run tests in legacy mode
+-- with @tree@ layout by default.
+legacyMode :: IO a -> IO a
+legacyMode act = do
+  setEnv "LIGO_LEGACY_LAYOUT_TREE" "1"
+  res <- act
+  unsetEnv "LIGO_LEGACY_LAYOUT_TREE"
+  pure res

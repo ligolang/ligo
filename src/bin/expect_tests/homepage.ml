@@ -18,10 +18,10 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; base "cameligo.mligo"; "-m"; "IncDec" ];
   [%expect
     {|
-    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+    { parameter (or (unit %reset) (or (int %decrement) (int %increment))) ;
       storage int ;
       code { UNPAIR ;
-             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             IF_LEFT { DROP 2 ; PUSH int 0 } { IF_LEFT { SWAP ; SUB } { ADD } } ;
              NIL operation ;
              PAIR } } |}]
 
@@ -29,9 +29,9 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo"; "-m"; "IncDec" ];
   [%expect
     {|
-    { parameter (or (or (int %decrement) (int %increment)) (unit %reset)) ;
+    { parameter (or (unit %reset) (or (int %decrement) (int %increment))) ;
       storage int ;
       code { UNPAIR ;
-             IF_LEFT { IF_LEFT { SWAP ; SUB } { ADD } } { DROP 2 ; PUSH int 0 } ;
+             IF_LEFT { DROP 2 ; PUSH int 0 } { IF_LEFT { SWAP ; SUB } { ADD } } ;
              NIL operation ;
              PAIR } } |}]

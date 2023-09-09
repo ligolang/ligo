@@ -74,7 +74,7 @@ test_ExpressionCompilation = testGroup "Compiling expression"
 
   , testCase "Relying on constants defined in the contract" do
       res <- evalExprOverContract1 "defEmptyStorage"
-      res @?= U.ValuePair (U.ValuePair (U.ValueInt 0) (U.ValueInt 0)) (U.ValueString [mt|!|])
+      res @?= U.ValuePair (U.ValueInt 0) (U.ValuePair (U.ValueInt 0) (U.ValueString [mt|!|]))
 
   , testCase "Relying on functions defined in the contract" do
       res <- try @_ @LigoCallException $ evalExprOverContract1 "defStorage \"a\""
@@ -178,7 +178,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
       [LVConstructor ("Some", LVCt $ LCInt "42")] @?= decompiled
 
   , testGroup "Decompile structures"
-      [ testCase "Decompile record" do
+      [ testCase "Decompile record" $ legacyMode do
           let recordVal = T.SomeValue $ T.toVal ((42 :: Integer, [mt|str|]), True)
 
           let recordLayout = LLInner
@@ -245,7 +245,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
       ]
 
   , testGroup "Sum types"
-      [ testCase "Decompile sum with default layout" do
+      [ testCase "Decompile sum with default layout" $ legacyMode do
           let sumVal = T.SomeValue $ T.toVal (Left @_ @() $ Right @Integer [mt|str|])
 
           let sumLayout = LLInner
@@ -315,7 +315,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
           [LVCt $ LCChainId "\0\0\0\0"] @?= decompiled
       ]
 
-  , testCase "Complex value" do
+  , testCase "Complex value" $ legacyMode do
       let complexVal = T.SomeValue
             $ T.toVal
             $ Left @_ @()

@@ -77,7 +77,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter int ;
-      storage (pair (pair (pair string nat) string nat) string) ;
+      storage (pair string nat string nat string) ;
       code { CDR ; NIL operation ; PAIR } ;
       view "v" int mutez { DROP ; PUSH mutez 1000000 } } |}]
 
@@ -133,7 +133,7 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (pair (int %a) (nat %b)) (mutez %c) (address %d)) ;
+      storage (pair (int %a) (nat %b) (mutez %c) (address %d)) ;
       code { CDR ;
              PUSH int 1 ;
              SOME ;
@@ -141,21 +141,17 @@ let%expect_test _ =
                {}
                { DROP ;
                  DUP ;
-                 CDR ;
-                 CDR ;
+                 GET 6 ;
                  DUP 2 ;
-                 CAR ;
                  CAR ;
                  SENDER ;
                  PAIR ;
                  VIEW "foo" unit ;
                  DROP ;
                  DUP ;
-                 CDR ;
-                 CDR ;
+                 GET 6 ;
                  DUP 2 ;
-                 CAR ;
-                 CDR ;
+                 GET 3 ;
                  VIEW "bar" unit ;
                  IF_NONE {} { DROP } } ;
              NIL operation ;

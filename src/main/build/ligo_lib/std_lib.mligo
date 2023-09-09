@@ -50,8 +50,8 @@ type external_map_remove_value = "%constant:external_map_remove_value"
 
 let failwith (type a b) (x : a) = [%michelson ({| { FAILWITH } |} x : b)]
 
-type bool = True | False
-type 'a option = Some of 'a | None
+type bool = False | True
+type 'a option = None | Some of 'a
 
 type ('p, 's) entrypoint = 'p * 's -> operation list * 's
 
@@ -92,8 +92,13 @@ module Tezos = struct
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
   let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+#if LEGACY_LAYOUT_TREE
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
     [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#else
+  let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
+    [%Michelson ({| { UNPAIR 3 ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+#endif
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     let _ : unit = [%external ("CHECK_CALL_VIEW_LITSTR", s)] in
     [%michelson ({| { VIEW (litstr $0) (typeopt $1) } |} (s : string) (None : b option) x a : b option)]
@@ -269,22 +274,26 @@ type int64 = "%constant:int64"
 type views = "%constant:views"
 
 type test_exec_error_balance_too_low =
-  { contract_too_low : address ; contract_balance : tez ; spend_request : tez }
+  { contract_balance : tez;
+    contract_too_low : address;
+    spend_request : tez }
 
 type test_exec_error =
-  | Rejected of michelson_program * address
   | Balance_too_low of test_exec_error_balance_too_low
   | Other of string
+  | Rejected of michelson_program * address
 
-type test_exec_result = Success of nat | Fail of test_exec_error
+type test_exec_result =
+  | Fail of test_exec_error
+  | Success of nat
 
 type test_baker_policy =
-  | By_round of int
   | By_account of address
+  | By_round of int
   | Excluding of address list
 
 type 'a pbt_test = ('a pbt_gen) * ('a -> bool)
-type 'a pbt_result = Success | Fail of 'a
+type 'a pbt_result = Fail of 'a | Success
 
 type 's unforged_ticket = [@layout:comb] { ticketer : address ; value : 's ; amount : nat }
 

@@ -7,14 +7,14 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (int %bar) (int %foo)) ;
+      storage (pair (int %foo) (int %bar)) ;
       code { CDR ;
              PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
-             UPDATE 1 ;
+             UPDATE 2 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -51,14 +51,14 @@ let%expect_test _ =
     Hint: remove recursion from the function "bar" to prevent this warning.
 
     { parameter unit ;
-      storage (pair (int %bar) (int %foo)) ;
+      storage (pair (int %foo) (int %bar)) ;
       code { CDR ;
              PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
-             UPDATE 1 ;
+             UPDATE 2 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -67,14 +67,14 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (int %bar) (int %foo)) ;
+      storage (pair (int %foo) (int %bar)) ;
       code { CDR ;
              PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
-             UPDATE 1 ;
+             UPDATE 2 ;
              NIL operation ;
              PAIR } } |}]
 
@@ -84,13 +84,13 @@ let%expect_test _ =
   [%expect
     {|
     { parameter unit ;
-      storage (pair (int %bar) (int %foo)) ;
+      storage (pair (int %foo) (int %bar)) ;
       code { CDR ;
              PUSH int 0 ;
              PUSH int 1 ;
              PUSH int 2 ;
              ADD ;
              ADD ;
-             UPDATE 1 ;
+             UPDATE 2 ;
              NIL operation ;
              PAIR } } |}]

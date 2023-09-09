@@ -1,0 +1,7 @@
+
+author: tomjack
+description: "\\nMade @layout:comb the default layout for all variants, records, and tuple (`[a, b, ...]`/`a * b * ...`) types.\\n\\nThis is a **BREAKING CHANGE**!\\n\\nIf your contract needs to interoperate with existing contracts, contracts compiled with previous LIGO versions or other compilers, or existing standards or off-chain tools/clients/indexers/etc, you **MUST** verify this interop still works after this change. Testing with `ligo test` or by compiling a fresh set of contracts is **generally not sufficient**! You must test against the actual contracts as they are deployed or will be deployed.\\n\\nFor more info, see the FAQ pages on [how to deal with this change](https://ligolang.org/docs/faq/layout-comb-how) and [why this happened](https://ligolang.org/docs/faq/layout-comb-why).\\n\\n"
+merge_request: '1816'
+title: "Draft: Default to @layout:comb everywhere"
+type: breaking
+            

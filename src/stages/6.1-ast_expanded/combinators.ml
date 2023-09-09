@@ -274,7 +274,7 @@ let t_sum_ez ~loc ?(layout = default_layout) (lst : (string * type_expression) l
 
 
 let t_bool ~loc () : type_expression =
-  t_sum_ez ~loc [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
+  t_sum_ez ~loc [ "False", t_unit ~loc (); "True", t_unit ~loc () ]
 
 
 let get_t_bool (t : type_expression) : unit option =
@@ -288,7 +288,7 @@ let get_t_bool (t : type_expression) : unit option =
 
 
 let t_option ~loc typ : type_expression =
-  t_sum_ez ~loc [ "Some", typ; "None", t_unit ~loc () ]
+  t_sum_ez ~loc [ "None", t_unit ~loc (); "Some", typ ]
 
 
 let t_record ~loc ~layout fields : type_expression =
