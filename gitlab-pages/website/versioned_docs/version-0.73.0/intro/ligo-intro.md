@@ -76,18 +76,18 @@ For critical code, LIGO also keeps its compiled output unbloated making **possib
 # Where to start
 
 ### Do you want to try Ligo ?
-For a quick overview, [get-started]( http://localhost:3000/docs/tutorials/getting-started) is a good choice. [Webide](https://ide.ligolang.org/) can be used to avoid installation onto your laptop.
+For a quick overview, [get-started]( https://ligolang.org/docs/tutorials/getting-started) is a good choice. [Webide](https://ide.ligolang.org/) can be used to avoid installation onto your laptop.
 
 ### Do you want to learn Ligo ?
 Your choice to learn Ligo is already available :
-- Read [basics](http://localhost:3000/docs/language-basics/types) to have a basic comprehension
-- Write your first [smart contract](http://localhost:3000/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract).
+- Read [basics](https://ligolang.org/docs/language-basics/types) to have a basic comprehension
+- Write your first [smart contract](https://ligolang.org/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract).
 - Others ressources are available on [marigold.dev](https://www.marigold.dev/learn)
 
 ### Do you want to build a production-ready project ?
 You will need a deeper comprehension : 
-- Teach yourself how to structure your code with [Combining code](http://localhost:3000/docs/next/language-basics/modules) section
-- Learn how to [write tests](http://localhost:3000/docs/next/advanced/testing?lang=jsligo) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
+- Teach yourself how to structure your code with [Combining code](https://ligolang.org/docs/next/language-basics/modules) section
+- Learn how to [write tests](https://ligolang.org/docs/next/advanced/testing?lang=jsligo) we strongly encourage to use [breathalyzer library from the LIGO registry.](https://packages.ligolang.org/package/ligo-breathalyzer)
 - Understand how to [secure a contract](https://ligolang.org/docs/tutorials/security)
 
 ### Go deeper
