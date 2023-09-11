@@ -14,16 +14,19 @@
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   "docs": {
-    "Getting started": [
-      "tutorials/getting-started/getting-started",
-      "intro/installation"
+    "Getting started": [      
+      "intro/introduction",
+      {
+        "type": "category",
+        "label": "Installation",
+        "items": [
+          "intro/installation",
+          "intro/editor-support"
+        ]
+      },
+      "tutorials/getting-started/getting-started"
     ],
     "Learn": [
-      {
-      "type": "link",
-      "label": "Learn with Academy",
-      "href": "https://academy.ligolang.org/",
-      },
       {
         "type": "link",
         "label": "Learn with Marigold",
@@ -44,10 +47,12 @@ const sidebars = {
       "language-basics/math-numbers-tez",
       "language-basics/loops",
       "language-basics/unit-option-pattern-matching",
+      "advanced/entrypoints-contracts",
+      "contract/views",
+      "contract/events",
       "language-basics/tezos-specific"
     ],
     "Writing a Contract": [
-      "intro/introduction",
       {
         "type": "category",
         "label": "First contract",
@@ -56,9 +61,6 @@ const sidebars = {
           "tutorials/taco-shop/tezos-taco-shop-payout"
         ],
       },
-      "advanced/entrypoints-contracts",
-      "contract/views",
-      "contract/events",
       "tutorials/start-a-project-from-a-template",
     ],
     "Testing and Debugging": [
@@ -235,7 +237,8 @@ const sidebars = {
       "protocol/kathmandu",
       "protocol/lima",
       "protocol/mumbai",
-      "protocol/nairobi"
+      "protocol/nairobi",
+      "protocol/oxford"
     ],
   },
   "faq": {

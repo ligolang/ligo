@@ -15,7 +15,7 @@ let%expect_test _ =
     Everything at the top-level was executed. |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; base "cameligo.mligo"; "-m"; "IncDec" ];
+  run_ligo_good [ "compile"; "contract"; base "cameligo.mligo"; "-m"; "Counter" ];
   [%expect
     {|
     { parameter (or (unit %reset) (or (int %decrement) (int %increment))) ;
@@ -26,7 +26,7 @@ let%expect_test _ =
              PAIR } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo"; "-m"; "IncDec" ];
+  run_ligo_good [ "compile"; "contract"; base "jsligo.jsligo"; "-m"; "Counter" ];
   [%expect
     {|
     { parameter (or (unit %reset) (or (int %decrement) (int %increment))) ;

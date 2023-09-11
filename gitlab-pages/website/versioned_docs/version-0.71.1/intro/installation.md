@@ -105,7 +105,15 @@ Linux or OSX:
 > To make this `alias` persistent across terminal sessions you need to configure your shell.     
 > Here is a [good link](https://www.tecmint.com/create-alias-in-linux/) with the steps on how to do that.
 
-Windows:
+Or if you want the development version, replace the version above with `next`.
+
+Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/ligolang/ligo/tags).
+
+</TabItem>
+<TabItem value="windows">
+
+It's possible to use ligo in [Docker](https://docs.docker.com/install/) through docker or [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install)
+
 > ```dos
 > docker run --rm -v "%CD%":/cd -w /cd ligolang/ligo:0.73.0`
 > ```
