@@ -8,7 +8,7 @@ const proxy_transfer_contract =
     const tx_param = mk_param (ticket);
     const c : contract<whole_p> =
       Tezos.get_contract_with_error (dst_addr, "Testing proxy: you provided a wrong address") ;
-    const op = Tezos.transaction (tx_param, 1 as mutez, c) ;
+    const op = Tezos.transaction (tx_param, 1mutez, c) ;
     return ([ list([op]), unit ]);
   };
 };
@@ -21,7 +21,7 @@ const proxy_originate_contract =
         const [v,amt] = p[0] ;
         const ticket = Option.unopt (Tezos.create_ticket (v, amt)) ;
         const init_storage : whole_s = mk_storage (ticket) ;
-        const [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), (0 as mutez), init_storage) ;
+        const [op,addr] = Tezos.create_contract(main, (None () as option<key_hash>), 0mutez, init_storage) ;
         return ([list([op]), Some(addr)])
   };
 };
@@ -33,7 +33,7 @@ const init_transfer =
     const proxy_transfer : (p : [[vt , nat] , address]) => (s : unit) => [list<operation> , unit] =
       proxy_transfer_contract (mk_param)
     ;
-    const [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1 as tez) ;
+    const [taddr_proxy, _, _] = Test.originate (proxy_transfer, unit, 1tez) ;
     return taddr_proxy
   };
 
@@ -41,7 +41,7 @@ const transfer =
   <vt>( [taddr_proxy, info] : [proxy_address<vt> , [[vt , nat] , address]]) => {
     const [ticket_info, dst_addr] = info ;
     return (
-      Test.transfer_to_contract(Test.to_contract (taddr_proxy), [ticket_info , dst_addr], 1 as mutez)
+      Test.transfer_to_contract(Test.to_contract (taddr_proxy), [ticket_info , dst_addr], 1mutez)
     )
   };
 
@@ -49,8 +49,8 @@ const originate =
   <vt, whole_s, vp>([ ticket_info , mk_storage , contract] : [ [vt , nat] , (t:ticket<vt>) => whole_s, (p: vp) => (s: whole_s) => [list<operation> , whole_s] ]) => {
       const proxy_origination : (_p : [vt , nat]) => (_s : option<address>) => [list<operation> , option<address>] =
         curry(proxy_originate_contract (mk_storage, contract)) ;
-      const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ),1 as tez) ;
-      const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0 as tez) ;
+      const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ), 1tez) ;
+      const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0tez) ;
       return match (Test.get_storage (taddr_proxy), {
         Some: (addr:address) => {
         const _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;

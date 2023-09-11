@@ -199,8 +199,8 @@ let threshold (p : unit) = if Tezos.get_amount () = 100tz then 42 else 0
 <Syntax syntax="jsligo">
 
 ```jsligo
-let threshold = (p : unit) => {
-  if (Tezos.get_amount() == (100 as tez)) { return 42; } else { return 0; };
+function threshold (p : unit) {
+  if (Tezos.get_amount() == 100tez) return 42 else return 0;
 };
 ```
 
@@ -888,9 +888,9 @@ type parameter = int ;
 
 type return_ = [list<operation>, storage];
 
-let main = (x: [parameter, storage]): return_ => {
+function main (x: [parameter, storage]): return_ {
   let [i, store] = x ;
-  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10 as nat));
+  let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
   let [_, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
   return [list([]), ret]
 };

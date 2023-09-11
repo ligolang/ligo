@@ -1,112 +1,82 @@
-type storage = int;
+type storage = int
 
 type parameter =
   ["Increment", int]
 | ["Decrement", int]
-| ["Reset"];
+| ["Reset"]
 
-const add = (store: storage, delta: int): storage => store + delta;
+const add = (store: storage, delta: int): storage => store + delta
 const sub = (store: storage, delta: int): storage => store - delta;
 
-
-const main = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+function main (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
     return [
       list([]),    // No operations
       match (action) {
-        when(Increment(n)): add (store, n);
-        when(Decrement(n)): sub (store, n);
-        when(Reset()): 0; }
+        when(Increment(n)): add (store, n)
+        when(Decrement(n)): sub (store, n)
+        when(Reset()): 0 }
       ]
   }
-  return failwith("Not Allowed");
-};
+  return failwith("Not Allowed")
+}
 
-
-const main2 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+function main2 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
-
- return [
-   list([]),    // No operations
-   match (action) {
-    when(Increment(n)): add (store, n);
-    when(Decrement(n)): sub (store, n);
-    when(Reset()): 0; }
-  ]
+    return [
+      list([]),    // No operations
+      match (action) {
+        when(Increment(n)): add (store, n)
+        when(Decrement(n)): sub (store, n)
+        when(Reset()): 0 }
+    ]
   } // comment should also work
-  return failwith("Not Allowed");
-};
+  return failwith("Not Allowed")
+}
 
-
-const main3 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+function main3 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
-
- return [
-   list([]),    // No operations
-   match (action) {
-    when(Increment(n)): add (store, n);
-    when(Decrement(n)): sub (store, n);
-    when(Reset()): 0; }
-  ]
+    return [
+      list([]),    // No operations
+      match (action) {
+        when(Increment(n)): add (store, n)
+        when(Decrement(n)): sub (store, n)
+        when(Reset()): 0 }
+    ]
   } // Comment then else should be fine too
   else {
-    return failwith("Not allowed");
+    return failwith("Not allowed")
   }
 }
 
-
-const main4 = (action: parameter, store: storage) : [ list<operation> , storage ] => {
+function main4 (action: parameter, store: storage) : [list<operation>, storage] {
   if (true) {
-
- return [
-   list([]),    // No operations
-   match (action) {
-    when(Increment(n)): add (store, n);
-    when(Decrement(n)): sub (store, n);
-    when(Reset()): 0; }
-  ]
+    return [
+      list([]),    // No operations
+      match (action) {
+        when(Increment(n)): add (store, n)
+        when(Decrement(n)): sub (store, n)
+        when(Reset()): 0 }
+    ]
   } /* Block comments as well */
   // and even multiple comments
   return failwith("Not Allowed");
-};
+}
 
-export const example = (x : int) : int => {
+export function example (x : int) : int {
   if (x == 42) { return x; } // foo
   else {
-    return x;
+    return x
   }
 }
 
-export const max2 = (x: int, y: int) => {
-  if (x > y) 
-
-      return x
-  
-  else
-
-    return y
-
+export function max2 (x: int, y: int) {
+  if (x > y) return x else return y
 }
 
-export const max3 = (x: int, y: int, z: int) => {
+export function max3 (x: int, y: int, z: int) {
   if (x > y)
-    
-    if (x > z)
-
-      return x
-
-    else 
-
-      return z
-
+    if (x > z) return x else return z
   else
-
-    if (y > z)
-
-      return y
-
-    else 
-
-      return z
-
+    if (y > z) return y else return z
 }

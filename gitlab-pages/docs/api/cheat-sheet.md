@@ -747,7 +747,7 @@ Natural numbers
 <div className="example">
 
 ```jsligo
-let n: nat = 7 as nat;
+let n: nat = 7n;
 ```
 
 </div>
@@ -792,8 +792,8 @@ Mutez (micro tez)
 <div className="example">
 
 ```jsligo
-let tez: tez = 42 as tez
-let tez2: tez = 7 as mutez
+let tez: tez = 42tez
+let tez2: tez = 7mutez
 ```
 
 </div>
@@ -817,7 +817,7 @@ Addition
 
 ```jsligo
 let add_int: int = 3 + 4;
-let add_nat: nat = (3 as nat) + (4 as nat);
+let add_nat: nat = 3n + 4n;
 ```
 
 </div>
@@ -828,10 +828,10 @@ Multiplication & Division
 
 ```jsligo
 let mul_int: int = 3 * 4;
-let mul_nat: nat = (3 as nat) * (4 as nat);
+let mul_nat: nat = 3n * 4n;
 
 let div_int: int = 10 / 5;
-let div_nat: nat = (10 as nat) / (5 as nat);
+let div_nat: nat = 10n / 5n;
 ```
 
 </div>
@@ -851,12 +851,12 @@ Tuples
 <div className="example">
 
 ```jsligo
-type name = [string, string]
+type name = [string, string];
 
-let winner: name = ["John", "Doe"]
+let winner: name = ["John", "Doe"];
 
-let firstName: string = winner[0]
-let lastName: string = winner[1]
+let firstName: string = winner[0];
+let lastName: string = winner[1];
 ```
 
 </div>
@@ -910,8 +910,8 @@ If Statement
 <div className="example">
 
 ```jsligo
-let if_statement = (age : nat): string => {
-  if (age >= (16 as nat)) { return "yes"; } else { return "no"; }
+function if_statement (age : nat): string {
+  if (age >= 16n) return "yes" else return "no"
 }
 ```
 
@@ -1004,14 +1004,14 @@ Maps
 type prices = map<nat, tez>;
 
 let prices: prices = Map.literal(list([
-  [10 as nat, 60 as mutez],
-  [50 as nat, 30 as mutez],
-  [100 as nat, 10 as mutez]
+  [10n, 60mutez],
+  [50n, 30mutez],
+  [100n, 10mutez]
 ]));
 
-let price: option<tez> = Map.find_opt(50 as nat, prices)
+let price: option<tez> = Map.find_opt(50n, prices)
 
-let prices2: prices = Map.update(200 as nat, (Some (5 as mutez)), prices)
+let prices2: prices = Map.update(200n, Some (5mutez), prices)
 ```
 
 </div>
@@ -1040,7 +1040,7 @@ Transactions
 ```jsligo group=tezos_specific
 
 let payment: operation =
-  Tezos.transaction(unit, 100 as mutez, contract);
+  Tezos.transaction(unit, 100mutez, contract);
 
 ```
 
@@ -1074,10 +1074,10 @@ namespace C {
 
 const testC = () => {
     let initial_storage = 42;
-    let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0 as tez);
+    let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0tez);
     let contr : contract<parameter_of C> = Test.to_contract(taddr);
     let p : parameter_of C = Increment(1);
-    let _ = Test.transfer_to_contract_exn(contr, p, 1 as mutez);
+    let _ = Test.transfer_to_contract_exn(contr, p, 1mutez);
     return assert(Test.get_storage(taddr) == initial_storage + 1);
 }
 ```

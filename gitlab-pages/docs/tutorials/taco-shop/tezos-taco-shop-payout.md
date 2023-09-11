@@ -130,7 +130,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
       "Sorry, the taco you are trying to purchase has a different price");
 
   // Decrease the stock by 1n, because we have just sold one
-  let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - (1 as nat))) };
+  let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - 1n)) };
 
   // Update the storage with the refreshed taco_kind
   let new_taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
@@ -417,7 +417,7 @@ let buy_taco = ([taco_kind_index, taco_shop_storage] : [nat, taco_shop_storage])
       "Sorry, the taco you are trying to purchase has a different price");
 
   // Decrease the stock by 1n, because we have just sold one
-  let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - (1 as nat))) };
+  let taco_kind_ = { ...taco_kind, current_stock : (abs (taco_kind.current_stock - 1n)) };
 
   // Update the storage with the refreshed taco_kind
   let new_taco_shop_storage = Map.update (taco_kind_index, Some(taco_kind_), taco_shop_storage);
@@ -473,9 +473,9 @@ ligo run dry-run taco-shop.mligo --syntax cameligo --amount 1 --entry-point buy_
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-ligo run dry-run taco-shop.jsligo --syntax jsligo --amount 1 --entry-point buy_taco '1 as n' "Map.literal (list([
-    [(1 as nat), { current_stock : (50 as nat), max_price : (50 as tez) }] ,
-    [(2 as nat), { current_stock : (20 as nat), max_price : (75 as tez) }]
+ligo run dry-run taco-shop.jsligo --syntax jsligo --amount 1 --entry-point buy_taco '1n' "Map.literal (list([
+    [1n, { current_stock : 50n, max_price : 50tez }] ,
+    [2n, { current_stock : 20n, max_price : 75tez }]
 ]));"
 ```
 
@@ -577,7 +577,7 @@ let donationReceiver : contract<unit>  =
     when(None()): ((failwith ("Not a contract")) as contract<unit>)
   }
 
-let donationAmount = ((Tezos.get_amount ()) / (10 as nat)) as tez;
+let donationAmount = ((Tezos.get_amount ()) / 10n) as tez;
 
 // Pedro will get 90% of the amount
 let op1 = match ((Tezos.get_amount ()) - donationAmount) {

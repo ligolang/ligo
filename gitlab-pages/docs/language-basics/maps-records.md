@@ -86,7 +86,7 @@ let alice : user = {
 
 ```jsligo group=records1
 let alice : user = {
-  id       : 1 as nat,
+  id       : 1n,
   is_admin : true,
   name     : "Alice"
 };
@@ -150,9 +150,9 @@ let user_to_tuple (u : user) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let userToTuple = (u : user) => {
-  let { id, is_admin, name } = u;
-  return [id, is_admin, name];
+function userToTuple (u : user) {
+  let { id, is_admin, name } = u
+  return [id, is_admin, name]
 }
 ```
 
@@ -183,12 +183,12 @@ let get_id (u : user) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let getId = (u : user) => {
+function getId (u : user) {
   let { id, is_admin, name } = u;
   /* we don't use `is_admin` and `name`
    so prevent warning with `ignore` */
   ignore([is_admin, name]);
-  return id;
+  return id
 }
 ```
 
@@ -311,8 +311,8 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
 The syntax for the functional updates of record in JsLIGO:
 
 ```jsligo group=records2
-type point = {x: int, y: int, z: int};
-type vector = {dx: int, dy: int};
+type point = {x: int, y: int, z: int}
+type vector = {dx: int, dy: int}
 
 let origin = {x: 0, y: 0, z: 0};
 

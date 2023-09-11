@@ -302,9 +302,9 @@ Add the following line at the end of `starting.jsligo`
 ```jsligo test-ligo group=a
 const test_increment = (() : unit => {
   let initial_storage = 10 as int;
-  let [taddr, _, _] = Test.originate_module(contract_of(IncDec), initial_storage, 0 as tez);
+  let [taddr, _, _] = Test.originate_module(contract_of(IncDec), initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1 as mutez);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
 }) ()
 ```

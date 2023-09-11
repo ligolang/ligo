@@ -220,7 +220,7 @@ let addr, contract, size =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [addr, contract, size] = Test.originate_from_file(testme_test, "main", list([]), init_storage, 0 as tez);
+let [addr, contract, size] = Test.originate_from_file(testme_test, "main", list([]), init_storage, 0tez);
 ```
 
 </Syntax>
@@ -288,7 +288,7 @@ let taddr, contract, size =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [taddr, contract, size] = Test.originate_module(contract_of(C), init_storage, 0 as tez);
+let [taddr, contract, size] = Test.originate_module(contract_of(C), init_storage, 0tez);
 ```
 
 </Syntax>
@@ -993,7 +993,7 @@ let f = (x: some_r) : int => x.one;
 
 let test_example =
   Test.run (((x : [int, nat, string, bytes, unit]) => f ({ one : x[0] , two : x[1] , three : x[2] , four : x[3] , five : x[4] })),
-           [1 + 3 + 2, ((1 as nat) + (2 as nat)), ("a" + "b"), 0xFF00, unit]);
+           [1 + 3 + 2, 1n + 2n, ("a" + "b"), 0xFF00, unit]);
 ```
 
 </Syntax>
@@ -1338,4 +1338,4 @@ framework will fail with the string passed as message.
 
 Helper functions for working with tickets in the LIGO Testing framework.
 
-Find the complete API reference [here](./proxy_ticket.md) 
+Find the complete API reference [here](./proxy_ticket.md)

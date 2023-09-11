@@ -550,9 +550,9 @@ let test = originate_and_test main
 
 const originate_and_test = (mainf : (p: parameter) => (s: storage) => return_) : unit => {
   let initial_storage = 5 as int;
-  let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
+  let [taddr, _, _] = Test.originate(mainf, initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1 as mutez);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1mutez);
   assert (Test.get_storage(taddr) == initial_storage + 7);
 };
 
@@ -710,10 +710,10 @@ let originate_and_test_dec (mainf : parameter * storage -> return) =
 ```jsligo test-ligo group=frontpage
 const originate_and_test_dec = (mainf : ((p: parameter, s: storage) => return_)) : unit => {
   let initial_storage = 5 as int;
-  let [taddr, _, _] = Test.originate(mainf, initial_storage, 0 as tez);
+  let [taddr, _, _] = Test.originate(mainf, initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1 as mutez);
-  let _ = Test.transfer_to_contract_exn(contr, (Decrement (3)), 1 as mutez);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (7)), 1mutez);
+  let _ = Test.transfer_to_contract_exn(contr, (Decrement (3)), 1mutez);
   assert (Test.get_storage(taddr) == initial_storage + 4);
 };
 ```

@@ -385,7 +385,7 @@ let z : z_or = M_left(unit);
 let y_1 : y_or = M_left(unit);
 let y : z_or = M_right(y_1);
 
-let x_pair = ["foo", [2, 3 as nat]];
+let x_pair = ["foo", [2, 3n]];
 let x_1 : y_or = M_right (x_pair);
 let x : z_or = M_right (y_1);
 ```
@@ -718,7 +718,7 @@ let main = (p: parameter, s: storage): [list<operation>, storage] => {
       when(None()): failwith ("contract does not match")
     };
   return [
-    list([Tezos.transaction(Left(2), 2 as mutez, contract)]),
+    list([Tezos.transaction(Left(2), 2mutez, contract)]),
     s];
 };
 ```

@@ -92,7 +92,7 @@ type account_balances = map<address, tez>;
 
 let ledger: account_balances =
   Map.literal
-    (list([["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, 10 as mutez]]));
+    (list([["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, 10mutez]]));
 ```
 
 </Syntax>

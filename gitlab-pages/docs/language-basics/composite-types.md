@@ -94,7 +94,7 @@ type ledger = map <account, account_data>;
 let my_ledger : ledger =
   Map.literal(list([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address,
-     {balance: 10 as mutez, transactions: 5 as nat}]]));
+     {balance: 10mutez, transactions: 5n}]]));
 ```
 
 </Syntax>

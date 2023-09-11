@@ -70,7 +70,7 @@ union type, which should be familiar for developers coming from TypeScript.
 type foo =
   { kind: "increment", amount: int}
 | { kind: "decrement", amount: int}
-| { kind: "reset"}
+| { kind: "reset"};
 ```
 
 Here, the `kind` field is unique among the objects. If not, an error will be
@@ -81,19 +81,19 @@ Creating an object from a discriminated union type requires all the fields
 to be fully written. So for increment that would be:
 
 ```jsligo
-let obj = { kind: "increment", amount: 3}
+let obj = { kind: "increment", amount: 3};
 ```
 
 or
 
 ```jsligo
-let obj2 = { kind: "reset" }
+let obj2 = { kind: "reset" };
 ```
 
 Pattern matching over a discriminated union type works like this:
 
 ```jsligo
-let foo = (item: foo) => {
+function foo (item: foo) {
   let state = 0;
   switch(item.kind) {
     case "increment":
@@ -216,7 +216,7 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-let u : user = Admin(1000 as nat);
+let u : user = Admin(1000n);
 let g : user = Guest();
 ```
 
@@ -378,12 +378,8 @@ let div (a, b : nat * nat) : nat option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let div = (a: nat, b: nat): option<nat> => {
-  if(b == (0 as nat)){
-    return None();
-  } else {
-    return (Some (a/b));
-  };
+function div (a: nat, b: nat): option<nat> {
+  if (b == 0n) return None() else return (Some (a/b))
 };
 ```
 
@@ -590,4 +586,3 @@ function complex (const x : complex_t; const y : complex_t) is
 ```
 
 </Syntax>
-

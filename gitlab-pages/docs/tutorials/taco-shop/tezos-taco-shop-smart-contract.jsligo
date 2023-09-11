@@ -18,7 +18,7 @@ let buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : re
     /* Update the storage decreasing the stock by 1n */
     let taco_shop_storage = Map.update (
       taco_kind_index,
-      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
+      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) }))),
       taco_shop_storage );
     return [(list([]) as list <operation>), taco_shop_storage]
   }

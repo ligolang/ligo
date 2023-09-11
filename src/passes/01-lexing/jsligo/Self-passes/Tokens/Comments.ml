@@ -77,7 +77,6 @@ let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
 | BIT_NOT    w -> BIT_NOT (w#add_comment comment)
 | BIT_XOR    w -> BIT_XOR (w#add_comment comment)
 | BIT_SL     w -> BIT_SL (w#add_comment comment)
-| BIT_SR     w -> BIT_SR (w#add_comment comment)
 | EQ         w -> EQ (w#add_comment comment)
 | EQ2        w -> EQ2 (w#add_comment comment)
 | NE         w -> NE (w#add_comment comment)

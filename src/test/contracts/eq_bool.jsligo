@@ -1,5 +1,5 @@
 /* Test boolean comparison in JsLIGO */
 
-let check = (a : bool, b : bool) : int => {
-  if (a == b) { return 999; } else { return 1; };
-};
+function check (a : bool, b : bool) : int {
+  if (a == b) return 999 else return 1
+}

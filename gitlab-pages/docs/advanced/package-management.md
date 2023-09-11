@@ -197,9 +197,11 @@ let test =
 
 const test = (() => {
     let storage = Test.compile_value(list([1, 2, 3]));
-    let [addr, _, _] = Test.originate_from_file("./main.jsligo", "main", (list([]) as list<string>), storage, 0 as tez);    let taddr : typed_address<parameter, storage> = Test.cast_address(addr);
+    let [addr, _, _] = Test.originate_from_file("./main.jsligo",
+    "main", (list([]) as list<string>), storage, 0tez);
+    let taddr : typed_address<parameter, storage> = Test.cast_address(addr);
     let contr : contract<parameter> = Test.to_contract(taddr);
-    let _ = Test.transfer_to_contract_exn(contr, Reverse(), 1 as mutez);
+    let _ = Test.transfer_to_contract_exn(contr, Reverse(), 1mutez);
     assert (Test.get_storage(taddr) == list([3, 2, 1]))
 })();
 

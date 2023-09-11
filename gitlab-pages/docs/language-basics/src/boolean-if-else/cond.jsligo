@@ -1,9 +1,5 @@
 type magnitude = ["Small"] | ["Large"]; // See variant types
 
-let compare = (n : nat) : magnitude => {
-  if (n < (10 as nat)) { 
-    return Small(); 
-  } else { 
-    return Large(); 
-  };
+function compare (n : nat) : magnitude {
+  if (n < 0n) return Small() else return Large()
 }
