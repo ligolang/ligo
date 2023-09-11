@@ -56,6 +56,14 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      announcementBar: {
+        id: 'support_us',
+        content:
+          '<b>Ligo v1 Alpha is now available, test it through docker image <a target="https://hub.docker.com/r/ligolang/ligo/tags" rel="noopener noreferrer" href="#">ligolang/ligo:alpha</a></b>',
+        backgroundColor: '#0e74ff',
+        textColor: '#efefef',
+        isCloseable: false,
+      },
       navbar: {
         logo: {
           alt: 'LIGO Logo',
