@@ -1,18 +1,14 @@
-namespace IncDec {
+namespace Counter {
   type storage = int;
   type ret = [list<operation>, storage];
-
   // Three entrypoints
 
   @entry
-  const increment = (delta : int, store : storage) : ret =>
+  const increment = (delta: int, store: storage): ret =>
     [list([]), store + delta];
-
   @entry
-  const decrement = (delta : int, store : storage) : ret =>
+  const decrement = (delta: int, store: storage): ret =>
     [list([]), store - delta];
-
   @entry
-  const reset = (_ : unit, _ : storage) : ret =>
-    [list([]), 0];
+  const reset = (_: unit, _: storage): ret => [list([]), 0]
 };

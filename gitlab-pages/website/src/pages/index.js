@@ -99,6 +99,9 @@ export default function Home() {
                 <li className="primary">
                   <a href={useBaseUrl("docs/tutorials/getting-started")}>Get started</a>
                 </li>
+                <li className="primary">
+                  <a href={useBaseUrl("docs/intro/introduction")}>About Ligo</a>
+                </li>
                 <li className="secondary">
                   <a href={useBaseUrl("docs/reference/toplevel")}>
                     Language references

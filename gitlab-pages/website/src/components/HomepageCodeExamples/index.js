@@ -76,10 +76,10 @@ function CodeExamples(props) {
         <div id="webide">
           <ul>
             <li className="primary">
-              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/168a39632c555e70098ac6236c7a20a8">JsLIGO on Web IDE</a>
+              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/bc3fc573a724b6851dde8ec4607671f3">JsLIGO on Web IDE</a>
             </li>
             <li className="secondary">
-              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/fd1ed87670420bfaa6438b2078f8de6c">CameLIGO on Web IDE</a>
+              <a href="https://ligo-webide-v2.gcp.marigold.dev/share/4466658a67a99308725b4954ed51dc29">CameLIGO on Web IDE</a>
             </li>
           </ul>
         </div>
