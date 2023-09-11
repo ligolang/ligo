@@ -90,15 +90,15 @@ let mk_app ctor = function
   bin_op(comp_expr_level,gt,add_expr_level)
   bin_op(comp_expr_level,ge,add_expr_level)
   bin_op(conj_expr_level,BIT_AND,bit_shift_level)
-  bin_op(bit_shift_level,BIT_SR,comp_expr_level)
   bin_op(bit_shift_level,BIT_SL,comp_expr_level)
   bin_op(conj_expr_level,AND,bit_shift_level)
+  bin_op(comp_expr_level,gt2,add_expr_level)
   bin_op(disj_expr_level,VBAR,conj_expr_level)
   bin_op(disj_expr_level,OR,conj_expr_level)
   bin_op(disj_expr_level,BIT_XOR,conj_expr_level)
   empty_return_stmt
   return_stmt
-  poly_stmt
+  catenable_stmt
   nsepseq(val_binding,COMMA)
 %on_error_reduce
   ternary_expr(core_expr,pre_expr_stmt)
@@ -111,7 +111,6 @@ let mk_app ctor = function
   stmt_not_starting_with_expr_nor_block
   last_or_more(stmt_not_starting_with_expr_nor_block)
 %on_error_reduce
-  open_stmt_not_starting_with_expr_nor_block2(right_rec_stmt(stmt_not_starting_with_expr_nor_block2))
   last_or_more(block_stmt)
   nseq(__anonymous_3)
 
@@ -135,6 +134,9 @@ gt:
 ge:
   ">" ZWSP "=" { Wrap.wrap ">=" (cover $1#region $3#region) }
 
+gt2:
+  gt ">" { Wrap.wrap ">>" (cover $1#region $2#region) }
+
 (* Compound constructs *)
 
 par(X):
@@ -148,7 +150,7 @@ par(X):
     in {region; value} }
 
 chevrons(X):
-  "<" X ">" ioption(ZWSP) {
+  "<" X gt {
     let region = cover $1#region $3#region
     and value  = {lchevron=$1; inside=$2; rchevron=$3}
     in {region; value} }
@@ -620,48 +622,50 @@ property_id:
 
 statements:
   stmt_ending_with_expr stmts_not_starting_with_expr
-| poly_stmt             statements
 | empty_return_stmt     stmts_not_starting_with_expr_nor_block
-| expr_stmt             stmts_not_starting_with_expr
-                           { nseq_cons ($1, None) $2 }
+| catenable_stmt        statements { nseq_cons ($1, None) $2 }
 | directive_stmt           { ($1, None), [] }
 | last_or_more (statement) { $1 }
 
-stmt_ending_with_expr: (* and not starting with [expr] *)
-  import_decl | value_decl | type_decl { S_Decl $1 }
-| export (import_decl) | export (value_decl) | export (type_decl)
+(* Could be refined, e.g., `let` ending with a block or an object are ok: *)
+stmt_ending_with_expr:
+  import_decl | value_decl { S_Decl $1 }
+| expr_stmt | export (import_decl) | export (value_decl)
 | full_return_stmt | right_rec_stmt (stmt_ending_with_expr) { $1 }
 
-right_rec_stmt (right_stmt):
-  "[@attr]" right_stmt                { S_Attr ($1,$2) }
-| no_attr_right_rec_stmt (right_stmt) {             $1 }
+stmt_not_ending_with_expr:
+  stmt_not_starting_with_expr_nor_block2_bis | block_stmt
+| right_rec_stmt (stmt_not_ending_with_expr) { $1 }
 
-no_attr_right_rec_stmt (right_stmt):
-  if_stmt (right_stmt) | if_else_stmt (right_stmt)
+right_rec_stmt (right_stmt):
+  "[@attr]" right_stmt { S_Attr ($1,$2) }
+| if_stmt (right_stmt) | if_else_stmt (right_stmt)
 | full_for_stmt (right_stmt) | for_of_stmt (right_stmt)
 | while_stmt (right_stmt) { $1 }
 
-poly_stmt:
-  open_stmt_not_starting_with_expr_nor_block2 (right_rec_stmt (poly_stmt))
-| directive_stmt | block_stmt { $1 }
+catenable_stmt:
+  type_decl | fun_decl { S_Decl $1 }
+| stmt_not_starting_with_expr_nor_block2_bis (* and not ending like [expr] *)
+| directive_stmt | block_stmt | export (type_decl)
+| right_rec_stmt (catenable_stmt) { $1 }
 
-open_stmt_not_starting_with_expr_nor_block1 (right_stmt):
+stmt_not_starting_with_expr_nor_block1_bis: (* and ending like [expr] *)
   import_decl | value_decl | type_decl { S_Decl $1 }
 | export (import_decl) | export (value_decl) | export (type_decl)
-| directive_stmt | full_return_stmt | right_stmt { $1 }
+| directive_stmt | full_return_stmt { $1 }
 
 stmt_not_starting_with_expr_nor_block1:
-  open_stmt_not_starting_with_expr_nor_block1
-    (right_rec_stmt (stmt_not_starting_with_expr_nor_block1)) { $1 }
+  stmt_not_starting_with_expr_nor_block1_bis
+| right_rec_stmt (stmt_ending_with_expr) { $1 }
 
-open_stmt_not_starting_with_expr_nor_block2 (right_stmt):
+stmt_not_starting_with_expr_nor_block2_bis: (* and not ending like [expr] *)
   interface_decl | namespace_decl { S_Decl $1 }
-| export (interface_decl) | export (namespace_decl)
-| break_stmt | continue_stmt | switch_stmt | right_stmt { $1 }
+| export (interface_decl) | export (namespace_decl) | export (fun_decl)
+| break_stmt | continue_stmt | switch_stmt { $1 }
 
 stmt_not_starting_with_expr_nor_block2:
-  open_stmt_not_starting_with_expr_nor_block2
-    (right_rec_stmt (stmt_not_starting_with_expr_nor_block2)) { $1 }
+  stmt_not_starting_with_expr_nor_block2_bis
+| right_rec_stmt (stmt_not_ending_with_expr) { $1 }
 
 stmts_not_starting_with_expr_nor_block:
   stmt_not_starting_with_expr_nor_block1 stmts_not_starting_with_expr
@@ -671,8 +675,9 @@ stmts_not_starting_with_expr_nor_block:
 | last_or_more (stmt_not_starting_with_expr_nor_block) { $1 }
 
 stmt_not_starting_with_expr_nor_block:
-  stmt_not_starting_with_expr_nor_block1
-| stmt_not_starting_with_expr_nor_block2
+  stmt_not_starting_with_expr_nor_block1_bis
+| stmt_not_starting_with_expr_nor_block2_bis
+| right_rec_stmt (statement)
 | empty_return_stmt { $1 }
 
 stmts_not_starting_with_expr:
@@ -1065,17 +1070,17 @@ conj_expr_level:
 
 bit_shift_level:
   bin_op (bit_shift_level, "<<", comp_expr_level) { E_BitSl $1 }
-| bin_op (bit_shift_level, ">>", comp_expr_level) { E_BitSr $1 }
 | comp_expr_level                                 {         $1 }
 
 (* Comparisons *)
 
 comp_expr_level:
-  bin_op (comp_expr_level,  "<", add_expr_level) { E_Lt  $1 }
-| bin_op (comp_expr_level, "<=", add_expr_level) { E_Leq $1 }
-| bin_op (comp_expr_level,   gt, add_expr_level) { E_Gt  $1 }
-| bin_op (comp_expr_level,   ge, add_expr_level) { E_Geq $1 }
-| eq_expr_level                                  {       $1 }
+  bin_op (comp_expr_level,  "<", add_expr_level) { E_Lt    $1 }
+| bin_op (comp_expr_level, "<=", add_expr_level) { E_Leq   $1 }
+| bin_op (comp_expr_level,   gt, add_expr_level) { E_Gt    $1 }
+| bin_op (comp_expr_level,   ge, add_expr_level) { E_Geq   $1 }
+| bin_op (comp_expr_level, gt2,  add_expr_level) { E_BitSr $1 } (* Due to LR conflict *)
+| eq_expr_level                                  {         $1 }
 
 eq_expr_level:
   bin_op (add_expr_level, "==", eq_expr_level) { E_Equal $1 }

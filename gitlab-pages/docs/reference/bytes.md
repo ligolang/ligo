@@ -93,7 +93,7 @@ let slice_op (s : bytes) = Bytes.sub 1n 2n s
 <Syntax syntax="jsligo">
 
 ```
-let slice_op = (s: bytes) => Bytes.sub(1 as nat, 2 as nat, s);
+let slice_op = (s: bytes) => Bytes.sub(1n, 2n, s);
 ```
 
 </Syntax>

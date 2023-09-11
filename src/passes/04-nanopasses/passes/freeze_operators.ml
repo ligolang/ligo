@@ -3,7 +3,7 @@ open Ast_unified
 open Pass_type
 open Errors
 
-(* morph binary and unary operators/keywords to ligo internal constants 
+(* morph binary and unary operators/keywords to ligo internal constants
   each syntax has its own set of keywords *)
 include Flag.With_arg (struct
   type flag = Syntax_types.t
@@ -60,6 +60,11 @@ let mapping_binop ~syntax : (Operators.op * Ligo_prim.Constant.constant') list =
     ; LE, C_LE
     ; DEQ, C_EQ
     ; EQ_SLASH_EQ, C_NEQ
+    ; WORD_LSL, C_LSL
+    ; WORD_LSR, C_LSR
+    ; WORD_LXOR, C_LXOR
+    ; WORD_LAND, C_LAND
+    ; WORD_LOR, C_LOR
     ]
   | PascaLIGO ->
     [ SHARP, C_CONS

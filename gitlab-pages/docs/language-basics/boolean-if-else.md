@@ -503,7 +503,7 @@ let h = (a != b);
 
 <Syntax syntax="pascaligo">
 
-To check if the following operators have the expected result use 
+To check if the following operators have the expected result use
 `ligo compile expression --deprecated pascaligo "a OP b"`
 
 Usage:
@@ -522,7 +522,7 @@ const h : bool = (a =/= b)
 </Syntax>
 <Syntax syntax="cameligo">
 
-To check if the following operators have the expected result use 
+To check if the following operators have the expected result use
 `ligo compile expression cameligo "a OP b"`
 
 Usage:
@@ -542,7 +542,7 @@ let h : bool = (a <> b)
 <Syntax syntax="jsligo">
 
 
-To check if the following operators have the expected result use 
+To check if the following operators have the expected result use
 `ligo compile expression jsligo "a OP b"`
 
 Usage:
@@ -587,8 +587,8 @@ let c : bool = (a = b) // false
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let a: tez  = 5 as mutez;
-let b: tez  = 10 as mutez;
+let a: tez  = 5mutez;
+let b: tez  = 10mutez;
 let c = (a == b); // false
 ```
 
@@ -680,7 +680,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo '21n' --entry-p
 type magnitude = ["Small"] | ["Large"]; // See variant types.
 
 let compare = n => {
-  if (n < (10 as nat)) {
+  if (n < 10n) {
     return Small ();
   }
   else {
@@ -757,7 +757,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/switch.jsligo '5' --entry-
 # Outputs: "Q2"
 ```
 
-### Ternary expression
+### Ternary conditional expression
 JsLIGO also supports JavaScript's ternary expression:
 
 ```jsligo

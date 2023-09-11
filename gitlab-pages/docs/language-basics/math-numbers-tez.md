@@ -50,20 +50,19 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 </Syntax>
 <Syntax syntax="jsligo">
 
-  * Natural numbers are written as digits followed by the annotation `as nat`,
-    like so: `12 as nat`, `0 as nat`, and the same restriction on zero as
-    integers applies: `0 as nat` is the only way to specify the natural zero.
+  * Natural numbers are written as digits followed by the suffix `n`,
+    like so: `12n`, `0n`, and the same restriction on zero as integers
+    applies: `0n` is the only way to specify the natural zero.
 
   * Tezos tokens can be specified using literals of three kinds:
-      * units of millionth of `tez`, using the annotation `as mutez` after a
-        natural literal, like `10000 as mutez` or `0 as mutez`;
-      * units of `tez`, using the annotation `as tez`, like `3 as tez`;
-      * decimal amounts of `tez` are not supported by JsLIGO, instead the
-        amount should be written as `mutez`.
-
+      * units of millionth of `tez`, using the suffix `mutez` after a
+        natural literal, like `10000mutez` or `0mutez`;
+      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
+        `3tez`;
+      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
 
 Note that large integral values can be expressed using underscores to
-separate groups of digits, like `1_000 as mutez`.
+separate groups of digits, like `1_000mutez` or `0.000_004tez`.
 
 </Syntax>
 
@@ -151,19 +150,19 @@ let g : int = 1_000_000
 let a = 5 + 10;
 
 // nat + int yields int
-let b = (5 as nat) + 10;
+let b = 5n + 10;
 
 // tez + tez yields tez
-let c: tez = (5 as mutez) + (1 as tez);
+let c: tez = 5mutez + 1tez;
 
 // tez + int or tez + nat is invalid:
-// let d : tez = (5 as mutez) + (10 as nat);
+// let d : tez = 5mutez + 10n;
 
 // two nats yield a nat
-let e: nat = (5 as nat) + (10 as nat);
+let e: nat = 5n + 10n;
 
 // nat + int yields an int: invalid
-// let f : nat = (5 as nat) + 10;
+// let f : nat = 5n + 10;
 
 let g = 1_000_000;
 ```
@@ -171,7 +170,7 @@ let g = 1_000_000;
 > Tip: you can use underscores for readability when defining large
 > numbers:
 >```jsligo
->let sum : tez = 100_000 as mutez;
+>let sum : tez = 100_000mutez;
 >```
 
 </Syntax>
@@ -215,10 +214,10 @@ let b : int = 5n - 2n
 let a = 5 - 10;
 
 // Subtraction of two nats yields an int
-let b: int = (5 as nat) - (2 as nat);
+let b: int = 5n - 2n;
 
 // Therefore the following is invalid
-// let c : nat = (5 as nat) - (2 as nat);
+// let c : nat = 5n - 2n;
 ```
 
 </Syntax>
@@ -251,8 +250,8 @@ let e : tez option = 1mutez - 5mutez (* None *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let d : option<tez> = (5 as mutez) - (1 as mutez); /* Some (4mutez) */
-let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */
+let d : option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
+let e : option<tez> = 1mutez - 5mutez; /* None */
 
 ```
 
@@ -289,10 +288,10 @@ let c : tez = 5n * 5mutez
 
 ```jsligo group=c
 let a = 5 * 5;
-let b: nat = (5 as nat) * (5 as nat);
+let b: nat = 5n * 5n;
 
 // You can also multiply `nat` and `tez`
-let c: tez = (5 as nat) * (5 as mutez);
+let c: tez = 5n * 5mutez;
 ```
 
 </Syntax>
@@ -327,8 +326,8 @@ let c : nat = 10mutez / 3mutez
 
 ```jsligo group=d
 let a: int = 10 / 3;
-let b: nat = (10 as nat) / (3 as nat);
-let c: nat = (10 as mutez) / (3 as mutez);
+let b: nat = 10n / 3n;
+let c: nat = 10mutez / 3mutez;
 ```
 
 </Syntax>
@@ -377,9 +376,9 @@ let rem4 : nat = a mod d  // 3
 let a = 120;
 let b = 9;
 let rem1 = a % b;  // 3
-let c = 120 as nat;
+let c = 120n;
 let rem2 = c % b;  // 3
-let d = 9 as nat;
+let d = 9n;
 let rem3 = c % d;  // 3
 let rem4 = a % d;  // 3
 ```
@@ -426,9 +425,9 @@ let ediv4 : (int * nat) option = ediv a d  // Some (7, 2)
 let a = 37;
 let b = 5;
 let ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
-let c = 37 as nat;
+let c = 37n;
 let ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
-let d = 5 as nat;
+let d = 5n;
 let ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
 let ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
 ```
@@ -460,7 +459,7 @@ let b : nat = abs (1)
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let a = int(1 as nat);
+let a = int(1n);
 let b = abs(1);
 ```
 
@@ -528,17 +527,17 @@ let seven_ : nat = 14n land 1n // 7
 
 Increment opeator increments (adds one to) the value of the binder.
 
-In the **prefix** position (`++p`) the operator increments the value and returns 
+In the **prefix** position (`++p`) the operator increments the value and returns
 the latest incremented value.
 
-In the **postfix** position (`p++`) the operator increments the value but 
+In the **postfix** position (`p++`) the operator increments the value but
 returns the old value before the increment.
 
 ```jsligo test-ligo group=increment_ops
 
 const testInc = (() => {
   let inc = 0;
-  
+
   // Prefix increment operator
   assert(++inc == 1);
 
@@ -550,14 +549,14 @@ const testInc = (() => {
 ```
 
 
-## Decrement operator 
+## Decrement operator
 
 Decrement opeator decrements (subtracts one from) the value of the binder.
 
-In the **prefix** position (`--p`) the operator decrements the value and returns 
+In the **prefix** position (`--p`) the operator decrements the value and returns
 the latest decremented value.
 
-In the **postfix** position (`p--`) the operator decrements the value but 
+In the **postfix** position (`p--`) the operator decrements the value but
 returns the old value before the decrement.
 
 ```jsligo test-ligo group=decrement_ops

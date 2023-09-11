@@ -85,58 +85,48 @@ through the use of tail recursive functions.
 Here is how to check if a string is a palindrome or not using a `for` loop:
 
 ```jsligo group=a
-const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s)
+const getChar = (s: string, idx: nat): string => String.sub(idx, 1n, s);
 
-const isPalindrome = (s: string): bool => {
-  let p = "";
-  let length = String.length(s);
-  for (let i = length - 1 ; i >= 0 ; i--) {
-    p += getChar(s, abs(i));
-  }
-  return p == s;
-}
+function isPalindrome (s: string): bool {
+  let p = ""
+  let length = String.length(s)
+  for (let i = length - 1 ; i >= 0 ; i--)
+    p += getChar(s, abs(i))
+  return p == s
+};
 ```
-
 
 Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm with using a while loop:
 
 
 ```jsligo group=a
-let gcd = (a: nat, b: nat) => {
+function gcd (a: nat, b: nat) {
   let [x,y] = [a,b]; // we will modify x and y
   if (x < y) {
     const z = x;
     x = y; y = z;
-  };
-  let r: nat = 0 as nat;
-  while (y != (0 as nat)) {
+  }
+  let r: nat = 0n
+  while (y != 0n) {
     r = x % y;
     x = y;
     y = r;
   }
   return x
-}
+};
 ```
 
 And here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm using tail recursion:
 
 ```jsligo group=a
-let iter = (x: nat,y: nat): nat => {
-  if (y == (0 as nat)) {
-    return x;
-  } else {
-    return iter (y, x % y);
-  };
+function iter (x: nat,y: nat): nat {
+  if (y == 0n) return x else return iter (y, x % y)
 };
 
-let gcd2 = (x: nat,y: nat) : nat => {
-  if (x < y) {
-    return iter (y, x);
-  } else {
-    return iter (x, y);
-  }
+function gcd2 (x: nat,y: nat) : nat {
+  if (x < y) return iter (y, x) else return iter (x, y)
 };
 ```
 
@@ -275,13 +265,11 @@ of the form `for (const <element var> of <collection var>) <block>`.
 Here is an example where the integers in a list are summed up.
 
 ```jsligo group=d
-let sum_list = (l : list<int>) => {
-  let total = 0;
-  for (const i of l) {
-    total = total + i
-  }
+function sum_list (l : list<int>) {
+  let total = 0
+  for (const i of l) total = total + i
   return total
-}
+};
 ```
 
 You can call the function `sum_list` defined above using the LIGO compiler
@@ -296,13 +284,11 @@ gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_
 Here is an example where the integers in a set are summed up.
 
 ```jsligo group=d
-let sum_set = (s : set<int>) => {
-  let total : int = 0;
-  for (const i of s) {
-    total = total + i
-  };
+function sum_set (s : set<int>) {
+  let total : int = 0
+  for (const i of s) total = total + i
   return total
-}
+};
 ```
 
 You can call the function `sum_set` defined above using the LIGO compiler
@@ -320,14 +306,14 @@ all the integers and concatenate all the strings.
 
 
 ```jsligo
-let sum_map = (m: map<string, int>) => {
-  let string_total = "";
-  let int_total = 0;
+function sum_map (m: map<string, int>) {
+  let string_total = ""
+  let int_total = 0
   for (const item of m) {
     let [key, value] = item;
     string_total = string_total + key;
     int_total = int_total + value
-  };
+  }
   return [string_total, int_total]
 }
 ```

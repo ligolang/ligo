@@ -1,22 +1,21 @@
 @inline // @pleh
-let x = 1;
+const x = 1;
 
 @inline
-let foo = (a : int) : int => {
-  // [@inline]
-  let test = 2 + a;
-  return test;
-};
+function foo (a : int) : int {
+  // @inline
+  let test = 2 + a
+  return test
+}
 
 // sfgsff
-let y = 1;
+const y = 1;
 
-let bar = (b : int) : int => {
-  // @inline @foo @bar
+function bar (b : int) : int {
   @inline
-  let test = (z : int):int => 2 + b + z;
+  let test = (z : int) : int => 2 + b + z
   return test (b);
 };
 
-// @ 
-let check = 4
+// @
+const check = 4

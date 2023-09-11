@@ -1,12 +1,12 @@
 //PART 0
 #include "remove-balance.jsligo"
-let x = Test.reset_state ( 5 as nat, list([]) as list <tez> );
+let x = Test.reset_state (5n, list([]) as list <tez> );
 
 //PART 1
 let balances : balances =
-  Map.literal(list([[Test.nth_bootstrap_account(1), 10 as tez],
-                    [Test.nth_bootstrap_account(2), 100 as tez],
-                    [Test.nth_bootstrap_account(3), 1000 as tez]]));
+  Map.literal(list([[Test.nth_bootstrap_account(1), 10tez],
+                    [Test.nth_bootstrap_account(2), 100tez],
+                    [Test.nth_bootstrap_account(3), 1000tez]]));
 
 //PART 2
 let test =
@@ -19,4 +19,4 @@ let test =
       let unit = Test.log (["actual",size]) ;
       return (assert (Test.michelson_equal (size,expected_size)))
     },
-    list ([ [15 as tez,2 as nat] , [130 as tez,1 as nat] , [1200 as tez,0 as nat]]) );
+    list ([ [15tez, 2n] , [130tez, 1n] , [1200tez, 0n]]) );

@@ -1,10 +1,10 @@
-let gcd = (x: nat, y: nat): nat => {
+function gcd (x: nat, y: nat): nat {
   if (x < y) {
     const z: nat = x;
     x = y; y = z;
   };
-  let r: nat = 0 as nat;
-  while (y != (0 as nat)) {
+  let r: nat = 0n;
+  while (y != 0n) {
     r = x % y;
     x = y;
     y = r;
@@ -12,17 +12,10 @@ let gcd = (x: nat, y: nat): nat => {
   return x
 };
 
-let iter = ([x,y]: [nat, nat]): nat => {
-  if (y == (0 as nat)) { 
-    return x; 
-  } else { 
-    return iter ([y, x % y]); 
-  };
+function iter ([x,y]: [nat, nat]): nat {
+  if (y == 0n) return x else return iter ([y, x % y])
 };
 
-let gcd2 = ([x,y] : [nat, nat]) : nat => {
-  if (x < y) { 
-    return iter ([y, x]);
-  } else {
-    return iter ([x, y]);
-  }
+function gcd2 ([x,y] : [nat, nat]) : nat {
+  if (x < y) return iter ([y, x]) else return iter ([x, y])
+}

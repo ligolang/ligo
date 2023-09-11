@@ -304,8 +304,8 @@ let init_storage = Map.literal [
 
 ```jsligo group=b
 let init_storage = Map.literal (list([
-  [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
-  [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }]
+  [1n, { current_stock : 50n, max_price : 50tez }],
+  [2n, { current_stock : 20n, max_price : 75tez }]
 ]));
 ```
 
@@ -462,7 +462,7 @@ let buy_taco2 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): re
   /* Update the storage decreasing the stock by 1n */
   let taco_shop_storage_ = Map.update (
     taco_kind_index,
-    (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
+    (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) }))),
     taco_shop_storage );
   return [list([]), taco_shop_storage_]
 };
@@ -557,7 +557,7 @@ let buy_taco3 = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : r
     /* Update the storage decreasing the stock by 1n */
     let taco_shop_storage = Map.update (
       taco_kind_index,
-      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - (1 as nat)) }))),
+      (Some (({...taco_kind, current_stock : abs (taco_kind.current_stock - 1n) }))),
       taco_shop_storage );
     return [list([]), taco_shop_storage]
   }
@@ -705,17 +705,17 @@ let assert_string_failure = (res: test_exec_result, expected: string) => {
 let test = ((_: unit): unit => {
   /* Originate the contract with a initial storage */
   let init_storage = Map.literal (list([
-      [1 as nat, { current_stock : 50 as nat, max_price : 50 as tez }],
-      [2 as nat, { current_stock : 20 as nat, max_price : 75 as tez }] ])) ;
-  let [pedro_taco_shop_ta, _code, _size] = Test.originate (buy_taco, init_storage, 0 as tez) ;
+      [1n, { current_stock : 50n, max_price : 50tez }],
+      [2n, { current_stock : 20n, max_price : 75tez }] ])) ;
+  let [pedro_taco_shop_ta, _code, _size] = Test.originate (buy_taco, init_storage, 0tez) ;
   /* Convert typed_address to contract */
   let pedro_taco_shop_ctr = Test.to_contract (pedro_taco_shop_ta);
   /* Convert contract to address */
   let pedro_taco_shop = Tezos.address (pedro_taco_shop_ctr);
 
   /* Test inputs */
-  let clasico_kind = (1 as nat) ;
-  let unknown_kind = (3 as nat) ;
+  let clasico_kind = 1n ;
+  let unknown_kind = 3n ;
 
   /* Auxiliary function for testing equality in maps */
   let eq_in_map = (r: taco_supply, m: taco_shop_storage, k: nat) =>
@@ -724,22 +724,22 @@ let test = ((_: unit): unit => {
      when(Some(v)): v.current_stock == r.current_stock && v.max_price == r.max_price };
 
   /* Purchasing a Taco with 1tez and checking that the stock has been updated */
-  let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 1 as tez) ;
+  let ok_case : test_exec_result = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 1tez) ;
   let _u = match (ok_case) {
     when(Success(_)): do {
       let storage = Test.get_storage (pedro_taco_shop_ta) ;
-      assert (eq_in_map({ current_stock : 49 as nat, max_price : 50 as tez }, storage, 1 as nat) &&
-              eq_in_map({ current_stock : 20 as nat, max_price : 75 as tez }, storage, 2 as nat));
+      assert (eq_in_map({ current_stock : 49n, max_price : 50tez }, storage, 1n) &&
+              eq_in_map({ current_stock : 20n, max_price : 75tez }, storage, 2n));
     };
     when(Fail(_)):failwith ("ok test case failed")
   };
 
   /* Purchasing an unregistred Taco */
-  let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1 as tez) ;
+  let nok_unknown_kind = Test.transfer_to_contract (pedro_taco_shop_ctr, unknown_kind, 1tez) ;
   let _u2 = assert_string_failure (nok_unknown_kind, "Unknown kind of taco") ;
 
   /* Attempting to Purchase a Taco with 2tez */
-  let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 2 as tez) ;
+  let nok_wrong_price = Test.transfer_to_contract (pedro_taco_shop_ctr, clasico_kind, 2tez) ;
   let _u3 = assert_string_failure (nok_wrong_price, "Sorry, the taco you are trying to purchase has a different price") ;
   return unit
 }) ();

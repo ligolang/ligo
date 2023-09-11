@@ -85,7 +85,6 @@ module T =
     | BIT_NOT    of lexeme Wrap.t  (* ~    *)
     | BIT_XOR    of lexeme Wrap.t  (* ^    *)
     | BIT_SL     of lexeme Wrap.t  (* <<   *)
-    | BIT_SR     of lexeme Wrap.t  (* >>   *)
     | EQ         of lexeme Wrap.t  (* =    *)
     | EQ2        of lexeme Wrap.t  (* ==   *)
     | NE         of lexeme Wrap.t  (* !=   *)
@@ -221,7 +220,6 @@ module T =
     | BIT_NOT    t
     | BIT_XOR    t
     | BIT_SL     t
-    | BIT_SR     t
     | EQ         t
     | EQ2        t
     | NE         t
@@ -538,7 +536,6 @@ module T =
     let wrap_bit_not    = wrap "~"
     let wrap_bit_xor    = wrap "^"
     let wrap_bit_sl     = wrap "<<"
-    let wrap_bit_sr     = wrap ">>"
     let wrap_eq         = wrap "="
     let wrap_eq2        = wrap "=="
     let wrap_ne         = wrap "!="
@@ -592,7 +589,6 @@ module T =
     let mk_BIT_NOT    region = BIT_NOT    (wrap_bit_not    region)
     let mk_BIT_XOR    region = BIT_XOR    (wrap_bit_xor    region)
     let mk_BIT_SL     region = BIT_SL     (wrap_bit_sl     region)
-    let mk_BIT_SR     region = BIT_SR     (wrap_bit_sr     region)
     let mk_EQ         region = EQ         (wrap_eq         region)
     let mk_EQ2        region = EQ2        (wrap_eq2        region)
     let mk_NE         region = NE         (wrap_ne         region)
@@ -644,7 +640,6 @@ module T =
       mk_BIT_NOT;
       mk_BIT_XOR;
       mk_BIT_SL;
-      mk_BIT_SR;
       mk_EQ;
       mk_EQ2;
       mk_NE;
@@ -709,7 +704,6 @@ module T =
     let ghost_bit_not    = wrap_bit_not    Region.ghost
     let ghost_bit_xor    = wrap_bit_xor    Region.ghost
     let ghost_bit_sl     = wrap_bit_sl     Region.ghost
-    let ghost_bit_sr     = wrap_bit_sr     Region.ghost
     let ghost_eq         = wrap_eq         Region.ghost
     let ghost_eq2        = wrap_eq2        Region.ghost
     let ghost_ne         = wrap_ne         Region.ghost
@@ -761,7 +755,6 @@ module T =
     let ghost_BIT_NOT    = BIT_NOT    ghost_bit_not
     let ghost_BIT_XOR    = BIT_XOR    ghost_bit_xor
     let ghost_BIT_SL     = BIT_SL     ghost_bit_sl
-    let ghost_BIT_SR     = BIT_SR     ghost_bit_sr
     let ghost_EQ         = EQ         ghost_eq
     let ghost_EQ2        = EQ2        ghost_eq2
     let ghost_NE         = NE         ghost_ne
@@ -911,7 +904,6 @@ module T =
     | "BIT_NOT"    -> ghost_bit_not#payload
     | "BIT_XOR"    -> ghost_bit_xor#payload
     | "BIT_SL"     -> ghost_bit_sl#payload
-    | "BIT_SR"     -> ghost_bit_sr#payload
     | "EQ"         -> ghost_eq#payload
     | "EQ2"        -> ghost_eq2#payload
     | "NE"         -> ghost_ne#payload
@@ -1069,7 +1061,6 @@ module T =
     | BIT_NOT    t -> t#region, sprintf "BIT_NOT%s" (comments t)
     | BIT_XOR    t -> t#region, sprintf "BIT_XOR%s" (comments t)
     | BIT_SL     t -> t#region, sprintf "BIT_SL%s" (comments t)
-    | BIT_SR     t -> t#region, sprintf "BIT_SR%s" (comments t)
     | EQ         t -> t#region, sprintf "EQ%s" (comments t)
     | EQ2        t -> t#region, sprintf "EQ2%s" (comments t)
     | NE         t -> t#region, sprintf "NE%s" (comments t)
@@ -1291,7 +1282,6 @@ module T =
     | BIT_NOT _
     | BIT_XOR _
     | BIT_SL _
-    | BIT_SR _
     | EQ _
     | EQ2 _
     | NE _

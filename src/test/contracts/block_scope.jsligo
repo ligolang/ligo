@@ -1,16 +1,16 @@
 
 // should work and return 3
-let test_1 = (): int => {
+function test_1 () : int {
     const _a = 2;
     {
         const _a = 3;
         return _a
     };
     return _a
-};
+}
 
 // should work and return 3
-let test_2 = (): int => {
+function test_2 () : int {
     const _a = 2;
     {
         {
@@ -19,19 +19,19 @@ let test_2 = (): int => {
         }
     };
     return _a
-};
+}
 
 // should work and return 3
-let test_3 = (): int => {
+function test_3 () : int {
     const _a = 2;
     {
         const _a = 3;
         return _a
     };
-};
+}
 
 // should work and return 3
-let test_4 = (): int => {
+function test_4 () : int {
     const _a = 2;
     {
         {
@@ -39,19 +39,19 @@ let test_4 = (): int => {
             return _a
         }
     };
-};
+}
 
 // should work and return 2
-let test_5 = (): int => {
+function test_5 () : int {
     const _a = 2;
     {
         const _a = 3;
     };
     return _a
-};
+}
 
 // should work and return 2
-let test_6 = (): int => {
+function test_6 () : int {
     const _a = 2;
     {
         {

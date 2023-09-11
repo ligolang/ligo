@@ -191,9 +191,9 @@ let test =
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
 
 const test = (() => {
-  let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0 as tez);
+  let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);
   let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
-  let _ = Test.transfer_to_contract_exn(c, Increment(42), 0 as tez);
+  let _ = Test.transfer_to_contract_exn(c, Increment(42), 0tez);
   assert(42 == Test.get_storage(ta));
 })();
 ```
@@ -432,7 +432,7 @@ type storage = unit;
 type return_ = [list<operation>, storage];
 
 const deny = (action: parameter, store: storage): return_ => {
-  if (Tezos.get_amount() > (0 as tez)) {
+  if (Tezos.get_amount() > 0tez) {
     return failwith("This contract does not accept tokens.");
   } else {
     return [list([]), store];
@@ -639,7 +639,7 @@ const proxy = (action: parameter, store: storage): return_ => {
   /* Reuse the parameter in the subsequent
      transaction or use another one, `mock_param`. */
   let mock_param = Increment(5);
-  let op = Tezos.transaction(action, 0 as tez, counter);
+  let op = Tezos.transaction(action, 0tez, counter);
   return [list([op]), store];
 };
 ```

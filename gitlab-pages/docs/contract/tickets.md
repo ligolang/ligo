@@ -46,8 +46,8 @@ let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-let my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10 as nat));
-let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10 as nat));
+let my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
+let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
 ```
 
 </Syntax>
@@ -151,7 +151,7 @@ let ta, tb =
 
 ```jsligo group=manip_ticket
 let [ta, tb] =
-  match(Tezos.split_ticket(my_ticket1, [6 as nat, 4 as nat])) {
+  match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
     when(None()): failwith("amt_a + amt_v != amt");
     when(Some(split_tickets)): split_tickets
   };
@@ -200,8 +200,8 @@ let tc : int ticket option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-let ta = Option.unopt(Tezos.create_ticket(1, 10 as nat));
-let tb = Option.unopt(Tezos.create_ticket(1, 5 as nat));
+let ta = Option.unopt(Tezos.create_ticket(1, 10n));
+let tb = Option.unopt(Tezos.create_ticket(1, 5n));
 let tc = Tezos.join_tickets([ta, tb]);
 ```
 

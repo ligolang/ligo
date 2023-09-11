@@ -209,7 +209,7 @@ let origination : operation * address = Tezos.create_contract
 let origination = Tezos.create_contract ((p: nat, s: string) =>
 [list([]), s],
   None(),
-  3 as tez,
+  3tez,
   "initial_storage");
 ```
 

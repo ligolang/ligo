@@ -230,14 +230,14 @@ Other similar operators will be added when enabling support for custom operator 
 
 <Syntax syntax="jsligo">
 
-Functions in JsLIGO are defined using the `let` or `const` keyword, like
-other values. The difference is that parameters are provided
-after the value name, with its type, then followed by the return type.
-
-Here is how you define a basic function that sums two integers:
+Functions in JsLIGO can be defined in two main ways: using the keyword
+`function` or `const` (the keyword `let` is defaulted to `const` in
+this instance). The latter manner is preferred when the function body
+is an expression. For example, here is how you define a basic function
+that sums two integers:
 
 ```jsligo group=b
-let add = (a: int, b: int) => a + b;
+const add = (a: int, b: int) => a + b;
 ```
 
 You can call the function `add` defined above using the LIGO compiler
@@ -247,16 +247,25 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless
 # Outputs: 3
 ```
 
-As in CameLIGO, the function body is a single expression, whose value
-is returned. If the body contains more than a single expression, you
-use block between braces:
+If the body contains statements instead of a single expression, you
+would use a block and a `return` statement:
 
 ```jsligo group=b
-let myFun = (x: int, y: int) => {
-  let doubleX = x + x;
-  let doubleY = y + y;
+const myFun = (x: int, y: int) => {
+  const doubleX = x + x;
+  const doubleY = y + y;
   return doubleX + doubleY;
 };
+```
+
+although it is arguably more readable to use `function`, like so:
+
+```jsligo group=b
+function myFun2 (x: int, y: int) {
+  const doubleX = x + x;
+  const doubleY = y + y;
+  return doubleX + doubleY;
+}
 ```
 
 Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate
@@ -269,13 +278,13 @@ functions. In case we do not use an argument, we can use the wildcard
 identifier:
 
 ```jsligo
-let k = (x: int, _: int) => x;
+const k = (x: int, _: int) => x;
 ```
 
 or use an identifier starting with wildcard:
 
 ```jsligo
-let k_other = (x: int, _y: int) => x;
+const k_other = (x: int, _y: int) => x;
 ```
 
 </Syntax>
@@ -381,8 +390,7 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point inc
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let incr_map = l =>
-  List.map(i => i + 1, l);
+let incr_map = l => List.map(i => i + 1, l);
 ```
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
@@ -423,7 +431,7 @@ let closure_example (i : int) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo
-let closure_example = i => {
+function closure_example (i) {
   let closure = j => i + j;
   return closure(i);
 };
@@ -464,20 +472,12 @@ let rec fibo (n, n_1, n_0 : int * int * int) : int =
 In JsLigo, recursive functions are defined and called using the same syntax as non-recursive functions.
 
 ```jsligo group=d
-let sum = (n: int, acc: int): int => {
-  if (n < 1) {
-    return acc;
-  } else {
-    return sum (n-1, acc + n);
-  };
+function sum (n: int, acc: int): int {
+  if (n < 1) return acc else return sum (n-1, acc + n);
 };
 
-let fibo = (n: int, n_1: int, n_0: int): int => {
-  if (n < 2) {
-    return  n_1;
-  } else {
-    return fibo (n-1, n_1 + n_0, n_1);
-  };
+function fibo (n: int, n_1: int, n_0: int): int {
+  if (n < 2) return n_1 else return fibo (n-1, n_1 + n_0, n_1);
 };
 ```
 </Syntax>

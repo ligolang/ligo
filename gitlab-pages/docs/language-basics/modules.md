@@ -77,8 +77,8 @@ the given currency, as well as constants for zero and one.
 namespace EURO {
   export type t = nat;
   export let add = (a: t, b: t): t => a + b;
-  export let zero: t = 0 as nat;
-  export let one: t = 1 as nat
+  export let zero: t = 0n;
+  export let one: t = 1n
 }
 ```
 
@@ -227,8 +227,8 @@ namespace EURO {
   export let add = (a: t, b: t): t => a + b;
 
   export namespace CONST {
-    export let zero: t = 0 as nat;
-    export let one: t = 1 as nat;
+    export let zero: t = 0n;
+    export let one: t = 1n;
   };
 };
 ```
@@ -320,8 +320,8 @@ export type t = nat;
 
 export const add = (a: t, b: t): t => a + b;
 
-export const zero: t = 0 as nat;
-export const one: t = 1 as nat;
+export const zero: t = 0n;
+export const one: t = 1n;
 ```
 
 </Syntax>
@@ -508,11 +508,11 @@ let test =
 
 ```jsligo group=contract
 const test = (() => {
-  let [taddr, _, _] = Test.originate_module(contract_of(C), 0, 0 as tez);
+  let [taddr, _, _] = Test.originate_module(contract_of(C), 0, 0tez);
   let contr : contract<parameter_of C> = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1 as mutez);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1mutez);
   return assert(Test.get_storage(taddr) == 42);
-}) ();
+})();
 ```
 
 </Syntax>

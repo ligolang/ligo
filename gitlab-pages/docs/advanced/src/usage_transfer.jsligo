@@ -7,7 +7,7 @@ const main = ( [p,_] : [param , [string , address]] ) : [list<operation> , [stri
 };
 
 const test_transfer_to_contract_ = () : unit => {
-  let [main_taddr, _ , _] = Test.originate (main, ["bye",Test.nth_bootstrap_account (1)], 1 as mutez) ;
+  let [main_taddr, _ , _] = Test.originate (main, ["bye",Test.nth_bootstrap_account (1)], 1mutez) ;
   let main_addr = Tezos.address (Test.to_contract (main_taddr)) ;
 
   /* mk_param is executed __by the proxy contract__ */
@@ -18,12 +18,12 @@ const test_transfer_to_contract_ = () : unit => {
   let _ = Test.log (["poxy addr:", proxy_taddr]) ;
 
   /* ticket_info lets you control the amount and the value of the tickets you send */
-  let ticket_info1 = ["hello",10 as nat] ;
+  let ticket_info1 = ["hello", 10n] ;
   /* we send ticket to main through the proxy-contract */
   let _ = transfer (proxy_taddr, [ticket_info1,main_addr]) ;
   let _ = Test.log (Test.get_storage (main_taddr)) ;
-  
-  let ticket_info2 = ["world",5 as nat] ;
+
+  let ticket_info2 = ["world", 5n] ;
   let _ = transfer (proxy_taddr, [ticket_info2,main_addr]) ;
   Test.log (Test.get_storage (main_taddr));
 };

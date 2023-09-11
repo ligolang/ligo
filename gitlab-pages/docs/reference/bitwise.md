@@ -65,14 +65,14 @@ Output
 <Syntax syntax="jsligo">
 
 ```jsligo
-let zero: nat = Bitwise.and(2 as nat, 1 as nat);
-let two_bytes : bytes = Bitwise.and(0x11, 0x10)
+let zero: nat = 2n & 1n;
+let two_bytes : bytes = 0x11 & 0x10
 ```
 
 
 Input
 ```bash
-❯ ligo compile expression jsligo "Bitwise.and(0x11, 0x10)"
+❯ ligo compile expression jsligo "0x11 & 0x10"
 ```
 
 Output
@@ -142,14 +142,14 @@ Output
 <Syntax syntax="jsligo">
 
 ```jsligo
-let five: nat = Bitwise.or(4 as nat, 1 as nat);
-let three_bytes : bytes = Bitwise.or(0x11, 0x10)
+let five: nat = 4n | 1n;
+let three_bytes : bytes = 0x11 | 0x10
 ```
 
 
 Input
 ```bash
-❯ ligo compile expression jsligo "Bitwise.or(0x11, 0x10)"
+❯ ligo compile expression jsligo "0x11 | 0x10"
 ```
 
 Output
@@ -220,8 +220,8 @@ Output
 <Syntax syntax="jsligo">
 
 ```jsligo group=other
-let three : nat = Bitwise.xor(2 as nat, 1 as nat)
-let one_byte : bytes = Bitwise.xor(0x11, 0x10)
+let three : nat = 2n ^ 1n;
+let one_byte : bytes = 0x11 ^ 0x10
 ```
 
 
@@ -294,13 +294,13 @@ Output
 <Syntax syntax="jsligo">
 
 ```jsligo
-let four : nat = Bitwise.shift_left(2 as nat, 1 as nat)
-let five_one_two : bytes = Bitwise.shift_left(0x0100, 1 as nat)
+let four : nat = 2n << 1n
+let five_one_two : bytes = 0x0100 << 1n
 ```
 
 Input
 ```bash
-❯ ligo compile expression cameligo "Bitwise.shift_left(0x01, 1 as nat)"
+❯ ligo compile expression jsligo "0x0100 << 1n"
 ```
 
 Output
@@ -371,13 +371,13 @@ Output
 <Syntax syntax="jsligo">
 
 ```jsligo
-let one : nat = Bitwise.shift_right(2 as nat, 1 as nat)
-let zero_bytes : bytes = Bitwise.shift_right(0x01, 1 as nat)
+let one : nat = 2n >> 1n;
+let zero_bytes : bytes = 0x01 >> 1n
 ```
 
 Input
 ```bash
-❯ ligo compile expression cameligo "Bitwise.shift_right(0x01, 1 as nat)"
+❯ ligo compile expression jsligo "0x01 >> 1n"
 ```
 
 Output

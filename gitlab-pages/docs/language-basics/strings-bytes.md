@@ -98,7 +98,7 @@ let slice : string = String.sub 0n 1n name
 
 ```jsligo group=b
 let name = "Alice";
-let slice = String.sub (0 as nat, 1 as nat, name);
+let slice = String.sub (0n, 1n, name);
 ```
 
 </Syntax>
@@ -117,7 +117,7 @@ const name : string = "Alice"
 const length : nat = String.length (name) // length = 5
 ```
 
-> Note that `size` is *deprecated*. 
+> Note that `size` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -254,7 +254,7 @@ let slice : bytes = Bytes.sub 1n 2n b (* 0x3456 *)
 
 ```jsligo group=e
 let b     = 0x12345678;
-let slice = Bytes.sub (1 as nat, 2 as nat, b); // 0x3456
+let slice = Bytes.sub (1n, 2n, b); // 0x3456
 ```
 
 </Syntax>
@@ -338,19 +338,19 @@ let b_shift_right = 0x0006 lsr  1n     (* 0x0003 *)
 
 ```jsligo group=g
 /* Bitwise and */
-const b_and           = Bitwise.and         (0x0005, 0x0106  ); // 0x0004
+const b_and           =  0x0005 & 0x0106; // 0x0004
 
 /* Bitwise or */
-const b_or            = Bitwise.or          (0x0005, 0x0106  ); // 0x0107
+const b_or            = 0x0005 | 0x0106; // 0x0107
 
 /* Bitwise xor */
-const b_xor           = Bitwise.xor         (0x0005, 0x0106  ); // 0x0103
+const b_xor           = 0x0005 ^ 0x0106; // 0x0103
 
 /* Bitwise shift left */
-const b_shift_left    = Bitwise.shift_left  (0x06  , 8 as nat); // 0x0600
+const b_shift_left    = 0x06 << 8n; // 0x0600
 
 /* Bitwise shift right */
-const b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat); // 0x0003
+const b_shift_right   = 0x0006 >> 1n; // 0x0003
 ```
 
 </Syntax>
@@ -358,7 +358,7 @@ const b_shift_right   = Bitwise.shift_right (0x0006, 1 as nat); // 0x0003
 
 ### From `bytes` to `nat` and back
 
-You can case `bytes` to `nat` using the built-in `nat` function and vice-versa 
+You can case `bytes` to `nat` using the built-in `nat` function and vice-versa
 using using the `bytes` built-in function.
 
 <Syntax syntax="pascaligo">
@@ -388,17 +388,17 @@ let test_nat_bytes = bytes 4660n (* 0x1234 *)
 
 ```jsligo group=h
 /* bytes -> nat */
-const test_bytes_nat = nat(0x1234) // (1234 as nat)
+const test_bytes_nat = nat(0x1234) // 1234n
 
 /* nat -> bytes */
-const test_nat_bytes = bytes(4660 as nat) // 0x1234
+const test_nat_bytes = bytes(4660n) // 0x1234
 ```
 
 </Syntax>
 
 ### From `bytes` to `int` and back
 
-You can cast `bytes` to `int` using the built-in `int` function and vice-versa 
+You can cast `bytes` to `int` using the built-in `int` function and vice-versa
 using the `bytes` built-in function.
 
 <Syntax syntax="pascaligo">

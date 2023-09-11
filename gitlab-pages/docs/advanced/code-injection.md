@@ -173,7 +173,7 @@ type parameter =
 
 type storage = int;
 
-const main = (action: parameter, store: storage) : [list<operation>, storage] => {
+function main (action: parameter, store: storage) : [list<operation>, storage] {
   let storage =
     match(action, {
      Increment: n => store + n,

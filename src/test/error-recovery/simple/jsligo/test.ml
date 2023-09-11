@@ -6,7 +6,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 0, 0, 0, 0, 0, ./extra_arrow_in_lambda.jsligo
     FAIL : can't recover test file./extra_colon_in_return_type.jsligo
     PASS, 4, 93, 21, 195, 3, ./extra_eq_in_func_decl.jsligo
-    PASS, 2, 13, 3, 8, 0, ./extra_gt_zwsp.jsligo
+    FAIL : can parse test file (but shouldn't)./extra_gt_zwsp.jsligo
     PASS, 3, 18, 8, 268, 0, ./lambda_with_missing_arguments.jsligo
     PASS, 6, 19, 13, 280, 2, ./missing_argument_bracketR.jsligo
     PASS, 0, 0, 0, 0, 0, ./missing_arrow_in_lambda_expr.jsligo
@@ -14,7 +14,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 2, 7, 3, 48, 0, ./missing_colon_in_record_expr.jsligo
     PASS, 4, 94, 26, 67, 5, ./missing_comma_in_arguments.jsligo
     PASS, 4, 26, 12, 22, 2, ./missing_comma_in_list_pat.jsligo
-    PASS, 2, 5, 5, 34, 0, ./missing_comma_in_record_decl.jsligo
+    PASS, 4, 32, 24, 347, 1, ./missing_comma_in_record_decl.jsligo
     PASS, 5, 108, 48, 90, 9, ./missing_comma_in_tuple_pat.jsligo
     PASS, 13, 227, 1, 142, 0, ./missing_curly_bracketR_in_the_nested_namespace.jsligo
     PASS, 2, 0, 0, 1, 0, ./missing_curly_bracket_in_record_decl.jsligo
@@ -29,7 +29,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 16, 139, 11, 266, 2, ./missing_namespace_kw_in_namespace_decl.jsligo
     PASS, 16, 133, 1, 260, 1, ./missing_open_curly_bracket_in_namespace_decl.jsligo
     PASS, 2, 9, 5, 23, 0, ./missing_par_in_call.jsligo
-    PASS, 21, 268, 10, 99, 4, ./missing_par_in_if_condition.jsligo
+    PASS, 6, 106, 10, 100, 2, ./missing_par_in_if_condition.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_before_return_on_same_line.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_in_top_level.jsligo
     FAIL : can parse test file (but shouldn't)./missing_type_annotation_in_lambda_in_match.jsligo
@@ -54,5 +54,5 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 4, 7, 5, 259, 0, ./unfinished_code12.jsligo
     PASS, 4, 7, 5, 259, 0, ./unfinished_code13.jsligo
     FAIL : can't recover test file./unreadable_symbol.jsligo
-    PASS, 14, 37, 5, 158, 2, ./using_then_in_if_expr.jsligo
+    PASS, 6, 65, 5, 137, 1, ./using_then_in_if_expr.jsligo
     PASS, 15, 110, 12, 217, 0, ./var_kw_instead_of_let_kw.jsligo |}]

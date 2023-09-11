@@ -480,9 +480,9 @@ const main = (p: parameter, s: storage) : [list<operation>, storage] =>
   [list([]), Tezos.constant(ct)(s)];
 
 const _test = () => {
-  let [taddr, _, _] = Test.originate(main, 1, (0 as tez));
+  let [taddr, _, _] = Test.originate(main, 1, 0tez);
   let ctr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(ctr, unit, (0 as tez));
+  let _ = Test.transfer_to_contract_exn(ctr, unit, 0tez);
   assert (Test.get_storage(taddr) == 5);
 };
 

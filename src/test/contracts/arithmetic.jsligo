@@ -1,19 +1,21 @@
 /* Test JSLigo arithmetic operators */
 
-let mod_op   = (n : int) : nat => n % 42;
-let plus_op  = (n : int) : int => n + 42;
-let minus_op = (n : int) : int => n - 42;
-let times_op = (n : int) : int => n * 42;
-let div_op   = (n : int) : int => n / 2;
-let int_op   = (n : nat) : int => int (n);
-let neg_op   = (n : int) : int => - n;
-let foo      = (n : int) : int => n + 10;
-let neg_op_2 = (b : int) : int => -foo(b);
-let ediv_op  = (n : int) : option<[int, nat]> => ediv (n,2)
-let aux      = (unit : unit) : unit => {
-  let _x : int = 42 * (42 as nat) ;
-  let _y : int = (23 as nat) * 23 ;
-  let _z : int = 144 * 144 ;
-  let _w : nat = (7 as nat) * (7 as nat) ;
+function mod_op   (n : int) { return n % 42  }
+function plus_op  (n : int) { return n + 42  }
+function minus_op (n : int) { return n - 42  }
+function times_op (n : int) { return n * 42  }
+function div_op   (n : int) { return n / 2   }
+function int_op   (n : nat) { return int (n) }
+function neg_op   (n : int) { return -n      }
+function foo      (n : int) { return n + 10  }
+function neg_op_2 (b : int) { return -foo(b) }
+function ediv_op  (n : int) : option<[int, nat]> { return ediv(n,2) }
+
+function aux (unit : unit) : unit {
+  let _x : int = 42 * 42n
+  let _y : int = 23n * 23
+  let _z : int = 144 * 144
+  let _w : nat = 7n * 7n
 }
+
 let mul_woo = aux (unit)

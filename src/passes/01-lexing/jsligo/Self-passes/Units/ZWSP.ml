@@ -3,8 +3,8 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
-module Std = Simple_utils.Std
-module Unit = LexerLib.Unit
+module Std    = Simple_utils.Std
+module Unit   = LexerLib.Unit
 
 (* Local dependencies *)
 
