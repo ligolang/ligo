@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFix JsLIGO syntax highlighting with the new alpha v1.0.0 changes.\\n\\n"
+merge_request: '2863'
+title: "[Chore] Fix JsLIGO syntax highlighting"
+type: fixed
+            

@@ -283,10 +283,10 @@
 		(,"\\b\\(let\\|const\\)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\)\\b"
+		(,"\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\)\\b"
+		(,"\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|match\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
@@ -300,6 +300,7 @@
 		(,","
 		)
 		(,"?" ( 1 ligo-font-lock-operator-face))
+		(,"\\bwhen\\b" ( 1 ligo-font-lock-conditional-face))
 		(,"\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-structure-face)
 		)
