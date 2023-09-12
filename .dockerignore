@@ -22,3 +22,10 @@ docker
 flake.lock
 nix
 result
+# vscode tests
+bin/
+client/out/
+ligo-vscode-*.vsix
+node_modules/
+.vscode-test/
+test-resources/
