@@ -5,7 +5,7 @@ ligo install [PACKAGE_NAME]
 ```
 
 ### DESCRIPTION
-This command invokes the package manager to install the external packages declared in package.json
+This command invokes the package manager to install the external packages declared in ligo.json
 
 ### FLAGS
 **--cache-path PATH**

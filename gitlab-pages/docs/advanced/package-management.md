@@ -14,7 +14,7 @@ first-class support for such distributable units (i.e. packages).
 ## Packages
 
 Reusable modules that developers intend to share with others can be
-distributed as packages by placing a `package.json` (a manifest file)
+distributed as packages by placing a `ligo.json` (a manifest file)
 next to their Ligo modules.
 
 ```bash
@@ -34,7 +34,7 @@ $ ls
 </colgroup>
 <tbody>
 <tr>
-<td class="org-left">package.json</td>
+<td class="org-left">ligo.json</td>
 <td class="org-left">set.mligo</td>
 <td class="org-left">list.mligo</td>
 </tr>
@@ -42,7 +42,7 @@ $ ls
 </table>
 
 Any directory (recursively) containing `.mligo` files can be turned into a package
-by simply placing a manifest file, `package.json` over there.
+by simply placing a manifest file, `ligo.json` over there.
 
 ## LIGO registry
 
@@ -59,7 +59,7 @@ Pre-requites:
 
 ### Workflow
 
-Start with an empty `package.json` file
+Start with an empty `ligo.json` file
 
 ```json
 {}
@@ -273,7 +273,7 @@ $ ligo install
 ### Upgrading the version of a LIGO package
 
 During the lifecycle of a project, if you wish to upgrade the version of a LIGO package,
-Just update the package version to the desired one in the `package.json`. e.g.
+Just update the package version to the desired one in the `ligo.json`. e.g.
 
 ```diff
 {
@@ -364,7 +364,7 @@ contents, its version, and other useful information.
 
 This is an important step, as it will help the tools and your users/collaborators, provide vital information about your package.
 
-For LIGO packages, authors must provide a manifest file (package.json).
+For LIGO packages, authors must provide a manifest file (ligo.json).
 
 The structure of a LIGO manifest is as follows,
 
@@ -392,7 +392,7 @@ The `bugs` fields follows a [structure same as npm](https://docs.npmjs.com/cli/v
 - **`dev_dependencies`** : A object (key-value pairs) of dev_dependencies of the package where key is a `package_name` and value is a `package_version`
 
 
-Sample LIGO manifest (`package.json`) with some of the above information:
+Sample LIGO manifest (`ligo.json`) with some of the above information:
 
 ```json
 {
@@ -755,7 +755,3 @@ let test =
 
 In this case, the main function will be used in tests.
 
-### 3. What happens if package.json is already in use (maybe because of another tool like npm or taqueria)?
-
-In that case, you can name your LIGO manifest as `esy.json` to avoid conflicts with other tools.
-Also, there is a plan in the future to introduce `ligo.json` as manifest.

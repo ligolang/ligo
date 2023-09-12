@@ -66,7 +66,7 @@ module Node = struct
   let version_of_yojson = function
     | `String v ->
       (match v with
-      | "link-dev:./package.json" -> Ok (DefaultVersion v)
+      | "link-dev:./ligo.json" -> Ok (DefaultVersion v)
       | v ->
         (match Semver.of_string v with
         | Some semver -> Ok (NodeVersion semver)

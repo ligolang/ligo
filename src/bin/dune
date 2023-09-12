@@ -47,7 +47,7 @@
   str
   fpath
   bos
-  semver)
+  semver lambda-term)
  (preprocess
   (pps ppx_deriving_yojson))
  (modules install))

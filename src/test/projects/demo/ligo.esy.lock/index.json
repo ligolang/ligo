@@ -1,0 +1,94 @@
+{
+  "checksum": "d47ed6a340679b1cafd2d1bef11a83b1",
+  "root": "demo@link-dev:./ligo.json",
+  "node": {
+    "ligo-test_2@1.0.0@d41d8cd9": {
+      "id": "ligo-test_2@1.0.0@d41d8cd9",
+      "name": "ligo-test_2",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-test_2/-/ligo-test_2-1.0.0.tgz#sha1:c6557e5a04461c1038e3813657da06aaf6508c2b"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "ligo-set-helpers@1.0.3@d41d8cd9": {
+      "id": "ligo-set-helpers@1.0.3@d41d8cd9",
+      "name": "ligo-set-helpers",
+      "version": "1.0.3",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-set-helpers/-/ligo-set-helpers-1.0.3.tgz#sha1:7fb51d198402a1dd9a194ed8c1c719e0082d4376"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "ligo-list-helpers@1.0.1@d41d8cd9": {
+      "id": "ligo-list-helpers@1.0.1@d41d8cd9",
+      "name": "ligo-list-helpers",
+      "version": "1.0.1",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-list-helpers/-/ligo-list-helpers-1.0.1.tgz#sha1:6d37571ff608705376243b93e2512ff88d8864ef"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "ligo-list-helpers@1.0.0@d41d8cd9": {
+      "id": "ligo-list-helpers@1.0.0@d41d8cd9",
+      "name": "ligo-list-helpers",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-list-helpers/-/ligo-list-helpers-1.0.0.tgz#sha1:aa7ba8a0231a1e6544711ac8d2f8a80c45ead595"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "ligo-foo@1.0.6@d41d8cd9": {
+      "id": "ligo-foo@1.0.6@d41d8cd9",
+      "name": "ligo-foo",
+      "version": "1.0.6",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-foo/-/ligo-foo-1.0.6.tgz#sha1:a47eb4215d4114444f12af9cb77fda3d92bcb821"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [
+        "ligo-set-helpers@1.0.3@d41d8cd9", "ligo-list-helpers@1.0.0@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
+    "demo@link-dev:./ligo.json": {
+      "id": "demo@link-dev:./ligo.json",
+      "name": "demo",
+      "version": "link-dev:./ligo.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "ligo.json"
+      },
+      "overrides": [],
+      "dependencies": [
+        "ligo_test_1@1.0.0@d41d8cd9", "ligo-test_2@1.0.0@d41d8cd9",
+        "ligo-list-helpers@1.0.1@d41d8cd9", "ligo-foo@1.0.6@d41d8cd9"
+      ],
+      "devDependencies": []
+    }
+  }
+}

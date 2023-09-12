@@ -1,0 +1,33 @@
+{
+  "checksum": "46e05c0246ddced7da901e0d9c2b6dc9",
+  "root": "using_scope_pkg_project@link-dev:./ligo.json",
+  "node": {
+    "using_scope_pkg_project@link-dev:./ligo.json": {
+      "id": "using_scope_pkg_project@link-dev:./ligo.json",
+      "name": "using_scope_pkg_project",
+      "version": "link-dev:./ligo.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "ligo.json"
+      },
+      "overrides": [],
+      "dependencies": [ "@ligo/bigarray-cameligo@0.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "@ligo/bigarray-cameligo@0.0.0@d41d8cd9": {
+      "id": "@ligo/bigarray-cameligo@0.0.0@d41d8cd9",
+      "name": "@ligo/bigarray-cameligo",
+      "version": "0.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@ligo/bigarray-cameligo/-/bigarray-cameligo-0.0.0.tgz#sha1:e3661a3eac49337aa35759da870fd0acb4ae2e39"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}

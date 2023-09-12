@@ -29,8 +29,8 @@ let is_root { version; _ } =
   | _ -> false
 
 
-let find_package_json_substring s =
-  let regexp = Str.regexp "./package.json" in
+let find_ligo_json_substring s =
+  let regexp = Str.regexp "./ligo.json" in
   try
     let index = Str.search_forward regexp s 0 in
     Some index
@@ -42,7 +42,7 @@ let version_of_string version =
   match Semver.of_string version with
   | Some v -> Some (SemverVersion v)
   | None ->
-    (match find_package_json_substring version with
+    (match find_ligo_json_substring version with
     | Some _ -> Some (StringVersion version)
     | None -> None)
 

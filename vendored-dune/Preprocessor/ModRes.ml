@@ -190,8 +190,8 @@ module Esy =
     (* The function [find_manifest_path] finds manifest file for a package. *)
 
     let find_manifest_path directory = 
-      if match Simple_utils.File.exists (directory ^ "/" ^ "esy.json") with Some _ -> true | _ -> false
-      then Some (directory / "esy.json")
+      if match Simple_utils.File.exists (directory ^ "/" ^ "package.json") with Some _ -> true | _ -> false
+      then Some (directory / "package.json")
       else if Stdlib.Sys.file_exists (directory / "package.json")
       then Some (directory / "package.json")
       else None
@@ -199,11 +199,11 @@ module Esy =
     (* Path to installation.json *)
 
     let installation_json_path path =
-      path / "_esy" / "default" / "installation.json"
+      path / "_esy" / "ligo" / "installation.json"
 
     (* Path to the lock file *)
 
-    let lock_file_path path = path / "esy.lock" / "index.json"
+    let lock_file_path path = path / "ligo.esy.lock" / "index.json"
 
     (* Path separator for Esy *)
 
@@ -279,7 +279,7 @@ module Esy =
       "/path/to/.esy/source/i/ligo_set_helpers__1.0.2__5cd724a1",
     "ligo-list-helpers@1.0.1@d41d8cd9":
       "/path/to/.esy/source/i/ligo_list_helpers__1.0.1__6233bebd",
-    "ligo-main@link-dev:./esy.json":
+    "ligo-main@link-dev:./ligo.json":
       "/path/to/projects/ligo-pkg-mgmnt/ligo-main"
   }
  *)
@@ -309,13 +309,13 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
 
   {
     "checksum": "<some hash>",
-    "root": "ligo-main@link-dev:./esy.json",
+    "root": "ligo-main@link-dev:./ligo.json",
     "node": {
-      "ligo-main@link-dev:./esy.json": {
-        "id": "ligo-main@link-dev:./esy.json",
+      "ligo-main@link-dev:./ligo.json": {
+        "id": "ligo-main@link-dev:./ligo.json",
         "name": "ligo-main",
-        "version": "link-dev:./esy.json",
-        "source": { "type": "link-dev", "path": ".", "manifest": "esy.json" },
+        "version": "link-dev:./ligo.json",
+        "source": { "type": "link-dev", "path": ".", "manifest": "ligo.json" },
         "overrides": [],
         "dependencies": [
           "temp-ligo-bin@0.30.1@d41d8cd9", "ligo_test_1@1.0.0@d41d8cd9",
@@ -337,8 +337,8 @@ let clean_installation_json ~root abs_path_to_project_root installation_json =
   For example, resuming the example above yields:
 
   [{
-    root = "ligo-main@link-dev:./esy.json" ;
-    node = SMap.t ({ "ligo-main@link-dev:./esy.json" = [
+    root = "ligo-main@link-dev:./ligo.json" ;
+    node = SMap.t ({ "ligo-main@link-dev:./ligo.json" = [
       "temp-ligo-bin@0.30.1@d41d8cd9",
       "ligo_test_1@1.0.0@d41d8cd9",
       "ligo-test_2@1.0.0@d41d8cd9",

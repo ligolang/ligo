@@ -53,12 +53,11 @@ let validate_main_file ~main =
       -> Ok ()
     | None ->
       Error
-        "Error: Invalid LIGO file specifed in main field of package.json\n\
+        "Error: Invalid LIGO file specifed in main field of ligo.json\n\
          Valid extension for LIGO files are (.ligo, .mligo, .jsligo) ")
   | false ->
     Error
-      "Error: main file does not exists.\n\
-       Please specify a valid LIGO file in package.json."
+      "Error: main file does not exists.\nPlease specify a valid LIGO file in ligo.json."
 
 
 let validate t =
@@ -86,25 +85,25 @@ let try_readme ~project_root =
 let parse_require_field ~field_name json =
   match Util.member field_name json with
   | `String "" ->
-    Error (Format.asprintf "Error: %s field is empty (\"\") in package.json" field_name)
+    Error (Format.asprintf "Error: %s field is empty (\"\") in ligo.json" field_name)
   | `String s -> Ok s
-  | `Null -> Error (Format.asprintf "Error: No %s field in package.json" field_name)
-  | _ -> Error (Format.asprintf "Error: Invalid %s field in package.json" field_name)
+  | `Null -> Error (Format.asprintf "Error: No %s field in ligo.json" field_name)
+  | _ -> Error (Format.asprintf "Error: Invalid %s field in ligo.json" field_name)
 
 
 let parse_sem_ver version =
   match Semver.of_string version with
   | Some s -> Ok s
-  | None -> Error (Format.sprintf "Error: Invalid version %s in package.json" version)
+  | None -> Error (Format.sprintf "Error: Invalid version %s in ligo.json" version)
 
 
 let parse_version json =
   let* version =
     match Util.member "version" json with
-    | `String "" -> Error "Error: version field is empty (\"\") in package.json"
+    | `String "" -> Error "Error: version field is empty (\"\") in ligo.json"
     | `String s -> Ok s
-    | `Null -> Error "Error: No version field in package.json"
-    | _ -> Error "Error: Invalid version field in package.json"
+    | `Null -> Error "Error: No version field in ligo.json"
+    | _ -> Error "Error: Invalid version field in ligo.json"
   in
   parse_sem_ver version
 
@@ -153,12 +152,12 @@ let parse_dev_dependencies json =
 
 let parse_repository json =
   match Util.member "repository" json with
-  | `Null -> Error "Error: No repository field in package.json"
+  | `Null -> Error "Error: No repository field in ligo.json"
   | repo ->
     (match Repository_url.parse repo with
     | Ok t -> Ok t
     | Error e ->
-      Error (Format.sprintf "Error: Invalid repository field in package.json\n%s" e))
+      Error (Format.sprintf "Error: Invalid repository field in ligo.json\n%s" e))
 
 
 let parse_readme ~project_root json =
@@ -173,14 +172,13 @@ let parse_type json =
   | `String "contract" -> Ok "contract"
   | `String "library" -> Ok "library"
   | _ ->
-    Error
-      "Error: Invalid type field in package.json\nType can be either library or contract"
+    Error "Error: Invalid type field in ligo.json\nType can be either library or contract"
 
 
 let parse_storage_fn ~type_ json =
   match Util.member "storage_fn" json with
   | `String "" when String.(type_ = "contract") ->
-    Error "Error: storage_fn field is empty (\"\") in package.json"
+    Error "Error: storage_fn field is empty (\"\") in ligo.json"
   | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
     Error "Error: In case of a type : contract a `storage_fn` needs to be provided."
@@ -190,7 +188,7 @@ let parse_storage_fn ~type_ json =
 let parse_storage_arg ~type_ json =
   match Util.member "storage_arg" json with
   | `String "" when String.(type_ = "contract") ->
-    Error "Error: storage_arg field is empty (\"\") in package.json"
+    Error "Error: storage_arg field is empty (\"\") in ligo.json"
   | `String s when String.(type_ = "contract") -> Ok (Some s)
   | _ when String.(type_ = "contract") ->
     Error "Error: In case of a type : contract a `storage_arg` needs to be provided."
@@ -199,13 +197,13 @@ let parse_storage_arg ~type_ json =
 
 let parse_bugs json =
   match Util.member "bugs" json with
-  | `Null -> Error "Error: No bugs field in package.json"
+  | `Null -> Error "Error: No bugs field in ligo.json"
   | bugs ->
     (match Bugs.of_yojson bugs with
     | Ok bugs -> Ok bugs
     | Error _ ->
       Error
-        "Error: Invalid `bugs` field in package.json.\n\
+        "Error: Invalid `bugs` field in ligo.json.\n\
          url (bug tracker url) and / or email needs to be provided\n\
          e.g.{ \"url\" : \"https://github.com/foo/bar/issues\" , \"email\" : \
          \"foo@bar.com\" }")
@@ -251,17 +249,17 @@ let read_from_json ~project_root ~ligo_manifest_path json =
 
 let read ~project_root =
   match project_root with
-  | None -> failwith "Error: No package.json found!"
+  | None -> failwith "Error: No ligo.json found!"
   | Some project_root ->
-    let ligo_manifest_path = Filename.concat project_root "package.json" in
+    let ligo_manifest_path = Filename.concat project_root "ligo.json" in
     let () =
       match Caml.Sys.file_exists ligo_manifest_path with
-      | false -> failwith "Error: Unable to find package.json!"
+      | false -> failwith "Error: Unable to find ligo.json!"
       | true -> ()
     in
     let json =
       try Yojson.Safe.from_file ligo_manifest_path with
-      | _ -> failwith "Error: Error in parsing package.json (invalid json)"
+      | _ -> failwith "Error: Error in parsing ligo.json (invalid json)"
     in
     read_from_json ~project_root ~ligo_manifest_path json
 
@@ -276,49 +274,49 @@ let read_from_json = read_from_json ~project_root ~ligo_manifest_path
 let%test _ =
   let json = Yojson.Safe.from_string {|{}|} in
   match read_from_json json with
-  | Error e -> String.(e = "Error: No name field in package.json")
+  | Error e -> String.(e = "Error: No name field in ligo.json")
   | Ok _ -> false
 
 (* name = empty *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":""}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: name field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: name field is empty ("") in ligo.json|})
   | Ok _ -> false
 
 (* name = valid & version = missing *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo"}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: No version field in package.json|})
+  | Error e -> String.(e = {|Error: No version field in ligo.json|})
   | Ok _ -> false
 
 (* version = empty *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo","version":""}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: version field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: version field is empty ("") in ligo.json|})
   | Ok _ -> false
 
 (* version = invalid *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1"}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: Invalid version 0.1 in package.json|})
+  | Error e -> String.(e = {|Error: Invalid version 0.1 in ligo.json|})
   | Ok _ -> false
 
 (* version = valid & author = missing *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0"}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: No author field in package.json|})
+  | Error e -> String.(e = {|Error: No author field in ligo.json|})
   | Ok _ -> false
 
 (* author = empty *)
 let%test _ =
   let json = Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":""}|} in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: author field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: author field is empty ("") in ligo.json|})
   | Ok _ -> false
 
 (* author = valid & repository = missing *)
@@ -327,7 +325,7 @@ let%test _ =
     Yojson.Safe.from_string {|{"name":"foo","version":"0.1.0","author":"john doe"}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: No repository field in package.json|})
+  | Error e -> String.(e = {|Error: No repository field in ligo.json|})
   | Ok _ -> false
 
 (* repository = empty *)
@@ -338,8 +336,7 @@ let%test _ =
   in
   match read_from_json json with
   | Error e ->
-    String.(
-      e = "Error: Invalid repository field in package.json\nrepository url is invalid")
+    String.(e = "Error: Invalid repository field in ligo.json\nrepository url is invalid")
   | Ok _ -> false
 
 (* repository = valid & main = empty *)
@@ -350,7 +347,7 @@ let%test _ =
          "repository":"https://github.com/npm/cli.git"}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = "Error: No main field in package.json")
+  | Error e -> String.(e = "Error: No main field in ligo.json")
   | Ok _ -> false
 
 (* main = valid & license = missing *)
@@ -362,7 +359,7 @@ let%test _ =
          "main":"lib.mligo"}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = "Error: No license field in package.json")
+  | Error e -> String.(e = "Error: No license field in ligo.json")
   | Ok _ -> false
 
 (* license = empty *)
@@ -374,7 +371,7 @@ let%test _ =
          "main":"lib.mligo","license":""}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: license field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: license field is empty ("") in ligo.json|})
   | Ok _ -> false
 
 (* license = valid & bugs = missing *)
@@ -386,7 +383,7 @@ let%test _ =
          "main":"lib.mligo","license":"MIT"}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: No bugs field in package.json|})
+  | Error e -> String.(e = {|Error: No bugs field in ligo.json|})
   | Ok _ -> false
 
 (* bugs = empty *)
@@ -401,7 +398,7 @@ let%test _ =
   | Error e ->
     String.(
       e
-      = {|Error: Invalid `bugs` field in package.json.
+      = {|Error: Invalid `bugs` field in ligo.json.
 url (bug tracker url) and / or email needs to be provided
 e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
   | Ok _ -> false
@@ -433,7 +430,7 @@ let%test _ =
   | Error e ->
     String.(
       e
-      = {|Error: Invalid `bugs` field in package.json.
+      = {|Error: Invalid `bugs` field in ligo.json.
 url (bug tracker url) and / or email needs to be provided
 e.g.{ "url" : "https://github.com/foo/bar/issues" , "email" : "foo@bar.com" }|})
   | Ok _ -> false
@@ -478,7 +475,7 @@ let%test _ =
   | Error e ->
     String.(
       e
-      = {|Error: Invalid type field in package.json
+      = {|Error: Invalid type field in ligo.json
 Type can be either library or contract|})
   | Ok _ -> false
 
@@ -496,7 +493,7 @@ let%test _ =
   | Error e ->
     String.(
       e
-      = {|Error: Invalid type field in package.json
+      = {|Error: Invalid type field in ligo.json
 Type can be either library or contract|})
   | Ok _ -> false
 
@@ -648,7 +645,7 @@ let%test _ =
          "storage_fn":""}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = {|Error: storage_fn field is empty ("") in package.json|})
+  | Error e -> String.(e = {|Error: storage_fn field is empty ("") in ligo.json|})
   | Ok _ -> false
 
 (* storage_fn = valid & storage_arg = missing *)
@@ -689,7 +686,7 @@ let%test _ =
          "storage_arg":""}|}
   in
   match read_from_json json with
-  | Error e -> String.(e = "Error: storage_arg field is empty (\"\") in package.json")
+  | Error e -> String.(e = "Error: storage_arg field is empty (\"\") in ligo.json")
   | Ok _ -> false
 
 (* storage_arg = valid *)

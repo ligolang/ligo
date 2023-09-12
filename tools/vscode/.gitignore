@@ -12,4 +12,4 @@ result-*
 
 # LIGO tests with Esy
 .ligo/
-esy.lock/
+ligo.esy.lock/

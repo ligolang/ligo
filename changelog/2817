@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nUsers can now use a `ligo.json` file to manage dependencies instead of `package.json` Existing projects with `esy.json` or `package.json` will be prompted to rename their manifests. `ligo` will automatically generate new lock files under the directory `ligo.esy.lock`. Users can check this folder into their version controll system for reproducibility.\\n\\n"
+merge_request: '2817'
+title: "Package management: use ligo.json instead of package.json or esy.json"
+type: added
+            

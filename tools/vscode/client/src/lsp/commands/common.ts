@@ -101,7 +101,7 @@ export function getLastContractPath() {
   return { path, ext }
 }
 
-const packageName = 'package.json'
+const packageName = 'ligo.json'
 
 function findPackage(dirname: string): Maybe<string> {
   if (dirname === '') {

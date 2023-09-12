@@ -1,6 +1,0 @@
-{
-  "using_scope_pkg_project@link-dev:./package.json":
-    ".",
-  "@ligo/bigarray-cameligo@0.0.0@d41d8cd9":
-    "./.ligo/source/i/ligo__s__bigarray_cameligo__0.0.0__bee0bbbb"
-}
