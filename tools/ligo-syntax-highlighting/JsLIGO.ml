@@ -24,6 +24,7 @@ module Name = struct
   let parentheses               = "parentheses"
   let case                      = "case"
   let ternary                   = "ternary"
+  let when_clause               = "whenclause"
   (* Types *)
   let type_binder               = "typebinder"
   let type_definition           = "typedefinition"
@@ -176,6 +177,7 @@ let syntax_highlighting =
       Name_ref Name.parentheses;
       Name_ref Name.case;
       Name_ref Name.ternary;
+      Name_ref Name.when_clause;
     ];
     repository = [
       {
@@ -230,12 +232,22 @@ let syntax_highlighting =
         }
       };
       {
-        (* Otherwise : is interpreted as a type annotation. *)
+        (* Otherwise [:] is interpreted as a type annotation. *)
         name = Name.ternary;
         kind = Begin_end {
           meta_name = None;
           begin_ = [(Regexp.ternary_begin_jsligo, Some Operator)];
           end_ = [(Regexp.ternary_end_jsligo, Some Operator)];
+          patterns = [Self_ref];
+        }
+      };
+      {
+        (* Otherwise [when ...:] is interpreted as a type annotation. *)
+        name = Name.when_clause;
+        kind = Begin_end {
+          meta_name = None;
+          begin_ = [(Regexp.when_begin_jsligo, Some Conditional)];
+          end_ = [(Regexp.when_end_jsligo, Some Operator)];
           patterns = [Self_ref];
         }
       };

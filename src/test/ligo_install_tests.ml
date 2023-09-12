@@ -75,11 +75,7 @@ let run_workflow_test ~path_list =
   let src = workflow_path ^ "main.mligo" in
   batch_rm_rf path_list;
   let* () =
-    ligo_install_pkgs
-      ~project_root:workflow_path
-      ~package_dir
-      ~cache_path
-      ~ligo_registry
+    ligo_install_pkgs ~project_root:workflow_path ~package_dir ~cache_path ~ligo_registry
     |> error_to_rresult_error
   in
   let output =

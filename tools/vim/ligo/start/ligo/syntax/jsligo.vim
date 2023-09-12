@@ -42,11 +42,11 @@ syntax region typeannotationfield matchgroup=typeannotationfield_ start=":" end=
 highlight link typeannotationfield_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=>\|,\|}\|=\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=>\|,\|{\|}\|=\|;\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(;\|}\|@\|\<\(else\|default\|case\|type\|let\|const\|namespace\|interface\|export\|import\)\>\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(;\|}\|@\|\<\(else\|default\|case\|type\|let\|const\|namespace\|interface\|export\|import\|function\)\>\)\@=" contains=keywords,uppercaseidentifier,typeoperator,typename,typeparentheses,typeint,typevariant,typeproduct,typebinder,typegeneric,string0,string1 
 highlight link typedefinition_ Keyword 
 
 " typebinder
@@ -111,6 +111,11 @@ highlight link lowercaseidentifier Identifier
 syntax match uppercaseidentifier "\<[A-Z][a-zA-Z0-9_$]*\>" 
 highlight link uppercaseidentifier Structure 
 
+" whenclause
+syntax region whenclause matchgroup=whenclause_ start="\<when\>" matchgroup=whenclause__ end=":" contains=@top 
+highlight link whenclause_ Conditional 
+highlight link whenclause__ Operator 
+
 " ternary
 syntax region ternary matchgroup=ternary_ start="?" matchgroup=ternary__ end=":" contains=@top 
 highlight link ternary_ Operator 
@@ -131,11 +136,11 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " controlkeywords
-syntax match controlkeywords "\<\(switch\|if\|else\|for\|of\|while\|return\|break\)\>" 
+syntax match controlkeywords "\<\(switch\|if\|else\|for\|of\|while\|return\|break\|match\)\>" 
 highlight link controlkeywords Conditional 
 
 " keywords
-syntax match keywords "\<\(export\|import\|from\|implements\|contract_of\|parameter_of\)\>" 
+syntax match keywords "\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\)\>" 
 highlight link keywords Keyword 
 
 " letbinding

@@ -144,7 +144,9 @@ let trim_quotes : string -> string =
  fun s -> String.strip s ~drop:(fun ch -> Char.equal ch '\"')
 
 
-let lock_file : string -> Fpath.t = fun path -> Fpath.(v path / "ligo.esy.lock" / "index.json")
+let lock_file : string -> Fpath.t =
+ fun path -> Fpath.(v path / "ligo.esy.lock" / "index.json")
+
 
 let ligo_json : string -> Fpath.t =
  fun project_root -> Fpath.(v project_root / "ligo.json")
@@ -170,8 +172,7 @@ let read_lock_file ~project_root =
 
 let read_ligo_json ~project_root =
   match ligo_json_exists project_root with
-  | true ->
-    Result.return @@ Json.from_file @@ Fpath.to_string @@ ligo_json project_root
+  | true -> Result.return @@ Json.from_file @@ Fpath.to_string @@ ligo_json project_root
   | false -> Error Manifest_not_found
 
 
@@ -662,9 +663,7 @@ let generate_lock_file
     let f lst = List.map ~f:generate_node lst |> Result.all in
     Result.map ~f metadata_json_list |> Result.join
   in
-  let default_node =
-    generate_default_node ~ligo_json ~dependencies ~dev_dependencies
-  in
+  let default_node = generate_default_node ~ligo_json ~dependencies ~dev_dependencies in
   let root = Result.map ~f:(fun node -> node.id) default_node in
   let all_dependencies = dependencies @ dev_dependencies in
   let checksum = Ok (generate_checksum ~all_dependencies) in
@@ -783,9 +782,7 @@ let run ~project_root _ligo_name cache_path ligo_registry =
       <pkg-name> exists in ligo registry and then add to the ligo.json and use the run function *)
   let open Lwt_result.Syntax in
   let* ligo_json = Lwt.return @@ read_ligo_json ~project_root in
-  let* dependencies =
-    Lwt.return @@ field_to_tuple_list ~field:"dependencies" ligo_json
-  in
+  let* dependencies = Lwt.return @@ field_to_tuple_list ~field:"dependencies" ligo_json in
   let* dev_dependencies =
     Lwt.return @@ field_to_tuple_list ~field:"devDependencies" ligo_json
   in
