@@ -35,7 +35,9 @@
   lsp_test_requests
   package_management
   lwt
-  lwt.unix))
+  lwt.unix)
+ (preprocess
+  (pps ppx_let)))
 
 (rule
  (alias doc-test)

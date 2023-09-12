@@ -7,13 +7,13 @@ module PP = PP
 type def = Types.def
 type scopes = Types.scopes
 
-val defs
+val defs_and_typed_program
   :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
   -> with_types:bool
-  -> def list
+  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
 
 val scopes
   :  options:Compiler_options.middle_end
@@ -22,10 +22,10 @@ val scopes
   -> definitions:def list
   -> scopes
 
-val defs_and_scopes
+val defs_and_typed_program_and_scopes
   :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
   -> with_types:bool
-  -> def list * scopes
+  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes

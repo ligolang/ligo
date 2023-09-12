@@ -8,15 +8,22 @@ let e_some element =
 let get_program = get_program "./contracts/id.mligo"
 
 let first_owner, first_contract =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 0 in
+  let%map env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
+  let id = List.nth_exn env.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
 let buy_id ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -36,10 +43,11 @@ let buy_id ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
@@ -84,8 +92,11 @@ let buy_id ~raise () =
 
 
 let buy_id_sender_addr ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -105,10 +116,11 @@ let buy_id_sender_addr ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
@@ -150,8 +162,12 @@ let buy_id_sender_addr ~raise () =
 
 (* Test that contract fails if we attempt to buy an ID for the wrong amount *)
 let buy_id_wrong_amount ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -171,10 +187,10 @@ let buy_id_wrong_amount ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents
         ())
@@ -200,8 +216,12 @@ let buy_id_wrong_amount ~raise () =
 
 
 let update_details_owner ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -212,10 +232,10 @@ let update_details_owner ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -280,8 +300,12 @@ let update_details_owner ~raise () =
 
 
 let update_details_controller ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -292,10 +316,10 @@ let update_details_controller ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -361,8 +385,12 @@ let update_details_controller ~raise () =
 
 (* Test that contract fails when we attempt to update details of nonexistent ID *)
 let update_details_nonexistent ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -373,10 +401,10 @@ let update_details_nonexistent ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -424,8 +452,12 @@ let update_details_nonexistent ~raise () =
 
 (* Test that contract fails when we attempt to update details from wrong addr *)
 let update_details_wrong_addr ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -436,12 +468,9 @@ let update_details_wrong_addr ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
-      make_options
-        ~env:(test_environment ())
-        ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
-        ())
+      make_options ~env ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero ())
   in
   let new_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_2 =
@@ -486,8 +515,12 @@ let update_details_wrong_addr ~raise () =
 
 (* Test that giving none on both profile and controller address is a no-op *)
 let update_details_unchanged ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -498,10 +531,10 @@ let update_details_unchanged ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -544,8 +577,12 @@ let update_details_unchanged ~raise () =
 
 
 let update_owner ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -556,10 +593,10 @@ let update_owner ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -619,8 +656,12 @@ let update_owner ~raise () =
 
 (* Test that contract fails when we attempt to update owner of nonexistent ID *)
 let update_owner_nonexistent ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -631,10 +672,10 @@ let update_owner_nonexistent ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -676,8 +717,12 @@ let update_owner_nonexistent ~raise () =
 
 (* Test that contract fails when we attempt to update owner from non-owner addr *)
 let update_owner_wrong_addr ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -688,10 +733,10 @@ let update_owner_wrong_addr ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.zero
         ())
@@ -732,8 +777,12 @@ let update_owner_wrong_addr ~raise () =
 
 
 let skip ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -744,10 +793,10 @@ let skip ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
         ())
@@ -796,8 +845,12 @@ let skip ~raise () =
 
 (* Test that contract fails if we try to skip without paying the right amount *)
 let skip_wrong_amount ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let owner_addr = addr 5 in
+  let%bind owner_addr = addr 5 in
   let owner_website = e_bytes_string ~loc "ligolang.org" in
   let id_details_1 =
     e_record_ez
@@ -808,10 +861,10 @@ let skip_wrong_amount ~raise () =
       ]
   in
   let new_addr = first_owner in
-  let options =
+  let%map options =
     Proto_alpha_utils.Memory_proto_alpha.(
       make_options
-        ~env:(test_environment ())
+        ~env
         ~sender:first_contract
         ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.fifty_cents
         ())

@@ -3,6 +3,7 @@ module Ligo_interface = Ligo_interface
 module Helpers_file = Helpers_file
 module Helpers_pretty = Helpers_pretty
 module Path = Path
+module Pretty = Pretty
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def
@@ -125,6 +126,7 @@ module Registration = Lsp.Types.Registration
 module RenameOptions = Lsp.Types.RenameOptions
 module ServerCapabilities = Lsp.Types.ServerCapabilities
 module ShowMessageParams = Lsp.Types.ShowMessageParams
+module TextDocumentContentChangeEvent = Lsp.Types.TextDocumentContentChangeEvent
 module TextEdit = Lsp.Types.TextEdit
 module WorkspaceEdit = Lsp.Types.WorkspaceEdit
 

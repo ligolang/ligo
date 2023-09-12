@@ -32,6 +32,7 @@ class lsp_server =
     inherit Linol_lwt.Jsonrpc2.server as super
     method spawn_query_handler = Linol_lwt.spawn
     val mutable config : config = default_config
+    val storage_invalidated : bool ref = ref true
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
     (* We now override the [on_notify_doc_did_open] method that will be called
@@ -65,7 +66,7 @@ class lsp_server =
     method on_notif_doc_did_change
         ~notify_back
         document
-        _changes
+        changes
         ~old_content:_old
         ~new_content
         : unit IO.t =
@@ -75,7 +76,7 @@ class lsp_server =
         ; config
         ; docs_cache = get_scope_buffers
         }
-      @@ Requests.on_doc file new_content
+      @@ Requests.on_doc ~changes file new_content
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in

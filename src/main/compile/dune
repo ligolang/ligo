@@ -30,4 +30,6 @@
   ast_aggregated
   self_ast_aggregated
   compiler_options
-  syntax))
+  syntax)
+ (preprocess
+  (pps ppx_let)))

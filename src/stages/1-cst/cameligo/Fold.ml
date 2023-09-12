@@ -171,20 +171,19 @@ type _ sing =
 type some_node = Some_node : 'b * 'b sing -> some_node
 let (-|) a b = Some_node (a, b)
 
-let fold
-    (type a b)
-    (init : b)
-    (f : b -> a -> b)
-    (instruction : some_node -> a fold_control)
-    (cst : CST.t) : b =
+let fold'
+    (type acc)
+    (init : acc)
+    (instruction : acc -> some_node -> acc fold_control)
+    (node : some_node) : acc =
   let acc = ref init in
   let rec process : some_node -> unit =
     fun some_node ->
-      match instruction some_node with
+      match instruction !acc some_node with
         Stop -> ()
       | Skip -> fold some_node
-      | Continue x -> acc := f !acc x; fold some_node
-      | Last x -> acc := f !acc x
+      | Continue x -> acc := x; fold some_node
+      | Last x -> acc := x
 
   and process_list : some_node list -> unit =
     fun l -> List.iter l ~f:process
@@ -736,11 +735,42 @@ let fold
     ; node#directives -| S_list S_directive ]
   | S_z -> () (* Leaf *)
   in
-  process @@ cst -| S_cst;
+  process node;
   !acc
 
+let fold
+    (type a b)
+    (init : b)
+    (f : b -> a -> b)
+    (instruction : some_node -> a fold_control)
+    (node : some_node) : b =
+  fold' init (fun acc n -> map_fold_control (instruction n) ~f:(f acc)) node
+
+let fold_cst'
+    (type acc)
+    (init : acc)
+    (instruction : acc -> some_node -> acc fold_control)
+    (cst : CST.t) : acc =
+  fold' init instruction (cst -| S_cst)
+
+let fold_cst
+    (type a b)
+    (init : b)
+    (f : b -> a -> b)
+    (instruction : some_node -> a fold_control)
+    (cst : CST.t) : b =
+  fold init f instruction (cst -| S_cst)
+
+let fold_map_cst
+    (type a)
+    (m : a monoid)
+    (f : some_node -> a fold_control)
+    (cst : CST.t) : a =
+  fold_cst m.empty m.append f cst
+
 let fold_map
-  (type a)
-  (m : a monoid)
-  (f : some_node -> a fold_control)
-  (cst : CST.t) : a = fold m.empty m.append f cst
+    (type a)
+    (m : a monoid)
+    (f : some_node -> a fold_control)
+    (node : some_node) : a =
+  fold m.empty m.append f node

@@ -22,10 +22,11 @@ module PP = PP
 type def = Types.def
 type scopes = Types.scopes
 
-let defs
+let defs_and_typed_program
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> with_types:bool -> def list
+    -> prg:Ast_core.module_ -> with_types:bool
+    -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
   =
  fun ~raise ~options ~stdlib ~prg ~with_types ->
   let stdlib_decls, stdlib_core = stdlib in
@@ -36,12 +37,20 @@ let defs
       let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
       Definitions.Of_Stdlib.definitions stdlib_core |> Types_pass.patch stdlib_core_types)
   in
-  Definitions.definitions prg stdlib_defs
-  |> (if with_types
-     then Types_pass.patch (Types_pass.resolve ~raise ~options ~stdlib_decls prg)
-     else Fn.id)
-  |> References.patch (References.declarations (stdlib_core @ prg))
-  |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
+  let bindings, typed =
+    if with_types
+    then (
+      let Types_pass.Typing_env.{ type_env; bindings; decls } =
+        Types_pass.resolve ~raise ~options ~stdlib_decls prg
+      in
+      bindings, Some (type_env, decls))
+    else Types_pass.empty, None
+  in
+  ( Definitions.definitions prg stdlib_defs
+    |> (if with_types then Types_pass.patch bindings else Fn.id)
+    |> References.patch (References.declarations (stdlib_core @ prg))
+    |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
+  , typed )
 
 
 let scopes
@@ -64,12 +73,15 @@ let scopes
   |> fix_shadowing_in_scopes
 
 
-let defs_and_scopes
+let defs_and_typed_program_and_scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> with_types:bool -> def list * scopes
+    -> prg:Ast_core.module_ -> with_types:bool
+    -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes
   =
  fun ~raise ~options ~stdlib ~prg ~with_types ->
-  let definitions = defs ~raise ~options ~stdlib ~prg ~with_types in
+  let definitions, typed =
+    defs_and_typed_program ~raise ~options ~stdlib ~prg ~with_types
+  in
   let scopes = scopes ~options ~stdlib ~prg ~definitions in
-  definitions, scopes
+  definitions, typed, scopes

@@ -37,6 +37,20 @@ val return_with_custom_formatter
   -> (unit -> (string * string, string * string) result)
   -> unit
 
+val return_result_lwt
+  :  cli_analytics:Analytics.analytics_inputs
+  -> skip_analytics:bool
+  -> return:return ref
+  -> ?show_warnings:bool
+  -> ?output_file:string
+  -> display_format:Simple_utils.Display.ex_display_format
+  -> no_colour:bool
+  -> warning_as_error:bool
+  -> 'value Simple_utils.Display.format
+     * (raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
+        -> ('value * Analytics.analytics_inputs) Lwt.t)
+  -> unit
+
 val return_result
   :  cli_analytics:Analytics.analytics_inputs
   -> skip_analytics:bool

@@ -1193,8 +1193,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "warning_layout.mligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     (Left 42)
   |}]
 
@@ -2795,7 +2794,8 @@ let%expect_test _ =
     ; "Approve { spender = (\"tz1fakefakefakefakefakefakefakcphLA5\" : address) ; value \
        = 3n }"
     ];
-  [%expect {| (Right (Right (Right (Left (Pair "tz1fakefakefakefakefakefakefakcphLA5" 3))))) |}]
+  [%expect
+    {| (Right (Right (Right (Left (Pair "tz1fakefakefakefakefakefakefakcphLA5" 3))))) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "pokeGame.jsligo" ];

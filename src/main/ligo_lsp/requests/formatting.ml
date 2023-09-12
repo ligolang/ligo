@@ -21,7 +21,7 @@ let try_get_pp_config : Path.t -> PP_config.t option Handler.t =
     return None
 
 
-let get_pp_mode : Path.t -> FormattingOptions.t -> Ligo_interface.pp_mode Handler.t =
+let get_pp_mode : Path.t -> FormattingOptions.t -> Pretty.pp_mode Handler.t =
  fun file { tabSize = optsTabSize; _ } ->
   let@ pp_config_opt = try_get_pp_config file in
   let indent =
@@ -40,7 +40,7 @@ let get_pp_mode : Path.t -> FormattingOptions.t -> Ligo_interface.pp_mode Handle
            ~default:Helpers_pretty.default_line_width_for_formatted_file
            lsp_config_width
   in
-  return Ligo_interface.{ indent; width }
+  return Pretty.{ indent; width }
 
 
 (* FIXME #1765: add support for configuration file, remove code duplication with range formatting *)
@@ -52,7 +52,7 @@ let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option 
     @@ Format.asprintf
          "Formatting request on %s, mode: %a"
          (Path.to_string file)
-         Ligo_interface.pp_pp_mode
+         Pretty.pp_pp_mode
          pp_mode
   in
   if Helpers_file.is_packaged file
@@ -67,5 +67,5 @@ let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option 
     in
     with_cst ~strict:true ~on_error file None
     @@ fun cst ->
-    let result = Ligo_interface.pretty_print_cst pp_mode ~dialect_cst:cst in
+    let result = Pretty.pretty_print_cst pp_mode ~dialect_cst:cst in
     return @@ Some [ TextEdit.create ~newText:result ~range:Range.whole_file ])

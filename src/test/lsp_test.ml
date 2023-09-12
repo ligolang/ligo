@@ -15,4 +15,5 @@ let _main =
     ; Prepare_rename.tests
     ; Range_formatting.tests
     ; References.tests
+    ; On_doc.tests
     ]

@@ -1,16 +1,14 @@
 open Handler
 open Lsp_helpers
 
-let hovers_pp_mode : Ligo_interface.pp_mode =
+let hovers_pp_mode : Pretty.pp_mode =
   { width = Helpers_pretty.default_line_width_for_hovers; indent = 2 }
 
 
 let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
  fun syntax ->
   let print_type_with_prefix ?prefix t =
-    match
-      Ligo_interface.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t
-    with
+    match Pretty.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t with
     | `Ok str -> return str
     | `Nonpretty (err, nonpretty_type) ->
       let@ () =

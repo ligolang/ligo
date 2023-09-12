@@ -41,13 +41,15 @@ let storage st interval execute =
 
 
 let early_call ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
   let now = mk_time ~raise "2000-01-01T00:10:10Z" in
   let lock_time = mk_time ~raise "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time 86400 empty_message in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ~now ())
-  in
+  let%map options = Proto_alpha_utils.Memory_proto_alpha.make_options ~env ~now () in
   let exp_failwith = "You have to wait before you can execute this contract again." in
   expect_string_failwith_twice
     ~raise
@@ -65,10 +67,12 @@ let fake_decompiled_empty_message =
 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise () in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let%map options = Proto_alpha_utils.Memory_proto_alpha.make_options ~env () in
   let now = options.now in
   let lock_time =
     Memory_proto_alpha.Protocol.(

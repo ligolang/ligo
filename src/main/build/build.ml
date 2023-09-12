@@ -405,9 +405,10 @@ type expression_michelson =
 
 let build_expression ~raise
     :  options:Compiler_options.t -> Syntax_types.t -> string
-    -> Source_input.file_name option -> expression_michelson
+    -> Source_input.file_name option -> expression_michelson Lwt.t
   =
  fun ~options syntax expression file_name_opt ->
+  let open Lwt.Let_syntax in
   let init_prg =
     let f : Source_input.file_name -> Ast_typed.program =
      fun filename -> qualified_typed ~raise ~options (Source_input.From_file filename)
@@ -434,7 +435,7 @@ let build_expression ~raise
   in
   let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c_exp = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
-  let stacking_exp =
+  let%map stacking_exp =
     if options.backend.function_body
     then Ligo_compile.Of_mini_c.compile_expression_function ~raise ~options mini_c_exp
     else Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
@@ -498,22 +499,27 @@ let rec build_contract_aggregated ~raise
 
 
 and build_contract_stacking ~raise
-    : options:Compiler_options.t -> string -> Source_input.code_input -> _
+    :  options:Compiler_options.t -> string -> Source_input.code_input
+    -> ((Stacking.compiled_expression * _)
+       * ((Value_var.t * Stacking.compiled_expression) list * _))
+       Lwt.t
   =
  fun ~options module_ source ->
+  let open Lwt.Let_syntax in
   let _, aggregated, agg_views =
     build_contract_aggregated ~raise ~options module_ source
   in
   let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
-  let contract = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
-  let views = build_views ~raise ~options agg_views in
+  let%bind contract = Ligo_compile.Of_mini_c.compile_contract ~raise ~options mini_c in
+  let%map views = build_views ~raise ~options agg_views in
   (contract, aggregated), (views, agg_views)
 
 
 (* building a contract in michelson *)
 and build_contract ~raise ~options module_ source =
-  let (contract, _), (views, _) =
+  let open Lwt.Let_syntax in
+  let%map (contract, _), (views, _) =
     build_contract_stacking ~raise ~options module_ source
   in
   let entrypoint = { name = Magic_vars.generated_main; value = contract } in
@@ -523,7 +529,8 @@ and build_contract ~raise ~options module_ source =
 
 (* Meta ligo needs contract and views as aggregated programs *)
 and build_contract_meta_ligo ~raise ~options file_name =
-  let (_, contract), (_, views) =
+  let open Lwt.Let_syntax in
+  let%map (_, contract), (_, views) =
     build_contract_stacking ~raise ~options "" (Source_input.From_file file_name)
   in
   contract, views
@@ -558,11 +565,12 @@ and build_aggregated_views ~raise
 
 and build_views ~raise
     :  options:Compiler_options.t -> (Value_var.t list * Ast_aggregated.expression) option
-    -> (Value_var.t * Stacking.compiled_expression) list
+    -> (Value_var.t * Stacking.compiled_expression) list Lwt.t
   =
  fun ~options lst_opt ->
+  let open Lwt.Let_syntax in
   match lst_opt with
-  | None -> []
+  | None -> Lwt.return []
   | Some (view_names, aggregated) ->
     let expanded = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
     let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
@@ -590,9 +598,10 @@ and build_views ~raise
     in
     let views = List.mapi ~f:aux view_names in
     let aux (vn, mini_c) =
-      vn, Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c
+      let%map view = Ligo_compile.Of_mini_c.compile_view ~raise ~options mini_c in
+      vn, view
     in
-    let michelsons = List.map ~f:aux views in
+    let%map michelsons = Lwt_list.map_p aux views in
     let () =
       Ligo_compile.Of_michelson.check_view_restrictions
         ~raise

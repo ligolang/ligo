@@ -159,10 +159,13 @@ let try_eval ~raise ~raw_options state s =
     Ligo_compile.Of_aggregated.compile_expression ~raise aggregated_exp
   in
   let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
-  let compiled_exp = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
+  let compiled_exp =
+    Lwt_main.run @@ Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c
+  in
   let options = state.dry_run_opts in
   let runres =
-    Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty
+    Lwt_main.run
+    @@ Run.run_expression ~raise ~options compiled_exp.expr compiled_exp.expr_ty
   in
   let x =
     Decompile.Of_michelson.decompile_expression
@@ -455,7 +458,12 @@ let main
     let history = LTerm_history.create [] in
     let options = Compiler_options.make ~raw_options ~syntax () in
     let state =
-      make_initial_state syntax protocol dry_run_opts raw_options.project_root options
+      make_initial_state
+        syntax
+        protocol
+        (Lwt_main.run dry_run_opts)
+        raw_options.project_root
+        options
     in
     let state =
       match init_file with

@@ -89,6 +89,16 @@ let test_cases =
     ; file_path = "contracts/lsp/warnings.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
+          ; message =
+              "\n\
+               Warning: unused variable \"x\".\n\
+               Hint: replace it by \"_x\" to prevent this warning.\n"
+          ; location =
+              { range = interval 2 10 11
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Warning
           ; message = "Toplevel let declaration is silently changed to const declaration."
           ; location =
               { range = interval 0 7 17
@@ -205,6 +215,16 @@ let test_cases =
     ; file_path = "contracts/lsp/import_warnings.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Warning
+          ; message =
+              "\n\
+               Warning: unused variable \"x\".\n\
+               Hint: replace it by \"_x\" to prevent this warning.\n"
+          ; location =
+              { range = interval 2 10 11
+              ; path = Path.from_relative "contracts/lsp/warnings.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Warning
           ; message = "Toplevel let declaration is silently changed to const declaration."
           ; location =
               { range = interval 0 7 17
@@ -214,7 +234,40 @@ let test_cases =
         ]
     ; max_number_of_problems = None
     }
+  ; { test_name = "Shows TZIP-16 checks with a top-level storage."
+    ; file_path = "contracts/lsp/test_metadata.mligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Warning
+          ; message =
+              "Warning: If the following metadata is meant to be TZIP-16 compliant,\n\
+               then it should be a 'big_map' from 'string' to 'bytes'.\n\
+               Hint: The corresponding type should be :\n\
+              \  (string, bytes) big_map\n\
+               You can disable this warning with the '--no-metadata-check' flag.\n"
+          ; location =
+              { range = interval 2 15 19
+              ; path = Path.from_relative "contracts/lsp/test_metadata.mligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Warning
+          ; message = "Cannot parse big-map metadata."
+          ; location =
+              { range = interval 4 4 11
+              ; path = Path.from_relative "contracts/lsp/test_metadata.mligo"
+              }
+          }
+        ]
+    ; max_number_of_problems = None
+    }
   ]
+
+
+let send_virtual_change : Range.t -> string -> Path.t -> string -> unit Requests.Handler.t
+  =
+ fun range text file contents ->
+  let change = TextDocumentContentChangeEvent.create ~range ~text () in
+  let changes = [ change ] in
+  Requests.on_doc ~changes file contents
 
 
 let tests = "diagnostics", List.map ~f:get_diagnostics_test test_cases

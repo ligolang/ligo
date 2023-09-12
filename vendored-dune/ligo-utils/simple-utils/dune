@@ -8,12 +8,13 @@
   simple-utils.http_uri
   ;; Third party
   core
+  lwt
   yojson
   result
   unix
   zarith
   str)
  (preprocess
-  (pps ppx_deriving.eq ppx_deriving.iter ppx_deriving.map ppx_deriving.fold ppx_compare ppx_deriving_yojson ppx_hash ppx_sexp_conv))
+  (pps ppx_deriving.eq ppx_deriving.iter ppx_deriving.map ppx_deriving.fold ppx_compare ppx_deriving_yojson ppx_hash ppx_sexp_conv lwt_ppx ppx_let))
  (flags
   (:standard -open Core)))

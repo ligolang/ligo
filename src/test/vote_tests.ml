@@ -28,8 +28,11 @@ let yea =
 
 
 let init_vote ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = get_program ~raise () in
-  let result =
+  let%map result =
     Test_helpers.run_typed_program_with_imperative_input
       ~raise
       program

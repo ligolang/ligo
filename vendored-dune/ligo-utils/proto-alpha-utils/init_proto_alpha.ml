@@ -230,22 +230,28 @@ let init_environment ?(n = 2) () =
 
 let dummy_environment_ : environment option ref = ref None
 
-let dummy_environment () : environment =
+let dummy_environment () : environment Lwt.t =
   match ! dummy_environment_ with
   | None ->
-     let dummy_environment = (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
-                                init_environment ()) in
+     let open Lwt.Let_syntax in
+     let%bind dummy_environment =
+       Lwt.map (force_ok ~msg:"Init_proto_alpha : initing dummy environment")
+       @@ init_environment ()
+     in
      dummy_environment_ := Some dummy_environment ;
-     dummy_environment
-  | Some dummy_environment -> dummy_environment
+     Lwt.return dummy_environment
+  | Some dummy_environment -> Lwt.return dummy_environment
 
 let test_environment_ : environment option ref = ref None
 
-let test_environment () =
+let test_environment () : environment Lwt.t =
   match ! test_environment_ with
   | None ->
-     let test_environment = (X_error_monad.force_lwt ~msg:"Init_proto_alpha : initing dummy environment" @@
-                               init_environment ~n:6 ()) in
+     let open Lwt.Let_syntax in
+     let%bind test_environment =
+       Lwt.map (force_ok ~msg:"Init_proto_alpha : initing dummy environment")
+       @@ init_environment ~n:6 ()
+     in
      test_environment_ := Some test_environment ;
-     test_environment
-  | Some test_environment -> test_environment
+     Lwt.return test_environment
+  | Some test_environment -> Lwt.return test_environment

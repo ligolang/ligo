@@ -1,0 +1,19 @@
+type storage = {
+  data: int;
+  metadata: big_map<string, bytes>;
+};
+
+const storage: storage = {
+  data: 42;
+  metadata: Big_map.literal(
+    list(
+      [
+        [
+          ``,
+          bytes
+            `sha256://0xff7c7fde391bc46a28cd98a77733fbe5927190dbe5493fe81244ee29dc624577/https:%2F%2Fipfs.io%2Fipfs%2FQmSBc8QuynU7bArUGtjwCRhZUbJyZQArrczKnqM7hZPtfV`
+        ]
+      ]
+    )
+  )
+};

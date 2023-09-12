@@ -44,6 +44,9 @@ let chain_id_zero =
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params ~raise counter msg keys is_validl f =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = get_program ~raise f () in
   let aux acc (key, is_valid) =
     let _, _pk, sk = key in
@@ -58,10 +61,12 @@ let params ~raise counter msg keys is_validl f =
            ; chain_id_zero
            ])
     in
-    let signature = sign_message ~raise program payload sk in
+    let%map signature = sign_message ~raise program payload sk in
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
   in
-  let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
+  let%map signed_msgs =
+    Lwt_list.fold_left_s aux [] (List.rev @@ List.zip_exn keys is_validl)
+  in
   e_applied_constructor
     ~loc
     { constructor = Label.of_string "CheckMessage"

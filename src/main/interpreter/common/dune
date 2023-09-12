@@ -4,7 +4,7 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_here))
+  (pps ppx_here ppx_let lwt_ppx))
  (libraries
   ast_aggregated
   ligo_interpreter

@@ -2150,11 +2150,12 @@ and try_eval ~raise ~steps ~options expr env state r =
 
 
 let eval_expression ~raise ~steps ~options
-    : Ast_typed.program -> Ast_typed.expression -> bool * value
+    : Ast_typed.program -> Ast_typed.expression -> (bool * value) Lwt.t
   =
  fun prg expr ->
+  let open Lwt.Let_syntax in
   (* Compile new context *)
-  let initial_state = Execution_monad.make_state ~raise ~options in
+  let%bind initial_state = Execution_monad.make_state ~raise ~options in
   let prg =
     trace ~raise Main_errors.self_ast_typed_tracer @@ Self_ast_typed.all_program prg
   in
@@ -2170,12 +2171,15 @@ let eval_expression ~raise ~steps ~options
     trace ~raise Main_errors.self_ast_aggregated_tracer
     @@ Self_ast_aggregated.all_expression ~options:options.middle_end expr
   in
-  let value, st = try_eval ~raise ~steps ~options expr Env.empty_env initial_state None in
+  let%map value, st =
+    try_eval ~raise ~steps ~options expr Env.empty_env initial_state None
+  in
   st.print_values, value
 
 
-let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env =
+let eval_test ~raise ~steps ~options : Ast_typed.program -> (bool * toplevel_env) Lwt.t =
  fun prg ->
+  let open Lwt.Let_syntax in
   let decl_lst = prg.pr_module in
   let lst =
     (* Pass over declarations, for each "test"-prefixed one, add a new
@@ -2207,7 +2211,9 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> bool * toplevel_env 
   in
   let map = List.fold_right lst ~f ~init:Record.empty in
   let expr = Ast_typed.e_a_record ~loc:Location.dummy map in
-  match eval_expression ~raise ~steps ~options { prg with pr_module = decl_lst } expr with
+  match%map
+    eval_expression ~raise ~steps ~options { prg with pr_module = decl_lst } expr
+  with
   | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in

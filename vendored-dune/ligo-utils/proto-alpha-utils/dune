@@ -6,4 +6,6 @@
   tezos-memory-proto-alpha
   data-encoding
   simple-utils
-  tezos-utils))
+  tezos-utils)
+ (preprocess
+  (pps ppx_let)))

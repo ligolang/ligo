@@ -34,10 +34,10 @@ type all =
   | `Metadata_not_valid_URI of Location.t * string
   | `Metadata_slash_not_valid_URI of Location.t * string
   | `Metadata_invalid_JSON of Location.t * string
-  | `Metadata_error_JSON_object of string
-  | `Metadata_hash_fails of string * string
-  | `Metadata_json_download of string
-  | `Metadata_error_download of string
+  | `Metadata_error_JSON_object of Location.t * string
+  | `Metadata_hash_fails of Location.t * string * string
+  | `Metadata_json_download of Location.t * string
+  | `Metadata_error_download of Location.t * string
   ]
 
 let warn_bad_self_type t1 t2 loc = `Self_ast_aggregated_warning_bad_self_type (t1, t2, loc)
@@ -247,24 +247,38 @@ let pp
         snippet_pp
         loc
         e
-    | `Metadata_error_JSON_object e ->
-      Format.fprintf f "@[<hv>Warning: Error in JSON in storage's metadata: %s. @]" e
-    | `Metadata_hash_fails (computed, given) ->
+    | `Metadata_error_JSON_object (loc, e) ->
       Format.fprintf
         f
-        "@[<hv>Warning: Hash mismatch in metadata's JSON document: got %s, when given \
-         %s. @]"
+        "@[<hv>%a@.Warning: Error in JSON in storage's metadata: %s. @]"
+        snippet_pp
+        loc
+        e
+    | `Metadata_hash_fails (loc, computed, given) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Hash mismatch in metadata's JSON document: got %s, when \
+         given %s. @]"
+        snippet_pp
+        loc
         computed
         given
-    | `Metadata_json_download s ->
+    | `Metadata_json_download (loc, s) ->
       Format.fprintf
         f
-        "@[<hv>Warning: Metadata in storage points to %s document.@ Hint: If you want to \
-         allow download and check it, pass `--allow-json-download`. To prevent this \
-         message from appearing, pass `--disallow-json-download`.@.@]"
+        "@[<hv>%a@.Warning: Metadata in storage points to %s document.@ Hint: If you \
+         want to allow download and check it, pass `--allow-json-download`. To prevent \
+         this message from appearing, pass `--disallow-json-download`.@.@]"
+        snippet_pp
+        loc
         s
-    | `Metadata_error_download s ->
-      Format.fprintf f "@[<hv>Warning: Could not download JSON in URL: %s.@.@]" s)
+    | `Metadata_error_download (loc, s) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Warning: Could not download JSON in URL: %s.@.@]"
+        snippet_pp
+        loc
+        s)
 
 
 let to_warning : all -> Simple_utils.Warning.t =
@@ -460,20 +474,20 @@ let to_warning : all -> Simple_utils.Warning.t =
     let message = Format.sprintf "Could not parse JSON in storage's metadata: \"%s\"" e in
     let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
-  | `Metadata_error_JSON_object e ->
+  | `Metadata_error_JSON_object (location, e) ->
     let message = Format.sprintf "Error in JSON in storage's metadata: %s" e in
-    let content = make_content ~message ~location:Location.generated () in
+    let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
-  | `Metadata_hash_fails (computed, given) ->
+  | `Metadata_hash_fails (location, computed, given) ->
     let message =
       Format.sprintf
         "Hash mismatch in metadata's JSON document: got %s, when given %s."
         computed
         given
     in
-    let content = make_content ~message ~location:Location.generated () in
+    let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
-  | `Metadata_json_download s ->
+  | `Metadata_json_download (location, s) ->
     let message =
       Format.sprintf
         "Metadata in storage points to %s document. If you want to allow download and \
@@ -481,11 +495,11 @@ let to_warning : all -> Simple_utils.Warning.t =
          pass `--disallow-json-download`."
         s
     in
-    let content = make_content ~message ~location:Location.generated () in
+    let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
-  | `Metadata_error_download s ->
+  | `Metadata_error_download (location, s) ->
     let message = Format.sprintf "Warning: Could not download JSON in URL: %s" s in
-    let content = make_content ~message ~location:Location.generated () in
+    let content = make_content ~message ~location () in
     make ~stage:"metadata_check" ~content
 
 

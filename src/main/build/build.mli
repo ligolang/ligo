@@ -80,8 +80,9 @@ val build_contract_meta_ligo
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
   -> string
-  -> Ast_aggregated.expression
-     * (Ligo_prim.Value_var.t list * Ast_aggregated.expression) option
+  -> (Ast_aggregated.Types.expression
+     * (Ligo_prim.Value_var.t list * Ast_aggregated.expression) option)
+     Lwt.t
 
 val parse_module_path
   :  loc:Stdlib.Location.t
@@ -94,7 +95,7 @@ val build_expression
   -> Syntax_types.t
   -> string
   -> string option
-  -> expression_michelson
+  -> expression_michelson Lwt.t
 
 val dependency_graph
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
@@ -109,7 +110,7 @@ val build_contract
   -> options:Compiler_options.t
   -> string
   -> Source_input.code_input
-  -> contract_michelson
+  -> contract_michelson Lwt.t
 
 val qualified_core
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise

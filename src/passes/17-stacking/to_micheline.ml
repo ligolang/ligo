@@ -21,13 +21,14 @@ let nat_to_mich : Datatypes.nat -> (meta, string) node =
 
 let smaller m1 m2 =
   let open Self_michelson in
+  let open Lwt.Let_syntax in
   let measure mich =
-    Bytes.length (Proto_alpha_utils.Memory_proto_alpha.to_bytes mich) in
+    Lwt.map Bytes.length (Proto_alpha_utils.Memory_proto_alpha.to_bytes mich)
+  in
   let optimize = optimize ~has_comment:(fun _ -> false) Environment.Protocols.current in
-  if measure (optimize (Seq (null, m1)))
-     <= measure (optimize (Seq (null, m2)))
-  then m1
-  else m2
+  let%bind loc1 = measure (optimize (Seq (null, m1))) in
+  let%bind loc2 = measure (optimize (Seq (null, m2))) in
+  Lwt.return (if loc1 <= loc2 then m1 else m2)
 
 (* Should port these to Coq and prove them... and/or just eliminate
    FUNC in the Coq compiler *)
@@ -56,7 +57,7 @@ let compile_dups2 (s : bool list) : _ node list =
                    @ aux (i - 1) n s in
   aux (List.length s - 1) (List.length s) (List.rev s)
 
-let compile_dups (s : bool list) : _ node list =
+let compile_dups (s : bool list) : _ node list Lwt.t =
   smaller (compile_dups1 s) (compile_dups2 s)
 
 let literal_type_prim (l : Literal_value.t) : string =
@@ -205,7 +206,8 @@ let pair_tuple = function
   | az -> [Prim (null, "PAIR", [int_to_mich (List.length az)], [])]
 
 let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node) Compiler.instr) :
-  (meta, string) node list =
+  (meta, string) node list Lwt.t =
+  let open Lwt.Let_syntax in
   match instr with
   (* TODO... *)
   | I_FUNC (l, cs, a, b, proj1, proj2, body) ->
@@ -213,21 +215,24 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
     let n = List.length cs in
     if n = 0
     then (
+      let%map prog = translate_prog body in
       [Prim (l, "LAMBDA", [translate_type a;
                       translate_type b;
-                      Seq (null, translate_prog body)], [])])
+                      Seq (null, prog)], [])])
     else
       let capture = translate_tuple cs in
+      let%bind prog = translate_prog body in
+      let%map dups = compile_dups (false :: proj1) in
       [Prim (l, "LAMBDA", [Prim (null, "pair", [capture; translate_type a], []);
                       translate_type b;
                       Seq (null, [Prim (null, "UNPAIR", [], [])]
                                  @ unpair_tuple cs
                                  @ [Prim (null, "DIG", [int_to_mich n], [])]
-                                 @ translate_prog body
+                                 @ prog
                                  @ (if weight proj2 = 0
                                     then []
                                     else [Prim (null, "DIP", [Seq (null, [Prim (null, "DROP", [int_to_mich (weight proj2)], [])])], [])]))], [])]
-      @ compile_dups (false :: proj1)
+      @ dups
       @ pair_tuple cs
       @ [Prim (null, "APPLY", [], [])]
   | I_REC_FUNC (l, cs, a, b, proj1, proj2, body) ->
@@ -235,11 +240,14 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
     let n = List.length cs in
     if n = 0
     then (
+      let%map prog = translate_prog body in
       [Prim (l, "LAMBDA_REC", [translate_type a;
                       translate_type b;
-                      Seq (null, translate_prog body)], [])])
+                      Seq (null, prog)], [])])
     else
       let capture = translate_tuple cs in
+      let%bind prog = translate_prog body in
+      let%map dups = compile_dups (false :: proj1) in
       [Prim (l, "LAMBDA_REC", [Prim (null, "pair", [capture; translate_type a], []);
                       translate_type b;
                       Seq (null, [Prim (null, "UNPAIR", [], [])]
@@ -249,16 +257,17 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
                                  @ [Prim (null, "DIG", [int_to_mich (n + 1)], [])]
                                  @ [Prim (null, "APPLY", [], [])]
                                  @ [Prim (null, "DIG", [int_to_mich (n + 1)], [])]
-                                 @ translate_prog body
+                                 @ prog
                                  @ (if weight proj2 = 0
                                     then []
                                     else [Prim (null, "DIP", [Seq (null, [Prim (null, "DROP", [int_to_mich (weight proj2)], [])])], [])]))], [])]
-      @ compile_dups (false :: proj1)
+      @ dups
       @ pair_tuple cs
       @ [Prim (null, "APPLY", [], [])]
   (* FICTION *)
   | I_FOR (_, body) ->
     (* hmmm *)
+    let%map prog = translate_prog body in
     [Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
      Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
      Prim (null, "COMPARE", [], []);
@@ -266,7 +275,7 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
      Prim (null, "LOOP",
            [Seq (null, [Prim (null, "DUP", [], []);
                         Prim (null, "DUG", [Int (null, Z.of_int 3)], []);
-                        Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, translate_prog body)], []);
+                        Prim (null, "DIP", [Int (null, Z.of_int 3); Seq (null, prog)], []);
                         Prim (null, "DUP", [Int (null, Z.of_int 3)], []);
                         Prim (null, "ADD", [], []);
                         Prim (null, "DUP", [Int (null, Z.of_int 2)], []);
@@ -276,47 +285,75 @@ let rec translate_instr (instr : (meta, (meta, string) node, (meta, string) node
            []);
      Prim (null, "DROP", [Int (null, Z.of_int 3)], [])]
   | I_LAMBDA (l, a, b, body) ->
+    let%map prog = translate_prog body in
     [Prim (l, "LAMBDA", [translate_type a;
                          translate_type b;
-                         Seq (null, translate_prog body)], [])]
-  | I_APPLY_LAMBDA (l, _ty) -> [Prim (l, "APPLY", [], [])]
-  | I_RAW (_l, _n, raw) -> raw
+                         Seq (null, prog)], [])]
+  | I_APPLY_LAMBDA (l, _ty) -> Lwt.return [Prim (l, "APPLY", [], [])]
+  | I_RAW (_l, _n, raw) -> Lwt.return raw
 
-  | I_SEQ (l, p) -> [Seq (l, translate_prog p)]
-  | I_DIP (l, p) -> [Prim (l, "DIP", [Seq (null, translate_prog p)], [])]
-  | I_DIG (l, n) -> [Prim (l, "DIG", [nat_to_mich n], [])]
-  | I_DUG (l, n) -> [Prim (l, "DUG", [nat_to_mich n], [])]
-  | I_DUP (l, n) -> [Prim (l, "DUP", [nat_to_mich n], [])]
-  | I_DROP (l, n) -> [Prim (l, "DROP", [nat_to_mich n], [])]
-  | I_SWAP l -> [Prim (l, "SWAP", [], [])]
-  | I_UNIT l -> [Prim (l, "UNIT", [], [])]
-  | I_TRUE l -> [Prim (l, "PUSH", [Prim (null, "bool", [], []); Prim (null, "True", [], [])], [])]
-  | I_LEFT (l, a) -> [Prim (l, "LEFT", [translate_type a], [])]
-  | I_RIGHT (l, b) -> [Prim (l, "RIGHT", [translate_type b], [])]
-  | I_IF_LEFT (l, bt, bf) -> [Prim (l, "IF_LEFT", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]
-  | I_PAIR (l, n) -> [Prim (l, "PAIR", [nat_to_mich n], [])]
-  | I_UNPAIR (l, n) -> [Prim (l, "UNPAIR", [nat_to_mich n], [])]
-  | I_GET (l, n) -> [Prim (l, "GET", [nat_to_mich n], [])]
-  | I_UPDATE (l, n) -> [Prim (l, "UPDATE", [nat_to_mich n], [])]
-  | I_CAR l -> [Prim (l, "CAR", [], [])]
-  | I_CDR l -> [Prim (l, "CDR", [], [])]
-  | I_IF (l, bt, bf) -> [Prim (l, "IF", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]
-  | I_IF_NONE (l, bt, bf) -> [Prim (l, "IF_NONE", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]
-  | I_NIL (l, a) -> [Prim (l, "NIL", [translate_type a], [])]
-  | I_CONS l -> [Prim (l, "CONS", [], [])]
-  | I_IF_CONS (l, bt, bf) -> [Prim (l, "IF_CONS", [Seq (null, translate_prog bt); Seq (null, translate_prog bf)], [])]
-  | I_EXEC l -> [Prim (l, "EXEC", [], [])]
-  | I_LOOP (l, body) -> [Prim (l, "LOOP", [Seq (null, translate_prog body)], [])]
-  | I_LOOP_LEFT (l, body) -> [Prim (l, "LOOP_LEFT", [Seq (null, translate_prog body)], [])]
+  | I_SEQ (l, p) ->
+    let%map prog = translate_prog p in
+    [Seq (l, prog)]
+  | I_DIP (l, p) ->
+    let%map prog = translate_prog p in
+    [Prim (l, "DIP", [Seq (null, prog)], [])]
+  | I_DIG (l, n) -> Lwt.return [Prim (l, "DIG", [nat_to_mich n], [])]
+  | I_DUG (l, n) -> Lwt.return [Prim (l, "DUG", [nat_to_mich n], [])]
+  | I_DUP (l, n) -> Lwt.return [Prim (l, "DUP", [nat_to_mich n], [])]
+  | I_DROP (l, n) -> Lwt.return [Prim (l, "DROP", [nat_to_mich n], [])]
+  | I_SWAP l -> Lwt.return [Prim (l, "SWAP", [], [])]
+  | I_UNIT l -> Lwt.return [Prim (l, "UNIT", [], [])]
+  | I_TRUE l -> Lwt.return [Prim (l, "PUSH", [Prim (null, "bool", [], []); Prim (null, "True", [], [])], [])]
+  | I_LEFT (l, a) -> Lwt.return [Prim (l, "LEFT", [translate_type a], [])]
+  | I_RIGHT (l, b) -> Lwt.return [Prim (l, "RIGHT", [translate_type b], [])]
+  | I_IF_LEFT (l, bt, bf) ->
+    let%bind bt = translate_prog bt in
+    let%map bf = translate_prog bf in
+    [Prim (l, "IF_LEFT", [Seq (null, bt); Seq (null, bf)], [])]
+  | I_PAIR (l, n) -> Lwt.return [Prim (l, "PAIR", [nat_to_mich n], [])]
+  | I_UNPAIR (l, n) -> Lwt.return [Prim (l, "UNPAIR", [nat_to_mich n], [])]
+  | I_GET (l, n) -> Lwt.return [Prim (l, "GET", [nat_to_mich n], [])]
+  | I_UPDATE (l, n) -> Lwt.return [Prim (l, "UPDATE", [nat_to_mich n], [])]
+  | I_CAR l -> Lwt.return [Prim (l, "CAR", [], [])]
+  | I_CDR l -> Lwt.return [Prim (l, "CDR", [], [])]
+  | I_IF (l, bt, bf) ->
+    let%bind bt = translate_prog bt in
+    let%map bf = translate_prog bf in
+    [Prim (l, "IF", [Seq (null, bt); Seq (null, bf)], [])]
+  | I_IF_NONE (l, bt, bf) ->
+    let%bind bt = translate_prog bt in
+    let%map bf = translate_prog bf in
+    [Prim (l, "IF_NONE", [Seq (null, bt); Seq (null, bf)], [])]
+  | I_NIL (l, a) -> Lwt.return [Prim (l, "NIL", [translate_type a], [])]
+  | I_CONS l -> Lwt.return [Prim (l, "CONS", [], [])]
+  | I_IF_CONS (l, bt, bf) ->
+    let%bind bt = translate_prog bt in
+    let%map bf = translate_prog bf in
+    [Prim (l, "IF_CONS", [Seq (null, bt); Seq (null, bf)], [])]
+  | I_EXEC l -> Lwt.return [Prim (l, "EXEC", [], [])]
+  | I_LOOP (l, body) ->
+    let%map prog = translate_prog body in
+    [Prim (l, "LOOP", [Seq (null, prog)], [])]
+  | I_LOOP_LEFT (l, body) ->
+    let%map prog = translate_prog body in
+    [Prim (l, "LOOP_LEFT", [Seq (null, prog)], [])]
   (* | I_PUSH (l, a, x) -> failwith "TODO" *)
-  | I_FAILWITH l -> [Prim (l, "FAILWITH", [], [])]
-  | I_ITER (l, body) -> [Prim (l, "ITER", [Seq (null, translate_prog body)], [])]
-  | I_MAP (l, body) -> [Prim (l, "MAP", [Seq (null, translate_prog body)], [])]
-  | I_CREATE_CONTRACT (l, p, s, script) -> [Prim (l, "CREATE_CONTRACT", [Seq (null, [Prim (null, "parameter", [translate_type p], []);
-                                                                                     Prim (null, "storage", [translate_type s], []);
-                                                                                     Prim (null, "code", [Seq (null, translate_prog script)], [])])], [])]
+  | I_FAILWITH l -> Lwt.return [Prim (l, "FAILWITH", [], [])]
+  | I_ITER (l, body) ->
+    let%map prog = translate_prog body in
+    [Prim (l, "ITER", [Seq (null, prog)], [])]
+  | I_MAP (l, body) ->
+    let%map prog = translate_prog body in
+    [Prim (l, "MAP", [Seq (null, prog)], [])]
+  | I_CREATE_CONTRACT (l, p, s, script) ->
+    let%map prog = translate_prog script in
+    [Prim (l, "CREATE_CONTRACT", [Seq (null, [Prim (null, "parameter", [translate_type p], []);
+                                              Prim (null, "storage", [translate_type s], []);
+                                              Prim (null, "code", [Seq (null, prog)], [])])], [])]
 
-and translate_prog = List.concat_map ~f:translate_instr
+and translate_prog prog =
+  Lwt.map List.concat @@ Lwt.all @@ List.map ~f:translate_instr prog
 
 (* strengthening of metadata (select the part of the env info which is
    still relevant after strengthening) *)

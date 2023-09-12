@@ -41,9 +41,9 @@ let decls_of_cst : Dialect_cst.t -> declaration Nseq.nseq =
     }
 
 
-let print_decl : Ligo_interface.pp_mode -> declaration -> string =
+let print_decl : Pretty.pp_mode -> declaration -> string =
  fun pp_mode ->
-  Ligo_interface.with_pp_mode
+  Pretty.with_pp_mode
     pp_mode
     { cameligo = uncurry CameLIGO_pretty.print_declaration
     ; jsligo = uncurry JsLIGO_pretty.print_statement
@@ -56,7 +56,7 @@ let print_decl : Ligo_interface.pp_mode -> declaration -> string =
 let strip_trailing_newline (s : string) : string = String.rstrip s
 
 let range_formatting
-    (pp_mode : Ligo_interface.pp_mode)
+    (pp_mode : Pretty.pp_mode)
     (decls : declaration Nseq.nseq)
     (range : Range.t)
     : TextEdit.t list option
@@ -89,7 +89,7 @@ let on_req_range_formatting
     @@ Format.asprintf
          "Formatting request on %s, mode: %a"
          (Path.to_string file)
-         Ligo_interface.pp_pp_mode
+         Pretty.pp_pp_mode
          pp_mode
   in
   if Helpers_file.is_packaged file

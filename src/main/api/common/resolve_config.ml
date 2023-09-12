@@ -51,9 +51,10 @@ type config =
 
 let build_expression ~raise
     :  options:Compiler_options.t -> Syntax_types.t -> string -> program
-    -> Stacking.compiled_expression * type_expression
+    -> (Stacking.compiled_expression * type_expression) Lwt.t
   =
  fun ~options syntax expression init_prg ->
+  let open Lwt.Let_syntax in
   let typed_exp =
     Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
   in
@@ -67,7 +68,7 @@ let build_expression ~raise
   in
   let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
   let mini_c_exp = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
-  let stacking_exp =
+  let%map stacking_exp =
     Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
   in
   stacking_exp, typed_exp.type_expression
@@ -103,7 +104,8 @@ let pp_type_expression ~raise ~syntax f type_expr =
   | _ -> Ast_typed.PP.type_expression f type_expr
 
 
-let resolve_config ~raise ~options syntax init_file =
+let resolve_config ~raise ~options syntax init_file : config Lwt.t =
+  let open Lwt.Let_syntax in
   let init_prg =
     let f : BuildSystem.Source_input.file_name -> Ast_typed.program =
      fun filename ->
@@ -114,26 +116,26 @@ let resolve_config ~raise ~options syntax init_file =
   in
   let get_field_opt field =
     try
-      Some
-        (let expression, typ =
-           build_expression ~raise ~options syntax ("config." ^ field) init_prg
-         in
-         let options =
-           Run.make_dry_run_options
-             ~raise
-             { now = None
-             ; amount = "0"
-             ; balance = "0"
-             ; sender = None
-             ; source = None
-             ; parameter_ty = None
-             }
-         in
-         ( Compile.no_comment
-           @@ Run.evaluate_expression ~raise ~options expression.expr expression.expr_ty
-         , typ ))
+      let%bind expression, typ =
+        build_expression ~raise ~options syntax ("config." ^ field) init_prg
+      in
+      let%bind options =
+        Run.make_dry_run_options
+          ~raise
+          { now = None
+          ; amount = "0"
+          ; balance = "0"
+          ; sender = None
+          ; source = None
+          ; parameter_ty = None
+          }
+      in
+      let%bind result =
+        Run.evaluate_expression ~raise ~options expression.expr expression.expr_ty
+      in
+      Lwt.return (Some (Compile.no_comment result, typ))
     with
-    | _ -> None
+    | _ -> Lwt.return None
   in
   let extract_string (field : string) : evaluated_michelson * type_expression -> string
     = function
@@ -150,64 +152,65 @@ let resolve_config ~raise ~options syntax init_file =
       @@ `Resolve_config_type_mismatch
            (field, "integral", typ, pp_type_expression ~raise ~syntax)
   in
-  let parameter = Option.map ~f:fst @@ get_field_opt "parameter" in
-  let storage = Option.map ~f:fst @@ get_field_opt "storage" in
-  let program = Option.map ~f:(extract_string "program") @@ get_field_opt "program" in
-  let module_name =
-    Option.map ~f:(extract_string "module_name") @@ get_field_opt "module_name"
-  in
-  let entrypoint =
-    Option.map ~f:(extract_string "entrypoint") @@ get_field_opt "entrypoint"
-  in
-  let log_dir = Option.map ~f:(extract_string "log_dir") @@ get_field_opt "log_dir" in
-  let contract_env =
-    let open Option.Let_syntax in
-    let%bind _ = get_field_opt "contract_env" in
-    let get_field_opt field = get_field_opt @@ "contract_env." ^ field in
-    let now = Option.map ~f:(extract_string "now") @@ get_field_opt "now" in
-    let level = Option.map ~f:(extract_int "level") @@ get_field_opt "level" in
-    let sender = Option.map ~f:(extract_string "sender") @@ get_field_opt "sender" in
-    let source = Option.map ~f:(extract_string "source") @@ get_field_opt "source" in
-    let self = Option.map ~f:(extract_string "self") @@ get_field_opt "self" in
-    let amount = Option.map ~f:(extract_int "amount") @@ get_field_opt "amount" in
-    let balance = Option.map ~f:(extract_int "balance") @@ get_field_opt "balance" in
-    let chain_id =
-      Option.map ~f:(extract_string "chain_id") @@ get_field_opt "chain_id"
-    in
-    let voting_powers =
-      let get_voting_power (elt_type : type_expression)
-          : evaluated_michelson -> string * z
-        = function
-        | Prim (_, _, [ String (_, addr); Int (_, power) ], _) -> addr, power
-        | _ ->
-          raise.error
-          @@ `Resolve_config_type_mismatch
-               ( "voting_powers.$elem"
-               , "(address, nat)"
-               , elt_type
-               , pp_type_expression ~raise ~syntax )
+  let get_field_opt ~f field = Lwt.map (Option.map ~f) @@ get_field_opt field in
+  let%bind parameter = get_field_opt ~f:fst "parameter" in
+  let%bind storage = get_field_opt ~f:fst "storage" in
+  let%bind program = get_field_opt ~f:(extract_string "program") "program" in
+  let%bind module_name = get_field_opt ~f:(extract_string "module_name") "module_name" in
+  let%bind entrypoint = get_field_opt ~f:(extract_string "entrypoint") "entrypoint" in
+  let%bind log_dir = get_field_opt ~f:(extract_string "log_dir") "log_dir" in
+  let%map contract_env =
+    match%bind get_field_opt ~f:Fn.id "contract_env" with
+    | None -> Lwt.return None
+    | Some _ ->
+      let get_field_opt field = get_field_opt ~f:Fn.id @@ "contract_env." ^ field in
+      let get_inner_field_result ~extractor field =
+        Lwt.map (Option.map ~f:(extractor field)) (get_field_opt field)
       in
-      match%bind get_field_opt "voting_powers" with
-      | Seq (_, lst), typ ->
-        let map_inner_type =
-          match typ.type_content with
-          | T_constant { parameters = [ parameter ]; _ } -> parameter
-          | T_constant { parameters = _ :: _ as parameters; _ } ->
-            make_t ~loc:Location.generated @@ T_record (Row.create_tuple parameters)
+      let%bind now = get_inner_field_result ~extractor:extract_string "now" in
+      let%bind level = get_inner_field_result ~extractor:extract_int "level" in
+      let%bind sender = get_inner_field_result ~extractor:extract_string "sender" in
+      let%bind source = get_inner_field_result ~extractor:extract_string "source" in
+      let%bind self = get_inner_field_result ~extractor:extract_string "self" in
+      let%bind amount = get_inner_field_result ~extractor:extract_int "amount" in
+      let%bind balance = get_inner_field_result ~extractor:extract_int "balance" in
+      let%bind chain_id = get_inner_field_result ~extractor:extract_string "chain_id" in
+      let%bind voting_powers =
+        let get_voting_power (elt_type : type_expression)
+            : evaluated_michelson -> string * z
+          = function
+          | Prim (_, _, [ String (_, addr); Int (_, power) ], _) -> addr, power
           | _ ->
             raise.error
-            @@ `Resolve_config_corner_case "expected map type in 'voting_powers'"
+            @@ `Resolve_config_type_mismatch
+                 ( "voting_powers.$elem"
+                 , "(address, nat)"
+                 , elt_type
+                 , pp_type_expression ~raise ~syntax )
         in
-        return @@ Simple (List.map ~f:(get_voting_power map_inner_type) lst)
-      | _, typ ->
-        raise.error
-        @@ `Resolve_config_type_mismatch
-             ( "voting_powers"
-             , "map (address, nat)"
-             , typ
-             , pp_type_expression ~raise ~syntax )
-    in
-    return { now; level; sender; source; self; amount; balance; chain_id; voting_powers }
+        match%map get_field_opt "voting_powers" with
+        | None -> None
+        | Some (Seq (_, lst), typ) ->
+          let map_inner_type =
+            match typ.type_content with
+            | T_constant { parameters = [ parameter ]; _ } -> parameter
+            | T_constant { parameters = _ :: _ as parameters; _ } ->
+              make_t ~loc:Location.generated @@ T_record (Row.create_tuple parameters)
+            | _ ->
+              raise.error
+              @@ `Resolve_config_corner_case "expected map type in 'voting_powers'"
+          in
+          Some (Simple (List.map ~f:(get_voting_power map_inner_type) lst))
+        | Some (_, typ) ->
+          raise.error
+          @@ `Resolve_config_type_mismatch
+               ( "voting_powers"
+               , "map (address, nat)"
+               , typ
+               , pp_type_expression ~raise ~syntax )
+      in
+      Lwt.return_some
+        { now; level; sender; source; self; amount; balance; chain_id; voting_powers }
   in
   { parameter; storage; program; module_name; entrypoint; log_dir; contract_env }
 
