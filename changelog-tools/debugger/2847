@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with picking a `default` entrypoint in cases when it's the only one (e.g. in contracts with one `@entry` annotation). Now the user can specify it in these cases.\\n\\n\\n"
+merge_request: '2847'
+title: "[Chore] Fix a bug with one entrypoint"
+type: fixed
+            
