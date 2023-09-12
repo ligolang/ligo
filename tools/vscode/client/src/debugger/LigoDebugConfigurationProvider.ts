@@ -133,8 +133,11 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
         )
       );
 
-    if (!isDefined(contractMetadata.entrypoints[entrypoint])) {
-      showErrorWithOpenLaunchJson(`Entrypoint ${entrypoint} doesn't exist`);
+    const entrypointValidateResult =
+      await this.client.sendMsg('validateEntrypoint', { pickedEntrypoint: entrypoint });
+
+    if (isDefined(entrypointValidateResult.body)) {
+      showErrorWithOpenLaunchJson(entrypointValidateResult.body.errorMessage);
       interruptExecution();
     }
 
@@ -144,7 +147,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
       return (
         await this.client.sendMsg(
           'validateValue',
-          { value, category, valueLang, pickedEntrypoint: entrypoint }
+          { value, category, valueLang }
         )
       ).body?.errorMessage;
     }
@@ -189,7 +192,7 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     config.storage = storage;
     config.storageLang = storageLang;
 
-    await this.client.sendMsg('validateConfig', { entrypoint, parameter, parameterLang, storage, storageLang });
+    await this.client.sendMsg('validateConfig', { parameter, parameterLang, storage, storageLang });
     return config;
   }
 

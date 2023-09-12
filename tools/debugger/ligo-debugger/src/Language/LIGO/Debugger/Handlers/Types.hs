@@ -13,6 +13,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , LigoSetProgramPathRequest (..)
   , LigoValidateModuleNameRequest (..)
   , LigoGetContractMetadataRequest (..)
+  , LigoValidateEntrypointRequest (..)
   , LigoValidateValueRequest (..)
   , LigoValidateConfigRequest (..)
 
@@ -108,6 +109,11 @@ data LigoGetContractMetadataRequest = LigoGetContractMetadataRequest
     -- ^ LIGO module name to be used.
   } deriving stock (Eq, Show, Generic)
 
+data LigoValidateEntrypointRequest = LigoValidateEntrypointRequest
+  { pickedEntrypoint :: Text
+    -- ^ A @LIGO@ entrypoint that will be used.
+  } deriving stock (Eq, Show, Generic)
+
 data LigoValidateValueRequest = LigoValidateValueRequest
   { value            :: Text
     -- ^ Value to check.
@@ -115,13 +121,10 @@ data LigoValidateValueRequest = LigoValidateValueRequest
     -- ^ Category of the value (e.g. @parameter@).
   , valueLang        :: Text
     -- ^ Language of value (@LIGO@ or @Michelson@)
-  , pickedEntrypoint :: Text
-    -- ^ Special @LIGO@ entrypoint that will be used.
   } deriving stock (Eq, Show, Generic)
 
 data LigoValidateConfigRequest = LigoValidateConfigRequest
-  { entrypoint    :: Text
-  , parameter     :: Text
+  { parameter     :: Text
   , parameterLang :: Text
   , storage       :: Text
   , storageLang   :: Text
@@ -193,6 +196,7 @@ concatMapM (deriveFromJSON Aeson.defaultOptions)
   , ''LigoSetProgramPathRequest
   , ''LigoValidateModuleNameRequest
   , ''LigoGetContractMetadataRequest
+  , ''LigoValidateEntrypointRequest
   , ''LigoValidateValueRequest
   , ''LigoValidateConfigRequest
   ]
@@ -224,6 +228,10 @@ instance IsRequest LigoValidateModuleNameRequest where
 instance IsRequest LigoGetContractMetadataRequest where
   type CommandFor LigoGetContractMetadataRequest = "getContractMetadata"
   type ResponseFor LigoGetContractMetadataRequest = ContractMetadata
+
+instance IsRequest LigoValidateEntrypointRequest where
+  type CommandFor LigoValidateEntrypointRequest = "validateEntrypoint"
+  type ResponseFor LigoValidateEntrypointRequest = LigoValidateResponse
 
 instance IsRequest LigoValidateValueRequest where
   type CommandFor LigoValidateValueRequest = "validateValue"

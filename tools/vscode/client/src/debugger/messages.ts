@@ -75,7 +75,7 @@ export interface ValidateModuleNameArguments {
   moduleName: string
 }
 
-export interface ValidateModuleNameResponse extends DebugProtocol.Response {
+export interface ValidateResponse extends DebugProtocol.Response {
   body?: {
     errorMessage: string
   }
@@ -89,7 +89,6 @@ export interface ValidateValueArguments {
   value: string
   category: ValidateValueCategory
   valueLang: InputValueLang
-  pickedEntrypoint: string
 }
 
 export interface ValidateValueRequest extends DebugProtocol.Request {
@@ -118,10 +117,20 @@ export interface GetContractMetadataResponse extends DebugProtocol.Response {
   body: ContractMetadata
 }
 
+// ValidateEntrypoint //
+
+export interface ValidateEntrypointRequest extends DebugProtocol.Request {
+  command: 'validateEntrypoint'
+  arguments: ValidateEntrypointArguments
+}
+
+export interface ValidateEntrypointArguments {
+  pickedEntrypoint: string
+}
+
 // ValidateConfig //
 
 export interface ValidateConfigArguments {
-  entrypoint: string
   parameter: string
   parameterLang: InputValueLang
   storage: string
