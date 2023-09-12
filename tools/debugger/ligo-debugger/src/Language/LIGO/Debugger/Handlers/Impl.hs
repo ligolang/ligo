@@ -111,6 +111,7 @@ ligoCustomHandlers =
   , setProgramPathHandler
   , validateModuleNameHandler
   , getContractMetadataHandler
+  , validateEntrypointHandler
   , validateValueHandler
   , validateConfigHandler
   ]
@@ -618,6 +619,8 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
     , lsParsedContracts = Nothing
     , lsLambdaLocs = Nothing
     , lsLigoTypesVec = Nothing
+    , lsEntrypoints = Nothing
+    , lsPickedEntrypoint = Nothing
     , lsToLigoValueConverter = toLigoValueConverter
     , lsVarsComputeThreadPool = varsComputeThreadPool
     , lsMoveId = 0
@@ -724,6 +727,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
           , lsParsedContracts = Just parsedContracts
           , lsLambdaLocs = Just lambdaLocs
           , lsLigoTypesVec = Just ligoTypesVec
+          , lsEntrypoints = Just michelsonEntrypoints
           , lsEntrypointType = Just entrypointType
           }
 
@@ -744,6 +748,22 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
               JsonFromBuildable <$> michelsonEntrypoints
           }
 
+validateEntrypointHandler :: DAP.Handler (RIO LIGO)
+validateEntrypointHandler = mkLigoHandler \req@LigoValidateEntrypointRequest{} -> do
+  let pickedEntrypoint = U.UnsafeEpName req.pickedEntrypoint
+  entrypoints <- getEntrypoints
+
+  if pickedEntrypoint `M.member` entrypoints
+  then do
+    lServVar <- asks (_rcLSState @LIGO)
+    atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
+      { lsPickedEntrypoint = Just req.pickedEntrypoint
+      }
+
+    respond LigoValidateOk
+  else
+    respond $ LigoValidateFailed [int||Entrypoint #{pickedEntrypoint} doesn't exist|]
+
 validateValueHandler :: DAP.Handler (RIO LIGO)
 validateValueHandler = mkLigoHandler \req@LigoValidateValueRequest{} -> do
   CollectedRunInfo
@@ -755,9 +775,11 @@ validateValueHandler = mkLigoHandler \req@LigoValidateValueRequest{} -> do
 
   let (parameterType, storageType, _) = getParameterStorageAndOpsTypes entrypointType
 
+  pickedEntrypoint <- getPickedEntrypoint
+
   parseRes <- case req.category of
     "parameter" ->
-      withMichelsonEntrypoint contract req.pickedEntrypoint $
+      withMichelsonEntrypoint contract pickedEntrypoint $
         \(_ :: T.Notes arg) _ ->
         void <$> parseValue @arg program
           req.category req.value req.valueLang parameterType
@@ -787,7 +809,9 @@ validateConfigHandler = mkLigoHandler \req@LigoValidateConfigRequest{} -> do
 
   let (parameterType, storageType, _) = getParameterStorageAndOpsTypes entrypointType
 
-  withMichelsonEntrypoint contract req.entrypoint
+  entrypoint <- getPickedEntrypoint
+
+  withMichelsonEntrypoint contract entrypoint
     \(_ :: T.Notes arg) epc -> do
       do let param = req.parameter; paramLang = req.parameterLang
          logMessage [int||
