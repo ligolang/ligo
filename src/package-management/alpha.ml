@@ -78,26 +78,53 @@ let string_of_error = function
     (* TODO : add a helpful message sharing where the failure occured *)
   | Manifest_not_found ->
     "No manifest file found." (*TODO link documentation to what is a ligo manifest file *)
-  | PackageJsonEmptyName -> "name field in package.json is empty/null"
+  | PackageJsonEmptyName -> "name field in ligo.json is empty/null"
   | RootGenerationInLockFileFailed msg -> msg
   | NodeGenerationInLockFileFailed msg -> msg
   | LockFileGenerationFailed -> "Lock file generation failed"
   | InternalError msg -> "Internal Error: Reason: " ^ msg
 
 
-let does_json_manifest_exist : unit -> (unit, string) result =
- fun () ->
+type manifest_result =
+  [ `Invalid_ligo_json
+  | `Invalid_esy_json
+  | `Invalid_package_json
+  | `Valid_package_json
+  | `Valid_esy_json
+  | `No_manifest
+  | `OK
+  ]
+
+let does_json_manifest_exist () =
   let cwd = Caml.Sys.getcwd () in
   let package_json = Filename.concat cwd "package.json" in
-  match Caml.Sys.file_exists package_json with
-  | true ->
+  let ligo_json = Filename.concat cwd "ligo.json" in
+  let esy_json = Filename.concat cwd "esy.json" in
+  match
+    ( Caml.Sys.file_exists ligo_json
+    , Caml.Sys.file_exists package_json
+    , Caml.Sys.file_exists esy_json )
+  with
+  | true, _, _ ->
     (try
-       let _ = Json.from_file package_json in
-       Ok ()
+       let _ = Yojson.Safe.from_file ligo_json in
+       `OK
        (* TODO: in case of invalid json write {} to the file *)
      with
-    | _ -> Error "Invalid package.json")
-  | false -> Error "A package.json does not exist"
+    | _ -> `Invalid_ligo_json)
+  | false, true, false ->
+    (try
+       let _ = Yojson.Safe.from_file package_json in
+       `Valid_package_json
+     with
+    | _ -> `Invalid_package_json)
+  | false, _, true ->
+    (try
+       let _ = Yojson.Safe.from_file esy_json in
+       `Valid_esy_json
+     with
+    | _ -> `Invalid_package_json)
+  | false, false, false -> `No_manifest
 
 
 (* 
@@ -117,22 +144,22 @@ let trim_quotes : string -> string =
  fun s -> String.strip s ~drop:(fun ch -> Char.equal ch '\"')
 
 
-let lock_file : string -> Fpath.t = fun path -> Fpath.(v path / "esy.lock" / "index.json")
+let lock_file : string -> Fpath.t = fun path -> Fpath.(v path / "ligo.esy.lock" / "index.json")
 
-let package_json : string -> Fpath.t =
- fun project_root -> Fpath.(v project_root / "package.json")
+let ligo_json : string -> Fpath.t =
+ fun project_root -> Fpath.(v project_root / "ligo.json")
 
 
 let installation_json : string -> Fpath.t =
- fun path -> Fpath.(v path / "_esy" / "default" / "installation.json")
+ fun path -> Fpath.(v path / "_esy" / "ligo" / "installation.json")
 
 
 let index_json_exists : string -> bool =
  fun path -> Caml.Sys.file_exists @@ Fpath.to_string @@ lock_file path
 
 
-let package_json_exists : string -> bool =
- fun project_root -> Caml.Sys.file_exists @@ Fpath.to_string @@ package_json project_root
+let ligo_json_exists : string -> bool =
+ fun project_root -> Caml.Sys.file_exists @@ Fpath.to_string @@ ligo_json project_root
 
 
 let read_lock_file ~project_root =
@@ -141,10 +168,10 @@ let read_lock_file ~project_root =
   | true -> Result.return @@ Json.from_file @@ Fpath.to_string @@ lock_file project_root
 
 
-let read_package_json ~project_root =
-  match package_json_exists project_root with
+let read_ligo_json ~project_root =
+  match ligo_json_exists project_root with
   | true ->
-    Result.return @@ Json.from_file @@ Fpath.to_string @@ package_json project_root
+    Result.return @@ Json.from_file @@ Fpath.to_string @@ ligo_json project_root
   | false -> Error Manifest_not_found
 
 
@@ -368,34 +395,34 @@ let fetch_tarballs
   Lwt_result.return installation_map
 
 
-let generate_default_installation package_json project_root =
+let generate_default_installation ligo_json project_root =
   let name =
-    if is_json_empty package_json
+    if is_json_empty ligo_json
     then Fpath.v project_root |> Fpath.segs |> List.last_exn
-    else Json.(Util.member "name" package_json |> to_string |> trim_quotes)
+    else Json.(Util.member "name" ligo_json |> to_string |> trim_quotes)
   in
-  let key : string = name ^ "@" ^ "link-dev:./package.json" in
+  let key : string = name ^ "@" ^ "link-dev:./ligo.json" in
   let value = project_root in
   key, value
 
 
 let generate_default_installation_json : Json.t -> string -> string * Json.t =
- fun package_json project_root ->
-  let key, value = generate_default_installation package_json project_root in
+ fun ligo_json project_root ->
+  let key, value = generate_default_installation ligo_json project_root in
   key, `String value
 
 
 let generate_installation_json
-    : Fpath.t InstallationJsonMap.t -> string -> package_json:Json.t -> Json.t
+    : Fpath.t InstallationJsonMap.t -> string -> ligo_json:Json.t -> Json.t
   =
- fun installation_json_map project_root ~package_json ->
+ fun installation_json_map project_root ~ligo_json ->
   let create_json lst : Json.t =
     let f (name_version, path) =
       let key = NameVersion.to_string name_version in
       let value = `String ("./" ^ Fpath.to_string path) in
       key, value
     in
-    let default = generate_default_installation_json package_json project_root in
+    let default = generate_default_installation_json ligo_json project_root in
     `Assoc (default :: List.map ~f lst)
   in
   let lst = InstallationJsonMap.bindings installation_json_map in
@@ -408,10 +435,10 @@ let assoc_to_dep_list : (string * Json.t) list -> (string * string) list =
       name, version |> Json.to_string |> trim_quotes)
 
 
-(* Get a list of tuples which are devDependencies from package.json of type : (package name, package version) list *)
+(* Get a list of tuples which are devDependencies from ligo.json of type : (package name, package version) list *)
 let get_dev_dep_list : Json.t -> (string * string) list =
- fun package_json ->
-  let dependencies = Json.Util.member "devDependencies" package_json in
+ fun ligo_json ->
+  let dependencies = Json.Util.member "devDependencies" ligo_json in
   Json.Util.(to_option to_assoc dependencies)
   |> function
   | None -> []
@@ -505,21 +532,21 @@ let generate_node json (* registry response *) =
 
 
 let generate_default_node
-    :  package_json:Json.t -> dependencies:NameVersion.t list
+    :  ligo_json:Json.t -> dependencies:NameVersion.t list
     -> dev_dependencies:NameVersion.t list -> (Node.t, error) result
   =
- fun ~package_json ~dependencies ~dev_dependencies ->
+ fun ~ligo_json ~dependencies ~dev_dependencies ->
   let open Json in
-  match Util.(member "name" package_json) with
+  match Util.(member "name" ligo_json) with
   | `Null -> Error PackageJsonEmptyName
   | name ->
     let name = to_string name |> trim_quotes in
-    let id = name ^ "@" ^ "link-dev:./package.json" in
-    let version = Node.DefaultVersion "link-dev:./package.json" in
+    let id = name ^ "@" ^ "link-dev:./ligo.json" in
+    let version = Node.DefaultVersion "link-dev:./ligo.json" in
     let source =
       let type_ = "link-dev" in
       let path = "." in
-      let manifest = "package.json" in
+      let manifest = "ligo.json" in
       Source.Default Source.{ type_; path; manifest }
     in
     let overrides = [] in
@@ -594,9 +621,9 @@ let solve ~ligo_registry ~all_dependencies =
   get_transitive_closure ~ligo_registry all_dependencies
 
 
-let dependencies package_json solution =
+let dependencies ligo_json solution =
   let deps =
-    Json.Util.(member "dependencies" package_json |> to_assoc) |> List.unzip |> fst
+    Json.Util.(member "dependencies" ligo_json |> to_assoc) |> List.unzip |> fst
   in
   let f name_version =
     let NameVersion.{ name; _ } = name_version in
@@ -606,8 +633,8 @@ let dependencies package_json solution =
   deps
 
 
-let dev_dependencies package_json solution =
-  let deps = package_json |> get_dev_dep_list |> List.unzip |> fst in
+let dev_dependencies ligo_json solution =
+  let deps = ligo_json |> get_dev_dep_list |> List.unzip |> fst in
   let f name_version =
     let NameVersion.{ name; _ } = name_version in
     List.mem deps name ~equal:String.equal
@@ -617,13 +644,13 @@ let dev_dependencies package_json solution =
 
 
 let generate_lock_file
-    ~(package_json : Json.t)
+    ~(ligo_json : Json.t)
     ~(solution : NameVersion.t list)
     ~(cache : Json.t Metadata_cache.t)
     : (Lock_file.t, error) Lwt_result.t
   =
-  let dependencies = dependencies package_json solution in
-  let dev_dependencies = dev_dependencies package_json solution in
+  let dependencies = dependencies ligo_json solution in
+  let dev_dependencies = dev_dependencies ligo_json solution in
   let metadata_json_list =
     let f name_version =
       Metadata_cache.find_opt name_version cache
@@ -636,7 +663,7 @@ let generate_lock_file
     Result.map ~f metadata_json_list |> Result.join
   in
   let default_node =
-    generate_default_node ~package_json ~dependencies ~dev_dependencies
+    generate_default_node ~ligo_json ~dependencies ~dev_dependencies
   in
   let root = Result.map ~f:(fun node -> node.id) default_node in
   let all_dependencies = dependencies @ dev_dependencies in
@@ -751,17 +778,16 @@ let get_lock_file_that_is_in_sync ~project_root ~all_dependencies =
 
 
 (* run `ligo install` *)
-let run ~project_root _package_name cache_path ligo_registry =
+let run ~project_root _ligo_name cache_path ligo_registry =
   (* TODO : to run `ligo install <pkg-name>` this branch should first check
-      <pkg-name> exists in ligo registry and then add to the package.json and use the run function *)
+      <pkg-name> exists in ligo registry and then add to the ligo.json and use the run function *)
   let open Lwt_result.Syntax in
-  let project_root = Option.value_or_thunk project_root ~default:Caml.Sys.getcwd in
-  let* package_json = Lwt.return @@ read_package_json ~project_root in
+  let* ligo_json = Lwt.return @@ read_ligo_json ~project_root in
   let* dependencies =
-    Lwt.return @@ field_to_tuple_list ~field:"dependencies" package_json
+    Lwt.return @@ field_to_tuple_list ~field:"dependencies" ligo_json
   in
   let* dev_dependencies =
-    Lwt.return @@ field_to_tuple_list ~field:"devDependencies" package_json
+    Lwt.return @@ field_to_tuple_list ~field:"devDependencies" ligo_json
   in
   let all_dependencies = dependencies @ dev_dependencies in
   match all_dependencies with
@@ -782,7 +808,7 @@ let run ~project_root _package_name cache_path ligo_registry =
       | None ->
         let* solution, cache = solve ~all_dependencies ~ligo_registry in
         remove_dir cache_path;
-        let* lock_file_json = generate_lock_file ~package_json ~solution ~cache in
+        let* lock_file_json = generate_lock_file ~ligo_json ~solution ~cache in
         let* () =
           let content = Lock_file.to_yojson lock_file_json |> Json.to_string in
           write ~content ~to_:(lock_file project_root)
@@ -794,7 +820,7 @@ let run ~project_root _package_name cache_path ligo_registry =
     in
     let installation_json_path = installation_json project_root in
     let installation_json =
-      generate_installation_json installation_map project_root ~package_json
+      generate_installation_json installation_map project_root ~ligo_json
     in
     let* () =
       write ~content:(Json.to_string installation_json) ~to_:installation_json_path

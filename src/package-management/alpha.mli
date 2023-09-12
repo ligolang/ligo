@@ -44,10 +44,20 @@ val string_of_error : error -> string
 
  *)
 val run
-  :  project_root:string option
+  :  project_root:string
   -> string
   -> Fpath.t
   -> Uri.t
   -> (unit, error) Lwt_result.t
 
-val does_json_manifest_exist : unit -> (unit, string) result
+type manifest_result =
+  [ `Invalid_ligo_json
+  | `Invalid_esy_json
+  | `Invalid_package_json
+  | `Valid_package_json
+  | `Valid_esy_json
+  | `No_manifest
+  | `OK
+  ]
+
+val does_json_manifest_exist : unit -> manifest_result

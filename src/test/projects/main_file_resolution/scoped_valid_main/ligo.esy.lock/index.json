@@ -1,0 +1,33 @@
+{
+  "checksum": "820164eaef240bc5db7ab9dc82479f36",
+  "root": "scoped_valid_main@link-dev:./ligo.json",
+  "node": {
+    "scoped_valid_main@link-dev:./ligo.json": {
+      "id": "scoped_valid_main@link-dev:./ligo.json",
+      "name": "scoped_valid_main",
+      "version": "link-dev:./ligo.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "ligo.json"
+      },
+      "overrides": [],
+      "dependencies": [ "@ligo/bigarray@1.0.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "@ligo/bigarray@1.0.0@d41d8cd9": {
+      "id": "@ligo/bigarray@1.0.0@d41d8cd9",
+      "name": "@ligo/bigarray",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://packages.ligolang.org/-/api/@ligo/bigarray/-/@ligo/bigarray-1.0.0.tgz#sha1:b41eda30818d519b8c142fddffff55cdf37a1500"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    }
+  }
+}

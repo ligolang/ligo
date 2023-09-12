@@ -36,7 +36,7 @@ print the ligo changelog
 print intermediary program representation. Warning: Intended for development of LIGO and can break at any time
 
 **install**
-install LIGO dependencies declared in package.json
+install LIGO dependencies declared in ligo.json
 
 **lsp**
 [BETA] launch a LIGO lsp server

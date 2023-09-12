@@ -1,1 +1,1 @@
-{ "ignorePaths" : [".ligo/", "_esy/", "esy.lock/"] }
+{ "ignorePaths" : [".ligo/", "_esy/", "ligo.esy.lock/"] }

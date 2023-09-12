@@ -94,7 +94,7 @@ let find_project_root () =
   let pwd = Caml.Sys.getcwd in
   let rec aux p =
     let dirs = Ligo_unix.ls_dir p in
-    if List.exists ~f:(String.equal "package.json") dirs
+    if List.exists ~f:(String.equal "ligo.json") dirs
     then Some p
     else (
       let p' = Filename.dirname p in

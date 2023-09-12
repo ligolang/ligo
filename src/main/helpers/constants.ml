@@ -19,7 +19,15 @@ let esy_add ~package_name ~cache_path ~ligo_registry =
 
 
 let esy_install ~cache_path ~ligo_registry =
-  "", [| "esy"; "install"; "--prefix-path"; cache_path; "--npm-registry"; ligo_registry |]
+  ( ""
+  , [| "esy"
+     ; "@ligo"
+     ; "install"
+     ; "--prefix-path"
+     ; cache_path
+     ; "--npm-registry"
+     ; ligo_registry
+    |] )
 
 
 let where ~cmd = "", [| "where"; "/q"; cmd |]

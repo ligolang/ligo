@@ -76,7 +76,7 @@ let run_workflow_test ~path_list =
   batch_rm_rf path_list;
   let* () =
     ligo_install_pkgs
-      ~project_root:(Some workflow_path)
+      ~project_root:workflow_path
       ~package_dir
       ~cache_path
       ~ligo_registry

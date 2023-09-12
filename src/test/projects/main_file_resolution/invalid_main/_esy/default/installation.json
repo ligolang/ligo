@@ -1,6 +1,0 @@
-{
-  "ligo-breathalyzer@1.2.1@d41d8cd9":
-    "./.ligo/source/i/ligo_breathalyzer__1.2.1__34387d7c",
-  "invalid_main@link-dev:./package.json":
-    "/home/user/projects/ligo/src/test/projects/main_file_resolution/invalid_main"
-}

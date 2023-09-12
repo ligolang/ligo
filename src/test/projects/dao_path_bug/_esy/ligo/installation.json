@@ -1,0 +1,8 @@
+{
+  "tezos-ligo-fa2@1.0.4@d41d8cd9":
+    "./.ligo/source/i/tezos_ligo_fa2__1.0.4__d08b6a16",
+  "dao_path_bug@link-dev:./ligo.json":
+    ".",
+  "@ligo/dao@1.0.9@d41d8cd9":
+    "./.ligo/source/i/ligo__s__dao__1.0.9__a6f35ecc"
+}

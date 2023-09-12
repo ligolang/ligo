@@ -1,0 +1,78 @@
+{
+  "checksum": "f9343036d86380341fe0404e33319116",
+  "root": "ligo-foo@link-dev:./ligo.json",
+  "node": {
+    "temp-ligo-bin@0.30.1@d41d8cd9": {
+      "id": "temp-ligo-bin@0.30.1@d41d8cd9",
+      "name": "temp-ligo-bin",
+      "version": "0.30.1",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/temp-ligo-bin/-/temp-ligo-bin-0.30.1.tgz#sha1:158190f3e73cd5fc18f04c194a1303196e7220c6"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "temp-ligo-bin@0.25.0@d41d8cd9": {
+      "id": "temp-ligo-bin@0.25.0@d41d8cd9",
+      "name": "temp-ligo-bin",
+      "version": "0.25.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/temp-ligo-bin/-/temp-ligo-bin-0.25.0.tgz#sha1:4533f969b3fa1fa23344b688997f2d14e1cf4872"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "ligo-set-helpers@1.0.2@d41d8cd9": {
+      "id": "ligo-set-helpers@1.0.2@d41d8cd9",
+      "name": "ligo-set-helpers",
+      "version": "1.0.2",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-set-helpers/-/ligo-set-helpers-1.0.2.tgz#sha1:8e977237271255de181e4c4901fb14cdaae9dcd9"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [ "temp-ligo-bin@0.25.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "ligo-list-helpers@1.0.0@d41d8cd9": {
+      "id": "ligo-list-helpers@1.0.0@d41d8cd9",
+      "name": "ligo-list-helpers",
+      "version": "1.0.0",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/ligo-list-helpers/-/ligo-list-helpers-1.0.0.tgz#sha1:aa7ba8a0231a1e6544711ac8d2f8a80c45ead595"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [ "temp-ligo-bin@0.25.0@d41d8cd9" ],
+      "devDependencies": []
+    },
+    "ligo-foo@link-dev:./ligo.json": {
+      "id": "ligo-foo@link-dev:./ligo.json",
+      "name": "ligo-foo",
+      "version": "link-dev:./ligo.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "ligo.json"
+      },
+      "overrides": [],
+      "dependencies": [
+        "temp-ligo-bin@0.30.1@d41d8cd9", "ligo-set-helpers@1.0.2@d41d8cd9",
+        "ligo-list-helpers@1.0.0@d41d8cd9"
+      ],
+      "devDependencies": []
+    }
+  }
+}

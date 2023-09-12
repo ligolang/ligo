@@ -2927,10 +2927,10 @@ let repl =
 
 
 let install =
-  let summary = "install LIGO dependencies declared in package.json" in
+  let summary = "install LIGO dependencies declared in ligo.json" in
   let readme () =
     "This command invokes the package manager to install the external packages declared \
-     in package.json"
+     in ligo.json"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"install" in
   let f
@@ -2964,7 +2964,7 @@ let install =
 
 
 let registry_publish =
-  let summary = "[BETA] publish the LIGO package declared in package.json" in
+  let summary = "[BETA] publish the LIGO package declared in ligo.json" in
   let readme () =
     "[BETA] Packs the pacakage directory contents into a tarball and uploads it to the \
      registry server"

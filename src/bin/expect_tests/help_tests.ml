@@ -28,8 +28,7 @@ let%expect_test _ =
       print                      . print intermediary program representation.
                                    Warning: Intended for development of LIGO and can
                                    break at any time
-      install                    . install LIGO dependencies declared in
-                                   package.json
+      install                    . install LIGO dependencies declared in ligo.json
       lsp                        . [BETA] launch a LIGO lsp server
       analytics                  . Manage analytics
       registry                   . Commands to interact with Ligo Package Registry

@@ -85,7 +85,7 @@ my-docusaurus/
     static/
       css/
       img/
-    package.json
+    ligo.json
     sidebar.json
     siteConfig.js
 ```

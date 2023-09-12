@@ -4,8 +4,8 @@ traversal:
   # (so they are neither analyzed nor can be referenced).
   ignored:
     - vendors/**/*
-    - esy.lock/**/*
-    - static.esy.esy.lock/**/*
+    - ligo.esy.lock/**/*
+    - static.esy.ligo.esy.lock/**/*
     - src/README.md
     - src/coq/README.md
     - tools/vim/ligo/README.md

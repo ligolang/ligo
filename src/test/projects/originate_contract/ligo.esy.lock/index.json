@@ -1,0 +1,33 @@
+{
+  "checksum": "0368ea2d83170996ad9738325570fe1a",
+  "root": "originate_contract@link-dev:./ligo.json",
+  "node": {
+    "tezos-ligo-fa2@1.0.1@d41d8cd9": {
+      "id": "tezos-ligo-fa2@1.0.1@d41d8cd9",
+      "name": "tezos-ligo-fa2",
+      "version": "1.0.1",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/tezos-ligo-fa2/-/tezos-ligo-fa2-1.0.1.tgz#sha1:81d1ff74dc457290fcd974e1251c15521e407149"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "originate_contract@link-dev:./ligo.json": {
+      "id": "originate_contract@link-dev:./ligo.json",
+      "name": "originate_contract",
+      "version": "link-dev:./ligo.json",
+      "source": {
+        "type": "link-dev",
+        "path": ".",
+        "manifest": "ligo.json"
+      },
+      "overrides": [],
+      "dependencies": [ "tezos-ligo-fa2@1.0.1@d41d8cd9" ],
+      "devDependencies": []
+    }
+  }
+}

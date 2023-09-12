@@ -1,8 +1,0 @@
-{
-  "ligo-set-helpers@1.0.2@d41d8cd9":
-    "./.ligo/source/i/ligo_set_helpers__1.0.2__5cd724a1",
-  "ligo-list-helpers@1.0.0@d41d8cd9":
-    "./.ligo/source/i/ligo_list_helpers__1.0.0__bf074147",
-  "working_project@link-dev:./package.json":
-    "./projects/working_project"
-}
