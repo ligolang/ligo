@@ -114,11 +114,9 @@ let defs_to_completion_items
             | Scopes.Types.Variable vdef ->
               let show_type : Ast_core.type_expression -> string =
                 (* VSCode is ignoring any newlines in completion detail *)
-                let pp_mode = Ligo_interface.{ width = 60; indent = 2 } in
+                let pp_mode = Pretty.{ width = 60; indent = 2 } in
                 fun te ->
-                  match
-                    Ligo_interface.pretty_print_type_expression pp_mode ~syntax te
-                  with
+                  match Pretty.pretty_print_type_expression pp_mode ~syntax te with
                   | `Ok str -> str
                   | `Nonpretty (_exn, str) -> str
                 (* Sending log messages from here or adding exn to return type will make the code
@@ -163,7 +161,7 @@ let get_defs_completions
           -> Continue node.value.name
         | _ -> Skip
       in
-      fold [] (Fn.flip List.cons) collect cst
+      fold_cst [] (Fn.flip List.cons) collect cst
     | JsLIGO cst ->
       let open Cst_jsligo.Fold in
       let collect (Some_node (node, sing)) =
@@ -173,7 +171,7 @@ let get_defs_completions
           Continue node.value.namespace_name
         | _ -> Skip
       in
-      fold [] (Fn.flip List.cons) collect cst
+      fold_cst [] (Fn.flip List.cons) collect cst
     | PascaLIGO cst ->
       let open Cst_pascaligo.Fold in
       let collect (Some_node (node, sing)) =
@@ -182,7 +180,7 @@ let get_defs_completions
           -> Continue node.value.name
         | _ -> Skip
       in
-      fold [] (Fn.flip List.cons) collect cst
+      fold_cst [] (Fn.flip List.cons) collect cst
   in
   defs_to_completion_items
     (Scope (List.rev_map ~f:(fun name -> name#payload) module_path))
@@ -266,10 +264,6 @@ let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
         ; lexeme = dist_monoid.append lexeme_lhs lexeme_rhs
         })
   }
-
-
-let first_monoid : 'a Cst_shared.Fold.monoid =
-  { empty = None; append = Option.first_some }
 
 
 type ('module_expr, 'module_type_expr) expr_kind =
@@ -435,7 +429,7 @@ let complete_fields
         | S_reg _ -> Continue { empty with lexeme = mk_dist node.region }
         | _ -> Skip
       in
-      let { dot; lexeme } = fold_map completion_distance_monoid collect cst in
+      let { dot; lexeme } = fold_map_cst completion_distance_monoid collect cst in
       Option.value_map
         (Option.both dot lexeme)
         ~default:(pos, pos)
@@ -546,7 +540,7 @@ let complete_fields
     in
     if Position.equal pos farthest_dot_position_before_cursor
     then []
-    else Option.value ~default:[] (fold_map first_monoid field_completion cst)
+    else Option.value ~default:[] (fold_map_cst first_monoid field_completion cst)
   | JsLIGO cst ->
     let open Cst_jsligo.CST in
     let open Cst_jsligo.Fold in
@@ -560,7 +554,7 @@ let complete_fields
         | S_reg _ -> Continue { empty with lexeme = mk_dist node.region }
         | _ -> Skip
       in
-      let { dot; lexeme } = fold_map completion_distance_monoid collect cst in
+      let { dot; lexeme } = fold_map_cst completion_distance_monoid collect cst in
       Option.value_map
         (Option.both dot lexeme)
         ~default:(pos, pos)
@@ -658,7 +652,7 @@ let complete_fields
     in
     if Position.equal pos farthest_dot_position_before_cursor
     then []
-    else Option.value ~default:[] (fold_map first_monoid field_completion cst)
+    else Option.value ~default:[] (fold_map_cst first_monoid field_completion cst)
   | PascaLIGO cst ->
     let open Cst_pascaligo.CST in
     let open Cst_pascaligo.Fold in
@@ -672,7 +666,7 @@ let complete_fields
         | S_reg _ -> Continue { empty with lexeme = mk_dist node.region }
         | _ -> Skip
       in
-      let { dot; lexeme } = fold_map completion_distance_monoid collect cst in
+      let { dot; lexeme } = fold_map_cst completion_distance_monoid collect cst in
       Option.value_map
         (Option.both dot lexeme)
         ~default:(pos, pos)
@@ -759,7 +753,7 @@ let complete_fields
     in
     if Position.equal pos farthest_dot_position_before_cursor
     then []
-    else Option.value ~default:[] (fold_map first_monoid field_completion cst)
+    else Option.value ~default:[] (fold_map_cst first_monoid field_completion cst)
 
 
 let mk_completion_list (items : CompletionItem.t list)

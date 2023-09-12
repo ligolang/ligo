@@ -7,13 +7,13 @@ open Ast_unified
 
 let sender, contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 0 in
+  let id = List.nth_exn (Lwt_main.run @@ test_environment ()).identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
-let from_ = e_address ~loc @@ addr 5
-let to_ = e_address ~loc @@ addr 2
+let from_ = e_address ~loc @@ Lwt_main.run @@ addr 5
+let to_ = e_address ~loc @@ Lwt_main.run @@ addr 2
 let sender = e_address ~loc @@ sender
 
 let transfer ~raise f s () =
@@ -51,9 +51,7 @@ let transfer ~raise f s () =
   in
   let input1, input2 = parameter, storage in
   let expected = e_pair ~loc (e_list ~loc []) new_storage in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let options = make_options () in
   expect_eq_twice ~raise program ~options "transfer" input1 input2 expected
 
 
@@ -77,9 +75,7 @@ let transfer_not_e_allowance ~raise f s () =
     e_record_ez ~loc [ "address_from", from_; "address_to", to_; "value", e_nat ~loc 10 ]
   in
   let input1, input2 = parameter, storage in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let options = make_options () in
   expect_string_failwith_twice
     ~raise
     ~options
@@ -110,9 +106,7 @@ let transfer_not_e_balance ~raise f s () =
     e_record_ez ~loc [ "address_from", from_; "address_to", to_; "value", e_nat ~loc 10 ]
   in
   let input1, input2 = parameter, storage in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let options = make_options () in
   expect_string_failwith_twice
     ~raise
     ~options
@@ -156,9 +150,7 @@ let approve ~raise f s () =
   in
   let input1, input2 = parameter, storage in
   let expected = e_pair ~loc (e_list ~loc []) new_storage in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let options = make_options () in
   expect_eq_twice ~raise program ~options "approve" input1 input2 expected
 
 
@@ -180,9 +172,7 @@ let approve_unsafe ~raise f s () =
   in
   let parameter = e_record_ez ~loc [ "spender", from_; "value", e_nat ~loc 100 ] in
   let input1, input2 = parameter, storage in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(make_options ~env:(test_environment ()) ())
-  in
+  let options = make_options () in
   expect_string_failwith_twice
     ~raise
     ~options

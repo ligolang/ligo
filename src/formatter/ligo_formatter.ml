@@ -85,7 +85,7 @@ module Michelson_formatter = struct
   module Row = Row.With_layout
 
   let pp_hex ppf michelson =
-    let hex = Proto_alpha_utils.Memory_proto_alpha.to_hex michelson in
+    let hex = Lwt_main.run @@ Proto_alpha_utils.Memory_proto_alpha.to_hex michelson in
     Format.fprintf ppf "%a" Hex.pp hex
 
 

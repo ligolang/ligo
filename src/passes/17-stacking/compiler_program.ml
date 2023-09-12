@@ -80,20 +80,22 @@ let compile_expr env expr =
     expr
 
 let compile_expr env e =
+  let open Lwt.Let_syntax in
   let p = compile_expr env e in
   let (rs, p) = To_micheline.strengthen_prog p [true] in
   (* TODO *)
   let () = if List.length (List.filter ~f:Fn.id rs) > 0 then failwith "TODO expr used something" else () in
   (* hmm, why did this end up here *)
   let drops = Ligo_coq_ocaml.Compiler.compile_ope null rs in
-  let drops = To_micheline.translate_prog drops in
-  let p = To_micheline.translate_prog p in
+  let%bind drops = To_micheline.translate_prog drops in
+  let%map p = To_micheline.translate_prog p in
   Seq (null, drops @ p)
 
 let compile_function_body e =
+  let open Lwt.Let_syntax in
   let p = compile_binds [] e in
   let (rs, p) = To_micheline.strengthen_prog p [true] in
-  let p = To_micheline.translate_prog p in
+  let%map p = To_micheline.translate_prog p in
   (* hmm, why did this end up here *)
   if Option.value ~default:false (List.hd rs)
   then Seq (null, p)

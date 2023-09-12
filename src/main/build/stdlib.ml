@@ -77,9 +77,8 @@ let get : options:Compiler_options.t -> unit -> t =
     | Environment.Protocols.Nairobi -> def "NAIROBI"
   in
   let legacy_layout_tree =
-    if Ligo_prim.Layout.legacy_layout_flag
-    then def "LEGACY_LAYOUT_TREE"
-    else "" in
+    if Ligo_prim.Layout.legacy_layout_flag then def "LEGACY_LAYOUT_TREE" else ""
+  in
   let lib = Ligo_lib.get () in
   let curry_content_core = compile ~options (std ^ legacy_layout_tree ^ lib) in
   let curry_content_typed = type_ ~options curry_content_core in

@@ -6,8 +6,10 @@ open Lsp_helpers
        - store the state resulting from the processing
        - return the diagnostics from the new state
     *)
-let on_doc : Path.t -> string -> unit Handler.t =
- fun file contents ->
+let on_doc
+    : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
+  =
+ fun ?changes:_ file contents ->
   let open Ligo_interface in
   let@ () = send_debug_msg @@ "Updating DOC :" ^ Path.to_string file in
   let@ get_scope_buffers = ask_docs_cache in
@@ -17,9 +19,19 @@ let on_doc : Path.t -> string -> unit Handler.t =
       lift_IO @@ failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string file
     | Some s -> return s
   in
-  let@ { deprecated; max_number_of_problems; _ } = ask_config in
-  let ({ definitions; _ } as defs_and_diagnostics : defs_and_diagnostics) =
-    Ligo_interface.get_defs_and_diagnostics ~deprecated ~code:contents file
+  let@ { config = { deprecated; max_number_of_problems; _ }; _ } = ask in
+  (* We want the following behavior:
+     * no changes (document opened): download JSON, update storage diagnostics
+     * storage not found: do not download JSON, clear storage diagnostics
+     * storage not changed: do not download JSON, keep previous storage diagnostics
+     * storage changed: download JSON, update storage diagnostics *)
+  let@ ({ definitions; _ } as defs_and_diagnostics : defs_and_diagnostics) =
+    lift_IO
+    @@ Ligo_interface.get_defs_and_diagnostics
+         ?json_download:None
+         ~deprecated
+         ~code:contents
+         file
   in
   Docs_cache.set
     get_scope_buffers

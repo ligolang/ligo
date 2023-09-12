@@ -6,6 +6,7 @@ module Formatter = Ligo_formatter
 let measure_contract (raw_options : Raw_options.t) entry_point source_file =
   ( Formatter.contract_size_format
   , fun ~raise ->
+      let open Lwt.Let_syntax in
       let protocol_version =
         Helpers.protocol_to_variant ~raise raw_options.protocol_version
       in
@@ -19,7 +20,7 @@ let measure_contract (raw_options : Raw_options.t) entry_point source_file =
       Deprecation.entry_cli ~raise syntax entry_point;
       let options = Compiler_options.make ~protocol_version ~raw_options ~syntax () in
       let Compiler_options.{ module_; _ } = options.frontend in
-      let Build.{ entrypoint; views } =
+      let%bind Build.{ entrypoint; views } =
         Build.build_contract
           ~raise
           ~options
@@ -28,7 +29,7 @@ let measure_contract (raw_options : Raw_options.t) entry_point source_file =
       in
       let michelson = entrypoint.value in
       let views = List.map ~f:(fun { name; value } -> name, value) views in
-      let contract =
+      let%bind contract =
         Compile.Of_michelson.build_contract
           ~raise
           ~enable_typed_opt:options.backend.enable_typed_opt
@@ -36,7 +37,8 @@ let measure_contract (raw_options : Raw_options.t) entry_point source_file =
           michelson
           views
       in
-      Compile.Of_michelson.measure ~raise contract, [] )
+      let%map measure = Compile.Of_michelson.measure ~raise contract in
+      measure, [] )
 
 
 let list_declarations (raw_options : Raw_options.t) source_file =
@@ -69,6 +71,7 @@ let list_declarations (raw_options : Raw_options.t) source_file =
 let resolve_config (raw_options : Raw_options.t) source_file =
   ( Resolve_config.config_format
   , fun ~raise ->
+      let open Lwt.Let_syntax in
       let syntax =
         Syntax.of_string_opt
           ~support_pascaligo:raw_options.deprecated
@@ -87,5 +90,5 @@ let resolve_config (raw_options : Raw_options.t) source_file =
           ~has_env_comments:false
           ()
       in
-      let config = Resolve_config.resolve_config ~raise ~options syntax source_file in
+      let%map config = Resolve_config.resolve_config ~raise ~options syntax source_file in
       config, [] )

@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nWarnings related to a contract's storage should now be displayed by the language server for TZIP-16 compliance. These warnings are only visible if there is a top-level definition called `storage` with an appropriate storage type.\\n\\nIn addition, more diagnostics will be shown, such as ones for unused variables.\\n\\n"
+merge_request: '2820'
+title: "[#1994] Display TZIP-16 storage checks in the LSP"
+type: added
+            

@@ -22,8 +22,12 @@ let init_storage threshold counter pkeys =
 
 
 let _, first_contract =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 0 in
+  let%map env = test_environment () in
+  let id = List.nth_exn env.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
@@ -73,6 +77,9 @@ let chain_id_zero =
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params ~raise counter payload keys is_validl f =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let open Ast_unified in
   let prog = get_program ~raise f () in
   let aux acc (key, is_valid) =
@@ -87,10 +94,12 @@ let params ~raise counter payload keys is_validl f =
            ; chain_id_zero
            ]
     in
-    let signature = sign_message ~raise prog msg sk in
+    let%map signature = sign_message ~raise prog msg sk in
     e_pair ~loc (e_key_hash ~loc pkh) (e_signature ~loc signature) :: acc
   in
-  let signed_msgs = List.fold ~f:aux ~init:[] (List.rev @@ List.zip_exn keys is_validl) in
+  let%map signed_msgs =
+    Lwt_list.fold_left_s aux [] (List.rev @@ List.zip_exn keys is_validl)
+  in
   e_record_ez
     ~loc
     [ "counter", e_nat ~loc counter
@@ -101,13 +110,16 @@ let params ~raise counter payload keys is_validl f =
 
 (* Provide one valid signature when the threshold is two of two keys *)
 let not_enough_1_of_2 ~raise f () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let program = get_program ~raise f () in
   let exp_failwith = "Not enough signatures passed the check" in
   let keys = gen_keys () in
   let test_params = params ~raise 0 empty_payload [ keys ] [ true ] f in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(
-      make_options ~env:(test_environment ()) ~sender:first_contract ())
+  let%map options =
+    Proto_alpha_utils.Memory_proto_alpha.make_options ~env ~sender:first_contract ()
   in
   let () =
     expect_string_failwith_twice

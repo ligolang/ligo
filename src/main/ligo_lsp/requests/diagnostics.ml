@@ -46,7 +46,7 @@ let partition_simple_diagnostics
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
 let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list =
- fun { errors; warnings; _ } ->
+ fun { errors; warnings; storage_diagnostics = { storage_warnings }; definitions = _ } ->
   let open Option.Let_syntax in
   let mk_diag region message severity =
     let range = Range.of_region region in
@@ -73,4 +73,4 @@ let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic l
     | Virtual _ -> None
   in
   List.concat_map ~f:extract_error_information errors
-  @ List.filter_map ~f:extract_warning_information warnings
+  @ List.filter_map ~f:extract_warning_information (storage_warnings @ warnings)

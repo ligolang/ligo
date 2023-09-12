@@ -1,5 +1,4 @@
-
-(* [try_with] is a wrapper for error that may works in two modes:
+(** [try_with] is a wrapper for error that may works in two modes:
    - [fast_fail = false] i.e. recovery mode that allows raise a fatal error by
      [raise exn] or remember non-fatal errors by [log_error exn] that can be
      retrieved by [get_errors ()];
@@ -36,51 +35,66 @@ type ('error,'warning) catch = {
   errors   : unit -> 'error list;
 }
 
-(* [try_with f handler] call [f] with [~raise] argument and in case of fatal
-   error [err] call [handler err]. *)
+(** [try_with f handler] call [f] with [~raise] argument and in case of fatal
+    error [err] call [handler err]. *)
 val try_with : ?fast_fail:bool ->
   (raise:('error, 'warning) raise ->
     catch:('error, 'warning) catch -> 'a) ->
    (catch:('error, 'warning) catch -> 'error -> 'a) -> 'a
-(*
-Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]
- *)
+
+(** [try_with_lwt f handler] works similarly to [try_with], but it uses [Lwt.catch] under
+    the hood, allowing Lwt's rejected promises to be handled. Very important: whenever
+    your handlers return Lwt promises, you must use this function instead of [try_with]. *)
+val try_with_lwt : ?fast_fail:bool ->
+  (raise:('error, 'warning) raise ->
+    catch:('error, 'warning) catch -> 'a Lwt.t) ->
+   (catch:('error, 'warning) catch -> 'error -> 'a Lwt.t) -> 'a Lwt.t
+
+(** Wrap the [try_with] in a stdlib [result = Ok 'value | Error 'error]. *)
 val to_stdlib_result : (raise:('error,'warn) raise -> 'value) -> ('value * 'warn list, 'error * 'warn list) result
 
-(* Wrap [try_wait'] and return value and all logged errors with fatal one if it happens *)
+(** Wrap the [try_with_lwt] in a [Lwt_result.t]. Very important: whenever your handler
+    return a Lwt promise, you must use this function instead of [to_stdlib_result]. *)
+val to_stdlib_result_lwt : (raise:('error,'warn) raise -> 'value Lwt.t) -> ('value * 'warn list, 'error * 'warn list) Lwt_result.t
+
+(** Wrap [try_wait'] and return value and all logged errors with fatal one if it happens *)
 val extract_all_errors : (raise:('error,_) raise -> 'value) -> 'error list * 'value option
 
-(*
-Act as a map for the propagated error. Save [fast_fail] mode.
-*)
+(** Act as a map for the propagated error. Save [fast_fail] mode. *)
 val trace : raise:('b,'w) raise -> ('a -> 'b) -> (raise:('a,'w) raise -> 'c) -> 'c
-(* Similar but erase the previous error instead of casting it *)
+
+(** Similar to [trace] but erase the previous error instead of casting it. *)
 val trace_strong : raise:('a,'w) raise -> 'a -> (raise:('b,'w) raise -> 'c) -> 'c
 
-(* collect multples errors into a list *)
+(** Similar to [trace] but with the same considerations as [try_with_lwt]. Very important:
+    use this function whenever your handler returns a Lwt promise. *)
+val trace_lwt : raise:('b,'w) raise -> ('a -> 'b Lwt.t) -> (raise:('a,'w) raise -> 'c Lwt.t) -> 'c Lwt.t
+
+(** collect multples errors into a list *)
 val collect : raise:('a list,'w) raise -> (raise:('a,'w) raise -> 'b) list -> 'b list
 
-(* Unwrap an option using our own error instead of exception *)
+(** Unwrap an option using our own error instead of exception *)
 val trace_option : raise:('a,'w) raise -> 'a -> 'b option -> 'b
-(* Check that option contains some value otherwise returns default and log error *)
+
+(** Check that option contains some value otherwise returns default and log error *)
 val validate_option : raise:('a,'w) raise -> err:'a -> default:'b -> 'b option -> 'b
 
-(* Raise error if the option is Some *)
+(** Raise error if the option is [Some]. *)
 val trace_assert_fail_option : raise:('a,'w) raise -> 'a -> 'b option -> unit
 
-(* Raise error if the option is None *)
+(** Raise error if the option is [None]. *)
 val trace_assert_option : raise:('a,'w) raise -> 'a -> 'b option -> unit
 
-(* Unwrap the result, raising the error if needed *)
+(** Unwrap the result, raising the error if needed. *)
 val from_result  : raise:('b,'w) raise -> ('a,'b) result -> 'a
 
-(* Check if the function is not failing *)
+(** Check if the function is not failing. *)
 val to_bool : (raise:('b,'w) raise -> 'a) -> bool
 
-(* Return the evaluation of the functino as Some(res) | None *)
+(** Return the evaluation of the function as [Some(res) | None]. *)
 val to_option : (raise:('b,'w) raise -> 'a) -> 'a option
 
-(* Run the second function if the first fails *)
+(** Run the second function if the first fails. *)
 val bind_or : raise:('a,'w) raise -> (raise:('a,'w) raise -> 'c) -> (raise:('b,'w) raise -> 'c) -> 'c
 val bind_exists : raise:('a,'w) raise -> ((raise:('a,'w) raise -> 'b) * (raise:('a,'w) raise -> 'b) list) -> 'b
 val bind_map_or :
@@ -90,11 +104,11 @@ val bind_map_or :
   ('c -> raise:('d,'w) raise -> 'b) ->
   'c -> 'b
 
-(* Dummy raise instance for debug and workarounds.
+(** Dummy raise instance for debug and workarounds.
    Don't use it in production! *)
 val raise_failwith : string -> ('e,'w) raise
 
-(*
+(**
 Assert module, raise exception if the assertion is false
 *)
 module Assert :

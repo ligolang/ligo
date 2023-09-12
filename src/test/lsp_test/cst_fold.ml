@@ -32,7 +32,7 @@ let get_cst_fold
   in
   match cst with
   | Ok (CameLIGO cst) ->
-    let result = Cst_cameligo.Fold.fold accumulator fold_function map_function cst in
+    let result = Cst_cameligo.Fold.fold_cst accumulator fold_function map_function cst in
     check testable "List of list sizes is incorrect" expected result
   | Error e -> fail e
   | _ -> fail "FATAL ERROR: can't get CST"

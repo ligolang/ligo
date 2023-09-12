@@ -65,7 +65,13 @@ let validate t =
   (* stat main file here *)
   let* () = validate_main_file ~main in
   (* check storage *)
-  let* () = validate_storage ~main ~storage_fn ~storage_arg () in
+  let* () =
+    validate_storage
+      ~main:(BuildSystem.Source_input.From_file main)
+      ~storage_fn
+      ~storage_arg
+      ()
+  in
   Ok ()
 
 

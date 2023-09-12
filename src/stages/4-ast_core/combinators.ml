@@ -73,7 +73,11 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
 
 let ez_t_sum ~loc ?layout lst =
   (* inconsistent naming conventions, but [t_sum_ez] is already taken *)
-  let layout = match layout with Some x -> x | None -> Layout.default_of_labels (List.map ~f:fst lst) in
+  let layout =
+    match layout with
+    | Some x -> x
+    | None -> Layout.default_of_labels (List.map ~f:fst lst)
+  in
   let layout = Some layout in
   let row = Row.of_alist_exn ~layout lst in
   make_t ~loc @@ T_sum row

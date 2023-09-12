@@ -7,14 +7,14 @@ let mfile = "./contracts/pledge.mligo"
 
 let oracle_addr, oracle_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 0 in
+  let id = List.nth_exn (Lwt_main.run @@ test_environment ()).identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt, kt
 
 
 let stranger_contract =
   let open Proto_alpha_utils.Memory_proto_alpha in
-  let id = List.nth_exn (test_environment ()).identities 1 in
+  let id = List.nth_exn (Lwt_main.run @@ test_environment ()).identities 1 in
   id.implicit_contract
 
 
@@ -34,12 +34,10 @@ let pledge ~raise f () =
   let storage = e_address ~loc oracle_addr in
   let parameter = e_unit ~loc in
   let options =
-    Proto_alpha_utils.Memory_proto_alpha.(
-      make_options
-        ~env:(test_environment ())
-        ~sender:oracle_contract
-        ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
-        ())
+    make_options
+      ~sender:oracle_contract
+      ~amount:Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+      ()
   in
   expect_eq
     ~raise
@@ -54,10 +52,7 @@ let distribute ~raise f () =
   let program = get_program ~raise f () in
   let storage = e_address ~loc oracle_addr in
   let parameter = empty_message in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(
-      make_options ~env:(test_environment ()) ~sender:oracle_contract ())
-  in
+  let options = make_options ~sender:oracle_contract () in
   expect_eq
     ~raise
     ~options
@@ -71,10 +66,7 @@ let distribute_unauthorized ~raise f () =
   let program = get_program ~raise f () in
   let storage = e_address ~loc oracle_addr in
   let parameter = empty_message in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(
-      make_options ~env:(test_environment ()) ~sender:stranger_contract ())
-  in
+  let options = make_options ~sender:stranger_contract () in
   expect_string_failwith
     ~raise
     ~options

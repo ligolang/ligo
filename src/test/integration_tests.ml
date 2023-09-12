@@ -281,6 +281,9 @@ let string_arithmetic ~raise f : unit =
 
 
 let bytes_arithmetic ~raise f : unit =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = type_file ~raise f in
   let foo = e_bytes_hex_ez ~loc "0f00" in
   let foototo = e_bytes_hex_ez ~loc "0f007070" in
@@ -294,11 +297,11 @@ let bytes_arithmetic ~raise f : unit =
   let () = expect_eq ~raise program "slice_op" tata at in
   let () = expect_fail ~raise program "slice_op" foo in
   let () = expect_fail ~raise program "slice_op" ba in
-  let b1 =
+  let%bind b1 =
     Test_helpers.run_typed_program_with_imperative_input ~raise program "hasherman" foo
   in
   let () = expect_eq_core ~raise program "hasherman" foo b1 in
-  let b3 =
+  let%map b3 =
     Test_helpers.run_typed_program_with_imperative_input
       ~raise
       program
@@ -377,14 +380,17 @@ let comparable_mligo ~raise () : unit =
 
 
 let crypto ~raise f : unit =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = type_file ~raise f in
   let foo = e_bytes_hex_ez ~loc "0f00" in
   let foototo = e_bytes_hex_ez ~loc "0f007070" in
-  let b1 =
+  let%bind b1 =
     Test_helpers.run_typed_program_with_imperative_input ~raise program "hasherman512" foo
   in
   let () = expect_eq_core ~raise program "hasherman512" foo b1 in
-  let b2 =
+  let%bind b2 =
     Test_helpers.run_typed_program_with_imperative_input
       ~raise
       program
@@ -395,7 +401,7 @@ let crypto ~raise f : unit =
     trace_assert_fail_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (b2, b1)
   in
-  let b4 =
+  let%bind b4 =
     Test_helpers.run_typed_program_with_imperative_input
       ~raise
       program
@@ -403,7 +409,7 @@ let crypto ~raise f : unit =
       foo
   in
   let () = expect_eq_core ~raise program "hasherman_blake" foo b4 in
-  let b5 =
+  let%map b5 =
     Test_helpers.run_typed_program_with_imperative_input
       ~raise
       program
@@ -1417,12 +1423,15 @@ let jsligo_let_multiple ~raise () : unit =
 
 
 let balance_test_options ~raise () =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let balance =
     trace_option ~raise (test_internal "could not convert balance")
     @@ Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "0"
   in
-  Proto_alpha_utils.Memory_proto_alpha.(
-    make_options ~env:(test_environment ()) ~balance ())
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
+  Proto_alpha_utils.Memory_proto_alpha.make_options ~env ~balance ()
 
 
 let balance_constant ~raise f : unit =
@@ -1433,6 +1442,9 @@ let balance_constant ~raise f : unit =
 
 
 let amount ~raise f : unit =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = type_file ~raise f in
   let input = e_unit ~loc in
   let expected = e_int ~loc 42 in
@@ -1441,23 +1453,25 @@ let amount ~raise f : unit =
     | Some t -> t
     | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
   in
-  let options =
-    Proto_alpha_utils.Memory_proto_alpha.(
-      make_options ~env:(test_environment ()) ~amount ())
-  in
+  let%bind env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
+  let%map options = Proto_alpha_utils.Memory_proto_alpha.make_options ~env ~amount () in
   expect_eq ~raise ~options program "check_" input expected
 
 
 let addr_test ~raise program =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let open Proto_alpha_utils.Memory_proto_alpha in
+  let%map env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let addr =
     Protocol.Alpha_context.Contract.to_b58check
-    @@ (List.nth_exn (test_environment ()).identities 0).implicit_contract
+    @@ (List.nth_exn env.identities 0).implicit_contract
   in
   let open Tezos_crypto in
   let key_hash =
     Signature.Public_key_hash.to_b58check
-    @@ (List.nth_exn (test_environment ()).identities 0).public_key_hash
+    @@ (List.nth_exn env.identities 0).public_key_hash
   in
   expect_eq ~raise program "check" (e_key_hash ~loc key_hash) (e_address ~loc addr)
 
@@ -1612,6 +1626,9 @@ let let_in_multi_bind ~raise () : unit =
 
 
 let bytes_unpack ~raise f : unit =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
   let program = type_file ~raise f in
   let () =
     expect_eq
@@ -1625,9 +1642,10 @@ let bytes_unpack ~raise f : unit =
     expect_eq ~raise program "id_int" (e_int ~loc 42) (e_some ~loc (e_int ~loc 42))
   in
   let open Proto_alpha_utils.Memory_proto_alpha in
+  let%map env = Proto_alpha_utils.Memory_proto_alpha.test_environment () in
   let addr =
     Protocol.Alpha_context.Contract.to_b58check
-    @@ (List.nth_exn (test_environment ()).identities 0).implicit_contract
+    @@ (List.nth_exn env.identities 0).implicit_contract
   in
   let () =
     expect_eq

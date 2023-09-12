@@ -885,15 +885,16 @@ let optimize : type meta. Environment.Protocols.t -> has_comment:(meta -> bool) 
   let x = use_lambda_instr x in
   x
 
-let rec optimize_with_types : type l. raise:_ -> typer_oracle:((l, Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prim) node -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map)-> Environment.Protocols.t -> has_comment:(l -> bool) -> l michelson -> l michelson =
+let rec optimize_with_types : type l. raise:_ -> typer_oracle:((l, Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prim) node -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map Lwt.t) -> Environment.Protocols.t -> has_comment:(l -> bool) -> l michelson -> l michelson Lwt.t =
   fun ~raise ~typer_oracle proto ~has_comment contract ->
+  let open Lwt.Let_syntax in
   let node_string_of_canonical c = let c = Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.strings_of_prims c in
                                    Tezos_micheline.Micheline.inject_locations (fun x -> x) c in
   let canonical, locs = Tezos_micheline.Micheline.extract_locations contract in
   let recover_loc l = List.Assoc.find_exn locs ~equal:Int.equal l in
   let canonical = Proto_alpha_utils.Trace.trace_alpha_tzresult ~raise (fun _ -> failwith "Could not parse primitives from strings") @@
             Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.prims_of_strings canonical in
-  let map = typer_oracle @@ Tezos_micheline.Micheline.inject_locations (fun x -> recover_loc x) canonical in
+  let%bind map = typer_oracle @@ Tezos_micheline.Micheline.inject_locations recover_loc canonical in
   let type_map = List.map ~f:(fun (i, (l, _)) -> (i, List.map ~f:(fun c -> node_string_of_canonical c) l)) map in
   match Tezos_micheline.Micheline.inject_locations (fun x -> x) canonical with
     | Seq (l, parameter :: storage :: code :: rest) ->
@@ -907,5 +908,5 @@ let rec optimize_with_types : type l. raise:_ -> typer_oracle:((l, Proto_alpha_u
          Tezos_micheline.Micheline.map_node recover_loc
            (fun v -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Michelson_v1_primitives.string_of_prim v) node in
        let contract = Seq (recover_loc l, [recover_locs parameter ; recover_locs storage; code] @ (List.map ~f:recover_locs rest)) in
-       if changed then optimize_with_types ~raise ~typer_oracle proto ~has_comment contract else contract
-    | _ -> contract
+       if changed then optimize_with_types ~raise ~typer_oracle proto ~has_comment contract else Lwt.return contract
+    | _ -> Lwt.return contract

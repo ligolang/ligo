@@ -50,6 +50,7 @@ depends: [
   "prometheus" {>= "1.2"}
   # work around tezos' failure to constrain
   "lwt" {= "5.6.1"}
+  "lwt_ppx"
   "bisect_ppx" {>= "2.3"}
   "irmin"
   "cmdliner" {= "1.1.0"}

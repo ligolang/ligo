@@ -25,7 +25,7 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
     | S_reg _ -> Continue (mk_region x.region)
     | _ -> Skip
   in
-  Some (fold [] (Fun.flip List.cons) get_range cst)
+  Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
 let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
@@ -37,7 +37,7 @@ let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
     | S_reg _ -> Continue (mk_region x.region)
     | _ -> Skip
   in
-  Some (fold [] (Fun.flip List.cons) get_range cst)
+  Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
@@ -53,7 +53,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
     | S_reg _ -> Continue (mk_region x.region)
     | _ -> Skip
   in
-  Some (fold [] (Fun.flip List.cons) get_range cst)
+  Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
 let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =

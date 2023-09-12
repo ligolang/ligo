@@ -133,7 +133,12 @@ let get_groups md_file : snippetsmap =
   if Object : run the ligo test framework
 **)
 let compile_groups ~raise filename grp_list =
-  let aux : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> unit =
+  Lwt_main.run
+  @@
+  let open Lwt.Let_syntax in
+  let aux
+      : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> unit Lwt.t
+    =
    fun ((syntax, grp, protocol_version), (lang, contents)) ->
     trace ~raise (test_md_file filename syntax grp contents)
     @@ fun ~raise ->
@@ -151,7 +156,7 @@ let compile_groups ~raise filename grp_list =
     | Meta ->
       let options = Compiler_options.set_test_flag options true in
       let typed = Build.qualified_typed_str ~raise ~options contents in
-      let (_ : bool * (group_name * Ligo_interpreter.Types.value) list) =
+      let%map (_ : bool * (group_name * Ligo_interpreter.Types.value) list) =
         Interpreter.eval_test ~options ~raise ~steps:5000 typed
       in
       ()
@@ -170,12 +175,12 @@ let compile_groups ~raise filename grp_list =
       in
       let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise expanded in
       (* Format.printf "Mini_c AST: %a\n" (Mini_c.PP.expression) mini_c; *)
-      let _michelson : Stacking__Compiler_program.compiled_expression =
+      let%map _michelson : Stacking__Compiler_program.compiled_expression Lwt.t =
         Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c
       in
       ()
   in
-  let () = List.iter ~f:aux grp_list in
+  let%map () = Lwt_list.iter_s aux grp_list in
   ()
 
 

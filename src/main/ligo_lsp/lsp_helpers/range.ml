@@ -59,6 +59,16 @@ let cover_nseq (ranges : t Simple_utils.Utils.nseq) : t =
   List.fold ~f:cover ~init:h t
 
 
+(** Return [true] iff [r1] touches [r2], or [false] otherwise. Returns [true] even if the
+    intersection point is just a zero-length range, i.e., [r1.start] touches [r2.end_] or
+    [r1.end_] touches [r2.start]. *)
+let intersects (r1 : t) (r2 : t) : bool =
+  contains_position r1.start r2
+  || contains_position r1.end_ r2
+  || contains_position r2.start r1
+  || contains_position r2.end_ r1
+
+
 (** Functions to quickly construct ranges. Designed to be [open]ed *)
 module Construct = struct
   let range

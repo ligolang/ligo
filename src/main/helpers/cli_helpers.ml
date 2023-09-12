@@ -165,12 +165,12 @@ let return_with_custom_formatter ~cli_analytics ~skip_analytics
     ()
 
 
-let return_result ~cli_analytics ~skip_analytics
+let return_result_lwt ~cli_analytics ~skip_analytics
     :  return:return ref -> ?show_warnings:bool -> ?output_file:string -> display_format:_
     -> no_colour:bool -> warning_as_error:bool
     -> 'value Display.format
        * (raise:(Main_errors.all, Main_warnings.all) Trace.raise
-          -> 'value * Analytics.analytics_inputs)
+          -> ('value * Analytics.analytics_inputs) Lwt.t)
     -> unit
   =
  fun ~return
@@ -183,7 +183,7 @@ let return_result ~cli_analytics ~skip_analytics
   Analytics.propose_term_acceptation ~skip_analytics;
   let () =
     try
-      let result = Trace.to_stdlib_result f in
+      let result = Lwt_main.run @@ Trace.to_stdlib_result_lwt f in
       let value, analytics =
         match result with
         | Ok ((v, analytics), _w) -> Ok v, analytics
@@ -214,6 +214,33 @@ let return_result ~cli_analytics ~skip_analytics
   | Done -> Analytics.push_collected_metrics ~skip_analytics
   | Compileur_Error -> ()
   | Exception _ -> ()
+
+
+let return_result ~cli_analytics ~skip_analytics
+    :  return:return ref -> ?show_warnings:bool -> ?output_file:string -> display_format:_
+    -> no_colour:bool -> warning_as_error:bool
+    -> 'value Display.format
+       * (raise:(Main_errors.all, Main_warnings.all) Trace.raise
+          -> 'value * Analytics.analytics_inputs)
+    -> unit
+  =
+ fun ~return
+     ?show_warnings
+     ?output_file
+     ~display_format
+     ~no_colour
+     ~warning_as_error
+     (value_format, f) ->
+  return_result_lwt
+    ~cli_analytics
+    ~skip_analytics
+    ~return
+    ?show_warnings
+    ?output_file
+    ~display_format
+    ~no_colour
+    ~warning_as_error
+    (value_format, fun ~raise -> Lwt.return @@ f ~raise)
 
 
 type command = string * string array

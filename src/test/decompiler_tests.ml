@@ -14,7 +14,8 @@ let remove_extra_spaces : string -> string =
     <@ String.split_on_chars ~on:[ ' '; '\r'; '\n' ])
 
 
-let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list =
+let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t =
+  let open Lwt.Let_syntax in
   let options =
     Compiler_options.Raw_options.make
       ~with_types:true
@@ -22,8 +23,8 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list =
       ~syntax:(Syntax.to_string syntax)
       ()
   in
-  let ({ errors; warnings = _; definitions }
-        : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
+  let%map ({ errors; warnings = _; storage_diagnostics = _; definitions }
+            : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
     =
     Lsp_helpers.Ligo_interface.Get_scope.get_defs_and_diagnostics
       options
@@ -53,10 +54,11 @@ type decompiler_test_ty_expr =
   }
 
 let mk_decompiler_test { code; expected; syntax; name } =
+  let open Lwt.Let_syntax in
   Alcotest.test_case (Syntax.to_string syntax ^ ": " ^ name) `Quick
   @@ fun () ->
   let ast_core =
-    match get_defs ~code ~syntax with
+    match%map get_defs ~code ~syntax with
     | [] -> fail "No defs"
     | Variable vdef :: _ ->
       (* ^ E.g. "let x a = a + 1" creates two vdefs but the one for x is always first*)
@@ -73,7 +75,9 @@ let mk_decompiler_test { code; expected; syntax; name } =
     print_string @@ Format.asprintf "Ast_core:\n%a\n" ty_expr_to_formatter ast_core
   in *)
   let ast_unified =
-    let result = Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ast_core in
+    let result =
+      Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr @@ Lwt_main.run ast_core
+    in
     match result with
     | Ok (s, _warnings) -> s ~syntax
     | Error (errors, _warnings) ->

@@ -705,7 +705,7 @@ let compile_file =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -812,7 +812,7 @@ let compile_parameter =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -917,7 +917,7 @@ let compile_expression =
         ~raw_options
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1022,7 +1022,7 @@ let compile_storage =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1034,7 +1034,7 @@ let compile_storage =
     @@ Api.Compile.storage
          raw_options
          entry_point
-         source_file
+         (From_file source_file)
          expression
          amount
          balance
@@ -1121,7 +1121,7 @@ let compile_constant =
         ~raw_options
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1374,7 +1374,7 @@ let test =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1446,7 +1446,7 @@ let test_expr =
         ~raw_options
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1528,7 +1528,7 @@ let dry_run =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1625,7 +1625,7 @@ let evaluate_call =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1718,7 +1718,7 @@ let evaluate_expr =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1805,7 +1805,7 @@ let interpret =
           ~raw_options
           ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -1957,7 +1957,7 @@ let measure_contract =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics
       ~cli_analytics
       ~return
@@ -2065,7 +2065,7 @@ let resolve_config =
         ~source_file
         ()
     in
-    return_result
+    return_result_lwt
       ~skip_analytics:true
       ~cli_analytics
       ~return
@@ -3077,7 +3077,11 @@ module Lsp_server = struct
     let log_file = Filename.(temp_dir_name ^/ "ligo_language_server.log") in
     Out_channel.with_file ~append:true log_file ~f:(fun outc ->
         Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
-        Logs.set_level (Some Logs.Debug);
+        (* Disable logs for anything that is not linol, as it causes crashes. *)
+        List.iter (Logs.Src.list ()) ~f:(fun src ->
+            match Logs.Src.name src with
+            | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
+            | _ -> Logs.Src.set_level src None);
         let s = new Server.lsp_server in
         let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
         let shutdown () = Caml.(s#get_status = `ReceivedExit) in

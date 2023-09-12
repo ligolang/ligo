@@ -10,4 +10,6 @@
   ligo_compile
   ligo_lib
   ligo_prim
-  BuildSystem))
+  BuildSystem)
+ (preprocess
+  (pps ppx_let)))

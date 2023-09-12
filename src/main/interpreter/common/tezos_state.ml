@@ -85,18 +85,18 @@ let contexts : context list ref = ref []
 let get_timestamp (ctxt : context) = ctxt.raw.header.shell.timestamp
 
 let get_balance ~raise ~loc ~calltrace (ctxt : context) addr =
-  Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
   @@ Tezos_alpha_test_helpers.Context.Contract.balance (B ctxt.raw) addr
 
 
 let get_voting_power ~raise ~loc ~calltrace (ctxt : context) key_hash =
   let vp = Tezos_alpha_test_helpers.Context.get_voting_power (B ctxt.raw) key_hash in
-  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) vp
+  Lwt.map (Trace.trace_alpha_shell_tzresult ~raise (throw_obj_exc loc calltrace)) vp
 
 
 let get_total_voting_power ~raise ~loc ~calltrace (ctxt : context) =
   let tvp = Tezos_alpha_test_helpers.Context.get_total_voting_power (B ctxt.raw) in
-  Trace.trace_alpha_shell_tzresult_lwt ~raise (throw_obj_exc loc calltrace) tvp
+  Lwt.map (Trace.trace_alpha_shell_tzresult ~raise (throw_obj_exc loc calltrace)) tvp
 
 
 let implicit_account
@@ -204,16 +204,17 @@ let set_big_map ~raise (ctxt : context) id version k_ty v_ty =
 
 
 let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
+  let open Lwt.Let_syntax in
   let addr = originated_account ~raise ~loc ~calltrace "Trying to get a contract" m in
-  let st_v =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind st_v =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Tezos_protocol.Protocol.Alpha_services.Contract.storage
          Tezos_alpha_test_helpers.Block.rpc_ctxt
          ctxt.raw
          addr
   in
-  let st_ty =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind st_ty =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Tezos_protocol.Protocol.Alpha_services.Contract.script
          Tezos_alpha_test_helpers.Block.rpc_ctxt
          ctxt.raw
@@ -223,19 +224,20 @@ let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
     Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace)
     @@ Memory_proto_alpha.Protocol.Script_repr.force_decode st_ty.code
   in
-  let ({ storage_type; _ } : Tezos_protocol.Protocol.Script_ir_translator.toplevel) =
+  let%map ({ storage_type; _ } : Tezos_protocol.Protocol.Script_ir_translator.toplevel) =
     (* Feels wrong :'( *)
-    let alpha_context, _, _ =
+    let%bind alpha_context, _, _ =
       let open Tezos_raw_protocol in
-      Trace.trace_alpha_tzresult_lwt ~raise (fun _ -> corner_case ())
+      Lwt.map (Trace.trace_alpha_tzresult ~raise (fun _ -> corner_case ()))
       @@ Alpha_context.prepare
            ~level:ctxt.raw.header.shell.level
            ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
            ~timestamp:(get_timestamp ctxt)
            ctxt.raw.context
     in
-    fst
-    @@ Trace.trace_alpha_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+    Lwt.map
+      Simple_utils.Function.(
+        fst <@ Trace.trace_alpha_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Tezos_protocol.Protocol.Script_ir_translator.parse_toplevel alpha_context x
   in
   let storage_type =
@@ -248,9 +250,10 @@ let get_storage ~raise ~loc ~calltrace ctxt (m : Contract.t) =
 
 
 let get_alpha_context ~raise ctxt =
-  let alpha_context, _, _ =
+  let open Lwt.Let_syntax in
+  let%map alpha_context, _, _ =
     let open Tezos_raw_protocol in
-    Trace.trace_alpha_tzresult_lwt ~raise (fun _ -> corner_case ())
+    Lwt.map (Trace.trace_alpha_tzresult ~raise (fun _ -> corner_case ()))
     @@ Alpha_context.prepare
          ~level:ctxt.raw.header.shell.level
          ~predecessor_timestamp:ctxt.raw.header.shell.timestamp
@@ -599,33 +602,41 @@ let get_consumed_gas x =
 
 let bake_ops
     :  raise:r -> loc:Location.t -> calltrace:calltrace -> context
-    -> (Tezos_alpha_test_helpers.Incremental.t -> tezos_op) list -> add_operation_outcome
+    -> (Tezos_alpha_test_helpers.Incremental.t -> tezos_op) list
+    -> add_operation_outcome Lwt.t
   =
  fun ~raise ~loc ~calltrace ctxt operation ->
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   (* First check if baker is going to be successfully selected *)
-  let _ =
-    Trace.trace_tzresult_lwt ~raise (fun _ ->
-        raise.error
-          (generic_error
-             ~calltrace
-             loc
-             "Baker cannot bake. Enough rolls? Enough cycles passed?"))
+  let%bind _ =
+    Lwt.map
+      (Trace.trace_tzresult ~raise (fun _ ->
+           raise.error
+             (generic_error
+                ~calltrace
+                loc
+                "Baker cannot bake. Enough rolls? Enough cycles passed?")))
     @@ Block.(get_next_baker ~policy:ctxt.internals.baker_policy ctxt.raw)
   in
-  let incr =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind incr =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Incremental.begin_construction ~policy:ctxt.internals.baker_policy ctxt.raw
   in
-  let aux incr op =
-    Lwt_main.run @@ Incremental.add_operation ~check_size:false incr (op incr)
+  let aux incr op = Incremental.add_operation ~check_size:false incr (op incr) in
+  let rec fold_result_s ~init ~f = function
+    | [] -> Lwt.return (Ok init)
+    | x :: xs ->
+      (match%bind f init x with
+      | Error err -> Lwt.return (Error err)
+      | Ok y -> fold_result_s ~init:y ~f xs)
   in
-  match List.fold_result ~f:aux ~init:incr operation with
+  match%bind fold_result_s ~f:aux ~init:incr operation with
   | Ok incr ->
     let last_operations = get_last_operations_result incr in
     let consum = get_consumed_gas (List.hd_exn last_operations) in
-    let raw =
-      Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+    let%bind raw =
+      Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
       @@ Incremental.finalize_block incr
     in
     let ctxt =
@@ -634,47 +645,50 @@ let bake_ops
         ~init:{ ctxt with raw }
         last_operations
     in
-    Success (ctxt, consum)
-  | Error errs -> Fail errs
+    Lwt.return (Success (ctxt, consum))
+  | Error errs -> Lwt.return (Fail errs)
 
 
 let bake_op
     :  raise:r -> loc:Location.t -> calltrace:calltrace -> context -> tezos_op
-    -> add_operation_outcome
+    -> add_operation_outcome Lwt.t
   =
  fun ~raise ~loc ~calltrace ctxt op ->
   bake_ops ~raise ~loc ~calltrace ctxt [ (fun _ -> op) ]
 
 
 let bake_until_n_cycle_end ~raise ~loc ~calltrace (ctxt : context) n =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
-  let raw =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%map raw =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Block.bake_until_n_cycle_end ~policy:ctxt.internals.baker_policy n ctxt.raw
   in
   { ctxt with raw }
 
 
 let register_delegate ~raise ~loc ~calltrace (ctxt : context) pkh =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
-  let operation =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind operation =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Op.delegation ~gas_limit:Max ~force_reveal:true (B ctxt.raw) contract (Some pkh)
   in
-  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 
 let stake ~raise ~loc ~calltrace (ctxt : context) pkh amt =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   let contract = Tezos_raw_protocol.Alpha_context.Contract.Implicit pkh in
   let amt = Int64.of_int (Z.to_int amt) in
   let source = unwrap_source ~raise ~loc ~calltrace contract in
   let entrypoint = Tezos_raw_protocol.Entrypoint_repr.stake in
-  let operation : Tezos_raw_protocol.Alpha_context.packed_operation =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind (operation : Tezos_raw_protocol.Alpha_context.packed_operation) =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ (* TODO: might let user choose here *)
     Op.transaction
       ~force_reveal:true
@@ -686,12 +700,13 @@ let stake ~raise ~loc ~calltrace (ctxt : context) pkh amt =
       contract
       (Test_tez.of_mutez_exn amt)
   in
-  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> ctxt
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
 
 let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   let value = ligo_to_canonical ~raise ~loc ~calltrace value in
   let hash =
@@ -700,8 +715,8 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
   in
   let hash = Tezos_protocol.Protocol.Script_expr_hash.hash_bytes [ hash ] in
   let hash = Format.asprintf "%a" Tezos_protocol.Protocol.Script_expr_hash.pp hash in
-  let operation =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind operation =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ Op.register_global_constant
          ~gas_limit:Max
          ~force_reveal:true
@@ -709,7 +724,7 @@ let register_constant ~raise ~loc ~calltrace (ctxt : context) ~source ~value =
          ~source
          ~value
   in
-  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) -> hash, ctxt
   | Fail errs -> raise.error (target_lang_error loc calltrace errs)
 
@@ -725,6 +740,7 @@ let read_file_constants ~raise fn =
 
 
 let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   let string_to_constant constant =
     let constant = parse_constant ~raise ~loc ~calltrace constant in
@@ -742,8 +758,8 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
   let constants = List.map ~f:string_to_constant constants in
   let hashes = List.map ~f:constant_to_hash constants in
   let aux constant ctxt =
-    let op =
-      Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+    let%bind op =
+      Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
       @@ Op.register_global_constant
            ~gas_limit:Max
            ~force_reveal:true
@@ -751,11 +767,11 @@ let register_file_constants ~raise ~loc ~calltrace fn (ctxt : context) ~source =
            ~source
            ~value:constant
     in
-    match bake_op ~raise ~loc ~calltrace ctxt op with
+    match%map bake_op ~raise ~loc ~calltrace ctxt op with
     | Success (ctxt, _) -> ctxt
     | Fail errs -> raise.error (target_lang_error loc calltrace errs)
   in
-  let ctxt = List.fold_right ~f:aux ~init:ctxt constants in
+  let%map ctxt = Lwt_list.fold_right_s aux constants ctxt in
   hashes, ctxt
 
 
@@ -770,11 +786,15 @@ let add_account ~raise ~loc ~calltrace sk pk pkh : unit =
   Account.add_account account
 
 
-let get_account ~raise ~loc ~calltrace mc : string * Tezos_crypto.Signature.public_key =
+let get_account ~raise ~loc ~calltrace mc
+    : (string * Tezos_crypto.Signature.public_key) Lwt.t
+  =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
-  let account =
-    Trace.trace_tzresult_lwt ~raise (fun _ ->
-        Errors.generic_error ~calltrace loc "Cannot find account")
+  let%map account =
+    Lwt.map
+      (Trace.trace_tzresult ~raise (fun _ ->
+           Errors.generic_error ~calltrace loc "Cannot find account"))
     @@ Account.find mc
   in
   let sk = Tezos_crypto.Signature.Secret_key.to_b58check account.sk in
@@ -803,13 +823,14 @@ let sign_message ~raise ~loc ~calltrace (packed_payload : bytes) sk
 
 
 let transfer ~raise ~loc ~calltrace (ctxt : context) ?entrypoint dst parameter amt
-    : add_operation_outcome
+    : add_operation_outcome Lwt.t
   =
+  let open Lwt.Let_syntax in
   let open Tezos_alpha_test_helpers in
   let source = unwrap_source ~raise ~loc ~calltrace ctxt.internals.source in
   let parameters = ligo_to_canonical ~raise ~loc ~calltrace parameter in
-  let operation : Tezos_raw_protocol.Alpha_context.packed_operation =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind operation : Tezos_raw_protocol.Alpha_context.packed_operation Lwt.t =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@
     (* TODO: fee? *)
     let amt = Int64.of_int (Z.to_int amt) in
@@ -830,9 +851,10 @@ let transfer ~raise ~loc ~calltrace (ctxt : context) ?entrypoint dst parameter a
 
 let originate_contract
     :  raise:r -> loc:Location.t -> calltrace:calltrace -> context -> value * value -> Z.t
-    -> value * context
+    -> (value * context) Lwt.t
   =
  fun ~raise ~loc ~calltrace ctxt (contract, storage) amt ->
+  let open Lwt.Let_syntax in
   let contract =
     trace_option ~raise (corner_case ~loc ()) @@ get_michelson_contract contract
   in
@@ -846,8 +868,8 @@ let originate_contract
     | _ -> None
   in
   let script = script_of_compiled_code ~raise ~loc ~calltrace contract storage in
-  let operation, dst =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace)
+  let%bind operation, dst =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace))
     @@ (* TODO : fee ? *)
     Op.contract_origination
       ~force_reveal:true
@@ -858,7 +880,7 @@ let originate_contract
       ~fee:(Test_tez.of_int 1)
       ~script
   in
-  match bake_op ~raise ~loc ~calltrace ctxt operation with
+  match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) ->
     let addr = v_address dst in
     let storage_tys =
@@ -976,6 +998,7 @@ let init_ctxt
     protocol_version
     bootstrapped_contracts
   =
+  let open Lwt.Let_syntax in
   let open Tezos_raw_protocol in
   let rng_state = Caml.Random.State.make (Caml.Array.make 1 0) in
   let () =
@@ -1027,8 +1050,8 @@ let init_ctxt
       ?initial_timestamp
       n
   in
-  let init_raw_ctxt =
-    Trace.trace_tzresult_lwt ~raise (throw_obj_exc loc calltrace) @@ r
+  let%map init_raw_ctxt =
+    Lwt.map (Trace.trace_tzresult ~raise (throw_obj_exc loc calltrace)) r
   in
   match acclst with
   | baker :: source :: _ ->

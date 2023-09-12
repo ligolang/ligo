@@ -9,10 +9,6 @@ let alpha_error_wrap x = Memory_proto_alpha.Alpha_environment.Ecoproto_error x
 
 let force_ok_alpha ~msg a = force_ok ~msg @@ alpha_wrap a
 
-let force_lwt ~msg a = force_ok ~msg @@ Lwt_main.run a
-
-let force_lwt_alpha ~msg a = force_ok ~msg @@ alpha_wrap @@ Lwt_main.run a
-
 let assert_error res =
   let open Lwt_result_syntax in
   let* res = res in

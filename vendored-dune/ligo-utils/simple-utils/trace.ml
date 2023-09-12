@@ -47,6 +47,27 @@ let try_with ?(fast_fail = true) (type error warning) f g =
   try f ~raise~catch
   with Local x -> g ~catch x
 
+let try_with_lwt ?(fast_fail = true) (type error warning) f g =
+  let recoverable_errors = ref [] in
+  let warnings = ref [] in
+  let exception Local_lwt of error in
+  let raise : (error,warning) raise =
+    let error x = Stdlib.raise (Local_lwt x) in
+    let warning x = warnings := x :: !warnings in
+    let log_error =
+      if fast_fail
+      then error
+      else fun x -> recoverable_errors := x :: !recoverable_errors
+    in
+    { error; warning; log_error; fast_fail }
+  in
+  let catch : (error,warning) catch = {
+      warnings = (fun () -> List.rev !warnings);
+      errors   = (fun () -> !recoverable_errors);
+  } in
+  try%lwt f ~raise ~catch
+  with Local_lwt x -> g ~catch x
+
 let to_stdlib_result : (raise:('error,'warning) raise -> 'value) -> ('value * 'warning list, 'error * 'warning list) Stdlib.result =
   fun f ->
   try_with
@@ -60,6 +81,18 @@ let to_stdlib_result : (raise:('error,'warning) raise -> 'value) -> ('value * 'w
       Error (e,warn)
     )
 
+let to_stdlib_result_lwt : (raise:('error,'warning) raise -> 'value Lwt.t) -> ('value * 'warning list, 'error * 'warning list) Lwt_result.t =
+  fun f ->
+  let open Lwt.Let_syntax in
+  try_with_lwt
+    (fun ~raise ~catch ->
+      let%map v = f ~raise in
+      let warn = catch.warnings () in
+      Ok (v,warn))
+    (fun ~catch e ->
+      let warn = catch.warnings () in
+      Lwt.return @@ Error (e,warn))
+
 let extract_all_errors : (raise:('error,_) raise -> 'value) -> 'error list * 'value option =
   fun f ->
   try_with
@@ -69,6 +102,13 @@ let extract_all_errors : (raise:('error,_) raise -> 'value) -> 'error list * 'va
 
 let move_errors catch raise tracer =
   List.iter (catch.errors ()) ~f:(fun e -> raise.log_error (tracer e))
+
+let move_errors_lwt catch raise tracer =
+  let open Lwt.Let_syntax in
+  Lwt_list.iter_s (fun e ->
+      let%map trace' = tracer e in
+      raise.log_error trace')
+    (catch.errors ())
 
 let trace_warnings ~raiser ~catcher () =
   catcher.warnings ()
@@ -87,6 +127,21 @@ let trace ~raise tracer f =
     move_errors catch parent_raise tracer;
     parent_raise.error @@ tracer err
   in try_with ~fast_fail:parent_raise.fast_fail try_body catch_body
+
+let trace_lwt ~raise tracer f =
+  let open Lwt.Let_syntax in
+  let parent_raise = raise in
+  let try_body ~raise ~catch =
+    let%bind value = f ~raise in
+    trace_warnings ~raiser:parent_raise ~catcher:catch ();
+    let%map () = move_errors_lwt catch parent_raise tracer in
+    value
+  in
+  let catch_body ~catch err =
+    trace_warnings ~raiser:parent_raise ~catcher:catch ();
+    let%bind () = move_errors_lwt catch parent_raise tracer in
+    Lwt.map (parent_raise.error) @@ tracer err
+  in try_with_lwt ~fast_fail:parent_raise.fast_fail try_body catch_body
 
 let trace_option ~raise error = function
   None -> raise.error error
