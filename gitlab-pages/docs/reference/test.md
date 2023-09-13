@@ -252,19 +252,6 @@ let originate = (contract: (p: 'param, s: 'storage) => [list &lt;operation&gt;, 
 
 Originate a contract with an entrypoint function in curried form, initial storage and initial balance.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_uncurried &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> storage -> tez -> typed_address (param, storage) * michelson_contract * int
-</SyntaxTitle>
-<SyntaxTitle syntax="cameligo">
-val originate_uncurried : ('param * 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
-</SyntaxTitle>
-
-<SyntaxTitle syntax="jsligo">
-let originate_uncurried = (contract: (ps: ['param, 'storage]) => [list &lt;operation&gt;, &apos;storage], init: 'storage, balance: tez) => [typed_address &lt;&apos;param, &apos;storage&gt;, michelson_contract, int]
-</SyntaxTitle>
-
-Originate a contract with an entrypoint function in uncurried form, initial storage and initial balance.
-
 <SyntaxTitle syntax="cameligo">
 val originate_module : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
 </SyntaxTitle>
