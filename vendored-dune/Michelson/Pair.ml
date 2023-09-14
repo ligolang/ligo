@@ -2,40 +2,49 @@
 
 (* Encodings of non-empty binary trees with PAIR and UNPAIR. *)
 
-type digit = P | A | I
-type code  = digit list
+type digit =
+  | P
+  | A
+  | I
+
+type code = digit list
 
 (* Injection and projection for digits *)
 
 let char_to_digit = function
-  'P' -> P
-| 'A' -> A
-| 'I' -> I
-|   _ -> assert false (* The lexer must ensure this case never happens. *)
+  | 'P' -> P
+  | 'A' -> A
+  | 'I' -> I
+  | _ -> assert false (* The lexer must ensure this case never happens. *)
 
 let digit_to_char = function
-  P -> 'P'
-| A -> 'A'
-| I -> 'I'
+  | P -> 'P'
+  | A -> 'A'
+  | I -> 'I'
 
 (* Injection and projection for codes *)
 
 let lift string =
   let length = String.length string in
   let rec push acc index =
-    if index = -1 then acc
-    else let digit = char_to_digit string.[index]
-         in push (digit::acc) (index-1)
-  in push [] (length-1)
+    if index = -1
+    then acc
+    else (
+      let digit = char_to_digit string.[index] in
+      push (digit :: acc) (index - 1))
+  in
+  push [] (length - 1)
 
 let drop code =
   let length = List.length code in
-  let bytes  = Bytes.make length ' ' in
+  let bytes = Bytes.make length ' ' in
   let rec fill index = function
-      [] -> bytes
-  | d::l -> Bytes.set bytes index (digit_to_char d);
-           fill (index+1) l
-  in fill 0 code |> Bytes.to_string
+    | [] -> bytes
+    | d :: l ->
+      Bytes.set bytes index (digit_to_char d);
+      fill (index + 1) l
+  in
+  fill 0 code |> Bytes.to_string
 
 (* NON-EMPTY BINARY TREES *)
 
@@ -47,10 +56,21 @@ type _ t =
 | Pair  : [< `Left | `Pair] t * [< `Right | `Pair] t -> [> `Pair] t
 *)
 
-type status = Fake | Real
-type left   = [`Left  of status | `Pair of left * right]
-and  right  = [`Right of status | `Pair of left * right]
-and  tree   = [`Pair of left * right]
+type status =
+  | Fake
+  | Real
+
+type left =
+  [ `Left of status
+  | `Pair of left * right
+  ]
+
+and right =
+  [ `Right of status
+  | `Pair of left * right
+  ]
+
+and tree = [ `Pair of left * right ]
 
 type t = tree
 
@@ -58,7 +78,10 @@ type t = tree
 
 type index = int
 
-type child = [`Left | `Right]
+type child =
+  [ `Left
+  | `Right
+  ]
 
 (* The type [mode] denotes the current state of the decoding: either a
    valid code (yielding a correct tree), or an invalid one (which
@@ -70,7 +93,9 @@ type child = [`Left | `Right]
    subtree. This information will be useful when printing the error
    message with a hint about what to do about it. *)
 
-type mode = Valid | Invalid of child * index
+type mode =
+  | Valid
+  | Invalid of child * index
 
 (* The type [attribute] is named so to evoke the terminology of
    attribute grammars. Here, a value of the type [attribute] will be
@@ -82,19 +107,19 @@ type mode = Valid | Invalid of child * index
    in [suffix]. In other words, it is the length of the longest valid
    prefix so far. *)
 
-type attribute = {
-  index  : int;
-  suffix : code;
-  mode   : mode
-}
+type attribute =
+  { index : int
+  ; suffix : code
+  ; mode : mode
+  }
 
 (* The call [invalidate c a] updates the attribute [a] to the status
    "invalid", and records the child [c] and the current index. *)
 
 let invalidate child attr =
   match attr.mode with
-    Valid   -> {attr with mode = Invalid (child, attr.index)}
-  | _       -> attr
+  | Valid -> { attr with mode = Invalid (child, attr.index) }
+  | _ -> attr
 
 (* The call [shift a] assumes that the suffix code in the attribute
    [a] is not empty. If not empty, it increments the index and take
@@ -104,14 +129,14 @@ let invalidate child attr =
 
 let shift attr =
   match attr.suffix with
-    _::suffix -> {attr with index = attr.index + 1; suffix}
-  |        [] -> assert false
+  | _ :: suffix -> { attr with index = attr.index + 1; suffix }
+  | [] -> assert false
 
 (* The functions [cast_left] and [cast_right] upcast the first
    component of their parameter, which is a tree, respectively to a left
    subtree and a right subtree. *)
 
-let cast_left  (tree, attr) = (tree :> left),  attr
+let cast_left (tree, attr) = (tree :> left), attr
 let cast_right (tree, attr) = (tree :> right), attr
 
 (* Due to the precise type definitions [tree], [left] and [right], we
@@ -150,37 +175,36 @@ let cast_right (tree, attr) = (tree :> right), attr
 
 let rec decode attr : tree * attribute =
   match attr.suffix with
-    P::_ -> let left,  attr = decode_left (shift attr) in
-           let right, attr = decide_right attr
-           in `Pair (left, right), attr
-  |    _ -> assert false
+  | P :: _ ->
+    let left, attr = decode_left (shift attr) in
+    let right, attr = decide_right attr in
+    `Pair (left, right), attr
+  | _ -> assert false
 
 and decode_left attr : left * attribute =
   match attr.suffix with
-    P::_ -> decode attr |> cast_left
-  | A::_ -> `Left Real, shift attr
-  | I::_ -> `Left Fake, shift (invalidate `Left attr)
-  |   [] -> `Left Fake, invalidate `Left attr
+  | P :: _ -> decode attr |> cast_left
+  | A :: _ -> `Left Real, shift attr
+  | I :: _ -> `Left Fake, shift (invalidate `Left attr)
+  | [] -> `Left Fake, invalidate `Left attr
 
 and decide_right attr : right * attribute =
   match attr.suffix with
-    P::_ -> decode attr |> cast_right
-  | A::_ -> `Right Fake, shift (invalidate `Right attr)
-  | I::_ -> `Right Real, shift attr
-  |   [] -> `Right Fake, invalidate `Right attr
+  | P :: _ -> decode attr |> cast_right
+  | A :: _ -> `Right Fake, shift (invalidate `Right attr)
+  | I :: _ -> `Right Real, shift attr
+  | [] -> `Right Fake, invalidate `Right attr
 
 type decode_err =
-  Valid_prefix of index * tree
-| Invalid_tree of index * tree * child
+  | Valid_prefix of index * tree
+  | Invalid_tree of index * tree * child
 
 let decode code =
-  match decode {index=0; suffix=code; mode=Valid} with
-    tree, {mode=Valid; suffix=[]; _} ->
-      Stdlib.Ok tree
-  | tree, {mode=Valid; index; _} ->
-      Error (Valid_prefix (index, tree))
-  | tree, {mode = Invalid (child, index); _} ->
-      Error (Invalid_tree (index, tree, child))
+  match decode { index = 0; suffix = code; mode = Valid } with
+  | tree, { mode = Valid; suffix = []; _ } -> Stdlib.Ok tree
+  | tree, { mode = Valid; index; _ } -> Error (Valid_prefix (index, tree))
+  | tree, { mode = Invalid (child, index); _ } ->
+    Error (Invalid_tree (index, tree, child))
 
 (* Encoding of trees
 
@@ -189,83 +213,90 @@ let decode code =
 *)
 
 let rec preorder_l code = function
-       `Left _ -> A :: code
-| `Pair _ as p -> preorder code p
+  | `Left _ -> A :: code
+  | `Pair _ as p -> preorder code p
 
 and preorder_r code = function
-      `Right _ -> I :: code
-| `Pair _ as p -> preorder code p
+  | `Right _ -> I :: code
+  | `Pair _ as p -> preorder code p
 
 and preorder code : t -> code = function
-  `Pair (left, right) -> P :: preorder_l (preorder_r code right) left
+  | `Pair (left, right) -> P :: preorder_l (preorder_r code right) left
 
 let encode tree = preorder [] tree
 
 (* Conversions and I/Os *)
 
 let draw channel tree =
-  let rec draw_l ~pad:(pd,pc) = function
-      `Left Real -> Printf.fprintf channel "%sA\n" pd
-  |   `Left Fake -> Printf.fprintf channel "%sX\n" pd
-  | `Pair _ as p -> draw ~pad:(pd,pc) p
-
-  and draw_r ~pad:(pd,pc) = function
-     `Right Real -> Printf.fprintf channel "%sI\n" pd
-  |  `Right Fake -> Printf.fprintf channel "%sX\n" pd
-  | `Pair _ as p -> draw ~pad:(pd,pc) p
-
-  and draw ~pad:(pd,pc) = function
-    `Pair (left, right) -> Printf.fprintf channel "%sP\n" pd;
-                          draw_r ~pad:(pc ^ "|-- ", pc ^ "|   ") right;
-                          draw_l ~pad:(pc ^ "`-- ", pc ^ "    ") left
-
-  in draw ~pad:("","") tree
+  let rec draw_l ~pad:(pd, pc) = function
+    | `Left Real -> Printf.fprintf channel "%sA\n" pd
+    | `Left Fake -> Printf.fprintf channel "%sX\n" pd
+    | `Pair _ as p -> draw ~pad:(pd, pc) p
+  and draw_r ~pad:(pd, pc) = function
+    | `Right Real -> Printf.fprintf channel "%sI\n" pd
+    | `Right Fake -> Printf.fprintf channel "%sX\n" pd
+    | `Pair _ as p -> draw ~pad:(pd, pc) p
+  and draw ~pad:(pd, pc) = function
+    | `Pair (left, right) ->
+      Printf.fprintf channel "%sP\n" pd;
+      draw_r ~pad:(pc ^ "|-- ", pc ^ "|   ") right;
+      draw_l ~pad:(pc ^ "`-- ", pc ^ "    ") left
+  in
+  draw ~pad:("", "") tree
 
 let to_string tree =
-  let rec to_string_l ~pad:(pd,pc) = function
-      `Left Real -> Printf.sprintf "%sA\n" pd
-  |   `Left Fake -> Printf.sprintf "%sX\n" pd
-  | `Pair _ as p -> to_string ~pad:(pd,pc) p
-
-  and to_string_r ~pad:(pd,pc) = function
-     `Right Real -> Printf.sprintf "%sI\n" pd
-  |  `Right Fake -> Printf.sprintf "%sX\n" pd
-  | `Pair _ as p -> to_string ~pad:(pd,pc) p
-
-  and to_string ~pad:(pd,pc) = function
-    `Pair (left, right) ->
-      Printf.sprintf "%sP\n%s%s"
+  let rec to_string_l ~pad:(pd, pc) = function
+    | `Left Real -> Printf.sprintf "%sA\n" pd
+    | `Left Fake -> Printf.sprintf "%sX\n" pd
+    | `Pair _ as p -> to_string ~pad:(pd, pc) p
+  and to_string_r ~pad:(pd, pc) = function
+    | `Right Real -> Printf.sprintf "%sI\n" pd
+    | `Right Fake -> Printf.sprintf "%sX\n" pd
+    | `Pair _ as p -> to_string ~pad:(pd, pc) p
+  and to_string ~pad:(pd, pc) = function
+    | `Pair (left, right) ->
+      Printf.sprintf
+        "%sP\n%s%s"
         pd
         (to_string_r ~pad:(pc ^ "|-- ", pc ^ "|   ") right)
         (to_string_l ~pad:(pc ^ "`-- ", pc ^ "    ") left)
-  in to_string ~pad:("","") tree
+  in
+  to_string ~pad:("", "") tree
 
 (* PATHS IN BINARY TREES *)
 
 type path = child list
 
 let char_to_selector = function
-  'A' -> `Left
-| 'D' -> `Right
-|   _ -> assert false
+  | 'A' -> `Left
+  | 'D' -> `Right
+  | _ -> assert false
 
 let lift_path string =
   let length = String.length string in
   let rec push acc index =
-    if index = 0 then acc
-    else let selector = char_to_selector string.[index]
-         in push (selector::acc) (index-1)
-  in push [] (length-2)
+    if index = 0
+    then acc
+    else (
+      let selector = char_to_selector string.[index] in
+      push (selector :: acc) (index - 1))
+  in
+  push [] (length - 2)
 
 let drop_path forest =
   let length = List.length forest + 2 in
-  let bytes  = Bytes.make length ' ' in
-  let     () = Bytes.set bytes 0 'C';
-               Bytes.set bytes (length-1) 'R' in
-
+  let bytes = Bytes.make length ' ' in
+  let () =
+    Bytes.set bytes 0 'C';
+    Bytes.set bytes (length - 1) 'R'
+  in
   let rec fill index = function
-              [] -> bytes
-  | `Left ::path -> Bytes.set bytes index 'A'; fill (index+1) path
-  | `Right::path -> Bytes.set bytes index 'D'; fill (index+1) path
-
-  in fill 1 forest |> Bytes.to_string
+    | [] -> bytes
+    | `Left :: path ->
+      Bytes.set bytes index 'A';
+      fill (index + 1) path
+    | `Right :: path ->
+      Bytes.set bytes index 'D';
+      fill (index + 1) path
+  in
+  fill 1 forest |> Bytes.to_string

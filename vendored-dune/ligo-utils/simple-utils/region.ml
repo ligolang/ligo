@@ -168,8 +168,8 @@ let compare r1 r2 =
 let cover r1 r2 =
   if r1#is_ghost then r2
   else if r2#is_ghost then r1
-  else 
-    let pos_min p1 p2 = if Pos.lt p1 p2 then p1 else p2 
+  else
+    let pos_min p1 p2 = if Pos.lt p1 p2 then p1 else p2
     and pos_max p1 p2 = if Pos.lt p1 p2 then p2 else p1
     in make ~start:(pos_min r1#start r2#start) ~stop:(pos_max r1#stop r2#stop)
 

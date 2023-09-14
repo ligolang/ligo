@@ -12,14 +12,12 @@ module Map = X_map
 module Ligo_string = X_string
 module Z = X_z
 module Result = X_result
-
 module Tuple = Tuple
 module Tree = Tree
 module Var = Var
 module Display = Display
 module Runned_result = Runned_result
 module Snippet = Snippet
-
 module Error = Error
 module Warning = Warning
 module File = Simple_utils_file
@@ -27,10 +25,10 @@ module Http_uri = Simple_utils_http_uri
 
 (* Originally by Christian Rinderknecht *)
 
-module Pos    = Pos
+module Pos = Pos
 module Region = Region
-module Utils  = Utils
+module Utils = Utils
 module FQueue = FQueue
-module Argv   = Argv
-module Std    = Std
+module Argv = Argv
+module Std = Std
 module Lexbuf = Lexbuf

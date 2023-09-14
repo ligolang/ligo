@@ -5,8 +5,12 @@
 
 (* Encodings of non-empty binary trees with PAIR and UNPAIR. *)
 
-type digit = P | A | I    (* Note: The terminator R is not included. *)
-type code  = digit list   (* Note: May become empty (recursively).   *)
+type digit =
+  | P
+  | A
+  | I (* Note: The terminator R is not included. *)
+
+type code = digit list (* Note: May become empty (recursively).   *)
 
 (* Injection and projection for digits *)
 
@@ -15,8 +19,8 @@ val digit_to_char : digit -> char (* Note: For the pretty-printer of tokens. *)
 
 (* Injection and projection for codes *)
 
-val lift : string -> code  (* Note: For the lexer. *)
-val drop : code -> string  (* Note: For the pretty-printer of tokens. *)
+val lift : string -> code (* Note: For the lexer. *)
+val drop : code -> string (* Note: For the pretty-printer of tokens. *)
 
 (* NON-EMPTY BINARY TREES *)
 
@@ -29,10 +33,21 @@ val drop : code -> string  (* Note: For the pretty-printer of tokens. *)
    constant constructor [Real] of type [status] is used, otherwise
    [Fake]. Note that trees cannot be empty. *)
 
-type status = Fake | Real
-type left   = [`Left  of status | `Pair of left * right]
-and  right  = [`Right of status | `Pair of left * right]
-and  tree   = [`Pair of left * right]
+type status =
+  | Fake
+  | Real
+
+type left =
+  [ `Left of status
+  | `Pair of left * right
+  ]
+
+and right =
+  [ `Right of status
+  | `Pair of left * right
+  ]
+
+and tree = [ `Pair of left * right ]
 
 type t = tree
 
@@ -42,7 +57,11 @@ type t = tree
    resulting code does _not_ include the terminator R. *)
 
 type index = int (* Note: Intended to be a natural number. *)
-type child = [`Left | `Right]
+
+type child =
+  [ `Left
+  | `Right
+  ]
 
 (* Decoding errors.
 
@@ -73,8 +92,8 @@ type child = [`Left | `Right]
 *)
 
 type decode_err =
-  Valid_prefix of index * tree
-| Invalid_tree of index * tree * child
+  | Valid_prefix of index * tree
+  | Invalid_tree of index * tree * child
 
 val decode : code -> (t, decode_err) Stdlib.result
 val encode : t -> code

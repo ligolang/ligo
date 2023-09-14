@@ -1,13 +1,12 @@
 open Ligo_prim
-
 open Tezos_micheline.Micheline
 
 type meta = Mini_c.meta
 
-type compiled_expression = {
-  expr_ty : (meta, string) node ;
-  expr : (meta, string) node ;
-}
+type compiled_expression =
+  { expr_ty : (meta, string) node
+  ; expr : (meta, string) node
+  }
 
 open Ligo_coq_ocaml.Compiler
 

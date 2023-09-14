@@ -16,14 +16,19 @@ let peep_of_option : 'a list option -> 'a peep = function
   | None -> No_change
   | Some xs -> Changed xs
 
+
 (* A let* syntax for Peep, see example usage in peepN below *)
-type peep_dummy = Peep_dummy | Peek_dummy
+type peep_dummy =
+  | Peep_dummy
+  | Peek_dummy
+
 let peep = Peep_dummy
+
 module Let_syntax = struct
-  let bind : peep_dummy -> f:('a -> 'a peep) -> 'a peep =
-    fun _ ~f -> Peep f
-  let (let*) x f = bind ~f x
+  let bind : peep_dummy -> f:('a -> 'a peep) -> 'a peep = fun _ ~f -> Peep f
+  let ( let* ) x f = bind ~f x
 end
+
 open Let_syntax
 
 (* These are used for backwards compatibility with the legacy
@@ -41,16 +46,19 @@ let peep1 (f : _ peep1) : _ peep =
   let* x1 = peep in
   peep_of_option (f x1)
 
+
 let peep2 (f : _ peep2) : _ peep =
   let* x1 = peep in
   let* x2 = peep in
   peep_of_option (f (x1, x2))
+
 
 let peep3 (f : _ peep3) : _ peep =
   let* x1 = peep in
   let* x2 = peep in
   let* x3 = peep in
   peep_of_option (f (x1, x2, x3))
+
 
 let peep4 (f : _ peep4) : _ peep =
   let* x1 = peep in
@@ -59,6 +67,7 @@ let peep4 (f : _ peep4) : _ peep =
   let* x4 = peep in
   peep_of_option (f (x1, x2, x3, x4))
 
+
 let peep5 (f : _ peep5) : _ peep =
   let* x1 = peep in
   let* x2 = peep in
@@ -66,6 +75,7 @@ let peep5 (f : _ peep5) : _ peep =
   let* x4 = peep in
   let* x5 = peep in
   peep_of_option (f (x1, x2, x3, x4, x5))
+
 
 (* Unused "left to right" peep interpreter, left here for a moment so
    that it will be preserved in git history. Feel free to remove. *)
@@ -109,22 +119,28 @@ let peephole (f : _ peep) (xs : _ list) : bool * _ list =
     | Changed popped' -> Some (popped' @ xs)
     | Peep f ->
       (match xs with
-       | [] -> None
-       | x :: xs' ->
-         let f = f x in
-         dopeep f xs')
+      | [] -> None
+      | x :: xs' ->
+        let f = f x in
+        dopeep f xs')
     | Peek f ->
-      let f = f (match xs with [] -> None | x :: _ -> Some x) in
-      dopeep f xs in
+      let f =
+        f
+          (match xs with
+          | [] -> None
+          | x :: _ -> Some x)
+      in
+      dopeep f xs
+  in
   (* try applying the peep to all tails of the sequence *)
   let rec aux changed xs xs' : bool * _ list =
     match dopeep f xs' with
     | None ->
       (match xs with
-       (* done *)
-       | [] -> (changed, xs')
-       (* done with this tail, continue with next element *)
-       | x :: xs -> aux changed xs (x :: xs'))
-    | Some xs' ->
-      aux true xs xs' in
+      (* done *)
+      | [] -> changed, xs'
+      (* done with this tail, continue with next element *)
+      | x :: xs -> aux changed xs (x :: xs'))
+    | Some xs' -> aux true xs xs'
+  in
   aux false (List.rev xs) []
