@@ -8,9 +8,6 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-<SyntaxTitle syntax="pascaligo">
-val length : string -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val length : string -> nat
 </SyntaxTitle>
@@ -24,15 +21,6 @@ Get the size of a string.
 [Michelson only supports ASCII strings](http://tezos.gitlab.io/whitedoc/michelson.html#constants)
 so for now you can assume that each character takes one byte of storage.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function string_size (const s : string) : nat is String.length (s)
-```
-
-> Note that `size` and `String.size` are *deprecated*.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -51,9 +39,6 @@ let size_op = (s: string): nat => String.length(s);
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val sub : nat -> nat -> string -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sub : nat -> nat -> string -> string
 </SyntaxTitle>
@@ -66,15 +51,6 @@ Extract a substring from a string based on the given offset and length. For
 example the string "abcd" given to the function below would return "bc".
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function slice_op (const s : string) : string is String.sub (1n, 2n, s)
-```
-
-> Note that `string_slice` is *deprecated*.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -93,11 +69,6 @@ let slice_op = (s: string): string => String.sub(1n, 2n, s);
 
 </Syntax>
 
-
-
-<SyntaxTitle syntax="pascaligo">
-val concat : string -> string -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val concat : string -> string -> string
 </SyntaxTitle>
@@ -108,21 +79,6 @@ let concat: (a: string, b: string) => string
 
 Concatenate two strings and return the result.
 
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function concat_op (const s : string) : string is String.concat (s, "toto")
-```
-
-Alternatively:
-
-```pascaligo
-function concat_op_alt (const s : string) : string is s ^ "toto"
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -152,15 +108,8 @@ let concat_syntax_alt = (s: string): string => s + "test_literal";
 
 </Syntax>
 
-
-<SyntaxTitle syntax="pascaligo">
-val concats : list (string) -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val concats : string list -> string
-</SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let concats: list(string) => string
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 let concats: (ss: list&lt;string&gt;) => string

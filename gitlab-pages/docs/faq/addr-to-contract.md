@@ -12,18 +12,6 @@ you need to convert `address` to `typed_address` using `Test.cast_address`.
 Then convert `typed_address` to `contract` using
 `Test.to_contract`. For example:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=addr2contract
-const test = {
-  const addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address);
-  const taddr : typed_address(unit, unit) = Test.cast_address (addr);
-  const contract : contract(unit) = Test.to_contract (taddr);
-} with contract;
-```
-
-</Syntax>
-
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=addr2contract

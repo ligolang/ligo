@@ -1,4 +1,4 @@
-const match_with_block = () => {
+function match_with_block () {
   // the first case is a function (holding an expression as body)
   // the second case is a "block function"
   let x = 1 ;

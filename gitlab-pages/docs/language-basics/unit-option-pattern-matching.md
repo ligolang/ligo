@@ -8,9 +8,8 @@ import Syntax from '@theme/Syntax';
 Optional values are a pervasive programming pattern in OCaml. Since
 Michelson and LIGO are both inspired by OCaml, *optional types* are
 available in LIGO as well. Similarly, OCaml features a *unit* type,
-and LIGO features it as well. Both the option type and the unit types
-are instances of a more general kind of types: *variant types*
-(sometimes called *sum types*).
+and LIGO features it as well. Both the option type and the unit type
+are instances of a more general kind of types: *variant types*.
 
 ## The unit Type
 
@@ -18,14 +17,6 @@ The `unit` type in Michelson or LIGO is a predefined type that
 contains only one value that carries no information. It is used when
 no relevant information is required or produced. Here is how it used.
 
-<Syntax syntax="pascaligo">
-
-In PascaLIGO, the unique value of the `unit` type is `Unit`.
-```pascaligo group=a
-const n : unit = Unit // Note the capital letter
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 In CameLIGO, the unique value of the `unit` type is `()`, following
@@ -52,9 +43,9 @@ let m (x : int) =
 
 <Syntax syntax="jsligo">
 
-In JsLIGO, the unique value of the `unit` type is `unit`.
+In JsLIGO, the unique value of the `unit` type is `[]`.
 ```jsligo group=a
-let n : unit = unit;
+let n : unit = [];
 ```
 
 </Syntax>
@@ -128,15 +119,6 @@ the enumerated types found in Java, C++, JavaScript etc.
 Here is how we define a coin as being either head or tail (and nothing
 else):
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-type coin is Head | Tail
-const head : coin = Head
-const tail : coin = Tail
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -167,25 +149,6 @@ In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
 define different kinds of users of a system.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-type id is nat
-
-type user is
-  Admin   of id
-| Manager of id
-| Guest
-
-const u : user = Admin (1000n)
-const g : user = Guest
-```
-
-In PascaLIGO, a constant constructor is equivalent to the same constructor
-taking an argument of type `unit`, so, for example, `Guest` is the
-same value as `Guest (unit)`.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -229,39 +192,18 @@ There are cases where several sum types match a given constructor.
 
 In the example below, types `t1` to `t6` are all possible types for `x`.
 
-In this case, the compiler will choose one of these types as the type of the expression,
-and throw a warning stating that other types are possible.
+In this case, the compiler will choose one of these types as the type
+of the expression, and throw a warning stating that other types are
+possible.
 
 You can add a type annotation to remove this ambiguity.
 
-**NOTE** : The compiler will choose in priority the latest matching sum type in the current scope,
-if no type is defined in this scope, it will look in the latest module, if not in the second latest etc.
-Below, it will choose `t1`, and if `t1` didn't match it would have chosen `t2`, otherwise `t3`, etc.
+**NOTE** : The compiler will choose in priority the latest matching
+sum type in the current scope, if no type is defined in this scope, it
+will look in the latest module, if not in the second latest etc.
+Below, it will choose `t1`, and if `t1` didn't match it would have
+chosen `t2`, otherwise `t3`, etc.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=multi_sum
-type t2 is A of int | B of int
-
-module MyModule is {
-  type t5 is A of int | C of bool
-  type t4 is A of int | D of int
-
-  module MySubModule is {
-    type t6 is A of int | E of tez
-  }
-}
-
-module MySecondModule is {
-  type t3 is A of int | F of int
-}
-
-type t1 is A of int | G of tez
-
-// The compiler will search above for sum types with an 'A' constructor
-const x = A(42)
-```
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=multi_sum
@@ -285,6 +227,7 @@ type t1 = A of int | G of tez
 // The compiler will search above for sum types with an 'A' constructor
 let x = A 42
 ```
+
 </Syntax>
 
 <Syntax syntax="jsligo">
@@ -310,29 +253,14 @@ type t1 = ["A", int] | ["G", tez];
 // The compiler will search above for sum types with an 'A' constructor
 const x = A(42);
 ```
+
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-In PascaLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
-The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
-
-```pascaligo group=sum_shadow
-module M is {
-  type t1 is A of int | B of int
-}
-module M is {
-  const y = 10
-}
-
-// This will fail because A will not be found
-// const x = A (42)
-```
-</Syntax>
 <Syntax syntax="cameligo">
 
-In CameLigo when looking for a matching sum type, the compiler will not look in shadowed modules.
-The below code will throw an error because type `t1` is in a shadowed module and thus not accessible.
+In CameLigo when looking for a matching sum type, the compiler will
+not look in shadowed modules.  The below code will throw an error
+because type `t1` is in a shadowed module and thus not accessible.
 
 ```cameligo group=sum_shadow
 module M = struct
@@ -345,6 +273,7 @@ end
 // This will fail because A will not be found
 // let x = A 42
 ```
+
 </Syntax>
 
 
@@ -358,14 +287,6 @@ type would be `None`, otherwise `Some (v)`, where `v` is some
 meaningful value *of any type*. An example in arithmetic is the
 division operation:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-function div (const a : nat; const b : nat) : option (nat) is
-  if b = 0n then None else Some (a/b)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -403,35 +324,10 @@ LIGO will warn about unused variables bound in patterns in the same
 way that function arguments are warned about. Variable names beginning
 with `_` can be used as a binder to prevent warnings.
 
-
-
-<Syntax syntax="jsligo">
-
-> Note: JsLIGO only supports basic pattern matching at the moment. This will change in the future.
-
-</Syntax>
-
 ### Match on variants
 
 Here is a function that transforms a colour variant type to an int.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=pm_variant
-type color is
-  RGB     of int * int * int
-| Gray    of int
-| Default
-
-function int_of_color (const c : color) : int is
-  case c of [
-  | RGB (r,g,b) -> 16 + b + g * 6 + r * 36
-  | Gray (i)    -> 232 + i
-  | Default     -> 0
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=pm_variant
@@ -464,56 +360,70 @@ let int_of_color = (c : color) : int =>
     when(Default()): 0 };
 ```
 
+The right-hand sides of each `when`-clause is an expression. Sometimes
+we might need statements to be processed before a value is given to
+the clause. In that case, the `do` expression comes handy. It enables
+the opening of a block of statements like a function body, that is, a
+block ended with a `return` statement whose argument has the value of
+the block, like so:
+
+```jsligo group=pm_variant
+function match_with_block () {
+  let x = 1;
+  return
+    match(Some(1)) {
+      when(None()): failwith(1);
+      when(Some(org)): do {
+        let y = x + 1;
+        return y
+      }
+    };
+};
+```
+
 </Syntax>
 
 ### Matching records or tuples
 
-Fields of records and components of tuples can be destructured. Record pattern variables can be renamed.
-
+Fields of records and components of tuples can be destructured. Record
+pattern variables can be renamed.
 
 <Syntax syntax="cameligo">
 
 ```cameligo group=pm_rec_tuple
-type my_record = { a : int ; b : nat ; c : string }
+type my_record = {a : int; b : nat; c : string}
 type my_tuple = int * nat * string
 
 let on_record (v : my_record) : int =
   match v with
-  | { a ; b = b_renamed ; c = _ } -> a + int(b_renamed)
+    { a ; b = b_renamed ; c = _ } -> a + int b_renamed
 
 let on_tuple (v : my_tuple) : int =
-  match v with
-  | ( x , y , _ ) -> x + int(y)
-```
-
-</Syntax>
-<Syntax syntax="pascaligo">
-
-```pascaligo group=pm_rec_tuple
-type my_record is record [a : int; b : nat; c : string]
-
-type my_tuple is int * nat * string
-
-function on_record (const v : my_record) : int is
-  case v of [
-   record [a; b = b_renamed ; c = _] -> a + int (b_renamed)
-  ]
-
-function on_tuple (const v : my_tuple) : int is
-  case v of [
-   (x, y, _) -> x + int (y)
-  ]
+  match v with (x , y, _) -> x + int y
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-Pattern-matching on records and tuples are not supported in JsLIGO yet.
+```jsligo group=pm_rec_tuple
+type my_record = { a : int ; b : nat ; c : string }
+type my_tuple = [int, nat, string]
+
+let on_record = (v : my_record) : int =>
+  match (v) {
+    when ({ a ; b : b_renamed ; c : _ }): a + int(b_renamed)
+  }
+
+let on_tuple = (v : my_tuple) : int =>
+  match (v) {
+    when ([x, y, _]): x + int(y)
+  }
+```
 
 </Syntax>
 
-### Match on lists
+### Matching lists
 
 <Syntax syntax="cameligo">
 
@@ -523,18 +433,6 @@ let weird_length (v : int list) : int =
   | [] -> -1
   | [ a; b ; c] -> -2
   | x -> int (List.length x)
-```
-
-</Syntax>
-<Syntax syntax="pascaligo">
-
-```pascaligo group=pm_lists
-function weird_length (const v : list (int)) : int is
-  case v of [
-    nil -> -1
-  | list [a; b; c] -> -2
-  | x -> int (List.length (x))
-  ]
 ```
 
 </Syntax>
@@ -561,28 +459,28 @@ Pattern matching can also be used for nested patterns.
 ```cameligo group=pm_complex
 type complex_t = { a : int list option ; b : int list }
 
-
 let complex = fun (x:complex_t) (y:complex_t) ->
   match (x,y) with
-  | {a=None;b=_} , { a = _ ; b = _ } -> -1
-  | {a=_;b=_} , { a = Some ([]) ; b = (hd::tl) } -> hd
-  | {a=_;b=_} , { a = Some (hd::tl) ; b = [] } -> hd
-  | {a=Some a;b=_} , _ -> int (List.length a)
+  | {a=None; b=_}, {a = _; b = _} -> -1
+  | {a=_; b=_}, {a = Some ([]); b = (hd::tl)} -> hd
+  | {a=_; b=_}, {a = Some (hd::tl); b = []} -> hd
+  | {a=Some a; b=_}, _ -> int (List.length a)
 ```
 
 </Syntax>
-<Syntax syntax="pascaligo">
 
-```pascaligo group=pm_complex
-type complex_t is record [a : option (list (int)); b : list (int)]
+<Syntax syntax="jsligo">
 
-function complex (const x : complex_t; const y : complex_t) is
-  case (x, y) of [
-    (record [a=None; b=_], _)               -> -1
-  | (_, record [a = Some (nil); b = hd#tl]) -> hd
-  | (_, record [a = Some (hd#tl); b=nil])   -> hd
-  | (record [a = Some (a); b=_], _)         -> int (List.length (a))
-  ]
+```jsligo group=pm_complex
+type complex_t = { a : option<list<int>> ; b : list<int> }
+
+const complex = (x: complex_t, y: complex_t) =>
+  match ([x,y]) {
+    when ([{a:None; b:_}, {a:_; b:_}]): -1
+    when ([{a:_; b:_}, {a: Some ([]); b: [hd,...tl]}]): hd
+    when ([{a:_; b:_}, {a: Some ([hd,...tl]); b:[]}]): hd
+    when ([{a: Some (a); b:_}, _]) : int (List.length (a))
+  }
 ```
 
 </Syntax>

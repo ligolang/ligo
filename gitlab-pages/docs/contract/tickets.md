@@ -10,9 +10,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ## Tickets
 
-<SyntaxTitle syntax="pascaligo">
-val create_ticket&lt;value&gt; : value -> nat -> option (ticket (value))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
@@ -26,14 +23,6 @@ To create a ticket, the value and the amount of tickets to be created needs to b
 The ticket will also contain the contract address it originated from (which corresponds to `Tezos.self`).
 The resulting value is `None` if the amount is zero.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const my_ticket1 = Option.unopt (Tezos.create_ticket (1, 10n))
-const my_ticket2 = Option.unopt (Tezos.create_ticket ("one", 10n))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=manip_ticket
@@ -52,9 +41,6 @@ let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val read_ticket&lt;value&gt; : ticket (value) -> (address * (value * nat)) * ticket (value)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
 </SyntaxTitle>
@@ -66,19 +52,6 @@ let read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&g
 
 Reading a ticket will return a tuple with the ticket address, the value and the same ticket for later use.
 A ticket is only consumed when it is dropped (e.g. `DROP`-ed from the Michelson stack) so if the returned ticket isn't stored in some form by your contract, it will be fully consumed.
-
-<Syntax syntax="pascaligo">
-
-To read the content of a ticket, you need to use pattern matching
-
-```pascaligo group=manip_ticket
-const v =
-  case Tezos.read_ticket (my_ticket1) of [
-    ((_addr, (payload, _amt)), _ticket) -> payload
-  ]
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -106,15 +79,9 @@ let v2 = (_: unit) => {
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val split_ticket&lt;value&gt; : ticket (value) -> nat * nat -> option (ticket (value) * ticket (value))
-</SyntaxTitle>
-
 <SyntaxTitle syntax="cameligo">
 val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
 </SyntaxTitle>
-
-
 
 <SyntaxTitle syntax="jsligo">
 let split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
@@ -122,18 +89,6 @@ let split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ti
 
 To partially use/consume a ticket, you have to split it.
 Provided a ticket and two amounts, two new tickets will be returned to you if, and only if, the sum equals to the amount of the original ticket.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const x =
-  case Tezos.split_ticket (my_ticket1, (6n, 4n)) of [
-    None -> failwith ("amt_a + amt_v =/= amt")
-  | Some (split_tickets) -> split_tickets
-  ]
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -159,9 +114,6 @@ let [ta, tb] =
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val join_tickets&lt;value&gt; : ticket (value) * ticket (value) -> option (ticket (value))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val join_tickets : 'value ticket * 'value ticket -> ('value ticket) option
 </SyntaxTitle>
@@ -174,17 +126,6 @@ To add two tickets, you have to join them. This works as the inverse
 of `Tezos.split_ticket`.  Provided two tickets with the same ticketer
 and content, they are deleted and a new ticket will be returned with
 an amount equal to the sum of the amounts of the input tickets.
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=manip_ticket
-const tc = {
-  const ta = Option.unopt (Tezos.create_ticket (1, 10n));
-  const tb = Option.unopt (Tezos.create_ticket (1, 5n))
-} with Tezos.join_tickets ((ta, tb))
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 

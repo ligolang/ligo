@@ -10,9 +10,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ## Events
 
-<SyntaxTitle syntax="pascaligo">
-val emit&lt;a&gt; :  string -> a -> operation
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val emit : string -> 'a -> operation
 </SyntaxTitle>

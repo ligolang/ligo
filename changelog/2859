@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "[JsLIGO] Documented `do { ... }` expression (in pattern matching).[JsLIGO] Fixed pretty-printing of constant constructors.[JsLIGO] Fixed spacing after pretty-printing of `contract_of`.\\n"
+merge_request: '2859'
+title: "More tweaks to JsLIGO"
+type: fixed
+            

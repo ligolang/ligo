@@ -11,29 +11,6 @@ In certain cases, the type of an expression cannot be properly
 inferred by the compiler. In order to help the type checker, you can
 annotate an expression with its desired type. Here is an example:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-type parameter is Back | Claim | Withdraw
-
-type storage is
-  record [
-    goal     : tez;
-    deadline : timestamp;
-    backers  : map (address, tez);
-    funded   : bool
-  ]
-
-function back (var action : unit; var store : storage) : list (operation) * storage is { // Type annotation
-  if Tezos.get_now() > store.deadline then failwith ("Deadline passed.");
-  case store.backers[Tezos.get_sender()] of [
-    None -> store.backers[Tezos.get_sender()] := Tezos.get_amount()
-  | Some (_) -> skip
-  ]
-} with (nil, store)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d

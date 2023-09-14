@@ -18,13 +18,6 @@ built-in `Tezos.get_now`. This timestamp does not change during the execution
 of the contract. Please be aware that it is up to the baker to set the
 current timestamp value.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=a
-const today : timestamp = Tezos.get_now ()
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=a
@@ -53,17 +46,6 @@ constraints on your smart contracts. Consider the following scenarios.
 #### In 24 hours
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=b
-const today : timestamp = Tezos.get_now()
-const one_day : int = 86_400
-const in_24_hrs : timestamp = today + one_day
-const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
-const one_day_later : timestamp = some_date + one_day
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=b
@@ -92,15 +74,6 @@ let one_day_later: timestamp = some_date + one_day;
 #### 24 hours Ago
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-const today : timestamp = Tezos.get_now()
-const one_day : int = 86400
-const in_24_hrs : timestamp = today - one_day
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -125,15 +98,6 @@ let in_24_hrs: timestamp = today - one_day;
 
 Timestamps can be subtracted, that means, we can use minus (`-`) between two timestamps:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=g
-const today : timestamp = Tezos.get_now()
-const some_date : timestamp = ("2035-01-01T10:10:10Z" : timestamp)
-const secs_until_some_date : int = some_date - today
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=g
@@ -162,13 +126,6 @@ You can compare timestamps using the same comparison operators
 applying to numbers.
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-const not_tommorow : bool = (Tezos.get_now() = in_24_hrs)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c
@@ -194,14 +151,6 @@ KT1, ...). Currently, addresses are created by casting a string to the
 the following examples.
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=d
-const my_account : address =
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=d
@@ -229,16 +178,6 @@ failure if the signature is invalid.
 
 Here is how you can define a signature:
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=e
-const my_sig : signature =
-  ("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" :
-  signature)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
@@ -268,14 +207,6 @@ failure if the key is invalid.
 
 Here is how you can define a key.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=f
-const my_key : key =
-("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" : key)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=f

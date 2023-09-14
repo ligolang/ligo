@@ -27,23 +27,6 @@ module: it's abstract.
 
 ## Declaring Modules
 
-<Syntax syntax="pascaligo">
-
-Modules are introduced using the `module` keyword. For example, the
-following code defines a module `EURO` that packages together a type,
-called `t`, together with an operation `add` that sums two values of
-the given currency, as well as constants for zero and one.
-
-```pascaligo group=EURO
-module EURO is {
-  type t is nat
-  function add (const a : t; const b : t) : t is a + b
-  const zero : t = 0n
-  const one : t = 1n
-}
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 Modules are introduced using the `module` keyword. For example, the
@@ -94,16 +77,6 @@ suppose that our storage keeps a value in euros using the previously
 defined module `EURO`. Then, we can write a `main` entry point that
 increments the storage value each time it is called.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=EURO
-type storage is EURO.t
-
-function main (const action : unit; const store : storage) : (list (operation)) * storage is
- (nil, EURO.add (store, EURO.one))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO
@@ -130,18 +103,6 @@ having to change the `storage` type or the function `main`. For
 example, if we decide later that we should support manipulating
 negative values, we could change `EURO` as follows:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=EURO2
-module EURO is {
-  type t is int
-  function add (const a : t; const b : t) : t is a + b
-  const zero : t = 0
-  const one : t = 1
-}
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO2
@@ -183,22 +144,6 @@ Modules can be nested, which means that we can define a module inside
 another module. Let's see how that works, and define a variant of
 `EURO` in which the constants are all grouped inside using a sub-module.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=EURO3
-module EURO is {
-  type t is nat
-
-  function add (const a : t; const b : t) : t is a + b
-
-  module CONST is {
-    const zero : t = 0n
-    const one : t = 1n
-  }
-}
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO3
@@ -238,16 +183,6 @@ namespace EURO {
 To access nested modules we simply apply the accessor operator more
 than once:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=EURO3
-type storage is EURO.t
-
-function main (const action : unit; const store : storage) : (list (operation)) * storage is
- (nil, EURO.add (store, EURO.CONST.one))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO3
@@ -282,20 +217,6 @@ Generally, we will take a set of definitions that can be naturally
 grouped by functionality, and put them together in a separate
 file.
 
-<Syntax syntax="pascaligo">
-
-For example, in PascaLIGO, we can create a file `imported.ligo`:
-
-```pascaligo group=imported
-type t is nat
-
-function add (const a : t; const b : t) : t is a + b
-
-const zero : t = 0n
-const one : t = 1n
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 For example, in CameLIGO, we can create a file `imported.mligo`:
@@ -326,23 +247,6 @@ export const one: t = 1n;
 
 </Syntax>
 
-<Syntax syntax="pascaligo">
-
-Later, in another file, we can import `imported.ligo` as a module, and
-use its definitions. For example, we could create a `importer.ligo`
-that imports all definitions from `imported.ligo` as the module
-`EURO`:
-
-```pascaligo
-#import "./gitlab-pages/docs/language-basics/src/modules/imported.ligo" "EURO"
-
-type storage is EURO.t
-
-function main (const action : unit; const store : storage) : (list (operation)) * storage is
- (nil, EURO.add (store, EURO.one))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 Later, in another file, we can import `imported.mligo` as a module, and
@@ -382,13 +286,6 @@ const main = (_action: unit, store: storage): [list<operation>, storage] =>
 We can compile the file that uses the `#import` statement directly,
 without having to mention the imported file.
 
-<Syntax syntax="pascaligo">
-
-```shell
-ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.ligo --entry-point main
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```shell
@@ -413,13 +310,6 @@ to other (previously defined) modules. This feature can be useful if
 we could implement a module using a previously defined one, but in the
 future, we might need to change it.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=EURO
-module US_DOLLAR is EURO
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=EURO
