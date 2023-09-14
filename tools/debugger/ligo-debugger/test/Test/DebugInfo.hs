@@ -99,6 +99,8 @@ test_SourceMapper = testGroup "Reading source mapper"
       let curriedMainType = LigoTypeResolved $ unitType' ~> intType' ~> resultType'
       let uncurriedMainType = LigoTypeResolved $ unitIntTuple' ~> resultType'
 
+      let fileName = Just file
+
       nonEmptyMetasAndInstrs
         @?=
         [ LigoMereEnvInfo
@@ -106,7 +108,7 @@ test_SourceMapper = testGroup "Reading source mapper"
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [LigoStackEntryVar "s" intType]
+            [LigoStackEntryVar "s" intType fileName]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -125,7 +127,7 @@ test_SourceMapper = testGroup "Reading source mapper"
                 )
 
         , LigoMereEnvInfo
-            [LigoStackEntryVar "s2" intType]
+            [LigoStackEntryVar "s2" intType fileName]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -164,7 +166,7 @@ test_SourceMapper = testGroup "Reading source mapper"
                 )
 
         , LigoMereEnvInfo
-            [LigoStackEntryVar "s2" intType]
+            [LigoStackEntryVar "s2" intType fileName]
             ?- SomeInstr dummyInstr
 
         , LigoMereLocInfo
@@ -188,81 +190,81 @@ test_SourceMapper = testGroup "Reading source mapper"
                 )
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "main" curriedMainType
+            [ LigoStackEntryVar "main" curriedMainType fileName
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitIntTuple
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitIntTuple
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitType
             , LigoStackEntryNoVar intType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitType
             , LigoStackEntryNoVar intType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar intType
             , LigoStackEntryNoVar unitType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "p" unitType
+            [ LigoStackEntryVar "p" unitType Nothing
             , LigoStackEntryNoVar intType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "s" intType
-            , LigoStackEntryVar "p" unitType
-            , LigoStackEntryVar "main" curriedMainType
-            ]
-            ?- SomeInstr dummyInstr
-
-        , LigoMereEnvInfo
-            [ LigoStackEntryNoVar unitType
-            , LigoStackEntryVar "s" intType
-            , LigoStackEntryVar "main" curriedMainType
+            [ LigoStackEntryVar "s" intType Nothing
+            , LigoStackEntryVar "p" unitType Nothing
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitType
-            , LigoStackEntryVar "s" intType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "s" intType Nothing
+            , LigoStackEntryVar "main" curriedMainType fileName
+            ]
+            ?- SomeInstr dummyInstr
+
+        , LigoMereEnvInfo
+            [ LigoStackEntryNoVar unitType
+            , LigoStackEntryVar "s" intType Nothing
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
             [ LigoStackEntryNoVar unitIntTuple
-            , LigoStackEntryVar "s" intType
-            , LigoStackEntryVar "main" curriedMainType
+            , LigoStackEntryVar "s" intType Nothing
+            , LigoStackEntryVar "main" curriedMainType fileName
             ]
             ?- SomeInstr dummyInstr
 
         , LigoMereEnvInfo
-            [ LigoStackEntryVar "<module main>" uncurriedMainType
+            [ LigoStackEntryVar "<module main>" uncurriedMainType Nothing
             , LigoHiddenStackEntry
             ]
             ?- SomeInstr dummyInstr

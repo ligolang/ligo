@@ -73,7 +73,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 , sfLoc = Range (LigoPosition 3 3) (LigoPosition 3 18) file'
                 , sfStack =
                   [ StackItem
-                    { siLigoDesc = LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable "s")) typ)
+                    { siLigoDesc = LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable "s")) typ _)
                     , siValue = SomeLorentzValue (0 :: Integer)
                     }
                   ]
@@ -106,6 +106,11 @@ test_Snapshots = testGroup "Snapshots collection"
           let
             stackWithS2 =
               [ ( Just LigoVariable
+                  { lvName = "s"
+                  }
+                , SomeLorentzValue (0 :: Integer)
+                )
+              , ( Just LigoVariable
                   { lvName = "s2"
                   }
                 , SomeLorentzValue (42 :: Integer)
@@ -800,7 +805,7 @@ test_Snapshots = testGroup "Snapshots collection"
                 & head
                 & getVariableNamesFromStackFrame
 
-          vars @~=? ["a", "b"]
+          vars @~=? ["a", "b", "pairFunc", "s"]
 
   , testCaseSteps "Check stack frames on function entering / exiting" \step -> do
       let file = contractsDir </> "recursive.mligo"
@@ -894,7 +899,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let
           initElems = Unsafe.init names
           lastElem = Unsafe.last names
-        in all (== ["main"]) initElems && lastElem == ["p", "p", "p", "main"]
+        in all (== ["main"]) initElems && lastElem == ["p", "p", "main"]
 
   , testCaseSteps "Check variables in stack frames" \step -> do
       let dir = contractsDir </> "module_contracts"
@@ -1049,17 +1054,12 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $ isAtLine 6
 
         liftIO $ step [int||Check "sub" stack frames inside "lambdaFun"|]
-
-        -- Actually here should be only one stack frame with name "f"
-        -- but LIGO source mapper treats these "f"s from this contract as different.
-        checkSnapshot ((@=?) ["sub", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["sub", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
 
         moveTill Forward $ isAtLine 5
 
         liftIO $ step [int||Check "add" stack frames inside "lambdaFun"|]
-
-        -- The same here.
-        checkSnapshot ((@=?) ["add", "f", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["add", "f", "apply", "lambdaFun", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcLoc 8 0)
@@ -1080,9 +1080,7 @@ test_Snapshots = testGroup "Snapshots collection"
         moveTill Forward $ isAtLine 7
 
         liftIO $ step [int||Check stack frames in inner "act"|]
-
-        -- The same as in the test above.
-        checkSnapshot ((@=?) ["act", "f", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main"] . getStackFrameNames)
+        checkSnapshot ((@=?) ["act", "f", "applyOnce", "applyTwice", "applyThrice", "apply", "main"] . getStackFrameNames)
 
         moveTill Forward $
           goesAfter (SrcLoc 10 0)
@@ -1532,6 +1530,7 @@ test_Snapshots = testGroup "Snapshots collection"
             InterpretSnapshot
               { isStackFrames = StackFrame
                   { sfStack =
+                      _ :
                       StackItem
                         { siLigoDesc = LigoStackEntry LigoExposedStackEntry
                             { leseType = typ1
@@ -1872,15 +1871,18 @@ test_Snapshots = testGroup "Snapshots collection"
         liftIO $ step "Extract values and types"
         let convertInfos = extractConvertInfos ligoTypesVec snap
 
+        let largeValue = LVConstructor
+              ( "Go"
+              , LVRecord $ HM.fromList
+                  [ (LLabel "ch", LVCt $ LCChainId "\0\0\0\0")
+                  , (LLabel "state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
+                  , (LLabel "s", LVCt $ LCString "large")
+                  ]
+              )
+
         let expected =
-              [ LVConstructor
-                  ( "Go"
-                  , LVRecord $ HM.fromList
-                      [ (LLabel "ch", LVCt $ LCChainId "\0\0\0\0")
-                      , (LLabel "state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
-                      , (LLabel "s", LVCt $ LCString "large")
-                      ]
-                  )
+              [ largeValue
+              , largeValue
               , LVCt $ LCInt "0"
               , LVCt $ LCString "<fun>"
               ]

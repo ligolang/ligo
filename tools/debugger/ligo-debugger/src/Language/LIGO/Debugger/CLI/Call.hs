@@ -5,6 +5,7 @@ module Language.LIGO.Debugger.CLI.Call
   , getAvailableModules
   , decompileLigoValues
   , resolveConfig
+  , getScopes
 
     -- * Helpers
   , preprocess
@@ -422,6 +423,20 @@ resolveConfig configPath = withMapLigoExc do
           level <- o .:? "level"
           votingPowers <- o .:? "voting_powers"
           pure LigoContractEnv{..}
+
+getScopes :: forall m. (HasLigoClient m) => FilePath -> m LigoDefinitions
+getScopes contractPath = withMapLigoExc do
+  callLigoBS Nothing
+    [ "info", "get-scope"
+    , "--format", "json"
+    , "--no-stdlib"
+    , strArg contractPath
+    ] Nothing
+    >>= decodeOutput
+  where
+    decodeOutput :: LByteString -> m LigoDefinitions
+    decodeOutput = either (throwIO . LigoDecodeException "decoding ligo scopes" . toText) pure
+      . Aeson.eitherDecode
 
 -- Versions
 ----------------------------------------------------------------------------
