@@ -71,15 +71,6 @@ If you come from the Solidity world, you may be accustomed to simple types like 
 Since types are not some purely "technical" concept and have inherent meaning attached to them, it is often a good idea to start thinking about your contract in terms of functions that transform values of one type to values of, possibly, some other type.
 
 You can define new types and type aliases in your code using the `type` keyword:
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type nat_alias is nat
-
-type token_amount is TokenAmount of nat
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -102,13 +93,6 @@ type token_amount = | ["TokenAmount", nat];
 </Syntax>
 
 As in Solidity, there are record types:
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type creature is record [heads_count : nat; legs_count : nat; tails_count : nat]
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 
@@ -129,19 +113,6 @@ type creature = { heads_count: nat, legs_count: nat, tails_count: nat };
 
 There are also _variant_ types (or "sum types") – a more powerful counterpart of Solidity enums that can hold data:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type int_option is Number of int | Null
-
-const x = Number (5)
-
-const y = Null
-```
-
-Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number (5)`, `Number (10)`, etc.) or `Null`. Notice how `Null` does not hold any value.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -175,27 +146,6 @@ Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number
 
 There is a special built-in parameterised `option` type with `Some` and `None` constructors, so we can rewrite the snippet above as:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const x = Some (5)
-
-const y : option(int) = None
-```
-
-This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `option(address)`. We can then use `case` to see if there is something inside:
-
-```pascaligo
-const x = Some (5)
-
-const x_or_zero : int
-= case x of [
-    Some (value) -> value
-  | None -> 0
-  ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -242,17 +192,6 @@ let x_or_zero  =
 
 We can go further and combine variant types with records:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type committee is record [members : list (address); quorum : nat]
-
-type leader is record [name : string; address : address]
-
-type authority is Dictatorship of leader | Democracy of committee
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -299,37 +238,6 @@ In Tezos, a contract must define a default entrypoint that does the dispatching.
 
 For example, we can simulate Ethereum dispatching behaviour:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function main (const parameter : bytes; const storage : int) is {
-  const nop = list []
-} with
-    if (parameter = 0xbc1ecb8e)
-    then (nop, storage + 1)
-    else
-      if (parameter = 0x36e44653)
-      then (nop, storage - 1)
-      else failwith ("Unknown entrypoint")
-```
-
-However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `case`:
-
-```pascaligo
-type parameter is Increment | Decrement
-
-type storage is int
-
-function main (const p : parameter; const s : storage) is {
-  const nop = list []
-} with
-    case p of [
-      Increment -> (nop, s + 1)
-    | Decrement -> (nop, s - 1)
-    ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -393,23 +301,6 @@ let main = (p: parameter, s: storage): [list<operation>, int] => {
 
 We do not need any internal operations, since we neither call other contracts nor transfer money. Here is how we can add arguments to our entrypoints:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type parameter is Add of int | Subtract of int
-
-type storage is int
-
-function main (const p : parameter; const s : storage) is {
-  const nop = list []
-} with
-    case p of [
-      Add (n) -> (nop, s + n)
-    | Subtract (n) -> (nop, s - n)
-    ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -465,26 +356,6 @@ Making a storage field `public` in Solidity instructs the compiler to generate a
 
 For contract methods, the dispatching logic defines which functions within the contract are accessible from the outside world. Consider the following snippet:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-function multiplyBy2 (const storage : int) is storage * 2
-
-function multiplyBy4 (const storage : int) is
-  multiplyBy2 (multiplyBy2 (storage))
-
-type parameter is MultiplyBy4 | MultiplyBy16
-
-function main (const param : parameter; const storage : storage) : list(operation) * storage is {
-  const nop = list []
-} with
-    case param of [
-      MultiplyBy4 -> (nop, multiplyBy4 (storage))
-    | MultiplyBy16 -> (nop, multiplyBy4 (multiplyBy4 (storage)))
-    ]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -534,25 +405,6 @@ There is no analogue of `internal` methods in LIGO because LIGO contracts do not
 
 In Tezos, you can accept _code_ as a parameter. Such functions that you can pass around are called _lambdas_ in functional languages. Let us say that we want to support arbitrary mathematical operations with the counter value. We can just accept the intended formula as the parameter:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type parameter is Compute of (int -> int) // a function that accepts an int and returns an int
-
-type storage is int
-
-function main (const p : parameter; const s : storage) : list(operation) * storage is
-  case p of [
-    Compute (func) -> (list [], func (s))
-  ]
-```
-
-We can then call this contract with the parameter of the form `Compute (function (const x : int) is x * x + 2 * x + 1)`. Try this out with:
-```
-ligo run interpret 'main (Compute (function (const x : int) is x * x + 2 * x + 1), 3)' --init-file examples/contracts/ligo/Lambda.ligo
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -597,31 +449,6 @@ The interpreted output is `( LIST_EMPTY() , 16 )`, which is an empty list of ope
 
 But this is not all lambdas are capable of. You can, for example, save them in storage:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type storage is record [fn : option (int -> int); value : int]
-
-type parameter is CallFunction | SetFunction of (int -> int)
-
-function call (const fn : option (int -> int); const value : int) is
-  case fn of [
-    Some (f) -> f (value)
-  | None -> failwith ("Lambda is not set")
-  ]
-
-function main (const p : parameter; const s : storage) is {
-  const newStorage
-  = case p of [
-      SetFunction (fn) -> s with record [fn = Some (fn)]
-    | CallFunction -> s with record [value = call (s.fn, s.value)]
-    ]
-} with (list [], newStorage)
-```
-
-Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction (function (const x : int) => ...)`.
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -707,31 +534,6 @@ contract Beneficiary {
 
 In Tezos, the execution model is quite different. Contracts communicate via message passing. Messages are called _internal operations._ If you want to pass a message to another contract, you need to finish the computation first, and then put an operation into the _operations queue._ Here is how it looks like:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-type storage is record [rewardsLeft : tez; beneficiaryAddress : address]
-
-function treasury (const _ : unit; const s : storage) is {
-  // We do our computations first
-  const newStorage = s with record [rewardsLeft = 0mutez];
-
-  // Then we find our beneficiary's `handleRewards` entrypoint:
-  const beneficiaryOpt = Tezos.get_entrypoint_opt ("%handleTransfer", s.beneficiaryAddress);
-  const beneficiary
-  = case beneficiaryOpt of [
-      Some (contract) -> contract
-    | None -> failwith ("Beneficiary does not exist")
-    ];
-
-  // Then we prepare the internal operation we want to perform
-  const operation = Tezos.transaction (Unit, s.rewardsLeft, beneficiary)
-
-  // ...and return both the operations and the updated storage
-} with  (list [operation], newStorage)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -788,21 +590,6 @@ Note that all the state changes occur _before_ the internal operation gets execu
 
 It is a common idiom in Ethereum to make read-only calls to other contracts. Tezos does not offer a straightforward way to do it but you might think of using something like a callback mechanism:
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-type parameter is DoSomething | DoSomethingCont of int
-
-function doSomething (const p : unit; const s : int) is {
-  (* The callee should call `%doSomethingCont` with the value we want *)
-  const op = Tezos.transaction ...
-} with (ops, s)
-
-function doSomethingCont (const p : int; const s : int) is
-  ((list [] : list (operation)), p + s)
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip

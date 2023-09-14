@@ -3,13 +3,13 @@ namespace IncDec {
   type ret = [list<operation>, storage];
 
   @entry
-  const increment = (_: unit, store : storage) : ret => {
+  function increment (_: unit, store : storage) : ret {
     let s = store
     return [list([]), ++s];
   }
 
   @entry
-  const decrement = (_: unit, store : storage) : ret => {
+  function decrement (_: unit, store : storage) : ret {
     let s = store
     return [list([]), --s];
   }
@@ -21,8 +21,8 @@ namespace IncDec {
 
 const test_increment = (() => {
   let initial_storage = 42;
-  let [taddr, _, _] = Test.originate_module(contract_of(IncDec), initial_storage, 0 as tez);
+  let [taddr, _, _] = Test.originate_module(contract_of(IncDec), initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment ()), 1 as mutez);
+  let _ = Test.transfer_to_contract_exn(contr, Increment(), 1mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
 }) ();

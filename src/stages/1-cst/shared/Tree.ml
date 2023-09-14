@@ -169,7 +169,7 @@ let of_nsep_or_term ?region state root print = function
      of_list ?region state root print @@ List.map ~f:fst (hd::tl)
 
 let of_sep_or_term ?region state root print = function
-  None -> ()
+  None   -> make_node ?region state root
 | Some s -> of_nsep_or_term ?region state root print s
 
 let of_nsep_or_pref ?region state root print = function

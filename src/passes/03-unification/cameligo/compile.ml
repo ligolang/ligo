@@ -348,8 +348,8 @@ let rec expr : Eq.expr -> Folding.expr =
     let bound = bound2 in
     let step =
       match direction with
-      | Upto _ -> Some TODO_do_in_parsing.(make_int 1)
-      | _ -> failwith "Downto not supported"
+      | Upto _ -> None
+      | Downto _ -> Some TODO_do_in_parsing.(make_int (-1))
     in
     let block = TODO_do_in_parsing.make_block ~region seq_expr in
     ret @@ E_for { index; init; bound; step; block }

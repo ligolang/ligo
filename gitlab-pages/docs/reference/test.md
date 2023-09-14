@@ -11,9 +11,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 > Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing.md).
 
-<SyntaxTitle syntax="pascaligo">
-type michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type michelson_program
 </SyntaxTitle>
@@ -24,9 +21,6 @@ type michelson_program
 
 A type for code that is compiled to Michelson.
 
-<SyntaxTitle syntax="pascaligo">
-type michelson_contract
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type michelson_contract
 </SyntaxTitle>
@@ -37,9 +31,6 @@ type michelson_contract
 
 A type for Michelson compiled contracts.
 
-<SyntaxTitle syntax="pascaligo">
-type test_exec_error_balance_too_low = record [ contract_balance : tez ; contract_too_low : address ; spend_request : tez ]
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error_balance_too_low = &#x007b; contract_balance : tez ; contract_too_low : address ; spend_request : tez &#x007d;
 </SyntaxTitle>
@@ -48,12 +39,6 @@ type test_exec_error_balance_too_low = &#x007b; contract_balance : tez ; contrac
 type test_exec_error_balance_too_low = &#x007b; contract_balance : tez , contract_too_low : address , spend_request : tez &#x007d;
 </SyntaxTitle>
 
-<SyntaxTitle syntax="pascaligo">
-type test_exec_error =
-  Rejected of michelson_program * address
-| Balance_too_low of test_exec_error_balance_too_low
-| Other of string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_error =
   Rejected of michelson_program * address
@@ -74,11 +59,6 @@ A test error:
     `contract_too_low` is the address of the contract, `contract_balance` is the actual balance of the contract and `spend_request` is the amount of tez that was required for the operation
   - The `Other` case wraps all the other possible reasons. Its argument is a string representation of the tezos_client error
 
-<SyntaxTitle syntax="pascaligo">
-type test_exec_result =
-  Success of nat
-| Fail of test_exec_error
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_exec_result =
   Success of nat
@@ -95,12 +75,6 @@ A test execution result:
  - The `Success` case means the transaction went through without an issue. Its argument represent the total amount of gas consumed by the transaction
  - The "Fail reason" case means something went wrong. Its argument encode the causes of the failure (see type `test_exec_error`)
 
-<SyntaxTitle syntax="pascaligo">
-type test_baker_policy =
-  | By_round of int
-  | By_account of address
-  | Excluding of list (address)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type test_baker_policy =
   | By_round of int
@@ -123,9 +97,6 @@ Policies to select the next baker (taken from test helpers documentation):
 - `By_account pkh` selects the first slot for baker `pkh`
 - `Excluding pkhs` selects the first baker that doesn't belong to `pkhs`
 
-<SyntaxTitle syntax="pascaligo">
-type typed_address (param, storage)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type ('param, 'storage) typed_address
 </SyntaxTitle>
@@ -137,9 +108,6 @@ type typed_address &lt;&apos;param, &apos;s&gt;
 A type for an address of a contract with parameter `'param` and storage
 `'storage`.
 
-<SyntaxTitle syntax="pascaligo">
-type unforged_ticket(s) is record [ ticketer : address ; value : s ; amount : nat ]
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 type 's unforged_ticket = &#x007b; ticketer : address; value : 's; amount : nat &#x007d;
 </SyntaxTitle>
@@ -150,9 +118,6 @@ type unforged_ticket &lt;s&gt; = &#x007b; ticketer : address, value : s, amount 
 
 A type for decompiling tickets.
 
-<SyntaxTitle syntax="pascaligo">
-val to_contract&lt;param,storage&gt; : typed_address (param, storage) -> contract (param)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val to_contract : ('param, 'storage) typed_address -> 'param contract
 </SyntaxTitle>
@@ -166,9 +131,6 @@ address: the contract parameter in the result will be the type of the
 default entrypoint (generally `'param`, but this might differ if
 `'param` includes a "default" entrypoint).
 
-<SyntaxTitle syntax="pascaligo">
-val to_entrypoint &lt;param, storage, e&gt; : string -> typed_address (param, storage) -> contract (e)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val to_entrypoint : string -> ('param, 'storage) typed_address -> 'e contract
 </SyntaxTitle>
@@ -183,9 +145,6 @@ entrypoint, it needs to be annotated, entrypoint string should omit
 the prefix "%", but if passed a string starting with "%", it will be
 removed (and a warning emitted).
 
-<SyntaxTitle syntax="pascaligo">
-val originate_from_file : string -> string -> list (string) -> michelson_program -> tez -> address * michelson_contract * int
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_from_file : string -> string -> string list -> michelson_program -> tez -> address * michelson_contract * int
 </SyntaxTitle>
@@ -196,17 +155,6 @@ let originate_from_file = (filepath: string, entrypoint: string, views: list&lt;
 
 Originate a contract with a path to the contract file, an entrypoint, and a list of views, together with an initial storage and an initial balance.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-const originated =
-  Test.originate_from_file (testme_test, "main", nil, init_storage, 0tez)
-const addr = originated.0
-const contract = originated.1
-const size = originated.2
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -225,10 +173,6 @@ let [addr, contract, size] = Test.originate_from_file(testme_test, "main", list(
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val compile_contract_from_file : string -> string -> list (string) -> michelson_contract
-</SyntaxTitle>
-
 <SyntaxTitle syntax="cameligo">
 val compile_contract_from_file : string -> string -> string list -> michelson_contract
 </SyntaxTitle>
@@ -239,9 +183,6 @@ let compile_contract_from_file = (filepath: string, entrypoint: string, views: l
 
 Compiles a contract with a path to the contract file, an entrypoint, and a list of views.
 
-<SyntaxTitle syntax="pascaligo">
-val originate &lt;param, storage&gt; : (param * storage -> list (operation) * storage) -> storage -> tez -> typed_address (param, storage) * michelson_contract * int
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate : ('param -> 'storage -> operation list * 'storage) -> 'storage -> tez -> (('param, 'storage) typed_address * michelson_contract * int)
 </SyntaxTitle>
@@ -291,9 +232,6 @@ let compile_contract = (contract: ('param, 'storage) => (list &lt;operation&gt;,
 
 Compiles a contract from an entrypoint function.
 
-<SyntaxTitle syntax="pascaligo">
-val read_contract_from_file : string -> michelson_contract
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val read_contract_from_file : string -> michelson_contract
 </SyntaxTitle>
@@ -304,9 +242,6 @@ let read_contract_from_file = (filepath: string) => michelson_contract
 
 Reads a contract from a `.tz` file.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_contract : michelson_contract -> michelson_program -> tez -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_contract : michelson_contract -> michelson_program -> tez -> address
 </SyntaxTitle>
@@ -317,9 +252,6 @@ let originate_contract = (contract: michelson_contract, init: michelson_program,
 
 Originate a contract with initial storage and initial balance.
 
-<SyntaxTitle syntax="pascaligo">
-val size : michelson_contract -> int
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val size : michelson_contract -> int
 </SyntaxTitle>
@@ -330,9 +262,6 @@ let size = (contract: michelson_contract) => int
 
 Measure the size of a contract.
 
-<SyntaxTitle syntax="pascaligo">
-val set_source : address -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_source : address -> unit
 </SyntaxTitle>
@@ -342,9 +271,6 @@ let set_source = (source: address) => unit
 </SyntaxTitle>
 Set the source for `Test.transfer` and `Test.originate`.
 
-<SyntaxTitle syntax="pascaligo">
-val set_baker_policy : test_baker_policy -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_baker_policy : test_baker_policy -> unit
 </SyntaxTitle>
@@ -356,9 +282,6 @@ let set_baker_policy = (policy: test_baker_policy) => unit
 Force the baking policy for `Test.transfer` and `Test.originate`. By
 default, the first bootstrapped account.
 
-<SyntaxTitle syntax="pascaligo">
-val set_baker : address -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_baker : address -> unit
 </SyntaxTitle>
@@ -371,9 +294,6 @@ Force the baker for `Test.transfer` and `Test.originate`, implemented
 using `Test.set_baker_policy` with `By_account`. By default, the first
 bootstrapped account.
 
-<SyntaxTitle syntax="pascaligo">
-val transfer : address -> michelson_program -> tez -> test_exec_result
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transfer : address -> michelson_program -> tez -> test_exec_result
 </SyntaxTitle>
@@ -386,9 +306,6 @@ Bake a transaction by sending an amount of tez with a parameter from
 the current source to another account.  Returns the amount of gas
 consumed by the execution of the contract.
 
-<SyntaxTitle syntax="pascaligo">
-function transfer_exn : address -> michelson_program -> tez -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transfer_exn : address -> michelson_program -> tez -> nat
 </SyntaxTitle>
@@ -399,9 +316,6 @@ let transfer_exn = (addr: address, parameter: michelson_program, amount: tez) =>
 
 Similar as `Test.transfer`, but fails when anything goes wrong.
 
-<SyntaxTitle syntax="pascaligo">
-val transfer_to_contract &lt;param&gt; : contract (param) -> p -> tez -> test_exec_result
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transfer_to_contract : 'param contract -> 'param -> tez -> test_exec_result
 </SyntaxTitle>
@@ -414,9 +328,6 @@ Bake a transaction by sending an amount of tez with a parameter from
 the current source to a contract.  Returns the amount of gas consumed
 by the execution of the contract.
 
-<SyntaxTitle syntax="pascaligo">
-function transfer_to_contract_exn : contract ('p) -> 'p -> tez -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transfer_to_contract_exn : 'p contract -> 'p -> tez -> nat
 </SyntaxTitle>
@@ -427,9 +338,6 @@ let transfer_to_contract_exn = (addr: contract&lt;&apos;p&gt;, parameter: &apos;
 
 Similar as `Test.transfer_to_contract`, but fails when anything goes wrong.
 
-<SyntaxTitle syntax="pascaligo">
-val get_storage_of_address : address -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_storage_of_address : address -> michelson_program
 </SyntaxTitle>
@@ -440,9 +348,6 @@ let get_storage_of_address = (account: address) => michelson_program
 
 Get the storage of an account in `michelson_program`.
 
-<SyntaxTitle syntax="pascaligo">
-val get_storage &lt;param, storage&gt; : typed_address (param, storage) -> storage
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_storage : ('param, 'storage) typed_address -> 'storage
 </SyntaxTitle>
@@ -453,9 +358,6 @@ let get_storage = (account: typed_address &lt;&apos;p, &apos;s&gt;) => &apos;s
 
 Get the storage of a typed account.
 
-<SyntaxTitle syntax="pascaligo">
-val get_balance : address -> tez
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_balance : address -> tez
 </SyntaxTitle>
@@ -465,9 +367,7 @@ let get_balance = (account: address) => tez
 </SyntaxTitle>
 
 Get the balance of an account in tez.
-<SyntaxTitle syntax="pascaligo">
-function get_voting_power : key_hash -> nat
-</SyntaxTitle>
+
 <SyntaxTitle syntax="cameligo">
 val get_voting_power : key_hash -> nat
 </SyntaxTitle>
@@ -481,9 +381,6 @@ coincides with the weight of the contract in the voting listings
 (i.e., the rolls count) which is calculated at the beginning of every
 voting period.
 
-<SyntaxTitle syntax="pascaligo">
-val get_total_voting_power : nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_total_voting_power : nat
 </SyntaxTitle>
@@ -493,9 +390,7 @@ let get_total_voting_power = nat
 </SyntaxTitle>
 
 Return the total voting power of all contracts. The total voting power coincides with the sum of the rolls count of every contract in the voting listings. The voting listings is calculated at the beginning of every voting period.
-<SyntaxTitle syntax="pascaligo">
-val michelson_equal : michelson_program -> michelson_program -> bool
-</SyntaxTitle>
+
 <SyntaxTitle syntax="cameligo">
 val michelson_equal : michelson_program -> michelson_program -> bool
 </SyntaxTitle>
@@ -506,9 +401,6 @@ let michelson_equal = (a: michelson_program, b: michelson_program) => bool
 
 Compare two Michelson values.
 
-<SyntaxTitle syntax="pascaligo">
-val log&lt;a&gt; : a -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val log : 'a -> unit
 </SyntaxTitle>
@@ -519,9 +411,6 @@ let log = (a: 'a) => unit
 
 Log a value.
 
-<SyntaxTitle syntax="pascaligo">
-val to_string&lt;a&gt; : a -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val to_string : 'a -> string
 </SyntaxTitle>
@@ -532,9 +421,6 @@ let to_string = (a: 'a) => string
 
 Convert a value to a string (same conversion as used by `log`).
 
-<SyntaxTitle syntax="pascaligo">
-val to_json&lt;a&gt; : a -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val to_json : 'a -> string
 </SyntaxTitle>
@@ -546,9 +432,6 @@ let to_json = (a: 'a) => string
 Convert a value to its JSON representation (as a string). A JSON
 schema is available [here](values.schema.json).
 
-<SyntaxTitle syntax="pascaligo">
-val print : string -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val print : string -> unit
 </SyntaxTitle>
@@ -559,9 +442,6 @@ let print = (s: string) => unit
 
 Prints an string to stdout.
 
-<SyntaxTitle syntax="pascaligo">
-val println : string -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val println : string -> unit
 </SyntaxTitle>
@@ -572,9 +452,6 @@ let println = (s: string) => unit
 
 Prints an string to stdout, ended with a newline.
 
-<SyntaxTitle syntax="pascaligo">
-val eprint : string -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val eprint : string -> unit
 </SyntaxTitle>
@@ -585,9 +462,6 @@ let eprint = (s: string) => unit
 
 Prints an string to stderr.
 
-<SyntaxTitle syntax="pascaligo">
-val nl : string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val nl : string
 </SyntaxTitle>
@@ -597,9 +471,6 @@ let nl : string
 </SyntaxTitle>
 String consisting of only a newline.
 
-<SyntaxTitle syntax="pascaligo">
-val chr : nat -> option string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val chr : nat -> string option
 </SyntaxTitle>
@@ -611,9 +482,6 @@ let chr = (c: nat) => option&lt;string&gt;
 String consisting of the character represented by a `nat` in the
 interval [0, 255].
 
-<SyntaxTitle syntax="pascaligo">
-val reset_state : nat -> list (tez) -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val reset_state : nat -> tez list -> unit
 </SyntaxTitle>
@@ -632,9 +500,6 @@ here](https://tezos.gitlab.io/alpha/consensus.html#validator-selection-staking-b
 and thus `Test.get_balance` can show a different amount to the one
 being set with `Test.reset_state`.
 
-<SyntaxTitle syntax="pascaligo">
-val reset_state_at : timestamp -> nat -> list (tez) -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val reset_state_at : timestamp -> nat -> tez list -> unit
 </SyntaxTitle>
@@ -645,9 +510,6 @@ let reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, amount
 
 Same as `reset_state` but accepts a timestamp which is set as the initial timestamp of the genesis block.
 
-<SyntaxTitle syntax="pascaligo">
-val get_time : unit -> timestamp
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_time : unit -> timestamp
 </SyntaxTitle>
@@ -658,9 +520,6 @@ let get_time = (_u: unit) => timestamp
 
 Gets the current time (to be used in test mode).
 
-<SyntaxTitle syntax="pascaligo">
-val baker_account : (string * key) -> option tez -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val baker_account : (string * key) -> tez option -> unit
 </SyntaxTitle>
@@ -672,10 +531,6 @@ let baker_account = ([string, key], amount : option&lt;tez&gt;) => unit
 Adds an account `(sk, pk)` as a baker. The change is only effective
 after `Test.reset_state`.
 
-
-<SyntaxTitle syntax="pascaligo">
-val register_delegate : key_hash -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val register_delegate : key_hash -> unit
 </SyntaxTitle>
@@ -686,9 +541,6 @@ let register_delegate = (account : key_hash) => unit
 
 Registers a `key_hash` corresponding to an account as a delegate.
 
-<SyntaxTitle syntax="pascaligo">
-val register_constant : michelson_program -> string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val register_constant : michelson_program -> string
 </SyntaxTitle>
@@ -702,9 +554,6 @@ Registers a global constant `constant`, returns its hash as a string.
 See the [documentation for global constants](../advanced/global-constants.md#global-constants-in-the-testing-framework)
 for an example of usage.
 
-<SyntaxTitle syntax="pascaligo">
-val constant_to_michelson_program : string -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val constant_to_michelson_program : string -> michelson_program
 </SyntaxTitle>
@@ -716,10 +565,6 @@ let constant_to_michelson_program = (constant : string) => michelson_program
 Turn a constant (as a string) into a `michelson_program`. To be used
 together with `Test.register_constant`.
 
-
-<SyntaxTitle syntax="pascaligo">
-val parse_michelson : string -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val parse_michelson : string -> michelson_program
 </SyntaxTitle>
@@ -729,9 +574,6 @@ let parse_michelson = (constant : string) => michelson_program
 </SyntaxTitle>
 Parses Michelson (as string) into a `michelson_program`.
 
-<SyntaxTitle syntax="pascaligo">
-val register_file_constants : string -> list (string)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val register_file_constants : string -> string list
 </SyntaxTitle>
@@ -743,9 +585,6 @@ Registers the global constants listed in a JSON file. It takes a
 string (file path) and returns a list of strings corresponding to the
 hashes of the registered constants.
 
-<SyntaxTitle syntax="pascaligo">
-val bake_until_n_cycle_end : nat -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val bake_until_n_cycle_end : nat -> unit
 </SyntaxTitle>
@@ -759,9 +598,6 @@ as delegate can effectively act as a baker.
 
 *Note :* It can be used in tests to [manually advance time](../faq/tezos-now-advance-time.md)
 
-<SyntaxTitle syntax="pascaligo">
-val new_account : unit -> (string * key)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val new_account : unit -> (string * key)
 </SyntaxTitle>
@@ -772,9 +608,6 @@ let new_account = (_: unit) => (string, key)
 
 Creates and returns secret key & public key of a new account.
 
-<SyntaxTitle syntax="pascaligo">
-val add_account : (string * key) -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val add_account : (string * key) -> unit
 </SyntaxTitle>
@@ -786,9 +619,6 @@ let add_account = (sk: string, pk: key) => unit
 Adds an account specfied by secret key & public key to the test
 context.
 
-<SyntaxTitle syntax="pascaligo">
-val nth_bootstrap_account : int -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val nth_bootstrap_account : int -> address
 </SyntaxTitle>
@@ -799,9 +629,6 @@ let nth_bootstrap_account = (nth: int) => address
 
 Returns the address of the nth bootstrapped account.
 
-<SyntaxTitle syntax="pascaligo">
-val nth_bootstrap_contract : nat -> address
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val nth_bootstrap_contract : nat -> address
 </SyntaxTitle>
@@ -812,9 +639,6 @@ let nth_bootstrap_contract = (nth: nat) => address
 
 Returns the address corresponding to the nth bootstrapped contract.
 
-<SyntaxTitle syntax="pascaligo">
-val bootstrap_contract&lt;param,storage&gt; : tez -> (param * storage -> list (operation) * storage) -> storage -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val bootstrap_contract : tez -> ('param * 'storage -> operation list * 'storage) -> 'storage -> unit
 </SyntaxTitle>
@@ -827,9 +651,6 @@ Setup a bootstrap contract with an entrypoint function, initial
 storage and initial balance. Bootstrap contracts will be loaded in
 order, and they will be available only after reset.
 
-<SyntaxTitle syntax="pascaligo">
-val nth_bootstrap_typed_address &lt;param, storage&gt; : nat -> typed_address (param, storage)
-2</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val nth_bootstrap_typed_address : int -> ('param, 'storage) typed_address
 </SyntaxTitle>
@@ -842,9 +663,6 @@ Returns the typed address corresponding to the nth bootstrapped
 contract currently loaded. The types are inferred from those contracts
 loaded with `Test.bootstrap_contract` (before reset).
 
-<SyntaxTitle syntax="pascaligo">
-val get_bootstrap_account : nat -> address * key * string
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_bootstrap_account : nat -> address * key * string
 </SyntaxTitle>
@@ -854,9 +672,6 @@ let get_bootstrap_account = (nth: nat) => [address, key, string]
 </SyntaxTitle>
 Returns the address, key and secret key of the nth bootstrapped account.
 
-<SyntaxTitle syntax="pascaligo">
-val last_originations : unit -> map (address * list (address))
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val last_originations : unit -> (address * address list) map
 </SyntaxTitle>
@@ -867,9 +682,6 @@ let last_originations = (_: unit) => map&lt;address , address list&gt;
 Returns addresses of orginated accounts in the last transfer.
 It is given in the form of a map binding the address of the source of the origination operation to the addresses of newly originated accounts.
 
-<SyntaxTitle syntax="pascaligo">
-val compile_value&lt;a&gt; : a -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val compile_value : 'a -> michelson_program
 </SyntaxTitle>
@@ -879,9 +691,6 @@ let compile_value = (value: 'a) => michelson_program
 </SyntaxTitle>
 Compile a LIGO value to Michelson.
 
-<SyntaxTitle syntax="pascaligo">
-val eval&lt;a&gt; : a -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val eval : 'a -> michelson_program
 </SyntaxTitle>
@@ -892,9 +701,6 @@ let eval = (value: 'a) => michelson_program
 Compile a LIGO value to Michelson. Currently it is a renaming of
 `compile_value`.
 
-<SyntaxTitle syntax="pascaligo">
-val run&lt;a,b&gt; : (a -> b) -> a -> michelson_program
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val run : ('a -> 'b) -> 'a -> michelson_program
 </SyntaxTitle>
@@ -910,28 +716,6 @@ runs the Michelson interpreter on the code `f_mich` with starting
 stack `[v_mich]`.
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo test-ligo group=test_run
-type some_r is
-  [@layout comb]
-  record [
-    one   : int;
-    two   : nat;
-    three : string;
-    four  : bytes;
-    five  : unit
-  ]
-
-function f (const x : some_r) is x.one
-
-const test_example = {
-  function aux (const x : int * nat * string * bytes * unit) is
-    f (record [one = x.0; two = x.1; three = x.2; four = x.3; five = x.4]);
-} with Test.run (aux, (1 + 3 + 2, 1n + 2n, "a" ^ "b", 0xFF00, unit))
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_run
@@ -985,9 +769,6 @@ let test_example =
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val decompile&lt;a&gt; : michelson_program -> a
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val decompile : michelson_program -> 'a
 </SyntaxTitle>
@@ -1001,9 +782,6 @@ annotation. Note: This operation can fail at run-time, in case that
 the `michelson_program` given cannot be decompiled to something
 compatible with the annotated type.
 
-<SyntaxTitle syntax="pascaligo">
-val mutate_value&lt;a&gt; : nat -> a -> option (a * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val mutate_value : nat -> 'a -> ('a * mutation) option
 </SyntaxTitle>
@@ -1016,9 +794,6 @@ Mutates a value using a natural number as an index for the available
 mutations, returns an option for indicating whether mutation was
 successful or not.
 
-<SyntaxTitle syntax="pascaligo">
-val mutation_test&lt;a,b&gt; : a -> (a -> b) -> option (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val mutation_test : 'a -> ('a -> 'b) -> ('b * mutation) option
 </SyntaxTitle>
@@ -1032,9 +807,6 @@ mutations available of it, passing each one to the function (second
 argument). On the first case of non failure when running the function
 on a mutation, the value and mutation involved will be returned.
 
-<SyntaxTitle syntax="pascaligo">
-val mutation_test_all&lt;a,b&gt; : a -> (a -> b) -> list (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val mutation_test_all : 'a -> ('a -> 'b) -> ('b * mutation) list
 </SyntaxTitle>
@@ -1049,9 +821,6 @@ In case no failure arises when running the function on a mutation, the
 failure and mutation involved will be added to the list to be
 returned.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_from_file_and_mutate&lt;b&gt; : string -> string -> list string -> michelson_program -> tez -> (address * michelson_contract * int -> b) -> option (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_from_file_and_mutate : string -> string -> string list -> michelson_program -> tez -> (address * michelson_contract * int -> 'b) -> ('b * mutation) option
 </SyntaxTitle>
@@ -1066,9 +835,6 @@ the contract and pass the result to the function (last argument). On
 the first case of non failure when running the function on a mutation,
 the value and mutation involved will be returned.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_from_file_and_mutate_all&lt;b&gt; : string -> string -> list string -> michelson_program -> tez -> (address * michelson_contract * int -> b) -> list (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_from_file_and_mutate_all : string -> string -> string list -> michelson_program -> tez -> (address * michelson_contract * int -> 'b) -> ('b * mutation) list
 </SyntaxTitle>
@@ -1084,9 +850,6 @@ case no failure arises when running the function on a mutation, the
 failure and mutation involved will be added to the list to be
 returned.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_module_and_mutate&lt;b, p, s&gt; : module_contract (p, s) -> s -> tez -> (typed_address (p, s) -> michelson_contract -> int -> b) -> option (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_module_and_mutate : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> michelson_contract -> int -> b) -> ('b * mutation) option
 </SyntaxTitle>
@@ -1101,9 +864,6 @@ to the function (last argument). On the first case of non failure when
 running the function on a mutation, the value and mutation involved
 will be returned.
 
-<SyntaxTitle syntax="pascaligo">
-val originate_module_and_mutate_all&lt;b, p, s&gt; : module_contract (p, s) -> s -> tez -> (typed_address (p, s) -> michelson_contract -> int -> b) -> list (b * mutation)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val originate_module_and_mutate_all : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> michelson_contract -> int -> b) -> ('b * mutation) list
 </SyntaxTitle>
@@ -1118,10 +878,6 @@ to the function (last argument). In case no failure arises when
 running the function on a mutation, the failure and mutation involved
 will be added to the list to be returned.
 
-
-<SyntaxTitle syntax="pascaligo">
-val save_mutation : string -> mutation -> option (string)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val save_mutation : string -> mutation -> string option
 </SyntaxTitle>
@@ -1135,9 +891,6 @@ and saves it to a file in the directory path (first argument). It
 returns an optional string indicating the filename where the mutation
 was saved, or `None` if there was an error.
 
-<SyntaxTitle syntax="pascaligo">
-val random&lt;a&gt; : unit -> a
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val random : unit -> 'a
 </SyntaxTitle>
@@ -1148,9 +901,6 @@ let random : (u: unit) => 'a
 
 This function creates a random value for a chosen type.
 
-<SyntaxTitle syntax="pascaligo">
-val cast_address &lt;param, storage&gt; : address -> typed_address (param, storage)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val cast_address : address -> ('param,'storage) typed_address
 </SyntaxTitle>
@@ -1161,9 +911,6 @@ let cast_address : (addr: adress) => typed_address &lt;&apos;param, &apos;storag
 
 This function casts an address to a typed address. You will need to annotate the result with the type you expect.
 
-<SyntaxTitle syntax="pascaligo">
-val set_big_map &lt;key, value&gt; : int -> big_map (key, value) -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_big_map : int -> ('key, 'value) big_map  -> unit
 </SyntaxTitle>
@@ -1178,10 +925,6 @@ the value of a particular big map identifier. It should not be
 normally needed, except in particular circumstances such as using
 custom bootstrap contracts that initialize big maps.
 
-
-<SyntaxTitle syntax="pascaligo">
-val save_context : unit -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val save_context : unit -> unit
 </SyntaxTitle>
@@ -1193,9 +936,6 @@ let save_context: (u: unit) => unit
 Takes current testing framework context and saves it, pushing it into
 a stack of contexts.
 
-<SyntaxTitle syntax="pascaligo">
-val restore_context : unit -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val restore_context : unit -> unit
 </SyntaxTitle>
@@ -1208,9 +948,6 @@ Pops a testing framework context from the stack of contexts, and sets
 it up as the new current context. In case the stack was empty, the
 current context is kept.
 
-<SyntaxTitle syntax="pascaligo">
-val drop_context : unit -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val drop_context : unit -> unit
 </SyntaxTitle>
@@ -1222,9 +959,6 @@ let drop_context: (u: unit) => unit
 Drops a testing framework context from the stack of contexts. In case
 the stack was empty, nothing is done.
 
-<SyntaxTitle syntax="pascaligo">
-val sign : string -> bytes -> signature
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sign : string -> bytes -> signature
 </SyntaxTitle>
@@ -1236,9 +970,6 @@ let sign: (secret_key: string, data: bytes) => signature
 Creates a signature of `bytes` from a `string` representing a secret
 key, it can be checked with `Crypto.check`.
 
-<SyntaxTitle syntax="pascaligo">
-val set_print_values : unit -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val set_print_values : unit -> unit
 </SyntaxTitle>
@@ -1249,9 +980,6 @@ let set_print_values = (u: unit) => unit
 
 Turns on the printing of `test` prefixed values at the end of tests. This is the default behaviour.
 
-<SyntaxTitle syntax="pascaligo">
-val unset_print_values : unit -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val unset_print_values : unit -> unit
 </SyntaxTitle>
@@ -1262,9 +990,6 @@ let unset_print_values = (u: unit) => unit
 
 Turns off the printing of `test` prefixed values at the end of tests.
 
-<SyntaxTitle syntax="pascaligo">
-val get_last_events_from&lt;a,p,s&gt; : typed_address (p,s) -> string -> list (a)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val get_last_events_from : ('p,'s) typed_address -> string -> 'a list
 </SyntaxTitle>
@@ -1279,10 +1004,6 @@ expected payload type.
 
 ### Failwith and asserts
 
-
-<SyntaxTitle syntax="pascaligo">
-val failwith&lt;a&gt; : a -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val failwith : 'a -> unit
 </SyntaxTitle>
@@ -1293,9 +1014,6 @@ let failwith: (message: &apos;a) => unit
 
 Cause the testing framework to fail.
 
-<SyntaxTitle syntax="pascaligo">
-val assert : bool -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val assert : bool -> unit
 </SyntaxTitle>
@@ -1307,9 +1025,6 @@ let assert: (condition: bool) => unit
 Check if a certain condition has been met. If not the testing
 framework will fail.
 
-<SyntaxTitle syntax="pascaligo">
-val assert_with_error : bool -> string -> unit
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val assert_with_error : bool -> string -> unit
 </SyntaxTitle>

@@ -16,36 +16,6 @@ types as *fields* and indexes them with a *field name*. In the example
 below you can see the definition of data types for a ledger that keeps
 the balance and number of previous transactions for a given account.
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo group=c
-// Type aliasing
-
-type account is address
-type number_of_transactions is nat
-
-// The type account_data is a record with two fields.
-
-type account_data is record [
-  balance : tez;
-  transactions : number_of_transactions
-]
-
-// A ledger is a map from accounts to account_data
-
-type ledger is map (account, account_data)
-
-const my_ledger : ledger = map [
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) ->
-  record [
-    balance = 10mutez;
-    transactions = 5n
-  ]
-]
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=c

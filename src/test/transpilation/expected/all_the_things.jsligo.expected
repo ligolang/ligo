@@ -55,7 +55,7 @@ let transfer = ([p, s]: [transfer, storage]): [
       match(opt) {
         when (Some(value)):
           value
-        when (None):
+        when (None()):
           (0 as nat)
       };
     if (authorized_value < p.value) {
@@ -74,7 +74,7 @@ let transfer = ([p, s]: [transfer, storage]): [
     match(opt) {
       when (Some(value)):
         value
-      when (None):
+      when (None()):
         (0 as nat)
     };
   if (sender_balance < p.value) {
@@ -94,7 +94,7 @@ let transfer = ([p, s]: [transfer, storage]): [
       match(opt) {
         when (Some(value)):
           value
-        when (None):
+        when (None()):
           (0 as nat)
       };
     let new_tokens2 =

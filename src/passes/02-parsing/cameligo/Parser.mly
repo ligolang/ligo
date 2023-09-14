@@ -1177,7 +1177,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence { $1 }
+| let_in_sequence
+| let_mut_sequence { $1 }
 
 let_in_sequence:
   attributes "let" ioption("rec") let_binding "in" series {
@@ -1188,6 +1189,16 @@ let_in_sequence:
     let value  = {kwd_let=$2; kwd_rec=$3; binding=$4; kwd_in=$5; body} in
     let let_in = E_LetIn {region; value}
     in hook_E_Attr $1 let_in }
+
+let_mut_sequence:
+  attributes "let" "mut" let_binding "in" series {
+    let stop    = nsepseq_to_region expr_to_region $6 in
+    let region  = cover $2#region stop in
+    let value   = {compound=None; elements = Some $6} in
+    let body    = E_Seq {region; value} in
+    let value   = {kwd_let=$2; kwd_mut=$3; binding=$4; kwd_in=$5; body} in
+    let let_mut = E_LetMutIn {region; value}
+    in hook_E_Attr $1 let_mut }
 
 seq_expr:
   ass_expr_level

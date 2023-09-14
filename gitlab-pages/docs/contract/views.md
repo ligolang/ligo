@@ -14,9 +14,6 @@ On-chain views can be defined using the `@view` attribute. For more information 
 
 ## Calling On-Chain Views
 
-<SyntaxTitle syntax="pascaligo">
-val call_view&lt;arg,reg&gt; : string -> arg -> address -> option (ret)
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val call_view : string -> 'arg -> address -> 'ret option
 </SyntaxTitle>

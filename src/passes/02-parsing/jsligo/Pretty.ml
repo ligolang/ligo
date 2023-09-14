@@ -864,7 +864,7 @@ and print_E_CodeInj state (node : code_inj reg) =
 
 and print_E_ContractOf state (node : contract_of_expr reg) =
   let {kwd_contract_of; namespace_path} = node.value in
-  token kwd_contract_of ^^ space ^^
+  token kwd_contract_of ^^
   print_par state (print_namespace_selection state) namespace_path
 
 (* Constructor application *)
@@ -877,7 +877,7 @@ and print_ctor_app :
   'a ctor_app reg -> document =
   fun state print_ctor print node ->
     match snd node.value with
-      ZeroArg ctor -> print_ctor state ctor
+      ZeroArg ctor -> print_ctor state ctor ^^ string "()"
     | MultArg args ->
         match args.value.inside with
           `Sep (ctor, []) -> print_ctor state ctor

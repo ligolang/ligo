@@ -8,9 +8,6 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-<SyntaxTitle syntax="pascaligo">
-val and : 'a -> nat -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val and : 'a -> nat -> nat
 </SyntaxTitle>
@@ -27,23 +24,6 @@ It can also be used with `bytes`. But the signature might be a bit different.
 
 A bitwise `and` operation.
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const zero : nat = Bitwise.and (2n, 1n)
-const two_bytes : bytes = Bitwise.and (0x11, 0x10)
-```
-
-Input
-```bash
-❯ ligo compile expression --deprecate pascaligo "Bitwise.and (0x11, 0x10)"
-```
-Output
-```bash
-0x10
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -83,9 +63,6 @@ Output
 </Syntax>
 
 
-<SyntaxTitle syntax="pascaligo">
-val or : nat -> nat -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val or :  nat -> nat -> nat
 </SyntaxTitle>
@@ -100,25 +77,6 @@ It can also be used with `bytes`. But the signature might be a bit different.
 
 `val or : bytes -> bytes -> bytes`
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const five : nat = Bitwise.or (4n, 1n)
-const three_bytes : bytes = Bitwise.or (0x11, 0x10)
-```
-
-
-Input
-```bash
-❯ ligo compile expression --deprecate pascaligo "Bitwise.or (0x11, 0x10)"
-```
-
-Output
-```bash
-0x11
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -160,9 +118,6 @@ Output
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val xor : nat -> nat -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val xor :  nat -> nat -> nat
 </SyntaxTitle>
@@ -177,26 +132,6 @@ It can also be used with `bytes`. But the signature might be a bit different.
 
 `val xor : bytes -> bytes -> bytes`
 
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const three : nat = Bitwise.xor (2n, 1n)
-const one_byte : bytes = Bitwise.xor (0x11, 0x10)
-```
-
-
-Input
-```bash
-❯ ligo compile expression --deprecate pascaligo "Bitwise.or (0x11, 0x10)"
-```
-
-Output
-```bash
-0x01
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -227,7 +162,7 @@ let one_byte : bytes = 0x11 ^ 0x10
 
 Input
 ```bash
-❯ ligo compile expression cameligo "Bitwise.xor(0x11, 0x10)"
+❯ ligo compile expression jsligo "0x11 ^ 0x10"
 ```
 
 Output
@@ -237,9 +172,6 @@ Output
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val shift_left : nat -> nat -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val shift_left :  nat -> nat -> nat
 </SyntaxTitle>
@@ -254,24 +186,6 @@ It can also be used with `bytes`. But the signature might be a bit different.
 
 `val shift_left : bytes -> nat -> bytes`
 
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const four : nat = Bitwise.shift_left (2n, 1n)
-const five_one_two : bytes = Bitwise.shift_left (0x0100, 1n)
-```
-
-Input
-```bash
-❯ ligo compile expression --deprecated pascaligo "Bitwise.shift_left (0x0100, 1n)"
-```
-
-Output
-```bash
-0x000200
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo
@@ -310,9 +224,6 @@ Output
 
 </Syntax>
 
-<SyntaxTitle syntax="pascaligo">
-val shift_right : nat -> nat -> nat
-</SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val shift_right :  nat -> nat -> nat
 </SyntaxTitle>
@@ -326,26 +237,6 @@ A bitwise shift right operation.
 It can also be used with `bytes`. But the signature might be a bit different.
 
 `val shift_right : bytes -> nat -> bytes`
-
-
-<Syntax syntax="pascaligo">
-
-```pascaligo
-const one : nat = Bitwise.shift_right (2n, 1n)
-const zero_bytes : bytes = Bitwise.shift_right (0x01, 1n)
-```
-
-Input
-```bash
-❯ ligo compile expression --deprecated pascaligo "Bitwise.shift_right (0x01, 1n)"
-```
-
-Output
-```bash
-0x00
-```
-
-</Syntax>
 
 <Syntax syntax="cameligo">
 

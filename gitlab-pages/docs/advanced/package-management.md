@@ -78,26 +78,6 @@ $ ligo install @ligo/bigarray
 Now we will write a smart contract names `main` which will use the
 `@ligo/bigarray` library
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
-
-type parameter is
-  Concat  of list(int)
-| Reverse
-
-type storage is list(int)
-
-function main (const action : parameter; const store : storage) : list(operation) * storage is
-  (nil,
-   case action of [
-      Concat (ys) -> (BA.concat(store))(ys)
-    | Reverse   -> BA.reverse(store)
-  ])
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -157,22 +137,6 @@ const main = (action: parameter, store: storage): [list<operation>, storage] => 
 
 and we write some tests for our smart contract in `main.test.mligo`
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-#include "main.ligo"
-
-const test = {
-    const storage = Test.compile_value(list [1; 2; 3]);
-    const (addr, _, _) = Test.originate_from_file("./main.ligo", "main", (nil : list(string)), storage, 0tez);
-    const taddr : typed_address(parameter, storage) = Test.cast_address(addr);
-    const contr : contract(parameter) = Test.to_contract(taddr);
-    const _ = Test.transfer_to_contract_exn(contr, Reverse, 1mutez);
-} with assert (Test.get_storage(taddr) = list [3; 2; 1])
-
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -212,13 +176,6 @@ const test = (() => {
 
 To compile the contract to Michelson run the command
 
-<Syntax syntax="pascaligo">
-
-```bash
-$ ligo compile contract main.ligo
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```bash
@@ -240,13 +197,6 @@ This will find the dependencies installed on the local machine, and compile the 
 
 To test the contract using LIGO's [testing framework](../advanced/testing.md) run the command
 
-<Syntax syntax="pascaligo">
-
-```bash
-$ ligo run test main.test.ligo
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```bash
@@ -303,22 +253,6 @@ If you wish to try out a LIGO package in the REPL environment, Install
 the LIGO package by following the steps above, and then fire up the
 LIGO REPL using the following command
 
-<Syntax syntax="pascaligo">
-
-```
-$ ligo repl pascaligo
-Welcome to LIGO's interpreter!
-Included directives:
-  #use "file_path";;
-  #import "file_path" "module_name";;
-In  [1]: #import "@ligo/bigarray/lib/bigarray.mligo" "BA";;
-Out [1]: Done.
-In  [2]: (BA.concat (list [1;2;3])) (list [4;5;6]);;
-Out [2]: CONS(1 , CONS(2 , CONS(3 , CONS(4 , CONS(5 , CONS(6 , LIST_EMPTY()))))))
-In  [3]:
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```
@@ -428,22 +362,6 @@ You can specify some files or directories which you want to keep out of the LIGO
 We are going the write a simple package `ligo-list-helpers` library that is similar to the bigarray package we used earlier.
 
 
-<Syntax syntax="pascaligo">
-
-```pascaligo group=pkg
-(* LIGO library for working with lists *)
-
-function concat<a> (const xs : list(a) ; const ys : list(a)) : list(a) is {
-    function f (const x : a ; const ys : list(a)) : list(a) is x # ys
-} with  List.fold_right(f, xs, ys)
-
-function reverse<a> (const xs : list(a)) : list(a) is {
-    function f (const ys : list(a) ; const x : a) : list(a) is x # ys
-} with List.fold_left(f, (nil : list(a)), xs)
-
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo group=pkg
@@ -483,24 +401,6 @@ const reverse = <T>(xs : list<T>) : list<T> => {
 
 and some tests for the library
 
-<Syntax syntax="pascaligo">
-
-```pascaligo skip
-#include "list.ligo"
-
-const test_concat = {
-    const xs = list [1; 2; 3];
-    const ys = list [4; 5; 6];
-    const zs = concat (xs, ys);
-} with assert (zs = list [1; 2; 3; 4; 5; 6]);
-
-const test_reverse = {
-    const xs = list [1; 2; 3];
-} with assert (reverse (xs) = list [3; 2; 1]);
-
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -544,13 +444,6 @@ const test_reverse = (() => {
 
 To run the tests run the command
 
-<Syntax syntax="pascaligo">
-
-```bash
-$ ligo run test list.test.ligo
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```bash
@@ -636,13 +529,6 @@ can find the dependencies installed on your local machine, If you wish
 to specify the root directory manually you can do so using the
 `--project-root` option e.g.
 
-<Syntax syntax="pascaligo">
-
-```bash
-$ ligo compile contract main.ligo --project-root PATH
-```
-
-</Syntax>
 <Syntax syntax="cameligo">
 
 ```bash
