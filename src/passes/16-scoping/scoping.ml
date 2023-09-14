@@ -23,10 +23,8 @@ let binder_meta (var : Var.t option) (source_type : I.type_expression)
     : binder_meta option
   =
   Option.map var ~f:(fun var : binder_meta ->
-      { location = Location.dummy
-      ; (* TODO propagate the location of the binder *)
-        name =
-          (if Var.is_generated var then None else Some (Format.asprintf "%a" Var.pp var))
+      { location = Var.get_location var
+      ; name = (if Var.is_generated var then None else Some (Var.to_name_exn var))
       ; source_type = source_type.source_type
       })
 

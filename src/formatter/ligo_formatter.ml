@@ -333,12 +333,24 @@ module Michelson_formatter = struct
 
   let variable_meta_to_json : shrunk_variable_meta -> Data_encoding.Json.t = function
     | { location; name; source_type } ->
+      let name =
+        Option.map name ~f:(fun name ->
+            let open Scopes.Types in
+            let name =
+              if Location.is_virtual location
+              then name
+              else Uid.to_string @@ Uid.make name location
+            in
+            `String name)
+      in
+      let file_name =
+        match location with
+        | File region -> Some (`String region#file)
+        | Virtual _ -> None
+      in
       json_object
-        [ "location", location_to_json location
-        ; ( "name"
-          , match name with
-            | None -> None
-            | Some name -> Some (`String name) )
+        [ "name", name
+        ; "file_name", file_name
         ; "source_type", Option.map ~f:(fun n -> `String (string_of_int n)) source_type
         ]
 
