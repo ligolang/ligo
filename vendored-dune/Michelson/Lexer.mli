@@ -58,52 +58,49 @@ module Region = Simple_utils.Region
 
 type lexeme = string
 
-module type TOKEN =
-  sig
-    type token
-    type t = token
+module type TOKEN = sig
+  type token
+  type t = token
 
-    (* Errors *)
+  (* Errors *)
 
-    type int_err = Non_canonical_zero
+  type int_err = Non_canonical_zero
+  type annot_err = Annotation_length of int
 
-    type annot_err = Annotation_length of int
-
-    type ident_err =
-      Valid_prefix       of Pair.index * Pair.tree
-    | Invalid_tree       of Pair.index * char * Pair.tree
+  type ident_err =
+    | Valid_prefix of Pair.index * Pair.tree
+    | Invalid_tree of Pair.index * char * Pair.tree
     | Truncated_encoding of Pair.index * Pair.child * Pair.tree
-    | Missing_break      of int
+    | Missing_break of int
     | Invalid_identifier
 
-    (* Injections *)
+  (* Injections *)
 
-    val mk_string : lexeme -> Region.t -> token
-    val mk_bytes  : lexeme -> Region.t -> token
-    val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
-    val mk_annot  : lexeme -> Region.t -> (token, annot_err) result
-    val mk_sym    : lexeme -> Region.t -> token
-    val eof       : Region.t -> token
+  val mk_string : lexeme -> Region.t -> token
+  val mk_bytes : lexeme -> Region.t -> token
+  val mk_int : lexeme -> Region.t -> (token, int_err) result
+  val mk_ident : lexeme -> Region.t -> (token, ident_err) result
+  val mk_annot : lexeme -> Region.t -> (token, annot_err) result
+  val mk_sym : lexeme -> Region.t -> token
+  val eof : Region.t -> token
 
-    (* Projections *)
+  (* Projections *)
 
-    val to_lexeme : token -> lexeme
-    val to_string : offsets:bool -> [`Byte | `Point] -> token -> string
-    val to_region : token -> Region.t
+  val to_lexeme : token -> lexeme
+  val to_string : offsets:bool -> [ `Byte | `Point ] -> token -> string
+  val to_region : token -> Region.t
 
-    (* Predicates *)
+  (* Predicates *)
 
-    val is_string : token -> bool
-    val is_bytes  : token -> bool
-    val is_int    : token -> bool
-    val is_ident  : token -> bool
-    val is_annot  : token -> bool
-    val is_sym    : token -> bool
-    val is_eof    : token -> bool
-
-    val support_string_delimiter : char -> bool
-  end
+  val is_string : token -> bool
+  val is_bytes : token -> bool
+  val is_int : token -> bool
+  val is_ident : token -> bool
+  val is_annot : token -> bool
+  val is_sym : token -> bool
+  val is_eof : token -> bool
+  val support_string_delimiter : char -> bool
+end
 
 (* The signature of the lexer *)
 

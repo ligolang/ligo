@@ -20,6 +20,7 @@ let comb_or ?source_type lst =
   in
   snd (aux ne_lst)
 
+
 (* Find actual annot to use on Michelson type *)
 let actual_annot (annot : string option) (label : Label.t) =
   match annot with
@@ -28,19 +29,19 @@ let actual_annot (annot : string option) (label : Label.t) =
     let label = Label.to_string label in
     (* unless label is an integer for a tuple index *)
     (match int_of_string_opt label with
-     | None ->
+    | None ->
       (* lowercase for convenience and backwards compat *)
-      let l = match String.to_list label with
-      | [] -> ""
-      | hd::tl -> String.of_char_list (Char.lowercase hd::tl)
+      let l =
+        match String.to_list label with
+        | [] -> ""
+        | hd :: tl -> String.of_char_list (Char.lowercase hd :: tl)
       in
       Some l
-     | Some _ -> None)
+    | Some _ -> None)
   | Some annot ->
     (* no annot if user specified empty string *)
-    if String.is_empty annot
-    then None
-    else Some annot
+    if String.is_empty annot then None else Some annot
+
 
 (* [from_layout] [f] [field] [layout] creates a type from [fields] which
    structure follows the one given by [layout].
@@ -54,7 +55,9 @@ let from_layout
   =
  fun ~raise f fields layout ->
   let annot_layout =
-    Layout.map_f (fun Layout.{ name; annot } -> actual_annot annot name, Record.find fields name) layout
+    Layout.map_f
+      (fun Layout.{ name; annot } -> actual_annot annot name, Record.find fields name)
+      layout
   in
   let rec aux = function
     | Layout.Inner [] -> raise.error (corner_case ~loc:__LOC__ "t_record empty")
@@ -67,14 +70,16 @@ let from_layout
 (* [t_sum] and [t_record] are the specialized version of [t_layouted_type]
    for combs *)
 let t_sum ?source_type = from_layout (comb_or ?source_type)
-let t_record ?source_type = from_layout (fun lst -> O.Expression.make_t ?source_type (T_tuple lst))
+
+let t_record ?source_type =
+  from_layout (fun lst -> O.Expression.make_t ?source_type (T_tuple lst))
+
 
 let record_to_pairs ~raise ~source_type return =
-  from_layout ~raise
-    (fun lst ->
+  from_layout ~raise (fun lst ->
       let tv =
-        let tys = List.map
-          ~f:(fun (ann,(e:O.expression)) -> ann, e.type_expression) lst 
+        let tys =
+          List.map ~f:(fun (ann, (e : O.expression)) -> ann, e.type_expression) lst
         in
         O.t_tuple ~loc:Location.generated ~source_type tys
       in
@@ -115,22 +120,25 @@ let explode_row ~loc (row : _ I.Row.t) ty' binders matchee
     | Inner layouts ->
       let subtree_types =
         match Mini_c.get_t_tuple ty' with
-        | None -> failwith (Format.asprintf "internal error: tuple not a tuple @ %s" __LOC__)
-        | Some subtree_types -> subtree_types in
-      let layouts_with_types =
-        List.zip_exn layouts subtree_types in
+        | None ->
+          failwith (Format.asprintf "internal error: tuple not a tuple @ %s" __LOC__)
+        | Some subtree_types -> subtree_types
+      in
+      let layouts_with_types = List.zip_exn layouts subtree_types in
       let let_tuple_bindings, bindings =
-        List.fold_map layouts_with_types
+        List.fold_map
+          layouts_with_types
           ~init:[]
           ~f:(fun let_tuple_bindings (layout, ty') ->
-              let var = Value_var.fresh ~loc () in
-              let var_exp = O.Expression.make ~loc (E_variable var) ty' in
-              let bindings = loop layout ~matchee:var_exp ty' in
-              (var, ty') :: let_tuple_bindings, bindings)
+            let var = Value_var.fresh ~loc () in
+            let var_exp = O.Expression.make ~loc (E_variable var) ty' in
+            let bindings = loop layout ~matchee:var_exp ty' in
+            (var, ty') :: let_tuple_bindings, bindings)
       in
       (`Let_tuple (List.rev let_tuple_bindings), matchee) :: List.concat bindings
   in
   loop row.layout ~matchee ty'
+
 
 let path_to_field layout field (ty' : Mini_c.type_expression) =
   let rec aux layout field ty' =
@@ -141,47 +149,47 @@ let path_to_field layout field (ty' : Mini_c.type_expression) =
     | Inner layouts ->
       let subtree_types =
         match Mini_c.get_t_tuple ty' with
-        | None -> failwith (Format.asprintf "internal error: tuple not a tuple @ %s" __LOC__)
-        | Some subtree_types -> subtree_types in
-      let layouts_with_types =
-        List.zip_exn layouts subtree_types in
-      List.find_mapi
-        layouts_with_types
-        ~f:(fun idx (layout, field_ty') ->
-            match aux layout field field_ty' with
-            | None -> None
-            | Some path ->
-              Some ((idx, List.length layouts, field_ty', ty') :: path))
+        | None ->
+          failwith (Format.asprintf "internal error: tuple not a tuple @ %s" __LOC__)
+        | Some subtree_types -> subtree_types
+      in
+      let layouts_with_types = List.zip_exn layouts subtree_types in
+      List.find_mapi layouts_with_types ~f:(fun idx (layout, field_ty') ->
+          match aux layout field field_ty' with
+          | None -> None
+          | Some path -> Some ((idx, List.length layouts, field_ty', ty') :: path))
   in
   match aux layout field ty' with
   | None -> failwith (Format.asprintf "internal error: field not found @ %s" __LOC__)
   | Some ret -> ret
 
+
 let constructor_to_lr
-      ~(layout : Ligo_prim.Layout.t)
-      (ty : Mini_c.type_expression)
-      (constructor : Label.t)
-    : (Mini_c.type_expression * [`Left | `Right]) list =
+    ~(layout : Ligo_prim.Layout.t)
+    (ty : Mini_c.type_expression)
+    (constructor : Label.t)
+    : (Mini_c.type_expression * [ `Left | `Right ]) list
+  =
   let layout = Layout.to_binary layout in
   let open Option.Let_syntax in
   let rec find layout path ty =
     match layout with
     | Empty -> None
     | Node (l, r) ->
-       (let%bind (lt, rt) = Mini_c.get_t_or ty in
-        match find l ((ty, `Left) :: path) lt with
-        | None -> find r ((ty, `Right) :: path) rt
-        | Some path -> Some path)
-    | Leaf f ->
-       if Label.equal constructor f.name
-       then Some path
-       else None in
+      let%bind lt, rt = Mini_c.get_t_or ty in
+      (match find l ((ty, `Left) :: path) lt with
+      | None -> find r ((ty, `Right) :: path) rt
+      | Some path -> Some path)
+    | Leaf f -> if Label.equal constructor f.name then Some path else None
+  in
   match find layout [] ty with
-  | None -> failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)
+  | None ->
+    failwith (Format.asprintf "internal error: constructor not found @ %s" __LOC__)
   | Some path -> path
 
-type variant_tree = [
-  | `Leaf of Label.t
+
+type variant_tree =
+  [ `Leaf of Label.t
   | `Node of variant_pair * variant_pair
   ]
 
@@ -191,14 +199,14 @@ let match_variant_to_tree ~raise ~layout ty : variant_pair =
   let layout = Layout.to_binary layout in
   let rec aux t ty =
     match t with
-    | Leaf field ->
-       (`Leaf field.name, ty)
+    | Leaf field -> `Leaf field.name, ty
     | Node (l, r) ->
-       (match Mini_c.get_t_or ty with
-        | None -> raise.error (corner_case ~loc:__LOC__ "variant not translated to or")
-        | Some (lty, rty) ->
-           let lt = aux l lty in
-           let rt = aux r rty in
-           (`Node (lt, rt), ty))
-    | Empty -> raise.error (corner_case ~loc:__LOC__ "empty variant") in
+      (match Mini_c.get_t_or ty with
+      | None -> raise.error (corner_case ~loc:__LOC__ "variant not translated to or")
+      | Some (lty, rty) ->
+        let lt = aux l lty in
+        let rt = aux r rty in
+        `Node (lt, rt), ty)
+    | Empty -> raise.error (corner_case ~loc:__LOC__ "empty variant")
+  in
   aux layout ty

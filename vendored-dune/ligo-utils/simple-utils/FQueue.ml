@@ -16,5 +16,5 @@ let rec peek = function
 | {rear;    front=  []}      -> peek {rear=[]; front = List.rev rear}
 | {rear=_;  front=x::_} as q -> Some (q,x)
 
-let is_empty q = 
+let is_empty q =
   List.is_empty q.rear && List.is_empty q.front

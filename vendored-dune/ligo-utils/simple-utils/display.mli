@@ -11,23 +11,27 @@ val human_readable : ex_display_format
 val dev : ex_display_format
 val json : ex_display_format
 
-type 'a pp = display_format:(string display_format) -> no_colour:bool -> Format.formatter -> 'a -> unit
-type 'a format = {
-    pp : 'a pp ;
-    to_json : 'a -> json ;
-}
+type 'a pp =
+  display_format:string display_format -> no_colour:bool -> Format.formatter -> 'a -> unit
 
-type 'a with_format = {
-    value : 'a ;
-    format : 'a format ;
-}
+type 'a format =
+  { pp : 'a pp
+  ; to_json : 'a -> json
+  }
+
+type 'a with_format =
+  { value : 'a
+  ; format : 'a format
+  }
 
 type displayable = Displayable : 'a with_format -> displayable
 
-val convert : display_format:'output display_format -> no_colour:bool -> displayable -> 'output
+val convert
+  :  display_format:'output display_format
+  -> no_colour:bool
+  -> displayable
+  -> 'output
 
 val to_json : displayable -> json
-
-val bind_format : 'value format -> 'error format -> ('value,'error) result format
-
+val bind_format : 'value format -> 'error format -> ('value, 'error) result format
 val map : 'b format -> f:('a -> 'b) -> 'a format
