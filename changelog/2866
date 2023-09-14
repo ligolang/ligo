@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nFixed an issue with folding ranges using an incorrect range for JsLIGO variant types with a leading vertical bar.\\n\\n"
+merge_request: '2866'
+title: "[#2024] Fix promoted folding range tests"
+type: fixed
+            

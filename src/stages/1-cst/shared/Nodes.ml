@@ -31,7 +31,12 @@ let nsep_or_term_to_region to_region = function
   `Sep  s -> nsepseq_to_region to_region s
 | `Term s -> nseq_to_region to_region s
 
-let nsep_or_pref_to_region to_region = function
-  `Sep  s -> nsepseq_to_region to_region s
-| `Pref s -> Utils.nseq_map (fun (x,y) -> (y,x)) s
-             |> nseq_to_region (to_region <@ fst)
+let nsep_or_pref_to_region
+  (to_region_b : 'b -> Region.t)
+  (to_region_a : 'a -> Region.t)
+  : [< `Sep of 'a * ('b * 'a) list | `Pref of ('b * 'a) Utils.nseq ] -> Region.t
+  = function
+  `Sep  s -> nsepseq_to_region to_region_a s
+| `Pref s ->
+    let hd, tl = s in
+    Region.cover (to_region_b (fst hd)) (last (to_region_a <@ snd) (hd :: tl))

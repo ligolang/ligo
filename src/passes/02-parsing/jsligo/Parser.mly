@@ -587,7 +587,7 @@ union_or_object:
   nsep_or_pref (object_type,"|") {
     match $1 with
      `Sep (t,[]) -> T_Object t
-    | _ -> let region = nsep_or_pref_to_region (fun b -> b.region) $1
+    | _ -> let region = nsep_or_pref_to_region (fun b -> b#region) (fun a -> a.region) $1
            in T_Union {region; value=$1} }
 
 (* Object types *)
