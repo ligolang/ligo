@@ -6,14 +6,16 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@12:5-12:21
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -27,14 +29,19 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@13:5-13:27
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -48,14 +55,19 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@13:22-13:27
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -69,21 +81,26 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@2:5-2:22
       sfStack:
         [ StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc: elem a of int in test/contracts/functions-visiting.jsligo
           siValue: 1 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.jsligo@13:22-13:27
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -97,21 +114,29 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@3:5-3:23
       sfStack:
         [ StackItem:
-          siLigoDesc: elem x of int
+          siLigoDesc: elem a of int in test/contracts/functions-visiting.jsligo
+          siValue: 1
+        , StackItem:
+          siLigoDesc: elem x of int in test/contracts/functions-visiting.jsligo
           siValue: 101 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.jsligo@13:22-13:27
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -125,21 +150,32 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@4:5-4:14
       sfStack:
         [ StackItem:
-          siLigoDesc: elem x2 of int
+          siLigoDesc: elem x of int in test/contracts/functions-visiting.jsligo
+          siValue: 101
+        , StackItem:
+          siLigoDesc: elem a of int in test/contracts/functions-visiting.jsligo
+          siValue: 1
+        , StackItem:
+          siLigoDesc: elem x2 of int in test/contracts/functions-visiting.jsligo
           siValue: 201 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.jsligo@13:22-13:27
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -153,14 +189,19 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@13:16-13:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -178,14 +219,19 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@13:16-13:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -199,21 +245,26 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@8:5-8:13
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc: elem y of int in test/contracts/functions-visiting.jsligo
           siValue: 20 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/functions-visiting.jsligo@13:16-13:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
           siValue: 1
         , StackItem:
-          siLigoDesc: elem g of unit -> int
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
         , StackItem:
-          siLigoDesc: elem f of int -> int
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
           siValue:
             { {  };
               { { { PUSH int 100 }; { SWAP }; ADD };
@@ -227,7 +278,26 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@14:5-14:47
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s3 of int
+          siLigoDesc: elem s2 of int in test/contracts/functions-visiting.jsligo
+          siValue: 1
+        , StackItem:
+          siLigoDesc: elem s of int in test/contracts/functions-visiting.jsligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc:
+            elem g of unit -> int in test/contracts/functions-visiting.jsligo
+          siValue:
+            { DROP; { { PUSH int 10 }; { PUSH int 10 }; ADD }; {  }; {  } }
+        , StackItem:
+          siLigoDesc:
+            elem f of int -> int in test/contracts/functions-visiting.jsligo
+          siValue:
+            { {  };
+              { { { PUSH int 100 }; { SWAP }; ADD };
+                {  };
+                { { { PUSH int 100 }; { SWAP }; ADD }; {  }; {  } } } }
+        , StackItem:
+          siLigoDesc: elem s3 of int in test/contracts/functions-visiting.jsligo
           siValue: 221 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
@@ -237,8 +307,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/functions-visiting.jsligo@14:12-14:47
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 221
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: 0 ] ]

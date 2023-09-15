@@ -8,7 +8,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of [@layout comb]
-              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+              { a: int; b: string; c: (False of (unit) | True of (unit)); } in test/contracts/record-update-is-statement.mligo
           siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -20,7 +20,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of [@layout comb]
-              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+              { a: int; b: string; c: (False of (unit) | True of (unit)); } in test/contracts/record-update-is-statement.mligo
           siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -32,7 +32,7 @@ InterpretSnapshot:
         [ StackItem:
           siLigoDesc:
             elem s of [@layout comb]
-              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+              { a: int; b: string; c: (False of (unit) | True of (unit)); } in test/contracts/record-update-is-statement.mligo
           siValue: Pair 0 (Pair "\"str\"" False) ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -43,8 +43,13 @@ InterpretSnapshot:
       sfStack:
         [ StackItem:
           siLigoDesc:
+            elem s of [@layout comb]
+              { a: int; b: string; c: (False of (unit) | True of (unit)); } in test/contracts/record-update-is-statement.mligo
+          siValue: Pair 0 (Pair "\"str\"" False)
+        , StackItem:
+          siLigoDesc:
             elem newStorage of [@layout comb]
-              { a: int; b: string; c: (False of (unit) | True of (unit)); }
+              { a: int; b: string; c: (False of (unit) | True of (unit)); } in test/contracts/record-update-is-statement.mligo
           siValue: Pair 0 (Pair "\"str\"" True) ] ]
 InterpretSnapshot:
   isStatus: terminated ok
@@ -54,8 +59,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/record-update-is-statement.mligo@16:4-16:37
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: { { }; 0; "\"str\""; True }
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair 0 (Pair "\"str\"" False) ] ]

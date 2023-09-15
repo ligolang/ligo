@@ -4,21 +4,18 @@ InterpretSnapshot:
     [ StackFrame:
       sfName: IncDec.reset
       sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
-      sfStack: []
-    , StackFrame:
-      sfName: IncDec.<module main>
-      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
       sfStack:
         [ StackItem:
           siLigoDesc:
             elem ? of ([@layout comb] |
-               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int in #generated
           siValue: Unit
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc: elem s of int in #generated
           siValue: 100
         , StackItem:
-          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siLigoDesc:
+            elem IncDec.reset of unit -> int -> operation list * int in test/contracts/module-entrypoints.mligo
           siValue:
             { DROP;
               LAMBDA
@@ -31,21 +28,18 @@ InterpretSnapshot:
     [ StackFrame:
       sfName: IncDec.reset
       sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:7
-      sfStack: []
-    , StackFrame:
-      sfName: IncDec.<module main>
-      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
       sfStack:
         [ StackItem:
           siLigoDesc:
             elem ? of ([@layout comb] |
-               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int in #generated
           siValue: Unit
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc: elem s of int in #generated
           siValue: 100
         , StackItem:
-          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siLigoDesc:
+            elem IncDec.reset of unit -> int -> operation list * int in test/contracts/module-entrypoints.mligo
           siValue:
             { DROP;
               LAMBDA
@@ -58,21 +52,18 @@ InterpretSnapshot:
     [ StackFrame:
       sfName: IncDec.reset
       sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:7
-      sfStack: []
-    , StackFrame:
-      sfName: IncDec.<module main>
-      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
       sfStack:
         [ StackItem:
           siLigoDesc:
             elem ? of ([@layout comb] |
-               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int in #generated
           siValue: Unit
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc: elem s of int in #generated
           siValue: 100
         , StackItem:
-          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siLigoDesc:
+            elem IncDec.reset of unit -> int -> operation list * int in test/contracts/module-entrypoints.mligo
           siValue:
             { DROP;
               LAMBDA
@@ -85,21 +76,18 @@ InterpretSnapshot:
     [ StackFrame:
       sfName: IncDec.reset
       sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
-      sfStack: []
-    , StackFrame:
-      sfName: IncDec.<module main>
-      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
       sfStack:
         [ StackItem:
           siLigoDesc:
             elem ? of ([@layout comb] |
-               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
+               Reset of (unit) | Decrement of (int) | Increment of (int)) * int in #generated
           siValue: Unit
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc: elem s of int in #generated
           siValue: 100
         , StackItem:
-          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
+          siLigoDesc:
+            elem IncDec.reset of unit -> int -> operation list * int in test/contracts/module-entrypoints.mligo
           siValue:
             { DROP;
               LAMBDA
@@ -114,28 +102,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/module-entrypoints.mligo@11:5-11:10
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 0
         , StackItem:
-          siLigoDesc: elem ? of 
-          siValue: 100 ]
-    , StackFrame:
-      sfName: IncDec.<module main>
-      sfLoc: test/contracts/module-entrypoints.mligo@1:1-1:1
-      sfStack:
-        [ StackItem:
-          siLigoDesc:
-            elem ? of ([@layout comb] |
-               Reset of (unit) | Decrement of (int) | Increment of (int)) * int
-          siValue: Unit
-        , StackItem:
-          siLigoDesc: elem s of int
-          siValue: 100
-        , StackItem:
-          siLigoDesc: elem IncDec.reset of unit -> int -> operation list * int
-          siValue:
-            { DROP;
-              LAMBDA
-                int
-                (pair (list operation) int)
-                { DROP; { { PUSH int 0 }; { NIL operation }; PAIR } } } ] ]
+          siLigoDesc: elem ? of  in #generated
+          siValue: 100 ] ]

@@ -6,19 +6,23 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@14:3-14:33
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -28,19 +32,23 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@14:18-14:33
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -50,22 +58,27 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@15:3-18:17
       sfStack:
         [ StackItem:
-          siLigoDesc: elem some_int of (None of (unit) | Some of (int))
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
           siValue: Some 993
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -75,22 +88,27 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@16:11-16:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem some_int of (None of (unit) | Some of (int))
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
           siValue: Some 993
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -100,19 +118,27 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@17:17-17:20
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -122,22 +148,31 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@20:3-20:13
       sfStack:
         [ StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -147,25 +182,35 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:3-21:97
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem y of int in test/contracts/constant_as_statement.mligo
           siValue: 12
         , StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -175,25 +220,35 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:85-21:96
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem y of int in test/contracts/constant_as_statement.mligo
           siValue: 12
         , StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -203,25 +258,35 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:53-21:82
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem y of int in test/contracts/constant_as_statement.mligo
           siValue: 12
         , StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -231,25 +296,35 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:67-21:81
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem y of int in test/contracts/constant_as_statement.mligo
           siValue: 12
         , StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -259,25 +334,35 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:41-21:50
       sfStack:
         [ StackItem:
-          siLigoDesc: elem y of int
+          siLigoDesc:
+            elem some_int of (None of (unit) | Some of (int)) in test/contracts/constant_as_statement.mligo
+          siValue: Some 993
+        , StackItem:
+          siLigoDesc:
+            elem y of int in test/contracts/constant_as_statement.mligo
           siValue: 12
         , StackItem:
-          siLigoDesc: elem res of int
+          siLigoDesc:
+            elem res of int in test/contracts/constant_as_statement.mligo
           siValue: 100
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/constant_as_statement.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem get_const of unit -> int
+          siLigoDesc:
+            elem get_const of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { PUSH int 10; PAIR; { CAR; {  }; {  } } }
         , StackItem:
-          siLigoDesc: elem get_verbatim of unit -> string
+          siLigoDesc:
+            elem get_verbatim of unit -> string in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH string "100" }
         , StackItem:
-          siLigoDesc: elem get_val of unit -> int
+          siLigoDesc:
+            elem get_val of unit -> int in test/contracts/constant_as_statement.mligo
           siValue: { DROP; PUSH int 42 }
         , StackItem:
-          siLigoDesc: elem String.length of string -> nat
+          siLigoDesc: elem String.length of string -> nat in 
           siValue: { {  }; { {  }; SIZE } } ] ]
 InterpretSnapshot:
   isStatus: terminated ok
@@ -287,8 +372,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/constant_as_statement.mligo@21:4-21:96
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 167
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: 0 ] ]

@@ -6,7 +6,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@3:3-3:43
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -16,7 +17,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@4:3-4:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               {  };
@@ -31,7 +33,8 @@ InterpretSnapshot:
               {  };
               { {  }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -41,7 +44,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@4:12-4:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               {  };
@@ -56,7 +60,8 @@ InterpretSnapshot:
               {  };
               { {  }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -66,17 +71,20 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@3:38-3:43
       sfStack:
         [ StackItem:
-          siLigoDesc: elem b of int
+          siLigoDesc:
+            elem b of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc:
+            elem a of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@4:16-4:24
       sfStack:
         [ StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               {  };
@@ -91,7 +99,8 @@ InterpretSnapshot:
               {  };
               { {  }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -101,10 +110,28 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@5:3-5:44
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -114,14 +141,33 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@6:3-6:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem bar of int -> int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -131,14 +177,33 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@6:12-6:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem bar of int -> int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -148,24 +213,45 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@5:39-5:44
       sfStack:
         [ StackItem:
-          siLigoDesc: elem b of int
+          siLigoDesc:
+            elem b of int in test/contracts/local-function-assignments.mligo
           siValue: -2
         , StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc:
+            elem a of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@6:19-6:24
       sfStack:
         [ StackItem:
-          siLigoDesc: elem bar of int -> int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -175,13 +261,37 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@7:3-7:57
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem s2 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -191,7 +301,29 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@8:3-8:26
       sfStack:
         [ StackItem:
-          siLigoDesc: elem baz of int -> int * int -> int
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem baz of int -> int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               UNPAIR;
@@ -211,13 +343,16 @@ InterpretSnapshot:
               {  };
               { { {  }; { SWAP }; MUL }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc:
+            elem s2 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon function call
@@ -227,7 +362,29 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@8:12-8:26
       sfStack:
         [ StackItem:
-          siLigoDesc: elem baz of int -> int * int -> int
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem baz of int -> int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               UNPAIR;
@@ -247,13 +404,16 @@ InterpretSnapshot:
               {  };
               { { {  }; { SWAP }; MUL }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc:
+            elem s2 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -263,20 +423,45 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@7:48-7:57
       sfStack:
         [ StackItem:
-          siLigoDesc: elem c of int
+          siLigoDesc:
+            elem c of int in test/contracts/local-function-assignments.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem b of int
+          siLigoDesc:
+            elem b of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc:
+            elem a of int in test/contracts/local-function-assignments.mligo
           siValue: 2 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/local-function-assignments.mligo@8:20-8:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem baz of int -> int * int -> int
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem baz of int -> int * int -> int in test/contracts/local-function-assignments.mligo
           siValue:
             { {  };
               UNPAIR;
@@ -296,13 +481,16 @@ InterpretSnapshot:
               {  };
               { { {  }; { SWAP }; MUL }; { SWAP }; ADD } }
         , StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc:
+            elem s2 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -312,13 +500,62 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@9:3-9:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s3 of int
+          siLigoDesc:
+            elem baz of int -> int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { { {  }; { SWAP }; MUL }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem bar of int -> int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  }; UNPAIR; {  }; {  }; SWAP; {  }; { {  }; { SWAP }; SUB } }
+        , StackItem:
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/local-function-assignments.mligo
+          siValue:
+            { {  };
+              {  };
+              UNPAIR;
+              {  };
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              SWAP;
+              {  };
+              { {  }; { SWAP }; ADD } }
+        , StackItem:
+          siLigoDesc:
+            elem s of int in test/contracts/local-function-assignments.mligo
+          siValue: 0
+        , StackItem:
+          siLigoDesc:
+            elem s3 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s2 of int
+          siLigoDesc:
+            elem s2 of int in test/contracts/local-function-assignments.mligo
           siValue: 2
         , StackItem:
-          siLigoDesc: elem s1 of int
+          siLigoDesc:
+            elem s1 of int in test/contracts/local-function-assignments.mligo
           siValue: 2 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
@@ -328,8 +565,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/local-function-assignments.mligo@9:4-9:39
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 6
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: 0 ] ]

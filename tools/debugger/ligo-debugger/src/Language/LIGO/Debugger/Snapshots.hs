@@ -55,7 +55,9 @@ import Data.Conduit qualified as C
 import Data.Conduit.Lazy (MonadActive, lazyConsume)
 import Data.Conduit.Lift qualified as CL
 import Data.Default (def)
+import Data.HashMap.Strict qualified as HM
 import Data.HashSet qualified as HS
+import Data.List ((\\))
 import Data.List.NonEmpty (cons)
 import Data.Text qualified as Text
 import Data.Vinyl (Rec (..))
@@ -94,6 +96,7 @@ import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Functions
 import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
+import Language.LIGO.Scope
 
 -- | Stack element, likely with an associated variable.
 data StackItem u = StackItem
@@ -224,6 +227,14 @@ instance NavigableSnapshot (InterpretSnapshot u) where
 instance NavigableSnapshotWithMethods (InterpretSnapshot u) where
   getCurMethodBlockLevel = length . isStackFrames <$> curSnapshot
 
+-- | A key for cache map in @CollectorState@.
+data CacheKey = CacheKey
+  { ckVariableName :: Text
+  , ckStackFrameName :: Text
+  , ckFileName :: FilePath
+  } deriving stock (Show, Eq, Ord, Generic)
+    deriving anyclass (NFData, Hashable)
+
 -- | State at some point of execution, used by Morley interpreter and by
 -- our snapshots collector.
 data CollectorState m = CollectorState
@@ -264,6 +275,12 @@ data CollectorState m = CollectorState
     -- for the same location.
   , csLigoTypesVec :: LigoTypesVec
     -- ^ Vector with LIGO types. It's needed to map @LigoTypeRef@ into bare @LigoType@.
+  , csScopes :: HashMap FilePath [Scope]
+    -- ^ Scopes for each file.
+  , csVariablesCache :: HashMap CacheKey (StackItem 'Unique)
+    -- ^ A cache with stack items. When a variable becomes unused then it
+    -- disappears from the variables pane. We can fill the snapshot with
+    -- these variables by using this cache and scopes above.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -373,6 +390,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
     preExecutedStage embeddedMetaMb instr stack = case embeddedMetaMb of
       Just LigoIndexedInfo{..} -> do
         whenJust liiLocation \loc -> do
+          fillSnapshotWithCachedValues loc
           statements <- getStatements instr loc
 
           forM_ statements \statement -> do
@@ -408,6 +426,14 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             [int||
               Stack at preExecutedStage: #{stackHere}
             |]
+
+          -- Lets put these values in cache.
+          stackFrameName <- use (csActiveStackFrameL . sfNameL)
+          forM_ stackHere \item@StackItem{..} ->
+            case siLigoDesc of
+              LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable (Name name))) _ (Just fileName)) ->
+                csVariablesCacheL %= HM.insert (CacheKey name stackFrameName fileName) item
+              _ -> pass
 
           csActiveStackFrameL . sfStackL .= stackHere
 
@@ -556,6 +582,47 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             _ -> return newStack
 
         _ -> runInstr instr stack
+
+    -- Fills the snapshot with values that became unused.
+    --
+    -- It uses the next strategy:
+    -- 1. Pick the closest inner scope for the given range.
+    -- 2. Pick the names on stack.
+    -- 3. Fill the current snapshot with missing values.
+    --
+    -- We're picking the closest inner scope because it always
+    -- contains the variables that are present in the given range.
+    -- E.g. on the current range we can see variables "a" and "b".
+    -- The closest inner scope contains a superset of ["a", "b"].
+    -- So, we won't lose these variables.
+    fillSnapshotWithCachedValues :: Range -> CollectingEvalOp m ()
+    fillSnapshotWithCachedValues loc = do
+      let fileName = _rFile loc
+      scopesMb <- use (csScopesL . at fileName)
+
+      logMessage [int||Getting cached values for #{loc}|]
+
+      whenJust (getClosestInnerScope loc =<< scopesMb) \scope@Scope{..} -> do
+        logMessage [int||Picked scope: #{scope}|]
+
+        currentStack <- use (csActiveStackFrameL . sfStackL)
+        stackFrameName <- use (csActiveStackFrameL . sfNameL)
+
+        let nameExtractor = \case
+              LigoStackEntry (LigoExposedStackEntry (Just (LigoVariable (Name name))) _ _) -> Just name
+              _ -> Nothing
+
+        let namesOnStack = mapMaybe (nameExtractor . siLigoDesc) currentStack
+        let missingNames = sVariables \\ namesOnStack
+
+        logMessage [int||Values on stack: #{namesOnStack}. Missing values: #{missingNames}|]
+
+        cache <- use csVariablesCacheL
+
+        let missingItems = missingNames
+              & mapMaybe \name -> cache HM.!? (CacheKey name stackFrameName fileName)
+
+        csActiveStackFrameL . sfStackL %= (++) missingItems
 
     -- Save a snapshot.
     --
@@ -722,11 +789,11 @@ runCollectInterpretSnapshots act env initSt initStorage =
                 ViewFinalStack (StkEl x :& RNil) -> SomeValue x
 
         let stackItemWithOpsAndStorage = StackItem
-              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
+              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing Nothing
               , siValue = lastValue
               }
         let oldStorage = StackItem
-              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing
+              { siLigoDesc = LigoStackEntry $ LigoExposedStackEntry Nothing Nothing Nothing
               , siValue = withValueTypeSanity initStorage (SomeValue initStorage)
               }
 
@@ -766,6 +833,7 @@ collectInterpretSnapshots
   -> HashSet Range
   -> Bool -- ^ should we track steps amount
   -> LigoTypesVec
+  -> HashMap FilePath [Scope]
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile
@@ -778,7 +846,8 @@ collectInterpretSnapshots
   logger
   lambdaLocs
   trackMaxSteps
-  ligoTypesVec =
+  ligoTypesVec
+  scopesMap =
     runCollectInterpretSnapshots
       (ContractFinalStack <$> runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
@@ -810,6 +879,8 @@ collectInterpretSnapshots
         , csCheckStepsAmount = trackMaxSteps
         , csRecordedFirstTime = False
         , csLigoTypesVec = ligoTypesVec
+        , csScopes = scopesMap
+        , csVariablesCache = HM.empty
         }
 
       -- Strip duplicate locations.

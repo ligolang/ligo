@@ -1633,30 +1633,30 @@ let%expect_test _ =
                  LAMBDA
                    unit
                    unit
-                   { { /* x#220 */ } ;
+                   { { /* x */ } ;
                      { /* File "../../test/contracts/noop.mligo", line 3, characters 28-29 */ } } } ;
-               { /* f#219, _ */ } ;
+               { /* f, _ */ } ;
                { /* File "../../test/contracts/noop.mligo", line 4, character 2 to line 7, character 28 */
                  { /* File "../../test/contracts/noop.mligo", line 4, characters 18-21 */
                    SWAP ;
                    { /* File "../../test/contracts/noop.mligo", line 4, characters 18-19 */ DUP 2 } ;
                    SWAP ;
                    EXEC } ;
-                 { /* s2#221, f#219 */ } ;
+                 { /* s2, f */ } ;
                  { /* File "../../test/contracts/noop.mligo", line 5, character 2 to line 7, character 28 */
                    { /* File "../../test/contracts/noop.mligo", line 5, characters 18-22 */
                      { /* File "../../test/contracts/noop.mligo", line 5, characters 20-22 */ } ;
                      { /* File "../../test/contracts/noop.mligo", line 5, characters 18-19 */ DUP 2 } ;
                      SWAP ;
                      EXEC } ;
-                   { /* s3#222, f#219 */ } ;
+                   { /* s3, f */ } ;
                    { /* File "../../test/contracts/noop.mligo", line 6, character 2 to line 7, character 28 */
                      { /* File "../../test/contracts/noop.mligo", line 6, characters 10-14 */
                        { /* File "../../test/contracts/noop.mligo", line 6, characters 12-14 */ } ;
                        { /* File "../../test/contracts/noop.mligo", line 6, characters 10-11 */ SWAP } ;
                        SWAP ;
                        EXEC } ;
-                     { /* s#223 */ } ;
+                     { /* s */ } ;
                      { /* File "../../test/contracts/noop.mligo", line 7, characters 3-27 */
                        { /* File "../../test/contracts/noop.mligo", line 7, characters 26-27 */ } ;
                        { /* File "../../test/contracts/noop.mligo", line 7, characters 3-24 */

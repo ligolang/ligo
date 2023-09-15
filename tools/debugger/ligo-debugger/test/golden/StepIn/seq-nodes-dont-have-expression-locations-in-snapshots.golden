@@ -6,7 +6,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:3-5:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
@@ -16,7 +17,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:13-5:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated (0 : int)
@@ -26,7 +28,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@5:13-5:19
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -36,7 +39,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@6:3-6:14
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -46,7 +50,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@7:3-7:14
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / faced statement
@@ -56,7 +61,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:3-8:29
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / upon expression
@@ -66,7 +72,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: running / expression evaluated ({ } : operation list)
@@ -76,7 +83,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/seq-nodes-without-locations.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus: terminated ok
@@ -86,8 +94,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/seq-nodes-without-locations.mligo@8:4-8:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 0
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: 0 ] ]

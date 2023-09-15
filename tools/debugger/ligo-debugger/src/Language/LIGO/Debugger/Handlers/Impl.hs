@@ -363,7 +363,7 @@ instance HasSpecificMessages LIGO where
     ligoVals <- fmap catMaybes $ forM stackItems \stackItem ->
       runMaybeT do
         StackItem desc michVal <- pure stackItem
-        LigoStackEntry (LigoExposedStackEntry mDecl typRef) <- pure desc
+        LigoStackEntry (LigoExposedStackEntry mDecl typRef _) <- pure desc
         let typ = readLigoType ligoTypesVec typRef
         let varName = maybe (pretty unknownVariable) pretty mDecl
 
@@ -626,6 +626,7 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
     , lsMoveId = 0
     , lsMaxSteps = maxStepsMb
     , lsEntrypointType = Nothing
+    , lsScopes = Nothing
     }
   do let binaryPath = req.binaryPath
      logMessage [int||Set LIGO binary path: #s{binaryPath}|]
@@ -707,6 +708,10 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
         logMessage $ pretty (unContractCode $ cCode contract)
 
         parsedContracts <- parseContracts allFiles
+        scopes <- fmap HM.fromList $
+          forM allFiles \fileName -> do
+            scope <- fromLigoDefinitions <$> getScopes fileName
+            pure (fileName, scope)
 
         let statementLocs = getStatementLocs (getAllSourceLocations exprLocs) parsedContracts
         let allLocs = getInterestingSourceLocations parsedContracts exprLocs <> statementLocs
@@ -729,6 +734,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
           , lsLigoTypesVec = Just ligoTypesVec
           , lsEntrypoints = Just michelsonEntrypoints
           , lsEntrypointType = Just entrypointType
+          , lsScopes = Just scopes
           }
 
         lServerState <- getServerState
@@ -881,6 +887,7 @@ initDebuggerSession req = do
       (fromMaybe dummyMaxSteps maxStepsMb)
 
   ligoTypesVec <- getLigoTypesVec
+  scopes <- getLigoScopes
 
   his <-
     withRunInIO \unlifter ->
@@ -896,6 +903,7 @@ initDebuggerSession req = do
         lambdaLocs
         (isJust maxStepsMb)
         ligoTypesVec
+        scopes
 
   let ds = initDebuggerState his allLocs
 

@@ -8,6 +8,7 @@
   proto-alpha-utils
   ast_typed
   mini_c
-  msgpck)
+  msgpck
+  scopes)
  (preprocess
   (pps ppx_deriving_yojson)))
