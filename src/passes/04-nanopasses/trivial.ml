@@ -87,6 +87,7 @@ end = struct
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
     | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
@@ -360,7 +361,7 @@ end = struct
     | T_constant t ->
       (match Ligo_prim.Literal_types.of_string_opt t with
       | Some t -> ret @@ T_constant (t, Ligo_prim.Literal_types.to_arity t)
-      | None -> invariant @@ Format.asprintf "Type constant %s is unknown." t)
+      | None -> failwith @@ Format.asprintf "Type constant %s is unknown." t)
     | T_module_app { constr = { module_path; field; _ }; type_args } ->
       ret
       @@ T_app

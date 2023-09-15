@@ -147,6 +147,7 @@ let add_ast_env
         ; hidden = false
         ; thunk = false
         ; entry = false
+        ; dyn_entry = false
         }
     else e
   in

@@ -117,7 +117,8 @@ and sig_item =
   | S_module of Module_var.t * signature
 
 and sig_item_attribute =
-  { entry : bool
+  { dyn_entry : bool
+  ; entry : bool
   ; view : bool
   }
 

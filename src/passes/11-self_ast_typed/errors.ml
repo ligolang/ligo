@@ -7,34 +7,12 @@ open Ligo_prim
 let stage = "self_ast_typed"
 
 type self_ast_typed_error =
-  [ `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation of
-    Value_var.t * Location.t
-  | `Self_ast_typed_bad_self_type of
-    Ast_typed.type_expression * Ast_typed.type_expression * Location.t
-  | `Self_ast_typed_bad_format_entrypoint_ann of string * Location.t
-  | `Self_ast_typed_entrypoint_ann_not_literal of Location.t
-    [@name "entrypoint_annotation_not_literal"]
-  | `Self_ast_typed_unmatched_entrypoint of Location.t
-  | `Self_ast_typed_nested_bigmap of Location.t
-  | `Self_ast_typed_corner_case of string
-  | `Self_ast_typed_bad_contract_io of
-    Value_var.t * Ast_typed.type_expression * Location.t
+  [ `Self_ast_typed_corner_case of string
+  | `Self_ast_typed_illegal_non_initial_dynamic of Location.t
+  | `Self_ast_typed_not_a_contract of string
   | `Self_ast_typed_bad_view_io of Module_var.t * Location.t
   | `Self_ast_typed_bad_view_storage of
     Module_var.t * Ast_typed.type_expression * Location.t
-  | `Self_ast_typed_expected_list_operation of
-    Value_var.t * Ast_typed.type_expression * Ast_typed.expression
-  | `Self_ast_typed_expected_same_entry of
-    Value_var.t
-    * Ast_typed.type_expression
-    * Ast_typed.type_expression
-    * Ast_typed.expression
-  | `Self_ast_typed_expected_non_vars_in_storage of
-    Value_var.t * Ast_typed.type_expression * Ast_typed.expression
-  | `Self_ast_typed_expected_non_vars_in_parameter of
-    Value_var.t * Ast_typed.type_expression * Ast_typed.expression
-  | `Self_ast_typed_expected_pair_in of Location.t * [ `View | `Contract ]
-  | `Self_ast_typed_expected_pair_out of Location.t
   | `Self_ast_typed_storage_view_contract of
     Location.t
     * Module_var.t
@@ -42,7 +20,6 @@ type self_ast_typed_error =
     * Ast_typed.type_expression
     * Ast_typed.type_expression
   | `Self_ast_typed_view_io of Location.t * Ast_typed.type_expression * [ `In | `Out ]
-  | `Self_ast_typed_not_a_contract of string
   ]
 [@@deriving poly_constructor { prefix = "self_ast_typed_" }]
 
@@ -77,6 +54,13 @@ let error_ppformat
         main_name
         Ast_typed.PP.type_expression
         ct
+    | `Self_ast_typed_illegal_non_initial_dynamic loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Illegal position for opted out entry.@. Only allowed in \
+         contracts \"@dyn_entry\" top-level declarations right-end side.@]"
+        snippet_pp
+        loc
     | `Self_ast_typed_view_io (loc, got, arg) ->
       let s =
         match arg with
@@ -91,66 +75,8 @@ let error_ppformat
         Ast_typed.PP.type_expression
         got
         s
-    | `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation (_name, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Recursive call not in tail position. @.The value of a recursive call \
-         must be immediately returned by the defined function. @]"
-        snippet_pp
-        loc
-    | `Self_ast_typed_bad_self_type (expected, got, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type annotation.@.\"%a\" was given, but \"%a\" was \
-         expected.@.Note that \"Tezos.self\" refers to this contract, so the parameters \
-         should be the same. @]"
-        snippet_pp
-        loc
-        Ast_typed.PP.type_expression
-        got
-        Ast_typed.PP.type_expression
-        expected
-    | `Self_ast_typed_bad_format_entrypoint_ann (ep, loc) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid entrypoint \"%s\". One of the following patterns is \
-         expected:@.* \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when \
-         no entrypoint is used."
-        snippet_pp
-        loc
-        ep
-    | `Self_ast_typed_entrypoint_ann_not_literal loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value must be a string \
-         literal. @]"
-        snippet_pp
-        loc
-    | `Self_ast_typed_unmatched_entrypoint loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid entrypoint value.@.The entrypoint value does not match a \
-         constructor of the contract parameter. @]"
-        snippet_pp
-        loc
-    | `Self_ast_typed_nested_bigmap loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid big map nesting.@.A big map cannot be nested inside another \
-         big map. @]"
-        snippet_pp
-        loc
     | `Self_ast_typed_corner_case desc ->
       Format.fprintf f "@[<hv>Internal error: %s @]" desc
-    | `Self_ast_typed_bad_contract_io (entrypoint, _, location) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \
-         \"parameter * storage -> operation list * storage\". @]"
-        snippet_pp
-        location
-        Value_var.pp
-        entrypoint
     | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
       Format.fprintf
         f
@@ -168,74 +94,7 @@ let error_ppformat
         Module_var.pp
         entrypoint
         Ast_typed.PP.type_expression
-        storage_ty
-    | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.An entrypoint must of type \
-         \"parameter * storage -> operation list * storage\".@.We expected a list of \
-         operations but we got %a@]"
-        snippet_pp
-        e.location
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        got
-    | `Self_ast_typed_expected_same_entry (entrypoint, t1, t2, e) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the \
-         function parameter must be the same as the storage type \"%a\" of the return \
-         value.@]"
-        snippet_pp
-        e.location
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t1
-        Ast_typed.PP.type_expression
-        t2
-    | `Self_ast_typed_expected_non_vars_in_storage (entrypoint, t, e) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the \
-         entrypoint function must not contain polymorphic variables.@]"
-        snippet_pp
-        e.location
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t
-    | `Self_ast_typed_expected_non_vars_in_parameter (entrypoint, t, e) ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid type for entrypoint \"%a\".@.The parameter type \"%a\" of the \
-         entrypoint function must not contain polymorphic variables.@]"
-        snippet_pp
-        e.location
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t
-    | `Self_ast_typed_expected_pair_in (loc, t) ->
-      let ep =
-        match t with
-        | `View -> "view"
-        | `Contract -> "contract"
-      in
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid %s.@.Expected a tuple as argument.@]"
-        snippet_pp
-        loc
-        ep
-    | `Self_ast_typed_expected_pair_out loc ->
-      Format.fprintf
-        f
-        "@[<hv>%a@.Invalid entrypoint.@.Expected a tuple of operations and storage as \
-         return value.@]"
-        snippet_pp
-        loc)
+        storage_ty)
 
 
 let error_json : self_ast_typed_error -> Simple_utils.Error.t =
@@ -245,6 +104,10 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
   | `Self_ast_typed_not_a_contract _ ->
     let message = "No contract found" in
     let content = make_content ~message () in
+    make ~stage ~content
+  | `Self_ast_typed_illegal_non_initial_dynamic location ->
+    let message = "Illegal non initial dynamic entrypoints" in
+    let content = make_content ~message ~location () in
     make ~stage ~content
   | `Self_ast_typed_storage_view_contract (location, main_name, view_name, ct, vt) ->
     let message =
@@ -277,73 +140,6 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
     in
     let content = make_content ~message ~location () in
     make ~stage ~content
-  | `Self_ast_typed_recursive_call_is_only_allowed_as_the_last_operation (_name, location)
-    ->
-    let message =
-      Format.sprintf
-        "Recursive call not in tail position. @.The value of a recursive call must be \
-         immediately returned by the defined function."
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_bad_self_type (expected, got, location) ->
-    let message =
-      Format.asprintf
-        "Invalid type annotation.@.\"%a\" was given, but \"%a\" was expected.@.Note that \
-         \"Tezos.self\" refers to this contract, so the parameters should be the same."
-        Ast_typed.PP.type_expression
-        got
-        Ast_typed.PP.type_expression
-        expected
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_bad_format_entrypoint_ann (ep, location) ->
-    let message =
-      Format.sprintf
-        "Invalid entrypoint \"%s\". One of the following patterns is expected:@.* \
-         \"%%bar\" is expected for entrypoint \"Bar\"@.* \"%%default\" when no \
-         entrypoint is used."
-        ep
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_entrypoint_ann_not_literal location ->
-    let message =
-      Format.sprintf
-        "Invalid entrypoint value.@.The entrypoint value must be a string literal."
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_unmatched_entrypoint location ->
-    let message =
-      Format.sprintf
-        "Invalid entrypoint value.@.The entrypoint value does not match a constructor of \
-         the contract parameter."
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_nested_bigmap location ->
-    let message =
-      Format.sprintf
-        "Invalid big map nesting.@.A big map cannot be nested inside another big map."
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_corner_case desc ->
-    let message = Format.sprintf "Internal error: %s" desc in
-    let content = make_content ~message () in
-    make ~stage ~content
-  | `Self_ast_typed_bad_contract_io (entrypoint, _, location) ->
-    let message =
-      Format.asprintf
-        "Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * \
-         storage -> operation list * storage\"."
-        Value_var.pp
-        entrypoint
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
   | `Self_ast_typed_bad_view_io (entrypoint, location) ->
     let message =
       Format.asprintf
@@ -364,74 +160,7 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
     in
     let content = make_content ~message ~location () in
     make ~stage ~content
-  | `Self_ast_typed_expected_list_operation (entrypoint, got, e) ->
-    let location = e.location in
-    let message =
-      Format.asprintf
-        "Invalid type for entrypoint \"%a\".@.An entrypoint must of type \"parameter * \
-         storage -> operation list * storage\".@.We expected a list of operations but we \
-         got %a"
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        got
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_expected_same_entry (entrypoint, t1, t2, e) ->
-    let location = e.location in
-    let message =
-      Format.asprintf
-        "Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the function \
-         parameter must be the same as the storage type \"%a\" of the return value."
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t1
-        Ast_typed.PP.type_expression
-        t2
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_expected_non_vars_in_storage (entrypoint, t, e) ->
-    let location = e.location in
-    let message =
-      Format.asprintf
-        "Invalid type for entrypoint \"%a\".@.The storage type \"%a\" of the entrypoint \
-         function must not contain polymorphic variables."
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_expected_non_vars_in_parameter (entrypoint, t, e) ->
-    let location = e.location in
-    let message =
-      Format.asprintf
-        "Invalid type for entrypoint \"%a\".@.The parameter type \"%a\" of the \
-         entrypoint function must not contain polymorphic variables."
-        Value_var.pp
-        entrypoint
-        Ast_typed.PP.type_expression
-        t
-    in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_expected_pair_in (location, t) ->
-    let ep =
-      match t with
-      | `View -> "view"
-      | `Contract -> "contract"
-    in
-    let message = Format.sprintf "Invalid %s.@.Expected a tuple as argument." ep in
-    let content = make_content ~message ~location () in
-    make ~stage ~content
-  | `Self_ast_typed_expected_pair_out location ->
-    let message =
-      Format.sprintf
-        "Invalid entrypoint.@.Expected a tuple of operations and storage as return value."
-    in
-    let content = make_content ~message ~location () in
+  | `Self_ast_typed_corner_case desc ->
+    let message = Format.sprintf "Internal error: %s" desc in
+    let content = make_content ~message () in
     make ~stage ~content

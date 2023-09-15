@@ -41,17 +41,10 @@ let def_value var (expr : Ast_typed.expression) : Module.item =
     @@ Ast_typed.D_value
          { binder = Binder.make var expr.type_expression
          ; expr
-         ; attr =
-             { inline = false
-             ; no_mutation = false
-             ; entry = false
-             ; view = false
-             ; public = true
-             ; thunk = false
-             ; hidden = false
-             }
+         ; attr = Value_attr.default_attributes
          }
-  , S_value (var, expr.type_expression, { entry = false; view = false }) )
+  , S_value (var, expr.type_expression, { entry = false; dyn_entry = false; view = false })
+  )
 
 
 let let_value var expr ~in_ =
@@ -77,8 +70,7 @@ let e_views ~storage_type view_types =
       let view_expr =
         match Ast_typed.should_uncurry_view ~storage_ty:storage_type view_type with
         | `Yes _ -> Option.value_exn @@ Ast_typed.uncurry_wrap ~loc ~type_:view_type view
-        | `No _ -> e_a_variable ~loc view view_type
-        | `Bad | `Bad_not_function | `Bad_storage _ -> failwith "wrong view"
+        | `Bad | `Bad_not_function -> failwith "wrong view"
       in
       e_a_test_cons_views
         ~loc
@@ -122,12 +114,6 @@ let e_main ~storage_type ~parameter_type entrypoint_types =
                  oplst_storage)
               s
               (t_arrow ~loc storage_type oplst_storage ())
-          | `No _ ->
-            e_a_application
-              ~loc
-              (e_a_variable ~loc entrypoint fun_type)
-              (e_a_pair ~loc (e_variable ~loc pattern (t_string ~loc ())) s)
-              oplst_storage
           | `Bad -> failwith "what?"
         in
         let pattern =
@@ -178,13 +164,38 @@ let let_views ~storage_type (sig_items : Ast_typed.sig_item list) ~in_ =
   let_value Magic_vars.views views ~in_
 
 
-let def_contract ~main ~views : Module.item =
-  let contract = Ast_typed.e_a_pair ~loc main views in
+let let_initial_dynamic_entrypoints
+    ~storage_type
+    (sig_items : Ast_typed.sig_item list)
+    ~in_
+  =
+  let view_types =
+    List.filter_map sig_items ~f:(function
+        | S_value (var, type_, attr) when attr.view -> Some (var, type_)
+        | _ -> None)
+  in
+  let views = e_views ~storage_type view_types in
+  let_value Magic_vars.views views ~in_
+
+
+let def_contract ~main ~views ~has_dynamic_entrypoints : Module.item =
+  let dynamic_entrypoint =
+    let open Ast_typed in
+    let ty = t_big_map ~loc (t_nat ~loc ()) (t_bytes ~loc ()) in
+    let e = e_variable ~loc Magic_vars.initial_dynamic_entrypoints ty in
+    make_e ~loc (if has_dynamic_entrypoints then (e_some e) else e_none ()) ty 
+  in
+  let contract = Ast_typed.e_a_tuple ~loc [ main; views; dynamic_entrypoint ] in
   def_value Magic_vars.contract contract
 
 
 let map_contract ~storage_type ~parameter_type sig_items module_ =
   let open Module in
+  let has_dynamic_entrypoints =
+    List.exists sig_items ~f:(function
+        | Ast_typed.S_value (_, _, attr) when attr.dyn_entry -> true
+        | _ -> false)
+  in
   let items =
     let_storage_and_parameter_types
       ~parameter_type
@@ -192,7 +203,7 @@ let map_contract ~storage_type ~parameter_type sig_items module_ =
       ~in_:
         (let_main ~storage_type ~parameter_type sig_items ~in_:(fun main ->
              let_views ~storage_type sig_items ~in_:(fun views ->
-                 def_contract ~main ~views >:: empty)))
+                 def_contract ~main ~views ~has_dynamic_entrypoints >:: empty)))
   in
   module_ <@ items
 
@@ -230,8 +241,7 @@ let generate_entry_logic : Ast_typed.program -> Ast_typed.program =
   match prg.pr_sig.sig_sort with
   | Ss_module ->
     let pr_module = mapper prg.pr_module in
-    let sig_items = prg.pr_sig.sig_items in
-    { pr_module; pr_sig = { prg.pr_sig with sig_items } }
+    { pr_module; pr_sig = Ast_typed.to_signature pr_module }
   | Ss_contract { storage = storage_type; parameter = parameter_type } ->
     (* Map the entire program first  *)
     let module_ = mapper prg.pr_module in

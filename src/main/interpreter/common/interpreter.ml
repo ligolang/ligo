@@ -1500,6 +1500,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_SUB is solved in checking."
+  | (C_CAST_DYNAMIC_ENTRYPOINT | C_OPT_OUT_ENTRY), _ ->
+    (* Not too sure here *)
+    fail @@ Errors.generic_error loc "CAST_DYNAMIC_ENTRYPOINT is solved in checking."
   | ( ( C_UPDATE
       | C_ITER
       | C_FOLD_LEFT

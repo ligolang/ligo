@@ -752,6 +752,7 @@ let compile
                   attributes =
                     { inline = false
                     ; no_mutation = false
+                    ; dyn_entry = false
                     ; view = false
                     ; entry = false
                     ; public = false

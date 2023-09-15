@@ -19,7 +19,6 @@ val parameter_from_entrypoints
 val should_uncurry_entry
   :  Types.type_expression
   -> [> `Bad
-     | `No of Types.type_expression * Types.type_expression
      | `Yes of Types.type_expression * Types.type_expression
      ]
 
@@ -39,8 +38,6 @@ val should_uncurry_view
   -> Types.type_expression
   -> [> `Bad
      | `Bad_not_function
-     | `Bad_storage of Types.type_expression
-     | `No of Types.type_expression * Types.type_expression * Types.type_expression
      | `Yes of Types.type_expression * Types.type_expression * Types.type_expression
      ]
 

@@ -135,6 +135,7 @@ and expression_content ppf (ec : expression_content) =
           ; public = __LOC__
           ; view = _
           ; entry = _
+          ; dyn_entry = _
           ; hidden = true
           ; thunk = _
           }

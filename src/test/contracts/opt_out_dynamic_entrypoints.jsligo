@@ -1,0 +1,21 @@
+type storage =
+  {
+    storage : int;
+    dynamic_entrypoints;
+  }
+
+@dyn_entry
+const one = (_: unit, _: int): [list<operation>, int] =>
+    [list([]), 1];
+
+@dyn_entry
+const two = (External `OPT_OUT_ENTRY` as ((x:ticket<int>, y:[int, int]) => [list<operation>, [int, int]]))
+
+@dyn_entry
+const three = (_ : unit, _ : int) : [list<operation>, int] => [list([]), 3]
+
+@dyn_entry
+const four = (External `OPT_OUT_ENTRY` as (entrypoint<int, nat>))
+
+@entry
+const nope = (_ : unit, _ : storage) : [list<operation>, storage] => failwith ()

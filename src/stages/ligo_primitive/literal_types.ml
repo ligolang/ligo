@@ -63,6 +63,7 @@ type t =
   | Bls12_381_fr
   | Never
   | Ticket
+  | Dynamic_entrypoint
   | Michelson_program [@only_interpreter]
   | Michelson_contract [@only_interpreter]
   | Ast_contract [@only_interpreter]
@@ -116,6 +117,7 @@ let to_string = function
   | Gen -> "pbt_gen"
   | Int64 -> "int64"
   | Views -> "views"
+  | Dynamic_entrypoint -> "dynamic_entrypoint"
 
 
 let of_string_opt = function
@@ -170,6 +172,7 @@ let of_string_opt = function
   | "external_map_add" -> Some (External Map_add)
   | "external_map_remove" -> Some (External Map_remove)
   | "external_map_remove_value" -> Some (External Map_remove_value)
+  | "dynamic_entrypoint" -> Some Dynamic_entrypoint
   | _ -> None
 
 
@@ -225,9 +228,11 @@ let to_arity = function
   | Gen -> 1
   | Int64 -> 0
   | Views -> 1
+  | Dynamic_entrypoint -> 2
 
 
 let string = String
+let dynamic_entrypoint = Dynamic_entrypoint
 let bytes = Bytes
 let int = Int
 let operation = Operation

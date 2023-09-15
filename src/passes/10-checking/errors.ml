@@ -159,6 +159,7 @@ type typer_error =
   | `Typer_storage_do_not_match of
     Value_var.t * Type.t * Value_var.t * Type.t * Location.t
   | `Typer_duplicate_entrypoint of Value_var.t * Location.t
+  | `Typer_wrong_dynamic_storage_definition of Type.t * Location.t
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
@@ -169,6 +170,13 @@ let extract_loc_and_message : typer_error -> Location.t * string =
   let name_tbl = Type.Type_var_name_tbl.create () in
   let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
   match a with
+  | `Typer_wrong_dynamic_storage_definition (t, loc) ->
+    ( loc
+    , Format.asprintf
+        "@[<hv> Wrong dynamic entrypoints storage definition %a.@. We expect two fields \
+         \"dynamic_entrypoint\" and \"storage\"  @]"
+        Type.pp
+        t )
   | `Typer_duplicate_entrypoint (v, loc) ->
     loc, Format.asprintf "@[<hv>Duplicate entry-point %a@]" Value_var.pp v
   | `Typer_storage_do_not_match (ep_1, storage_1, ep_2, storage_2, loc) ->
