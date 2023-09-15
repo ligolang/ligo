@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\nA new code injection is available for calling `CREATE_CONTRACT` of a `.tz` file.\\n\\nIn CameLIGO, `[%create_contract_of_file \"file.tz\"]` will be expanded to a function of type `key_hash option -> tez -> 's -> operation * address`. It can be used as follows:\\n\\n```\\n[@entry]\\nlet main (u : unit) (_ : unit) : operation list * unit =\\n  let op, _addr = [%create_contract_of_file \"./interpreter_tests/contract_under_test/compiled.tz\"] None 1tez u  in\\n  [op], ()\\n\\n```\\n\\nIn JsLIGO, `(create_contract_of_file `file.tz`)` will be expanded to a function of type `<s>(k: option<key_hash>, t: tez, s:storage) => [operation, address]`. It can be used as follows:\\n\\n```\\n@entry\\nconst main = (u : unit, _ : unit) : [list<operation>, unit] => {\\n  let [op, _addr] = (create_contract_of_file `./interpreter_tests/contract_under_test/compiled.tz`)(None(), 1tez, u);\\n  return [list([op]), []]\\n}\\n\\n```\\n\\nNotice that the parameter passed for storage must have a type that compiles to the type expected as storage of the contract in the `.tz` file. In case of a mismatch, a type error will be present when typing the resulting Michelson contract. In the examples above, the contract's storage type is `unit`, and the argument passed as storage to the function (`u`) has that type.\\n\\n"
+merge_request: '2860'
+title: "Code injection: new code injection for directly using `CREATE_CONTRACT` + `of_file`"
+type: added
+            

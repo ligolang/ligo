@@ -1,6 +1,7 @@
 open Ast_unified
 open Pass_type
-open Simple_utils
+open Simple_utils.Trace
+open Errors
 module Location = Simple_utils.Location
 module ModRes = Preprocessor.ModRes
 
@@ -27,13 +28,19 @@ let resolve_contract_file ~mod_res ~source_file ~contract_file =
 
 
 let get_file_from_location loc =
-  let open Option in
+  let open Simple_utils.Option in
   let* reg = Location.get_file loc in
   let file = reg#file in
   if String.(file = "") then None else Some file
 
 
-let compile ~raise:_ =
+let input_all ~raise ~loc source_file =
+  try In_channel.(with_file source_file ~f:input_all) with
+  | Sys_error msg -> raise.error (sys_error loc msg)
+  | e -> Caml.raise e
+
+
+let compile ~raise =
   let mod_res = get_flag () in
   let expr : _ expr_ -> expr =
    fun e ->
@@ -43,12 +50,67 @@ let compile ~raise:_ =
       (match get_e code with
       | E_literal (Literal_string path) ->
         let source_file = get_file_from_location loc in
-        let path = Ligo_string.extract path in
+        let path = Simple_utils.Ligo_string.extract path in
         let source_file =
           resolve_contract_file ~mod_res ~source_file ~contract_file:path
         in
-        let s = In_channel.(with_file source_file ~f:input_all) in
-        make_e ~loc (E_literal (Literal_string (Ligo_string.verbatim s)))
+        let s = input_all ~raise ~loc source_file in
+        e_verbatim ~loc s
+      | _ -> make_e ~loc e)
+    | E_raw_code { language = "create_contract_of_file"; code } as e ->
+      (match get_e code with
+      | E_literal (Literal_string path) ->
+        let source_file = get_file_from_location loc in
+        let path = Simple_utils.Ligo_string.extract path in
+        let source_file =
+          resolve_contract_file ~mod_res ~source_file ~contract_file:path
+        in
+        let s = input_all ~raise ~loc source_file in
+        let michelson = Format.sprintf "{ UNPAIR 3 ; CREATE_CONTRACT %s ; PAIR }" s in
+        let code = e_verbatim ~loc michelson in
+        let ty_storage = Ty_variable.fresh ~loc ~name:"storage" () in
+        let ty_src =
+          t_prod
+            ~loc
+            ( t_option ~loc (t_constant ~loc "key_hash")
+            , [ t_constant ~loc "tez"; t_var ~loc ty_storage ] )
+        in
+        let ty_tgt =
+          t_prod ~loc (t_constant ~loc "operation", [ t_constant ~loc "address" ])
+        in
+        let ty_type_ = t_fun ~loc (ty_src, ty_tgt) in
+        let code = e_annot ~loc (code, ty_type_) in
+        let code = e_raw_code ~loc { language = "Michelson"; code } in
+        let storage = Variable.fresh ~loc ~name:"storage" () in
+        let expr_storage = e_variable ~loc storage in
+        let tez = Variable.fresh ~loc ~name:"tez" () in
+        let expr_tez = e_variable ~loc tez in
+        let key_hash = Variable.fresh ~loc ~name:"key_hash" () in
+        let expr_key_hash = make_e ~loc (E_variable key_hash) in
+        let args = e_tuple ~loc (expr_key_hash, [ expr_tez; expr_storage ]) in
+        let code = e_application ~loc { lamb = code; args } in
+        let code =
+          e_lambda
+            ~loc
+            { binder = Ligo_prim.Param.make storage None
+            ; output_type = None
+            ; result = code
+            }
+        in
+        let code =
+          e_lambda
+            ~loc
+            { binder = Ligo_prim.Param.make tez None; output_type = None; result = code }
+        in
+        let code =
+          e_lambda
+            ~loc
+            { binder = Ligo_prim.Param.make key_hash None
+            ; output_type = None
+            ; result = code
+            }
+        in
+        e_type_abstraction ~loc { type_binder = ty_storage; result = code }
       | _ -> make_e ~loc e)
     | e -> make_e ~loc e
   in

@@ -196,6 +196,10 @@ let e_string ~loc str : expr =
   make_e ~loc @@ E_literal (Literal_string (Simple_utils.Ligo_string.standard str))
 
 
+let e_verbatim ~loc str : expr =
+  make_e ~loc @@ E_literal (Literal_string (Simple_utils.Ligo_string.verbatim str))
+
+
 let e_unit ~loc : expr = make_e ~loc @@ E_literal Literal_unit
 
 let is_e_unit (e : expr) : bool =
