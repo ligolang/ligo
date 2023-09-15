@@ -159,13 +159,10 @@ instance (SingI u) => Buildable (Name u) where
           -- "T.any (== '_') functionWithIndex" check in guard above.
           (functionName, _) = first (T.dropEnd 1) $ T.breakOnEnd "_" functionWithIndex
 
-      buildUnique name =
-        -- Some variables may look like "varName#123". We want to strip that identifier.
-        if T.all isDigit suffix
-        then build $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') prettyName
-        else build prettyName
+      buildUnique name
+        | '#' `T.elem` name = build $ T.dropEnd 1 $ T.dropWhileEnd (/= '#') prettyName
+        | otherwise = build prettyName
         where
-          suffix = T.takeWhileEnd (/= '#') name
           strippedMangledModule
             | "Mangled" `T.isPrefixOf` name = T.drop 1 . T.dropWhile (/= '.') $ name
             | otherwise = name

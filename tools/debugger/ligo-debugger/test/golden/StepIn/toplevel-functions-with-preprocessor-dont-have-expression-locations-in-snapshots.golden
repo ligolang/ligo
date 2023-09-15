@@ -6,10 +6,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:3-10:42
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -31,10 +33,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -56,10 +60,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:27-10:41
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -81,10 +87,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -106,10 +114,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:34-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -131,10 +141,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:34-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -156,10 +168,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -181,20 +195,24 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@5:3-5:8
       sfStack:
         [ StackItem:
-          siLigoDesc: elem b of int
+          siLigoDesc:
+            elem b of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 42
         , StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc:
+            elem a of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -216,20 +234,24 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@5:3-5:8
       sfStack:
         [ StackItem:
-          siLigoDesc: elem b of int
+          siLigoDesc:
+            elem b of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 42
         , StackItem:
-          siLigoDesc: elem a of int
+          siLigoDesc:
+            elem a of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0 ]
     , StackFrame:
       sfName: main
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:31-10:40
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -251,10 +273,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:27-10:41
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -276,10 +300,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -301,10 +327,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:25
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -326,10 +354,12 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
-          siLigoDesc: elem s of int
+          siLigoDesc:
+            elem s of int in test/contracts/contract-with-preprocessor.mligo
           siValue: 0
         , StackItem:
-          siLigoDesc: elem foo of int * int -> int
+          siLigoDesc:
+            elem foo of int * int -> int in test/contracts/contract-with-preprocessor.mligo
           siValue:
             { {  };
               {  };
@@ -351,8 +381,8 @@ InterpretSnapshot:
       sfLoc: test/contracts/contract-with-preprocessor.mligo@10:4-10:41
       sfStack:
         [ StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: Pair { } 42
         , StackItem:
-          siLigoDesc: elem ? of 
+          siLigoDesc: elem ? of  in #generated
           siValue: 0 ] ]

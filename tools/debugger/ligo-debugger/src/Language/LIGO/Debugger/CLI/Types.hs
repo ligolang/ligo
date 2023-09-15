@@ -59,6 +59,7 @@ import Language.LIGO.Diagnostic
 import Language.LIGO.Parser
 import Language.LIGO.Product
 import Language.LIGO.Range
+import Language.LIGO.Scope
 
 ----------------------------------------------------------------------------
 -- Types
@@ -263,6 +264,7 @@ instance ForInternalUse => Buildable LigoType where
 data LigoExposedStackEntry u = LigoExposedStackEntry
   { leseDeclaration :: Maybe (LigoVariable u)
   , leseType        :: LigoTypeF u
+  , leseFileName    :: Maybe FilePath
   } deriving stock (Generic)
 
 deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoExposedStackEntry u)
@@ -289,12 +291,14 @@ pattern LigoStackEntryNoVar :: LigoTypeF u -> LigoStackEntry u
 pattern LigoStackEntryNoVar ty = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Nothing
   , leseType = ty
+  , leseFileName = Nothing
   }
 
-pattern LigoStackEntryVar :: Text -> LigoType -> LigoStackEntry 'Concise
-pattern LigoStackEntryVar name ty = LigoStackEntry LigoExposedStackEntry
+pattern LigoStackEntryVar :: Text -> LigoType -> Maybe FilePath -> LigoStackEntry 'Concise
+pattern LigoStackEntryVar name ty fileName = LigoStackEntry LigoExposedStackEntry
   { leseDeclaration = Just LigoVariable{ lvName = Name name }
   , leseType = ty
+  , leseFileName = fileName
   }
 
 -- | Variables associated with each element on stack.
@@ -607,9 +611,11 @@ instance Eq LigoType where
   lhs == rhs = pretty @_ @Text (buildType Caml lhs) == pretty @_ @Text (buildType Caml rhs)
 
 instance (SingI u) => Buildable (LigoExposedStackEntry u) where
-  build (LigoExposedStackEntry decl ty) =
-    let declB = maybe (build unknownVariable) build decl
-    in [int||elem #{declB} of #{buildLigoTypeF @u ty}|]
+  build (LigoExposedStackEntry decl ty fileName) =
+    let
+      declB = maybe (build unknownVariable) build decl
+      fileNameB = maybe "#generated" build fileName
+    in [int||elem #{declB} of #{buildLigoTypeF @u ty} in #{fileNameB}|]
 
 instance MessagePack LigoTypeRef where
   toObject _ = const ObjectNil
@@ -620,6 +626,7 @@ instance MessagePack (LigoExposedStackEntry 'Unique) where
   fromObjectWith _ = withMsgMap "LIGO exposed stack entry" \o -> do
     leseType <- o .:! "source_type"
     leseDeclaration <- o .:! "name"
+    leseFileName <- o .:! "file_name"
     return LigoExposedStackEntry{..}
 
 instance (SingI u) => Buildable (LigoStackEntry u) where
@@ -1004,6 +1011,15 @@ fromLigoType st = \case
         FieldProduct -> make' (st, TField  n type')
 
     mkErr = mkLigoError st
+
+fromLigoDefinitions :: LigoDefinitions -> [Scope]
+fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
+  where
+    fromLigoScope :: LigoScope -> Maybe Scope
+    fromLigoScope LigoScope{..} = do
+      sRange <- mbFromLigoRange _lsRange
+      let sVariables = _lsExpressionEnvironment
+      pure Scope{..}
 
 defaultState :: Product Info
 defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil

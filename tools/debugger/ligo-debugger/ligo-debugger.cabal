@@ -47,6 +47,7 @@ library
       Language.LIGO.ParseTree
       Language.LIGO.Product
       Language.LIGO.Range
+      Language.LIGO.Scope
       Util
   other-modules:
       Paths_ligo_debugger

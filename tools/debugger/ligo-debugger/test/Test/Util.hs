@@ -67,6 +67,7 @@ module Test.Util
 
 import Control.Lens (each)
 import Data.Default (def)
+import Data.HashMap.Strict qualified as HM
 import Data.Singletons (demote)
 import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
@@ -336,6 +337,11 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mModuleName (param ::
         , csDelegate = Nothing
         }
 
+  scopes <- fmap HM.fromList $
+    forM allFiles \fileName -> do
+      scope <- fromLigoDefinitions <$> getScopes fileName
+      pure (fileName, scope)
+
   contractEnv <- initContractEnv contractState def (maxStepsMb ?: dummyMaxSteps)
 
   his <-
@@ -351,6 +357,7 @@ mkSnapshotsForImpl logger maxStepsMb (ContractRunData file mModuleName (param ::
       lambdaLocs
       (isJust maxStepsMb)
       ligoTypesVec
+      scopes
 
   return (allLocs, his, entrypointType, ligoTypesVec)
 
@@ -476,7 +483,7 @@ extractConvertInfos ligoTypesVec snap =
   let stackItems = sfStack $ head $ isStackFrames snap in
   catMaybes $ flip map stackItems \stackItem -> do
     StackItem desc michVal <- pure stackItem
-    LigoStackEntry (LigoExposedStackEntry _ typRef) <- pure desc
+    LigoStackEntry (LigoExposedStackEntry _ typRef _) <- pure desc
     let typ = readLigoType ligoTypesVec typRef
     pure $ PreLigoConvertInfo michVal typ
 
