@@ -6,6 +6,7 @@ module Attrs : sig
   module Value : sig
     type t =
       { entry : bool
+      ; dyn_entry : bool
       ; view : bool
       ; public : bool
       }

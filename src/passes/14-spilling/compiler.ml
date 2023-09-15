@@ -73,6 +73,7 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
     | Bls12_381_g2, [] -> return (T_base TB_bls12_381_g2)
     | Bls12_381_fr, [] -> return (T_base TB_bls12_381_fr)
     | Never, [] -> return (T_base TB_never)
+    | Dynamic_entrypoint, [ _p; _s ] -> return (T_base TB_nat)
     | Ticket, [ x ] ->
       let x' = compile_type x in
       return (T_ticket x')
@@ -175,7 +176,8 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
         | List
         | Gen
         | External _
-        | Views )
+        | Views
+        | Dynamic_entrypoint )
       , [] ) -> raise.error @@ corner_case ~loc:__LOC__ "wrong constant"
     | ( ( Int64
         | Unit
@@ -216,7 +218,8 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
         | External _
         | List
         | Tx_rollup_l2_address
-        | Views )
+        | Views
+        | Dynamic_entrypoint )
       , _ :: _ ) ->
       raise.error
       @@ corner_case
@@ -289,6 +292,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
           ; hidden = _
           ; thunk = _
           ; entry = _
+          ; dyn_entry = _
           }
       } ->
     let rhs' = self rhs in

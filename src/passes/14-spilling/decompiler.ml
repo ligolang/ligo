@@ -172,7 +172,8 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         | Operation
         | Tx_rollup_l2_address
         | External _
-        | Views )
+        | Views
+        | Dynamic_entrypoint )
       , _ ) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.error

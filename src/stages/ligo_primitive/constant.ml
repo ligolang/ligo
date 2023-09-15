@@ -98,6 +98,8 @@ type constant' =
   | C_BIG_MAP_GET_AND_UPDATE [@pure]
   (* Blockchain *)
   | C_CREATE_CONTRACT
+  (* Casting dynamic entrypoints to nat *)
+  | C_CAST_DYNAMIC_ENTRYPOINT
   (* Check - used for checking conditions and giving errors *)
   | C_CHECK_SELF
   | C_CHECK_EMIT_EVENT
@@ -169,6 +171,7 @@ type constant' =
   | C_POLYMORPHIC_SUB [@print "C_POLYMORPHIC_SUB"]
   | C_SUB_MUTEZ [@pure]
   | C_OPTION_MAP
+  | C_OPT_OUT_ENTRY
 [@@deriving
   eq
   , compare

@@ -271,10 +271,7 @@ module With_default_layout = struct
       return sig_
 end
 
-let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t =
- fun { inline; no_mutation; view; public; hidden; thunk; entry } ->
-  { inline; no_mutation; view; public; hidden; thunk; entry }
-
+let infer_value_attr : I.ValueAttr.t -> O.ValueAttr.t = fun x -> x
 
 let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
   let open C in
@@ -1512,6 +1509,36 @@ and infer_declaration (decl : I.declaration)
   set_loc decl.location
   @@
   match decl.wrap_content with
+  | D_value { binder; attr; expr }
+  | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr; attr }
+    when attr.dyn_entry ->
+    (* Dynamic entrypoints:
+       A dynamic entrypoint declaration has the following form :
+       `[@dyn_entry] let v = e`
+       and is type checked as:
+        - e : ('param, 'storage) entrypoint
+        - x : ('param, 'storage) dyn_entrypoint
+       (see stdlib type definitions)
+    *)
+    let var = Binder.get_var binder in
+    let ascr = Binder.get_ascr binder in
+    let%bind expr =
+      let%map loc = loc () in
+      Option.value_map ascr ~default:expr ~f:(fun ascr -> I.e_ascription ~loc expr ascr)
+    in
+    let%bind expr_type, expr = infer_expression expr in
+    let%bind lhs_type =
+      match Type.dynamic_entrypoint expr_type with
+      | Error (`Not_entry_point_form x) -> C.raise (not_an_entrypoint expr_type)
+      | Ok t -> return t
+    in
+    let attr = infer_value_attr attr in
+    const
+      E.(
+        let%bind lhs_type = decode lhs_type
+        and expr = expr in
+        return @@ O.D_value { binder = Binder.set_ascr binder lhs_type; expr; attr })
+      [ S_value (var, lhs_type, Context.Attr.of_core_attr attr) ]
   | D_irrefutable_match { pattern; expr; attr } ->
     let%bind matchee_type, expr = infer_expression expr in
     let attr = infer_value_attr attr in
@@ -1616,27 +1643,32 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
   (* A module is said to have a 'contract'ual signature if:
       - it contains at least 1 entrypoint
       - it contains zero or more views
+      - it contains zero or more dynamic entrypoints
    *)
   let entrypoints =
     List.filter_map inferred_module_sig.items ~f:(function
         | S_value (var, type_, attr) when attr.entry -> Some (var, type_)
         | _ -> None)
   in
-  match List.Ne.of_list_opt entrypoints with
-  | None -> return (inferred_module_sig, module_expr)
-  | Some entrypoints ->
-    (* FIXME: This could be improved by using unification to unify the storage
+  let%bind inferred_sort =
+    match List.Ne.of_list_opt entrypoints with
+    | None -> return inferred_module_sig.sort
+    | Some entrypoints ->
+      (* FIXME: This could be improved by using unification to unify the storage
        types together, permitting more programs to type check. *)
-    let%bind parameter, storage =
-      match Type.parameter_from_entrypoints entrypoints with
-      | Error (`Duplicate_entrypoint v) -> C.raise (duplicate_entrypoint v)
-      | Error (`Not_entry_point_form ep_type) -> C.raise (not_an_entrypoint ep_type)
-      | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
-        C.raise (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
-      | Ok (p, s) -> return (p, s)
-    in
-    return
-      ({ inferred_module_sig with sort = Ss_contract { storage; parameter } }, module_expr)
+      let%bind parameter, storage =
+        match Type.parameter_from_entrypoints entrypoints with
+        | Error (`Duplicate_entrypoint v) -> C.raise (duplicate_entrypoint v)
+        | Error (`Not_entry_point_form ep_type) -> C.raise (not_an_entrypoint ep_type)
+        | Error (`Storage_does_not_match (ep_1, storage_1, ep_2, storage_2)) ->
+          C.raise (storage_do_not_match ep_1 storage_1 ep_2 storage_2)
+        | Error (`Wrong_dynamic_storage_definition t) ->
+          C.raise (wrong_dynamic_storage_definition t)
+        | Ok (p, s) -> return (p, s)
+      in
+      return (Signature.Ss_contract { storage; parameter })
+  in
+  return ({ inferred_module_sig with sort = inferred_sort }, module_expr)
 
 
 and remove_non_public (sig_ : Signature.t) =

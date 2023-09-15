@@ -8,17 +8,6 @@ very naive decompilation
 
 *)
 
-let default_attr : I.ValueAttr.t =
-  { inline = false
-  ; no_mutation = false
-  ; public = true
-  ; view = false
-  ; hidden = false
-  ; thunk = false
-  ; entry = false
-  }
-
-
 let rec decompile_expression : I.expression -> O.expression =
  fun exp ->
   let self = decompile_expression in
@@ -33,7 +22,9 @@ let rec decompile_expression : I.expression -> O.expression =
     let let_result = self body in
     let fields = Record.map fields ~f:(O.Pattern.var ~loc) in
     let let_binder = O.Pattern.record_pattern ~loc:exp.location fields in
-    return (O.E_let_in { let_binder; rhs; let_result; attributes = default_attr })
+    return
+      (O.E_let_in
+         { let_binder; rhs; let_result; attributes = Value_attr.default_attributes })
   | E_matching
       { matchee
       ; cases = Match_variant { cases = [ { constructor; pattern; body } ]; tv }
@@ -44,7 +35,9 @@ let rec decompile_expression : I.expression -> O.expression =
       let v = O.Pattern.var ~loc (Binder.make pattern (I.get_sum_type tv constructor)) in
       O.Pattern.variant_pattern ~loc:exp.location (constructor, v)
     in
-    return (O.E_let_in { let_binder; rhs; let_result; attributes = default_attr })
+    return
+      (O.E_let_in
+         { let_binder; rhs; let_result; attributes = Value_attr.default_attributes })
   | E_matching { matchee; cases = Match_variant { cases; tv } } ->
     let matchee = self matchee in
     let f I.{ constructor; pattern; body } =

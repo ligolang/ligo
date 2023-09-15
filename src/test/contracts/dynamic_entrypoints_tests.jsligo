@@ -1,0 +1,43 @@
+namespace C {
+  export type storage =
+    {
+     storage : int;
+     dynamic_entrypoints
+    }
+
+  @dyn_entry
+  export const one = (_: unit, _: int): [list<operation>, int] =>
+    [list([]), 1];
+
+  @entry
+  export const call_one = (_:unit, s : storage) : [list<operation>, storage] =>
+    match (Dynamic_entrypoints.get(one, s.dynamic_entrypoints)) {
+      when (Some(f)): do {
+        const [op, storage] = f([], s.storage);
+        return [op, ({...s, storage})]
+      };
+      when (None): failwith(-1);
+    }
+
+  @entry
+  export const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
+    const dynamic_entrypoints =
+      Dynamic_entrypoints.set(one, (Some(one_v2)), s.dynamic_entrypoints);
+      return [list([]), {...s, dynamic_entrypoints}]
+  }
+
+}
+
+const test_dyn = do {
+  const init_storage = Test.storage_with_dynamic_entrypoints(contract_of(C), 42);
+  const [addr, _, _] = Test.originate_module (contract_of(C), init_storage, 0mutez);
+  /* Call initial one */
+  const _ = Test.transfer_to_contract (Test.to_contract(addr), Call_one(), 1mutez);
+  const _ = assert ((Test.get_storage(addr)).storage == 1);
+  /* Change initial one and call it */
+  const f = (_ : unit, i : int) : [list<operation>, int] => [list([]), i + 1];
+  const _ = Test.transfer_to_contract (Test.to_contract(addr), (Set_one(f)), 1mutez);
+  const _ = Test.transfer_to_contract (Test.to_contract(addr), (Call_one()), 1mutez);
+  const _ = assert ((Test.get_storage(addr)).storage == 2);
+  return []
+}

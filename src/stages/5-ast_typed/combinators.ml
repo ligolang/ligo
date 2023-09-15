@@ -87,6 +87,10 @@ let t__type_ ~loc t : type_expression = t_constant ~loc _type_ [ t ]
       , "views" )]
 
 
+let t__type_ ~loc t1 t2 : type_expression = t_constant ~loc _type_ [ t1; t2 ]
+  [@@map _type_, "big_map"]
+
+
 let t_mutez = t_tez
 
 let t_abstraction1 ~loc name kind : type_expression =
@@ -336,8 +340,16 @@ let ez_e_record (lst : (Label.t * expression) list) : expression_content =
   E_record (Record.of_list lst)
 
 
+let e__ct_ arguments : expression_content = E_constant { cons_name = C__CT_; arguments }
+  [@@map _ct_, "list_literal"]
+
+
+let e__ct_ () : expression_content = E_constant { cons_name = C__CT_; arguments = [] }
+  [@@map _ct_, "none"]
+
+
 let e__ct_ p : expression_content = E_constant { cons_name = C__CT_; arguments = [ p ] }
-  [@@map _ct_, ("some", "test_nil_views")]
+  [@@map _ct_, ("some", "test_nil_views", "big_map_literal")]
 
 
 let e__ct_ p p' p'' : expression_content =
@@ -409,6 +421,10 @@ let ez_e_a_record ~loc ?layout r =
        ~loc
        ?layout
        (List.map r ~f:(fun (name, expr) -> name, expr.type_expression)))
+
+
+let e_a_tuple ~loc lst =
+  ez_e_a_record ~loc (List.mapi ~f:(fun i el -> Label.of_int i, el) lst)
 
 
 let e_a_variable ~loc v ty = e_variable ~loc v ty

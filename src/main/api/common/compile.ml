@@ -259,7 +259,26 @@ let typed_contract_and_expression_impl
   let app_typed_sig = Ast_typed.to_signature app_typed_prg.pr_module in
   let annotation =
     match check_type with
-    | Runned_result.Check_storage -> Checking.untype_type_expression ctrct_sig.storage
+    | Runned_result.Check_storage ->
+      (* to handle dynamic entrypoints:
+             when the storage is of the form `{ storage : ty1 ; dynamic_entrypoints : ty2 }`
+             the user is expect to provide an expression of type `ty1`.
+             so the expected type will be storage.storage
+          *)
+      let ty =
+        let x =
+          Option.(
+            let* row = Ast_typed.get_t_record ctrct_sig.storage in
+            let* _ =
+              Ast_typed.Row.find_type
+                row
+                (Ligo_prim.Label.of_string "dynamic_entrypoints")
+            in
+            Ast_typed.Row.find_type row (Ligo_prim.Label.of_string "storage"))
+        in
+        Option.value x ~default:ctrct_sig.storage
+      in
+      Checking.untype_type_expression ty
     | Check_parameter -> Checking.untype_type_expression ctrct_sig.parameter
   in
   let typed_expr =
@@ -449,6 +468,27 @@ let storage_impl
       ~constants
       michelson
       []
+  in
+  let typed_store =
+    let open Ast_typed in
+    let open Ligo_prim in
+    (* implicit detection of dynamic storage. *)
+    let dyn_opt =
+      get_sig_value
+        module_path
+        Magic_vars.initial_dynamic_entrypoints
+        app_typed_prg.pr_sig
+    in
+    Option.value_map dyn_opt ~default:typed_store ~f:(fun (dyn_ty, _) ->
+        ez_e_a_record
+          ~loc
+          [ Label.of_string "storage", typed_store
+          ; ( Label.of_string "dynamic_entrypoints"
+            , e_module_accessor
+                ~loc
+                { module_path; element = Magic_vars.initial_dynamic_entrypoints }
+                dyn_ty )
+          ])
   in
   let aggregated_param =
     Ligo_compile.Of_typed.compile_expression_in_context

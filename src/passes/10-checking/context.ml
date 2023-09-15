@@ -47,15 +47,16 @@ module Attrs = struct
   module Value = struct
     type t =
       { entry : bool
+      ; dyn_entry : bool
       ; view : bool
       ; public : bool
       }
     [@@deriving compare, hash, equal]
 
-    let default = { entry = false; view = false; public = true }
+    let default = { entry = false; dyn_entry = false; view = false; public = true }
 
-    let of_core_attr ({ entry; view; public; _ } : Ast_typed.ValueAttr.t) =
-      { entry; view; public }
+    let of_core_attr ({ entry; dyn_entry; view; public; _ } : Ast_typed.ValueAttr.t) =
+      { entry; dyn_entry; view; public }
   end
 
   module Type = struct

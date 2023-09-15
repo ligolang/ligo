@@ -129,6 +129,7 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             { inline = _
             ; no_mutation = _
             ; view = _
+            ; dyn_entry = _
             ; public = _
             ; hidden = _
             ; thunk = _
@@ -418,11 +419,16 @@ let get_entrypoint_storage_type : program -> Module_var.t list -> type_expressio
 let to_sig_items (module_ : module_) : sig_item list =
   List.fold module_ ~init:[] ~f:(fun ctx decl ->
       match Location.unwrap decl with
-      | D_irrefutable_match { pattern; expr = _; attr = { view; entry; _ } } ->
+      | D_irrefutable_match { pattern; expr = _; attr = { view; entry; dyn_entry; _ } } ->
         List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
-            ctx @ [ S_value (Binder.get_var x, Binder.get_ascr x, { view; entry }) ])
-      | D_value { binder; expr; attr = { view; entry; _ } } ->
-        ctx @ [ S_value (Binder.get_var binder, expr.type_expression, { view; entry }) ]
+            ctx
+            @ [ S_value (Binder.get_var x, Binder.get_ascr x, { dyn_entry; view; entry })
+              ])
+      | D_value { binder; expr; attr = { view; entry; dyn_entry; _ } } ->
+        ctx
+        @ [ S_value
+              (Binder.get_var binder, expr.type_expression, { view; entry; dyn_entry })
+          ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
         ctx @ [ S_type (type_binder, type_expr) ]
       | D_module_include x -> x.signature.sig_items

@@ -41,6 +41,9 @@ let collect_attributes tokens =
         "@entry" ->
           let attr = Token.mk_attr ~key:"entry" id#region
           in inner (attr :: acc) tokens
+      | "@dyn_entry" ->
+          let attr = Token.mk_attr ~key:"dyn_entry" id#region
+          in inner (attr :: acc) tokens
       | "@inline" ->
           let attr = Token.mk_attr ~key:"inline" id#region
           in inner (attr :: acc) tokens

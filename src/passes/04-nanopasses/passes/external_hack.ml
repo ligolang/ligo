@@ -16,7 +16,8 @@ let compile ~raise:_ =
    fun e ->
     let loc = Location.get_location e in
     match Location.unwrap e with
-    | E_raw_code { language = "external"; code } as e ->
+    | ( E_raw_code { language = "External"; code }
+      | E_raw_code { language = "external"; code } ) as e ->
       (match get_e code with
       | E_tuple m ->
         (match destruct_args m with

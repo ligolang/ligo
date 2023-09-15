@@ -6,6 +6,7 @@ type t =
 *)
     view : bool
   ; entry : bool
+  ; dyn_entry : bool
   ; public : bool
   ; (* Controls whether a declaration must be printed or not when using LIGO print commands (print ast-typed , ast-aggregated .. etc ..)
   set to true for standard libraries
@@ -20,10 +21,10 @@ open Format
 
 let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
 
-let pp ppf { inline; no_mutation; view; entry; public; hidden; thunk } =
+let pp ppf { inline; no_mutation; view; entry; dyn_entry; public; hidden; thunk } =
   fprintf
     ppf
-    "%a%a%a%a%a%a%a"
+    "%a%a%a%a%a%a%a%a"
     (pp_if_set "inline")
     inline
     (pp_if_set "no_mutation")
@@ -32,6 +33,8 @@ let pp ppf { inline; no_mutation; view; entry; public; hidden; thunk } =
     view
     (pp_if_set "entry")
     entry
+    (pp_if_set "dyn_entry")
+    dyn_entry
     (pp_if_set "private")
     (not public)
     (pp_if_set "hidden")
@@ -48,4 +51,5 @@ let default_attributes =
   ; public = true
   ; hidden = false
   ; thunk = false
+  ; dyn_entry = false
   }

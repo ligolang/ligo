@@ -77,6 +77,7 @@ const sidebars = {
     "Advanced Topics": [
       "advanced/polymorphism",
       "advanced/inline",
+      // "advanced/dynamic-entrypoints",
       "tutorials/inter-contract-calls/inter-contract-calls",
       "tutorials/optimisation/optimisation",
       "tutorials/security/security",
@@ -219,6 +220,7 @@ const sidebars = {
       "reference/bitwise-reference",
       "reference/bytes-reference",
       "reference/crypto-reference",
+      // "reference/dynamic-entrypoints-reference",
       "reference/list-reference",
       "reference/map-reference",
       "reference/set-reference",

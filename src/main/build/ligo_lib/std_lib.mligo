@@ -45,15 +45,16 @@ type external_map_find_opt = "%constant:external_map_find_opt"
 type external_map_add = "%constant:external_map_add"
 type external_map_remove = "%constant:external_map_remove"
 type external_map_remove_value = "%constant:external_map_remove_value"
+(* type dynamic_entrypoint represent a typed key in dynamic_entrypoints *)
+type dynamic_entrypoint = "%constant:dynamic_entrypoint"
 
-(* protocol dependent types *)
+type ('p, 's) entrypoint = 'p -> 's -> operation list * 's
 
 let failwith (type a b) (x : a) = [%michelson ({| { FAILWITH } |} x : b)]
 
 type bool = False | True
 type 'a option = None | Some of 'a
 
-type ('p, 's) entrypoint = 'p * 's -> operation list * 's
 
 module Tezos = struct
 
@@ -264,6 +265,42 @@ let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v
 let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
 let ediv (type a b) (l : a) (r : b) : (a, b) external_ediv = [%michelson ({| { EDIV } |} l r : (a, b) external_ediv)]
 
+type dynamic_entrypoints = (nat,bytes) big_map
+module Dynamic_entrypoints = struct
+
+  [@private] let cast_dynamic_entrypoint (type p s) (x : (p,s) dynamic_entrypoint) : nat =
+    [%external ("CAST_DYNAMIC_ENTRYPOINT", x)]
+
+  let set (type p s) : 
+        (p, s) dynamic_entrypoint 
+      -> (p, s) entrypoint option 
+      -> dynamic_entrypoints 
+      -> dynamic_entrypoints =
+    fun k v_opt dyns ->
+      let v_opt = Option.map Bytes.pack v_opt in
+      Big_map.update (cast_dynamic_entrypoint k) v_opt dyns
+
+  let get (type p s) : 
+        (p, s) dynamic_entrypoint
+      -> dynamic_entrypoints 
+      -> (p, s) entrypoint option =
+    fun k dyns ->
+      let res_opt = Big_map.find_opt (cast_dynamic_entrypoint k) dyns in
+      Option.map
+        (fun dyn_f ->
+          let f_opt : (p -> s -> operation list * s) option = Bytes.unpack dyn_f in
+          Option.value_exn () f_opt)
+        res_opt
+  
+  let set_bytes (type p s) : 
+        (p, s) dynamic_entrypoint 
+      -> bytes option 
+      -> dynamic_entrypoints 
+      -> dynamic_entrypoints =
+    fun k v_opt dyns ->
+      Big_map.update (cast_dynamic_entrypoint k) v_opt dyns
+end
+
 type michelson_program = "%constant:michelson_program"
 type typed_address = "%constant:typed_address"
 type mutation = "%constant:mutation"
@@ -297,7 +334,7 @@ type 'a pbt_result = Fail of 'a | Success
 
 type 's unforged_ticket = [@layout:comb] { ticketer : address ; value : 's ; amount : nat }
 
-type ('p, 's) module_contract = ('p * 's -> operation list * 's) * 's views
+type ('p, 's) module_contract = ('p * 's -> operation list * 's) * 's views * dynamic_entrypoints option
 
 module Test = struct
 
@@ -430,6 +467,12 @@ module Test = struct
 	      else s
 	    else s in
     [%external ("TEST_TO_ENTRYPOINT", s, t)]
+  let storage_with_dynamic_entrypoints (type p s s2) ((_, _, init_opt) : (p, s) module_contract) (s:s2) =
+    type t = [@layout comb] { storage : s2 ; dynamic_entrypoints : dynamic_entrypoints} in
+    match init_opt with
+    | Some dynamic_entrypoints ->
+      ({storage = s ; dynamic_entrypoints } : t)
+    | None -> failwith "Your contract do not have dynamic entrypoints"
   let originate_contract (c : michelson_contract) (s : michelson_program) (t : tez) : address = [%external ("TEST_ORIGINATE", c, s, t)]
   let originate (type p s) (f : p -> s -> operation list * s) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
     let f = compile_contract (uncurry f) in
@@ -448,7 +491,7 @@ module Test = struct
     let c = size f in
     let a : (p, s) typed_address = cast_address a in
     (a, f, c)
-  let originate_module (type p s) ((f, vs) : (p, s) module_contract) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
+  let originate_module (type p s) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez) : ((p, s) typed_address * michelson_contract * int) =
     let f = compile_contract_with_views f vs in
     let s = eval s in
     let a = originate_contract f s t in
@@ -527,7 +570,7 @@ module Test = struct
       | Continue -> mutation_nth acc (n + 1n)
       | Passed (b, m) -> mutation_nth ((b, m) :: acc) (n + 1n) in
     mutation_nth ([] : (b * mutation) list) 0n
-  let originate_module_and_mutate (type p s b) ((f, vs) : (p, s) module_contract) (s : s) (t : tez)
+  let originate_module_and_mutate (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
                                   (tester : (p, s) typed_address -> michelson_contract -> int -> b) : (b * mutation) option =
     let s = eval s in
     let wrap_tester (v : ast_contract) : b =
@@ -549,7 +592,7 @@ module Test = struct
       | Continue -> mutation_nth (n + 1n)
       | Passed (b, m) -> Some (b, m) in
     mutation_nth 0n
-  let originate_module_and_mutate_all (type p s b) ((f, vs) : (p, s) module_contract) (s : s) (t : tez)
+  let originate_module_and_mutate_all (type p s b) ((f, vs, _) : (p, s) module_contract) (s : s) (t : tez)
                                       (tester : (p, s) typed_address -> michelson_contract -> int -> b) : (b * mutation) list =
     let s = eval s in
     let wrap_tester (v : ast_contract) : b =
@@ -651,3 +694,4 @@ module Test = struct
       | None -> failwith "internal error"
   end
 end
+

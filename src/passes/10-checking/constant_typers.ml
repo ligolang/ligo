@@ -1552,6 +1552,17 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
               [ a ^-> t_map a b ~loc () ^~> t_bool ~loc ()
               ; a ^-> t_big_map a b ~loc () ^~> t_bool ~loc ()
               ]) )
+    ; ( C_CAST_DYNAMIC_ENTRYPOINT
+      , of_type
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked; Checked ]
+            ~types:[ t_dynamic_entrypoint a b ~loc () ^~> t_nat ~loc () ]) )
+    ; ( C_OPT_OUT_ENTRY
+      , of_type (for_all "a" @@ fun a -> create ~mode_annot:[] ~types:[ return a ]) )
     ]
 
 

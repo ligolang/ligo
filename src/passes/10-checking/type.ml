@@ -253,7 +253,7 @@ let t__type_ t ~loc () : t = t_construct ~loc Literal_types._type_ [ t ] ()
 
 
 let t__type_ t t' ~loc () : t = t_construct ~loc Literal_types._type_ [ t; t' ] ()
-  [@@map _type_, ("map", "big_map", "typed_address")]
+  [@@map _type_, ("map", "big_map", "typed_address", "dynamic_entrypoint")]
 
 
 let row_ez fields ?(layout = default_layout) () =
@@ -577,7 +577,13 @@ let t_entrypoint p_ty s_ty =
 
 let t_contract_of p_ty s_ty =
   let loc = Location.generated in
-  t_pair ~loc (t_entrypoint p_ty s_ty) (t_views ~loc s_ty ()) ()
+  t_tuple
+    ~loc
+    [ t_entrypoint p_ty s_ty
+    ; t_views ~loc s_ty ()
+    ; t_option ~loc (t_big_map ~loc (t_nat ~loc ()) (t_bytes ~loc ()) ()) ()
+    ]
+    ()
 
 
 let get_t_inj (t : t) (v : Literal_types.t) : t list option =
@@ -599,21 +605,24 @@ let assert_t_list_operation (t : t) : unit option =
   | None -> None
 
 
-let should_uncurry_entry entry_ty =
-  let is_t_list_operation listop = Option.is_some @@ assert_t_list_operation listop in
-  match get_t_arrow entry_ty with
-  | Some { type1 = tin; type2 = return } ->
-    let parameter = tin in
-    (match get_t_arrow return with
-    | Some { type1 = storage; type2 = return } ->
-      (match get_t_pair return with
-      | Some (listop, storage') ->
-        if is_t_list_operation listop && equal storage storage'
-        then `Yes (parameter, storage)
-        else `Bad
-      | _ -> `Bad)
-    | None -> `Bad)
-  | None -> `Bad
+let get_entrypoint ty =
+  let ty_eq a b = if equal a b then Some () else None in
+  let open Option.Let_syntax in
+  let%bind { type1 = parameter; type2 } = get_t_arrow ty in
+  let%bind { type1 = storage; type2 } = get_t_arrow type2 in
+  let%bind list_op, storage' = get_t_pair type2 in
+  let%bind () = assert_t_list_operation list_op in
+  let%bind () = ty_eq storage storage' in
+  return (parameter, storage)
+
+
+let dynamic_entrypoint : t -> (t, [> `Not_entry_point_form of t ]) result =
+ fun ty ->
+  Result.of_option
+    Simple_utils.Option.(
+      let* p, s = get_entrypoint ty in
+      return @@ t_construct ~loc:ty.location Dynamic_entrypoint [ p; s ] ())
+    ~error:(`Not_entry_point_form ty)
 
 
 let parameter_from_entrypoints
@@ -622,6 +631,7 @@ let parameter_from_entrypoints
        , [> `Not_entry_point_form of t
          | `Storage_does_not_match of Value_var.t * t * Value_var.t * t
          | `Duplicate_entrypoint of Value_var.t
+         | `Wrong_dynamic_storage_definition of t
          ] )
        result
   =
@@ -638,20 +648,18 @@ let parameter_from_entrypoints
   in
   let (entrypoint, entrypoint_type), rest = entrypoints in
   let%bind parameter, storage =
-    match should_uncurry_entry entrypoint_type with
-    | `Yes (parameter, storage) | `No (parameter, storage) ->
-      Result.Ok (parameter, storage)
-    | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+    Result.of_option
+      (get_entrypoint entrypoint_type)
+      ~error:(`Not_entry_point_form entrypoint_type)
   in
   let%bind parameter_list =
     List.fold_result
       ~init:[ String.capitalize (Value_var.to_name_exn entrypoint), parameter ]
       ~f:(fun parameters (ep, ep_type) ->
         let%bind parameter_, storage_ =
-          match should_uncurry_entry ep_type with
-          | `Yes (parameter, storage) | `No (parameter, storage) ->
-            Result.Ok (parameter, storage)
-          | `Bad -> Result.Error (`Not_entry_point_form entrypoint_type)
+          Result.of_option
+            (get_entrypoint ep_type)
+            ~error:(`Not_entry_point_form entrypoint_type)
         in
         let%bind () =
           Result.of_option
@@ -660,6 +668,21 @@ let parameter_from_entrypoints
         in
         return ((String.capitalize (Value_var.to_name_exn ep), parameter_) :: parameters))
       rest
+  in
+  let%bind () =
+    (* If storage as a `dynamic_entrypoints` field, we expect only one extra field `storage` *)
+    let opt =
+      Simple_utils.Option.(
+        let* rows = get_t_record storage in
+        let* _ = Row.find_type rows (Label.of_string "dynamic_entrypoints") in
+        return rows)
+    in
+    match opt with
+    | None -> return ()
+    | Some rows_with_dyns
+      when Row.mem rows_with_dyns (Label.of_string "storage")
+           && Int.equal (Row.length rows_with_dyns) 2 -> return ()
+    | _ -> Error (`Wrong_dynamic_storage_definition storage)
   in
   return
     (t_sum_ez ~loc:Location.generated ~layout:default_layout parameter_list (), storage)

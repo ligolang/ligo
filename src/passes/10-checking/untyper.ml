@@ -4,10 +4,7 @@ module I = Ast_core
 module O = Ast_typed
 open Ligo_prim
 
-let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t =
- fun { inline; no_mutation; view; public; hidden; thunk; entry } ->
-  { inline; no_mutation; view; public; hidden; thunk; entry }
-
+let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t = fun x -> x
 
 (* use_orig_var param allows us to preserve the orininal type variables names, e.g. if
    we have [type t = A | B] then type of [Some A] will be transformed to [t option]

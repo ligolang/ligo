@@ -1,0 +1,40 @@
+type storage =
+  {
+    storage : int;
+    dynamic_entrypoints;
+  }
+
+@dyn_entry
+  const one = (_: unit, _: int): [list<operation>, int] =>
+    [list([]), 1];
+
+@dyn_entry
+const tick = (_ : ticket<int>, x : [int, int]) : [list<operation>, [int, int]] => [list([]), x];
+
+@entry
+const call_one = (_:unit, s : storage) : [list<operation>, storage] =>
+  match (Dynamic_entrypoints.get(one, s.dynamic_entrypoints)) {
+    when (Some(f)): do {
+      const [op, storage] = f([], s.storage);
+      return [op, ({...s, storage})]
+    };
+    when (None): failwith(-1);
+  }
+
+@entry
+const call_tick = (p : ticket<int>, s : storage) : [list<operation>, storage] =>
+  match (Dynamic_entrypoints.get(tick, s.dynamic_entrypoints)) {
+    when (Some(f)): do {
+      const [op, [i1, i2]] = f(p, [s.storage, 0]);
+      return [op, ({...s, storage: i1 + i2})]
+    };
+    when (None): failwith(-1);
+  }
+
+@entry
+const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
+  const dynamic_entrypoints =
+    Dynamic_entrypoints.set(one, (Some(one_v2)), s.dynamic_entrypoints);
+    return [list([]), {...s, dynamic_entrypoints}]
+}
+
