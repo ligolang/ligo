@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with disappearing variables when they become unused. Now they stay present in the variables pane.\\n\\n\\n"
+merge_request: '2872'
+title: "[#1888] Fix disappearing variables via scopes"
+type: fixed
+            
