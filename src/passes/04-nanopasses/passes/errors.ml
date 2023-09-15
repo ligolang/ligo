@@ -39,6 +39,7 @@ type t =
   | `Small_passes_duplicate_ty_identifier of Ty_variable.t
   | `Small_passes_only_variable_in_prefix of expr
   | `Small_passes_only_variable_in_postfix of expr
+  | `Small_passes_sys_error of Location.t * string
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -235,7 +236,9 @@ let error_ppformat
         f
         "@[<hv>%a@ Only variables are accepted in postfix operators. @]"
         snippet_pp
-        (get_e_loc e))
+        (get_e_loc e)
+    | `Small_passes_sys_error (l, msg) ->
+      Format.fprintf f "@[<hv>%a@ Found a system error: %s. @]" snippet_pp l msg)
 
 
 let error_json : t -> Simple_utils.Error.t =
@@ -447,5 +450,9 @@ let error_json : t -> Simple_utils.Error.t =
   | `Small_passes_only_variable_in_postfix e ->
     let location = get_e_loc e in
     let message = "Only variables are accepted in postfix operators" in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_sys_error (location, msg) ->
+    let message = Format.sprintf "Found a system error: %s" msg in
     let content = make_content ~message ~location () in
     make ~stage ~content

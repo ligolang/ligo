@@ -385,6 +385,12 @@ let rec mono_polymorphic_expression ~raise
     let data, struct_ = self data struct_ in
     let data, update = self data update in
     data, return (E_update { struct_; path; update })
+  | E_type_inst
+      { forall = { expression_content = E_type_abstraction { type_binder; result }; _ }
+      ; type_
+      } ->
+    let result = apply_table_expr [ type_binder, type_ ] result in
+    data, return result.expression_content
   | E_type_inst _ ->
     let rec aux type_insts (e : AST.expression) =
       match e.expression_content with
