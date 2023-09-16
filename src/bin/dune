@@ -18,8 +18,10 @@
   unpublish
   user
   ligo.cli_helpers
+  registry
+  lambda-term
   ligo_api)
- (modules command_unx cli version))
+ (modules command_unx cli version prompt forgot_password))
 
 (library
  (name repl)

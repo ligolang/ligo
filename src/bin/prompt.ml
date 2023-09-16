@@ -61,3 +61,22 @@ let prompt_register stdout_term =
     Ok (Zed_string.to_utf8 u, Zed_string.to_utf8 e, Zed_string.to_utf8 p)
   with
   | LTerm_read_line.Interrupt | Caml.Sys.Break -> Error ("Error: Canceled", "")
+
+type 'a error =
+  | Cancelled
+  | Unknown_error of 'a
+
+let handle_interruption f =
+  Lwt.catch f (function
+      | LTerm_read_line.Interrupt | Caml.Sys.Break -> Lwt_result.lift @@ Error Cancelled
+      | e -> Lwt_result.lift @@ Error (Unknown_error e))
+
+let prompt ~msg =
+  let f () =
+    let open Lwt.Syntax in
+    let* stdout_term = Lazy.force LTerm.stdout in
+    let* () = LTerm_inputrc.load () in
+    let* v = (new prompt stdout_term msg)#run in
+    Lwt_result.return @@ Zed_string.to_utf8 @@ v
+  in
+  handle_interruption f

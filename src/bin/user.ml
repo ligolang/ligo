@@ -9,7 +9,7 @@ type data =
 [@@deriving to_yojson]
 
 let login_url ~base_url user =
-  Uri.with_path base_url (Format.sprintf "/-/user/org.couchdb.user:%s" user)
+  Uri.with_path base_url (Format.sprintf "/-/api/-/user/org.couchdb.user:%s" user)
 
 
 let http ~uri ~authorization ~user ~pass ~email =

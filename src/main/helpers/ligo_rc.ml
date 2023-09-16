@@ -48,6 +48,6 @@ let write ligorc =
 
 let registry_key uri =
   uri
-  |> Uri.with_uri ~scheme:None
+  |> Uri.with_uri ~scheme:None ~path:(Some "/-/api")
   |> Uri.to_string
   |> Str.global_replace (Str.regexp "\\(//\\)") ""
