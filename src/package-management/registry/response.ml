@@ -6,6 +6,7 @@ module Semver = Package_management_external_libs.Ligo_semver
 module SMap = Caml.Map.Make (String)
 open Package_management_shared
 module RepositoryUrl = Repository_url
+module Uri = Package_management_external_libs.Ligo_uri
 
 let get_tarball_name ~name ~version = Format.sprintf "%s-%s.tgz" name version
 
@@ -62,7 +63,7 @@ module Dist = struct
   type t =
     { integrity : string
     ; shasum : string
-    ; tarball : string
+    ; tarball : Uri.t
     ; file_count : int [@key "fileCount"]
     ; unpacked_size : int [@key "unpackedSize"]
     }
@@ -114,13 +115,10 @@ module Version = struct
       ~storage_arg
       ~bugs
     =
-    let tarball =
-      Format.sprintf
-        "%s/%s/-/%s"
-        ligo_registry
-        name
-        package_stats.PackageStats.tarball_name
+    let endpoint_uri =
+      Format.sprintf "/-/api/%s/-/%s" name package_stats.PackageStats.tarball_name
     in
+    let tarball = Uri.with_path ligo_registry endpoint_uri in
     { main
     ; name
     ; author = { name = author }

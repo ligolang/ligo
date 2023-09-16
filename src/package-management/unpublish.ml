@@ -1,6 +1,7 @@
 module LigoRC = Cli_helpers.LigoRC
 open Registry.Response
 open Utils
+module Uri = Package_management_external_libs.Ligo_uri
 
 let handle_server_response ~name response body =
   let open Cohttp_lwt in
@@ -21,7 +22,8 @@ let handle_server_response ~name response body =
    used [token] for authorization *)
 let delete_package ~name ~ligo_registry ~token =
   let open Cohttp_lwt_unix in
-  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
+  let endpoint_uri = Format.sprintf "/-/api/%s" name in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   let headers =
     Cohttp.Header.of_list
       [ "referer", "unpublish"
@@ -38,7 +40,8 @@ let unpublish_package_version ~name ~body ~ligo_registry ~token ~tarball_name ~r
   let open Lwt.Infix in
   let open Cohttp_lwt_unix in
   let ( let* ) x f = Result.bind x ~f in
-  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
+  let endpoint_uri = Format.sprintf "/-/api/%s" name in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   let body =
     body |> GetBody.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
@@ -61,10 +64,8 @@ let unpublish_package_version ~name ~body ~ligo_registry ~token ~tarball_name ~r
     Cohttp.Header.of_list
       [ "referer", "unpublish"; "authorization", Format.sprintf "Bearer %s" token ]
   in
-  let uri =
-    Uri.of_string
-      (Format.sprintf "%s/%s/-/%s/-rev/%s" ligo_registry name tarball_name revision)
-  in
+  let endpoint_uri = Format.sprintf "/-/api/%s/-/%s/-rev/%s" name tarball_name revision in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   let r = Client.delete ~headers uri in
   let response, body_str = Lwt_main.run r in
   handle_server_response ~name response body_str
@@ -81,8 +82,7 @@ let get_auth_token ~ligorc_path ligo_registry =
   | None -> Error ("\nUser not logged in.\nHint: Use ligo login or ligo add-user.", "")
 
 
-let get_package ~(name : string) (ligo_registry : string)
-    : (GetBody.t, string * string) result Lwt.t
+let get_package ~(name : string) ligo_registry : (GetBody.t, string * string) result Lwt.t
   =
   let open Lwt.Infix in
   let handle_ok body =
@@ -92,7 +92,8 @@ let get_package ~(name : string) (ligo_registry : string)
     | Ok v -> Ok v |> Lwt.return
     | Error e -> Error (e, "") |> Lwt.return
   in
-  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
+  let endpoint_uri = Format.sprintf "/-/api/%s" name in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   Cohttp_lwt_unix.Client.get uri
   >>= fun (response, body) ->
   match Cohttp.Response.status response with

@@ -2,7 +2,7 @@
     and used [token] for authorization *)
 
 val publish
-  :  ligo_registry:string
+  :  ligo_registry:Uri.t
   -> ligorc_path:string
   -> project_root:string option
   -> dry_run:bool

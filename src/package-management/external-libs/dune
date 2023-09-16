@@ -1,4 +1,4 @@
 (library
  (name package_management_external_libs)
- (libraries semver core yojson)
+ (libraries semver core yojson uri)
  (synopsis "External libraries used for ligo package management"))

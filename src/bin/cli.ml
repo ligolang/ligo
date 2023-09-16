@@ -610,11 +610,15 @@ let cache_path =
   flag ~doc name spec
 
 
+let command_arg_type_uri = Command.Arg_type.create Uri.of_string
+
 let ligo_registry =
   let open Command.Param in
   let name = "--registry" in
   let doc = "URL The url to a LIGO registry." in
-  let spec = optional_with_default Constants.ligo_registry string in
+  let spec =
+    optional_with_default (Uri.of_string Constants.ligo_registry) command_arg_type_uri
+  in
   flag ~doc name spec
 
 

@@ -1,14 +1,17 @@
 module Constants = Cli_helpers.Constants
 
 let run_esy package_name cache_path ligo_registry =
+  let ligo_registry_str = Uri.to_string ligo_registry in
   match Cli_helpers.does_command_exist Constants.esy with
   | Ok true ->
     let result =
       match package_name with
       | Some package_name ->
         Cli_helpers.run_command
-          (Constants.esy_add ~package_name ~cache_path ~ligo_registry)
-      | None -> Cli_helpers.run_command (Constants.esy_install ~cache_path ~ligo_registry)
+          (Constants.esy_add ~package_name ~cache_path ~ligo_registry:ligo_registry_str)
+      | None ->
+        Cli_helpers.run_command
+          (Constants.esy_install ~cache_path ~ligo_registry:ligo_registry_str)
     in
     (match result with
     | Ok () -> Ok ("", "")
@@ -160,7 +163,6 @@ let rec install
       let package_name = Option.value ~default:"" package_name in
       let package_name = String.strip package_name in
       let cache_path = Fpath.v cache_path in
-      let ligo_registry = Uri.of_string ligo_registry in
       Lwt_main.run
       @@ Package_management.Alpha.run ~project_root package_name cache_path ligo_registry
       |> function

@@ -206,7 +206,8 @@ let get_project_root project_root =
    and used [token] for authorization *)
 let publish' ~name ~ligo_registry ~body ~token =
   let open Cohttp_lwt_unix in
-  let uri = Uri.of_string (Format.sprintf "%s/%s" ligo_registry name) in
+  let endpoint_uri = Format.sprintf "/-/api/%s" name in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   let body =
     body |> PutBody.to_yojson |> Yojson.Safe.to_string |> Cohttp_lwt.Body.of_string
   in
