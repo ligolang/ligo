@@ -784,7 +784,10 @@ let test_example =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_run
-type some_r = [@layout comb] { one : int , two : nat , three : string , four : bytes , five : unit };
+type some_r =
+  @layout("comb")
+  { one : int , two : nat , three : string , four : bytes , five : unit };
+
 let f = (x: some_r) : int => x.one;
 
 let test_example =

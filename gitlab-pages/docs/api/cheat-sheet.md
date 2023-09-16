@@ -699,10 +699,10 @@ contract_of and parameter_of
 namespace C {
   type storage = int;
 
-  // @entry
+  @entry
   const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
 
-  // @entry
+  @entry
   const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
 };
 

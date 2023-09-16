@@ -97,9 +97,9 @@ location retaining right combed tree, like this:
         (unit %cat)))
 ```
 
-You can use the `@layout comb` (or `@layout:comb`) attribute:
-
 <Syntax syntax="cameligo">
+
+You can use the `@layout comb` (or `@layout:comb`) attribute:
 
 ```cameligo
 type animal =
@@ -113,9 +113,11 @@ type animal =
 
 <Syntax syntax="jsligo">
 
+You can use the decorator `@layout("comb")`, like so:
+
 ```jsligo
 type animal =
-// @layout comb
+@layout("comb")
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -123,10 +125,10 @@ type animal =
 
 </Syntax>
 
+<Syntax syntax="cameligo">
+
 The `@layout comb` (or `@layout:comb`) attribute can also be used on
 record types:
-
-<Syntax syntax="cameligo">
 
 ```cameligo
 type artist =
@@ -140,10 +142,12 @@ type artist =
 </Syntax>
 
 <Syntax syntax="jsligo">
+The decorator `@layout("comb")` can also be used on object types:
+
 
 ```jsligo
 type artist =
-// @layout comb
+@layout("comb")
 {
   genre : string,
   since : timestamp,
@@ -175,9 +179,9 @@ type animal =
 
 ```jsligo group=annot
 type animal =
-| /* @annot memory */ ["Elephant"]
-| /* @annot face */ ["Dog"]
-| /* @annot fish */ ["Cat"]
+| @annot("memory") ["Elephant"]
+| @annot("face") ["Dog"]
+| @annot("fish") ["Cat"]
 ```
 
 </Syntax>
@@ -192,10 +196,10 @@ will result into:
   (unit %memory))
 ```
 
+<Syntax syntax="cameligo">
+
 The `@annot <name>` attribute can also be used on record field
 annotations:
-
-<Syntax syntax="cameligo">
 
 ```cameligo group=annot
 type artist = {
@@ -204,24 +208,30 @@ type artist = {
   [@annot performer] name: string;
 }
 ```
+If the `@layout comb` and `@annot <name>` attributes are not adequate
+enough for your use-case, LIGO has more advanced advanced
+interoperability features, which we will we discuss next.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
+The decorator `@annot("<name>")` can also be used on object field
+annotations:
+
 ```jsligo group=annot
 type artist = {
-  /* @annot style */ genre: string,
-  /* @annot from */ since: timestamp,
-  /* @annot performer */ name: string
+  @annot("style") genre: string,
+  @annot("from") since: timestamp,
+  @annot("performer") name: string
 }
 ```
 
-</Syntax>
-
-If the `@layout comb` and `@annot <name>` attributes are not adequate
-enough for your use-case, LIGO has more advanced advanced
+If the decorators `@layout("comb")` and `@annot("<name>")` are not
+adequate enough for your use-case, LIGO has more advanced advanced
 interoperability features, which we will we discuss next.
+
+</Syntax>
 
 ## Advanced interoperability with Michelson
 
@@ -318,7 +328,6 @@ If you want to get your hands dirty, it is also possible to do manual
 data structure conversion. The following code can be used as
 inspiration:
 
-
 <Syntax syntax="cameligo">
 
 ```cameligo group=helper_functions
@@ -373,8 +382,6 @@ let make_abstract_record z y x w v =
 ```
 
 </Syntax>
-
-
 
 <Syntax syntax="jsligo">
 
@@ -499,8 +506,6 @@ let main (p, s: parameter * storage): operation list * storage =
 ```
 
 </Syntax>
-
-
 
 <Syntax syntax="jsligo">
 

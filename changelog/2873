@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nDecorators in JsLIGO now follow the official format `@foo` and `@foo(\"bar\")`.\\n\\n"
+merge_request: '2873'
+title: "Upgrade syntax for JsLIGO decorators"
+type: breaking
+            

@@ -199,13 +199,13 @@ let anon_tree_tuple (p : [@layout tree] (nat * int * string)) : [@layout tree] (
 
 ```jsligo
 type tree_variant =
-  // @layout tree
+  @layout("tree")
   | ["Foo", nat]
   | ["Bar", int]
   | ["Baz", string];
 
 type tree_record =
-  // @layout tree
+  @layout("tree")
   {
     foo : int,
     bar : int
@@ -214,9 +214,8 @@ type tree_record =
 // in JsLIGO, you must assign names to tuple types in order to put
 // them back into tree layout, and then use these names at use sites instead
 // of repeating the tuple type
-type tree_tuple =
-  // @layout tree
-  [nat, int, string];
+
+type tree_tuple = @layout("tree") [nat, int, string];
 ```
 
 </Syntax>

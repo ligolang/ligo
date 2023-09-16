@@ -100,18 +100,6 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    File "../../test/contracts/modules.jsligo", line 2, character 0 to line 4, character 1:
-      1 | // @foo
-      2 | namespace B {
-          ^^^^^^^^^^^^^
-      3 |   export type titi = int;
-          ^^^^^^^^^^^^^^^^^^^^^^^^^
-      4 | };
-          ^
-      5 |
-
-    Warning: unsupported attribute, ignored.
-
     84 |}]
 
 let%expect_test _ =

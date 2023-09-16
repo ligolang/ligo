@@ -5,11 +5,6 @@
 module Std           = Simple_utils.Std
 module Region        = Simple_utils.Region
 module Lexbuf        = Simple_utils.Lexbuf
-module Config        = Preprocessing_jsligo.Config
-module PreprocParams = Preprocessor.CLI.MakeDefault (Config)
-module Parameters    = LexerLib.CLI.MakeDefault (PreprocParams)
-module Options       = Parameters.Options
-module Lexer         = Lexing_shared.Lexer.Make (Options) (Token)
 
 let scan_comment scan comment region =
   let lexbuf = Lexing.from_string comment in
@@ -22,21 +17,7 @@ let collect_attributes tokens =
   let open! Token
   in
   let rec inner acc = function
-    LineCom c as com_token :: tokens -> (
-      let comment = "// " ^ c#payload in
-      let line_comment = Lexer.line_comment_attr com_token acc in
-      match scan_comment line_comment comment c#region with
-        Ok acc    -> inner acc tokens
-      | Error msg -> Error (acc, msg))
-
-  | BlockCom c as com_token :: tokens -> (
-      let comment = Printf.sprintf "/* %s */" c#payload in
-      let block_comment = Lexer.block_comment_attr com_token acc in
-      match scan_comment block_comment comment c#region with
-        Ok acc    -> inner acc tokens
-      | Error msg -> Error (acc, msg))
-
-  | Ident id as token :: tokens -> (
+    Ident id as token :: tokens -> (
       match id#payload with
         "@entry" ->
           let attr = Token.mk_attr ~key:"entry" id#region

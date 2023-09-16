@@ -1,6 +1,6 @@
 ---
 id: maps-records
-title: Records and Maps
+title: Records/Objects and Maps
 ---
 
 import Syntax from '@theme/Syntax';
@@ -8,7 +8,9 @@ import Syntax from '@theme/Syntax';
 So far, we have seen pretty basic data types. LIGO also offers more
 complex built-in constructs, such as *records* and *maps*.
 
-## Records
+## Records/Objects
+
+<Syntax syntax="cameligo">
 
 Records are one-way data of different types can be packed into a
 single type. A record is made of a set of *fields*, which are made of
@@ -17,8 +19,6 @@ value bound to a field can be accessed by giving its field name to a
 special operator (`.`).
 
 Let us first consider an example of record type declaration.
-
-<Syntax syntax="cameligo">
 
 ```cameligo group=records1
 type user = {
@@ -32,6 +32,14 @@ type user = {
 
 <Syntax syntax="jsligo">
 
+Objects are one-way data of different types can be packed into a
+single type. An object is made of a set of *properties*, which are
+made of a *property name* and a *property type*. Given a value of a
+record type, the value bound to a field can be accessed by giving its
+field name to a special operator (`.`).
+
+Let us first consider an example of object type declaration.
+
 ```jsligo group=records1
 type user = {
   id       : nat,
@@ -42,9 +50,9 @@ type user = {
 
 </Syntax>
 
-And here is how a record value is defined:
-
 <Syntax syntax="cameligo">
+
+And here is how a record value is defined:
 
 ```cameligo group=records1
 let alice : user = {
@@ -58,6 +66,8 @@ let alice : user = {
 
 <Syntax syntax="jsligo">
 
+And here is how an object value is defined:
+
 ```jsligo group=records1
 let alice : user = {
   id       : 1n,
@@ -67,7 +77,6 @@ let alice : user = {
 ```
 
 </Syntax>
-
 
 ### Accessing Record Fields
 
@@ -300,6 +309,8 @@ ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record
 
 ### Comparison
 
+<Syntax syntax="cameligo">
+
 Record types are comparable, which allows to check for equality and
 use records as key in sets or maps. By default, the ordering of
 records is **undefined and implementation-dependent**. Ultimately, the
@@ -307,6 +318,19 @@ order is determined by the translated Michelson type. When using the
 `@layout comb` (or `@layout:comb`) attribute, fields are translated in
 their order in the record, and records are then ordered with
 lexicographic ordering.
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+Record types are comparable, which allows to check for equality and
+use records as key in sets or maps. By default, the ordering of
+records is **undefined and implementation-dependent**. Ultimately, the
+order is determined by the translated Michelson type. When using the
+decorator `@layout("comb")`, fields are translated in their order in
+the record, and objects are then ordered with lexicographic ordering.
+
+</Syntax>
 
 ## Maps
 
