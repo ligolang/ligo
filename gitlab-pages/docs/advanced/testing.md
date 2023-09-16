@@ -851,10 +851,10 @@ In the example below, `contract_of(C)` is returns the implicitly-declared `main`
 namespace C {
   type storage = int;
 
-  // @entry
+  @entry
   const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
 
-  // @entry
+  @entry
   const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
 };
 

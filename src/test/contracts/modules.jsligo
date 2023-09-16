@@ -1,4 +1,3 @@
-// @foo
 namespace B {
   export type titi = int;
 };

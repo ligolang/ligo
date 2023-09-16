@@ -294,12 +294,14 @@ const main = (action: parameter, store: storage): return_ =>
 
 ### Workaround for the deprecation of the `main` function
 
-In most cases, adding `[@entry]` for CameLIGO or `// @entry` for JsLIGO aboce the existing `main`
-function should suffice. However in cases where it is not possible or desiarable to convert an
-existing `contract_main` contract to the new `@entry` format (e.g. generated code or a code review
-process that forbids making changes to an already-audited file), the deprecation can be circumvented
-by adding a proxy file which declares a single entry point and calls the existing `main` function, as
-follows:
+In most cases, adding `[@entry]` for CameLIGO or `@entry` for JsLIGO
+before the existing `main` function should suffice. However in cases
+where it is not possible or desiarable to convert an existing
+`contract_main` contract to the new `@entry` format (e.g. generated
+code or a code review process that forbids making changes to an
+already-audited file), the deprecation can be circumvented by adding a
+proxy file which declares a single entry point and calls the existing
+`main` function, as follows:
 
 <Syntax syntax="cameligo">
 
@@ -329,11 +331,10 @@ ligo compile contract -m Proxy contract_main_proxy.mligo
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main.jsligo" "C"
 
 namespace Proxy {
-
-  // @entry
-  const proxy = (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+  @entry
+  const proxy =
+    (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
     C.main(p, s)
-
 }
 ```
 

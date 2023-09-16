@@ -34,7 +34,7 @@ let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
 <Syntax syntax="jsligo">
 
 ```jsligo
-// @inline
+@inline
 const fst = (p: [nat, nat]) => p[0];
 
 const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
