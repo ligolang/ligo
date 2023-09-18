@@ -100,11 +100,11 @@ highlight link modulealias Conditional
 " moduleaccess
 syntax match moduleaccess_ "\<\([a-zA-Z0-9_$]*\)\>" contained 
 highlight link moduleaccess_ Identifier 
-syntax match moduleaccess "\<\([A-Z][\.a-zA-Z0-9_$]*\)." contained nextgroup=moduleaccess_ skipempty skipwhite
+syntax match moduleaccess "\<[A-Z][a-zA-Z0-9_$]*\." contained nextgroup=moduleaccess_ skipempty skipwhite
 highlight link moduleaccess Structure 
 
 " lowercaseidentifier
-syntax match lowercaseidentifier "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
+syntax match lowercaseidentifier "\<[a-z$_][a-zA-Z0-9$_]*\>" contained 
 highlight link lowercaseidentifier Identifier 
 
 " uppercaseidentifier

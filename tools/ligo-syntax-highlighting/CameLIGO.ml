@@ -1,6 +1,120 @@
 module Core = SyntaxHighlighting.Core
 module Helpers = SyntaxHighlighting.Helpers
 
+module Regexp = struct
+  include Regexp
+
+  let module_keyword_match : Core.regexp =
+    { emacs = {|\\bmodule\\b|}; textmate = {|\b(module)\b|}; vim = {|\<module\>|} }
+
+  (** Keywords that will be highlighted with [Keyword]. *)
+  let keywords_match : Core.regexp =
+    { emacs = {|\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\)\\b|}
+    ; textmate = {|\b(struct|end|let|in|mut|rec)\b|}
+    ; vim = {|\<\(struct\|end\|let\|in\|mut\|rec\)\>|}
+    }
+
+  let operators_match : Core.regexp =
+    { emacs =
+        {|::\\|-\\|+\\|/\\|\\b\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\b\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\||>|}
+    ; textmate = {|::|\-|\+|\b(mod|land|lor|lxor|lsl|lsr)\b|&&|\|\||>|<>|<=|=>|<|>|\|>|}
+    ; vim =
+        {|::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=\||>|}
+    }
+
+  (* Types *)
+
+  (* A type declaration may appear in the following places:
+     * At top-level or in a module, immediately before a {|let|}, {|#|} (directive),
+       {|module|}, {|type|}, {|end|}, {|[@|} (attribute) or EOF.
+     * Locally inside a {|let|}, immediately before an {|in|}.
+
+     follow(type_decl) = Type Module Let In End EOF Directive Attr
+     Heads-up for an extra token: {|)|}. This is for parametric types. *)
+  let type_definition_begin : Core.regexp =
+    { emacs = {|\\btype\\b|}; textmate = {|\b(type)\b|}; vim = {|\<type\>|} }
+
+  let type_definition_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
+      emacs = {|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\)\\|)\\b|}
+    ; textmate = {|(?=^#|\[@|\b(let|in|type|end|module)\b|\))|}
+    ; vim = {|\(^#\|\[@\|\<\(let\|in\|type\|end\|module\)\>\|)\)\@=|}
+    }
+
+  let type_name_match : Core.regexp =
+    { emacs = {|\\b[a-z_][a-zA-Z0-9]\\*\\b|}
+    ; textmate = {|\b([a-z_][a-zA-Z0-9_]*)\b|}
+    ; vim = {|\<[a-z_][a-zA-Z0-9_]*\>|}
+    }
+
+  let type_var_match : Core.regexp =
+    { emacs = {|'|} ^ type_name_match.emacs
+    ; textmate = {|'|} ^ type_name_match.textmate
+    ; vim = {|'|} ^ type_name_match.vim
+    }
+
+  let type_operator_match : Core.regexp =
+    { emacs = {|\\(->\\|\\.\\|\\*\\||\\)|}
+    ; textmate = {|(->|\.|\*|\|)|}
+    ; vim = {|\(->\|\.\|\*\||\)|}
+    }
+
+  (* A type annotation may appear in the following places:
+     * In the return type of a declaration, immediately before a =.
+     * In a function parameter, immediately before a ).
+     * In a field of a record, immediately before a ; or a }.
+     * In an arbitrary pattern, immediately before a ).
+
+     follow(field_decl) = SEMI RBRACE
+     follow(type_annotation(type_expr)) = RPAR EQ
+     follow(type_annotation(lambda_app_type)) = ARROW *)
+  let type_annotation_begin : Core.regexp = colon_match
+
+  let type_annotation_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {r|)\\|=\\|;\\|}|r}
+    ; textmate = {r|(?=\)|=|;|})|r}
+    ; vim = {r|\()\|=\|;\|}\)\@=|r}
+    }
+
+  let type_annotation_begin_lambda : Core.regexp = type_annotation_begin
+
+  let type_annotation_end_lambda : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {r|)\\|=\\|;\\|}\\|->|r}
+    ; textmate = {r|(?=\)|=|;|}|->)|r}
+    ; vim = {r|\()\|=\|;\|}\|->\)\@=|r}
+    }
+
+  let type_field_annotation_begin : Core.regexp = type_annotation_begin
+
+  let type_field_annotation_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {|\\(}\\|;\\)|}
+    ; textmate = {|(?=}|;)|}
+    ; vim = {|\(}\|;\)\@=|}
+    }
+
+  let lambda_begin : Core.regexp =
+    { emacs = {|\\b\\(fun\\)\\b|}; textmate = {|\b(fun)\b|}; vim = {|\<fun\>|} }
+
+  let lambda_end : Core.regexp =
+    { emacs = {|(->)|}; textmate = {|(->)|}; vim = {|\(->\)|} }
+
+  let of_keyword_match : Core.regexp =
+    { emacs = {|\\b\\(of\\)\\b|}; textmate = {|\b(of)\b|}; vim = {|\<\(of\)\>|} }
+
+  (** Keywords that will be highlighted with [Conditional]. *)
+  let control_keywords_match : Core.regexp =
+    { emacs =
+        {|\\b\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|for\\|upto\\|downto\\|do\\|while\\|done\\)\\b|}
+    ; textmate =
+        {|\b(match|with|if|then|else|assert|failwith|begin|for|upto|downto|do|while|done)\b|}
+    ; vim =
+        {|\<\(match\|with\|if\|then\|else\|assert\|failwith\|begin\|for\|upto\|downto\|do\|while\|done\)\>|}
+    }
+end
+
 module Name = struct
   let macro = "macro"
   let lambda = "lambda"
@@ -69,12 +183,12 @@ let syntax_highlighting =
           ; "^"
           ; "|>"
           ]
-      ; string_delimiters = [ { emacs = "\\\""; textmate = "\\\""; vim = "\\\"" } ]
+      ; string_delimiters = [ { emacs = {|\"|}; textmate = {|\"|}; vim = {|\"|} } ]
       ; comments =
-          { line_comment = { emacs = "//"; textmate = "\\/\\/"; vim = "\\/\\/" }
+          { line_comment = { emacs = {|//|}; textmate = {|\/\/|}; vim = {|\/\/|} }
           ; block_comment =
-              ( { emacs = "(*"; textmate = "\\(\\*"; vim = "(\\*" }
-              , { emacs = "*)"; textmate = "\\*\\)"; vim = "\\*)" } )
+              ( { emacs = {|(*|}; textmate = {|\(\*|}; vim = {|(\*|} }
+              , { emacs = {|*)|}; textmate = {|\*\)|}; vim = {|\*)|} } )
           }
       ; comments_insertion = { line_comment = "//"; block_comment = "(*", "*)" }
       ; extra_patterns =
