@@ -3,12 +3,6 @@ module Core = SyntaxHighlighting.Core
 let let_binding_match1 : Core.regexp =
   { emacs = "\\\\b\\\\(let\\\\)\\\\b"; textmate = "\\b(let)\\b"; vim = "\\<\\(let\\)\\>" }
 
-let let_binding_match2 : Core.regexp =
-  { emacs = "\\\\(\\\\brec\\\\b\\\\|\\\\)"
-  ; textmate = "(\\brec\\b|)"
-  ; vim = "\\<rec\\>\\|"
-  }
-
 let let_binding_match3 : Core.regexp =
   { emacs = "\\\\b\\\\([a-zA-Z$_][a-zA-Z0-9$_]*\\\\)\\\\b"
   ; textmate = "\\b([a-zA-Z$_][a-zA-Z0-9$_]*)\\b"
@@ -39,15 +33,17 @@ let record_keyword_match : Core.regexp =
 
 let control_keywords_match : Core.regexp =
   { emacs =
-      "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\)\\\\b"
-  ; textmate = "\\b(match|with|if|then|else|assert|failwith|begin)\\b"
-  ; vim = "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\)\\>"
+      "\\\\b\\\\(match\\\\|with\\\\|if\\\\|then\\\\|else\\\\|assert\\\\|failwith\\\\|begin\\\\|for\\\\|upto\\\\|downto\\\\|do\\\\|while\\\\|done\\\\)\\\\b"
+  ; textmate =
+      "\\b(match|with|if|then|else|assert|failwith|begin|for|upto|downto|do|while|done)\\b"
+  ; vim =
+      "\\<\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|for\\|upto\\|downto\\|do\\|while\\|done\\)\\>"
   }
 
-let structure_keywords_match : Core.regexp =
-  { emacs = "\\\\b\\\\(struct\\\\|end\\\\|in\\\\)\\\\b"
-  ; textmate = "\\b(struct|end|in)\\b"
-  ; vim = "\\<\\(struct\\|end\\|in\\)\\>"
+let keywords_match : Core.regexp =
+  { emacs = "\\\\b\\\\(struct\\\\|end\\\\|let\\\\|in\\\\|mut\\\\|rec\\\\)\\\\b"
+  ; textmate = "\\b(struct|end|let|in|mut|rec)\\b"
+  ; vim = "\\<\\(struct\\|end\\|let\\|in\\|mut\\|rec\\)\\>"
   }
 
 let control_keywords_match_ligo : Core.regexp =

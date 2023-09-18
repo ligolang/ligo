@@ -183,7 +183,7 @@ let def_contract ~main ~views ~has_dynamic_entrypoints : Module.item =
     let open Ast_typed in
     let ty = t_big_map ~loc (t_nat ~loc ()) (t_bytes ~loc ()) in
     let e = e_variable ~loc Magic_vars.initial_dynamic_entrypoints ty in
-    make_e ~loc (if has_dynamic_entrypoints then (e_some e) else e_none ()) ty 
+    make_e ~loc (if has_dynamic_entrypoints then e_some e else e_none ()) ty
   in
   let contract = Ast_typed.e_a_tuple ~loc [ main; views; dynamic_entrypoint ] in
   def_value Magic_vars.contract contract

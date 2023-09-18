@@ -1158,7 +1158,7 @@ let%expect_test _ =
 (* uncurrying example *)
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "uncurry_contract.mligo" ];
-  shrink_output [%expect.output] ;
+  shrink_output [%expect.output];
   [%expect
     {|
     { parameter unit ;
