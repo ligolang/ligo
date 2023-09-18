@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\n`add-user` now prompts for email so that users can reset their passwords.\\n\\n"
+merge_request: '2840'
+title: "Prompt user for email in case they lose their password"
+type: added
+            
