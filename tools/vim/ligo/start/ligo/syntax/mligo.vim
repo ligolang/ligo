@@ -67,24 +67,16 @@ highlight link operators Operator
 syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>" 
 highlight link numericliterals Number 
 
-" letbinding
-syntax match letbinding__ "\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>" contained 
-highlight link letbinding__ Statement 
-syntax match letbinding_ "\<rec\>\|" contained nextgroup=letbinding__ skipempty skipwhite
-highlight link letbinding_ StorageClass 
-syntax match letbinding "\<\(let\)\>" nextgroup=letbinding_ skipempty skipwhite
-highlight link letbinding Keyword 
-
 " moduledeclaration
 syntax match moduledeclaration "\<module\>" 
 highlight link moduledeclaration Keyword 
 
-" structurekeywords
-syntax match structurekeywords "\<\(struct\|end\|in\)\>" 
-highlight link structurekeywords Keyword 
+" keywords
+syntax match keywords "\<\(struct\|end\|let\|in\|mut\|rec\)\>" 
+highlight link keywords Keyword 
 
 " controlkeywords
-syntax match controlkeywords "\<\(match\|with\|if\|then\|else\|assert\|failwith\|begin\)\>" 
+syntax match controlkeywords "\<\(match\|with\|if\|then\|else\|assert\|failwith\|begin\|for\|upto\|downto\|do\|while\|done\)\>" 
 highlight link controlkeywords Conditional 
 
 " macro

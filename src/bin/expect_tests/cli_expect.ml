@@ -45,8 +45,9 @@ let run_ligo_bad args =
   let exit_code = run_ligo args in
   if exit_code = 0 then raise Should_exit_bad else ()
 
-let shrink_output ?(n=4) output =
+
+let shrink_output ?(n = 4) output =
   let lines = String.split_lines output in
   let lines = List.take lines n in
   let output = String.concat ~sep:"\n" lines in
-  print_string output;
+  print_string output

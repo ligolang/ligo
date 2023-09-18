@@ -98,9 +98,7 @@ let inject_declaration ~options ~raise
   let inject_arg_declaration arg =
     let open Ast_core in
     let expr = Ligo_compile.Utils.core_expression_string ~raise ~options syntax arg in
-    let attr =
-      ValueAttr.{default_attributes with no_mutation = true ; public = false }
-    in
+    let attr = ValueAttr.{ default_attributes with no_mutation = true; public = false } in
     let d =
       Location.wrap ~loc
       @@ D_value

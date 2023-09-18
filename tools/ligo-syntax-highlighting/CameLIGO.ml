@@ -3,10 +3,9 @@ module Helpers = SyntaxHighlighting.Helpers
 
 module Name = struct
   let macro = "macro"
-  let let_binding = "letbinding"
   let lambda = "lambda"
   let control_keywords = "controlkeywords"
-  let structure_keywords = "structurekeywords"
+  let keywords = "keywords"
   let numeric_literals = "numericliterals"
   let operators = "operators"
   let semicolon = "semicolon"
@@ -91,12 +90,11 @@ let syntax_highlighting =
         Name_ref Name.uppercase_identifier
       ; Name_ref Name.attribute
       ; Name_ref Name.macro
-      ; Name_ref Name.let_binding
       ; Name_ref Name.lambda
       ; Name_ref Name.type_definition
       ; Name_ref Name.control_keywords
       ; Name_ref Name.module_declaration
-      ; Name_ref Name.structure_keywords
+      ; Name_ref Name.keywords
       ; Name_ref Name.numeric_literals
       ; Name_ref Name.operators
       ; Name_ref Name.type_annotation
@@ -111,29 +109,15 @@ let syntax_highlighting =
               ; match_ = [ Regexp.control_keywords_match, None ]
               }
         }
-      ; { name = Name.structure_keywords
+      ; { name = Name.keywords
         ; kind =
-            Match
-              { match_name = Some Keyword
-              ; match_ = [ Regexp.structure_keywords_match, None ]
-              }
+            Match { match_name = Some Keyword; match_ = [ Regexp.keywords_match, None ] }
         }
       ; { name = Name.module_declaration
         ; kind =
             Match
               { match_name = None
               ; match_ = [ Regexp.module_keyword_match, Some Keyword ]
-              }
-        }
-      ; { name = Name.let_binding
-        ; kind =
-            Match
-              { match_ =
-                  [ Regexp.let_binding_match1, Some Keyword
-                  ; Regexp.let_binding_match2, Some StorageClass
-                  ; Regexp.let_binding_match3, Some FunctionName
-                  ]
-              ; match_name = None
               }
         }
       ; Helpers.numeric_literals

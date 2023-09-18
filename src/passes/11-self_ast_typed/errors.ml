@@ -57,8 +57,8 @@ let error_ppformat
     | `Self_ast_typed_illegal_non_initial_dynamic loc ->
       Format.fprintf
         f
-        "@[<hv>%a@.Illegal position for opted out entry.@. Only allowed in \
-         contracts \"@dyn_entry\" top-level declarations right-end side.@]"
+        "@[<hv>%a@.Illegal position for opted out entry.@. Only allowed in contracts \
+         \"@dyn_entry\" top-level declarations right-end side.@]"
         snippet_pp
         loc
     | `Self_ast_typed_view_io (loc, got, arg) ->

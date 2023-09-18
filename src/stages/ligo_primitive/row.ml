@@ -53,9 +53,9 @@ struct
 
   let map : 'a 'b. ('a -> 'b) -> 'a t -> 'b t =
    fun f { fields; layout } -> { fields = Map.map fields ~f; layout }
-  
-  let mem (t : 'a t) (l : Label.t) = Option.is_some @@ find_type t l
 
+
+  let mem (t : 'a t) (l : Label.t) = Option.is_some @@ find_type t l
   let iter : 'a. ('a -> unit) -> 'a t -> unit = fun f { fields; _ } -> Map.iter fields ~f
   let fold g init t = Map.fold t.fields ~init ~f:(fun ~key:_ ~data acc -> g acc data)
 
