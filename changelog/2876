@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nBug fix: `ligo dry-run` was not working on a single module-contract file\\n\\n"
+merge_request: '2876'
+title: "ligo dry-run bug fix"
+type: fixed
+            

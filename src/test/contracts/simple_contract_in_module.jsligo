@@ -1,0 +1,9 @@
+namespace C {
+  export type storage = unit;
+  @entry
+  const buy_taco = (_p: nat, s: storage): [list<operation>, storage] => {
+    return [list([]), s]
+  }
+};
+
+const default_storage: C.storage = unit;

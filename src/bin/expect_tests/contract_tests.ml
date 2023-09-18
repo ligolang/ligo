@@ -98,8 +98,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "modules.jsligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     84 |}]
 
 let%expect_test _ =
@@ -3142,3 +3141,17 @@ let%expect_test "duplicate entrypoints" =
           ^^^
 
     Duplicate entry-point b |}]
+
+let%expect_test "dry-run module contract" =
+  (* the contract must be accessible even if not exported *)
+  run_ligo_good
+    [ "run"
+    ; "dry-run"
+    ; contract "simple_contract_in_module.jsligo"
+    ; "1n"
+    ; "default_storage"
+    ; "-m"
+    ; "C"
+    ];
+  [%expect {|
+    ( LIST_EMPTY() , unit ) |}]
