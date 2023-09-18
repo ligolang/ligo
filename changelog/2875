@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nAdds a CLI command for ligo registry users to reset their password. \\n\\n\\n```\\nligo registry forgot-password\\n\\n```\\n\\nFor security reasons, existing users would need a valid session token already since we dont have their emails. The CLI would ask them for their email to send the password reset link. If they don't have a valid session token, they'll have to reach out to support.\\n\\nNew users dont need this, since we start asking their emails when they create an account with us.\\n\\n"
+merge_request: '2875'
+title: "CLI: Forgot password command"
+type: added
+            
