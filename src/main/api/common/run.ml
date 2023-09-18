@@ -116,7 +116,8 @@ let dry_run
             (`Self_ast_aggregated_tracer
               (Self_ast_aggregated.Errors.corner_case
                  "Could not recover types from contract"))
-            (Ast_typed.Misc.get_contract_signature typed_prg.pr_sig module_path)
+            Ast_typed.Misc.(
+              get_contract_signature (to_extended_signature typed_prg) module_path)
         in
         Compile.Of_typed.apply_to_entrypoint_with_contract_type
           ~raise
