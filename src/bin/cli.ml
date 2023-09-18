@@ -3017,7 +3017,7 @@ let add_user =
   let cli_analytic = Analytics.generate_cli_metric ~command:"add-user" in
   let f ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path
+    @@ fun () -> User.create ~ligo_registry ~ligorc_path
   in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
 
@@ -3031,7 +3031,7 @@ let login =
   let cli_analytic = Analytics.generate_cli_metric ~command:"login" in
   let f ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> User.create_or_login ~ligo_registry ~ligorc_path
+    @@ fun () -> User.login ~ligo_registry ~ligorc_path
   in
   Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
 

@@ -84,7 +84,7 @@
  ;Remove unused libs
  (preprocess
   (pps ppx_deriving_yojson))
- (modules user))
+ (modules user prompt))
 
 (rule
  (targets version.ml)
