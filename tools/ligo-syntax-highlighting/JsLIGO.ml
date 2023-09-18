@@ -1,6 +1,208 @@
 module Core = SyntaxHighlighting.Core
 module Helpers = SyntaxHighlighting.Helpers
 
+module Regexp = struct
+  include Regexp
+
+  (* follow(property) = RBRACE COMMA *)
+  let property_expr_begin : Core.regexp = colon_match
+
+  let property_expr_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {r|,\\|;\\|}|r}
+    ; textmate = {r|(?=,|;|})|r}
+    ; vim = {r|\(,\|;\|}\)\@=|r}
+    }
+
+  (* follow(type_decl) = SEMI RBRACE Else EOF Default Case
+     I added a few other cases that break because of ASI:
+     Type Let Const Namespace Interface Export Import Attr *)
+  let type_definition_begin : Core.regexp =
+    { emacs = {|\\btype\\b|}; textmate = {|\b(type)\b|}; vim = {|\<type\>|} }
+
+  let type_definition_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate =
+        {r|(?=;|}|@|\b(else|default|case|type|let|const|namespace|interface|export|import|function)\b)|r}
+    ; vim =
+        {r|\(;\|}\|@\|\<\(else\|default\|case\|type\|let\|const\|namespace\|interface\|export\|import\|function\)\>\)\@=|r}
+    }
+
+  let type_name_match : Core.regexp =
+    { emacs = {|\\b[a-zA-Z_][a-zA-Z0-9]\\*\\b|}
+    ; textmate = {|\b([a-zA-Z_][a-zA-Z0-9_]*)\b|}
+    ; vim = {|\<\([a-zA-Z_][a-zA-Z0-9_]*\)\>|}
+    }
+
+  let type_operator_match : Core.regexp =
+    { emacs = {|\\(=>\\|\\.\\||\\)|}; textmate = {|(=>|\.|\|)|}; vim = {|\(=>\|\.\||\)|} }
+
+  (* follow(type_annotation(type_expr)) = SEMI RPAR RBRACE PARAMS COMMA
+     follow(type_annotation(__anonymous_6)) = LBRACE ARROW
+     follow(type_annotation(__anonymous_2)) = EQ
+     follow(ret_type) = LBRACE ARROW
+     follow(binding_type) = EQ *)
+  let type_annotation_begin : Core.regexp = colon_match
+
+  let type_annotation_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {r|)\\|=>\\|,\\|{\\|}\\|=\\|;|r}
+    ; textmate = {r|(?=\)|=>|,|{|}|=|;)|r}
+    ; vim = {r|\()\|=>\|,\|{\|}\|=\|;\)\@=|r}
+    }
+
+  (* follow(field_decl) = RBRACE COMMA
+     n.b.: For JsLIGO, both the FIRST and FOLLOW for both the type_annotation in
+     a property and the "expression field assignment" are the same. *)
+  let type_annotation_field_begin : Core.regexp = property_expr_begin
+  let type_annotation_field_end : Core.regexp = property_expr_end
+
+  (* follow(as_expr_level) = SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ    Else EQ EOF Default DIV_EQ Case COMMA COLON As
+     follow(type_expr)     = SEMI RPAR REM_EQ RBRACKET RBRACE PLUS_EQ MULT_EQ MINUS_EQ GT Else EQ EOF Default DIV_EQ Case COMMA COLON As ARROW
+     Since `as_expr_level` also includes `disj_expr_level` as an alternative, we
+     likely want the intersection of those two. Therefore:
+     follow(as_expr_level) ∩ follow(type_expr) = follow(as_expr_level) *)
+  let type_as_begin : Core.regexp =
+    { emacs = {|\\bas\\b|}; textmate = {|\b(as)\b|}; vim = {|\<as\>|} }
+
+  let type_as_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = {r|(?=;|%=|\]|}|\+=|\*=|-=|=|/=|,|:|\b(else|default|case|as)\b)|r}
+    ; vim =
+        {r|\(;\|%=\|]\|}\|+=\|\*=\|-=\|=\|\/=\|,\|:\|\<\(else\|default\|case\|as\)\>\)\@=|r}
+    }
+
+  let attributes_match : Core.regexp =
+    { emacs = {|\\(@[a-zA-Z][a-zA-Z0-9_:.@%]*\\)|}
+    ; textmate = {|(@[a-zA-Z][a-zA-Z0-9_:.@%]*)|}
+    ; vim = {|\(@[a-zA-Z][a-zA-Z0-9_:.@%]*\)|}
+    }
+
+  let value_binding_match : Core.regexp =
+    { emacs = {|\\b\\(let\\|const\\)\\b|}
+    ; textmate = {|\b(let|const)\b\s*|}
+    ; vim = {|\<\(let\|const\)\>|}
+    }
+
+  let case_begin : Core.regexp =
+    { emacs = {|\\b\\(case\\|default\\)\\b|}
+    ; textmate = {|\b(case|default)\b|}
+    ; vim = {|\<\(case\|default\)\>|}
+    }
+
+  let case_end : Core.regexp = colon_match
+
+  let identifier_annotation_positive_lookahead : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {|\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\b[:space:]*:|}
+    ; textmate = {|\b([a-zA-Z$_][a-zA-Z0-9$_]*)\b\s*(?=:)|}
+    ; vim = {|\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>\s*:\@=|}
+    }
+
+  (** Keywords that will be highlighted with [Keyword]. *)
+  let keywords_match : Core.regexp =
+    { emacs =
+        {|\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\)\\b|}
+    ; textmate =
+        {|\b(export|import|from|implements|contract_of|parameter_of|function|do)\b|}
+    ; vim =
+        {|\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\)\>|}
+    }
+
+  (** Keywords that will be highlighted with [Conditional]. *)
+  let control_keywords_match : Core.regexp =
+    { emacs =
+        {|\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|match\\)\\b|}
+    ; textmate = {|\b(switch|if|else|for|of|while|return|break|match)\b|}
+    ; vim = {|\<\(switch\|if\|else\|for\|of\|while\|return\|break\|match\)\>|}
+    }
+
+  let operators_match : Core.regexp =
+    { emacs =
+        {|\\b\\(-\\|+\\|%\\|&&\\||\\||==\\|!=\\|<=\\|>=\\|<\\|>\\|\\*\\|/\\|=\\|!\\|\\*=\\|/=\\|%=\\|+=\\|-=\\)\\b|}
+    ; textmate = {|\b(-|\+|%|&&|\|\||==|!=|<=|>=|<|>|\*|\/|=|!|\*=|\/=|%=|\+=|-=)\b|}
+    ; vim =
+        {|\<\(-\|+\|%\|&&\||\||==\|!=\|<=\|>=\|<\|>\|\*\|/\|=\|!\|\*=\|/=\|%=\|+=\|-=\)\>|}
+    }
+
+  let module_alias_match1 : Core.regexp =
+    { emacs = {|\\b\\(import\\)\\b|}
+    ; textmate = {|\b(import)\b|}
+    ; vim = {|\<\(import\)\>|}
+    }
+
+  let module_alias_match2 : Core.regexp =
+    { emacs = {|\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b|}
+    ; textmate = {|\b([A-Z][a-zA-Z0-9_$]*)\b|}
+    ; vim = {|\<\([A-Z][a-zA-Z0-9_$]*\)\>|}
+    }
+
+  let module_declaration_match1 : Core.regexp =
+    { emacs = {|\\b\\(namespace\\|interface\\)\\b|}
+    ; textmate = {|\b(namespace|interface)\b|}
+    ; vim = {|\<\(namespace\|interface\)\>|}
+    }
+
+  let module_declaration_match2 : Core.regexp =
+    { emacs = {|\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b|}
+    ; textmate = {|\b([A-Z][a-zA-Z0-9_$]*)\b|}
+    ; vim = {|\<\([A-Z][a-zA-Z0-9_$]*\)\>|}
+    }
+
+  let module_match1 : Core.regexp =
+    { emacs = {|\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\.|}
+    ; textmate = {|\b([A-Z][a-zA-Z0-9_$]*)\.|}
+    ; vim = {|\<[A-Z][a-zA-Z0-9_$]*\.|}
+    }
+
+  let module_match2 : Core.regexp =
+    { emacs = {|\\b\\([a-zA-Z0-9_$]*\\)\\b|}
+    ; textmate = {|\b([a-zA-Z0-9_$]*)\b|}
+    ; vim = {|\<\([a-zA-Z0-9_$]*\)\>|}
+    }
+
+  let string_literal_match : Core.regexp =
+    { emacs = {|\\\"\\.*\\\"|}; textmate = {|(\".*\")|}; vim = {|\".*\"|} }
+
+  let ternary_begin : Core.regexp = { emacs = {|?|}; textmate = {|(\?)|}; vim = {|?|} }
+  let ternary_end : Core.regexp = colon_match
+
+  let when_begin : Core.regexp =
+    { emacs = {|\\bwhen\\b|}; textmate = {|\b(when)\b|}; vim = {|\<when\>|} }
+
+  let when_end : Core.regexp = colon_match
+
+  let property_ctor_match : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = identifier_constructor_match.textmate ^ {|(?=\s*:)|}
+    ; vim = identifier_constructor_match.vim ^ {|\(\s*:\)\@=|}
+    }
+
+  let property_int_match : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = int_literal_match.textmate ^ {|(?=\s*:)|}
+    ; vim = int_literal_match.vim ^ {|\(\s*:\)\@=|}
+    }
+
+  let property_string_match : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = string_literal_match.textmate ^ {|(?=\s*:)|}
+    ; vim = string_literal_match.vim ^ {|\(\s*:\)\@=|}
+    }
+
+  let property_match : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = {|\b([a-zA-Z$_][a-zA-Z0-9$_]*)\b(?=\s*:)|}
+    ; vim = {|\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>\(\s*:\)\@=|}
+    }
+end
+
 module Name = struct
   let macro = "macro"
   let let_binding = "letbinding"
@@ -140,39 +342,30 @@ let syntax_highlighting =
       [ { name = Name.attribute
         ; kind =
             Match
-              { match_name = Some Attribute
-              ; match_ = [ Regexp.attributes_match_jsligo, None ]
-              }
+              { match_name = Some Attribute; match_ = [ Regexp.attributes_match, None ] }
         }
       ; Helpers.macro
       ; { name = Name.let_binding
         ; kind =
             Match
-              { match_name = None
-              ; match_ = [ Regexp.let_binding_match1_jsligo, Some Keyword ]
-              }
+              { match_name = None; match_ = [ Regexp.value_binding_match, Some Keyword ] }
         }
       ; { name = Name.keywords
         ; kind =
-            Match
-              { match_name = None
-              ; match_ = [ Regexp.keywords_match_jsligo, Some Keyword ]
-              }
+            Match { match_name = None; match_ = [ Regexp.keywords_match, Some Keyword ] }
         }
       ; { name = Name.control_keywords
         ; kind =
             Match
               { match_name = Some Conditional
-              ; match_ = [ Regexp.control_keywords_match_jsligo, None ]
+              ; match_ = [ Regexp.control_keywords_match, None ]
               }
         }
       ; Helpers.numeric_literals
       ; { name = Name.operators
         ; kind =
             Match
-              { match_name = Some Operator
-              ; match_ = [ Regexp.operators_match_jsligo, None ]
-              }
+              { match_name = Some Operator; match_ = [ Regexp.operators_match, None ] }
         }
       ; { name = Name.semicolon
         ; kind = Match { match_name = None; match_ = [ Regexp.semicolon_match, None ] }
@@ -185,8 +378,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.ternary_begin_jsligo, Some Operator ]
-              ; end_ = [ Regexp.ternary_end_jsligo, Some Operator ]
+              ; begin_ = [ Regexp.ternary_begin, Some Operator ]
+              ; end_ = [ Regexp.ternary_end, Some Operator ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -195,8 +388,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.when_begin_jsligo, Some Conditional ]
-              ; end_ = [ Regexp.when_end_jsligo, Some Operator ]
+              ; begin_ = [ Regexp.when_begin, Some Conditional ]
+              ; end_ = [ Regexp.when_end, Some Operator ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -210,16 +403,14 @@ let syntax_highlighting =
       ; { name = Name.lowercase_identifier
         ; kind =
             Match
-              { match_name = None
-              ; match_ = [ Regexp.let_binding_match2_jsligo, Some Identifier ]
-              }
+              { match_name = None; match_ = [ Regexp.identifier_match, Some Identifier ] }
         }
       ; { name = Name.module_access
         ; kind =
             Match
               { match_ =
-                  [ Regexp.module_match1_jsligo, Some Structure
-                  ; Regexp.module_match2_jsligo, Some Identifier
+                  [ Regexp.module_match1, Some Structure
+                  ; Regexp.module_match2, Some Identifier
                   ]
               ; match_name = None
               }
@@ -228,8 +419,8 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_ =
-                  [ Regexp.module_alias_match1_jsligo, Some Conditional
-                  ; Regexp.module_alias_match2_jsligo, Some Structure
+                  [ Regexp.module_alias_match1, Some Conditional
+                  ; Regexp.module_alias_match2, Some Structure
                   ]
               ; match_name = None
               }
@@ -238,7 +429,7 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_name = None
-              ; match_ = [ Regexp.module_declaration_match1_jsligo, Some Keyword ]
+              ; match_ = [ Regexp.module_declaration_match1, Some Keyword ]
               }
         }
       ; { name = Name.object_or_block
@@ -270,8 +461,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.case_begin_jsligo, Some Conditional ]
-              ; end_ = [ Regexp.case_end_jsligo, Some Operator ]
+              ; begin_ = [ Regexp.case_begin, Some Conditional ]
+              ; end_ = [ Regexp.case_end, Some Operator ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -280,10 +471,10 @@ let syntax_highlighting =
             Begin_end
               { meta_name = None
               ; begin_ =
-                  [ Regexp.property_ctor_match_jsligo, Some Label
-                  ; Regexp.property_expr_begin_jsligo, Some Operator
+                  [ Regexp.property_ctor_match, Some Label
+                  ; Regexp.property_expr_begin, Some Operator
                   ]
-              ; end_ = [ Regexp.property_expr_end_jsligo, None ]
+              ; end_ = [ Regexp.property_expr_end, None ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -292,10 +483,10 @@ let syntax_highlighting =
             Begin_end
               { meta_name = None
               ; begin_ =
-                  [ Regexp.property_int_match_jsligo, Some Number
-                  ; Regexp.property_expr_begin_jsligo, Some Operator
+                  [ Regexp.property_int_match, Some Number
+                  ; Regexp.property_expr_begin, Some Operator
                   ]
-              ; end_ = [ Regexp.property_expr_end_jsligo, None ]
+              ; end_ = [ Regexp.property_expr_end, None ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -304,10 +495,10 @@ let syntax_highlighting =
             Begin_end
               { meta_name = None
               ; begin_ =
-                  [ Regexp.property_string_match_jsligo, Some String
-                  ; Regexp.property_expr_begin_jsligo, Some Operator
+                  [ Regexp.property_string_match, Some String
+                  ; Regexp.property_expr_begin, Some Operator
                   ]
-              ; end_ = [ Regexp.property_expr_end_jsligo, None ]
+              ; end_ = [ Regexp.property_expr_end, None ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -316,10 +507,10 @@ let syntax_highlighting =
             Begin_end
               { meta_name = None
               ; begin_ =
-                  [ Regexp.property_match_jsligo, Some Identifier
-                  ; Regexp.property_expr_begin_jsligo, Some Operator
+                  [ Regexp.property_match, Some Identifier
+                  ; Regexp.property_expr_begin, Some Operator
                   ]
-              ; end_ = [ Regexp.property_expr_end_jsligo, None ]
+              ; end_ = [ Regexp.property_expr_end, None ]
               ; patterns = [ Self_ref ]
               }
         }
@@ -337,8 +528,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_definition_begin_jsligo, Some Keyword ]
-              ; end_ = [ Regexp.type_definition_end_jsligo, None ]
+              ; begin_ = [ Regexp.type_definition_begin, Some Keyword ]
+              ; end_ = [ Regexp.type_definition_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -346,8 +537,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_annotation_begin_jsligo, Some Operator ]
-              ; end_ = [ Regexp.type_annotation_end_jsligo, None ]
+              ; begin_ = [ Regexp.type_annotation_begin, Some Operator ]
+              ; end_ = [ Regexp.type_annotation_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -355,8 +546,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_annotation_field_begin_jsligo, Some Operator ]
-              ; end_ = [ Regexp.type_annotation_field_end_jsligo, None ]
+              ; begin_ = [ Regexp.type_annotation_field_begin, Some Operator ]
+              ; end_ = [ Regexp.type_annotation_field_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -364,8 +555,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_as_begin_jsligo, Some Keyword ]
-              ; end_ = [ Regexp.type_as_end_jsligo, None ]
+              ; begin_ = [ Regexp.type_as_begin, Some Keyword ]
+              ; end_ = [ Regexp.type_as_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -373,7 +564,7 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_name = Some Operator
-              ; match_ = [ Regexp.type_operator_match_jsligo, None ]
+              ; match_ = [ Regexp.type_operator_match, None ]
               }
         }
       ; { name = Name.type_generic
@@ -415,7 +606,7 @@ let syntax_highlighting =
               { (* n.b.: We use Type instead of Type_var since we can't easily
              disambiguate between the two in JsLIGO. *)
                 match_name = Some Type
-              ; match_ = [ Regexp.type_name_match_jsligo, None ]
+              ; match_ = [ Regexp.type_name_match, None ]
               }
         }
       ; { name = Name.type_parentheses

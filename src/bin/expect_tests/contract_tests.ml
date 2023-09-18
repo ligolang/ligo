@@ -98,8 +98,7 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "modules.jsligo"
     ];
-  [%expect
-    {|
+  [%expect {|
     84 |}]
 
 let%expect_test _ =

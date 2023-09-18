@@ -1,6 +1,111 @@
 module Core = SyntaxHighlighting.Core
 module Helpers = SyntaxHighlighting.Helpers
 
+module Regexp = struct
+  include Regexp
+
+  let module_keyword_match : Core.regexp =
+    { emacs = {|\\bmodule\\b|}; textmate = {|\b(module)\b|}; vim = {|\<module\>|} }
+
+  let const_or_var : Core.regexp =
+    { emacs = {|\\b\\(const\\|var\\)\\b|}
+    ; textmate = {|\b(const|var)\b|}
+    ; vim = {|\<\(const\|var\)\>|}
+    }
+
+  (** Keywords that will be highlighted with [Conditional]. *)
+  let control_keywords_match : Core.regexp =
+    { emacs =
+        {|\\b\\(case\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|end\\|in\\|is\\|from\\|skip\\|block\\|contains\\|to\\|step\\|of\\|while\\|for\\|remove\\)\\b|}
+    ; textmate =
+        {|\b(case|with|if|then|else|assert|failwith|begin|end|in|is|from|skip|block|contains|to|step|of|while|for|remove)\b|}
+    ; vim =
+        {|\<\(case\|with\|if\|then\|else\|assert\|failwith\|begin\|end\|in\|is\|from\|skip\|block\|contains\|to\|step\|of\|while\|for\|remove\)\>|}
+    }
+
+  let type_name_match : Core.regexp =
+    { emacs = {|\\b[a-z_][a-zA-Z0-9]\\*\\b|}
+    ; textmate = {|\b([a-z_][a-zA-Z0-9_]*)\b|}
+    ; vim = {|\<[a-z_][a-zA-Z0-9_]*\>|}
+    }
+
+  let operators_match : Core.regexp =
+    { emacs =
+        {|\\b\\(-\\|+\\|/\\|mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\|&&\\|||\\|<\\|>\\|=/=\\|<=\\|>=\\)\\b|}
+    ; textmate = {|\b(\-|\+|mod|land|lor|lxor|lsl|lsr|&&|\|\||>|=/=|<=|=>|<|>)\b|}
+    ; vim = {|\<\(-\|+\|/\|mod\|land\|lor\|lxor\|lsl\|lsr\|&&\|||\|<\|>\|=/=\|<=\|>=\)\>|}
+    }
+
+  let type_binder_positive_lookahead : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = ""
+    ; textmate = {|(?=([a-zA-Z0-9_,]+|\s)+>)|}
+    ; vim = {|\([a-zA-Z0-9_,]\|\s\)\+>\@=|}
+    }
+
+  (* follow(type_annotation) = SEMI RPAR RBRACKET Is EQ ASS
+     n.b.: Remove the `%inline` from `type_annotation` before running Menhir to see
+     its FOLLOW set. *)
+  let type_annotation_begin : Core.regexp = colon_match
+
+  let type_annotation_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {r|;\\|)\\|}\\|\\bis\\b\\|=\\|:=|r}
+    ; textmate = {r|(?=;|\)|\]|\bis\b|=|:=)|r}
+    ; vim = {r|\(;\|)\|}\|\<is\>\|=\|:=\)\@=|r}
+    }
+
+  (* follow(type_decl) = Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr *)
+  let type_definition_begin : Core.regexp =
+    { emacs = {|\\btype\\b|}; textmate = {|\b(type)\b|}; vim = {|\<type\>|} }
+
+  let type_definition_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs =
+        {|\\b\\(type\\|recursive\\|module\\|function\\|end\\|const\\)\\b\\|;\\|{\\|^#\\|\\[@|}
+    ; textmate = {|(?=\b(type|recursive|module|function|end|const)\b|;|{|^#|\[@)|}
+    ; vim =
+        {|\(\<\(type\|recursive\|module\|function\|end\|const\)\>\|;\|{\|^#\|\[@\)\@=|}
+    }
+
+  let type_operator_match : Core.regexp =
+    { emacs = {|\\(->\\|\\.\\||\\|\\*\\)|}
+    ; textmate = {|(->|\.|\||\*)|}
+    ; vim = {|\(->\|\.\||\|\*\)|}
+    }
+
+  (* follow(field_decl) = SEMI RBRACKET *)
+  let type_annotation_field_begin : Core.regexp = type_annotation_begin
+
+  let type_annotation_field_end : Core.regexp =
+    { (* FIXME: Emacs doesn't support positive look-ahead *)
+      emacs = {|;\\|\\]|}
+    ; textmate = {|(?=;|\])|}
+    ; vim = {|\(;\|\]\)\@=|}
+    }
+
+  let is_keyword_match : Core.regexp =
+    { emacs = {|\\b\\(is)\\b|}; textmate = {|\b(is)\b|}; vim = {|\<\(is\)\>|} }
+
+  let record_keyword_match : Core.regexp =
+    { emacs = {|\\brecord\\b|}; textmate = {|\b(record)\b|}; vim = {|\<record\>|} }
+
+  let let_binding_match1 : Core.regexp =
+    { emacs = {|\\b\\(function\\)\\b|}
+    ; textmate = {|\b(function)\b|}
+    ; vim = {|\<function\>|}
+    }
+
+  let let_binding_match2 : Core.regexp =
+    { emacs = {|\\b\\([a-zA-Z$_][a-zA-Z0-9$_]*\\)\\b|}
+    ; textmate = {|\b([a-zA-Z$_][a-zA-Z0-9$_]*)\b|}
+    ; vim = {|\<\([a-zA-Z$_][a-zA-Z0-9$_]*\)\>|}
+    }
+
+  let of_keyword_match : Core.regexp =
+    { emacs = {|\\b\\(of\\)\\b|}; textmate = {|\b(of)\b|}; vim = {|\<\(of\)\>|} }
+end
+
 module Name = struct
   let attribute = "attribute"
   let macro = "macro"
@@ -69,12 +174,12 @@ let syntax_highlighting =
           ; "and"
           ; "^"
           ]
-      ; string_delimiters = [ { emacs = "\\\""; textmate = "\\\""; vim = "\\\"" } ]
+      ; string_delimiters = [ { emacs = {|\"|}; textmate = {|\"|}; vim = {|\"|} } ]
       ; comments =
-          { line_comment = { emacs = "//"; textmate = "\\/\\/"; vim = "\\/\\/" }
+          { line_comment = { emacs = {|//|}; textmate = {|\/\/|}; vim = {|\/\/|} }
           ; block_comment =
-              ( { emacs = "(*"; textmate = "\\(\\*"; vim = "(\\*" }
-              , { emacs = "*)"; textmate = "\\*\\)"; vim = "\\*)" } )
+              ( { emacs = {|(*|}; textmate = {|\(\*|}; vim = {|(\*|} }
+              , { emacs = {|*)|}; textmate = {|\*\)|}; vim = {|\*)|} } )
           }
       ; comments_insertion = { line_comment = "//"; block_comment = "(*", "*)" }
       ; extra_patterns =
@@ -123,7 +228,7 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_name = Some Conditional
-              ; match_ = [ Regexp.control_keywords_match_ligo, None ]
+              ; match_ = [ Regexp.control_keywords_match, None ]
               }
         }
       ; { name = Name.module_declaration
@@ -137,8 +242,8 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_ =
-                  [ Regexp.let_binding_match1_ligo, Some Keyword
-                  ; Regexp.let_binding_match2_ligo, Some FunctionName
+                  [ Regexp.let_binding_match1, Some Keyword
+                  ; Regexp.identifier_match, Some FunctionName
                   ]
               ; match_name = None
               }
@@ -147,9 +252,7 @@ let syntax_highlighting =
       ; { name = Name.operators
         ; kind =
             Match
-              { match_name = Some Operator
-              ; match_ = [ Regexp.operators_match_ligo, None ]
-              }
+              { match_name = Some Operator; match_ = [ Regexp.operators_match, None ] }
         }
       ; { name = Name.semicolon
         ; kind = Match { match_name = None; match_ = [ Regexp.semicolon_match, None ] }
@@ -197,7 +300,7 @@ let syntax_highlighting =
               `const`/`let/`function` declarations (and `function` expressions)
               and expect a type_binder right after a pattern.
             *)
-                    Regexp.type_binder_positive_lookahead_ligo, None
+                    Regexp.type_binder_positive_lookahead, None
                   ]
               ; end_ = [ Regexp.chevron_end, None ]
               ; patterns = [ Name_ref Name.type_name ]
@@ -207,8 +310,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_definition_begin_ligo, Some Keyword ]
-              ; end_ = [ Regexp.type_definition_end_ligo, None ]
+              ; begin_ = [ Regexp.type_definition_begin, Some Keyword ]
+              ; end_ = [ Regexp.type_definition_end, None ]
               ; patterns = Name_ref Name.is_keyword :: type_core_patterns
               }
         }
@@ -216,8 +319,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_annotation_begin_ligo, Some Operator ]
-              ; end_ = [ Regexp.type_annotation_end_ligo, None ]
+              ; begin_ = [ Regexp.type_annotation_begin, Some Operator ]
+              ; end_ = [ Regexp.type_annotation_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -225,8 +328,8 @@ let syntax_highlighting =
         ; kind =
             Begin_end
               { meta_name = None
-              ; begin_ = [ Regexp.type_annotation_field_begin_ligo, Some Operator ]
-              ; end_ = [ Regexp.type_annotation_field_end_ligo, None ]
+              ; begin_ = [ Regexp.type_annotation_field_begin, Some Operator ]
+              ; end_ = [ Regexp.type_annotation_field_end, None ]
               ; patterns = type_core_patterns
               }
         }
@@ -253,7 +356,7 @@ let syntax_highlighting =
         ; kind =
             Match
               { match_name = Some Operator
-              ; match_ = [ Regexp.type_operator_match_ligo, None ]
+              ; match_ = [ Regexp.type_operator_match, None ]
               }
         }
       ; { name = Name.type_name
