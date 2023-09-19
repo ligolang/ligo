@@ -41,7 +41,8 @@ let main ~ligo_registry ~ligorc_path ~username =
       | Ok () ->
         Ok
           ( "Your profile has been created. To verify your email, we have sent you an\n\
-             email. Please follow the instructions there. After that, please run this command again."
+             email. Please follow the instructions there. After that, please run this \
+             command again."
           , "" )
       | Error Invalid_input -> Error ("Please check your inputs", "")
       | Error Invalid_token ->
@@ -63,7 +64,8 @@ let main ~ligo_registry ~ligorc_path ~username =
       (match Lwt_main.run @@ prompt () with
       | Ok (email, fullname) -> setup_profile ~token ~email ~fullname
       | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
-      | Error Prompt.Cancelled -> Error ("Aborted", ""))
+      | Error Prompt.Cancelled -> Error ("Aborted", "")
+      | Error Prompt.Not_tty -> Error ("Not an interactive terminal", ""))
     | false -> Error (no_session_found_msg, ""))
   | Ok Email_verification_pending ->
     Ok

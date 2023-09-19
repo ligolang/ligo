@@ -2,6 +2,8 @@
  (name cli)
  (instrumentation
   (backend bisect_ppx))
+ (preprocess
+  (pps ppx_deriving_yojson))
  (libraries
   core_kernel.version_util
   core_kernel.caml_threads
@@ -16,12 +18,14 @@
   install
   publish
   unpublish
-  user
   ligo.cli_helpers
   registry
+  lwt
+  lwt.unix
+  base64
   lambda-term
   ligo_api)
- (modules command_unx cli version prompt forgot_password))
+ (modules command_unx forgot_password prompt user cli version))
 
 (library
  (name repl)
@@ -70,23 +74,6 @@
   (backend bisect_ppx))
  (libraries package_management)
  (modules publish))
-
-(library
- (name user)
- (instrumentation
-  (backend bisect_ppx))
- (libraries
-  cli_helpers
-  simple-utils
-  lwt
-  lwt.unix
-  base64
-  cohttp-lwt-unix
-  lambda-term)
- ;Remove unused libs
- (preprocess
-  (pps ppx_deriving_yojson))
- (modules user prompt))
 
 (rule
  (targets version.ml)
