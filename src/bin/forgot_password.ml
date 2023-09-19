@@ -12,8 +12,10 @@ let get_auth_token ~ligorc_path ligo_registry =
 let no_session_found_msg =
   "We need a valid session with you, for security reasons,\n\
    to initiate resetting your password. We couldn't find such a session. Either,\n\
-   1. You try this from a machine where you had logged in earlier \n\
-   2. Or, contact Ligo support to reset your password"
+   to initiate resetting your password. We couldn't find such a session.\n\
+   You could:\n\
+   1. try this from a machine where you had logged in earlier,\n\
+   2. contact LIGO support to reset your password"
 
 
 let main ~ligo_registry ~ligorc_path ~username =
@@ -40,11 +42,11 @@ let main ~ligo_registry ~ligorc_path ~username =
       match Lwt_main.run @@ create ~token ~ligo_registry ~email ~fullname with
       | Ok () ->
         Ok
-          ( "Your profile has been created. To verify your email, we have sent you an\n\
-             email. Please follow the instructions there. After that, please run this \
-             command again."
+          ( "Your profile has been created. To verify your address, we have sent you an\n\
+             email. Please follow the instructions there. You may run this command again\n\
+             after verifying your address."
           , "" )
-      | Error Invalid_input -> Error ("Please check your inputs", "")
+      | Error Invalid_input -> Error ("Invalid input", "")
       | Error Invalid_token ->
         Error
           ( Printf.sprintf "A session was found, but it didn't belong to user: %s" username
@@ -60,7 +62,8 @@ let main ~ligo_registry ~ligorc_path ~username =
     let* session_username, _ = whoami ~token in
     (match String.equal session_username username with
     | true ->
-      print_endline "We don't have your email and other details. Setting up your profile";
+      print_endline
+        "We don't have your email address and other details. Setting up your profile";
       (match Lwt_main.run @@ prompt () with
       | Ok (email, fullname) -> setup_profile ~token ~email ~fullname
       | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")

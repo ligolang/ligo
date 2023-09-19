@@ -50,4 +50,4 @@ let registry_key uri =
   uri
   |> Uri.with_uri ~scheme:None ~path:(Some "/-/api")
   |> Uri.to_string
-  |> Str.global_replace (Str.regexp "\\(//\\)") ""
+  |> Str.global_replace (Str.regexp "\\(^//\\)") ""

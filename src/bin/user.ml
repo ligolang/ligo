@@ -82,6 +82,7 @@ let login ~ligo_registry ~ligorc_path =
   | Error Prompt.Cancelled -> Error ("Aborted", "")
   | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")
 
+
 (* (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD") *)
 
 let create ~ligo_registry ~ligorc_path =
@@ -93,11 +94,8 @@ let create ~ligo_registry ~ligorc_path =
     Lwt_result.return (user, password, email)
   in
   match Lwt_main.run @@ prompt () with
-  | Ok (user, pass, email) -> ping ~email:(Some email) ~user ~pass ~ligo_registry ~ligorc_path
+  | Ok (user, pass, email) ->
+    ping ~email:(Some email) ~user ~pass ~ligo_registry ~ligorc_path
   | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
   | Error Prompt.Cancelled -> Error ("Aborted", "")
   | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")
-
-
-
-  

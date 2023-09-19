@@ -78,7 +78,7 @@ end = struct
   let package_info_endpoint ?version ~registry pkg =
     match version with
     | Some version -> Uri.with_path registry (Format.sprintf "%s/%s" pkg version)
-    | None -> Uri.with_path registry (Format.sprintf "%s" pkg)
+    | None -> Uri.with_path registry pkg
 
 
   let package_info ?version ~registry pkg =

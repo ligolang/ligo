@@ -47,7 +47,7 @@ type state =
   | Profile_creation_pending
   | Email_verification_pending
 
-(* Forgot password endpoint must never ask for token *)
+(* "Forgot password" endpoint must never ask for token *)
 let send ~ligo_registry ~request =
   let uri = Uri.with_path ligo_registry endpoint_uri in
   let body =
@@ -63,7 +63,11 @@ let send ~ligo_registry ~request =
   | `OK -> Lwt_result.return Password_reset_emailed
   | `Bad_gateway | `Service_unavailable | `Gateway_timeout ->
     (* TODO debug.log http code *)
-    Lwt_result.lift @@ Error "\nRegistry seems down. Contact the developers"
+    Lwt_result.lift
+    @@ Error
+         "\n\
+          Registry seems down. Check your network connection. If the problem persists, \
+          please contact the developers"
   | `Not_implemented ->
     let open Response.Failure in
     let* { code; message : _ } =
