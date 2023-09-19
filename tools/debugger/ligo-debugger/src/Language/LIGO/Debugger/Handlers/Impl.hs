@@ -587,14 +587,14 @@ convertMichelsonValuesToLigo logger inps = do
   let typesAndValues = inps
         <&> \(PreLigoConvertInfo val typ) -> (typ, val)
 
-  decompiledValues <- decompileLigoValues typesAndValues
-
   logger [int||
     Decompilation contract: begin
     #{generateDecompilation typesAndValues}
 
     the end.
   |]
+
+  decompiledValues <- decompileLigoValues typesAndValues
 
   pure $
     zipWith
