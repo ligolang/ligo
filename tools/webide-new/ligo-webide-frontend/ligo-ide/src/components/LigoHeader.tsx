@@ -3,31 +3,15 @@ import ligologo from "./logo.svg";
 
 const links = [
   {
-    link: `${window.location.host}`,
-    name: "Try Online",
-    isBlank: true,
-    isCurrent: true,
-  },
-  {
-    link: "ligolang.org/docs/intro/installation",
-    name: "Install",
+    link: "ligolang.org/docs/intro/introduction",
+    name: "Docs",
     isBlank: true,
     isCurrent: false,
   },
-  { link: "ligolang.org/docs/intro/introduction", name: "Docs", isBlank: true, isCurrent: false },
+  { link: "ligolang.org/docs/reference/toplevel", name: "API", isBlank: true, isCurrent: false },
   {
-    link: "ligolang.org/docs/tutorials/getting-started",
-    name: "Tutorials",
-    isBlank: true,
-    isCurrent: false,
-  },
-  { link: "packages.ligolang.org/packages", name: "Packages", isBlank: true, isCurrent: false },
-  { link: "academy.ligolang.org", name: "Academy", isBlank: true, isCurrent: false },
-  { link: "ligolang.org/contact", name: "Ask Questions", isBlank: true, isCurrent: false },
-  { link: "ligolang.org/docs/faq/intro", name: "FAQ", isBlank: true, isCurrent: false },
-  {
-    link: "ligolang.org/docs/next/intro/changelog",
-    name: "Changelog",
+    link: "ligolang.org/docs/faq/intro",
+    name: "FAQ",
     isBlank: true,
     isCurrent: false,
   },
