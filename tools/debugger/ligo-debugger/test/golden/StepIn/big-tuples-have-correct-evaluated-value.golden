@@ -20,7 +20,7 @@ InterpretSnapshot:
           siValue: 0 ] ]
 InterpretSnapshot:
   isStatus:
-    running / expression evaluated (Pair 1 (Pair 2 (Pair 3 (Pair 4 5))) : int * int * int * int * int)
+    running / expression evaluated (Pair 1 (Pair 2 (Pair 3 (Pair 4 5))) : (int * int * int * int * int))
   isStackFrames:
     [ StackFrame:
       sfName: main
@@ -380,7 +380,8 @@ InterpretSnapshot:
           siLigoDesc: elem s of int in test/contracts/tuple-with-size-five.mligo
           siValue: 0 ] ]
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair { } 15 : operation list * int)
+  isStatus:
+    running / expression evaluated (Pair { } 15 : (operation list * int))
   isStackFrames:
     [ StackFrame:
       sfName: main
