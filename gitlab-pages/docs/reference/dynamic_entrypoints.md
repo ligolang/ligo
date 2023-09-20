@@ -27,7 +27,7 @@ val set :
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-todo
+const set : <P, S>(x1: dynamic_entrypoint<P, S>, x2: option<entrypoint>, x3: dynamic_entrypoints) => dynamic_entrypoints
 ```
 
 </Syntax>
@@ -38,10 +38,10 @@ To set an dynamic entrypoint within a static entrypoint, just use `Dynamic_entry
 
 ```cameligo skip
 [@entry]
-  let set_one (one_v2 : (unit, int) entrypoint) (s : storage) : operation list * storage =
-    let dynamic_entrypoints =
-      Dynamic_entrypoints.set one (Some one_v2) s.dynamic_entrypoints in
-    [], {s with dynamic_entrypoints}
+let set_one (one_v2 : (unit, int) entrypoint) (s : storage) : operation list * storage =
+  let dynamic_entrypoints =
+    Dynamic_entrypoints.set one (Some one_v2) s.dynamic_entrypoints in
+  [], {s with dynamic_entrypoints}
 ```
 
 </Syntax>
@@ -49,7 +49,12 @@ To set an dynamic entrypoint within a static entrypoint, just use `Dynamic_entry
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-  todo
+@entry
+const set_one = (one_v2 : entrypoint<unit, int>, s : storage) : [list<operation>, storage] => {
+  let dynamic_entrypoints =
+    Dynamic_entrypoints.set(one, Some(one_v2), s.dynamic_entrypoints);
+  return [list([]), {...s, dynamic_entrypoints}]
+}
 ```
 
 </Syntax>
@@ -70,7 +75,7 @@ val get :
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-todo
+const get : <P, S>(x1: dynamic_entrypoint<P, S>, x2: dynamic_entrypoints) => option<dynamic_entrypoint<P, S>>
 ```
 
 </Syntax>
@@ -82,12 +87,12 @@ To get an dynamic entrypoint within a static entrypoint and call it just use `Dy
 
 ```cameligo skip
 [@entry]
-  let call_one () (s : storage) : operation list * storage =
-    match Dynamic_entrypoints.get one s.dynamic_entrypoints with
-      Some f ->
-        let op, storage = f () s.storage in
-        op, {s with storage}
-    | None -> failwith (-1)
+let call_one () (s : storage) : operation list * storage =
+  match Dynamic_entrypoints.get one s.dynamic_entrypoints with
+    Some f ->
+      let op, storage = f () s.storage in
+      op, {s with storage}
+  | None -> failwith (-1)
 ```
 
 </Syntax>
@@ -95,7 +100,15 @@ To get an dynamic entrypoint within a static entrypoint and call it just use `Dy
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-todo
+@entry
+const call_one = ([], s : storage) : [list<operation>, storage] =>
+  match (Dynamic_entrypoints.get(one, s.dynamic_entrypoints)) {
+    when (Some(f)): do {
+      const [op, storage] = f([], s.storage);
+      return [op, ({...s, storage})]
+    };
+    when (None): failwith(-1);
+  }
 ```
 
 </Syntax>
@@ -117,7 +130,7 @@ val set_bytes :
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-todo
+const set_bytes : <P, S>(x1: dynamic_entrypoint<P, S>, x2: option<bytes>, x3: dynamic_entrypoints) => dynamic_entrypoints
 ```
 
 </Syntax>
