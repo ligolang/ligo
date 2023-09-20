@@ -5,6 +5,6 @@
 val unpublish
   :  name:string option
   -> version:string option
-  -> ligo_registry:string
+  -> ligo_registry:Uri.t
   -> ligorc_path:string
   -> (string * string, string * string) result

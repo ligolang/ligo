@@ -76,6 +76,14 @@ let package_name =
   Command.Param.(anon (maybe (name %: string)))
 
 
+let username =
+  let open Command.Param in
+  let name = "--username" in
+  let doc = "Username registered with the registry" in
+  let spec = required string in
+  flag ~doc name spec
+
+
 let named_arg_package_name =
   let open Command.Param in
   let name = "--package-name" in
@@ -610,11 +618,15 @@ let cache_path =
   flag ~doc name spec
 
 
+let command_arg_type_uri = Command.Arg_type.create Uri.of_string
+
 let ligo_registry =
   let open Command.Param in
   let name = "--registry" in
   let doc = "URL The url to a LIGO registry." in
-  let spec = optional_with_default Constants.ligo_registry string in
+  let spec =
+    optional_with_default (Uri.of_string Constants.ligo_registry) command_arg_type_uri
+  in
   flag ~doc name spec
 
 
@@ -2963,6 +2975,24 @@ let install =
     <*> skip_analytics)
 
 
+let registry_forgot_password =
+  let summary =
+    "Initiate a password resetting the password used to authenticate with the registry"
+  in
+  let readme () =
+    "Initiate a password resetting the password used to authenticate with the registry"
+  in
+  let cli_analytic = Analytics.generate_cli_metric ~command:"forgot_password" in
+  let f username ligo_registry ligorc_path skip_analytics () =
+    return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
+    @@ fun () -> Forgot_password.main ~username ~ligo_registry ~ligorc_path
+  in
+  Command.basic
+    ~summary
+    ~readme
+    (f <$> username <*> ligo_registry <*> ligorc_path <*> skip_analytics)
+
+
 let registry_publish =
   let summary = "[BETA] publish the LIGO package declared in ligo.json" in
   let readme () =
@@ -3042,6 +3072,7 @@ let registry_group =
      ; "add-user", add_user
      ; "publish", registry_publish
      ; "unpublish", registry_unpublish
+     ; "forgot-password", registry_forgot_password
      ]
 
 

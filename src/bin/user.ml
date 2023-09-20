@@ -1,5 +1,4 @@
 module LigoRC = Cli_helpers.LigoRC
-open Prompt
 
 type data =
   { name : string
@@ -9,12 +8,11 @@ type data =
 [@@deriving to_yojson]
 
 let login_url ~base_url user =
-  Format.sprintf "%s/-/user/org.couchdb.user:%s" base_url user
+  Uri.with_path base_url (Format.sprintf "/-/api/-/user/org.couchdb.user:%s" user)
 
 
 let http ~uri ~authorization ~user ~pass ~email =
   let open Cohttp_lwt_unix in
-  let uri = Uri.of_string uri in
   let headers =
     Cohttp.Header.of_list
       [ "authorization", authorization; "content-type", "application/json" ]
@@ -72,26 +70,32 @@ let ping ~email ~user ~pass ~ligo_registry ~ligorc_path =
 
 
 let login ~ligo_registry ~ligorc_path =
-  let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
-  let ( let* ) x f = Result.bind ~f x in
-  let* user, pass =
-    if LTerm.is_a_tty stdout_term
-    then prompt_login stdout_term
-    else Ok (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD")
+  let prompt () =
+    let open Lwt_result.Syntax in
+    let* user = Prompt.prompt ~msg:"Username: " in
+    let* password = Prompt.prompt_sensitive ~msg:"Password: " in
+    Lwt_result.return (user, password)
   in
-  ping ~user ~email:None ~pass ~ligo_registry ~ligorc_path
+  match Lwt_main.run @@ prompt () with
+  | Ok (user, pass) -> ping ~user ~email:None ~pass ~ligo_registry ~ligorc_path
+  | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
+  | Error Prompt.Cancelled -> Error ("Aborted", "")
+  | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")
 
+
+(* (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD") *)
 
 let create ~ligo_registry ~ligorc_path =
-  let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
-  let ( let* ) x f = Result.bind ~f x in
-  let* user, email, pass =
-    if LTerm.is_a_tty stdout_term
-    then prompt_register stdout_term
-    else
-      Ok
-        ( Caml.Sys.getenv "LIGO_USERNAME"
-        , Caml.Sys.getenv "LIGO_USER_EMAIL"
-        , Caml.Sys.getenv "LIGO_PASSWORD" )
+  let prompt () =
+    let open Lwt_result.Syntax in
+    let* user = Prompt.prompt ~msg:"Username: " in
+    let* password = Prompt.prompt_sensitive ~msg:"Password: " in
+    let* email = Prompt.prompt ~msg:"Email: " in
+    Lwt_result.return (user, password, email)
   in
-  ping ~email:(Some email) ~user ~pass ~ligo_registry ~ligorc_path
+  match Lwt_main.run @@ prompt () with
+  | Ok (user, pass, email) ->
+    ping ~email:(Some email) ~user ~pass ~ligo_registry ~ligorc_path
+  | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
+  | Error Prompt.Cancelled -> Error ("Aborted", "")
+  | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")

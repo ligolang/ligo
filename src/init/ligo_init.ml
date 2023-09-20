@@ -31,7 +31,7 @@ module RegistryTemplate : sig
     -> template:string
     -> project_name:string
     -> ?version:string
-    -> registry:string
+    -> registry:Uri.t
     -> unit
     -> (string, error) result
 end = struct
@@ -76,12 +76,9 @@ end = struct
 *)
 
   let package_info_endpoint ?version ~registry pkg =
-    let uri =
-      match version with
-      | Some version -> Format.sprintf "%s/%s/%s" registry pkg version
-      | None -> Format.sprintf "%s/%s" registry pkg
-    in
-    Uri.of_string uri
+    match version with
+    | Some version -> Uri.with_path registry (Format.sprintf "%s/%s" pkg version)
+    | None -> Uri.with_path registry pkg
 
 
   let package_info ?version ~registry pkg =
