@@ -312,10 +312,10 @@ let%expect_test "for loop negative tests" =
     ];
   [%expect
     {|
-    File "../../test/contracts/for_loop/infinite_for_loop12.jsligo", line 4, characters 2-21:
+    File "../../test/contracts/for_loop/infinite_for_loop12.jsligo", line 4, characters 2-20:
       3 |   let y = 0;
-      4 |   for (y = 0 ; ; y++) ;
-            ^^^^^^^^^^^^^^^^^^^
+      4 |   for (y = 0; ; y++) ;
+            ^^^^^^^^^^^^^^^^^^
       5 |   return [list([]), y]
 
     Warning: A boolean conditional expression is expected.

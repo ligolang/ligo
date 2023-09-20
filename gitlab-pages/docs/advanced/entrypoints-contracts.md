@@ -38,7 +38,7 @@ namespace IncDec {
     [list([]), store - delta];
 
   @entry
-  const reset = (_ : unit, _ : storage) : ret =>
+  const reset = (_p : unit, _s : storage) : ret =>
     [list([]), 0];
 };
 ```
@@ -185,7 +185,7 @@ let test =
 const test = (() => {
   let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);
   let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
-  let _ = Test.transfer_to_contract_exn(c, Increment(42), 0tez);
+  Test.transfer_to_contract_exn(c, Increment(42), 0tez);
   assert(42 == Test.get_storage(ta));
 })();
 ```

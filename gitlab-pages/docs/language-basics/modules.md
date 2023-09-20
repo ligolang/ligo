@@ -398,9 +398,9 @@ let test =
 
 ```jsligo group=contract
 const test = (() => {
-  let [taddr, _, _] = Test.originate_module(contract_of(C), 0, 0tez);
+  let [taddr, _code, _size] = Test.originate_module(contract_of(C), 0, 0tez);
   let contr : contract<parameter_of C> = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1mutez);
+  Test.transfer_to_contract_exn(contr, (Increment (42)), 1mutez);
   return assert(Test.get_storage(taddr) == 42);
 })();
 ```

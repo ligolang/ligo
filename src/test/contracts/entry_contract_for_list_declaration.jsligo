@@ -13,7 +13,7 @@ namespace Foo {
     [list([]), store - delta];
 
   @entry
-  const reset = (_: unit, _: storage): ret => [list([]), 0]
+  const reset = (_u: unit, _s: storage): ret => [list([]), 0]
 };
 
 

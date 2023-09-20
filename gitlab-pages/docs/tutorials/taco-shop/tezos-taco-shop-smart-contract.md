@@ -524,7 +524,7 @@ const test = (
           clasico_kind,
           1000000mutez
         );
-      const _u =
+      
         match(ok_case) {
           when (Success(_)):
             do {
@@ -553,7 +553,7 @@ const test = (
           unknown_kind,
           1000000mutez
         );
-      const _u2 = assert_string_failure(nok_unknown_kind, "Unknown kind of taco");
+      assert_string_failure(nok_unknown_kind, "Unknown kind of taco");
       /* Attempting to Purchase a Taco with 2tez */
 
       const nok_wrong_price =
@@ -562,7 +562,7 @@ const test = (
           clasico_kind,
           2000000mutez
         );
-      const _u3 =
+      
         assert_string_failure(
           nok_wrong_price,
           "Sorry, the taco you are trying to purchase has a different price"

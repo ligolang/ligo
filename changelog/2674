@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nBreaking change: if multiple `_` variable are bound in the same scope, it will result in an error (duplicate block-scoped variable) just as in TypeScript\\n\\n"
+merge_request: '2674'
+title: "Jsligo: adopt TypeScript behavior on `_` variable [PLEASE DO NOT MERGE BEFORE 1.0]"
+type: breaking
+            

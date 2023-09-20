@@ -26,6 +26,7 @@ type flags =
   ; projections : Syntax_types.t
   ; pattern_constructor_application : Syntax_types.t
   ; mod_res : ModRes.t option
+  ; wildcards : bool
   }
 
 let passes ~(flags : flags) : (module T) list =
@@ -49,6 +50,7 @@ let passes ~(flags : flags) : (module T) list =
       ; projections
       ; pattern_constructor_application
       ; mod_res
+      ; wildcards
       }
     =
     flags
@@ -63,6 +65,7 @@ let passes ~(flags : flags) : (module T) list =
   in
   [ entry (module Initial_node_check) ~flag:initial_node_check ~arg:()
   ; entry (module For_to_while_loop) ~flag:always ~arg:for_to_while_loop
+  ; entry (module Wildcards) ~flag:wildcards ~arg:()
   ; entry (module Duplicate_identifier) ~flag:duplicate_identifier ~arg:()
   ; entry (module Linear_signature) ~flag:always ~arg:()
   ; entry (module Restrict_projections) ~flag:restrict_projection ~arg:()
@@ -134,6 +137,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   in
   let is_jsligo = Syntax_types.equal syntax JsLIGO in
   let is_pascaligo = Syntax_types.equal syntax PascaLIGO in
+  let is_cameligo = Syntax_types.equal syntax CameLIGO in
   let duplicate_identifier = if options.frontend.transpiled then false else is_jsligo in
   let mod_res =
     Option.bind ~f:Preprocessor.ModRes.make options.Compiler_options.frontend.project_root
@@ -157,6 +161,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; projections = syntax
   ; pattern_constructor_application = syntax
   ; mod_res
+  ; wildcards = is_cameligo
   }
 
 

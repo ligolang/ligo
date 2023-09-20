@@ -5,6 +5,6 @@ type organization = {
 type storage = int;
 
 @entry
-const unique = (_ : organization, _ : storage) => {
+const unique = (_p : organization, _s : storage) => {
     return failwith("You need to be part of Tezos organization to activate an organization");
 };

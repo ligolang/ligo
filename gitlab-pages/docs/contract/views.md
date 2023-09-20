@@ -111,7 +111,7 @@ namespace C {
   const append = (a: string, s: storage) : [list<operation> , storage] => [list([]), s + a];
 
   @entry
-  const clear = (_: unit, _: storage) : [list<operation>, storage] => [list([]), ""];
+  const clear = (_p: unit, _s: storage) : [list<operation>, storage] => [list([]), ""];
 
   export const v = (expected_length: nat, s: storage) : bool => (String.length (s) == expected_length);
 }

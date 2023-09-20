@@ -711,7 +711,7 @@ const testC = () => {
     let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0tez);
     let contr : contract<parameter_of C> = Test.to_contract(taddr);
     let p : parameter_of C = Increment(1);
-    let _ = Test.transfer_to_contract_exn(contr, p, 1mutez);
+    Test.transfer_to_contract_exn(contr, p, 1mutez);
     return assert(Test.get_storage(taddr) == initial_storage + 1);
 }
 ```

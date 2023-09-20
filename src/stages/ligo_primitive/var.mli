@@ -19,7 +19,6 @@ module type VAR = sig
   val get_location : t -> Location.t
   val set_location : Location.t -> t -> t
   val is_generated : t -> bool
-  val is_ignored : t -> bool
   val add_prefix : string -> t -> t
 
   (* Prints vars as %s or %s#%d *)
@@ -35,7 +34,6 @@ module Value_var : sig
 
   (* Maybe bad *)
   val internal_get_name_and_counter : t -> string * int
-  val wildcard : loc:Location.t -> t
 end
 
 module Type_var : sig

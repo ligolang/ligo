@@ -29,7 +29,7 @@ const test_initial_storage =
   (
     () => {
       let initial_storage = 42;
-      let [taddr, _, _] = Test.originate(main, initial_storage, 0tez);
+      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0tez);
       return assert(Test.get_storage(taddr) == initial_storage)
     }
   )();
@@ -38,9 +38,9 @@ const test_increment =
   (
     () => {
       let initial_storage = 42;
-      let [taddr, _, _] = Test.originate(main, initial_storage, 0tez);
+      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0tez);
       let contr = Test.to_contract(taddr);
-      let _ = Test.transfer_to_contract_exn(contr, (Increment(1)), 1mutez);
+      Test.transfer_to_contract_exn(contr, (Increment(1)), 1mutez);
       return assert(Test.get_storage(taddr) == initial_storage + 1)
     }
   )();

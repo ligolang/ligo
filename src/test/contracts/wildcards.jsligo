@@ -1,0 +1,18 @@
+// see issue #1692
+
+namespace Foo {
+  let _ = 1;
+  let x = _
+};
+
+namespace Bar {
+  const [_, ignored] = [1, 2]
+  const x = _
+};
+
+// rejected by the parser, but should work in principle
+// type _ = int
+// type y = _
+
+// namespace _ {
+// }

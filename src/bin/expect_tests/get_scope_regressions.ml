@@ -464,7 +464,7 @@ let%expect_test _ =
     [ s_x#2:9-12  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 2, characters 16-17
     [  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 3, characters 12-13
     [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 6, characters 21-22
-    [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 7, characters 14-15
+    [ m#1:4-5 _#7:9-10  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 7, characters 14-15
     [ m#1:4-5  ] File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 8, characters 12-13
 
     Variable definitions:
@@ -489,5 +489,12 @@ let%expect_test _ =
     references: []
     Mod Path =
     Def Type = Global
+    (_#7:9-10 -> _)
+    Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 7, characters 9-10
+    Body Range: File "../../test/contracts/get_scope_tests/regressions/duplicate_unused_warnings.mligo", line 7, characters 14-15
+    Content: |resolved: int|
+    references: []
+    Mod Path =
+    Def Type = Local
     Type definitions:
     Module definitions: |}]

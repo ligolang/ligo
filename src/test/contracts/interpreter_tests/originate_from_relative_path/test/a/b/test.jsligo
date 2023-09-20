@@ -1,7 +1,7 @@
 #import "../../c/d/foo.jsligo" "Foo"
 
 const _test_originate_from_file_relative_path = () : address => {
-  let [c_addr,_,_] = Test.originate_from_file 
+  let [c_addr,_code,_size] = Test.originate_from_file 
     ("../../../src/contract/unit.mligo",
     Test.eval(unit), 0 as mutez);
     return c_addr

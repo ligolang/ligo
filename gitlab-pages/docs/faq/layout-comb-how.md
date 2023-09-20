@@ -127,14 +127,14 @@ namespace Bar {
 };
 
 const test_interaction = (() => {
-  const [foo_typed_addr, _, _] = Test.originate_module(contract_of(Foo), unit, 0tz);
+  const [foo_typed_addr, _x1, _y1] = Test.originate_module(contract_of(Foo), unit, 0tz);
   const foo_addr = Tezos.address(Test.to_contract(foo_typed_addr));
   // let foo_contract : contract<parameter_of Foo> = Test.to_contract(foo_addr);
 
-  const [bar_addr, _, _] = Test.originate_module(contract_of(Bar), unit, 0tz);
+  const [bar_addr, _x2, _y2] = Test.originate_module(contract_of(Bar), unit, 0tz);
   const bar_contract : contract<parameter_of Bar> = Test.to_contract(bar_addr);
 
-  const _ = Test.transfer_to_contract_exn(bar_contract, Bar(foo_addr), 0tz);
+  Test.transfer_to_contract_exn(bar_contract, Bar(foo_addr), 0tz);
 }) ();
 ```
 

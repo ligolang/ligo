@@ -10,7 +10,7 @@ let f0 = (_a: string): bool => true
 let f1 = (_a: string): bool => true
 let f2 = (_a: string): bool => true
 
-let letin_nesting = (_: unit): string => {
+let letin_nesting = (_unit: unit): string => {
   let s = "test";
   let p0 = f0(s);
   assert(p0);
@@ -28,6 +28,6 @@ let letin_nesting2 = (x: int): int => {
 }
 
 let f = (_x: int): nat => {
- let [_, [x, _]] = [(1 as nat), [(2 as nat), (3 as nat)]];
+ let [_ig1, [x, _ig2]] = [(1 as nat), [(2 as nat), (3 as nat)]];
  return x;
 }
