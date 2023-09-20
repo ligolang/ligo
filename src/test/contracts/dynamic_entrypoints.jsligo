@@ -5,14 +5,14 @@ type storage =
   }
 
 @dyn_entry
-  const one = (_p: unit, _s: int): [list<operation>, int] =>
+  const one = (_u: unit, _i: int): [list<operation>, int] =>
     [list([]), 1];
 
 @dyn_entry
 const tick = (_t : ticket<int>, x : [int, int]) : [list<operation>, [int, int]] => [list([]), x];
 
 @entry
-const call_one = (_p:unit, s : storage) : [list<operation>, storage] =>
+const call_one = (_u:unit, s : storage) : [list<operation>, storage] =>
   match (Dynamic_entrypoints.get(one, s.dynamic_entrypoints)) {
     when (Some(f)): do {
       const [op, storage] = f([], s.storage);
