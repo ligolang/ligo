@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nWe allow `_` as a parameter name in JsLIGO's function types.\\n\\n"
+merge_request: '2891'
+title: "JsLIGO: added `_` as a parameter in function types."
+type: added
+            

@@ -12,6 +12,23 @@ let%expect_test _ =
     [ "compile"
     ; "expression"
     ; "jsligo"
+    ; "h2"
+    ; "--init-file"
+    ; contract "wildcard_in_type.jsligo"
+    ];
+  [%expect
+    {|
+    { LAMBDA (pair int int) int { UNPAIR ; ADD } ;
+      DUP 2 ;
+      APPLY ;
+      SWAP ;
+      DROP } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
     ; "foo"
     ; "--init-file"
     ; contract "function_ascr.jsligo"
