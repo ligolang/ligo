@@ -246,6 +246,7 @@ const sidebars = {
   "faq": {
     "FAQ": [
       "faq/intro",
+      "faq/v1-migration-guide",
       "faq/convert-address-to-contract",
       "faq/polymorphic-comparison",
       "faq/catch-error-view",
