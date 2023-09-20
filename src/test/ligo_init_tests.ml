@@ -195,7 +195,7 @@ let test_init_list_template_contract_template ~no_colour ~raise:_ () =
 
 let main =
   let no_colour = Test_helpers.options.tools.no_colour in
-  let registry = Cli_helpers.Constants.ligo_registry in
+  let registry = Cli_helpers.Constants.ligo_registry |> Uri.of_string in
   let test_new_project_wrapper = test_new_project_wrapper ~no_colour ~registry in
   let test_init_list_template_contract_template =
     test_init_list_template_contract_template ~no_colour
