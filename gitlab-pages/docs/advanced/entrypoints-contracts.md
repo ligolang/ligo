@@ -161,7 +161,7 @@ In the command above, `Increment` is the (capitalized) name of the entry point t
 ### Using the `ligo run test` command
 
 A LIGO program can instantiate a new contract (or obtain an existing contract from its address),
-and call one of its entry points by passing e.g. the parameter `Increment(5).
+and call one of its entry points by passing e.g. the parameter `Increment(5)`.
 
 <Syntax syntax="cameligo">
 
