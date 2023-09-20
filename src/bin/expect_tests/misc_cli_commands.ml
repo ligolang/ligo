@@ -9,7 +9,6 @@ let%expect_test _ =
     ; "../../test/contracts/entry_contract_for_list_declaration.jsligo"
     ; "--only-ep"
     ];
-  [%expect
-    {|
+  [%expect{|
     ../../test/contracts/entry_contract_for_list_declaration.jsligo declarations:
     Foo.$main |}]

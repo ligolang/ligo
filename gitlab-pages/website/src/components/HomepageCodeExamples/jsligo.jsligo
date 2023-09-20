@@ -10,5 +10,5 @@ namespace Counter {
   const decrement = (delta: int, store: storage): ret =>
     [list([]), store - delta];
   @entry
-  const reset = (_: unit, _: storage): ret => [list([]), 0]
+  const reset = (_p: unit, _s: storage): ret => [list([]), 0]
 };

@@ -56,7 +56,7 @@ function main ( const x : (int*int) * unit ) is
 
 const test_foo = {
   const (ta, _, _) = Test.originate (main, Unit, 0tez) ;
-  const _ = Test.transfer_to_contract_exn (Test.to_contract (ta), (1,2), 0tez) ;
+  Test.transfer_to_contract_exn (Test.to_contract (ta), (1,2), 0tez) ;
   const x = (Test.get_last_events_from (ta, "foo") : list (int*int)) ;
   const y = (Test.get_last_events_from (ta, "foo") : list (int)) ;
 } with (x,y)
@@ -79,15 +79,15 @@ let test_foo =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-let main = (p: [int, int], _ : unit) => {
+let main = (p: [int, int], _s : unit) => {
   let op1 = Tezos.emit("%foo", p);
   let op2 = Tezos.emit("%foo", p[0]);
   return [list([op1, op2]), unit];
   };
 
 let test = (() : [list<[int,int]>, list<int>] => {
-  let [ta, _, _] = Test.originate(main, unit, 0 as tez);
-  let _ = Test.transfer_to_contract_exn(Test.to_contract(ta), [1,2], 0 as tez);
+  let [ta, _code, _size] = Test.originate(main, unit, 0 as tez);
+  Test.transfer_to_contract_exn(Test.to_contract(ta), [1,2], 0 as tez);
   return [Test.get_last_events_from(ta, "foo") as list<[int, int]>, Test.get_last_events_from(ta, "foo") as list<int>];
 }) ();
 ```

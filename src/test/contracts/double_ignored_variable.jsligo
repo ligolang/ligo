@@ -1,1 +1,1 @@
-function f () { let _ = 1; let _ = 2; return 42 }
+function f () { let _ig1 = 1; let _ig2 = 2; return 42 }

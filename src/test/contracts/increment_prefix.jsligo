@@ -15,14 +15,14 @@ namespace IncDec {
   }
 
   @entry
-  const reset = (_ : unit, _ : storage) : ret =>
+    const reset = (_p : unit, _s : storage) : ret =>
     [list([]), 0];
 };
 
 const test_increment = (() => {
   let initial_storage = 42;
-  let [taddr, _, _] = Test.originate_module(contract_of(IncDec), initial_storage, 0tez);
+  let [taddr, _code, _size] = Test.originate_module(contract_of(IncDec), initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, Increment(), 1mutez);
+  Test.transfer_to_contract_exn(contr, Increment(), 1mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
 }) ();

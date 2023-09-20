@@ -223,7 +223,7 @@ and instr ~raise : instruction -> Statement_result.t =
       ```
       *))
   | I_skip -> Binding Fun.id
-  | I_call (f, args) -> Binding (fun x -> let_unit_in (e_call ~loc f args) x)
+  | I_call (f, args) -> Binding (fun x -> let_ignore_in (e_call ~loc f args) x)
   | I_case { expr; cases } ->
     if List.for_all (List.Ne.to_list cases) ~f:(fun x ->
            Statement_result.is_not_returning (clause ~raise x.rhs))
@@ -293,7 +293,7 @@ and instr ~raise : instruction -> Statement_result.t =
   | I_expr ({ fp = { wrap_content = E_assign_chainable _ | E_simple_let_in _; _ } } as e)
     -> Binding (fun hole -> let_ignore_in e hole)
   | I_expr e ->
-    Binding (fun hole -> if Combinators.is_e_unit hole then e else let_unit_in e hole)
+    Binding (fun hole -> if Combinators.is_e_unit hole then e else let_ignore_in e hole)
   | I_for for_ ->
     let for_ = For_int.map Fun.id (block_to_expression ~raise) for_ in
     Binding (fun hole -> let_unit_in (e_for ~loc for_) hole)

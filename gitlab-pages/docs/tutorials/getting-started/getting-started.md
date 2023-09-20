@@ -67,7 +67,7 @@ namespace Counter {
   const decrement = (delta : int, store : storage) : ret => [list([]), store - delta];
 
   @entry
-  const reset = (_ : unit, _ : storage) : ret => [list([]), 0];
+  const reset = (_p : unit, _s : storage) : ret => [list([]), 0];
 };
 ```
 
@@ -236,9 +236,9 @@ Add the following line at the end of `main.jsligo`
 ```jsligo test-ligo group=a
 const test_increment = (() : unit => {
   let initial_storage = 10 as int;
-  let [taddr, _, _] = Test.originate_module(contract_of(Counter), initial_storage, 0tez);
+  let [taddr, _code, _size] = Test.originate_module(contract_of(Counter), initial_storage, 0tez);
   let contr = Test.to_contract(taddr);
-  let _ = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
   return assert(Test.get_storage(taddr) == initial_storage + 1);
 }) ()
 ```

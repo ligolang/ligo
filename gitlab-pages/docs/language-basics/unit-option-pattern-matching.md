@@ -476,10 +476,10 @@ type complex_t = { a : option<list<int>> ; b : list<int> }
 
 const complex = (x: complex_t, y: complex_t) =>
   match ([x,y]) {
-    when ([{a:None; b:_}, {a:_; b:_}]): -1
-    when ([{a:_; b:_}, {a: Some ([]); b: [hd,...tl]}]): hd
-    when ([{a:_; b:_}, {a: Some ([hd,...tl]); b:[]}]): hd
-    when ([{a: Some (a); b:_}, _]) : int (List.length (a))
+    when ([{a:None; b:_bl}, {a:_ar; b:_br}]): -1
+    when ([{a:_a; b:_b}, {a: Some ([]); b: [hd,...tl]}]): hd
+    when ([{a:_a; b:_b}, {a: Some ([hd,...tl]); b:[]}]): hd
+    when ([{a: Some (a); b:_b}, _l]) : int (List.length (a))
   }
 ```
 

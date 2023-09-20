@@ -50,10 +50,10 @@ const originate =
       const proxy_origination : (_p : [vt , nat]) => (_s : option<address>) => [list<operation> , option<address>] =
         curry(proxy_originate_contract (mk_storage, contract)) ;
       const [taddr_proxy, _, _] = Test.originate (proxy_origination, (None () as option<address> ), 1tez) ;
-      const _ = Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0tez) ;
+      Test.transfer_to_contract_exn (Test.to_contract (taddr_proxy), ticket_info, 0tez) ;
       return match (Test.get_storage (taddr_proxy), {
         Some: (addr:address) => {
-        const _taddr = (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
+        (Test.cast_address(addr) as typed_address<vp,whole_s> ) ;
         return addr
         },
         None : (_:unit) => failwith ("internal error")

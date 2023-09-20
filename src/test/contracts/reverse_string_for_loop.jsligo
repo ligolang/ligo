@@ -1,7 +1,7 @@
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s);
 
 @entry
-const main = (_: unit, s: string): [list<operation>, string] => {
+const main = (_p: unit, s: string): [list<operation>, string] => {
   let reverse = "";
   let length = String.length(s);
   for (let i = length - 1; i >= 0; i--) {
@@ -14,9 +14,9 @@ const test =
   (
     () => {
       let initial_storage = "esrever";
-      let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0 as tez);
       let contract = Test.to_contract(taddr);
-      let _ = Test.transfer_to_contract_exn(contract, unit, 1 as mutez);
+      Test.transfer_to_contract_exn(contract, unit, 1 as mutez);
       Test.log(Test.get_storage(taddr));
       return assert(Test.get_storage(taddr) == "reverse")
     }

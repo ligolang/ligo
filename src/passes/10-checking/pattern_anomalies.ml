@@ -17,7 +17,7 @@ let nil_label = Label.of_string "#NIL"
 let t_unit = AST.t_unit ()
 
 let wild_binder ~loc =
-  let var = Value_var.wildcard ~loc in
+  let var = Value_var.of_input_var ~loc "_" in
   Binder.make var None
 
 

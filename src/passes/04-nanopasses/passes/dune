@@ -8,6 +8,7 @@
   flag
   morphing
   ; nanopasses:
+  wildcards
   map_lookup
   errors
   unit_test_helpers

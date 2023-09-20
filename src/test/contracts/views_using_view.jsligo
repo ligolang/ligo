@@ -17,7 +17,7 @@ const not_funny = (_: unit, s: storage) : storage =>
 const get_storage = (_: unit, s: storage) : storage => x + s
 
 @view
-const get_address = (_: unit, _: storage) : address => Tezos.get_sender()
+const get_address = (_: unit, _s: storage) : address => Tezos.get_sender()
 
 @view
 const super_not_funny = (_: unit, s: storage): storage =>

@@ -23,7 +23,7 @@ const main = (action: parameter, store: storage) : return_ => {
 
 const _test = () : test_exec_error_balance_too_low => {
   let initial_storage = 42 as int;
-  let [taddr, _, _] = Test.originate(main, initial_storage, 0 as tez);
+  let [taddr, _c, _s] = Test.originate(main, initial_storage, 0 as tez);
   let contr = Test.to_contract(taddr);
   let r = Test.transfer_to_contract(contr, (Increment (1)), 100000000 as tez);
   return match(r) {

@@ -231,14 +231,14 @@ let%expect_test _ =
     [  ] File "../../test/contracts/warning_unused.mligo", line 2, character 2 to line 5, character 3
     [ storage#1:5-12 x#7:9-10  ] File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
     [ storage#1:5-12 foo#7:4-7 x#9:9-10  ] File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 10-17
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 14, characters 10-15
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#14:6-7  ] File "../../test/contracts/warning_unused.mligo", line 15, characters 10-17
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 3-5
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 8-17
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 25-39
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 26-27
-    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 37-38
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21  ] File "../../test/contracts/warning_unused.mligo", line 13, characters 10-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 14, characters 10-15
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#14:6-7  ] File "../../test/contracts/warning_unused.mligo", line 15, characters 10-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 3-5
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 8-17
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#13:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 25-39
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 26-27
+    [ storage#1:5-12 foo#7:4-7 bar#9:4-7 _#12:10-11 s#12:20-21 x#15:6-7  ] File "../../test/contracts/warning_unused.mligo", line 16, characters 37-38
 
     Variable definitions:
     (foo#7:4-7 -> foo)
@@ -282,6 +282,13 @@ let%expect_test _ =
     references: []
     Mod Path =
     Def Type = Global
+    (_#12:10-11 -> _)
+    Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 10-11
+    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
+    Content: |core: int|
+    references: []
+    Mod Path =
+    Def Type = Parameter
     (s#12:20-21 -> s)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 20-21
     Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
