@@ -21,7 +21,7 @@ class prompt term (prompt_msg : string) =
 class prompt_sensitive term (prompt_msg : string) =
   object (self)
     inherit prompt_base term
-    inherit LTerm_read_line.read_password () as _super
+    inherit! LTerm_read_line.read_password () as _super
     initializer self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 prompt_msg))
   end
 

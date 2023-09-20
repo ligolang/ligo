@@ -71,9 +71,7 @@ module Internal () = struct
 
 
   (* should be removed in favor of a lift pass before ast_imperative *)
-  let of_input_var ~loc name =
-    { name; counter = 0; generated = false; location = loc }
-
+  let of_input_var ~loc name = { name; counter = 0; generated = false; location = loc }
 
   (* This exception indicates that some code tried to throw away the
    counter of a generated variable. It is not supposed to happen. *)
@@ -96,6 +94,7 @@ module Internal () = struct
     if v.counter <> 0
     then Format.fprintf ppf "%s#%d" v.name v.counter
     else Format.fprintf ppf "%s" v.name
+
 
   include Comparable.Make (T)
 end
