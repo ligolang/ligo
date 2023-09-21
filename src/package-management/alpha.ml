@@ -236,7 +236,9 @@ let get_metadata_json
  fun ~name ~version ~ligo_registry ->
   let open Lwt.Syntax in
   let version = NameVersion.version_to_string version in
-  let uri = Uri.to_string ligo_registry // name |> Uri.of_string in
+  (* TODO move this inside registry folder containing all registry interaction logic *)
+  let endpoint_uri = Printf.sprintf "/-/api/%s" name in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
   let* res, body = Cohttp_lwt_unix.Client.get uri in
   let status = Cohttp.Code.code_of_status res.status in
   if status |> Cohttp.Code.is_success

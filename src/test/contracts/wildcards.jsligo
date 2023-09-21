@@ -2,12 +2,14 @@
 
 namespace Foo {
   let _ = 1;
-  let x = _
+  // rejected by the parser, but should work
+  // let x = _
 };
 
 namespace Bar {
   const [_, ignored] = [1, 2]
-  const x = _
+  // rejected by the parser, but should work
+  // const x = _
 };
 
 // rejected by the parser, but should work in principle

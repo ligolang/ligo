@@ -1,17 +1,18 @@
 module Constants = Cli_helpers.Constants
 
 let run_esy package_name cache_path ligo_registry =
-  let ligo_registry_str = Uri.to_string ligo_registry in
+  let endpoint_uri = "/-/api" in
+  let uri = Uri.with_path ligo_registry endpoint_uri in
+  let uri_str = Uri.to_string uri in
   match Cli_helpers.does_command_exist Constants.esy with
   | Ok true ->
     let result =
       match package_name with
       | Some package_name ->
         Cli_helpers.run_command
-          (Constants.esy_add ~package_name ~cache_path ~ligo_registry:ligo_registry_str)
+          (Constants.esy_add ~package_name ~cache_path ~ligo_registry:uri_str)
       | None ->
-        Cli_helpers.run_command
-          (Constants.esy_install ~cache_path ~ligo_registry:ligo_registry_str)
+        Cli_helpers.run_command (Constants.esy_install ~cache_path ~ligo_registry:uri_str)
     in
     (match result with
     | Ok () -> Ok ("", "")
