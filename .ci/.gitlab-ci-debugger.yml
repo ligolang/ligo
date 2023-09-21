@@ -50,7 +50,6 @@ debugger-danger-instant-checks:
     - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
         --dangerfile=./danger/instant-checks.rb
         --danger_id=instant
-  allow_failure: true
 
 debugger-danger-hlint:
   stage: tools-precheck
@@ -118,6 +117,7 @@ debugger-test-static-debugger-binary:
   stage: tools-check
   rules: *debugger_mr_dev
   needs: [debugger-build]
+  allow_failure: true
   script:
     - nix build $FLAKE_FLAGS ./tools/debugger#ligo-debugger-static
     # 'ldd' returns non-zero exit code when binary is not dynamically linked, so || true is needed
