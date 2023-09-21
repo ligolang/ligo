@@ -23,7 +23,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 0, 0, 0, 0, 0, ./missing_eq_in_type_decl.jsligo
     PASS, 2, 39, 1, 28, 0, ./missing_expr_parenthesesL.jsligo
     PASS, 2, 22, 2, 6, 0, ./missing_expr_parenthesesR.jsligo
-    PASS, 2, 2, 2, 2, 0, ./missing_ident_in_type_decl.jsligo
+    PASS, 2, 2, 2, 8, 0, ./missing_ident_in_type_decl.jsligo
     PASS, 2, 5, 5, 12, 0, ./missing_int.jsligo
     PASS, 4, 95, 21, 195, 2, ./missing_name_of_argument.jsligo
     PASS, 16, 140, 12, 266, 2, ./missing_namespace_kw_in_namespace_decl.jsligo

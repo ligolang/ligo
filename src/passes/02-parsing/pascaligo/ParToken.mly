@@ -90,7 +90,7 @@
 %token <string Wrap.t> SLASH    "/"   [@recover.expr Token.wrap_slash    $loc]
 %token <string Wrap.t> TIMES    "*"   [@recover.expr Token.wrap_times    $loc]
 %token <string Wrap.t> DOT      "."   [@recover.expr Token.wrap_dot      $loc]
-%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc] [@recover.cost 700]
+%token <string Wrap.t> WILD     "_"   [@recover.expr Token.wrap_wild     $loc]
 %token <string Wrap.t> CARET    "^"   [@recover.expr Token.wrap_caret    $loc]
 %token <string Wrap.t> PLUS_EQ  "+="  [@recover.expr Token.wrap_plus_eq  $loc]
 %token <string Wrap.t> MINUS_EQ "-="  [@recover.expr Token.wrap_minus_eq $loc]

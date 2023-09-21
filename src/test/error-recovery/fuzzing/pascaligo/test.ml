@@ -12,13 +12,13 @@ let%expect_test "error_recovery_fuzzing_pascaligo" =
     PASS, 11, 60, 56, 45, 2, ./2function-complex.ligo
     PASS, 34, 307, 51, 574, 11, ./2hashlock.ligo
     PASS, 0, 0, 0, 0, 0, ./2lambda2.ligo
-    PASS, 42, 582, 174, 1094, 32, ./2long_assign.ligo
+    PASS, 43, 582, 174, 1094, 32, ./2long_assign.ligo
     PASS, 18, 140, 32, 315, 10, ./2long_remove.ligo
     PASS, 0, 0, 0, 0, 0, ./2loop13.ligo
     PASS, 2, 18, 14, 26, 3, ./2loop18.ligo
     PASS, 9, 94, 36, 67, 4, ./2michelson_pair_tree_intermediary.ligo
     PASS, 18, 157, 57, 134, 5, ./2replaceable_id.ligo
-    PASS, 4, 55, 9, 11, 2, ./2transpiler_nested.ligo
+    PASS, 4, 55, 9, 25, 2, ./2transpiler_nested.ligo
     PASS, 9, 115, 13, 87, 2, ./4closure.ligo
     PASS, 32, 302, 118, 334, 17, ./4failwith.ligo
     PASS, 13, 37, 19, 90, 5, ./4super-counter.ligo

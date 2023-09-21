@@ -25,7 +25,7 @@ let%expect_test "error_recovery_simple_pascaligo" =
     PASS, 0, 0, 0, 0, 0, ./missing_is_kw_in_lambda_expr.ligo
     PASS, 0, 0, 0, 0, 0, ./missing_is_kw_in_type_decl.ligo
     PASS, 12, 100, 4, 199, 1, ./missing_module_kw_in_module_decl.ligo
-    PASS, 2, 2, 2, 2, 0, ./missing_name_of_argument.ligo
+    PASS, 2, 2, 2, 24, 0, ./missing_name_of_argument.ligo
     PASS, 2, 10, 6, 7, 0, ./missing_of_kw.ligo
     PASS, 0, 0, 0, 0, 0, ./missing_semicolon_between_stmts.ligo
     PASS, 5, 44, 14, 70, 2, ./missing_semicolon_in_arguments.ligo

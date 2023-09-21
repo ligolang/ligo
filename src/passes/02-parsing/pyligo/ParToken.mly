@@ -105,7 +105,7 @@
 %token <string Wrap.t> RSHIFT_EQ  ">>=" [@recover.expr Token.wrap_rshift_eq  $loc]
 %token <string Wrap.t> LSHIFT_EQ  "<<=" [@recover.expr Token.wrap_lshift_eq  $loc]
 %token <string Wrap.t> EXP_EQ     "**=" [@recover.expr Token.wrap_exp_eq     $loc]
-%token <string Wrap.t> WILD       "_"   [@recover.expr Token.wrap_wild $loc] [@recover.cost 700]
+%token <string Wrap.t> WILD       "_"   [@recover.expr Token.wrap_wild $loc]
 %token <string Wrap.t> GRAVE      "`"   [@recover.expr Token.wrap_grave      $loc]
 %token <string Wrap.t> BACKSLASH  "\\"  [@recover.expr Token.wrap_backslash  $loc]
 

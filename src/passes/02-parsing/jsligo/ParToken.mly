@@ -118,7 +118,7 @@
 %token <string Wrap.t> BIT_XOR_EQ "^="  [@recover.expr Token.wrap_bit_xor_eq $loc]
 %token <string Wrap.t> VBAR       "|"   [@recover.expr Token.wrap_vbar       $loc]
 %token <string Wrap.t> ARROW      "=>"  [@recover.expr Token.wrap_arrow      $loc]
-%token <string Wrap.t> WILD       "_"   [@recover.expr Token.wrap_wild       $loc] [@recover.cost 700]
+%token <string Wrap.t> WILD       "_"   [@recover.expr Token.wrap_wild       $loc]
 
 (* JavaScript Keywords *)
 
