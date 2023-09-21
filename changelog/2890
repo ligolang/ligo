@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nUnderscore is now accepted everywhere a variable is accepted.\\n\\n"
+merge_request: '2890'
+title: "[JsLIGO] Allow _ as an expression"
+type: added
+            

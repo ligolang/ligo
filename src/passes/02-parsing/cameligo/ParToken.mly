@@ -86,7 +86,7 @@
 %token <string Wrap.t> SEMI     ";"  [@recover.expr Token.wrap_semi      $loc]
 %token <string Wrap.t> COLON    ":"  [@recover.expr Token.wrap_colon     $loc]
 %token <string Wrap.t> VBAR     "|"  [@recover.expr Token.wrap_vbar      $loc]
-%token <string Wrap.t> WILD     "_"  [@recover.expr Token.wrap_wild      $loc] [@recover.cost 700]
+%token <string Wrap.t> WILD     "_"  [@recover.expr Token.wrap_wild      $loc]
 %token <string Wrap.t> EQ       "="  [@recover.expr Token.wrap_eq        $loc]
 %token <string Wrap.t> NE       "<>" [@recover.expr Token.wrap_ne        $loc]
 %token <string Wrap.t> LT       "<"  [@recover.expr Token.wrap_lt        $loc]

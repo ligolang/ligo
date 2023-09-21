@@ -1,20 +1,21 @@
 // see issue #1692
 
 namespace Foo {
-  let _ = 1;
-  // rejected by the parser, but should work
-  // let x = _
+  const x = do {
+    let _ = 1;
+    let y = _;
+    return y + _;
+  }
 };
 
 namespace Bar {
   const [_, ignored] = [1, 2]
-  // rejected by the parser, but should work
-  // const x = _
+  export const x = _
 };
 
-// rejected by the parser, but should work in principle
-// type _ = int
-// type y = _
+type _ = int
+type y = _
 
-// namespace _ {
-// }
+namespace _ { const _ = 4 }
+
+const _ = Bar.x

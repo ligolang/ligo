@@ -72,7 +72,6 @@ let mk_app ctor = function
   unary_expr_level
   add_expr_level
   eq_expr_level
-  object_or_array
   var_path
   path_expr
   bit_shift_level
@@ -101,6 +100,7 @@ let mk_app ctor = function
   catenable_stmt
   nsepseq(val_binding,COMMA)
 %on_error_reduce
+  object_or_array
   ternary_expr(core_expr,pre_expr_stmt)
   non_if_stmt(statement)
   last_or_more(statement)
@@ -764,7 +764,8 @@ assign_expr:
 | bin_op (var_path, ">>=", expr) { E_BitSrEq  $1 }
 
 var_path:
-  path (object_or_array) | object_or_array { $1 }
+  path (object_or_array) { $1 }
+| variable | "_" { E_Var $1 }
 
 object_or_array : "<ident>" { E_Var  $1 }
 
