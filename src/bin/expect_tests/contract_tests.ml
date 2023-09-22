@@ -9,6 +9,15 @@ let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
   run_ligo_good
+    [ "compile"; "contract"; contract "interfaces.extra.jsligo"; "-m"; "Impl" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage int ;
+      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good
     [ "compile"; "expression"; "jsligo"; "_"; "--init-file"; contract "wildcards.jsligo" ];
   [%expect {| 1 |}]
 

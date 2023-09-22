@@ -1,0 +1,12 @@
+interface FA0 {
+  type storage;
+
+  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+}
+
+namespace Impl implements FA0 {
+  type storage = int;
+
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+}
