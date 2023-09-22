@@ -1451,7 +1451,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
   return ({ Signature.items = insts @ items; sort = inferred_sig.sort }, entries)
 
 
-and infer_module_expr (mod_expr : I.module_expr)
+and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
     : (Signature.t * O.module_expr E.t, _, _) C.t
   =
   let open C in
@@ -1471,7 +1471,7 @@ and infer_module_expr (mod_expr : I.module_expr)
   @@
   match mod_expr.wrap_content with
   | M_struct decls ->
-    let%bind sig_, decls = infer_module decls in
+    let%bind sig_, decls = infer_module ?is_annoted_entry decls in
     const
       E.(
         let%bind decls = decls in
@@ -1581,19 +1581,28 @@ and infer_declaration (decl : I.declaration)
       [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
   | D_module
       { module_binder; module_; module_attr = { public; hidden } as attr; annotation } ->
-    let%bind inferred_sig, module_ = infer_module_expr module_ in
-    let%bind annoted_sig =
+    let%bind module_, annoted_sig =
       match annotation with
       | None ->
         (* For non-annoted signatures, we use the one inferred *)
-        return @@ remove_non_public inferred_sig
+        let%bind inferred_sig, module_ = infer_module_expr module_ in
+        return (module_, remove_non_public inferred_sig)
       | Some signature_expr ->
         (* For annoted signtures, we evaluate the signature, cast the inferred signature to it, and check that all entries implemented where declared *)
         let%bind annoted_sig =
           With_default_layout.evaluate_signature_expr signature_expr
         in
+        let annoted_entries =
+          List.filter_map
+            ~f:(function
+              | MT_value (v, _, attr) when attr.entry -> Some v
+              | _ -> None)
+            annoted_sig.items
+        in
+        let is_annoted_entry = List.mem annoted_entries ~equal:Value_var.equal in
+        let%bind inferred_sig, module_ = infer_module_expr ~is_annoted_entry module_ in
         let%bind annoted_sig, _entries = cast_signature inferred_sig annoted_sig in
-        return @@ remove_non_public annoted_sig
+        return (module_, remove_non_public annoted_sig)
     in
     const
       E.(
@@ -1619,9 +1628,12 @@ and infer_declaration (decl : I.declaration)
       sig_.items
 
 
-and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =
+and infer_module ?is_annoted_entry (module_ : I.module_)
+    : (Signature.t * O.module_ E.t, _, _) C.t
+  =
   let open C in
   let open Let_syntax in
+  let is_annoted_entry = Option.value ~default:(Fn.const true) is_annoted_entry in
   let rec loop (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t =
     match module_ with
     | [] ->
@@ -1647,7 +1659,8 @@ and infer_module (module_ : I.module_) : (Signature.t * O.module_ E.t, _, _) C.t
    *)
   let entrypoints =
     List.filter_map inferred_module_sig.items ~f:(function
-        | S_value (var, type_, attr) when attr.entry -> Some (var, type_)
+        | S_value (var, type_, attr) when attr.entry && is_annoted_entry var ->
+          Some (var, type_)
         | _ -> None)
   in
   let%bind inferred_sort =
