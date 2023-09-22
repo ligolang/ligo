@@ -1,6 +1,6 @@
 open Lwt_result.Syntax
 
-let endpoint_uri = "/-/api/whoami"
+let endpoint_uri = "/-/api/-/whoami"
 
 module Request = struct
   type t = unit [@@deriving yojson]
