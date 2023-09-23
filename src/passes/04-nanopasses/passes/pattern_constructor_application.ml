@@ -43,16 +43,17 @@ let compile ~raise:_ =
   let pattern : (pattern, ty_expr) pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
+    let mk_args = function
+      | [] -> None
+      | [ u ] -> Some u
+      | args -> Some (p_tuple ~loc args)
+    in
     match Location.unwrap p with
     | P_ctor_app
         ({ fp = { wrap_content = P_literal (Literal_string ctor_name); _ } }, args) ->
-      let args =
-        match args with
-        | [] -> None
-        | [ u ] -> Some u
-        | _ -> Some (p_tuple ~loc args)
-      in
-      p_variant ~loc (Label.of_string (Ligo_string.extract ctor_name)) args
+      p_variant ~loc (Label.of_string (Ligo_string.extract ctor_name)) (mk_args args)
+    | P_ctor_app ({ fp = { wrap_content = P_ctor ctor_name; _ } }, args) ->
+      p_variant ~loc ctor_name (mk_args args)
     | P_app (c, args) ->
       (match get_p c with
       | P_ctor c

@@ -299,6 +299,13 @@ module Typing_env = struct
     in
     Result.(
       match typed_prg with
+      (* FIXME: [Checking.type_declaration] ignores the [Ast_typed.Signature.item list]
+         that is type-checked along with the [Ast_typed.declaration list]. We are probably
+         not handling signatures in scopes. This case below is possible if a contract
+         contains just a signature. *)
+      | Ok ([], ws) ->
+        let () = List.iter ws ~f:raise.warning in
+        tenv
       | Ok (decl, ws) ->
         assert (List.length decl = 1);
         let decl = List.hd_exn decl in

@@ -174,7 +174,8 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
    (* XXX we should split generated names on '#'? Can we just extract the name somehow?
          Why [t.name] is not working?? *)
   and decompile_variant
-      : AST.Label.t -> CST.type_expr option -> AST.Attribute.t list -> CST.variant
+      :  AST.Label.t -> CST.type_expr option -> AST.Attribute.t list
+      -> CST.type_expr CST.legacy_variant
     =
    fun (AST.Label.Label constr_name) t attributes ->
     let ctor_params : (CST.comma * (CST.type_expr, CST.comma) Utils.nsep_or_term) option =
@@ -187,22 +188,16 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
           | t -> ghost_comma, `Sep (t, []))
         t
     in
-    let ctor = CST.T_String (ghost_string constr_name) in
-    let inside : CST.type_expr CST.ctor_app =
-      ( None
-      , match ctor_params with
-        | None -> ZeroArg ctor
-        | Some (comma, args) ->
-          let inside : (CST.type_expr, CST.comma) Utils.nsep_or_term =
-            Utils.nsep_or_term_cons ctor comma args
-          in
-          let args : (CST.type_expr, CST.comma) Utils.nsep_or_term CST.brackets =
-            w @@ CST.{ lbracket = ghost_lbracket; rbracket = ghost_rbracket; inside }
-          in
-          MultArg args )
+    let ctor = ghost_string constr_name in
+    let args : (CST.comma * CST.type_expr) list =
+      match ctor_params with
+      | None -> []
+      | Some (comma, args) ->
+        List.map ~f:(fun arg -> comma, arg) @@ Utils.nsep_or_term_to_list args
     in
-    let tuple : CST.type_expr CST.ctor_app Region.reg = w inside in
+    let inside : CST.type_expr CST.legacy_variant_args = { ctor; args } in
     let attributes = List.map ~f:decompile_attr attributes in
+    let tuple = w CST.{ lbracket = ghost_lbracket; inside; rbracket = ghost_rbracket } in
     { attributes; tuple }
   and decompile_field
       : AST.Label.t -> CST.type_expr -> AST.Attribute.t list -> _ CST.property
@@ -284,14 +279,17 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     | None -> failwith "Decompiler: got a T_record_raw with no fields"
     | Some nsepseq -> T_Object (mk_object nsepseq))
   | T_sum_raw variants ->
-    let f : CST.type_expr option AST.Non_linear_rows.row -> CST.variant =
+    let f : CST.type_expr option AST.Non_linear_rows.row -> CST.type_expr CST.variant_kind
+      =
      fun (constr, { associated_type; attributes; _ }) ->
-      decompile_variant constr associated_type attributes
+      Legacy (w @@ decompile_variant constr associated_type attributes)
     in
     (match Utils.list_to_sepseq (List.map ~f variants) ghost_vbar with
     | None -> failwith "Decompiler: got a T_sum_raw with no fields"
     | Some nsepseq ->
-      let variant : (CST.variant, CST.vbar) Utils.nsep_or_pref = `Sep nsepseq in
+      let variant : (CST.type_expr CST.variant_kind, CST.vbar) Utils.nsep_or_pref =
+        `Sep nsepseq
+      in
       T_Variant (w variant))
   | T_disc_union objects ->
     let f : CST.type_expr AST.Non_linear_disc_rows.row -> CST.type_expr CST._object =
@@ -310,15 +308,17 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_sum { fields; layout = _ } ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
          T_record -> T_record_raw is not implemented, so we need to handle those here*)
-    let f : AST.Label.t * CST.type_expr -> CST.variant =
-     fun (constr, t) -> decompile_variant constr (Some t) []
+    let f : AST.Label.t * CST.type_expr -> CST.type_expr CST.variant_kind =
+     fun (constr, t) -> Legacy (w @@ decompile_variant constr (Some t) [])
     in
     let pairs =
       match Utils.list_to_sepseq (AST.Label.Map.to_alist fields) ghost_vbar with
       | None -> failwith "Decompiler: got a T_sum with no elements"
       | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
-    let variant : (CST.variant, CST.vbar) Utils.nsep_or_pref = `Sep pairs in
+    let variant : (CST.type_expr CST.variant_kind, CST.vbar) Utils.nsep_or_pref =
+      `Sep pairs
+    in
     T_Variant (w variant)
   | T_record { fields; layout = _ } ->
     let f : AST.Label.t * CST.type_expr -> CST.type_expr CST.property CST.reg =
