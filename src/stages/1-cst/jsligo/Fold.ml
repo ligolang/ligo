@@ -9,6 +9,7 @@ type _ sing =
     S_all_cases : all_cases sing
   | S_all_match_clauses : all_match_clauses sing
   | S_app : 'a sing -> 'a app sing
+  | S_arrow_fun_params : arrow_fun_params sing
   | S_sharp : sharp sing
   | S_arguments : arguments sing
   | S_array : 'a sing -> 'a _array sing
@@ -38,6 +39,8 @@ type _ sing =
   | S_bool_xor : bool_xor sing
   | S_braces : 'a sing -> 'a braces sing
   | S_braces' : 'a sing -> 'a braces' sing
+  | S_bracketed_variant : 'a sing -> 'a bracketed_variant sing
+  | S_bracketed_variant_args : 'a sing -> 'a bracketed_variant_args sing
   | S_brackets : 'a sing -> 'a brackets sing
   | S_brackets' : 'a sing -> 'a brackets' sing
   | S_bytes_literal : bytes_literal sing
@@ -54,6 +57,7 @@ type _ sing =
   | S_cst : CST.t sing
   | S_ctor : ctor sing
   | S_ctor_app : 'a sing -> 'a ctor_app sing
+  | S_ctor_app_kind : ctor_app_kind sing
   | S_declaration : declaration sing
   | S_decrement : decrement sing
   | S_directive : Directive.t sing
@@ -64,7 +68,6 @@ type _ sing =
   | S_equal : equal sing
   | S_equal_cmp : equal_cmp sing
   | S_expr : expr sing
-  | S_false : false_const sing
   | S_file_path : file_path sing
   | S_for_of_stmt : for_of_stmt sing
   | S_for_stmt : for_stmt sing
@@ -73,7 +76,8 @@ type _ sing =
   | S_function_expr : function_expr sing
   | S_fun_name : fun_name sing
   | S_fun_params : fun_params sing
-  | S_arrow_fun_params : arrow_fun_params sing
+  | S_generic : generic sing
+  | S_generics : generics sing
   | S_fun_type : fun_type sing
   | S_fun_type_param : fun_type_param sing
   | S_fun_type_params : fun_type_params sing
@@ -106,6 +110,7 @@ type _ sing =
   | S_kwd_do : kwd_do sing
   | S_kwd_else : kwd_else sing
   | S_kwd_export : kwd_export sing
+  | S_kwd_false : kwd_false sing
   | S_kwd_for : kwd_for sing
   | S_kwd_from : kwd_from sing
   | S_kwd_function : kwd_function sing
@@ -120,12 +125,15 @@ type _ sing =
   | S_kwd_parameter_of : kwd_parameter_of sing
   | S_kwd_return : kwd_return sing
   | S_kwd_switch : kwd_switch sing
+  | S_kwd_true : kwd_true sing
   | S_kwd_type : kwd_type sing
   | S_kwd_when : kwd_when sing
   | S_kwd_while : kwd_while sing
   | S_language : language sing
   | S_lbrace : lbrace sing
   | S_lbracket : lbracket sing
+  | S_legacy_variant : 'a sing -> 'a legacy_variant sing
+  | S_legacy_variant_args : 'a sing -> 'a legacy_variant_args sing
   | S_leq : leq sing
   | S_lexeme : lexeme sing
   | S_list : 'a sing -> 'a list sing
@@ -187,7 +195,6 @@ type _ sing =
   | S_ternary : ternary sing
   | S_times : times sing
   | S_times_eq : times_eq sing
-  | S_true : true_const sing
   | S_type_annotation : type_annotation sing
   | S_type_ctor : type_ctor sing
   | S_type_ctor_args : type_ctor_args sing
@@ -195,7 +202,6 @@ type _ sing =
   | S_type_expr : type_expr sing
   | S_type_name : type_name sing
   | S_type_var : type_var sing
-  | S_type_vars : type_vars sing
   | S_typed_expr : typed_expr sing
   | S_typed_pattern : typed_pattern sing
   | S_un_op : 'a sing -> 'a un_op sing
@@ -205,7 +211,8 @@ type _ sing =
   | S_value_decl : value_decl sing
   | S_var_kind : var_kind sing
   | S_variable : variable sing
-  | S_variant : variant sing
+  | S_variant : 'a sing -> 'a variant sing
+  | S_variant_kind : 'a sing -> 'a variant_kind sing
   | S_variant_type : variant_type sing
   | S_vbar : vbar sing
   | S_verbatim_literal : verbatim_literal sing
@@ -277,6 +284,17 @@ let fold'
     [ lbrace -| S_lbrace
     ; inside -| sing
     ; rbrace -| S_rbrace ]
+  | S_bracketed_variant sing ->
+    let { attributes; sharp; tuple } = node in
+    process_list
+    [ attributes -| S_list S_attribute
+    ; sharp -| S_sharp
+    ; tuple -| S_brackets (S_bracketed_variant_args sing)]
+  | S_bracketed_variant_args sing ->
+    let ({ ctor; args } : _ bracketed_variant_args) = node in
+    process_list
+    [ ctor -| sing
+    ; args -| S_option (S_array_2 (S_comma, S_sep_or_term (sing, S_comma)))]
   | S_brackets sing -> process @@ node -| S_reg (S_brackets' sing)
   | S_brackets' sing -> let { lbracket; inside; rbracket } = node in
     process_list
@@ -317,23 +335,31 @@ let fold'
     process_list
     [ statements -| S_nseq (S_array_2 (S_statement, S_option S_semi))
     ; eof -| S_eof ]
-  | S_ctor ->process @@  node -| S_wrap S_lexeme
+  | S_ctor -> process @@ node -| S_wrap S_lexeme
   | S_ctor_app sing ->
     let sharp, app = node in
     process_list
     [ sharp -| S_option S_sharp
     ; app -| S_app sing
     ]
+  | S_ctor_app_kind ->
+    ( match node with
+        CtorStr  node -> process @@ node -| S_string_literal
+      | CtorName node -> process @@ node -| S_ctor)
   | S_do_expr ->
      let {kwd_do; statements} = node in
      process_list
      [ kwd_do -| S_kwd_do
      ; statements -| S_braces S_statements
      ]
-  | S_app sing -> process
+  | S_app sing ->
     ( match node with
-        ZeroArg node -> node -| sing
-      | MultArg node -> node -| S_brackets (S_nsep_or_term (sing, S_comma)))
+        ZeroArg node -> process @@ node -| S_ctor_app_kind
+      | MultArg (ctor, node) ->
+          process_list
+          [ ctor -| S_ctor_app_kind
+          ; node -| S_par (S_nsep_or_term (sing, S_comma))
+          ])
   | S_declaration -> process
     ( match node with
         D_Fun node -> node -| S_reg S_fun_decl
@@ -376,12 +402,12 @@ let fold'
     | E_Bytes node -> node -| S_bytes_literal
     | E_CodeInj node -> node -| S_reg S_code_inj
     | E_ContractOf node -> node -| S_reg S_contract_of_expr
-    | E_CtorApp node -> node -| S_reg (S_ctor_app S_expr)
+    | E_CtorApp node -> node -| S_variant_kind S_expr
     | E_Div node -> node -| S_reg (S_bin_op S_slash)
     | E_DivEq node -> node -| S_reg (S_bin_op S_div_eq)
     | E_Do node -> node -| S_reg S_do_expr
     | E_Equal node -> node -| S_reg (S_bin_op S_equal_cmp)
-    | E_False node -> node -| S_false
+    | E_False node -> node -| S_kwd_false
     | E_Function node -> node -| S_reg (S_function_expr)
     | E_Geq node -> node -| S_reg (S_bin_op S_geq)
     | E_Gt node -> node -| S_reg (S_bin_op S_gt)
@@ -411,14 +437,13 @@ let fold'
     | E_Sub node -> node -| S_reg (S_bin_op S_minus)
     | E_SubEq node -> node -| S_reg (S_bin_op S_minus_eq)
     | E_Ternary node -> node -| S_reg S_ternary
-    | E_True node -> node -| S_true
+    | E_True node -> node -| S_kwd_true
     | E_Typed node -> node -| S_reg S_typed_expr
     | E_Update node -> node -| S_braces S_update_expr
     | E_Var node -> node -| S_variable
     | E_Verbatim node -> node -| S_verbatim_literal
     | E_Xor node -> node -| S_reg (S_bin_op S_bool_xor)
     )
-  | S_false -> process @@ node -| S_wrap S_lexeme
   | S_file_path -> process @@ node -| S_wrap S_lexeme
   | S_for_of_stmt -> let { kwd_for; range; for_of_body } = node in
     process_list
@@ -438,29 +463,29 @@ let fold'
     | ExprBody node -> node -| S_expr )
   | S_fun_name -> process @@ node -| S_wrap S_lexeme
   | S_function_expr ->
-    let { kwd_function; type_vars; parameters; rhs_type; fun_body } = node in
+    let { kwd_function; generics; parameters; rhs_type; fun_body } = node in
     process_list
     [ kwd_function -| S_kwd_function
-    ; type_vars -| S_option S_type_vars
+    ; generics -| S_option S_generics
     ; parameters -| S_arrow_fun_params
     ; rhs_type -| S_option (S_array_2 (S_colon, S_type_expr))
     ; fun_body -| S_fun_body ]
   | S_fun_decl ->
-    let {kwd_function; fun_name; type_vars; parameters;
+    let {kwd_function; fun_name; generics; parameters;
          rhs_type; fun_body } = node in
     process_list
     [ kwd_function -| S_kwd_function
     ; fun_name -| S_fun_name
-    ; type_vars -| S_option S_type_vars
+    ; generics -| S_option S_generics
     ; parameters -| S_fun_params
     ; rhs_type -| S_option (S_array_2 (S_colon, S_type_expr))
     ; fun_body -| S_braces S_statements ]
   | S_fun_params ->
       process @@ node -| S_par (S_sep_or_term (S_pattern, S_comma))
   | S_arrow_fun_expr ->
-    let { type_vars; parameters; rhs_type; arrow; fun_body } = node in
+    let { generics; parameters; rhs_type; arrow; fun_body } = node in
     process_list
-    [ type_vars -| S_option S_type_vars
+    [ generics -| S_option S_generics
     ; parameters -| S_arrow_fun_params
     ; rhs_type -| S_option (S_array_2 (S_colon, S_type_expr))
     ; arrow -| S_arrow
@@ -469,6 +494,8 @@ let fold'
   | S_fun_type_param -> process @@ node -| S_array_2 (S_pattern, S_type_annotation)
   | S_fun_type_params ->
       process @@ node -| S_par (S_sep_or_term (S_reg S_fun_type_param, S_comma))
+  | S_generic -> process @@ node -| S_wrap S_lexeme
+  | S_generics -> process @@ node -| S_chevrons (S_sep_or_term (S_generic, S_comma))
   | S_geq -> process @@ node -| S_wrap S_lexeme
   | S_gt -> process @@ node -| S_wrap S_lexeme
   | S_hex -> () (* Leaf *)
@@ -539,6 +566,7 @@ let fold'
   | S_kwd_default -> process @@ node -| S_wrap S_lexeme
   | S_kwd_else -> process @@ node -| S_wrap S_lexeme
   | S_kwd_export -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_false -> process @@ node -| S_wrap S_lexeme
   | S_kwd_for -> process @@ node -| S_wrap S_lexeme
   | S_kwd_from -> process @@ node -| S_wrap S_lexeme
   | S_kwd_if -> process @@ node -| S_wrap S_lexeme
@@ -552,12 +580,23 @@ let fold'
   | S_kwd_parameter_of -> process @@ node -| S_wrap S_lexeme
   | S_kwd_return -> process @@ node -| S_wrap S_lexeme
   | S_kwd_switch -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_true -> process @@ node -| S_wrap S_lexeme
   | S_kwd_type -> process @@ node -| S_wrap S_lexeme
   | S_kwd_when -> process @@ node -| S_wrap S_lexeme
   | S_kwd_while -> process @@ node -| S_wrap S_lexeme
   | S_language -> process @@ node -| S_wrap S_lexeme
   | S_lbrace -> process @@ node -| S_wrap S_lexeme
   | S_lbracket -> process @@ node -| S_wrap S_lexeme
+  | S_legacy_variant sing ->
+    let {attributes; tuple} = node in
+    process_list
+    [ attributes -| S_list S_attribute
+    ; tuple -| S_brackets (S_legacy_variant_args sing)]
+  | S_legacy_variant_args sing ->
+    let {ctor; args} = node in
+    process_list
+    [ ctor -| S_string_literal
+    ; args -| S_list (S_array_2 (S_comma, sing))]
   | S_leq -> process @@ node -| S_wrap S_lexeme
   | S_lexeme -> () (* Leaf *)
   | S_list sing -> process_list @@ List.map ~f:(fun x -> x -| sing) node
@@ -654,15 +693,15 @@ let fold'
       P_Attr node -> node -| S_array_2 (S_attribute, S_pattern)
     | P_Array node -> node -| S_array S_pattern
     | P_Bytes node -> node -| S_bytes_literal
-    | P_CtorApp node -> node -| S_reg (S_ctor_app S_pattern)
-    | P_False node -> node -| S_false
+    | P_CtorApp node -> node -| S_variant_kind S_pattern
+    | P_False node -> node -| S_kwd_false
     | P_Int node -> node -| S_int_literal
     | P_Mutez node -> node -| S_mutez_literal
     | P_NamePath node -> node -| S_reg (S_namespace_path S_pattern)
     | P_Nat node -> node -| S_nat_literal
     | P_Object node -> node -| S_object S_pattern
     | P_String node -> node -| S_string_literal
-    | P_True node -> node -| S_true
+    | P_True node -> node -| S_kwd_true
     | P_Typed node -> node -| S_reg S_typed_pattern
     | P_Var node -> node -| S_variable
     | P_Verbatim node -> node -| S_verbatim_literal
@@ -754,7 +793,6 @@ let fold'
     ; falsy -| S_expr ]
   | S_times -> process @@ node -| S_wrap S_lexeme
   | S_times_eq -> process @@ node -| S_wrap S_lexeme
-  | S_true -> process @@ node -| S_wrap S_lexeme
   | S_array sing -> process @@ node -| S_brackets (S_sep_or_term (S_element sing, S_comma))
   | S_array_2 (sing_1, sing_2) ->
     ( match node with
@@ -777,11 +815,11 @@ let fold'
   | S_type_annotation -> process @@ node -| S_array_2 (S_colon, S_type_expr)
   | S_type_ctor -> process @@ node -| S_wrap S_lexeme
   | S_type_ctor_args -> process @@ node -| S_chevrons (S_nsep_or_term (S_type_expr, S_comma))
-  | S_type_decl -> let { kwd_type; name; type_vars; eq; type_expr } = node in
+  | S_type_decl -> let { kwd_type; name; generics; eq; type_expr } = node in
     process_list
     [ kwd_type -| S_kwd_type
     ; name -| S_type_name
-    ; type_vars -| S_option S_type_vars
+    ; generics -| S_option S_generics
     ; eq -| S_equal
     ; type_expr -| S_type_expr ]
   | S_type_expr -> process
@@ -797,11 +835,10 @@ let fold'
     | T_ParameterOf node -> node -| S_reg S_parameter_of_type
     | T_String node -> node -| S_string_literal
     | T_Union node -> node -| S_union_type
-    | T_Var node -> node -| S_variable
+    | T_Var node -> node -| S_type_var
     | T_Variant node -> node -| S_variant_type )
   | S_type_name -> process @@ node -| S_wrap S_lexeme
   | S_type_var -> process @@ node -| S_wrap S_lexeme
-  | S_type_vars -> process @@ node -| S_chevrons (S_sep_or_term (S_type_var, S_comma))
   | S_typed_expr -> process @@ node -| S_array_3 (S_expr, S_kwd_as, S_type_expr)
   | S_typed_pattern -> process @@ node -| S_array_2 (S_pattern, S_type_annotation)
   | S_un_op sing -> let { op; arg } = node in
@@ -815,10 +852,10 @@ let fold'
     ; _object -| S_expr
     ; sep -| S_property_sep
     ; updates -| S_sep_or_term (S_reg (S_property S_expr), S_semi) ]
-  | S_val_binding -> let { pattern; type_vars; rhs_type; eq; rhs_expr } = node in
+  | S_val_binding -> let { pattern; generics; rhs_type; eq; rhs_expr } = node in
     process_list
     [ pattern -| S_pattern
-    ; type_vars -| S_option S_type_vars
+    ; generics -| S_option S_generics
     ; rhs_type -| S_option S_type_annotation
     ; eq -| S_equal
     ; rhs_expr -| S_expr ]
@@ -832,11 +869,17 @@ let fold'
     | `Const node -> node -| S_kwd_const
     )
   | S_variable -> process @@ node -| S_wrap S_lexeme
-  | S_variant -> let { attributes; tuple } = node in
+  | S_variant sing ->
+    let ({ attributes; tuple } : _ variant) = node in
     process_list
     [ attributes -| S_list S_attribute
-    ; tuple -| S_reg (S_ctor_app S_type_expr)]
-  | S_variant_type -> process @@ node -| S_reg (S_nsep_or_pref (S_variant, S_vbar))
+    ; tuple -| S_ctor_app sing]
+  | S_variant_kind sing -> process
+    ( match node with
+        Variant   node -> node -| S_reg (S_variant sing)
+      | Bracketed node -> node -| S_reg (S_bracketed_variant sing)
+      | Legacy    node -> node -| S_reg (S_legacy_variant sing))
+  | S_variant_type -> process @@ node -| S_reg (S_nsep_or_pref (S_variant_kind S_type_expr, S_vbar))
   | S_vbar -> process @@ node -| S_wrap S_lexeme
   | S_verbatim_literal -> process @@ node -| S_wrap S_lexeme
   | S_while_stmt -> let { kwd_while; invariant; while_body } = node in

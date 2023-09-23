@@ -223,6 +223,8 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
 
 let print_ident (node : variable) = token node
 
+let print_ctor (node : ctor) = token node
+
 let print_string (node : lexeme wrap) = dquotes (print_ident node)
 
 and print_verbatim (node : lexeme wrap) = bquotes (print_ident node)
@@ -328,21 +330,21 @@ and print_declaration state = function
 (* Function declaration *)
 
 and print_D_Fun state (node : fun_decl reg) =
-  let {kwd_function; fun_name; type_vars;
+  let {kwd_function; fun_name; generics;
        parameters; rhs_type; fun_body} = node.value in
   let thread = token kwd_function ^^ space ^^ print_ident fun_name in
-  let thread = thread ^^ print_type_vars_opt state type_vars in
+  let thread = thread ^^ print_generics_opt state generics in
   let thread = thread ^^ print_fun_params state parameters in
   let thread = thread ^^ print_type_annotation_opt state rhs_type
   in group (thread ^^ space ^^ print_block state fun_body)
 
-and print_type_vars_opt state (node : type_vars option) =
-  Option.value_map node ~default:empty ~f:(print_type_vars state)
+and print_generics_opt state (node : generics option) =
+  Option.value_map node ~default:empty ~f:(print_generics state)
 
-and print_type_var (node : type_var) = print_ident node
+and print_generic (node : generic) = print_ident node
 
-and print_type_vars state (node : type_vars) =
-  print_chevrons state (print_sep_or_term (break 1) print_type_var) node
+and print_generics state (node : generics) =
+  print_chevrons state (print_sep_or_term (break 1) print_generic) node
 
 and print_fun_params state (node : fun_params) =
   if Option.is_some node.value.inside then
@@ -472,9 +474,9 @@ and print_I_Path state (node : namespace_selection) =
 (* Type declarations *)
 
 and print_D_Type state (node : type_decl reg) =
-  let {kwd_type; name; type_vars; eq; type_expr} = node.value in
+  let {kwd_type; name; generics; eq; type_expr} = node.value in
   let thread = token kwd_type ^^ space ^^ token name in
-  let thread = thread ^^ print_type_vars_opt state type_vars in
+  let thread = thread ^^ print_generics_opt state generics in
   let rhs = print_type_expr state type_expr in
   group (thread ^^
          if is_enclosed_type type_expr
@@ -494,7 +496,7 @@ and print_var_kind = function
 | `Const kwd_const -> token kwd_const
 
 and print_val_binding state (node : val_binding reg) =
-  let {pattern; type_vars; rhs_type; eq; rhs_expr} = node.value in
+  let {pattern; generics; rhs_type; eq; rhs_expr} = node.value in
   (* In case the RHS is a lambda function, we want to try to display
      it in the same line instead of causing a line break. For example,
      we want to see this:
@@ -767,8 +769,8 @@ and print_arrow_fun_params state = function
 | NakedParam node -> print_pattern state node
 
 and print_E_ArrowFun state (node : arrow_fun_expr reg) =
-  let {type_vars; parameters; rhs_type; arrow; fun_body} = node.value in
-  let thread = print_type_vars_opt state type_vars in
+  let {generics; parameters; rhs_type; arrow; fun_body} = node.value in
+  let thread = print_generics_opt state generics in
   let thread = thread ^^ print_arrow_fun_params state parameters in
   let thread = thread ^^ print_type_annotation_opt state rhs_type in
   let lhs    = thread ^^ space ^^ token arrow ^^ space
@@ -863,34 +865,8 @@ and print_E_ContractOf state (node : contract_of_expr reg) =
 
 (* Constructor application *)
 
-and print_E_CtorApp state (node : expr ctor_app reg) =
-  print_ctor_app state print_ctor_expr print_expr node
-
-and print_ctor_app :
-  'a.state -> (state -> 'a -> document) -> (state -> 'a -> document) ->
-  'a ctor_app reg -> document =
-  fun state print_ctor print node ->
-    match snd node.value with
-      ZeroArg ctor -> print_ctor state ctor ^^ string "()"
-    | MultArg args ->
-        match args.value.inside with
-          `Sep (ctor, []) -> print_ctor state ctor
-        | `Term ((ctor,_), []) -> print_ctor state ctor
-        | `Sep (ctor, (_,arg)::args) ->
-             print_ctor state ctor
-             ^^ print_ctor_args (print state) (arg, args)
-        | `Term ((ctor,_), (arg,_)::args) ->
-            let args = List.map ~f:(fun (x,y) -> (y,x)) args in
-            print_ctor state ctor
-            ^^ print_ctor_args (print state) (arg, args)
-
-and print_ctor_expr state = function
-  E_String s -> string s#payload
-| expr -> print_expr state expr (* Should not happen *)
-
-and print_ctor_args :
-  'a.('a -> document) -> ('a,'sep) Utils.nsepseq -> document =
-  fun print seq -> string "(" ^^ print_nsepseq (break 1) print seq ^^ string ")"
+and print_E_CtorApp state (node : expr variant_kind) =
+  print_variant_kind print_expr state node
 
 (* Euclidean division *)
 
@@ -913,19 +889,19 @@ and print_E_Equal state (node : equal bin_op reg) = print_bin_op state node
 
 (* Logical falsity *)
 
-and print_false (node : false_const) = token node
+and print_false (node : kwd_false) = token node
 
-and print_E_False (node : false_const) = print_false node
+and print_E_False (node : kwd_false) = print_false node
 
 (* Function expression *)
 
 and print_E_Function state (node : function_expr reg) =
-  let {kwd_function; type_vars; parameters; rhs_type; fun_body} = node.value in
+  let {kwd_function; generics; parameters; rhs_type; fun_body} = node.value in
   let kwd_function = token kwd_function in
-  let type_vars    = print_type_vars_opt state type_vars in
+  let generics     = print_generics_opt state generics in
   let parameters   = print_arrow_fun_params state parameters in
   let rhs_type     = print_type_annotation_opt state rhs_type in
-  let lhs = type_vars ^^ parameters ^^ rhs_type in
+  let lhs = generics ^^ parameters ^^ rhs_type in
   let thread =
     kwd_function ^/^
     match fun_body with
@@ -1144,9 +1120,9 @@ and print_E_Ternary state (node : ternary reg) =
 
 (* Logical truth *)
 
-and print_true (node : true_const) = token node
+and print_true (node : kwd_true) = token node
 
-and print_E_True (node : true_const) = print_true node
+and print_E_True (node : kwd_true) = print_true node
 
 (* Typed expressions *)
 
@@ -1225,16 +1201,12 @@ and print_P_Bytes (node : (lexeme * Hex.t) wrap) = print_bytes node
 
 (* Pattern for constructor application *)
 
-and print_P_CtorApp state (node : pattern ctor_app reg) =
-  print_ctor_app state print_ctor_pattern print_pattern node
-
-and print_ctor_pattern state = function
-  P_String s -> string s#payload
-| pattern -> print_pattern state pattern (* Should not happen *)
+and print_P_CtorApp state (node : pattern variant_kind) =
+  print_variant_kind print_pattern state node
 
 (* Logical false pattern *)
 
-and print_P_False (node : false_const) = print_false node
+and print_P_False (node : kwd_false) = print_false node
 
 (* Integer in a pattern *)
 
@@ -1264,7 +1236,7 @@ and print_P_String (node : lexeme wrap) = print_string node
 
 (* Logical truth pattern *)
 
-and print_P_True (node : true_const) = print_true node
+and print_P_True (node : kwd_true) = print_true node
 
 (* Typed patterns *)
 
@@ -1439,22 +1411,69 @@ and print_T_Var (node : variable) = print_ident node
 
 (* Variant type *)
 
-and print_variant state (node : variant) =
-  let {tuple; attributes} = node in
-  let sharp, app = tuple.value in
+and print_variant_kind : 'a. (state -> 'a -> document) -> state -> 'a variant_kind -> document =
+ fun printer state node ->
+  match node with
+    Variant node -> print_variant printer state node
+  | Bracketed node -> print_bracketed_variant printer state node
+  | Legacy  node -> print_legacy_variant printer state node
+
+and print_variant : 'a. (state -> 'a -> document) -> state -> 'a variant reg -> document =
+ fun printer state node ->
+  let ({tuple; attributes} : 'a variant) = node.value in
+  let sharp, app = tuple in
   let tuple = Option.value_map ~default:empty ~f:token sharp
-              ^^ print_app state print_type_expr app
+              ^^ print_app state printer app
   in group (print_attributes state tuple attributes)
+
+and print_bracketed_variant : 'a. (state -> 'a -> document) -> state -> 'a bracketed_variant reg -> document =
+ fun printer state node ->
+  let {attributes; sharp; tuple} = node.value in
+  let attributes = print_attributes state empty attributes in
+  let sharp = token sharp in
+  let tuple = print_brackets state (print_bracketed_variant_args printer state) tuple
+  in group (attributes ^^ sharp ^^ tuple)
+
+and print_bracketed_variant_args : 'a. (state -> 'a -> document) -> state -> 'a bracketed_variant_args -> document =
+ fun printer state node ->
+  let {ctor; args} : 'a bracketed_variant_args = node in
+  let args =
+    match args with
+      None -> empty
+    | Some (comma, args) -> token comma ^/^ print_sep_or_term (break 1) (printer state) args
+  in printer state ctor ^^ args
+
+and print_legacy_variant : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant reg -> document =
+ fun printer state node ->
+  let {attributes; tuple} = node.value in
+  let tuple = print_legacy_variant_args printer state tuple in
+  print_attributes state tuple attributes
+
+and print_legacy_variant_args : 'a. (state -> 'a -> document) -> state -> 'a legacy_variant_args brackets -> document =
+ fun printer state ->
+  print_brackets state (fun inside ->
+    let {ctor; args} = inside in
+    let ctor = print_string ctor in
+    let rec separate_map = function
+      []            -> empty
+    | (sep', x)::xs -> token ~sep:(break 1) sep' ^^ printer state x ^^ separate_map xs
+    in ctor ^^ separate_map args)
 
 and print_app :
   'a.state -> (state -> 'a -> document) -> 'a app -> document =
   fun state print -> function
-    ZeroArg ctor  -> print state ctor
-  | MultArg args -> let seq = print_nsep_or_term (break 1) (print state)
-                    in print_brackets state seq args
+    ZeroArg ctor -> print_ctor_app_kind ctor
+  | MultArg (ctor, args) ->
+      print_ctor_app_kind ctor
+      ^^ print_par state (print_nsep_or_term (break 1) (print state)) args
+
+and print_ctor_app_kind (node : ctor_app_kind) =
+  match node with
+    CtorStr  node -> print_string node
+  | CtorName node -> print_ctor node
 
 and print_variant_type state (node : variant_type) =
-  print_variant_or_union_type state print_variant node
+  print_variant_or_union_type state (print_variant_kind print_type_expr) node
 
 and print_T_Variant state (node : variant_type) = print_variant_type state node
 

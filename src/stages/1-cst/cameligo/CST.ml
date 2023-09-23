@@ -115,12 +115,16 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type variable    = lexeme wrap
-type module_name = lexeme wrap
-type field_name  = lexeme wrap
-type ctor        = lexeme wrap
-type language    = lexeme Region.reg wrap
-type attribute   = Attr.t wrap
+type attribute     = Attr.t wrap
+type ctor          = lexeme wrap
+type field_name    = lexeme wrap
+type language      = lexeme Region.reg wrap
+type module_name   = lexeme wrap
+type string_       = lexeme wrap
+type type_name     = lexeme wrap
+type type_variable = lexeme wrap
+type variable      = lexeme wrap
+type verbatim      = lexeme wrap
 
 type string_literal   = lexeme wrap
 type int_literal      = (lexeme * Z.t) wrap
@@ -128,8 +132,6 @@ type nat_literal      = int_literal
 type bytes_literal    = (lexeme * Hex.t) wrap
 type mutez_literal    = (lexeme * Int64.t) wrap
 type verbatim_literal = lexeme wrap
-type false_const      = lexeme wrap
-type true_const       = lexeme wrap
 
 (* Parentheses, braces, brackets *)
 
@@ -177,7 +179,7 @@ and let_binding = {
 
 (* Type parameters *)
 
-and type_params = kwd_type * variable nseq
+and type_params = kwd_type * type_variable nseq
 
 (* Module declaration *)
 
@@ -228,8 +230,8 @@ and signature_expr =
 
 and sig_item =
   S_Value   of (kwd_val * variable * colon * type_expr) reg
-| S_Type    of (kwd_type * variable * equal * type_expr) reg
-| S_TypeVar of (kwd_type * variable) reg
+| S_Type    of (kwd_type * type_name * equal * type_expr) reg
+| S_TypeVar of (kwd_type * type_name) reg
 | S_Attr    of (attribute * sig_item) reg
 
 (* Module paths *)
@@ -245,7 +247,7 @@ and 'a module_path = {
 and type_decl = {
   kwd_type  : kwd_type;
   params    : type_vars option;
-  name      : variable;
+  name      : type_name;
   eq        : equal;
   type_expr : type_expr
 }
@@ -254,7 +256,7 @@ and type_vars =
   TV_Single of type_var
 | TV_Tuple  of type_var tuple par
 
-and type_var = (quote option * variable) reg  (* 'a or ' a or _ *)
+and type_var = (quote option * type_variable) reg  (* 'a or ' a or _ *)
 
 and 'a tuple = ('a, comma) nsepseq
 
@@ -275,7 +277,7 @@ and type_expr =
 | T_ParameterOf of (module_name, dot) nsepseq reg  (* parameter_of m  *)
 | T_Record      of field_decl reg record           (* {a; [@x] b: t}  *)
 | T_String      of string_literal                  (* "x"             *)
-| T_Var         of variable                        (* x               *)
+| T_Var         of type_variable                   (* x               *)
 | T_Variant     of variant_type reg                (* [@a] A | B of t *)
 
 (* Type application *)
@@ -324,7 +326,7 @@ and pattern =
 | P_Bytes    of bytes_literal                   (* 0xFFFA    *)
 | P_Cons     of (pattern * cons * pattern) reg  (* x :: y    *)
 | P_Ctor     of ctor                            (* C         *)
-| P_False    of false_const                     (* false     *)
+| P_False    of kwd_false                       (* false     *)
 | P_Int      of int_literal                     (* 42        *)
 | P_List     of pattern list_                   (* [x; 4]    *)
 | P_ModPath  of pattern module_path reg         (* M.N.x     *)
@@ -333,7 +335,7 @@ and pattern =
 | P_Par      of pattern par                     (* (C, 4)    *)
 | P_Record   of record_pattern                  (* {x=y; z}  *)
 | P_String   of string_literal                  (* "string"  *)
-| P_True     of true_const                      (* true      *)
+| P_True     of kwd_true                        (* true      *)
 | P_Tuple    of pattern tuple reg               (* 1, x      *)
 | P_Typed    of typed_pattern reg               (* (x : int) *)
 | P_Unit     of the_unit reg                    (* ()        *)
@@ -392,7 +394,7 @@ and expr =
 | E_Ctor       of ctor                     (* C                   *)
 | E_Div        of slash bin_op reg         (* x / y               *)
 | E_Equal      of equal bin_op reg         (* x = y               *)
-| E_False      of false_const              (* false               *)
+| E_False      of kwd_false                (* false               *)
 | E_For        of for_loop reg   (* for x = e1 upto e2 do e3 done *)
 | E_ForIn      of for_in_loop reg       (* for x in e1 do e2 done *)
 | E_Fun        of fun_expr reg             (* fun x -> x          *)
@@ -427,7 +429,7 @@ and expr =
 | E_Seq        of sequence_expr reg        (* x; 3                *)
 | E_String     of string_literal           (* "string"            *)
 | E_Sub        of minus bin_op reg         (* a - b               *)
-| E_True       of true_const               (* true                *)
+| E_True       of kwd_true                 (* true                *)
 | E_Tuple      of expr tuple reg           (* (1, x)              *)
 | E_Typed      of typed_expr par           (* (x : int)           *)
 | E_TypeIn     of type_in reg              (* type t = u in e     *)

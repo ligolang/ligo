@@ -685,7 +685,7 @@ and print_P_Ctor (node : ctor) = print_ident node
 
 (* "false" as pattern *)
 
-and print_P_False (node : false_const) = print_ident node
+and print_P_False (node : kwd_false) = print_ident node
 
 (* Integer in a pattern *)
 
@@ -757,7 +757,7 @@ and print_P_String (node : lexeme wrap) = print_string node
 
 (* "true" as pattern *)
 
-and print_P_True (node : true_const) = print_ident node
+and print_P_True (node : kwd_true) = print_ident node
 
 (* Tuple patterns *)
 
@@ -955,7 +955,7 @@ and print_E_Equal state (node : equal bin_op reg) = print_bin_op state node
 
 (* "false" as expression *)
 
-and print_E_False (node : false_const) = print_ident node
+and print_E_False (node : kwd_false) = print_ident node
 
 (* For loop *)
 
@@ -1191,7 +1191,7 @@ and print_E_Sub state (node : minus bin_op reg) = print_bin_op state node
 
 (* "true" as expression *)
 
-and print_E_True (node : true_const) = print_ident node
+and print_E_True (node : kwd_true) = print_ident node
 
 (* Tuple expression *)
 

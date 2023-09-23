@@ -25,6 +25,7 @@ type _ sing =
   | S_case_clause : 'a sing -> 'a case_clause sing
   | S_chevrons : 'a sing -> 'a chevrons sing
   | S_code_inj : code_inj sing
+  | S_collection : collection sing
   | S_colon : colon sing
   | S_comma : comma sing
   | S_compound : 'a sing -> 'a compound sing
@@ -140,7 +141,7 @@ type _ sing =
   | S_slash_eq : slash_eq sing
   | S_statement : statement sing
   | S_statements : statements sing
-  | S_string : string sing
+  | S_string : string_ sing
   | S_sum_type : sum_type sing
   | S_test_clause : test_clause sing
   | S_times : times sing
@@ -148,11 +149,11 @@ type _ sing =
   | S_tuple : 'a sing -> 'a tuple sing
   | S_tuple_2 : 'a sing * 'b sing -> ('a * 'b) sing
   | S_tuple_3 : 'a sing * 'b sing * 'c sing -> ('a * 'b * 'c) sing
-  | S_tuple_4 :
-    'a sing * 'b sing * 'c sing * 'd sing -> ('a * 'b * 'c * 'd) sing
+  | S_tuple_4 : 'a sing * 'b sing * 'c sing * 'd sing -> ('a * 'b * 'c * 'd) sing
   | S_type_annotation : type_annotation sing
   | S_type_decl : type_decl sing
   | S_type_expr : type_expr sing
+  | S_type_name : type_name sing
   | S_type_params : type_params sing
   | S_type_tuple : type_tuple sing
   | S_typed_expr : typed_expr sing
@@ -164,6 +165,7 @@ type _ sing =
   | S_variant : variant sing
   | S_vbar : vbar sing
   | S_vbar_eq : vbar_eq sing
+  | S_verbatim : verbatim sing
   | S_while_loop : while_loop sing
   | S_wrap : 'a sing -> 'a wrap sing
   | S_z : Z.t sing
@@ -203,8 +205,8 @@ let fold'
   | S_bin_op sing ->
     let { op; arg1; arg2 } = node in
     process_list
-    [ op -| sing
-    ; arg1 -| S_expr
+    [ arg1 -| S_expr
+    ; op -| sing
     ; arg2 -| S_expr ]
   | S_binding ->
     let { key; arrow; value } = node in
@@ -273,12 +275,13 @@ let fold'
     [ language -| S_language
     ; code -| S_expr
     ; rbracket -| S_rbracket ]
+  | S_collection -> process @@ node -| S_wrap S_lexeme
   | S_colon -> process @@ node -| S_wrap S_lexeme
   | S_comma -> process @@ node -| S_wrap S_lexeme
   | S_compound sing ->
     let { kind; opening; elements; terminator; closing } = node in
     process_list
-    [ kind -| S_wrap S_lexeme
+    [ kind -| S_collection
     ; opening -| S_lbracket
     ; elements -| S_sepseq (sing, S_semi)
     ; terminator -| S_option S_semi
@@ -367,23 +370,23 @@ let fold'
     | E_Record node -> node -| S_record_expr
     | E_Set node -> node -| S_reg (S_compound S_expr)
     | E_SetMem node -> node -| S_reg S_set_membership
-    | E_String node -> node -| S_wrap S_lexeme
+    | E_String node -> node -| S_string
     | E_Sub node -> node -| S_reg (S_bin_op  S_minus)
     | E_Tuple node -> node -| S_tuple S_expr
     | E_Typed node -> node -| S_reg (S_par S_typed_expr)
     | E_Update node -> node -| S_reg S_update
     | E_Var node -> node -| S_variable
-    | E_Verbatim node -> node -| S_wrap S_lexeme)
+    | E_Verbatim node -> node -| S_verbatim)
   | S_field (sing_1, sing_2) -> process
     (match node with
       Punned node -> node -| S_punned sing_1
     | Complete node -> node -| S_full_field (sing_1, sing_2))
   | S_field_decl ->
-    let { field_name; field_type; attributes } = node in
+    let { attributes; field_name; field_type } = node in
     process_list
-    [ field_name -| S_field_name
-    ; field_type -| S_option S_type_annotation
-    ; attributes -| S_list S_attribute ]
+    [ attributes -| S_list S_attribute
+    ; field_name -| S_field_name
+    ; field_type -| S_option S_type_annotation ]
   | S_field_lens -> process
     (match node with
       Lens_Id node -> node -| S_assign
@@ -430,12 +433,12 @@ let fold'
     ; collection -| S_expr
     ; block -| S_reg S_block ]
   | S_full_field (sing_1, sing_2) ->
-    let { field_lhs; field_lens; field_rhs; attributes } = node in
+    let { attributes; field_lhs; field_lens; field_rhs } = node in
     process_list
-    [ field_lhs -| sing_1
+    [ attributes -| S_list S_attribute
+    ; field_lhs -| sing_1
     ; field_lens -| S_field_lens
-    ; field_rhs -| sing_2
-    ; attributes -| S_list S_attribute ]
+    ; field_rhs -| sing_2 ]
   | S_fun_decl ->
     let { kwd_recursive
       ; kwd_function
@@ -616,11 +619,11 @@ let fold'
     | P_Nil node -> node -| S_kwd_nil
     | P_Par node -> node -| S_reg (S_par S_pattern)
     | P_Record node -> node -| S_record_pattern
-    | P_String node -> node -| S_wrap S_lexeme
+    | P_String node -> node -| S_string
     | P_Tuple node -> node -| S_tuple S_pattern
     | P_Typed node -> node -| S_reg S_typed_pattern
     | P_Var node -> node -| S_variable
-    | P_Verbatim node -> node -| S_wrap S_lexeme)
+    | P_Verbatim node -> node -| S_verbatim)
   | S_plus -> process @@ node -| S_wrap S_lexeme
   | S_plus_eq -> process @@ node -| S_wrap S_lexeme
   | S_projection ->
@@ -630,10 +633,10 @@ let fold'
     ; selector -| S_dot
     ; field_path -| S_nsepseq (S_selection, S_dot) ]
   | S_punned sing ->
-    let { pun; attributes } = node in
+    let { attributes; pun } = node in
     process_list
-    [ pun -| sing
-    ; attributes -| S_list S_attribute ]
+    [ attributes -| S_list S_attribute
+    ; pun -| sing ]
   | S_rbrace -> process @@ node -| S_wrap S_lexeme
   | S_rbracket -> process @@ node -| S_wrap S_lexeme
   | S_record_expr ->
@@ -680,7 +683,7 @@ let fold'
     | S_Instr node -> node -| S_instruction
     | S_VarDecl node -> node -| S_reg S_var_decl)
   | S_statements -> process @@ node -| S_nsepseq (S_statement, S_semi)
-  | S_string -> () (* Leaf *)
+  | S_string -> process @@ node -| S_wrap S_lexeme
   | S_sum_type ->
     let { lead_vbar; variants } = node in
     process_list
@@ -716,8 +719,8 @@ let fold'
     let { kwd_type; name; params; kwd_is; type_expr; terminator } = node in
     process_list
     [ kwd_type -| S_kwd_type
-    ; name -| S_variable
-    ; params -| S_option (S_tuple S_variable)
+    ; name -| S_type_name
+    ; params -| S_option (S_tuple S_type_name)
     ; kwd_is -| S_kwd_is
     ; type_expr -| S_type_expr
     ; terminator -| S_option S_semi ]
@@ -732,10 +735,11 @@ let fold'
     | T_ModPath node -> node -| S_reg (S_module_path S_type_expr)
     | T_Par node -> node -| S_reg (S_par S_type_expr)
     | T_Record node -> node -| S_reg (S_compound (S_reg S_field_decl))
-    | T_String node -> node -| S_wrap S_lexeme
+    | T_String node -> node -| S_string
     | T_Sum node -> node -| S_reg S_sum_type
-    | T_Var node -> node -| S_variable)
-  | S_type_params -> process @@ node -| S_nsepseq (S_variable, S_comma)
+    | T_Var node -> node -| S_type_name)
+  | S_type_name -> process @@ node -| S_wrap S_lexeme
+  | S_type_params -> process @@ node -| S_nsepseq (S_type_name, S_comma)
   | S_type_tuple -> process @@ node -| S_tuple S_type_expr
   | S_typed_expr -> process @@ node -| S_tuple_2 (S_expr, S_type_annotation)
   | S_typed_pattern ->
@@ -772,13 +776,14 @@ let fold'
     ; terminator -| S_option S_semi ]
   | S_variable -> process @@ node -| S_wrap S_lexeme
   | S_variant ->
-    let { ctor; ctor_args; attributes } = node in
+    let { attributes; ctor; ctor_args } = node in
     process_list
-    [ ctor -| S_ctor
-    ; ctor_args -| S_option (S_tuple_2 (S_kwd_of, S_type_expr))
-    ; attributes -| S_list S_attribute ]
+    [ attributes -| S_list S_attribute
+    ; ctor -| S_ctor
+    ; ctor_args -| S_option (S_tuple_2 (S_kwd_of, S_type_expr)) ]
   | S_vbar -> process @@ node -| S_wrap S_lexeme
   | S_vbar_eq -> process @@ node -| S_wrap S_lexeme
+  | S_verbatim -> process @@ node -| S_wrap S_lexeme
   | S_while_loop ->
     let { kwd_while; cond; block } = node in
     process_list

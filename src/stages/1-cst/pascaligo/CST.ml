@@ -118,7 +118,10 @@ type field_name  = lexeme wrap
 type ctor        = lexeme wrap
 
 type attribute   = Attr.t wrap
+type collection  = lexeme wrap
 type language    = lexeme Region.reg wrap
+type string_     = lexeme wrap
+type verbatim    = lexeme wrap
 
 type string_literal   = lexeme wrap
 type int_literal      = (lexeme * Z.t) wrap
@@ -295,9 +298,9 @@ and 'a compound = {
 (* Record types *)
 
 and field_decl = {
+  attributes : attribute list;
   field_name : field_name;
   field_type : type_annotation option; (* Type punning if [None] *)
-  attributes : attribute list
 }
 
 (* Sum types *)
@@ -308,9 +311,9 @@ and sum_type = {
 }
 
 and variant = {
+  attributes : attribute list;
   ctor       : ctor;
   ctor_args  : (kwd_of * type_expr) option;
-  attributes : attribute list
 }
 
 (* STATEMENTS *)
@@ -519,15 +522,15 @@ and ('lhs, 'rhs) field =
 | Complete of ('lhs, 'rhs) full_field
 
 and 'lhs punned = {
+  attributes : attribute list;
   pun        : 'lhs;
-  attributes : attribute list
 }
 
 and ('lhs, 'rhs) full_field = {
+  attributes : attribute list;
   field_lhs  : 'lhs;
   field_lens : field_lens;
   field_rhs  : 'rhs;
-  attributes : attribute list
 }
 
 and field_lens =
@@ -629,8 +632,8 @@ and selection =
 (* Binary and unary arithmetic operators *)
 
 and 'a bin_op = {
-  op   : 'a;
   arg1 : expr;
+  op   : 'a;
   arg2 : expr
 }
 

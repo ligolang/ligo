@@ -42,8 +42,8 @@ It's hard but possible by use debug tools:
 ```bash
 cd _build/default/src/test/error-recovery/simple/cameligo
 diff recovered/problem_test.mligo original_generated/formatted_problem_test.mligo
-diff recovered/problem_test.mliog.errors original_generated/problem_test.mligo.errors
-diff recovered/problem_test.mliog.cst original_generated/problem_test.mligo.cst
+diff recovered/problem_test.mligo.errors original_generated/problem_test.mligo.errors
+diff recovered/problem_test.mligo.cst original_generated/problem_test.mligo.cst
 ```
 - run the parser with the `--trace-recovery` flag to inspect what is happened in the runtime.
 ```bash

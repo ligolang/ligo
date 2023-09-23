@@ -41,6 +41,7 @@ type kwd_default      = lexeme wrap
 type kwd_do           = lexeme wrap
 type kwd_else         = lexeme wrap
 type kwd_export       = lexeme wrap
+type kwd_false        = lexeme wrap
 type kwd_for          = lexeme wrap
 type kwd_from         = lexeme wrap
 type kwd_function     = lexeme wrap
@@ -55,62 +56,63 @@ type kwd_of           = lexeme wrap
 type kwd_parameter_of = lexeme wrap
 type kwd_return       = lexeme wrap
 type kwd_switch       = lexeme wrap
+type kwd_true         = lexeme wrap
 type kwd_type         = lexeme wrap
 type kwd_when         = lexeme wrap
 type kwd_while        = lexeme wrap
 
 (* Symbols *)
 
-type sharp      = lexeme wrap  (* #   *)
 type arrow      = lexeme wrap  (* =>  *)
-type dot        = lexeme wrap  (* .   *)
-type ellipsis   = lexeme wrap  (* ... *)
-type equal      = lexeme wrap  (* =   *)
-type minus      = lexeme wrap  (* -   *)
-type plus       = lexeme wrap  (* +   *)
-type slash      = lexeme wrap  (* /   *)
-type remainder  = lexeme wrap  (* %   *)
-type times      = lexeme wrap  (* *   *)
-type increment  = lexeme wrap  (* ++  *)
-type decrement  = lexeme wrap  (* --  *)
-type qmark      = lexeme wrap  (* ?   *)
+type bit_and_eq = lexeme wrap  (* &=  *)
 type bit_and    = lexeme wrap  (* &   *)
 type bit_neg    = lexeme wrap  (* ~   *)
-type bit_or     = lexeme wrap  (* |   *)
-type bit_xor    = lexeme wrap  (* ^   *)
-type bit_sl     = lexeme wrap  (* <<  *)
-type bit_sr     = lexeme wrap  (* >>  *)
-type bool_or    = lexeme wrap  (* ||  *)
-type bool_and   = lexeme wrap  (* &&  *)
-type bool_xor   = lexeme wrap  (* ^^  *)
-type bool_neg   = lexeme wrap  (* !   *)
-type equal_cmp  = lexeme wrap  (* ==  *)
-type neq        = lexeme wrap  (* !=  *)
-type lt         = lexeme wrap  (* <   *)
-type gt         = lexeme wrap  (* >   *)
-type leq        = lexeme wrap  (* <=  *)
-type geq        = lexeme wrap  (* >=  *)
-type lpar       = lexeme wrap  (* (   *)
-type rpar       = lexeme wrap  (* )   *)
-type lbracket   = lexeme wrap  (* [   *)
-type rbracket   = lexeme wrap  (* ]   *)
-type lbrace     = lexeme wrap  (* {   *)
-type rbrace     = lexeme wrap  (* }   *)
-type comma      = lexeme wrap  (* ,   *)
-type semi       = lexeme wrap  (* ;   *)
-type vbar       = lexeme wrap  (* |   *)
-type colon      = lexeme wrap  (* :   *)
-type wild       = lexeme wrap  (* _   *)
-type times_eq   = lexeme wrap  (* *=  *)
-type div_eq     = lexeme wrap  (* /=  *)
-type minus_eq   = lexeme wrap  (* -=  *)
-type plus_eq    = lexeme wrap  (* +=  *)
-type rem_eq     = lexeme wrap  (* %=  *)
-type bit_sl_eq  = lexeme wrap  (* <<= *)
-type bit_sr_eq  = lexeme wrap  (* >>= *)
-type bit_and_eq = lexeme wrap  (* &=  *)
 type bit_or_eq  = lexeme wrap  (* |=  *)
+type bit_or     = lexeme wrap  (* |   *)
+type bit_sl_eq  = lexeme wrap  (* <<= *)
+type bit_sl     = lexeme wrap  (* <<  *)
+type bit_sr_eq  = lexeme wrap  (* >>= *)
+type bit_sr     = lexeme wrap  (* >>  *)
 type bit_xor_eq = lexeme wrap  (* ^=  *)
+type bit_xor    = lexeme wrap  (* ^   *)
+type bool_and   = lexeme wrap  (* &&  *)
+type bool_neg   = lexeme wrap  (* !   *)
+type bool_or    = lexeme wrap  (* ||  *)
+type bool_xor   = lexeme wrap  (* ^^  *)
+type colon      = lexeme wrap  (* :   *)
+type comma      = lexeme wrap  (* ,   *)
+type decrement  = lexeme wrap  (* --  *)
+type div_eq     = lexeme wrap  (* /=  *)
+type dot        = lexeme wrap  (* .   *)
+type ellipsis   = lexeme wrap  (* ... *)
+type equal_cmp  = lexeme wrap  (* ==  *)
+type equal      = lexeme wrap  (* =   *)
+type geq        = lexeme wrap  (* >=  *)
+type gt         = lexeme wrap  (* >   *)
+type increment  = lexeme wrap  (* ++  *)
+type lbrace     = lexeme wrap  (* {   *)
+type lbracket   = lexeme wrap  (* [   *)
+type leq        = lexeme wrap  (* <=  *)
+type lpar       = lexeme wrap  (* (   *)
+type lt         = lexeme wrap  (* <   *)
+type minus_eq   = lexeme wrap  (* -=  *)
+type minus      = lexeme wrap  (* -   *)
+type neq        = lexeme wrap  (* !=  *)
+type plus_eq    = lexeme wrap  (* +=  *)
+type plus       = lexeme wrap  (* +   *)
+type qmark      = lexeme wrap  (* ?   *)
+type rbrace     = lexeme wrap  (* }   *)
+type rbracket   = lexeme wrap  (* ]   *)
+type remainder  = lexeme wrap  (* %   *)
+type rem_eq     = lexeme wrap  (* %=  *)
+type rpar       = lexeme wrap  (* )   *)
+type semi       = lexeme wrap  (* ;   *)
+type sharp      = lexeme wrap  (* #   *)
+type slash      = lexeme wrap  (* /   *)
+type times_eq   = lexeme wrap  (* *=  *)
+type times      = lexeme wrap  (* *   *)
+type vbar       = lexeme wrap  (* |   *)
+type wild       = lexeme wrap  (* _   *)
 
 type property_sep = lexeme wrap  (* , ; *)
 
@@ -120,26 +122,25 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type variable       = lexeme wrap
+type attribute      = Attr.t wrap
+type ctor           = lexeme wrap
+type file_path      = lexeme wrap
 type fun_name       = lexeme wrap
+type generic        = lexeme wrap
+type intf_name      = lexeme wrap
+type language       = lexeme wrap
+type namespace_name = lexeme wrap
+type property_name  = lexeme wrap
+type type_ctor      = lexeme wrap
 type type_name      = lexeme wrap
 type type_var       = lexeme wrap
-type type_ctor      = lexeme wrap
-type ctor           = lexeme wrap
-type property_name  = lexeme wrap
-type namespace_name = lexeme wrap
-type intf_name      = lexeme wrap
-type file_path      = lexeme wrap
-type language       = lexeme wrap
-type attribute      = Attr.t wrap
-type true_const     = lexeme wrap
-type false_const    = lexeme wrap
+type variable       = lexeme wrap
 
-type string_literal   = lexeme wrap
-type int_literal      = (lexeme * Z.t) wrap
-type nat_literal      = int_literal
 type bytes_literal    = (lexeme * Hex.t) wrap
+type int_literal      = (lexeme * Z.t) wrap
 type mutez_literal    = (lexeme * Int64.t) wrap
+type nat_literal      = int_literal
+type string_literal   = lexeme wrap
 type verbatim_literal = lexeme wrap
 
 (* Parentheses, braces, brackets *)
@@ -177,7 +178,7 @@ and declaration =
 and fun_decl = {
   kwd_function : kwd_function;
   fun_name     : fun_name;
-  type_vars    : type_vars option;
+  generics     : generics option;
   parameters   : fun_params;
   rhs_type     : type_annotation option;
   fun_body     : statements braces
@@ -276,7 +277,7 @@ and intf_expr =
 and type_decl = {
   kwd_type  : kwd_type;
   name      : type_name;
-  type_vars : type_vars option;
+  generics  : generics option;
   eq        : equal;
   type_expr : type_expr
 }
@@ -295,13 +296,13 @@ and var_kind = [
 
 and val_binding = {
   pattern   : pattern;
-  type_vars : type_vars option;
+  generics  : generics option;
   rhs_type  : type_annotation option;
   eq        : equal;
   rhs_expr  : expr
 }
 
-and type_vars = (type_var, comma) sep_or_term chevrons
+and generics = (generic, comma) sep_or_term chevrons
 
 and type_annotation = colon * type_expr
 
@@ -322,7 +323,7 @@ and type_expr =
 | T_ParameterOf of parameter_of_type reg            (* parameter_of m *)
 | T_String      of string_literal                   (* "x"            *)
 | T_Union       of union_type                    (* {kind: "C", x: t} *)
-| T_Var         of variable                      (* t                 *)
+| T_Var         of type_var                      (* t                 *)
 | T_Variant     of variant_type                  (* ["A"] | ["B", t]  *)
 
 (* Type application *)
@@ -367,20 +368,50 @@ and union_type = (type_expr _object, vbar) nsep_or_pref reg
 
 (* Variant type *)
 
-and variant_type = (variant, vbar) nsep_or_pref reg
+and variant_type = (type_expr variant_kind, vbar) nsep_or_pref reg
 
-and variant = {
+and 'a variant_kind =
+  Variant   of 'a variant reg
+| Bracketed of 'a bracketed_variant reg
+| Legacy    of 'a legacy_variant reg
+
+and 'a variant = {
   attributes : attribute list;
-  tuple      : type_expr ctor_app reg
+  tuple      : 'a ctor_app
+}
+
+and 'a bracketed_variant = {
+  attributes : attribute list;
+  sharp      : sharp;
+  tuple      : 'a bracketed_variant_args brackets
+}
+
+and 'a bracketed_variant_args = {
+  ctor : 'a;
+  args : (comma * ('a, comma) sep_or_term) option
+}
+
+and 'a legacy_variant = {
+  attributes : attribute list;
+  tuple      : 'a legacy_variant_args brackets
+}
+
+and 'a legacy_variant_args = {
+  ctor : string_literal;
+  args : (comma * 'a) list
 }
 
 (* Data constructor applications *)
 
 and 'a ctor_app = sharp option * 'a app
 
+and ctor_app_kind =
+  CtorStr  of string_literal
+| CtorName of ctor
+
 and 'a app =
-  ZeroArg of 'a
-| MultArg of ('a, comma) nsep_or_term brackets
+  ZeroArg of ctor_app_kind
+| MultArg of ctor_app_kind * ('a, comma) nsep_or_term par
 
 (* Do-expressions *)
 
@@ -398,15 +429,15 @@ and pattern =
   P_Array    of pattern _array             (* [x, ...y, z] [] *)
 | P_Attr     of (attribute * pattern)      (* @a [x, _]       *)
 | P_Bytes    of bytes_literal              (* 0xFFFA          *)
-| P_CtorApp  of pattern ctor_app reg       (* #["C",4]        *)
-| P_False    of false_const                (* false           *)
+| P_CtorApp  of pattern variant_kind       (* #["C",4]        *)
+| P_False    of kwd_false                  (* false           *)
 | P_Int      of int_literal                (* 42              *)
 | P_Mutez    of mutez_literal              (* 5mutez          *)
 | P_NamePath of pattern namespace_path reg (* M.N.{x, y : 0}  *)
 | P_Nat      of nat_literal                (* 4n              *)
 | P_Object   of pattern _object            (* {x, y : 0}      *)
 | P_String   of string_literal             (* "string"        *)
-| P_True     of true_const                 (* true            *)
+| P_True     of kwd_true                   (* true            *)
 | P_Typed    of typed_pattern reg          (* [x,y] : t       *)
 | P_Var      of variable                   (* x               *)
 | P_Verbatim of verbatim_literal           (* {|foo|}         *)
@@ -555,12 +586,12 @@ and expr =
 | E_Bytes      of bytes_literal           (* 0xFFFA            *)
 | E_CodeInj    of code_inj reg
 | E_ContractOf of contract_of_expr reg    (* contract_of (M.N) *)
-| E_CtorApp    of expr ctor_app reg       (* #["C",4]          *)
+| E_CtorApp    of expr variant_kind       (* #["C",4]          *)
 | E_Div        of slash bin_op reg        (* x / y             *)
 | E_DivEq      of div_eq bin_op reg       (* x /= y            *)
 | E_Do         of do_expr reg             (* do { return 4 }   *)
 | E_Equal      of equal_cmp bin_op reg    (* x == y            *)
-| E_False      of false_const             (* false             *)
+| E_False      of kwd_false               (* false             *)
 | E_Function   of function_expr reg       (* function (x) {...} *)
 | E_Geq        of geq bin_op reg          (* x >= y            *)
 | E_Gt         of gt bin_op reg           (* x > y             *)
@@ -590,7 +621,7 @@ and expr =
 | E_Sub        of minus bin_op reg        (* x - y             *)
 | E_SubEq      of minus_eq bin_op reg     (* x -= y            *)
 | E_Ternary    of ternary reg             (* x ? y : z         *)
-| E_True       of true_const              (* true              *)
+| E_True       of kwd_true                (* true              *)
 | E_Typed      of typed_expr reg          (* e as t            *)
 | E_Update     of update_expr braces      (* {...x, y : z}     *)
 | E_Var        of variable                (* x                 *)
@@ -604,7 +635,7 @@ and arguments = (expr, comma) sepseq par
 (* Functional expressions *)
 
 and arrow_fun_expr = {
-  type_vars  : type_vars option;
+  generics   : generics option;
   parameters : arrow_fun_params;
   rhs_type   : type_annotation option;
   arrow      : arrow;
@@ -613,7 +644,7 @@ and arrow_fun_expr = {
 
 and function_expr = {
   kwd_function : kwd_function;
-  type_vars    : type_vars option;
+  generics     : generics option;
   parameters   : arrow_fun_params;
   rhs_type     : type_annotation option;
   fun_body     : fun_body
@@ -714,6 +745,11 @@ and code_inj = {
 
 (* Projecting regions from some nodes of the AST *)
 
+let variant_kind_to_region = function
+  Variant   {region; _}
+| Bracketed {region; _}
+| Legacy    {region; _} -> region
+
 let import_decl_to_region = function
   ImportAlias {region; _}
 | ImportAllAs {region; _}
@@ -746,7 +782,7 @@ let rec pattern_to_region = function
   P_Array    {region; _} -> region
 | P_Attr     (_, p) -> pattern_to_region p
 | P_Bytes    w -> w#region
-| P_CtorApp  {region; _} -> region
+| P_CtorApp  w -> variant_kind_to_region w
 | P_False    w -> w#region
 | P_Int      w -> w#region
 | P_Mutez    w -> w#region
@@ -781,8 +817,8 @@ let rec expr_to_region = function
 | E_BitXorEq   {region; _} -> region
 | E_Bytes      w -> w#region
 | E_CodeInj    {region; _}
-| E_ContractOf {region; _}
-| E_CtorApp    {region; _}
+| E_ContractOf {region; _} -> region
+| E_CtorApp    w -> variant_kind_to_region w
 | E_Do         {region; _}
 | E_Div        {region; _}
 | E_DivEq      {region; _}

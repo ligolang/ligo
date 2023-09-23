@@ -454,7 +454,7 @@ and print_P_Ctor state (node : ctor) =
 
 (* "false" as pattern *)
 
-and print_P_False state (node : false_const) =
+and print_P_False state (node : kwd_false) =
   Tree.make_node ~region:node#region state "P_False"
 
 (* Integers in patterns *)
@@ -549,7 +549,7 @@ and print_P_String state (node : lexeme wrap) =
 
 (* "true" as pattern *)
 
-and print_P_True state (node : true_const) =
+and print_P_True state (node : kwd_true) =
   Tree.make_node ~region:node#region state "P_True"
 
 (* The pattern matching a tuple *)
@@ -770,7 +770,7 @@ and print_E_Equal state (node : equal bin_op reg) =
 
 (* "false" as expression *)
 
-and print_E_False state (node : false_const) =
+and print_E_False state (node : kwd_false) =
   Tree.make_node ~region:node#region state "E_False"
 
 (* For loops *)
@@ -1021,7 +1021,7 @@ and print_E_Sub state (node : minus bin_op reg) =
 
 (* "true" as expression *)
 
-and print_E_True state (node : true_const) =
+and print_E_True state (node : kwd_true) =
   Tree.make_node ~region:node#region state "E_True"
 
 (* Tuple of expression *)
