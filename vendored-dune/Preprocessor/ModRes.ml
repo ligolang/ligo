@@ -198,8 +198,14 @@ module Esy =
 
     (* Path to installation.json *)
 
+    (* HACK : Remove finding the installation.json in _esy and _ligo after custom pacakge management is out of alpha *)
     let installation_json_path path =
-      path / "_esy" / "ligo" / "installation.json"
+      let ligo_exists = Fpath.v (path / "_ligo" / "ligo" / "installation.json") |> Bos.OS.File.exists in
+      let esy_exists = Fpath.v (path / "_esy" / "ligo" / "installation.json") |> Bos.OS.File.exists in
+      match ligo_exists, esy_exists with
+      | Ok true, _ -> Some (path / "_ligo" / "ligo" / "installation.json")
+      | _, Ok true -> Some (path / "_esy" / "ligo" / "installation.json")
+      | _, _ -> None
 
     (* Path to the lock file *)
 
@@ -430,7 +436,8 @@ let make project_root : t option =
   in
   let root = lock_file_json.root in
   let* installation_json =
-    Esy.installation_json_path project_root
+    let* installation_json = Esy.installation_json_path project_root in
+    installation_json
     |> JsonHelpers.from_file_opt
     |> clean_installation_json ~root abs_path_to_project_root in
   let dependencies = find_dependencies lock_file_json in
