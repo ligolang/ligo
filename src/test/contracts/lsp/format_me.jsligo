@@ -11,3 +11,5 @@ const incr_map
 =>
   List.map
     ((i : int) => i + 1, l)
+
+const x : option <int> = None ()

@@ -39,13 +39,13 @@ let%expect_test "error_recovery_simple_jsligo" =
     FAIL : can parse test file (but shouldn't)./switch_with_missing_semicolon.jsligo
     PASS, 11, 21, 5, 114, 2, ./switch_with_not_last_default.jsligo
     PASS, 0, 0, 0, 0, 0, ./triple_eq_in_if_condition.jsligo
-    PASS, 3, 10, 10, 497, 0, ./unfinished_code00.jsligo
-    PASS, 6, 2, 2, 362, 0, ./unfinished_code01.jsligo
-    PASS, 3, 11, 9, 748, 0, ./unfinished_code02.jsligo
+    PASS, 3, 10, 10, 501, 0, ./unfinished_code00.jsligo
+    PASS, 6, 2, 2, 366, 0, ./unfinished_code01.jsligo
+    PASS, 3, 11, 9, 750, 0, ./unfinished_code02.jsligo
     PASS, 4, 9, 5, 866, 0, ./unfinished_code03.jsligo
     PASS, 5, 31, 29, 291, 0, ./unfinished_code04.jsligo
     PASS, 4, 9, 9, 426, 0, ./unfinished_code05.jsligo
-    PASS, 6, 8, 6, 469, 0, ./unfinished_code06.jsligo
+    PASS, 6, 8, 6, 473, 0, ./unfinished_code06.jsligo
     FAIL : can parse test file (but shouldn't)./unfinished_code07.jsligo
     PASS, 2, 7, 5, 20, 0, ./unfinished_code08.jsligo
     PASS, 4, 2, 2, 131, 0, ./unfinished_code09.jsligo
