@@ -14,7 +14,7 @@ listDeclarations :: ListDeclarationsRequest -> WebIDEM ListDeclarationsResponse
 listDeclarations request =
   withProject (ldrProject request) $ \(dirPath, fullMainPath, _) -> do
     (ec, out, err) <- runLigo dirPath $
-      [ "info", "list-declarations", "--skip-generated", "--no-color", "--deprecated", fullMainPath]
+      [ "info", "list-declarations", "--skip-generated", "--no-color", fullMainPath]
       ++ ["--display-format", "dev"]
       ++ ["--only-ep" | fromMaybe False $ ldrOnlyEndpoint request]
 

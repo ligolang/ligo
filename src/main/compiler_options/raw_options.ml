@@ -3,8 +3,6 @@ type t =
     warning_as_error : bool
   ; no_colour : bool
   ; no_metadata_check : bool
-  ; (* Supported features *)
-    deprecated : bool
   ; (* Warnings *)
     warn_unused_rec : bool
   ; warn_infinite_loop : bool
@@ -44,9 +42,6 @@ module Default_options = struct
   let warning_as_error = false
   let no_colour = false
   let no_metadata_check = false
-
-  (* Supported features *)
-  let deprecated = false
 
   (* Warnings *)
   let warn_unused_rec = false
@@ -92,7 +87,6 @@ let make
     ?(no_colour = Default_options.no_colour)
     ?(no_metadata_check = Default_options.no_metadata_check)
     ?(json_download = Default_options.json_download)
-    ?(deprecated = Default_options.deprecated)
     ?(warn_unused_rec = Default_options.warn_unused_rec)
     ?(warn_infinite_loop = Default_options.warn_infinite_loop)
     ?(syntax = Default_options.syntax)
@@ -125,8 +119,6 @@ let make
     warning_as_error
   ; no_colour
   ; no_metadata_check
-  ; (* Supported features *)
-    deprecated
   ; (* Warnings *)
     warn_unused_rec
   ; warn_infinite_loop

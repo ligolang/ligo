@@ -4,7 +4,7 @@ open Simple_utils.Trace
 open Errors
 module Location = Simple_utils.Location
 
-(* 
+(*
     Certain types should translate directly to specific Michelson types
     and thus have their own AST node. (e.g. michelson_or, michelson_pair).
   *)
@@ -90,7 +90,7 @@ let decompile ~raise:_ = Nothing
 open Unit_test_helpers.Ty_expr
 
 let flag_bef = !flag
-let () = flag := Some (true, PascaLIGO)
+let () = flag := Some (true, CameLIGO)
 
 let%expect_test "compile_michelson_pair" =
   {|

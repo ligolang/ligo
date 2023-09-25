@@ -36,15 +36,6 @@ const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<str
   return args
 }
 
-const withDeprecated = (args: string[]) => {
-  const config = vscode.workspace.getConfiguration()
-  const deprecated: boolean = config.get('ligoLanguageServer.deprecated')
-  if (deprecated) {
-    return args.concat('--deprecated')
-  }
-  return args
-}
-
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
   client: LanguageClient,
@@ -72,11 +63,11 @@ export async function executeCompileContract(
 
   const result = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['compile', 'contract', path],
       Boolean(entrypoint) ? ['-m', entrypoint] : [],
       ['--michelson-format', format],
-    ].flat())),
+    ].flat()),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
@@ -122,11 +113,11 @@ export async function executeCompileStorage(
 
   const result = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['compile', 'storage', path, storage],
       Boolean(entrypoint) ? ['-m', entrypoint] : [],
       ['--michelson-format', format],
-    ].flat())),
+    ].flat()),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
@@ -143,10 +134,10 @@ export async function executeCompileStorage(
 export async function executeCompileExpression(client: LanguageClient) {
   const declarations = await executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['info', 'list-declarations', path],
       ['--format', 'json'],
-    ].flat())),
+    ].flat()),
     client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     false,
@@ -161,10 +152,10 @@ export async function executeCompileExpression(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => (syntax: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => (syntax: string) => withProjectRootFlag([
       ['compile', 'expression', syntax, maybeExpression],
       ['--init-file', path],
-    ].flat())),
+    ].flat()),
     client,
     CommandRequiredArguments.Path
     | CommandRequiredArguments.Ext
@@ -194,10 +185,10 @@ export async function executeDryRun(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['run', 'dry-run', path, maybeParameter, maybeStorage],
       Boolean(maybeEntrypoint) ? ['-m', maybeEntrypoint] : [],
-    ].flat())),
+    ].flat()),
     client,
   )
 }
@@ -218,9 +209,9 @@ export async function executeEvaluateFunction(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['run', 'evaluate-call', path, maybeEntrypoint, maybeExpr],
-    ].flat())),
+    ].flat()),
     client,
   )
 }
@@ -235,9 +226,9 @@ export async function executeEvaluateValue(client: LanguageClient) {
 
   return executeCommand(
     ligoBinaryInfo,
-    (path: string) => withProjectRootFlag(withDeprecated([
+    (path: string) => withProjectRootFlag([
       ['run', 'evaluate-expr', path, maybeValue],
-    ].flat())),
+    ].flat()),
     client,
   )
 }

@@ -17,7 +17,6 @@
         "vscode": "^1.78.0"
     },
     "activationEvents": [
-        "onLanguage:ligo",
         "onLanguage:mligo",
         "onLanguage:jsligo",
         "onDebugResolve:ligo"
@@ -26,21 +25,6 @@
     "main": "./client/out/extension",
     "contributes": {
         "languages": [
-            {
-                "id": "ligo",
-                "aliases": [
-                    "PascaLIGO"
-                ],
-                "extensions": [
-                    ".ligo",
-                    ".pligo"
-                ],
-                "icon": {
-                    "light": "logo.png",
-                    "dark": "logo.png"
-                },
-                "configuration": "./syntaxes/ligo.configuration.json"
-            },
             {
                 "id": "mligo",
                 "aliases": [
@@ -71,11 +55,6 @@
             }
         ],
         "grammars": [
-            {
-                "language": "ligo",
-                "scopeName": "source.ligo",
-                "path": "./syntaxes/ligo.tmLanguage.json"
-            },
             {
                 "language": "mligo",
                 "scopeName": "source.mligo",
@@ -114,12 +93,6 @@
                     "type": "string",
                     "default": "baker",
                     "description": "Account for originating contracts from. It should contain enough money for origination"
-                },
-                "ligoLanguageServer.deprecated": {
-                    "scope": "resource",
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable support for compiling and deploying contracts written in the deprecated PascaLIGO syntax."
                 },
                 "ligoLanguageServer.loggingVerbosity": {
                     "scope": "resource",

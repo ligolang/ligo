@@ -11,11 +11,7 @@ let measure_contract (raw_options : Raw_options.t) entry_point source_file =
         Helpers.protocol_to_variant ~raise raw_options.protocol_version
       in
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       Deprecation.entry_cli ~raise syntax entry_point;
       let options = Compiler_options.make ~protocol_version ~raw_options ~syntax () in
@@ -45,11 +41,7 @@ let list_declarations (raw_options : Raw_options.t) source_file =
   ( Formatter.declarations_format
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let prg =
@@ -73,11 +65,7 @@ let resolve_config (raw_options : Raw_options.t) source_file =
   , fun ~raise ->
       let open Lwt.Let_syntax in
       let syntax =
-        Syntax.of_string_opt
-          ~support_pascaligo:raw_options.deprecated
-          ~raise
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options =
         let protocol_version =

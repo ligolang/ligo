@@ -109,7 +109,6 @@ export class LspExtension extends LigoExtension {
     const clientOptions: LanguageClientOptions = {
       // Register the server for plain text documents
       documentSelector: [
-        { scheme: 'file', language: 'ligo' },
         { scheme: 'file', language: 'mligo' },
         { scheme: 'file', language: 'jsligo' },
       ],

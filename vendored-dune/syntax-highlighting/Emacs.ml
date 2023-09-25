@@ -319,17 +319,17 @@ module Print = struct
     fprintf fmt "\t)\n";
     fprintf fmt "\t\"Syntax highlighting rules for %s\")\n" syntax
 
-  (* 
+  (*
 
 For debugging.
-  let print_custom_faces fmt = 
+  let print_custom_faces fmt =
     fprintf fmt "(custom-set-faces\n";
     fprintf fmt "\t'(font-lock-function-name-face ((t (:foreground \"#00dd44\"))))\n";
     fprintf fmt "\t'(ligo-font-lock-storage-class-face ((t (:foreground \"#FF00FF\"))))\n";
     fprintf fmt "\t'(font-lock-preprocessor-face ((t (:foreground \"#CCFF22\"))))\n";
     fprintf fmt "\t'(ligo-font-lock-label-face ((t (:foreground \"#1155FF\"))))\n";
     fprintf fmt "\t'(ligo-font-lock-number-face ((t (:foreground \"#FF3311\"))))\n";
-    
+
     fprintf fmt ")\n" *)
 
   let print_pre fmt =
@@ -376,14 +376,11 @@ For debugging.
     fprintf fmt "  (interactive)\n";
     fprintf
       fmt
-      "  (add-to-list 'lsp-language-id-configuration '(ligo-pascal-mode . \"ligo\"))\n";
-    fprintf
-      fmt
       "  (add-to-list 'lsp-language-id-configuration '(ligo-caml-mode . \"ligo\"))\n";
     fprintf fmt "  (lsp-register-client\n";
     fprintf fmt "   (make-lsp-client\n";
     fprintf fmt "    :new-connection (lsp-stdio-connection `(,ligo-bin \"lsp\"))\n";
-    fprintf fmt "    :major-modes '(ligo-pascal-mode ligo-caml-mode)\n";
+    fprintf fmt "    :major-modes '(ligo-caml-mode)\n";
     fprintf fmt "    :server-id 'ligo)))\n"
 
   let print fmt syntax alt_name (t : Core.t) =

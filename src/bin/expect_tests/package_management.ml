@@ -471,7 +471,7 @@ let%expect_test _ =
     ==> Reading manifest... Done
     ==> Validating manifest file...
     Error: Invalid LIGO file specifed in main field of ligo.json
-    Valid extension for LIGO files are (.ligo, .mligo, .jsligo) |}]
+    Valid extension for LIGO files are (.mligo, .jsligo) |}]
 
 let () = Caml.Sys.chdir pwd
 let () = Caml.Sys.chdir "publish_invalid_storage"

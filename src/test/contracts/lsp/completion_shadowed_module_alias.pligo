@@ -1,7 +1,0 @@
-module X is {
-  const x = 1
-}
-
-module X is X
-
-const y = X.

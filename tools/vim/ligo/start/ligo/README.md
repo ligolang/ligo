@@ -1,6 +1,6 @@
 # LIGO language support for Vim and Neovim
 
-This plugin adds support for JsLIGO, CameLIGO, and PascaLIGO to Vim and Neovim.
+This plugin adds support for JsLIGO and CameLIGO to Vim and Neovim.
 
 Syntax highlighting is supported out-of-the box. Language features are provided
 via LSP. `ligo` must be available in PATH.

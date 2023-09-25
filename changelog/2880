@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nRemove the `--deprecated` flag that allowed users to work with PascaLIGO contracts. To compile a PascaLIGO contract you can use LIGO 0.73.0 with the `--deprecated` flag or an older LIGO version.\\n\\n"
+merge_request: '2880'
+title: "Remove PascaLIGO (except parser) from compiler and tools"
+type: breaking
+            

@@ -19,7 +19,7 @@ compileExpression request =
       Just d -> pure d
 
     (ec, out, err) <- runLigo dirPath $
-      ["compile", "expression", "--no-color", "--deprecated"]
+      ["compile", "expression", "--no-color"]
       ++ moduleOption pModule
       ++ [prettyDialect dialect, Text.unpack (cerFunction request)]
       ++ maybe []
@@ -32,20 +32,17 @@ compileExpression request =
       ExitSuccess -> pure (CompilerResponse $ Text.pack out)
       ExitFailure _ -> throwM $ LigoCompilerError $ Text.pack err
 
-data Dialect = CameLIGO | PascaLIGO | JsLIGO
+data Dialect = CameLIGO | JsLIGO
   deriving stock (Eq, Show, Ord, Enum)
 
 prettyDialect :: Dialect -> String
 prettyDialect = \case
   CameLIGO -> "cameligo"
-  PascaLIGO -> "pascaligo"
   JsLIGO -> "jsligo"
 
 inferDialect :: FilePath -> Maybe Dialect
 inferDialect filepath =
   case Text.takeWhileEnd (/= '.') (Text.pack filepath) of
     "mligo" -> Just CameLIGO
-    "ligo" -> Just PascaLIGO
-    "pligo" -> Just PascaLIGO
     "jsligo" -> Just JsLIGO
     _ -> Nothing

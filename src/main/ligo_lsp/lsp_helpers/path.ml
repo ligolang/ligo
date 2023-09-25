@@ -45,7 +45,7 @@ let concat : t -> string -> t =
 
 
 let get_extension : t -> string option = snd <@ Filename.split_extension <@ to_string
-let get_syntax = Syntax.of_ext_opt ~support_pascaligo:true <@ get_extension
+let get_syntax = Syntax.of_ext_opt <@ get_extension
 
 let pp (ppf : Format.formatter) : t -> unit =
   Format.fprintf ppf "%s" <@ to_string_with_canonical_drive_letter

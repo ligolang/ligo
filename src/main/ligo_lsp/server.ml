@@ -10,7 +10,6 @@ let default_config : config =
   { max_number_of_problems = 100
   ; logging_verbosity = MessageType.Info
   ; disabled_features = []
-  ; deprecated = false
   ; max_line_width = None
   }
 
@@ -44,22 +43,7 @@ class lsp_server =
         ; config
         ; docs_cache = get_scope_buffers
         }
-      @@ let@ { deprecated; _ } = ask_config in
-         let@ () =
-           if not deprecated
-           then (
-             match Path.get_syntax file with
-             | None -> return ()
-             | Some PascaLIGO ->
-               send_message
-                 ~type_:MessageType.Error
-                 "PascaLIGO is deprecated and not fully supported. To use the language \
-                  server with it, enable \"ligoLanguageServer.deprecated\" in the Visual \
-                  Studio Code configuration."
-             | Some (CameLIGO | JsLIGO) -> return ())
-           else return ()
-         in
-         Requests.on_doc file content
+      @@ Requests.on_doc file content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -81,7 +65,7 @@ class lsp_server =
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
       match to_option (member "ligoLanguageServer") settings with
-      | None -> config <- { config with deprecated = true }
+      | None -> ()
       | Some ligo_language_server ->
         self#decode_apply_ligo_language_server ligo_language_server
 
@@ -110,11 +94,6 @@ class lsp_server =
                |> member "disabledFeatures"
                |> to_option to_list
                |> Option.value_map ~f:(List.map ~f:to_string) ~default:[]
-           ; deprecated =
-               ligo_language_server
-               |> member "deprecated"
-               |> to_bool_option
-               |> Option.value ~default:default_config.deprecated
            ; max_line_width =
                ligo_language_server |> member "maxLineWidth" |> to_int_option
            }
@@ -124,9 +103,7 @@ class lsp_server =
         (init_params : InitializeParams.t)
         : InitializeResult.t IO.t =
       (* Currently, the behaviors of these editors will be as follow:
-         * Emacs: Will send [Some `Null]. In [decode_apply_settings] we handle
-           this by seeting [deprecated] as [true] so this editor may launch
-           when opening PascaLIGO files.
+         * Emacs: Will send [Some `Null]. Default config will be used.
            TODO: Fix this in #1706.
          * Vim: Will send [None], so we handle it similarly to Emacs.
            TODO: Fix this in #1707.
@@ -134,7 +111,7 @@ class lsp_server =
            this editor, we proceed with our ordinary business and decode it. *)
       let () =
         match init_params.initializationOptions with
-        | None -> config <- { config with deprecated = true }
+        | None -> ()
         | Some settings -> self#decode_apply_settings settings
       in
       client_capabilities <- init_params.capabilities;

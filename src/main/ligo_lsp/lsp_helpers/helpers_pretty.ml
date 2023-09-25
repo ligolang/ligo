@@ -26,7 +26,6 @@ let get_comment syntax =
     match syntax with
     | Syntax_types.CameLIGO -> Preprocessing_cameligo.Config.block
     | Syntax_types.JsLIGO -> Preprocessing_jsligo.Config.block
-    | Syntax_types.PascaLIGO -> Preprocessing_pascaligo.Config.block
   in
   match block with
   | Some x -> x#opening, x#closing
@@ -74,17 +73,6 @@ let jsligo_module =
   }
 
 
-let pascaligo_module =
-  { module_keyword = "module"
-  ; import_keyword = "module"
-  ; sign_on_definition = Some "is"
-  ; sign_on_import = Some "is"
-  ; open_ = "{"
-  ; close = "}"
-  ; semicolon_at_the_end = false
-  }
-
-
 let print_module_with_description
     : module_pp_mode -> string * string -> Scopes.Types.mdef -> string
   =
@@ -117,7 +105,6 @@ let print_module_with_description
 let print_module : Syntax_types.t -> Scopes.Types.mdef -> string = function
   | CameLIGO -> print_module_with_description cameligo_module (get_comment CameLIGO)
   | JsLIGO -> print_module_with_description jsligo_module (get_comment JsLIGO)
-  | PascaLIGO -> print_module_with_description pascaligo_module (get_comment PascaLIGO)
 
 
 (* Functions made for debugging *)

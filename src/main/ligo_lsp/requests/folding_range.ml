@@ -28,18 +28,6 @@ let folding_range_cameligo : Cst.Cameligo.t -> FoldingRange.t list option =
   Some (fold_cst [] (Fun.flip List.cons) get_range cst)
 
 
-let folding_range_pascaligo : Cst.Pascaligo.t -> FoldingRange.t list option =
- fun cst ->
-  let open Cst_pascaligo.Fold in
-  let get_range : some_node -> FoldingRange.t fold_control =
-   fun (Some_node (x, b)) ->
-    match b with
-    | S_reg _ -> Continue (mk_region x.region)
-    | _ -> Skip
-  in
-  Some (fold_cst [] (Fun.flip List.cons) get_range cst)
-
-
 let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
  fun cst ->
   let open Cst_jsligo.Fold in
@@ -62,8 +50,5 @@ let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =
   @@ fun cst ->
   Handler.return
   @@ Dialect_cst.from_dialect
-       { cameligo = folding_range_cameligo
-       ; jsligo = folding_range_jsligo
-       ; pascaligo = folding_range_pascaligo
-       }
+       { cameligo = folding_range_cameligo; jsligo = folding_range_jsligo }
        cst

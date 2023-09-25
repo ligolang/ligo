@@ -31,8 +31,6 @@ export function changeLastContractPath(newPath: string) {
 
 function extToDialect(ext: string) {
   switch (ext) {
-    case '.pligo':
-    case '.ligo': return 'pascaligo'
     case '.mligo': return 'cameligo'
     case '.jsligo': return 'jsligo'
     default:

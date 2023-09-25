@@ -97,13 +97,11 @@ let mk_decompiler_test { code; expected; syntax; name } =
     match syntax with
     | JsLIGO -> `JsLIGO (Unification.Jsligo.decompile_ty_expr ast_unified)
     | CameLIGO -> `Cameligo (Unification.Cameligo.decompile_ty_expr ast_unified)
-    | PascaLIGO -> `PascaLIGO (Unification.Pascaligo.decompile_ty_expr ast_unified)
   in
   let doc =
     match cst with
     | `JsLIGO cst -> Parsing.Jsligo.Pretty.(print_type_expr default_state cst)
     | `Cameligo cst -> Parsing.Cameligo.Pretty.(print_type_expr default_state cst)
-    | `PascaLIGO cst -> Parsing.Pascaligo.Pretty.(print_type_expr default_state cst)
   in
   check
     raw_string

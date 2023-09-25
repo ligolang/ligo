@@ -10,11 +10,7 @@ let pretty_print (raw_options : Raw_options.t) source_file =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
@@ -31,11 +27,7 @@ let dependency_graph (raw_options : Raw_options.t) source_file =
   ( BuildSystem.Formatter.graph_format
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let g, _ = Build.dependency_graph ~raise ~options source_file in
@@ -49,11 +41,7 @@ let preprocess (raw_options : Raw_options.t) source_file =
         fst
         @@
         let syntax =
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
         let options = Compiler_options.make ~raw_options ~syntax () in
         let meta = Compile.Of_source.extract_meta syntax in
@@ -70,11 +58,7 @@ let cst (raw_options : Raw_options.t) source_file =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
@@ -91,11 +75,7 @@ let ast_unified (raw_options : Raw_options.t) show_loc hide_sort stop_before sou
   ( Ast_unified.Formatter.program_format ~show_loc ~hide_sort
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
@@ -117,11 +97,7 @@ let ast_core (raw_options : Raw_options.t) source_file =
   ( Ast_core.Formatter.program_format
   , fun ~raise ->
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options = Compiler_options.make ~raw_options ~syntax () in
       let meta = Compile.Of_source.extract_meta syntax in
@@ -142,11 +118,7 @@ let ast_typed (raw_options : Raw_options.t) source_file =
       let options =
         (* TODO: options should be computed outside of the API *)
         let syntax =
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
         let protocol_version =
           Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -178,11 +150,7 @@ let ast_aggregated (raw_options : Raw_options.t) source_file =
       let options =
         (* TODO: options should be computed outside of the API *)
         let syntax =
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
         let protocol_version =
           Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -209,11 +177,7 @@ let ast_expanded (raw_options : Raw_options.t) source_file =
       let options =
         (* TODO: options should be computed outside of the API *)
         let syntax =
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
         let protocol_version =
           Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -242,11 +206,7 @@ let mini_c (raw_options : Raw_options.t) source_file optimize =
       let options =
         (* TODO: options should be computed outside of the API *)
         let syntax =
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
         in
         let protocol_version =
           Helpers.protocol_to_variant ~raise raw_options.protocol_version

@@ -352,7 +352,7 @@ instance HasSpecificMessages LIGO where
     -- Here we can see one problem. Variables types would be prettified
     -- in the dialect from the current file.
     -- But some variables can come from, for example, a @CameLIGO@ contract
-    -- and the other ones from a @PascaLIGO@ one.
+    -- and the other ones from a @JsLIGO@ one.
     lang <-
       currentStackFrame ^. sfLocL . rFile
         & getExt @(Either UnsupportedExtension)

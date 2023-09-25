@@ -14,10 +14,9 @@ let with_pp_mode
       about changing the pp_mode to (Parsing_shared.PrettyComb.state,...) dialect  *)
       ( Parsing_shared.PrettyComb.state * 'a
       , Parsing_shared.PrettyComb.state * 'b
-      , unit * 'c
       , PPrint.document )
       Dialect_cst.from_dialect)
-    (x : ('a, 'b, 'c) Dialect_cst.dialect)
+    (x : ('a, 'b) Dialect_cst.dialect)
   =
   let set_ident pprint_state =
     object
@@ -32,9 +31,6 @@ let with_pp_mode
     (* FIXME #1923 should set_ident here but CameLIGO gives nonpretty result with custom ident *)
     pprint.cameligo (Parsing.Cameligo.Pretty.default_state, code)
   | JsLIGO code -> pprint.jsligo (set_ident Parsing.Jsligo.Pretty.default_state, code)
-  | PascaLIGO code ->
-    (* XXX change type and use set_indent as well after adding ident to state for PascaLIGO *)
-    pprint.pascaligo (Parsing.Pascaligo.Pretty.default_state, code)
 
 
 let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
@@ -42,7 +38,6 @@ let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
     pp_mode
     { cameligo = uncurry Parsing.Cameligo.Pretty.print
     ; jsligo = uncurry Parsing.Jsligo.Pretty.print
-    ; pascaligo = uncurry Parsing.Pascaligo.Pretty.print
     }
     dialect_cst
 
@@ -61,10 +56,7 @@ let pretty_print_type_expression
   =
  fun ?prefix pp_mode ~syntax te ->
   let decompiled_cst_result
-      : ( ( Cst.Cameligo.type_expr
-          , Cst.Jsligo.type_expr
-          , Cst.Pascaligo.type_expr )
-          Dialect_cst.dialect
+      : ( (Cst.Cameligo.type_expr, Cst.Jsligo.type_expr) Dialect_cst.dialect
       , [> `Exn of exn | `PassesError of Nanopasses.Errors.t ] ) result
     =
     try
@@ -78,9 +70,7 @@ let pretty_print_type_expression
           (match syntax with
           | JsLIGO -> JsLIGO (Unification_jsligo.Decompile.decompile_type_expression s)
           | CameLIGO ->
-            CameLIGO (Unification_cameligo.Decompile.decompile_type_expression s)
-          | PascaLIGO ->
-            PascaLIGO (Unification_pascaligo.Decompile.decompile_type_expression s))
+            CameLIGO (Unification_cameligo.Decompile.decompile_type_expression s))
     with
     | exn -> Error (`Exn exn)
   in
@@ -91,7 +81,6 @@ let pretty_print_type_expression
       Dialect_cst.
         { cameligo = add_prefix <@ uncurry Parsing.Cameligo.Pretty.print_type_expr
         ; jsligo = add_prefix <@ uncurry Parsing.Jsligo.Pretty.print_type_expr
-        ; pascaligo = add_prefix <@ uncurry Parsing.Pascaligo.Pretty.print_type_expr
         }
     in
     `Ok (with_pp_mode pp_mode print cst)

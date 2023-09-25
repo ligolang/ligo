@@ -53,21 +53,18 @@ type backend =
   ; function_body : bool
   }
 
-type common = { deprecated : bool }
-
 type t =
   { frontend : frontend
   ; tools : tools
   ; test_framework : test_framework
   ; middle_end : middle_end
   ; backend : backend
-  ; common : common
   }
 
 let warn_unused_rec ~syntax should_warn =
   match syntax with
   | Some Syntax_types.JsLIGO -> false
-  | Some CameLIGO | Some PascaLIGO | None -> should_warn
+  | Some CameLIGO | None -> should_warn
 
 
 let make
@@ -125,8 +122,7 @@ let make
     ; function_body = raw_options.function_body
     }
   in
-  let common = { deprecated = raw_options.deprecated } in
-  { frontend; tools; test_framework; middle_end; backend; common }
+  { frontend; tools; test_framework; middle_end; backend }
 
 
 let set_test_flag opts test = { opts with middle_end = { opts.middle_end with test } }

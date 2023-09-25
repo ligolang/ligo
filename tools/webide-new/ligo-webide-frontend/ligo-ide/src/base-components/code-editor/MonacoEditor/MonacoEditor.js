@@ -68,12 +68,7 @@ async function loadProjectFileContentsRecursively(fileTree, filePromiseMap) {
 }
 
 function isLigoPath(path) {
-  return (
-    path.endsWith(".mligo") ||
-    path.endsWith(".ligo") ||
-    path.endsWith(".pligo") ||
-    path.endsWith(".jsligo")
-  );
+  return path.endsWith(".mligo") || path.endsWith(".jsligo");
 }
 
 function createLanguageClient(transports) {
@@ -81,7 +76,7 @@ function createLanguageClient(transports) {
     name: "Sample Language Client",
     clientOptions: {
       // use a language id as a document selector
-      documentSelector: ["cameligoext", "jsligoext", "pascaligoext"],
+      documentSelector: ["cameligoext", "jsligoext"],
       // disable the default error handler
       errorHandler: {
         error: () => ({ action: ErrorAction.Continue }),

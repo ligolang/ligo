@@ -39,11 +39,7 @@ let with_code_input
     | HTTP uri -> Simple_utils.Http_uri.get_filename uri
   in
   let syntax =
-    Syntax.of_string_opt
-      ~support_pascaligo:true
-      ~raise
-      (Syntax_name raw_options.syntax)
-      (Some file_name)
+    Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some file_name)
   in
   let protocol_version =
     Ligo_compile.Helpers.protocol_to_variant ~raise raw_options.protocol_version
@@ -178,9 +174,7 @@ let make_lsp_virtual_main
       (match syntax with
       | CameLIGO -> "[@entry]\nlet %s (_ : never) (s : %s) : operation list * %s = [], s"
       | JsLIGO ->
-        "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]"
-      | PascaLIGO ->
-        "[@entry]\nfunction %s(_: never; s: %s): list(operation) * %s is (nil, s)")
+        "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]")
       virtual_main_name
       storage_type_name
       storage_type_name

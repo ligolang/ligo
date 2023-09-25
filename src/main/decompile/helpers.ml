@@ -1,20 +1,5 @@
 open Simple_utils.Function
 
-let specialise_and_print_pascaligo =
-  Parsing.Pascaligo.pretty_print Parsing.Pascaligo.Pretty.default_state
-  <@ Unification.Pascaligo.decompile_program
-
-
-let specialise_and_print_expression_pascaligo =
-  Parsing.Pascaligo.pretty_print_expression Parsing.Pascaligo.Pretty.default_state
-  <@ Unification.Pascaligo.decompile_expression
-
-
-let specialise_and_print_ty_pascaligo =
-  Parsing.Pascaligo.pretty_print_type_expr Parsing.Pascaligo.Pretty.default_state
-  <@ Unification.Pascaligo.decompile_ty_expr
-
-
 let specialise_and_print_cameligo =
   Parsing.Cameligo.pretty_print Parsing.Cameligo.Pretty.default_state
   <@ Unification.Cameligo.decompile_program
@@ -50,7 +35,6 @@ let specialise_and_print (syntax : Syntax_types.t) source : Buffer.t =
     match syntax with
     | CameLIGO -> specialise_and_print_cameligo
     | JsLIGO -> specialise_and_print_jsligo
-    | PascaLIGO -> specialise_and_print_pascaligo
   in
   specialise_and_print source
 
@@ -60,7 +44,6 @@ let specialise_and_print_expression (syntax : Syntax_types.t) source =
     match syntax with
     | CameLIGO -> specialise_and_print_expression_cameligo
     | JsLIGO -> specialise_and_print_expression_jsligo
-    | PascaLIGO -> specialise_and_print_expression_pascaligo
   in
   specialise_and_print source
 
@@ -70,6 +53,5 @@ let specialise_and_print_ty (syntax : Syntax_types.t) source =
     match syntax with
     | CameLIGO -> specialise_and_print_ty_cameligo
     | JsLIGO -> specialise_and_print_ty_jsligo
-    | PascaLIGO -> specialise_and_print_ty_pascaligo
   in
   specialise_and_print source
