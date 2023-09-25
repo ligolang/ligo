@@ -19,6 +19,7 @@
     str
     fpath
     uutf
+    bos
     )
   (flags (:standard -open Core)))
 

@@ -1,0 +1,7 @@
+
+author: shubham-kumar
+description: "Replace `_esy/ligo/installation.json` to `_ligo/ligo/installation.json`\\n\\n"
+merge_request: '2883'
+title: "Replace _esy directory with _ligo directory in package management alpha"
+type: breaking
+            

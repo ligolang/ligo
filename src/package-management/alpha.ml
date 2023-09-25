@@ -153,7 +153,7 @@ let ligo_json : string -> Fpath.t =
 
 
 let installation_json : string -> Fpath.t =
- fun path -> Fpath.(v path / "_esy" / "ligo" / "installation.json")
+ fun path -> Fpath.(v path / "_ligo" / "ligo" / "installation.json")
 
 
 let index_json_exists : string -> bool =
