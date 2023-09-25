@@ -13,8 +13,8 @@ type file_data =
   ; definitions : Def.t list
   }
 
-let lsp_raw_options : deprecated:bool -> Path.t -> Compiler_options.Raw_options.t =
- fun ~deprecated path ->
+let lsp_raw_options : Path.t -> Compiler_options.Raw_options.t =
+ fun path ->
   (* packages - project_root [later] *)
   let file = Path.to_string path in
   (* #include - Pass lib or dirs *)
@@ -24,26 +24,22 @@ let lsp_raw_options : deprecated:bool -> Path.t -> Compiler_options.Raw_options.
   Compiler_options.Raw_options.make
     ~with_types:true
     ~libraries:[ dir_name ]
-    ~deprecated
     ~project_root
     ()
 
 
 let get_defs_and_diagnostics
-    :  ?json_download:bool -> deprecated:bool -> code:string -> Path.t
-    -> defs_and_diagnostics Lwt.t
+    : ?json_download:bool -> code:string -> Path.t -> defs_and_diagnostics Lwt.t
   =
- fun ?json_download ~deprecated ~code path ->
-  let options = lsp_raw_options ~deprecated path in
+ fun ?json_download ~code path ->
+  let options = lsp_raw_options path in
   get_defs_and_diagnostics
     ?json_download
     options
     (Raw_input_lsp { file = Path.to_string path; code })
 
 
-let get_scopes
-    : definitions:Def.t list -> deprecated:bool -> code:string -> Path.t -> Scopes.scopes
-  =
- fun ~definitions ~deprecated ~code path ->
-  let options = lsp_raw_options ~deprecated path in
+let get_scopes : definitions:Def.t list -> code:string -> Path.t -> Scopes.scopes =
+ fun ~definitions ~code path ->
+  let options = lsp_raw_options path in
   get_scopes options (Raw_input_lsp { file = Path.to_string path; code }) definitions

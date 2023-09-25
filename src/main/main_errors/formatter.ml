@@ -114,13 +114,13 @@ let rec error_ppformat
       Format.fprintf
         f
         "@[<hv>Invalid file extension for '%s'.@.PascaLIGO is deprecated.@.Hint: You can \
-         enable its support using the --deprecated flag.@]"
+         use LIGO 0.73.0 with the --deprecated flag.@]"
         filename
     | `Main_deprecated_pascaligo_syntax () ->
       Format.fprintf
         f
-        "@[<hv>Invalid syntax.@.PascaLIGO is deprecated.@.Hint: You can enable its \
-         support using the --deprecated flag.@]"
+        "@[<hv>Invalid syntax.@.PascaLIGO is deprecated.@.Hint: You can use LIGO 0.73.0 \
+         with the --deprecated flag.@]"
     | `Main_transpilation_unsupported_syntaxes (src_syntax, dst_syntax) ->
       Format.fprintf
         f

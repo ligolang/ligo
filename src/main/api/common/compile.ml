@@ -55,11 +55,7 @@ let contract
         match source with
         | Text (_source_code, syntax) -> syntax
         | File source_file ->
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:raw_options.deprecated
-            (Syntax_name raw_options.syntax)
-            (Some source_file)
+          Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       Deprecation.view_cli ~raise syntax views;
       Deprecation.entry_cli ~raise syntax entry_point;
@@ -133,11 +129,7 @@ let expression (raw_options : Raw_options.t) expression init_file michelson_form
   , fun ~raise ->
       let open Lwt.Let_syntax in
       let syntax =
-        Syntax.of_string_opt
-          ~support_pascaligo:raw_options.deprecated
-          ~raise
-          (Syntax_name raw_options.syntax)
-          init_file
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
       let options =
         let protocol_version =
@@ -183,11 +175,7 @@ let constant (raw_options : Raw_options.t) constants init_file =
   , fun ~raise ->
       let open Lwt.Let_syntax in
       let syntax =
-        Syntax.of_string_opt
-          ~support_pascaligo:raw_options.deprecated
-          ~raise
-          (Syntax_name raw_options.syntax)
-          init_file
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) init_file
       in
       let options =
         let protocol_version =
@@ -247,7 +235,7 @@ let typed_contract_and_expression_impl
         This representation do not yet persist up until the michelson representation
         due to "optimisations" :  `| Main of p` compiles to `p`
         When using `compile parameter /path/to/file` without using the -e CLI option,
-        we assume the given expression is of type `p` and not `| Main of p`   
+        we assume the given expression is of type `p` and not `| Main of p`
         *)
         (match
            Option.map (Ast_typed.get_t_sum ctrct_sig.parameter) ~f:Ast_typed.Row.to_alist
@@ -354,11 +342,7 @@ let parameter
         Helpers.protocol_to_variant ~raise raw_options.protocol_version
       in
       let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name raw_options.syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
       in
       let options =
         Compiler_options.make
@@ -597,13 +581,7 @@ let storage
         | HTTP uri -> Simple_utils.Http_uri.get_filename uri
       in
       let filename = extract_file_name source_file in
-      let syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:raw_options.deprecated
-          (Syntax_name "auto")
-          (Some filename)
-      in
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name "auto") (Some filename) in
       Deprecation.entry_cli ~raise syntax entry_point;
       let options =
         Compiler_options.make

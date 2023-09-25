@@ -101,9 +101,9 @@ let get ~options : t =
 
 let select_lib_core (stx : Syntax_types.t) (lib : t) : Ast_core.program =
   match stx with
-  | CameLIGO | JsLIGO | PascaLIGO -> lib.content_core
+  | CameLIGO | JsLIGO -> lib.content_core
 
 
 let select_lib_typed (stx : Syntax_types.t) (lib : t) : Ast_typed.program =
   match stx with
-  | CameLIGO | JsLIGO | PascaLIGO -> lib.content_typed
+  | CameLIGO | JsLIGO -> lib.content_typed

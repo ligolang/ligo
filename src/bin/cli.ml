@@ -457,13 +457,6 @@ let hide_sort : _ Command.Param.t =
   flag ~doc ~aliases:[ "hide" ] "--hide-sort" spec
 
 
-let deprecated =
-  let open Command.Param in
-  let name = "--deprecated" in
-  let doc = "enable deprecated language PascaLIGO" in
-  flag ~doc name no_arg
-
-
 let function_body =
   let open Command.Param in
   let name = "--function-body" in
@@ -676,7 +669,6 @@ let compile_file =
       warning_as_error
       no_colour
       no_metadata_check
-      deprecated
       skip_analytics
       michelson_comments
       constants
@@ -700,7 +692,6 @@ let compile_file =
         ~warning_as_error
         ~no_colour
         ~no_metadata_check
-        ~deprecated
         ~constants
         ~file_constants
         ~project_root
@@ -761,7 +752,6 @@ let compile_file =
     <*> werror
     <*> no_colour
     <*> no_metadata_check
-    <*> deprecated
     <*> skip_analytics
     <*> michelson_comments
     <*> constants
@@ -788,7 +778,6 @@ let compile_parameter =
       now
       display_format
       no_colour
-      deprecated
       skip_analytics
       michelson_format
       output_file
@@ -811,7 +800,6 @@ let compile_parameter =
         ~constants
         ~file_constants
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -868,7 +856,6 @@ let compile_parameter =
     <*> now
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> michelson_code_format
     <*> output_file
@@ -890,7 +877,6 @@ let compile_expression =
       init_file
       display_format
       no_colour
-      deprecated
       skip_analytics
       without_run
       no_stdlib
@@ -916,7 +902,6 @@ let compile_expression =
         ~constants
         ~file_constants
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -955,7 +940,6 @@ let compile_expression =
     <*> init_file
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> without_run
     <*> no_stdlib
@@ -989,7 +973,6 @@ let compile_storage =
       no_metadata_check
       allow_json_download
       disallow_json_download
-      deprecated
       skip_analytics
       michelson_format
       output_file
@@ -1019,7 +1002,6 @@ let compile_storage =
         ~constants
         ~file_constants
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1081,7 +1063,6 @@ let compile_storage =
     <*> no_metadata_check
     <*> allow_json_download
     <*> disallow_json_download
-    <*> deprecated
     <*> skip_analytics
     <*> michelson_code_format
     <*> output_file
@@ -1103,7 +1084,6 @@ let compile_constant =
       init_file
       display_format
       no_colour
-      deprecated
       skip_analytics
       without_run
       show_warnings
@@ -1121,7 +1101,6 @@ let compile_constant =
         ~without_run
         ~warning_as_error
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1159,7 +1138,6 @@ let compile_constant =
     <*> init_file
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> without_run
     <*> warn
@@ -1357,7 +1335,6 @@ let test =
       cli_expr_inj
       display_format
       no_colour
-      deprecated
       skip_analytics
       show_warnings
       project_root
@@ -1371,7 +1348,6 @@ let test =
         ~syntax
         ~steps
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~cli_expr_inj
@@ -1412,7 +1388,6 @@ let test =
     <*> cli_expr_inj
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> warn
     <*> project_root
@@ -1430,7 +1405,6 @@ let test_expr =
       cli_expr_inj
       display_format
       no_colour
-      deprecated
       skip_analytics
       show_warnings
       project_root
@@ -1444,7 +1418,6 @@ let test_expr =
         ~syntax
         ~steps
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~cli_expr_inj
@@ -1485,7 +1458,6 @@ let test_expr =
     <*> cli_expr_inj
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> warn
     <*> project_root
@@ -1510,7 +1482,6 @@ let dry_run =
       protocol_version
       display_format
       no_colour
-      deprecated
       skip_analytics
       show_warnings
       warning_as_error
@@ -1527,7 +1498,6 @@ let dry_run =
         ~protocol_version
         ~warning_as_error
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1584,7 +1554,6 @@ let dry_run =
     <*> protocol_version
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> warn
     <*> werror
@@ -1608,7 +1577,6 @@ let evaluate_call =
       protocol_version
       display_format
       no_colour
-      deprecated
       skip_analytics
       show_warnings
       warning_as_error
@@ -1624,7 +1592,6 @@ let evaluate_call =
         ~protocol_version
         ~warning_as_error
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1678,7 +1645,6 @@ let evaluate_call =
     <*> protocol_version
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> warn
     <*> werror
@@ -1701,7 +1667,6 @@ let evaluate_expr =
       protocol_version
       display_format
       no_colour
-      deprecated
       skip_analytics
       show_warnings
       warning_as_error
@@ -1717,7 +1682,6 @@ let evaluate_expr =
         ~protocol_version
         ~warning_as_error
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1761,7 +1725,6 @@ let evaluate_expr =
     <*> protocol_version
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> warn
     <*> werror
@@ -1784,7 +1747,6 @@ let interpret =
       now
       display_format
       no_colour
-      deprecated
       skip_analytics
       project_root
       warn_unused_rec
@@ -1797,7 +1759,6 @@ let interpret =
         ~syntax
         ~protocol_version
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~libraries
@@ -1848,7 +1809,6 @@ let interpret =
     <*> now
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> project_root
     <*> warn_unused_rec
@@ -1877,21 +1837,13 @@ let list_declarations =
       syntax
       display_format
       no_colour
-      deprecated
       skip_analytics
       project_root
       libraries
       ()
     =
     let raw_options =
-      Raw_options.make
-        ~only_ep
-        ~skip_generated
-        ~syntax
-        ~project_root
-        ~deprecated
-        ~libraries
-        ()
+      Raw_options.make ~only_ep ~skip_generated ~syntax ~project_root ~libraries ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -1924,7 +1876,6 @@ let list_declarations =
     <*> syntax
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> project_root
     <*> libraries)
@@ -1938,7 +1889,6 @@ let measure_contract =
       protocol_version
       display_format
       no_colour
-      deprecated
       skip_analytics
       enable_typed_opt
       show_warnings
@@ -1955,7 +1905,6 @@ let measure_contract =
         ~protocol_version
         ~warning_as_error
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~enable_typed_opt
@@ -1994,7 +1943,6 @@ let measure_contract =
     <*> protocol_version
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> enable_michelson_typed_opt
     <*> warn
@@ -2012,7 +1960,6 @@ let get_scope =
       libraries
       display_format
       no_colour
-      deprecated
       with_types
       defs_only
       project_root
@@ -2026,7 +1973,6 @@ let get_scope =
         ~with_types
         ~defs_only
         ~project_root
-        ~deprecated
         ~no_stdlib
         ()
     in
@@ -2060,7 +2006,6 @@ let get_scope =
     <*> libraries
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> with_types
     <*> defs_only
     <*> project_root
@@ -2115,13 +2060,10 @@ let preprocessed =
       display_format
       project_root
       no_colour
-      deprecated
       skip_analytics
       ()
     =
-    let raw_options =
-      Raw_options.make ~syntax ~libraries ~project_root ~no_colour ~deprecated ()
-    in
+    let raw_options = Raw_options.make ~syntax ~libraries ~project_root ~no_colour () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"print_preprocessed"
@@ -2157,7 +2099,6 @@ let preprocessed =
      <*> display_format
      <*> project_root
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics)
 
 
@@ -2168,21 +2109,13 @@ let pretty_print =
       display_format
       warning_as_error
       no_colour
-      deprecated
       skip_analytics
       project_root
       libraries
       ()
     =
     let raw_options =
-      Raw_options.make
-        ~syntax
-        ~warning_as_error
-        ~no_colour
-        ~project_root
-        ~deprecated
-        ~libraries
-        ()
+      Raw_options.make ~syntax ~warning_as_error ~no_colour ~project_root ~libraries ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -2213,7 +2146,6 @@ let pretty_print =
      <*> display_format
      <*> werror
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics
      <*> project_root
      <*> libraries)
@@ -2226,14 +2158,11 @@ let print_graph =
       display_format
       project_root
       no_colour
-      deprecated
       skip_analytics
       libraries
       ()
     =
-    let raw_options =
-      Raw_options.make ~syntax ~project_root ~no_colour ~deprecated ~libraries ()
-    in
+    let raw_options = Raw_options.make ~syntax ~project_root ~no_colour ~libraries () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"print_dependency-graph"
@@ -2265,7 +2194,6 @@ let print_graph =
      <*> display_format
      <*> project_root
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics
      <*> libraries)
 
@@ -2276,15 +2204,12 @@ let print_cst =
       syntax
       display_format
       no_colour
-      deprecated
       skip_analytics
       project_root
       libraries
       ()
     =
-    let raw_options =
-      Raw_options.make ~syntax ~no_colour ~project_root ~deprecated ~libraries ()
-    in
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~libraries () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"print_cst"
@@ -2314,7 +2239,6 @@ let print_cst =
      <*> syntax
      <*> display_format
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics
      <*> project_root
      <*> libraries)
@@ -2329,15 +2253,12 @@ let print_ast_unified =
       no_colour
       show_loc
       hide_sort
-      deprecated
       skip_analytics
       project_root
       libraries
       ()
     =
-    let raw_options =
-      Raw_options.make ~syntax ~no_colour ~project_root ~deprecated ~libraries ()
-    in
+    let raw_options = Raw_options.make ~syntax ~no_colour ~project_root ~libraries () in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
         ~command:"print_ast-imperative"
@@ -2370,7 +2291,6 @@ let print_ast_unified =
      <*> no_colour
      <*> show_loc
      <*> hide_sort
-     <*> deprecated
      <*> skip_analytics
      <*> project_root
      <*> libraries)
@@ -2384,20 +2304,12 @@ let print_ast_core =
       self_pass
       project_root
       no_colour
-      deprecated
       skip_analytics
       libraries
       ()
     =
     let raw_options =
-      Raw_options.make
-        ~syntax
-        ~self_pass
-        ~project_root
-        ~no_colour
-        ~deprecated
-        ~libraries
-        ()
+      Raw_options.make ~syntax ~self_pass ~project_root ~no_colour ~libraries ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -2428,7 +2340,6 @@ let print_ast_core =
      <*> self_pass
      <*> project_root
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics
      <*> libraries)
 
@@ -2445,7 +2356,6 @@ let print_ast_typed =
       warn_infinite_loop
       test
       no_colour
-      deprecated
       skip_analytics
       libraries
       ()
@@ -2460,7 +2370,6 @@ let print_ast_typed =
         ~warn_infinite_loop
         ~test
         ~no_colour
-        ~deprecated
         ~libraries
         ()
     in
@@ -2501,7 +2410,6 @@ let print_ast_typed =
      <*> warn_infinite_loop
      <*> test_mode
      <*> no_colour
-     <*> deprecated
      <*> skip_analytics
      <*> libraries)
 
@@ -2518,7 +2426,6 @@ let print_ast_aggregated =
       warn_infinite_loop
       test
       no_colour
-      deprecated
       skip_analytics
       libraries
       ()
@@ -2533,7 +2440,6 @@ let print_ast_aggregated =
         ~warn_infinite_loop
         ~test
         ~no_colour
-        ~deprecated
         ~libraries
         ()
     in
@@ -2574,7 +2480,6 @@ let print_ast_aggregated =
     <*> warn_infinite_loop
     <*> test_mode
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> libraries)
 
@@ -2586,7 +2491,6 @@ let print_ast_expanded =
       protocol_version
       display_format
       no_colour
-      deprecated
       skip_analytics
       self_pass
       project_root
@@ -2602,7 +2506,6 @@ let print_ast_expanded =
         ~protocol_version
         ~self_pass
         ~project_root
-        ~deprecated
         ~warn_unused_rec
         ~warn_infinite_loop
         ~test
@@ -2641,7 +2544,6 @@ let print_ast_expanded =
     <*> protocol_version
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> self_pass
     <*> project_root
@@ -2662,7 +2564,6 @@ let print_mini_c =
       warn_unused_rec
       warn_infinite_loop
       no_colour
-      deprecated
       skip_analytics
       libraries
       ()
@@ -2675,7 +2576,6 @@ let print_mini_c =
         ~warn_unused_rec
         ~warn_infinite_loop
         ~no_colour
-        ~deprecated
         ~libraries
         ()
     in
@@ -2716,7 +2616,6 @@ let print_mini_c =
     <*> warn_unused_rec
     <*> warn_infinite_loop
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> libraries)
 
@@ -2888,7 +2787,6 @@ let repl =
       now
       display_format
       no_colour
-      deprecated
       skip_analytics
       init_file
       project_root
@@ -2896,7 +2794,7 @@ let repl =
       ()
     =
     let raw_options =
-      Raw_options.make ~syntax ~protocol_version ~project_root ~deprecated ~libraries ()
+      Raw_options.make ~syntax ~protocol_version ~project_root ~libraries ()
     in
     let cli_analytics =
       Analytics.generate_cli_metrics_with_syntax_and_protocol
@@ -2931,7 +2829,6 @@ let repl =
     <*> now
     <*> display_format
     <*> no_colour
-    <*> deprecated
     <*> skip_analytics
     <*> init_file
     <*> project_root

@@ -6,7 +6,6 @@ let default_test_config : config =
   { max_number_of_problems = Int.max_value
   ; logging_verbosity = Log
   ; disabled_features = []
-  ; deprecated = true
   ; max_line_width = None
   }
 

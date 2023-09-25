@@ -340,7 +340,6 @@ let determine_syntax_label_from_source source : string =
   match ext with
   | ".mligo" -> "CameLIGO"
   | ".jsligo" -> "JsLIGO"
-  | ".ligo" | ".pligo" -> "PascaLIGO"
   | _ -> "invalid"
 
 
@@ -349,7 +348,6 @@ let determine_syntax_label syntax source : string =
   | "auto", source -> determine_syntax_label_from_source source
   | ("cameligo" | "CameLIGO"), _ -> "CameLIGO"
   | ("jsligo" | "JsLIGO"), _ -> "JsLIGO"
-  | ("pascaligo" | "PascaLIGO"), _ -> "PascaLIGO"
   | _ -> "invalid"
 
 

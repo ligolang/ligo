@@ -67,10 +67,6 @@ let dialect_keyword_completions (module Built_in : Built_in) : CompletionItem.t 
         ())
 
 
-let pascaligo_keyword_completions : CompletionItem.t list =
-  dialect_keyword_completions (module Lx_psc_self_tokens.Token)
-
-
 let cameligo_keyword_completions : CompletionItem.t list =
   dialect_keyword_completions (module Lx_ml_self_tokens.Token)
 
@@ -80,7 +76,6 @@ let jsligo_keyword_completions : CompletionItem.t list =
 
 
 let get_keyword_completions : Syntax_types.t -> CompletionItem.t list = function
-  | PascaLIGO -> pascaligo_keyword_completions
   | CameLIGO -> cameligo_keyword_completions
   | JsLIGO -> jsligo_keyword_completions
 
@@ -169,15 +164,6 @@ let get_defs_completions
         | S_reg S_namespace_decl
           when Range.(contains_position pos (of_region node.region)) ->
           Continue node.value.namespace_name
-        | _ -> Skip
-      in
-      fold_cst [] (Fn.flip List.cons) collect cst
-    | PascaLIGO cst ->
-      let open Cst_pascaligo.Fold in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_reg S_module_decl when Range.(contains_position pos (of_region node.region))
-          -> Continue node.value.name
         | _ -> Skip
       in
       fold_cst [] (Fn.flip List.cons) collect cst
@@ -407,7 +393,7 @@ let complete_fields
     Option.map (distance_to_pos range) ~f:(fun dist -> { range; dist })
   in
   let open Cst_shared.Fold in
-  (* JsLIGO's and PascaLIGO's completion code is just a copy and paste of CameLIGO's
+  (* JsLIGO's completion code is just a copy and paste of CameLIGO's
      completion code because their CSTs are very similar, with some minor changes where
      needed. The comments in CameLIGO's branch also generalize to the other two branches. *)
   match cst with
@@ -653,107 +639,6 @@ let complete_fields
     if Position.equal pos farthest_dot_position_before_cursor
     then []
     else Option.value ~default:[] (fold_map_cst first_monoid field_completion cst)
-  | PascaLIGO cst ->
-    let open Cst_pascaligo.CST in
-    let open Cst_pascaligo.Fold in
-    let farthest_dot_position_before_cursor, farthest_lexeme_position_before_cursor =
-      let empty = completion_distance_monoid.empty in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_dot -> Last { empty with dot = mk_dist node#region }
-        | S_eof -> Stop
-        | S_wrap _ -> Last { empty with lexeme = mk_dist node#region }
-        | S_reg _ -> Continue { empty with lexeme = mk_dist node.region }
-        | _ -> Skip
-      in
-      let { dot; lexeme } = fold_map_cst completion_distance_monoid collect cst in
-      Option.value_map
-        (Option.both dot lexeme)
-        ~default:(pos, pos)
-        ~f:(fun (dot, lexeme) -> dot.range.start, lexeme.range.start)
-    in
-    let expr_start (expr : expr) : Position.t =
-      Position.of_pos (expr_to_region expr)#start
-    in
-    let linearize_projection (node : projection) : Position.t * lexeme wrap option list =
-      let hd, tl = node.field_path in
-      ( expr_start node.record_or_tuple
-      , List.take_while ((node.selector, hd) :: tl) ~f:(fun (dot, _field) ->
-            Position.(is_to_the_left (of_pos dot#region#stop))
-              farthest_dot_position_before_cursor)
-        |> List.map ~f:(fun (_dot, (field : selection)) ->
-               match field with
-               | FieldName name -> Some name
-               | Component _ -> None) )
-    in
-    let linearize_module_path (type expr) (node : expr module_path) : lexeme wrap list =
-      List.take_while
-        (Simple_utils.Utils.nsepseq_to_list node.module_path)
-        ~f:(fun name ->
-          Position.(is_to_the_left (of_pos name#region#stop))
-            farthest_dot_position_before_cursor)
-    in
-    let linearize_module_path_expr (node : expr module_path)
-        : Position.t option * lexeme wrap list * lexeme wrap option list
-      =
-      let module_names_before_cursor = linearize_module_path node in
-      let struct', proj_fields_before_cursor =
-        match node.field with
-        | E_Proj proj
-          when Position.(
-                 is_to_the_left
-                   (of_pos proj.value.selector#region#start)
-                   farthest_dot_position_before_cursor) ->
-          Tuple.T2.map_fst ~f:Option.some (linearize_projection proj.value)
-        | _ -> None, []
-      in
-      struct', module_names_before_cursor, proj_fields_before_cursor
-    in
-    let expr_path_impl
-        (node : (expr module_path reg, type_expr module_path reg) expr_kind)
-        : CompletionItem.t list option
-      =
-      let struct', module_names_before_cursor, proj_fields_before_cursor =
-        match node with
-        | Module_path_expr expr -> linearize_module_path_expr expr.value
-        | Module_path_type_expr type_expr ->
-          None, linearize_module_path type_expr.value, []
-      in
-      let proj_fields_before_cursor =
-        List.map ~f:(Option.map ~f:(fun field -> field#payload)) proj_fields_before_cursor
-      in
-      match struct' with
-      | None ->
-        (match node with
-        | Module_path_expr _ -> module_path_impl_expr module_names_before_cursor
-        | Module_path_type_expr _ -> module_path_impl_type_expr module_names_before_cursor)
-      | Some struct' -> projection_impl struct' proj_fields_before_cursor
-    in
-    let is_reg_node_of_interest (type a) (node : a reg) : bool =
-      let open Range in
-      let range = of_region node.region in
-      contains_position farthest_dot_position_before_cursor range
-      && contains_position farthest_lexeme_position_before_cursor range
-    in
-    let field_completion (Some_node (node, sing)) =
-      match sing with
-      | S_reg S_projection when is_reg_node_of_interest node ->
-        let struct_pos, proj_fields_before_cursor = linearize_projection node.value in
-        let proj_fields_before_cursor =
-          List.map
-            ~f:(Option.map ~f:(fun field -> field#payload))
-            proj_fields_before_cursor
-        in
-        Continue (projection_impl struct_pos proj_fields_before_cursor)
-      | S_reg (S_module_path S_expr) when is_reg_node_of_interest node ->
-        Continue (expr_path_impl (Module_path_expr node))
-      | S_reg (S_module_path S_type_expr) when is_reg_node_of_interest node ->
-        Continue (expr_path_impl (Module_path_type_expr node))
-      | _ -> Skip
-    in
-    if Position.equal pos farthest_dot_position_before_cursor
-    then []
-    else Option.value ~default:[] (fold_map_cst first_monoid field_completion cst)
 
 
 let mk_completion_list (items : CompletionItem.t list)
@@ -789,7 +674,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
        suggest scopes or keywords. *)
     if List.is_empty field_completions
     then (
-      let scopes = Ligo_interface.get_scopes ~definitions ~deprecated:true ~code path in
+      let scopes = Ligo_interface.get_scopes ~definitions ~code path in
       let scope_completions =
         get_defs_completions path syntax cst pos scopes definitions
       in

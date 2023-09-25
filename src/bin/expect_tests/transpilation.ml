@@ -5,8 +5,9 @@ let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "jsligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Syntactic-level transpilation from pascaligo to jsligo is not supported. |}]
+    Invalid file extension for '../../test/contracts/example.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 (* ---------- Tests for CLI options for syntax ------------------------------ *)
 
@@ -15,9 +16,9 @@ let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.ligo" ];
   [%expect
     {|
-    Transpilation target syntax is not specified.
-    Please provide it using the --to-syntax option
-    or by specifying an output file with the -o option |}]
+    Invalid file extension for '../../test/contracts/example.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 (* Should suceed since output file is explicitely provided,
    even if [--to-syntax] is not *)
@@ -25,8 +26,9 @@ let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "-o"; "dest.jsligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Syntactic-level transpilation from pascaligo to jsligo is not supported. |}]
+    Invalid file extension for '../../test/contracts/example.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 (* ---------- Tests for (un)supported syntaxes ------------------------------ *)
 
@@ -35,15 +37,17 @@ let%expect_test _ =
     [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "pascaligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Source and destination of transpilation are the same (pascaligo). |}]
+    Invalid file extension for '../../test/contracts/example.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.ligo"; "--to-syntax"; "cameligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Syntactic-level transpilation from pascaligo to cameligo is not supported. |}]
+    Invalid file extension for '../../test/contracts/example.ligo'.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 let%expect_test _ =
   run_ligo_bad
@@ -58,8 +62,9 @@ let%expect_test _ =
     [ "transpile"; "contract"; test "example.mligo"; "--to-syntax"; "pascaligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Syntactic-level transpilation from cameligo to pascaligo is not supported. |}]
+    Invalid syntax.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.mligo"; "--to-syntax"; "jsligo" ];
@@ -81,8 +86,9 @@ let%expect_test _ =
     [ "transpile"; "contract"; test "example.jsligo"; "--to-syntax"; "pascaligo" ];
   [%expect
     {|
-    Invalid syntaxes.
-    Syntactic-level transpilation from jsligo to pascaligo is not supported. |}]
+    Invalid syntax.
+    PascaLIGO is deprecated.
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "transpile"; "contract"; test "example.jsligo"; "--to-syntax"; "jsligo" ];

@@ -434,12 +434,7 @@ let main
   let protocol =
     Environment.Protocols.protocols_to_variant raw_options.protocol_version
   in
-  let syntax =
-    Syntax.of_string_opt
-      ~support_pascaligo:raw_options.deprecated
-      (Syntax_name raw_options.syntax)
-      None
-  in
+  let syntax = Syntax.of_string_opt (Syntax_name raw_options.syntax) None in
   let dry_run_opts =
     Ligo_run.Of_michelson.make_dry_run_options
       { now; amount; balance; sender; source; parameter_ty = None }

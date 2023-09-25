@@ -1932,7 +1932,7 @@ let%expect_test _ =
     {|
     Invalid file extension for '../../test/contracts/increment.ligo'.
     PascaLIGO is deprecated.
-    Hint: You can enable its support using the --deprecated flag. |}]
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile"; "expression"; "pascaligo"; "1 + 1" ];
@@ -1940,12 +1940,7 @@ let%expect_test _ =
     {|
     Invalid syntax.
     PascaLIGO is deprecated.
-    Hint: You can enable its support using the --deprecated flag. |}]
-
-let%expect_test _ =
-  run_ligo_good [ "compile"; "expression"; "pascaligo"; "1 + 1"; "--deprecated" ];
-  [%expect {|
-    2 |}]
+    Hint: You can use LIGO 0.73.0 with the --deprecated flag. |}]
 
 (* Test compiling a contract with a get_entrypoint_opt to a capitalized entrypoint *)
 let%expect_test _ =

@@ -118,7 +118,6 @@ let output : string -> string -> string -> string -> _ Term.ret =
   else (
     let syntaxes =
       [ "jsligo", JsLIGO.syntax_highlighting
-      ; "ligo", PascaLIGO.syntax_highlighting
       ; "mligo", CameLIGO.syntax_highlighting
       ]
     in

@@ -93,11 +93,6 @@ let pp_type_expression ~raise ~syntax f type_expr =
         let open Parsing.Jsligo in
         let cst = decompile_ty_expr unified_type_expr in
         Pretty.print_type_expr Pretty.default_state cst
-      | PascaLIGO ->
-        let open Unification.Pascaligo in
-        let open Parsing.Pascaligo in
-        let cst = decompile_ty_expr unified_type_expr in
-        Pretty.print_type_expr Pretty.default_state cst
     in
     PPrint.ToFormatter.compact f pp
   with

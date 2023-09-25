@@ -7,7 +7,5 @@
   unification_shared
   syntax_types
   unification_cameligo
-  unification_pascaligo
-  ; unification_reasonligo
   unification_jsligo
   ast_unified))

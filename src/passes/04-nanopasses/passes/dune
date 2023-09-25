@@ -64,7 +64,6 @@
   literalize_annotated
   detect_recursive
   restrict_projections
-  special_unit_constructor
   unpuning
   disc_union_types
   prefix_postfix_operators

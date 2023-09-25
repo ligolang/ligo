@@ -15,7 +15,7 @@ dryRun :: DryRunRequest -> WebIDEM CompilerResponse
 dryRun request =
   withProject (drrProject request) $ \(dirPath, fullMainPath, pModule) -> do
     (ec, out, err) <- runLigo dirPath $
-      ["run", "dry-run", "--no-color", "--deprecated", fullMainPath]
+      ["run", "dry-run", "--no-color", fullMainPath]
       ++ moduleOption pModule
       ++ [Text.unpack (drrParameters request), Text.unpack (drrStorage request)]
       ++ maybe []

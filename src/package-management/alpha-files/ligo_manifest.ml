@@ -47,14 +47,13 @@ let validate_main_file ~main =
   match Caml.Sys.file_exists main with
   | true ->
     let ext_opt = snd @@ Filename.split_extension main in
-    let ligo_syntax_opt = Syntax.of_ext_opt ~support_pascaligo:true ext_opt in
+    let ligo_syntax_opt = Syntax.of_ext_opt ext_opt in
     (match ligo_syntax_opt with
-    | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO | Some Syntax_types.PascaLIGO
-      -> Ok ()
+    | Some Syntax_types.CameLIGO | Some Syntax_types.JsLIGO -> Ok ()
     | None ->
       Error
         "Error: Invalid LIGO file specifed in main field of ligo.json\n\
-         Valid extension for LIGO files are (.ligo, .mligo, .jsligo) ")
+         Valid extension for LIGO files are (.mligo, .jsligo) ")
   | false ->
     Error
       "Error: main file does not exists.\nPlease specify a valid LIGO file in ligo.json."

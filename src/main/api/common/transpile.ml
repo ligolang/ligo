@@ -8,26 +8,18 @@ module LexerParams = LexerLib.CLI.MakeDefault (PreprocParams)
 module Parameters = ParserLib.CLI.MakeDefault (LexerParams)
 module Options = Parameters.Options
 
+(* XXX Transpilation is not implemented *)
 let contract source_file to_syntax from_syntax output_file =
   ( Parsing.Formatter.ppx_format
   , fun ~raise ->
       let from_syntax =
-        Syntax.of_string_opt
-          ~raise
-          ~support_pascaligo:true
-          (Syntax_name from_syntax)
-          (Some source_file)
+        Syntax.of_string_opt ~raise (Syntax_name from_syntax) (Some source_file)
       in
       let to_syntax =
         match to_syntax, output_file with
         | "auto", None ->
           raise.error @@ Main_errors.main_transpilation_unspecified_dest_syntax
-        | _ ->
-          Syntax.of_string_opt
-            ~raise
-            ~support_pascaligo:true
-            (Syntax_name to_syntax)
-            output_file
+        | _ -> Syntax.of_string_opt ~raise (Syntax_name to_syntax) output_file
       in
       let buffer =
         let open Trace in

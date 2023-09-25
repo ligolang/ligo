@@ -7,7 +7,7 @@ if executable('ligo')
           \ call lsp#register_server({
           \   'name': 'ligo_lsp',
           \   'cmd': {server_info->['ligo', 'lsp']},
-          \   'allowlist': ['jsligo', 'ligo', 'mligo'],
+          \   'allowlist': ['jsligo', 'mligo'],
           \ })
     augroup END
   endif

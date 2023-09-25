@@ -51,7 +51,6 @@ This sub-command compiles a contract to Michelson code. It expects a source file
   [--constants CONSTANTS], -c
                              . A list of global constants that will be assumed
                                in the context, separated by ','
-  [--deprecated]             . enable deprecated language PascaLIGO
   [--disable-michelson-typechecking]
                              . Disable Michelson typecking, this might produce
                                ill-typed Michelson code.
@@ -142,7 +141,6 @@ let%expect_test _ =
       [--constants CONSTANTS], -c
                                  . A list of global constants that will be assumed
                                    in the context, separated by ','
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -216,7 +214,6 @@ let%expect_test _ =
       [--constants CONSTANTS], -c
                                  . A list of global constants that will be assumed
                                    in the context, separated by ','
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--disallow-json-download] . Disallow LIGO to download JSON files for metadata
                                    check (and do not show message).
       [--display-format FORMAT], --format
@@ -284,7 +281,6 @@ let%expect_test _ =
 
     === flags ===
 
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -330,7 +326,6 @@ let%expect_test _ =
                                    use for the transaction.
       [--balance INT]            . the balance the Michelson interpreter will use
                                    for the contract balance.
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -388,7 +383,6 @@ let%expect_test _ =
                                    use for the transaction.
       [--balance INT]            . the balance the Michelson interpreter will use
                                    for the contract balance.
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -441,7 +435,6 @@ let%expect_test _ =
                                    use for the transaction.
       [--balance INT]            . the balance the Michelson interpreter will use
                                    for the contract balance.
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -493,7 +486,6 @@ let%expect_test _ =
       [--constants CONSTANTS], -c
                                  . A list of global constants that will be assumed
                                    in the context, separated by ','
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and
@@ -545,7 +537,6 @@ let%expect_test _ =
 
     === flags ===
 
-      [--deprecated]             . enable deprecated language PascaLIGO
       [--display-format FORMAT], --format
                                  . the format that will be used by the CLI.
                                    Available formats are 'dev', 'json', and

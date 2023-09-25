@@ -31,15 +31,11 @@ open Simple_utils.Trace
 open Simple_utils
 open Errors
 module Location = Simple_utils.Location
-
-include Flag.With_arg (struct
-  type flag = Syntax_types.t
-end)
+include Flag.No_arg ()
 
 let name = __MODULE__
 
 let compile ~raise:_ =
-  let syntax = get_flag () in
   let pattern : (pattern, ty_expr) pattern_ -> pattern =
    fun p ->
     let loc = Location.get_location p in
@@ -55,12 +51,6 @@ let compile ~raise:_ =
       p_variant ~loc (Label.of_string (Ligo_string.extract ctor_name)) args
     | P_app (c, args) ->
       (match get_p c with
-      | P_ctor c
-        when Label.(equal c (of_string "Unit"))
-             && Option.is_none args
-             && Syntax_types.equal syntax PascaLIGO ->
-        (* should not be necessary in principle *)
-        p_literal ~loc Literal_unit
       | P_ctor constructor -> p_variant ~loc constructor args
       | _ -> failwith "impossible: parsing invariant")
     | p -> make_p ~loc p

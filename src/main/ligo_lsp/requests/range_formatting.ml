@@ -10,17 +10,13 @@ open Lsp_helpers
 (* TODO: format definitions from local modules, format subexpressions *)
 
 type declaration =
-  ( Cst_cameligo.CST.declaration
-  , Cst_jsligo.CST.statement
-  , Cst_pascaligo.CST.declaration )
-  Dialect_cst.dialect
+  (Cst_cameligo.CST.declaration, Cst_jsligo.CST.statement) Dialect_cst.dialect
 
 let decl_range : declaration -> Range.t =
   Range.of_region
   <@ Dialect_cst.from_dialect
        { cameligo = Cst_cameligo.CST.declaration_to_region
        ; jsligo = Cst_jsligo.CST.statement_to_region
-       ; pascaligo = Cst_pascaligo.CST.region_of_S_Decl
        }
 
 
@@ -35,9 +31,6 @@ let decls_of_cst : Dialect_cst.t -> declaration Nseq.nseq =
             Nseq.nseq_map
               (fun (x, _) -> Dialect_cst.JsLIGO x)
               cst.statements (* Type inference is not working here *))
-    ; pascaligo =
-        Cst_pascaligo.CST.(
-          fun cst -> Nseq.nseq_map (fun x -> Dialect_cst.PascaLIGO x) cst.decl)
     }
 
 
@@ -47,7 +40,6 @@ let print_decl : Pretty.pp_mode -> declaration -> string =
     pp_mode
     { cameligo = uncurry CameLIGO_pretty.print_declaration
     ; jsligo = uncurry JsLIGO_pretty.print_statement
-    ; pascaligo = uncurry PascaLIGO_pretty.print_declaration
     }
 
 

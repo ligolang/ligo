@@ -26,7 +26,6 @@ let test { test_name; actual; expected } =
     match Caml.Filename.extension actual with
     | ".mligo" -> Syntax_types.CameLIGO
     | ".jsligo" -> Syntax_types.JsLIGO
-    | ".ligo" | ".pligo" -> Syntax_types.PascaLIGO
     | other -> failwith (Printf.sprintf "Unknown extension %s" other)
   in
   let contents = In_channel.read_all actual in
@@ -50,10 +49,6 @@ let test { test_name; actual; expected } =
       | JsLIGO ->
         let module Parse = Jsligo.Make (Options) in
         let module Pretty = Jsligo.Pretty in
-        Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual
-      | PascaLIGO ->
-        let module Parse = Pascaligo.Make (Options) in
-        let module Pretty = Pascaligo.Pretty in
         Parse.pretty_print_file ~preprocess ~raise Pretty.default_state buffer actual)
   in
   Alcotest.(check string)

@@ -1,26 +1,23 @@
-(** We want to write some high-level functions that can take toplevel declarations 
-    / cst / etc for all dialects, 
+(** We want to write some high-level functions that can take toplevel declarations
+    / cst / etc for all dialects,
     this wrapper allow to simplify types of such functions and create some combinators *)
-type ('cameligo, 'jsligo, 'pascaligo) dialect =
+type ('cameligo, 'jsligo) dialect =
   | CameLIGO of 'cameligo
   | JsLIGO of 'jsligo
-  | PascaLIGO of 'pascaligo
 
 (** Nice form for functions that take [(...) dialect] *)
-type ('cameligo, 'jsligo, 'pascaligo, 'result) from_dialect =
+type ('cameligo, 'jsligo, 'result) from_dialect =
   { cameligo : 'cameligo -> 'result
   ; jsligo : 'jsligo -> 'result
-  ; pascaligo : 'pascaligo -> 'result
   }
 
-let from_dialect : ('a, 'b, 'c, 'result) from_dialect -> ('a, 'b, 'c) dialect -> 'result =
+let from_dialect : ('a, 'b, 'result) from_dialect -> ('a, 'b) dialect -> 'result =
  fun f -> function
   | CameLIGO x -> f.cameligo x
   | JsLIGO x -> f.jsligo x
-  | PascaLIGO x -> f.pascaligo x
 
 
-type t = (Parsing.Cameligo.CST.t, Parsing.Jsligo.CST.t, Parsing.Pascaligo.CST.t) dialect
+type t = (Parsing.Cameligo.CST.t, Parsing.Jsligo.CST.t) dialect
 type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
 
 exception Fatal_cst_error of string
@@ -62,8 +59,5 @@ let get_cst ~(strict : bool) ~(file : Path.t) (syntax : Syntax_types.t) (code : 
     | JsLIGO ->
       let module Parse = Jsligo.Make (Options) in
       Ok (JsLIGO (Parse.parse_file ~preprocess ~project_root ~raise buffer file))
-    | PascaLIGO ->
-      let module Parse = Pascaligo.Make (Options) in
-      Ok (PascaLIGO (Parse.parse_file ~preprocess ~project_root ~raise buffer file))
   with
   | Fatal_cst_error err -> Error err

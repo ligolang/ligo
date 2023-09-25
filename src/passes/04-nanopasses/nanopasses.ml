@@ -12,9 +12,7 @@ type flags =
   ; for_to_while_loop : bool
   ; restrict_projection : bool
   ; export : bool
-  ; special_unit_constructor : bool
   ; freeze_operators : Syntax_types.t
-  ; constructor_application : Syntax_types.t
   ; list_as_function : bool
   ; array_to_tuple : bool
   ; match_as_function : bool
@@ -24,7 +22,6 @@ type flags =
   ; named_fun : bool
   ; t_app_michelson_types : Syntax_types.t
   ; projections : Syntax_types.t
-  ; pattern_constructor_application : Syntax_types.t
   ; mod_res : ModRes.t option
   ; wildcards : bool
   }
@@ -36,19 +33,16 @@ let passes ~(flags : flags) : (module T) list =
       ; for_to_while_loop
       ; restrict_projection
       ; export
-      ; special_unit_constructor
       ; list_as_function
       ; array_to_tuple
       ; match_as_function
       ; object_to_record
       ; detect_recursion
       ; freeze_operators
-      ; constructor_application
       ; hack_literalize_jsligo
       ; named_fun
       ; t_app_michelson_types
       ; projections
-      ; pattern_constructor_application
       ; mod_res
       ; wildcards
       }
@@ -74,10 +68,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Export_program_entry) ~flag:export ~arg:()
   ; entry (module Export_declaration) ~flag:export ~arg:()
   ; entry (module Top_level_restriction) ~flag:always ~arg:()
-  ; entry
-      (module Pattern_constructor_application)
-      ~flag:always
-      ~arg:pattern_constructor_application
+  ; entry (module Pattern_constructor_application) ~flag:always ~arg:()
   ; entry (module Pattern_restriction) ~flag:always ~arg:()
   ; entry (module Pattern_heuristic) ~flag:always ~arg:()
   ; entry (module Unpuning) ~flag:always ~arg:()
@@ -87,9 +78,8 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Linearity) ~flag:always ~arg:()
   ; entry (module T_constant) ~flag:always ~arg:()
   ; entry (module T_arg) ~flag:always ~arg:()
-  ; entry (module Constructor_application) ~flag:always ~arg:constructor_application
+  ; entry (module Constructor_application) ~flag:always ~arg:()
   ; entry (module Standalone_constructor_removal) ~flag:always ~arg:()
-  ; entry (module Special_unit_constructor) ~flag:special_unit_constructor ~arg:()
   ; entry (module Type_abstraction_declaration) ~flag:always ~arg:()
   ; entry (module Sum_type_helper_generator) ~flag:always ~arg:()
   ; entry (module Named_fun) ~flag:named_fun ~arg:()
@@ -136,7 +126,6 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
     Option.value_map options.frontend.syntax ~default:Syntax_types.CameLIGO ~f:Fun.id
   in
   let is_jsligo = Syntax_types.equal syntax JsLIGO in
-  let is_pascaligo = Syntax_types.equal syntax PascaLIGO in
   let is_cameligo = Syntax_types.equal syntax CameLIGO in
   let duplicate_identifier = if options.frontend.transpiled then false else is_jsligo in
   let mod_res =
@@ -147,19 +136,16 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; for_to_while_loop = options.frontend.warn_infinite_loop
   ; restrict_projection = is_jsligo
   ; export = is_jsligo
-  ; special_unit_constructor = is_pascaligo
   ; list_as_function = is_jsligo
   ; array_to_tuple = is_jsligo
   ; match_as_function = is_jsligo
   ; object_to_record = is_jsligo
   ; detect_recursion = is_jsligo
   ; freeze_operators = syntax
-  ; constructor_application = syntax
   ; hack_literalize_jsligo = is_jsligo
   ; named_fun = is_jsligo
   ; t_app_michelson_types = syntax
   ; projections = syntax
-  ; pattern_constructor_application = syntax
   ; mod_res
   ; wildcards = is_cameligo
   }
