@@ -1462,7 +1462,7 @@ and print_legacy_variant_args : 'a. (state -> 'a -> document) -> state -> 'a leg
 and print_app :
   'a.state -> (state -> 'a -> document) -> 'a app -> document =
   fun state print -> function
-    ZeroArg ctor -> print_ctor_app_kind ctor
+    ZeroArg ctor -> print_ctor_app_kind ctor ^^ string "()"
   | MultArg (ctor, args) ->
       print_ctor_app_kind ctor
       ^^ print_par state (print_nsep_or_term (break 1) (print state)) args
