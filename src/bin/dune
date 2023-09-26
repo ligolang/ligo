@@ -23,9 +23,9 @@
   lwt
   lwt.unix
   base64
-  lambda-term
+  prompt
   ligo_api)
- (modules command_unx forgot_password prompt user cli version))
+ (modules command_unx forgot_password user cli version))
 
 (library
  (name repl)
@@ -33,6 +33,11 @@
   (backend bisect_ppx))
  (libraries simple-utils cmdliner ligo build lambda-term)
  (modules repl))
+
+(library
+ (name prompt)
+ (modules prompt)
+ (libraries core lambda-term))
 
 (library
  (name install)
@@ -54,6 +59,7 @@
   fpath
   bos
   semver
+  prompt
   lambda-term)
  (preprocess
   (pps ppx_deriving_yojson))
