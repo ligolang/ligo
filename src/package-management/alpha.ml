@@ -24,6 +24,7 @@ let ( let@ ) o f = Result.bind ~f o
 type error =
   | NotSupportedInAlpha
   | UnableToAccessRegistry
+  | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
   | UnableToAccessName of string
@@ -53,6 +54,7 @@ let string_of_error = function
     "Not supported under --package-management-alpha please try with"
   | UnableToAccessRegistry ->
     "Unable to access registry, cannot download the metadata json"
+  | VersionNotFound (n, v) -> Printf.sprintf "Version %s of %s not found" v n
   | UnableToSerializeSemver -> "The version provided is illegal Semver"
   | UnableToAccessId -> "The access id doesn't exists"
   | UnableToAccessName msg -> "The access name doesn't exists\n" ^ msg
@@ -251,11 +253,11 @@ let get_metadata_json
     let* body = Cohttp_lwt.Body.to_string body in
     let json = Json.from_string body in
     let version = get_apt_version version ~json in
-    try
-      let json = Json.Util.(member "versions" json |> member version) in
-      Lwt.return_ok json
-    with
-    | Yojson.Safe.Util.Type_error (msg, _) -> Lwt.return_error (UnableToAccessName msg)
+    match Json.Util.(member "versions" json |> member version) with
+    | `Null -> Lwt.return_error (VersionNotFound (name, version))
+    | json -> Lwt_result.return json
+    | exception Yojson.Safe.Util.Type_error (msg, _) ->
+      Lwt.return_error (UnableToAccessName msg)
   else Lwt.return_error UnableToAccessRegistry
 
 
@@ -556,7 +558,16 @@ let generate_default_node
     Source.Default Source.{ type_; path; manifest }
   in
   let overrides = [] in
-  Ok Node.{ id; name = project_name; version; source; overrides; dependencies; dev_dependencies }
+  Ok
+    Node.
+      { id
+      ; name = project_name
+      ; version
+      ; source
+      ; overrides
+      ; dependencies
+      ; dev_dependencies
+      }
 
 
 (* let node : (string * t) list = [ "node", node_value ] in *)

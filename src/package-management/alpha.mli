@@ -3,6 +3,7 @@
 type error =
   | NotSupportedInAlpha
   | UnableToAccessRegistry
+  | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
   | UnableToAccessName of string
