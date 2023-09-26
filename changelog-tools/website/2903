@@ -1,0 +1,7 @@
+
+author: ligo.suzanne.soy
+description: "\\n\\nDocumented that views can't be written using the \"uncurried\" calling convention anymore.\\n\\n"
+merge_request: '2903'
+title: "Migration guide: uncurried views are deprecated"
+type: breaking
+            

@@ -1,3 +1,10 @@
+---
+id: v1-migration-guide
+title: Migration to LIGO v. 1.0
+---
+
+import Syntax from '@theme/Syntax';
+
 # Migration to LIGO v. 1.0
 
 Exciting news, LIGO has released version 1.0! We made sure to fit in this release a number of pending breaking changes, so that our users do not need to catch up with small breaking changes every release, and can handle the migration in bulk. Please continue reading to learn which changes may affect your existing codebase.
@@ -25,6 +32,55 @@ MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2805
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2831
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2885
+
+#### Uniform calling convention for views and entry points.
+
+Views used to be functions taking a tuple, they are now functions taking two arguments:
+
+<Syntax syntax="cameligo">
+
+```cameligo skip
+[@entry]
+let set_storage (new_storage, _old_storage : int * int): operation list * int = ([], new_storage)
+
+[@view]
+let get_storage ((), storage : unit * int): int = storage
+```
+
+is now written
+
+```cameligo
+[@entry]
+let set_storage (new_storage : int)  (_old_storage : int): operation list * int = ([], new_storage)
+
+[@view]
+let get_storage () (storage : int): int = storage
+```
+
+</Syntax>
+
+<Syntax syntax="jsligoligo">
+
+```jsligo skip
+// @entry
+const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [list([]), new_storage]
+
+// @view
+const get_storage = ([_, storage] : [unit, int]): int => storage
+```
+
+is now written
+
+```jsligo
+@entry
+const set_storage = (new_storage: int, _old_storage: int): [list<operation>, int] => [list([]), new_storage]
+
+@view
+const get_storage = (_: unit, storage: int): int => storage
+```
+
+</Syntax>
+
 
 #### `contract_of` and `parameter_of`
 
@@ -202,7 +258,7 @@ const force_positive = (key: string, dict: map<string, int>) => {
 
 Pattern-matching on lists uses the syntaxes `when([])` and `when([head, ...tail])`:
 
-```
+```jsligo
 type storage = [int, list <int>];
 type parameter = list <int>;
 type returnx = [list <operation>, storage];
