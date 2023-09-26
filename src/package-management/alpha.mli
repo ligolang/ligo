@@ -3,6 +3,7 @@
 type error =
   | NotSupportedInAlpha
   | UnableToAccessRegistry
+  | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
   | UnableToAccessName of string
@@ -60,4 +61,4 @@ type manifest_result =
   | `OK
   ]
 
-val does_json_manifest_exist : unit -> manifest_result
+val does_json_manifest_exist : project_root:string -> manifest_result

@@ -24,6 +24,7 @@ let ( let@ ) o f = Result.bind ~f o
 type error =
   | NotSupportedInAlpha
   | UnableToAccessRegistry
+  | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
   | UnableToAccessName of string
@@ -53,6 +54,7 @@ let string_of_error = function
     "Not supported under --package-management-alpha please try with"
   | UnableToAccessRegistry ->
     "Unable to access registry, cannot download the metadata json"
+  | VersionNotFound (n, v) -> Printf.sprintf "Version %s of %s not found" v n
   | UnableToSerializeSemver -> "The version provided is illegal Semver"
   | UnableToAccessId -> "The access id doesn't exists"
   | UnableToAccessName msg -> "The access name doesn't exists\n" ^ msg
@@ -95,11 +97,10 @@ type manifest_result =
   | `OK
   ]
 
-let does_json_manifest_exist () =
-  let cwd = Caml.Sys.getcwd () in
-  let package_json = Filename.concat cwd "package.json" in
-  let ligo_json = Filename.concat cwd "ligo.json" in
-  let esy_json = Filename.concat cwd "esy.json" in
+let does_json_manifest_exist ~project_root =
+  let package_json = Filename.concat project_root "package.json" in
+  let ligo_json = Filename.concat project_root "ligo.json" in
+  let esy_json = Filename.concat project_root "esy.json" in
   match
     ( Caml.Sys.file_exists ligo_json
     , Caml.Sys.file_exists package_json
@@ -137,7 +138,6 @@ with the current preproccessor that accepts a package name with a 8 letter hex c
   This is temporary and ffffffff is random string and has no signficant meaning
 *)
 let generate_random_uuid () = "ffffffff"
-let is_json_empty : Json.t -> bool = fun json -> Json.Util.keys json |> List.is_empty
 let ( // ) a b = a ^ "/" ^ b
 
 let trim_quotes : string -> string =
@@ -253,11 +253,11 @@ let get_metadata_json
     let* body = Cohttp_lwt.Body.to_string body in
     let json = Json.from_string body in
     let version = get_apt_version version ~json in
-    try
-      let json = Json.Util.(member "versions" json |> member version) in
-      Lwt.return_ok json
-    with
-    | Yojson.Safe.Util.Type_error (msg, _) -> Lwt.return_error (UnableToAccessName msg)
+    match Json.Util.(member "versions" json |> member version) with
+    | `Null -> Lwt.return_error (VersionNotFound (name, version))
+    | json -> Lwt_result.return json
+    | exception Yojson.Safe.Util.Type_error (msg, _) ->
+      Lwt.return_error (UnableToAccessName msg)
   else Lwt.return_error UnableToAccessRegistry
 
 
@@ -410,34 +410,32 @@ let fetch_tarballs
   Lwt_result.return installation_map
 
 
-let generate_default_installation ligo_json project_root =
-  let name =
-    if is_json_empty ligo_json
-    then Fpath.v project_root |> Fpath.segs |> List.last_exn
-    else Json.(Util.member "name" ligo_json |> to_string |> trim_quotes)
-  in
-  let key : string = name ^ "@" ^ "link-dev:./ligo.json" in
+let generate_default_installation ~project_name ligo_json project_root =
+  let key : string = project_name ^ "@" ^ "link-dev:./ligo.json" in
   let value = project_root in
   key, value
 
 
-let generate_default_installation_json : Json.t -> string -> string * Json.t =
- fun ligo_json project_root ->
-  let key, value = generate_default_installation ligo_json project_root in
+let generate_default_installation_json ~project_name ligo_json project_root =
+  let key, value = generate_default_installation ~project_name ligo_json project_root in
   key, `String value
 
 
 let generate_installation_json
-    : Fpath.t InstallationJsonMap.t -> string -> ligo_json:Json.t -> Json.t
+    ~project_root
+    ~project_name
+    ~ligo_json
+    installation_json_map
   =
- fun installation_json_map project_root ~ligo_json ->
   let create_json lst : Json.t =
     let f (name_version, path) =
       let key = NameVersion.to_string name_version in
       let value = `String ("./" ^ Fpath.to_string path) in
       key, value
     in
-    let default = generate_default_installation_json ligo_json project_root in
+    let default =
+      generate_default_installation_json ~project_name ligo_json project_root
+    in
     `Assoc (default :: List.map ~f lst)
   in
   let lst = InstallationJsonMap.bindings installation_json_map in
@@ -551,14 +549,7 @@ let generate_default_node
     -> dev_dependencies:NameVersion.t list -> (Node.t, error) result
   =
  fun ~project_name ~ligo_json ~dependencies ~dev_dependencies ->
-  let open Json in
-  let name =
-    match Util.(member "name" ligo_json) with
-    | `String name -> name
-    | _ -> project_name
-  in
-  let name = name |> trim_quotes in
-  let id = name ^ "@" ^ "link-dev:./ligo.json" in
+  let id = project_name ^ "@" ^ "link-dev:./ligo.json" in
   let version = Node.DefaultVersion "link-dev:./ligo.json" in
   let source =
     let type_ = "link-dev" in
@@ -567,7 +558,16 @@ let generate_default_node
     Source.Default Source.{ type_; path; manifest }
   in
   let overrides = [] in
-  Ok Node.{ id; name; version; source; overrides; dependencies; dev_dependencies }
+  Ok
+    Node.
+      { id
+      ; name = project_name
+      ; version
+      ; source
+      ; overrides
+      ; dependencies
+      ; dev_dependencies
+      }
 
 
 (* let node : (string * t) list = [ "node", node_value ] in *)
@@ -814,6 +814,11 @@ let run ~project_root package_name cache_path ligo_registry =
   let open Lwt_result.Syntax in
   let manifest_path = ligo_json project_root in
   let ligo_json = read_ligo_json ~project_root in
+  let project_name =
+    match Json.Util.(member "name" ligo_json) with
+    | `String name -> name
+    | _ -> Fpath.v project_root |> Fpath.segs |> List.last_exn
+  in
   let* dependencies = Lwt.return @@ field_to_tuple_list ~field:"dependencies" ligo_json in
   let* dependencies =
     match package_name with
@@ -859,7 +864,7 @@ let run ~project_root package_name cache_path ligo_registry =
         let* solution, cache = solve ~all_dependencies ~ligo_registry in
         remove_dir cache_path;
         let* lock_file_json =
-          generate_lock_file ~project_name:"default-project" ~ligo_json ~solution ~cache
+          generate_lock_file ~project_name ~ligo_json ~solution ~cache
         in
         let* () =
           let content = Lock_file.to_yojson lock_file_json |> Json.to_string in
@@ -884,7 +889,7 @@ let run ~project_root package_name cache_path ligo_registry =
     in
     let installation_json_path = installation_json project_root in
     let installation_json =
-      generate_installation_json installation_map project_root ~ligo_json
+      generate_installation_json ~project_root ~project_name installation_map ~ligo_json
     in
     let* () =
       write ~content:(Json.to_string installation_json) ~to_:installation_json_path
