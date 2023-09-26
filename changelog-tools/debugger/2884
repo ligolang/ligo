@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with the wrong pretty-printing of tuple types in CameLIGO. Now tuple values are displayed correctly in the variables pane.\\n\\n\\n"
+merge_request: '2884'
+title: "[Chore] Fix CameLIGO's tuple types in the debugger"
+type: fixed
+            
