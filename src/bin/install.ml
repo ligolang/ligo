@@ -156,14 +156,12 @@ let rec install
         ~package_management_alpha
     | _ -> Error ("Valid manifest not found and old manifest w\nsn't migrated", ""))
   | `Invalid_package_json -> Error ("No manifest file found", "")
-  | `No_manifest -> Error ("No manifest file found", "")
-  | `OK ->
+  | `No_manifest | `OK ->
     if not package_management_alpha
     then run_esy package_name cache_path ligo_registry
     else (
-      let package_name = Option.value ~default:"" package_name in
-      let package_name = String.strip package_name in
       let cache_path = Fpath.v cache_path in
+      let package_name = Option.map ~f:String.strip package_name in
       Lwt_main.run
       @@ Package_management.Alpha.run ~project_root package_name cache_path ligo_registry
       |> function
