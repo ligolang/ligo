@@ -59,7 +59,7 @@ let get_storage () (storage : int): int = storage
 
 </Syntax>
 
-<Syntax syntax="jsligoligo">
+<Syntax syntax="jsligo">
 
 ```jsligo skip
 // @entry
