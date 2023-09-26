@@ -25,10 +25,10 @@ class prompt_sensitive term (prompt_msg : string) =
     initializer self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 prompt_msg))
   end
 
-type 'a error =
+type error =
   | Cancelled
   | Not_tty
-  | Unknown_error of 'a
+  | Unknown_error of exn
 
 let handle_interruption f =
   let open Lwt.Syntax in
