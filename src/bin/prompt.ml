@@ -30,6 +30,16 @@ type error =
   | Not_tty
   | Unknown_error of exn
 
+let user_cancelled_msg = "Aborted"
+let not_tty_msg = "Not an interactive terminal"
+let unknown_error_msg e = Printf.sprintf "Unknown error: %s" (Exn.to_string e)
+
+let error_to_string = function
+  | Cancelled -> user_cancelled_msg
+  | Not_tty -> not_tty_msg
+  | Unknown_error e -> unknown_error_msg e
+
+
 let handle_interruption f =
   let open Lwt.Syntax in
   let* stdout_term = Lazy.force LTerm.stdout in

@@ -59,6 +59,7 @@
   fpath
   bos
   semver
+  prompt
   lambda-term)
  (preprocess
   (pps ppx_deriving_yojson))

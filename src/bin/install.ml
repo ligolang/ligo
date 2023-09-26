@@ -25,63 +25,12 @@ let run_esy package_name cache_path ligo_registry =
   | Error e -> Error (e, "")
 
 
-class migration_prompt term (prompt_msg : string) =
-  object (self)
-    inherit LTerm_read_line.read_line () as super
-    inherit [Zed_string.t] LTerm_read_line.term term
-
-    method! send_action =
-      function
-      | LTerm_read_line.Break -> raise Caml.Sys.Break
-      | action -> super#send_action action
-
-    method! show_box = false
-    initializer self#set_prompt (Lwt_react.S.const (LTerm_text.of_utf8 prompt_msg))
-  end
-
-let prompt_esy_json_migration stdout_term =
-  let open Lwt.Syntax in
-  let* () = LTerm_inputrc.load () in
-  let prompt_msg =
-    "A valid ligo.json wasn't found, but a package.json was found instead. Ligo\n\
-    \ now uses ligo.json to manage it's package dependencies. Does it contain\n\
-    \ ligo dependencies? Would you like it to be renamed to ligo.json? "
-  in
-  let prompt = new migration_prompt stdout_term prompt_msg in
-  let* migrate_esy_json = prompt#run in
-  Lwt.return migrate_esy_json
-
-
-let prompt_esy_json_migration stdout_term =
-  try
-    Result.return
-    @@ Zed_string.to_utf8
-    @@ Lwt_main.run
-    @@ prompt_esy_json_migration stdout_term
-  with
-  | LTerm_read_line.Interrupt | Caml.Sys.Break -> Error ("Canceled!", "")
-
-
-let prompt_package_json_migration stdout_term =
-  let open Lwt.Syntax in
-  let* () = LTerm_inputrc.load () in
-  let prompt_msg =
-    "A valid ligo.json wasn't found, but a package.json was found instead. Ligo\n\
-    \ now uses ligo.json to manage it's package dependencies. Does it contain\n\
-    \ ligo dependencies? Would you like it to be renamed to ligo.json? "
-  in
-  let* migrate_package_json = (new migration_prompt stdout_term prompt_msg)#run in
-  Lwt.return migrate_package_json
-
-
-let prompt_package_json_migration stdout_term =
-  try
-    Result.return
-    @@ Zed_string.to_utf8
-    @@ Lwt_main.run
-    @@ prompt_package_json_migration stdout_term
-  with
-  | LTerm_read_line.Interrupt | Caml.Sys.Break -> Error ("Canceled!", "")
+let manifest_migration_prompt ~manifest =
+  Printf.sprintf
+    "A valid ligo.json wasn't found, but a %s was found instead.\n\
+     Ligo now uses ligo.json to manage it's package dependencies.\n\
+     Does it contain ligo dependencies? Would you like it to be renamed to ligo.json? "
+    manifest
 
 
 let migrate_manifest ~project_root ~previous_manifest =
@@ -107,6 +56,8 @@ let rec detect_project_root cwd =
     (* TODO log that we failed to detect project root and that we chose to go with cwd *)
     None
 
+let manual_migration_hint =
+  "To continue, create a ligo.json with ligo dependencies in it."
 
 let rec install
     ~project_root
@@ -131,14 +82,14 @@ let rec install
   | `Invalid_ligo_json -> Error ("Invalid manifest ligo.json", "")
   | `Invalid_esy_json -> Error ("No manifest file found", "")
   | `Valid_esy_json ->
-    let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
-    let prompt_response =
-      if LTerm.is_a_tty stdout_term
-      then prompt_esy_json_migration stdout_term
-      else Result.return @@ Caml.Sys.getenv "LIGO_MIGRATE_ESY_JSON"
+    let msg = manifest_migration_prompt ~manifest:"esy.json" in
+    let* prompt_response =
+      match Lwt_main.run @@ Prompt.prompt ~msg with
+      | Ok prompt_response -> Ok prompt_response
+      | Error e -> Error (Prompt.error_to_string e, "")
     in
     (match prompt_response with
-    | Ok ("y" | "Y" | "yes") ->
+    | "y" | "Y" | "yes" ->
       let* () =
         rresult_to_ligo_result
         @@ migrate_manifest ~project_root ~previous_manifest:"esy.json"
@@ -149,16 +100,16 @@ let rec install
         ~cache_path
         ~ligo_registry
         ~package_management_alpha
-    | _ -> Error ("Valid manifest not found and old manifest w\nsn't migrated", ""))
+    | _ -> Error (manual_migration_hint, ""))
   | `Valid_package_json ->
-    let stdout_term = Lwt_main.run @@ Lazy.force LTerm.stdout in
-    let prompt_response =
-      if LTerm.is_a_tty stdout_term
-      then prompt_package_json_migration stdout_term
-      else Result.return @@ Caml.Sys.getenv "LIGO_MIGRATE_PACKAGE_JSON"
+    let msg = manifest_migration_prompt ~manifest:"package.json" in
+    let* prompt_response =
+      match Lwt_main.run @@ Prompt.prompt ~msg with
+      | Ok prompt_response -> Ok prompt_response
+      | Error e -> Error (Prompt.error_to_string e, "")
     in
     (match prompt_response with
-    | Ok ("y" | "Y" | "yes") ->
+    | "y" | "Y" | "yes" ->
       let* _ =
         rresult_to_ligo_result
         @@ migrate_manifest ~project_root ~previous_manifest:"package.json"
@@ -169,7 +120,7 @@ let rec install
         ~cache_path
         ~ligo_registry
         ~package_management_alpha
-    | _ -> Error ("Valid manifest not found and old manifest w\nsn't migrated", ""))
+    | _ -> Error (manual_migration_hint, ""))
   | `Invalid_package_json -> Error ("No manifest file found", "")
   | `No_manifest | `OK ->
     if not package_management_alpha
