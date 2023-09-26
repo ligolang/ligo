@@ -34,7 +34,7 @@ module Update = Update (Access_label)
 module Value_decl = Value_decl (Value_attr)
 module Type_decl = Type_decl (Type_or_module_attr)
 module Module_decl = Module_decl (Type_or_module_attr)
-module Signature_decl = Signature_decl
+module Signature_decl = Signature_decl (Signature_attr)
 module Pattern = Linear_pattern
 module Match_expr = Match_expr.Make (Pattern)
 module Pattern_decl = Pattern_decl (Pattern) (Value_attr)
@@ -96,13 +96,16 @@ and sig_item =
   | S_value of Value_var.t * ty_expr * sig_item_attribute
   | S_type of Type_var.t * ty_expr
   | S_type_var of Type_var.t
+  | S_module of Module_var.t * signature
+  | S_module_type of Module_var.t * signature
 
 and sig_item_attribute =
   { entry : bool
   ; view : bool
+  ; dyn_entry : bool
   }
 
-and signature = sig_item list
+and signature = { items : sig_item list }
 
 and signature_content =
   | S_sig of signature

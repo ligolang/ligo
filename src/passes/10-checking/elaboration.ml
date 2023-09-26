@@ -110,9 +110,11 @@ let rec decode_sig_item (item : Context.Signature.item) ~raise subst : O.sig_ite
   | S_value (var, type_, attr) ->
     Some (S_value (var, decode ~raise type_ subst, decode_attribute attr))
   | S_type (var, type_, _attr) -> Some (S_type (var, decode ~raise type_ subst))
+  | S_type_var (var, _attr) -> Some (S_type_var var)
   | S_module (var, sig_, _attr) ->
     Some (S_module (var, decode_signature ~raise sig_ subst))
-  | S_module_type _ -> None
+  | S_module_type (var, sig_, attr) ->
+    Some (S_module_type (var, decode_signature ~raise sig_ subst))
 
 
 and decode_sig_sort (sort : Context.Signature.sort) ~raise subst : O.signature_sort =

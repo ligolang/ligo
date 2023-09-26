@@ -24,6 +24,13 @@ module Attrs : sig
   end
 
   module Module = Type
+
+  module Signature : sig
+    type t = { public : bool } [@@deriving compare, hash, equal]
+
+    val default : t
+    val of_core_attr : Ast_typed.SignatureAttr.t -> t
+  end
 end
 
 module Signature : sig
@@ -42,8 +49,18 @@ module Signature : sig
   and item =
     | S_value of Value_var.t * Type.t * Attrs.Value.t
     | S_type of Type_var.t * Type.t * Attrs.Type.t
+    | S_type_var of Type_var.t * Attrs.Type.t
     | S_module of Module_var.t * t * Attrs.Module.t
-    | S_module_type of Module_var.t * Module_type.t
+    | S_module_type of Module_var.t * t * Attrs.Signature.t
+
+  val as_casteable
+    :  t
+    -> (Type_var.t list
+       * [> `S_type of Type_var.t * Type.t * Attrs.Type.t
+         | `S_value of Value_var.t * Type.t * Attrs.Value.t
+         ]
+         list)
+       option
 
   val get_contract_sort : sort -> (Type.t * Type.t) option
   val get_value : t -> Value_var.t -> (Type.t * Attrs.Value.t) option
@@ -66,7 +83,7 @@ and item =
   | C_type of Type_var.t * Type.t
   | C_type_var of Type_var.t * Kind.t
   | C_module of Module_var.t * Signature.t
-  | C_module_type of Module_var.t * Module_type.t
+  | C_module_type of Module_var.t * Signature.t
   | C_texists_var of Type_var.t * Kind.t
   | C_texists_eq of Type_var.t * Kind.t * Type.t
   | C_lexists_var of Layout_var.t * fields
@@ -100,6 +117,7 @@ val add_texists_eq : t -> Type_var.t -> Kind.t -> Type.t -> t
 val add_lexists_var : t -> Layout_var.t -> fields -> t
 val add_lexists_eq : t -> Layout_var.t -> fields -> Type.layout -> t
 val add_module : t -> Module_var.t -> Signature.t -> t
+val add_module_type : t -> Module_var.t -> Signature.t -> t
 
 val get_value
   :  t
@@ -119,7 +137,7 @@ val get_texists_eq : t -> Type_var.t -> Type.t option
 val get_lexists_var : t -> Layout_var.t -> fields option
 val get_lexists_eq : t -> Layout_var.t -> (fields * Type.layout) option
 val get_module_of_path : t -> Module_var.t List.Ne.t -> Signature.t option
-val get_module_type_of_path : t -> Module_var.t List.Ne.t -> Module_type.t option
+val get_module_type_of_path : t -> Module_var.t List.Ne.t -> Signature.t option
 
 val get_type_or_type_var
   :  t

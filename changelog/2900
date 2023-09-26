@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '2900'
+title: "Signatures: preserve them in `ast-typed`"
+type: fixed
+            

@@ -1,5 +1,5 @@
 namespace Interfaces {
-  interface IncDec {
+  export interface IncDec {
     type storage;
     type ret = [list<operation>, storage];
     @entry const increment : (k: int, s: storage) => ret;

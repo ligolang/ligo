@@ -67,8 +67,12 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
             Location.{ wrap_content = D_value { binder; attr; expr = nat_rhs }; location }
           in
           (ctr + 1, (binder, nat_rhs, expr) :: acc), d
-        | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_module_include _
-          -> (ctr, acc), el)
+        | D_value _
+        | D_irrefutable_match _
+        | D_type _
+        | D_module _
+        | D_module_include _
+        | D_signature _ -> (ctr, acc), el)
   in
   match dyns with
   | [] -> decls, sig_

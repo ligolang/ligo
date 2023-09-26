@@ -2,6 +2,7 @@ module Location = Simple_utils.Location
 module Row = Ligo_prim.Row.With_optional_layout
 module Value_attr = Ligo_prim.Value_attr
 module Type_or_module_attr = Ligo_prim.Type_or_module_attr
+module Signature_attr = Ligo_prim.Signature_attr
 open Simple_utils
 open Simple_utils.Trace
 
@@ -100,10 +101,13 @@ end = struct
     match i_attr with
     | { key = "view"; value = None } -> { o_attr with view = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
+    | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
     | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
-      let default : O.sig_item_attribute = { entry = false; view = false } in
+      let default : O.sig_item_attribute =
+        { entry = false; view = false; dyn_entry = false }
+      in
       default
 
 
@@ -135,6 +139,18 @@ end = struct
       Type_or_module_attr.default_attributes
 
 
+  and conv_signature_attr ~raise
+      : Location.t -> Signature_attr.t -> I.Attribute.t -> Signature_attr.t
+    =
+   fun loc o_attr i_attr ->
+    match i_attr with
+    | { key = "private"; value = None } -> { public = false }
+    | { key = "public"; value = None } -> { public = true }
+    | _ ->
+      raise.warning (`Nanopasses_attribute_ignored loc);
+      o_attr
+
+
   and declaration ~raise
       :  ( O.declaration
          , O.expression
@@ -162,7 +178,12 @@ end = struct
       ret
       @@ D_module
            { x with module_attr = conv_modtydecl_attr ~raise location x.module_attr attr }
-    | D_attr (_attr, O.{ wrap_content = D_signature x; _ }) -> ret @@ D_signature x
+    | D_attr (attr, O.{ wrap_content = D_signature x; _ }) ->
+      ret
+      @@ D_signature
+           { x with
+             signature_attr = conv_signature_attr ~raise location x.signature_attr attr
+           }
     | D_const { type_params = None; pattern; rhs_type; let_rhs }
     | D_var { type_params = None; pattern; rhs_type; let_rhs } ->
       let let_rhs =
@@ -195,7 +216,12 @@ end = struct
            ; module_attr = O.TypeOrModuleAttr.default_attributes
            }
     | D_signature { name; sig_expr } ->
-      ret @@ D_signature { signature_binder = name; signature = sig_expr }
+      ret
+      @@ D_signature
+           { signature_binder = name
+           ; signature = sig_expr
+           ; signature_attr = Signature_attr.default_attributes
+           }
     | D_type { name; type_expr } ->
       ret
       @@ D_type
@@ -457,8 +483,12 @@ end = struct
     | PE_attr (_, (O.{ wrap_content = D_module_include _; location } as d)) ->
       raise.warning (`Nanopasses_attribute_ignored location);
       program_entry ~raise (PE_declaration d)
-    | PE_attr (_TODO, O.{ wrap_content = D_signature x; location }) ->
-      ret location @@ D_signature x
+    | PE_attr (attr, O.{ wrap_content = D_signature x; location }) ->
+      ret location
+      @@ D_signature
+           { x with
+             signature_attr = conv_signature_attr ~raise location x.signature_attr attr
+           }
     | PE_declaration d -> d
     | PE_preproc_directive _ -> Location.wrap ~loc:Location.generated (dummy_top_level ())
     | PE_top_level_instruction _ -> invariant "pe"
@@ -485,7 +515,7 @@ end = struct
       =
       let loc = Location.get_location se in
       match Location.unwrap se with
-      | I.Types.S_body m -> Location.wrap ~loc @@ O.S_sig m
+      | I.Types.S_body m -> Location.wrap ~loc @@ O.S_sig { items = m }
       | S_path p -> Location.wrap ~loc @@ O.S_path p
     in
     sig_expr se
@@ -495,7 +525,9 @@ end = struct
       : (O.signature_expr, O.sig_item, O.type_expression) I.Types.sig_entry_ -> O.sig_item
     =
    fun item ->
-    let attr : O.sig_item_attribute = { entry = false; view = false } in
+    let attr : O.sig_item_attribute =
+      { entry = false; view = false; dyn_entry = false }
+    in
     match Location.unwrap item with
     | S_value (v, ty) -> S_value (v, ty, attr)
     | S_type (v, ty) -> S_type (v, ty)

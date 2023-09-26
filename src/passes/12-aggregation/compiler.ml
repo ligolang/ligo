@@ -374,6 +374,7 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
         compile_module_expr ~copy_content:true acc_scope.env ("INCL" :: path) module_
       in
       Data.include_ acc_scope data
+    | I.D_signature _ -> acc_scope
   in
   List.fold lst ~init:init_scope ~f
 

@@ -137,7 +137,8 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
     | D_module_include { module_content = M_struct x; _ } -> get_entry x name
-    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ -> None
+    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _
+      -> None
   in
   List.find_map ~f:aux (List.rev lst)
 
@@ -353,8 +354,12 @@ let rec fetch_views_in_module ~storage_ty
           :: views ))
     | D_module_include { module_content = M_struct x; _ } ->
       fetch_views_in_module ~storage_ty x
-    | D_module_include _ | D_irrefutable_match _ | D_type _ | D_module _ | D_value _ ->
-      return ()
+    | D_module_include _
+    | D_irrefutable_match _
+    | D_type _
+    | D_module _
+    | D_value _
+    | D_signature _ -> return ()
   in
   List.fold_right ~f:aux ~init:([], []) prog
 
@@ -433,7 +438,9 @@ let to_sig_items (module_ : module_) : sig_item list =
         ctx @ [ S_type (type_binder, type_expr) ]
       | D_module_include x -> x.signature.sig_items
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
-        ctx @ [ S_module (module_binder, module_.signature) ])
+        ctx @ [ S_module (module_binder, module_.signature) ]
+      | D_signature { signature_binder; signature; signature_attr } ->
+        ctx @ [ S_module_type (signature_binder, signature) ])
 
 
 let to_signature (module_ : module_) : signature =

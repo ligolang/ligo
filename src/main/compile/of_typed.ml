@@ -199,7 +199,7 @@ let rec list_declarations
                  (Format.asprintf "%a." Module_var.pp module_binder
                  ^ Format.asprintf "%a" Value_var.pp v)))
         @ prev
-      | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ -> prev)
+      | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _ -> prev)
     ~init:[]
     m.pr_module
 

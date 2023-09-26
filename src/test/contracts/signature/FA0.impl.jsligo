@@ -1,0 +1,48 @@
+#import "FA0.interface.jsligo" "INT0"
+#import "FA0.interface.mligo" "INT1"
+
+// check that implementation of a namespace defined outside works
+
+namespace Impl0 implements INT0.FA0 {
+  type storage = nat;
+
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+}
+
+// check that implementation of a namespace defined outside, but in CameLIGO with @extensible works
+
+namespace Impl1 implements INT1.FA0 {
+  type storage = int;
+
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+}
+
+namespace Impl2 implements INT1.FA0 {
+  type storage = nat;
+
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+  @entry const extra = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s - k)];
+}
+
+namespace Impl3 implements INT1.FA0 {
+  type storage = nat;
+
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+}
+
+
+// check that also implementation of a local namespace works
+
+interface FA0 {
+  type storage;
+
+  @entry const add : (p : int, s : storage) => [list<operation>, storage];
+}
+
+
+namespace Impl4 implements INT0.FA0 {
+  type storage = nat;
+
+  @entry const add = (s : int, k : storage) : [list<operation>, storage] => [list([]), abs (s + k)];
+}

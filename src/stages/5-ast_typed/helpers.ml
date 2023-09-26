@@ -180,6 +180,7 @@ and fold_map_declaration m acc (x : declaration) =
   | D_module_include module_ ->
     let acc', module_ = (fold_map_expression_in_module_expr m) acc module_ in
     acc', { x with wrap_content = D_module_include module_ }
+  | D_signature sig_ -> acc, { x with wrap_content = D_signature sig_ }
 
 
 and fold_map_decl m = fold_map_declaration m
@@ -289,8 +290,12 @@ let get_views : program -> (Value_var.t * Location.t) list =
         let var = Binder.get_var binder in
         (var, Value_var.get_location var) :: acc
       | D_module_include { module_content = M_struct x; _ } -> loop x
-      | D_type _ | D_module _ | D_value _ | D_irrefutable_match _ | D_module_include _ ->
-        acc
+      | D_type _
+      | D_module _
+      | D_value _
+      | D_irrefutable_match _
+      | D_module_include _
+      | D_signature _ -> acc
     in
     (* TODO: This would be easier to use the signature instead of the module *)
     List.fold_right ~init:[] ~f module_
@@ -305,4 +310,9 @@ let fetch_view_type : declaration -> (type_expression * type_expression Binder.t
   | D_irrefutable_match { pattern = { wrap_content = P_var binder; _ }; expr; attr }
     when attr.view ->
     Some (expr.type_expression, Binder.map (fun _ -> expr.type_expression) binder)
-  | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_module_include _ -> None
+  | D_value _
+  | D_irrefutable_match _
+  | D_type _
+  | D_module _
+  | D_module_include _
+  | D_signature _ -> None
