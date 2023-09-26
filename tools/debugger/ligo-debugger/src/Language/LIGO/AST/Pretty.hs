@@ -556,7 +556,8 @@ instance LPP1 'Caml AST.Type where
           Comb -> "[@layout comb]" `indent` record
           Tree -> record
 
-    TProduct elements           -> train " *" elements
+    TProduct [element]          -> element
+    TProduct elements           -> parens (train " *" elements)
     TSum     layout   (x :| xs) ->
       let sum' = x `indent` blockWith ("| "<.>) xs in parens
         case layout of

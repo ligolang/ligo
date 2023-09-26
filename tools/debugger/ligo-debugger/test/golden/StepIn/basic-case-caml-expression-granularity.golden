@@ -529,7 +529,8 @@ InterpretSnapshot:
           siLigoDesc: elem s3 of int in test/contracts/functions-visiting.mligo
           siValue: 221 ] ]
 InterpretSnapshot:
-  isStatus: running / expression evaluated (Pair { } 221 : operation list * int)
+  isStatus:
+    running / expression evaluated (Pair { } 221 : (operation list * int))
   isStackFrames:
     [ StackFrame:
       sfName: main
