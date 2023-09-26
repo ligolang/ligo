@@ -31,7 +31,7 @@ module Of_Ast_typed = struct
       | S_type _ -> bindings
       | S_type_var _ -> bindings
       | S_module (_, sig_) -> extract_binding_types_from_signature bindings sig_
-      | S_module_type _ -> failwith "TODO")
+      | S_module_type _ -> bindings)
 
 
   let rec extract_binding_types : t -> Ast_typed.declaration_content -> t =
