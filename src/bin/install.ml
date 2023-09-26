@@ -56,8 +56,10 @@ let rec detect_project_root cwd =
     (* TODO log that we failed to detect project root and that we chose to go with cwd *)
     None
 
+
 let manual_migration_hint =
   "To continue, create a ligo.json with ligo dependencies in it."
+
 
 let rec install
     ~project_root
@@ -80,7 +82,6 @@ let rec install
   in
   match Package_management.Alpha.does_json_manifest_exist () with
   | `Invalid_ligo_json -> Error ("Invalid manifest ligo.json", "")
-  | `Invalid_esy_json -> Error ("No manifest file found", "")
   | `Valid_esy_json ->
     let msg = manifest_migration_prompt ~manifest:"esy.json" in
     let* prompt_response =
@@ -121,8 +122,7 @@ let rec install
         ~ligo_registry
         ~package_management_alpha
     | _ -> Error (manual_migration_hint, ""))
-  | `Invalid_package_json -> Error ("No manifest file found", "")
-  | `No_manifest | `OK ->
+  | `Invalid_esy_json | `Invalid_package_json | `No_manifest | `OK ->
     if not package_management_alpha
     then run_esy package_name cache_path ligo_registry
     else (
