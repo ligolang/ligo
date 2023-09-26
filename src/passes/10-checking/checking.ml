@@ -224,43 +224,76 @@ module With_default_layout = struct
       type_
 
 
-  and evaluate_module_type_item_attribute (attr : Ast_core.sig_item_attribute) =
+  and evaluate_signature_item_attribute (attr : Ast_core.sig_item_attribute) =
     let open C in
     let open Let_syntax in
-    return @@ Module_type.Attr.{ view = attr.view; entry = attr.entry }
+    return
+    @@ Attrs.Value.
+         { view = attr.view
+         ; entry = attr.entry
+         ; dyn_entry = attr.dyn_entry
+         ; public = true
+         }
 
 
-  and evaluate_module_type (sig_ : Ast_core.signature) : (Module_type.t * unit, _, _) C.t =
+  and evaluate_signature (sig_ : Ast_core.signature) : (Signature.t * unit, _, _) C.t =
     let open C in
     let open Let_syntax in
-    match sig_ with
-    | [] -> return @@ (Module_type.{ tvars = []; items = [] }, ())
+    match sig_.items with
+    | [] -> return @@ (Signature.{ items = []; sort = Signature.Ss_module }, ())
     | Ast_core.S_value (v, ty, attr) :: sig_ ->
       let%bind ty = evaluate_type ty in
-      let%bind attr = evaluate_module_type_item_attribute attr in
-      let%bind { tvars; items }, () = evaluate_module_type sig_ in
-      return @@ (Module_type.{ tvars; items = MT_value (v, ty, attr) :: items }, ())
+      let%bind attr = evaluate_signature_item_attribute attr in
+      let%bind { items; sort }, () = evaluate_signature { items = sig_ } in
+      return @@ (Signature.{ sort; items = S_value (v, ty, attr) :: items }, ())
     | S_type (v, ty) :: sig_ ->
       let%bind ty = evaluate_type ty in
-      let%bind { tvars; items }, () =
-        def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_module_type sig_)
+      let%bind { sort; items }, () =
+        def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
       in
-      return @@ (Module_type.{ tvars; items = MT_type (v, ty) :: items }, ())
+      return
+      @@ (Signature.{ sort; items = S_type (v, ty, { public = true }) :: items }, ())
     | S_type_var v :: sig_ ->
-      let%bind { tvars; items }, () =
-        def_type_var [ v, Type ] ~on_exit:Drop ~in_:(evaluate_module_type sig_)
+      let%bind { sort; items }, () =
+        def_type_var [ v, Type ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
       in
-      return @@ (Module_type.{ tvars = v :: tvars; items }, ())
+      return
+      @@ (Signature.{ sort; items = S_type_var (v, Attrs.Type.default) :: items }, ())
+    | S_module (v, items) :: sig_ ->
+      let%bind signature, () = evaluate_signature items in
+      let%bind { sort; items }, () =
+        def_module
+          [ v, signature ]
+          ~on_exit:Drop
+          ~in_:(evaluate_signature { items = sig_ })
+      in
+      return
+      @@ ( Signature.{ sort; items = S_module (v, signature, Attrs.Type.default) :: items }
+         , () )
+    | S_module_type (v, items) :: sig_ ->
+      let%bind signature, () = evaluate_signature items in
+      let%bind { sort; items }, () =
+        def_module_type
+          [ v, signature ]
+          ~on_exit:Drop
+          ~in_:(evaluate_signature { items = sig_ })
+      in
+      return
+      @@ ( Signature.
+             { sort
+             ; items = S_module_type (v, signature, Attrs.Signature.default) :: items
+             }
+         , () )
 
 
   and evaluate_signature_expr (sig_expr : Ast_core.signature_expr)
-      : (Module_type.t, _, _) C.t
+      : (Signature.t, _, _) C.t
     =
     let open C in
     let open Let_syntax in
     match Location.unwrap sig_expr with
     | S_sig sig_ ->
-      let%bind sig_, _ = evaluate_module_type sig_ in
+      let%bind sig_, _ = evaluate_signature sig_ in
       return sig_
     | S_path module_path ->
       let%bind sig_ =
@@ -1399,12 +1432,19 @@ and compile_match (matchee : O.expression E.t) cases matchee_type
       O.E_matching { matchee; cases })
 
 
-and cast_items (inferred_sig : Signature.t) (items : Module_type.item list) =
+and cast_items
+    (inferred_sig : Signature.t)
+    (items :
+      [> `S_type of Type_var.t * Type.t * Attrs.Type.t
+      | `S_value of Value_var.t * Type.t * Attrs.Value.t
+      ]
+      list)
+  =
   let open C in
   let open Let_syntax in
   match items with
   | [] -> return ([], [])
-  | Module_type.MT_type (v, ty) :: sig_ ->
+  | `S_type (v, ty, _) :: sig_ ->
     let%bind ty' =
       raise_opt (Signature.get_type inferred_sig v) ~error:(signature_not_found_type v)
     in
@@ -1413,7 +1453,7 @@ and cast_items (inferred_sig : Signature.t) (items : Module_type.item list) =
       let%bind sig_, entries = cast_items inferred_sig sig_ in
       return (Signature.S_type (v, ty', Attrs.Module.default) :: sig_, entries))
     else raise (signature_not_match_type v ty ty')
-  | Module_type.MT_value (v, ty, attr) :: sig_ ->
+  | `S_value (v, ty, attr) :: sig_ ->
     let%bind ty', attr' =
       raise_opt (Signature.get_value inferred_sig v) ~error:(signature_not_found_value v)
     in
@@ -1427,12 +1467,27 @@ and cast_items (inferred_sig : Signature.t) (items : Module_type.item list) =
     else raise (signature_not_match_value v ty ty')
 
 
-and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
+and instantiate_var mt ~tvar ~type_ =
+  let self mt = instantiate_var mt ~tvar ~type_ in
+  match mt with
+  | [] -> mt
+  | `S_value (val_var, val_type, val_attr) :: mt ->
+    let val_type = Type.subst val_type ~tvar ~type_ in
+    `S_value (val_var, val_type, val_attr) :: self mt
+  | `S_type (type_var, type_type, attr) :: mt ->
+    let type_type = Type.subst type_type ~tvar ~type_ in
+    `S_type (type_var, type_type, attr) :: self mt
+
+
+and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
     : (Signature.t * Value_var.t list, _, _) C.t
   =
   let open C in
   let open Let_syntax in
-  let Module_type.{ tvars; items } = annoted_sig in
+  let%bind tvars, items =
+    raise_opt ~error:(corner_case "Signature is not casteable")
+    @@ Signature.as_casteable annoted_sig
+  in
   let instantiate_tvar tvar r =
     let%bind insts, items = r in
     let%bind type_ =
@@ -1442,7 +1497,7 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Module_type.t)
     in
     return
       ( Signature.S_type (tvar, type_, Attrs.Type.default) :: insts
-      , Module_type.instantiate_var items ~tvar ~type_ )
+      , instantiate_var items ~tvar ~type_ )
   in
   let%bind insts, items =
     List.fold_right tvars ~init:(return ([], items)) ~f:instantiate_tvar
@@ -1489,15 +1544,53 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
     const E.(return @@ M.M_variable mvar) sig_
 
 
+and cast_module_expr
+    ?is_annoted_entry
+    (mod_expr : I.module_expr)
+    (annoted_sig : Signature.t)
+    : (Signature.t * O.module_expr E.t, _, _) C.t
+  =
+  let open C in
+  let open Let_syntax in
+  let module M = Module_expr in
+  let const content sig_ =
+    let%bind loc = loc () in
+    return
+    @@ ( sig_
+       , E.(
+           let%bind module_content = content in
+           let%bind signature = decode_signature sig_ in
+           return ({ module_content; module_location = loc; signature } : O.module_expr))
+       )
+  in
+  set_loc mod_expr.location
+  @@
+  match mod_expr.wrap_content with
+  | M_struct decls ->
+    let%bind sig_, decls = infer_module ?is_annoted_entry decls in
+    const
+      E.(
+        let%bind decls = decls in
+        return @@ M.M_struct decls)
+      sig_
+  | M_module_path path ->
+    (* Check we can access every element in [path] *)
+    let%bind sig_ =
+      Context.get_module_of_path_exn path ~error:(unbound_module (List.Ne.to_list path))
+    in
+    const E.(return @@ M.M_module_path path) sig_
+  | M_variable mvar ->
+    (* Check we can access [mvar] *)
+    let%bind sig_ = Context.get_module_exn mvar ~error:(unbound_module_variable mvar) in
+    const E.(return @@ M.M_variable mvar) sig_
+
+
 and infer_declaration (decl : I.declaration)
     : (Signature.item list * O.declaration list E.t, _, _) C.t
   =
   let open C in
   let open Let_syntax in
   let%bind syntax = Options.syntax () in
-  let no_declaration (sig_item : Signature.item list) =
-    return (sig_item, E.(return []))
-  in
   let const content (sig_item : Signature.item list) =
     let%bind loc = loc () in
     return
@@ -1516,9 +1609,9 @@ and infer_declaration (decl : I.declaration)
        A dynamic entrypoint declaration has the following form :
        `[@dyn_entry] let v = e`
        and is type checked as:
-        - e : ('param, 'storage) entrypoint
-        - x : ('param, 'storage) dyn_entrypoint
-       (see stdlib type definitions)
+       - e : ('param, 'storage) entrypoint
+       - x : ('param, 'storage) dyn_entrypoint
+         (see stdlib type definitions)
     *)
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
@@ -1595,12 +1688,14 @@ and infer_declaration (decl : I.declaration)
         let annoted_entries =
           List.filter_map
             ~f:(function
-              | MT_value (v, _, attr) when attr.entry -> Some v
+              | S_value (v, _, attr) when attr.entry -> Some v
               | _ -> None)
             annoted_sig.items
         in
         let is_annoted_entry = List.mem annoted_entries ~equal:Value_var.equal in
-        let%bind inferred_sig, module_ = infer_module_expr ~is_annoted_entry module_ in
+        let%bind inferred_sig, module_ =
+          cast_module_expr ~is_annoted_entry module_ annoted_sig
+        in
         let%bind annoted_sig, _entries = cast_signature inferred_sig annoted_sig in
         return (module_, remove_non_public annoted_sig)
     in
@@ -1616,9 +1711,15 @@ and infer_declaration (decl : I.declaration)
              ; annotation = ()
              })
       [ S_module (module_binder, annoted_sig, Attrs.Module.of_core_attr attr) ]
-  | D_signature { signature_binder; signature } ->
-    let%bind signature_expr = With_default_layout.evaluate_signature_expr signature in
-    no_declaration [ S_module_type (signature_binder, signature_expr) ]
+  | D_signature { signature_binder; signature; signature_attr } ->
+    let%bind signature = With_default_layout.evaluate_signature_expr signature in
+    const
+      E.(
+        let%bind signature = decode_signature signature in
+        return @@ O.D_signature { signature_binder; signature; signature_attr })
+      [ S_module_type
+          (signature_binder, signature, Attrs.Signature.of_core_attr signature_attr)
+      ]
   | D_module_include module_ ->
     let%bind sig_, module_ = infer_module_expr module_ in
     const
@@ -1653,10 +1754,10 @@ and infer_module ?is_annoted_entry (module_ : I.module_)
   in
   let%bind inferred_module_sig, module_expr = loop module_ in
   (* A module is said to have a 'contract'ual signature if:
-      - it contains at least 1 entrypoint
-      - it contains zero or more views
-      - it contains zero or more dynamic entrypoints
-   *)
+     - it contains at least 1 entrypoint
+     - it contains zero or more views
+     - it contains zero or more dynamic entrypoints
+  *)
   let entrypoints =
     List.filter_map inferred_module_sig.items ~f:(function
         | S_value (var, type_, attr) when attr.entry && is_annoted_entry var ->
@@ -1668,7 +1769,7 @@ and infer_module ?is_annoted_entry (module_ : I.module_)
     | None -> return inferred_module_sig.sort
     | Some entrypoints ->
       (* FIXME: This could be improved by using unification to unify the storage
-       types together, permitting more programs to type check. *)
+         types together, permitting more programs to type check. *)
       let%bind parameter, storage =
         match Type.parameter_from_entrypoints entrypoints with
         | Error (`Duplicate_entrypoint v) -> C.raise (duplicate_entrypoint v)
@@ -1689,8 +1790,9 @@ and remove_non_public (sig_ : Signature.t) =
     List.filter sig_.items ~f:(function
         | Signature.S_value (_, _, attr) -> attr.public || attr.entry
         | Signature.S_type (_, _, attr) -> attr.public
+        | Signature.S_type_var (_, attr) -> attr.public
         | Signature.S_module (_, _, attr) -> attr.public
-        | _ -> true)
+        | Signature.S_module_type (_m, _, attr) -> attr.public)
   in
   { sig_ with items }
 

@@ -35,5 +35,36 @@ let%expect_test _ =
     ; "--init-file"
     ; contract "interface.jsligo"
     ];
-  [%expect {|
-    42 |}]
+  [%expect {| 42 |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl0" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage nat ;
+      code { UNPAIR ; ADD ; ABS ; NIL operation ; PAIR } } |}];
+  run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl1" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage int ;
+      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}];
+  run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl2" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage nat ;
+      code { UNPAIR ; ADD ; ABS ; NIL operation ; PAIR } } |}];
+  run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl3" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage nat ;
+      code { UNPAIR ; ADD ; ABS ; NIL operation ; PAIR } } |}];
+  run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl4" ];
+  [%expect
+    {|
+    { parameter int ;
+      storage nat ;
+      code { UNPAIR ; ADD ; ABS ; NIL operation ; PAIR } } |}]

@@ -6,6 +6,10 @@ open Ligo_prim
 
 let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t = fun x -> x
 
+let untype_sig_item_attr : O.sig_item_attribute -> I.sig_item_attribute =
+ fun { entry; dyn_entry; view; _ } -> { entry; view; dyn_entry }
+
+
 (* use_orig_var param allows us to preserve the orininal type variables names, e.g. if
    we have [type t = A | B] then type of [Some A] will be transformed to [t option]
   instead of default [(A | B) option].
@@ -204,6 +208,21 @@ and untype_module_expr : O.module_expr -> I.module_expr =
   | M_variable v -> return (M_variable v)
 
 
+and untype_sig_item : O.sig_item -> I.sig_item =
+ fun sig_item ->
+  match sig_item with
+  | S_value (var, type_, attr) ->
+    S_value (var, untype_type_expression type_, untype_sig_item_attr attr)
+  | S_type (var, type_) -> S_type (var, untype_type_expression type_)
+  | S_type_var var -> S_type_var var
+  | S_module (var, sig_) -> S_module (var, untype_signature sig_)
+  | S_module_type (var, sig_) -> S_module_type (var, untype_signature sig_)
+
+
+and untype_signature : O.signature -> I.signature =
+ fun signature -> { items = List.map ~f:untype_sig_item signature.sig_items }
+
+
 and untype_declaration_constant
     : (O.expression -> I.expression) -> _ O.Value_decl.t -> _ I.Value_decl.t
   =
@@ -242,6 +261,17 @@ and untype_declaration_module : _ O.Module_decl.t -> _ I.Module_decl.t =
   { module_binder; module_; module_attr; annotation }
 
 
+and untype_declaration_signature
+    : O.signature O.Signature_decl.t -> I.signature_expr I.Signature_decl.t
+  =
+ fun { signature_binder; signature; signature_attr } ->
+  let signature = untype_signature signature in
+  { signature_binder
+  ; signature = Location.wrap ~loc:Location.generated (I.S_sig signature)
+  ; signature_attr
+  }
+
+
 and untype_declaration =
   let return (d : I.declaration_content) = d in
   fun (d : O.declaration_content) ->
@@ -262,6 +292,9 @@ and untype_declaration =
       let dm = untype_declaration_module dm in
       let dm = { dm with annotation = None } in
       return @@ D_module dm
+    | D_signature ds ->
+      let ds = untype_declaration_signature ds in
+      return @@ D_signature ds
 
 
 and untype_decl : O.decl -> I.decl = fun d -> Location.map untype_declaration d

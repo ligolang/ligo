@@ -200,12 +200,12 @@ module Context : sig
 
   val get_module_type_of_path
     :  Module_var.t List.Ne.t
-    -> (Module_type.t option, 'err, 'wrn) t
+    -> (Signature.t option, 'err, 'wrn) t
 
   val get_module_type_of_path_exn
     :  Module_var.t List.Ne.t
     -> error:'err Errors.with_loc
-    -> (Module_type.t, 'err, 'wrn) t
+    -> (Signature.t, 'err, 'wrn) t
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
       containing [constr].
@@ -298,6 +298,14 @@ val def_type_var
 (** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in 
     computation [in_]. *)
 val def_module
+  :  (Module_var.t * Context.Signature.t) list
+  -> on_exit:'a exit
+  -> in_:('a, 'err, 'wrn) t
+  -> ('a, 'err, 'wrn) t
+
+(** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in 
+    computation [in_]. *)
+val def_module_type
   :  (Module_var.t * Context.Signature.t) list
   -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t

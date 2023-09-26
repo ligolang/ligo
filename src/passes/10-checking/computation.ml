@@ -57,8 +57,12 @@ and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item =
   | Ast_typed.S_value (v, ty, attr) ->
     Context.Signature.S_value (v, encode ty, encode_sig_item_attribute attr)
   | S_type (v, ty) -> Context.Signature.S_type (v, encode ty, Context.Attrs.Type.default)
+  | S_type_var v -> Context.Signature.S_type_var (v, Context.Attrs.Type.default)
   | S_module (v, sig_) ->
     Context.Signature.S_module (v, encode_signature sig_, Context.Attrs.Module.default)
+  | S_module_type (v, sig_) ->
+    Context.Signature.S_module_type
+      (v, encode_signature sig_, Context.Attrs.Signature.default)
 
 
 and encode_sig_sort (sort : Ast_typed.signature_sort) : Context.Signature.sort =
@@ -77,7 +81,7 @@ and encode_signature (sig_ : Ast_typed.signature) : Context.Signature.t =
 and encode_sig_item_attribute (attr : Ast_typed.sig_item_attribute)
     : Context.Attrs.Value.t
   =
-  { view = attr.view; entry = attr.entry; dyn_entry = attr.entry; public = true }
+  { view = attr.view; entry = attr.entry; dyn_entry = attr.dyn_entry; public = true }
 
 
 (* Load context from the outside declarations *)
@@ -94,7 +98,9 @@ let ctx_init_of_sig ?env () =
       match decl with
       | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ty)
       | S_type (v, ty) -> Context.add_type ctx v (encode ty)
+      | S_type_var v -> Context.add_type_var ctx v Kind.Type
       | S_module (v, sig_) -> Context.add_module ctx v (encode_signature sig_)
+      | S_module_type (v, sig_) -> Context.add_module_type ctx v (encode_signature sig_)
     in
     List.fold env.sig_items ~init:Context.empty ~f
 
@@ -751,6 +757,13 @@ let def bindings ~on_exit ~in_ =
 let def_module bindings ~on_exit ~in_ =
   Context.add
     (List.map bindings ~f:(fun (mvar, sig_) -> Context_.C_module (mvar, sig_)))
+    ~on_exit
+    ~in_
+
+
+let def_module_type bindings ~on_exit ~in_ =
+  Context.add
+    (List.map bindings ~f:(fun (mvar, sig_) -> Context_.C_module_type (mvar, sig_)))
     ~on_exit
     ~in_
 

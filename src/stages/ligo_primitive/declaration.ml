@@ -85,19 +85,22 @@ module Module_decl (Attr : Attr) = struct
       module_attr
 end
 
-module Signature_decl = struct
+module Signature_decl (Attr : Attr) = struct
   type 'signature_expr t =
     { signature_binder : Var.Module_var.t
     ; signature : 'signature_expr
+    ; signature_attr : Attr.t
     }
   [@@deriving eq, compare, yojson, hash, fold, map]
 
-  let pp h ppf { signature_binder; signature } =
+  let pp h ppf { signature_binder; signature; signature_attr } =
     Format.fprintf
       ppf
-      "@[<2>module type %a =@ %a@]"
+      "@[<2>module type %a =@ %a%a@]"
       Var.Module_var.pp
       signature_binder
       h
       signature
+      Attr.pp
+      signature_attr
 end

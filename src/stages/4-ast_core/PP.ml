@@ -138,11 +138,19 @@ and module_expr ppf (me : module_expr) : unit =
   Location.pp_wrap (Module_expr.pp decl) ppf me
 
 
-and sig_item_attribute ppf { view; entry } =
+and sig_item_attribute ppf { view; entry; dyn_entry } =
   let pp_if_set str ppf attr =
     if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
   in
-  fprintf ppf "%a%a" (pp_if_set "view") view (pp_if_set "entry") entry
+  fprintf
+    ppf
+    "%a%a%a"
+    (pp_if_set "view")
+    view
+    (pp_if_set "entry")
+    entry
+    (pp_if_set "dyn_entry")
+    dyn_entry
 
 
 and sig_item ppf (d : sig_item) =
@@ -160,10 +168,18 @@ and sig_item ppf (d : sig_item) =
   | S_type (var, type_) ->
     Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
   | S_type_var var -> Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
+  | S_module (var, sig_) ->
+    Format.fprintf ppf "@[<2>module %a :@ %a@]" Module_var.pp var signature sig_
+  | S_module_type (var, sig_) ->
+    Format.fprintf ppf "@[<2>module type %a =@ %a@]" Module_var.pp var signature sig_
 
 
 and signature ppf (sig_ : signature) : unit =
-  Format.fprintf ppf "@[<v>sig@[<v1>@,%a@]@,end@]" (list_sep sig_item (tag "@,")) sig_
+  Format.fprintf
+    ppf
+    "@[<v>sig@[<v1>@,%a@]@,end@]"
+    (list_sep sig_item (tag "@,"))
+    sig_.items
 
 
 and signature_expr ppf (sig_expr : signature_expr) : unit =

@@ -187,6 +187,7 @@ and declaration ?(use_hidden = true) ppf (d : declaration) =
     then ()
     else Types.Module_decl.pp module_expr (fun _ () -> ()) ppf md
   | D_module_include x -> fprintf ppf "include %a" module_expr x
+  | D_signature sd -> Types.Signature_decl.pp signature ppf sd
 
 
 and decl ppf d = declaration ppf d
@@ -207,8 +208,11 @@ and sig_item ppf (d : sig_item) =
     Format.fprintf ppf "@[<2>val %a :@ %a@]" Value_var.pp var type_expression type_
   | S_type (var, type_) ->
     Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
+  | S_type_var var -> Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
   | S_module (var, sig_) ->
     Format.fprintf ppf "@[<2>module %a =@ %a@]" Module_var.pp var signature sig_
+  | S_module_type (var, sig_) ->
+    Format.fprintf ppf "@[<2>module type %a =@ %a@]" Module_var.pp var signature sig_
 
 
 and signature ppf (sig_ : signature) : unit =

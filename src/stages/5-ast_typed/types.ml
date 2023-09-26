@@ -37,12 +37,14 @@ and ty_expr = type_expression [@@deriving eq, compare, yojson, hash]
 
 module ValueAttr = Value_attr
 module TypeOrModuleAttr = Type_or_module_attr
+module SignatureAttr = Signature_attr
 module Access_label = Access_label
 module Accessor = Accessor (Access_label)
 module Update = Update (Access_label)
 module Value_decl = Value_decl (ValueAttr)
 module Type_decl = Type_decl (TypeOrModuleAttr)
 module Module_decl = Module_decl (TypeOrModuleAttr)
+module Signature_decl = Signature_decl (SignatureAttr)
 module Pattern = Linear_pattern
 module Match_expr = Match_expr.Make (Pattern)
 module Let_in = Let_in.Make (Pattern) (ValueAttr)
@@ -99,6 +101,7 @@ and declaration_content =
   | D_type of ty_expr Type_decl.t
   | D_module of (module_expr, unit) Module_decl.t
   | D_module_include of module_expr
+  | D_signature of signature Signature_decl.t
 
 and declaration = declaration_content Location.wrap
 and decl = declaration [@@deriving eq, compare, yojson, hash]
@@ -114,7 +117,9 @@ and module_expr =
 and sig_item =
   | S_value of Value_var.t * ty_expr * sig_item_attribute
   | S_type of Type_var.t * ty_expr
+  | S_type_var of Type_var.t
   | S_module of Module_var.t * signature
+  | S_module_type of Module_var.t * signature
 
 and sig_item_attribute =
   { dyn_entry : bool

@@ -67,6 +67,13 @@ module Attrs = struct
   end
 
   module Module = Type
+
+  module Signature = struct
+    type t = { public : bool } [@@deriving compare, hash, equal]
+
+    let default = { public = true }
+    let of_core_attr ({ public } : Ast_typed.SignatureAttr.t) = { public }
+  end
 end
 
 module Signature = struct
@@ -79,8 +86,9 @@ module Signature = struct
     and item =
       | S_value of Value_var.t * Type.t * Attrs.Value.t
       | S_type of Type_var.t * Type.t * Attrs.Type.t
+      | S_type_var of Type_var.t * Attrs.Type.t
       | S_module of Module_var.t * t * Attrs.Module.t
-      | S_module_type of Module_var.t * Module_type.t
+      | S_module_type of Module_var.t * t * Attrs.Signature.t
 
     and sort =
       | Ss_module
@@ -92,6 +100,27 @@ module Signature = struct
   end
 
   include T
+
+  (* Extracts all `type t` (S_type_var t) ocurrences, and leaves only
+     values and type declarations. Other items in the signature are
+     not supported (by the parsers currently) *)
+  let as_casteable (sig_ : T.t)
+      : (Type_var.t list
+        * [> `S_type of Type_var.t * Type.t * Attrs.Type.t
+          | `S_value of Value_var.t * Type.t * Attrs.Value.t
+          ]
+          list)
+      option
+    =
+    let f (tvars, items) (item : item) =
+      match item with
+      | S_value (v, t, a) -> Result.Ok (tvars, `S_value (v, t, a) :: items)
+      | S_type (v, t, a) -> Result.Ok (tvars, `S_type (v, t, a) :: items)
+      | S_type_var (v, _) -> Result.Ok (v :: tvars, items)
+      | _ -> Result.Error `Not_casteable
+    in
+    Result.ok @@ List.fold_result sig_.items ~init:([], []) ~f
+
 
   let hashable : t hashable = (module Phys_hashable (T))
   let find_map t ~f = List.find_map (List.rev t) ~f
@@ -139,7 +168,7 @@ module Signature = struct
       (module Module_var)
       (fun t mvar ->
         (find_map t.items ~f:(function
-            | S_module_type (mvar', sig_) when Module_var.equal mvar mvar' -> Some sig_
+            | S_module_type (mvar', sig_, _) when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
@@ -194,10 +223,11 @@ module Signature = struct
         Format.fprintf ppf "%a : %a" Value_var.pp var Type.pp type_
       | S_type (tvar, type_, _attr) ->
         Format.fprintf ppf "type %a = %a" Type_var.pp tvar Type.pp type_
+      | S_type_var (tvar, _attr) -> Format.fprintf ppf "type %a" Type_var.pp tvar
       | S_module (mvar, sig_, _attr) ->
         Format.fprintf ppf "module %a = %a" Module_var.pp mvar pp sig_
-      | S_module_type (mvar, sig_) ->
-        Format.fprintf ppf "module type %a = %a" Module_var.pp mvar Module_type.pp sig_
+      | S_module_type (mvar, sig_, _attr) ->
+        Format.fprintf ppf "module type %a = %a" Module_var.pp mvar pp sig_
 
 
     and pp_sort ppf sort =
@@ -234,7 +264,7 @@ module T = struct
     | C_type of Type_var.t * Type.t
     | C_type_var of Type_var.t * Kind.t
     | C_module of Module_var.t * Signature.t
-    | C_module_type of Module_var.t * Module_type.t
+    | C_module_type of Module_var.t * Signature.t
     | C_texists_var of Type_var.t * Kind.t
     | C_texists_eq of Type_var.t * Kind.t * Type.t
     | C_lexists_var of Layout_var.t * fields
@@ -296,7 +326,7 @@ module PP = struct
     | C_module (mvar, sig_) ->
       Format.fprintf ppf "module %a = %a" Module_var.pp mvar Signature.pp sig_
     | C_module_type (mvar, sig_) ->
-      Format.fprintf ppf "module %a : %a" Module_var.pp mvar Module_type.pp sig_
+      Format.fprintf ppf "module %a : %a" Module_var.pp mvar Signature.pp sig_
     | C_pos _ | C_mut_lock _ -> ()
 
 
@@ -323,14 +353,16 @@ let add_type t tvar type_ = t |:: C_type (tvar, type_)
 let add_type_var t tvar kind = t |:: C_type_var (tvar, kind)
 let add_texists_var t tvar kind = t |:: C_texists_var (tvar, kind)
 let add_module t mvar mctx = t |:: C_module (mvar, mctx)
+let add_module_type t mvar mctx = t |:: C_module_type (mvar, mctx)
 let add_lexists_var t lvar fields = t |:: C_lexists_var (lvar, fields)
 
 let item_of_signature_item (sig_item : Signature.item) : item =
   match sig_item with
   | S_value (var, type_, attr) -> C_value (var, Immutable, type_, attr)
   | S_type (tvar, type_, _attr) -> C_type (tvar, type_)
+  | S_type_var (tvar, _attr) -> C_type_var (tvar, Type)
   | S_module (mvar, sig_, _attr) -> C_module (mvar, sig_)
-  | S_module_type (mvar, sig_) -> C_module_type (mvar, sig_)
+  | S_module_type (mvar, sig_, _attr) -> C_module_type (mvar, sig_)
 
 
 let add_signature_item t (sig_item : Signature.item) =
@@ -553,8 +585,9 @@ module Apply = struct
     match sig_item with
     | S_type (tvar, type', attr) -> S_type (tvar, type_ ctx type', attr)
     | S_value (var, type', attr) -> S_value (var, type_ ctx type', attr)
+    | S_type_var (var, attr) -> S_type_var (var, attr)
     | S_module (mvar, sig', attr) -> S_module (mvar, sig_ ctx sig', attr)
-    | S_module_type (mvar, sig') -> S_module_type (mvar, sig')
+    | S_module_type (mvar, sig', attr) -> S_module_type (mvar, sig', attr)
 
 
   and sig_sort ctx (sig_sort : Signature.sort) : Signature.sort =
@@ -1147,8 +1180,9 @@ end = struct
       (match type_ ~ctx type' with
       | Some _ -> true
       | _ -> false)
+    | S_type_var (_, _) -> true (* TODO *)
     | S_module (_mvar, sig_, _) -> signature ~ctx sig_
-    | S_module_type (_mvar, _sig_) -> true (* TODO *)
+    | S_module_type (_mvar, _sig_, _) -> true (* TODO *)
 end
 
 module Hashes = struct
