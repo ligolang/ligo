@@ -99,6 +99,15 @@ let rresult_to_ligo_result = function
   | Error (`Msg m) -> Error (m, "")
 
 
+let rec detect_project_root cwd =
+  match Bos.OS.Path.exists Fpath.(cwd / "ligo.json:") with
+  | Ok true -> Some cwd
+  | Ok false -> if Fpath.is_root cwd then None else detect_project_root (Fpath.parent cwd)
+  | Error _ ->
+    (* TODO log that we failed to detect project root and that we chose to go with cwd *)
+    None
+
+
 let rec install
     ~project_root
     ~package_name
@@ -107,10 +116,16 @@ let rec install
     ~package_management_alpha
   =
   let ( let* ) = Caml.Result.bind in
-  let project_root =
+  let* project_root =
     match project_root with
-    | Some p -> p
-    | None -> Caml.Sys.getcwd ()
+    | Some p -> Ok p
+    | None ->
+      (match Bos.OS.Dir.current () with
+      | Ok cwd ->
+        (match detect_project_root cwd with
+        | Some path -> Ok (Fpath.to_string path)
+        | None -> Ok (Fpath.to_string cwd))
+      | Error (`Msg m) -> Error (m, ""))
   in
   match Package_management.Alpha.does_json_manifest_exist () with
   | `Invalid_ligo_json -> Error ("Invalid manifest ligo.json", "")
@@ -160,6 +175,7 @@ let rec install
     if not package_management_alpha
     then run_esy package_name cache_path ligo_registry
     else (
+      print_endline ("Project root: " ^ project_root);
       let cache_path = Fpath.v cache_path in
       let package_name = Option.map ~f:String.strip package_name in
       Lwt_main.run
