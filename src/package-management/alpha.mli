@@ -43,7 +43,12 @@ val string_of_error : error -> string
     3. Generate a map (installation.json) for ModRes.ml (from Preprocessing
 
  *)
-val run : project_root:string -> string -> Fpath.t -> Uri.t -> (unit, error) Lwt_result.t
+val run
+  :  project_root:string
+  -> string option
+  -> Fpath.t
+  -> Uri.t
+  -> (unit, error) Lwt_result.t
 
 type manifest_result =
   [ `Invalid_ligo_json

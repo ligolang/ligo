@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nAlpha package management feature parity: Users can now specify package name via CLI\\n\\n\\n```\\nligo install package-name --package-management-alpha\\n\\n```\\n\\n"
+merge_request: '2904'
+title: "CLI: Package management: Adds ligo install package-name"
+type: fixed
+            
