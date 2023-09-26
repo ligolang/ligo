@@ -104,19 +104,19 @@ module Regexp = struct
   (** Keywords that will be highlighted with [Keyword]. *)
   let keywords_match : Core.regexp =
     { emacs =
-        {|\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\)\\b|}
+        {|\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|false\\|true\\)\\b|}
     ; textmate =
-        {|\b(export|import|from|implements|contract_of|parameter_of|function|do)\b|}
+        {|\b(export|import|from|implements|contract_of|parameter_of|function|do|namespace|interface|implements|false|true)\b|}
     ; vim =
-        {|\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\)\>|}
+        {|\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|false\|true\)\>|}
     }
 
   (** Keywords that will be highlighted with [Conditional]. *)
   let control_keywords_match : Core.regexp =
     { emacs =
-        {|\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|match\\)\\b|}
-    ; textmate = {|\b(switch|if|else|for|of|while|return|break|match)\b|}
-    ; vim = {|\<\(switch\|if\|else\|for\|of\|while\|return\|break\|match\)\>|}
+        {|\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|continue\\|match\\)\\b|}
+    ; textmate = {|\b(switch|if|else|for|of|while|return|break|continue|match)\b|}
+    ; vim = {|\<\(switch\|if\|else\|for\|of\|while\|return\|break\|continue\|match\)\>|}
     }
 
   let operators_match : Core.regexp =
@@ -134,18 +134,6 @@ module Regexp = struct
     }
 
   let module_alias_match2 : Core.regexp =
-    { emacs = {|\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b|}
-    ; textmate = {|\b([A-Z][a-zA-Z0-9_$]*)\b|}
-    ; vim = {|\<\([A-Z][a-zA-Z0-9_$]*\)\>|}
-    }
-
-  let module_declaration_match1 : Core.regexp =
-    { emacs = {|\\b\\(namespace\\|interface\\)\\b|}
-    ; textmate = {|\b(namespace|interface)\b|}
-    ; vim = {|\<\(namespace\|interface\)\>|}
-    }
-
-  let module_declaration_match2 : Core.regexp =
     { emacs = {|\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b|}
     ; textmate = {|\b([A-Z][a-zA-Z0-9_$]*)\b|}
     ; vim = {|\<\([A-Z][a-zA-Z0-9_$]*\)\>|}
@@ -216,7 +204,6 @@ module Name = struct
   let uppercase_identifier = "uppercaseidentifier"
   let module_access = "moduleaccess"
   let module_alias = "modulealias"
-  let module_declaration = "moduledeclaration"
   let object_or_block = "objectorblock"
   let object_property = "objectproperty"
   let object_property_ctor = "objectpropertyctor"
@@ -329,7 +316,6 @@ let syntax_highlighting =
       ; Name_ref Name.numeric_literals
       ; Name_ref Name.operators
       ; Name_ref Name.module_alias
-      ; Name_ref Name.module_declaration
       ; Name_ref Name.type_annotation
       ; Name_ref Name.type_as
       ; Name_ref Name.object_or_block
@@ -423,13 +409,6 @@ let syntax_highlighting =
                   ; Regexp.module_alias_match2, Some Structure
                   ]
               ; match_name = None
-              }
-        }
-      ; { name = Name.module_declaration
-        ; kind =
-            Match
-              { match_name = None
-              ; match_ = [ Regexp.module_declaration_match1, Some Keyword ]
               }
         }
       ; { name = Name.object_or_block

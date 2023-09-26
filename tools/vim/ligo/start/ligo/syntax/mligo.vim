@@ -32,11 +32,11 @@ syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" en
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\)\>\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[@\|\<\(let\|in\|type\|end\|module\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typedefinition_ Keyword 
 
 " lowercaseidentifier
@@ -60,19 +60,15 @@ highlight link ofkeyword Keyword
 syntax match semicolon ";" contained 
 
 " operators
-syntax match operators "::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=\||>" 
+syntax match operators "::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=\||>\|->\|:=\|\^\|*\|+=\|-=\|\*=\|\/=\||=" 
 highlight link operators Operator 
 
 " numericliterals
 syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>" 
 highlight link numericliterals Number 
 
-" moduledeclaration
-syntax match moduledeclaration "\<module\>" 
-highlight link moduledeclaration Keyword 
-
 " keywords
-syntax match keywords "\<\(struct\|end\|let\|in\|mut\|rec\)\>" 
+syntax match keywords "\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|false\|true\)\>" 
 highlight link keywords Keyword 
 
 " controlkeywords

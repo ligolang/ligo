@@ -282,10 +282,10 @@
 		(,"\\b\\(let\\|const\\)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\)\\b"
+		(,"\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|false\\|true\\)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|match\\)\\b"
+		(,"\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|continue\\|match\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
@@ -313,9 +313,6 @@
 		(,"\\b\\(import\\)\\b[:space:]*\\b\\([A-Z][a-zA-Z0-9_$]*\\)\\b"
 			(1 ligo-font-lock-conditional-face)
 			(2 ligo-font-lock-structure-face)
-		)
-		(,"\\b\\(namespace\\|interface\\)\\b"
-			(1 font-lock-keyword-face)
 		)
 		(,"{" ())
 		(,"\\(" ())
@@ -395,16 +392,13 @@
 		(,"\\b\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|for\\|upto\\|downto\\|do\\|while\\|done\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
-		(,"\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\)\\b"
+		(,"\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|false\\|true\\)\\b"
 			. font-lock-keyword-face
-		)
-		(,"\\bmodule\\b"
-			(1 font-lock-keyword-face)
 		)
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"
 			. ligo-font-lock-number-face
 		)
-		(,"::\\|-\\|+\\|/\\|\\b\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\b\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\||>"
+		(,"::\\|-\\|+\\|/\\|\\b\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\b\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\||>\\|->\\|:=\\|\\^\\|*\\|+=\\|-=\\|*=\\|/=\\||="
 			. ligo-font-lock-operator-face
 		)
 		(,";"
