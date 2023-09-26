@@ -80,7 +80,7 @@ let rec install
         | None -> Ok (Fpath.to_string cwd))
       | Error (`Msg m) -> Error (m, ""))
   in
-  match Package_management.Alpha.does_json_manifest_exist () with
+  match Package_management.Alpha.does_json_manifest_exist ~project_root with
   | `Invalid_ligo_json -> Error ("Invalid manifest ligo.json", "")
   | `Valid_esy_json ->
     let msg = manifest_migration_prompt ~manifest:"esy.json" in

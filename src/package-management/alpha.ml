@@ -95,11 +95,10 @@ type manifest_result =
   | `OK
   ]
 
-let does_json_manifest_exist () =
-  let cwd = Caml.Sys.getcwd () in
-  let package_json = Filename.concat cwd "package.json" in
-  let ligo_json = Filename.concat cwd "ligo.json" in
-  let esy_json = Filename.concat cwd "esy.json" in
+let does_json_manifest_exist ~project_root =
+  let package_json = Filename.concat project_root "package.json" in
+  let ligo_json = Filename.concat project_root "ligo.json" in
+  let esy_json = Filename.concat project_root "esy.json" in
   match
     ( Caml.Sys.file_exists ligo_json
     , Caml.Sys.file_exists package_json
