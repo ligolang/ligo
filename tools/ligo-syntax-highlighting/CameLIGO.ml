@@ -4,22 +4,23 @@ module Helpers = SyntaxHighlighting.Helpers
 module Regexp = struct
   include Regexp
 
-  let module_keyword_match : Core.regexp =
-    { emacs = {|\\bmodule\\b|}; textmate = {|\b(module)\b|}; vim = {|\<module\>|} }
-
   (** Keywords that will be highlighted with [Keyword]. *)
   let keywords_match : Core.regexp =
-    { emacs = {|\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\)\\b|}
-    ; textmate = {|\b(struct|end|let|in|mut|rec)\b|}
-    ; vim = {|\<\(struct\|end\|let\|in\|mut\|rec\)\>|}
+    { emacs =
+        {|\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|false\\|true\\)\\b|}
+    ; textmate =
+        {|\b(struct|end|let|in|mut|rec|contract_of|parameter_of|module|sig|val|false|true)\b|}
+    ; vim =
+        {|\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|false\|true\)\>|}
     }
 
   let operators_match : Core.regexp =
     { emacs =
-        {|::\\|-\\|+\\|/\\|\\b\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\b\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\||>|}
-    ; textmate = {|::|\-|\+|\b(mod|land|lor|lxor|lsl|lsr)\b|&&|\|\||>|<>|<=|=>|<|>|\|>|}
+        {|::\\|-\\|+\\|/\\|\\b\\(mod\\|land\\|lor\\|lxor\\|lsl\\|lsr\\)\\b\\|&&\\|||\\|<\\|>\\|<>\\|<=\\|>=\\||>\\|->\\|:=\\|\\^\\|*\\|+=\\|-=\\|*=\\|/=\\||=|}
+    ; textmate =
+        {|::|\-|\+|\b(mod|land|lor|lxor|lsl|lsr)\b|&&|\|\||>|<>|<=|=>|<|>|\|>|->|:=|\^|\*|\+=|-=|\*=|/=|\|=|}
     ; vim =
-        {|::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=\||>|}
+        {|::\|-\|+\|/\|\<\(mod\|land\|lor\|lxor\|lsl\|lsr\)\>\|&&\|||\|<\|>\|<>\|<=\|>=\||>\|->\|:=\|\^\|*\|+=\|-=\|\*=\|\/=\||=|}
     }
 
   (* Types *)
@@ -36,9 +37,9 @@ module Regexp = struct
 
   let type_definition_end : Core.regexp =
     { (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
-      emacs = {|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\)\\|)\\b|}
-    ; textmate = {|(?=^#|\[@|\b(let|in|type|end|module)\b|\))|}
-    ; vim = {|\(^#\|\[@\|\<\(let\|in\|type\|end\|module\)\>\|)\)\@=|}
+      emacs = {|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\)\\b\\|)|}
+    ; textmate = {|(?=^#|\[@|\b(let|in|type|end|module|sig|val)\b|\))|}
+    ; vim = {|\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\)\>\|)\)\@=|}
     }
 
   let type_name_match : Core.regexp =
@@ -72,9 +73,11 @@ module Regexp = struct
 
   let type_annotation_end : Core.regexp =
     { (* FIXME: Emacs doesn't support positive look-ahead *)
-      emacs = {r|)\\|=\\|;\\|}|r}
-    ; textmate = {r|(?=\)|=|;|})|r}
-    ; vim = {r|\()\|=\|;\|}\)\@=|r}
+      emacs =
+        {r|)\\|=\\|;\\|}\\|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\|end\\)\\b|r}
+    ; textmate = {r|(?=\)|=|;|}|^#|\[@|\b(let|in|type|end|module|sig|val|end)\b)|r}
+    ; vim =
+        {r|\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\)\>\)\@=|r}
     }
 
   let type_annotation_begin_lambda : Core.regexp = type_annotation_begin
@@ -126,7 +129,6 @@ module Name = struct
   let of_keyword = "ofkeyword"
   let lowercase_identifier = "lowercaseidentifier"
   let uppercase_identifier = "uppercaseidentifier"
-  let module_declaration = "moduledeclaration"
   let attribute = "attribute"
 
   (* Types *)
@@ -207,7 +209,6 @@ let syntax_highlighting =
       ; Name_ref Name.lambda
       ; Name_ref Name.type_definition
       ; Name_ref Name.control_keywords
-      ; Name_ref Name.module_declaration
       ; Name_ref Name.keywords
       ; Name_ref Name.numeric_literals
       ; Name_ref Name.operators
@@ -226,13 +227,6 @@ let syntax_highlighting =
       ; { name = Name.keywords
         ; kind =
             Match { match_name = Some Keyword; match_ = [ Regexp.keywords_match, None ] }
-        }
-      ; { name = Name.module_declaration
-        ; kind =
-            Match
-              { match_name = None
-              ; match_ = [ Regexp.module_keyword_match, Some Keyword ]
-              }
         }
       ; Helpers.numeric_literals
       ; { name = Name.operators

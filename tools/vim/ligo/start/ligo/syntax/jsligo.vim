@@ -87,10 +87,6 @@ syntax region parentheses start="(" end=")" contains=typefunparam,comma,@top
 " objectorblock
 syntax region objectorblock start="{" end="}" contains=objectpropertyctor,objectpropertyint,objectpropertystring,objectproperty,comma,@top 
 
-" moduledeclaration
-syntax match moduledeclaration "\<\(namespace\|interface\)\>" 
-highlight link moduledeclaration Keyword 
-
 " modulealias
 syntax match modulealias_ "\<\([A-Z][a-zA-Z0-9_$]*\)\>" contained 
 highlight link modulealias_ Structure 
@@ -136,11 +132,11 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " controlkeywords
-syntax match controlkeywords "\<\(switch\|if\|else\|for\|of\|while\|return\|break\|match\)\>" 
+syntax match controlkeywords "\<\(switch\|if\|else\|for\|of\|while\|return\|break\|continue\|match\)\>" 
 highlight link controlkeywords Conditional 
 
 " keywords
-syntax match keywords "\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\)\>" 
+syntax match keywords "\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|false\|true\)\>" 
 highlight link keywords Keyword 
 
 " letbinding

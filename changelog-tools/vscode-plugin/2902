@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nAdd some missing keywords to the syntax highlighting (both JsLIGO and CameLIGO), such as signatures and interfaces.\\n\\n"
+merge_request: '2902'
+title: "[Chore] Add missing syntax highlighting tokens"
+type: fixed
+            
