@@ -631,12 +631,10 @@ let ligorc_path =
   flag ~doc name spec
 
 
-let package_management_alpha =
+let esy_legacy =
   let open Command.Param in
-  let name = "--package-management-alpha" in
-  let doc =
-    "enable installing packages without esy, some features might not be supported"
-  in
+  let name = "--legacy-package-management" in
+  let doc = "enable installing packages with legacy package manager esy" in
   flag ~doc name no_arg
 
 
@@ -2842,23 +2840,10 @@ let install =
      in ligo.json"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"install" in
-  let f
-      project_root
-      package_name
-      cache_path
-      ligo_registry
-      package_management_alpha
-      skip_analytics
-      ()
-    =
+  let f project_root package_name cache_path ligo_registry esy_legacy skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
     @@ fun () ->
-    Install.install
-      ~project_root
-      ~package_name
-      ~cache_path
-      ~ligo_registry
-      ~package_management_alpha
+    Install.install ~project_root ~package_name ~cache_path ~ligo_registry ~esy_legacy
   in
   Command.basic
     ~summary
@@ -2868,7 +2853,7 @@ let install =
     <*> package_name
     <*> cache_path
     <*> ligo_registry
-    <*> package_management_alpha
+    <*> esy_legacy
     <*> skip_analytics)
 
 

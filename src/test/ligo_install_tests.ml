@@ -89,7 +89,7 @@ let run_workflow_test ~path_list =
 
 (* #! /bin/sh
 
-CMD="ligo install --package-management-alpha ; ligo compile contract ./main.mligo"
+CMD="ligo install ; ligo compile contract ./main.mligo"
 
 sh -c "rm -rf esy.lock _esy .ligo; $CMD"
 sh -c "rm -rf _esy .ligo; $CMD"
@@ -177,23 +177,23 @@ let main =
   test_suite
     "LIGO install tests"
     [ test
-        "Test workflow when running [ligo install --package-management-alpha] followed \
-         by [ligo compile contract ./main.mligo] in the install_tests/workflow directoy. \
-         In this test by removing .ligo/ and _esy/ directories"
+        "Test workflow when running [ligo install] followed by [ligo compile contract \
+         ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
+         .ligo/ and _esy/ directories"
         test_remove_ligoPackageDir_installationJson
     ; test
-        "Test workflow when running [ligo install --package-management-alpha] followed \
-         by [ligo compile contract ./main.mligo] in the install_tests/workflow directoy. \
-         In this test by removing .ligo/ directory"
+        "Test workflow when running [ligo install] followed by [ligo compile contract \
+         ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
+         .ligo/ directory"
         test_remove_ligoPackageDir
     ; test
-        "Test workflow when running [ligo install --package-management-alpha] followed \
-         by [ligo compile contract ./main.mligo] in the install_tests/workflow directoy. \
-         In this test by removing _esy/ directory"
+        "Test workflow when running [ligo install] followed by [ligo compile contract \
+         ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
+         _esy/ directory"
         test_remove_installationJson
     ; test
-        "Test workflow when running [ligo install --package-management-alpha] followed \
-         by [ligo compile contract ./main.mligo] in the install_tests/workflow directoy. \
-         In this test by removing nothin"
+        "Test workflow when running [ligo install] followed by [ligo compile contract \
+         ./main.mligo] in the install_tests/workflow directoy. In this test by removing \
+         nothin"
         test_remove_nothing
     ]
