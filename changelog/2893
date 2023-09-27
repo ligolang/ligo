@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nstandard library: Refactoring of the \`Test\` module \\n\\n"
+merge_request: '2893'
+title: "stdlib: Cleanup of Test module"
+type: breaking
+            

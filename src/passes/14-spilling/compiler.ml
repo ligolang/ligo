@@ -172,7 +172,6 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
         | Michelson_pair
         | Set
         | Mutation
-        | Ast_contract
         | List
         | Gen
         | External _
@@ -211,7 +210,6 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
         | Tez
         | Michelson_pair
         | Never
-        | Ast_contract
         | Bytes
         | Mutation
         | Typed_address

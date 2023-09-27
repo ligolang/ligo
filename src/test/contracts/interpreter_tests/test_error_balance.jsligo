@@ -1,31 +1,32 @@
-type storage = int;
+namespace C {
+  type storage = int;
 
-type parameter =
-| ["Increment", int]
-| ["Decrement", int]
-| ["Reset"];
+  type parameter =
+  | ["Increment", int]
+  | ["Decrement", int]
+  | ["Reset"];
 
-type return_ = [list <operation>, storage];
+  type return_ = [list <operation>, storage];
 
-const add = ([store, delta] : [storage, int]) : storage => store + delta;
-const sub = ([store, delta] : [storage, int]) : storage => store - delta;
+  const add = ([store, delta] : [storage, int]) : storage => store + delta;
+  const sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
-const main = (action: parameter, store: storage) : return_ => {
- return [
-   (list([]) as list <operation>),    // No operations
-   (match (action) {
-    when(Increment(n)): add ([store, n]);
-    when(Decrement(n)): sub ([store, n]);
-    when(Reset()): 0; })
-  ]
-};
-
+  @entry
+  const main = (action: parameter, store: storage) : return_ => {
+  return [
+    (list([]) as list <operation>),    // No operations
+    (match (action) {
+      when(Increment(n)): add ([store, n]);
+      when(Decrement(n)): sub ([store, n]);
+      when(Reset()): 0; })
+    ]
+  };
+}
 
 const _test = () : test_exec_error_balance_too_low => {
   let initial_storage = 42 as int;
-  let [taddr, _c, _s] = Test.originate(main, initial_storage, 0 as tez);
-  let contr = Test.to_contract(taddr);
-  let r = Test.transfer_to_contract(contr, (Increment (1)), 100000000 as tez);
+  let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
+  let r = Test.transfer(orig.addr, Main((Increment (1))), 100000000 as tez);
   return match(r) {
     when(Success(_n)): failwith("Success");
     when(Fail(e)): match (e) {

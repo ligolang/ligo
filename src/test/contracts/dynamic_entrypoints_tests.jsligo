@@ -30,14 +30,14 @@ namespace C {
 
 const test_dyn = do {
   const init_storage = Test.storage_with_dynamic_entrypoints(contract_of(C), 42);
-  const [addr, _init, _balance] = Test.originate_module (contract_of(C), init_storage, 0mutez);
+  const orig = Test.originate (contract_of(C), init_storage, 0mutez);
   /* Call initial one */
-  Test.transfer_to_contract (Test.to_contract(addr), Call_one(), 1mutez);
-  assert ((Test.get_storage(addr)).storage == 1);
+  Test.transfer_exn (orig.addr, Call_one(), 1mutez);
+  assert ((Test.get_storage(orig.addr)).storage == 1);
   /* Change initial one and call it */
   const f = (_ : unit, i : int) : [list<operation>, int] => [list([]), i + 1];
-  Test.transfer_to_contract (Test.to_contract(addr), (Set_one(f)), 1mutez);
-  Test.transfer_to_contract (Test.to_contract(addr), (Call_one()), 1mutez);
-  assert ((Test.get_storage(addr)).storage == 2);
+  Test.transfer_exn (orig.addr, (Set_one(f)), 1mutez);
+  Test.transfer_exn (orig.addr, (Call_one()), 1mutez);
+  assert ((Test.get_storage(orig.addr)).storage == 2);
   return []
 }

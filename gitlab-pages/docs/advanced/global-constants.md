@@ -331,22 +331,24 @@ A simple usage case is the following, in which we obtain a
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_global
-type storage = int
-type parameter = unit
-type return = operation list * storage
+module C = struct
+  type storage = int
+  type parameter = unit
+  type return = operation list * storage
 
-let f (x : int) = x * 3 + 2
+  let f (x : int) = x * 3 + 2
 
-let ct = Test.register_constant (Test.eval f)
+  let ct = Test.register_constant (Test.eval f)
 
-let main (() : parameter) (store : storage) : return =
- [], (Tezos.constant ct store)
+  [@entry]
+  let main (() : parameter) (store : storage) : return =
+    [], (Tezos.constant ct store)
+end
 
 let test =
-  let (taddr, _, _) = Test.originate main 1 0tez in
-  let ctr = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn ctr () 0tez in
-  assert (Test.get_storage taddr = 5)
+  let orig = Test.originate (contract_of C) 1 0tez in
+  let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+  assert (Test.get_storage orig.addr = 5)
 ```
 
 </Syntax>
@@ -354,21 +356,23 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_global
-type storage = int
-type parameter = unit
+namespace C {
+  type storage = int
+  type parameter = unit
 
-const f = (x : int) => x * 3 + 2;
+  const f = (x : int) => x * 3 + 2;
 
-const ct = Test.register_constant(Test.eval(f));
+  const ct = Test.register_constant(Test.eval(f));
 
-const main = (p: parameter, s: storage) : [list<operation>, storage] =>
-  [list([]), Tezos.constant(ct)(s)];
+  @entry
+  const main = (p: parameter, s: storage) : [list<operation>, storage] =>
+    [list([]), Tezos.constant(ct)(s)];
+}
 
 const _test = () => {
-  let [taddr, _code, _size] = Test.originate(main, 1, 0tez);
-  let ctr = Test.to_contract(taddr);
-  Test.transfer_to_contract_exn(ctr, unit, 0tez);
-  assert (Test.get_storage(taddr) == 5);
+  let orig = Test.originate(contract_of(C), 1, 0tez);
+  Test.transfer_exn(orig.addr, Main(unit), 0tez);
+  assert (Test.get_storage(orig.addr) == 5);
 };
 
 const test = _test();

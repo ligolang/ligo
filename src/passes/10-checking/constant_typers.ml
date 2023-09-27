@@ -1063,9 +1063,11 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (for_all "a"
           @@ fun a ->
+          for_all "b"
+          @@ fun b ->
           create
             ~mode_annot:[ Checked ]
-            ~types:[ t_contract a ~loc () ^~> t_address ~loc () ]) )
+            ~types:[ t_contract a ~loc () ^~> t_typed_address a b ~loc () ]) )
     ; ( C_TEST_COMPILE_CONTRACT
       , of_type
           (for_all "a"
@@ -1078,28 +1080,41 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
               [ (t_pair a b ~loc ()
                 @-> t_pair (t_list (t_operation ~loc ()) ~loc ()) b ~loc ())
                 ^-> t_views ~loc b ()
-                ^~> t_ast_contract ~loc ()
+                ^~> t_michelson_contract a b ~loc ()
               ]) )
     ; ( C_TEST_COMPILE_AST_CONTRACT
       , of_type
-          (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_ast_contract ~loc () ^~> t_michelson_contract ~loc () ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked ]
+            ~types:
+              [ t_michelson_contract a b ~loc () ^~> t_michelson_contract a b ~loc () ]) )
     ; ( C_TEST_SIZE
       , of_type
-          (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_michelson_contract ~loc () ^~> t_int ~loc () ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked ]
+            ~types:[ t_michelson_contract a b ~loc () ^~> t_int ~loc () ]) )
     ; ( C_TEST_ORIGINATE
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Checked ]
-             ~types:
-               [ t_michelson_contract ~loc ()
-                 ^-> t_michelson_code ~loc ()
-                 ^-> t_mutez ~loc ()
-                 ^~> t_address ~loc ()
-               ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked; Checked; Checked ]
+            ~types:
+              [ t_michelson_contract a b ~loc ()
+                ^-> t_michelson_code ~loc ()
+                ^-> t_mutez ~loc ()
+                ^~> t_typed_address a b ~loc ()
+              ]) )
     ; ( C_TEST_BOOTSTRAP_CONTRACT
       , of_type
           (for_all "a"
@@ -1158,11 +1173,15 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
       , of_type
           (create ~mode_annot:[ Checked ] ~types:[ t_nat ~loc () ^~> t_address ~loc () ])
       )
-    ; ( C_TEST_GET_STORAGE_OF_ADDRESS
+    ; ( C_TEST_GET_STORAGE
       , of_type
-          (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_address ~loc () ^~> t_michelson_code ~loc () ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked ]
+            ~types:[ t_typed_address a b ~loc () ^~> t_michelson_code ~loc () ]) )
     ; ( C_TEST_GET_BALANCE
       , of_type
           (create
@@ -1235,16 +1254,24 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           @@ fun a -> create ~mode_annot:[ Checked ] ~types:[ t_gen a ~loc () ^~> a ]) )
     ; ( C_TEST_MUTATE_CONTRACT
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked ]
-             ~types:
-               [ t_nat ~loc ()
-                 ^-> t_ast_contract ~loc ()
-                 ^~> t_option
-                       (t_pair (t_ast_contract ~loc ()) (t_mutation ~loc ()) ~loc ())
-                       ~loc
-                       ()
-               ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked; Checked ]
+            ~types:
+              [ t_nat ~loc ()
+                ^-> t_michelson_contract a b ~loc ()
+                ^~> t_option
+                      (t_pair
+                         (t_michelson_contract a b ~loc ())
+                         (t_mutation ~loc ())
+                         ~loc
+                         ())
+                      ~loc
+                      ()
+              ]) )
     ; ( C_TEST_MUTATE_VALUE
       , of_type
           (for_all "a"
@@ -1306,28 +1333,41 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           create
             ~mode_annot:[ Inferred ]
             ~types:[ t_contract a ~loc () ^~> t_typed_address a b ~loc () ]) )
+    ; ( C_TEST_TO_ADDRESS
+      , of_type
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Inferred ]
+            ~types:[ t_typed_address a b ~loc () ^~> t_address ~loc () ]) )
     ; ( C_TEST_EXTERNAL_CALL_TO_ADDRESS
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Checked; Checked ]
-             ~types:
-               [ t_address ~loc ()
-                 ^-> t_option (t_string ~loc ()) ~loc ()
-                 ^-> t_michelson_code ~loc ()
-                 ^-> t_mutez ~loc ()
-                 ^~> t_test_exec_result ~loc ()
-               ]) )
+          (for_all "a"
+          @@ fun a ->
+          create
+            ~mode_annot:[ Checked; Checked; Checked; Checked ]
+            ~types:
+              [ t_contract a ~loc ()
+                ^-> t_option (t_string ~loc ()) ~loc ()
+                ^-> t_michelson_code ~loc ()
+                ^-> t_mutez ~loc ()
+                ^~> t_test_exec_result ~loc ()
+              ]) )
     ; ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Checked; Checked ]
-             ~types:
-               [ t_address ~loc ()
-                 ^-> t_option (t_string ~loc ()) ~loc ()
-                 ^-> t_michelson_code ~loc ()
-                 ^-> t_mutez ~loc ()
-                 ^~> t_nat ~loc ()
-               ]) )
+          (for_all "a"
+          @@ fun a ->
+          create
+            ~mode_annot:[ Checked; Checked; Checked; Checked ]
+            ~types:
+              [ t_contract a ~loc ()
+                ^-> t_option (t_string ~loc ()) ~loc ()
+                ^-> t_michelson_code ~loc ()
+                ^-> t_mutez ~loc ()
+                ^~> t_nat ~loc ()
+              ]) )
     ; ( C_TEST_SET_BIG_MAP
       , of_type
           (for_all "a"
@@ -1374,13 +1414,17 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           @@ fun a -> create ~mode_annot:[ Checked ] ~types:[ t_string ~loc () ^~> a ]) )
     ; ( C_TEST_COMPILE_CONTRACT_FROM_FILE
       , of_type
-          (create
-             ~mode_annot:[ Checked; Checked; Checked; Checked ]
-             ~types:
-               [ t_string ~loc ()
-                 ^-> t_option (t_nat ~loc ()) ~loc ()
-                 ^~> t_ast_contract ~loc ()
-               ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked; Checked; Checked; Checked ]
+            ~types:
+              [ t_string ~loc ()
+                ^-> t_option (t_nat ~loc ()) ~loc ()
+                ^~> t_michelson_contract a b ~loc ()
+              ]) )
     ; ( C_TEST_REGISTER_CONSTANT
       , of_type
           (create
@@ -1428,9 +1472,13 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           (create ~mode_annot:[ Checked ] ~types:[ t_bool ~loc () ^~> t_bool ~loc () ]) )
     ; ( C_TEST_READ_CONTRACT_FROM_FILE
       , of_type
-          (create
-             ~mode_annot:[ Checked ]
-             ~types:[ t_string ~loc () ^~> t_michelson_contract ~loc () ]) )
+          (for_all "a"
+          @@ fun a ->
+          for_all "b"
+          @@ fun b ->
+          create
+            ~mode_annot:[ Checked ]
+            ~types:[ t_string ~loc () ^~> t_michelson_contract a b ~loc () ]) )
     ; ( C_TEST_SIGN
       , of_type
           (create

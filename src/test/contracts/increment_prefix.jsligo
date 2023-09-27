@@ -21,8 +21,7 @@ namespace IncDec {
 
 const test_increment = (() => {
   let initial_storage = 42;
-  let [taddr, _code, _size] = Test.originate_module(contract_of(IncDec), initial_storage, 0tez);
-  let contr = Test.to_contract(taddr);
-  Test.transfer_to_contract_exn(contr, Increment(), 1mutez);
-  return assert(Test.get_storage(taddr) == initial_storage + 1);
+  let orig = Test.originate(contract_of(IncDec), initial_storage, 0tez);
+  Test.transfer_exn(orig.addr, Increment(), 1mutez);
+  return assert(Test.get_storage(orig.addr) == initial_storage + 1);
 }) ();

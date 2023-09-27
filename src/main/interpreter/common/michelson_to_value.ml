@@ -400,8 +400,7 @@ let rec decompile_value
         List.map ~f:aux lst
       in
       V_Set lst'
-    | ( ( Ast_contract
-        | Map
+    | ( ( Map
         | Big_map
         | List
         | Set

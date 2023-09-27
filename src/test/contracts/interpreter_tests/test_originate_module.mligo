@@ -10,7 +10,7 @@ module Bar = struct
 end
 
 let test =
-  let ta, m, _ = Test.originate_module (contract_of Bar.Foo) 0 0tez in
+  let {addr = ta; code = m; size = _} = Test.originate (contract_of Bar.Foo) 0 0tez in
   let () = Test.println "Deployed the contract:" in
   let () = Test.println (Test.to_string m) in
   let () = Test.println ("With storage: " ^ Test.to_string (Test.get_storage ta)) in

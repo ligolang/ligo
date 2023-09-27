@@ -21,7 +21,7 @@ If you need more fine-grained control, it is still possible to write a `main` fu
 
 As the use of `@entry` or `[@entry]` (and `@view` or `[@view]`) in the source is now mandatory, it is not possible anymore to rely on the auto-detection of the `main` function as the sole entry point, and it is not possible anymore to specify a entry points via the `-e` function on the command-line or views via the `--views` / `-v` options.
 
-Another consequence of this change is that, when originating a contract for tests, `Test.originate_module` (which can take as an argument a module containing multiple entry points) should be used in place of `Test.originate` (which only accepts a single function, i.e. a single entry point).
+Another consequence of this change is that, when originating a contract for tests, `Test.originate` now take as an argument a module containing multiple entry points instead of a single function, i.e. a single entry point
 
 We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](../advanced/dynamic-entrypoints.md) and [the reference](../reference/dynamic_entrypoints.md) for this feature.
 

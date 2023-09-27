@@ -1,5 +1,5 @@
 let f = "../../../../../src/contract/unit.mligo"
 
 let originate () =
-    let (c_addr,_,_) = Test.originate_from_file  f (Test.eval ()) 0tez in
-    c_addr
+    let x : (unit, unit) origination_result = Test.originate_from_file f () 0tez in
+    x.addr

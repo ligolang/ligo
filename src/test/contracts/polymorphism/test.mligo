@@ -1,9 +1,11 @@
 let id (type a) (x : a) : a = x
 
-let main (m : int) (n : int) : operation list * int =
-  ([] : operation list), (id n) + (id m)
+module C = struct
+  [@entry] let main (m : int) (n : int) : operation list * int =
+    ([] : operation list), (id n) + (id m)
+end
 
 let test =
-  let (taddr, _, _) = Test.originate main 0 0tez in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr) 42 0tez in
-  assert (Test.get_storage taddr = 42)
+  let orig = Test.originate (contract_of C) 0 0tez in
+  let _ = Test.transfer_exn orig.addr (Main 42) 0tez in
+  assert (Test.get_storage orig.addr = 42)

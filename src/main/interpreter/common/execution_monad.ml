@@ -114,7 +114,7 @@ module Command = struct
         * Z.t
         -> [ `Exec_failed of Tezos_state.state_error | `Exec_ok of Z.t ] tezos_command
     | State_error_to_value : Tezos_state.state_error -> LT.value tezos_command
-    | Get_storage_of_address :
+    | Get_storage :
         Location.t * Ligo_interpreter.Types.calltrace * LT.value
         -> LT.value tezos_command
     | Get_size : LT.value -> LT.value tezos_command
@@ -387,8 +387,8 @@ module Command = struct
       let mutez = Michelson_backend.int_of_mutez balance in
       let balance = LT.V_Ct (C_mutez mutez) in
       balance, ctxt
-    | Get_storage_of_address (loc, calltrace, addr) ->
-      let addr = trace_option ~raise (corner_case ()) @@ LC.get_address addr in
+    | Get_storage (loc, calltrace, addr) ->
+      let addr = trace_option ~raise (corner_case ()) @@ LC.get_typed_address addr in
       let%map storage', ty = Tezos_state.get_storage ~raise ~loc ~calltrace ctxt addr in
       let storage =
         storage'

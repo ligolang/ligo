@@ -1,23 +1,24 @@
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1 as nat, s);
 
-@entry
-const main = (_p: unit, s: string): [list<operation>, string] => {
-  let reverse = "";
-  let length = String.length(s);
-  for (let i = length - 1; i >= 0; i--) {
-    reverse += getChar(s, abs(i))
+namespace C {
+  @entry
+  const main = (_p: unit, s: string): [list<operation>, string] => {
+    let reverse = "";
+    let length = String.length(s);
+    for (let i = length - 1; i >= 0; i--) {
+      reverse += getChar(s, abs(i))
+    };
+    return [list([]), reverse]
   };
-  return [list([]), reverse]
-};
+}
 
 const test =
   (
     () => {
       let initial_storage = "esrever";
-      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0 as tez);
-      let contract = Test.to_contract(taddr);
-      Test.transfer_to_contract_exn(contract, unit, 1 as mutez);
-      Test.log(Test.get_storage(taddr));
-      return assert(Test.get_storage(taddr) == "reverse")
+      let orig = Test.originate(contract_of(C), initial_storage, 0 as tez);
+      Test.transfer_exn(orig.addr, Main(unit), 1 as mutez);
+      Test.log(Test.get_storage(orig.addr));
+      return assert(Test.get_storage(orig.addr) == "reverse")
     }
   )();

@@ -14,20 +14,22 @@ type allowance_key =
   { owner : address;
     spender : address }
 
+type callback_param = | Main of nat
+
 type getAllowance =
   [@layout comb]
   { request : allowance_key;
-    callback : nat contract }
+    callback : callback_param contract }
 
 type getBalance =
   [@layout comb]
   { owner : address;
-    callback : nat contract }
+    callback : callback_param contract }
 
 type getTotalSupply =
   [@layout comb]
   { request : unit ;
-    callback : nat contract }
+    callback : callback_param contract }
 
 type tokens = (address, nat) big_map
 type allowances = (allowance_key, nat) big_map
@@ -109,19 +111,20 @@ let getAllowance (param : getAllowance) (storage : storage) : operation list =
     match Big_map.find_opt param.request storage.allowances with
     | Some value -> value
     | None -> 0n in
-  [Tezos.transaction value 0mutez param.callback]
+  [Tezos.transaction (Main value) 0mutez param.callback]
 
 let getBalance (param : getBalance) (storage : storage) : operation list =
   let value =
     match Big_map.find_opt param.owner storage.tokens with
     | Some value -> value
     | None -> 0n in
-  [Tezos.transaction value 0mutez param.callback]
+  [Tezos.transaction (Main value) 0mutez param.callback]
 
 let getTotalSupply (param : getTotalSupply) (storage : storage) : operation list =
   let total = storage.total_supply in
-  [Tezos.transaction total 0mutez param.callback]
+  [Tezos.transaction (Main total) 0mutez param.callback]
 
+[@entry]
 let main (param : parameter) (storage : storage) : result =
   begin
     if Tezos.get_amount () <> 0mutez

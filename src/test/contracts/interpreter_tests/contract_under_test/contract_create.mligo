@@ -2,6 +2,7 @@ type storage = address option
 type return = operation list * storage
 type parameter = One | Two
 
+[@entry]
 let main (action : parameter) (store : storage) : return =
   match action with
     | One ->

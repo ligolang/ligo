@@ -311,30 +311,30 @@ entrypoints `Add` and `Sub`:
 
 <Syntax syntax="cameligo">
 
-```cameligo test-ligo group=mutation-contract
-(* This is mutation-contract.mligo *)
-type storage = int
+```cameligo test-ligo group=frontpage
+// This is mutation-contract.mligo
+module C = struct
+  type storage = int
 
-type result = operation list * storage
-
-(* Two entrypoints *)
-[@entry] let add (delta : int) (store : storage) : result = [], store + delta
-[@entry] let sub (delta : int) (store : storage) : result = [], store - delta
+  // Two entrypoints
+  [@entry] let add (delta : int) (store : storage) : operation list * storage = [],store + delta
+  [@entry] let sub (delta : int) (store : storage) : operation list * storage = [],store - delta
+end
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-```jsligo test-ligo group=mutation-contract
-// This is mutation-contract.mligo
-type storage = int;
+```jsligo test-ligo group=frontpage
+// This is mutation-contract.jsligo
+namespace C {
+  type storage = int;
 
-type result = [list<operation>, storage];
-
-// Two entrypoints
-@entry const add = (delta : int, store : storage) : result => [list([]), store + delta];
-@entry const sub = (delta : int, store : storage) : result => [list([]), store - delta];
+  // Two entrypoints
+  @entry const add = (delta: int, store: storage): [list<operation>, storage] => [list([]),store + delta];
+  @entry const sub = (delta: int, store: storage): [list<operation>, storage] => [list([]),store - delta];
+}
 ```
 
 </Syntax>
@@ -343,7 +343,7 @@ Doing mutation testing on a contract with multiple entrypoints can
 help in finding out entrypoints that are not covered by the tests.
 
 Consider the following test, which deploys a contract passed as
-an argument (of the same type as `main` above), and then tests that
+an argument, and then tests that
 the entrypoint `Add(7)` works as intended on an initial storage
 `5`:
 
@@ -358,14 +358,13 @@ type storage = int
 type param = MutationContract parameter_of
 let initial_storage = 7
 
-let tester (taddr : (param, storage) typed_address) (_ : michelson_contract) (_ : int) : unit =
-  let contr = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn contr (Add 7) 1mutez in
+let tester (taddr : (param, storage) typed_address) (_: (param ,storage) michelson_contract) (_:int) : unit =
+  let _ = Test.transfer_exn taddr (Add 7) 1mutez in
   assert (Test.get_storage taddr = initial_storage + 7)
 
 let test_original =
-  let (taddr, _, _) = Test.originate_module (contract_of MutationContract) initial_storage 0tez in
-  tester taddr
+  let orig = Test.originate (contract_of MutationContract) initial_storage 0tez in
+  tester orig.addr
 ```
 
 </Syntax>
@@ -380,15 +379,14 @@ type storage = int;
 type param = parameter_of MutationContract;
 const initial_storage = 7;
 
-const tester = (taddr : typed_address<param, storage>, _c : michelson_contract, _i : int) : unit => {
-  let contr = Test.to_contract(taddr);
-  let _xfer = Test.transfer_to_contract_exn(contr, Add(7), 1mutez);
+const tester = (taddr : typed_address<param, storage>, _c : michelson_contract<param, storage> , _ : int) : unit => {
+  let _xfer = Test.transfer_exn(taddr, Add(7), 1mutez);
   assert(Test.get_storage(taddr) == initial_storage + 7);
 }
 
 const test_original = (() => {
-  let [taddr, _x, _y] = Test.originate_module(contract_of(MutationContract), initial_storage, 0tez);
-  return tester(taddr);
+  let orig = Test.originate(contract_of(MutationContract), initial_storage, 0tez);
+  return tester(orig.addr);
 })();
 ```
 
@@ -487,11 +485,10 @@ to the `Sub` entrypoint in the test above:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=mutation-contract-test
-let tester_add_and_sub (taddr : (param, storage) typed_address) (_ : michelson_contract) (_ : int) : unit =
-  let contr = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn contr (Add 7) 1mutez in
+let tester_add_and_sub (taddr : (param, storage) typed_address) (_ : (param, storage) michelson_contract) (_ : int) : unit =
+  let _ = Test.transfer_exn taddr (Add 7) 1mutez in
   let () = assert (Test.get_storage taddr = initial_storage + 7) in
-  let _ = Test.transfer_to_contract_exn contr (Sub 3) 1mutez in
+  let _ = Test.transfer_exn taddr (Sub 3) 1mutez in
   assert (Test.get_storage taddr = initial_storage + 4)
 ```
 
@@ -500,11 +497,10 @@ let tester_add_and_sub (taddr : (param, storage) typed_address) (_ : michelson_c
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=mutation-contract-test
-const tester_add_and_sub = (taddr : typed_address<param, storage>, _c : michelson_contract, _i : int) : unit => {
-  let contr = Test.to_contract(taddr);
-  let _xfer1 = Test.transfer_to_contract_exn(contr, Add(7), 1mutez);
+const tester_add_and_sub = (taddr : typed_address<param, storage>, _c : michelson_contract<param, storage>, _i : int) : unit => {
+  let _xfer1 = Test.transfer_exn(taddr, Add(7), 1mutez);
   assert(Test.get_storage(taddr) == initial_storage + 7);
-  let _xfer2 = Test.transfer_to_contract_exn(contr, Sub(3), 1mutez);
+  let _xfer2 = Test.transfer_exn(taddr, Sub(3), 1mutez);
   assert(Test.get_storage(taddr) == initial_storage + 4);
 }
 ```
@@ -525,7 +521,7 @@ returning an optional type, it returns a list:
 
 ```cameligo skip
 Test.mutation_test_all : 'a -> ('a -> 'b) -> ('b * mutation) list
-Test.originate_module_and_mutate_all : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> michelson_contract -> int -> b) -> ('b * mutation) list
+Test.originate_and_mutate_all : (('param, 'storage) module_contract) -> 'storage -> tez -> (('param, 'storage) typed_address -> ('param, 'storage) michelson_contract -> int -> b) -> ('b * mutation) list
 ```
 
 </Syntax>
@@ -534,7 +530,7 @@ Test.originate_module_and_mutate_all : (('param, 'storage) module_contract) -> '
 
 ```jsligo skip
 Test.mutation_test_all : (value: 'a, tester: ('a -> 'b)) => list <['b, mutation]>;
-Test.originate_module_and_mutate_all : (contract: module_contract<'p, 's>, init: 's, balance: tez, (tester: (originated_address: typed_address<'p, 's>, code: michelson_contract, size: int) => 'b)) => list<['b, mutation]>
+Test.originate_and_mutate_all : (contract: module_contract<'p, 's>, init: 's, balance: tez, (tester: (originated_address: typed_address<'p, 's>, code: michelson_contract<'p, 's>, size: int) => 'b)) => list<['b, mutation]>
 ```
 
 </Syntax>
@@ -546,7 +542,7 @@ then process the list:
 
 ```cameligo test-ligo group=mutation-contract-test
 let test_mutation_all =
-  match Test.originate_module_and_mutate_all (contract_of MutationContract) initial_storage 0tez tester_add_and_sub with
+  match Test.originate_and_mutate_all (contract_of MutationContract) initial_storage 0tez tester_add_and_sub with
     [] -> ()
   | ms -> let () = List.iter (fun ((_, mutation) : unit * mutation) ->
                               let path = Test.save_mutation "." mutation in
@@ -561,7 +557,7 @@ let test_mutation_all =
 
 ```jsligo test-ligo group=mutation-contract-test
 const test_mutation_all =
-  match(Test.originate_module_and_mutate_all(contract_of(MutationContract), initial_storage, 0tez, tester_add_and_sub)) {
+  match(Test.originate_and_mutate_all(contract_of(MutationContract), initial_storage, 0tez, tester_add_and_sub)) {
     when([]): unit;
     when([hd,...tl]): do {
       let ms = list([hd,...tl]);

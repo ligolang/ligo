@@ -1,11 +1,13 @@
-let michelson_add : int * int -> int =
-  [%Michelson ({| { UNPAIR ; ADD } |} : int * int -> int) ]
+module C = struct
+  let michelson_add : int * int -> int =
+    [%Michelson ({| { UNPAIR ; ADD } |} : int * int -> int) ]
 
-let main (x : int) (s : int) : operation list * int =
-  ([] : operation list), michelson_add (x, s)
+  [@entry]
+  let main (x : int) (s : int) : operation list * int =
+    ([] : operation list), michelson_add (x, s)
+end
 
 let test =
-  let (taddr, _, _) = Test.originate main 1 0tez in
-  let c = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn c 41 0tez in
-  Test.log (Test.get_storage taddr)
+  let orig = Test.originate (contract_of C) 1 0tez in
+  let _ = Test.transfer_exn orig.addr (Main 41) 0tez in
+  Test.log (Test.get_storage orig.addr)

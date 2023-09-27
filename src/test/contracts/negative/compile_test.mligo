@@ -1,36 +1,29 @@
-type storage = int
+module C = struct
+  type storage = int
 
-type parameter =
-| Increment of int
-| Decrement of int
-| Reset
+  type parameter =
+  | Increment of int
+  | Decrement of int
+  | Reset
 
-type return = operation list * storage
+  type return = operation list * storage
 
-// Two entrypoints
+  // Two entrypoints
 
-let add (store : storage) (delta : int) : storage = store + delta
+  [@entry]
+  let increment (store : storage) (delta : int) : operation list * storage =
+    let () = Test.log "foo" in
+    [], store + delta
 
-let sub (store : storage) (delta : int) : storage = store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-
-[@entry]
-let main (action : parameter) (store : storage) : return =
-  ([] : operation list), // No operations
-  (match action with
-     Increment (n) ->
-       let _ = Test.log "foo" in
-       add store n
-   | Decrement (n) -> sub store n
-   | Reset -> 0)
+  [@entry]
+  let decrement (store : storage) (delta : int) : operation list * storage = [], store - delta
+end
 
 let _test () =
   let initial_storage = 10 in
-  let (taddr, _, _) = Test.originate main initial_storage 0mutez in
-  let contr = Test.to_contract (taddr) in
+  let orig = Test.originate (contract_of C) initial_storage 0mutez in
+  let contr = Test.to_contract (orig.addr) in
   let _r = Test.transfer_to_contract_exn contr (Increment (32)) 1000000mutez in
-  (Test.get_storage (taddr) = initial_storage + 32)
+  (Test.get_storage (orig.addr) = initial_storage + 32)
 
 let test = _test ()

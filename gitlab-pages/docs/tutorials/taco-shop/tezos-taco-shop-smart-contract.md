@@ -411,7 +411,7 @@ For that, we will have another file in which will describe our test:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.mligo"
+#import "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.mligo" "C"
 
 let assert_string_failure (res : test_exec_result) (expected : string) =
   let expected = Test.eval expected in
@@ -426,36 +426,34 @@ let test =
       (1n, { current_stock = 50n ; max_price = 50tez }) ;
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
   in
-  let (pedro_taco_shop_ta, _code, _size) = Test.originate TacoShop.buy_taco init_storage 0tez in
-  (* Convert typed_address to contract *)
-  let pedro_taco_shop_ctr = Test.to_contract pedro_taco_shop_ta in
+  let { addr ; code = _; size = _ } = Test.originate (contract_of C.TacoShop) init_storage 0tez in
 
   (* Test inputs *)
-  let clasico_kind = 1n in
-  let unknown_kind = 3n in
+  let clasico_kind : C.TacoShop parameter_of = Buy_taco 1n in
+  let unknown_kind : C.TacoShop parameter_of = Buy_taco 3n in
 
   (* Auxiliary function for testing equality in maps *)
-  let eq_in_map (r : TacoShop.taco_supply) (m : TacoShop.taco_shop_storage) (k : nat) =
+  let eq_in_map (r : C.TacoShop.taco_supply) (m : C.TacoShop.taco_shop_storage) (k : nat) =
     match Map.find_opt k m with
     | None -> false
     | Some v -> v.current_stock = r.current_stock && v.max_price = r.max_price in
 
   (* Purchasing a Taco with 1tez and checking that the stock has been updated *)
-  let ok_case : test_exec_result = Test.transfer_to_contract pedro_taco_shop_ctr clasico_kind 1tez in
+  let ok_case : test_exec_result = Test.transfer addr clasico_kind 1tez in
   let () = match ok_case with
     | Success _ ->
-      let storage = Test.get_storage pedro_taco_shop_ta in
+      let storage = Test.get_storage addr in
       assert ((eq_in_map { current_stock = 49n ; max_price = 50tez } storage 1n) &&
               (eq_in_map { current_stock = 20n ; max_price = 75tez } storage 2n))
     | Fail _ -> failwith ("ok test case failed")
   in
 
   (* Purchasing an unregistred Taco *)
-  let nok_unknown_kind = Test.transfer_to_contract pedro_taco_shop_ctr unknown_kind 1tez in
+  let nok_unknown_kind = Test.transfer addr unknown_kind 1tez in
   let () = assert_string_failure nok_unknown_kind "Unknown kind of taco" in
 
   (* Attempting to Purchase a Taco with 2tez *)
-  let nok_wrong_price = Test.transfer_to_contract pedro_taco_shop_ctr clasico_kind 2tez in
+  let nok_wrong_price = Test.transfer addr clasico_kind 2tez in
   let () = assert_string_failure nok_wrong_price "Sorry, the taco you are trying to purchase has a different price" in
   ()
 ```
@@ -465,7 +463,7 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test
-#include "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo"
+#import "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo" "C"
 
 function assert_string_failure (res: test_exec_result, expected: string) {
   const expected_bis = Test.eval(expected);
@@ -497,19 +495,16 @@ const test = (
             ]
           )
         );
-      const [pedro_taco_shop_ta, _code, _size] =
-        Test.originate(TacoShop.buy_taco, init_storage, 0mutez);
-      /* Convert typed_address to contract */
-
-      const pedro_taco_shop_ctr = Test.to_contract(pedro_taco_shop_ta);
+      const { addr , code , size } =
+        Test.originate(contract_of(C.TacoShop), init_storage, 0mutez);
 
       /* Test inputs */
 
-      const clasico_kind = 1n;
-      const unknown_kind = 3n;
+      const clasico_kind : parameter_of C.TacoShop = Buy_taco (1n);
+      const unknown_kind : parameter_of C.TacoShop = Buy_taco (3n);
       /* Auxiliary function for testing equality in maps */
 
-      const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) =>
+      const eq_in_map = (r: C.TacoShop.taco_supply, m: C.TacoShop.taco_shop_storage, k: nat) =>
         match(Map.find_opt(k, m)) {
           when (None):
             false
@@ -519,8 +514,8 @@ const test = (
       /* Purchasing a Taco with 1tez and checking that the stock has been updated */
 
       const ok_case: test_exec_result =
-        Test.transfer_to_contract(
-          pedro_taco_shop_ctr,
+        Test.transfer(
+          addr,
           clasico_kind,
           1000000mutez
         );
@@ -528,7 +523,7 @@ const test = (
         match(ok_case) {
           when (Success(_s)):
             do {
-              let storage = Test.get_storage(pedro_taco_shop_ta);
+              let storage = Test.get_storage(addr);
               assert(
                 eq_in_map(
                   { current_stock: 49n, max_price: 50000000mutez },
@@ -548,8 +543,8 @@ const test = (
       /* Purchasing an unregistred Taco */
 
       const nok_unknown_kind =
-        Test.transfer_to_contract(
-          pedro_taco_shop_ctr,
+        Test.transfer(
+          addr,
           unknown_kind,
           1000000mutez
         );
@@ -557,8 +552,8 @@ const test = (
       /* Attempting to Purchase a Taco with 2tez */
 
       const nok_wrong_price =
-        Test.transfer_to_contract(
-          pedro_taco_shop_ctr,
+        Test.transfer(
+          addr,
           clasico_kind,
           2000000mutez
         );

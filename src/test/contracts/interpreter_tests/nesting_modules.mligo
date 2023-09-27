@@ -23,12 +23,14 @@ module Foo = struct
   let x () = x + Foo.Bar.x
 end
 
-let main (_ : unit) (s : int) : operation list * int =
-  let v = foo () + Foo.x () + y () in
-  ([] : operation list), (s + v)
+module C = struct
+  [@entry]
+  let main (_ : unit) (s : int) : operation list * int =
+    let v = foo () + Foo.x () + y () in
+    ([] : operation list), (s + v)
+end
 
 let test =
-  let (taddr, _, _) = Test.originate main 0 0tez in
-  let c = Test.to_contract taddr in
-  let _ = Test.transfer_to_contract_exn c () 0tez in
-  Test.log (Test.get_storage taddr)
+  let orig = Test.originate (contract_of C) 0 0tez in
+  let _ = Test.transfer_exn orig.addr (Main ()) 0tez in
+  Test.log (Test.get_storage orig.addr)

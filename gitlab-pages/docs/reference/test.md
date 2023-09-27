@@ -207,7 +207,7 @@ Originate a contract from a module/namespace. To obtain a `module_contract` from
 
 ```cameligo skip
 let taddr, contract, size =
-  Test.originate_module (contract_of C) init_storage 0tez
+  Test.originate (contract_of C) init_storage 0tez
 ...
 ```
 
@@ -216,7 +216,7 @@ let taddr, contract, size =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-let [taddr, contract, size] = Test.originate_module(contract_of(C), init_storage, 0tez);
+let [taddr, contract, size] = Test.originate(contract_of(C), init_storage, 0tez);
 ```
 
 </Syntax>

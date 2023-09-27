@@ -338,7 +338,7 @@ In the testing framework, you can use to 'Test.storage_with_dynamic_entrypoints'
 ```cameligo skip
 let test_dyn =
   let init_storage = Test.storage_with_dynamic_entrypoints (contract_of C) 42 in
-  let (addr, _, _) = Test.originate_module (contract_of  C) init_storage 0mutez in
+  let (addr, _, _) = Test.originate (contract_of  C) init_storage 0mutez in
   (* Call initial one *)
   let _ = Test.transfer_to_contract (Test.to_contract addr) (Call_one ()) 1mutez in
   let () = assert ((Test.get_storage addr).storage = 1) in
@@ -357,7 +357,7 @@ let test_dyn =
 ```jsligo skip
 const test_dyn = do {
   const init_storage = Test.storage_with_dynamic_entrypoints(contract_of(C), 42);
-  const [addr, _init, _balance] = Test.originate_module (contract_of(C), init_storage, 0mutez);
+  const [addr, _init, _balance] = Test.originate (contract_of(C), init_storage, 0mutez);
   /* Call initial one */
   Test.transfer_to_contract (Test.to_contract(addr), Call_one(), 1mutez);
   assert ((Test.get_storage(addr)).storage == 1);

@@ -1,27 +1,17 @@
-type storage = int
+namespace C {
+  type storage = int
 
-type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"]
+  type parameter = ["Increment", int] | ["Decrement", int] | ["Reset"]
 
-/* Two entrypoints */
+  /* Two entrypoints */
 
-function add (store: storage, delta: int) { return store + delta }
+  @entry
+  function increment (store: storage, delta: int) : [list<operation>, storage] { return [list([]),store + delta] }
 
-function sub (store: storage, delta: int) { return store - delta }
+  @entry
+  function decrement (store: storage, delta: int) : [list<operation>, storage] { return [list([]),store - delta] }
 
-/* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. */
-
-@entry
-function main (action: parameter, store: storage): [list<operation>, storage] {
-  return [
-    list([]), // No operations
-    match(action) {
-      when(Increment(n)): add(store, n)
-      when(Decrement(n)): sub(store, n)
-      when(Reset()): 0
-    }
-  ]
-};
+}
 
 /* Tests for main access point */
 
@@ -29,8 +19,8 @@ const test_initial_storage =
   (
     () => {
       let initial_storage = 42;
-      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0tez);
-      return assert(Test.get_storage(taddr) == initial_storage)
+      let orig = Test.originate(contract_of (C), initial_storage, 0tez);
+      return assert(Test.get_storage(orig.addr) == initial_storage)
     }
   )();
 
@@ -38,9 +28,9 @@ const test_increment =
   (
     () => {
       let initial_storage = 42;
-      let [taddr, _code, _size] = Test.originate(main, initial_storage, 0tez);
-      let contr = Test.to_contract(taddr);
+      let orig = Test.originate(contract_of (C), initial_storage, 0tez);
+      let contr = Test.to_contract(orig.addr);
       Test.transfer_to_contract_exn(contr, (Increment(1)), 1mutez);
-      return assert(Test.get_storage(taddr) == initial_storage + 1)
+      return assert(Test.get_storage(orig.addr) == initial_storage + 1)
     }
   )();

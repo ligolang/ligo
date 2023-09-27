@@ -1147,7 +1147,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return @@ code
   | C_TEST_COMPILE_CONTRACT_FROM_FILE, _ -> fail @@ error_type ()
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN
-    , [ V_Ct (C_address address)
+    , [ V_Ct (C_contract { address; _ })
       ; entrypoint
       ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
@@ -1158,7 +1158,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     return_contract_exec_exn res
   | C_TEST_EXTERNAL_CALL_TO_ADDRESS_EXN, _ -> fail @@ error_type ()
   | ( C_TEST_EXTERNAL_CALL_TO_ADDRESS
-    , [ V_Ct (C_address address)
+    , [ V_Ct (C_contract { address; _ })
       ; entrypoint
       ; V_Michelson (Ty_code { micheline_repr = { code = param; _ }; _ })
       ; V_Ct (C_mutez amt)
@@ -1176,10 +1176,10 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> () = Set_baker (loc, calltrace, addr) in
     return @@ v_unit ()
   | C_TEST_SET_BAKER, _ -> fail @@ error_type ()
-  | C_TEST_GET_STORAGE_OF_ADDRESS, [ addr ] ->
-    let>> storage = Get_storage_of_address (loc, calltrace, addr) in
+  | C_TEST_GET_STORAGE, [ addr ] ->
+    let>> storage = Get_storage (loc, calltrace, addr) in
     return storage
-  | C_TEST_GET_STORAGE_OF_ADDRESS, _ -> fail @@ error_type ()
+  | C_TEST_GET_STORAGE, _ -> fail @@ error_type ()
   | C_TEST_GET_BALANCE, [ addr ] ->
     let>> balance = Get_balance (loc, calltrace, addr) in
     return balance
@@ -1310,6 +1310,8 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let>> () = Check_storage_address (loc, address, expr_ty) in
     return @@ v_address address
   | C_TEST_TO_TYPED_ADDRESS, _ -> fail @@ error_type ()
+  | C_TEST_TO_ADDRESS, [ V_Typed_address address ] -> return @@ v_address address
+  | C_TEST_TO_ADDRESS, _ -> fail @@ error_type ()
   | C_TEST_RUN, [ V_Func_val f; v ] ->
     let* () = check_value (V_Func_val f) in
     let* () = check_value v in

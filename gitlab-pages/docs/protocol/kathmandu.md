@@ -55,10 +55,10 @@ function main ( const x : (int*int) * unit ) is
   (list [Tezos.emit ("%foo", x.0) ; Tezos.emit ("%foo", x.0.0)], Unit)
 
 const test_foo = {
-  const (ta, _, _) = Test.originate (main, Unit, 0tez) ;
-  Test.transfer_to_contract_exn (Test.to_contract (ta), (1,2), 0tez) ;
-  const x = (Test.get_last_events_from (ta, "foo") : list (int*int)) ;
-  const y = (Test.get_last_events_from (ta, "foo") : list (int)) ;
+  const orig = Test.originate (main, Unit, 0tez) ;
+  Test.transfer_exn (orig.addr, (1,2), 0tez) ;
+  const x = (Test.get_last_events_from (orig.addr, "foo") : list (int*int)) ;
+  const y = (Test.get_last_events_from (orig.addr, "foo") : list (int)) ;
 } with (x,y)
 ```
 
@@ -66,29 +66,34 @@ const test_foo = {
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
-let main (p,_ : (int*int) * unit ) =
-  [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+module C = struct
+  [@entry] let main (p: int*int) (_: unit) =
+    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+end
 
 let test_foo =
-  let (ta, _, _) = Test.originate_uncurried main () 0tez in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract ta) (1,2) 0tez in
-  (Test.get_last_events_from ta "foo" : (int*int) list),(Test.get_last_events_from ta "foo" : int list)
+  let orig = Test.originate (contract_of C) () 0tez in
+  let _ = Test.transfer_exn orig.addr (Main (1,2)) 0tez in
+  (Test.get_last_events_from orig.addr "foo" : (int*int) list),(Test.get_last_events_from orig.addr "foo" : int list)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-let main = (p: [int, int], _s : unit) => {
-  let op1 = Tezos.emit("%foo", p);
-  let op2 = Tezos.emit("%foo", p[0]);
-  return [list([op1, op2]), unit];
+namespace C {
+  @entry
+  let main = (p: [int, int], _s : unit) => { 
+    let op1 = Tezos.emit("%foo", p);
+    let op2 = Tezos.emit("%foo", p[0]);
+    return [list([op1, op2]), unit];
   };
+}
 
 let test = (() : [list<[int,int]>, list<int>] => {
-  let [ta, _code, _size] = Test.originate(main, unit, 0 as tez);
-  Test.transfer_to_contract_exn(Test.to_contract(ta), [1,2], 0 as tez);
-  return [Test.get_last_events_from(ta, "foo") as list<[int, int]>, Test.get_last_events_from(ta, "foo") as list<int>];
+  let orig = Test.originate(contract_of(C), unit, 0 as tez);
+  Test.transfer_exn(orig.addr, Main([1,2]), 0 as tez);
+  return [Test.get_last_events_from(orig.addr, "foo") as list<[int, int]>, Test.get_last_events_from(orig.addr, "foo") as list<int>];
 }) ();
 ```
 
