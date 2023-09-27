@@ -60,6 +60,15 @@ let let_storage_and_parameter_types ~parameter_type ~storage_type ~in_ =
   >:: (def_type Magic_vars.storage storage_type >:: in_)
 
 
+let views_help_message =
+  {|Views must be functions taking exactly two arguments: their input, and the storage.|}
+
+
+let exit_with_error str =
+  prerr_endline ("Error: " ^ str);
+  exit 1
+
+
 let e_views ~storage_type view_types =
   let open Ast_typed in
   List.fold_right
@@ -70,7 +79,17 @@ let e_views ~storage_type view_types =
       let view_expr =
         match Ast_typed.should_uncurry_view ~storage_ty:storage_type view_type with
         | `Yes _ -> Option.value_exn @@ Ast_typed.uncurry_wrap ~loc ~type_:view_type view
-        | `Bad | `Bad_not_function -> failwith "wrong view"
+        | `Bad ->
+          exit_with_error
+            (Printf.sprintf "The view `%s` has too few parameter. " name
+            ^ views_help_message
+            ^ "\n\
+               If you get this error while migrating a contract to a new version of \
+               LIGO, this is likely due to the depreciation of uncurried views. See the \
+               documentation on migration to LIGO v. 1.0.")
+        | `Bad_not_function ->
+          exit_with_error
+            (Printf.sprintf "The view `%s` is not a function. " name ^ views_help_message)
       in
       e_a_test_cons_views
         ~loc
