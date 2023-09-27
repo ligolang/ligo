@@ -10,11 +10,11 @@ You should not manually craft a `main` function that calls your entry points any
 
 If you need more fine-grained control, it is still possible to write a `main` function, but you will need to add `@entry` or `[@entry]` above that `main` function (and only that function). See [the documentation on the main function and entry points](../advanced/entrypoints-contracts.md#main-function) for more details on how to do this.
 
-Views can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO
+[Views](../contract/views) can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO.
 
 As the use of `@entry` or `[@entry]` (and `@view` or `[@view]`) in the source is now mandatory, it is not possible anymore to rely on the auto-detection of the `main` function as the sole entry point, and it is not possible anymore to specify a entry points via the `-e` function on the command-line or views via the `--views` / `-v` options.
 
-Another consequence of this change is that, when originating a contract for tests, `Test.originate_module` (which can take as an argument a module containing multiple entry points) should be used in place of Test.originate (which only accepts a single function, i.e. a single entry point).
+Another consequence of this change is that, when originating a contract for tests, `Test.originate_module` (which can take as an argument a module containing multiple entry points) should be used in place of `Test.originate` (which only accepts a single function, i.e. a single entry point).
 
 We are also rolling out a new feature allowing the addition, removal and update of dynamic entry points for a contract after deployment. This could be a useful feature for example when building a DAO which allows on-chain vote to upgrade its code (or a DAO which controls the code of another separate contract). For more information, see [the documentation](../advanced/dynamic-entrypoints.md) and [the reference](../reference/dynamic_entrypoints.md) for this feature.
 
@@ -44,15 +44,20 @@ MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2796
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2684 in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0.69.0))
 
-### `@layout:comb` is now used by default everywhere
+### The comb layout is now used by default
 
-`@layout:comb` (usually written `@layout comb` in CameLIGO) is now used by default everywhere instead of `@layout:tree`.
+Some types can have several isomorphic representations in Michelson, and LIGO allows choosing between two of these, `comb` and `tree`, via an `@layout` decorator (e.g. `@layout("comb")` in JsLIGO, or `[@layout comb]` in CameLIGO). See [the documentation on layouts](../advanced/interop#michelson-types-and-annotations).
 
-The rationale is that `@layout:comb` is usually more optimal, especially for records: `@layout:comb` records are compiled to Michelson combs, which have better support and look more readable. `@layout:comb` is also more predictable / less surprising, because the fields are in declared order instead of alphabetical order. `@layout:comb` can be less efficient for variants, but the difference should not be significant in most cases. For more info on why this change happened, see [Why did the default datatype layout change to `@layout comb`?](../faq/layout-comb-why.md)
+Previously, the default layout was `tree`, and in LIGO v1, the default becomes `comb`.
 
-If your project has a stable ABI that other tools rely on, you might need to manually annotate the type os entry point arguments and the entry point return types with `@layout:tree`.
+The rationale is that the `comb` layout is usually more optimal, especially for records: records with a `comb` layout are compiled to Michelson combs, which have better support and look more readable. The `comb` layout is also more predictable / less surprising, because the fields are in declared order instead of alphabetical order. The `comb` layout can be less efficient for variants, but the difference should not be significant in most cases. For more info on why this change happened, see [Why did the default datatype layout change to `@layout comb`?](../faq/layout-comb-why.md)
 
-Once reaching the optimization phase of your development process, youu may wish to try annotating large variants (which contain many cases) with `@layout:tree` and comparing the size and gas consumption of the compiled contracts. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/1816.
+If your project has a stable ABI that other tools rely on, you might need to manually annotate the type of entry point arguments and the entry point return types with `@layout("tree")` / `[@layout tree]`.
+
+Once reaching the optimization phase of your development process, youu may wish to try annotating large variants (which contain many cases) with `@layout("tree")` / `[@layout tree]` and comparing the size and gas consumption of the compiled contracts.
+
+MRs:
+* https://gitlab.com/ligolang/ligo/-/merge_requests/1816.
 
 ### A small set of annotations / decorators are now supported
 
@@ -66,7 +71,7 @@ Once reaching the optimization phase of your development process, youu may wish 
 * `@annot`
 * `@layout`
 
-These annotations / decorators can be written without prefixing them with a comment, e.g.
+These annotations / decorators should now be written without prefixing them with a comment, e.g.
 
 ```jsligo
 @entry
