@@ -59,7 +59,7 @@ const config = {
       announcementBar: {
         id: 'support_us',
         content:
-          '<b>Ligo v1 Alpha is now available, test it through docker image <a target="https://hub.docker.com/r/ligolang/ligo/tags" rel="noopener noreferrer" href="#">ligolang/ligo:alpha</a></b>',
+          '<b>Ligo v1 is now available ! Check the migration guide : https://ligolang.org/docs/next/faq/v1-migration-guide ! </b>',
         backgroundColor: '#0e74ff',
         textColor: '#efefef',
         isCloseable: false,
