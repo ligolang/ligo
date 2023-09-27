@@ -441,9 +441,32 @@ let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) =>  (
 
 
 ## Entrypoints and annotations
+It's possible for a contract to have multiple entrypoints, which is implicitly translated in
+LIGO to a `parameter` with a variant type as shown below. The following contract:
 
-It is possible for a contract to have multiple entrypoints, which
-translates in LIGO to a `parameter` with a variant type as shown here:
+<Syntax syntax="cameligo">
+
+```cameligo group=entrypoints_and_annotations
+type storage = int
+
+[@entry] let left (i : int) (x : storage) : operation list * storage = [], x - i
+[@entry] let right (i : int) (x : storage) : operation list * storage = [], x + i
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=entrypoints_and_annotations
+type storage = int
+
+@entry const left  = (i : int, x : storage) : [list<operation>, storage] => [list([]), x - i]
+@entry const right = (i : int, x : storage) : [list<operation>, storage] => [list([]), x + i]
+```
+
+</Syntax>
+
+is tranlated internally to a contract similar to this one:
 
 <Syntax syntax="cameligo">
 
@@ -454,13 +477,13 @@ type parameter =
  | Left of int
  | Right of int
 
-let main ((p, x): (parameter * storage)): (operation list * storage) =
+[@entry]
+let main (p : parameter) (x : storage): (operation list * storage) =
   [],
   (match p with
   | Left i -> x - i
   | Right i -> x + i
   )
-
 ```
 
 </Syntax>
@@ -496,7 +519,8 @@ type parameter = int
 
 type x = Left of int
 
-let main (p, s: parameter * storage): operation list * storage =
+[@entry]
+let main (p : parameter) (s : storage): operation list * storage =
   let contract =
     match Tezos.get_entrypoint_opt "%left" ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) with
     | Some c -> c
@@ -516,7 +540,8 @@ type parameter = int;
 
 type x = | ["Left", int];
 
-let main = (p: parameter, s: storage): [list<operation>, storage] => {
+@entry
+const main = (p: parameter, s: storage): [list<operation>, storage] => {
   let contract =
     match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address)) {
       when(Some(c)): c;
@@ -540,3 +565,5 @@ This currently only works for `or`'s or variant types in LIGO.
 ## Amendment
 With the upcoming 007 amendment to Tezos this will change though, and also
 `pair`'s can be ordered differently.
+
+<!-- updated use of entry -->

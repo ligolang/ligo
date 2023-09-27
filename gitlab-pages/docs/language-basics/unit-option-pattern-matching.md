@@ -43,9 +43,11 @@ let m (x : int) =
 
 <Syntax syntax="jsligo">
 
-In JsLIGO, the unique value of the `unit` type is `[]`.
+In JsLIGO, the unique value of the `unit` type is `[]`. The global variable `unit` contains `[]` so that name can be used for clarity, but the value is the same.
 ```jsligo group=a
-let n : unit = [];
+let u1 : unit = [];
+let u2 : unit = unit;
+let eq = (u1 == u2); // true
 ```
 
 </Syntax>
@@ -54,7 +56,7 @@ let n : unit = [];
 
 ## Discriminated union type
 
-The simplest form of pattern matching in JsLIGO is with help of a discriminated
+The simplest form of pattern matching in JsLIGO is with the help of a discriminated
 union type, which should be familiar for developers coming from TypeScript.
 
 ```jsligo
@@ -103,8 +105,7 @@ function foo (item: foo) {
 Note that all cases of the discriminated union must be handled, if not an error
 will be generated.
 
-The "strict" rules on discriminated union types are because there currently is
-no type system support for this.
+These "strict" rules on discriminated union types help prevent bugs where cases are not handled correctly.
 
 
 </Syntax>
@@ -179,8 +180,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-let u : user = Admin(1000n);
-let g : user = Guest();
+const u : user = Admin(1000n);
+const g : user = Guest();
 ```
 
 In JsLIGO, a constant constructor is equivalent to the same constructor
@@ -270,8 +271,8 @@ module M = struct
   let y = 10
 end
 
-// This will fail because A will not be found
-// let x = A 42
+(* This will fail because A will not be found *)
+(* let x = A 42 *)
 ```
 
 </Syntax>
@@ -300,7 +301,7 @@ let div (a, b : nat * nat) : nat option =
 
 ```jsligo group=d
 function div (a: nat, b: nat): option<nat> {
-  if (b == 0n) return None() else return (Some (a/b))
+  if (b == 0n) return None() else return Some(a/b)
 };
 ```
 
@@ -353,7 +354,7 @@ type color =
 | ["Gray", int]
 | ["Default"];
 
-let int_of_color = (c : color) : int =>
+const int_of_color = (c : color) : int =>
   match(c) {
     when(RGB(rgb)): 16 + rgb[2] + rgb[1] * 6 + rgb[0] * 36;
     when(Gray(i)): 232 + i;
@@ -412,12 +413,12 @@ type my_tuple = [int, nat, string]
 
 let on_record = (v : my_record) : int =>
   match (v) {
-    when ({ a ; b : b_renamed ; c : _ }): a + int(b_renamed)
+    when ({ a ; b : b_renamed ; c : _c }): a + int(b_renamed)
   }
 
 let on_tuple = (v : my_tuple) : int =>
   match (v) {
-    when ([x, y, _]): x + int(y)
+    when ([x, y, _s]): x + int(y)
   }
 ```
 
@@ -484,3 +485,5 @@ const complex = (x: complex_t, y: complex_t) =>
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

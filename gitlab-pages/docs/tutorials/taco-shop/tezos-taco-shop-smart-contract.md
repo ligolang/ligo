@@ -447,7 +447,7 @@ let test =
       let storage = Test.get_storage pedro_taco_shop_ta in
       assert ((eq_in_map { current_stock = 49n ; max_price = 50tez } storage 1n) &&
               (eq_in_map { current_stock = 20n ; max_price = 75tez } storage 2n))
-    | Fail x -> failwith ("ok test case failed")
+    | Fail _ -> failwith ("ok test case failed")
   in
 
   (* Purchasing an unregistred Taco *)
@@ -476,16 +476,16 @@ function assert_string_failure (res: test_exec_result, expected: string) {
           assert(Test.michelson_equal(y[0], expected_bis))
         when (Balance_too_low(_)):
           failwith("contract failed for an unknown reason")
-        when (Other(_)):
+        when (Other(_o)):
           failwith("contract failed for an unknown reason")
       }
-    when (Success(_)):
+    when (Success(_s)):
       failwith("bad price check")
   };
 }
 
 const test = (
-  (_: unit): unit => {
+  (_u: unit): unit => {
       /* Originate the contract with a initial storage */
 
       let init_storage =
@@ -526,7 +526,7 @@ const test = (
         );
       
         match(ok_case) {
-          when (Success(_)):
+          when (Success(_s)):
             do {
               let storage = Test.get_storage(pedro_taco_shop_ta);
               assert(
@@ -542,7 +542,7 @@ const test = (
                    )
               );
             }
-          when (Fail(_)):
+          when (Fail(_e)):
             failwith("ok test case failed")
         };
       /* Purchasing an unregistred Taco */

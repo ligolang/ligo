@@ -47,22 +47,13 @@ function to two entrypoints for `add` (addition) and `sub`
 <Syntax syntax="cameligo">
 
 ```cameligo
-type parameter =
-  Increment of int
-| Decrement of int
-
 type storage = int
+type result = operation list * storage
 
-type return = operation list * storage
+[@entry] let increment (n : int) (store : storage) : result = [], store + n
+[@entry] let decrement (n : int) (store : storage) : result = [], store - n
 
-let add (n : int) (store : storage) : storage = store + n
-let sub (n : int) (store : storage) : storage = store - n
-
-let main (action : parameter) (store : storage) : return =
-  [],
-  (match action with
-     Increment n -> add n store
-   | Decrement n -> sub n store)
+[@view] let v1 (n : int) (store : storage) : int = store + n
 ```
 
 </Syntax>
@@ -71,24 +62,20 @@ let main (action : parameter) (store : storage) : return =
 <Syntax syntax="jsligo">
 
 ```jsligo
-type parameter =
-| ["Increment", int]
-| ["Decrement", int]
-;
 
 type storage = int;
+type result = [list<operation>, storage];
 
-type return_ = [list<operation>, storage];
+@entry
+const increment = (n: int, store: storage): result =>
+  [list([]), store + n];
 
-const add = (n: int, store: storage): storage => store + n;
-const sub = (n: int, store: storage): storage => store - n;
+@entry
+const decrement = (n: int, store: storage): result =>
+  [list([]), store - n];
 
-const main = (action: parameter, store: storage): return_ =>
-  [list([]),
-    match (action) {
-     when(Increment(n)): add (n, store);
-     when(Decrement(n)): sub (n, store)
-    }];
+[@view]
+const v1 = (n : int, store : storage) : int => store + n
 ```
 
 </Syntax>
@@ -98,10 +85,10 @@ with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.
 
 ```shell
-ligo run dry-run src/counter.mligo "Increment(5)" 5 --entry-point main
-// tuple[   list[]
-//          10
-// ]
+ligo run dry-run ./gitlab-pages/docs/advanced/src/counter.mligo "Increment(5)" 5
+# tuple[   list[]
+#          10
+# ]
 ```
 
 Our contract's storage has been successfully incremented to `10`.
@@ -113,7 +100,7 @@ have to compile it first, this can be done with the help of the
 `compile-contract` CLI command:
 
 ```shell
-ligo compile contract src/counter.mligo --entry-point main
+ligo compile contract ./gitlab-pages/docs/advanced/src/counter.mligo
 ```
 
 Command above will output the following Michelson code:
@@ -121,31 +108,8 @@ Command above will output the following Michelson code:
 ```michelson
 { parameter (or (int %decrement) (int %increment)) ;
   storage int ;
-  code { DUP ;
-         CDR ;
-         DIP { DUP } ;
-         SWAP ;
-         CAR ;
-         IF_LEFT
-           { DUP ;
-             DIP { DIP { DUP } ; SWAP } ;
-             PAIR ;
-             DUP ;
-             CDR ;
-             DIP { DUP ; CAR } ;
-             SUB ;
-             DIP { DROP 2 } }
-           { DUP ;
-             DIP { DIP { DUP } ; SWAP } ;
-             PAIR ;
-             DUP ;
-             CDR ;
-             DIP { DUP ; CAR } ;
-             ADD ;
-             DIP { DROP 2 } } ;
-         NIL operation ;
-         PAIR ;
-         DIP { DROP 2 } } }
+  code { UNPAIR ; IF_LEFT { SWAP ; SUB } { ADD } ; NIL operation ; PAIR } ;
+  view "v1" int int { UNPAIR ; ADD } }
 ```
 
 However in order to originate a Michelson contract on Tezos, we also
@@ -154,8 +118,8 @@ need to provide the initial storage value, we can use
 Michelson.
 
 ```shell
-ligo compile storage src/counter.mligo 5 --entry-point main
-// Outputs: 5
+ligo compile storage ./gitlab-pages/docs/advanced/src/counter.mligo 5
+# Outputs: 5
 ```
 
 In our case the LIGO storage value maps 1:1 to its Michelson
@@ -169,9 +133,11 @@ values to Michelson. We will need to use `compile-parameter` to
 compile our `action` variant into Michelson, here's how:
 
 ```shell
-ligo compile parameter src/counter.mligo 'Increment(5)' --entry-point main
-// Outputs: (Right 5)
+ligo compile parameter ./gitlab-pages/docs/advanced/src/counter.mligo 'Increment(5)'
+# Outputs: (Right 5)
 ```
 
 Now we can use `(Right 5)` which is a Michelson value, to invoke our
 contract - e.g., via `tezos-client`
+
+<!-- updated use of entry -->

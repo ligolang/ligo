@@ -40,3 +40,5 @@ In the meantime, if you are willing to risk seeing a Michelson typechecking erro
 ```
 
 If you apply this to types which aren't comparable in Michelson, you will get a Michelson typechecking error.
+
+<!-- updated use of entry -->

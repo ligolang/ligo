@@ -14,12 +14,9 @@ values of type `tez` are units of measure of Tezos tokens.
     languages, for example, `10`, `-6` and `0`, but there is only one
     canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
 
-<Syntax syntax="cameligo">
-
   * Natural numbers are written as digits followed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
-
   * Tezos tokens can be specified using literals of three kinds:
       * units of millionth of `tez`, using the suffix `mutez` after a
         natural literal, like `10000mutez` or `0mutez`;
@@ -29,25 +26,6 @@ values of type `tez` are units of measure of Tezos tokens.
 
 Note that large integral values can be expressed using underscores to
 separate groups of digits, like `1_000mutez` or `0.000_004tez`.
-
-</Syntax>
-<Syntax syntax="jsligo">
-
-  * Natural numbers are written as digits followed by the suffix `n`,
-    like so: `12n`, `0n`, and the same restriction on zero as integers
-    applies: `0n` is the only way to specify the natural zero.
-
-  * Tezos tokens can be specified using literals of three kinds:
-      * units of millionth of `tez`, using the suffix `mutez` after a
-        natural literal, like `10000mutez` or `0mutez`;
-      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
-        `3tez`;
-      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
-
-Note that large integral values can be expressed using underscores to
-separate groups of digits, like `1_000mutez` or `0.000_004tez`.
-
-</Syntax>
 
 ## Addition
 
@@ -98,24 +76,24 @@ let g : int = 1_000_000
 
 ```jsligo group=a
 // int + int yields int
-let a = 5 + 10;
+const a = 5 + 10;
 
 // nat + int yields int
-let b = 5n + 10;
+const b = 5n + 10;
 
 // tez + tez yields tez
-let c: tez = 5mutez + 1tez;
+const c: tez = 5mutez + 1tez;
 
 // tez + int or tez + nat is invalid:
-// let d : tez = 5mutez + 10n;
+// const d : tez = 5mutez + 10n;
 
 // two nats yield a nat
-let e: nat = 5n + 10n;
+const e: nat = 5n + 10n;
 
 // nat + int yields an int: invalid
-// let f : nat = 5n + 10;
+// const f : nat = 5n + 10;
 
-let g = 1_000_000;
+const g = 1_000_000;
 ```
 
 > Tip: you can use underscores for readability when defining large
@@ -149,13 +127,13 @@ let b : int = 5n - 2n
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let a = 5 - 10;
+const a = 5 - 10;
 
 // Subtraction of two nats yields an int
-let b: int = 5n - 2n;
+const b: int = 5n - 2n;
 
 // Therefore the following is invalid
-// let c : nat = 5n - 2n;
+// const c : nat = 5n - 2n;
 ```
 
 </Syntax>
@@ -169,7 +147,6 @@ yeilds an optional value (due to the Michelson instruction
 ```cameligo group=b
 let d : tez option = 5mutez - 1mutez (* Some (4mutez) *)
 let e : tez option = 1mutez - 5mutez (* None *)
-
 ```
 
 </Syntax>
@@ -177,9 +154,8 @@ let e : tez option = 1mutez - 5mutez (* None *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let d : option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
-let e : option<tez> = 1mutez - 5mutez; /* None */
-
+const d : option<tez> = 5mutez - 1mutez; /* Some (4mutez) */
+const e : option<tez> = 1mutez - 5mutez; /* None */
 ```
 
 </Syntax>
@@ -203,11 +179,11 @@ let c : tez = 5n * 5mutez
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let a = 5 * 5;
-let b: nat = 5n * 5n;
+const a = 5 * 5;
+const b: nat = 5n * 5n;
 
 // You can also multiply `nat` and `tez`
-let c: tez = 5n * 5mutez;
+const c: tez = 5n * 5mutez;
 ```
 
 </Syntax>
@@ -232,9 +208,9 @@ let c : nat = 10mutez / 3mutez
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let a: int = 10 / 3;
-let b: nat = 10n / 3n;
-let c: nat = 10mutez / 3mutez;
+const a: int = 10 / 3;
+const b: nat = 10n / 3n;
+const c: nat = 10mutez / 3mutez;
 ```
 
 </Syntax>
@@ -266,14 +242,14 @@ let rem4 : nat = a mod d  // 3
 > not with negative numbers.
 
 ```jsligo group=e
-let a = 120;
-let b = 9;
-let rem1 = a % b;  // 3
-let c = 120n;
-let rem2 = c % b;  // 3
-let d = 9n;
-let rem3 = c % d;  // 3
-let rem4 = a % d;  // 3
+const a = 120;
+const b = 9;
+const rem1 = a % b;  // 3
+const c = 120n;
+const rem2 = c % b;  // 3
+const d = 9n;
+const rem3 = c % d;  // 3
+const rem4 = a % d;  // 3
 ```
 
 </Syntax>
@@ -301,14 +277,14 @@ let ediv4 : (int * nat) option = ediv a d  // Some (7, 2)
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let a = 37;
-let b = 5;
-let ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
-let c = 37n;
-let ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
-let d = 5n;
-let ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
-let ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
+const a = 37;
+const b = 5;
+const ediv1 : option<[int , nat]> = ediv(a, b);  // Some (7, 2)
+const c = 37n;
+const ediv2: option<[int , nat]> = ediv(c, b);  // Some (7, 2)
+const d = 5n;
+const ediv3: option<[nat , nat]> = ediv(c, d);  // Some (7, 2)
+const ediv4: option<[int , nat]> = ediv(a, d);  // Some (7, 2)
 ```
 
 </Syntax>
@@ -330,8 +306,8 @@ let b : nat = abs (1)
 <Syntax syntax="jsligo">
 
 ```jsligo group=g
-let a = int(1n);
-let b = abs(1);
+const a = int(1n);
+const b = abs(1);
 ```
 
 </Syntax>
@@ -355,7 +331,7 @@ let is_a_nat : nat option = is_nat (1)
 <Syntax syntax="jsligo">
 
 ```jsligo group=h
-let is_a_nat = is_nat(1);
+const is_a_nat = is_nat(1);
 ```
 
 </Syntax>
@@ -404,6 +380,7 @@ const testInc = (() => {
 
   // Prefix increment operator
   assert(++inc == 1);
+  assert(inc   == 1);
 
   // Postfix increment operator
   assert(inc++ == 1);
@@ -426,16 +403,19 @@ returns the old value before the decrement.
 ```jsligo test-ligo group=decrement_ops
 
 const testDec = (() => {
-  let dec = 10;
+  let v = 10;
 
   // Prefix decrement operator
-  assert(--dec == 9);
+  assert(--v == 9);
+  assert(v   == 9);
 
   // Postfix decrement operator
-  assert(dec-- == 9);
-  assert(dec   == 8);
+  assert(v-- == 9);
+  assert(v   == 8);
 })();
 
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

@@ -1,18 +1,7 @@
-type parameter =
-  Increment of int
-| Decrement of int
-
 type storage = int
+type result = operation list * storage
 
-type return = operation list * storage
+[@entry] let increment (n : int) (store : storage) : result = [], store + n
+[@entry] let decrement (n : int) (store : storage) : result = [], store - n
 
-let add (n, store : int * storage) : storage = store + n
-let sub (n, store : int * storage) : storage = store - n
-
-let main (action, store : parameter * storage) : return =
-  [],
-  (match action with
-     Increment n -> add (n, store)
-   | Decrement n -> sub (n, store))
-
-[@view] let v1 (n, store : int * storage) : int = store + n
+[@view] let v1 (n : int) (store : storage) : int = store + n

@@ -38,7 +38,7 @@ let dog_breed : breed = "Saluki"
 
 ```jsligo group=a
 type breed = string;
-let dog_breed: breed = "Saluki";
+const dog_breed: breed = "Saluki";
 ```
 
 </Syntax>
@@ -70,9 +70,11 @@ let ledger : account_balances =
 
 type account_balances = map<address, tez>;
 
-let ledger: account_balances =
+const ledger: account_balances =
   Map.literal
     (list([["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, 10mutez]]));
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

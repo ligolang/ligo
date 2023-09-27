@@ -20,6 +20,7 @@ next to their Ligo modules.
 ```bash
 $ ls
 ```
+
 <br/>
 
 <table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
@@ -75,7 +76,7 @@ $ ligo install @ligo/bigarray
 ```
 <br/>
 
-Now we will write a smart contract names `main` which will use the
+Now we will write a smart contract named `main` which will use the
 `@ligo/bigarray` library
 
 <Syntax syntax="cameligo">
@@ -83,18 +84,11 @@ Now we will write a smart contract names `main` which will use the
 ```cameligo skip
 #import "@ligo/bigarray/lib/bigarray.mligo" "BA"
 
-type parameter =
-  Concat  of int list
-| Reverse
-
 type storage = int list
+type result = operation list * storage
 
-let main (action, store : parameter * storage) : operation list * storage =
-  (([]: operation list),
-   (match action with
-      Concat ys -> BA.concat store ys
-    | Reverse   -> BA.reverse store))
-
+let concat (ys : int list) (store : storage) : result = BA.concat store ys
+let reverse (_ : unit) (store: storage) : result = BA.reverse store
 ```
 
 </Syntax>
@@ -104,21 +98,11 @@ let main (action, store : parameter * storage) : operation list * storage =
 ```jsligo skip
 #import "@ligo/bigarray/lib/bigarray.mligo" "BA"
 
-type parameter =
-  ["Concat", list<int>]
-| ["Reverse"];
+type storage = int list;
+type result = operation list * storage;
 
-type storage = list<int>;
-
-const main = (action: parameter, store: storage): [list<operation>, storage] => {
-  return [
-   list([]),
-   (match(action, {
-      Concat: (ys) => BA.concat(store)(ys)
-    , Reverse: () => BA.reverse(store)
-    }))
-  ]
-}
+const concat = (ys : int list, store : storage) : result => BA.concat(store, ys)
+const reverse = (_ : unit, store: storage) : result => BA.reverse(store)
 ```
 
 </Syntax>
@@ -137,6 +121,8 @@ const main = (action: parameter, store: storage): [list<operation>, storage] => 
 
 and we write some tests for our smart contract in `main.test.mligo`
 
+<!-- TODO: do these tests still work after the deprecation of main? -->
+
 <Syntax syntax="cameligo">
 
 ```cameligo skip
@@ -149,7 +135,6 @@ let test =
     let contr : parameter contract = Test.to_contract taddr in
     let _ = Test.transfer_to_contract_exn contr Reverse 1mutez in
     assert (Test.get_storage taddr = [3; 2; 1])
-
 ```
 
 </Syntax>
@@ -172,7 +157,6 @@ const test = (() => {
 ```
 
 </Syntax>
-<br/>
 
 To compile the contract to Michelson run the command
 
@@ -191,7 +175,6 @@ $ ligo compile contract main.jsligo
 ```
 
 </Syntax>
-<br/>
 
 This will find the dependencies installed on the local machine, and compile the `main.mligo` file.
 
@@ -212,7 +195,6 @@ $ ligo run test main.test.jsligo
 ```
 
 </Syntax>
-<br/>
 
 If you working with an existing LIGO project, to install the dependencies, at the root of the project just run
 
@@ -226,16 +208,16 @@ During the lifecycle of a project, if you wish to upgrade the version of a LIGO 
 Just update the package version to the desired one in the `ligo.json`. e.g.
 
 ```diff
-{
-  ...
-  "dependencies": {
-    "ligo-foo": "1.0.6",
--   "@ligo/bigarray": "1.0.0",
-+   "@ligo/bigarray": "1.0.1",
-    "ligo-test_2": "1.0.0",
-    "ligo_test_1": "1.0.0"
-  }
-}
+ {
+   ...
+   "dependencies": {
+     "ligo-foo": "1.0.6",
+-    "@ligo/bigarray": "1.0.0",
++    "@ligo/bigarray": "1.0.1",
+     "ligo-test_2": "1.0.0",
+     "ligo_test_1": "1.0.0"
+   }
+ }
 ```
 <br/>
 
@@ -384,12 +366,12 @@ let reverse (type a) (xs : a list) : a list =
 ```jsligo group=pkg
 /* LIGO library for working with lists */
 
-const concat = <T>(xs : list<T>, ys : list<T>) : list<T> => {
+export const concat = <T>(xs : list<T>, ys : list<T>) : list<T> => {
     let f = ([x, ys] : [T, list<T>]) : list<T> => list([x, ...ys]);
     return List.fold_right(f, xs, ys)
 }
 
-const reverse = <T>(xs : list<T>) : list<T> => {
+export const reverse = <T>(xs : list<T>) : list<T> => {
     let f = ([ys, x] : [list<T>, T]) : list<T> => list([x, ...ys]);
     return List.fold_left(f, (list([]) as list<T>), xs)
 }
@@ -609,35 +591,19 @@ If `--package-version` is skipped, the entire package is unpublished.
 
 Yes, any syntax can be used in packages. Furthermore, one can consume a package written in one syntax from another.
 
-### 2. What happens if there is a main function in a LIGO package?
+### 2. What happens if there are entry points declared in a LIGO package?
 
-Depends on how it is called.
-
-If it is not used, it won't appear in the final Michelson - only the used parts from the library will be compiled.
-
-As an example, consider,
+If you need to use the entry points defined within a package, the best approach is likely to alias them:
 
 ```cameligo skip
 #import "package_name/increment.mligo" "Increment"
 
-let main =
-  ...
-  Increment.add ...
-  ...
+[@entry] let add = Increment.add
 ```
 <br/>
 
-In this case, only `add` function from the package will be used by the compiler.
+In this case, only `add` entry point from the package will be used by the compiler. By adding an alias for `Increment.sub`, it is possible to also include that entry point in the final contract.
 
-Also,
+<!-- TODO: please review this section, I'm not 100% sure the entry points won't be automatically exported to the outer module -- Suzanne Soy 2023-09-18 -->
 
-```cameligo skip
-#import "package_name/increment.mligo"
-
-let test =
-  Test.originate ... Increment.main ...
-```
-<br/>
-
-In this case, the main function will be used in tests.
-
+<!-- updated use of entry -->

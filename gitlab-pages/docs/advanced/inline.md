@@ -22,9 +22,11 @@ To force inlining you can use the inline attribute.
 <Syntax syntax="cameligo">
 
 ```cameligo
+
 [@inline]
 let fst (p : nat * nat) = p.0
 
+[@entry]
 let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
     ([], (fst (p.0, p.1), fst (s.1, s.0)))
 ```
@@ -34,7 +36,7 @@ let main (p : nat * nat) (s : nat * nat) : operation list * (nat * nat) =
 <Syntax syntax="jsligo">
 
 ```jsligo
-@inline
+// @inline
 const fst = (p: [nat, nat]) => p[0];
 
 const main = (p: [nat, nat], s: [nat, nat]) : [list<operation>, [nat, nat]] =>
@@ -60,3 +62,5 @@ following results:
 Note that these results can change due to ongoing work to optimise output of
 the LIGO compiler.
 :::
+
+<!-- updated use of entry -->

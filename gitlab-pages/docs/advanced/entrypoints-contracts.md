@@ -23,22 +23,22 @@ More examples on how to perform this call are given below.
 <Syntax syntax="jsligo">
 
 ```jsligo group=incdec
-namespace IncDec {
+export namespace IncDec {
   type storage = int;
-  type ret = [list<operation>, storage];
+  type result = [list<operation>, storage];
 
   // Three entrypoints
 
   @entry
-  const increment = (delta : int, store : storage) : ret =>
+  const increment = (delta : int, store : storage) : result =>
     [list([]), store + delta];
 
   @entry
-  const decrement = (delta : int, store : storage) : ret =>
+  const decrement = (delta : int, store : storage) : result =>
     [list([]), store - delta];
 
   @entry
-  const reset = (_p : unit, _s : storage) : ret =>
+  const reset = (_p : unit, _s : storage) : result =>
     [list([]), 0];
 };
 ```
@@ -50,14 +50,14 @@ namespace IncDec {
 ```cameligo group=incdec
 module IncDec = struct
   type storage = int
-  type return = operation list * storage
+  type result = operation list * storage
 
   (* Three entrypoints *)
-  [@entry] let increment (delta : int) (store : storage) : return =
+  [@entry] let increment (delta : int) (store : storage) : result =
     [], store + delta
-  [@entry] let decrement (delta : int) (store : storage) : return =
+  [@entry] let decrement (delta : int) (store : storage) : result =
     [], store - delta
-  [@entry] let reset (() : unit) (_ : storage) : return =
+  [@entry] let reset (() : unit) (_ : storage) : result =
     [], 0
 end
 ```
@@ -79,7 +79,7 @@ with any name for the storage.)
 
 ```cameligo skip
 type storage = ...  // Any name, any type
-type return = operation list * storage
+type result = operation list * storage
 ```
 
 </Syntax>
@@ -88,7 +88,7 @@ type return = operation list * storage
 
 ```jsligo skip
 type storage = ...;  // Any name, any type
-type return_ = [list<operation>, storage];
+type result = [list<operation>, storage];
 ```
 
 </Syntax>
@@ -102,12 +102,12 @@ contract's parameter.
 
 ### Using the dry-run command
 
-In order to call the `increment` entry point of the smart contract, we can pass the `-m IncDec` option to specify the module and the `-e increment` option to specify the entry point.
+In order to call the `increment` entry point of the smart contract, we can pass the `-m IncDec` option to specify the module and the `Increment(...)` constructor to specify the entry point (note the capitalization of `Increment`).
 
 <Syntax syntax="cameligo">
 
 ```shell
-ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo '5' '0'
+ligo run dry-run -m IncDec gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo 'Increment(5)' '0'
 ```
 
 </Syntax>
@@ -115,7 +115,7 @@ ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoin
 <Syntax syntax="jsligo">
 
 ```shell
-ligo run dry-run -m IncDec -e increment gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo '5' '0'
+ligo run dry-run -m IncDec gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo 'Increment(5)' '0'
 ```
 
 </Syntax>
@@ -165,7 +165,7 @@ and call one of its entry points by passing e.g. the parameter `Increment(5)`.
 
 <Syntax syntax="cameligo">
 
-```jsligo skip
+```mligo
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo" "C"
 
 let test =
@@ -179,15 +179,15 @@ let test =
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
 
-const test = (() => {
-  let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);
+const test = do {
+  let [ta, _x, _y] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);
   let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
   Test.transfer_to_contract_exn(c, Increment(42), 0tez);
   assert(42 == Test.get_storage(ta));
-})();
+};
 ```
 
 </Syntax>
@@ -221,6 +221,8 @@ the `@entry` facility.
 
 **This feature is now deprecated, future versions of LIGO will not allow the declaration of a single `main` function. A workaround is given at the end of this section.**
 
+_While it is still possible to define a single function called `main` and mark it as the sole entry point using `@entry`, this is not what most programs should do. The following paragraphs are intended for programs which need more fine control over the behaviour of the entire program than what is possible using the automatic `@entry` mechanism._
+
 As an analogy, in the C programming language, the `main` function is
 the unique main function and any function called from it would be an
 entrypoint.
@@ -247,15 +249,16 @@ type storage = {
   name    : string
 }
 
-type return = operation list * storage
+type result = operation list * storage
 
-let entry_A (n : nat) (store : storage) : return =
+let entry_A (n : nat) (store : storage) : result =
   [], {store with counter = n}
 
-let entry_B (s : string) (store : storage) : return =
+let entry_B (s : string) (store : storage) : result =
   [], {store with name = s}
 
-let main (action : parameter) (store: storage) : return =
+[@entry]
+let main (action : parameter) (store: storage) : result =
   match action with
     Action_A n -> entry_A n store
   | Action_B s -> entry_B s store
@@ -275,15 +278,16 @@ export type storage = {
   name    : string
 };
 
-type return_ = [list<operation>, storage];
+type result = [list<operation>, storage];
 
-const entry_A = (n: nat, store: storage): return_ =>
+const entry_A = (n: nat, store: storage): result =>
   [list([]), {...store, counter: n}];
 
-const entry_B = (s: string, store: storage): return_ =>
+const entry_B = (s: string, store: storage): result =>
   [list([]), {...store, name: s}];
 
-const main = (action: parameter, store: storage): return_ =>
+@entry
+const main = (action: parameter, store: storage): result =>
   match(action) {
     when(Action_A(n)): entry_A(n, store);
     when(Action_B(s)): entry_B(s, store)
@@ -363,9 +367,10 @@ incoming tokens are accepted.
 ```cameligo group=c
 type parameter = unit
 type storage = unit
-type return = operation list * storage
+type result = operation list * storage
 
-let deny (action : parameter) (store : storage) : return =
+[@entry]
+let no_tokens (action : parameter) (store : storage) : result =
   if Tezos.get_amount () > 0tez then
     failwith "This contract does not accept tokens."
   else ([], store)
@@ -378,9 +383,10 @@ let deny (action : parameter) (store : storage) : return =
 ```jsligo group=c
 type parameter = unit;
 type storage = unit;
-type return_ = [list<operation>, storage];
+type result = [list<operation>, storage];
 
-const deny = (action: parameter, store: storage): return_ => {
+@entry
+const no_tokens = (action: parameter, store: storage): result => {
   if (Tezos.get_amount() > 0tez) {
     return failwith("This contract does not accept tokens.");
   } else {
@@ -401,7 +407,8 @@ entrypoint.
 ```cameligo group=c
 let owner = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
-let main (action : parameter) (store: storage) : return =
+[@entry]
+let owner_only (action : parameter) (store: storage) : result =
   if Tezos.get_sender () <> owner then failwith "Access denied."
   else ([], store)
 ```
@@ -413,7 +420,7 @@ let main (action : parameter) (store: storage) : return =
 ```jsligo group=c
 const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-const main = (action: parameter, store: storage): return_ => {
+const owner_only = (action: parameter, store: storage): result => {
   if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
   else { return [list([]), store]; };
 };
@@ -458,18 +465,21 @@ contract.
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-// counter.mligo
+(* gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo *)
 
-type parameter =
-  Increment of int
-| Decrement of int
-| Reset
+module IncDec = struct
+  type storage = int
+  type return = operation list * storage
 
-// ...
+  [@entry] let increment (delta : int) (store : storage) : return =
+    [], store + delta
+  
+  (* And so on, as above *)
+end
 ```
 
 ```cameligo group=d
-// proxy.mligo
+(* proxy.mligo *)
 
 type parameter =
   Increment of int
@@ -478,20 +488,14 @@ type parameter =
 
 type storage = unit
 
-type return = operation list * storage
+type result = operation list * storage
 
 let dest = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" : address)
 
-let proxy (action, store : parameter * storage) : return =
-  let counter : parameter contract =
-    match Tezos.get_contract_opt (dest) with
-      Some contract -> contract
-    | None -> failwith "Contract not found."
-  in
-  (* Reuse the parameter in the subsequent
-     transaction or use another one, `mock_param`. *)
-  let mock_param = Increment 5 in
-  let op = Tezos.transaction action 0tez counter
+[@entry]
+let proxy (action : parameter) (store : storage) : result =
+  let counter : parameter contract = Tezos.get_contract_with_error dest "not found" in
+  let op = Tezos.transaction (Increment 5) 0tez counter
   in [op], store
 ```
 
@@ -500,17 +504,21 @@ let proxy (action, store : parameter * storage) : return =
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-// counter.jsligo
+// gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo
 
-type parameter =
-| ["Increment", int]
-| ["Decrement", int]
-| ["Reset"];
+export namespace IncDec {
+  type storage = int;
+  type ret = [list<operation>, storage];
 
-// ...
+  @entry
+  const increment = (delta : int, store : storage) : ret =>
+    [list([]), store + delta];
+
+  // And so on, as above
+};
 ```
 
-```jsligo group=e
+```jsligo group=d
 // proxy.jsligo
 
 type parameter =
@@ -520,22 +528,17 @@ type parameter =
 
 type storage = unit;
 
-type return_ = [list<operation>, storage];
+type result = [list<operation>, storage];
 
 const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
 
-const proxy = (action: parameter, store: storage): return_ => {
-  let counter =
-    match (Tezos.get_contract_opt(dest)) {
-      when(Some(contract)): contract;
-      when(None()): failwith("Contract not found.")
-    };
-  /* Reuse the parameter in the subsequent
-     transaction or use another one, `mock_param`. */
-  let mock_param = Increment(5);
-  let op = Tezos.transaction(action, 0tez, counter);
+const proxy = (action: parameter, store: storage): result => {
+  let counter : contract<parameter> = Tezos.get_contract_with_error(dest, "not found");
+  let op = Tezos.transaction(Increment(5), 0tez, counter);
   return [list([op]), store];
 };
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

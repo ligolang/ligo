@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
+#import "incdec.jsligo" "C"
 
 const test = (() => {
   let [ta, _, _] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);

@@ -243,25 +243,20 @@ It turns out we can do better. Tezos has a lazy container – big map. The conte
 
 Here is how it looks like:
 ```cameligo
-type parameter = LargeEntrypoint of int (* | ... *)
-
 type storage = { large_entrypoint : (bool, int -> int) big_map; result : int }
 
-let load_large_ep (storage : storage) : (int -> int) =
+let load_large_ep (store : storage) : (int -> int) =
   let maybe_large_entrypoint =
-    Big_map.find_opt true (storage.large_entrypoint) in
+    Big_map.find_opt true (store.large_entrypoint) in
   match maybe_large_entrypoint with
     Some ep -> ep
   | None -> failwith "Internal error"
 
-let main (parameter, storage : parameter * storage) : operation list * storage =
-  match parameter with
-    LargeEntrypoint n ->
-      [], {storage with result = (load_large_ep storage) n}
-  (* Other entrypoints
-  | ... -> ...
-  | ... -> ...
-  *)
+[@entry]
+let large_entry_point (n : int) (store :  storage) : operation list * storage =
+  [], {store with result = (load_large_ep store) n}
+
+(* Other entrypoints ... *)
 ```
 
 </Syntax>

@@ -97,3 +97,5 @@ In the end, maybe you will want to :
 - [Interact with other contracts](https://ligolang.org/docs/tutorials/inter-contract-calls/)
 
 Consult [Advanced topics section](https://ligolang.org/docs/advanced/polymorphism).
+
+<!-- updated use of entry -->

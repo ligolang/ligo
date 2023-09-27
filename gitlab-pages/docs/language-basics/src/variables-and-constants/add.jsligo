@@ -1,4 +1,4 @@
-let add = (a: int, b: int): int => {
+const add = (a: int, b: int): int => {
   let c = a;
   c = c + b;
   return c

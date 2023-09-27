@@ -130,3 +130,5 @@ Or run one of the older versions found on [DockerHub](https://hub.docker.com/r/l
 
 </TabItem>
 </Tabs>
+
+<!-- updated use of entry -->

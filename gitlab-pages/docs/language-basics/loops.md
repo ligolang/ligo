@@ -84,11 +84,11 @@ Here is how to check if a string is a palindrome or not using a `for` loop:
 const getChar = (s: string, idx: nat): string => String.sub(idx, 1n, s);
 
 function isPalindrome (s: string): bool {
-  let p = ""
-  let length = String.length(s)
+  let p = "";
+  let length = String.length(s);
   for (let i = length - 1 ; i >= 0 ; i--)
-    p += getChar(s, abs(i))
-  return p == s
+    p += getChar(s, abs(i));
+  return p == s;
 };
 ```
 
@@ -108,7 +108,7 @@ function gcd (a: nat, b: nat) {
     x = y;
     y = r;
   }
-  return x
+  return x;
 };
 ```
 
@@ -128,16 +128,18 @@ function gcd2 (x: nat,y: nat) : nat {
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/gcd.jsligo '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)' --entry-point gcd
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/loops/gcd.jsligo \
+  'gcd(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
 
 and can call the function `gcd2` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/gcd.jsligo '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)' --entry-point gcd2
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/loops/gcd.jsligo \
+  'gcd2(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
 
@@ -158,18 +160,18 @@ Here is an example where the integers in a list are summed up.
 
 ```jsligo group=d
 function sum_list (l : list<int>) {
-  let total = 0
-  for (const i of l) total = total + i
-  return total
+  let total = 0;
+  for (const i of l) total = total + i;
+  return total;
 };
 ```
 
 You can call the function `sum_list` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_list
-'list [1;2;3]'
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
+  'sum_list(list([1,2,3]))'
 # Outputs: 6
 ```
 
@@ -177,18 +179,18 @@ Here is an example where the integers in a set are summed up.
 
 ```jsligo group=d
 function sum_set (s : set<int>) {
-  let total : int = 0
-  for (const i of s) total = total + i
-  return total
+  let total : int = 0;
+  for (const i of s) total = total + i;
+  return total;
 };
 ```
 
 You can call the function `sum_set` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_set
-'set [1;2;3]'
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
+  'sum_set(Set.literal(list([1;2;2;3])))'
 # Outputs: 6
 ```
 
@@ -213,10 +215,12 @@ function sum_map (m: map<string, int>) {
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/collection.jsligo --entry-point sum_map
-'map ["1"->1; "2"->2; "3"->3]'
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
+ 'sum_map(Map.literal(list([ ["1", 1], ["2", 2], ["3", 3] ])))'
 # Outputs: ( "123", 6 )
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

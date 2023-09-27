@@ -1,22 +1,13 @@
-// This is testme.mligo
+(* This is testme.mligo *)
+
 type storage = int
+type result = operation list * storage
 
-type parameter =
-  Increment of int
-| Decrement of int
-| Reset
+[@entry]
+let increment (delta : int) (store : storage) : result = [], store + delta
 
-type return = operation list * storage
+[@entry]
+let decrement (delta : int) (store : storage) : result = [], store - delta
 
-// Two entrypoints
-let add (store, delta : storage * int) : storage = store + delta
-let sub (store, delta : storage * int) : storage = store - delta
-
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
-let main (action, store : parameter * storage) : return =
- ([] : operation list),    // No operations
- (match action with
-   Increment (n) -> add (store, n)
- | Decrement (n) -> sub (store, n)
- | Reset         -> 0)
+[@entry]
+let reset (_ : unit) (_ : storage) : result = [], 0

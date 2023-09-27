@@ -17,23 +17,26 @@ terminates the contract.
 
 ```cameligo group=failwith
 type storage = unit
+type result = operation list * storage
 
-let main (p, store : unit * storage) : operation list * storage =
-  (failwith "This contract always fails." : operation list * storage)
+[@entry]
+let main (_param : unit) (_store : storage) : result =
+  failwith "This contract always fails."
 ```
 
-The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
+The call to failwith sometimes needs to be annotated with a type when the type-checker cannot infer the correct type, e.g. `(failwith "message" : result)`.
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main = (p: unit, s: unit) : [list<operation>, unit] =>
+@entry
+const main = (p: unit, s: unit) : [list<operation>, unit] =>
   failwith("This contract always fails");
 ```
 
-The call to failwith should be annotated with a type as the type-checker cannot infer the correct type yet.
+The call to failwith sometimes needs to be annotated with a type when the type-checker cannot infer the correct type, e.g. `return (failwith("message") : result);`.
 
 </Syntax>
 
@@ -49,13 +52,16 @@ stop executing and display an error.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=failwith
-let main (p, s : bool * unit) : operation list * unit =
+```cameligo group=failwith_alt
+[@entry]
+let main (p : bool) (s : unit) : operation list * unit =
   let u : unit = assert p
   in [], s
 
-let some (o : unit option) =
-  assert_some o
+[@entry]
+let some (o : unit option) (s : unit) : operation list * unit =
+  let u : unit = assert_some o
+  in [], s
 ```
 
 </Syntax>
@@ -63,13 +69,16 @@ let some (o : unit option) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith_alt
-let main = (p: bool, s: unit) : [list<operation>, unit] => {
+@entry
+const main = (p: bool, s: unit) : [list<operation>, unit] => {
   let u: unit = assert(p);
   return [list([]), s];
 };
 
-let some = (o: option<unit>) => {
-  assert_some(o)
+@entry
+const some = (o: option<unit>, s : unit) : [list<operation>, unit] => {
+  assert_some(o);
+  return [list([]), s]
 };
 ```
 
@@ -79,8 +88,9 @@ You can use `assert_with_error` or `assert_some_with_error` to use a custom erro
 
 <Syntax syntax="cameligo">
 
-```cameligo group=failwith
-let main (p, s : bool * unit) : operation list * unit =
+```cameligo group=failwith_assert_with_error
+[@entry]
+let main (p : bool) (s : unit) : operation list * unit =
   let () = assert_with_error p "My custom error message."
   in [], s
 ```
@@ -89,11 +99,14 @@ let main (p, s : bool * unit) : operation list * unit =
 
 <Syntax syntax="jsligo">
 
-```jsligo group=failwith
-let main2 = (p: bool, s: unit) : [list<operation>, unit] => {
+```jsligo group=failwith_assert_with_error
+@entry
+let main = (p: bool, s: unit) : [list<operation>, unit] => {
   assert_with_error (p, "My custom error message.");
   return [list([]), s];
 };
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

@@ -31,16 +31,15 @@ contract:
 <Syntax syntax="cameligo">
 
 ```cameligo
-// This is mockup_testme.mligo
+(* This is mockup_testme.mligo *)
 type storage = string
 
-type parameter = Append of string
+type result = operation list * storage
 
-type return = operation list * storage
-
-let main (action, store : parameter * storage) : return =
- ([] : operation list),    // No operations
- (match action with Append s -> store ^ s)
+[@entry]
+let append (s : string) (store : storage) : result =
+ [],    (* No operations *)
+ store ^ s
 ```
 
 </Syntax>
@@ -51,17 +50,11 @@ let main (action, store : parameter * storage) : return =
 // This is mockup_testme.jsligo
 type storage = string;
 
-type parameter =
-| ["Append", string];
+type result = [list<operation>, storage];
 
-type return_ = [list<operation>, storage];
-
-const main = ([action, store]: [parameter, storage]): return_ => {
- return [list([]) as list<operation>,    // No operations
-  match(action) {
-    when(Append(s)): store + s
-  }]
-};
+@entry
+const append = (s : string, store: storage): result =>
+  [list([]), store + s]
 ```
 
 </Syntax>
@@ -71,14 +64,27 @@ To obtain Michelson code from it, we run the LIGO compiler like so:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo --entry-point main
-// Outputs:
-// { parameter string ;
-//   storage string ;
-//   code { DUP ; CAR ; SWAP ; CDR ; CONCAT ; NIL operation ; PAIR } }
+ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo
+# Outputs:
+# { parameter string ;
+#   storage string ;
+#   code { UNPAIR ; SWAP ; CONCAT ; NIL operation ; PAIR } }
 ```
 
 </Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.jsligo
+# Outputs:
+# { parameter string ;
+#   storage string ;
+#   code { UNPAIR ; SWAP ; CONCAT ; NIL operation ; PAIR } }
+```
+
+</Syntax>
+
 
 
 Instead of outputting the resulted compiled code in the screen, we can
@@ -87,11 +93,18 @@ tell LIGO to write it in a file called `mockup_testme.tz`:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo --entry-point main --output-file mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo --output-file mockup_testme.tz
 ```
 
 </Syntax>
 
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.jsligo --output-file mockup_testme.tz
+```
+
+</Syntax>
 
 Now it is time to test this Michelson code we obtained: we want to
 execute it using the mockup mode.
@@ -124,12 +137,12 @@ We can list the addresses returned above by running:
 
 ```shell
 mockup-client list known addresses
-// Outputs:
-// bootstrap5: tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv (unencrypted sk known)
-// bootstrap4: tz1b7tUupMgCNw2cCLpKTkSD1NZzB5TkP2sv (unencrypted sk known)
-// bootstrap3: tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU (unencrypted sk known)
-// bootstrap2: tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN (unencrypted sk known)
-// bootstrap1: tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx (unencrypted sk known)
+# Outputs:
+# bootstrap5: tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv (unencrypted sk known)
+# bootstrap4: tz1b7tUupMgCNw2cCLpKTkSD1NZzB5TkP2sv (unencrypted sk known)
+# bootstrap3: tz1faswCTDciRzE4oJ9jn2Vm2dvjeyA9fUzU (unencrypted sk known)
+# bootstrap2: tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN (unencrypted sk known)
+# bootstrap1: tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx (unencrypted sk known)
 ```
 
 We are now ready to originate (or "deploy") the contract on our mockup
@@ -155,8 +168,8 @@ As a first sanity check, we can confirm that the storage is currently `"foo"`:
 
 ```shell
 mockup-client get contract storage for mockup_testme
-// Outputs:
-// "foo"
+# Outputs:
+# "foo"
 ```
 
 Then, we execute a call to our contract with parameter `Append
@@ -166,8 +179,8 @@ Then, we execute a call to our contract with parameter `Append
 
 ```shell
 ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo "Append (\"bar\")" --entry-point main
-// Outputs:
-// "bar"
+# Outputs:
+# "bar"
 ```
 
 </Syntax>
@@ -190,8 +203,10 @@ We can finally check that that our property holds: the storage is now
 
 ```shell
 mockup-client get contract storage for mockup_testme
-// Outputs:
-// "foobar"
+# Outputs:
+# "foobar"
 ```
 
 Good! Our contract passed the test successfully!
+
+<!-- updated use of entry -->

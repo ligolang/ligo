@@ -84,7 +84,7 @@ const get_storage = (_: unit, storage: int): int => storage
 
 #### `contract_of` and `parameter_of`
 
-The aforementioned changes to `@entry` and the `main` function have affected how contracts are tested, starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0.64.2)). See [the documentation on testing](../advanced/testing.md#testing-a-contract-declared-as-a-module-or-namespace) for examples on how to use `contract_of` and `parameter_of`.
+The aforementioned changes to `@entry` and the `main` function have affected how contracts are tested, starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0642)). See [the documentation on testing](../advanced/testing.md#testing-a-contract-declared-as-a-module-or-namespace) for examples on how to use `contract_of` and `parameter_of`.
 
 MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2476
@@ -98,7 +98,7 @@ In LIGO v1, JsLIGO definitions which are not marked with `export` are not export
 
 MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2796
-* https://gitlab.com/ligolang/ligo/-/merge_requests/2684 in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0.69.0))
+* https://gitlab.com/ligolang/ligo/-/merge_requests/2684 in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0690))
 
 ### The comb layout is now used by default
 
@@ -147,7 +147,7 @@ There are also two internal annotations / decorators, which should not appear in
 * `@hidden`
 
 MRs:
-* https://gitlab.com/ligolang/ligo/-/merge_requests/2619 in [v0.67.0](https://gitlab.com/ligolang/ligo/-/releases/0.67.0) ([changelog](../intro/changelog.md#0.67.0))
+* https://gitlab.com/ligolang/ligo/-/merge_requests/2619 in [v0.67.0](https://gitlab.com/ligolang/ligo/-/releases/0.67.0) ([changelog](../intro/changelog.md#0670))
 
 
 MRs:
@@ -170,10 +170,10 @@ const part : bool = stuff.y["universe"][2];
 
 ### Miscellaneous
 
-* The internal command `ligo daemon` has been removed in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0.69.0)). It was previously used by the old language server to create a persistent LIGO process, but it was hacky and offered no performance improvements. There should be no noticeable change for the user, as the new language server (used e.g. by the VsCode plug-in) does not make use of this command anymore. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2690.
-* The support for CST mutation testing has been dropped in [v0.66.0](https://gitlab.com/ligolang/ligo/-/releases/0.66.0) ([changelog](../intro/changelog.md#0.66.0)). Unfortunately, that feature was incomplete and broken. With the disappearance of this feature, the command `ligo mutate` has been removed. However, AST mutation testing is still supported and part of the [testing framework](../advanced/mutation-testing.md). MRs: https://gitlab.com/ligolang/ligo/-/merge_requests/2455 and https://gitlab.com/ligolang/ligo/-/merge_requests/2607.
-* Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0.64.2)), the transpilation commands now take `--from-syntax` and `--to-syntax`, instead of the former, less clear use of `--syntax` for the source syntax and an unnamed parameter for the destination syntax. The destination syntax can still be inferred from the filename given to `-o`, e.g. `-o dest.jsligo`. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2501
-* Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0.64.2)), the Kathmandu protocol is deprecated. If you need to recompile an old LIGO contract for an outdated protocol version, you may use the compiler version that the project was developed with. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2500
+* The internal command `ligo daemon` has been removed in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0690)). It was previously used by the old language server to create a persistent LIGO process, but it was hacky and offered no performance improvements. There should be no noticeable change for the user, as the new language server (used e.g. by the VsCode plug-in) does not make use of this command anymore. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2690.
+* The support for CST mutation testing has been dropped in [v0.66.0](https://gitlab.com/ligolang/ligo/-/releases/0.66.0) ([changelog](../intro/changelog.md#0660)). Unfortunately, that feature was incomplete and broken. With the disappearance of this feature, the command `ligo mutate` has been removed. However, AST mutation testing is still supported and part of the [testing framework](../advanced/mutation-testing.md). MRs: https://gitlab.com/ligolang/ligo/-/merge_requests/2455 and https://gitlab.com/ligolang/ligo/-/merge_requests/2607.
+* Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0642)), the transpilation commands now take `--from-syntax` and `--to-syntax`, instead of the former, less clear use of `--syntax` for the source syntax and an unnamed parameter for the destination syntax. The destination syntax can still be inferred from the filename given to `-o`, e.g. `-o dest.jsligo`. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2501
+* Starting from [v0.64.2](https://gitlab.com/ligolang/ligo/-/releases/0.64.2) ([changelog](../intro/changelog.md#0642)), the Kathmandu protocol is deprecated. If you need to recompile an old LIGO contract for an outdated protocol version, you may use the compiler version that the project was developed with. MR: https://gitlab.com/ligolang/ligo/-/merge_requests/2500
 
 ## JsLIGO
 
@@ -362,3 +362,5 @@ MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2817
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2785
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2883
+
+<!-- updated use of entry -->

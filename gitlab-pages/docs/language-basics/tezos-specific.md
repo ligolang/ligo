@@ -37,7 +37,7 @@ let id_string (p : string) : string option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let id_string = p => {
+const id_string = (p) => {
   let packed = Bytes.pack(p);
   return Bytes.unpack(packed);
 };
@@ -68,7 +68,7 @@ let check_hash_key (kh1, k2 : key_hash * key) : bool * key_hash =
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let check_hash_key = (kh1: key_hash, k2: key) => {
+const check_hash_key = (kh1: key_hash, k2: key) => {
   let kh2 = Crypto.hash_key(k2);
   return [kh1 == kh2, kh2];
 };
@@ -101,7 +101,7 @@ let check_signature (pk, signed, msg : key * signature * bytes) : bool =
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let check_signature =
+const check_signature =
   (pk: key, signed: signature, msg: bytes) =>
   Crypto.check(pk, signed, msg);
 ```
@@ -129,7 +129,7 @@ let current_addr : address = Tezos.get_self_address ()
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let current_addr = Tezos.get_self_address();
+const current_addr = Tezos.get_self_address();
 ```
 
 </Syntax>
@@ -157,11 +157,14 @@ let origination : operation * address = Tezos.create_contract
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let origination = Tezos.create_contract ((p: nat, s: string) =>
-[list([]), s],
+const origination = Tezos.create_contract(
+  (p: nat, s: string) => [list([]), s],
   None(),
   3tez,
-  "initial_storage");
+  "initial_storage"
+);
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

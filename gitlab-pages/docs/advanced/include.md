@@ -14,8 +14,9 @@ file, for example the contract names `included`:
 
 <Syntax syntax="cameligo">
 
-```cameligo
-// Demonstrate CameLIGO inclusion statements, see includer.mligo
+```cameligo group=included
+(* This is "included.mligo" *)
+(* Demonstrate CameLIGO inclusion statements, see includer.mligo *)
 
 let foo = 144
 ```
@@ -24,10 +25,11 @@ let foo = 144
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=included
+// This is "included.jsligo"
 // Demonstrate JsLIGO inclusion statements, see includer.jsligo
 
-const foo = 144;
+export const foo = 144;
 ```
 
 </Syntax>
@@ -37,8 +39,8 @@ so:
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
-#include "included.mligo"
+```cameligo
+#include "gitlab-pages/docs/advanced/src/included.mligo"
 
 let bar = foo
 ```
@@ -47,10 +49,12 @@ let bar = foo
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
-#include "included.jsligo"
+```jsligo
+#include "gitlab-pages/docs/advanced/src/included.jsligo"
 
 const bar = foo;
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->
