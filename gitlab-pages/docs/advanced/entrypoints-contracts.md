@@ -169,10 +169,9 @@ and call one of its entry points by passing e.g. the parameter `Increment(5)`.
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo" "C"
 
 let test =
-  let (ta, _, _) = Test.originate_module (contract_of C.IncDec) 0 (0tez) in
-  let c : C.IncDec parameter_of contract = Test.to_contract ta in
-  let _ = Test.transfer_to_contract_exn c (Increment 42) (0tez) in
-  assert (42 = Test.get_storage(ta))
+  let {addr ; code = _ ; size = _} = Test.originate (contract_of C.IncDec) 0 (0tez) in
+  let _ = Test.transfer_exn addr (Increment 42) (0tez) in
+  assert (42 = Test.get_storage(addr))
 ```
 
 </Syntax>
@@ -183,10 +182,9 @@ let test =
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
 
 const test = do {
-  let [ta, _x, _y] = Test.originate_module(contract_of(C.IncDec), 0, 0tez);
-  let c : contract<parameter_of C.IncDec> = Test.to_contract(ta);
-  Test.transfer_to_contract_exn(c, Increment(42), 0tez);
-  assert(42 == Test.get_storage(ta));
+  let {addr , code , size} = Test.originate(contract_of(C.IncDec), 0, 0tez);
+  Test.transfer_exn(addr, Increment(42), 0tez);
+  assert(42 == Test.get_storage(addr));
 };
 ```
 

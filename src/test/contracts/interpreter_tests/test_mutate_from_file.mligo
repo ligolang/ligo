@@ -1,12 +1,12 @@
-let tester ((a, _, _) : address * michelson_contract * int) : unit =
-  (* Test 1 *)
-  let _ = Test.transfer_exn a (Test.eval 0) 0tez in
-  let () = assert (Test.get_storage_of_address a = (Test.eval 0)) in
-  (* Test 2 *)
-  let _ = Test.transfer_exn a (Test.eval 1) 0tez in 
-  let () = assert (Test.get_storage_of_address a = (Test.eval 1)) in
-  ()
-
 let test =
-    let fn = "adder.mligo" in
-    Test.originate_from_file_and_mutate_all fn (Test.eval 0) 0tez tester
+  let tester (a, _, _) : unit =
+    (* Test 1 *)
+    let _ = Test.transfer_exn a 0 0tez in
+    let () = assert (Test.get_storage a = 0) in
+    (* Test 2 *)
+    let _ = Test.transfer_exn a 1 0tez in 
+    let () = assert (Test.get_storage a = 1) in
+    ()
+  in
+  let fn = "adder.mligo" in
+  Test.originate_from_file_and_mutate_all fn 0 0tez tester

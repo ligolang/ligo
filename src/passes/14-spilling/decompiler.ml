@@ -147,7 +147,6 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         | Key
         | Chain_id
         | Signature
-        | Ast_contract
         | Map
         | Big_map
         | Set

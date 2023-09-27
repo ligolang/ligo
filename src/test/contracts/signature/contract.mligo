@@ -44,18 +44,18 @@ module Inc : IInc = struct
 end
 
 let test =
-  let taddr, _, _ = Test.originate_module (contract_of Inc) (Inc.initial_storage : Inc.storage) 0tez in
+  let orig = Test.originate (contract_of Inc) (Inc.initial_storage : Inc.storage) 0tez in
   let x : Inc parameter_of = One () in
   let () = Test.log x in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr) x 0tez in
+  let _ = Test.transfer_to_contract_exn (Test.to_contract orig.addr) x 0tez in
   let x : Inc parameter_of = Increment 41 in
   let () = Test.log x in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr) x 0tez in
-  Test.log (Test.get_storage taddr)
+  let _ = Test.transfer_to_contract_exn (Test.to_contract orig.addr) x 0tez in
+  Test.log (Test.get_storage orig.addr)
 
 let test2 =
-  let taddr, _, _ = Test.originate_module (contract_of IncDec) (IncDec.initial_storage : IncDec.storage) 0tez in
+  let orig = Test.originate (contract_of IncDec) (IncDec.initial_storage : IncDec.storage) 0tez in
   let x : IncDec parameter_of = Decrement 42 in
   let () = Test.log x in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract taddr) x 0tez in
-  Test.log (Test.get_storage taddr)
+  let _ = Test.transfer_exn orig.addr x 0tez in
+  Test.log (Test.get_storage orig.addr)

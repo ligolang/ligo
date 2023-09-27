@@ -131,6 +131,7 @@ type transfer_from = {
 }
 type transfer = transfer_from list
 
+[@entry]
 let transfer : transfer -> storage -> operation list * storage = 
    fun (t:transfer) (s:storage) -> 
    (* This function process the "tx" list. Since all transfer share the same "from_" address, we use a se *)
@@ -161,12 +162,14 @@ type callback = [@layout:comb] {
    request : request;
    balance : nat;
 }
+type callback_parameter = | Main of callback list
 
 type balance_of = [@layout:comb] {
    requests : request list;
-   callback : callback list contract;
+   callback : callback_parameter contract;
 }
 
+[@entry]
 let balance_of : balance_of -> storage -> operation list * storage = 
    fun (b: balance_of) (s: storage) -> 
    let {requests;callback} = b in
@@ -175,7 +178,7 @@ let balance_of : balance_of -> storage -> operation list * storage =
       let balance_ = Storage.get_amount_for_owner s owner    in
       {request=request;balance=balance_}
    in
-   let callback_param = List.map get_balance_info requests in
+   let callback_param = Main (List.map get_balance_info requests) in
    let operation = Tezos.transaction callback_param 0tez callback in
    ([operation]: operation list),s
 
@@ -226,7 +229,8 @@ operator of A, C cannot transfer tokens that are owned by A, on behalf of B.
 
 
 *)
-let update_ops : update_operators -> storage -> operation list * storage = 
+[@entry]
+let update_operators : update_operators -> storage -> operation list * storage = 
    fun (updates: update_operators) (s: storage) -> 
    let update_operator (operators,update : Operators.t * unit_update) = match update with 
       Add_operator    {owner=owner;operator=operator;token_id=_token_id} -> Operators.add_operator    operators owner operator
@@ -238,17 +242,9 @@ let update_ops : update_operators -> storage -> operation list * storage =
    ([]: operation list),s
 
 (** If transfer_policy is  No_transfer or Owner_transfer
-let update_ops : update_operators -> storage -> operation list * storage = 
+[@entry]
+let update_operators : update_operators -> storage -> operation list * storage = 
    fun (updates: update_operators) (s: storage) -> 
    let () = failwith Errors.not_supported in
    ([]: operation list),s
 *)
-
-
-type parameter = [@layout:comb] | Transfer of transfer | Balance_of of balance_of | Update_operators of update_operators
-
-[@entry]
-let main (p: parameter) (s: storage) = match p with
-   Transfer         p -> transfer   p s
-|  Balance_of       p -> balance_of p s
-|  Update_operators p -> update_ops p s

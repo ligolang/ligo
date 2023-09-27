@@ -66,7 +66,6 @@ type t =
   | Dynamic_entrypoint
   | Michelson_program [@only_interpreter]
   | Michelson_contract [@only_interpreter]
-  | Ast_contract [@only_interpreter]
   | Typed_address [@only_interpreter]
   | Mutation [@only_interpreter]
   | Tx_rollup_l2_address
@@ -109,7 +108,6 @@ let to_string = function
   | Ticket -> "ticket"
   | Michelson_program -> "michelson_program"
   | Michelson_contract -> "michelson_contract"
-  | Ast_contract -> "ast_contract"
   | Typed_address -> "typed_address"
   | Mutation -> "mutation"
   | Tx_rollup_l2_address -> "tx_rollup_l2_address"
@@ -153,7 +151,6 @@ let of_string_opt = function
   | "ticket" -> Some Ticket
   | "michelson_program" -> Some Michelson_program
   | "michelson_contract" -> Some Michelson_contract
-  | "ast_contract" -> Some Ast_contract
   | "typed_address" -> Some Typed_address
   | "mutation" -> Some Mutation
   | "tx_rollup_l2_address" -> Some Tx_rollup_l2_address
@@ -208,8 +205,7 @@ let to_arity = function
   | Never -> 0
   | Ticket -> 1
   | Michelson_program -> 0
-  | Michelson_contract -> 0
-  | Ast_contract -> 0
+  | Michelson_contract -> 2
   | Typed_address -> 2
   | Mutation -> 0
   | Tx_rollup_l2_address -> 0
@@ -264,7 +260,6 @@ let never = Never
 let ticket = Ticket
 let michelson_program = Michelson_program
 let michelson_contract = Michelson_contract
-let ast_contract = Ast_contract
 let typed_address = Typed_address
 let mutation = Mutation
 let tx_rollup_l2_address = Tx_rollup_l2_address
@@ -307,7 +302,6 @@ let v_never = Type_var.of_input_var (to_string Never)
 let v_ticket = Type_var.of_input_var (to_string Ticket)
 let v_test_michelson = Type_var.of_input_var (to_string Michelson_program)
 let v_michelson_contract = Type_var.of_input_var (to_string Michelson_contract)
-let v_ast_contract = Type_var.of_input_var (to_string Ast_contract)
 let v_typed_address = Type_var.of_input_var (to_string Typed_address)
 let v_mutation = Type_var.of_input_var (to_string Mutation)
 let v_tx_rollup_l2_address = Type_var.of_input_var (to_string Tx_rollup_l2_address)

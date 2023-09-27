@@ -40,12 +40,12 @@ testing library.
 
 The function `Test.originate` allows to deploy a contract in the
 testing environment. It takes a contract, which is represented as a
-function of type `'parameter * 'storage -> operation list * 'storage`,
+function of type `'parameter -> 'storage -> operation list * 'storage`,
 an initial storage of type `'storage`, and an initial balance for the
 contract being deployed. This function deploys the contract, and
-returns the type `('parameter, 'storage) typed_address`, the compiled
-program in Michelson of type `michelson_program`, and the size of the
-program of type `int`.
+returns a record value holding: `('parameter, 'storage) typed_address`, the compiled
+program in Michelson of type `('parameter, 'storage) michelson_contract`,
+and the size of the program of type `int`.
 
 The storage of a deployed contract can be queried using the
 `Test.get_storage` function, that given a typed address `('parameter,
@@ -55,14 +55,16 @@ As a concrete example, suppose we have the following contract:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=mycontract
-(* This is testnew.mligo *)
+// This is testnew.mligo
+module C = struct
+  type storage = int
+  type result = operation list * storage
 
-type storage = int
-type result = operation list * storage
-
-[@entry] let increment (delta : int) (store : storage) : result = [], store + delta
-[@entry] let decrement (delta : int) (store : storage) : result = [], store - delta
-[@entry] let reset (_ : unit) (_store : storage) : result = [], 0
+  // Two entrypoints
+  [@entry] let increment (delta : int) (store : storage) : result = [],store + delta
+  [@entry] let decrement (delta : int) (store : storage) : result = [],store - delta
+  [@entry] let reset () (_ : storage) : result = [],0
+end
 ```
 
 </Syntax>
@@ -71,13 +73,14 @@ type result = operation list * storage
 
 ```jsligo test-ligo group=mycontract
 // This is mycontract.jsligo
+namespace C {
+  export type storage = int;
+  export type result = [list<operation>, storage];
 
-export type storage = int;
-export type result = [list<operation>, storage];
-
-@entry const increment = (delta : int, store : storage) : result => [list([]), store + delta];
-@entry const decrement = (delta : int, store : storage) : result => [list([]), store - delta];
-@entry const reset = (_u : unit, _store : storage) : result => [list([]), 0];
+  @entry const increment = (delta : int, store : storage) : result => [list([]), store + delta];
+  @entry const decrement = (delta : int, store : storage) : result => [list([]), store - delta];
+  @entry const reset = (_u : unit, _store : storage) : result => [list([]), 0];
+}
 ```
 
 </Syntax>
@@ -95,8 +98,8 @@ type param = MyContract parameter_of
 
 let test1 =
   let initial_storage = 42 in
-  let taddr, _, _ = Test.originate_module (contract_of MyContract) initial_storage 0tez in
-  assert (Test.get_storage taddr = initial_storage)
+  let {addr ; code = _ ; size = _} = Test.originate (contract_of MyContract) initial_storage 0tez in
+  assert (Test.get_storage addr = initial_storage)
 ```
 
 </Syntax>
@@ -111,8 +114,8 @@ type param = parameter_of MyContract
 
 const run_test1 = () : unit => {
   let initial_storage = 42 as int;
-  let [taddr, _code, _size] = Test.originate_module(contract_of(MyContract), initial_storage, 0tez);
-  assert (Test.get_storage(taddr) == initial_storage);
+  let {addr , code , size} = Test.originate(contract_of(MyContract), initial_storage, 0tez);
+  assert (Test.get_storage(addr) == initial_storage);
 };
 
 const test1 = run_test1();
@@ -148,15 +151,15 @@ ligo run test gitlab-pages/docs/advanced/src/testnew.jsligo
 
 </Syntax>
 
-The function `Test.transfer_to_contract` allows to bake a transaction.
-It takes a target account of type `'parameter contract`, the parameter
+The function `Test.transfer` allows to bake a transaction.
+It takes a target account of type `('parameter, 'storage) typed_address`, the parameter
 of type `'parameter` and an amount of type `tez`. This function
 performs the transaction, and returns a `test_exec_result` which
 can be matched on to know whether the transaction was successful or not.
 In case of success you will get access to the gas consumed by the execution
 of the contract and in case of failure you will get access to a `test_exec_error`
 describing the error.
-There is an alternative version, called `Test.transfer_to_contract_exn`
+There is an alternative version, called `Test.transfer_exn`
 which performs the transaction and will only return the gas consumption,
 failing in case that there was an error.
 
@@ -169,11 +172,10 @@ increments the storage after deployment, we also print the gas consumption:
 
 let test2 =
   let initial_storage = 42 in
-  let taddr, _, _ = Test.originate_module (contract_of MyContract) initial_storage 0tez in
-  let contr = Test.to_contract taddr in
-  let gas_cons = Test.transfer_to_contract_exn contr (Increment (1)) 1mutez in
+  let orig = Test.originate (contract_of MyContract) initial_storage 0tez in
+  let gas_cons = Test.transfer_exn orig.addr (Increment (1)) 1mutez in
   let () = Test.log ("gas consumption",gas_cons) in
-  assert (Test.get_storage taddr = initial_storage + 1)
+  assert (Test.get_storage orig.addr = initial_storage + 1)
 ```
 
 </Syntax>
@@ -188,11 +190,10 @@ it is a block expression which can contain statements and local declarations.
 
 const test2 = do {
   let initial_storage = 42 as int;
-  let [taddr, _code, _test] = Test.originate_module(contract_of(MyContract), initial_storage, 0tez);
-  let contr = Test.to_contract(taddr);
-  let gas_cons = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  let orig = Test.originate(contract_of (MyContract), initial_storage, 0tez);
+  let gas_cons = Test.transfer_exn(orig.addr, (Increment (1)), 1mutez);
   Test.log(["gas consumption", gas_cons]);
-  return (Test.get_storage(taddr) == initial_storage + 1);
+  return (Test.get_storage(orig.addr) == initial_storage + 1);
 }
 ```
 
@@ -269,35 +270,36 @@ Find more detailed information on the API of [`Proxy_ticket` here](../reference/
 Here is an example using `Proxy_ticket.init_transfer` and `Proxy_ticket.transfer`:
 
 1. import the module above as `Proxy_ticket`
-2. define a contract `main` holding a ticket of string in its parameter type. The contract will just store the value of
+2. define a contract `C` holding a ticket of string in its parameter type. The contract will just store the value of
   the received ticket and the address of the sender
-3. originate contract `main`
+3. originate contract `C`
 4. initialize a "transfer proxy-contract" providing a function to build a parameter out of a ticket
-5. transfer a ticket with a value `"hello"` and an amount of `10` to contract `main`
-6. print the storage of contract `main`
-7. transfer a ticket with a value `"world"` and an amount of `5` to contract `main`
-8. print the storage of contract `main`
+5. transfer a ticket with a value `"hello"` and an amount of `10` to contract `C`
+6. print the storage of contract `C`
+7. transfer a ticket with a value `"world"` and an amount of `5` to contract `C`
+8. print the storage of contract `C`
 
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=usage_transfer
-type param = int * string ticket
-type storage = string * address
+module C = struct
+  type param = int * string ticket
+  type storage = string * address
 
-[@entry]
-let main (p : param) (_ : storage) : operation list * storage =
-  let (_,ticket) = p in
-  let (_,(v,_)) , _ = Tezos.read_ticket ticket in
-  [] , (v, Tezos.get_sender ())
-
+  [@entry]
+  let main (p : param) (_ : storage) : operation list * storage =
+    let (_,ticket) = p in
+    let (_,(v,_)) , _ = Tezos.read_ticket ticket in
+    [] , (v, Tezos.get_sender ())
+end
 let test_transfer_to_contract =
-  let (main_taddr, _ , _) = Test.originate main ("bye",Test.nth_bootstrap_account 1) 1mutez in
-  let main_addr = Tezos.address (Test.to_contract main_taddr) in
+  let {addr = main_taddr; code = _ ; size = _} = Test.originate (contract_of C) ("bye",Test.nth_bootstrap_account 1) 1mutez in
+  let main_addr = Test.to_address main_taddr in
 
   (* Use this address everytime you want to send tickets from the same proxy-contract *)
   let proxy_taddr =
     (* mk_param is executed __by the proxy contract__ *)
-    let mk_param : string ticket -> param = fun (t : string ticket) -> 42,t in
+    let mk_param : string ticket -> C.param = fun (t : string ticket) -> 42,t in
     (* initialize a proxy contract in charge of creating and sending your tickets *)
     Test.Proxy_ticket.init_transfer mk_param
   in
@@ -306,7 +308,7 @@ let test_transfer_to_contract =
   let _ =
     (* ticket_info lets you control the amount and the value of the tickets you send *)
     let ticket_info = ("hello", 10n) in
-    (* we send ticket to main through the proxy-contract *)
+    (* we send ticket to C through the proxy-contract *)
     Test.Proxy_ticket.transfer proxy_taddr (ticket_info,main_addr)
   in
   let () = Test.log (Test.get_storage main_taddr) in
@@ -324,20 +326,23 @@ let test_transfer_to_contract =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=usage_transfer
-type param = [ int , ticket<string>]
+namespace C {
+  export type param = [ int , ticket<string>]
 
-function main (p: param, _s: [string , address]) : [list<operation> , [string , address]] {
-  let [_v,ticket] = p ;
-  let [[_addr,[v,_t]] , _ticket] = Tezos.read_ticket (ticket) ;
-  return ([list([]) , [v, Tezos.get_sender ()]])
-};
+  @entry
+  function main (p: param, _s: [string , address]) : [list<operation> , [string , address]] {
+    let [_v,ticket] = p ;
+    let [[_addr,[v,_t]] , _ticket] = Tezos.read_ticket (ticket) ;
+    return ([list([]) , [v, Tezos.get_sender ()]])
+  };
+}
 
 const test_transfer_to_contract = do {
-  let [main_taddr, _code , _size] = Test.originate (main, ["bye",Test.nth_bootstrap_account (1)], 1mutez) ;
-  let main_addr = Tezos.address (Test.to_contract (main_taddr)) ;
+  let {addr : main_taddr, code , size } = Test.originate (contract_of(C), ["bye",Test.nth_bootstrap_account (1)], 1mutez) ;
+  let main_addr = Test.to_address (main_taddr) ;
 
   /* mk_param is executed __by the proxy contract__ */
-  const mk_param = (t:ticket<string>) : param => { return [42,t] } ;
+  const mk_param = (t:ticket<string>) : C.param => { return [42,t] } ;
   /* Use this address everytime you want to send tickets from the same proxy-contract */
   /* initialize a proxy contract in charge of creating and sending your tickets */
   let proxy_taddr = Test.Proxy_ticket.init_transfer (mk_param) ;
@@ -406,8 +411,7 @@ let test_originate_contract =
   let mk_storage = fun (t:bytes ticket) -> Some t in
   let ticket_info = (0x0202, 15n) in
   let addr = Test.Proxy_ticket.originate ticket_info mk_storage main in
-  let storage : michelson_program = Test.get_storage_of_address addr in
-  let unforged_storage = (Test.decompile storage : unforged_storage) in
+  let unforged_storage : unforged_storage = Test.Proxy_ticket.get_storage addr in
 
   (* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity *)
 
@@ -444,8 +448,7 @@ const test_originate_contract = do {
   const mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
   let ticket_info = [0x0202, 15n];
   let addr = Test.Proxy_ticket.originate (ticket_info, mk_storage, main) ;
-  let storage : michelson_program = Test.get_storage_of_address (addr) ;
-  let unforged_storage = (Test.decompile (storage) as unforged_storage) ;
+  let unforged_storage = (Test.Proxy_ticket.get_storage (addr) as unforged_storage) ;
 
   /* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity */
 
@@ -677,7 +680,6 @@ let reset (_ : unit) (_ : storage) : result = [], 0
 
 ```jsligo
 // This is testme.jsligo
-
 type storage = int;
 type result = [list<operation>, storage];
 
@@ -750,31 +752,33 @@ Here is how you emit events and fetch them from your tests:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test_ex
-[@entry]
-let emit_foo (p : int * int) (_ : unit) =
-  [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+module C = struct
+  [@entry] let main (p : int*int) () =
+    [Tezos.emit "%foo" p ; Tezos.emit "%foo" p.0],()
+end
 
 let test_foo =
-  let (ta, _, _) = Test.originate emit_foo () 0tez in
-  let _ = Test.transfer_to_contract_exn (Test.to_contract ta) (1,2) 0tez in
-  (Test.get_last_events_from ta "foo" : (int*int) list),(Test.get_last_events_from ta "foo" : int list)
+  let orig = Test.originate (contract_of C) () 0tez in
+  let _ = Test.transfer_exn orig.addr (Main (1,2)) 0tez in
+  (Test.get_last_events_from orig.addr "foo" : (int*int) list),(Test.get_last_events_from orig.addr "foo" : int list)
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test_ex
-@entry
-const emit_foo = (p: [int, int], _u: unit) : [list<operation>, unit] => {
-  let op1 = Tezos.emit("%foo", p);
-  let op2 = Tezos.emit("%foo", p[0]);
-  return [list([op1, op2]), unit];
-};
-
-const test_foo = do {
-  let [ta, _code, _size] = Test.originate(emit_foo, unit, 0tez);
-  Test.transfer_to_contract_exn(Test.to_contract(ta), [1,2], 0tez);
-  return [Test.get_last_events_from(ta, "foo") as list<[int, int]>, Test.get_last_events_from(ta, "foo") as list<int>];
+namespace C {
+  @entry
+  let main = (p: [int, int], _: unit) => {
+    let op1 = Tezos.emit("%foo", p);
+    let op2 = Tezos.emit("%foo", p[0]);
+    return [list([op1, op2]), unit];
+    };
+}
+let test = do {
+  let orig = Test.originate(contract_of(C), unit, 0tez);
+  Test.transfer_exn(orig.addr, Main ([1,2]), 0tez);
+  return [Test.get_last_events_from(orig.addr, "foo") as list<[int, int]>, Test.get_last_events_from(orig.addr, "foo") as list<int>];
 };
 ```
 
@@ -800,14 +804,13 @@ namespace C {
   const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
 };
 
-const testC = () => {
+const testC = do {
     let initial_storage = 42;
-    let [taddr, _contract, _size] = Test.originate_module(contract_of(C), initial_storage, 0tez);
-    let contr : contract<parameter_of C> = Test.to_contract(taddr);
+    let orig = Test.originate(contract_of(C), initial_storage, 0tez);
     let p : parameter_of C = Increment(1);
-    Test.transfer_to_contract_exn(contr, p, 1mutez);
-    return assert(Test.get_storage(taddr) == initial_storage + 1);
-}
+    Test.transfer_exn(orig.addr, p, 1mutez);
+    return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+};
 ```
 
 The special constructions `contract_of(C)` and `parameter_of C` are not first-class functions, they are special syntax which take a module or namespace name as a parameter. This means for example that `some_function(contract_of)` or `contract_of(some_variable)` are invalid uses of the syntax (a literal module or parameter name must always be passed as part of the syntax).

@@ -85,11 +85,10 @@ module Bar = struct
 end
 
 let test_interaction () =
-  let (foo_typed_addr, _, _) = Test.originate_module (contract_of Foo) () 0tz in
-  let foo_addr = Tezos.address (Test.to_contract foo_typed_addr) in
-  let (bar_addr, _, _) = Test.originate_module (contract_of Bar) () 0tz in
-  let bar_contract : (Bar parameter_of) contract = Test.to_contract bar_addr in
-  Test.transfer_to_contract_exn bar_contract (Bar foo_addr) 0tz
+  let orig_foo = Test.originate (contract_of Foo) () 0tz in
+  let foo_addr = Test.to_address orig_foo.addr in
+  let orig_bar = Test.originate (contract_of Bar) () 0tz in
+  Test.transfer_exn orig_bar.addr (Bar foo_addr) 0tz
 ```
 
 </Syntax>
@@ -127,15 +126,11 @@ namespace Bar {
   const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
 };
 
-const test_interaction = do {
-  const [foo_typed_addr, _x1, _y1] = Test.originate_module(contract_of(Foo), unit, 0tz);
-  const foo_addr = Tezos.address(Test.to_contract(foo_typed_addr));
-  // let foo_contract : contract<parameter_of Foo> = Test.to_contract(foo_addr);
-
-  const [bar_addr, _x2, _y2] = Test.originate_module(contract_of(Bar), unit, 0tz);
-  const bar_contract : contract<parameter_of Bar> = Test.to_contract(bar_addr);
-
-  Test.transfer_to_contract_exn(bar_contract, Bar(foo_addr), 0tz);
+const test_interaction = do{
+  const orig_foo = Test.originate(contract_of(Foo), unit, 0tz);
+  const foo_addr = Test.to_address (orig_foo.addr);
+  const orig_bar = Test.originate(contract_of(Bar), unit, 0tz);
+  Test.transfer_exn(orig_bar.addr, Bar(foo_addr), 0tz);
 };
 ```
 

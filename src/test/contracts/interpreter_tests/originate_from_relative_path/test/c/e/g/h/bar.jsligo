@@ -1,7 +1,6 @@
 const f = "../../../../../src/contract/unit.mligo";
 
-export const originate = (): address => {
-  let [c_addr, _code, _size] =
-    Test.originate_from_file(f, Test.eval(unit), 0mutez);
-  return c_addr
+export const originate = () => {
+  const x : origination_result<unit, unit> = Test.originate_from_file(f, unit, 0mutez);
+  return x.addr
 };

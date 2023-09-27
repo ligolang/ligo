@@ -1356,10 +1356,8 @@ let%expect_test _ =
 
 (* using test in compilation *)
 let%expect_test _ =
-  run_ligo_bad [ "compile"; "contract"; bad_contract "compile_test.mligo" ];
-  [%expect
-    {|
-    Invalid usage of a Test primitive: cannot be translated to Michelson. |}]
+  run_ligo_bad [ "compile"; "contract"; bad_contract "compile_test.mligo"; "-m"; "C" ];
+  [%expect {| Invalid usage of a Test primitive: cannot be translated to Michelson. |}]
 
 (* remove unused declarations *)
 let%expect_test _ =
@@ -2664,11 +2662,11 @@ let%expect_test _ =
     [ "compile"
     ; "parameter"
     ; contract "entrypoint_in_module.mligo"
-    ; "Increment 32"
+    ; "32"
     ; "-m"
     ; "C"
     ; "-e"
-    ; "main"
+    ; "increment"
     ];
   [%expect {| (Left 32) |}]
 
@@ -3165,7 +3163,8 @@ let%expect_test _ =
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo" ];
+  run_ligo_good
+    [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo"; "-m"; "C" ];
   [%expect
     {|
     { parameter unit ;

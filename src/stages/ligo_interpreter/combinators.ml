@@ -67,6 +67,12 @@ let get_address : value -> Tezos_protocol.Protocol.Alpha_context.Contract.t opti
   | _ -> None
 
 
+let get_typed_address : value -> Tezos_protocol.Protocol.Alpha_context.Contract.t option
+  = function
+  | V_Typed_address x -> Some x
+  | _ -> None
+
+
 let get_michelson_contract : value -> unit Tezos_utils.Michelson.michelson option
   = function
   | V_Michelson_contract x -> Some x

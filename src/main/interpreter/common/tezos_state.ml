@@ -882,7 +882,7 @@ let originate_contract
   in
   match%map bake_op ~raise ~loc ~calltrace ctxt operation with
   | Success (ctxt, _) ->
-    let addr = v_address dst in
+    let addr = v_typed_address dst in
     let storage_tys =
       match ligo_ty with
       | None -> ctxt.internals.storage_tys

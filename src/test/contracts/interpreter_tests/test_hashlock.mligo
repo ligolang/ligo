@@ -1,11 +1,5 @@
 #import "../hashlock.mligo" "Hashlock"
 
-
-let originate storage balance =
-  let storage = Test.eval storage in
-  let addr, ctr, size = Test.originate_from_file "../hashlock.mligo" storage balance in
-  ((Test.cast_address addr : (Hashlock.parameter, Hashlock.storage) typed_address), ctr, size)
-
 let test_commit =
   let () = Test.reset_state_at (0 : timestamp) 10n ([] : tez list) in
   let first_committer = Test.nth_bootstrap_account 0 in
@@ -14,7 +8,7 @@ let test_commit =
   let salted_hash = Crypto.sha256 (Bytes.concat hashable packed_sender) in
   let pre_commits = (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let parameter = Commit salted_hash in
   let () = Test.set_source first_committer in
@@ -34,7 +28,7 @@ let test_reveal_no_commit =
   let hashable = [%bytes "hello world"] in
   let pre_commits = (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = pre_commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let parameter = Reveal reveal in
   let () = Test.set_source first_committer in
@@ -53,7 +47,7 @@ let test_reveal_young_commit =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let empty_message = fun (_ : unit) -> ([] : operation list) in
   let reveal = { hashable = hashable ; message = empty_message } in
@@ -75,7 +69,7 @@ let test_reveal_breaks_commit =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let empty_message = fun (_ : unit) -> ([] : operation list) in
   let reveal = { hashable = hashable ; message = empty_message } in
@@ -97,7 +91,7 @@ let test_reveal_wrong_commit =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let empty_message = fun (_ : unit) -> ([] : operation list) in
   let reveal = { hashable = bad_hashable ; message = empty_message } in
@@ -119,7 +113,7 @@ let test_reveal_no_reuse =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = false ; commits = commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let empty_message = fun (_ : unit) -> ([] : operation list) in
   let reveal = { hashable = bad_hashable ; message = empty_message } in
@@ -140,7 +134,7 @@ let test_reveal =
   let commit = { date = lock_time ; salted_hash = salted_hash } in
   let commits = Big_map.add first_committer commit (Big_map.empty : Hashlock.commit_set) in
   let init_storage = { hashed = Crypto.sha256 hashable ; unused = true ; commits = commits } in
-  let (typed_addr, _, _) = originate init_storage 0tez in
+  let {addr = typed_addr; code = _; size = _} = Test.originate_from_file "../hashlock.mligo" init_storage 0tez in
   let contr = Test.to_contract typed_addr in
   let empty_message = fun (_ : unit) -> ([] : operation list) in
   let reveal = { hashable = hashable ; message = empty_message } in

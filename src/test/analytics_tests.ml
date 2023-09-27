@@ -58,7 +58,9 @@ let test_compile_contract ~raise:_ () =
        repository=\"[a-z0-9-]+\", version=\".*\", command=\"compile_contract\", \
        syntax=\"JsLIGO\", protocol=\"[a-z]+\"} 1.000000.*"
   in
-  let _ = run_ligo [ "compile"; "contract"; "contracts/analytics_test.jsligo" ] in
+  let _ =
+    run_ligo [ "compile"; "contract"; "contracts/analytics_test.jsligo"; "-m"; "C" ]
+  in
   check_analytics expected_registry_output_regex expected_agg_registry_content_regex
 
 

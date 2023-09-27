@@ -3,12 +3,12 @@ let test =
   let _baker = Test.nth_bootstrap_account 0 in
   let _src = Test.nth_bootstrap_account 1 in
   let init_storage = 0 in
-  let (addr_v, _, _) = Test.originate_module (contract_of CUT.Main_with_view) init_storage 0mutez in
-  let (addr_c, _, _) = Test.originate CUT.main_calling init_storage 0mutez in
+  let {addr = addr_v ; code = _ ; size = _} = Test.originate (contract_of CUT.Main_with_view) init_storage 0mutez in
+  let {addr = addr_c ; code = _ ; size = _} = Test.originate (contract_of CUT.Caller) init_storage 0mutez in
   let tx =
-    Test.transfer_to_contract
-      (Test.to_contract addr_c)
-      (Tezos.address (Test.to_contract addr_v))
+    Test.transfer
+      addr_c
+      (Main (Test.to_address addr_v))
       1tez in
   match tx with
     Success _ ->

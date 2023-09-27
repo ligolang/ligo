@@ -50,7 +50,8 @@ type error =
   | InternalError of string
 
 let string_of_error = function
-  | NotSupported -> "Not supported please try --legacy-package-management to install using esy"
+  | NotSupported ->
+    "Not supported please try --legacy-package-management to install using esy"
   | UnableToAccessRegistry ->
     "Unable to access registry, cannot download the metadata json"
   | VersionNotFound (n, v) -> Printf.sprintf "Version %s of %s not found" v n

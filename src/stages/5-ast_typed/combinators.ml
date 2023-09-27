@@ -69,8 +69,6 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
       , "pvss_key"
       , "baker_hash"
       , "tx_rollup_l2_address"
-      , "michelson_contract"
-      , "ast_contract"
       , "int64" )]
 
 
@@ -88,7 +86,7 @@ let t__type_ ~loc t : type_expression = t_constant ~loc _type_ [ t ]
 
 
 let t__type_ ~loc t1 t2 : type_expression = t_constant ~loc _type_ [ t1; t2 ]
-  [@@map _type_, "big_map"]
+  [@@map _type_, ("big_map", "michelson_contract")]
 
 
 let t_mutez = t_tez

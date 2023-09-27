@@ -1,4 +1,4 @@
-#include "./contract_under_test/contract_create.mligo"
+#import "./contract_under_test/contract_create.mligo" "C"
 
 let check_new_origination (src :address) : address =
   let last_origs = Test.last_originations () in
@@ -15,20 +15,18 @@ let test =
   let _baker = Test.nth_bootstrap_account 0 in
   let src = Test.nth_bootstrap_account 1 in
 
-  let (typed_addr, _code, size) = Test.originate main (None : storage) 0tez in
-  let () = Test.assert ((None : storage) = (Test.get_storage typed_addr : storage)) in
+  let {addr = typed_addr; code = _; size} = Test.originate (contract_of C) None 0tez in
+  let () = Test.assert ((None : C.storage) = (Test.get_storage typed_addr)) in
   let () = Test.assert (size < 300) in
   let new_account1 = check_new_origination src in
 
-  let contr = Test.to_contract typed_addr in
-  let _ = Test.transfer_to_contract_exn contr Two 10tez in
+  let _ = Test.transfer_exn typed_addr (Main Two) 10tez in
   let new_account2 = check_new_origination new_account1 in
   let new_storage = Test.get_storage typed_addr in
   let expected_new_storage = Some new_account2 in
   let () = Test.assert (new_storage = expected_new_storage) in
 
-
-  match (Test.transfer_to_contract contr One 10tez : test_exec_result) with
+  match (Test.transfer typed_addr (Main One) 10tez : test_exec_result) with
   | Success _ -> (failwith "contract did not fail" : michelson_program)
   | Fail x -> (
     let x = (fun (x : test_exec_error) -> x) x in 
@@ -62,9 +60,9 @@ let test2 =
   let tz = fun (n:nat) ->
     Test.run (fun (x : unit -> nat) -> x () * 1mutez) (fun (_ : unit) -> n)
   in
-  let () = Test.assert ((Test.get_balance bsa0) = 2000tez) in
-  let () = Test.assert ((Test.get_balance bsa1) = 0mutez) in
-  let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance bsa1)) (tz 0n)) in
-  let () = Test.assert ((Test.get_balance bsa2) = 3800000tez) in
-  let () = Test.assert ((Test.get_balance bsa3) = 3800000000000mutez) in
+  let () = Test.assert ((Test.get_balance_of_address bsa0) = 2000tez) in
+  let () = Test.assert ((Test.get_balance_of_address bsa1) = 0mutez) in
+  let () = Test.assert (Test.michelson_equal (Test.eval (Test.get_balance_of_address bsa1)) (tz 0n)) in
+  let () = Test.assert ((Test.get_balance_of_address bsa2) = 3800000tez) in
+  let () = Test.assert ((Test.get_balance_of_address bsa3) = 3800000000000mutez) in
   ()

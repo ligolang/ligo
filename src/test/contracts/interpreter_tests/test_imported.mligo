@@ -4,6 +4,7 @@ module D = struct
   let default : p = { initial = true; final = false }
 end
 
+[@entry]
 let main (p : D.t) (_ : D.t) : operation list * D.t =
   ([] : operation list), p
 

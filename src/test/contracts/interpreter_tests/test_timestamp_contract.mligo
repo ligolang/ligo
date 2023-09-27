@@ -1,10 +1,7 @@
-let no_operation = ([] : operation list)
-type storage = timestamp
-type result = operation list * storage
-
-let main (ts : timestamp) (_ : storage) : result =
-  no_operation, ts 
-
+module C = struct
+  [@entry]
+  let main (ts : timestamp) (_ : timestamp) : operation list * timestamp = [], ts 
+end
 
 
 let boot () = 
@@ -14,13 +11,13 @@ let boot () =
 
   let init_storage = ("2022-01-01t10:10:10Z" : timestamp) in
 
-  let (taddr, _, _) = Test.originate main init_storage 0mutez in
-  let contr = Test.to_contract taddr in
+  let orig = Test.originate (contract_of C) init_storage 0mutez in
+  let contr = Test.to_contract orig.addr in
   let addr = Tezos.address contr in
-  {addr = addr; taddr = taddr; contr = contr}
+  {addr = addr; taddr = orig.addr; contr = contr}
 
 let test_timestamp = 
   let c = boot() in
-  let r = Test.transfer_to_contract c.contr ("2022-01-01t10:10:10Z" : timestamp) 0tez in
+  let r = Test.transfer_to_contract c.contr (Main ("2022-01-01t10:10:10Z" : timestamp)) 0tez in
   Test.log r
 

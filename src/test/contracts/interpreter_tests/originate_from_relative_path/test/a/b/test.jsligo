@@ -1,10 +1,8 @@
 #import "../../c/d/foo.jsligo" "Foo"
 
-const _test_originate_from_file_relative_path = () : address => {
-  let [c_addr,_code,_size] = Test.originate_from_file 
-    ("../../../src/contract/unit.mligo",
-    Test.eval(unit), 0 as mutez);
-    return c_addr
+const _test_originate_from_file_relative_path = () : typed_address<unit, unit> => {
+  let x = Test.originate_from_file ("../../../src/contract/unit.mligo", unit, 0 as mutez);
+  return x.addr
 };
 
 const test_originate_from_file_relative_path = _test_originate_from_file_relative_path();
@@ -13,7 +11,7 @@ const test_originate_from_file_relative_path = _test_originate_from_file_relativ
 const _test_originate_from_file_relative_path_w_r_t_imported_file = () : bool => {
   let addr = Foo.originate();
   let bef  = Test.get_balance(addr);
-  ignore(Test.transfer (addr, Test.eval(unit), 10 as mutez));
+  ignore(Test.transfer (addr, unit, 10 as mutez));
   let aft  = Test.get_balance(addr);
   return aft == (bef + (10 as mutez))
 }

@@ -1,11 +1,14 @@
-type t = { x : int ; y : (unit, unit) typed_address }
 
-let main (_ : unit) (_ : unit) : operation list * unit = [], ()
+module C = struct
+  [@entry] let main (_ : unit) (_ : unit) : operation list * unit = [], ()
+end
 
-let ta, _, _ =
-  Test.originate main () 0tez
+type t = { x : int ; y : (C parameter_of, unit) typed_address }
 
-let v = { x = 42 ; y = ta }
+let orig =
+  Test.originate (contract_of C) () 0tez
+
+let v : t = { x = 42 ; y = orig.addr }
 
 let w = v.x
 

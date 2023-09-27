@@ -231,8 +231,6 @@ let t__type_ ~loc () : t = t_construct Literal_types._type_ [] ~loc ()
       , "pvss_key"
       , "baker_hash"
       , "tx_rollup_l2_address"
-      , "michelson_contract"
-      , "ast_contract"
       , "int64"
       , "michelson_program" )]
 
@@ -253,7 +251,8 @@ let t__type_ t ~loc () : t = t_construct ~loc Literal_types._type_ [ t ] ()
 
 
 let t__type_ t t' ~loc () : t = t_construct ~loc Literal_types._type_ [ t; t' ] ()
-  [@@map _type_, ("map", "big_map", "typed_address", "dynamic_entrypoint")]
+  [@@map
+    _type_, ("map", "big_map", "typed_address", "dynamic_entrypoint", "michelson_contract")]
 
 
 let row_ez fields ?(layout = default_layout) () =

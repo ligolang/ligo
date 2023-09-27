@@ -1,7 +1,7 @@
 type storage = (bytes ticket) option
 type unforged_storage = (bytes unforged_ticket) option
 
-let main ((), s : unit * storage) : operation list * storage =
+let main () (s : storage) : operation list * storage =
   [] , (
     match s with
     | Some ticket ->
@@ -13,7 +13,7 @@ let main ((), s : unit * storage) : operation list * storage =
 let test_originate_contract =
   let mk_storage = fun (t : bytes ticket) -> Some t in
   let ticket_info = (0x0202, 15n) in
-  let addr = Test.Proxy_ticket.originate_uncurried ticket_info mk_storage main in
+  let addr = Test.Proxy_ticket.originate ticket_info mk_storage main in
   let storage : michelson_program = Test.get_storage_of_address addr in
   let unforged_storage = (Test.decompile storage : unforged_storage) in
 
