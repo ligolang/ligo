@@ -619,6 +619,11 @@ async function updateLigoImpl(client: LanguageClient, config: vscode.WorkspaceCo
       const newVersion = await promptLigoUpdate(client, config, ligoPath, semverTest)
       switch (typeof newVersion) {
         case 'string':
+          if (semver.lt(newVersion, '1.0.0')) {
+            vscode.window.showInformationMessage(
+              'LIGO v1 is released. Please visit https://ligolang.org for more information.',
+            )
+          }
           if (semver.lt(newVersion, '0.61.0')) {
             return await unsupportedVersion()
           }

@@ -1,0 +1,52 @@
+export namespace TacoShop {
+  export type taco_supply = { current_stock: nat, max_price: tez };
+  export type taco_shop_storage = map<nat, taco_supply>;
+  @entry
+  const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
+    list<operation>,
+    taco_shop_storage
+  ] => {
+    /* Retrieve the taco_kind from the contracts storage or fail */
+
+    let taco_kind: taco_supply =
+      match(Map.find_opt(taco_kind_index, taco_shop_storage)) {
+        when (Some(kind)):
+          kind
+        when (None):
+          failwith("Unknown kind of taco")
+      };
+    let current_purchase_price: tez =
+      taco_kind.max_price / taco_kind.current_stock;
+    /* We won't sell tacos if the amount is not correct */
+
+    if ((Tezos.get_amount()) != current_purchase_price) {
+      return failwith(
+        "Sorry, the taco you are trying to purchase has a different price"
+      )
+    } else {
+      /* Update the storage decreasing the stock by 1n */
+
+      let taco_shop_storage =
+        Map.update(
+          taco_kind_index,
+          (
+            Some({
+              ...taco_kind, current_stock: abs(taco_kind.current_stock - 1n)
+            })
+          ),
+          taco_shop_storage
+        );
+      return [list([]), taco_shop_storage]
+    }
+  };
+}
+const default_storage: TacoShop.taco_shop_storage =
+  Map.literal(
+    list(
+      [
+        [1n, { current_stock: 50n, max_price: 50000000mutez }],
+        [2n, { current_stock: 20n, max_price: 75000000mutez }]
+      ]
+    )
+  );
+

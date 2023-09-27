@@ -1,0 +1,22 @@
+export type parameter =
+| ["Action_A", nat]
+| ["Action_B", string];
+
+export type storage = {
+  counter : nat,
+  name    : string
+};
+
+type result = [list<operation>, storage];
+
+const entry_A = (n: nat, store: storage): result =>
+  [list([]), {...store, counter: n}];
+
+const entry_B = (s: string, store: storage): result =>
+  [list([]), {...store, name: s}];
+
+export const main = (action: parameter, store: storage): result =>
+  match (action) {
+    when (Action_A(n)): entry_A(n, store);
+    when (Action_B(s)): entry_B(s, store)
+  };
