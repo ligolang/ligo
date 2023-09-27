@@ -1788,7 +1788,7 @@ and infer_module ?is_annoted_entry (module_ : I.module_)
 and remove_non_public (sig_ : Signature.t) =
   let items =
     List.filter sig_.items ~f:(function
-        | Signature.S_value (_, _, attr) -> attr.public || attr.entry
+        | Signature.S_value (_, _, attr) -> attr.public || attr.entry || attr.view
         | Signature.S_type (_, _, attr) -> attr.public
         | Signature.S_type_var (_, attr) -> attr.public
         | Signature.S_module (_, _, attr) -> attr.public
