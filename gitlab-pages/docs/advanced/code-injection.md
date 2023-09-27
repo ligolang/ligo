@@ -63,8 +63,8 @@ immediately, and then continues as a regular increment function.
 
 ```shell
 ligo compile expression cameligo "[%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)]"
-// Outputs:
-// { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
+# Outputs:
+# { PUSH nat 42 ; DROP ; PUSH nat 1 ; ADD }
 ```
 
 </Syntax>
@@ -80,8 +80,8 @@ removed by LIGO because they have no effect on the final result.
 
 ```shell
 ligo compile expression cameligo "fun n -> [%Michelson ({| { PUSH nat 42; DROP ; PUSH nat 1; ADD } |} : nat -> nat)] n"
-// Outputs:
-// { PUSH nat 1 ; ADD }
+# Outputs:
+# { PUSH nat 1 ; ADD }
 ```
 
 </Syntax>
@@ -107,6 +107,7 @@ type parameter =
 
 type storage = int
 
+[@entry]
 let main (action : parameter) (store : storage) : operation list * storage =
   [],
   (match action with
@@ -125,11 +126,12 @@ type parameter =
 
 type storage = int;
 
+@entry
 function main (action: parameter, store: storage) : [list<operation>, storage] {
   let storage =
     match(action, {
-     Increment: n => store + n,
-     Extend: k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
+      Increment: n => store + n,
+      Extend: k => (Michelson`{ NEVER }` as ((n: never) => int))(k)
     });
   return [list([]), storage];
 };
@@ -143,7 +145,7 @@ can compile it using the following command:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo --entry-point main
+ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo
 ```
 
 </Syntax>
@@ -151,3 +153,5 @@ ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pag
 
 > ⚠️ Just for reference, there is support now for generating the
 > instruction `NEVER` directly from LIGO, using `Tezos.never`.
+
+<!-- updated use of entry -->

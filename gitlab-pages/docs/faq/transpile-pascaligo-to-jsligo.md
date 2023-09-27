@@ -43,3 +43,5 @@ and will thus disable certain checks that don't make sense with transpiled contr
 ```
 ligo compile contract --transpiled foo.jsligo
 ```
+
+<!-- updated use of entry -->

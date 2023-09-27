@@ -9,3 +9,5 @@ To see the changelog, run
 ```
 
 in the LIGO directory.
+
+<!-- updated use of entry -->

@@ -20,7 +20,7 @@ let a : string = "Hello Alice"
 <Syntax syntax="jsligo">
 
 ```jsligo
-let a = "Hello Alice";
+const a = "Hello Alice";
 ```
 
 </Syntax>
@@ -44,14 +44,12 @@ let full_greeting : string = greeting ^ " " ^ name
 Strings can be concatenated using the `+` operator.
 
 ```jsligo group=a
-let name = "Alice";
-let greeting = "Hello";
-let full_greeting = greeting + " " + name;
+const name = "Alice";
+const greeting = "Hello";
+const full_greeting = greeting + " " + name;
 ```
 
 </Syntax>
-
-
 
 ### Extracting Substrings
 
@@ -63,7 +61,7 @@ indices for the substring has inclusive bounds.
 
 ```cameligo group=b
 let name  : string = "Alice"
-let slice : string = String.sub 0n 1n name
+let slice : string = String.sub 0n 1n name (* slice = "A" *)
 ```
 
 </Syntax>
@@ -71,8 +69,8 @@ let slice : string = String.sub 0n 1n name
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let name = "Alice";
-let slice = String.sub (0n, 1n, name);
+const name = "Alice";
+const slice = String.sub (0n, 1n, name); // slice == "A"
 ```
 
 </Syntax>
@@ -98,8 +96,8 @@ let length : nat = String.length name  // length = 5
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let name = "Alice";
-let length = String.length(name);  // length == 5
+const name = "Alice";
+const length = String.length(name);  // length == 5
 ```
 
 </Syntax>
@@ -119,7 +117,7 @@ let b : bytes = 0x7070
 <Syntax syntax="jsligo">
 
 ```jsligo
-let b = 0x7070;
+const b = 0x7070;
 ```
 
 </Syntax>
@@ -137,7 +135,7 @@ let bs : bytes = [%bytes "foo"]
 <Syntax syntax="jsligo">
 
 ```jsligo
-let bs = (bytes `foo`);
+const bs = (bytes `foo`);
 ```
 
 </Syntax>
@@ -152,7 +150,7 @@ Bytes can be concatenated using the `Bytes.concat` function.
 ```cameligo group=d
 let white : bytes = 0xffff
 let black : bytes = 0x0000
-let mixed : bytes = Bytes.concat white black (* 0xffff0000 *)
+let pixels : bytes = Bytes.concat white black (* 0xffff0000 *)
 ```
 
 </Syntax>
@@ -160,9 +158,9 @@ let mixed : bytes = Bytes.concat white black (* 0xffff0000 *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let white = 0xffff;
-let black = 0x0000;
-let mixed = Bytes.concat(white, black); // 0xffff0000
+const white = 0xffff;
+const black = 0x0000;
+const pixels = Bytes.concat(white, black); // 0xffff0000
 ```
 
 </Syntax>
@@ -186,8 +184,8 @@ let slice : bytes = Bytes.sub 1n 2n b (* 0x3456 *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let b     = 0x12345678;
-let slice = Bytes.sub (1n, 2n, b); // 0x3456
+const b     = 0x12345678;
+const slice = Bytes.sub (1n, 2n, b); // 0x3456
 ```
 
 </Syntax>
@@ -208,8 +206,8 @@ let length : nat   = Bytes.length b  (* length = 3 *)
 <Syntax syntax="jsligo">
 
 ```jsligo group=f
-let b      = 0x123456;
-let length = Bytes.length(b);  // length = 3
+const b      = 0x123456;
+const length = Bytes.length(b);  // length = 3
 ```
 
 </Syntax>
@@ -318,3 +316,5 @@ const test_int_bytes = bytes(4660) // 0x1234
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

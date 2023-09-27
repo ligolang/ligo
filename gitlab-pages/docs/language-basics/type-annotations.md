@@ -24,7 +24,8 @@ type storage = {
   funded   : bool
 }
 
-let back (param, store : unit * storage) : operation list * storage = // Annotation
+[@entry]
+let back (param : unit) (store : storage) : operation list * storage = (* Annotation *)
   if Tezos.get_now () > store.deadline then failwith "Deadline passed."
   else
     match Map.find_opt (Tezos.get_sender ()) store.backers with
@@ -52,7 +53,8 @@ type storage = {
   funded   : bool
 };
 
-let back = ([param, store] : [unit, storage]) : [list<operation>, storage] => { // Annotation
+@entry
+const back = (param : unit, store : storage) : [list<operation>, storage] => { // Annotation
   let no_op = list([]);
   if (Tezos.get_now() > store.deadline) {
     return failwith ("Deadline passed.");
@@ -70,3 +72,5 @@ let back = ([param, store] : [unit, storage]) : [list<operation>, storage] => { 
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

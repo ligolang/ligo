@@ -69,7 +69,7 @@ let alice : user = {
 And here is how an object value is defined:
 
 ```jsligo group=records1
-let alice : user = {
+const alice : user = {
   id       : 1n,
   is_admin : true,
   name     : "Alice"
@@ -94,7 +94,7 @@ let alice_admin : bool = alice.is_admin
 <Syntax syntax="jsligo">
 
 ```jsligo group=records1
-let alice_admin = alice.is_admin;
+const alice_admin = alice.is_admin;
 ```
 
 </Syntax>
@@ -118,8 +118,8 @@ let user_to_tuple (u : user) =
 
 ```jsligo group=records1
 function userToTuple (u : user) {
-  let { id, is_admin, name } = u
-  return [id, is_admin, name]
+  let { id, is_admin, name } = u;
+  return [id, is_admin, name];
 }
 ```
 
@@ -206,9 +206,9 @@ The syntax for the functional updates of record in JsLIGO:
 type point = {x: int, y: int, z: int}
 type vector = {dx: int, dy: int}
 
-let origin = {x: 0, y: 0, z: 0};
+const origin = {x: 0, y: 0, z: 0};
 
-let xy_translate = (p: point, vec: vector) =>
+const xy_translate = (p: point, vec: vector) =>
   ({...p, x: p.x + vec.dx, y: p.y + vec.dy});
 ```
 
@@ -216,13 +216,13 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo
-"({x:2,y:3,z:1}, {dx:3,dy:4})" --entry-point xy_translate
-# Outputs: {z = 1 , y = 7 , x = 5}
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/maps-records/record_update.jsligo \
+  "xy_translate({x:2,y:3,z:1}, {dx:3,dy:4})"
+# Outputs: record[x -> 5 , y -> 7 , z -> 1]
 ```
 
-> You have to understand that `p` has not been changed by the
+> It is important to understand that `p` has not been changed by the
 > functional update: a nameless new version of it has been created and
 > returned.
 
@@ -289,7 +289,7 @@ let change_color_preference (account : account) (color : color) : account =
 <Syntax syntax="jsligo">
 
 ```jsligo
-let change_color_preference = (account : account, color : color) =>
+const change_color_preference = (account : account, color : color) =>
   ({ ...account, preferences: {...account.preferences, color: color }});
 ```
 
@@ -302,8 +302,9 @@ You can call the function `change_color_preference` defined above by running the
 following command:
 
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.ligo
-"(record [id=1001; preferences=record [color=Blue; other=1]], Green)" --entry-point change_color_preference
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/maps-records/record_nested_update.jsligo \
+  "change_color_preference({id:1001, preferences:{color:Blue(), other:1}}, Green())"
 # Outputs: record[id -> 1001 , preferences -> record[color -> Green(unit) , other -> 1]]
 ```
 
@@ -379,7 +380,7 @@ let empty : register = Map.empty
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let empty: register = Map.empty;
+const empty: register = Map.empty;
 ```
 
 </Syntax>
@@ -408,7 +409,7 @@ that we type-cast a string into an address.
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let moves : register =
+const moves : register =
   Map.literal (list([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
     ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
@@ -436,7 +437,7 @@ let my_balance : move option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let my_balance: option<move> =
+const my_balance: option<move> =
   Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
@@ -463,8 +464,8 @@ let force_access (key, moves : address * register) : move =
 ```jsligo group=maps
 let force_access = (key: address, moves: register) => {
   return match(Map.find_opt (key, moves)) {
-   when(Some(move)): move;
-   when(None()): failwith("No move.")
+    when(Some(move)): move;
+    when(None()): failwith("No move.")
   };
 };
 ```
@@ -508,7 +509,7 @@ We can update a binding in a map in JsLIGO by means of the
 `Map.update` built-in function:
 
 ```jsligo group=maps
-let assign = (m: register) =>
+const assign = (m: register) =>
   Map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some ([4, 9]), m);
 ```
@@ -519,7 +520,7 @@ Notice the optional value `Some ([4,9])` instead of `[4, 9]`. If we used
 As a particular case, we can only add a key and its associated value.
 
 ```jsligo group=maps
-let add = (m: register) =>
+const add = (m: register) =>
   Map.add
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [4, 9], m);
 ```
@@ -544,7 +545,7 @@ let delete (key, moves : address * register) : register =
 In JsLIGO, we use the predefined function `Map.remove` as follows:
 
 ```jsligo group=maps
-let delete = (key: address, moves: register) =>
+const delete = (key: address, moves: register) =>
   Map.remove(key, moves);
 ```
 
@@ -588,7 +589,7 @@ let iter_op (m : register) : unit =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let iter_op = (m: register) => {
+const assert_all_greater_than_three = (m: register) => {
   let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
   Map.iter(predicate, m);
 };
@@ -619,8 +620,8 @@ let map_op (m : register) : register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let map_op = (m: register) => {
-  let increment = ([_, j]: [address, move]) => [j[0], j[1] + 1];
+const map_op = (m: register) => {
+  let increment = ([_a, j]: [address, move]) => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -652,7 +653,7 @@ let fold_op (m : register) : int =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let fold_op = (m: register): int => {
+const fold_op = (m: register): int => {
   let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
@@ -710,7 +711,7 @@ let empty : register = Big_map.empty
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
-let empty: register = Big_map.empty;
+const empty: register = Big_map.empty;
 ```
 
 </Syntax>
@@ -738,7 +739,7 @@ value>" : address)` means that we cast a string into an address.
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
-let moves : register =
+const moves : register =
   Big_map.literal (list([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1, 2]],
     ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0, 3]]]));
@@ -771,7 +772,7 @@ let my_balance : move option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=big_maps
-let my_balance: option<move> =
+const my_balance: option<move> =
   Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
@@ -800,7 +801,7 @@ We can update a big map in JsLIGO using the `Big_map.update`
 built-in:
 
 ```jsligo group=big_maps
-let updated_map: register =
+const updated_map: register =
   Big_map.update
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4, 9]), moves);
 ```
@@ -831,8 +832,10 @@ In JsLIGO, the predefined function which removes a binding in a map
 is called `Map.remove` and is used as follows:
 
 ```jsligo group=big_maps
-let updated_map_: register =
+const updated_map_: register =
   Big_map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

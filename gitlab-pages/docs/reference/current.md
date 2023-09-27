@@ -366,9 +366,10 @@ only be used together with `Bytes.pack` and `Bytes.unpack`.
 ```cameligo
 type storage = bytes
 
-let main ((ignore, storage): (unit * storage)) =
+[@entry]
+let main (_ignore : unit) (store : storage) =
   let packed = Bytes.pack (Tezos.get_chain_id ()) in
-  if (storage <> packed) then
+  if (store <> packed) then
     (failwith "wrong chain" : (operation list * storage))
   else
     ([], (packed: storage))
@@ -381,7 +382,8 @@ let main ((ignore, storage): (unit * storage)) =
 ```jsligo group=k
 type storage = bytes;
 
-let main = (ignore: unit, storage: storage):[list<operation>, storage] => {
+@entry
+let main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
   let packed = Bytes.pack(Tezos.get_chain_id());
   if (storage != packed) {
     return failwith("wrong chain") as [list<operation>, storage];
@@ -640,10 +642,10 @@ For the same reasons, if tickets are stored in a `map`/`big_map` you must use th
 ```cameligo group=contract_ticket
 type storage = (string, int ticket) big_map
 type parameter = int
-type return = operation list * storage
+type result = operation list * storage
 
-let main (x : parameter * storage) : return =
-  let i, store = x in
+[@entry]
+let main (i : parameter) (store : storage) : result =
   let my_ticket1 = Option.unopt (Tezos.create_ticket i 10n) in
   let _, x = Big_map.get_and_update "hello" (Some my_ticket1) store
   in [], x
@@ -658,12 +660,12 @@ type storage = big_map<string, ticket<int>> ;
 
 type parameter = int ;
 
-type return_ = [list<operation>, storage];
+type result = [list<operation>, storage];
 
-function main (x: [parameter, storage]): return_ {
-  let [i, store] = x ;
+@entry
+function main (i: parameter, store : storage): result {
   let my_ticket1 = Option.unopt (Tezos.create_ticket (i, 10n));
-  let [_, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
+  let [_x, ret] = Big_map.get_and_update ("hello", Some(my_ticket1), store);
   return [list([]), ret]
 };
 ```

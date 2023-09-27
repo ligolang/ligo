@@ -26,7 +26,9 @@ type transaction = Incoming of address * tez | Outgoing of address * tez
 
 type storage = {owner : address; transactionLog : transaction list}
 
-let send (dst, @amount : address * tez) =
+type result = operation list * storage
+
+let do_send (dst, @amount : address * tez) =
   let callee = Tezos.get_contract_opt dst in
   match callee with
     Some contract ->
@@ -34,17 +36,19 @@ let send (dst, @amount : address * tez) =
       Outgoing (dst, @amount), [op]
   | None -> (failwith "Could not send tokens" : transaction * operation list)
 
-let receive (from, @amount : address * tez) =
+let do_fund (from, @amount : address * tez) =
   Incoming (from, @amount), ([] : operation list)
 
-let main (p, s : parameter * storage) =
-  let tx, ops =
-    match p with
-      Fund -> receive (Tezos.get_sender (), Tezos.get_amount ())
-    | Send args ->
-        let u = assert ((Tezos.get_sender ()) = s.owner && (Tezos.get_amount ()) = 0mutez) in
-        send args in
-  ops, {s with transactionLog = tx :: s.transactionLog}
+[@entry]
+let fund (_ : unit) (s : storage) : result =
+  let tx, ops = do_fund (Tezos.get_sender (), Tezos.get_amount ()) in
+  ops, { s with transactionLog = tx :: s.transactionLog }
+
+[@entry]
+let send (args : address * tez) (s : storage) =
+  let u = assert ((Tezos.get_sender ()) = s.owner && (Tezos.get_amount ()) = 0mutez) in
+  let tx, ops = do_send args in
+  ops, { s with transactionLog = tx :: s.transactionLog }
 ```
 
 </Syntax>

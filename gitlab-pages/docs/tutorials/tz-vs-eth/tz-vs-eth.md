@@ -74,7 +74,7 @@ You can define new types and type aliases in your code using the `type` keyword:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b2
 type nat_alias = nat
 
 type token_amount = TokenAmount of nat
@@ -96,7 +96,7 @@ As in Solidity, there are record types:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b3
 type creature = {heads_count : nat; legs_count : nat; tails_count : nat}
 ```
 
@@ -115,7 +115,7 @@ There are also _variant_ types (or "sum types") – a more powerful counterpart 
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b4
 type int_option = Number of int | Null
 
 let x = Number 5
@@ -148,7 +148,7 @@ There is a special built-in parameterised `option` type with `Some` and `None` c
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b5
 let x = Some 5
 
 let y : int option = None
@@ -156,7 +156,7 @@ let y : int option = None
 
 This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `address option`. We can then use `match` to see if there is something inside:
 
-```cameligo
+```cameligo group=b6
 let x : int option = Some 5
 
 let x_or_zero =
@@ -194,7 +194,7 @@ We can go further and combine variant types with records:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b7
 type committee = {members : address list; quorum : nat}
 
 type leader = {name : string; address : address}
@@ -240,8 +240,9 @@ For example, we can simulate Ethereum dispatching behaviour:
 
 <Syntax syntax="cameligo">
 
-```cameligo
-let main (parameter, storage : bytes * int) : operation list * int =
+```cameligo group=a2
+[@entry]
+let main (parameter : bytes) (storage : int) : operation list * int =
   if parameter = 0xbc1ecb8e
   then [], storage + 1
   else
@@ -250,17 +251,17 @@ let main (parameter, storage : bytes * int) : operation list * int =
     else failwith "Unknown entrypoint"
 ```
 
-However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
+However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoints by marking the functions which are entry points. For our counter contract, we can say, e.g., that the entry points are _either_ `Increment` or `Decrement`, and implement their behaviours as separate functions:
 
-```cameligo
-type parameter = Increment | Decrement
-
+```cameligo group=a3
 type storage = int
+type result = operation list * storage
 
-let main (p, s : parameter * storage) =
-  match p with
-    Increment -> [], s + 1
-  | Decrement -> [], s - 1
+[@entry]
+let increment (_ : unit) (s : storage) : result = [], s + 1
+
+[@entry]
+let decrement (_ : unit) (s : storage) : result = [], s - 1
 ```
 
 </Syntax>
@@ -281,19 +282,17 @@ let main = (parameter: bytes, storage: int): [list<operation>, int] => {
 };
 ```
 
-However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
+However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. that the entry points are _either_ `Increment` or `Decrement`, and implement their behaviours as separate functions:
 
 ```jsligo group=a3
-type parameter = ["Increment"] | ["Decrement"];
-
 type storage = int;
+type result = [list<operation>, int]
 
-let main = (p: parameter, s: storage): [list<operation>, int] => {
-  return match(p) {
-    when(Increment()): [list([]), s + 1];
-    when(Decrement()): [list([]), s - 1]
-  };
-};
+@entry
+const increment = (_u : unit, s : storage) : result => [list([]), s + 1]
+
+@entry
+const decrement = (_u : unit, s : storage) : result => [list([]), s - 1]
 ```
 
 </Syntax>
@@ -303,15 +302,15 @@ We do not need any internal operations, since we neither call other contracts no
 
 <Syntax syntax="cameligo">
 
-```cameligo
-type parameter = Add of int | Subtract of int
-
+```cameligo group=a4
 type storage = int
+type result = operation list * storage
 
-let main (p, s : parameter * storage) =
-  match p with
-    Add n -> [], s + n
-  | Subtract n -> [], s - n
+[@entry]
+let add (i : int) (s : storage) : result = [], s + i
+
+[@entry]
+let subtract (i : int) (s : storage) : result = [], s - i
 ```
 
 </Syntax>
@@ -320,16 +319,14 @@ let main (p, s : parameter * storage) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=a4
-type parameter = ["Add", int] | ["Subtract", int];
-
 type storage = int;
+type result = [list<operation>, int]
 
-let main = (p : parameter, s : storage): [list<operation>, int] => {
-  return match(p) {
-    when(Add(n)): [list([]), s + n];
-    when(Subtract(n)): [list([]), s - n]
-  };
-};
+@entry
+const add = (i : int, s : storage) : result => [list([]), s + i]
+
+@entry
+const subtract = (i : int, s : storage) : result => [list([]), s - i]
 ```
 
 </Syntax>
@@ -358,18 +355,16 @@ For contract methods, the dispatching logic defines which functions within the c
 
 <Syntax syntax="cameligo">
 
-```cameligo
-let multiplyBy2 (storage : int) : int = storage * 2
+```cameligo group=a5
+type storage = int
+type result = operation list * storage
 
-let multiplyBy4 (storage : int) : int = multiplyBy2 (multiplyBy2 storage)
+let doMultiplyBy2 (store : storage) : int = store * 2
 
-type parameter = MultiplyBy4 | MultiplyBy16
+let doMultiplyBy4 (store : storage) : int = doMultiplyBy2 (doMultiplyBy2 store)
 
-let main (param, storage : parameter * storage) : operation list * storage =
-  [],
-  (match param with
-     MultiplyBy4 -> multiplyBy4 storage
-   | MultiplyBy16 -> multiplyBy4 (multiplyBy4 storage))
+[@entry] let multiplyBy4 (_ : unit) (s : storage) : result = [], doMultiplyBy4 s
+[@entry] let multiplyBy16 (_ : unit) (s : storage) : result = [], doMultiplyBy4 (doMultiplyBy4 s)
 ```
 
 </Syntax>
@@ -377,19 +372,15 @@ let main (param, storage : parameter * storage) : operation list * storage =
 <Syntax syntax="jsligo">
 
 ```jsligo group=a5
-let multiplyBy2 = (storage : int) : int => storage * 2;
+type storage = int
+type result = [list<operation>, storage]
 
-let multiplyBy4 = (storage: int) : int => multiplyBy2(multiplyBy2(storage));
+let doMultiplyBy2 = (store : storage) : int => store * 2;
 
-type parameter = | ["MultiplyBy4"] | ["MultiplyBy16"];
+let doMultiplyBy4 = (store : storage) : int => doMultiplyBy2(doMultiplyBy2(store));
 
-let main = (param: parameter, storage: int) : [list<operation>, int] => {
-  const op = list ([]) ;
-  return match(param) {
-    when(MultiplyBy4()): [op, multiplyBy4(storage)];
-    when(MultiplyBy16()): [op, multiplyBy4(multiplyBy4(storage))]
-  };
-};
+@entry const multiplyBy4 = (_u : unit, s : storage) : result => [list([]), doMultiplyBy4(s)]
+@entry const multiplyBy16 = (_u : unit, s : storage) : result => [list([]), doMultiplyBy4(doMultiplyBy4(s))]
 ```
 
 </Syntax>
@@ -407,14 +398,13 @@ In Tezos, you can accept _code_ as a parameter. Such functions that you can pass
 
 <Syntax syntax="cameligo">
 
-```cameligo
-type parameter = Compute of int -> int // a function that accepts an int and returns an int
+```cameligo group=a6
 
 type storage = int
 
-let main (p, s : parameter * storage) : operation list * storage =
-  match p with
-  Compute func -> [], func s
+[@entry]
+let compute (func : int -> int) (s : storage) : operation list * storage =
+  [], func s
 ```
 
 We can then call this contract with the parameter of the form `Compute (fun (x : int) -> x * x + 2 * x + 1)`. Try this out with:
@@ -427,15 +417,11 @@ ligo run interpret 'main (Compute (fun (x : int) -> x * x + 2 * x + 1), 3)' --in
 <Syntax syntax="jsligo">
 
 ```jsligo group=a6
-type parameter = | ["Compute", (c : int) => int];
-
 type storage = int;
 
-let main = (p: parameter, s: storage): [list<operation>, int] => {
-  return match(p) {
-    when(Compute(func)): [list([]), func(s)]
-  };
-};
+@entry
+const compute = (func: ((v : int) => int), s: storage) : [list<operation>, int] =>
+  [list([]), func(s)]
 ```
 
 We can then call this contract with the parameter of the form `Compute ((x : int) => x * x + 2 * x + 1)`. Try this out with:
@@ -451,22 +437,22 @@ But this is not all lambdas are capable of. You can, for example, save them in s
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=a1
 type storage = {fn : (int -> int) option; value : int}
+type result = operation list * storage
 
-type parameter = SetFunction of (int -> int) | CallFunction
-
-let call (fn, value : (int -> int) option * int) =
+let call (fn : (int -> int) option) (value : int) =
   match fn with
     Some f -> f value
   | None -> failwith "Lambda is not set"
 
-let main (p, s : parameter * storage) : operation list * storage =
-  let newStorage =
-    match p with
-      SetFunction fn -> {s with fn = Some fn}
-    | CallFunction -> {s with value = call (s.fn, s.value)} in
-  [], newStorage
+[@entry]
+let setFunction (fn : int -> int) (s : storage) : result =
+  [], { s with fn = Some fn }
+
+[@entry]
+let callFunction (_ : unit) (s : storage) : result =
+  [], { s with value = call s.fn s.value }
 ```
 
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction (fun (x : int) -> ...)`.
@@ -477,24 +463,22 @@ Now we can _upgrade_ a part of the implementation by calling our contract with `
 
 ```jsligo group=a1
 type storage = { fn : option<((x : int) => int)>, value : int };
+type result = [list<operation>, storage];
 
-type parameter = ["CallFunction"] | ["SetFunction", ((x : int) => int)];
-
-let call = (fn: option<((x : int) => int)>, value: int) : int => {
+const call = (fn: option<((x : int) => int)>, value: int) : int => {
   return match(fn) {
     when(Some(f)): f(value);
     when(None()): failwith("Lambda is not set")
   }
 };
 
-let main = (p : parameter, s: storage) : [list<operation>, storage] => {
-  let newStorage =
-    match(p) {
-      when(SetFunction(fn)): ({...s, fn: Some (fn)});
-      when(CallFunction()): ({...s, value: call(s.fn, s.value)})
-    };
-  return [list([]), newStorage]
-};
+@entry
+const setFunction = (fn : ((v : int) => int), s : storage) : result =>
+  [list([]), {...s, fn: Some(fn)}];
+
+@entry
+const callFunction = (_u : unit, s : storage) : result =>
+  [list([]), {...s, value: call(s.fn, s.value)}];
 ```
 
 Now we can _upgrade_ a part of the implementation by calling our contract with `SetFunction ((x : int) => ...)`.
@@ -536,7 +520,7 @@ In Tezos, the execution model is quite different. Contracts communicate via mess
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=b1
 type storage = {rewardsLeft : tez; beneficiaryAddress : address}
 
 let treasury (p, s : unit * storage) =

@@ -8,31 +8,31 @@ Contracts written in LIGO can be compiled using the `ligo` executable.
 
 ## Compiling a contract
 
-Compile your contract with a specific entry point.
+Compile your contract.
 
 ```zsh
-ligo compile contract SOURCE_FILE --entry-point ENTRY_POINT
+ligo compile contract SOURCE_FILE
 ```
 
 #### Example
 
 ```zsh
-ligo compile contract examples/counter.mligo --entry-point main
+ligo compile contract examples/counter.mligo
 ```
 
 
 ## Compiling a view
 
-Compile a view with a specific entry point.
+Compile a view.
 
 ```zsh
-ligo compile view SOURCE_FILE VIEW_NAME --entry-point ENTRY_POINT
+ligo compile view SOURCE_FILE VIEW_NAME
 ```
 
 #### Example
 
 ```zsh
-ligo compile view examples/counter.mligo v1 --entry-point main
+ligo compile view examples/counter.mligo v1
 ```
 
 
@@ -46,14 +46,14 @@ ligo compile storage SOURCE_FILE EXPRESSION --entry-point ENTRY_POINT
 
 #### Example
 ```zsh
-ligo compile storage examples/counter.mligo 5 --entry-point main
+ligo compile storage examples/counter.mligo 5
 # Outputs: 5
 ```
 
 ## Invoking the contract with a parameter
 
 ```zsh
-ligo compile parameter SOURCE_FILE EXPRESSION --entry-point ENTRY_POINT
+ligo compile parameter SOURCE_FILE EXPRESSION
 ```
 
 #### Example
@@ -61,3 +61,5 @@ ligo compile parameter SOURCE_FILE EXPRESSION --entry-point ENTRY_POINT
 ligo compile parameter examples/counter.mligo "Increment(5)" --entry-point main
 # Outputs: (Right 5)
 ```
+
+<!-- updated use of entry -->

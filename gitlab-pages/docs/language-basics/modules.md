@@ -59,9 +59,9 @@ the given currency, as well as constants for zero and one.
 ```jsligo group=EURO
 namespace EURO {
   export type t = nat;
-  export let add = (a: t, b: t): t => a + b;
-  export let zero: t = 0n;
-  export let one: t = 1n
+  export const add = (a: t, b: t): t => a + b;
+  export const zero: t = 0n;
+  export const one: t = 1n
 }
 ```
 
@@ -82,8 +82,9 @@ increments the storage value each time it is called.
 ```cameligo group=EURO
 type storage = EURO.t
 
-let main (action, store : unit * storage) : operation list * storage =
- ([], EURO.add(store, EURO.one))
+[@entry]
+let main (_action : unit) (store : storage) : operation list * storage =
+  ([], EURO.add(store, EURO.one))
 ```
 </Syntax>
 
@@ -92,7 +93,8 @@ let main (action, store : unit * storage) : operation list * storage =
 ```jsligo group=EURO
 type storage = EURO.t;
 
-let main = (action: unit, store: storage): [list<operation>, storage] =>
+@entry
+let main = (_action: unit, store: storage): [list<operation>, storage] =>
   [list([]), EURO.add(store, EURO.one)];
 ```
 
@@ -121,9 +123,9 @@ end
 ```jsligo group=EURO2
 namespace EURO {
   export type t = int;
-  export let add = (a: t, b: t): t => a + b;
-  export let zero: t = 0;
-  export let one: t = 1;
+  export const add = (a: t, b: t): t => a + b;
+  export const zero: t = 0;
+  export const one: t = 1;
 }
 ```
 
@@ -136,7 +138,8 @@ needed. Abstraction accomplished!
 > the abstraction if it directly uses the underlying representation of
 > `EURO.t`. Client code should always try to respect the interface
 > provided by the module, and not make assumptions on its current
-> underlying representation (e.g. `EURO.t` is an alias of `nat`).
+> underlying representation (e.g. `EURO.t` is a transparent alias
+> of `nat`; future versons of LIGO might make this an opaque / abstract type).
 
 ## Nested Modules: Sub-Modules
 
@@ -188,7 +191,8 @@ than once:
 ```cameligo group=EURO3
 type storage = EURO.t
 
-let main (action, store : unit * storage) : operation list * storage =
+[@entry]
+let main (_action : unit) (store : storage) : operation list * storage =
  ([], EURO.add(store, EURO.CONST.one))
 ```
 
@@ -199,7 +203,8 @@ let main (action, store : unit * storage) : operation list * storage =
 ```jsligo group=EURO3
 type storage = EURO.t;
 
-let main = (action: unit, store: storage) : [list<operation>, storage] =>
+@entry
+let main = (_action: unit, store: storage) : [list<operation>, storage] =>
  [list([]), EURO.add(store, EURO.CONST.one)]
 ```
 
@@ -259,7 +264,8 @@ that imports all definitions from `imported.mligo` as the module
 
 type storage = EURO.t
 
-let main (action, store : unit * storage) : operation list * storage =
+[@entry]
+let main (_action : unit) (store : storage) : operation list * storage =
  ([], EURO.add(store, EURO.one))
 ```
 
@@ -277,6 +283,7 @@ that imports all definitions from `imported.jsligo` as the module
 
 type storage = EURO.t;
 
+@entry
 const main = (_action: unit, store: storage): [list<operation>, storage] =>
   [list([]), EURO.add(store, EURO.one)];
 ```
@@ -289,7 +296,7 @@ without having to mention the imported file.
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.mligo --entry-point main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.mligo
 ```
 
 </Syntax>
@@ -297,7 +304,7 @@ ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.mli
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.jsligo --entry-point main
+ligo compile contract gitlab-pages/docs/language-basics/src/modules/importer.jsligo
 ```
 
 </Syntax>
@@ -330,9 +337,9 @@ import US_DOLLAR = EURO;
 ## Modules as Contracts
 
 When a module contains declarations that are tagged with the attribute
-`@entry`, then a contract can be obtained from such module. All
-declarations in the module tagged as `@entry` are grouped, and a
-dispatcher contract is generated.
+`@entry` (called `@entry` decorator in JsLIGO), then a contract can be
+obtained from such module. All declarations in the module tagged as
+`@entry` are grouped, and a dispatcher contract is generated.
 
 <Syntax syntax="cameligo">
 
@@ -397,12 +404,14 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo group=contract
-const test = (() => {
+const test = do {
   let [taddr, _code, _size] = Test.originate_module(contract_of(C), 0, 0tez);
   let contr : contract<parameter_of C> = Test.to_contract(taddr);
   Test.transfer_to_contract_exn(contr, (Increment (42)), 1mutez);
   return assert(Test.get_storage(taddr) == 42);
-})();
+};
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

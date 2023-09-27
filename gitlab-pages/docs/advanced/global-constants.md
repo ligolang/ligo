@@ -68,7 +68,7 @@ contract` sub-command in the `--constants` argument:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract ./gitlab-pages/docs/advanced/src/global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
@@ -76,7 +76,7 @@ ligo compile contract global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ;
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract global_call.jsligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract ./gitlab-pages/docs/advanced/src/global_call.jsligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
@@ -118,14 +118,15 @@ simplifies the usage flow (see example below).
 
 ## Usage example
 
-Given the following contract `global_call`:
+Given the following contract `global_const`:
 
 <Syntax syntax="cameligo">
 
-```cameligo group=pre_global
+```cameligo group=global_const
 let helper ((s, x) : string * int) =
   String.length s + x * 3 + 2
 
+[@entry]
 let main (p : string) (s : int) : operation list * int =
   ([], helper (p, s))
 ```
@@ -134,10 +135,11 @@ let main (p : string) (s : int) : operation list * int =
 
 <Syntax syntax="jsligo">
 
-```jsligo group=pre_global
+```jsligo group=global_const
 const helper = ([s, x]: [string, int]) =>
   String.length(s) + x * 3 + 2;
 
+@entry
 const main = (p: string, s: int) : [list<operation>, int] =>
   [list([]), helper ([p, s])];
 ```
@@ -150,25 +152,25 @@ step is to ask LIGO to compile the constant:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile constant cameligo "helper" --init-file global_call.mligo
-// Outputs:
-// Michelson constant as JSON string:
-// "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
-// This string can be passed in `--constants` argument when compiling a contract.
-//
-// Remember to register it in the network, e.g.:
-// > tezos-client register global constant "{ UNPAIR ;
-//   PUSH int 2 ;
-//   PUSH int 3 ;
-//   DIG 3 ;
-//   MUL ;
-//   DIG 2 ;
-//   SIZE ;
-//   ADD ;
-//   ADD }" from bootstrap1
-//
-// Constant hash:
-// exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
+ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global_const.mligo
+# Outputs:
+# Michelson constant as JSON string:
+# "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
+# This string can be passed in `--constants` argument when compiling a contract.
+# 
+# Remember to register it in the network, e.g.:
+# > tezos-client register global constant "{ UNPAIR ;
+#   PUSH int 2 ;
+#   PUSH int 3 ;
+#   DIG 3 ;
+#   MUL ;
+#   DIG 2 ;
+#   SIZE ;
+#   ADD ;
+#   ADD }" from bootstrap1
+# 
+# Constant hash:
+# exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
 
 </Syntax>
@@ -176,26 +178,25 @@ ligo compile constant cameligo "helper" --init-file global_call.mligo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile constant jsligo "helper" --init-file global_const.jsligo
-// Outputs:
-// Michelson constant as JSON string:
-// "{ PUSH int 2 ;\n  PUSH int 3 ;\n  DUP 3 ;\n  CDR ;\n  MUL ;\n  DIG 2 ;\n  CAR ;\n  SIZE ;\n  ADD ;\n  ADD }"
-// This string can be passed in `--constants` argument when compiling a contract.
-//
-// Remember to register it in the network, e.g.:
-// > tezos-client register global constant "{ PUSH int 2 ;
-//   PUSH int 3 ;
-//   DUP 3 ;
-//   CDR ;
-//   MUL ;
-//   DIG 2 ;
-//   CAR ;
-//   SIZE ;
-//   ADD ;
-//   ADD }" from bootstrap1
-//
-// Constant hash:
-// expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8
+ligo compile constant jsligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global_const.jsligo
+# Outputs:
+# Michelson constant as JSON string:
+# "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
+# This string can be passed in `--constants` argument when compiling a contract.
+# 
+# Remember to register it in the network, e.g.:
+# > tezos-client register global constant "{ UNPAIR ;
+#   PUSH int 2 ;
+#   PUSH int 3 ;
+#   DIG 3 ;
+#   MUL ;
+#   DIG 2 ;
+#   SIZE ;
+#   ADD ;
+#   ADD }" from bootstrap1
+# 
+# Constant hash:
+# exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
 
 </Syntax>
@@ -213,7 +214,7 @@ exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 <Syntax syntax="jsligo">
 
 ```
-expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8
+exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf
 ```
 
 </Syntax>
@@ -232,7 +233,7 @@ references to `helper` by
 <Syntax syntax="jsligo">
 
 ```
-(Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8") as ((_ps : [string, int]) => int))
+(Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf") as ((_ps : [string, int]) => int))
 ```
 
 </Syntax>
@@ -252,7 +253,7 @@ let main (p : string) (s : int) : operation list * int =
 
 ```jsligo skip
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [ list([]), Tezos.constant("expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8")(p, s) ];
+  [ list([]), Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s) ];
 ```
 
 </Syntax>
@@ -284,12 +285,12 @@ passing the file with constants in the flag `--file-constants`:
 
 ```shell
 ligo compile contract global_call.mligo --file-constants consts.json
-// Outputs:
-// { parameter string ;
-//   storage int ;
-//   code { constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" ;
-//          NIL operation ;
-//          PAIR } }
+# Outputs:
+# { parameter string ;
+#   storage int ;
+#   code { constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" ;
+#          NIL operation ;
+#          PAIR } }
 ```
 
 </Syntax>
@@ -298,12 +299,12 @@ ligo compile contract global_call.mligo --file-constants consts.json
 
 ```shell
 ligo compile contract global_call.jsligo --file-constants consts.json
-// Outputs:
-// { parameter string ;
-//   storage int ;
-//   code { constant "expru4G4gV3ppCneKsDec8s5oTHE1ukSVD6vKb13hBEsqD1xQUvib8" ;
-//          NIL operation ;
-//          PAIR } }
+# Outputs:
+# { parameter string ;
+#   storage int ;
+#   code { constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf" ;
+#          NIL operation ;
+#          PAIR } }
 ```
 
 </Syntax>
@@ -374,3 +375,5 @@ const test = _test();
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

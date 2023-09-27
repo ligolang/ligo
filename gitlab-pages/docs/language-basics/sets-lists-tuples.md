@@ -50,9 +50,9 @@ them names by *type aliasing*.
 <Syntax syntax="cameligo">
 
 ```cameligo group=tuple
-type full_name = string * string  // Alias
+type two_people = string * string  // Alias
 
-let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
+let friends : two_people = ("Alice", "Johnson") // Optional parentheses
 ```
 
 </Syntax>
@@ -60,9 +60,9 @@ let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
-type full_name = [string, string];  // Alias
+type two_people = [string, string];  // Alias
 
-let full_name: full_name = ["Alice", "Johnson"];
+const friends: two_people = ["Alice", "Johnson"];
 ```
 
 </Syntax>
@@ -71,19 +71,19 @@ let full_name: full_name = ["Alice", "Johnson"];
 
 ### Destructuring
 
-If we want to get the first and last name of the `full_name` type, we can use
+If we want to get the first and second names of the `two_people` type, we can use
 destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
 ```cameligo group=tuple
-let (first_name, last_name) : full_name = full_name
+let (person_a, person_b) : two_people = friends
 ```
 
 This also works in functions:
 
 ```cameligo group=tuple
-let first_name ((first_name, _): full_name) = first_name
-let alice = first_name full_name
+let first_person ((person_a, _): two_people) = person_a
+let alice = first_person friends
 ```
 
 Notice that we use the underscore to indicate that we ignore the last element
@@ -95,22 +95,22 @@ of the tuple.
 
 ### Destructuring
 
-If we want to get the first and last name of the `full_name` type, we can use
+If we want to get the first and second names of the `two_people` type, we can use
 destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
 ```jsligo group=tuple
-let [first_name, last_name] = full_name;
+let [person_a, person_b] = friends;
 ```
 
 This also works in functions:
 
 ```jsligo group=tuple
-let first_name_fun = ([first_name, _]: full_name) => first_name;
-let alice = first_name_fun(full_name);
+let first_person_fun = ([person_a, _person_b]: two_people) => person_a;
+let alice = first_person_fun(friends);
 ```
 
-> note: the underscore to indicate that we ignore the last element of the tuple.
+> note: the leading underscore to indicate that the argument `_person_b` is unused.
 
 and within a code block:
 
@@ -145,7 +145,7 @@ components are zero-indexed*, that is, the first component has index
 <Syntax syntax="cameligo">
 
 ```cameligo group=tuple
-let first_name : string = full_name.0
+let first_name : string = friends.0
 ```
 
 </Syntax>
@@ -153,7 +153,7 @@ let first_name : string = full_name.0
 <Syntax syntax="jsligo">
 
 ```jsligo group=tuple
-let first_name_component = full_name[0];
+const first_name_component = friends[0];
 ```
 
 </Syntax>
@@ -178,7 +178,7 @@ think of a list a *stack*, where the top is written on the left.
 
 ```cameligo group=lists
 let empty_list : int list = []
-let my_list : int list = [1; 2; 2] // The head is 1
+let my_list : int list = [1; 2; 2] (* The head is 1, the tail is [2; 2] *)
 ```
 
 </Syntax>
@@ -186,8 +186,8 @@ let my_list : int list = [1; 2; 2] // The head is 1
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let empty_list: list<int> = list([]);
-let my_list = list([1, 2, 2]); // The head is 1
+const empty_list: list<int> = list([]);
+const my_list = list([1, 2, 2]); // The head is 1, the tail is list([2, 2])
 ```
 
 </Syntax>
@@ -206,7 +206,7 @@ symmetric: on the left lies the element to cons, and, on the right, a
 list on which to cons.
 
 ```cameligo group=lists
-let larger_list : int list = 5 :: my_list // [5;1;2;2]
+let larger_list : int list = 5 :: my_list (* [5;1;2;2] *)
 ```
 
 </Syntax>
@@ -218,7 +218,7 @@ not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
 ```jsligo group=lists
-let larger_list = list([5, ...my_list]); // [5,1,2,2]
+const larger_list = list([5, ...my_list]); // [5,1,2,2]
 ```
 
 </Syntax>
@@ -232,8 +232,8 @@ function to access those are `List.head_opt` and `List.tail_opt`
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let head : int option = List.head_opt my_list // 1
-let tail : int list option = List.tail_opt my_list // [2;2]
+let head : int option = List.head_opt my_list (* 1 *)
+let tail : int list option = List.tail_opt my_list (* [2;2] *)
 ```
 
 </Syntax>
@@ -241,14 +241,14 @@ let tail : int list option = List.tail_opt my_list // [2;2]
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let head: option<int> = List.head_opt(my_list); // 1
-let tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
+const head: option<int> = List.head_opt(my_list); // 1
+const tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
 ```
 
 </Syntax>
 
 However, the canonical way to destructure lists is using [pattern
-matching](unit-option-pattern-matching.md#match-on-lists).
+matching](unit-option-pattern-matching.md#matching-lists).
 
 ### Functional Iteration over Lists
 
@@ -278,7 +278,7 @@ elements (integers) are strictly greater than `3`.
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let iter_op (l : int list) : unit =
+let assert_all_greater_than_three (l : int list) : unit =
   let predicate = fun (i:int) -> assert (i > 3)
   in List.iter predicate l
 ```
@@ -288,7 +288,7 @@ let iter_op (l : int list) : unit =
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let iter_op = (l: list<int>): unit => {
+const assert_all_greater_than_three = (l: list<int>): unit => {
   let predicate = i => assert(i > 3);
   List.iter(predicate, l);
 };
@@ -311,7 +311,7 @@ is used as follows.
 let increment (i : int) = i + 1
 
 // Creates a new list with all elements incremented by 1
-let plus_one : int list = List.map increment larger_list
+let plus_one : int list = List.map increment larger_list (* [6,2,3,3] *)
 ```
 
 </Syntax>
@@ -319,10 +319,10 @@ let plus_one : int list = List.map increment larger_list
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let increment = i => i + 1;
+const increment = i => i + 1;
 
 // Creates a new list with all elements incremented by 1
-let plus_one: list<int> = List.map(increment, larger_list);
+const plus_one: list<int> = List.map(increment, larger_list); // [6,2,3,3]
 ```
 
 </Syntax>
@@ -361,12 +361,11 @@ let sum_of_elements : int = List.fold_left sum 0 my_list
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let sum = ([result, i]: [int, int]) => result + i;
-let sum_of_elements: int = List.fold (sum, my_list, 0);
+const sum = ([result, i]: [int, int]) => result + i;
+const sum_of_elements: int = List.fold (sum, my_list, 0);
 ```
 
 </Syntax>
-
 
 ## Sets
 
@@ -394,7 +393,7 @@ In JsLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
 ```jsligo group=sets
-let my_empty_set: set<int> = Set.empty;
+const my_empty_set: set<int> = Set.empty;
 ```
 
 </Syntax>
@@ -415,9 +414,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo run evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo --entry-point my_set
-# Outputs: { 3 ; 2 ; 1 }
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
+# Outputs: SET_ADD(3 , SET_ADD(2 , SET_ADD(1 , SET_EMPTY())))
 ```
 
 </Syntax>
@@ -436,9 +434,8 @@ compiler like this (the output will sort the elements of the set, but
 that order is not significant for the compiler):
 
 ```shell
-ligo run evaluate-expr
-gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo --entry-point my_set
-# Outputs: { 3 ; 2 ; 1 }
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.jsligo my_set
+# Outputs: SET_ADD(3 , SET_ADD(2 , SET_ADD(1 , SET_EMPTY())))
 ```
 
 </Syntax>
@@ -450,7 +447,7 @@ You can add an element to a set, using `Set.add` function.
 <Syntax syntax="cameligo">
 
 ```cameligo group=sets
-let add_999 : int set = Set.add 999 my_set
+let with_999 : int set = Set.add 999 my_set
 ```
 
 </Syntax>
@@ -458,7 +455,7 @@ let add_999 : int set = Set.add 999 my_set
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let add_999: set<int> = Set.add(999, my_set);
+const with_999: set<int> = Set.add(999, my_set);
 ```
 
 </Syntax>
@@ -482,7 +479,7 @@ In JsLIGO, the predefined predicate `Set.mem` tests for membership
 in a set as follows:
 
 ```jsligo group=sets
-let contains_3: bool = Set.mem(3, my_set);
+const contains_3: bool = Set.mem(3, my_set);
 ```
 
 </Syntax>
@@ -506,7 +503,7 @@ let cardinal : nat = Set.size my_set
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let cardinal: nat = Set.size(my_set);
+const cardinal: nat = Set.size(my_set);
 ```
 
 </Syntax>
@@ -536,8 +533,8 @@ In JsLIGO, we can use the predefined functions `Set.add` and
 without some elements.
 
 ```jsligo group=sets
-let larger_set: set<int> = Set.add(4, my_set);
-let smaller_set: set<int> = Set.remove(3, my_set);
+const larger_set: set<int> = Set.add(4, my_set);
+const smaller_set: set<int> = Set.remove(3, my_set);
 ```
 
 </Syntax>
@@ -568,7 +565,7 @@ iterated to check that all its elements (integers) are greater than
 <Syntax syntax="cameligo">
 
 ```cameligo group=sets
-let iter_op (s : int set) : unit =
+let assert_all_greater_than_three (s : int set) : unit =
   let predicate = fun (i : int) -> assert (i > 3)
   in Set.iter predicate s
 ```
@@ -578,7 +575,7 @@ let iter_op (s : int set) : unit =
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let iter_op = s => {
+const assert_all_greater_than_three = s => {
   let predicate = i => assert(i > 3);
   Set.iter(predicate, s);
 };
@@ -618,8 +615,10 @@ signature `val fold_right : ('acc * 'elt -> 'acc) * 'elt set * 'acc ->
 'acc`.
 
 ```jsligo group=sets
-let sum = ([acc, i]: [int, int]) => acc + i;
-let sum_of_elements = Set.fold (sum, my_set, 0);
+const sum = ([acc, i]: [int, int]) => acc + i;
+const sum_of_elements = Set.fold (sum, my_set, 0);
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

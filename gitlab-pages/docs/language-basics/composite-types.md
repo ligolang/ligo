@@ -61,7 +61,7 @@ type account_data = {
 
 type ledger = map <account, account_data>;
 
-let my_ledger : ledger =
+const my_ledger : ledger =
   Map.literal(list([
     ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address,
      {balance: 10mutez, transactions: 5n}]]));
@@ -72,3 +72,5 @@ let my_ledger : ledger =
 Complementary to records are the *variant types*, which are described in the
 section on [pattern matching](https://ligolang.org/docs/language-basics/unit-option-pattern-matching#variant-types).
 Records are a product of types, while variant types are sums of types.
+
+<!-- updated use of entry -->

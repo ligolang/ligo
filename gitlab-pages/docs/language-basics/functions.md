@@ -31,7 +31,9 @@ let add (a : int) (b : int) : int = a + b
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.mligo '(1,2)' --entry-point add
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/functions/blockless.mligo \
+  'add 1 2'
 # Outputs: 3
 ```
 
@@ -66,7 +68,9 @@ let increment : int -> int = add_curry 1             // Partial application
 You can run the `increment` function defined above using the LIGO
 compiler like this:
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/curry.mligo 5 --entry-point increment
+ligo run evaluate-call \
+  gitlab-pages/docs/language-basics/src/functions/curry.mligo \
+  increment 5
 # Outputs: 6
 ```
 
@@ -97,8 +101,8 @@ let g (x : int) = x - 2
 let h (x : int) = x + x - 3
 
 (* Here we apply function f on value 42,
-then apply g on the result,
-and then apply h on the result *)
+   then apply g on the result,
+   and then apply h on the result *)
 let result = h (g (f 42))
 
 (* Parentheses are indeed necessary here. If we remove them, we have : *)
@@ -112,7 +116,7 @@ In this case, the reverse-application operator (`|>`) can be used instead.
 
 Expression `f x` can be rewritten as `x |> f`,
 and `g (f x)` can be rewritten as `x |> f |> g`
-(you can think of it as "I take `x`, give it to function `f`, and then to function `g`").
+(you can think of it as "I take `x`, give it to function `f`, and then the result to function `g`").
 
 Above `result` can thus be rewritten as :
 
@@ -150,7 +154,9 @@ const add = (a: int, b: int) => a + b;
 You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/functions/blockless.jsligo '(1,2)' --entry-point add
+ligo run evaluate-expr \
+  gitlab-pages/docs/language-basics/src/functions/blockless.jsligo \
+  'add(1,2)'
 # Outputs: 3
 ```
 
@@ -180,15 +186,8 @@ what is being returned. If `return` is not used, it will be the same as
 `return unit`.
 
 By default, LIGO will warn about unused arguments inside
-functions. In case we do not use an argument, we can use the wildcard
-`_` to prevent warnings. Either use `_` instead of the argument
-identifier:
-
-```jsligo
-const k = (x: int, _: int) => x;
-```
-
-or use an identifier starting with wildcard:
+functions. In case we do not use an argument, its name should start with
+`_` to prevent warnings.
 
 ```jsligo
 const k_other = (x: int, _y: int) => x;
@@ -215,7 +214,7 @@ let a = increment 1 // a = 2
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mligo --entry-point a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mligo a
 # Outputs: 2
 ```
 
@@ -224,14 +223,14 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mlig
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let increment = (b) => ((a) => a + 1) (b);
-let a = increment(1); // a == 2
+const increment = (b) => ((a) => a + 1) (b);
+const a = increment(1); // a == 2
 ```
 
 You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.jsligo --entry-point a
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.jsligo a
 # Outputs: 2
 ```
 
@@ -252,9 +251,9 @@ let incr_map (l : int list) : int list =
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.mligo --entry-point incr_map
-"[1;2;3]"
+ligo run evaluate-call \
+  gitlab-pages/docs/language-basics/src/functions/incr_map.mligo \
+  incr_map "[1;2;3]"
 # Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to [ 2 ; 3 ; 4 ]
 ```
 
@@ -268,9 +267,9 @@ let incr_map = l => List.map(i => i + 1, l);
 You can call the function `incr_map` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo --entry-point incr_map
-"list([1,2,3])"
+ligo run evaluate-call \
+  gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo \
+  incr_map "list([1,2,3])"
 # Outputs: CONS(2 , CONS(3 , CONS(4 , LIST_EMPTY()))), equivalent to list([ 2 , 3 , 4 ])
 ```
 
@@ -332,3 +331,5 @@ function fibo (n: int, n_1: int, n_0: int): int {
 };
 ```
 </Syntax>
+
+<!-- updated use of entry -->

@@ -18,7 +18,9 @@ or define your own type result like in OCaml:
 In CameLIGO:
 
 ```cameligo group=failwith_view
-type ('s,'f) result = Ok of 's | Error of 'f
+type ('success,'failure) result =
+| Ok of 'success
+| Error of 'failure
 ```
 
 </Syntax>
@@ -28,7 +30,16 @@ type ('s,'f) result = Ok of 's | Error of 'f
 In JsLIGO:
 
 ```jsligo group=failwith_view
-type result<s,f> = ["Ok", s] | ["Error", f]
+type result<success,failure> =
+| ["Ok", success]
+| ["Error", failure]
 ```
 
 </Syntax>
+
+An exception (pun not intended) to this is that when using the test framework, some functions are able to detect a `failwith` raised by one of their callbacks, and return a different result based on the success or failure.
+
+For example, the [Test.transfer](../reference/test.md) function catches errors raised with `failwith` and converts them to a result of type `type test_exec_result = Success of nat | Fail of test_exec_error`.
+This allows the programmer to write positive and negative test, checking that the contract runs as intended and fails as intended.
+
+<!-- updated use of entry -->

@@ -39,7 +39,8 @@ type parameter = address
 
 type storage = unit
 
-let main (destination_addr, _ : parameter * storage) =
+[@entry]
+let main (destination_addr : parameter) (_ : storage) =
   let maybe_contract = Tezos.get_contract_opt destination_addr in
   let destination_contract =
     match maybe_contract with
@@ -60,7 +61,7 @@ Let us also examine a contract that stores the address of another contract and p
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=proxy
 (* examples/contracts/mligo/Proxy.mligo *)
 
 type parameter = int
@@ -72,7 +73,8 @@ let get_contract (addr : address) =
     Some contract -> contract
   | None -> failwith "Callee does not exist"
 
-let main (param, callee_addr : parameter * storage) =
+[@entry]
+let main (param : parameter) (callee_addr : storage) =
   let callee = get_contract (callee_addr) in
   let op = Tezos.transaction param 0mutez callee in
   [op], callee_addr
@@ -89,10 +91,11 @@ callee can be implemented like this:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=simplecounter
 (* examples/contracts/mligo/SimpleCounter.mligo *)
 
-let main (param, storage : int * int) = [], param + storage
+[@entry]
+let main (param : int) (storage : int) : operation list * int = [], param + storage
 ```
 
 </Syntax>
@@ -101,20 +104,16 @@ But what if we want to make a transaction to a contract but do not know the full
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=advancedcounter
 (* examples/contracts/mligo/AdvancedCounter.mligo *)
 
-type parameter =
-  Set of int | Add of int | Subtract of int | Multiply of int | Reset
+let nop : operation list = []
 
-let main (param, storage : parameter * int) =
-  let nop = [] in
-  match param with
-    Set n -> nop, n
-  | Add n -> nop, storage + n
-  | Subtract n -> nop, storage - n
-  | Multiply n -> nop, storage * n
-  | Reset -> nop, 0
+[@entry] let set      (n : int)  (_storage : int) = nop, n
+[@entry] let add      (n : int)  (storage : int)  = nop, storage + n
+[@entry] let subtract (n : int)  (storage : int)  = nop, storage + n
+[@entry] let multiply (n : int)  (storage : int)  = nop, storage * n
+[@entry] let reset    (_ : unit) (_storage : int) = nop, 0
 ```
 
 </Syntax>
@@ -138,7 +137,7 @@ To specify an entrypoint, we can use `Tezos.get_entrypoint_opt` instead of `Tezo
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=entrypointproxy
 (* contracts/examples/mligo/EntrypointProxy.mligo *)
 
 type parameter = int
@@ -150,7 +149,8 @@ let get_add_entrypoint (addr : address) =
     Some contract -> contract
   | None -> failwith "The entrypoint does not exist"
 
-let main (param, callee_addr : parameter * storage) =
+[@entry]
+let main (param : parameter) (callee_addr : storage) =
   let add : int contract = get_add_entrypoint (callee_addr) in
   let op = Tezos.transaction param 0mutez add in
   [op], callee_addr
@@ -256,25 +256,22 @@ Let us look at a simple access control contract with a "view" entrypoint:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=accesscontroller
 (* examples/contracts/mligo/AccessController.mligo *)
-
-type parameter =
-  Call of unit -> operation | IsWhitelisted of address * (bool contract)
 
 type storage = {senders_whitelist : address set}
 
-let main (p, s : parameter * storage) =
-  let op =
-    match p with
-      Call op ->
-        if Set.mem (Tezos.get_sender ()) s.senders_whitelist
-        then op ()
-        else failwith "Sender is not whitelisted"
-    | IsWhitelisted arg ->
-        let addr, callback_contract = arg in
-        let whitelisted = Set.mem addr s.senders_whitelist in
-        Tezos.transaction whitelisted 0mutez callback_contract in
+[@entry]
+let call (op : unit -> operation) (s : storage) : operation list * storage =
+  if Set.mem (Tezos.get_sender ()) s.senders_whitelist
+  then [op ()], s
+  else failwith "Sender is not whitelisted"
+
+[@entry]
+let iswhitelisted (arg : address * (bool contract)) (s : storage) : operation list * storage =
+  let addr, callback_contract = arg in
+  let whitelisted = Set.mem addr s.senders_whitelist in
+  let op = Tezos.transaction whitelisted 0mutez callback_contract in
   [op], s
 ```
 
@@ -288,26 +285,25 @@ Now imagine we want to control a contract with the following interface (we omit 
 ```cameligo skip
 (* examples/contracts/mligo/PausableToken.mligo *)
 
-type parameter = Transfer of address * address * nat | SetPaused of bool
-
 type storage = {ledger : (address, nat) big_map; owner : address; paused : bool}
+type result = operation list * storage
 
-let transfer (src, dst, amount_, storage : address * address * nat * storage) : storage =
+let do_transfer (src, dst, amount_, storage : address * address * nat * storage) : storage =
   (* ... *)
 
-let main (p, s : parameter * storage) =
-  [],
-  (match p with
-     Transfer arg ->
-       if s.paused
-       then failwith "The contract is paused"
-       else
-         let src, dst, amount_ = arg in
-         transfer (src, dst, amount_, s)
-   | SetPaused paused ->
-       if (Tezos.get_sender ()) <> s.owner
-       then failwith "Access denied"
-       else {s with paused = paused})
+[@entry]
+let transfer (arg : address * address * nat) (s : storage) : result =
+  if s.paused
+  then failwith "The contract is paused"
+  else
+    let src, dst, amount_ = arg in
+    [], transfer (src, dst, amount_, s)
+
+[@entry]
+let setpaused (paused : bool) (s : storage) : result =
+  if (Tezos.get_sender ()) <> s.owner
+  then failwith "Access denied"
+  else [], {s with paused = paused}
 ```
 
 </Syntax>

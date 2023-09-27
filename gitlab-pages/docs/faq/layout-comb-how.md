@@ -19,7 +19,8 @@ This will cause LIGO to undo the change, letting `@layout tree` remain
 the default.
 
 This is only a temporary solution, intended to let people easily
-migrate to LIGO 1.0. We would like to remove it eventually...
+migrate to LIGO 1.0, which should be considered already deprecated
+as it will eventually be removed.
 
 ## What's the problem?
 
@@ -126,7 +127,7 @@ namespace Bar {
   const dummy = (_: unit, s: unit) : [list<operation>, unit] => [list([]), s];
 };
 
-const test_interaction = (() => {
+const test_interaction = do {
   const [foo_typed_addr, _x1, _y1] = Test.originate_module(contract_of(Foo), unit, 0tz);
   const foo_addr = Tezos.address(Test.to_contract(foo_typed_addr));
   // let foo_contract : contract<parameter_of Foo> = Test.to_contract(foo_addr);
@@ -135,7 +136,7 @@ const test_interaction = (() => {
   const bar_contract : contract<parameter_of Bar> = Test.to_contract(bar_addr);
 
   Test.transfer_to_contract_exn(bar_contract, Bar(foo_addr), 0tz);
-}) ();
+};
 ```
 
 </Syntax>
@@ -274,3 +275,5 @@ Cannot unify "record1" with "record2" due to differing layouts "({ name: foo }, 
 The reason for this is that in the old `tree` layout, the fields were sorted alphabetically, but in the `comb` layout they are taken in the declared order.
 
 You can fix this problem either by switching back to the `tree` layout (see the previous section) or by writing the fields in a consistent order.
+
+<!-- updated use of entry -->

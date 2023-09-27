@@ -11,3 +11,5 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 ## Best practices
 
 TODO
+
+<!-- updated use of entry -->

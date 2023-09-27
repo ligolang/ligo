@@ -48,27 +48,14 @@ CameLigo. Additionally, it has both a light and dark theme mode.
     storage: 999
 *_*)
 type storage = int
+type result = operation list * storage
 
-(* variant defining pseudo multi-entrypoint actions *)
-
-type action =
-  Increment of int
-| Decrement of int
-
-let add (a, b : int * int) : int = a + b
-let sub (a, b : int * int) : int = a - b
-
-(* real entrypoint that re-routes the flow based on the action provided *)
-
-let main (p, s : action * storage) =
- let storage =
-   match p with
-   | Increment n -> add (s, n)
-   | Decrement n -> sub (s, n)
- in ([] : operation list), storage
-
+[@entry] let add (a : int) (store : storage) : result = [], a + b
+[@entry] let sub (a : int) (store : storage) : result = [], a - b
 ```
 
 </TabItem>
 
 </Tabs>
+
+<!-- updated use of entry -->

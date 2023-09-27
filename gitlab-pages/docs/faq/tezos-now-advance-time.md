@@ -61,3 +61,5 @@ let Test.reset_state_at = (initial_timestamp : timestamp, no_of_accounts: nat, a
 
 
 For more information on these function, see the [Test library](../reference/test.md)
+
+<!-- updated use of entry -->

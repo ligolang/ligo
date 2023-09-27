@@ -171,3 +171,5 @@ const lnat : list<nat> = rev(list([1n, 2n, 3n]));
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

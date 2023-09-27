@@ -23,7 +23,7 @@ let age : int = 25
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.mligo --entry-point age
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.mligo age
 # Outputs: 25
 ```
 
@@ -34,7 +34,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-const
 > Constants in JsLIGO are enforced:
 
 ```jsligo skip
-let x = (a : int) : int => {
+const x = do {
   const age = 25;
   age = 3; // Yields an error
 };
@@ -43,7 +43,7 @@ let x = (a : int) : int => {
 Unlike the other syntaxes, JsLIGO doesn't allow variable names to be reused in the same block scope:
 
 ```jsligo skip
-let x = a => {
+const x = () => {
   const age = 25;
   const age = 3; // Yields an error
 };
@@ -52,19 +52,24 @@ let x = a => {
 However, the following does work:
 
 ```jsligo group=d
-let x = a => {
-  const age = 25;
+const x = () => {
+  const _age = 25;
   {
-   const age = 3; // does not give an error
-   return age;
+    const _age = 3; // does not give an error
+    return _age;
   }
 };
 ```
 
-You can evaluate the constant definition above using the following CLI
+You can evaluate a constant definition using the following CLI
 command:
+
+```jsligo
+const age : int = 25;
+```
+
 ```shell
-ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo --entry-point age
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo age
 # Outputs: 25
 ```
 
@@ -87,7 +92,7 @@ let add (a, b : int * int) =
 You can run the `add` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo '(1,1)' --entry-point add
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo 'add 1 1'
 # Outputs: 2
 ```
 
@@ -108,7 +113,7 @@ Variables, unlike constants, are *mutable*.
 let add = (a: int, b: int): int => {
   let c = a;
   c = c + b;
-  return c
+  return c;
 }
 ```
 
@@ -116,7 +121,7 @@ You can run the `add` function defined above using the LIGO compiler
 like this:
 
 ```shell
-ligo run evaluate-call gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo '(1,1)' --entry-point add
+ligo run evaluate-expr gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo 'add(1, 1)'
 # Outputs: 2
 ```
 
@@ -147,7 +152,9 @@ let @Unique_name = true
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let @Unique_name = true
+const @Unique_name = true
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

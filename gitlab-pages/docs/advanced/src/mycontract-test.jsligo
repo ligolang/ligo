@@ -1,0 +1,23 @@
+// This is mycontract-test.jligo
+
+#import "mycontract.mligo" "MyContract"
+type param = parameter_of MyContract
+
+const run_test1 = () : unit => {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate_module(contract_of(MyContract), initial_storage, 0tez);
+  assert (Test.get_storage(taddr) == initial_storage);
+};
+
+const test1 = run_test1();
+
+// This continues mycontract-test.jsligo
+
+const test2 = do {
+  let initial_storage = 42 as int;
+  let [taddr, _, _] = Test.originate_module(contract_of(MyContract), initial_storage, 0tez);
+  let contr = Test.to_contract(taddr);
+  let gas_cons = Test.transfer_to_contract_exn(contr, (Increment (1)), 1mutez);
+  let _ = Test.log(["gas consumption", gas_cons]);
+  return (Test.get_storage(taddr) == initial_storage + 1);
+}

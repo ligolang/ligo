@@ -70,7 +70,7 @@ Tezos*.
 Here is an example of a Michelson contract.
 
 **`counter.tz`**
-```text
+```michelson
 { parameter (or (or (nat %add) (nat %sub)) (unit %default)) ;
   storage int ;
   code { AMOUNT ; PUSH mutez 0 ; ASSERT_CMPEQ ; UNPAIR ;
@@ -135,3 +135,25 @@ We cannot run JavaScript on the Tezos blockchain, but we can choose
 LIGO, which will abstract the stack management and allow us to create
 readable, type-safe, and efficient smart contracts.
 
+The JsLIGO program is very similar to the above naive JavaScript example.
+The notable differences are:
+
+* the main functions return the new storage, instead of updating it
+* the main functions also return a list of operations, this is used to transfer tokens out of the contract to other addresses
+* As in TypeScript, we need to specify the input / output type of some functions, where the compiler cannot guess them. This helps the compiler perform extra checks and weed off some bugs before they ever happen.
+
+```jsligo
+type t_storage = int
+type result = [list<operation>, t_storage]
+
+@entry
+function add (a, storage) : result { return [list([]), storage + a]; }
+
+@entry
+function sub (a, storage) : result { return [list([]), storage - a]; }
+
+@entry
+function reset (_ : unit, _storage : t_storage) : result { return [list([]), 0]; }
+```
+
+<!-- updated use of entry -->

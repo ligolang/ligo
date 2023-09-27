@@ -8,14 +8,14 @@ hide_table_of_contents: true
 import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
-## Tickets
+The following functions are available under the `Tezos.` namespace.
 
 <SyntaxTitle syntax="cameligo">
-val create_ticket : 'value -> nat -> ('value ticket) option
+val Tezos.create_ticket : 'value -> nat -> ('value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
+let Tezos.create_ticket: 'value => nat => option&lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 
@@ -35,18 +35,18 @@ let my_ticket2 = Option.unopt (Tezos.create_ticket "one" 10n)
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-let my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
-let my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
+const my_ticket1 = Option.unopt(Tezos.create_ticket(1, 10n));
+const my_ticket2 = Option.unopt(Tezos.create_ticket("one", 10n));
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="cameligo">
-val read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
+val Tezos.read_ticket : 'value ticket -> (address * ('value * nat)) * 'value ticket
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket&lt;'value&gt;&gt;
+let Tezos.read_ticket: ticket&lt;'value&gt; => &lt;&lt;address, &lt;'value , nat&gt;&gt; , ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 
@@ -71,20 +71,20 @@ let v =
 To read the content of a ticket, you need to use tuple destructuring:
 
 ```jsligo group=manip_ticket
-let v2 = (_: unit) => {
-  let [[addr, [v, amt]], ticket] = Tezos.read_ticket (my_ticket2);
-  return v;
+const v2 = do {
+  let [[_addr, [payload, _amt]], _ticket] = Tezos.read_ticket (my_ticket2);
+  return payload;
 }
 ```
 
 </Syntax>
 
 <SyntaxTitle syntax="cameligo">
-val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
+val Tezos.split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
+let Tezos.split_ticket: ticket&lt;'value&gt; => &lt;nat , nat&gt; => option &lt;&lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt;&gt;
 </SyntaxTitle>
 
 To partially use/consume a ticket, you have to split it.
@@ -105,7 +105,7 @@ let ta, tb =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket
-let [ta, tb] =
+const [ta, tb] =
   match(Tezos.split_ticket(my_ticket1, [6n, 4n])) {
     when(None()): failwith("amt_a + amt_v != amt");
     when(Some(split_tickets)): split_tickets
@@ -115,11 +115,11 @@ let [ta, tb] =
 </Syntax>
 
 <SyntaxTitle syntax="cameligo">
-val join_tickets : 'value ticket * 'value ticket -> ('value ticket) option
+val Tezos.join_tickets : 'value ticket * 'value ticket -> ('value ticket) option
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let join_tickets = &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
+let Tezos.join_tickets = &lt;ticket&lt;'value&gt;, ticket&lt;'value&gt;&gt; => option &lt;ticket&lt;'value&gt;&gt;
 </SyntaxTitle>
 
 To add two tickets, you have to join them. This works as the inverse
@@ -141,9 +141,11 @@ let tc : int ticket option =
 <Syntax syntax="jsligo">
 
 ```jsligo group=manip_ticket2
-let ta = Option.unopt(Tezos.create_ticket(1, 10n));
-let tb = Option.unopt(Tezos.create_ticket(1, 5n));
-let tc = Tezos.join_tickets([ta, tb]);
+const ta = Option.unopt(Tezos.create_ticket(1, 10n));
+const tb = Option.unopt(Tezos.create_ticket(1, 5n));
+const tc = Tezos.join_tickets([ta, tb]);
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

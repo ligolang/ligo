@@ -22,8 +22,8 @@ let b : bool = false
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let a = true;
-let b = false;
+const a = true;
+const b = false;
 ```
 
 </Syntax>
@@ -164,7 +164,7 @@ let lte: bool = 4 <= 3
   <div className="example">
 
 ```jsligo
-let logical_and = true && true;
+const logical_and = true && true;
 ```
 
   </div>
@@ -177,7 +177,7 @@ let logical_and = true && true;
   <div className="example">
 
 ```jsligo
-let logical_or = false || true;
+const logical_or = false || true;
 ```
 
   </div>
@@ -190,7 +190,7 @@ let logical_or = false || true;
   <div className="example">
 
 ```jsligo
-let logical_not = !false;
+const logical_not = !false;
 ```
 
   </div>
@@ -203,7 +203,7 @@ let logical_not = !false;
   <div className="example">
 
 ```jsligo
-let eq = 2 == 3;
+const eq = 2 == 3;
 ```
 
   </div>
@@ -216,7 +216,7 @@ let eq = 2 == 3;
   <div className="example">
 
 ```jsligo
-let not_eq = 2 != 3;
+const not_eq = 2 != 3;
 ```
 
   </div>
@@ -229,7 +229,7 @@ let not_eq = 2 != 3;
   <div className="example">
 
 ```jsligo
-let gt = 4 > 3;
+const gt = 4 > 3;
 ```
 
   </div>
@@ -242,7 +242,7 @@ let gt = 4 > 3;
   <div className="example">
 
 ```jsligo
-let lt = 4 < 3;
+const lt = 4 < 3;
 ```
 
   </div>
@@ -255,7 +255,7 @@ let lt = 4 < 3;
   <div className="example">
 
 ```jsligo
-let gte = 4 >= 3;
+const gte = 4 >= 3;
 ```
 
   </div>
@@ -268,7 +268,7 @@ let gte = 4 >= 3;
   <div className="example">
 
 ```jsligo
-let lte = 4 <= 3;
+const lte = 4 <= 3;
 ```
 
   </div>
@@ -299,7 +299,7 @@ function.
 ```cameligo group=b
 let a : string = "Alice"
 let b : string = "Alice"
-let c : bool = (a = b) // true
+let c : bool = (a = b) (* true *)
 ```
 
 </Syntax>
@@ -307,9 +307,9 @@ let c : bool = (a = b) // true
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let a = "Alice";
-let b = "Alice";
-let c = (a == b); // true
+const a = "Alice";
+const b = "Alice";
+const c = (a == b); // true
 ```
 
 </Syntax>
@@ -334,14 +334,14 @@ let h : bool = (a <> b)
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let a  = 5;
-let b  = 4;
-let c = (a == b);
-let d = (a > b);
-let e = (a < b);
-let f = (a <= b);
-let g = (a >= b);
-let h = (a != b);
+const a  = 5;
+const b  = 4;
+const c = (a == b);
+const d = (a > b);
+const e = (a < b);
+const f = (a <= b);
+const g = (a >= b);
+const h = (a != b);
 ```
 
 </Syntax>
@@ -376,14 +376,14 @@ To check if the following operators have the expected result use
 Usage:
 
 ```jsligo group=d
-let a = 0x1001;
-let b = 0x1000;
-let c = (a == b);
-let d = (a > b);
-let e = (a < b);
-let f = (a <= b);
-let g = (a >= b);
-let h = (a != b);
+const a = 0x1001;
+const b = 0x1000;
+const c = (a == b);
+const d = (a > b);
+const e = (a < b);
+const f = (a <= b);
+const g = (a >= b);
+const h = (a != b);
 ```
 
 </Syntax>
@@ -406,9 +406,9 @@ let c : bool = (a = b) // false
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let a: tez  = 5mutez;
-let b: tez  = 10mutez;
-let c = (a == b); // false
+const a: tez  = 5mutez;
+const b: tez  = 10mutez;
+const c = (a == b); // false
 ```
 
 </Syntax>
@@ -423,7 +423,7 @@ state.
 <Syntax syntax="cameligo">
 
 ```cameligo group=e
-type magnitude = Small | Large // See variant types.
+type magnitude = Small | Large (* See variant types. *)
 
 let compare (n : nat) : magnitude =
   if n < 10n then Small else Large
@@ -448,7 +448,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo '21n' --entry-p
 ```jsligo group=e
 type magnitude = ["Small"] | ["Large"]; // See variant types.
 
-function compare (n) {
+const compare = (n) => {
   if (n < 10n) return Small() else return Large()
 };
 ```
@@ -456,8 +456,7 @@ function compare (n) {
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/boolean-if-else/cond.jsligo '21n' --entry-point compare
+ligo run evaluate-call  gitlab-pages/docs/language-basics/src/boolean-if-else/cond.jsligo compare '21n'
 # Outputs: Large
 ```
 
@@ -516,8 +515,7 @@ the statements of the `default` case are executed.
 You can run the `quarter` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/boolean-if-else/switch.jsligo '5' --entry-point quarter
+ligo run evaluate-call  gitlab-pages/docs/language-basics/src/boolean-if-else/switch.jsligo quarter '5'
 # Outputs: "Q2"
 ```
 
@@ -525,17 +523,19 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/switch.jsligo '5' --entry-
 JsLIGO also supports JavaScript's ternary expression:
 
 ```jsligo
-let ternary = a => a == 1 ? true : false
+const ternary = a => a == 1 ? true : false;
 ```
 
 which can also be nested:
 
 ```jsligo
-let ternary_nested = a =>
+const ternary_nested = a =>
   a == 1 ? "one"   :
   a == 2 ? "two"   :
   a == 3 ? "three" :
-          "other"
+           "other"
 ```
 
 </Syntax>
+
+<!-- updated use of entry -->

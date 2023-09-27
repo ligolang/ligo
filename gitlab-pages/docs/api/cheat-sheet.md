@@ -722,3 +722,5 @@ const testC = () => {
 </Syntax>
 
 </div>
+
+<!-- updated use of entry -->

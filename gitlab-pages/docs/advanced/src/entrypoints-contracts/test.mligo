@@ -1,4 +1,4 @@
-#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo" "C"
+#import "incdec.mligo" "C"
 
 let test =
   let (ta, _, _) = Test.originate_module (contract_of C.IncDec) 0 (0tez) in

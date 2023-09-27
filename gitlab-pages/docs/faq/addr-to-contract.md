@@ -27,15 +27,16 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=addr2contract
-const _test = () : contract<unit> => {
+const test = do {
   const addr = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
   const taddr : typed_address<unit,unit> = Test.cast_address(addr);
   const contract : contract<unit> = Test.to_contract(taddr);
   return contract;
-}
-const test = _test();
+};
 ```
 
 </Syntax>
 
 Check out the reference of the `Test` framework for exact signature of the functions [here](../reference/test.md).
+
+<!-- updated use of entry -->

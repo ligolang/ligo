@@ -1,5 +1,5 @@
-type magnitude = ["Small"] | ["Large"]; // See variant types
+type magnitude = ["Small"] | ["Large"]; // See variant types.
 
-function compare (n : nat) : magnitude {
-  if (n < 0n) return Small() else return Large()
-}
+const compare = (n) => {
+  if (n < 10n) return Small() else return Large()
+};

@@ -304,7 +304,8 @@ Using this currently requires in general a type annotation on the
 <Syntax syntax="cameligo">
 
 ```cameligo
-let main (p,s : int * unit) : operation list * unit = if p > 10 then failwith "Failure." else [], ()
+let main (p : int) (_s : unit) : operation list * unit =
+  if p > 10 then failwith "Failure." else [], ()
 ```
 
 </Syntax>

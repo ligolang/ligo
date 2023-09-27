@@ -1,4 +1,4 @@
-namespace IncDec {
+export namespace IncDec {
   type storage = int;
   type ret = [list<operation>, storage];
 
@@ -13,6 +13,6 @@ namespace IncDec {
     [list([]), store - delta];
 
   @entry
-  const reset = (_ : unit, _ : storage) : ret =>
+  const reset = (_u : unit, _s : storage) : ret =>
     [list([]), 0];
 };
