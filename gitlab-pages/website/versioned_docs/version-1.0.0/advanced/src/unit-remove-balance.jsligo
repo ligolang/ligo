@@ -1,0 +1,39 @@
+// PART 0
+let under_test : option <string> = Some(("./gitlab-pages/docs/advanced/src/remove-balance.jsligo")) ;
+let x = Test.reset_state (5n, list([]) as list <nat> );
+
+// PART 1
+let bs_addr = (i : int) : michelson_program => {
+  return (Test.compile_value (Test.nth_bootstrap_account (i)))
+} ;
+
+let balances : michelson_program =
+  Test.compile_expression_subst (
+    under_test,
+    jsligo` Map.literal (list ([[ $a1 as address , 10mutez ] , [ $a2 as address , 100mutez ] , [ $a3 as address , 1000mutez ]])) ` as ligo_program,
+    list ([ ["a1", bs_addr (1)] , ["a2", bs_addr (2)] , ["a3", bs_addr (3)] ])
+  );
+
+//PART2
+let to_tez = (i:nat) : michelson_program => {
+  return (
+    Test.compile_expression_subst (
+      (None () as option<string>),
+      jsligo` $i * 1mutez ` as ligo_program,
+      list ([ ["i", Test.compile_value (i)] ])
+  )) } ;
+
+let test =
+  List.iter
+    ( ([threshold , expected_size] : [nat , nat]) : unit => {
+      let expected_size = Test.compile_value (expected_size) ;
+      let size =
+        Test.compile_expression_subst (
+          under_test,
+          jsligo` Map.size (balances_under ($b, $threshold)) ` as ligo_program,
+          list ([ ["b", balances] , ["threshold", to_tez (threshold)]]) );
+      let unit = Test.log (["expected", expected_size]) ;
+      let unit = Test.log (["actual",size]) ;
+      return (assert (Test.michelson_equal (size,expected_size)))
+    },
+    list ([ [15n, 2n] , [130n, 1n] , [1200n, 0n]]) );

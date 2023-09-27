@@ -1,0 +1,4 @@
+export type t = nat;
+export const add = (a: t, b: t): t => a + b;
+export const zero: t = 0n;
+export const one: t = 1n;
