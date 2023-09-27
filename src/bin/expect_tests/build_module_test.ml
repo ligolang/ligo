@@ -234,6 +234,8 @@ let%expect_test _ =
     ; "Parameter.initial_parameter ()"
     ; "--library"
     ; "test_libraries/lib/parameter,test_libraries/lib/storage"
+    ; "-e"
+    ; "main"
     ];
   [%expect {| (Right (Right (Left "Hello"))) |}];
   run_ligo_good

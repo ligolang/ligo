@@ -225,25 +225,6 @@ let typed_contract_and_expression_impl
       (Main_errors.self_ast_typed_tracer @@ `Self_ast_typed_not_a_contract module_)
       (Ast_typed.get_contract_signature sig_ module_path)
   in
-  let ctrct_sig =
-    { ctrct_sig with
-      parameter =
-        (* to handle single entrypoints:
-        parameter type for single entry-point contracts such as
-        `[@entry] let main (p:p) (s:s) = ...`
-        are now compiled to `| Main of p`
-        This representation do not yet persist up until the michelson representation
-        due to "optimisations" :  `| Main of p` compiles to `p`
-        When using `compile parameter /path/to/file` without using the -e CLI option,
-        we assume the given expression is of type `p` and not `| Main of p`
-        *)
-        (match
-           Option.map (Ast_typed.get_t_sum ctrct_sig.parameter) ~f:Ast_typed.Row.to_alist
-         with
-        | Some [ (_, ty) ] -> ty
-        | _ -> ctrct_sig.parameter)
-    }
-  in
   let app_typed_sig = Ast_typed.to_signature app_typed_prg.pr_module in
   let annotation =
     match check_type with

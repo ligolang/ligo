@@ -88,7 +88,13 @@ let test_compile_parameter ~raise:_ () =
   in
   let _ =
     run_ligo
-      [ "compile"; "parameter"; "contracts/module_contract_simple.mligo"; "Add 999" ]
+      [ "compile"
+      ; "parameter"
+      ; "contracts/module_contract_simple.mligo"
+      ; "Add 999"
+      ; "-e"
+      ; "main"
+      ]
   in
   check_analytics expected_registry_output_regex expected_agg_registry_content_regex
 
