@@ -1707,7 +1707,13 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "parameter"; contract "module_contract_simple.mligo"; "Add 999" ];
+    [ "compile"
+    ; "parameter"
+    ; contract "module_contract_simple.mligo"
+    ; "Add 999"
+    ; "-e"
+    ; "main"
+    ];
   [%expect {| (Left 999) |}]
 
 let%expect_test _ =
@@ -1721,7 +1727,13 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "parameter"; contract "module_contract_complex.mligo"; "Add 999" ];
+    [ "compile"
+    ; "parameter"
+    ; contract "module_contract_complex.mligo"
+    ; "Add 999"
+    ; "-e"
+    ; "main"
+    ];
   [%expect {| (Left 999) |}]
 
 (* Global constants *)
@@ -1767,6 +1779,8 @@ let%expect_test _ =
     ; "()"
     ; "--constants"
     ; "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+    ; "-e"
+    ; "main"
     ];
   [%expect {| Unit |}]
 
@@ -1965,7 +1979,8 @@ let%expect_test _ =
 
 (* Test compiling parameter in a file which uses test primitives *)
 let%expect_test _ =
-  run_ligo_good [ "compile"; "parameter"; contract "increment_with_test.mligo"; "z.1" ];
+  run_ligo_good
+    [ "compile"; "parameter"; contract "increment_with_test.mligo"; "z.1"; "-e"; "main" ];
   [%expect {| (Left 32) |}]
 
 (* Test compiling storage in a file which uses test primitives *)
@@ -2449,6 +2464,43 @@ let%expect_test _ =
     * "%default" when no entrypoint is used.
     Valid characters in annotation: ('a' .. 'z' | 'A' .. 'Z' | '_' | '.' | '%' | '@' | '0' .. '9'). |}]
 
+(* test compile parameter w.r.t. @entry *)
+let%expect_test _ =
+  run_ligo_good [ "compile"; "parameter"; contract "single.contract.jsligo"; "Poke()" ];
+  [%expect {| Unit |}];
+  run_ligo_good
+    [ "compile"; "parameter"; contract "single.contract.jsligo"; "[]"; "-e"; "poke" ];
+  [%expect {| Unit |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "single.parameter.jsligo"
+    ; "[]"
+    ; "-e"
+    ; "poke"
+    ; "-m"
+    ; "Contract"
+    ];
+  [%expect {| Unit |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "single.parameter.jsligo"
+    ; "Poke()"
+    ; "-m"
+    ; "Contract"
+    ];
+  [%expect {| Unit |}];
+  run_ligo_good
+    [ "compile"
+    ; "parameter"
+    ; contract "single.parameter.jsligo"
+    ; "default_parameter"
+    ; "-m"
+    ; "Contract"
+    ];
+  [%expect {| Unit |}]
+
 (* make sure that in compile storage we annotate the type *)
 let%expect_test _ =
   run_ligo_good
@@ -2462,7 +2514,13 @@ let%expect_test _ =
 (* make sure that in compile parameter we annotate the type *)
 let%expect_test _ =
   run_ligo_good
-    [ "compile"; "parameter"; contract "annotated_storage_and_parameter.mligo"; "[]" ];
+    [ "compile"
+    ; "parameter"
+    ; contract "annotated_storage_and_parameter.mligo"
+    ; "[]"
+    ; "-e"
+    ; "main"
+    ];
   [%expect {| {} |}]
 
 (* make sure that in compile parameter we do not allow polymorphic type *)
@@ -2609,6 +2667,8 @@ let%expect_test _ =
     ; "Increment 32"
     ; "-m"
     ; "C"
+    ; "-e"
+    ; "main"
     ];
   [%expect {| (Left 32) |}]
 

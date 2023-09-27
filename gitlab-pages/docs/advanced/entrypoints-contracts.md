@@ -346,6 +346,34 @@ ligo compile contract -m Proxy contract_main_proxy.jsligo
 
 </Syntax>
 
+Notice that to compile a parameter for this contract, now we need to
+pass the either `-e proxy` or construct a value using the `Proxy`
+constructor:
+
+<Syntax syntax="cameligo">
+
+```shell
+ligo compile parameter -m Proxy -e proxy contract_main_proxy.mligo "Action_A(42n)"
+```
+
+```shell
+ligo compile parameter -m Proxy contract_main_proxy.mligo "Proxy(Action_A(42n))"
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile parameter -m Proxy -e proxy contract_main_proxy.jsligo "Action_A(42n)"
+```
+
+```shell
+ligo compile parameter -m Proxy contract_main_proxy.jsligo "Proxy(Action_A(42n))"
+```
+
+</Syntax>
+
 ## Tezos-specific Built-ins
 
 A LIGO smart contract can query part of the state of the Tezos
