@@ -61,13 +61,7 @@ let manual_migration_hint =
   "To continue, create a ligo.json with ligo dependencies in it."
 
 
-let rec install
-    ~project_root
-    ~package_name
-    ~cache_path
-    ~ligo_registry
-    ~package_management_alpha
-  =
+let rec install ~project_root ~package_name ~cache_path ~ligo_registry ~esy_legacy =
   let ( let* ) = Caml.Result.bind in
   let* project_root =
     match project_root with
@@ -100,7 +94,7 @@ let rec install
         ~package_name
         ~cache_path
         ~ligo_registry
-        ~package_management_alpha
+        ~esy_legacy
     | _ -> Error (manual_migration_hint, ""))
   | `Valid_package_json ->
     let msg = manifest_migration_prompt ~manifest:"package.json" in
@@ -120,10 +114,10 @@ let rec install
         ~package_name
         ~cache_path
         ~ligo_registry
-        ~package_management_alpha
+        ~esy_legacy
     | _ -> Error (manual_migration_hint, ""))
   | `Invalid_esy_json | `Invalid_package_json | `No_manifest | `OK ->
-    if not package_management_alpha
+    if esy_legacy
     then run_esy package_name cache_path ligo_registry
     else (
       print_endline ("Project root: " ^ project_root);

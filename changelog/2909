@@ -1,0 +1,7 @@
+
+author: shubham-kumar
+description: "\\nPackage management backend no longer uses esy by default. Using esy is now opt-in and requires `--legacy-package-management` option\\n"
+merge_request: '2909'
+title: "deprecate --package-management-alpha flag"
+type: added
+            

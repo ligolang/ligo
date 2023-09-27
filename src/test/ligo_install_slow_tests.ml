@@ -114,7 +114,7 @@ module Slow_test = struct
       Ok s
 
 
-  (* This runs the complete user flow when the command `ligo install --package-management-alpha is used` *)
+  (* This runs the complete user flow when the command `ligo install` is used *)
   let run : string -> (string * string) list =
    fun cwd ->
     List.map ~f:(fun repo -> repo, run_seq cwd repo) repos

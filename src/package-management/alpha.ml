@@ -22,7 +22,7 @@ module InstallationJsonMap = Caml.Map.Make (NameVersion)
 let ( let@ ) o f = Result.bind ~f o
 
 type error =
-  | NotSupportedInAlpha
+  | NotSupported
   | UnableToAccessRegistry
   | VersionNotFound of string * string
   | UnableToSerializeSemver
@@ -50,8 +50,7 @@ type error =
   | InternalError of string
 
 let string_of_error = function
-  | NotSupportedInAlpha ->
-    "Not supported under --package-management-alpha please try with"
+  | NotSupported -> "Not supported please try --legacy-package-management to install using esy"
   | UnableToAccessRegistry ->
     "Unable to access registry, cannot download the metadata json"
   | VersionNotFound (n, v) -> Printf.sprintf "Version %s of %s not found" v n

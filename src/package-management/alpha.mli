@@ -1,7 +1,7 @@
 (** Contains all functions and modules handling the new in-house package management (without esy) *)
 
 type error =
-  | NotSupportedInAlpha
+  | NotSupported
   | UnableToAccessRegistry
   | VersionNotFound of string * string
   | UnableToSerializeSemver

@@ -53,42 +53,31 @@ The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO package
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
 LIGO libraries can be published to [LIGO's registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
-Using `ligo install` command we can fetch these ligo libraries (It internally invokes the [esy](https://esy.sh/) package manager).
+Using `ligo install` command we can fetch these ligo libraries.
 
-Pre-requites:
-1. Install esy ([link](https://esy.sh/docs/getting-started))
+Note:
+Earlier versions of LIGO used [`esy`](https://esy.sh) as the backend for package management. This is not so anymore, and installing esy is not necessary.
 
 ### Workflow
 
-Start with an empty `ligo.json` file
-
-```json
-{}
-```
-<br/>
-
 We will need the LIGO compiler to compile smart contracts, to get the LIGO compiler follow these [instructions](https://ligolang.org/docs/intro/installation).
 
-Next, we will use a simple dependency `@ligo/bigarray` published on the LIGO registry. To download & install the library, run,
+Next, we will use a simple dependency `@ligo/math-lib` published on the LIGO registry. To download & install the library, run,
 
 ```bash
-$ ligo install @ligo/bigarray
+$ ligo install @ligo/math-lib
 ```
 <br/>
 
-Now we will write a smart contract named `main` which will use the
-`@ligo/bigarray` library
+Now we can write a smart contract which will use the `@ligo/mathlib` library.
 
 <Syntax syntax="cameligo">
 
 ```cameligo skip
-#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
+#import "@ligo/mathlib/rational/rational.mligo" "Rational"
 
-type storage = int list
-type result = operation list * storage
+...
 
-let concat (ys : int list) (store : storage) : result = BA.concat store ys
-let reverse (_ : unit) (store: storage) : result = BA.reverse store
 ```
 
 </Syntax>
@@ -96,16 +85,14 @@ let reverse (_ : unit) (store: storage) : result = BA.reverse store
 <Syntax syntax="jsligo">
 
 ```jsligo skip
-#import "@ligo/bigarray/lib/bigarray.mligo" "BA"
+#import "@ligo/mathlib/rational/rational.mligo" "Rational"
 
-type storage = int list;
-type result = operation list * storage;
+...
 
-const concat = (ys : int list, store : storage) : result => BA.concat(store, ys)
-const reverse = (_ : unit, store: storage) : result => BA.reverse(store)
 ```
 
 </Syntax>
+
 <br/>
 
 > Note: When using LIGO packages via `#import`/`#include`
@@ -201,6 +188,10 @@ If you working with an existing LIGO project, to install the dependencies, at th
 ```bash
 $ ligo install
 ```
+
+### Specifying package versions
+
+To use package, it is necessary to specify the exact version of the package. Semver ranges are currently not supported. This will, however, change soon.
 
 ### Upgrading the version of a LIGO package
 
