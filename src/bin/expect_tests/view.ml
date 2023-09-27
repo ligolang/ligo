@@ -129,6 +129,18 @@ let%expect_test _ =
     - test_super_not_funny exited with value true. |}]
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; contract "view_exported.jsligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { CDR ; NIL operation ; PAIR } ;
+      view "bar" unit unit { CDR } }
+    Some (())
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "call_view_tuple.mligo" ];
   [%expect
     {|

@@ -1,0 +1,15 @@
+namespace C {
+  export type storage = unit
+  type result = [list<operation>, storage];
+
+  @entry const foo = (_u : unit, s : storage) : result => [list([]), s];
+  @view const bar = (_u : unit, s : storage) => s;
+}
+
+const test = do {
+  let [ta, _c, _n] = Test.originate_module(contract_of(C), [], 0tez);
+  Test.log(_c);
+  let c = Test.to_contract(ta);
+
+  Test.log(Tezos.call_view("bar", unit, Tezos.address(c)) as option<C.storage>);
+};

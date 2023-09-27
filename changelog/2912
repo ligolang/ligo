@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '2912'
+title: "Make view non-removed even if not exported"
+type: fixed
+            
