@@ -17,7 +17,8 @@ function SyntaxSwitch(props) {
   }, []);
 
   useEffect(() => {
-    let hidePascaligo = !!location.pathname?.startsWith("/docs/next");
+    let hidePascaligo = !location.pathname?.startsWith("/docs/0.72.0") && !location.pathname?.startsWith("/docs/0.73.0");
+    
     setIsNext(hidePascaligo);
   }, [location]);
 
