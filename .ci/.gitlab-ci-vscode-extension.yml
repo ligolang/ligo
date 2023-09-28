@@ -1,4 +1,4 @@
-## LSP/Squirrel and Debugger
+## LSP and Debugger
 
 include:
   - '/.ci/.gitlab-ci-tools-common.yml'

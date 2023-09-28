@@ -78,6 +78,7 @@ debugger-build:
   rules: &debugger_mr_dev
     - !reference [.debugger_mr_changes]
     - !reference [.dev]
+    - !reference [.vscode_production]
   needs: []
   script:
     - nix build $FLAKE_FLAGS ./tools/debugger#packages.x86_64-linux.ligo-debugger
@@ -128,7 +129,7 @@ debugger-test-ligo-minimal-supported:
   stage: push
   rules:
     - !reference [.vscode_production]
-  needs: []
+  needs: [debugger-build]
   when: manual
   variables:
     LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/minimal-supported"
