@@ -96,6 +96,18 @@ Previously, all declarations would be exported regardless whether `export`, `@pr
 
 In LIGO v1, JsLIGO definitions which are not marked with `export` are not exported, and CameLIGO definitions which are marked with `@private` are not exported. In other words, the default for JsLIGO is now to make definitions private unless specified otherwise with `export`, and the default for CameLIGO is now to make definitions public unless specified otherwise with `[@private]`.
 
+Furthermore, in JsLIGO nested namespaces need to be exported in order to be accessed, e.g.
+
+```jsligo group=namespace-export
+namespace Foo {
+    export namespace Bar {
+        export const x = 1
+    }
+}
+
+const y = Foo.Bar.x
+```
+
 MRs:
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2796
 * https://gitlab.com/ligolang/ligo/-/merge_requests/2684 in [v0.69.0](https://gitlab.com/ligolang/ligo/-/releases/0.69.0) ([changelog](../intro/changelog.md#0690))
