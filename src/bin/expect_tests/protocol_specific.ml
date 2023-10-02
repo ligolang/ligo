@@ -114,9 +114,11 @@ let%expect_test _ =
              PAIR } } |}]
 
 (* Test if pre alpha protocol works in this case it's mumbai, but in future this 
-   will change *)
+   will change
+   UPDATE: it seems that we do not have pre alpha anymore? Switching to oxford
+ *)
 let%expect_test _ =
-  run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "mumbai" ];
+  run_ligo_good [ "compile"; "contract"; contract "unit.mligo"; "--protocol"; "oxford" ];
   [%expect
     {|
     { parameter unit ;
