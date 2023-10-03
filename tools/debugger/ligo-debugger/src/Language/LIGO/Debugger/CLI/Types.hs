@@ -56,8 +56,6 @@ import Language.LIGO.AST.Skeleton hiding (ModuleName, Name)
 import Language.LIGO.AST.Skeleton qualified as AST
 import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Diagnostic
-import Language.LIGO.Parser
-import Language.LIGO.Product
 import Language.LIGO.Range
 import Language.LIGO.Scope
 
@@ -799,6 +797,27 @@ instance Buildable ModuleName where
 instance IsString ModuleName where
   fromString = mkModuleName . toText
 
+instance MessagePack LigoFileRange where
+  fromObjectWith _ = withMsgMap "LigoFileRange" \o -> do
+    _lfrStart <- o .: "start"
+    _lfrStop <- o .: "stop"
+    pure LigoFileRange{..}
+
+instance MessagePack LigoRangeInner where
+  fromObjectWith _ = withMsgMap "LigoRangeInner" \o -> do
+    _lriByte <- o .: "byte"
+    _lriPointNum <- o .: "point_num"
+    _lriPointBol <- o .: "point_bol"
+    pure LigoRangeInner{..}
+
+instance MessagePack LigoByte where
+  fromObjectWith _ = withMsgMap "LigoByte" \o -> do
+    _lbPosFname <- o .: "pos_fname"
+    _lbPosLnum <- o .: "pos_lnum"
+    _lbPosBol <- o .: "pos_bol"
+    _lbPosCnum <- o .: "pos_cnum"
+    pure LigoByte{..}
+
 ----------------------------------------------------------------------------
 -- Pretty
 ----------------------------------------------------------------------------
@@ -886,11 +905,10 @@ fromLigoTypeFull = \case
 fromLigoTypeExpression :: LigoTypeExpression -> LIGO Info
 fromLigoTypeExpression
   LigoTypeExpression {..} =
-    let st = putElem (point 0 0) defaultState in
-    fromLigoType st _lteTypeContent
+    fromLigoType defaultState _lteTypeContent
 
 fromLigoType
-  :: Product Info
+  :: Info
   -> LigoTypeContent
   -> LIGO Info
 fromLigoType st = \case
@@ -1007,7 +1025,7 @@ fromLigoType st = \case
       -- FIXME: Type annotation is optional.
       let type' = Just $ fromLigoTypeExpression typeExpr in
       case fieldKind of
-        FieldSum     -> make' (st, Variant n type')
+        FieldSum     -> make' (st, Variant n $ maybeToList type')
         FieldProduct -> make' (st, TField  n type')
 
     mkErr = mkLigoError st
@@ -1021,10 +1039,10 @@ fromLigoDefinitions LigoDefinitions{..} = mapMaybe fromLigoScope _ldScopes
       let sVariables = _lsExpressionEnvironment
       pure Scope{..}
 
-defaultState :: Product Info
-defaultState = [] :> [] :> point 1 1 :> CodeSource "" :> Nil
+defaultState :: Info
+defaultState = point 1 1
 
-mkLigoError :: Product Info -> Text -> LIGO Info
+mkLigoError :: Info -> Text -> LIGO Info
 mkLigoError p msg = make' . (p,) $ Error (FromLIGO msg) []
 
 -- | Variant of `make` that constructs a tree out of annotation and node
@@ -1036,15 +1054,15 @@ make'
      ( Element f fs
      , Foldable f
      , Apply Functor fs
-     ) => (Product Info, f (Tree fs (Product Info)))
-       -> Tree fs (Product Info)
+     ) => (Info, f (Tree fs Info))
+       -> Tree fs Info
 make' (i, f)
   | null ges = i :< inject f
   | otherwise = i' :< inject f
   where
     ges = List.filter (not . (`leq` i)) (extract <$> Data.Foldable.toList f)
-    r = getElem (List.minimum ges) `merged` getElem (List.maximum ges)
-    i' = putElem r i
+    r = List.minimum ges `merged` List.maximum ges
+    i' = r
 
 -- | Since we have @Maybe LigoVariable@ in @LigoExposedStackEntry@
 -- we need to have some default variable for unknown variables.

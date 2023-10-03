@@ -12,16 +12,16 @@ import Test.Hspec.Expectations (shouldBe)
 import Test.Util (renderNoLineLengthLimit)
 import Test.Util qualified as Common
 
-import Language.LIGO.AST (SomeLIGO (..), contractTree, lppDialect, parse)
-import Language.LIGO.ParseTree (pathToSrc)
+import Language.LIGO.AST (SomeLIGO (..))
+import Language.LIGO.AST.Pretty
+import Language.LIGO.Debugger.CLI
 
 contractsDir :: FilePath
 contractsDir = Common.contractsDir </> "pretty"
 
 checkPretty :: FilePath -> Text -> Assertion
 checkPretty fp expected = do
-  contract <- parse =<< pathToSrc (contractsDir </> fp)
-  let SomeLIGO lang code = contractTree contract
+  [SomeLIGO lang code] <- decodeCST (one $ contractsDir </> fp)
   strip (renderNoLineLengthLimit $ lppDialect lang code) `shouldBe` expected
 
 unit_pretty_sum_type_jsligo :: Assertion

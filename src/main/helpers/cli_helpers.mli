@@ -43,6 +43,7 @@ val return_result_lwt
   -> return:return ref
   -> ?show_warnings:bool
   -> ?output_file:string
+  -> ?minify_json:bool
   -> display_format:Simple_utils.Display.ex_display_format
   -> no_colour:bool
   -> warning_as_error:bool
@@ -57,6 +58,7 @@ val return_result
   -> return:return ref
   -> ?show_warnings:bool
   -> ?output_file:string
+  -> ?minify_json:bool
   -> display_format:Simple_utils.Display.ex_display_format
   -> no_colour:bool
   -> warning_as_error:bool

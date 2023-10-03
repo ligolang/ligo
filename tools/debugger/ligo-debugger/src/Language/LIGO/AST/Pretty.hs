@@ -7,7 +7,6 @@
 module Language.LIGO.AST.Pretty
   ( module DPretty
   , LPP (..)
-  , PPableLIGO
   , Pretty (..)
   , TotalLPP
   , lppDialect
@@ -26,8 +25,6 @@ import Duplo.Tree (Tree)
 
 import Language.LIGO.AST.Skeleton hiding (Type)
 import Language.LIGO.AST.Skeleton qualified as AST
-import Language.LIGO.Parser (LineMarker (..), LineMarkerType (..))
-import Language.LIGO.Product (Contains)
 import Language.LIGO.Range (Range)
 
 ----------------------------------------------------------------------------
@@ -138,6 +135,10 @@ instance Pretty1 RawContract where
   pp1 = \case
     RawContract xs -> sexpr "contract" xs
 
+instance Pretty1 ModuleExpr where
+  pp1 = \case
+    ModuleExpr xs -> sexpr "module_expr" xs
+
 instance Pretty1 Binding where
   pp1 = \case
     BTypeDecl     n    tys ty   -> sexpr "type_decl"  [n, pp tys, ty]
@@ -153,9 +154,9 @@ instance Pretty1 Binding where
         , [pp value]
         ]
     BInclude      fname         -> sexpr "#include" [fname]
-    BImport       fname alias   -> sexpr "#import" [fname, alias]
-    BModuleDecl   mname body    -> sexpr "module" [mname, pp body]
-    BModuleAlias  mname alias   -> sexpr "module" [mname, pp alias]
+    BImport       fname vars alias   -> sexpr "#import" [pp fname, list vars, alias]
+    BModuleDecl   mname _    body    -> sexpr "module" [mname, body]
+    BModuleAlias  mname _    alias   -> sexpr "module" [mname, alias]
 
     BFunction isRec name tys params ty body ->
       sexpr "fun" $ concat
@@ -167,6 +168,10 @@ instance Pretty1 Binding where
         , ["=", body]
         ]
 
+    BSignature name sig   -> sexpr "signature" [name, sig]
+    BExport decl          -> sexpr "export" [decl]
+    BDeclarationSeq decls -> sexpr "declarations" decls
+
 instance Pretty1 QuotedTypeParams where
   pp1 = \case
     QuotedTypeParam  t  -> sexpr "tparameter" [t]
@@ -174,15 +179,25 @@ instance Pretty1 QuotedTypeParams where
 
 instance Pretty1 AST.Type where
   pp1 = \case
-    TArrow    dom      codom  -> sop dom "->" [codom]
-    TRecord   _        fields -> sexpr "RECORD" fields
-    TSum _    variants        -> sexpr "SUM" (toList variants)
-    TProduct  elements        -> sexpr "PROD" elements
-    TApply    f        xs     -> sop f "$" xs
-    TString   t               -> sexpr "TSTRING" [pp t]
-    TWildcard                 -> "_"
-    TVariable v               -> sexpr "'" [v]
-    TParen    t               -> sexpr "par" [t]
+    TArrow     dom      codom  -> sop dom "->" [codom]
+    TRecord    _        fields -> sexpr "RECORD" fields
+    TSum _     variants        -> sexpr "SUM" (toList variants)
+    TProduct   elements        -> sexpr "PROD" elements
+    TApply     f        xs     -> sop f "$" xs
+    TString    t               -> sexpr "TSTRING" [pp t]
+    TWildcard                  -> "_"
+    TVariable  v               -> sexpr "'" [v]
+    TParen     t               -> sexpr "par" [t]
+    TInt       t               -> sexpr "TINT" [pp t]
+    TParameter t               -> sexpr "TPARAMETER" [pp t]
+
+instance Pretty1 Signature where
+  pp1 (Signature elements) = block' elements
+
+instance Pretty1 SigItem where
+  pp1 = \case
+    SValue name typ -> sexpr "SVALUE" [name, typ]
+    SType name typMb -> sexpr "STYPE" [name, fromMaybe "" typMb]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -206,6 +221,7 @@ instance Pretty1 Expr where
     Case      s az       -> sexpr "case" (s : az)
     Return    e          -> sexpr "return" [pp e]
     Break                -> "break"
+    Continue             -> "continue"
     ForOfLoop v c b      -> sexpr "for_of" [v, c, b]
     WhileLoop f b        -> sexpr "while" [f, b]
     Seq       es         -> sexpr "seq" es
@@ -215,6 +231,11 @@ instance Pretty1 Expr where
     Paren     e          -> "(" <> pp e <> ")"
     SwitchStm s cs       -> sexpr "switch" (s : cs)
     AssignOp  l o r      -> sop l (ppToText o) [r]
+    ForLoop   i c a b    -> sexpr "for" [pp i, pp c, pp a, pp b]
+    Contract  p          -> sexpr "contract_of" [p]
+    EFalse               -> "false"
+    ETrue                -> "true"
+    EDo       b          -> sexpr "do" b
 
 instance Pretty1 Verbatim where
   pp1 = \case
@@ -223,6 +244,7 @@ instance Pretty1 Verbatim where
 instance Pretty1 Alt where
   pp1 = \case
     Alt p b -> sexpr "alt" [p, b]
+    Default b -> sexpr "default" [b]
 
 instance Pretty1 FieldAssignment where
   pp1 = \case
@@ -260,6 +282,8 @@ instance Pretty1 Pattern where
     IsTuple      t         -> sexpr "tuple?" t
     IsRecord     xs        -> sexpr "record?" xs
     IsParen      x         -> "(?" <> pp x <> ")"
+    IsFalse                -> "false"
+    IsTrue                 -> "true"
 
 instance Pretty1 RecordFieldPattern where
   pp1 = \case
@@ -314,18 +338,15 @@ instance Pretty1 Error where
   pp1 = \case
     Error src children -> sexpr "ERROR" ["\"" <> pp src <> "\"", pp children]
 
-instance Pretty LineMarker where
-  pp (LineMarker fp f l _) = sexpr "#" [pp l, pp $ toText fp, pp f]
-
-instance Pretty LineMarkerType where
-  pp RootFile     = ""
-  pp IncludedFile = "1"
-  pp ReturnToFile = "2"
-
 instance Pretty1 CaseOrDefaultStm where
   pp1 = \case
     CaseStm  c s -> sexpr "case"    [c, pp s]
     DefaultStm s -> sexpr "default" [pp s]
+
+instance Pretty1 Direction where
+  pp1 = \case
+    Upto   -> sexpr "Upto"   []
+    Downto -> sexpr "Downto" []
 
 -- Orphans
 type instance PrettyShow Int = ()
@@ -347,6 +368,10 @@ instance LPP1 d QualifiedName where
 instance LPP1 d RawContract where
   lpp1 = \case
     RawContract xs -> block' xs
+
+instance LPP1 d ModuleExpr where
+  lpp1 = \case
+    ModuleExpr xs -> block' xs
 
 instance LPP1 d Name where
   lpp1 = \case
@@ -415,10 +440,24 @@ instance LPP1 'Js AST.Type where
           Comb -> "/* @layout comb */ |" `indent` sum'
 
     TApply    f xs      -> f <+> tuple xs
-    TString   t         -> "\"" <.> lpp t <.> "\""
+    TString   t         -> lpp t
     TWildcard           -> "_"
     TVariable v         -> v
     TParen    t         -> "(" <+> lpp t <+> ")"
+    TInt       t        -> t
+    TParameter _t       -> error "implement"
+
+instance LPP1 'Js Signature where
+  lpp1 (Signature elements) = braces $ block' elements
+
+instance LPP1 'Js SigItem where
+  lpp1 = \case
+    SValue name typ -> "const" <+> name <+> ":" <+> typ
+    SType name typMb ->
+      let pref = "type" <+> name in
+      case typMb of
+        Nothing -> pref
+        Just typ -> pref <+> "=" <+> typ
 
 instance LPP1 'Js TypeVariableName where
   lpp1 = \case
@@ -433,10 +472,11 @@ instance LPP1 'Js Binding where
       , "=", lpp body, ";"
       ]
     BInclude      fname         -> "#include" <+> pp fname
-    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
+    BImport       fname _ alias -> "#import" <+> pp fname <+> pp alias
     BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
-    BModuleDecl   mname body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
-    BModuleAlias  mname alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
+    BModuleDecl   mname _ body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
+    BModuleAlias  mname _ alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
+    BSignature    sname sig     -> "interface" <+> sname <+> braces sig
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Js QuotedTypeParams where
@@ -446,9 +486,9 @@ instance LPP1 'Js QuotedTypeParams where
 
 instance LPP1 'Js Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor mTy -> brackets $ case mTy of
-      Just ty -> ctrInQuotes <.> "," <+> lpp ty
-      Nothing -> ctrInQuotes
+    Variant ctor typs -> brackets $ case typs of
+      [] -> ctrInQuotes
+      _ -> train "," (ctrInQuotes : typs)
       where
         ctrInQuotes = "\"" <.> lpp ctor <.> "\""
 
@@ -465,6 +505,8 @@ instance LPP1 'Js Expr where
     ListAccess l ids     -> lpp l <.> fsep (brackets <$> ids)
     Tuple     l          -> tupleJsLIGO l
     Annot     n t        -> parens (n <+> ":" <+> t)
+    Break                -> "break"
+    Continue             -> "continue"
     Case      s az       -> foldr (<+>) DPretty.empty
       [ "match("
       , lpp s
@@ -492,6 +534,7 @@ instance LPP1 'Js Expr where
 instance LPP1 'Js Alt where
   lpp1 = \case
     Alt p b -> "(" <+> lpp p <+> ")" <+> "=>" <+> lpp b <+> ","
+    Default b -> "default:" <+> b
 
 instance LPP1 'Js FieldAssignment where
   lpp1 = \case
@@ -534,6 +577,9 @@ instance LPP1 'Js CaseOrDefaultStm where
     CaseStm c  b -> "case " <+> c <+> ": " <+> lpp b
     DefaultStm b -> "default: " <+> lpp b
 
+instance LPP1 'Js Direction where
+  lpp1 = error "implement"
+
 ----------------------------------------------------------------------------
 -- Caml
 ----------------------------------------------------------------------------
@@ -564,11 +610,25 @@ instance LPP1 'Caml AST.Type where
           Comb -> "[@layout comb] |" `indent` sum'
           Tree -> sum'
 
-    TApply    f xs      -> tupleCameLIGO xs <+> f
-    TString   t         -> "\"" <.> lpp t <.> "\""
-    TWildcard           -> "_"
-    TVariable v         -> v
-    TParen    t         -> parens (lpp t)
+    TApply     f xs      -> tupleCameLIGO xs <+> f
+    TString    t         -> lpp t
+    TWildcard            -> "_"
+    TVariable  v         -> v
+    TParen     t         -> parens (lpp t)
+    TInt       t         -> t
+    TParameter p         -> p <+> "parameter_of"
+
+instance LPP1 'Caml Signature where
+  lpp1 (Signature elements) = block' elements
+
+instance LPP1 'Caml SigItem where
+  lpp1 = \case
+    SValue name typ -> "val" <+> name <+> ":" <+> typ
+    SType name typMb ->
+      let pref = "type" <+> name in
+      case typMb of
+        Nothing -> pref
+        Just typ -> pref <+> "=" <+> typ
 
 instance LPP1 'Caml TypeVariableName where
   lpp1 = \case
@@ -580,7 +640,7 @@ instance LPP1 'Caml Binding where
     BConst isRec name tys ty body ->
       "let" <+> bool DPretty.empty "rec" isRec <+> name <+> prettyTyVarsCaml tys <+> ":" <+> lpp ty <+> "=" <+> lpp body
     BInclude      fname         -> "#include" <+> pp fname
-    BImport       fname alias   -> "#import" <+> pp fname <+> pp alias
+    BImport       fname _ alias -> "#import" <+> pp fname <+> pp alias
 
     BFunction isRec name tys params ty body ->
       foldr (<+>) DPretty.empty $ concat
@@ -592,6 +652,8 @@ instance LPP1 'Caml Binding where
         , [maybe DPretty.empty ((":" <+>) . lpp) ty]
         , ["=", body]
         ]
+
+    BSignature sname sig      -> "module type" <+> sname <+> "= sig" <+> sig <+> "end"
     node                      -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Caml QuotedTypeParams where
@@ -601,9 +663,10 @@ instance LPP1 'Caml QuotedTypeParams where
 
 instance LPP1 'Caml Variant where
   lpp1 = \case -- We prepend "|" in sum type itself to be aware of the first one
-    Variant ctor mTy -> case mTy of
-      Just ty -> ctor <+> "of" <+> parens (pp ty)
-      Nothing -> ctor
+    Variant ctor typs -> case typs of
+      [] -> ctor
+      [ty] -> ctor <+> "of" <+> parens (pp ty)
+      _ -> error "Expected zero or one arg in variant type"
 
 instance LPP1 'Caml Expr where
   lpp1 = \case
@@ -634,11 +697,15 @@ instance LPP1 'Caml Expr where
       ]
     RecordUpd r with     -> r <+> "with" <+> train ";" with
     Paren     e          -> "(" <+> lpp e <+> ")"
+    Contract  m          -> "contract_of" <+> m
+    EFalse               -> "false"
+    ETrue                -> "true"
     node                 -> error "unexpected `Expr` node failed with: " <+> pp node
 
 instance LPP1 'Caml Alt where
   lpp1 = \case
     Alt p b -> "|" <+> lpp p <+> "->" <+> lpp b
+    _ -> error "Default is not supported in CameLIGO"
 
 instance LPP1 'Caml FieldAssignment where
   lpp1 = \case
@@ -667,6 +734,8 @@ instance LPP1 'Caml Pattern where
     IsCons       h t       -> h <+> "::" <+> t
     IsRecord     fields    -> "{" <+> train "," fields <+> "}"
     IsParen      x         -> parens x
+    IsFalse                -> "false"
+    IsTrue                 -> "true"
     pat                    -> error "unexpected `Pattern` node failed with:" <+> pp pat
 
 instance LPP1 'Caml RecordFieldPattern where
@@ -683,6 +752,11 @@ instance LPP1 'Caml CaseOrDefaultStm where
     CaseStm _ _  -> error "unexpected `CaseStm` node"
     DefaultStm _ -> error "unexpected `DefaultStm` node"
 
+instance LPP1 'Caml Direction where
+  lpp1 = \case
+    Upto   -> "upto"
+    Downto -> "downto"
+
 ----------------------------------------------------------------------------
 -- General utilities
 ----------------------------------------------------------------------------
@@ -693,11 +767,6 @@ lppDialect :: TotalLPP expr => Lang -> expr -> Doc
 lppDialect dialect = case dialect of
   Caml -> lpp @'Caml
   Js   -> lpp @'Js
-
-type PPableLIGO info =
-  ( Contains [Text] info
-  , Contains Range info
-  )
 
 blockComment :: Lang -> Doc -> Doc
 blockComment dialect contents = case dialect of

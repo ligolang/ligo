@@ -13,4 +13,6 @@
   ;; Third party
   hex
   zarith)
- (modules CST Print Fold))
+ (modules CST Print Fold)
+ (preprocess
+  (pps ppx_yojson_conv)))

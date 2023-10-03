@@ -445,7 +445,7 @@ let fold'
     process_list
     [ kwd_let -| S_kwd_let
     ; kwd_rec -| S_option S_kwd_rec
-    ; binding -| S_let_binding
+    ; binding -| S_reg S_let_binding
     ; kwd_in -| S_kwd_in
     ; body -| S_expr ]
   | S_let_mut_in ->
@@ -453,7 +453,7 @@ let fold'
     process_list
     [ kwd_let -| S_kwd_let
     ; kwd_mut -| S_kwd_mut
-    ; binding -| S_let_binding
+    ; binding -| S_reg S_let_binding
     ; kwd_in -| S_kwd_in
     ; body -| S_expr ]
   | S_lexeme -> () (* Leaf *)
@@ -511,7 +511,7 @@ let fold'
   | S_module_in ->
     let { mod_decl; kwd_in; body } = node in
     process_list
-    [ mod_decl -| S_module_decl
+    [ mod_decl -| S_reg S_module_decl
     ; kwd_in -| S_kwd_in
     ; body -| S_expr ]
   | S_module_name -> process @@ node -| S_wrap S_lexeme
@@ -684,7 +684,7 @@ let fold'
   | S_type_in ->
     let { type_decl; kwd_in; body } = node in
     process_list
-    [ type_decl -| S_type_decl
+    [ type_decl -| S_reg S_type_decl
     ; kwd_in -| S_kwd_in
     ; body -| S_expr ]
   | S_type_name -> process @@ node -| S_wrap S_lexeme

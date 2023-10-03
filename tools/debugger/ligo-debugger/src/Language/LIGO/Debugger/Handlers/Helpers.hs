@@ -5,7 +5,6 @@ module Language.LIGO.Debugger.Handlers.Helpers
 
 import Prelude hiding (try)
 
-import Control.Lens (Each (each))
 import Control.Monad.Except (liftEither, throwError, withExceptT)
 import Data.Char qualified as C
 import Data.HashMap.Strict qualified as HM
@@ -34,15 +33,12 @@ import Morley.Util.Lens (makeLensesWith, postfixLFields)
 import Control.AbortingThreadPool qualified as AbortingThreadPool
 import Control.DelayedValues qualified as DelayedValues
 
-import Language.LIGO.AST (LIGO, insertPreprocessorRanges, nestedLIGO, parsePreprocessed)
-import Language.LIGO.AST.Common qualified as AST.Common
+import Language.LIGO.AST (Info, LIGO, SomeLIGO (..))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Michelson
 import Language.LIGO.Extension
-import Language.LIGO.ParseTree (pathToSrc)
-import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range
 import Language.LIGO.Scope
 
@@ -99,7 +95,7 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsCollectedRunInfo :: Maybe CollectedRunInfo
   , lsAllLocs :: Maybe (Set SourceLocation)
   , lsBinaryPath :: Maybe FilePath
-  , lsParsedContracts :: Maybe (HashMap FilePath (LIGO ParsedInfo))
+  , lsParsedContracts :: Maybe (HashMap FilePath (LIGO Info))
   , lsLambdaLocs :: Maybe (HashSet Range)
   , lsLigoTypesVec :: Maybe LigoTypesVec
   , lsEntrypoints :: Maybe (Map U.EpName U.Ty)
@@ -232,7 +228,7 @@ getAllLocs = "All locs are not initialized" `expectInitialized` (lsAllLocs <$> g
 
 getParsedContracts
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
-  => MonadRIO ext m => m (HashMap FilePath (LIGO ParsedInfo))
+  => MonadRIO ext m => m (HashMap FilePath (LIGO Info))
 getParsedContracts =
   "Parsed contracts are not initialized" `expectInitialized` (lsParsedContracts <$> getServerState)
 
@@ -282,16 +278,15 @@ getParameterStorageAndOpsTypes (LigoTypeResolved typ) =
     pure (LigoTypeResolved param, LigoTypeResolved st, LigoTypeResolved _ltaType2)
 getParameterStorageAndOpsTypes _ = (LigoType Nothing, LigoType Nothing, LigoType Nothing)
 
-parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO ParsedInfo))
+parseContracts :: (HasLigoClient m) => [FilePath] -> m (HashMap FilePath (LIGO Info))
 parseContracts allFiles = do
-  parsedInfos <- do
-    forM allFiles
-      $   pathToSrc
-      >=> parsePreprocessed
-      >=> insertPreprocessorRanges
+  allFilesNE <-
+    maybe
+      (throwIO $ LigoCallException [int||File list is empty|])
+      pure
+      (nonEmpty allFiles)
 
-  let parsedFiles = parsedInfos ^.. each . AST.Common.getContract . AST.Common.cTree . nestedLIGO
-
+  parsedFiles <- decodeCST allFilesNE <&> fmap \(SomeLIGO _ ast) -> ast
   pure $ HM.fromList $ zip allFiles parsedFiles
 
 -- | Some exception in debugger logic.

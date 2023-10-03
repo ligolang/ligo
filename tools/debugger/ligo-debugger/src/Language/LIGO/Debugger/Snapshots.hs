@@ -87,15 +87,14 @@ import Morley.Michelson.TypeCheck.Helpers (handleError)
 import Morley.Michelson.Typed as T
 import Morley.Util.Lens (postfixLFields)
 
-import Duplo (leq)
+import Duplo (extract, leq)
 
-import Language.LIGO.AST (LIGO, Lang (Caml))
+import Language.LIGO.AST (Info, LIGO, Lang (Caml))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Functions
-import Language.LIGO.Parser (ParsedInfo)
-import Language.LIGO.Range (HasRange (getRange), LigoPosition (LigoPosition), Range (..))
+import Language.LIGO.Range (LigoPosition (LigoPosition), Range (..))
 import Language.LIGO.Scope
 
 -- | Stack element, likely with an associated variable.
@@ -245,7 +244,7 @@ data CollectorState m = CollectorState
   , csLastRecordedSnapshot :: Maybe (InterpretSnapshot 'Unique)
     -- ^ Last recorded snapshot.
     -- We can pick @[operation] * storage@ value from it.
-  , csParsedFiles :: HashMap FilePath (LIGO ParsedInfo)
+  , csParsedFiles :: HashMap FilePath (LIGO Info)
     -- ^ Parsed contracts.
   , csRecordedStatementRanges :: HashSet Range
     -- ^ Ranges of recorded statement snapshots.
@@ -710,18 +709,18 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       if isLambdaLoc && not isLambda
       then pure []
       else do
-        let statements = filterAndReverseStatements isLambda isLambdaLoc (getRange parsedLigo) $ spineAtPoint range parsedLigo
+        let statements = filterAndReverseStatements isLambda isLambdaLoc (extract parsedLigo) $ spineAtPoint range parsedLigo
 
-        pure $ getRange <$> statements
+        pure $ extract <$> statements
       where
         -- Here we're looking for statements and the nearest scope locations.
         -- These statements are filtered by strict inclusivity of their ranges to this scope.
-        filterAndReverseStatements :: Bool -> Bool -> Range -> [LIGO ParsedInfo] -> [LIGO ParsedInfo]
+        filterAndReverseStatements :: Bool -> Bool -> Range -> [LIGO Info] -> [LIGO Info]
         filterAndReverseStatements isLambda = \isLambdaLoc startRange nodes ->
           let (statements, scopeRange) = usingState startRange $ go [] nodes isLambdaLoc False
-          in filter (\(getRange -> stmtRange) -> stmtRange `leq` scopeRange && stmtRange /= scopeRange) statements
+          in filter (\(extract -> stmtRange) -> stmtRange `leq` scopeRange && stmtRange /= scopeRange) statements
           where
-            go :: [LIGO ParsedInfo] -> [LIGO ParsedInfo] -> Bool -> Bool -> State Range [LIGO ParsedInfo]
+            go :: [LIGO Info] -> [LIGO Info] -> Bool -> Bool -> State Range [LIGO Info]
             go acc nodes isLambdaLoc ignore =
               tryToProcessLigoStatement
                 onSuccess
@@ -737,17 +736,17 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
                   let newAcc
                         -- We want to ignore body location if it's assigned
                         -- to @LAMBDA@ instr.
-                        | getRange x == range && isLambda = acc
+                        | extract x == range && isLambda = acc
                         | otherwise = x : acc
                   in
                   decide True x (go newAcc xs)
                 onFail x xs = decide False x (go acc xs)
 
-                decide :: Bool -> LIGO ParsedInfo -> (Bool -> Bool -> State Range [LIGO ParsedInfo]) -> State Range [LIGO ParsedInfo]
+                decide :: Bool -> LIGO Info -> (Bool -> Bool -> State Range [LIGO Info]) -> State Range [LIGO Info]
                 decide isOnSuccess x cont
                   | ignore = cont isLambdaLoc ignore
-                  | getRange x /= range && isScopeForStatements isLambdaLoc x
-                      = put (getRange x) >> cont isLambdaLoc True
+                  | extract x /= range && isScopeForStatements isLambdaLoc x
+                      = put (extract x) >> cont isLambdaLoc True
                   | otherwise =
                       let
                         isFunctionAssignment = isScopeForStatements (not isLambdaLoc) x && isOnSuccess
@@ -828,7 +827,7 @@ collectInterpretSnapshots
   -> Value arg
   -> Value st
   -> ContractEnv m
-  -> HashMap FilePath (LIGO ParsedInfo)
+  -> HashMap FilePath (LIGO Info)
   -> (Text -> m ())
   -> HashSet Range
   -> Bool -- ^ should we track steps amount

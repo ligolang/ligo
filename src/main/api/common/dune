@@ -5,6 +5,7 @@
   (backend bisect_ppx))
  (libraries
   simple-utils
+  ligo.ligo_compile
   ligo.decompile
   ligo.scopes
   build
@@ -14,7 +15,9 @@
   tar
   tar-unix
   decompress.gz
-  ligo.formatter)
+  ligo.formatter
+  cst
+  msgpck)
  (preprocess
   (pps ppx_yojson_conv ppx_let)))
 

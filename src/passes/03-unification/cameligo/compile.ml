@@ -297,7 +297,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let elements = sepseq_to_list listcomp.value.inside in
     ret @@ E_list elements
   | E_LetIn { value = { kwd_rec; binding; body; _ }; _ } ->
-    let I.{ type_params; binders; rhs_type; eq = _; let_rhs } = binding in
+    let I.{ type_params; binders; rhs_type; eq = _; let_rhs } = binding.value in
     let is_rec =
       match kwd_rec with
       | Some _ -> true
@@ -306,11 +306,15 @@ let rec expr : Eq.expr -> Folding.expr =
     let type_params = Option.map ~f:compile_type_params type_params in
     let rhs_type = Option.map ~f:snd rhs_type in
     ret @@ E_let_in { is_rec; type_params; lhs = binders; rhs_type; rhs = let_rhs; body }
-  | E_TypeIn { value = { type_decl = { name; type_expr; params; _ }; body; _ }; _ } ->
+  | E_TypeIn
+      { value = { type_decl = { value = { name; type_expr; params; _ }; _ }; body; _ }
+      ; _
+      } ->
     let name = TODO_do_in_parsing.tvar name in
     let params = Option.map params ~f:(fun p -> TODO_do_in_parsing.type_vars_to_lst p) in
     ret @@ E_type_in { type_decl = { name; params; type_expr }; body }
-  | E_ModIn { value = { mod_decl = { name; module_expr; _ }; body; _ }; _ } ->
+  | E_ModIn { value = { mod_decl = { value = { name; module_expr; _ }; _ }; body; _ }; _ }
+    ->
     let module_name = TODO_do_in_parsing.mvar name in
     ret @@ E_mod_in { module_name; rhs = module_expr; body }
   | E_CodeInj { value = { language; code; _ }; _ } ->
@@ -328,8 +332,13 @@ let rec expr : Eq.expr -> Folding.expr =
     let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.var binder) None in
     ret @@ E_assign_unitary { binder; expression }
   | E_LetMutIn
-      { value = { binding = { binders; type_params; rhs_type; let_rhs; _ }; body; _ }; _ }
-    ->
+      { value =
+          { binding = { value = { binders; type_params; rhs_type; let_rhs; _ }; _ }
+          ; body
+          ; _
+          }
+      ; _
+      } ->
     let type_params = Option.map ~f:compile_type_params type_params in
     let rhs_type = Option.map ~f:snd rhs_type in
     ret
