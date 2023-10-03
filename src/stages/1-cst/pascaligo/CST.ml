@@ -4,27 +4,33 @@
 
 [@@@warning "-30"] (* multiply-defined record labels *)
 
+module Types = Cst_shared.Types
+
 (* Vendor dependencies *)
 
-module Directive = Preprocessor.Directive
-module Utils     = Simple_utils.Utils
-module Region    = Simple_utils.Region
+module Directive = Types.Directive
+module Utils     = Types.Utils
+module Region    = Types.Region
 
 (* Local dependencies *)
 
-module Wrap = Lexing_shared.Wrap
-module Attr = Lexing_shared.Attr
+module Wrap = Types.Wrap
+module Attr = Types.Attr
 
 (* Utilities *)
 
-type 'a reg = 'a Region.reg
-type 'payload wrap = 'payload Wrap.t
+type 'a reg = 'a Types.reg
+type 'payload wrap = 'payload Types.wrap
 
 open Utils
 
-type lexeme = string
+(* Lexemes *)
+
+type lexeme = Types.lexeme
 
 (* Keywords of PascaLIGO *)
+
+open Types
 
 (* IMPORTANT: The types are sorted alphabetically. If you add or
    modify some, please make sure they remain in order. *)

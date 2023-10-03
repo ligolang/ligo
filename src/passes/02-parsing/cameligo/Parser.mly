@@ -469,9 +469,9 @@ module_path(selected):
 
 let_decl:
   "let" ioption("rec") let_binding {
-    let stop   = expr_to_region $3.let_rhs in
+    let stop   = expr_to_region $3.value.let_rhs in
     let region = cover $1#region stop
-    in mk_reg region ($1,$2,$3) }
+    in mk_reg region ($1,$2,$3.value) }
 
 let_binding:
   fun_decl | non_fun_decl { $1 }
@@ -479,11 +479,17 @@ let_binding:
 fun_decl:
   var_pattern type_params parameters rhs_type "=" expr {
     let binders = Utils.nseq_cons $1 $3 in
-    {binders; type_params=$2; rhs_type=$4; eq=$5; let_rhs=$6} }
+    let start = pattern_to_region $1 in
+    let stop = expr_to_region $6 in
+    let region = cover start stop in
+    mk_reg region {binders; type_params=$2; rhs_type=$4; eq=$5; let_rhs=$6} }
 
 non_fun_decl:
   irrefutable type_params rhs_type "=" expr {
-    {binders=($1,[]); type_params=$2; rhs_type=$3; eq=$4; let_rhs=$5} }
+    let start = pattern_to_region $1 in
+    let stop = expr_to_region $5 in
+    let region = cover start stop in
+    mk_reg region {binders=($1,[]); type_params=$2; rhs_type=$3; eq=$4; let_rhs=$5} }
 
 %inline
 rhs_type:
@@ -821,10 +827,7 @@ match_expr(right_expr):
     let clauses : ( match_clause reg, vbar) Utils.nsepseq reg = {
       value  = Utils.nsepseq_rev $5;
       region = nsepseq_to_region (fun x -> x.region) $5}
-    and stop =
-      match $5 with
-         only_case, [] -> only_case.region
-      | _, other_cases -> last (fun f -> (fst f)#region) other_cases in
+    and stop = (fst $5).region in
     let region = cover $1#region stop
     and value  = {kwd_match=$1; subject=$2; kwd_with=$3;
                   lead_vbar=$4; clauses}
@@ -872,7 +875,7 @@ let_mut_in_expr(right_expr):
 local_type_decl(right_expr):
   type_decl "in" right_expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {type_decl=$1.value; kwd_in=$2; body=$3}
+    and value  = {type_decl=$1; kwd_in=$2; body=$3}
     in E_TypeIn {region; value} }
 
 (* Local module declaration *)
@@ -880,7 +883,7 @@ local_type_decl(right_expr):
 local_module_decl(right_expr):
   module_decl "in" right_expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {mod_decl=$1.value; kwd_in=$2; body=$3}
+    and value  = {mod_decl=$1; kwd_in=$2; body=$3}
     in E_ModIn {region; value} }
 
 (* Functional expression (a.k.a. lambda) *)

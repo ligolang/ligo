@@ -20,13 +20,12 @@ import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Typed.Util (dsGoToValues)
 import Morley.Util.PeanoNatural (toPeanoNatural')
 
-import Language.LIGO.AST (LIGO)
+import Language.LIGO.AST (Info, LIGO)
 import Language.LIGO.Debugger.CLI.Call
 import Language.LIGO.Debugger.CLI.Types
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Michelson
-import Language.LIGO.Parser (ParsedInfo)
 import Language.LIGO.Range
 
 data SomeInstr = forall i o. SomeInstr (T.Instr i o)
@@ -39,7 +38,7 @@ instance Buildable SomeInstr where
   build (SomeInstr i) = build i
 
 -- | Get instructions with associated 'InstrNo' metas.
-collectCodeMetas :: HashMap FilePath (LIGO ParsedInfo) -> T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
+collectCodeMetas :: HashMap FilePath (LIGO Info) -> T.Instr i o -> [(EmbeddedLigoMeta, SomeInstr)]
 collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \case
   T.ConcreteMeta meta i ->
     case liiLocation meta of
@@ -48,7 +47,7 @@ collectCodeMetas parsedContracts = T.dfsFoldInstr def { dsGoToValues = True } \c
       _ -> one (meta, SomeInstr i)
   _ -> mempty
 
-collectContractMetas :: HashMap FilePath (LIGO ParsedInfo) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
+collectContractMetas :: HashMap FilePath (LIGO Info) -> T.Contract cp st -> [(EmbeddedLigoMeta, SomeInstr)]
 collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unContractCode . T.cCode
 
 -- | Run the given contract + entrypoint, build code with embedded ligo metadata.

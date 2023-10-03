@@ -1,4 +1,5 @@
 open Imports
+module Dialect_cst = Ligo_api.Dialect_cst
 
 type pp_mode =
   { indent : int

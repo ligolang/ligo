@@ -8,7 +8,7 @@
 module Language.LIGO.AST.Skeleton
   ( SomeLIGO (..)
   , LIGO
-  , Tree'
+  , Info
   , RawLigoList
   , Lang (..)
   , allLangs
@@ -20,6 +20,10 @@ module Language.LIGO.AST.Skeleton
   , TypeVariableName (..), FieldName (..), Verbatim (..), Error (..), Ctor (..)
   , NameDecl (..), Preprocessor (..), PreprocessorCommand (..), ModuleName (..)
   , ModuleAccess (..), Attr (..), QuotedTypeParams (..), CaseOrDefaultStm (..)
+  , Direction (..)
+  , ModuleExpr (..)
+  , Signature (..)
+  , SigItem (..)
   , pattern ErrorTypeUnresolved
   , getLIGO
   , setLIGO
@@ -30,17 +34,22 @@ module Language.LIGO.AST.Skeleton
 import Prelude hiding (Alt, Product, Type)
 
 import Control.Lens.Lens (lens)
+import Control.MessagePack (withMsgText)
+import Control.Monad.Validate (refute)
 import Data.Default (Default (def))
 import Data.Functor.Classes (Eq1 (..))
 import Data.HashSet qualified as HashSet
+import Data.MessagePack (MessagePack (..), decodeError)
 import Fmt.Buildable (Buildable, build)
+import Text.Interpolation.Nyan hiding (rmode')
 import Text.Show qualified
+import Util
 
 import Duplo.Pretty (PP (..), Pretty (..))
 import Duplo.Tree (Tree)
 
 import Language.LIGO.Diagnostic (MessageDetail (..))
-import Language.LIGO.Product (Product)
+import Language.LIGO.Range (Range)
 
 data SomeLIGO xs = SomeLIGO Lang (LIGO xs)
 
@@ -63,28 +72,36 @@ instance Pretty (LIGO xs) => Show (SomeLIGO xs) where
 instance Pretty (LIGO xs) => Pretty (SomeLIGO xs) where
   pp (SomeLIGO _ nested) = pp nested
 
+type Info = Range
+
 -- | The universal AST for CameLIGO and JsLIGO.
-type LIGO xs = Tree' RawLigoList xs
-type Tree' fs xs = Tree fs (Product xs)
+type LIGO x = Tree RawLigoList x
 
 type RawLigoList =
   [ Name, QualifiedName, Pattern, RecordFieldPattern, Constant, FieldAssignment
   , Alt, Expr, TField, Variant, Type, Binding, RawContract, TypeName
   , TypeVariableName, FieldName, Verbatim, Error, Ctor, NameDecl, Preprocessor
   , PreprocessorCommand, ModuleName, ModuleAccess, Attr, QuotedTypeParams
-  , CaseOrDefaultStm
+  , CaseOrDefaultStm, Direction, Signature, SigItem, ModuleExpr
   ]
 
 data Lang
   = Caml
   | Js
   deriving stock (Show, Eq, Enum, Bounded, Generic)
-  deriving anyclass (Hashable)
+  deriving anyclass (Hashable, NFData)
 
 instance Buildable Lang where
   build = \case
     Caml -> "caml"
     Js -> "js"
+
+instance MessagePack Lang where
+  fromObjectWith _ = withMsgText "Lang" \(toString -> str) ->
+    case str of
+      "CameLIGO" -> pure Caml
+      "JsLIGO" -> pure Js
+      other -> refute $ decodeError [int||Unexpected lang: #{other}|]
 
 allLangs :: [Lang]
 allLangs = [minBound .. maxBound]
@@ -126,9 +143,28 @@ data Binding it
   | BConst        IsRec it [it] (Maybe it) (Maybe it) -- ^ (IsRec) (Pattern) (TypeVariableName) (Type) (Expr)
   | BTypeDecl     it (Maybe it) it -- ^ (Name) (Maybe (QuotedTypeParams)) (Type)
   | BInclude      it
-  | BImport       it it
-  | BModuleDecl   it [it] -- ^ (Name) (Expr)
-  | BModuleAlias  it [it]   -- ^ (Name) (Name)
+  | BImport       (Maybe it) [it] it -- ^ (Name) [Name] (ModuleAccess)
+  | BExport       it
+  | BModuleDecl   it (Maybe it) it -- ^ (Name) (Signature) (ModuleExpr)
+  | BModuleAlias  it (Maybe it) it   -- ^ (Name) (Signature) (ModuleAccess)
+  | BSignature    it it -- ^ (Name) (Signature)
+  | BDeclarationSeq [it] -- ^ (BVar | BConst)
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+
+newtype ModuleExpr it
+  = ModuleExpr [it] -- ^ [Declaration]
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveFor1List
+
+newtype Signature it = Signature
+  { sSignatureBody :: [it] -- ^ (SigItem)
+  }
+  deriving stock (Generic, Eq, Functor, Foldable, Traversable)
+  deriving Eq1 via DefaultEq1DeriveFor1List
+
+data SigItem it
+  = SValue it it -- ^ (Name) (TypeExpression)
+  | SType it (Maybe it) -- ^ (TypeVariableName) (TypeExpression)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data QuotedTypeParams it
@@ -147,19 +183,21 @@ data Layout
   deriving stock (Generic, Eq, Show)
 
 data Type it
-  = TArrow    it     it            -- ^ (Type) (Type)
-  | TRecord   Layout [it]          -- ^ [TField]
-  | TSum      Layout (NonEmpty it) -- ^ [Variant]
-  | TProduct  [it]                 -- ^ [Type]
-  | TApply    it     [it]          -- ^ (Name) [Type]
-  | TString   it                   -- ^ (TString)
+  = TArrow     it     it            -- ^ (Type) (Type)
+  | TRecord    Layout [it]          -- ^ [TField]
+  | TSum       Layout (NonEmpty it) -- ^ [Variant]
+  | TProduct   [it]                 -- ^ [Type]
+  | TApply     it     [it]          -- ^ (Name) [Type]
+  | TString    it                   -- ^ (TString)
   | TWildcard
-  | TVariable it                   -- ^ (TypeVariableName)
-  | TParen    it                   -- ^ (Type)
+  | TVariable  it                   -- ^ (TypeVariableName)
+  | TParen     it                   -- ^ (Type)
+  | TInt       it                   -- ^ (TInt)
+  | TParameter it                   -- ^ (ModuleAccess)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it
-  = Variant it (Maybe it)  -- (Name) (Maybe (Type))
+  = Variant it [it]  -- (Name) [Type]
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data TField it
@@ -184,15 +222,26 @@ data Expr it
   | Annot     it it -- (Expr) (Type)
   | Case      it [it]                  -- (Expr) [Alt]
   | Break
+  | Continue
   | Return    (Maybe it) -- (Expr)
   | SwitchStm it [it]    -- (Expr) [CaseOrDefaultStm]
-  | WhileLoop it it                    -- (Expr) (Expr)
-  | ForOfLoop it it it                 -- (Expr) (Expr) (Expr)
-  | Seq       [it]                     -- [Declaration]
+  | WhileLoop it it      -- (Expr) (Expr)
+  | ForLoop   (Maybe it) (Maybe it) [it] (Maybe it) -- (Expr) (Expr) [Expr] (Expr)
+  | ForOfLoop it it it                                    -- (Expr) (Expr) (Expr)
+  | Seq       [it]                                        -- [Declaration]
   | Lambda    [it] [it] (Maybe it) it -- [VarDecl] [TypeVariableName] (Maybe (Type)) (Expr)
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
   | CodeInj   it it -- (Attr) (Expr)
   | Paren     it -- (Expr)
+  | Contract  it -- (ModuleAccess)
+  | EFalse
+  | ETrue
+  | EDo       [it] -- [Declaration]
+  deriving stock (Generic, Functor, Foldable, Traversable)
+
+data Direction it
+  = Upto
+  | Downto
   deriving stock (Generic, Functor, Foldable, Traversable)
 
 newtype Verbatim it
@@ -207,6 +256,7 @@ newtype Preprocessor it
 
 data Alt it
   = Alt it it -- (Pattern) (Expr)
+  | Default it -- Expr
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data CaseOrDefaultStm it
@@ -230,7 +280,7 @@ data Constant it
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Pattern it
-  = IsConstr     it (Maybe it) -- (Name) (Maybe (Pattern))
+  = IsConstr     it [it] -- (Name) [Pattern]
   | IsConstant   it -- (Constant)
   | IsVar        it -- (NameDecl)
   | IsCons       it it -- (Pattern) (Pattern)
@@ -241,6 +291,8 @@ data Pattern it
   | IsTuple      [it] -- [Pattern]
   | IsRecord     [it] -- [RecordFieldPattern]
   | IsParen      it   -- (Pattern)
+  | IsFalse
+  | IsTrue
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 -- Used specifically in record destructuring
@@ -373,6 +425,8 @@ instance Eq1 DefaultEq1DeriveFor1List where
 --------------------------------------------------------------------------------
 instance Eq1 Alt where
   liftEq f (Alt pa ea) (Alt pb eb) = f pa pb && f ea eb
+  liftEq f (Default ea) (Default eb) = f ea eb
+  liftEq _ _ _ = False
 
 instance Eq1 RecordFieldPattern where
   liftEq f (IsRecordField la ba) (IsRecordField lb bb) = f la lb && f ba bb
@@ -426,10 +480,14 @@ instance Eq1 Type where
   liftEq f (TParen a) (TParen b) = f a b
   liftEq _ _ _ = False
 
-instance Eq1 Variant where
-  liftEq f (Variant an (Just at)) (Variant bn (Just bt)) = f an bn && f at bt
-  liftEq f (Variant an Nothing) (Variant bn Nothing) = f an bn
+instance Eq1 SigItem where
+  liftEq f (SValue an at) (SValue bn bt) = f an bn && f at bt
+  liftEq f (SType an Nothing) (SType bn Nothing) = f an bn
+  liftEq f (SType an (Just at)) (SType bn (Just bt)) = f an bn && f at bt
   liftEq _ _ _ = False
+
+instance Eq1 Variant where
+  liftEq f (Variant an at) (Variant bn bt) = f an bn && liftEqList f at bt
 
 instance Eq1 TField where
   liftEq f (TField an at) (TField bn bt) = f an bn && liftEqMaybe f at bt
@@ -443,8 +501,8 @@ instance Eq1 QualifiedName where
     f asrc bsrc && liftEqList f apath bpath
 
 instance Eq1 Pattern where
-  liftEq f (IsConstr na mbpa) (IsConstr nb mbpb) =
-    f na nb && liftEqMaybe f mbpa mbpb
+  liftEq f (IsConstr na pa) (IsConstr nb pb) =
+    f na nb && liftEqList f pa pb
   liftEq f (IsConstant a) (IsConstant b) = f a b
   liftEq f (IsVar a) (IsVar b) = f a b
   liftEq f (IsCons ha ta) (IsCons hb tb) = f ha hb && f ta tb

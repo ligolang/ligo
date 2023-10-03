@@ -11,7 +11,7 @@ import Data.Text qualified as T
 import Fmt (pretty)
 import Test.Tasty (TestTree, testGroup)
 import Test.Util
-import Test.Util.Options (minor)
+import Test.Util.Options (minor, reinsuring)
 import Text.Interpolation.Nyan hiding (rmode')
 import UnliftIO.Exception (try)
 import Unsafe qualified
@@ -25,6 +25,7 @@ import Morley.Tezos.Address (Constrained (Constrained), ImplicitAddress, ta, unI
 import Morley.Tezos.Core
   (ChainId (UnsafeChainId), parseChainId, timestampFromSeconds, timestampQuote, tz)
 
+import Language.LIGO.AST hiding ((<.>))
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Extension
@@ -492,3 +493,24 @@ test_config_resolution = testGroup "LIGO config resolution"
       . SimpleVotingPowersInfo
       . M.fromList
       . map (bimap (MichelsonJson . unImplicitAddress) MichelsonJson)
+
+test_Dumped_cst_parse :: TestTree
+test_Dumped_cst_parse = reinsuring $ testCase "Dumped cst parse" do
+  contracts <- scanContracts (const True) compilerContractsDir
+
+  errors <- newIORef []
+
+  forM_ contracts \contract -> do
+    try @_ @SomeException (decodeCST (contract :| [])) >>= \case
+      Left (fromException -> Just (err :: LigoDecodeException)) -> do
+        modifyIORef errors ((contract, err) :)
+      _ -> pass
+
+  readIORef errors >>= \case
+    [] -> pass
+    errs -> do
+      let errMsg = errs
+            <&> do \(file, err) -> [int||Error occurred in file #{file}: #{err}|]
+            & unlines
+
+      assertFailure (toString errMsg)

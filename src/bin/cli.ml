@@ -71,6 +71,11 @@ let source_file =
   Command.Param.(anon (name %: create_arg_type Fn.id))
 
 
+let source_files =
+  let name = "SOURCE_FILES" in
+  Command.Param.(anon @@ non_empty_sequence_as_pair (name %: create_arg_type Fn.id))
+
+
 let package_name =
   let name = "PACKAGE_NAME" in
   Command.Param.(anon (maybe (name %: string)))
@@ -2038,6 +2043,53 @@ let resolve_config =
   Command.basic ~summary ~readme (f <$> source_file <*> display_format)
 
 
+let dump_cst =
+  let f
+      (source_file, source_files)
+      protocol_version
+      libraries
+      display_format
+      with_types
+      skip_analytics
+      no_colour
+      ()
+    =
+    let raw_options = Raw_options.make ~protocol_version ~libraries ~with_types () in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"info_dump-cst"
+        ~raw_options
+        ~source_file
+        ()
+    in
+    return_result
+      ~return
+      ~display_format
+      ~skip_analytics
+      ~no_colour
+      ~cli_analytics
+      ~warning_as_error:raw_options.warning_as_error
+      ~minify_json:true
+    @@ Api.Info.dump_cst raw_options (source_file :: source_files)
+  in
+  let summary = "dump CST for a contract." in
+  let readme () =
+    "This subcommand returns a concrete syntax tree for a LIGO contract. If format is \
+     not specified, then CST would be returned in the MessagePack format."
+  in
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> source_files
+    <*> protocol_version
+    <*> libraries
+    <*> display_format
+    <*> with_types
+    <*> skip_analytics
+    <*> no_colour)
+
+
 let info_group =
   let summary = "tools to get information from contracts" in
   Command.group
@@ -2046,6 +2098,7 @@ let info_group =
     ; "measure-contract", measure_contract
     ; "get-scope", get_scope
     ; "resolve-config", resolve_config
+    ; "dump-cst", dump_cst
     ]
 
 

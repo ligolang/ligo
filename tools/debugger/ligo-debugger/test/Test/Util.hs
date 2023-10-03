@@ -3,6 +3,7 @@ module Test.Util
     (</>)
   , (<.>)
   , contractsDir
+  , compilerContractsDir
   , AST.Lang (..)
   , AST.allLangs
   , AST.langExtension
@@ -109,6 +110,9 @@ import "ligo-debugger" Util
 
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"
+
+compilerContractsDir :: FilePath
+compilerContractsDir = ".." </> ".." </> ".." </> "src" </> "test" </> "contracts"
 
 renderNoLineLengthLimit :: Doc -> Text
 renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}

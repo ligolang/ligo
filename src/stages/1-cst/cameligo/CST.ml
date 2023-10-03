@@ -4,29 +4,33 @@
 
 [@@@warning "-30"] (* multiply-defined record labels *)
 
+module Types = Cst_shared.Types
+
 (* Vendor dependencies *)
 
-module Directive = Preprocessor.Directive
-module Utils     = Simple_utils.Utils
-module Region    = Simple_utils.Region
+module Directive = Types.Directive
+module Utils     = Types.Utils
+module Region    = Types.Region
 
 (* Local dependencies *)
 
-module Wrap = Lexing_shared.Wrap
-module Attr = Lexing_shared.Attr
+module Wrap = Types.Wrap
+module Attr = Types.Attr
 
 (* Utilities *)
 
-type 'a reg = 'a Region.reg
-type 'payload wrap = 'payload Wrap.t
+type 'a reg = 'a Types.reg
+type 'payload wrap = 'payload Types.wrap
 
 open Utils
 
 (* Lexemes *)
 
-type lexeme = string
+type lexeme = Types.lexeme
 
 (* Keywords of CameLIGO *)
+
+open Types
 
 (* IMPORTANT: The types are sorted alphabetically. If you add or
    modify some, please make sure they remain in order. *)
@@ -34,36 +38,36 @@ type lexeme = string
 type kwd_begin     = lexeme wrap
 type kwd_do        = lexeme wrap
 type kwd_done      = lexeme wrap
-type kwd_downto    = lexeme wrap
+type kwd_downto    = lexeme wrap [@@deriving yojson_of]
 type kwd_else      = lexeme wrap
 type kwd_end       = lexeme wrap
-type kwd_false     = lexeme wrap
+type kwd_false     = lexeme wrap [@@deriving yojson_of]
 type kwd_for       = lexeme wrap
 type kwd_fun       = lexeme wrap
 type kwd_if        = lexeme wrap
 type kwd_in        = lexeme wrap
 type kwd_include   = lexeme wrap
-type kwd_let       = lexeme wrap
-type kwd_land      = lexeme wrap
-type kwd_lor       = lexeme wrap
-type kwd_lxor      = lexeme wrap
-type kwd_lsl       = lexeme wrap
-type kwd_lsr       = lexeme wrap
+type kwd_let       = lexeme wrap [@@deriving yojson_of]
+type kwd_land      = lexeme wrap [@@deriving yojson_of]
+type kwd_lor       = lexeme wrap [@@deriving yojson_of]
+type kwd_lxor      = lexeme wrap [@@deriving yojson_of]
+type kwd_lsl       = lexeme wrap [@@deriving yojson_of]
+type kwd_lsr       = lexeme wrap [@@deriving yojson_of]
 type kwd_match     = lexeme wrap
-type kwd_mod       = lexeme wrap
+type kwd_mod       = lexeme wrap [@@deriving yojson_of]
 type kwd_module    = lexeme wrap
 type kwd_mut       = lexeme wrap
-type kwd_not       = lexeme wrap
+type kwd_not       = lexeme wrap [@@deriving yojson_of]
 type kwd_of        = lexeme wrap
-type kwd_or        = lexeme wrap
+type kwd_or        = lexeme wrap [@@deriving yojson_of]
 type kwd_rec       = lexeme wrap
 type kwd_signature = lexeme wrap
 type kwd_sig       = lexeme wrap
 type kwd_struct    = lexeme wrap
 type kwd_then      = lexeme wrap
-type kwd_true      = lexeme wrap
+type kwd_true      = lexeme wrap [@@deriving yojson_of]
 type kwd_type      = lexeme wrap
-type kwd_upto      = lexeme wrap
+type kwd_upto      = lexeme wrap [@@deriving yojson_of]
 type kwd_val       = lexeme wrap
 type kwd_while     = lexeme wrap
 type kwd_with      = lexeme wrap
@@ -73,74 +77,86 @@ type kwd_with      = lexeme wrap
 (* IMPORTANT: The types are sorted alphabetically. If you add or
    modify some, please make sure they remain in order. *)
 
-type arrow    = lexeme wrap  (* -> *)
-type ass      = lexeme wrap  (* := *)
-type append   = lexeme wrap  (* @  *)
-type bool_or  = lexeme wrap  (* || *)
-type bool_and = lexeme wrap  (* && *)
-type caret    = lexeme wrap  (* ^  *)
-type colon    = lexeme wrap  (* :  *)
-type comma    = lexeme wrap  (* ,  *)
-type cons     = lexeme wrap  (* :: *)
-type dot      = lexeme wrap  (* .  *)
-type equal    = lexeme wrap  (* =  *)
-type geq      = lexeme wrap  (* >= *)
-type gt       = lexeme wrap  (* >  *)
-type lbrace   = lexeme wrap  (* {  *)
-type lbracket = lexeme wrap  (* [  *)
-type leq      = lexeme wrap  (* =< *)
-type lpar     = lexeme wrap  (* (  *)
-type lt       = lexeme wrap  (* <  *)
-type minus    = lexeme wrap  (* -  *)
-type neq      = lexeme wrap  (* <> *)
-type plus     = lexeme wrap  (* +  *)
-type quote    = lexeme wrap  (* '  *)
-type rbracket = lexeme wrap  (* ]  *)
-type rbrace   = lexeme wrap  (* }  *)
-type rev_app  = lexeme wrap  (* |> *)
-type rpar     = lexeme wrap  (* )  *)
-type semi     = lexeme wrap  (* ;  *)
-type slash    = lexeme wrap  (* /  *)
-type times    = lexeme wrap  (* *  *)
-type vbar     = lexeme wrap  (* |  *)
-type plus_eq  = lexeme wrap  (* += *)
-type minus_eq = lexeme wrap  (* -= *)
-type times_eq = lexeme wrap  (* *= *)
-type slash_eq = lexeme wrap  (* /= *)
-type vbar_eq  = lexeme wrap  (* |= *)
+type arrow    = lexeme wrap                         (* -> *)
+type ass      = lexeme wrap [@@deriving yojson_of]  (* := *)
+type append   = lexeme wrap                         (* @  *)
+type bool_or  = lexeme wrap                         (* || *)
+type bool_and = lexeme wrap [@@deriving yojson_of]  (* && *)
+type caret    = lexeme wrap [@@deriving yojson_of]  (* ^  *)
+type colon    = lexeme wrap                         (* :  *)
+type comma    = lexeme wrap                         (* ,  *)
+type cons     = lexeme wrap [@@deriving yojson_of]  (* :: *)
+type dot      = lexeme wrap                         (* .  *)
+type equal    = lexeme wrap [@@deriving yojson_of]  (* =  *)
+type geq      = lexeme wrap [@@deriving yojson_of]  (* >= *)
+type gt       = lexeme wrap [@@deriving yojson_of]  (* >  *)
+type lbrace   = lexeme wrap                         (* {  *)
+type lbracket = lexeme wrap                         (* [  *)
+type leq      = lexeme wrap [@@deriving yojson_of]  (* =< *)
+type lpar     = lexeme wrap                         (* (  *)
+type lt       = lexeme wrap [@@deriving yojson_of]  (* <  *)
+type minus    = lexeme wrap [@@deriving yojson_of]  (* -  *)
+type neq      = lexeme wrap [@@deriving yojson_of]  (* <> *)
+type plus     = lexeme wrap [@@deriving yojson_of]  (* +  *)
+type quote    = lexeme wrap                         (* '  *)
+type rbracket = lexeme wrap                         (* ]  *)
+type rbrace   = lexeme wrap                         (* }  *)
+type rev_app  = lexeme wrap [@@deriving yojson_of]  (* |> *)
+type rpar     = lexeme wrap                         (* )  *)
+type semi     = lexeme wrap                         (* ;  *)
+type slash    = lexeme wrap [@@deriving yojson_of]  (* /  *)
+type times    = lexeme wrap [@@deriving yojson_of]  (* *  *)
+type vbar     = lexeme wrap                         (* |  *)
+type plus_eq  = lexeme wrap                         (* += *)
+type minus_eq = lexeme wrap                         (* -= *)
+type times_eq = lexeme wrap                         (* *= *)
+type slash_eq = lexeme wrap                         (* /= *)
+type vbar_eq  = lexeme wrap                         (* |= *)
 
 (* End-of-File *)
 
 type eof = lexeme wrap
+[@@deriving yojson_of]
 
 (* Literals *)
 
 type attribute     = Attr.t wrap
-type ctor          = lexeme wrap
-type field_name    = lexeme wrap
-type language      = lexeme Region.reg wrap
-type module_name   = lexeme wrap
-type string_       = lexeme wrap
-type type_name     = lexeme wrap
-type type_variable = lexeme wrap
-type variable      = lexeme wrap
-type verbatim      = lexeme wrap
+type ctor          = lexeme wrap [@@deriving yojson_of]
+type field_name    = lexeme wrap [@@deriving yojson_of]
+type language      = lexeme reg wrap [@@deriving yojson_of]
+type module_name   = lexeme wrap [@@deriving yojson_of]
+type string_       = lexeme wrap [@@deriving yojson_of]
+type type_name     = lexeme wrap [@@deriving yojson_of]
+type type_variable = lexeme wrap [@@deriving yojson_of]
+type variable      = lexeme wrap [@@deriving yojson_of]
+type verbatim      = lexeme wrap [@@deriving yojson_of]
 
-type string_literal   = lexeme wrap
-type int_literal      = (lexeme * Z.t) wrap
-type nat_literal      = int_literal
-type bytes_literal    = (lexeme * Hex.t) wrap
-type mutez_literal    = (lexeme * Int64.t) wrap
-type verbatim_literal = lexeme wrap
+type string_literal   = lexeme wrap [@@deriving yojson_of]
+type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type nat_literal      = int_literal [@@deriving yojson_of]
+type bytes_literal    = (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type mutez_literal    = (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type verbatim_literal = lexeme wrap [@@deriving yojson_of]
 
 (* Parentheses, braces, brackets *)
 
-type 'a par'      = {lpar: lpar; inside: 'a; rpar: rpar}
+type 'a par'      = {lpar: (lpar [@yojson.opaque]); inside: 'a; rpar: (rpar [@yojson.opaque])}
+[@@deriving yojson_of]
+
 type 'a par       = 'a par' reg
-type 'a braces'   = {lbrace: lbrace; inside: 'a; rbrace: rbrace}
+[@@deriving yojson_of]
+
+type 'a braces'   = {lbrace: (lbrace [@yojson.opaque]); inside: 'a; rbrace: (rbrace [@yojson.opaque])}
+[@@deriving yojson_of]
+
 type 'a braces    = 'a braces' reg
-type 'a brackets' = {lbracket: lbracket; inside: 'a; rbracket: rbracket}
+[@@deriving yojson_of]
+
+type 'a brackets' = {lbracket: (lbracket [@yojson.opaque]); inside: 'a; rbracket: (rbracket [@yojson.opaque])}
+[@@deriving yojson_of]
+
 type 'a brackets  = 'a brackets' reg
+[@@deriving yojson_of]
 
 (* The Abstract Syntax Tree *)
 
@@ -150,6 +166,7 @@ type t = {
 }
 
 and cst = t
+[@@deriving yojson_of]
 
 (* DECLARATIONS (top-level) *)
 
@@ -157,8 +174,8 @@ and cst = t
    add or modify some, please make sure they remain in order. *)
 
 and declaration =
-  D_Attr      of (attribute * declaration) reg
-| D_Directive of Directive.t
+  D_Attr      of ((attribute [@yojson.opaque]) * declaration) reg
+| D_Directive of (Directive.t [@yojson.opaque])
 | D_Let       of let_decl reg
 | D_Module    of module_decl reg
 | D_Include   of module_include reg
@@ -167,27 +184,27 @@ and declaration =
 
 (* Non-recursive, top-level values *)
 
-and let_decl = kwd_let * kwd_rec option * let_binding
+and let_decl = (kwd_let [@yojson.opaque]) * (kwd_rec [@yojson.opaque]) option * let_binding
 
 and let_binding = {
   binders     : pattern nseq;
   type_params : type_params par option;
   rhs_type    : type_annotation option;
-  eq          : equal;
+  eq          : (equal [@yojson.opaque]);
   let_rhs     : expr
 }
 
 (* Type parameters *)
 
-and type_params = kwd_type * type_variable nseq
+and type_params = (kwd_type [@yojson.opaque]) * type_variable nseq
 
 (* Module declaration *)
 
 and module_decl = {
-  kwd_module  : kwd_module;
+  kwd_module  : (kwd_module [@yojson.opaque]);
   name        : module_name;
-  annotation  : (colon * signature_expr) option;
-  eq          : equal;
+  annotation  : ((colon [@yojson.opaque]) * signature_expr) option;
+  eq          : (equal [@yojson.opaque]);
   module_expr : module_expr
 }
 
@@ -197,30 +214,30 @@ and module_expr =
 | M_Var  of module_name                 (* Module aliasing      *)
 
 and module_body = {
-  kwd_struct   : kwd_struct;
+  kwd_struct   : (kwd_struct [@yojson.opaque]);
   declarations : declaration list;
-  kwd_end      : kwd_end
+  kwd_end      : (kwd_end [@yojson.opaque])
 }
 
 and module_include = {
-  kwd_include : kwd_include ;
+  kwd_include : (kwd_include [@yojson.opaque]);
   module_expr : module_expr
 }
 
 (* Signature declaration *)
 
 and signature_decl = {
-  kwd_module     : kwd_module;
-  kwd_type       : kwd_type;
+  kwd_module     : (kwd_module [@yojson.opaque]);
+  kwd_type       : (kwd_type [@yojson.opaque]);
   name           : module_name;
-  eq             : equal;
+  eq             : (equal [@yojson.opaque]);
   signature_expr : signature_expr
 }
 
 and signature_body = {
-  kwd_sig      : kwd_sig;
+  kwd_sig      : (kwd_sig [@yojson.opaque]);
   sig_items    : sig_item list;
-  kwd_end      : kwd_end
+  kwd_end      : (kwd_end [@yojson.opaque])
 }
 
 and signature_expr =
@@ -229,26 +246,26 @@ and signature_expr =
 | S_Var  of module_name
 
 and sig_item =
-  S_Value   of (kwd_val * variable * colon * type_expr) reg
-| S_Type    of (kwd_type * type_name * equal * type_expr) reg
-| S_TypeVar of (kwd_type * type_name) reg
-| S_Attr    of (attribute * sig_item) reg
+  S_Value   of ((kwd_val [@yojson.opaque]) * variable * (colon [@yojson.opaque]) * type_expr) reg
+| S_Type    of ((kwd_type [@yojson.opaque]) * type_name * (equal [@yojson.opaque]) * type_expr) reg
+| S_TypeVar of ((kwd_type [@yojson.opaque]) * type_name) reg
+| S_Attr    of ((attribute [@yojson.opaque]) * sig_item) reg
 
 (* Module paths *)
 
 and 'a module_path = {
-  module_path : (module_name, dot) nsepseq;
-  selector    : dot;
+  module_path : (module_name, (dot [@yojson.opaque])) nsepseq;
+  selector    : (dot [@yojson.opaque]);
   field       : 'a
 }
 
 (* Type declaration *)
 
 and type_decl = {
-  kwd_type  : kwd_type;
+  kwd_type  : (kwd_type [@yojson.opaque]);
   params    : type_vars option;
   name      : type_name;
-  eq        : equal;
+  eq        : (equal [@yojson.opaque]);
   type_expr : type_expr
 }
 
@@ -256,9 +273,9 @@ and type_vars =
   TV_Single of type_var
 | TV_Tuple  of type_var tuple par
 
-and type_var = (quote option * type_variable) reg  (* 'a or ' a or _ *)
+and type_var = ((quote option [@yojson.opaque]) * type_variable) reg  (* 'a or ' a or _ *)
 
-and 'a tuple = ('a, comma) nsepseq
+and 'a tuple = ('a, (comma [@yojson.opaque])) nsepseq
 
 (* TYPE EXPRESSIONS *)
 
@@ -266,19 +283,19 @@ and 'a tuple = ('a, comma) nsepseq
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_App         of (type_expr * type_ctor_arg) reg (* M.t (x,y,z)     *)
-| T_Arg         of type_var                        (* 'a              *)
-| T_Attr        of (attribute * type_expr)         (* [@a] x          *)
-| T_Cart        of cartesian                       (* x * (y * z)     *)
-| T_Fun         of (type_expr * arrow * type_expr) reg (* x -> y      *)
-| T_Int         of int_literal                     (* 42              *)
-| T_ModPath     of type_expr module_path reg       (* A.B.(x * y)     *)
-| T_Par         of type_expr par                   (* (t)             *)
-| T_ParameterOf of (module_name, dot) nsepseq reg  (* parameter_of m  *)
-| T_Record      of field_decl reg record           (* {a; [@x] b: t}  *)
-| T_String      of string_literal                  (* "x"             *)
-| T_Var         of type_variable                   (* x               *)
-| T_Variant     of variant_type reg                (* [@a] A | B of t *)
+  T_App         of (type_expr * type_ctor_arg) reg                         (* M.t (x,y,z)     *)
+| T_Arg         of type_var                                                (* 'a              *)
+| T_Attr        of ((attribute [@yojson.opaque]) * type_expr)              (* [@a] x          *)
+| T_Cart        of cartesian                                               (* x * (y * z)     *)
+| T_Fun         of (type_expr * (arrow [@yojson.opaque]) * type_expr) reg  (* x -> y          *)
+| T_Int         of int_literal                                             (* 42              *)
+| T_ModPath     of type_expr module_path reg                               (* A.B.(x * y)     *)
+| T_Par         of type_expr par                                           (* (t)             *)
+| T_ParameterOf of (module_name, (dot [@yojson.opaque])) nsepseq reg       (* parameter_of m  *)
+| T_Record      of field_decl reg record                                   (* {a; [@x] b: t}  *)
+| T_String      of string_literal                                          (* "x"             *)
+| T_Var         of type_variable                                           (* x               *)
+| T_Variant     of variant_type reg                                        (* [@a] A | B of t *)
 
 (* Type application *)
 
@@ -288,31 +305,31 @@ and type_ctor_arg =
 
 (* Cartesian type *)
 
-and cartesian = (type_expr * times * (type_expr,times) nsepseq) reg
+and cartesian = (type_expr * (times [@yojson.opaque]) * (type_expr,(times [@yojson.opaque])) nsepseq) reg
 
 (* Record type *)
 
-and 'a record = ('a, semi) sepseq braces
+and 'a record = ('a, (semi [@yojson.opaque])) sepseq braces
 
 and field_decl = {
-  attributes : attribute list;
+  attributes : (attribute list [@yojson.opaque]);
   field_name : field_name;
   field_type : type_annotation option (* Type punning if [None] *)
 }
 
-and type_annotation = colon * type_expr
+and type_annotation = (colon [@yojson.opaque]) * type_expr
 
 (* Variant type *)
 
 and variant_type = {
-  lead_vbar : vbar option;
-  variants  : (variant reg, vbar) nsepseq
+  lead_vbar : (vbar option [@yojson.opaque]);
+  variants  : (variant reg, (vbar [@yojson.opaque])) nsepseq
 }
 
 and variant = {
-  attributes : attribute list;
+  attributes : (attribute list [@yojson.opaque]);
   ctor       : ctor;
-  ctor_args  : (kwd_of * type_expr) option
+  ctor_args  : ((kwd_of [@yojson.opaque]) * type_expr) option
 }
 
 (* PATTERNS *)
@@ -321,30 +338,30 @@ and variant = {
    add or modify some, please make sure they remain in order. *)
 
 and pattern =
-  P_App      of (pattern * pattern option) reg  (* M.C (x,y) *)
-| P_Attr     of (attribute * pattern)           (* [@var] x  *)
-| P_Bytes    of bytes_literal                   (* 0xFFFA    *)
-| P_Cons     of (pattern * cons * pattern) reg  (* x :: y    *)
-| P_Ctor     of ctor                            (* C         *)
-| P_False    of kwd_false                       (* false     *)
-| P_Int      of int_literal                     (* 42        *)
-| P_List     of pattern list_                   (* [x; 4]    *)
-| P_ModPath  of pattern module_path reg         (* M.N.x     *)
-| P_Mutez    of mutez_literal                   (* 5mutez    *)
-| P_Nat      of nat_literal                     (* 4n        *)
-| P_Par      of pattern par                     (* (C, 4)    *)
-| P_Record   of record_pattern                  (* {x=y; z}  *)
-| P_String   of string_literal                  (* "string"  *)
-| P_True     of kwd_true                        (* true      *)
-| P_Tuple    of pattern tuple reg               (* 1, x      *)
-| P_Typed    of typed_pattern reg               (* (x : int) *)
-| P_Unit     of the_unit reg                    (* ()        *)
-| P_Var      of variable                        (* x         *)
-| P_Verbatim of verbatim_literal                (* {|foo|}   *)
+  P_App      of (pattern * pattern option) reg                     (* M.C (x,y) *)
+| P_Attr     of ((attribute [@yojson.opaque]) * pattern)           (* [@var] x  *)
+| P_Bytes    of bytes_literal                                      (* 0xFFFA    *)
+| P_Cons     of (pattern * (cons [@yojson.opaque]) * pattern) reg  (* x :: y    *)
+| P_Ctor     of ctor                                               (* C         *)
+| P_False    of kwd_false                                          (* false     *)
+| P_Int      of int_literal                                        (* 42        *)
+| P_List     of pattern list_                                      (* [x; 4]    *)
+| P_ModPath  of pattern module_path reg                            (* M.N.x     *)
+| P_Mutez    of mutez_literal                                      (* 5mutez    *)
+| P_Nat      of nat_literal                                        (* 4n        *)
+| P_Par      of pattern par                                        (* (C, 4)    *)
+| P_Record   of record_pattern                                     (* {x=y; z}  *)
+| P_String   of string_literal                                     (* "string"  *)
+| P_True     of kwd_true                                           (* true      *)
+| P_Tuple    of pattern tuple reg                                  (* 1, x      *)
+| P_Typed    of typed_pattern reg                                  (* (x : int) *)
+| P_Unit     of the_unit reg                                       (* ()        *)
+| P_Var      of variable                                           (* x         *)
+| P_Verbatim of verbatim_literal                                   (* {|foo|}   *)
 
 (* List pattern *)
 
-and 'a list_ = ('a, semi) sepseq brackets
+and 'a list_ = ('a, (semi [@yojson.opaque])) sepseq brackets
 
 (* Record pattern *)
 
@@ -355,14 +372,14 @@ and ('lhs, 'lens, 'rhs) field =
 | Complete of ('lhs, 'lens, 'rhs) full_field reg
 
 and 'lhs punned = {
-  attributes : attribute list;
+  attributes : (attribute list [@yojson.opaque]);
   pun        : 'lhs;
 }
 
 and ('lhs, 'lens, 'rhs) full_field = {
-  attributes : attribute list;
+  attributes : (attribute list [@yojson.opaque]);
   field_lhs  : 'lhs;
-  field_lens : 'lens;
+  field_lens : ('lens [@yojson.opaque]);
   field_rhs  : 'rhs
 }
 
@@ -372,7 +389,7 @@ and typed_pattern = pattern * type_annotation
 
 (* Unit pattern *)
 
-and the_unit = lpar * rpar
+and the_unit = (lpar * rpar [@yojson.opaque])
 
 (* EXPRESSIONS *)
 
@@ -380,64 +397,64 @@ and the_unit = lpar * rpar
    add or modify some, please make sure they remain in order. *)
 
 and expr =
-  E_Add        of plus bin_op reg          (* x + y               *)
-| E_And        of bool_and bin_op reg      (* x && y              *)
-| E_App        of (expr * expr nseq) reg   (* f x y     C (x,y)   *)
-| E_Assign     of assign reg               (* x := e              *)
-| E_Attr       of (attribute * expr)       (* [@a] e              *)
-| E_Bytes      of bytes_literal            (* 0xFFFA              *)
-| E_Cat        of caret bin_op reg         (* "Hello" ^ world     *)
+  E_Add        of plus bin_op reg                             (* x + y               *)
+| E_And        of bool_and bin_op reg                         (* x && y              *)
+| E_App        of (expr * expr nseq) reg                      (* f x y     C (x,y)   *)
+| E_Assign     of assign reg                                  (* x := e              *)
+| E_Attr       of ((attribute [@yojson.opaque]) * expr)       (* [@a] e              *)
+| E_Bytes      of bytes_literal                               (* 0xFFFA              *)
+| E_Cat        of caret bin_op reg                            (* "Hello" ^ world     *)
 | E_CodeInj    of code_inj reg
-| E_Cond       of cond_expr reg            (* if x then y         *)
-| E_Cons       of cons bin_op reg          (* head :: tail        *)
-| E_ContractOf of (module_name, dot) nsepseq reg (* contract_of M *)
-| E_Ctor       of ctor                     (* C                   *)
-| E_Div        of slash bin_op reg         (* x / y               *)
-| E_Equal      of equal bin_op reg         (* x = y               *)
-| E_False      of kwd_false                (* false               *)
-| E_For        of for_loop reg   (* for x = e1 upto e2 do e3 done *)
-| E_ForIn      of for_in_loop reg       (* for x in e1 do e2 done *)
-| E_Fun        of fun_expr reg             (* fun x -> x          *)
-| E_Geq        of geq bin_op reg           (* x >= y              *)
-| E_Gt         of gt bin_op reg            (* x > y               *)
-| E_Int        of int_literal              (* 42                  *)
-| E_Land       of kwd_land bin_op reg      (* x land y            *)
-| E_Leq        of leq bin_op reg           (* x <= y              *)
-| E_LetIn      of let_in reg               (* let x = e1 in e2    *)
-| E_LetMutIn   of let_mut_in reg          (* let mut x = e1 in e2 *)
-| E_List       of expr list_               (* [f x; 5]            *)
-| E_Lor        of kwd_lor bin_op reg       (* x lor y             *)
-| E_Lsl        of kwd_lsl bin_op reg       (* x lsl y             *)
-| E_Lsr        of kwd_lsr bin_op reg       (* x lsr y             *)
-| E_Lt         of lt bin_op reg            (* x < y               *)
-| E_Lxor       of kwd_lxor bin_op reg      (* x lxor y            *)
-| E_Match      of match_expr reg           (* match e with p -> i *)
-| E_Mod        of kwd_mod bin_op reg       (* x mod n             *)
-| E_ModIn      of module_in reg            (* module M = N in e   *)
-| E_ModPath    of expr module_path reg     (* M.N.x.0             *)
-| E_Mult       of times bin_op reg         (* x * y               *)
-| E_Mutez      of mutez_literal            (* 5mutez              *)
-| E_Nat        of nat_literal              (* 4n                  *)
-| E_Neg        of minus un_op reg          (* -a                  *)
-| E_Neq        of neq bin_op reg           (* x <> y              *)
-| E_Not        of kwd_not un_op reg        (* not x               *)
-| E_Or         of kwd_or bin_op reg        (* x or y              *)
-| E_Par        of expr par                 (* (x - M.y)           *)
-| E_Proj       of projection reg           (* e.x.1               *)
-| E_Record     of record_expr              (* {x=y; z}            *)
-| E_RevApp     of rev_app bin_op reg       (* y |> f |> g x       *)
-| E_Seq        of sequence_expr reg        (* x; 3                *)
-| E_String     of string_literal           (* "string"            *)
-| E_Sub        of minus bin_op reg         (* a - b               *)
-| E_True       of kwd_true                 (* true                *)
-| E_Tuple      of expr tuple reg           (* (1, x)              *)
-| E_Typed      of typed_expr par           (* (x : int)           *)
-| E_TypeIn     of type_in reg              (* type t = u in e     *)
-| E_Unit       of the_unit reg             (* ()                  *)
-| E_Update     of update_expr braces       (* {x with y=z}        *)
-| E_Var        of variable                 (* x                   *)
-| E_Verbatim   of verbatim_literal         (* {|foo|}             *)
-| E_While      of while_loop reg           (* while e1 do e2 done *)
+| E_Cond       of cond_expr reg                               (* if x then y         *)
+| E_Cons       of cons bin_op reg                             (* head :: tail        *)
+| E_ContractOf of (module_name, (dot [@yojson.opaque])) nsepseq reg (* contract_of M *)
+| E_Ctor       of ctor                                        (* C                   *)
+| E_Div        of slash bin_op reg                            (* x / y               *)
+| E_Equal      of equal bin_op reg                            (* x = y               *)
+| E_False      of kwd_false                                   (* false               *)
+| E_For        of for_loop reg                      (* for x = e1 upto e2 do e3 done *)
+| E_ForIn      of for_in_loop reg                          (* for x in e1 do e2 done *)
+| E_Fun        of fun_expr reg                                (* fun x -> x          *)
+| E_Geq        of geq bin_op reg                              (* x >= y              *)
+| E_Gt         of gt bin_op reg                               (* x > y               *)
+| E_Int        of int_literal                                 (* 42                  *)
+| E_Land       of kwd_land bin_op reg                         (* x land y            *)
+| E_Leq        of leq bin_op reg                              (* x <= y              *)
+| E_LetIn      of let_in reg                                  (* let x = e1 in e2    *)
+| E_LetMutIn   of let_mut_in reg                             (* let mut x = e1 in e2 *)
+| E_List       of expr list_                                  (* [f x; 5]            *)
+| E_Lor        of kwd_lor bin_op reg                          (* x lor y             *)
+| E_Lsl        of kwd_lsl bin_op reg                          (* x lsl y             *)
+| E_Lsr        of kwd_lsr bin_op reg                          (* x lsr y             *)
+| E_Lt         of lt bin_op reg                               (* x < y               *)
+| E_Lxor       of kwd_lxor bin_op reg                         (* x lxor y            *)
+| E_Match      of match_expr reg                              (* match e with p -> i *)
+| E_Mod        of kwd_mod bin_op reg                          (* x mod n             *)
+| E_ModIn      of module_in reg                               (* module M = N in e   *)
+| E_ModPath    of expr module_path reg                        (* M.N.x.0             *)
+| E_Mult       of times bin_op reg                            (* x * y               *)
+| E_Mutez      of mutez_literal                               (* 5mutez              *)
+| E_Nat        of nat_literal                                 (* 4n                  *)
+| E_Neg        of minus un_op reg                             (* -a                  *)
+| E_Neq        of neq bin_op reg                              (* x <> y              *)
+| E_Not        of kwd_not un_op reg                           (* not x               *)
+| E_Or         of kwd_or bin_op reg                           (* x or y              *)
+| E_Par        of expr par                                    (* (x - M.y)           *)
+| E_Proj       of projection reg                              (* e.x.1               *)
+| E_Record     of record_expr                                 (* {x=y; z}            *)
+| E_RevApp     of rev_app bin_op reg                          (* y |> f |> g x       *)
+| E_Seq        of sequence_expr reg                           (* x; 3                *)
+| E_String     of string_literal                              (* "string"            *)
+| E_Sub        of minus bin_op reg                            (* a - b               *)
+| E_True       of kwd_true                                    (* true                *)
+| E_Tuple      of expr tuple reg                              (* (1, x)              *)
+| E_Typed      of typed_expr par                              (* (x : int)           *)
+| E_TypeIn     of type_in reg                                 (* type t = u in e     *)
+| E_Unit       of the_unit reg                                (* ()                  *)
+| E_Update     of update_expr braces                          (* {x with y=z}        *)
+| E_Var        of variable                                    (* x                   *)
+| E_Verbatim   of verbatim_literal                            (* {|foo|}             *)
+| E_While      of while_loop reg                              (* while e1 do e2 done *)
 
 (* Binary and unary arithmetic operators *)
 
@@ -451,20 +468,20 @@ and typed_expr = expr * type_annotation
 (* Sequence expression *)
 
 and sequence_expr = {
-  compound : compound option;
-  elements : (expr, semi) sepseq
+  compound : (compound option [@yojson.opaque]);
+  elements : (expr, (semi [@yojson.opaque])) sepseq
 }
 
 and compound =
-  BeginEnd of kwd_begin * kwd_end
-| Parens   of lpar * rpar          (* TODO in parser *)
+  BeginEnd of (kwd_begin * kwd_end [@yojson.opaque])
+| Parens   of (lpar * rpar [@yojson.opaque])          (* TODO in parser *)
 
 (* Projection *)
 
 and projection = {
   record_or_tuple : expr;
-  selector        : dot;
-  field_path      : (selection, dot) nsepseq
+  selector        : (dot [@yojson.opaque]);
+  field_path      : (selection, (dot [@yojson.opaque])) nsepseq
 }
 
 and selection =
@@ -479,8 +496,8 @@ and record_expr = (field_name, equal, expr) field record
 
 and update_expr = {
   record   : expr;
-  kwd_with : kwd_with;
-  updates  : ((path, lens, expr) field, semi) nsepseq
+  kwd_with : (kwd_with [@yojson.opaque]);
+  updates  : ((path, lens, expr) field, (semi [@yojson.opaque])) nsepseq
 }
 
 and path =
@@ -488,26 +505,26 @@ and path =
 | Path of projection reg
 
 and lens =
-  Lens_Id   of equal
-| Lens_Add  of plus_eq
-| Lens_Sub  of minus_eq
-| Lens_Mult of times_eq
-| Lens_Div  of slash_eq
-| Lens_Fun  of vbar_eq
+  Lens_Id   of (equal [@yojson.opaque])
+| Lens_Add  of (plus_eq [@yojson.opaque])
+| Lens_Sub  of (minus_eq [@yojson.opaque])
+| Lens_Mult of (times_eq [@yojson.opaque])
+| Lens_Div  of (slash_eq [@yojson.opaque])
+| Lens_Fun  of (vbar_eq [@yojson.opaque])
 
 (* Pattern matching *)
 
 and match_expr = {
-  kwd_match : kwd_match;
+  kwd_match : (kwd_match [@yojson.opaque]);
   subject   : expr;
-  kwd_with  : kwd_with;
-  lead_vbar : vbar option;
-  clauses   : (match_clause reg, vbar) nsepseq reg
+  kwd_with  : (kwd_with [@yojson.opaque]);
+  lead_vbar : (vbar option [@yojson.opaque]);
+  clauses   : (match_clause reg, (vbar [@yojson.opaque])) nsepseq reg
 }
 
 and match_clause = {
   pattern : pattern;
-  arrow   : arrow;
+  arrow   : (arrow [@yojson.opaque]);
   rhs     : expr
 }
 
@@ -515,9 +532,9 @@ and match_clause = {
 
 and let_in = {
   kwd_let : kwd_let;
-  kwd_rec : kwd_rec option;
-  binding : let_binding;
-  kwd_in  : kwd_in;
+  kwd_rec : (kwd_rec [@yojson.opaque]) option;
+  binding : let_binding reg;
+  kwd_in  : (kwd_in [@yojson.opaque]);
   body    : expr
 }
 
@@ -525,9 +542,9 @@ and let_in = {
 
 and let_mut_in = {
   kwd_let : kwd_let;
-  kwd_mut : kwd_mut;
-  binding : let_binding;
-  kwd_in  : kwd_in;
+  kwd_mut : (kwd_mut [@yojson.opaque]);
+  binding : let_binding reg;
+  kwd_in  : (kwd_in [@yojson.opaque]);
   body    : expr
 }
 
@@ -542,38 +559,38 @@ and assign = {
 (* Local type definition *)
 
 and type_in = {
-  type_decl : type_decl;
-  kwd_in    : kwd_in;
+  type_decl : type_decl reg;
+  kwd_in    : (kwd_in [@yojson.opaque]);
   body      : expr
 }
 
 (* Local module definition *)
 
 and module_in = {
-  mod_decl : module_decl;
-  kwd_in   : kwd_in;
+  mod_decl : module_decl reg;
+  kwd_in   : (kwd_in [@yojson.opaque]);
   body     : expr
 }
 
 (* Functional expression (a.k.a. lambda) *)
 
 and fun_expr = {
-  kwd_fun     : kwd_fun;
+  kwd_fun     : (kwd_fun [@yojson.opaque]);
   type_params : type_params par option;
   binders     : pattern nseq;
   rhs_type    : type_annotation option;
-  arrow       : arrow;
+  arrow       : (arrow [@yojson.opaque]);
   body        : expr
 }
 
 (* Conditional expression *)
 
 and cond_expr = {
-  kwd_if   : kwd_if;
+  kwd_if   : (kwd_if [@yojson.opaque]);
   test     : expr;
-  kwd_then : kwd_then;
+  kwd_then : (kwd_then [@yojson.opaque]);
   if_so    : expr;
-  if_not   : (kwd_else * expr) option
+  if_not   : ((kwd_else [@yojson.opaque]) * expr) option
 }
 
 (* Code injection. Note how the field [language] wraps a region in
@@ -583,11 +600,11 @@ and cond_expr = {
 and code_inj = {
   language : language;
   code     : expr;
-  rbracket : rbracket
+  rbracket : (rbracket [@yojson.opaque])
 }
 
 and for_loop = {
-  kwd_for   : kwd_for;
+  kwd_for   : (kwd_for [@yojson.opaque]);
   index     : variable;
   equal     : equal;
   bound1    : expr;
@@ -597,15 +614,15 @@ and for_loop = {
 }
 
 and while_loop = {
-  kwd_while : kwd_while;
+  kwd_while : (kwd_while [@yojson.opaque]);
   cond      : expr;
   body      : loop_body reg
 }
 
 and for_in_loop = {
-  kwd_for    : kwd_for;
+  kwd_for    : (kwd_for [@yojson.opaque]);
   pattern    : pattern;
-  kwd_in     : kwd_in;
+  kwd_in     : (kwd_in [@yojson.opaque]);
   collection : expr;
   body       : loop_body reg
 }
@@ -615,9 +632,9 @@ and direction =
 | Downto of kwd_downto
 
 and loop_body = {
-  kwd_do   : kwd_do;
-  seq_expr : (expr, semi) sepseq;
-  kwd_done : kwd_done
+  kwd_do   : (kwd_do [@yojson.opaque]);
+  seq_expr : (expr, (semi [@yojson.opaque])) sepseq;
+  kwd_done : (kwd_done [@yojson.opaque])
 }
 
 (* PROJECTING REGIONS *)

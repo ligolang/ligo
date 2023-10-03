@@ -212,7 +212,13 @@ let with_cst
   =
   with_cached_doc path default
   @@ fun { syntax; code; _ } ->
-  match Dialect_cst.get_cst ~strict ~file:path syntax code with
+  match
+    Ligo_api.Dialect_cst.get_cst
+      ~strict
+      ~file:(Path.to_string path)
+      syntax
+      (Caml.Buffer.of_seq (Caml.String.to_seq code))
+  with
   | Error err ->
     let@ () = on_error err in
     return default

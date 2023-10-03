@@ -7,7 +7,7 @@ module Pretty = Pretty
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def
-module Dialect_cst = Dialect_cst
+module Dialect_cst = Ligo_api.Dialect_cst
 module DocumentUri = Document_uri
 module Position = Position
 module PP_config = PP_config

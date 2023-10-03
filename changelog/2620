@@ -1,0 +1,7 @@
+
+author: DK318
+description: "\\nAdds a `ligo info dump-cst` command which is useful for the debugger. It prints contracts CST in JSON format (supported only for CameLIGO and JsLIGO).\\n\\n"
+merge_request: '2620'
+title: "Draft: [#1762] Implement dumping CST in the compiler"
+type: added
+            

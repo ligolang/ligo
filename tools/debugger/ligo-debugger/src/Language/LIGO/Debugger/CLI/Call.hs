@@ -7,9 +7,6 @@ module Language.LIGO.Debugger.CLI.Call
   , resolveConfig
   , getScopes
 
-    -- * Helpers
-  , preprocess
-
     -- * Versions
   , Version (..)
 
@@ -20,6 +17,7 @@ module Language.LIGO.Debugger.CLI.Call
   , minimalSupportedVersion
   , recommendedVersion
   , getVersionIssuesDetails
+  , decodeCST
 
     -- * Exceptions
   , UnsupportedLigoVersionException (..)
@@ -27,11 +25,10 @@ module Language.LIGO.Debugger.CLI.Call
 
 import Control.Arrow ((>>>))
 import Data.Aeson
-  (FromJSON (parseJSON), KeyValue ((.=)), ToJSON (toJSON), Value, eitherDecode',
-  eitherDecodeStrict', object, withObject, (.:?))
+  (FromJSON (parseJSON), KeyValue ((.=)), ToJSON, Value, eitherDecodeStrict', object, withObject,
+  (.:?))
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Types (Parser, parseEither)
-import Data.ByteString.Lazy qualified as BSL
 import Data.Coerce (coerce)
 import Data.Map qualified as M
 import Data.MessagePack (errorMessages, unpackEither)
@@ -45,6 +42,7 @@ import System.FilePath (isPathSeparator, takeDirectory, (</>))
 import System.Process (cwd, proc)
 import System.Process.ByteString.Lazy qualified as PExtras
 import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
 import UnliftIO
   (Handler (Handler), MonadUnliftIO, catches, hFlush, handle, throwIO, try, withSystemTempFile)
@@ -56,6 +54,8 @@ import Morley.Michelson.Parser qualified as MP
 import Morley.Michelson.Typed qualified as T
 import Morley.Michelson.Untyped qualified as MU
 
+import Language.LIGO.AST.Parser
+import Language.LIGO.AST.Skeleton (Info, SomeLIGO)
 import Language.LIGO.Debugger.CLI.Exception
 import Language.LIGO.Debugger.CLI.Helpers
 import Language.LIGO.Debugger.CLI.Types
@@ -63,9 +63,6 @@ import Language.LIGO.Debugger.CLI.Types.LigoValue
 import Language.LIGO.Debugger.CLI.Types.LigoValue.Codegen
 import Language.LIGO.Debugger.Error
 import Language.LIGO.Debugger.Handlers.Types
-import Language.LIGO.ParseTree
-
-import Util
 
 ----------------------------------------------------------------------------
 -- Execution
@@ -99,12 +96,10 @@ rewrapIOError = UnliftIO.handle \exc@IOException.IOError{} ->
     , lieDescription = toText $ IOException.ioe_description exc
     }
 
-callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m LByteString
-callLigoBS _rootDir args conM = do
+callLigoBS :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> m LByteString
+callLigoBS _rootDir args = do
   LigoClientEnv {..} <- getLigoClientEnv
   liftIO $ do
-    let raw = maybe "" (BSL.fromStrict . encodeUtf8 . srcText) conM
-    let fpM = srcPath <$> conM
     -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there
     -- is a bug in the `process` library preventing us from doing it, as it
     -- causes non-determinism with handles receiving invalid arguments when
@@ -112,10 +107,10 @@ callLigoBS _rootDir args conM = do
     -- Additionally, using `withCurrentDirectory` from `directory` is no help
     -- either, as it doesn't seem thread-safe either.
     let process = proc _lceClientPath (coerce args)
-    (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process raw
+    (ec, lo, le) <- PExtras.readCreateProcessWithExitCode process ""
       & rewrapIOError
     unless (ec == ExitSuccess && le == mempty) $ -- TODO: separate JSON errors and other ones
-      UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) fpM (Just ec)
+      UnliftIO.throwIO $ LigoClientFailureException (lazyBytesToText lo) (lazyBytesToText le) Nothing (Just ec)
     pure lo
 
 -- | Calls the LIGO binary (extracted from 'getLigoClientEnv') with the provided
@@ -124,21 +119,19 @@ callLigoBS _rootDir args conM = do
 -- If '_lceLigoProcesses' is 'Nothing', this function will make a blocking call
 -- to LIGO, otherwise it will use an unused process handle from the process
 -- pool.
-callLigo :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> Maybe Source -> m Text
-callLigo rootDir args conM = do
+callLigo :: HasLigoClient m => Maybe FilePath -> [LigoCliArg] -> m Text
+callLigo rootDir args = do
   LigoClientEnv{..} <- getLigoClientEnv
-  let fpM = srcPath <$> conM
   -- FIXME (LIGO-545): We should set the cwd to `rootDir`, but it seems there is
   -- a bug in the `process` library preventing us from doing it, as it causes
   -- non-determinism with handles receiving invalid arguments when running our
   -- tests with multiple threads. Additionally, using `withCurrentDirectory`
   -- from `directory` is no help either, as it doesn't seem thread-safe either.
-  let raw = maybe "" (toString . srcText) conM
   let process = (proc _lceClientPath $ coerce args){cwd = rootDir}
-  (ec, lo, le) <- readCreateProcessWithExitCode process raw
+  (ec, lo, le) <- readCreateProcessWithExitCode process ""
     & rewrapIOError
   unless (ec == ExitSuccess && null le) $ -- TODO: separate JSON errors and other ones
-    UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) fpM (Just ec)
+    UnliftIO.throwIO $ LigoClientFailureException (toText lo) (toText le) Nothing (Just ec)
   pure $ toText lo
 
 newtype Version = Version
@@ -150,24 +143,6 @@ instance ToJSON Version where
 
 parseValue :: FromJSON a => Value -> Either String a
 parseValue = parseEither parseJSON
-
--- | Abstracts boilerplate present in many of our LIGO handlers.
---
--- This function will simply ignore the contents of the
--- 'Source' and call LIGO with the file that is directly on the disk.
-withLigo
-  :: (HasLigoClient m)
-  => Source  -- ^ The source file that will be given to LIGO.
-  -> (FilePath -> [LigoCliArg])  -- ^ A function that should return the command line arguments for the provided file which will be used to call LIGO.
-  -> (Source -> Value -> m a)  -- ^ Given the source file after calling LIGO and its decoded JSON value, what to do to return the final value.
-  -> m a
-withLigo src@(Source fp _) getArgs decode =
-  UnliftIO.try (callLigoBS Nothing (getArgs fp) (Just src)) >>= \case
-    Left LigoClientFailureException{cfeStderr} ->
-      handleLigoMessages fp cfeStderr
-    Right result -> case eitherDecode' result of
-      Left e -> UnliftIO.throwIO $ LigoMalformedJSONException e (lazyBytesToText result) fp
-      Right json -> decode (Source fp (lazyBytesToText result)) json
 
 ----------------------------------------------------------------------------
 -- Execute ligo binary itself
@@ -181,7 +156,7 @@ withLigo src@(Source fp _) getArgs decode =
 -- TODO: rename this back to @getLigoVersion@.
 getLigoVersionRaw :: (HasLigoClient m) => m Version
 getLigoVersionRaw =
-  Version . Text.strip <$> callLigo Nothing ["--version"] Nothing
+  Version . Text.strip <$> callLigo Nothing ["--version"]
 
 -- | Get the current LIGO version, but in case of any failure return 'Nothing'.
 --
@@ -206,38 +181,6 @@ findProjectRoot currentDirectory = do
 
 projectRootToCliArg :: Maybe FilePath -> [LigoCliArg]
 projectRootToCliArg = maybe [] (\projectRoot -> ["--project-root", strArg projectRoot])
-
--- | Call the preprocessor on some contract, handling all preprocessor directives.
---
--- This function will call the contract with a temporary file path, dumping the
--- contents of the given source so LIGO reads the contents. This allows us to
--- continue using the preprocessor even if it's an unsaved LSP buffer.
---
--- ```
--- ligo print preprocessed ${temp_file_name} --lib ${contract_dir} --format json
--- ```
-preprocess
-  :: (HasLigoClient m)
-  => Source
-  -> m Source
-preprocess source = do
-  maybeProjectRoot <- liftIO $ findProjectRoot dir
-  withLigo source
-    (\tempFp ->
-      [ "print", "preprocessed", strArg tempFp
-      , "--lib", strArg dir
-      , "--format", "json"
-      ] ++ projectRootToCliArg maybeProjectRoot
-    )
-    (\_ json ->
-      case parseValue json of
-        Left err -> do
-          UnliftIO.throwIO $ LigoPreprocessFailedException (toText err) fp
-        Right newContract ->
-          pure $ Source fp newContract)
-  where
-    fp = srcPath source
-    dir = takeDirectory fp
 
 -- | A middleware for processing `ExpectedClientFailure` error needed to pass it
 -- multiple levels up allowing us from restoring from expected ligo errors.
@@ -307,7 +250,6 @@ checkCompilation ModuleName{..} file = void $ withMapLigoExc $
         , ["--disable-michelson-typechecking"]
         , [strArg file]
         ]
-    Nothing
 
 -- | Run ligo to compile the contract with all the necessary debug info.
 compileLigoContractDebug :: forall m. (HasLigoClient m) => ModuleName -> FilePath -> m (LigoMapper 'Unique)
@@ -324,7 +266,6 @@ compileLigoContractDebug ModuleName{..} file = withMapLigoExc $
         , ["--disable-michelson-typechecking"]
         , [strArg file]
         ]
-    Nothing
     >>= either (throwIO . LigoDecodeException "decoding source mapper" . unlines . fmap toText . errorMessages) pure
       . unpackEither
 
@@ -339,7 +280,7 @@ compileLigoExpression valueOrigin ctxFile expr = withMapLigoExc $
     , "--init-file", strArg ctxFile
     , "auto"  -- `syntax` argument, we can leave `auto` since context file is specified
     , strArg expr
-    ] Nothing
+    ]
     >>= decodeOutput
   where
     decodeOutput :: Text -> m MU.Value
@@ -355,7 +296,7 @@ getAvailableModules file = withMapLigoExc $
     [ "info", "list-declarations"
     , "--only-ep"
     , strArg file
-    ] Nothing
+    ]
     >>= decodeOutput
   where
     decodeOutput :: Text -> m ModuleNamesList
@@ -377,7 +318,7 @@ decompileLigoValues typesAndValues = withMapLigoExc do
     callLigoBS Nothing
       [ "run", "test"
       , strArg path
-      ] Nothing
+      ]
     >>= decodeOutput
   where
     decodeOutput :: LByteString -> m [Maybe LigoValue]
@@ -391,7 +332,7 @@ resolveConfig configPath = withMapLigoExc do
       [ "info", "resolve-config"
       , "--format", "json"
       , strArg configPath
-      ] Nothing
+      ]
       >>= decodeOutput
   where
     decodeOutput :: LByteString -> m LigoLaunchRequest
@@ -431,12 +372,31 @@ getScopes contractPath = withMapLigoExc do
     , "--format", "json"
     , "--no-stdlib"
     , strArg contractPath
-    ] Nothing
+    ]
     >>= decodeOutput
   where
     decodeOutput :: LByteString -> m LigoDefinitions
     decodeOutput = either (throwIO . LigoDecodeException "decoding ligo scopes" . toText) pure
       . Aeson.eitherDecode
+
+decodeCST :: forall m. (HasLigoClient m) => NonEmpty FilePath -> m [SomeLIGO Info]
+decodeCST files = withMapLigoExc $
+  callLigoBS
+    Nothing
+    do mconcat
+        [ [ "info", "dump-cst"
+          ]
+        , toList (strArg <$> files)
+        ]
+    >>= decodeOutput
+  where
+    decodeOutput :: LByteString -> m [SomeLIGO Info]
+    decodeOutput bts = do
+      ASTs asts <-
+        either (throwIO . LigoDecodeException "decoding ligo cst" . unlines . fmap toText . errorMessages) pure
+          $ (unpackEither bts)
+
+      pure asts
 
 -- Versions
 ----------------------------------------------------------------------------

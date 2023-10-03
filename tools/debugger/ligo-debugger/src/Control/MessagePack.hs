@@ -11,13 +11,22 @@ module Control.MessagePack
   , asumMsg
   , guardMsg
   , wrapMonadFail
+
+  -- * Debug
+  , _jsonToMsgPack
+  , _parseAsMsgPack
   ) where
 
 import Control.Monad.Validate (MonadValidate (refute), Validate, runValidate)
+import Data.Aeson (Value (..), decodeFileStrict)
+import Data.Aeson.Key qualified as A
+import Data.Aeson.KeyMap qualified as A
 import Data.Map qualified as M
+import Data.Maybe (fromJust)
 import Data.MessagePack
-  (DecodeError, MessagePack, Object (ObjectArray, ObjectMap, ObjectNil, ObjectStr), decodeError,
-  defaultConfig, fromObjectWith, toObject)
+  (DecodeError, MessagePack, Object (..), decodeError, defaultConfig, fromObject, fromObjectWith,
+  toObject)
+import Data.Scientific (toBoundedInteger)
 import Data.Vector qualified as V
 import Text.Interpolation.Nyan
 
@@ -131,3 +140,24 @@ instance (MessagePack a) => MessagePack (Maybe a) where
   fromObjectWith cfg = \case
     ObjectNil -> pure Nothing
     other -> Just <$> fromObjectWith cfg other
+
+-----------
+-- Debug --
+-----------
+
+_jsonToMsgPack :: Value -> Object
+_jsonToMsgPack = \case
+  Object obj -> obj
+    & A.toList
+    <&> do \(key, val) -> (ObjectStr $ A.toText key, _jsonToMsgPack val)
+    & ObjectMap . V.fromList
+  Array vec -> ObjectArray $ _jsonToMsgPack <$> vec
+  String str -> ObjectStr str
+  Number n -> ObjectInt (fromJust $ toBoundedInteger n)
+  Bool b -> ObjectBool b
+  Null -> ObjectNil
+
+_parseAsMsgPack :: (MessagePack a) => FilePath -> IO a
+_parseAsMsgPack path = do
+  val <- fromJust <$> decodeFileStrict path
+  fromObject (_jsonToMsgPack val)

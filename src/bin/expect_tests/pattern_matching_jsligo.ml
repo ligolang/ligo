@@ -33,10 +33,10 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match2.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 16-18:
+    File "../../test/contracts/negative/pattern_match2.jsligo", line 3, characters 9-18:
       2 |   match(x) {
       3 |     when(Success()): "";
-                          ^^
+                   ^^^^^^^^^
       4 |     when(Fail(_)): ""
 
     Pattern not of the expected type "nat". |}]
@@ -65,10 +65,10 @@ let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pattern_match3.jsligo"; "--test" ];
   [%expect
     {|
-    File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 16-19:
+    File "../../test/contracts/negative/pattern_match3.jsligo", line 4, characters 9-19:
       3 |     when(Success(_)): "";
       4 |     when(Failure(_)): ""
-                          ^^^
+                   ^^^^^^^^^^
       5 |   };
 
     Pattern not of the expected type "test_exec_result". |}]
