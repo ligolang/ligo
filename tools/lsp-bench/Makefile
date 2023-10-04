@@ -3,6 +3,7 @@
 
 bench:
 	git submodule update --init --recursive
+	bash -c "cd projects/submodules/checker; cd -"
 	$(BUILD_FLAGS) stack run -- "-v2" "$(filter)"
 
 bench-no-logging:

@@ -39,13 +39,13 @@ bench_simple_references :: [Benchmark]
 bench_simple_references =
   [ bgroup "References/simple"
     [ simpleReferencesBench rr
-    | rr <- referencesOneBigFile
+    | rr <- referencesOneBigFile <> referencesChecker
     ]
   ]
 
 simpleReferencesBench :: ReferencesRequest -> Benchmark
 simpleReferencesBench rr@ReferencesRequest{..} =
-  benchLspSession
+  benchLspSession OnDocumentLink
     (show rrFile <> "/" <> show rrPos)
     rrProject
     $ requestReferences rr
@@ -72,6 +72,29 @@ referencesOneBigFile =
       }
   ]
 
+referencesChecker :: [ReferencesRequest]
+referencesChecker =
+  [
+    ReferencesRequest -- ref_peek_front
+      { rrProject = projectChecker
+      , rrFile = FileDoc "avl.mligo"
+      , rrPos = (535, 9)
+      , rrExpectedAmount = 4
+      }
+  , ReferencesRequest -- parent_ptr
+      { rrProject = projectChecker
+      , rrFile = FileDoc "avl.mligo"
+      , rrPos = (477, 7)
+      , rrExpectedAmount = 6
+      }
+  , ReferencesRequest -- left
+      { rrProject = projectChecker
+      , rrFile = FileDoc "avl.mligo"
+      , rrPos = (359, 7)
+      , rrExpectedAmount = 7
+      }
+  ]
+
 -- request many references from a file in one session
 -- to check that our caching works correctly. It's expected that
 -- the result will be close to case when we ask for one reference.
@@ -84,5 +107,13 @@ bench_sequence_references =
       , bsSetRequestDoc = \doc rr -> rr {rrFile = doc}
       , bsRunRequest = requestReferences
       , bsProject = projectWithOneBigFile
+      }
+  , benchSequence BenchmarkSequence
+      { bsName = "References/sequence"
+      , bsRequests = referencesChecker
+      , bsGetRequestDoc = rrFile
+      , bsSetRequestDoc = \doc rr -> rr {rrFile = doc}
+      , bsRunRequest = requestReferences
+      , bsProject = projectChecker
       }
   ]

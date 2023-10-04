@@ -8,6 +8,9 @@ module Bench.Util
     openLigoDoc,
     projectWithOneBigFile,
     projectWithOneSmallFile,
+    projectChecker,
+    DiagnosticsPullingMethod(..),
+    pullDiagnostics,
     withBothEditsAndKeystrokes,
     BenchmarkSequence(..),
     benchSequence,
@@ -15,14 +18,19 @@ module Bench.Util
 where
 
 import Prelude qualified
-import Universum
+import Universum hiding ((^.))
 
 import Criterion
+import Data.Aeson qualified as Aeson
+import Data.Aeson.QQ.Simple (aesonQQ)
 import Data.Row.Records ((.+), (.==))
 import Language.LSP.Protocol.Capabilities qualified as LSP
+import Language.LSP.Protocol.Lens qualified as LspLens
+import Language.LSP.Protocol.Message qualified as LSP
 import Language.LSP.Protocol.Types qualified as LSP
-import Language.LSP.Test (SessionConfig (logStdErr))
+import Language.LSP.Test (SessionConfig (logStdErr, messageTimeout), lspConfig)
 import Language.LSP.Test qualified as LSP
+import Lens.Micro ((^.))
 import System.Directory (canonicalizePath)
 import System.Environment (lookupEnv)
 import System.IO.Unsafe (unsafePerformIO)
@@ -33,7 +41,7 @@ import System.IO.Unsafe (unsafePerformIO)
 serverCommand :: String
 serverCommand =
   unsafePerformIO $
-    fromMaybe "ligo lsp"
+    fromMaybe "ligo lsp --disable-lsp-requests-logging all-capabilities"
       <$> lookupEnv "LIGO_LSP_TEST_EXE"
 {-# NOINLINE serverCommand #-}
 
@@ -45,24 +53,46 @@ projectWithOneSmallFile :: FilePath
 projectWithOneSmallFile = unsafePerformIO $ canonicalizePath "projects/one_small_file/"
 {-# NOINLINE projectWithOneSmallFile #-}
 
+projectChecker :: FilePath
+projectChecker = unsafePerformIO $ canonicalizePath "projects/submodules/checker/src/"
+{-# NOINLINE projectChecker #-}
+
 openLigoDoc :: FilePath -> LSP.Session LSP.TextDocumentIdentifier
 openLigoDoc fp = LSP.openDoc fp "ligo"
 
 benchLspSession ::
   (NFData a) =>
+  DiagnosticsPullingMethod ->
   String ->
   FilePath ->
   LSP.Session a ->
   Benchmark
-benchLspSession description project session =
+benchLspSession pullingMethod description project session =
   bench description $
     nfIO $
       LSP.runSessionWithConfig
-        LSP.defaultConfig {logStdErr = True}
+        LSP.defaultConfig
+          { logStdErr = True
+            -- 10 minutes should be enough
+          , messageTimeout = 600
+          , lspConfig
+          }
         serverCommand
         (LSP.capsForVersion $ LSP.LSPVersion 3 0)
         project
         session
+  where
+    lspConfig =
+      case pullingMethod of
+        OnDoc -> Just
+          [aesonQQ|
+          {
+            "ligoLanguageServer": {
+              "diagnosticsPullMode": "on doc update (can be slow)"
+            }
+          }
+          |]
+        OnDocumentLink -> Nothing
 
 getDoc :: Doc -> LSP.Session LSP.TextDocumentIdentifier
 getDoc (OpenedDoc tdi) = pure tdi
@@ -93,8 +123,49 @@ insertToDocKeystrokes doc (line, col) text =
     for_ (Universum.zip (toString text) [col ..]) $
       \(char, activeCol) -> insertToDoc (OpenedDoc tdi) (line, activeCol) (one char)
 
-withBothEditsAndKeystrokes :: (String -> (Doc -> (LSP.UInt, LSP.UInt) -> Text -> LSP.Session ()) -> a) -> (a,a)
-withBothEditsAndKeystrokes f = (f "edits" insertToDoc, f "keystrokes" insertToDocKeystrokes)
+data DiagnosticsPullingMethod
+  = OnDoc
+  | OnDocumentLink
+
+instance Prelude.Show DiagnosticsPullingMethod where
+  show = \case
+    OnDoc -> "on_doc"
+    OnDocumentLink -> "on_document_link"
+
+{-# ANN pullDiagnostics ("HLint: ignore Redundant fmap" :: String) #-}
+pullDiagnostics :: LSP.TextDocumentIdentifier -> DiagnosticsPullingMethod -> LSP.Session [LSP.Diagnostic]
+pullDiagnostics tdi = \case
+  OnDoc -> do
+    _ <- let params = Aeson.Null in LSP.sendRequest (LSP.SMethod_CustomMethod $ Proxy @"DebugEcho") params
+    -- After we edited a document multiple times, the LSP server might produce multiple publish diagnostics
+    -- notifications
+    firstMessage <- LSP.waitForDiagnostics
+    otherDiagnosticMessages <- many LSP.publishDiagnosticsNotification
+    echoResponse <- LSP.response (LSP.SMethod_CustomMethod $ Proxy @"DebugEcho")
+    unless (echoResponse ^. LspLens.result == Right (Aeson.String "DebugEchoResponse"))
+      $ fail "Expected DebugEchoResponse"
+    case nonEmpty otherDiagnosticMessages of
+      Nothing -> pure firstMessage
+      Just messages -> pure $ last messages ^. (LspLens.params . LspLens.diagnostics)
+  OnDocumentLink -> do
+    _ <- let params = LSP.DocumentLinkParams Nothing Nothing tdi in LSP.sendRequest LSP.SMethod_TextDocumentDocumentLink params
+    firstMessage <- LSP.waitForDiagnostics
+    fmap nonEmpty (many LSP.publishDiagnosticsNotification) >>= \case
+      Nothing -> pure firstMessage
+      Just messages -> pure $ last messages ^. (LspLens.params . LspLens.diagnostics)
+
+withBothEditsAndKeystrokes
+  :: ( DiagnosticsPullingMethod
+    -> String
+    -> (Doc -> (LSP.UInt, LSP.UInt) -> Text -> LSP.Session ())
+    -> a
+     ) -> (a,a,a,a)
+withBothEditsAndKeystrokes f =
+  ( f OnDoc "edits" insertToDoc
+  , f OnDoc "keystrokes" insertToDocKeystrokes
+  , f OnDocumentLink "edits" insertToDoc
+  , f OnDocumentLink "keystrokes" insertToDocKeystrokes
+  )
 
 data BenchmarkSequence :: Type -> Type where
   BenchmarkSequence :: NFData a =>
@@ -109,7 +180,9 @@ data BenchmarkSequence :: Type -> Type where
 -- Runs multiple similar requests for one file (opening this file only once).
 benchSequence :: BenchmarkSequence request -> Benchmark
 benchSequence BenchmarkSequence {..} =
-  benchLspSession (bsName <> "/" <> file) bsProject $ do
+  -- Picking "OnDocumentLink" here because it's faster. Other pulling methods
+  -- would be measured in diagnostics benches.
+  benchLspSession OnDocumentLink (bsName <> "/" <> file) bsProject $ do
     doc <- getDoc (FileDoc file)
     mapM (bsRunRequest . bsSetRequestDoc (OpenedDoc doc)) bsRequests
   where

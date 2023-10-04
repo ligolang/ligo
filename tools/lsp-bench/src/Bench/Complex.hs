@@ -25,37 +25,38 @@ bench_complex =
 
 complexBenchBigFileReferencesEdits, complexBenchBigFileReferencesKeystrokes :: Benchmark
 (complexBenchBigFileReferencesEdits, complexBenchBigFileReferencesKeystrokes) =
-  withBothEditsAndKeystrokes complexBenchBigFileReferences
+  let (_, _, edits, keystrokes) = withBothEditsAndKeystrokes complexBenchBigFileReferences in
+  (edits, keystrokes)
   where
-  complexBenchBigFileReferences insertFuncName insert =
-      benchLspSession ("one_big_file.mligo/" <> insertFuncName) projectWithOneBigFile $ do
-        doc <- OpenedDoc <$> openLigoDoc "one_big_file.mligo"
-        let rrFile = doc
-            rrProject = projectWithOneBigFile
-        refs1 <-
-          requestReferences $
-            ReferencesRequest -- a022
-              { rrProject,
-                rrFile,
-                rrPos = (24, 15),
-                rrExpectedAmount = 2
-              }
-        insert doc (1001, 1) "let q1 = 1234 + a023"
-        refs2 <-
-          requestReferences $
-            ReferencesRequest -- a023
-              { rrProject,
-                rrFile,
-                rrPos = (25, 15),
-                rrExpectedAmount = 3
-              }
-        insert doc (1002, 1) "let q2 = 5678 + a024 + a024"
-        refs3 <-
-          requestReferences $
-            ReferencesRequest -- a024
-              { rrProject,
-                rrFile,
-                rrPos = (26, 15),
-                rrExpectedAmount = 4
-              }
-        pure (refs1, refs2, refs3)
+  complexBenchBigFileReferences _ insertFuncName insert =
+    benchLspSession OnDocumentLink ("one_big_file.mligo/" <> insertFuncName) projectWithOneBigFile $ do
+      doc <- OpenedDoc <$> openLigoDoc "one_big_file.mligo"
+      let rrFile = doc
+          rrProject = projectWithOneBigFile
+      refs1 <-
+        requestReferences $
+          ReferencesRequest -- a022
+            { rrProject,
+              rrFile,
+              rrPos = (24, 15),
+              rrExpectedAmount = 2
+            }
+      insert doc (1001, 1) "let q1 = 1234 + a023"
+      refs2 <-
+        requestReferences $
+          ReferencesRequest -- a023
+            { rrProject,
+              rrFile,
+              rrPos = (25, 15),
+              rrExpectedAmount = 3
+            }
+      insert doc (1002, 1) "let q2 = 5678 + a024 + a024"
+      refs3 <-
+        requestReferences $
+          ReferencesRequest -- a024
+            { rrProject,
+              rrFile,
+              rrPos = (26, 15),
+              rrExpectedAmount = 4
+            }
+      pure (refs1, refs2, refs3)
