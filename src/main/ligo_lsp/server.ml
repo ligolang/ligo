@@ -328,5 +328,8 @@ class lsp_server =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_completion position (DocumentUri.to_path uri)
+        | Client_request.UnknownRequest { meth = "DebugEcho"; _ } ->
+          (* Used in tools/lsp-bench *)
+          IO.return @@ `String "DebugEchoResponse"
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end
