@@ -400,6 +400,13 @@ let defs_only =
   flag ~doc name no_arg
 
 
+let disable_lsp_request_logging =
+  let open Command.Param in
+  let name = "--disable-lsp-requests-logging" in
+  let doc = "Disables request logging for LSP server." in
+  flag ~doc name no_arg
+
+
 let now =
   let open Command.Param in
   let name = "--now" in
@@ -3019,55 +3026,71 @@ module Lsp_server = struct
   module Requests = Ligo_lsp.Server.Requests
   module Server = Ligo_lsp.Server
 
-  let run () =
-    let reporter ppf =
-      let report _src level ~over k msgf =
-        let k _ =
-          over ();
-          k ()
-        in
-        let with_stamp header _tags k ppf fmt =
-          let time = Time_ns.(to_string_utc @@ now ()) in
-          Format.kfprintf
-            k
-            ppf
-            ("%s %a @[" ^^ fmt ^^ "@]@.")
-            time
-            Logs.pp_header
-            (level, header)
-        in
-        msgf @@ fun ?header ?tags fmt -> with_stamp header tags k ppf fmt
-      in
-      { Logs.report }
+  let run ?(log_requests = true) () =
+    let run_lsp () =
+      let s = new Server.lsp_server in
+      let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
+      let shutdown () = Caml.(s#get_status = `ReceivedExit) in
+      let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
+      match Linol_lwt.run task with
+      | () -> Ok ("", "")
+      | exception e ->
+        let e = Caml.Printexc.to_string e in
+        Error ("", e)
     in
-    let log_file = Filename.(temp_dir_name ^/ "ligo_language_server.log") in
-    Out_channel.with_file ~append:true log_file ~f:(fun outc ->
-        Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
-        (* Disable logs for anything that is not linol, as it causes crashes. *)
-        List.iter (Logs.Src.list ()) ~f:(fun src ->
-            match Logs.Src.name src with
-            | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
-            | _ -> Logs.Src.set_level src None);
-        let s = new Server.lsp_server in
-        let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
-        let shutdown () = Caml.(s#get_status = `ReceivedExit) in
-        let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
-        Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
-        match Linol_lwt.run task with
-        | () -> Ok ("", "")
-        | exception e ->
-          let e = Caml.Printexc.to_string e in
-          Error ("", e))
+    let with_request_logging f () =
+      let reporter ppf =
+        let report _src level ~over k msgf =
+          let k _ =
+            over ();
+            k ()
+          in
+          let with_stamp header _tags k ppf fmt =
+            let time = Time_ns.(to_string_utc @@ now ()) in
+            Format.kfprintf
+              k
+              ppf
+              ("%s %a @[" ^^ fmt ^^ "@]@.")
+              time
+              Logs.pp_header
+              (level, header)
+          in
+          msgf @@ fun ?header ?tags fmt -> with_stamp header tags k ppf fmt
+        in
+        { Logs.report }
+      in
+      let log_file = Filename.(temp_dir_name ^/ "ligo_language_server.log") in
+      Out_channel.with_file ~append:true log_file ~f:(fun outc ->
+          Logs.set_reporter (reporter @@ Format.formatter_of_out_channel outc);
+          (* Disable logs for anything that is not linol, as it causes crashes. *)
+          List.iter (Logs.Src.list ()) ~f:(fun src ->
+              match Logs.Src.name src with
+              | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
+              | _ -> Logs.Src.set_level src None);
+          Logs.set_level (Some Logs.Debug);
+          let s = new Server.lsp_server in
+          let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
+          let shutdown () = Caml.(s#get_status = `ReceivedExit) in
+          let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
+          Format.eprintf "For LIGO language server logs, see %s\n%!" log_file;
+          match Linol_lwt.run task with
+          | () -> Ok ("", "")
+          | exception e ->
+            let e = Caml.Printexc.to_string e in
+            Error ("", e))
+    in
+    if log_requests then with_request_logging run_lsp () else run_lsp ()
 end
 
 let lsp =
   let summary = "[BETA] launch a LIGO lsp server" in
   let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
-  let f () =
+  let f disable_logging () =
+    let log_requests = not disable_logging in
     return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
-    @@ fun () -> Lsp_server.run ()
+    @@ Lsp_server.run ~log_requests
   in
-  Command.basic ~summary ~readme (Command.Param.return f)
+  Command.basic ~summary ~readme (f <$> disable_lsp_request_logging)
 
 
 let analytics_accept =
