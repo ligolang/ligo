@@ -430,7 +430,7 @@ let complete_fields
        last name that appears (module or field). The returned position is that
        of the start of the record or tuple being completed, in this case, ["d"],
        which will be missing from the list. *)
-    let linearize_projection (node : projection) : Position.t * lexeme wrap option list =
+    let linearize_projection (node : projection) : Position.t * lexeme option list =
       let hd, tl = node.field_path in
       ( expr_start node.record_or_tuple
       , List.take_while ((node.selector, hd) :: tl) ~f:(fun (dot, _field) ->
@@ -438,7 +438,10 @@ let complete_fields
               farthest_dot_position_before_cursor)
         |> List.map ~f:(fun (_dot, (field : selection)) ->
                match field with
-               | FieldName name -> Some name
+               | FieldName v ->
+                 (match v with
+                 | Var name -> Some name#payload
+                 | Esc name -> Some ("@" ^ name#payload))
                | Component _ -> None) )
     in
     let linearize_module_path (type expr) (node : expr module_path) : lexeme wrap list =
@@ -452,7 +455,7 @@ let complete_fields
        before the cursor, and the list of field names before the cursor ([None]
        means it's a [Component] rather than [FieldName]). *)
     let linearize_module_path_expr (node : expr module_path)
-        : Position.t option * lexeme wrap list * lexeme wrap option list
+        : Position.t option * lexeme wrap list * lexeme option list
       =
       let module_names_before_cursor = linearize_module_path node in
       let struct', proj_fields_before_cursor =
@@ -476,9 +479,6 @@ let complete_fields
         | Module_path_expr expr -> linearize_module_path_expr expr.value
         | Module_path_type_expr type_expr ->
           None, linearize_module_path type_expr.value, []
-      in
-      let proj_fields_before_cursor =
-        List.map ~f:(Option.map ~f:(fun field -> field#payload)) proj_fields_before_cursor
       in
       (* Are we completing a module or a projection? *)
       match struct' with
@@ -512,11 +512,6 @@ let complete_fields
          selector (the dot) is before such token. *)
         when is_reg_node_of_interest node ->
         let struct_pos, proj_fields_before_cursor = linearize_projection node.value in
-        let proj_fields_before_cursor =
-          List.map
-            ~f:(Option.map ~f:(fun field -> field#payload))
-            proj_fields_before_cursor
-        in
         Continue (projection_impl struct_pos proj_fields_before_cursor)
       | S_reg (S_module_path S_expr) when is_reg_node_of_interest node ->
         Continue (expr_path_impl (Module_path_expr node))
@@ -549,7 +544,7 @@ let complete_fields
     let expr_start (expr : expr) : Position.t =
       Position.of_pos (expr_to_region expr)#start
     in
-    let linearize_projection (node : projection) : Position.t * lexeme wrap option list =
+    let linearize_projection (node : projection) : Position.t * lexeme option list =
       let hd, tl = node.property_path in
       ( expr_start node.object_or_array
       , List.take_while (hd :: tl) ~f:(function
@@ -559,7 +554,10 @@ let complete_fields
             | PropertyStr _ -> false
             | Component _ -> false)
         |> List.map ~f:(function
-               | PropertyName (_dot, name) -> Some name
+               | PropertyName (_dot, v) ->
+                 (match v with
+                 | Var name -> Some name#payload
+                 | Esc name -> Some ("@" ^ name#payload))
                | PropertyStr _ -> None
                | Component _ -> None) )
     in
@@ -573,7 +571,7 @@ let complete_fields
             farthest_dot_position_before_cursor)
     in
     let linearize_namespace_path_expr (node : expr namespace_path)
-        : Position.t option * lexeme wrap list * lexeme wrap option list
+        : Position.t option * lexeme wrap list * lexeme option list
       =
       let module_names_before_cursor = linearize_namespace_path node in
       let struct', proj_fields_before_cursor =
@@ -604,9 +602,6 @@ let complete_fields
         | Module_path_type_expr type_expr ->
           None, linearize_namespace_path type_expr.value, []
       in
-      let proj_fields_before_cursor =
-        List.map ~f:(Option.map ~f:(fun field -> field#payload)) proj_fields_before_cursor
-      in
       match struct' with
       | None ->
         (match node with
@@ -624,11 +619,6 @@ let complete_fields
       match sing with
       | S_reg S_projection when is_reg_node_of_interest node ->
         let struct_pos, proj_fields_before_cursor = linearize_projection node.value in
-        let proj_fields_before_cursor =
-          List.map
-            ~f:(Option.map ~f:(fun field -> field#payload))
-            proj_fields_before_cursor
-        in
         Continue (projection_impl struct_pos proj_fields_before_cursor)
       | S_reg (S_namespace_path S_expr) when is_reg_node_of_interest node ->
         Continue (expr_path_impl (Module_path_expr node))

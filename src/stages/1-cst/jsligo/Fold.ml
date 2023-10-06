@@ -335,7 +335,7 @@ let fold'
     process_list
     [ statements -| S_nseq (S_array_2 (S_statement, S_option S_semi))
     ; eof -| S_eof ]
-  | S_ctor -> process @@ node -| S_wrap S_lexeme
+  | S_ctor -> process @@  node -| S_wrap S_lexeme
   | S_ctor_app sing ->
     let sharp, app = node in
     process_list
@@ -461,7 +461,7 @@ let fold'
     ( match node with
       StmtBody node -> node -| S_braces S_statements
     | ExprBody node -> node -| S_expr )
-  | S_fun_name -> process @@ node -| S_wrap S_lexeme
+  | S_fun_name -> process @@ node -| S_variable
   | S_function_expr ->
     let { kwd_function; generics; parameters; rhs_type; fun_body } = node in
     process_list
@@ -494,7 +494,7 @@ let fold'
   | S_fun_type_param -> process @@ node -| S_array_2 (S_pattern, S_type_annotation)
   | S_fun_type_params ->
       process @@ node -| S_par (S_sep_or_term (S_reg S_fun_type_param, S_comma))
-  | S_generic -> process @@ node -| S_wrap S_lexeme
+  | S_generic -> process @@ node -| S_variable
   | S_generics -> process @@ node -| S_chevrons (S_sep_or_term (S_generic, S_comma))
   | S_geq -> process @@ node -| S_wrap S_lexeme
   | S_gt -> process @@ node -| S_wrap S_lexeme
@@ -686,7 +686,7 @@ let fold'
     | F_Int node -> node -| S_int_literal
     | F_Str node -> node -| S_string_literal
     )
-  | S_property_name -> process @@ node -| S_wrap S_lexeme
+  | S_property_name -> process @@ node -| S_variable
   | S_property_sep -> process @@ node -| S_wrap S_lexeme
   | S_pattern -> process
     ( match node with
@@ -813,7 +813,7 @@ let fold'
       ; node_3 -| sing_3
       ; node_4 -| sing_4 ] )
   | S_type_annotation -> process @@ node -| S_array_2 (S_colon, S_type_expr)
-  | S_type_ctor -> process @@ node -| S_wrap S_lexeme
+  | S_type_ctor -> process @@ node -| S_variable
   | S_type_ctor_args -> process @@ node -| S_chevrons (S_nsep_or_term (S_type_expr, S_comma))
   | S_type_decl -> let { kwd_type; name; generics; eq; type_expr } = node in
     process_list
@@ -835,10 +835,10 @@ let fold'
     | T_ParameterOf node -> node -| S_reg S_parameter_of_type
     | T_String node -> node -| S_string_literal
     | T_Union node -> node -| S_union_type
-    | T_Var node -> node -| S_type_var
+    | T_Var node -> node -| S_variable
     | T_Variant node -> node -| S_variant_type )
-  | S_type_name -> process @@ node -| S_wrap S_lexeme
-  | S_type_var -> process @@ node -| S_wrap S_lexeme
+  | S_type_name -> process @@ node -| S_variable
+  | S_type_var -> process @@ node -| S_variable
   | S_typed_expr -> process @@ node -| S_array_3 (S_expr, S_kwd_as, S_type_expr)
   | S_typed_pattern -> process @@ node -| S_array_2 (S_pattern, S_type_annotation)
   | S_un_op sing -> let { op; arg } = node in
@@ -868,7 +868,9 @@ let fold'
       `Let node -> node -| S_kwd_let
     | `Const node -> node -| S_kwd_const
     )
-  | S_variable -> process @@ node -| S_wrap S_lexeme
+  | S_variable -> process
+    ( match node with
+        Var node | Esc node -> node -| S_wrap S_lexeme)
   | S_variant sing ->
     let ({ attributes; tuple } : _ variant) = node in
     process_list

@@ -80,6 +80,8 @@ module Operators = Nano_prim.Operators
 module Let_binding = Nano_prim.Let_binding
 module Rev_app = Nano_prim.Rev_app
 module Z = Ligo_prim.Literal_value.Z
+module Ty_escaped_var = Nano_prim.Ty_escaped_var
+module Value_escaped_var = Nano_prim.Value_escaped_var
 
 (*  INFO: Node tagged with [@not_initial] should not be emited by unification
    the first nanopass do the check *)
@@ -91,7 +93,8 @@ and 'self ty_expr_ = 'self type_expression_
 
 and 'self type_expression_content_ =
   | T_attr of Attribute.t * 'self (* [@a] x *)
-  | T_var of Ty_variable.t (* x *)
+  | T_var of Ty_variable.t [@not_initial] (* x *)
+  | T_var_esc of Ty_escaped_var.t (* x or @x without @ *)
   | T_contract_parameter of Mod_variable.t Simple_utils.List.Ne.t
   | T_constant of string [@not_initial]
   | T_prod of 'self Simple_utils.List.Ne.t (* x * y *)
@@ -108,7 +111,7 @@ and 'self type_expression_content_ =
   | T_disc_union of 'self Non_linear_disc_rows.t
     (* { kind: "A" } | { kind: "B" }, initial for JsLIGO only *)
   | T_abstraction of 'self Abstraction.t [@not_initial]
-    (* [type 'a t = 'a * 'a] <- [t] this decl will be replaced by an abstraction 
+    (* [type 'a t = 'a * 'a] <- [t] this decl will be replaced by an abstraction
        at passes/04-nanopasses/passes/type_abstraction_declaration.ml *)
   | T_module_access of
       (Mod_variable.t Simple_utils.List.Ne.t, Ty_variable.t) Mod_access.t (* A.B.x *)
@@ -146,7 +149,8 @@ and ('self, 'ty_expr) pattern_content_ =
   | P_unit
   | P_typed of 'ty_expr * 'self
   | P_literal of Literal_value.t
-  | P_var of Variable.t
+  | P_var of Variable.t [@not_initial]
+  | P_var_esc of Value_escaped_var.t (* x or @x without @ *)
   | P_list of 'self list_pattern
   | P_variant of Label.t * 'self option
   | P_tuple of 'self list
@@ -346,7 +350,8 @@ and ('self, 'ty_expr, 'pattern, 'block, 'mod_expr) expression_content_ =
   | E_literal of Literal_value.t (* 42, 10tez *)
   | E_binary_op of 'self Operators.binary_op
   | E_unary_op of 'self Operators.unary_op
-  | E_variable of Variable.t (* x *)
+  | E_variable of Variable.t [@not_initial] (* x *)
+  | E_variable_esc of Value_escaped_var.t (* x or @x without @ *)
   | E_rev_app of 'self Rev_app.t (* x |> f *)
   | E_tuple of 'self Simple_utils.List.Ne.t (* (x, y, z) *)
   | E_record_pun of (Label.t, 'self) Field.t list (* { x = 10; y; z } *)

@@ -45,8 +45,9 @@ module T =
     | Int      of (lexeme * Z.t) Wrap.t
     | Nat      of (lexeme * Z.t) Wrap.t
     | Mutez    of (lexeme * Int64.t) Wrap.t
-    | Ident    of lexeme Wrap.t
-    | UIdent   of lexeme Wrap.t
+    | Ident    of lexeme Wrap.t              (* foo  *)
+    | UIdent   of lexeme Wrap.t              (* Foo  *)
+    | EIdent   of lexeme Wrap.t              (* @foo *)
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of Attr.t Region.reg
 
@@ -154,11 +155,6 @@ module T =
     type token = t
 
 
-    (* NOT USED FOR JSLIGO: STUB *)
-
-    let add_directive (_ : Directive.t) (token : t) = token
-
-
     (* FROM TOKENS TO LEXEMES *)
 
     let to_lexeme = function
@@ -168,16 +164,17 @@ module T =
 
       (* Literals *)
 
-    | String t   -> [sprintf "%S" t#payload] (* Escaped *)
+    | String   t -> [sprintf "%S" t#payload] (* Escaped *)
     | Verbatim t -> [String.escaped t#payload]
-    | Bytes t    -> [fst t#payload]
-    | Int t
-    | Nat t      -> [fst t#payload]
-    | Mutez t    -> [fst t#payload]
-    | Ident t
-    | UIdent t   -> [t#payload]
-    | Attr t     -> [Attr.to_lexeme t.Region.value]
-    | Lang lang  -> ["[%" ^ Region.(lang.value.value)]
+    | Bytes    t -> [fst t#payload]
+    | Int      t
+    | Nat      t -> [fst t#payload]
+    | Mutez    t -> [fst t#payload]
+    | Ident    t
+    | UIdent   t
+    | EIdent   t -> [t#payload]
+    | Attr     t -> [Attr.to_lexeme t.Region.value]
+    | Lang  lang -> ["[%" ^ Region.(lang.value.value)]
 
     (* Symbols *)
 
@@ -760,14 +757,15 @@ module T =
 
     (* IMPORTANT: These values cannot be exported in Token.mli *)
 
-    let wrap_string   s = Wrap.wrap s
-    let wrap_verbatim s = Wrap.wrap s
-    let wrap_bytes    b = Wrap.wrap ("0x" ^ Hex.show b, b)
-    let wrap_int      z = Wrap.wrap (Z.to_string z, z)
-    let wrap_nat      z = Wrap.wrap (Z.to_string z ^ "n", z)
-    let wrap_mutez    i = Wrap.wrap (Int64.to_string i ^ "mutez", i)
-    let wrap_ident    i = Wrap.wrap i
-    let wrap_uident   c = Wrap.wrap c
+    let wrap_string   s = wrap s
+    let wrap_verbatim s = wrap s
+    let wrap_bytes    b = wrap ("0x" ^ Hex.show b, b)
+    let wrap_int      z = wrap (Z.to_string z, z)
+    let wrap_nat      z = wrap (Z.to_string z ^ "n", z)
+    let wrap_mutez    m = wrap (Int64.to_string m ^ "mutez", m)
+    let wrap_ident    i = wrap i
+    let wrap_uident   i = wrap i
+    let wrap_eident   i = wrap i
 
     let wrap_attr key value region =
       Region.{value = (key, value); region}
@@ -782,9 +780,10 @@ module T =
     let ghost_bytes    b = wrap_bytes    b   Region.ghost
     let ghost_int      z = wrap_int      z   Region.ghost
     let ghost_nat      z = wrap_nat      z   Region.ghost
-    let ghost_mutez    i = wrap_mutez    i   Region.ghost
+    let ghost_mutez    m = wrap_mutez    m   Region.ghost
     let ghost_ident    i = wrap_ident    i   Region.ghost
-    let ghost_uident   c = wrap_uident   c   Region.ghost
+    let ghost_uident   i = wrap_uident   i   Region.ghost
+    let ghost_eident   i = wrap_eident   i   Region.ghost
     let ghost_attr   k v = wrap_attr     k v Region.ghost
     let ghost_lang     l = wrap_lang     l   Region.ghost
 
@@ -793,9 +792,10 @@ module T =
     let ghost_Bytes    b = Bytes    (ghost_bytes b)
     let ghost_Int      z = Int      (ghost_int z)
     let ghost_Nat      z = Nat      (ghost_nat z)
-    let ghost_Mutez    i = Mutez    (ghost_mutez i)
+    let ghost_Mutez    m = Mutez    (ghost_mutez m)
     let ghost_Ident    i = Ident    (ghost_ident i)
-    let ghost_UIdent   c = UIdent   (ghost_uident c)
+    let ghost_UIdent   i = UIdent   (ghost_uident i)
+    let ghost_EIdent   i = EIdent   (ghost_eident i)
     let ghost_Attr   k v = Attr     (ghost_attr k v)
     let ghost_Lang     l = Lang     (ghost_lang l)
 
@@ -843,7 +843,8 @@ module T =
 
     let concrete = function
       "Ident"    -> "x"
-    | "UIdent"   -> "C"
+    | "UIdent"   -> "X"
+    | "EIdent"   -> "@x"
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -988,6 +989,8 @@ module T =
         t#region, sprintf "Ident %S" t#payload
     | UIdent t ->
         t#region, sprintf "UIdent %S" t#payload
+    | EIdent t ->
+        t#region, sprintf "EIdent %S" t#payload
     | Attr {region; value} ->
         region, sprintf "Attr %s" (Attr.to_string value)
     | Lang {value = {value = payload; _}; region; _} ->
@@ -1168,6 +1171,10 @@ module T =
       match SMap.find keywords value with
         Some mk_kwd -> mk_kwd region
       |        None -> Ident (wrap value region)
+
+    (* Escaped identifiers *)
+
+    let mk_eident value region = EIdent (wrap value region)
 
     (* Constructors/Modules *)
 

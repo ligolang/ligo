@@ -24,8 +24,7 @@ module Make (Options : Options.S) =
 
     type t = filter list
 
-    (* Listing all self-passes on lexical units (resulting in
-       [filters]) *)
+    (* Listing all self-passes on tokens (resulting in [filters]) *)
 
     let filters : t = [
       Comments.filter

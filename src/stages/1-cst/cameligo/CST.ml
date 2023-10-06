@@ -120,22 +120,28 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type attribute     = Attr.t wrap
-type ctor          = lexeme wrap [@@deriving yojson_of]
-type field_name    = lexeme wrap [@@deriving yojson_of]
-type language      = lexeme reg wrap [@@deriving yojson_of]
-type module_name   = lexeme wrap [@@deriving yojson_of]
-type string_       = lexeme wrap [@@deriving yojson_of]
-type type_name     = lexeme wrap [@@deriving yojson_of]
-type type_variable = lexeme wrap [@@deriving yojson_of]
-type variable      = lexeme wrap [@@deriving yojson_of]
-type verbatim      = lexeme wrap [@@deriving yojson_of]
+type variable =
+  Var of lexeme wrap (* foo  *)
+| Esc of lexeme wrap (* @foo without the @ *)
 
-type string_literal   = lexeme wrap [@@deriving yojson_of]
-type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
-type nat_literal      = int_literal [@@deriving yojson_of]
+let yojson_of_variable : variable -> Yojson.Safe.t = function
+  Var wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
+| Esc wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
+
+type field_name    = variable [@@deriving yojson_of]
+type type_name     = variable [@@deriving yojson_of]
+type type_variable = variable [@@deriving yojson_of]
+
+type language      = lexeme reg wrap [@@deriving yojson_of]
+type ctor          = lexeme wrap [@@deriving yojson_of]
+type module_name   = lexeme wrap [@@deriving yojson_of]
+type attribute     = Attr.t wrap
+
 type bytes_literal    = (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 type mutez_literal    = (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type nat_literal      = int_literal [@@deriving yojson_of]
+type string_literal   = lexeme wrap [@@deriving yojson_of]
 type verbatim_literal = lexeme wrap [@@deriving yojson_of]
 
 (* Parentheses, braces, brackets *)
@@ -283,19 +289,19 @@ and 'a tuple = ('a, (comma [@yojson.opaque])) nsepseq
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_App         of (type_expr * type_ctor_arg) reg                         (* M.t (x,y,z)     *)
-| T_Arg         of type_var                                                (* 'a              *)
-| T_Attr        of ((attribute [@yojson.opaque]) * type_expr)              (* [@a] x          *)
-| T_Cart        of cartesian                                               (* x * (y * z)     *)
-| T_Fun         of (type_expr * (arrow [@yojson.opaque]) * type_expr) reg  (* x -> y          *)
-| T_Int         of int_literal                                             (* 42              *)
-| T_ModPath     of type_expr module_path reg                               (* A.B.(x * y)     *)
-| T_Par         of type_expr par                                           (* (t)             *)
-| T_ParameterOf of (module_name, (dot [@yojson.opaque])) nsepseq reg       (* parameter_of m  *)
-| T_Record      of field_decl reg record                                   (* {a; [@x] b: t}  *)
-| T_String      of string_literal                                          (* "x"             *)
-| T_Var         of type_variable                                           (* x               *)
-| T_Variant     of variant_type reg                                        (* [@a] A | B of t *)
+  T_App         of (type_expr * type_ctor_arg) reg                    (* M.t (x,y,z)     *)
+| T_Arg         of type_var                                           (* 'a              *)
+| T_Attr        of ((attribute [@yojson.opaque]) * type_expr)         (* [@a] x          *)
+| T_Cart        of cartesian                                          (* x * (y * z)     *)
+| T_Fun         of (type_expr * (arrow [@yojson.opaque]) * type_expr) reg (* x -> y      *)
+| T_Int         of int_literal                                        (* 42              *)
+| T_ModPath     of type_expr module_path reg                          (* A.B.(x * y)     *)
+| T_Par         of type_expr par                                      (* (t)             *)
+| T_ParameterOf of (module_name, (dot [@yojson.opaque])) nsepseq reg  (* parameter_of m  *)
+| T_Record      of field_decl reg record                              (* {a; [@x] b: t}  *)
+| T_String      of string_literal                                     (* "x"             *)
+| T_Var         of type_variable                                      (* x   @x          *)
+| T_Variant     of variant_type reg                                   (* [@a] A | B of t *)
 
 (* Type application *)
 
@@ -356,7 +362,7 @@ and pattern =
 | P_Tuple    of pattern tuple reg                                  (* 1, x      *)
 | P_Typed    of typed_pattern reg                                  (* (x : int) *)
 | P_Unit     of the_unit reg                                       (* ()        *)
-| P_Var      of variable                                           (* x         *)
+| P_Var      of variable                                           (* x  @x     *)
 | P_Verbatim of verbatim_literal                                   (* {|foo|}   *)
 
 (* List pattern *)
@@ -452,7 +458,7 @@ and expr =
 | E_TypeIn     of type_in reg                                 (* type t = u in e     *)
 | E_Unit       of the_unit reg                                (* ()                  *)
 | E_Update     of update_expr braces                          (* {x with y=z}        *)
-| E_Var        of variable                                    (* x                   *)
+| E_Var        of variable                                    (* x  @x               *)
 | E_Verbatim   of verbatim_literal                            (* {|foo|}             *)
 | E_While      of while_loop reg                              (* while e1 do e2 done *)
 
@@ -654,6 +660,9 @@ let sepseq_to_region to_region = function
       None -> Region.ghost
 | Some seq -> nsepseq_to_region to_region seq
 
+let variable_to_region = function
+  Var w | Esc w -> w#region
+
 let rec type_expr_to_region = function
   T_Arg     {region; _}
 | T_App     {region; _} -> region
@@ -667,7 +676,7 @@ let rec type_expr_to_region = function
 | T_Record  {region; _} -> region
 | T_String  w -> w#region
 | T_Variant {region; _} -> region
-| T_Var     w -> w#region
+| T_Var     w -> variable_to_region w
 
 let rec pattern_to_region = function
   P_App      {region; _} -> region
@@ -687,7 +696,7 @@ let rec pattern_to_region = function
 | P_True     p -> p#region
 | P_Tuple    {region; _}
 | P_Typed    {region; _} -> region
-| P_Var      p -> p#region
+| P_Var      p -> variable_to_region p
 | P_Verbatim p -> p#region
 | P_Unit     {region; _} -> region
 
@@ -743,7 +752,7 @@ let rec expr_to_region = function
 | E_TypeIn     {region; _}
 | E_Unit       {region; _}
 | E_Update     {region; _} -> region
-| E_Var        e -> e#region
+| E_Var        e -> variable_to_region e
 | E_Verbatim   e -> e#region
 | E_Seq        {region; _}
 | E_RevApp     {region; _} -> region
@@ -752,11 +761,11 @@ let rec expr_to_region = function
 | E_ForIn      {region; _} -> region
 
 let selection_to_region = function
-  FieldName v -> v#region
+  FieldName v -> variable_to_region v
 | Component c -> c#region
 
 let path_to_region = function
-  Name v -> v#region
+  Name v -> variable_to_region v
 | Path p -> p.region
 
 let type_ctor_arg_to_region = function

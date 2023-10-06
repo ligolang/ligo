@@ -194,16 +194,22 @@ list_of(item):
 record(item):
   braces(option(sep_or_term_list(item,";") { fst $1 })) { $1 }
 
-(* Aliasing and inlining some tokens *)
+(* Helpers *)
 
-variable        : "<ident>"  { $1 }
-record_name     : "<ident>"  { $1 }
+variable:
+  "<ident>"  { Var $1 }
+| "<eident>" { Esc $1 }
+
+wildcard : "_" { Var $1 }
+
+record_name     : variable   { $1 }
+field_name      : variable   { $1 }
+type_name       : variable   { $1 }
+type_ctor       : variable   { $1 }
+record_or_tuple : variable   { $1 }
+
 module_name     : "<uident>" { $1 }
-field_name      : "<ident>"  { $1 }
-type_name       : "<ident>"  { $1 }
-type_ctor       : "<ident>"  { $1 }
 ctor            : "<uident>" { $1 }
-record_or_tuple : "<ident>"  { $1 }
 
 (* Unary operators *)
 
@@ -269,11 +275,11 @@ type_vars:
 
 type_var:
   quoted_type_var { $1 }
-| "_"             { {region=$1#region; value = (None, $1)} }
+| wildcard        { {region=(variable_to_region $1); value=(None,$1)} }
 
 quoted_type_var:
   "'" variable {
-    let region = cover $1#region $2#region
+    let region = cover $1#region (variable_to_region $2)
     and value  = Some $1, $2
     in {region; value} }
 
@@ -414,9 +420,9 @@ record_type:
 field_decl:
   attributes field_name ioption(type_annotation(type_expr)) {
     let stop = match $3 with
-                        None -> $2#region
+                        None -> variable_to_region $2
                | Some (_, t) -> type_expr_to_region t in
-    let region = cover $2#region stop
+    let region = cover (variable_to_region $2) stop
     and value = {attributes=$1; field_name=$2; field_type=$3}
     in {region; value} }
 
@@ -572,7 +578,7 @@ sig_item:
     in S_Type {region; value}
   }
 | "type" type_name {
-    let region = cover $1#region $2#region
+    let region = cover $1#region (variable_to_region $2)
     in S_TypeVar {region; value=$1,$2}
   }
 | "[@attr]" sig_item {
@@ -605,7 +611,7 @@ core_irrefutable:
 | ctor_irrefutable            { $1 }
 
 var_pattern:
-  "_" | variable        { P_Var       $1 }
+  wildcard | variable   { P_Var       $1 }
 | "[@attr]" var_pattern { P_Attr ($1,$2) }
 
 in_core_irrefutable:
@@ -649,15 +655,15 @@ cons_pattern_level:
 | core_pattern { $1 }
 
 core_pattern:
-  "_" | variable               { P_Var      $1 }
-| unit                         { P_Unit     $1 }
-| list_pattern                 { P_List     $1 }
-| ctor_app_pattern             { P_App      $1 }
-| record_pattern(core_pattern) { P_Record   $1 }
-| attr_pattern                 { P_Attr     $1 }
+  wildcard | variable          { P_Var       $1 }
+| unit                         { P_Unit      $1 }
+| list_pattern                 { P_List      $1 }
+| ctor_app_pattern             { P_App       $1 }
+| record_pattern(core_pattern) { P_Record    $1 }
+| attr_pattern                 { P_Attr      $1 }
 | literal_pattern
 | in_pattern
-| qualified_pattern            { $1            }
+| qualified_pattern            { $1             }
 
 %inline
 literal_pattern:
@@ -727,14 +733,16 @@ record_pattern(rhs_pattern):
 field_pattern(rhs_pattern):
   nseq("[@attr]") field_name {
     let attributes = Utils.nseq_to_list $1 in
-    Punned {region=$2#region; value = {attributes; pun=$2}}
+    let region = variable_to_region $2 in
+    Punned {region; value = {attributes; pun=$2}}
   }
-| field_name | "_" {
-    Punned {region=$1#region; value = {attributes=[]; pun=$1}}
+| field_name | wildcard {
+    let region = variable_to_region $1 in
+    Punned {region; value = {attributes=[]; pun=$1}}
   }
 | attributes field_name "=" rhs_pattern {
     let stop   = pattern_to_region $4 in
-    let region = cover $2#region stop
+    let region = cover (variable_to_region $2) stop
     and value  = {attributes=$1; field_lhs=$2; field_lens=$3;
                   field_rhs=$4}
     in Complete {region; value} }
@@ -777,7 +785,7 @@ right_opened_expr(right_expr):
 
 ass_expr_level:
   variable ":=" ass_expr_level {
-    let start  = $1#region in
+    let start  = variable_to_region $1 in
     let stop   = expr_to_region $3 in
     let region = cover start stop
     and value  = {binder=$1; ass=$2; expr=$3}
@@ -1081,12 +1089,12 @@ path_expr:
 selected:
   field_path { $1        }
 | ctor       { E_Ctor $1 }
-| "or"       { E_Var (Wrap.make "or" $1#region) }
+| "or"       { E_Var (Var (Wrap.make "or" $1#region)) }
 
 field_path:
   record_or_tuple "." nsepseq(selection,".") {
     let stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover $1#region stop
+    let region = cover (variable_to_region $1) stop
     and value  = {record_or_tuple=(E_Var $1); selector=$2; field_path=$3}
     in E_Proj {region; value}
   }
@@ -1113,14 +1121,16 @@ record_expr:
 
 field_assignment:
   attributes field_name "=" expr {
-    let region = cover $2#region (expr_to_region $4)
+    let start  = variable_to_region $2 in
+    let region = cover start (expr_to_region $4)
     and value  = {attributes=$1; field_lhs=$2; field_lens=$3;
                   field_rhs=$4}
     in Complete {region; value}
   }
 | attributes field_name {
-    let value = {attributes=$1; pun=$2}
-    in Punned {region=$2#region; value} }
+    let region = variable_to_region $2
+    and value = {attributes=$1; pun=$2}
+    in Punned {region; value} }
 
 (* Functional updates of records *)
 
@@ -1133,8 +1143,9 @@ update_expr:
 
 field_path_assignment:
   attributes field_name {
-    let value = {attributes=$1; pun = Name $2}
-    in Punned {region = $2#region; value} }
+    let value  = {attributes=$1; pun = Name $2}
+    and region = variable_to_region $2
+    in Punned {region; value} }
 | attributes path field_lens expr {
     let region = cover (path_to_region $2) (expr_to_region $4)
     and value = {attributes=$1; field_lhs=$2; field_lens=$3;
@@ -1156,7 +1167,7 @@ path:
 projection:
   record_or_tuple "." nsepseq(selection,".") {
     let stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover $1#region stop in
+    let region = cover (variable_to_region $1) stop in
     let value  = {record_or_tuple=(E_Var $1); selector=$2; field_path=$3}
     in {region; value} }
 

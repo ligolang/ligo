@@ -32,9 +32,9 @@ let%expect_test _ =
                 ^^^^
      11 |         output = output + "@@@";
     Ill-formed switch.
-    At this point, if the case is complete, one of the following is
-    expected:
-      * another case;
+    At this point, one of the following is expected:
+      * the keyword 'case' to start a new case;
+      * the keyword 'default' to start the default case;
       * a closing brace '}' if no more cases. |}]
 
 let%expect_test _ =
@@ -51,9 +51,9 @@ let%expect_test _ =
                 ^^^^^^^
      15 |         output = output + "***";
     Ill-formed switch.
-    At this point, if the case is complete, one of the following is
-    expected:
-      * another case;
+    At this point, one of the following is expected:
+      * the keyword 'case' to start a new case;
+      * the keyword 'default' to start the default case;
       * a closing brace '}' if no more cases. |}]
 
 let%expect_test _ =

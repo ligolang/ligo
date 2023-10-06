@@ -55,19 +55,22 @@ let unroll_E_Attr (attr, expr) =
 
 (* PRINTING LITERALS *)
 
+let token (t : string Wrap.t) : document = string t#payload
+
+let print_variable = function
+  Var t -> string t#payload
+| Esc t -> string ("@" ^ t#payload)
+
 let print_bytes (node : (lexeme * Hex.t) wrap) =
   string ("0x" ^ Hex.show (snd node#payload))
 
 let print_mutez (node : (lexeme * Int64.t) wrap) =
   Int64.to_string (snd node#payload) ^ "mutez" |> string
 
-let print_ident (node : variable) = string node#payload
-
-let print_string (node : lexeme wrap) =
-  string "\"" ^^ print_ident node ^^ string "\""
+let print_string (node : lexeme wrap) = dquotes (token node)
 
 let print_verbatim (node : lexeme wrap) =
-  string "{|" ^^ print_ident node ^^ string "|}"
+  string "{|" ^^ token node ^^ string "|}"
 
 let print_int (node : (lexeme * Z.t) wrap) =
   string (Z.to_string (snd node#payload))
@@ -193,7 +196,7 @@ and print_D_Fun (node : fun_decl reg) =
     else string "recursive" ^/^ string "function" in
 
   let kwd_recursive = print_kwd_recursive node.kwd_recursive
-  and fun_name      = print_ident node.fun_name
+  and fun_name      = print_variable node.fun_name
   and type_params   = node.type_params
   and param         = node.parameters
   and ret_type      = print_ret_type node.ret_type
@@ -236,13 +239,11 @@ and print_param thread pattern param_type =
     None -> thread
   | Some (_, e) -> (thread ^^ string " :") ^//^ print_type_expr e
 
-and print_variable (node : variable) = print_ident node
-
 (* Module declaration (structure) *)
 
 and print_D_Module (node : module_decl reg) =
   let node        = node.value in
-  let name        = print_ident node.name
+  let name        = token node.name
   and module_expr = print_module_expr node.module_expr
   in group (string "module " ^^ name ^^ string " is "
             ^^ module_expr)
@@ -260,15 +261,15 @@ and print_M_Body (node : module_body reg) =
          ^^ nest 2 (break 0 ^^ decls) ^^ hardline ^^ string "}")
 
 and print_M_Path (node : module_name module_path reg) =
-  print_module_path print_ident node
+  print_module_path token node
 
-and print_M_Var (node : module_name) = print_ident node
+and print_M_Var (node : module_name) = token node
 
 (* Type declaration *)
 
 and print_D_Type (node : type_decl reg) =
   let node      = node.value in
-  let name      = print_ident node.name
+  let name      = print_variable node.name
   and params    = print_type_vars node.params
   and type_expr = print_type_expr node.type_expr
   in
@@ -278,7 +279,7 @@ and print_D_Type (node : type_decl reg) =
 and print_type_vars (node : variable tuple option) =
   match node with
     None -> empty
-  | Some tuple -> string " " ^^ print_tuple print_ident tuple
+  | Some tuple -> string " " ^^ print_tuple print_variable tuple
 
 (* TYPE EXPRESSIONS *)
 
@@ -363,7 +364,7 @@ and print_module_path
   fun print {value; _} ->
     let modules = Utils.nsepseq_to_list value.module_path
     and sep     = string "." ^^ break 0 in
-    let modules = separate_map sep print_ident modules
+    let modules = separate_map sep token modules
     in group (modules ^^ sep ^^ print value.field)
 
 (* Parenthesised type *)
@@ -382,7 +383,7 @@ and print_field_decl (node : field_decl reg) =
   and field_type = node.field_type
   and attributes = node.attributes
   in
-  let thread     = print_ident field_name in
+  let thread     = print_variable field_name in
   let thread     = print_attributes thread attributes in
   match field_type with
     None -> thread
@@ -433,7 +434,7 @@ and print_variant (node : variant reg) =
   and args       = node.ctor_args
   and attributes = node.attributes
   in
-  let thread     = print_ident ctor in
+  let thread     = token ctor in
   let thread     = print_attributes thread attributes in
   match args with
     None -> thread
@@ -442,7 +443,7 @@ and print_variant (node : variant reg) =
 
 (* Type variable *)
 
-and print_T_Var (node : variable) = print_ident node
+and print_T_Var (node : variable) = print_variable node
 
 (* STATEMENTS *)
 
@@ -608,7 +609,7 @@ and print_in_block (node : block reg) =
 
 and print_I_For (node : for_int reg) =
   let node  = node.value in
-  let index = print_ident node.index
+  let index = print_variable node.index
   and init  = print_expr node.init
   and bound = print_expr node.bound
   and step  = node.step
@@ -633,14 +634,14 @@ and print_ForMap (node : for_map reg) =
   and collection  = print_expr node.collection
   and block       = print_block node.block
   in
-  let binding = print_ident src ^^ string " -> " ^^ print_ident dst
+  let binding = print_variable src ^^ string " -> " ^^ print_variable dst
   in group ((string "for" ^//^ binding)
             ^^ (string " in map" ^//^ collection)
             ^^ hardline ^^ block)
 
 and print_ForSetOrList (node : for_set_or_list reg) =
   let node       = node.value in
-  let var        = print_ident node.var
+  let var        = print_variable node.var
   and kind       = print_for_kind node.for_kind
   and collection = print_expr node.collection
   and block      = print_block node.block
@@ -764,7 +765,7 @@ and print_P_Cons (node : (pattern * sharp * pattern) reg) =
 
 (* Constructor in a pattern *)
 
-and print_P_Ctor (node : ctor) = print_ident node
+and print_P_Ctor (node : ctor) = token node
 
 (* Integer in a pattern *)
 
@@ -991,7 +992,7 @@ and print_E_Cons (node : sharp bin_op reg) = print_bin_op node
 
 (* Constructor in expressions *)
 
-and print_E_Ctor (node : ctor) = print_ident node
+and print_E_Ctor (node : ctor) = token node
 
 (* Arithmetic division *)
 
@@ -1119,7 +1120,7 @@ and print_E_Proj (node : projection reg) =
 
 and print_selection (node : selection) =
   match node with
-    FieldName name -> string name#payload
+    FieldName name -> print_variable name
   | Component cmp  -> cmp#payload |> snd |> Z.to_string |> string
 
 (* Record expression *)

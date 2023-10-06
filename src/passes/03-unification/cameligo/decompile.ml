@@ -5,6 +5,26 @@ open Simple_utils
 open Simple_utils.Function
 module Label = Ligo_prim.Label
 open Lexing_cameligo.Token
+module Value_escaped_var = Nano_prim.Value_escaped_var
+module Ty_escaped_var = Nano_prim.Ty_escaped_var
+
+let ghost_var v = ghost_ident (Format.asprintf "%a" AST.Variable.pp v)
+
+let decompile_var_esc = function
+  | Value_escaped_var.Raw v -> CST.Var (ghost_var v)
+  | Esc v -> Esc (ghost_var v)
+
+
+let ghost_tvar v = ghost_ident (Format.asprintf "%a" AST.Ty_variable.pp v)
+
+let decompile_tvar_esc = function
+  | Ty_escaped_var.Raw v -> CST.T_Var (Var (ghost_tvar v))
+  | Esc v -> T_Var (Esc (ghost_tvar v))
+
+
+let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
+ fun t -> T_Var (Var (ghost_tvar t))
+
 
 let rec folder =
   let todo _ = failwith ("TODO" ^ __LOC__) in
@@ -55,12 +75,16 @@ and decompile_mod_path
 (* Decompilers: expect that all Ast nodes are initial, i.e.
    that backwards nanopasses were applied to Ast_unified before decompiler *)
 
+(* TODO: The E_variable case can be removed once
+   Nanopasses.Espaced_variables.decompile is implemented. *)
+
 and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ -> CST.expr =
  fun e ->
   let w = Region.wrap_ghost in
   match Location.unwrap e with
   | E_attr (attr, expr) -> E_Attr (decompile_attr attr, expr)
-  | E_variable v -> E_Var (ghost_ident (Format.asprintf "%a" AST.Variable.pp v))
+  | E_variable v -> E_Var (Var (ghost_var v))
+  | E_variable_esc v -> E_Var (decompile_var_esc v)
   | E_binary_op { operator; left; right } ->
     let binop op : 'a CST.wrap CST.bin_op CST.reg =
       w @@ CST.{ op; arg1 = left; arg2 = right }
@@ -137,7 +161,8 @@ and pattern : (CST.pattern, CST.type_expr) AST.pattern_ -> CST.pattern =
     *)
     ignore type_expr;
     pattern
-  | P_var v -> P_Var (ghost_ident @@ Format.asprintf "%a" AST.Variable.pp v)
+  | P_var v -> P_Var (Var (ghost_var v))
+  | P_var_esc v -> P_Var (decompile_var_esc v)
   | P_list (List lst) ->
     let elements = Utils.list_to_sepseq lst ghost_semi in
     P_List
@@ -164,7 +189,7 @@ and pattern : (CST.pattern, CST.type_expr) AST.pattern_ -> CST.pattern =
               CST.Complete
                 (w
                 @@ CST.
-                     { field_lhs = ghost_ident (AST.Label.to_string l)
+                     { field_lhs = Var (ghost_ident (AST.Label.to_string l))
                      ; field_lens = ghost_eq
                      ; field_rhs = p
                      ; attributes = []
@@ -173,7 +198,10 @@ and pattern : (CST.pattern, CST.type_expr) AST.pattern_ -> CST.pattern =
               (* XXX do we need to extract attributes here?
                               Why this CST node has a separate record for attributes at all?*)
               CST.Punned
-                (w @@ CST.{ attributes = []; pun = ghost_ident (AST.Label.to_string l) }))
+                (w
+                @@ CST.
+                     { attributes = []; pun = Var (ghost_ident (AST.Label.to_string l)) }
+                ))
       in
       Utils.list_to_sepseq lst ghost_semi
     in
@@ -225,17 +253,15 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       else parens t
     else t
   in
-  let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
-   fun t -> T_Var (ghost_ident @@ Format.asprintf "%a" Ligo_prim.Type_var.pp t)
-   (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow?
+  (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow?
       Why [t.name] is not working?? *)
-  in
   match Location.unwrap te with
   | T_attr (attr, t) -> T_Attr (decompile_attr attr, t)
   | T_int (_s, z) -> T_Int (ghost_int z)
   | T_string s -> T_String (ghost_string s)
-  | T_arg s -> T_Arg (w (Some ghost_quote, ghost_ident s))
+  | T_arg s -> T_Arg (w (Some ghost_quote, CST.Var (ghost_ident s)))
   | T_var t -> decompile_tvar t
+  | T_var_esc t -> decompile_tvar_esc t
   | T_fun (t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
   | T_prod (first, rest) ->
     (match Utils.list_to_sepseq rest ghost_times with
@@ -266,7 +292,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
       Utils.sepseq_map (fun (Label.Label field, t) ->
           w
             CST.
-              { field_name = ghost_ident field
+              { field_name = Var (ghost_ident field)
               ; field_type = Some (ghost_colon, t)
               ; attributes = []
               })
@@ -294,7 +320,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
            ~f:(fun (Label.Label field, { associated_type; attributes; decl_pos = _ }) ->
              w
                CST.
-                 { field_name = ghost_ident field
+                 { field_name = Var (ghost_ident field)
                  ; field_type = Option.map ~f:(fun t -> ghost_colon, t) associated_type
                  ; attributes = List.map ~f:decompile_attr attributes
                  })

@@ -61,6 +61,12 @@ let token (t : string Wrap.t) : document =
   let prefix = print_comments t#comments ^/^ string t#payload
   in print_line_comment_opt prefix t#line_comment
 
+let print_variable = function
+  Var t -> token t
+| Esc t ->
+    let prefix = print_comments t#comments ^/^ string ("@" ^ t#payload)
+    in print_line_comment_opt prefix t#line_comment
+
 (* Enclosed documents *)
 
 let print_enclosed_document
@@ -192,13 +198,10 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
                ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
   in print_line_comment_opt prefix node#line_comment
 
-let print_ident (node : variable) = token node
-
-let print_string (node : lexeme wrap) =
-  dquotes (print_ident node)
+let print_string (node : lexeme wrap) = dquotes (token node)
 
 let print_verbatim (node : lexeme wrap) =
-  string "{|" ^^ print_ident node ^^ string "|}"
+  string "{|" ^^ token node ^^ string "|}"
 
 let print_int (node : (lexeme * Z.t) wrap) =
   let prefix = print_comments node#comments
@@ -321,7 +324,7 @@ and print_type_params thread (node : type_params par option) =
     None    -> thread
   | Some {value; _ } ->
       let {lpar; inside=(kwd_type, vars); rpar} = value in
-      let params = print_nseq print_ident vars in
+      let params = print_nseq print_variable vars in
       thread ^^ space ^^ token lpar ^^ token kwd_type ^^ space ^^ params ^^ token rpar
 
 
@@ -329,13 +332,14 @@ and print_type_params thread (node : type_params par option) =
 
 and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
   let kwd_val, var, colon, type_expr = node.value
-  in token kwd_val ^^ space ^^ print_ident var ^^ space ^^ token colon ^^ space ^^ print_type_expr state type_expr
+  in token kwd_val ^^ space ^^ print_variable var ^^ space ^^ token colon
+     ^^ space ^^ print_type_expr state type_expr
 
 (* Module declaration (structure) *)
 
 and print_D_Module state (node : module_decl reg) =
   let {kwd_module; name; eq; module_expr; annotation} = node.value in
-  let name        = print_ident name
+  let name        = token name
   and module_expr = print_module_expr state module_expr
   and sig_expr    =
     match annotation with
@@ -362,16 +366,15 @@ and print_M_Body state (node : module_body reg) =
   group (token kwd_struct ^^ decls ^^ hardline ^^ token kwd_end)
 
 and print_M_Path (node : module_name module_path reg) =
-  print_module_path print_ident node
+  print_module_path token node
 
-and print_M_Var (node : module_name) = print_ident node
-
+and print_M_Var (node : module_name) = token node
 
 (* Module declaration (signature) *)
 
 and print_D_Signature state (node : signature_decl reg) =
   let {kwd_module; kwd_type; name; eq; signature_expr} = node.value in
-  let name        = print_ident name
+  let name           = token name
   and signature_expr = print_signature_expr state signature_expr
   in group (token kwd_module ^^ space ^^ token kwd_type ^^ space
             ^^ name ^^ space ^^ token eq ^^ space ^^ signature_expr)
@@ -388,9 +391,9 @@ and print_S_sig state (node : signature_body reg) =
   group (token kwd_sig ^^ decls ^^ hardline ^^ token kwd_end)
 
 and print_S_path (node : module_name module_path reg) =
-  print_module_path print_ident node
+  print_module_path token node
 
-and print_S_var (node : module_name) = print_ident node
+and print_S_var (node : module_name) = token node
 
 (* Type declaration *)
 
@@ -399,7 +402,7 @@ and print_D_Type state (node : type_decl reg) =
 
 and print_type_decl state (node : type_decl) =
   let {kwd_type; params; name; eq; type_expr} = node in
-  let name    = print_ident name
+  let name    = print_variable name
   and params  = print_type_vars params
   and padding = match type_expr with T_Variant _ -> 0 | _ -> state#indent
   and t_expr  = print_type_expr state type_expr in
@@ -416,14 +419,14 @@ and print_type_vars (node : type_vars option) =
 
 and print_type_var (node : type_var) =
   match node.value with
-    Some quote, var -> token quote ^^ print_ident var
-  | None, var       -> print_ident var
+    Some quote, var -> token quote ^^ print_variable var
+  | None, var       -> print_variable var
 
 (* Type declaration (signature) *)
 
 and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
   let kwd_type, name, eq, type_expr = node.value in
-  let name    = print_ident name
+  let name    = print_variable name
   and padding = match type_expr with T_Variant _ -> 0 | _ -> state#indent
   and t_expr  = print_type_expr state type_expr in
   token kwd_type ^^ space ^^ name ^^ space ^^ token eq
@@ -432,8 +435,8 @@ and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
 
 and print_S_TypeVar (node : (kwd_type * variable) reg) =
   let kwd_type, name = node.value in
-  let name    = print_ident name in
-  token kwd_type ^^ space ^^ name
+  let name           = print_variable name
+  in token kwd_type ^^ space ^^ name
 
 (* TYPE EXPRESSIONS *)
 
@@ -485,7 +488,7 @@ and print_ctor_arg_tuple state (node : type_expr tuple par) =
 
 and print_T_Arg (node : type_var) =
   let quote_opt, variable = node.value in
-  let var_doc = print_ident variable in
+  let var_doc = print_variable variable in
   match quote_opt with
     None   -> var_doc
   | Some _ -> squote ^^ var_doc
@@ -537,7 +540,7 @@ and print_module_path
     let {module_path; selector; field} = node.value in
     let modules = Utils.nsepseq_to_list module_path
     and sep     = token selector ^^ break 0 in
-    let modules = separate_map sep print_ident modules
+    let modules = separate_map sep token modules
     in group (modules ^^ sep ^^ print field)
 
 (* Parenthesised type expressions *)
@@ -552,7 +555,7 @@ and print_T_Record state (node : field_decl reg record) =
 
 and print_field_decl state (node : field_decl reg) =
   let {attributes; field_name; field_type} = node.value in
-  let thread = print_ident field_name in
+  let thread = print_variable field_name in
   let thread = print_attributes state thread attributes
   in group (print_opt_type state thread field_type)
 
@@ -606,7 +609,7 @@ and print_variant_type state ~(attr: bool) (node : variant_type reg) =
 
 and print_variant state (node : variant reg) =
   let {attributes; ctor; ctor_args} = node.value in
-  let thread = print_ident ctor in
+  let thread = token ctor in
   let thread = print_attributes state thread attributes in
   match ctor_args with
     None -> thread
@@ -616,12 +619,12 @@ and print_variant state (node : variant reg) =
 
 (* Type variables *)
 
-and print_T_Var (node : variable) = print_ident node
+and print_T_Var (node : variable) = print_variable node
 
 (* Parameter of *)
 
 and print_T_ParameterOf (node : (module_name, dot) Utils.nsepseq reg) =
-  let path = print_nsepseq (break 0) print_ident node.value in
+  let path = print_nsepseq (break 0) token node.value in
   let path = group (nest 0 (break 1 ^^ path))
   in path ^^ space ^^ string "parameter_of"
 
@@ -681,11 +684,11 @@ and print_P_Cons state (node : (pattern * cons * pattern) reg) =
 
 (* Constructor in a pattern *)
 
-and print_P_Ctor (node : ctor) = print_ident node
+and print_P_Ctor (node : ctor) = token node
 
 (* "false" as pattern *)
 
-and print_P_False (node : kwd_false) = print_ident node
+and print_P_False (node : kwd_false) = token node
 
 (* Integer in a pattern *)
 
@@ -727,8 +730,8 @@ and print_P_Record state (node : record_pattern) =
 and print_field_pattern state (node : (field_name, equal, pattern) field) =
   print_field
     state
-    ~lhs:print_ident
-    ~lens:print_ident
+    ~lhs:print_variable
+    ~lens:token
     ~rhs:(print_pattern state)
     node
 
@@ -757,7 +760,7 @@ and print_P_String (node : lexeme wrap) = print_string node
 
 (* "true" as pattern *)
 
-and print_P_True (node : kwd_true) = print_ident node
+and print_P_True (node : kwd_true) = token node
 
 (* Tuple patterns *)
 
@@ -782,7 +785,7 @@ and print_P_Typed state (node : typed_pattern reg) =
 
 (* Variable pattern *)
 
-and print_P_Var (node : variable) = print_ident node
+and print_P_Var (node : variable) = print_variable node
 
 (* Verbatim string patterns *)
 
@@ -887,7 +890,7 @@ and print_E_App state (node : (expr * expr Utils.nseq) reg) =
 and print_E_Assign state (node : assign reg) =
   let {binder; ass; expr} = node.value in
   prefix state#indent 1
-    (print_ident binder ^^ space ^^ token ass)
+    (print_variable binder ^^ space ^^ token ass)
     (print_expr state expr)
 
 (* Attributes expressions *)
@@ -938,12 +941,12 @@ and print_E_Cond state (node : cond_expr reg) =
 and print_E_Cons state (node : cons bin_op reg) = print_bin_op state node
 
 and print_E_ContractOf (node : (module_name, dot) Utils.nsepseq reg) =
-  let path = print_nsepseq (break 0) print_ident node.value in
+  let path = print_nsepseq (break 0) token node.value in
   string "contract_of" ^^ space ^^ group (nest 0 (break 1 ^^ path))
 
 (* Constructor in expressions *)
 
-and print_E_Ctor (node : ctor) = print_ident node
+and print_E_Ctor (node : ctor) = token node
 
 (* Arithmetic division *)
 
@@ -955,7 +958,7 @@ and print_E_Equal state (node : equal bin_op reg) = print_bin_op state node
 
 (* "false" as expression *)
 
-and print_E_False (node : kwd_false) = print_ident node
+and print_E_False (node : kwd_false) = token node
 
 (* For loop *)
 
@@ -963,7 +966,7 @@ and print_E_For state (node : for_loop reg) =
   let {kwd_for; index; equal; bound1;
        direction; bound2; body} = node.value in
   token kwd_for ^^ space
-  ^^ print_ident index
+  ^^ print_variable index
   ^^ space ^^ token equal ^^ space
   ^^ print_expr state bound1 ^^ space
   ^^ print_direction direction ^^ space
@@ -1102,7 +1105,7 @@ and print_E_ModIn state (node : module_in reg) =
   let {mod_decl; kwd_in; body} = node.value in
   let {kwd_module; name; eq; module_expr; annotation = _} = mod_decl.value
   in group (token kwd_module ^^ space
-            ^^ print_ident name ^^ space ^^ token eq ^^ space
+            ^^ token name ^^ space ^^ token eq ^^ space
             ^^ print_module_expr state module_expr
             ^^ space ^^ token kwd_in ^^ hardline ^^ print_expr state body)
 
@@ -1162,7 +1165,7 @@ and print_projection state (node : projection reg) =
   in group (record_or_tuple ^^ token selector ^^ break 0 ^^ field_path)
 
 and print_selection = function
-  FieldName name -> token name
+  FieldName name -> print_variable name
 | Component cmp  ->
     let prefix = print_comments cmp#comments
                  ^/^ (cmp#payload |> snd |> Z.to_string |> string)
@@ -1176,8 +1179,8 @@ and print_E_Record state (node : record_expr) =
 and print_field_expr state (node : (field_name, equal, expr) field) =
   print_field
     state
-    ~lhs:print_ident
-    ~lens:print_ident
+    ~lhs:print_variable
+    ~lens:token
     ~rhs:(print_expr state)
     node
 
@@ -1191,7 +1194,7 @@ and print_E_Sub state (node : minus bin_op reg) = print_bin_op state node
 
 (* "true" as expression *)
 
-and print_E_True (node : kwd_true) = print_ident node
+and print_E_True (node : kwd_true) = token node
 
 (* Tuple expression *)
 
@@ -1240,7 +1243,7 @@ and print_field_path_assign state (node : (path, lens, expr) field) =
     node
 
 and print_path state = function
-  Name p -> print_ident            p
+  Name p -> print_variable         p
 | Path p -> print_projection state p
 
 and print_lens = function
@@ -1253,7 +1256,7 @@ and print_lens = function
 
 (* Expression variable *)
 
-and print_E_Var (node : variable) = print_ident node
+and print_E_Var (node : variable) = print_variable node
 
 (* Verbatim string expressions *)
 

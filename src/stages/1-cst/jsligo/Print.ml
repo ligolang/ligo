@@ -46,6 +46,13 @@ let print_S_Directive state (node : Directive.t) =
   let region, string = Directive.project node in
   Tree.(make_unary state "S_Directive" make_node ~region string)
 
+(* Printing variables *)
+
+let print_variable state = function
+  Var node -> Tree.make_literal state node
+| Esc node ->
+    Tree.make_node ~region:node#region state ("@" ^ node#payload)
+
 (* PRINTING THE CST *)
 
 let rec print_cst state (node : cst) =
@@ -69,7 +76,7 @@ and print_D_Fun state (node: fun_decl reg) =
   let {kwd_function=_; fun_name; generics; parameters;
        rhs_type; fun_body} = value in
   let children = Tree.[
-    mk_child     make_literal        fun_name;
+    mk_child     print_variable      fun_name;
     mk_child_opt print_generics      generics;
     mk_child     print_fun_params    parameters;
     mk_child_opt print_rhs_type      rhs_type;
@@ -136,7 +143,7 @@ and print_ImportFrom state (node: import_from reg) =
 and print_imported state (node: (property_name, comma) sep_or_term braces) =
   let Region.{region; value} = node in
   Tree.(of_sep_or_term state ~region "<namespace path>"
-                       make_literal value.inside)
+                       print_variable value.inside)
 
 (* Interface declaration *)
 
@@ -166,7 +173,7 @@ and print_I_Type state (node : intf_type reg) =
   let Region.{region; value} = node in
   let {kwd_type=_; type_name; type_rhs} = value in
   let children = Tree.[
-    mk_child     make_literal   type_name;
+    mk_child     print_variable type_name;
     mk_child_opt print_type_rhs type_rhs]
   in Tree.make ~region state "I_Type" children
 
@@ -177,7 +184,7 @@ and print_I_Const state (node : intf_const reg) =
   let Region.{value; region} = node in
   let {kwd_const=_; const_name; const_type} = value in
   let children = Tree.[
-    mk_child make_literal          const_name;
+    mk_child print_variable        const_name;
     mk_child print_type_annotation const_type]
   in Tree.make ~region state "I_Const" children
 
@@ -226,7 +233,7 @@ and print_D_Type state (node: type_decl reg) =
   let Region.{value; region} = node in
   let {kwd_type=_; generics; name; eq=_; type_expr} = value in
   let children = Tree.[
-    mk_child     make_literal    name;
+    mk_child     print_variable  name;
     mk_child_opt print_generics  generics;
     mk_child     print_type_expr type_expr]
   in Tree.make state ~region "D_Type" children
@@ -267,7 +274,7 @@ and print_binders state (node: pattern) =
 and print_generics state (node: generics) =
   let Region.{region; value} = node in
   let seq = value.inside in
-  Tree.(of_sep_or_term state ~region "<type vars>" make_literal seq)
+  Tree.(of_sep_or_term state ~region "<type vars>" print_variable seq)
 
 and print_type_annotation state (node : type_annotation) =
   Tree.make_unary state "<type>" print_type_expr (snd node)
@@ -384,7 +391,7 @@ and print_property_id state = function
 | F_Str  i -> print_F_Str  state i
 
 and print_F_Name state (node: property_name) =
-  Tree.(make_unary state "F_Name" make_literal node)
+  Tree.(make_unary state "F_Name" print_variable node)
 
 and print_F_Int state (node: int_literal) =
   Tree.make_int "F_Int" state node
@@ -407,13 +414,14 @@ and print_T_Union state (node: union_type) =
 (* Type variable *)
 
 and print_T_Var state (node : variable) =
-  Tree.(make_unary state "T_Var" make_literal node)
+  Tree.(make_unary state "T_Var" print_variable node)
 
 (* Variant types *)
 
 and print_T_Variant state (node : variant_type) =
   let Region.{value; region} = node in
-  Tree.of_nsep_or_pref ~region state "T_Variant" (print_variant_kind print_type_expr) value
+  Tree.of_nsep_or_pref ~region state "T_Variant"
+                       (print_variant_kind print_type_expr) value
 
 and print_variant_kind : 'a. 'a Tree.printer -> 'a variant_kind Tree.printer =
  fun printer state node ->
@@ -442,10 +450,11 @@ and print_variant : 'a. 'a Tree.printer -> 'a variant reg Tree.printer =
     @ mk_children_attr attributes
   in Tree.make ~region:node.region state "<variant>" children
 
-and print_ctor_app_kind state (node : ctor_app_kind) =
-  match node with
-    CtorStr  s -> Tree.make_node ~region:s#region state s#payload
-  | CtorName c -> Tree.make_node ~region:c#region state c#payload
+and print_ctor_app_kind state = function
+  CtorStr c ->
+    Tree.(make_unary ~region:c#region state "CtorStr" make_literal c)
+| CtorName c ->
+    Tree.(make_unary ~region:c#region state "CtorName" make_literal c)
 
 and print_bracketed_variant : 'a. 'a Tree.printer -> 'a bracketed_variant reg Tree.printer =
  fun printer state node ->
@@ -582,7 +591,7 @@ and print_P_Typed state (node : typed_pattern reg) =
 (* A pattern variable *)
 
 and print_P_Var state (node : variable) =
-  Tree.(make_unary state "P_Var" make_literal node)
+  Tree.(make_unary state "P_Var" print_variable node)
 
 (* A verbatim string as a pattern *)
 
@@ -1018,7 +1027,7 @@ and print_selection state = function
 | Component    s -> print_Component    state s
 
 and print_PropertyName state (node : dot * property_name) =
-  Tree.(make_unary state "PropertyName" make_literal (snd node))
+  Tree.make_unary state "PropertyName" print_variable (snd node)
 
 and print_PropertyStr state (node : string_literal brackets) =
   Tree.(make_string "PropertyStr" state node.value.inside)
@@ -1114,7 +1123,7 @@ and print_E_Update state (node: update_expr braces) =
 (* Variables denoting expressions *)
 
 and print_E_Var state (node: variable) =
-  Tree.(make_unary state "E_Var" make_literal node)
+  Tree.(make_unary state "E_Var" print_variable node)
 
 (* Verbatim strings as expressions *)
 
@@ -1232,15 +1241,15 @@ and print_S_ForOf state (node: for_of_stmt reg) =
   let range = range.value.inside in
   let {index_kind; index; kwd_of=_; expr} = range in
   let print_index state = function
-    `Let _,   var -> Tree.(make_unary state "let"   make_literal var)
-  | `Const _, var -> Tree.(make_unary state "const" make_literal var) in
+    `Let _,   var -> Tree.(make_unary state "let"   print_variable var)
+  | `Const _, var -> Tree.(make_unary state "const" print_variable var) in
   let children = Tree.[
     mk_child print_index     (index_kind, index);
     mk_child print_expr      expr;
     mk_child print_loop_body for_of_body]
   in Tree.make ~region state "S_ForOf" children
 
-(* return statement *)
+(* Return statement *)
 
 and print_S_Return state (node: return_stmt reg) =
   let Region.{value; region} = node in

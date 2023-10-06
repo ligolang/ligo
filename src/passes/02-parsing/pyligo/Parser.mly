@@ -157,12 +157,22 @@ tuple(item):
 
 (* Aliasing and inlining some tokens *)
 
+
 %inline
-variable    : "<ident>"  { $1 }
-fun_name    : "<ident>"  { $1 }
-member_name : "<ident>"  { $1 }
-module_name : "<ident>"  { $1 }
-type_name   : "<ident>"  { $1 }
+variable:
+  "<ident>"  { Var $1 }
+| "<eident>" { Esc $1 }
+
+wildcard : "_" { Var $1 }
+
+ext_var : variable | wildcard { $1 }
+
+fun_name    : variable  { $1 }
+member_name : variable  { $1 }
+type_name   : variable  { $1 }
+
+%inline
+module_name : variable  { $1 }
 
 class_name  : "<uident>" { $1 }
 
@@ -243,9 +253,6 @@ const_decl:
                   equal=$4; init=$5}
     in {region; value} }
 
-ext_var:
-  variable | "_" { $1 }
-
 %inline
 type_annotation:
   ":" type_expr { $1,$2 }
@@ -278,8 +285,9 @@ param_decl:
 
 var_param_decl:
   ext_var ioption(type_annotation) {
-    let stop   = mk_stop (type_expr_to_region <@ snd) $1#region $2 in
-    let region = cover $1#region stop in
+    let start  = variable_to_region $1 in
+    let stop   = mk_stop (type_expr_to_region <@ snd) start $2 in
+    let region = cover start stop in
     let value  = {kwd_const=None; parameter=$1; param_type=$2}
     in {region; value} }
 
@@ -389,7 +397,7 @@ return_stmt:
 
 module_alias:
   "module" module_name "=" decl_rhs(module_name) {
-    let region = cover $1#region $4#region
+    let region = cover $1#region (variable_to_region $4)
     and value  = {kwd_module=$1; name=$2; equal=$3; module_expr=$4}
     in {region; value} }
 
@@ -431,8 +439,8 @@ var_decl:
     in {region; value}
   }
 | ext_var type_annotation "=" decl_rhs(expr) {
-    let stop   = expr_to_region $4 in
-    let region = cover $1#region stop
+    let start  = variable_to_region $1 in
+    let region = cover start (expr_to_region $4)
     and value  = {kwd_var=None; variable=$1; var_type = Some $2;
                   equal=$3; init=$4}
     in {region; value} }
@@ -484,7 +492,7 @@ member_vars_decl:
   "const"? nsepseq(variable,",") type_annotation {
     let start =
       match $1 with
-        None -> nsepseq_to_region (fun x -> x#region) $2
+        None -> nsepseq_to_region variable_to_region $2
       | Some kwd_const -> kwd_const#region in
     let stop   = type_expr_to_region (snd $3) in
     let region = cover start stop
@@ -594,8 +602,8 @@ literal_pattern:
 | "<string>"   { P_String   $1 }
 | "<verbatim>" { P_Verbatim $1 }
 | "<mutez>"    { P_Mutez    $1 }
-| class_name   (* None, False, True or custom *)
-| "_"
+| class_name   { P_Var (Var $1) } (* None, False, True or custom *)
+| wildcard
 | variable     { P_Var      $1 }
 
 (* Typed patterns *)
@@ -633,8 +641,8 @@ qualified_class:
   class_name {
     ClassName $1
   }
-| variable "." class_name { (* variable is module_name *)
-    let region = cover $1#region $3#region in
+| module_name "." class_name {
+    let region = cover (variable_to_region $1) $3#region in
     let value  = {module_path=$1; selector=$2; field=$3}
     in ClassPath {region; value} }
 
@@ -656,7 +664,7 @@ qualified_member:
   variable "." nsepseq(selection,".") {
     let object_or_tuple = E_Var $1 in
     let stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover $1#region stop
+    let region = cover (variable_to_region $1) stop
     and value  = {object_or_tuple; selector=$2; path=$3}
     in E_Proj {region; value}
   }
@@ -960,12 +968,12 @@ cartesian_level:
 (* Core types *)
 
 core_type:
-  "<string>"     { T_String $1 }
-| "<int>"        { T_Int    $1 }
-| "_" | variable { T_Var    $1 } (* variable is a type name *)
-| class_type     { T_Class  $1 }
-| par(type_expr) { T_Par    $1 }
-| attr_type      { T_Attr   $1 }
+  "<string>"           { T_String $1 }
+| "<int>"              { T_Int    $1 }
+| wildcard | type_name { T_Var    $1 }
+| class_type           { T_Class  $1 }
+| par(type_expr)       { T_Par    $1 }
+| attr_type            { T_Attr   $1 }
 
 (* Class types *)
 

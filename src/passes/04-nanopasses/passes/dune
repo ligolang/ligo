@@ -67,7 +67,8 @@
   unpuning
   disc_union_types
   prefix_postfix_operators
-  for_to_while_loop)
+  for_to_while_loop
+  escaped_variables)
  (libraries
   ast_unified
   syntax_types

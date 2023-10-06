@@ -48,3 +48,5 @@ module Record_update = Record_update
 module Record_access = Record_access
 module Prefix_postfix = Prefix_postfix
 module Match_tc39 = Match_tc39
+module Ty_escaped_var = Escaped_var.Ty_escaped_var
+module Value_escaped_var = Escaped_var.Value_escaped_var

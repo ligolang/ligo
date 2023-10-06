@@ -1,84 +1,4 @@
-(* Menhir specification of the parser of PascaLIGO
-
-   "Beaucoup de mal durable est souvent fait par les choses provisoires."
-                                              Victor Hugo, 11 Sept. 1848
-                         http://classes.bnf.fr/laicite/anthologie/32.htm
-
-   About Menhir:
-     http://gallium.inria.fr/blog/parser-construction-menhir-appetizers/
-     http://gallium.inria.fr/~fpottier/menhir/manual.pdf
-
-   When laying out rules for the same non-terminal, we use the closing
-   brace of a rule to separate it from the next by being on its own
-   line, like so:
-
-     foo:
-       .... { ...
-       }
-     | ... { ... }
-
-   When there are many rules for the same terminal, we present the
-   rules for the non-terminals involved in a left-right prefix manner
-   (a.k.a depth-first traversal in an algorithmic context). For
-   example:
-
-     foo:
-       bar { ... }
-     | baz { ... }
-
-     bar:
-       zoo { ... }
-
-     zoo:
-       A { ... }
-
-     baz:
-       B { ... }
-
-   When you change the grammar, take some time to see if you cannot
-   remove a reduction on error (%on_error_reduce) that is related to
-   your change.
-
-   Write comments. Inside them, escape text by writing it between
-   square brackets, following the ocamldoc convention.
-
-   Please avoid writing a leading vertical bar, like
-
-     foo:
-       | bar {}
-
-   The above is equivalent to
-
-     foo:
-       bar {}
-
-   but people could think it means
-
-     for:
-       {} | bar {}
-
-   because Menhir enables the sharing of semantic actions. (By the
-   way, the leading vertical bar is the only cause of an LR conflict
-   in the grammar of Menhir itself (personal communication to
-   Rinderknecht by Pottier, June 23, 2006).
-
-     We do not rely on predefined Menhir symbols, like
-   [$symbolstartpos], to help determine the regions (that is, source
-   locations) of our tokens and subtrees of our CST. One reason is
-   that the semantic of [$symbolstartpos] is that of ocamlyacc, and
-   this does not blend well with nullable prefixes of rules. That is
-   why we use [Region.cover] to compute the region in the source that
-   corresponds to any given CST node. This is more verbose than
-   letting Menhir ask the lexer buffer with an awkward semantic, but
-   we are 100% in control.
-
-     A note on terminology: I sometimes use words taken from the
-   context of formal logic or programming theory. For example:
-   https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions
-
-     We always define and write values of type [Region.t] by stating
-   the region first, like so: [{region; value}], and we always use
-   name punning. *)
+(* Menhir specification of the parser of PascaLIGO *)
 
 %{
 (* START HEADER *)
@@ -113,11 +33,11 @@ let apply_type_ctor token args =
   let {region; value = {lpar; inside; rpar}} = args in
   let tuple  = mk_reg region {lpar; inside=inside,[]; rpar}
   and region = cover token#region args.region
-  in mk_reg region (T_Var token, tuple)
+  in mk_reg region (T_Var (Var token), tuple)
 
 let apply_map token args =
   let region = cover token#region args.region
-  in mk_reg region (T_Var token, args)
+  in mk_reg region (T_Var (Var token), args)
 
 let mk_mod_path :
   (module_name * dot) Utils.nseq * 'a ->
@@ -360,12 +280,18 @@ sep_or_term_list(item,sep):
 
 (* Aliasing and inlining some tokens *)
 
-%inline variable        : "<ident>"  { $1 }
-%inline type_name       : "<ident>"  { $1 }
-%inline type_ctor       : "<ident>"  { T_Var $1 }
-%inline fun_name        : "<ident>"  { $1 }
-%inline field_name      : "<ident>"  { $1 }
-%inline record_or_tuple : "<ident>"  { $1 }
+variable:
+  "<ident>"  { Var $1 }
+| "<eident>" { Esc $1 }
+
+wildcard : "_" { Var $1 }
+
+%inline type_name       : variable  { $1 }
+%inline type_ctor       : variable  { T_Var $1 }
+%inline fun_name        : variable  { $1 }
+%inline field_name      : variable  { $1 }
+%inline record_or_tuple : variable  { $1 }
+
 %inline module_name     : "<uident>" { $1 }
 %inline ctor            : "<uident>" { $1 }
 
@@ -445,7 +371,7 @@ type_vars:
   par(nsepseq(type_var,",")) { $1 }
 
 type_var:
-  "_" | type_name { $1 }
+  wildcard | type_name { $1 }
 
 (* Type expressions *)
 
@@ -532,14 +458,14 @@ cartesian_level:
 (* Core types *)
 
 core_type:
-  "<string>"      { T_String $1 }
-| "<int>"         { T_Int    $1 }
-| "_" | type_name { T_Var    $1 }
-| type_ctor_app   { T_App    $1 }
-| record_type     { T_Record $1 }
-| par(type_expr)  { T_Par    $1 }
+  "<string>"           { T_String $1 }
+| "<int>"              { T_Int    $1 }
+| wildcard | type_name { T_Var    $1 }
+| type_ctor_app        { T_App    $1 }
+| record_type          { T_Record $1 }
+| par(type_expr)       { T_Par    $1 }
 | qualified_type
-| attr_type       { $1 }
+| attr_type            { $1 }
 
 (* Attributed core types *)
 
@@ -613,12 +539,13 @@ record_type:
    type of the field is the name of the field. *)
 
 field_decl:
-  attributes field_name ioption(type_annotation) {
+   attributes field_name ioption(type_annotation) {
+    let start = variable_to_region $2 in
     let stop = match $3 with
-                        None -> $2#region
+                        None -> start
                | Some (_, t) -> type_expr_to_region t in
     let region = match $1 with
-                         [] -> cover $2#region stop
+                         [] -> cover start stop
                  | start::_ -> cover start#region stop
     and value = {attributes=$1; field_name=$2; field_type=$3}
     in {region; value} }
@@ -1281,12 +1208,12 @@ path_expr:
 selected:
   field_path                      { $1 }
 | ctor                            { E_Ctor $1 }
-| "remove" | "map" | "or" | "and" { E_Var  $1 }
+| "remove" | "map" | "or" | "and" { E_Var (Var $1) }
 
 field_path:
   record_or_tuple "." nsepseq(selection,".") {
     let stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover $1#region stop
+    let region = cover (variable_to_region $1) stop
     and value  = {record_or_tuple=(E_Var $1); selector=$2;
                   field_path=$3}
     in E_Proj {region; value}
@@ -1483,21 +1410,21 @@ pattern:
 | core_pattern { $1 }
 
 core_pattern:
-  "<int>"            { P_Int      $1 }
-| "<nat>"            { P_Nat      $1 }
-| "<bytes>"          { P_Bytes    $1 }
-| "<string>"         { P_String   $1 }
-| "<verbatim>"       { P_Verbatim $1 }
-| "<mutez>"          { P_Mutez    $1 }
-| "nil"              { P_Nil      $1 }
-| "_" | variable     { P_Var      $1 }
-| list_pattern       { P_List     $1 }
-| ctor_app_pattern   { P_App      $1 }
-| tuple(pattern)     { P_Tuple    $1 }
-| record_pattern     { P_Record   $1 }
-| attr_pattern       { P_Attr     $1 }
-| par(in_pattern)    { P_Par      $1 }
-| qualified_pattern  { $1 }
+  "<int>"             { P_Int      $1 }
+| "<nat>"             { P_Nat      $1 }
+| "<bytes>"           { P_Bytes    $1 }
+| "<string>"          { P_String   $1 }
+| "<verbatim>"        { P_Verbatim $1 }
+| "<mutez>"           { P_Mutez    $1 }
+| "nil"               { P_Nil      $1 }
+| wildcard | variable { P_Var      $1 }
+| list_pattern        { P_List     $1 }
+| ctor_app_pattern    { P_App      $1 }
+| tuple(pattern)      { P_Tuple    $1 }
+| record_pattern      { P_Record   $1 }
+| attr_pattern        { P_Attr     $1 }
+| par(in_pattern)     { P_Par      $1 }
+| qualified_pattern   { $1 }
 
 (* Parenthesised patterns *)
 

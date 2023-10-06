@@ -47,6 +47,13 @@ let print_attribute state (node : Attr.t wrap) =
 let mk_children_attr (node : Attr.t wrap list) =
   Tree.mk_children_list print_attribute ~root:"<attributes>" node
 
+(* Printing variables *)
+
+let print_variable state = function
+  Var node -> Tree.make_literal state node
+| Esc node ->
+    Tree.make_node ~region:node#region state ("@" ^ node#payload)
+
 (* PRINTING THE CST *)
 
 let rec print_cst state (node : cst) =
@@ -120,7 +127,7 @@ and print_binders state (node : pattern nseq) =
 
 and print_type_params state (node : type_params par) =
   let nseq = snd node.value.inside in
-  Tree.(of_nseq state "<type parameters>" make_literal nseq)
+  Tree.of_nseq state "<type parameters>" print_variable nseq
 
 and print_type_annotation state (_, type_expr) =
   Tree.make_unary state "<type>" print_type_expr type_expr
@@ -131,7 +138,8 @@ and print_D_Include state node =
   in Tree.make state ~region "D_Include" children
 
 and mk_children_module_include (node : module_include) =
-  Tree.[ mk_child print_module_expr node.module_expr]
+  Tree.[mk_child print_module_expr node.module_expr]
+
 (* Type declaration *)
 
 and print_D_Type state (node : type_decl reg) =
@@ -152,14 +160,14 @@ and mk_children_type_decl (node : type_decl) =
     TV_Single tv -> print_TV_Single state tv
   | TV_Tuple  tv -> print_TV_Tuple  state tv
   in
-  Tree.[mk_child     make_literal    name;
+  Tree.[mk_child     print_variable  name;
         mk_child_opt print_type_vars params;
         mk_child     print_type_expr type_expr]
 
 and print_type_var state (node : type_var) =
   let Region.{value; region} = node in
-  let _, var = value in (* We don't print the backquote, if any. *)
-  Tree.make_node ~region state var#payload
+  (* We don't print the backquote, if any. *)
+  print_variable state (snd value)
 
 (* Module declaration *)
 
@@ -235,7 +243,7 @@ and print_S_Var state (node : module_name) =
 and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
   let Region.{value; region} = node in
   let _kwd_val, var, _colon, type_expr = value in
-  let children = Tree.[mk_child make_literal var;
+  let children = Tree.[mk_child print_variable  var;
                        mk_child print_type_expr type_expr]
   in Tree.make ~region state "S_Value" children
 
@@ -244,7 +252,7 @@ and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
 and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
   let Region.{value; region} = node in
   let _kwd_type, var, _eq, type_expr = value in
-  let children = Tree.[mk_child make_literal var;
+  let children = Tree.[mk_child print_variable  var;
                        mk_child print_type_expr type_expr]
   in Tree.make ~region state "S_Type" children
 
@@ -253,7 +261,7 @@ and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
 and print_S_TypeVar state (node : (kwd_type * variable) reg) =
   let Region.{value; region} = node in
   let _kwd_type, var = value in
-  let children = Tree.[mk_child make_literal var]
+  let children = Tree.[mk_child print_variable var]
   in Tree.make ~region state "S_TypeVar" children
 
 (* TYPE EXPRESSIONS *)
@@ -294,7 +302,7 @@ and print_type_ctor_arg state = function
 
 and print_T_Arg state (node : type_var) =
   let Region.{value; region} = node in
-  Tree.(make_unary ~region state "T_Arg" make_literal (snd value))
+  Tree.make_unary ~region state "T_Arg" print_variable (snd value)
 
 (* Attributed type expression *)
 
@@ -354,7 +362,7 @@ and print_field_decl state (node : field_decl reg) =
   let Region.{value; region} = node in
   let {attributes; field_name; field_type} = value in
   let children = Tree.[
-    mk_child     make_literal          field_name;
+    mk_child     print_variable        field_name;
     mk_child_opt print_type_annotation field_type]
   @ mk_children_attr attributes
   in Tree.make ~region state "<field>" children
@@ -383,7 +391,7 @@ and print_of_type_expr state (_, type_expr) =
 (* Type variable *)
 
 and print_T_Var state (node : variable) =
-  Tree.(make_unary state "T_Var" make_literal node)
+  Tree.make_unary state "T_Var" print_variable node
 
 (* PATTERNS *)
 
@@ -497,7 +505,7 @@ and print_P_Record state (node : record_pattern) =
 
 and print_field_pattern state (node : (field_name, equal, pattern) field) =
   let print_lhs state =
-    Tree.(make_unary state "<lhs>" make_literal)
+    Tree.make_unary state "<lhs>" print_variable
   and print_rhs state =
     Tree.make_unary state "<rhs>" print_pattern
   in print_field
@@ -577,7 +585,7 @@ and print_P_Unit state (node : the_unit reg) =
 (* A pattern variable *)
 
 and print_P_Var state (node : variable) =
-  Tree.(make_unary state "P_Var" make_literal node)
+  Tree.make_unary state "P_Var" print_variable node
 
 (* A verbatim string *)
 
@@ -688,7 +696,8 @@ and print_E_Assign state (node : assign reg) =
   let Region.{value; region} = node in
   let {binder; expr; _} = value in
   let children =
-    Tree.(mk_child make_literal binder) :: [Tree.mk_child print_expr expr] in
+    Tree.(mk_child print_variable binder)
+    :: [Tree.mk_child print_expr expr] in
   Tree.make ~region state "E_Assign" children
 
 (* Attributed expressions *)
@@ -779,7 +788,7 @@ and print_E_For state (node : for_loop reg) =
   let Region.{value; region} = node in
   let {index; bound1; bound2; body; _} = value in
   let children = Tree.[
-    mk_child make_literal    index;
+    mk_child print_variable  index;
     mk_child print_expr      bound1;
     mk_child print_expr      bound2;
     mk_child print_loop_body body] in
@@ -991,7 +1000,7 @@ and print_selection state = function
 | Component comp -> print_Component state comp
 
 and print_FieldName state (node : field_name) =
-  Tree.(make_unary state "FieldName" make_literal node)
+  Tree.make_unary state "FieldName" print_variable node
 
 and print_Component state (node : (lexeme * Z.t) wrap) =
   Tree.make_int "Component" state node
@@ -1003,7 +1012,7 @@ and print_E_Record state (node : record_expr) =
 
 and print_field_expr state (node : (field_name, equal, expr) field) =
   let print_lhs state =
-    Tree.(make_unary state "<lhs>" make_literal)
+    Tree.make_unary state "<lhs>" print_variable
   and print_rhs state =
     Tree.make_unary state "<rhs>" print_expr
   in print_field
@@ -1071,7 +1080,7 @@ and print_E_Update state (node : update_expr braces) =
   in Tree.make ~region state "E_Update" children
 
 and print_path state = function
-  Name p -> Tree.(make_unary state "Name" make_literal p)
+  Name p -> Tree.make_unary state "Name" print_variable p
 | Path p -> print_Path state p
 
 and print_Path state (node : projection reg) =
@@ -1081,7 +1090,7 @@ and print_Path state (node : projection reg) =
 (* Variables in expressions *)
 
 and print_E_Var state (node : variable) =
-  Tree.(make_unary state "E_Var" make_literal node)
+  Tree.make_unary state "E_Var" print_variable node
 
 (* Verbatim strings *)
 

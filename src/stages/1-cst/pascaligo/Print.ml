@@ -44,6 +44,17 @@ let print_D_Directive state (node: Directive.t) =
   let region, string = Directive.project node in
   Tree.(make_unary state "D_Directive" make_node ~region string)
 
+(* Printing variables *)
+
+let print_variable state = function
+  Var node -> Tree.make_literal state node
+| Esc node ->
+    Tree.make_node ~region:node#region state ("@" ^ node#payload)
+
+let payload_of_variable = function
+  Var v -> v#payload
+| Esc v -> "@" ^ v#payload
+
 (* PRINTING THE CST *)
 
 (* The names of the printing functions are all prefixed by
@@ -131,7 +142,7 @@ and print_D_Fun state (node: fun_decl reg) =
   let node = node.value in
   let children = Tree.[
     mk_child_opt print_recursive   node.kwd_recursive;
-    mk_child     make_literal      node.fun_name;
+    mk_child     print_variable    node.fun_name;
     mk_child_opt print_type_params node.type_params;
     mk_child     print_parameters  node.parameters;
     mk_child_opt print_ret_type    node.ret_type;
@@ -142,7 +153,8 @@ and print_recursive state (node : keyword) =
   Tree.make_literal state node
 
 and print_type_params state (node : type_params chevrons reg) =
-  Tree.(of_nsepseq state "<type parameters>" make_literal node.value.inside)
+  Tree.of_nsepseq state "<type parameters>" print_variable
+                  node.value.inside
 
 and print_parameters state (node : parameters) =
   Tree.of_sepseq state "<parameters>" print_param_decl node.value.inside
@@ -200,13 +212,14 @@ and print_D_Type state (node: type_decl reg) =
   let print_type_expr state =
     Tree.make_unary state "<type>" print_type_expr in
   let children = Tree.[
-    mk_child     make_literal    node.name;
+    mk_child     print_variable  node.name;
     mk_child_opt print_type_vars node.params;
     mk_child     print_type_expr node.type_expr]
   in Tree.make state "D_Type" children
 
 and print_type_vars state (node: variable tuple) =
-  Tree.(of_nsepseq state "<type variables>" make_literal node.value.inside)
+  Tree.of_nsepseq state "<type variables>" print_variable
+                  node.value.inside
 
 (* TYPE EXPRESSIONS *)
 
@@ -304,8 +317,8 @@ and print_field_decl state (node: field_decl reg) =
   let Region.{value; region} = node in
   let children = Tree.mk_child_opt print_type_annotation value.field_type
                  :: mk_children_attr value.attributes
-  and root = value.field_name#payload in
-  Tree.make state root ~region children
+  and root = payload_of_variable value.field_name
+  in Tree.make state root ~region children
 
 (* The string type *)
 
@@ -332,7 +345,7 @@ and print_of_type_expr state (_, type_expr) =
 (* A type variable *)
 
 and print_T_Var state (node: variable) =
-  Tree.(make_unary state "T_Var" make_literal node)
+  Tree.make_unary state "T_Var" print_variable node
 
 
 (* STATEMENTS *)
@@ -494,8 +507,8 @@ and print_I_For state (node: for_int reg) =
 
   let print_init state (index, init : variable * expr) =
     let children = Tree.[
-      mk_child make_literal index;
-      mk_child print_expr init]
+      mk_child print_variable index;
+      mk_child print_expr     init]
     in Tree.make state "<init>" children
 
   and print_bound state =
@@ -522,8 +535,8 @@ and print_ForMap state (node: for_map reg) =
   let Region.{value; region} = node in
   let print_binding state (source, _arrow, image) =
     let children = Tree.[
-      mk_child make_literal source;
-      mk_child make_literal image]
+      mk_child print_variable source;
+      mk_child print_variable image]
     in Tree.make state "<binding>" children
   and print_collection state =
     Tree.make_unary state "<collection>" print_expr in
@@ -544,10 +557,10 @@ and print_ForSetOrList state (node: for_set_or_list reg) =
   | `List kwd_list -> Tree.make_literal state kwd_list in
 
   let children = Tree.[
-    mk_child make_literal value.var;
-    mk_child print_kind         value.for_kind;
-    mk_child print_collection   value.collection;
-    mk_child print_block        value.block]
+    mk_child print_variable   value.var;
+    mk_child print_kind       value.for_kind;
+    mk_child print_collection value.collection;
+    mk_child print_block      value.block]
 
   in Tree.make state "I_ForIn" ~region children
 
@@ -761,7 +774,7 @@ and print_P_Typed state (node: typed_pattern reg) =
 (* A pattern variable *)
 
 and print_P_Var state (node: variable) =
-  Tree.(make_unary state "P_Var" make_literal node)
+  Tree.make_unary state "P_Var" print_variable node
 
 (* A verbatim string in patterns *)
 
@@ -1075,7 +1088,7 @@ and print_selection state = function
 | Component comp -> print_Component state comp
 
 and print_FieldName state (node: field_name) =
-  Tree.(make_unary state "FieldName" make_literal node)
+  Tree.make_unary state "FieldName" print_variable node
 
 and print_Component state (node: int_literal) =
   Tree.make_int "Component" state node
@@ -1141,7 +1154,7 @@ and print_E_Update state (node: update reg) =
 (* Expression variables *)
 
 and print_E_Var state (node: variable) =
-  Tree.(make_unary state "E_Var" make_literal node)
+  Tree.make_unary state "E_Var" print_variable node
 
 (* Verbatim strings as expressions *)
 

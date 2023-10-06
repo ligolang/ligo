@@ -86,9 +86,6 @@ let make_node ?region state root =
 let make_literal state (wrap : string Wrap.t) =
   make_node ~region:wrap#region state wrap#payload
 
-let make_literal_wo_reg state (wrap : string Wrap.t) =
-  make_node state wrap#payload
-
 (* PRINTING GENERAL TREES *)
 
 type child = (state -> unit) option

@@ -1,7 +1,7 @@
 ;; Build of the self passes on the lexical units of PyLIGO
 
 (library
- (name Lx_py_self_units)
+ (name lx_py_self_units)
  (public_name ligo.lexing.pyligo.self.units)
  (instrumentation
   (backend bisect_ppx))

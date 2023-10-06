@@ -81,11 +81,6 @@ val make_node : ?region:Region.t -> string printer
 
 val make_literal : string Wrap.t printer
 
-(* The call [make_literal_wo_reg state wrap] is the same as
-   [make_literal] but without printing the region. *)
-
-val make_literal_wo_reg : string Wrap.t printer
-
 (* PRINTING UNARY TREES (trees with exactly one child) *)
 
 val make_unary :

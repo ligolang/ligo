@@ -8,7 +8,7 @@
   ;; LIGO
   lexing_shared
   mh_py_tokens
-  Lx_py_self_units
+  lx_py_self_units
   lx_py_self_tokens
   ;; Third party
   str
