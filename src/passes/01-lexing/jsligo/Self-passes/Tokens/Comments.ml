@@ -24,10 +24,12 @@ let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
   Directive w ->
     let comment =
       match comment with
-        Wrap.Block {region; value = c} ->
-          `BlockComment Region.{region; value = Preprocessing_jsligo.Config.block, c}
-        | Wrap.Line {region; value = c} ->
-          `LineComment  Region.{region; value = Preprocessing_jsligo.Config.line, c}
+        Wrap.Block {region; value} ->
+          let value = Preprocessing_jsligo.Config.block, value
+          in `BlockComment Region.{region; value}
+      | Wrap.Line {region; value} ->
+          let value = Preprocessing_jsligo.Config.line, value
+          in `LineComment  Region.{region; value}
     in Directive (Directive.add_comment comment w)
 
   (* Comments *)
@@ -45,6 +47,7 @@ let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
 | Mutez    w -> Mutez (w#add_comment comment)
 | Ident    w -> Ident (w#add_comment comment)
 | UIdent   w -> UIdent (w#add_comment comment)
+| EIdent   w -> EIdent (w#add_comment comment)
 | Attr     w -> Attr (w#add_comment comment)
 
 (* Symbols *)

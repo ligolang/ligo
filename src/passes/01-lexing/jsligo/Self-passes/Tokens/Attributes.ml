@@ -17,43 +17,43 @@ let collect_attributes tokens =
   let open! Token
   in
   let rec inner acc = function
-    Ident id as token :: tokens -> (
+    EIdent id as token :: tokens -> (
       match id#payload with
-        "@entry" ->
+        "entry" ->
           let attr = Token.mk_attr ~key:"entry" id#region
           in inner (attr :: acc) tokens
-      | "@dyn_entry" ->
+      | "dyn_entry" ->
           let attr = Token.mk_attr ~key:"dyn_entry" id#region
           in inner (attr :: acc) tokens
-      | "@inline" ->
+      | "inline" ->
           let attr = Token.mk_attr ~key:"inline" id#region
           in inner (attr :: acc) tokens
-      | "@view" ->
+      | "view" ->
           let attr = Token.mk_attr ~key:"view" id#region
           in inner (attr :: acc) tokens
-      | "@no_mutation" ->
+      | "no_mutation" ->
           let attr = Token.mk_attr ~key:"no_mutation" id#region
           in inner (attr :: acc) tokens
-      | "@private" ->
+      | "private" ->
           let attr = Token.mk_attr ~key:"private" id#region
           in inner (attr :: acc) tokens
-      | "@public" ->
+      | "public" ->
           let attr = Token.mk_attr ~key:"public" id#region
           in inner (attr :: acc) tokens
-      | "@hidden" ->
+      | "hidden" ->
           let attr = Token.mk_attr ~key:"hidden" id#region
           in inner (attr :: acc) tokens
-      | "@thunk" ->
+      | "thunk" ->
           let attr = Token.mk_attr ~key:"thunk" id#region
           in inner (attr :: acc) tokens
-      | "@annot" -> (
+      | "annot" -> (
           match tokens with
             LPAR _ :: String value :: RPAR _ :: rest ->
               let value = Attr.String value#payload in
               let attr = Token.mk_attr ~key:"annot" ~value id#region
               in inner (attr :: acc) rest
           | _ -> inner (token :: acc) tokens)
-      | "@layout" -> (
+      | "layout" -> (
           match tokens with
             LPAR _ :: String value :: RPAR _ :: rest ->
               let value = Attr.String value#payload in

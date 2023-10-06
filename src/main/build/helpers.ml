@@ -22,20 +22,6 @@ let sap_for_all (b : Ast_core.type_expression option Binder.t) =
   b
 
 
-(* This pass removes '@' prefix from binders.
-   E.g., `let @or = ...` becomes `let or = ...` *)
-let at_prefix (b : Ast_core.type_expression option Binder.t) =
-  if not (Value_var.is_generated @@ Binder.get_var b)
-  then (
-    let var = Binder.get_var b in
-    let loc = Value_var.get_location var in
-    let name = Value_var.to_name_exn var in
-    match String.chop_prefix name ~prefix:"@" with
-    | Some name -> Binder.set_var b @@ Value_var.of_input_var ~loc name
-    | None -> b)
-  else b
-
-
 let internalize_core (ds : Ast_core.program) : Ast_core.program =
   let open Ast_core in
   let rec module_decl
@@ -52,7 +38,10 @@ let internalize_core (ds : Ast_core.program) : Ast_core.program =
     Module_decl.{ module_binder; module_; module_attr; annotation }
   and value_decl (value_decl : _ Value_decl.t) =
     let binder = sap_for_all value_decl.binder in
-    let binder = at_prefix binder in
+    let var = Binder.get_var binder in
+    let loc = Value_var.get_location var in
+    let name = Value_var.to_name_exn var in
+    let binder = Binder.set_var binder @@ Value_var.of_input_var ~loc name in
     let attr : ValueAttr.t =
       { value_decl.attr with inline = true; hidden = true; no_mutation = true }
     in

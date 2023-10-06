@@ -115,19 +115,20 @@ type eof = lexeme wrap
 
 (* Literals *)
 
-type variable    = lexeme wrap
-type type_param  = lexeme wrap
-type type_name   = lexeme wrap
-type type_var    = lexeme wrap
-type module_name = lexeme wrap
-type field_name  = lexeme wrap
-type ctor        = lexeme wrap
+type variable =
+  Var of lexeme wrap (* foo  *)
+| Esc of lexeme wrap (* @foo without the @ *)
 
+type type_param  = variable
+type type_name   = variable
+type type_var    = variable
+type field_name  = variable
+
+type module_name = lexeme wrap
+type ctor        = lexeme wrap
 type attribute   = Attr.t wrap
 type collection  = lexeme wrap
 type language    = lexeme Region.reg wrap
-type string_     = lexeme wrap
-type verbatim    = lexeme wrap
 
 type string_literal   = lexeme wrap
 type int_literal      = (lexeme * Z.t) wrap
@@ -273,7 +274,7 @@ and type_expr =
 | T_Record  of field_decl reg compound reg (* record [a; [@a1] b : t] *)
 | T_String  of string_literal                      (*           "foo" *)
 | T_Sum     of sum_type reg                        (* [@a] A | B of t *)
-| T_Var     of type_var                            (*               t *)
+| T_Var     of type_var                            (*           @t  t *)
 
 (* Application of type constructors *)
 
@@ -512,7 +513,7 @@ and pattern =
 | P_String   of string_literal                       (*   "string" *)
 | P_Tuple    of pattern tuple                        (*     (1, x) *)
 | P_Typed    of typed_pattern reg                    (*  (x : int) *)
-| P_Var      of variable                             (*          x *)
+| P_Var      of variable                             (*     @x   x *)
 | P_Verbatim of verbatim_literal                     (*    {|foo|} *)
 
 (* Record pattern *)
@@ -604,7 +605,7 @@ and expr =
 | E_Tuple     of expr tuple                     (* (1, x)          *)
 | E_Typed     of typed_expr par reg             (* (x : int)       *)
 | E_Update    of update reg                     (* x with y        *)
-| E_Var       of variable                       (* x               *)
+| E_Var       of variable                       (* x  @x           *)
 | E_Verbatim  of verbatim_literal               (* {|foo|}         *)
 
 (* Map binding *)
@@ -702,6 +703,9 @@ and update = {
 
 (* PROJECTING REGIONS *)
 
+let variable_to_region = function
+  Var w | Esc w -> w#region
+
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
    please make sure they remain in order. *)
@@ -717,7 +721,7 @@ let rec type_expr_to_region = function
 | T_Record  {region; _} -> region
 | T_String  t -> t#region
 | T_Sum     {region; _} -> region
-| T_Var     t -> t#region
+| T_Var     t -> variable_to_region t
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
@@ -768,7 +772,7 @@ let rec expr_to_region = function
 | E_Tuple     {region; _}
 | E_Typed     {region; _}
 | E_Update    {region; _} -> region
-| E_Var       t
+| E_Var       t -> variable_to_region t
 | E_Verbatim  t -> t#region
 
 and module_expr_to_region = function
@@ -814,27 +818,27 @@ let test_clause_to_region = function
    please make sure they remain in order. *)
 
 let rec pattern_to_region = function
-  P_App     {region; _} -> region
-| P_Attr    (_,p) -> pattern_to_region p
-| P_Bytes   t -> t#region
-| P_Cons    {region; _} -> region
-| P_Ctor    t -> t#region
-| P_Int     t -> t#region
-| P_List    {region; _}
-| P_ModPath {region; _} -> region
-| P_Mutez   t -> t#region
-| P_Nat     t -> t#region
-| P_Nil     t -> t#region
-| P_Par     {region; _}
-| P_Record  {region; _} -> region
-| P_String  t -> t#region
-| P_Tuple   {region; _}
-| P_Typed   {region; _} -> region
-| P_Var     t
+  P_App      {region; _} -> region
+| P_Attr     (_,p) -> pattern_to_region p
+| P_Bytes    t -> t#region
+| P_Cons     {region; _} -> region
+| P_Ctor     t -> t#region
+| P_Int      t -> t#region
+| P_List     {region; _}
+| P_ModPath  {region; _} -> region
+| P_Mutez    t -> t#region
+| P_Nat      t -> t#region
+| P_Nil      t -> t#region
+| P_Par      {region; _}
+| P_Record   {region; _} -> region
+| P_String   t -> t#region
+| P_Tuple    {region; _}
+| P_Typed    {region; _} -> region
+| P_Var      t -> variable_to_region t
 | P_Verbatim t -> t#region
 
 let selection_to_region = function
-  FieldName name -> name#region
+  FieldName n -> variable_to_region n
 | Component w -> w#region
 
 let field_lens_to_region = function

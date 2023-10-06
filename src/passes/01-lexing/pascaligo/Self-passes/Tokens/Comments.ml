@@ -29,16 +29,15 @@ let rec comments_to_attr acc = function
 
 let rec hook_comments_to_dir directive acc = function
   Token.(BlockCom _ | LineCom _) as comment :: tokens ->
-    let comment   = match comment with
-      BlockCom w -> `BlockComment
-        (
-        Region.{value = Preprocessing_pascaligo.Config.block, w#payload;
-        region = w#region})
-    | LineCom w -> `LineComment
-       (
-       Region.{value = Preprocessing_pascaligo.Config.line, w#payload; region = w#region})
-    | _ -> failwith "hook_comments_to_dir: impossible"
-    in
+    let comment =
+      match comment with
+        BlockCom w ->
+          let value = Preprocessing_pascaligo.Config.block, w#payload
+          in `BlockComment Region.{value; region = w#region}
+      | LineCom w ->
+          let value = Preprocessing_pascaligo.Config.line, w#payload
+          in `LineComment Region.{value; region = w#region}
+      | _ -> failwith "Comment.hook_comments_to_dir: Impossible." in
     let directive = Directive.add_comment comment directive
     in hook_comments_to_dir directive acc tokens
 | tokens -> Token.Directive directive :: acc, tokens

@@ -196,6 +196,18 @@ module Make (Options : Options.S) (Token : Token.S) =
       let state, Region.{region; value} = state#sync buffer
       in Token.mk_ident value region, state
 
+    (* Data constructors and module names *)
+
+    let mk_uident state buffer =
+      let state, Region.{region; value} = state#sync buffer
+      in Token.mk_uident value region, state
+
+    (* Escaped identifiers *)
+
+    let mk_eident id state buffer =
+      let state, Region.{region; _} = state#sync buffer
+      in Token.mk_eident id region, state
+
     (* Attributes *)
 
     let mk_str_attr key ?value state buffer =
@@ -213,12 +225,6 @@ module Make (Options : Options.S) (Token : Token.S) =
           None      -> None
         | Some name -> Some (Attr.Ident name)
       in Token.mk_attr ~key ?value region, state
-
-    (* Data constructors and module names *)
-
-    let mk_uident state buffer =
-      let state, Region.{region; value} = state#sync buffer
-      in Token.mk_uident value region, state
 
     (* Code injection *)
 
@@ -267,7 +273,7 @@ let small     = ['a'-'z']
 let capital   = ['A'-'Z']
 let letter    = small | capital
 let ident     = (small | '_'+ (letter | digit)) (letter | '_' | digit)*
-let ext_ident = '@' (letter | digit | '_')+
+let eident    = '@' ((letter | digit | '_')+ as id)
 let uident    = capital (letter | '_' | digit)*
 
 let string    = '"' ([^ '"' '\\' '\n']* as value) '"'
@@ -293,7 +299,7 @@ let  pascaligo_sym = "->" | "=/=" | "#" | ":=" | "^"
 let   cameligo_sym = "->" | "<>" | "::" | "||" | "&&" | "'" | "|>" | "^"
 let     jsligo_sym =   "..." | "?" | "!" | "%" | "==" | "!=" | "+=" | "-="
                    | "*=" | "/="| "%=" | "=>" | "++" | "--" | "#" | "<<"
-                   | "<<=" (* | ">>=" | ">>" : See parser. *)
+                   | "<<=" (* | ">=" | ">>=" | ">>" : See parser. *)
 let     pyligo_sym = "->" | "^"   | "**"  | "//" | "%"  | "@"  | "|" | "&"
                    | "~"  | "`"   | "\\"
                    | "==" | "!=" | "+=" | "-="
@@ -323,8 +329,9 @@ rule scan state = parse
 
 | "[@" str_attr "]" { mk_str_attr key ?value state lexbuf }
 | "[@" id_attr  "]" { mk_id_attr  key ?value state lexbuf }
-| ident | ext_ident { mk_ident               state lexbuf }
+| ident             { mk_ident               state lexbuf }
 | uident            { mk_uident              state lexbuf }
+| eident            { mk_eident   id         state lexbuf }
 | bytes             { mk_bytes    bytes      state lexbuf }
 | nat "n"           { mk_nat      nat        state lexbuf }
 | nat "mutez"       { mk_mutez    nat        state lexbuf }

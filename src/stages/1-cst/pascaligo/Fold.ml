@@ -141,7 +141,7 @@ type _ sing =
   | S_slash_eq : slash_eq sing
   | S_statement : statement sing
   | S_statements : statements sing
-  | S_string : string_ sing
+  | S_string_literal : string_literal sing
   | S_sum_type : sum_type sing
   | S_test_clause : test_clause sing
   | S_times : times sing
@@ -165,7 +165,7 @@ type _ sing =
   | S_variant : variant sing
   | S_vbar : vbar sing
   | S_vbar_eq : vbar_eq sing
-  | S_verbatim : verbatim sing
+  | S_verbatim_literal : verbatim_literal sing
   | S_while_loop : while_loop sing
   | S_wrap : 'a sing -> 'a wrap sing
   | S_z : Z.t sing
@@ -370,13 +370,13 @@ let fold'
     | E_Record node -> node -| S_record_expr
     | E_Set node -> node -| S_reg (S_compound S_expr)
     | E_SetMem node -> node -| S_reg S_set_membership
-    | E_String node -> node -| S_string
+    | E_String node -> node -| S_string_literal
     | E_Sub node -> node -| S_reg (S_bin_op  S_minus)
     | E_Tuple node -> node -| S_tuple S_expr
     | E_Typed node -> node -| S_reg (S_par S_typed_expr)
     | E_Update node -> node -| S_reg S_update
     | E_Var node -> node -| S_variable
-    | E_Verbatim node -> node -| S_verbatim)
+    | E_Verbatim node -> node -| S_verbatim_literal)
   | S_field (sing_1, sing_2) -> process
     (match node with
       Punned node -> node -| S_punned sing_1
@@ -395,7 +395,7 @@ let fold'
     | Lens_Mult node -> node -| S_times_eq
     | Lens_Div node -> node -| S_slash_eq
     | Lens_Fun node -> node -| S_vbar_eq)
-  | S_field_name -> process @@ node -| S_wrap S_lexeme
+  | S_field_name -> process @@ node -| S_variable
   | S_field_pattern -> process @@ node -| S_field (S_pattern, S_pattern)
   | S_for_in -> process
     (match node with
@@ -619,11 +619,11 @@ let fold'
     | P_Nil node -> node -| S_kwd_nil
     | P_Par node -> node -| S_reg (S_par S_pattern)
     | P_Record node -> node -| S_record_pattern
-    | P_String node -> node -| S_string
+    | P_String node -> node -| S_string_literal
     | P_Tuple node -> node -| S_tuple S_pattern
     | P_Typed node -> node -| S_reg S_typed_pattern
     | P_Var node -> node -| S_variable
-    | P_Verbatim node -> node -| S_verbatim)
+    | P_Verbatim node -> node -| S_verbatim_literal)
   | S_plus -> process @@ node -| S_wrap S_lexeme
   | S_plus_eq -> process @@ node -| S_wrap S_lexeme
   | S_projection ->
@@ -683,7 +683,7 @@ let fold'
     | S_Instr node -> node -| S_instruction
     | S_VarDecl node -> node -| S_reg S_var_decl)
   | S_statements -> process @@ node -| S_nsepseq (S_statement, S_semi)
-  | S_string -> process @@ node -| S_wrap S_lexeme
+  | S_string_literal -> process @@ node -| S_wrap S_lexeme
   | S_sum_type ->
     let { lead_vbar; variants } = node in
     process_list
@@ -735,10 +735,10 @@ let fold'
     | T_ModPath node -> node -| S_reg (S_module_path S_type_expr)
     | T_Par node -> node -| S_reg (S_par S_type_expr)
     | T_Record node -> node -| S_reg (S_compound (S_reg S_field_decl))
-    | T_String node -> node -| S_string
+    | T_String node -> node -| S_string_literal
     | T_Sum node -> node -| S_reg S_sum_type
     | T_Var node -> node -| S_type_name)
-  | S_type_name -> process @@ node -| S_wrap S_lexeme
+  | S_type_name -> process @@ node -| S_variable
   | S_type_params -> process @@ node -| S_nsepseq (S_type_name, S_comma)
   | S_type_tuple -> process @@ node -| S_tuple S_type_expr
   | S_typed_expr -> process @@ node -| S_tuple_2 (S_expr, S_type_annotation)
@@ -774,7 +774,9 @@ let fold'
     ; assign -| S_assign
     ; init -| S_expr
     ; terminator -| S_option S_semi ]
-  | S_variable -> process @@ node -| S_wrap S_lexeme
+  | S_variable -> process
+    ( match node with
+        Var node | Esc node -> node -| S_wrap S_lexeme)
   | S_variant ->
     let { attributes; ctor; ctor_args } = node in
     process_list
@@ -783,7 +785,7 @@ let fold'
     ; ctor_args -| S_option (S_tuple_2 (S_kwd_of, S_type_expr)) ]
   | S_vbar -> process @@ node -| S_wrap S_lexeme
   | S_vbar_eq -> process @@ node -| S_wrap S_lexeme
-  | S_verbatim -> process @@ node -| S_wrap S_lexeme
+  | S_verbatim_literal -> process @@ node -| S_wrap S_lexeme
   | S_while_loop ->
     let { kwd_while; cond; block } = node in
     process_list

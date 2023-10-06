@@ -43,12 +43,43 @@ module TODO_do_in_parsing = struct
   let conv_attrs = List.map ~f:conv_attr
 
   (* I don't know what to do with those lens/attributes *)
+
   let weird_attributes _ = ()
   let weird_lens _ = ()
+
+  (* Variables *)
+
   let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(w_snd x) (w_fst x)
   let var x = Ligo_prim.Value_var.of_input_var ~loc:(w_snd x) (w_fst x)
   let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(w_snd x) (w_fst x)
   let labelize x = Ligo_prim.Label.of_string (w_fst x)
+
+  (* (Potentially) Escaped variables *)
+
+  let get_var = function
+    | I.Var v | I.Esc v -> v
+
+
+  let esc_var = var <@ get_var
+  let esc_tvar = tvar <@ get_var
+  let labelize_esc = labelize <@ get_var
+
+  let mk_E_Variable_esc = function
+    | I.Var v -> O.E_variable_esc (Raw (var v))
+    | I.Esc v -> O.E_variable_esc (Esc (var v))
+
+
+  let mk_T_var_esc = function
+    | I.Var v -> O.T_var_esc (Raw (tvar v))
+    | I.Esc v -> O.T_var_esc (Esc (tvar v))
+
+
+  let mk_P_var_esc = function
+    | I.Var v -> O.P_var_esc (Raw (var v))
+    | I.Esc v -> O.P_var_esc (Esc (var v))
+
+
+  (* Constructors *)
 
   let ctor_arg (lst : I.expr nseq) : I.expr =
     let region =
@@ -71,21 +102,21 @@ module TODO_do_in_parsing = struct
         weird_attributes attributes;
         let loc = Location.lift region in
         (match pun with
-        | Name x -> O.Update.Pun (Location.wrap ~loc @@ labelize x)
+        | Name x -> O.Update.Pun (Location.wrap ~loc @@ labelize_esc x)
         | _ -> assert false (* never emited by parser *))
       | Complete { region = _; value = { attributes; field_lhs; field_lens; field_rhs } }
         ->
         weird_attributes attributes;
         let field_lhs =
           match field_lhs with
-          | Name v -> [ AST.Selection.FieldName (labelize v) ]
+          | Name v -> [ AST.Selection.FieldName (labelize_esc v) ]
           | Path { region = _; value = { record_or_tuple; selector = _; field_path } } ->
             let struct_name =
               match record_or_tuple with
               | I.E_Var x -> x
               | _ -> assert false (* never emited by parser *)
             in
-            AST.Selection.FieldName (labelize struct_name)
+            AST.Selection.FieldName (labelize_esc struct_name)
             :: List.map (nsepseq_to_list field_path) ~f:compile_selection
         in
         let field_lens = compile_lens field_lens in
@@ -105,6 +136,10 @@ module TODO_do_in_parsing = struct
 
   let quoted_tvar (x : I.type_var) =
     let var = snd @@ r_fst x in
+    let var =
+      match var with
+      | I.Var v | I.Esc v -> v
+    in
     tvar @@ I.Wrap.make ("'" ^ var#payload) var#region
 
 
@@ -159,11 +194,11 @@ let rec expr : Eq.expr -> Folding.expr =
   let compile_selection =
     let open Nano_prim.Selection in
     function
-    | I.FieldName name -> FieldName (TODO_do_in_parsing.labelize name)
+    | I.FieldName name -> FieldName (TODO_do_in_parsing.labelize_esc name)
     | I.Component c -> Component_num c#payload
   in
   let compile_type_params : I.type_params I.par -> Ligo_prim.Type_var.t nseq =
-   fun tp -> nseq_map TODO_do_in_parsing.tvar (snd (r_fst tp).inside)
+   fun tp -> nseq_map TODO_do_in_parsing.esc_tvar (snd (r_fst tp).inside)
   in
   let compile_lens : I.lens -> AST.Update.field_lens = function
     | I.Lens_Id _ -> Lens_Id
@@ -175,7 +210,7 @@ let rec expr : Eq.expr -> Folding.expr =
   in
   match e with
   | E_Attr (x, y) -> ret @@ E_attr (fst @@ TODO_do_in_parsing.conv_attr x, y)
-  | E_Var var -> ret @@ O.E_variable (TODO_do_in_parsing.var var)
+  | E_Var v -> ret @@ TODO_do_in_parsing.mk_E_Variable_esc v
   (* we keep parenthesis so that the backward pass which add parenthesis is done only once for all syntaxes (?) *)
   | E_Par par -> expr par.value.inside
   | E_Unit _ -> ret @@ E_literal Literal_unit
@@ -220,13 +255,13 @@ let rec expr : Eq.expr -> Folding.expr =
       | Punned p ->
         let I.{ attributes; pun }, loc = r_split p in
         TODO_do_in_parsing.weird_attributes attributes;
-        let s = TODO_do_in_parsing.labelize pun in
+        let s = TODO_do_in_parsing.labelize_esc pun in
         AST.Field.Punned (Location.wrap ~loc s)
       | Complete c ->
         let I.{ attributes; field_lhs; field_lens; field_rhs } = r_fst c in
         TODO_do_in_parsing.weird_lens field_lens (* TODO : add weird_lens *);
         TODO_do_in_parsing.weird_attributes attributes;
-        let label = TODO_do_in_parsing.labelize field_lhs in
+        let label = TODO_do_in_parsing.labelize_esc field_lhs in
         AST.Field.Complete (label, field_rhs)
     in
     let record = sepseq_to_list record.inside in
@@ -310,7 +345,7 @@ let rec expr : Eq.expr -> Folding.expr =
       { value = { type_decl = { value = { name; type_expr; params; _ }; _ }; body; _ }
       ; _
       } ->
-    let name = TODO_do_in_parsing.tvar name in
+    let name = TODO_do_in_parsing.esc_tvar name in
     let params = Option.map params ~f:(fun p -> TODO_do_in_parsing.type_vars_to_lst p) in
     ret @@ E_type_in { type_decl = { name; params; type_expr }; body }
   | E_ModIn { value = { mod_decl = { value = { name; module_expr; _ }; _ }; body; _ }; _ }
@@ -329,7 +364,7 @@ let rec expr : Eq.expr -> Folding.expr =
   | E_ContractOf c ->
     ret @@ E_contract (List.Ne.map TODO_do_in_parsing.mvar (nsepseq_to_nseq c.value))
   | E_Assign { value = { binder; expr = expression; _ }; _ } ->
-    let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.var binder) None in
+    let binder = Ligo_prim.Binder.make (TODO_do_in_parsing.esc_var binder) None in
     ret @@ E_assign_unitary { binder; expression }
   | E_LetMutIn
       { value =
@@ -352,7 +387,7 @@ let rec expr : Eq.expr -> Folding.expr =
           { index; bound1; direction; bound2; body = { value = { seq_expr; _ }; _ }; _ }
       ; region
       } ->
-    let index = TODO_do_in_parsing.var index in
+    let index = TODO_do_in_parsing.esc_var index in
     let init = bound1 in
     let bound = bound2 in
     let step =
@@ -375,8 +410,8 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   let loc = Location.lift (I.type_expr_to_region te) in
   let ret = Location.wrap ~loc in
   match te with
-  | T_Var t -> ret @@ O.T_var (TODO_do_in_parsing.tvar t)
-  | T_Arg v -> ret @@ T_var (TODO_do_in_parsing.quoted_tvar v)
+  | T_Var v -> ret @@ TODO_do_in_parsing.mk_T_var_esc v
+  | T_Arg v -> ret @@ T_var_esc (Raw (TODO_do_in_parsing.quoted_tvar v))
   | T_Attr (x, y) -> ret @@ T_attr (fst @@ TODO_do_in_parsing.conv_attr x, y)
   | T_Cart { value = hd, _, tl; _ } -> ret @@ T_prod (hd, nsepseq_to_list tl)
   | T_Variant { value = { variants; _ }; region = _ } ->
@@ -399,7 +434,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
           : int -> I.field_decl -> I.type_expr option O.Non_linear_rows.row
         =
        fun i { field_name; field_type; attributes; _ } ->
-        let l = TODO_do_in_parsing.labelize field_name in
+        let l = TODO_do_in_parsing.labelize_esc field_name in
         let rows =
           O.Non_linear_rows.
             { decl_pos = i
@@ -455,7 +490,7 @@ let rec pattern : Eq.pattern -> Folding.pattern =
   | P_Unit _ -> ret @@ P_unit
   | P_False _ -> ret @@ P_ctor (Ligo_prim.Label.of_string "False")
   | P_True _ -> ret @@ P_ctor (Ligo_prim.Label.of_string "True")
-  | P_Var p -> ret @@ P_var (TODO_do_in_parsing.var p)
+  | P_Var v -> ret @@ TODO_do_in_parsing.mk_P_var_esc v
   | P_Int v -> ret @@ P_literal (Literal_int (snd (w_fst v)))
   | P_Nat v -> ret @@ P_literal (Literal_nat (snd (w_fst v)))
   | P_Mutez v -> ret @@ P_literal (Literal_mutez (Z.of_int64 (snd (w_fst v))))
@@ -475,10 +510,10 @@ let rec pattern : Eq.pattern -> Folding.pattern =
       let compile_field_pattern = function
         | I.Punned { value = { attributes = _; pun }; region } ->
           O.Field.Punned
-            Location.(wrap ~loc:(lift region) (TODO_do_in_parsing.labelize pun))
+            Location.(wrap ~loc:(lift region) (TODO_do_in_parsing.labelize_esc pun))
         | I.Complete { value = { attributes; field_lhs; field_rhs; _ }; region = _ } ->
           TODO_do_in_parsing.weird_attributes attributes;
-          O.Field.Complete (TODO_do_in_parsing.labelize field_lhs, field_rhs)
+          O.Field.Complete (TODO_do_in_parsing.labelize_esc field_lhs, field_rhs)
       in
       List.map ~f:compile_field_pattern (sepseq_to_list p)
     in
@@ -516,7 +551,7 @@ let declaration : Eq.declaration -> Folding.declaration =
     in
     let type_params =
       let compile_type_params : I.type_params I.par -> AST.Ty_variable.t nseq =
-       fun tp -> nseq_map TODO_do_in_parsing.tvar (snd tp.value.inside)
+       fun tp -> nseq_map TODO_do_in_parsing.esc_tvar (snd tp.value.inside)
       in
       Option.map ~f:compile_type_params type_params
     in
@@ -524,7 +559,7 @@ let declaration : Eq.declaration -> Folding.declaration =
     let rhs_type = Option.map ~f:snd rhs_type in
     ret (D_let { is_rec; type_params; pattern; rhs_type; let_rhs })
   | D_Type { value = { name; params; type_expr; _ }; _ } ->
-    let name = TODO_do_in_parsing.tvar name in
+    let name = TODO_do_in_parsing.esc_tvar name in
     let params = Option.map ~f:TODO_do_in_parsing.type_vars_to_lst params in
     ret @@ D_type_abstraction { name; params; type_expr }
   | D_Module { value = { name; module_expr; annotation; _ }; _ } ->
@@ -578,13 +613,13 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
 let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
   | S_Value { region; value = _, v, _, ty } ->
     let loc = Location.lift region in
-    Location.wrap ~loc (O.S_value (TODO_do_in_parsing.var v, ty))
+    Location.wrap ~loc (O.S_value (TODO_do_in_parsing.esc_var v, ty))
   | S_Type { region; value = _, v, _, ty } ->
     let loc = Location.lift region in
-    Location.wrap ~loc (O.S_type (TODO_do_in_parsing.tvar v, ty))
+    Location.wrap ~loc (O.S_type (TODO_do_in_parsing.esc_tvar v, ty))
   | S_TypeVar { region; value = _, v } ->
     let loc = Location.lift region in
-    Location.wrap ~loc (O.S_type_var (TODO_do_in_parsing.tvar v))
+    Location.wrap ~loc (O.S_type_var (TODO_do_in_parsing.esc_tvar v))
   | S_Attr { region; value = attr, si } ->
     let loc = Location.lift region in
     Location.wrap

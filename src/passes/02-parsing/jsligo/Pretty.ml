@@ -64,6 +64,12 @@ let token ?(sep=empty) (t : string Wrap.t) : document =
   let prefix = print_comments t#comments ^/^ string t#payload
   in print_line_comment_opt ~sep prefix t#line_comment
 
+let print_variable ?(sep=empty) = function
+  Var t -> token ~sep t
+| Esc t ->
+    let prefix = print_comments t#comments ^/^ string ("@" ^ t#payload)
+    in print_line_comment_opt ~sep prefix t#line_comment
+
 (* Enclosed documents *)
 
 let print_enclosed_document
@@ -221,13 +227,11 @@ let print_mutez (node : (lexeme * Int64.t) wrap) =
     ^/^ (Int64.to_string (snd node#payload) ^ "mutez" |> string)
   in print_line_comment_opt prefix node#line_comment
 
-let print_ident (node : variable) = token node
-
 let print_ctor (node : ctor) = token node
 
-let print_string (node : lexeme wrap) = dquotes (print_ident node)
+let print_string (node : lexeme wrap) = dquotes (token node)
 
-and print_verbatim (node : lexeme wrap) = bquotes (print_ident node)
+and print_verbatim (node : lexeme wrap) = bquotes (token node)
 
 let print_int (node : (lexeme * Z.t) wrap) =
   let prefix = print_comments node#comments
@@ -332,7 +336,7 @@ and print_declaration state = function
 and print_D_Fun state (node : fun_decl reg) =
   let {kwd_function; fun_name; generics;
        parameters; rhs_type; fun_body} = node.value in
-  let thread = token kwd_function ^^ space ^^ print_ident fun_name in
+  let thread = token kwd_function ^^ space ^^ print_variable fun_name in
   let thread = thread ^^ print_generics_opt state generics in
   let thread = thread ^^ print_fun_params state parameters in
   let thread = thread ^^ print_type_annotation_opt state rhs_type
@@ -341,7 +345,7 @@ and print_D_Fun state (node : fun_decl reg) =
 and print_generics_opt state (node : generics option) =
   Option.value_map node ~default:empty ~f:(print_generics state)
 
-and print_generic (node : generic) = print_ident node
+and print_generic (node : generic) = print_variable node
 
 and print_generics state (node : generics) =
   print_chevrons state (print_sep_or_term (break 1) print_generic) node
@@ -381,16 +385,16 @@ and print_namespace_selection state = function
 | M_Alias s -> print_M_Alias s
 
 and print_M_Path state (node : namespace_name namespace_path reg) =
-  print_namespace_path state print_ident node.value
+  print_namespace_path state token node.value
 
 and print_namespace_path :
   'a.state -> ('a -> document) -> 'a namespace_path -> document =
   fun state print node ->
     let {namespace_path; selector; property} = node in
-    let thread = print_nsepseq (break 0) print_ident namespace_path
+    let thread = print_nsepseq (break 0) token namespace_path
     in group (thread ^^ token selector ^^ break 0 ^^ print property)
 
-and print_M_Alias (node : namespace_name) = print_ident node
+and print_M_Alias (node : namespace_name) = token node
 
 and print_ImportAllAs state (node : import_all_as reg) =
   let {kwd_import; times; kwd_as; alias; kwd_from; file_path} = node.value
@@ -400,9 +404,9 @@ and print_ImportAllAs state (node : import_all_as reg) =
 
 and print_ImportFrom state (node : import_from reg) =
   let {kwd_import; imported; kwd_from; file_path} = node.value in
-  let print_idents = print_sep_or_term (break 1) print_ident in
+  let print_vars = print_sep_or_term (break 1) print_variable in
   group (token kwd_import ^^ space ^^
-         print_braces ~force_hardline:true state print_idents imported
+         print_braces ~force_hardline:true state print_vars imported
          ^^ space ^^ token kwd_from ^^ space ^^ print_string file_path)
 
 (* Interfaces *)
@@ -430,7 +434,7 @@ and print_I_Attr state (node : attribute * intf_entry) =
 
 and print_I_Type state (node : intf_type reg) =
   let {kwd_type; type_name; type_rhs} = node.value in
-  let thread = token kwd_type ^^ space ^^ token type_name
+  let thread = token kwd_type ^^ space ^^ print_variable type_name
   in group (print_rhs state thread type_rhs)
 
 and print_rhs state thread (node : (equal * type_expr) option) =
@@ -443,7 +447,7 @@ and print_rhs state thread (node : (equal * type_expr) option) =
 
 and print_I_Const state (node : intf_const reg) =
   let {kwd_const; const_name; const_type} = node.value in
-  let thread = token kwd_const ^^ space ^^ token const_name
+  let thread = token kwd_const ^^ space ^^ print_variable const_name
   in group (thread ^^ print_type_annotation state const_type)
 
 (* Namespace declaration *)
@@ -475,7 +479,7 @@ and print_I_Path state (node : namespace_selection) =
 
 and print_D_Type state (node : type_decl reg) =
   let {kwd_type; name; generics; eq; type_expr} = node.value in
-  let thread = token kwd_type ^^ space ^^ token name in
+  let thread = token kwd_type ^^ space ^^ print_variable name in
   let thread = thread ^^ print_generics_opt state generics in
   let rhs = print_type_expr state type_expr in
   group (thread ^^
@@ -566,7 +570,7 @@ and print_S_ForOf state (node: for_of_stmt reg) =
 and print_range_for_of state (node : range_of par) =
   let {lpar; inside; rpar} = node.value in
   let {index_kind; index; kwd_of; expr} = inside in
-  let par = print_var_kind index_kind ^^ space ^^ token index
+  let par = print_var_kind index_kind ^^ space ^^ print_variable index
             ^^ space ^^ token kwd_of ^^ space ^^ print_expr state expr
   in print_par_like_document state par lpar rpar
 
@@ -1039,7 +1043,7 @@ and print_property :
 
 and print_property_id state = function
   F_Int  i -> print_int i
-| F_Name n -> token n
+| F_Name n -> print_variable n
 | F_Str  s -> print_string s
 
 (* Logical disjunction *)
@@ -1078,7 +1082,7 @@ and print_E_PreIncr state (node : increment un_op reg) =
 (* Projections *)
 
 and print_selection state = function
-  PropertyName (dot, n) -> token dot ^^ token n
+  PropertyName (dot, n) -> token dot ^^ print_variable n
 | PropertyStr        s  -> print_brackets state print_string s
 | Component          i  -> print_brackets state print_int i
 
@@ -1151,7 +1155,7 @@ and print_E_Update state (node : update_expr braces) =
 
 (* Expression variable *)
 
-and print_E_Var (node : variable) = print_ident node
+and print_E_Var (node : variable) = print_variable node
 
 (* Verbatim string expressions *)
 
@@ -1247,7 +1251,7 @@ and print_P_Typed state (node : typed_pattern reg) =
 
 (* Variable pattern *)
 
-and print_P_Var (node : variable) = print_ident node
+and print_P_Var (node : variable) = print_variable node
 
 (* Verbatim string patterns *)
 
@@ -1407,7 +1411,7 @@ and print_T_Union state (node : union_type) = print_union_type state node
 
 (* Type variables *)
 
-and print_T_Var (node : variable) = print_ident node
+and print_T_Var (node : variable) = print_variable node
 
 (* Variant type *)
 
@@ -1467,10 +1471,9 @@ and print_app :
       print_ctor_app_kind ctor
       ^^ print_par state (print_nsep_or_term (break 1) (print state)) args
 
-and print_ctor_app_kind (node : ctor_app_kind) =
-  match node with
-    CtorStr  node -> print_string node
-  | CtorName node -> print_ctor node
+and print_ctor_app_kind = function
+  CtorStr  node -> print_string node
+| CtorName node -> print_ctor node
 
 and print_variant_type state (node : variant_type) =
   print_variant_or_union_type state (print_variant_kind print_type_expr) node

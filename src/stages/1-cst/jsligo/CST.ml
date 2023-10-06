@@ -126,19 +126,27 @@ type eof = lexeme wrap [@@deriving yojson_of]
 
 (* Literals *)
 
-type attribute      = Attr.t wrap
-type ctor           = lexeme wrap [@@deriving yojson_of]
-type file_path      = lexeme wrap [@@deriving yojson_of]
-type fun_name       = lexeme wrap [@@deriving yojson_of]
-type generic        = lexeme wrap [@@deriving yojson_of]
-type intf_name      = lexeme wrap [@@deriving yojson_of]
+type variable =
+  Var of lexeme wrap (* foo  *)
+| Esc of lexeme wrap (* @foo without the @ *)
+
+let yojson_of_variable : variable -> Yojson.Safe.t = function
+  Var wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
+| Esc wrapped_lexeme -> yojson_of_wrap yojson_of_lexeme wrapped_lexeme
+
+type fun_name       = variable [@@deriving yojson_of]
+type type_name      = variable [@@deriving yojson_of]
+type type_var       = variable [@@deriving yojson_of]
+type type_ctor      = variable [@@deriving yojson_of]
+type property_name  = variable [@@deriving yojson_of]
+type generic        = variable [@@deriving yojson_of]
+
 type language       = lexeme wrap [@@deriving yojson_of]
-type namespace_name = lexeme wrap [@@deriving yojson_of]
-type property_name  = lexeme wrap [@@deriving yojson_of]
-type type_ctor      = lexeme wrap
-type type_name      = lexeme wrap [@@deriving yojson_of]
-type type_var       = lexeme wrap [@@deriving yojson_of]
-type variable       = lexeme wrap [@@deriving yojson_of]
+type ctor           = lexeme wrap [@@deriving yojson_of]
+type namespace_name = lexeme wrap [@@deriving yojson_of] (* N *)
+type intf_name      = lexeme wrap [@@deriving yojson_of] (* I *)
+type file_path      = lexeme wrap [@@deriving yojson_of]
+type attribute      = Attr.t wrap
 
 type bytes_literal    = (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
 type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
@@ -444,7 +452,7 @@ and pattern =
 | P_String   of string_literal                           (* "string"        *)
 | P_True     of kwd_true                                 (* true            *)
 | P_Typed    of typed_pattern reg                        (* [x,y] : t       *)
-| P_Var      of variable                                 (* x               *)
+| P_Var      of variable                                 (* x  @x           *)
 | P_Verbatim of verbatim_literal                         (* {|foo|}         *)
 
 (* Array pattern *)
@@ -768,6 +776,9 @@ let declaration_to_region = function
 | D_Type      {region; _} -> region
 | D_Value     {region; _} -> region
 
+let variable_to_region = function
+  Var w | Esc w -> w#region
+
 let rec type_expr_to_region = function
   T_App         {region; _}
 | T_Array       {region; _} -> region
@@ -780,7 +791,7 @@ let rec type_expr_to_region = function
 | T_ParameterOf {region; _} -> region
 | T_String      w -> w#region
 | T_Union       {region; _} -> region
-| T_Var         w -> w#region
+| T_Var         v -> variable_to_region v
 | T_Variant     {region; _} -> region
 
 let rec pattern_to_region = function
@@ -797,7 +808,7 @@ let rec pattern_to_region = function
 | P_String   w-> w#region
 | P_True     w -> w#region
 | P_Typed    {region; _} -> region
-| P_Var      w -> w#region
+| P_Var      v -> variable_to_region v
 | P_Verbatim w -> w#region
 
 let rec expr_to_region = function
@@ -861,7 +872,7 @@ let rec expr_to_region = function
 | E_True       w -> w#region
 | E_Typed      {region; _}
 | E_Update     {region; _} -> region
-| E_Var        w
+| E_Var        v -> variable_to_region v
 | E_Verbatim   w -> w#region
 | E_Xor        {region; _} -> region
 
@@ -885,7 +896,7 @@ let var_kind_to_region = function
   `Let w | `Const w -> w#region
 
 let property_id_to_region = function
-  F_Name i -> i#region
+  F_Name i -> variable_to_region i
 | F_Int  i -> i#region
 | F_Str  i -> i#region
 
@@ -895,7 +906,7 @@ let fun_body_to_region = function
 
 let selection_to_region = function
   PropertyName (dot, property_name) ->
-    Region.cover dot#region property_name#region
+    Region.cover dot#region (variable_to_region property_name)
 | PropertyStr brackets -> brackets.region
 | Component brackets -> brackets.region
 
