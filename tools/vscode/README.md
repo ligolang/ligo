@@ -8,7 +8,7 @@ Currently, it is highly experimental and may contain bugs.
 Language Server capabilities on Windows are supported only if running in WSL mode.
 
 Note: You need a LIGO build with support for `ligo lsp`.
-LIGO version 0.61.0 and greater will come with support for language server capabilities.
+LIGO version 0.61.0 and greater come with support for language server capabilities.
 
 To report bugs in the LIGO Language Server (LLS), please open an issue in [GitLab](https://gitlab.com/ligolang/ligo/-/issues).
 You should find a file called `ligo_language_server.log` in your temporary directory. For example, in Linux, this should be inside `/tmp/`, which might contain information that the devs would find useful to debug your problem.
@@ -113,6 +113,25 @@ The supported features that may be disabled are listed below:
 - `textDocument/codeAction`
 
 **Note**: Please restart the LIGO Language Server after changing this configuration.
+
+## Project indexing
+
+The LIGO Language Server will look for the contents of the directory where the opened LIGO file is, as well as all its parent directories, in search for a `ligo.json` file. Supposing that `/home/johndoe/ligo/foo.mligo` is open, then the language server will look for `ligo.json` file in `/home/jonhdoe/ligo`, `/home/jonhdoe`, `/home`, and `/`, in this order, using the first encounter of `ligo.json`, if it exists.
+
+If this file is not found, the language sever will ask the user to create it in the directory where the file is open.
+Moreover, if an old `esy.json` or `.ligoproject` file is found, the language server might ask the user to create in these locations, if preferred.
+Note that both `esy.json` and `.ligoproject` are deprecated and ignored, so `ligo.json` should be used instead.
+
+If there is no `ligo.json`, some features such as importing from LIGO packages might not work.
+
+You need to run `ligo install` in the directory with `ligo.json` to import libraries from the LIGO registry and to use them in the language server.
+
+### Specification of `ligo.json`
+
+The `ligo.json` file represents a JSON object which, for now, has no fields that are used by the language server.
+Some other fields, such as `dependencies`, are still used by the LIGO compiler, but ignored by the language server.
+
+In the future, we plan on expanding the functionality of this file by adding more fields.
 
 # Debugger
 
