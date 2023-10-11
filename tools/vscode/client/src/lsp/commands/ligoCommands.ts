@@ -38,7 +38,6 @@ const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<str
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
-  client: LanguageClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   showOutput = true,
@@ -61,14 +60,13 @@ export async function executeCompileContract(
     throw new ex.InvalidChoiceException(format, formats)
   }
 
-  const result = await executeCommand(
+  const result = executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'contract', path],
       Boolean(entrypoint) ? ['-m', entrypoint] : [],
       ['--michelson-format', format],
     ].flat()),
-    client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
   )
@@ -82,7 +80,6 @@ export async function executeCompileContract(
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileStorage(
-  client: LanguageClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   storage: Maybe<string> = undefined,
@@ -111,14 +108,13 @@ export async function executeCompileStorage(
     throw new ex.InvalidChoiceException(format, ['text', 'hex', 'json'])
   }
 
-  const result = await executeCommand(
+  const result = executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'storage', path, storage],
       Boolean(entrypoint) ? ['-m', entrypoint] : [],
       ['--michelson-format', format],
     ].flat()),
-    client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
   )
@@ -131,14 +127,13 @@ export async function executeCompileStorage(
   };
 }
 
-export async function executeCompileExpression(client: LanguageClient) {
-  const declarations = await executeCommand(
+export async function executeCompileExpression() {
+  const declarations = executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['info', 'list-declarations', path],
       ['--format', 'json'],
     ].flat()),
-    client,
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     false,
   )
@@ -156,14 +151,13 @@ export async function executeCompileExpression(client: LanguageClient) {
       ['compile', 'expression', syntax, maybeExpression],
       ['--init-file', path],
     ].flat()),
-    client,
     CommandRequiredArguments.Path
     | CommandRequiredArguments.Ext
     | CommandRequiredArguments.ProjectRoot,
   )
 }
 
-export async function executeDryRun(client: LanguageClient) {
+export async function executeDryRun() {
   const maybeEntrypoint = await createRememberingInputBox({
     title: 'Entrypoint',
     placeHolder: 'Enter entrypoint to compile',
@@ -189,11 +183,10 @@ export async function executeDryRun(client: LanguageClient) {
       ['run', 'dry-run', path, maybeParameter, maybeStorage],
       Boolean(maybeEntrypoint) ? ['-m', maybeEntrypoint] : [],
     ].flat()),
-    client,
   )
 }
 
-export async function executeEvaluateFunction(client: LanguageClient) {
+export async function executeEvaluateFunction() {
   const maybeEntrypoint = await createRememberingInputBox({
     title: 'Function',
     placeHolder: 'Enter function to evaluate',
@@ -212,11 +205,10 @@ export async function executeEvaluateFunction(client: LanguageClient) {
     (path: string) => withProjectRootFlag([
       ['run', 'evaluate-call', path, maybeEntrypoint, maybeExpr],
     ].flat()),
-    client,
   )
 }
 
-export async function executeEvaluateValue(client: LanguageClient) {
+export async function executeEvaluateValue() {
   const maybeValue = await createRememberingInputBox({
     title: 'Value',
     placeHolder: 'Enter value to evaluate',
@@ -229,6 +221,5 @@ export async function executeEvaluateValue(client: LanguageClient) {
     (path: string) => withProjectRootFlag([
       ['run', 'evaluate-expr', path, maybeValue],
     ].flat()),
-    client,
   )
 }

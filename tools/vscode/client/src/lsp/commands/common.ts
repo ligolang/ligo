@@ -64,9 +64,9 @@ export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfigur
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-multi-spaces */
 export enum CommandRequiredArguments {
-  NoArgs      = 0,
-  Path        = 1 << 1,
-  Ext         = 1 << 2,
+  NoArgs = 0,
+  Path = 1 << 1,
+  Ext = 1 << 2,
   ProjectRoot = 1 << 3,
 }
 
@@ -111,40 +111,31 @@ function findPackage(dirname: string): Maybe<string> {
   return findPackage(dirname.substring(0, dirname.lastIndexOf('/')));
 }
 
-export async function executeCommand(
+export function executeCommand(
   binary: BinaryInfo,
   command: any,
-  client: LanguageClient,
   commandArgs = CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
   showOutput = true,
-): Promise<string> {
+): string {
   const contractInfo = getLastContractPath()
   const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
+  const ligoJsonPath = findPackage(dirname(contractInfo.path))
 
   if (commandArgs & CommandRequiredArguments.Path) {
-
     command = command(contractInfo.path)
   }
   if (commandArgs & CommandRequiredArguments.Ext) {
     command = command(extToDialect(contractInfo.ext))
   }
   if (commandArgs & CommandRequiredArguments.ProjectRoot) {
-    command = command(findPackage(dirname(contractInfo.path)))
+    command = command(ligoJsonPath)
   }
   try {
     if (command.includes(undefined)) {
       throw new ex.UserInterruptionException()
     }
 
-    // FIXME (#1657): Use the code below when we support getting the index
-    // directory and use the propery `indexDirectory` for the `cwd`.
-    /*
-    const requestType = new RequestType<null, string | null, void>('indexDirectory')
-    const indexDirectory: string | null = await client.sendRequest(requestType, null)
-    */
-    const indexDirectory: string | null = null
-    const result = execFileSync(ligoPath, command, { cwd: indexDirectory }).toString()
-
+    const result = execFileSync(ligoPath, command, { cwd: ligoJsonPath }).toString()
     if (showOutput) {
       ligoOutput.appendLine(result)
       ligoOutput.show();

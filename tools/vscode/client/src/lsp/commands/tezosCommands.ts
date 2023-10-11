@@ -37,20 +37,17 @@ type ContractAndStorage = {
 }
 
 async function askForContractAndStorage(
-  client: LanguageClient,
   format: string,
   prevEntrypoint = undefined,
   prevStorage = undefined,
 ): Promise<ContractAndStorage> {
   const code = await executeCompileContract(
-    client,
     prevEntrypoint,
     format,
     false,
   )
 
   const storage = await executeCompileStorage(
-    client,
     code.entrypoint,
     format,
     prevStorage,
@@ -79,8 +76,8 @@ const showUnsupportedMessage = (network: string, msg?: string) => {
   )
 }
 
-export async function executeDeploy(client: LanguageClient): Promise<void> {
-  const { code, storage } = await askForContractAndStorage(client, 'json')
+export async function executeDeploy(): Promise<void> {
+  const { code, storage } = await askForContractAndStorage('json')
   const network = await askForNetwork()
 
   vscode.window.withProgress(
@@ -132,10 +129,9 @@ export async function executeDeploy(client: LanguageClient): Promise<void> {
   )
 }
 
-export async function executeGenerateDeployScript(client: LanguageClient): Promise<void> {
-  const { code: codeJson, storage: storageJson } = await askForContractAndStorage(client, 'json')
+export async function executeGenerateDeployScript(): Promise<void> {
+  const { code: codeJson, storage: storageJson } = await askForContractAndStorage('json')
   const { code, storage } = await askForContractAndStorage(
-    client,
     'text',
     codeJson.entrypoint,
     storageJson.storage,
