@@ -7,6 +7,7 @@ type all =
   | `Self_ast_aggregated_warning_muchused of Location.t * string
   | `Self_ast_aggregated_warning_unused_rec of Location.t * string
   | `Self_ast_aggregated_metadata_invalid_type of Location.t * string
+  | `Self_ast_aggregated_deprecated of Location.t * string
   | `Checking_ambiguous_constructor_expr of
     Ast_core.expression * Type_var.t * Type_var.t * Location.t
   | `Checking_ambiguous_constructor_pat of
@@ -117,6 +118,8 @@ let pp
          entry] annotation@.@]"
         snippet_pp
         loc
+    | `Self_ast_aggregated_deprecated (loc, s) ->
+      Format.fprintf f "@[<hv>%a:@.Warning: deprecated value.@.%s\n@]" snippet_pp loc s
     | `Self_ast_aggregated_warning_unused (loc, s) ->
       Format.fprintf
         f
@@ -359,6 +362,10 @@ let to_warning : all -> Simple_utils.Warning.t =
     in
     let content = make_content ~message ~location () in
     make ~stage:"view compilation" ~content
+  | `Self_ast_aggregated_deprecated (location, msg) ->
+    let message = Format.sprintf "@.Warning: deprecated value.@.%s\n" msg in
+    let content = make_content ~message ~location () in
+    make ~stage:"parsing command line parameters" ~content
   | `Self_ast_aggregated_warning_unused (location, variable) ->
     let message =
       Format.sprintf

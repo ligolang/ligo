@@ -148,6 +148,7 @@ let add_ast_env
         ; thunk = false
         ; entry = false
         ; dyn_entry = false
+        ; deprecated = None
         }
     else e
   in

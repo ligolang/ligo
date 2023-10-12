@@ -758,6 +758,7 @@ let compile
                     ; public = false
                     ; hidden = false
                     ; thunk = false
+                    ; deprecated = None
                     }
                 }
                 body_type

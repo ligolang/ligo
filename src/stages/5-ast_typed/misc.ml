@@ -134,6 +134,7 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             ; hidden = _
             ; thunk = _
             ; entry = _
+            ; deprecated = _
             }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
     | D_module_include { module_content = M_struct x; _ } -> get_entry x name

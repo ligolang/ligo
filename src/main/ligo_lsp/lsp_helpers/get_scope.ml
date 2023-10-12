@@ -300,6 +300,7 @@ let storage_diagnostics
 (** Returns [true] if this is an expensive check that might require downloading from the
     internet and thus lag the language server, or [false] otherwise. *)
 let is_metadata_check : Main_warnings.all -> bool = function
+  | `Self_ast_aggregated_deprecated _
   | `Self_ast_aggregated_warning_unused _
   | `Self_ast_aggregated_warning_muchused _
   | `Self_ast_aggregated_warning_unused_rec _
