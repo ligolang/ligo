@@ -429,6 +429,7 @@ let uncurry_expression (expr : expression) : expression =
                 ; thunk = false
                 ; entry = false
                 ; dyn_entry = false
+                ; deprecated = None
                 }
             in
             (* Construct the let *)

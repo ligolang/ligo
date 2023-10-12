@@ -14,6 +14,7 @@ type t =
     hidden : bool
   ; (* Controls whether it should be inlined at AST level *)
     thunk : bool
+  ; deprecated : string option
   }
 [@@deriving eq, compare, yojson, hash]
 
@@ -21,10 +22,19 @@ open Format
 
 let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
 
-let pp ppf { inline; no_mutation; view; entry; dyn_entry; public; hidden; thunk } =
+let pp_if_some str ppf attr =
+  if Option.is_some attr
+  then fprintf ppf "[@@%s %s]" str (Option.value_exn attr)
+  else fprintf ppf ""
+
+
+let pp
+    ppf
+    { inline; no_mutation; view; entry; dyn_entry; public; hidden; thunk; deprecated }
+  =
   fprintf
     ppf
-    "%a%a%a%a%a%a%a%a"
+    "%a%a%a%a%a%a%a%a%a"
     (pp_if_set "inline")
     inline
     (pp_if_set "no_mutation")
@@ -41,6 +51,8 @@ let pp ppf { inline; no_mutation; view; entry; dyn_entry; public; hidden; thunk 
     hidden
     (pp_if_set "thunk")
     thunk
+    (pp_if_some "deprecated")
+    deprecated
 
 
 let default_attributes =
@@ -52,4 +64,5 @@ let default_attributes =
   ; hidden = false
   ; thunk = false
   ; dyn_entry = false
+  ; deprecated = None
   }

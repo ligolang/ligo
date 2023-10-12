@@ -291,6 +291,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
           ; thunk = _
           ; entry = _
           ; dyn_entry = _
+          ; deprecated = _
           }
       } ->
     let rhs' = self rhs in

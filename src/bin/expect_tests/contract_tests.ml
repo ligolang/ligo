@@ -8,6 +8,54 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "run"; "test"; contract "deprecated.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
+      4 | module C = struct
+      5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                                    ^
+      6 | end
+    :
+    Warning: deprecated value.
+    Replace me by...
+    g!
+    mail: foo@bar.com
+
+    File "../../test/contracts/deprecated.mligo", line 8, characters 21-22:
+      7 |
+      8 | let test = Test.log (f ())
+                               ^
+    :
+    Warning: deprecated value.
+    Replace me by...
+    g!
+    mail: foo@bar.com
+
+    1
+    Everything at the top-level was executed.
+    - test exited with value (). |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "deprecated.mligo"; "-m"; "C" ];
+  [%expect
+    {|
+    File "../../test/contracts/deprecated.mligo", line 5, characters 74-75:
+      4 | module C = struct
+      5 |   [@entry] let foo (() : unit) (m : int) : operation list * int = [], m + f ()
+                                                                                    ^
+      6 | end
+    :
+    Warning: deprecated value.
+    Replace me by...
+    g!
+    mail: foo@bar.com
+
+    { parameter unit ;
+      storage int ;
+      code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "interfaces.extra.jsligo"; "-m"; "Impl" ];
   [%expect

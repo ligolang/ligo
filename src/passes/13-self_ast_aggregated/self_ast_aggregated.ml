@@ -111,6 +111,7 @@ let all_expression ~raise ~(options : Compiler_options.middle_end) e =
       e)
     else e
   in
+  let () = Deprecated.warn ~raise e in
   all_aggregated_expression ~raise e
 
 
@@ -177,4 +178,5 @@ let all_contract ~raise ~(options : Compiler_options.middle_end) parameter stora
     List.map ~f:(fun pass -> map_expression pass) @@ contract_passes_map ~raise
   in
   let prg = List.fold ~f:(fun x f -> f x) all_p ~init:prg in
+  let () = Deprecated.warn ~raise prg in
   prg

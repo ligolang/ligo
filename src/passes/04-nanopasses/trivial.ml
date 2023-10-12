@@ -89,6 +89,7 @@ end = struct
     | { key = "entry"; value = None } -> { o_attr with entry = true }
     | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
     | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
+    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
@@ -120,6 +121,7 @@ end = struct
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "deprecated"; value } -> { o_attr with deprecated = value }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Value_attr.default_attributes
