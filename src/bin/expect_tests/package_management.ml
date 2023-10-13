@@ -18,6 +18,10 @@ let%expect_test _ =
     - test exited with value KT1Cc2Cru5HktLnEjK9Gn39fYrjHw1YLdnUB(None). |}]
 
 let%expect_test _ =
+  run_ligo_good [ "install"; "--project-root"; "complex_project_with_one_dependency" ];
+  [%expect {| Project root: complex_project_with_one_dependency |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "info"
     ; "measure-contract"

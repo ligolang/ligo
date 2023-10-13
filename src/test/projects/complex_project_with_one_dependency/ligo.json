@@ -1,0 +1,13 @@
+{
+  "name": "@ligo/test-package-manager-parsing",
+  "version": "0.1",
+  "description": "A test ligo project",
+  "license": "MIT",
+  "scripts": {
+    "test": "ligo run test main.test.mligo --project-root .",
+    "compile": "ligo compile contract main.mligo --project-root ."
+  },
+  "dependencies": {
+    "@ligo/fa" : "1.0.8"
+  }
+}
