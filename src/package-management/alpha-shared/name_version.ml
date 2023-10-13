@@ -62,7 +62,7 @@ let to_string { name; version } =
 let of_string s =
   (* This breaks on the default node *)
   match String.split_on_chars ~on:[ '@' ] s with
-  | [ ""; package_name_with_slash; version; _unused ] ->
+  | "" :: package_name_with_slash :: version :: _unused ->
     let name = Printf.sprintf "@%s" package_name_with_slash in
     (match version_of_string version with
     | Some version -> Ok { name; version }

@@ -1,0 +1,7 @@
+
+author: shubham-kumar
+description: "Fixes #2077 by adding an additional check on the input string when parsing the nodes in the lockfile. This check of input string looks for the default node which is why the install part is breaking. In future the default node would be removed. So this is a fix to manage the temporary pattern of lockfile which was adopted to carry the same pattern of lockfile as esy.\\n\\n"
+merge_request: '2931'
+title: "Fixes link-dev version parsing"
+type: fixed
+            
