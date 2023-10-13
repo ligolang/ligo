@@ -1,7 +1,5 @@
 -- | Helpers for handling LIGO functions.
 
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module Language.LIGO.Debugger.Functions
   ( LambdaMeta
   , LambdaMeta' (..)
@@ -9,6 +7,8 @@ module Language.LIGO.Debugger.Functions
   , matchesUniqueLambdaName
   , LambdaArg (..)
   , LambdaNamedInfo (..)
+  , ApplicationMeta (..)
+  , lmApplicationMetaL
   , lmAllFuncNames
   , lmOriginalFuncName
   , lmActualFuncName
@@ -17,15 +17,17 @@ module Language.LIGO.Debugger.Functions
   , internalStackFrameName
   , embedFunctionNames
   , embedFunctionNameIntoLambda
-  , addAppliedArg
+  , setAppliedArgs
   , getLambdaMeta
+  , makeConciseApplicationMeta
+  , extractApplicationMeta
   ) where
 
 import Control.Lens (AsEmpty (..), lens, makeLensesWith, makePrisms, non', prism)
 import Data.Default (Default (..))
 import Data.Singletons (SingI)
 import Data.Vinyl (Rec (RNil, (:&)))
-import Fmt.Buildable (Buildable, build)
+import Fmt.Buildable (Buildable, build, pretty)
 import Text.Interpolation.Nyan hiding (rmode')
 import Util
 
@@ -58,14 +60,20 @@ matchesUniqueLambdaName n1 = \case
   LNameUnknown -> False
 
 -- | An argument applied to lambda.
-data LambdaArg = LambdaArg
+data LambdaArg u = LambdaArg
   { laValue :: T.SomeValue
-  , laType :: LigoType
-  } deriving stock (Eq, Show, Generic)
-    deriving anyclass (NFData)
+  , laType :: LigoTypeF u
+  } deriving stock (Generic)
 
-instance ForInternalUse => Buildable LambdaArg where
-  build (LambdaArg value ty) = [int||Value #{value} of type #{ty}|]
+deriving stock instance (Show (LigoTypeF u)) => Show (LambdaArg u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LambdaArg u)
+deriving stock instance Eq (LambdaArg 'Concise)
+
+makeLensesWith postfixLFields 'LambdaArg
+
+instance (ForInternalUse, SingI u) => Buildable (LambdaArg u) where
+  build (LambdaArg value ty) =
+    [int||Value #{value} of type #{buildLigoTypeF @u ty}|]
 
 -- | Information that comes along with a lambda being named.
 data LambdaNamedInfo u = LambdaNamedInfo
@@ -81,7 +89,7 @@ instance (SingI u, ForInternalUse) => Buildable (LambdaNamedInfo u) where
 
 -- | An event happening to lambda.
 data LambdaEvent u
-  = LambdaApplied LambdaArg
+  = LambdaApplied (LambdaArg u)
     -- ^ Lambda was applied an argument.
     --
     -- Likely that produced another lambda, because if not then we will likely stop
@@ -89,19 +97,50 @@ data LambdaEvent u
   | LambdaNamed (LambdaNamedInfo u)
     -- ^ We figured out a new name for a lambda, and that variable has
     -- the given type.
-  deriving stock (Show, Generic)
-  deriving anyclass (NFData)
+  deriving stock (Generic)
 
+deriving stock instance (Show (LigoTypeF u)) => Show (LambdaEvent u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LambdaEvent u)
 deriving stock instance Eq (LambdaEvent 'Concise)
 deriving anyclass instance (SingI u, ForInternalUse) => Buildable (LambdaEvent u)
 
 makePrisms ''LambdaEvent
 
+-- | A meta for partial application.
+data ApplicationMeta u = ApplicationMeta
+  { amFunctionName :: Maybe (Name u)
+    -- ^ A name of applied function.
+    -- It is @Nothing@ if applied expression isn't a function name.
+    -- E.g. @(f a) b@.
+  , amAppliedArguments :: [LambdaArg u]
+  , amPreviousApplication :: Maybe (ApplicationMeta u)
+    -- ^ We don't want to lose an information about previously applied
+    -- functions.
+    --
+    -- E.g. we had the next execution:
+    --
+    -- @
+    -- ...
+    -- let foo = f a in
+    -- let bar = foo b in
+    -- let baz = bar c in
+    -- ...
+    -- @
+    -- Take a @baz@ function. We want to show children for @bar@ and @foo@ in these cases.
+  } deriving stock (Generic)
+
+deriving stock instance (Show (LigoTypeF u)) => Show (ApplicationMeta u)
+deriving anyclass instance (ForInternalUse, Buildable (LigoTypeF u), SingI u) => Buildable (ApplicationMeta u)
+deriving stock instance Eq (ApplicationMeta 'Concise)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (ApplicationMeta u)
+
+makeLensesWith postfixLFields 'ApplicationMeta
+
 -- | This type is a stepping stone to getting meta which we will carry along
 -- with lambdas - 'LambdaMeta'.
 --
 -- Unlike 'LambdaMeta', this type allows for different variables naming.
-newtype LambdaMeta' u = LambdaMeta
+data LambdaMeta' u = LambdaMeta
   { lmEvents :: [LambdaEvent u]
     -- ^ Events that happened to the related lambda, last event goes first.
     --
@@ -135,8 +174,15 @@ newtype LambdaMeta' u = LambdaMeta
     -- (names that are same string literals but come from different scopes are
     -- treated as different here). I.e. the fact the the lambda repeatedly
     -- gets assigned the same variable name should add only one event.
-  } deriving stock (Show, Generic)
-    deriving anyclass (NFData)
+
+  , lmApplicationMeta :: Maybe (ApplicationMeta u)
+    -- ^ If a lambda is created by partial application then
+    -- this field will store all the information regarding this
+    -- application.
+  } deriving stock (Generic)
+
+deriving stock instance (Show (LigoTypeF u)) => Show (LambdaMeta' u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LambdaMeta' u)
 
 makeLensesWith postfixLFields ''LambdaMeta'
 
@@ -147,10 +193,10 @@ instance (SingI u, ForInternalUse) => Buildable (LambdaMeta' u) where
       variables: #{toList lmEvents}|]
 
 instance Default (LambdaMeta' u) where
-  def = LambdaMeta []
+  def = LambdaMeta [] Nothing
 
 instance AsEmpty (LambdaMeta' u) where
-  _Empty = prism def \case{ LambdaMeta [] -> Right (); other -> Left other }
+  _Empty = prism def \case{ LambdaMeta [] Nothing -> Right (); other -> Left other }
 
 -- | All function names, the most recent one goes first.
 lmAllFuncNames :: LambdaMeta' u -> [Name u]
@@ -184,8 +230,8 @@ lmOriginalFuncName = maybe LNameUnknown LName . safeHead . lmAllFuncNames
 --
 -- If any applications took place before the first name was assigned to the lambda,
 -- those are ignored as non-interesting.
-lmGroupByName :: LambdaMeta' u -> [(LambdaNamedInfo u, [LambdaArg])]
-lmGroupByName (LambdaMeta events) = go [] [] events
+lmGroupByName :: LambdaMeta' u -> [(LambdaNamedInfo u, [LambdaArg u])]
+lmGroupByName (LambdaMeta events _) = go [] [] events
   where
   go resAcc argsAcc = \case
     LambdaApplied arg : evs -> go resAcc (arg : argsAcc) evs
@@ -253,8 +299,45 @@ embedFunctionNames vec (x :& xs) (y : ys) = tryToEmbedEnvIntoLambda vec (y, x) :
 embedFunctionNames _ stack [] = stack
 embedFunctionNames _ RNil _ = RNil
 
-addAppliedArg :: LambdaArg -> LambdaMeta -> LambdaMeta
-addAppliedArg arg (LambdaMeta evs) = LambdaMeta (LambdaApplied arg : evs)
+-- | Set applied arguments in the next way:
+-- 1. If the name of applied function is unknown (e.g. in @(f a) b@ cases) then
+--    add the arguments to the previous one.
+-- 2. Otherwise create a new meta and set into @amPreviousApplication@
+--    field the previous one,
+setAppliedArgs :: Maybe (Name 'Unique) -> [LambdaArg 'Unique] -> LambdaMeta -> LambdaMeta
+setAppliedArgs functionNameMb args (LambdaMeta evs oldArgs) =
+  let
+    newArgs = mergeMetas oldArgs
+  in LambdaMeta evs (Just newArgs)
+  where
+    defaultMeta = ApplicationMeta functionNameMb args oldArgs
+
+    mergeMetas :: Maybe (ApplicationMeta 'Unique) -> ApplicationMeta 'Unique
+    mergeMetas (Just inner@ApplicationMeta{..}) =
+      case functionNameMb of
+        Just{} -> defaultMeta
+        Nothing -> inner{ amAppliedArguments = amAppliedArguments <> args }
+    mergeMetas Nothing = defaultMeta
 
 getLambdaMeta :: T.Value ('T.TLambda i o) -> LambdaMeta
 getLambdaMeta = fromMaybe def . view lambdaMetaL
+
+makeConciseLambdaArg :: LigoTypesVec -> LambdaArg 'Unique -> LambdaArg 'Concise
+makeConciseLambdaArg vec arg =
+  let
+    laType = readLigoType vec (arg ^. laTypeL)
+    laValue = arg ^. laValueL
+  in LambdaArg{..}
+
+makeConciseApplicationMeta :: LigoTypesVec -> ApplicationMeta 'Unique -> ApplicationMeta 'Concise
+makeConciseApplicationMeta vec appMeta =
+  let
+    amFunctionName = pretty <$> appMeta ^. amFunctionNameL
+    amAppliedArguments = makeConciseLambdaArg vec <$> appMeta ^. amAppliedArgumentsL
+    amPreviousApplication = makeConciseApplicationMeta vec <$> appMeta ^. amPreviousApplicationL
+  in ApplicationMeta{..}
+
+extractApplicationMeta :: T.SomeValue -> Maybe (ApplicationMeta 'Unique)
+extractApplicationMeta = \case
+  T.SomeValue val@T.VLam{} -> lmApplicationMeta =<< val ^. lambdaMetaL
+  _ -> Nothing

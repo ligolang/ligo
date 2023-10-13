@@ -11,6 +11,7 @@ module Test.Navigation
   , test_values_inside_switch_and_match_with_are_statements
   , test_local_function_assignments_are_statements
   , test_record_update_is_statement
+  , test_partially_applied_functions
   , test_Module_entrypoints
   , test_Next_golden
   , test_StepOut_golden
@@ -35,6 +36,7 @@ import Morley.Michelson.Text (mt)
 
 import Language.LIGO.Debugger.Navigate
 import Language.LIGO.Debugger.Snapshots
+import Language.LIGO.Extension
 
 import Test.Util
 import Test.Util.Golden
@@ -197,6 +199,25 @@ test_record_update_is_statement =
       "StepIn"
       runData
       (dumpAllSnapshotsWithStep doStep)
+
+test_partially_applied_functions :: TestTree
+test_partially_applied_functions = testGroup "Partially applied functions"
+  [ let
+      runData = ContractRunData
+        { crdProgram = contractsDir </> "partially-applied-cases" <.> ext
+        , crdModuleName = Nothing
+        , crdParam = ()
+        , crdStorage = ()
+        }
+
+      doStep = processLigoStep (CStepIn GExpExt)
+    in goldenTestWithSnapshots
+        [int||Partially applied #{ext}|]
+        "Functions"
+        runData
+        (dumpAllAppliedMetas doStep)
+  | ext <- supportedExtensions
+  ]
 
 test_Module_entrypoints :: TestTree
 test_Module_entrypoints = testGroup "Module entrypoints"

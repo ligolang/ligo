@@ -44,6 +44,7 @@ module Language.LIGO.Debugger.Snapshots
   , _EventExpressionEvaluated
   ) where
 
+import Control.Exception (throw)
 import Control.Lens
   (At (at), Each (each), Ixed (ix), Zoom (zoom), lens, makeLensesWith, makePrisms, (%=), (.=),
   (<<.=), (?=))
@@ -280,6 +281,13 @@ data CollectorState m = CollectorState
     -- ^ A cache with stack items. When a variable becomes unused then it
     -- disappears from the variables pane. We can fill the snapshot with
     -- these variables by using this cache and scopes above.
+  , csArgumentsRanges :: HashSet Range
+    -- ^ Ranges for arguments. We need them to decide
+    -- should we cache a value with provided location or not.
+  , csCachedArguments :: HashMap Range SomeValue
+    -- ^ Cached values with their ranges. We need them
+    -- when we want to create an application meta
+    -- for partially applied function.
   }
 
 makeLensesWith postfixLFields ''StackItem
@@ -446,10 +454,60 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
       -> CollectingEvalOp m (Rec (StkEl meta) o)
     postExecutedStage embeddedMetaMb instr newStack = case embeddedMetaMb of
       Just LigoIndexedInfo{..} -> do
+        stackWithUpdatedMetas <-
+          case (liiApplication, newStack) of
+            (Just LigoApplication{..}, MkStkEl m lam@VLam{} :& stkEls) -> do
+              appliedArguments <-
+                forM laArguments \LigoApplicationArgument{..} -> do
+                  let laType = laaArgumentType
+
+                  laValue <-
+                    case laaArgument of
+                      LAKVar (v@(LigoVariable (Name n)), filepath) -> do
+                        cache <- use csVariablesCacheL
+
+                        let stackItem = cache
+                              & HM.mapKeys do \CacheKey{..} -> (ckVariableName, ckFileName)
+                              & HM.lookup (n, filepath)
+                              & fromMaybe (throw $ ImpossibleHappened [int||Stack item with variable #{v} is not in cache|])
+
+                        pure $ siValue stackItem
+                      LAKExpressionLocation loc -> do
+                        cachedArguments <- use csCachedArgumentsL
+
+                        let value = cachedArguments
+                              & HM.lookup loc
+                              & fromMaybe (throw $ ImpossibleHappened [int||Argument with location #{loc} is not in cache|])
+
+                        pure value
+
+                  pure LambdaArg{..}
+
+              logMessage [int||
+                Extracted applied arguments: #{appliedArguments}
+                |]
+
+              let functionName =
+                    case laAppliedFunction of
+                      Just (LigoVariable name) -> Just name
+                      _ -> Nothing
+
+              let embeddedLam = lam
+                    & lambdaMetaL %~ fmap (setAppliedArgs functionName appliedArguments)
+
+              pure $ MkStkEl m embeddedLam :& stkEls
+            _ -> pure newStack
+
         whenJust liiLocation \loc -> do
           -- `location` point to instructions that end expression evaluation,
           -- we can record the computed value
-          let evaluatedVal = safeHead (refineStack newStack)
+          let evaluatedVal = safeHead (refineStack stackWithUpdatedMetas)
+
+          argumentsRanges <- use csArgumentsRangesL
+
+          whenJust evaluatedVal \val -> do
+            when (HS.member loc argumentsRanges) do
+              csCachedArgumentsL %= HM.insert loc val
 
           logMessage
             [int||
@@ -464,7 +522,7 @@ runInstrCollect = \instr oldStack -> michFailureHandler `handleError` do
             unless (shouldIgnoreMeta loc instr contracts) do
               recordSnapshot loc (EventExpressionEvaluated (ligoTypesVec `readLigoType` join liiSourceType) evaluatedVal)
 
-        pure newStack
+        pure stackWithUpdatedMetas
       Nothing -> pure newStack
 
     -- When we want to go inside a function call or loop-like thing (e,g, @for-of@ or @while@)
@@ -833,6 +891,7 @@ collectInterpretSnapshots
   -> Bool -- ^ should we track steps amount
   -> LigoTypesVec
   -> HashMap FilePath [Scope]
+  -> HashSet Range
   -> m (InterpretHistory (InterpretSnapshot 'Unique))
 collectInterpretSnapshots
   mainFile
@@ -846,7 +905,8 @@ collectInterpretSnapshots
   lambdaLocs
   trackMaxSteps
   ligoTypesVec
-  scopesMap =
+  scopesMap
+  argumentsRanges =
     runCollectInterpretSnapshots
       (ContractFinalStack <$> runInstrCollect (stripDuplicates $ unContractCode cCode) initStack)
       env
@@ -880,6 +940,8 @@ collectInterpretSnapshots
         , csLigoTypesVec = ligoTypesVec
         , csScopes = scopesMap
         , csVariablesCache = HM.empty
+        , csArgumentsRanges = argumentsRanges
+        , csCachedArguments = HM.empty
         }
 
       -- Strip duplicate locations.

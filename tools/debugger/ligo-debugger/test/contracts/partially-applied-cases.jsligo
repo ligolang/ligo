@@ -1,0 +1,72 @@
+function f (a, b) {
+  return a + b
+}
+
+function f_uncurry ([a, b], c) {
+  return a + b + c
+}
+
+function op (f : (a : int) => int, a, b) {
+  return f(a) + b
+}
+
+function triple (a, b, c, d) {
+  return a + b + c + d
+}
+
+function simple_case () {
+  let applied = f(42)
+  let should_not_have_applied_args = applied(10)
+  return ignore(should_not_have_applied_args)
+}
+
+function apply_vars () {
+  let a = 42
+  let applied = f(a)
+  return ignore(applied)
+}
+
+function tuple_is_one_arg () {
+  let applied = f_uncurry([42, 42])
+  return ignore(applied)
+}
+
+function apply_expression () {
+  let a = 100
+  let b = a - 42
+  let applied = f(a + b + a * b)
+  return ignore(applied)
+}
+
+function apply_applied_function () {
+  let f1 = f(42)
+  let apply = op(f1, 1000 - 7)
+  return ignore(apply)
+}
+
+function apply_sequence () {
+  let f1 = triple(1)
+  let f2 = f1(2)
+  let f3 = f2(3)
+  let f4 = f3(4)
+  return ignore(f4)
+}
+
+type some_foo = (a : int) => (b : int) => int
+
+function type_aliases_have_children () {
+  let type_aliased : some_foo = triple(1, 2)
+  return ignore(type_aliased)
+}
+
+@entry
+function main (_p : unit, _s : unit) : [list<operation>, unit] {
+  simple_case();
+  apply_vars();
+  tuple_is_one_arg();
+  apply_expression();
+  apply_applied_function();
+  apply_sequence();
+  type_aliases_have_children();
+  return [list([]), unit]
+}

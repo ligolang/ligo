@@ -3,6 +3,7 @@ module Test.Functions
   ( module Test.Functions
   ) where
 
+import Data.Default (def)
 import Test.Tasty (TestTree, testGroup)
 
 import Language.LIGO.Debugger.CLI.Helpers
@@ -20,7 +21,7 @@ test_LambdaMeta = testGroup "functionality around LambdaMeta"
           LambdaArg (SomeLorentzValue i) (LigoTypeResolved intType')
     in
     [ testCase "Simple partial application" $
-        lmGroupByName LambdaMeta
+        lmGroupByName def
           { lmEvents = reverse
               -- further listing events in chronological order
               [ LambdaNamed $ mkLambdaNamedInfo "a"
@@ -31,7 +32,7 @@ test_LambdaMeta = testGroup "functionality around LambdaMeta"
           [ (mkLambdaNamedInfo "a", one $ mkLambdaArg 1) ]
 
     , testCase "Arguments applied before the first naming event are ignored" $
-        lmGroupByName LambdaMeta
+        lmGroupByName def
           { lmEvents = reverse
               [ LambdaApplied $ mkLambdaArg 1
               , LambdaApplied $ mkLambdaArg 2
@@ -43,21 +44,21 @@ test_LambdaMeta = testGroup "functionality around LambdaMeta"
           [ (mkLambdaNamedInfo "a", one $ mkLambdaArg 3) ]
 
     , testCase "No events" $
-        lmGroupByName @'Concise LambdaMeta
+        lmGroupByName @'Concise def
           { lmEvents = []
           }
         @?=
           []
 
     , testCase "Only argument application event" $
-        lmGroupByName @'Concise LambdaMeta
+        lmGroupByName @'Concise def
           { lmEvents = [ LambdaApplied $ mkLambdaArg 0 ]
           }
         @?=
           []
 
     , testCase "Trailing naming event" $
-        lmGroupByName LambdaMeta
+        lmGroupByName def
           { lmEvents = reverse
               [ LambdaNamed $ mkLambdaNamedInfo "a"
               , LambdaApplied $ mkLambdaArg 1
@@ -71,7 +72,7 @@ test_LambdaMeta = testGroup "functionality around LambdaMeta"
           ]
 
     , testCase "Two adjacent namings are preserved" $
-        lmGroupByName LambdaMeta
+        lmGroupByName def
           { lmEvents = reverse
               [ LambdaNamed $ mkLambdaNamedInfo "a"
               , LambdaNamed $ mkLambdaNamedInfo "b"
@@ -84,7 +85,7 @@ test_LambdaMeta = testGroup "functionality around LambdaMeta"
           ]
 
     , testCase "Complex case" $
-        lmGroupByName LambdaMeta
+        lmGroupByName def
           { lmEvents = reverse
               [ LambdaApplied $ mkLambdaArg 1
               , LambdaNamed $ mkLambdaNamedInfo "a"
