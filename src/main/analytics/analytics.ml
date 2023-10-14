@@ -97,10 +97,10 @@ let term_acceptance_filepath =
 let line_separator = if String.equal Sys.os_type "Win32" then "\r\n" else "\n"
 
 let acceptance_condition_common =
-  "Ligo use analytics to have a better understanding compiler community usage."
+  "Ligo uses analytics to have a better understanding compiler community usage."
   ^ line_separator
   ^ line_separator
-  ^ "Ligo only collect data necessary to improve its services and stores it in \
+  ^ "Ligo only collects data necessary to improve its services and stores it in \
      anonymized manner. Collected data can be shared through our communication \
      channel.Data collected can be stored for up to 5 years. If you want to delete any \
      collected \n\
