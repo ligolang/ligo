@@ -383,7 +383,7 @@
 
 (defvar mligo-font-lock-defaults
 	`(
-		(,"\\[@.*\\]"
+		(,"\\[@[^\\]]*\\]"
 			. ligo-font-lock-attribute-face
 		)
 		(,"^\\(#[a-zA-Z]+\\)"
@@ -392,7 +392,7 @@
 		(,"\\b\\(match\\|with\\|if\\|then\\|else\\|assert\\|failwith\\|begin\\|for\\|upto\\|downto\\|do\\|while\\|done\\)\\b"
 			. ligo-font-lock-conditional-face
 		)
-		(,"\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|false\\|true\\)\\b"
+		(,"\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|include\\|false\\|true\\)\\b"
 			. font-lock-keyword-face
 		)
 		(,"\\b[-+]?\\([0-9]+\\)\\(n\\|\\tz\\|tez\\|mutez\\|\\)\\b"

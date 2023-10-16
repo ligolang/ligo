@@ -68,7 +68,7 @@ syntax match numericliterals "\<[0-9]+\(n\|tz\|tez\|mutez\|\)\>"
 highlight link numericliterals Number 
 
 " keywords
-syntax match keywords "\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|false\|true\)\>" 
+syntax match keywords "\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|include\|false\|true\)\>" 
 highlight link keywords Keyword 
 
 " controlkeywords
@@ -80,7 +80,7 @@ syntax match macro "^\#[a-zA-Z]\+"
 highlight link macro PreProc 
 
 " attribute
-syntax match attribute "\[@.*\]" 
+syntax match attribute "\[@[^\]]*\]" 
 highlight link attribute PreProc 
 
 " string

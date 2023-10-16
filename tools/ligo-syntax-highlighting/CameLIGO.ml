@@ -7,11 +7,11 @@ module Regexp = struct
   (** Keywords that will be highlighted with [Keyword]. *)
   let keywords_match : Core.regexp =
     { emacs =
-        {|\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|false\\|true\\)\\b|}
+        {|\\b\\(struct\\|end\\|let\\|in\\|mut\\|rec\\contract_of|parameter_of\\|module\\|sig\\|val\\|include\\|false\\|true\\)\\b|}
     ; textmate =
-        {|\b(struct|end|let|in|mut|rec|contract_of|parameter_of|module|sig|val|false|true)\b|}
+        {|\b(struct|end|let|in|mut|rec|contract_of|parameter_of|module|sig|val|include|false|true)\b|}
     ; vim =
-        {|\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|false\|true\)\>|}
+        {|\<\(struct\|end\|let\|in\|mut\|rec\|contract_of\|parameter_of\|module\|sig\|val\|include\|false\|true\)\>|}
     }
 
   let operators_match : Core.regexp =

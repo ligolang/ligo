@@ -19,4 +19,4 @@ let numeric_literals_match : Core.regexp =
   }
 
 let attributes_match : Core.regexp =
-  { emacs = "\\\\[@.*\\\\]"; textmate = "\\[@.*\\]"; vim = "\\[@.*\\]" }
+  { emacs = {|\\[@[^\\]]*\\]|}; textmate = {|\[@[^\]]*\]|}; vim = {|\[@[^\]]*\]|} }
