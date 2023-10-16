@@ -3,7 +3,7 @@
    - The definitions : A list of everything that's been defined (all variables, type variables and modules)
    - The scopes : A mapping between defintions and their range of availability (their scope)
    - The references : A mapping between defintions and all the location where they are used.
-  
+
   In order to retrieve this information, the {!Scopes} module traverses the AST typed of the give LIGO file,
   maintaining an {i environment} telling which defintions are available at which point in the AST,
   and fills in the above structures along the way.
@@ -110,6 +110,13 @@ type defs_or_alias =
   | Defs of def list
   | Alias of Module_var.t
 
+(** Pretty print [defs_or_alias] for debugging. *)
+let pp_defs_or_alias (ppf : Format.formatter) : defs_or_alias -> unit = function
+  | Defs defs ->
+    Format.fprintf ppf "Defs: %a" PP_helpers.(list_sep Def.pp (tag ", ")) defs
+  | Alias var -> Format.fprintf ppf "Alias: %a" Module_var.pp var
+
+
 (******************************************************************************)
 
 (** Maps the encountered modules to :
@@ -119,7 +126,7 @@ type defs_or_alias =
     Two different modules will always correspond to two different entries.
 
     However, {!Module_var.compare} doesn't account for location, so same-name
-    modules will wrongly correspond to the same key, so same entry. 
+    modules will wrongly correspond to the same key, so same entry.
 
     This is why we augment {!Module_var} with a location-aware comparison function. *)
 module Module_map = struct
@@ -156,7 +163,7 @@ type module_map = Module_map.t
 (** In [env] the record fields represent the following:
     1. [parent] represents the defintions from the parent(ancestors) modules.
     2. [avail_defs] represents the top-level defintions of the current module
-        & in the context of an expression it represents the bindings encountered 
+        & in the context of an expression it represents the bindings encountered
         sofar.
     3. [module_map] is a map from [Module_var.t] -> [defs_or_alias] this is a flat
         representation of modules & its contents, this simplifies the handling
@@ -240,7 +247,7 @@ let lookup_mvar_in_defs_opt : Module_var.t -> def list -> Module_var.t option =
   - Which [N] does [N3] refers to (here [N2] and not [N1])
   - Which actual non-alias module does [N2] point to
   - The list of declaration of that non-alias module
-  
+
   *)
 let resolve_mvar
     :  Module_var.t -> def list -> module_map

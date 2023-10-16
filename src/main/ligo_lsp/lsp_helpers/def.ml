@@ -82,9 +82,9 @@ let references_getter : Scopes.def -> Def_locations.t =
 
 
 let is_reference : Position.t -> Path.t -> Scopes.def -> bool =
- fun pos file defintion ->
+ fun pos file definition ->
   let check_pos : Def_location.t -> bool = function
     | File { path; range } -> Range.contains_position pos range && Path.equal path file
     | StdLib _ | Virtual _ -> false
   in
-  Def_locations.exists ~f:check_pos @@ references_getter defintion
+  Def_locations.exists ~f:check_pos @@ references_getter definition

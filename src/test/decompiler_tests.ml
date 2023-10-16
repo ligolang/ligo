@@ -66,7 +66,10 @@ let mk_decompiler_test { code; expected; syntax; name } =
       | Core t -> t
       | Resolved ast_typed -> Checking.untype_type_expression ast_typed
       | Unresolved -> failwith "Got a vdef with unresolved type")
-    | Type tdef :: _ -> tdef.content
+    | Type tdef :: _ ->
+      Option.value_or_thunk
+        ~default:(fun () -> fail "Expected tdef with Some type contents, but got None")
+        tdef.content
     | Module _ :: _ -> fail "Expected vdef or tdef at the beginning of defs list"
   in
   (* uncomment code below if you want to print Ast_core (no sexps here for some reason) *)

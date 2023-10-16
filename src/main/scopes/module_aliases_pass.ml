@@ -8,12 +8,12 @@ open Env
 type t = (Types.Uid.t list * Types.Uid.t) LMap.t
 
 (** [resolve_mpath] takes a module path [mvs] and tries to resolve in the [env]
-    the final output is of type [(Module_var.t * string list) option] 
+    the final output is of type [(Module_var.t * string list) option]
     it is optional because we are not sure if the module alias can be resolved
-    in the [env], in case we are able to resolve the alias the first part 
+    in the [env], in case we are able to resolve the alias the first part
     [Module_var.t] is the finally resolved module & the [string list] is the list
     of module ids as explained in the comments of the [resolve_module_alias]
-    
+
     This function uses [Env.fold_resolve_mpath] to resolve the module path,
     i.e. for [module X = A.B.C.D] it will initially completely resolve module [A]
     if it is an alias-of-an-alias it will resolve it to the final module definition
@@ -37,11 +37,11 @@ let resolve_mpath
 
 (** [resolve_module_alias] completely resolves the module_path [mv] to a module def
     using the [env] and add an entry in [m_alias] with key as lhs module name & the
-    value is a list of module ids. 
+    value is a list of module ids.
     For example.
     {[
-        module A = struct 
-          module B = struct 
+        module A = struct
+          module B = struct
             let x = 1
           end
           module C = B
@@ -68,7 +68,7 @@ let resolve_module_alias
   | None -> m_alias, None
 
 
-(** [expression] walks the expression and builds the [env] and looks for local 
+(** [expression] walks the expression and builds the [env] and looks for local
     module [E_mod_in] calls [module_expression] to resolve that module.  *)
 let rec expression : AST.expression -> t -> env -> t =
  fun e m_alias env ->
@@ -163,7 +163,7 @@ and declaration : AST.declaration -> t -> env -> t * env =
     let m_alias = expression expr m_alias env in
     m_alias, env
   | D_type { type_binder = _; type_expr = _; type_attr = _ } -> m_alias, env
-  | D_module { module_binder; module_; module_attr = _; annotation = _ } ->
+  | D_module { module_binder; module_; module_attr = _; annotation = _TODO } ->
     let m_alias, defs_or_alias_opt, module_map =
       module_expression module_binder module_ m_alias env
     in

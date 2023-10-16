@@ -37,12 +37,14 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
         ty_binder :: get_params type_.type_content
       | _ -> []
     in
-    let params = get_params tdef.content.type_content in
     (* Like ['a x] or [x<a>] if there are params, or just [x] othervise *)
     let@ name_with_params =
-      match params with
+      match
+        Option.value_map tdef.content ~default:[] ~f:(fun content ->
+            get_params content.type_content)
+      with
       | [] -> return tdef.name
-      | _ ->
+      | params ->
         print_type_with_prefix
         @@ Ast_core.Combinators.t_app
              ~loc:Loc.dummy
@@ -56,8 +58,15 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
              }
              ()
     in
-    let prefix = PPrint.(string "type" ^//^ PPrint.string name_with_params ^//^ equals) in
-    print_type_with_prefix ~prefix tdef.content
+    (match tdef.content with
+    | None ->
+      return
+      @@ Helpers_pretty.doc_to_string
+           ~width:10000
+           PPrint.(string "type" ^//^ string name_with_params)
+    | Some content ->
+      let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
+      print_type_with_prefix ~prefix content)
   | Module mdef -> return @@ Helpers_pretty.print_module syntax mdef
 
 
