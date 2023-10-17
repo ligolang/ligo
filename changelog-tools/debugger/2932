@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Show function name and applied arguments for partially applied functions in the variables pane in the next format:\\n`func: func_name`. If `func_name` is also a partially applied function then show a tree for it as well.`arg#{n}` for each applied argument. If an applied argument is also a partially applied function then show a tree for it as well.\\n\\n"
+merge_request: '2932'
+title: "Draft: [#1969] Show arguments for partially applied functions"
+type: added
+            
