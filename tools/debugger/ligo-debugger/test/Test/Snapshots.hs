@@ -2032,13 +2032,13 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
           (fromMaybe "$main" coModuleName)
           (contractsDir </> contractName)
 
-      (locations, _, _, _, _, _) <-
+      LigoMapperResult{..} <-
         case readLigoMapper ligoMapper of
           Right v -> pure v
           Left err -> assertFailure $ pretty err
 
       when coCheckSourceLocations do
-        forM_ (getAllSourceLocations locations) \srcLoc@(SourceLocation loc _ _) -> do
+        forM_ (getAllSourceLocations lmrExpressionLocation) \srcLoc@(SourceLocation loc _ _) -> do
           case loc of
             MSFile path ->
               -- Some paths can be empty in @SourceLocation@ because of some ligo issues.

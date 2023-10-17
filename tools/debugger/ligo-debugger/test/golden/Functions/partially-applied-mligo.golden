@@ -1,0 +1,260 @@
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f_uncurry
+  amAppliedArguments: [Value Pair 42 42 of type (int * int)]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f_uncurry
+  amAppliedArguments: [Value Pair 42 42 of type (int * int)]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 5958 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 5958 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: op
+  amAppliedArguments:
+    [ Value { PUSH int 42; PAIR; { UNPAIR; SWAP; {  }; { {  }; { SWAP }; ADD } } } of type int -> int
+    , Value 993 of type int ]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f
+  amAppliedArguments: [Value 42 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: op
+  amAppliedArguments:
+    [ Value { PUSH int 42; PAIR; { UNPAIR; SWAP; {  }; { {  }; { SWAP }; ADD } } } of type int -> int
+    , Value 993 of type int ]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f2
+  amAppliedArguments: [Value 3 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: f1
+      amAppliedArguments: [Value 2 of type int]
+      amPreviousApplication:
+        ApplicationMeta:
+          amFunctionName: triple
+          amAppliedArguments: [Value 1 of type int]
+          amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f2
+  amAppliedArguments: [Value 3 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: f1
+      amAppliedArguments: [Value 2 of type int]
+      amPreviousApplication:
+        ApplicationMeta:
+          amFunctionName: triple
+          amAppliedArguments: [Value 1 of type int]
+          amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f2
+  amAppliedArguments: [Value 3 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: f1
+      amAppliedArguments: [Value 2 of type int]
+      amPreviousApplication:
+        ApplicationMeta:
+          amFunctionName: triple
+          amAppliedArguments: [Value 1 of type int]
+          amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f2
+  amAppliedArguments: [Value 3 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: f1
+      amAppliedArguments: [Value 2 of type int]
+      amPreviousApplication:
+        ApplicationMeta:
+          amFunctionName: triple
+          amAppliedArguments: [Value 1 of type int]
+          amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f2
+  amAppliedArguments: [Value 3 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: f1
+      amAppliedArguments: [Value 2 of type int]
+      amPreviousApplication:
+        ApplicationMeta:
+          amFunctionName: triple
+          amAppliedArguments: [Value 1 of type int]
+          amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: f1
+  amAppliedArguments: [Value 2 of type int]
+  amPreviousApplication:
+    ApplicationMeta:
+      amFunctionName: triple
+      amAppliedArguments: [Value 1 of type int]
+      amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int, Value 2 of type int]
+  amPreviousApplication: 
+ApplicationMeta:
+  amFunctionName: triple
+  amAppliedArguments: [Value 1 of type int, Value 2 of type int]
+  amPreviousApplication: 

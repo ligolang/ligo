@@ -304,6 +304,40 @@ pattern LigoStackEntryVar name ty fileName = LigoStackEntry LigoExposedStackEntr
 -- Entries are listed in top-to-bottom order.
 type LigoStack u = [LigoStackEntry u]
 
+data LigoApplication u = LigoApplication
+  { laAppliedFunction :: Maybe (LigoVariable u)
+    -- ^ A name of applied function.
+  , laArguments :: [LigoApplicationArgument u]
+    -- ^ Applied arguments.
+  } deriving stock (Generic)
+
+deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoApplication u)
+deriving stock instance (Show (LigoTypeF u)) => Show (LigoApplication u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoApplication u)
+deriving stock instance Eq (LigoApplication 'Concise)
+
+data LigoApplicationArgument u = LigoApplicationArgument
+  { laaArgumentType :: LigoTypeF u
+    -- ^ A type of argument.
+  , laaArgument :: LigoArgumentKind u
+    -- ^ A way how argument is represented.
+  } deriving stock (Generic)
+
+deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoApplicationArgument u)
+deriving stock instance (Show (LigoTypeF u)) => Show (LigoApplicationArgument u)
+deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoApplicationArgument u)
+deriving stock instance Eq (LigoApplicationArgument 'Concise)
+
+data LigoArgumentKind u
+  = LAKVar (LigoVariable u, FilePath)
+    -- ^ A name of _bound_ variable with its file path.
+  | LAKExpressionLocation Range
+    -- ^ A full range of expression argument.
+  deriving stock (Data, Show, Generic)
+  deriving anyclass (NFData)
+
+deriving stock instance Eq (LigoArgumentKind 'Concise)
+
 -- | All the information provided for specific point of a Michelson program.
 data LigoIndexedInfo u = LigoIndexedInfo
   { liiLocation    :: Maybe Range
@@ -346,6 +380,12 @@ data LigoIndexedInfo u = LigoIndexedInfo
       Comes with location meta.
 
     -}
+
+  , liiApplication :: Maybe (LigoApplication u)
+    {- ^ This meta is tied to partial applications
+      (i.e. the result type is arrow and an expression has @f a (b + 42)@ pattern)
+
+    -}
   } deriving stock (Generic)
 
 deriving stock instance (Typeable u, Data (LigoTypeF u)) => Data (LigoIndexedInfo u)
@@ -354,13 +394,14 @@ deriving anyclass instance (NFData (LigoTypeF u)) => NFData (LigoIndexedInfo u)
 deriving stock instance Eq (LigoIndexedInfo 'Concise)
 
 pattern LigoEmptyLocationInfo :: LigoIndexedInfo u
-pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing Nothing
+pattern LigoEmptyLocationInfo = LigoIndexedInfo Nothing Nothing Nothing Nothing
 
 pattern LigoMereLocInfo :: Range -> LigoTypeF u -> LigoIndexedInfo u
 pattern LigoMereLocInfo loc typ = LigoIndexedInfo
   { liiLocation = Just loc
   , liiEnvironment = Nothing
   , liiSourceType = Just typ
+  , liiApplication = Nothing
   }
 
 pattern LigoMereEnvInfo :: LigoStack u -> LigoIndexedInfo u
@@ -368,6 +409,7 @@ pattern LigoMereEnvInfo env = LigoIndexedInfo
   { liiLocation = Nothing
   , liiEnvironment = Just env
   , liiSourceType = Nothing
+  , liiApplication = Nothing
   }
 
 -- | The debug output produced by LIGO.
@@ -647,11 +689,31 @@ instance Default (LigoIndexedInfo u) where
 instance (SingI u) => Buildable (LigoIndexedInfo u) where
   build = \case
     LigoEmptyLocationInfo -> "none"
-    LigoIndexedInfo mLoc mEnv typ -> unlinesF $ catMaybes
+    LigoIndexedInfo mLoc mEnv typ mApp -> unlinesF $ catMaybes
       [ mLoc <&> \loc ->  [int||location: #{loc}|]
       , mEnv <&> \env -> nameF "environment stack" $ blockListF env
       , case typ of { Just ty -> Just [int||source type: #{buildLigoTypeF @u ty}|] ; _ -> Nothing }
+      , mApp <&> \app -> [int||Application: #{app}|]
       ]
+
+instance (SingI u) => Buildable (LigoApplication u) where
+  build LigoApplication{..} =
+    [int||
+    Applied function: #{laAppliedFunction}
+    Arguments: #{blockListF laArguments}
+    |]
+
+instance (SingI u) => Buildable (LigoApplicationArgument u) where
+  build LigoApplicationArgument{..} =
+    [int||
+    Argument type: #{buildLigoTypeF @u laaArgumentType}
+    Argument: #{laaArgument}
+    |]
+
+instance (SingI u) => Buildable (LigoArgumentKind u) where
+  build = \case
+    LAKVar v -> [int||Variable: #{v}|]
+    LAKExpressionLocation loc -> [int||Expression location: #{loc}|]
 
 instance MessagePack (LigoIndexedInfo 'Unique) where
   toObject _ = const ObjectNil
@@ -659,7 +721,28 @@ instance MessagePack (LigoIndexedInfo 'Unique) where
     liiLocation <- o .:! "location"
     liiEnvironment <- o .:! "environment"
     liiSourceType <-  o .:! "source_type"
+    liiApplication <- o .:! "application"
     return LigoIndexedInfo{..}
+
+instance MessagePack (LigoApplication 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LigoApplication" \o -> do
+    laAppliedFunction <- o .:! "applied_function"
+    laArguments <- o .: "arguments"
+    pure LigoApplication{..}
+
+instance MessagePack (LigoApplicationArgument 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith _ = withMsgMap "LigoApplicationArgument" \o -> do
+    laaArgumentType <- o .:! "argument_type"
+    laaArgument <- o .: "argument"
+    pure LigoApplicationArgument{..}
+
+instance MessagePack (LigoArgumentKind 'Unique) where
+  toObject _ = const ObjectNil
+  fromObjectWith cfg = \case
+    tuple@ObjectArray{} -> LAKVar <$> fromObjectWith cfg tuple
+    loc -> LAKExpressionLocation <$> fromObjectWith cfg loc
 
 instance AsEmpty (LigoIndexedInfo u) where
   _Empty = prism
@@ -1169,7 +1252,10 @@ mkModuleName txt =
 
 makeLensesWith postfixLFields ''LigoExposedStackEntry
 makeLensesWith postfixLFields ''LigoIndexedInfo
+makeLensesWith postfixLFields ''LigoApplication
+makeLensesWith postfixLFields ''LigoApplicationArgument
 makePrisms ''LigoStackEntry
+makePrisms ''LigoArgumentKind
 
 makeConciseLigoStackEntry :: LigoTypesVec -> LigoStackEntry 'Unique -> LigoStackEntry 'Concise
 makeConciseLigoStackEntry vec = \case
@@ -1179,11 +1265,31 @@ makeConciseLigoStackEntry vec = \case
     }
   LigoHiddenStackEntry -> LigoHiddenStackEntry
 
+makeConciseLigoApplication :: LigoTypesVec -> LigoApplication 'Unique -> LigoApplication 'Concise
+makeConciseLigoApplication vec LigoApplication{..} = LigoApplication
+  { laAppliedFunction = stripSuffixHashVariable <$> laAppliedFunction
+  , laArguments = makeConciseAppliedArgument <$> laArguments
+  }
+  where
+    makeConciseAppliedArgument :: LigoApplicationArgument 'Unique -> LigoApplicationArgument 'Concise
+    makeConciseAppliedArgument LigoApplicationArgument{..} =
+      let
+        conciseArgument =
+          case laaArgument of
+            LAKVar (v, filepath) -> LAKVar (stripSuffixHashVariable v, filepath)
+            LAKExpressionLocation loc -> LAKExpressionLocation loc
+      in
+        LigoApplicationArgument
+          { laaArgumentType = readLigoType vec laaArgumentType
+          , laaArgument = conciseArgument
+          }
+
 makeConciseLigoIndexedInfo :: LigoTypesVec -> LigoIndexedInfo 'Unique -> LigoIndexedInfo 'Concise
 makeConciseLigoIndexedInfo vec indexedInfo =
   indexedInfo
     { liiEnvironment = liiEnvironment indexedInfo & _Just . each %~ makeConciseLigoStackEntry vec
     , liiSourceType = readLigoType vec <$> liiSourceType indexedInfo
+    , liiApplication = makeConciseLigoApplication vec <$> liiApplication indexedInfo
     }
 
 parseModuleNamesList :: Text -> Maybe ModuleNamesList

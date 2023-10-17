@@ -5,9 +5,10 @@ module Language.LIGO.Debugger.Michelson
   , MichelsonDecodeException (..)
   , PreprocessError (..)
   , readLigoMapper
+  , LigoMapperResult (..)
   ) where
 
-import Control.Lens (at, devoid, forOf, unsafePartsOf)
+import Control.Lens (at, devoid, each, forOf, unsafePartsOf)
 import Control.Lens.Extras (template)
 import Control.Lens.Prism (_Just)
 import Control.Monad.Except (Except, liftEither, runExcept, throwError)
@@ -428,19 +429,31 @@ preprocessContract con@U.Contract{..} =
       , U.contractViews = viewsSet
       }
 
--- | Read LIGO's debug output and produce
---
--- 1. All expression locations. We return __all__ expression locations
---    because we need them to extract all the statement ones.
--- 2. A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
---    wrappers that carry the debug info.
--- 3. All contract filepaths that would be used in debugging session.
--- 4. All locations that are related to lambdas.
--- 5. LIGO type of entrypoint.
--- 6. Vector with LIGO types.
+-- | A result of @readLigoMapper@ function.
+data LigoMapperResult = LigoMapperResult
+  { lmrExpressionLocation :: Set ExpressionSourceLocation
+    -- ^ All expression locations. We return __all__ expression locations
+    -- because we need them to extract all the statement ones.
+  , lmrContract :: SomeContract
+    -- ^ A contract with inserted @Meta (SomeMeta (info :: 'EmbeddedLigoMeta'))@
+    -- wrappers that carry the debug info.
+  , lmrFilepaths :: [FilePath]
+    -- ^ All contract filepaths that would be used in debugging session.
+  , lmrLambdaLocs :: HashSet Range
+    -- ^ All locations that are related to lambdas.
+  , lmrEntrypointType :: LigoType
+    -- ^ LIGO type of entrypoint.
+  , lmrLigoTypesVec :: LigoTypesVec
+    -- ^ Vector with LIGO types.
+  , lmrArgumentRanges :: HashSet Range
+    -- ^ Ranges of arguments in partially applied functions.
+  } deriving stock (Generic)
+    deriving anyclass (NFData)
+
+-- | Read LIGO's debug output and produce @LigoMapperResult@.
 readLigoMapper
   :: LigoMapper 'Unique
-  -> Either (DecodeError EmbeddedLigoMeta) (Set ExpressionSourceLocation, SomeContract, [FilePath], HashSet Range, LigoType, LigoTypesVec)
+  -> Either (DecodeError EmbeddedLigoMeta) LigoMapperResult
 readLigoMapper ligoMapper = do
   extendedExpression <- first MetaEmbeddingError $
     embedMetas (lmLocations ligoMapper) (lmMichelsonCode ligoMapper)
@@ -467,6 +480,15 @@ readLigoMapper ligoMapper = do
         & unstableNub
         & filter (not . isLigoStdLib)
 
+  let argumentRanges = uContract
+        ^.. template @_ @EmbeddedLigoMeta
+          . liiApplicationL
+          . _Just
+          . laArgumentsL
+          . each
+          . laaArgumentL
+          . _LAKExpressionLocation
+
   let (exprLocs, lambdaLocs) =
         -- We expect a lot of duplicates, stripping them via putting to Set
         bimap Set.fromList HashSet.fromList $
@@ -475,7 +497,16 @@ readLigoMapper ligoMapper = do
   -- The LIGO's debug info may be really large, so we better force
   -- the evaluation for all the info that will be stored for the entire
   -- debug session, and let GC wipe out everything intermediate.
-  return $! force (exprLocs, extendedContract, allFiles, lambdaLocs, entrypointType, lmTypes ligoMapper)
+  return $! force
+    do
+      LigoMapperResult
+        exprLocs
+        extendedContract
+        allFiles
+        lambdaLocs
+        entrypointType
+        (lmTypes ligoMapper)
+        (HashSet.fromList argumentRanges)
 
   where
     getSourceLocations :: Instr i o -> ([ExpressionSourceLocation], [Range])

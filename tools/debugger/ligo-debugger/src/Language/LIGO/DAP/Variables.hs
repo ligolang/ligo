@@ -2,17 +2,21 @@
 
 -- This code is copypasted from Morley.Debugger.DAP.Variables
 module Language.LIGO.DAP.Variables
-  ( createVariables
+  ( PreConvertVariable (..)
+  , PreConvertAppliedArguments (..)
+  , createVariables
   , runBuilder
   , buildVariable
   , insertToIndex
   ) where
 
-import Control.Lens hiding ((...))
+import Control.Lens hiding (children, (...))
 import Data.HashMap.Strict qualified as HM
 import Data.Map qualified as M
 import Fmt.Buildable (pretty)
 import Named (defaults, paramF, (!))
+import Text.Interpolation.Nyan hiding (rmode')
+import Util
 
 import Protocol.DAP qualified as DAP
 
@@ -25,15 +29,29 @@ import Morley.Michelson.Untyped.Entrypoints (isDefEpName)
 import Language.LIGO.AST (Lang)
 import Language.LIGO.Debugger.CLI
 
+-- | A representation of applied arguments meta before
+-- converting it into a tree.
+data PreConvertAppliedArguments = PreConvertAppliedArguments
+  { pcaaFunctionName :: Name 'Concise
+  , pcaaArguments :: [(LigoOrMichValue, Maybe PreConvertAppliedArguments)]
+  , pcaaPreviousMeta :: Maybe PreConvertAppliedArguments
+  }
+
+-- | A representation of a variable before converting
+-- it into @DAP.Variable@.
+data PreConvertVariable = PreConvertVariable
+  { pcvName :: Text
+  , pcvValue :: LigoOrMichValue
+  , pcvApplicationMeta :: Maybe PreConvertAppliedArguments
+  }
+
 -- | For a given stack generate its representation as a tree of 'DAP.Variable's.
 --
 -- This creates a map @varaibles references -> [variable]@, where root always has
 -- largest reference.
-createVariables :: Lang -> [(Text, LigoOrMichValue)] -> VariableBuilder DAP.VariableId
+createVariables :: Lang -> [PreConvertVariable] -> VariableBuilder DAP.VariableId
 createVariables lang varsAndNames = do
-  topVars <-
-    forM varsAndNames \(name, ligoOrMichValue) -> do
-      buildVariable lang ligoOrMichValue name
+  topVars <- traverse (buildVariable lang) varsAndNames
   insertVars topVars
 
 type VariableBuilder a = State (Int, Map DAP.VariableId [DAP.Variable]) a
@@ -64,8 +82,51 @@ createVariable name varText lang typ menuContext evaluateName = DAP.mk @DAP.Vari
   ! paramF #evaluateName evaluateName
   ! defaults
 
-buildVariable :: Lang -> LigoOrMichValue -> Text -> VariableBuilder DAP.Variable
-buildVariable lang v name = do
+-- | Creates the next tree:
+-- 1. @func: func_name@. If @func_name@ is a partially applied function
+--    then it'll create the same tree for it.
+-- 2. A list of @arg#{n}@ fields which represents applied arguments.
+--    If an argument is a partially applied function
+--    then it'll create the same tree for it.
+buildAppliedArguments :: Lang -> PreConvertAppliedArguments -> VariableBuilder [DAP.Variable]
+buildAppliedArguments lang PreConvertAppliedArguments{..} = do
+  let functionName' =
+        createVariable
+          "func"
+          (pretty pcaaFunctionName)
+          lang
+          LigoTypeUnresolved
+          Nothing
+          Nothing
+
+  prevFuncArguments <- maybe (pure []) (buildAppliedArguments lang) pcaaPreviousMeta
+
+  functionName <- insertChildren functionName' prevFuncArguments
+  arguments <- zipWithM buildArgument [1..] pcaaArguments
+
+  pure (functionName : arguments)
+  where
+    buildArgument :: Int -> (LigoOrMichValue, Maybe PreConvertAppliedArguments) -> VariableBuilder DAP.Variable
+    buildArgument n (val, applicationMeta) = do
+      let pcvName = [int||arg#{n}|]
+      let pcvValue = val
+      let pcvApplicationMeta = Nothing
+
+      var <- buildVariable lang PreConvertVariable{..}
+      arguments <- maybe (pure []) (buildAppliedArguments lang) applicationMeta
+      insertChildren var arguments
+
+insertChildren :: DAP.Variable -> [DAP.Variable] -> VariableBuilder DAP.Variable
+insertChildren var = \case
+  [] -> pure var
+  children -> do
+    idx <- insertVars children
+    pure $ (var :: DAP.Variable)
+      { DAP.variablesReference = idx
+      }
+
+buildVariable :: Lang -> PreConvertVariable -> VariableBuilder DAP.Variable
+buildVariable lang PreConvertVariable{pcvValue = v, ..} = do
   let
     varText = pretty $ debugBuild DpmNormal (lang, v)
     evaluatedText = pretty $ debugBuild DpmEvaluated (lang, v)
@@ -81,17 +142,12 @@ buildVariable lang v name = do
       _ -> Nothing
 
     typ = getLigoType v
-    var = createVariable name varText lang typ menuContext (Just evaluatedText)
+    var = createVariable pcvName varText lang typ menuContext (Just evaluatedText)
 
   subVars <- buildSubVars lang v
+  children <- maybe (pure []) (buildAppliedArguments lang) pcvApplicationMeta
 
-  case subVars of
-    [] -> return var
-    _ -> do
-      idx <- insertVars subVars
-      return $ (var :: DAP.Variable)
-        { DAP.variablesReference = idx
-        }
+  insertChildren var (subVars <> children)
 
 getInnerTypeFromConstant :: Int -> LigoType -> LigoType
 getInnerTypeFromConstant i = \case
@@ -140,19 +196,19 @@ buildSubVars lang = \case
     VOption Nothing -> return []
     VOption (Just v) -> do
       -- Inner type is wrong here. It's hard to extract it here properly.
-      (:[]) <$> buildVariable lang (toLigoValue (getInnerTypeFromConstant 0 typ) v) "Some"
+      (:[]) <$> buildVariableWithoutChildren (toLigoValue (getInnerTypeFromConstant 0 typ) v) "Some"
     VList lst -> do
-      zipWithM (buildVariable lang . toLigoValue (getInnerTypeFromConstant 0 typ)) lst (show <$> [1 :: Int ..])
+      zipWithM (buildVariableWithoutChildren . toLigoValue (getInnerTypeFromConstant 0 typ)) lst (show <$> [1 :: Int ..])
     VSet s -> do
-      zipWithM (buildVariable lang . toLigoValue (getInnerTypeFromConstant 0 typ)) (toList s) (show <$> [1 :: Int ..])
+      zipWithM (buildVariableWithoutChildren . toLigoValue (getInnerTypeFromConstant 0 typ)) (toList s) (show <$> [1 :: Int ..])
     VMap m -> do
       forM (toPairs m) \(k, v) -> do
         let name = pretty $ debugBuild DpmNormal k
-        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) name
+        buildVariableWithoutChildren (toLigoValue (getInnerTypeFromRecord name typ) v) name
     VBigMap _id m -> do
       forM (toPairs m) \(k, v) -> do
         let name = pretty $ debugBuild DpmNormal k
-        buildVariable lang (toLigoValue (getInnerTypeFromRecord name typ) v) name
+        buildVariableWithoutChildren (toLigoValue (getInnerTypeFromRecord name typ) v) name
     VContract eaAddress (SomeEpc EntrypointCall{ epcName = eaEntrypoint }) -> do
       pure $ getEpAddressChildren lang EpAddress'{..}
     VAddress epAddress -> pure $ getEpAddressChildren lang epAddress
@@ -167,34 +223,37 @@ buildSubVars lang = \case
       | otherwise -> return []
     LVList lst ->
       let innerType = getInnerTypeFromConstant 0 typ in
-      zipWithM (buildVariable lang . LigoValue innerType) lst (show <$> [1 :: Int ..])
+      zipWithM (buildVariableWithoutChildren . LigoValue innerType) lst (show <$> [1 :: Int ..])
     value@(LVRecord record) -> case toTupleMaybe value of
       Just values ->
         zipWithM
           do \val n ->
               let innerType = getInnerTypeFromRecord n typ in
-              buildVariable lang (LigoValue innerType val) n
+              buildVariableWithoutChildren (LigoValue innerType val) n
           values
           (show <$> [1 :: Int ..])
       Nothing -> do
         forM (toPairs record) \(LLabel name, v) -> do
           let innerType = getInnerTypeFromRecord name typ
-          buildVariable lang (LigoValue innerType v) name
+          buildVariableWithoutChildren (LigoValue innerType v) name
     LVConstructor (ctor, value) ->
       let innerType = getInnerTypeFromSum ctor typ in
-      (:[]) <$> buildVariable lang (LigoValue innerType value) ctor
+      (:[]) <$> buildVariableWithoutChildren (LigoValue innerType value) ctor
     LVSet s ->
       let innerType = getInnerTypeFromConstant 0 typ in
-      zipWithM (buildVariable lang . LigoValue innerType) s (show <$> [1 :: Int ..])
+      zipWithM (buildVariableWithoutChildren . LigoValue innerType) s (show <$> [1 :: Int ..])
     LVMap m -> do
       forM m \(k, v) -> do
         let keyType = getInnerTypeFromConstant 0 typ
         let valueType = getInnerTypeFromConstant 1 typ
 
         let name = pretty @_ @Text $ debugBuild DpmNormal (lang, LigoValue keyType k)
-        buildVariable lang (LigoValue valueType v) name
+        buildVariableWithoutChildren (LigoValue valueType v) name
     _ -> return []
   _ -> return []
   where
     toLigoValue :: (SingI t) => LigoType -> Value t -> LigoOrMichValue
     toLigoValue typ = MichValue typ . SomeValue
+
+    buildVariableWithoutChildren :: LigoOrMichValue -> Text -> VariableBuilder DAP.Variable
+    buildVariableWithoutChildren val name = buildVariable lang (PreConvertVariable name val Nothing)

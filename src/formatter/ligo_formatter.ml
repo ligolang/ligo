@@ -112,10 +112,21 @@ module Michelson_formatter = struct
     ; source_type : int option
     }
 
+  type shrunk_applied_argument =
+    (* Variable name and filepath *)
+    | Var of string * string
+    | Expression_location of Location.t
+
+  type shrunk_application_meta =
+    { applied_function : string option
+    ; arguments : (int option * shrunk_applied_argument) list
+    }
+
   type shrunk_meta =
     { location : Location.t
     ; env : shrunk_variable_meta option list
     ; source_type : int option
+    ; application : shrunk_application_meta option
     }
 
   type shrunk_type_content =
@@ -149,7 +160,7 @@ module Michelson_formatter = struct
   let comment michelson_comments =
     match michelson_comments with
     | { location = show_location; source = _; env = show_env } ->
-      fun ({ location; env; source_type = _ } : shrunk_meta) ->
+      fun ({ location; env; source_type = _; application = _ } : shrunk_meta) ->
         let loc =
           if show_location && not (Simple_utils.Location.is_virtual location)
           then Format.asprintf "%a" Location.pp location
@@ -222,6 +233,30 @@ module Michelson_formatter = struct
               | Some v -> [ k, v ])))
 
 
+  let application_to_json ({ applied_function; arguments } : shrunk_application_meta)
+      : Data_encoding.Json.t
+    =
+    let arguments =
+      List.map
+        ~f:(fun (typ_opt, argument) ->
+          let argument =
+            match argument with
+            | Var (var, filepath) -> `A [ `String var; `String filepath ]
+            | Expression_location loc ->
+              Option.value ~default:`Null @@ location_to_json loc
+          in
+          json_object
+            [ "argument_type", Option.map ~f:(fun n -> `String (string_of_int n)) typ_opt
+            ; "argument", Some argument
+            ])
+        arguments
+    in
+    json_object
+      [ "applied_function", Option.map ~f:(fun s -> `String s) applied_function
+      ; "arguments", Some (`A arguments)
+      ]
+
+
   module TypeOrd = struct
     type t = Ast_typed.type_expression
 
@@ -248,13 +283,25 @@ module Michelson_formatter = struct
     | Bytes _ -> init
 
 
+  let make_variable_name_from_string_and_loc (name : string) (loc : Location.t) : string =
+    let open Scopes.Types in
+    if Location.is_virtual loc then name else Uid.to_string @@ Uid.make name loc
+
+
+  let make_variable_name (v : Value_var.t) : string =
+    let name =
+      if Value_var.is_generated v then "<generated>" else Value_var.to_name_exn v
+    in
+    make_variable_name_from_string_and_loc name @@ Value_var.get_location v
+
+
   let shrink (node : (Mini_c.meta, 'p) Tezos_micheline.Micheline.node) : shrunk_result =
     (* first collect all source types *)
     let type_set : TypeSet.t =
       fold_micheline
         node
         ~f:(fun init node ->
-          let Mini_c.{ location = _; env; binder = _; source_type } =
+          let Mini_c.{ location = _; env; binder = _; source_type; application = _ } =
             Tezos_micheline.Micheline.location node
           in
           let init =
@@ -282,7 +329,7 @@ module Michelson_formatter = struct
     (* now substitute all source types for their indices *)
     let node =
       Micheline.map_node
-        (fun Mini_c.{ location; env; binder = _; source_type } ->
+        (fun Mini_c.{ location; env; binder = _; source_type; application } ->
           let source_type = Option.map ~f:type_index source_type in
           let env =
             List.map
@@ -294,7 +341,35 @@ module Michelson_formatter = struct
                      }))
               env
           in
-          { location; env; source_type })
+          let application =
+            Option.map
+              ~f:(fun Mini_c.{ applied_function; arguments } ->
+                let applied_function =
+                  Option.map ~f:make_variable_name applied_function
+                in
+                let arguments =
+                  List.map
+                    ~f:(fun (typ_opt, argument) ->
+                      (* Every function argument should be in typeset *)
+                      let typ_opt = Option.map typ_opt ~f:type_index in
+                      let argument =
+                        match argument with
+                        | Var var ->
+                          let filepath =
+                            match Value_var.get_location var with
+                            | File reg -> reg#file
+                            | Virtual _ -> ""
+                          in
+                          Var (make_variable_name var, filepath)
+                        | Expression_location loc -> Expression_location loc
+                      in
+                      typ_opt, argument)
+                    arguments
+                in
+                { applied_function; arguments })
+              application
+          in
+          { location; env; source_type; application })
         (fun prim -> prim)
         node
     in
@@ -335,13 +410,7 @@ module Michelson_formatter = struct
     | { location; name; source_type } ->
       let name =
         Option.map name ~f:(fun name ->
-            let open Scopes.Types in
-            let name =
-              if Location.is_virtual location
-              then name
-              else Uid.to_string @@ Uid.make name location
-            in
-            `String name)
+            `String (make_variable_name_from_string_and_loc name location))
       in
       let file_name =
         match location with
@@ -358,7 +427,7 @@ module Michelson_formatter = struct
   let meta_encoding : shrunk_meta Data_encoding.t =
     Data_encoding.(
       conv
-        (fun { location; env; source_type } ->
+        (fun { location; env; source_type; application } ->
           json_object
             [ "location", location_to_json location
             ; ( "environment"
@@ -372,6 +441,7 @@ module Michelson_formatter = struct
                           | Some binder_meta -> variable_meta_to_json binder_meta))) )
             ; ( "source_type"
               , Option.map ~f:(fun n -> `String (string_of_int n)) source_type )
+            ; "application", Option.map ~f:application_to_json application
             ])
         (fun _s -> failwith ("internal error: not implemented @ " ^ __LOC__))
         Data_encoding.json)

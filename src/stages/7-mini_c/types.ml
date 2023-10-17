@@ -151,6 +151,15 @@ type binder_meta =
   ; source_type : Ast_typed.type_expression option
   }
 
+type application_meta =
+  { applied_function : Value_var.t option
+  ; arguments : (Ast_typed.type_expression option * applied_argument) list
+  }
+
+and applied_argument =
+  | Var of Value_var.t
+  | Expression_location of Location.t
+
 type meta =
   { location : Location.t
   ; (* source location on any node *)
@@ -160,7 +169,14 @@ type meta =
   ; (* binder descriptor on the translated type of binders (since
        backend environments are lists of types) *)
     source_type : Ast_typed.type_expression option
+  ; application : application_meta option
+        (* meta with applied function name and its arguments *)
   }
 
 let dummy_meta : meta =
-  { location = Location.dummy; env = []; binder = None; source_type = None }
+  { location = Location.dummy
+  ; env = []
+  ; binder = None
+  ; source_type = None
+  ; application = None
+  }
