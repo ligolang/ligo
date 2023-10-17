@@ -81,7 +81,12 @@ let parse_constant_pre ~raise code =
 
 
 let dummy : Stacking.meta =
-  { location = Location.dummy; env = []; binder = None; source_type = None }
+  { location = Location.dummy
+  ; env = []
+  ; binder = None
+  ; source_type = None
+  ; application = None
+  }
 
 
 (* should preserve locations, currently wipes them *)
@@ -174,7 +179,7 @@ let build_contract ~raise
         map
       in
       let has_comment : Mini_c.meta -> bool =
-       fun { env; location; binder = _; source_type = _ } ->
+       fun { env; location; binder = _; source_type = _; application = _ } ->
         has_env_comments
         && ((not (List.is_empty env)) || not (Location.is_dummy_or_generated location))
       in

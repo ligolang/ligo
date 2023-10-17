@@ -6,7 +6,12 @@ open! Stacking
 open Tezos_micheline
 
 let dummy : Stacking.meta =
-  { location = Location.dummy; env = []; binder = None; source_type = None }
+  { location = Location.dummy
+  ; env = []
+  ; binder = None
+  ; source_type = None
+  ; application = None
+  }
 
 
 let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (meta, 'p) Micheline.node =
@@ -17,7 +22,7 @@ let dummy_locations : 'l 'p. ('l, 'p) Micheline.node -> (meta, 'p) Micheline.nod
    to preserve Seq nodes which are used only for comments. Currently
    only env data is important. *)
 let has_comment : Compiler_options.t -> meta -> bool =
- fun options { env; location; binder = _; source_type = _ } ->
+ fun options { env; location; binder = _; source_type = _; application = _ } ->
   options.backend.has_env_comments
   && ((not (List.is_empty env)) || not (Location.is_dummy_or_generated location))
 

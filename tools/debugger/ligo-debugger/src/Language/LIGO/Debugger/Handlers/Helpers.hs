@@ -113,6 +113,8 @@ data LigoLanguageServerState = LigoLanguageServerState
     -- ^ the type of the @main@ method.
   , lsScopes :: Maybe (HashMap FilePath [Scope])
     -- ^ Scopes from @get-scope@ command for each contract file.
+  , lsArgumentRanges :: Maybe (HashSet Range)
+    -- ^ Ranges for arguments in partially applied functions.
   }
 
 instance Buildable LigoLanguageServerState where
@@ -266,6 +268,11 @@ getLigoScopes
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashMap FilePath [Scope])
 getLigoScopes = "Scopes are not initialized" `expectInitialized` (lsScopes <$> getServerState)
+
+getArgumentRanges
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => MonadRIO ext m => m (HashSet Range)
+getArgumentRanges = "Argument ranges are not initialized" `expectInitialized` (lsArgumentRanges <$> getServerState)
 
 getParameterStorageAndOpsTypes :: LigoType -> (LigoType, LigoType, LigoType)
 getParameterStorageAndOpsTypes (LigoTypeResolved typ) =

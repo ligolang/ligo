@@ -54,7 +54,7 @@ collectContractMetas parsedContracts = collectCodeMetas parsedContracts . T.unCo
 buildSourceMapper
   :: FilePath
   -> ModuleName
-  -> IO (Set ExpressionSourceLocation, T.SomeContract, [FilePath], HashSet Range, LigoType, LigoTypesVec)
+  -> IO LigoMapperResult
 buildSourceMapper file entrypoint = do
   ligoMapper <- compileLigoContractDebug entrypoint file
   case readLigoMapper ligoMapper of
@@ -74,7 +74,8 @@ test_SourceMapper = testGroup "Reading source mapper"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
 
-      (exprLocs, T.SomeContract contract, allFiles, _, _, ligoTypesVec) <- buildSourceMapper file "main"
+      LigoMapperResult exprLocs (T.SomeContract contract) allFiles _ _ ligoTypesVec _
+        <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
@@ -293,7 +294,8 @@ test_SourceMapper = testGroup "Reading source mapper"
 
   , testCase "metas are not shifted in `if` blocks" do
       let file = contractsDir </> "if.mligo"
-      (_, T.SomeContract contract, allFiles, _, _, _) <- buildSourceMapper file "main"
+      LigoMapperResult _ (T.SomeContract contract) allFiles _ _ _ _
+        <- buildSourceMapper file "main"
 
       parsedContracts <- parseContracts allFiles
 
@@ -331,7 +333,9 @@ test_Function_call_locations = testGroup "Function call locations"
     checkLocations :: FilePath -> [((Word, Word), (Word, Word))] -> Assertion
     checkLocations contractName expectedLocs = do
       let file = contractsDir </> contractName
-      (Set.map (rangeToSourceLocation . eslRange) -> locs, _, _, _, _, _) <- buildSourceMapper file "main"
+      LigoMapperResult
+        { lmrExpressionLocation = Set.map (rangeToSourceLocation . eslRange) -> locs
+        } <- buildSourceMapper file "main"
 
       forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
         if Set.member loc locs

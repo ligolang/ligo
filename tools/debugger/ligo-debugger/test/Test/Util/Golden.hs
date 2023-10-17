@@ -3,8 +3,10 @@ module Test.Util.Golden
   ( goldenTestWithSnapshots
   , dumpCurSnapshot
   , dumpAllSnapshotsWithStep
+  , dumpAllAppliedMetas
   ) where
 
+import Control.Lens (Each (each), lens)
 import Data.Algorithm.Diff (PolyDiff (Both), getGroupedDiff)
 import Data.Algorithm.DiffOutput (ppDiff)
 import Data.Char qualified as Char
@@ -14,6 +16,7 @@ import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Fmt (Doc, FromDoc, fmt, pretty)
 import GHC.Stack (srcLocFile, srcLocStartLine)
+import Language.LIGO.Debugger.Functions
 import System.Directory (createDirectoryIfMissing)
 import System.FilePath (pathSeparator)
 import System.IO.Unsafe (unsafePerformIO)
@@ -23,6 +26,7 @@ import Test.Tasty.Golden.Advanced (goldenTest)
 import Text.Interpolation.Nyan hiding (rmode')
 import Text.Show qualified
 import UnliftIO.Exception (handle, throwIO)
+import Util
 
 import Morley.Debugger.Core.Navigate
   (HistoryReplay, HistoryReplayM, MovementResult (..), curSnapshot, frozen)
@@ -194,6 +198,18 @@ dumpCurSnapshot
 dumpCurSnapshot =
   asks gacLigoTypesVec >>= \vec -> frozen curSnapshot >>= dumpComment . pretty . makeConciseSnapshots vec
 
+stepThroughAllSnapshots
+  :: (HasCallStack, MonadIO m)
+  => m ()
+  -> m (MovementResult a)
+  -> m ()
+stepThroughAllSnapshots onSnapshot step = go (1000 :: Int)
+  where
+    go 0 = error "Looks like stepping fell into infinite loop"
+    go n = do
+      onSnapshot
+      step >>= \case{ HitBoundary -> pass; _ -> go (n - 1) }
+
 -- | Perform the given step many times until the end and record the snapshots
 -- at stops.
 dumpAllSnapshotsWithStep
@@ -203,9 +219,27 @@ dumpAllSnapshotsWithStep
      )
   => m (MovementResult a)
   -> m ()
-dumpAllSnapshotsWithStep step = go (1000 :: Int)
+dumpAllSnapshotsWithStep = stepThroughAllSnapshots dumpCurSnapshot
+
+dumpAllAppliedMetas
+  :: forall m a
+   . ( HistoryReplay (InterpretSnapshot 'Unique) m
+     , MonadReader GoldenActionContext m, MonadIO m
+     , HasCallStack
+     )
+  => m (MovementResult a)
+  -> m ()
+dumpAllAppliedMetas = stepThroughAllSnapshots dumpAppliedMeta
   where
-  go 0 = error "Looks like stepping fell into infinite loop"
-  go n = do
-    dumpCurSnapshot
-    step >>= \case{ HitBoundary -> pass; _ -> go (n - 1) }
+    dumpAppliedMeta :: m ()
+    dumpAppliedMeta = do
+      snap <- frozen curSnapshot
+      vec <- asks gacLigoTypesVec
+
+      let headL = lens head \(_ :| xs) x -> x :| xs
+      let allValues = snap ^.. isStackFramesL . headL . sfStackL . each . siValueL
+
+      let allAppliedMetas = mapMaybe extractApplicationMeta allValues
+            <&> makeConciseApplicationMeta vec
+
+      mapM_ (itIsForInternalUse $ dumpComment . pretty) allAppliedMetas

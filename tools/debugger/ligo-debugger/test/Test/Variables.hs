@@ -22,19 +22,20 @@ import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.HUnit (testCase)
 
 import Language.LIGO.AST (Lang (Caml))
-import Language.LIGO.DAP.Variables (createVariables, runBuilder)
+import Language.LIGO.DAP.Variables (PreConvertVariable (..), createVariables, runBuilder)
 import Language.LIGO.Debugger.CLI
 
-mkDummyValue :: LigoOrMichValue -> Maybe (Name 'Concise) -> (Text, LigoOrMichValue)
-mkDummyValue v nameMb =
-  ( maybe unknownVariable pretty nameMb
-  , v
-  )
+mkDummyValue :: LigoOrMichValue -> Maybe (Name 'Concise) -> PreConvertVariable
+mkDummyValue v nameMb = PreConvertVariable
+  { pcvName = maybe unknownVariable pretty nameMb
+  , pcvValue = v
+  , pcvApplicationMeta = Nothing
+  }
 
-mkDummyMichValue :: (SingI t) => Value t -> Maybe (Name 'Concise) -> (Text, LigoOrMichValue)
+mkDummyMichValue :: (SingI t) => Value t -> Maybe (Name 'Concise) -> PreConvertVariable
 mkDummyMichValue v = mkDummyValue (MichValue (LigoType Nothing) $ SomeValue v)
 
-mkDummyLigoValue :: LigoValue -> Maybe (Name 'Concise) -> (Text, LigoOrMichValue)
+mkDummyLigoValue :: LigoValue -> Maybe (Name 'Concise) -> PreConvertVariable
 mkDummyLigoValue v = mkDummyValue (LigoValue (LigoType Nothing) v)
 
 test_Variables :: TestTree

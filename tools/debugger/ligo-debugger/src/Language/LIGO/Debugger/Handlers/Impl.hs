@@ -81,6 +81,7 @@ import Language.LIGO.DAP.Variables
 import Language.LIGO.Debugger.CLI
 import Language.LIGO.Debugger.Common
 import Language.LIGO.Debugger.Error
+import Language.LIGO.Debugger.Functions
 import Language.LIGO.Debugger.Handlers.Helpers
 import Language.LIGO.Debugger.Handlers.Types
 import Language.LIGO.Debugger.Michelson
@@ -360,25 +361,45 @@ instance HasSpecificMessages LIGO where
 
     let valConvertManager = lsToLigoValueConverter lServVar
 
+    let applicationMetaConv ApplicationMeta{..} = do
+          let pcaaFunctionName = maybe "<fun>" pretty amFunctionName
+
+          pcaaArguments <-
+            forM amAppliedArguments \LambdaArg{..} -> do
+              let convInfo = PreLigoConvertInfo laValue (readLigoType ligoTypesVec laType)
+              preConvertApplicationMeta <- traverse applicationMetaConv (extractApplicationMeta laValue)
+              ligoVal <- decompileValue convInfo valConvertManager
+              pure (ligoVal, preConvertApplicationMeta)
+
+          pcaaPreviousMeta <- traverse applicationMetaConv amPreviousApplication
+          pure PreConvertAppliedArguments{..}
+
     ligoVals <- fmap catMaybes $ forM stackItems \stackItem ->
       runMaybeT do
         StackItem desc michVal <- pure stackItem
+
+        let applicationMeta = extractApplicationMeta michVal
+
         LigoStackEntry (LigoExposedStackEntry mDecl typRef _) <- pure desc
         let typ = readLigoType ligoTypesVec typRef
         let varName = maybe (pretty unknownVariable) pretty mDecl
 
         ligoVal <- decompileValue (PreLigoConvertInfo michVal typ) valConvertManager
-        return (varName :: Text, ligoVal)
+        preConvertAppliedArguments <- traverse (lift . applicationMetaConv) applicationMeta
+        return $ PreConvertVariable varName ligoVal preConvertAppliedArguments
 
     builder <-
       case isStatus snap of
         InterpretRunning (EventExpressionEvaluated typ (Just value))
           -- We want to show $it variable only in the top-most stack frame.
           | req.frameId == DAP.StackFrameId 1 -> do
+            let applicationMeta = extractApplicationMeta value
             itVal <- decompileValue (PreLigoConvertInfo value typ) valConvertManager
+            preConvertAppliedArguments <- traverse applicationMetaConv applicationMeta
             pure do
               idx <- createVariables lang ligoVals
-              itVar <- buildVariable lang itVal "$it"
+              let preConvVar = PreConvertVariable "$it" itVal preConvertAppliedArguments
+              itVar <- buildVariable lang preConvVar
               insertToIndex idx [itVar]
         _ -> pure $ createVariables lang ligoVals
 
@@ -627,6 +648,7 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
     , lsMaxSteps = maxStepsMb
     , lsEntrypointType = Nothing
     , lsScopes = Nothing
+    , lsArgumentRanges = Nothing
     }
   do let binaryPath = req.binaryPath
      logMessage [int||Set LIGO binary path: #s{binaryPath}|]
@@ -699,7 +721,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
     Right ligoDebugInfo -> do
       logMessage $ "Successfully read the LIGO debug output for " <> pretty program
 
-      (exprLocs, someContract, allFiles, lambdaLocs, entrypointType, ligoTypesVec) <-
+      LigoMapperResult exprLocs someContract allFiles lambdaLocs entrypointType ligoTypesVec argumentRanges <-
         readLigoMapper ligoDebugInfo
         & either (throwIO . MichelsonDecodeException) pure
 
@@ -735,6 +757,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
           , lsEntrypoints = Just michelsonEntrypoints
           , lsEntrypointType = Just entrypointType
           , lsScopes = Just scopes
+          , lsArgumentRanges = Just argumentRanges
           }
 
         lServerState <- getServerState
@@ -888,6 +911,7 @@ initDebuggerSession req = do
 
   ligoTypesVec <- getLigoTypesVec
   scopes <- getLigoScopes
+  argumentRanges <- getArgumentRanges
 
   his <-
     withRunInIO \unlifter ->
@@ -904,6 +928,7 @@ initDebuggerSession req = do
         (isJust maxStepsMb)
         ligoTypesVec
         scopes
+        argumentRanges
 
   let ds = initDebuggerState his allLocs
 

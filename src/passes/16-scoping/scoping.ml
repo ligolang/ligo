@@ -13,7 +13,12 @@ type binder_meta = Mini_c.binder_meta
 
 (* We should use this less: *)
 let nil : meta =
-  { location = Location.generated; env = []; binder = None; source_type = None }
+  { location = Location.generated
+  ; env = []
+  ; binder = None
+  ; source_type = None
+  ; application = None
+  }
 
 
 type base_type = (meta, string) Micheline.node
@@ -37,6 +42,7 @@ let rec translate_type ?var : I.type_expression -> oty =
     ; env = []
     ; binder = binder_meta var a
     ; source_type = None
+    ; application = None
     }
   in
   match a.type_content with
@@ -121,6 +127,48 @@ let internal_error loc msg =
        msg)
 
 
+let extract_applications (expr : I.expression) (env : I.environment)
+    : I.application_meta option
+  =
+  match expr.type_expression.source_type, expr.content with
+  (* If an expression is a function and it's an application
+     then we're interested in it *)
+  | Some { type_content = T_arrow _; _ }, E_application (f, args) ->
+    let applied_function =
+      match f.content with
+      | E_variable var_name | E_deref var_name -> Some var_name
+      | _ -> None
+    in
+    let args =
+      (* After uncurrying in self_mini_c some applications
+         are changed from `f a b c` to `f (a, b, c)`.
+         We can differ them by location
+         (location for uncurried tuple would be generated) *)
+      if Location.is_dummy_or_generated args.location
+      then (
+        match args.content with
+        | E_tuple args -> args
+        | _ -> [ args ])
+      else [ args ]
+    in
+    let to_applied_argument (expr : I.expression) : I.applied_argument =
+      match expr.content with
+      | E_variable var | E_deref var ->
+        let orig_var =
+          (* We want to have a location of binded variable *)
+          Option.value ~default:var (I.Environment.Environment.get_var_opt var env)
+        in
+        Var orig_var
+      | _ -> Expression_location expr.location
+    in
+    let arguments =
+      List.map args ~f:(fun expr ->
+          expr.type_expression.source_type, to_applied_argument expr)
+    in
+    Some { I.applied_function; I.arguments }
+  | _ -> None
+
+
 (* The translation. Given an expression in an environment, returns a
    "co-de Bruijn" expression with an embedding (`list usage`) showing
    which things in the environment were used. *)
@@ -136,6 +184,7 @@ let rec translate_expression ~raise ~proto (expr : I.expression) (env : I.enviro
     ; env = []
     ; binder = None
     ; source_type = expr.type_expression.source_type
+    ; application = extract_applications expr env
     }
   in
   let ty = expr.type_expression in
