@@ -575,7 +575,19 @@ let rec error_ppformat
         expected_type
         type_formatter
         got
-    | `Resolve_config_corner_case err -> Format.fprintf f "Corner case: %s" err)
+    | `Resolve_config_corner_case err -> Format.fprintf f "Corner case: %s" err
+    | `Resolve_config_type_uncaught (locs_and_types, pp_typ) ->
+      let pp_elt f (loc, typ) =
+        Format.fprintf f "Unexpected type: %a\n%a\n" pp_typ typ snippet_pp loc
+      in
+      Format.fprintf
+        f
+        "Several type errors occurred during config resolution:\n\
+        \ %a\n\
+         Perhaps \"parameter\" or/and \"storage\" are not monomorphed. Please, write a \
+         type annotation for it."
+        (PP_helpers.list_sep_d pp_elt)
+        locs_and_types)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -768,7 +780,8 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_deprecated_views_cli s ->
     let content = make_content ~message:s () in
     [ make ~stage:"deprecated command" ~content ]
-  | `Resolve_config_type_mismatch _ as resolve_config_exc ->
+  | (`Resolve_config_type_mismatch _ | `Resolve_config_type_uncaught _) as
+    resolve_config_exc ->
     let message =
       Format.asprintf
         "%a"
