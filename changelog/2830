@@ -1,0 +1,7 @@
+
+author: XJIE6
+description: "\\n\\n`ligo lsp` now looks for `ligo.json` to determine the project root. If not present, the language server will request the user to create one when opening a new file.\\n\\n"
+merge_request: '2830'
+title: "[#1741] Add project root support"
+type: fixed
+            

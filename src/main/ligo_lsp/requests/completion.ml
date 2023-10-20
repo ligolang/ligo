@@ -664,7 +664,13 @@ let on_req_completion (pos : Position.t) (path : Path.t)
        suggest scopes or keywords. *)
     if List.is_empty field_completions
     then (
-      let scopes = Ligo_interface.get_scopes ~definitions ~code path in
+      let scopes =
+        Ligo_interface.get_scopes
+          ~project_root:(Project_root.get_project_root path)
+          ~definitions
+          ~code
+          path
+      in
       let scope_completions =
         get_defs_completions path syntax cst pos scopes definitions
       in

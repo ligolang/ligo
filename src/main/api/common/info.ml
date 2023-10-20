@@ -63,6 +63,7 @@ let dump_cst (raw_options : Raw_options.t) (source_files : string list) =
               Simple_utils.Trace.trace ~raise (fun e -> `Parser_tracer e)
               @@ fun ~raise ->
               Dialect_cst.get_cst_exn
+                ?project_root:options.frontend.project_root
                 ~preprocess:true
                 ~strict:false
                 ~file:source_file

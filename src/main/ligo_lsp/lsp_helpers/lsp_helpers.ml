@@ -4,6 +4,7 @@ module Helpers_file = Helpers_file
 module Helpers_pretty = Helpers_pretty
 module Path = Path
 module Pretty = Pretty
+module Project_root = Project_root
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def
@@ -121,14 +122,21 @@ module Hover = Lsp.Types.Hover
 module InitializeParams = Lsp.Types.InitializeParams
 module InitializeResult = Lsp.Types.InitializeResult
 module MarkupContent = Lsp.Types.MarkupContent
+module MessageActionItem = Lsp.Types.MessageActionItem
 module MessageType = Lsp.Types.MessageType
 module Registration = Lsp.Types.Registration
 module RenameOptions = Lsp.Types.RenameOptions
 module ServerCapabilities = Lsp.Types.ServerCapabilities
 module ShowMessageParams = Lsp.Types.ShowMessageParams
+module ShowMessageRequestParams = Lsp.Types.ShowMessageRequestParams
 module TextDocumentContentChangeEvent = Lsp.Types.TextDocumentContentChangeEvent
 module TextEdit = Lsp.Types.TextEdit
 module WorkspaceEdit = Lsp.Types.WorkspaceEdit
+module WorkspaceFoldersServerCapabilities = Lsp.Types.WorkspaceFoldersServerCapabilities
+module FileOperationOptions = Lsp.Types.FileOperationOptions
+module FileOperationRegistrationOptions = Lsp.Types.FileOperationRegistrationOptions
+module FileOperationFilter = Lsp.Types.FileOperationFilter
+module FileOperationPattern = Lsp.Types.FileOperationPattern
 
 (* Lsp reexports *)
 module Client_notification = Lsp.Client_notification
