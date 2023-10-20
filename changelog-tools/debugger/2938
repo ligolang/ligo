@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Made proper error handling in config resolution. Before it was resolving into a config with all `null` fields.\\n\\n\\n"
+merge_request: '2938'
+title: "[#2044] Make proper error handling in `resolve-config` command"
+type: fixed
+            
