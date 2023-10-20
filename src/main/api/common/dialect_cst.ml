@@ -30,6 +30,7 @@ module Options = Parameters.Options
 
 let get_cst_exn
     ?(preprocess = false)
+    ?(project_root : string option)
     ~(strict : bool)
     ~(file : string)
     (syntax : Syntax_types.t)
@@ -42,8 +43,8 @@ let get_cst_exn
     in
     message
   in
-  (* Warnings and errors will be reported to the user via diagnostics, so we
-      ignore them here unless the strict mode is enabled. *)
+  (* Warnings and errors will be reported to the user via diagnostics, so we ignore them
+     here unless the strict mode is enabled. *)
   let raise : parsing_raise =
     { error = (fun err -> raise @@ Fatal_cst_error (parsing_error_to_string err))
     ; warning = (fun _ -> ())
@@ -52,25 +53,24 @@ let get_cst_exn
     ; fast_fail = false
     }
   in
-  (* FIXME [#1657]: Once we have a project system, set the correct [project_root]. *)
-  let project_root = Filename.dirname file in
   let open Parsing in
   match syntax with
   | CameLIGO ->
     let module Parse = Cameligo.Make (Options) in
-    CameLIGO (Parse.parse_file ~preprocess ~project_root ~raise c_unit file)
+    CameLIGO (Parse.parse_file ~preprocess ?project_root ~raise c_unit file)
   | JsLIGO ->
     let module Parse = Jsligo.Make (Options) in
-    JsLIGO (Parse.parse_file ~preprocess ~project_root ~raise c_unit file)
+    JsLIGO (Parse.parse_file ~preprocess ?project_root ~raise c_unit file)
 
 
 let get_cst
     ?(preprocess = false)
+    ?(project_root : string option)
     ~(strict : bool)
     ~(file : string)
     (syntax : Syntax_types.t)
     (c_unit : Buffer.t)
     : (t, string) result
   =
-  try Ok (get_cst_exn ~preprocess ~strict ~file syntax c_unit) with
+  try Ok (get_cst_exn ~preprocess ?project_root ~strict ~file syntax c_unit) with
   | Fatal_cst_error err -> Error err

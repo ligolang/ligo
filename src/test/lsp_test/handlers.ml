@@ -16,7 +16,11 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
   let mocked_notify_back = Path_hashtbl.create () in
   let result =
     run_handler
-      { notify_back = Mock mocked_notify_back; config; docs_cache = Docs_cache.create () }
+      { notify_back = Mock mocked_notify_back
+      ; config
+      ; docs_cache = Docs_cache.create ()
+      ; last_project_file = ref None
+      }
       session
   in
   Lwt_main.run result, mocked_notify_back
