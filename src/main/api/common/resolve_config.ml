@@ -49,31 +49,6 @@ type config =
   }
 [@@deriving yojson_of]
 
-let build_expression ~raise
-    :  options:Compiler_options.t -> Syntax_types.t -> string -> program
-    -> (Stacking.compiled_expression * type_expression) Lwt.t
-  =
- fun ~options syntax expression init_prg ->
-  let open Lwt.Let_syntax in
-  let typed_exp =
-    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
-  in
-  let aggregated =
-    Ligo_compile.Of_typed.compile_expression_in_context
-      ~raise
-      ~options:options.middle_end
-      None
-      init_prg
-      typed_exp
-  in
-  let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
-  let mini_c_exp = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
-  let%map stacking_exp =
-    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
-  in
-  stacking_exp, typed_exp.type_expression
-
-
 let pp_type_expression ~raise ~syntax f type_expr =
   let core_type_expr = Checking.untype_type_expression type_expr in
   try
@@ -99,6 +74,60 @@ let pp_type_expression ~raise ~syntax f type_expr =
   | _ -> Ast_typed.PP.type_expression f type_expr
 
 
+let build_expression ~raise ?(check_config_type = false)
+    :  options:Compiler_options.t -> Syntax_types.t -> string -> program
+    -> (Stacking.compiled_expression * type_expression) Lwt.t
+  =
+ fun ~options syntax expression init_prg ->
+  let open Lwt.Let_syntax in
+  let typed_exp =
+    Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
+  in
+  if check_config_type
+  then (
+    match typed_exp.type_expression.type_content with
+    | T_record _ -> ()
+    | _ ->
+      raise.error
+        (`Resolve_config_config_type_mismatch
+          (typed_exp.type_expression, pp_type_expression ~raise ~syntax)));
+  let aggregated =
+    Ligo_compile.Of_typed.compile_expression_in_context
+      ~raise
+      ~options:options.middle_end
+      None
+      init_prg
+      typed_exp
+  in
+  let expanded_exp = Ligo_compile.Of_aggregated.compile_expression ~raise aggregated in
+  let locations_and_types_with_forall, _ =
+    Ast_expanded.Helpers.fold_map_expression
+      (fun acc expr ->
+        let return a = true, a, expr in
+        if Ast_expanded.equal_expr expr expanded_exp
+        then return acc
+        else (
+          match expr.type_expression.type_content with
+          | T_for_all _ -> return ((expr.location, expr.type_expression) :: acc)
+          | _ -> return acc))
+      []
+      expanded_exp
+  in
+  let pp_type f (typ : Ast_expanded.type_expression) =
+    match typ.source_type with
+    | Some typ -> pp_type_expression ~raise ~syntax f typ
+    | None -> Ast_expanded.PP.type_expression f typ
+  in
+  if not @@ List.is_empty locations_and_types_with_forall
+  then
+    raise.error (`Resolve_config_type_uncaught (locations_and_types_with_forall, pp_type));
+  let mini_c_exp = Ligo_compile.Of_expanded.compile_expression ~raise expanded_exp in
+  let%map stacking_exp =
+    Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c_exp
+  in
+  stacking_exp, typed_exp.type_expression
+
+
 let resolve_config ~raise ~options syntax init_file : config Lwt.t =
   let open Lwt.Let_syntax in
   let init_prg =
@@ -109,28 +138,35 @@ let resolve_config ~raise ~options syntax init_file : config Lwt.t =
     let default = Build.Stdlib.select_lib_typed syntax (Build.Stdlib.get ~options) in
     Option.value_map (Some init_file) ~f ~default
   in
+  (* Check that config is compiling... *)
+  let%bind _ =
+    build_expression ~raise ~check_config_type:true ~options syntax "config" init_prg
+  in
   let get_field_opt field =
-    try
-      let%bind expression, typ =
-        build_expression ~raise ~options syntax ("config." ^ field) init_prg
-      in
-      let%bind options =
-        Run.make_dry_run_options
-          ~raise
-          { now = None
-          ; amount = "0"
-          ; balance = "0"
-          ; sender = None
-          ; source = None
-          ; parameter_ty = None
-          }
-      in
-      let%bind result =
-        Run.evaluate_expression ~raise ~options expression.expr expression.expr_ty
-      in
-      Lwt.return (Some (Compile.no_comment result, typ))
-    with
-    | _ -> Lwt.return None
+    Trace.try_with_lwt
+      (fun ~raise ~catch ->
+        let%bind expression, typ =
+          build_expression ~raise ~options syntax ("config." ^ field) init_prg
+        in
+        let%bind options =
+          Run.make_dry_run_options
+            ~raise
+            { now = None
+            ; amount = "0"
+            ; balance = "0"
+            ; sender = None
+            ; source = None
+            ; parameter_ty = None
+            }
+        in
+        let%bind result =
+          Run.evaluate_expression ~raise ~options expression.expr expression.expr_ty
+        in
+        Lwt.return (Some (Compile.no_comment result, typ)))
+      (fun ~catch -> function
+        | (`Resolve_config_type_uncaught _ | `Resolve_config_config_type_mismatch _) as
+          exn -> raise.error exn
+        | _ -> Lwt.return None)
   in
   let extract_string (field : string) : evaluated_michelson * type_expression -> string
     = function
