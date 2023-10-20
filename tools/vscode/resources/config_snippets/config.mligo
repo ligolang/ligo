@@ -18,8 +18,10 @@ let contract_env =
   }
 
 let config =
-  { parameter    = "*parameter value*"
-  ; storage      = "*storage value*"
+  { parameter    = "*parameter value*" : parameter_type
+    // Note that the types of parameter and storage
+    // should be monomorphized at the config resolution stage.
+  ; storage      = "*storage value*" : storage_type
   ; program      = "*path to program*"
   ; module_name  = "*module name*"
   ; entrypoint   = "*entrypoint name*"

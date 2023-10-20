@@ -19,8 +19,10 @@ const contract_env =
   }
 
 export const config =
-  { parameter    : "*parameter value*"
-  , storage      : "*storage value*"
+  { parameter    : "*parameter value*" as parameter_type
+    // Note that the types of parameter and storage
+    // should be monomorphized at the config resolution stage.
+  , storage      : "*storage value*" as storage_type
   , program      : "*path to program*"
   , module_name  : "*module name*"
   , entrypoint   : "*entrypoint name*"
