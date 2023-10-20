@@ -74,7 +74,7 @@ let pp_type_expression ~raise ~syntax f type_expr =
   | _ -> Ast_typed.PP.type_expression f type_expr
 
 
-let build_expression ~raise
+let build_expression ~raise ?(check_config_type = false)
     :  options:Compiler_options.t -> Syntax_types.t -> string -> program
     -> (Stacking.compiled_expression * type_expression) Lwt.t
   =
@@ -83,6 +83,14 @@ let build_expression ~raise
   let typed_exp =
     Ligo_compile.Utils.type_expression ~raise ~options syntax expression init_prg.pr_sig
   in
+  if check_config_type
+  then (
+    match typed_exp.type_expression.type_content with
+    | T_record _ -> ()
+    | _ ->
+      raise.error
+        (`Resolve_config_config_type_mismatch
+          (typed_exp.type_expression, pp_type_expression ~raise ~syntax)));
   let aggregated =
     Ligo_compile.Of_typed.compile_expression_in_context
       ~raise
@@ -131,7 +139,9 @@ let resolve_config ~raise ~options syntax init_file : config Lwt.t =
     Option.value_map (Some init_file) ~f ~default
   in
   (* Check that config is compiling... *)
-  let%bind _ = build_expression ~raise ~options syntax "config" init_prg in
+  let%bind _ =
+    build_expression ~raise ~check_config_type:true ~options syntax "config" init_prg
+  in
   let get_field_opt field =
     Trace.try_with_lwt
       (fun ~raise ~catch ->
@@ -154,7 +164,8 @@ let resolve_config ~raise ~options syntax init_file : config Lwt.t =
         in
         Lwt.return (Some (Compile.no_comment result, typ)))
       (fun ~catch -> function
-        | `Resolve_config_type_uncaught _ as exn -> raise.error exn
+        | (`Resolve_config_type_uncaught _ | `Resolve_config_config_type_mismatch _) as
+          exn -> raise.error exn
         | _ -> Lwt.return None)
   in
   let extract_string (field : string) : evaluated_michelson * type_expression -> string

@@ -584,10 +584,12 @@ let rec error_ppformat
         f
         "Several type errors occurred during config resolution:\n\
         \ %a\n\
-         Perhaps \"parameter\" or/and \"storage\" are not monomorphed. Please, write a \
+         Perhaps \"parameter\" or/and \"storage\" are not monomorphized. Please, write a \
          type annotation for it."
         (PP_helpers.list_sep_d pp_elt)
-        locs_and_types)
+        locs_and_types
+    | `Resolve_config_config_type_mismatch (got, pp_typ) ->
+      Format.fprintf f "Expected config type to be a record.\nGot: %a" pp_typ got)
 
 
 let rec error_json : Types.all -> Simple_utils.Error.t list =
@@ -780,8 +782,9 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_deprecated_views_cli s ->
     let content = make_content ~message:s () in
     [ make ~stage:"deprecated command" ~content ]
-  | (`Resolve_config_type_mismatch _ | `Resolve_config_type_uncaught _) as
-    resolve_config_exc ->
+  | ( `Resolve_config_type_mismatch _
+    | `Resolve_config_type_uncaught _
+    | `Resolve_config_config_type_mismatch _ ) as resolve_config_exc ->
     let message =
       Format.asprintf
         "%a"

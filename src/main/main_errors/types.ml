@@ -97,6 +97,8 @@ type all =
   | `Resolve_config_type_uncaught of
     (Location.t * Ast_expanded.type_expression) list
     * (Format.formatter -> Ast_expanded.type_expression -> unit)
+  | `Resolve_config_config_type_mismatch of
+    Ast_typed.type_expression * (Format.formatter -> Ast_typed.type_expression -> unit)
   | `Repl_unexpected
   ]
 [@@deriving poly_constructor]
