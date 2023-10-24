@@ -70,6 +70,12 @@ let signature_of_string ~raise s =
   @@ Tezos_crypto.Signature.of_b58check s
 
 
+let chain_id_of_bytes ~raise s =
+  Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
+      Errors.generic_error Location.generated "Cannot parse chain_id")
+  @@ Tezos_crypto.Hashed.Chain_id.of_bytes s
+
+
 let chain_id_of_string ~raise s =
   Proto_alpha_utils.Trace.trace_tzresult ~raise (fun _ ->
       Errors.generic_error Location.generated "Cannot parse chain_id")
@@ -166,6 +172,8 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
   | Prim (_, "nat", [], _), Int (_, n) -> V_Ct (C_nat n)
   | Prim (_, "chain_id", _, _), String (_, id) ->
     V_Ct (C_chain_id (chain_id_of_string ~raise id))
+  | Prim (_, "chain_id", _, _), Bytes (_, b) ->
+    V_Ct (C_chain_id (chain_id_of_bytes ~raise b))
   | Prim (_, "key_hash", [], _), String (_, n) ->
     V_Ct (C_key_hash (key_hash_of_string ~raise n))
   | Prim (_, "key_hash", [], _), Bytes (_, b) ->
@@ -178,6 +186,8 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Ct (C_bls12_381_g2 (bls12_381_g2_of_bytes ~raise b))
   | Prim (_, "bls12_381_fr", [], _), Bytes (_, b) ->
     V_Ct (C_bls12_381_fr (bls12_381_fr_of_bytes ~raise b))
+  | Prim (_, "bls12_381_fr", [], _), Int (_, n) ->
+    V_Ct (C_bls12_381_fr (Bls12_381_Fr.of_z n))
   | Prim (_, "signature", [], _), String (_, n) ->
     V_Ct (C_signature (signature_of_string ~raise n))
   | Prim (_, "timestamp", [], _), Int (_, n) -> V_Ct (C_timestamp n)
