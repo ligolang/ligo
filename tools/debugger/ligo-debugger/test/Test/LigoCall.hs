@@ -305,7 +305,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
 
           decompiled <- decompileValues [(chainIdType, chainIdVal)]
 
-          [LVCt $ LCChainId "\0\0\0\0"] @?= decompiled
+          [LVCt $ LCChainId "NetXH12Aer3be93"] @?= decompiled
 
       , testCase "Chain id from bytes" do
           let chainIdVal = T.SomeValue $ T.toVal $ UnsafeChainId "\0\0\0\0"
@@ -313,7 +313,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
 
           decompiled <- decompileValues [(chainIdType, chainIdVal)]
 
-          [LVCt $ LCChainId "\0\0\0\0"] @?= decompiled
+          [LVCt $ LCChainId "NetXH12Aer3be93"] @?= decompiled
       ]
 
   , testCase "Complex value" $ legacyMode do
@@ -355,7 +355,7 @@ test_Decompile_values = testGroup "Decompilation of LIGO values"
       let expected = LVConstructor
             ( "Go"
             , LVRecord $ HM.fromList
-                [ (LLabel "ch", LVCt $ LCChainId "\0\0\0\0")
+                [ (LLabel "ch", LVCt $ LCChainId "NetXH12Aer3be93")
                 , (LLabel "state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
                 , (LLabel "s", LVCt $ LCString "large")
                 ]

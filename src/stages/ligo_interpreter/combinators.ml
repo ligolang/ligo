@@ -405,3 +405,46 @@ let rec compare_value (v : value) (v' : value) : int =
 
 
 let equal_value (v : value) (v' : value) : bool = Int.equal (compare_value v v') 0
+
+let constant_val_to_debugger_yojson : constant_val -> Yojson.Safe.t = function
+  | C_bytes bts ->
+    let hex_str = Format.asprintf "0x%a" Hex.pp (Hex.of_bytes bts) in
+    `List [ `String "bytes"; `String hex_str ]
+  | C_bls12_381_g1 bls ->
+    let open Bls12_381.G1 in
+    let hex_str = Format.asprintf "0x%a" Hex.pp (Hex.of_bytes @@ to_bytes bls) in
+    `List [ `String "bls12_381_g1"; `String hex_str ]
+  | C_bls12_381_g2 bls ->
+    let open Bls12_381.G2 in
+    let hex_str = Format.asprintf "0x%a" Hex.pp (Hex.of_bytes @@ to_bytes bls) in
+    `List [ `String "bls12_381_g2"; `String hex_str ]
+  | C_bls12_381_fr bls ->
+    let open Bls12_381.Fr in
+    let hex_str = Format.asprintf "0x%a" Hex.pp (Hex.of_bytes @@ to_bytes bls) in
+    `List [ `String "bls12_381_fr"; `String hex_str ]
+  | C_chain_id chain_id ->
+    let open Tezos_crypto.Hashed in
+    `List [ `String "chain_id"; `String (Chain_id.to_b58check chain_id) ]
+  | other -> constant_val_to_yojson other
+
+
+let rec value_to_debugger_yojson : value -> Yojson.Safe.t = function
+  | V_Ct constant_val ->
+    `List [ `String "constant"; constant_val_to_debugger_yojson constant_val ]
+  | V_List values ->
+    `List [ `String "list"; `List (List.map ~f:value_to_debugger_yojson values) ]
+  | V_Record value_record ->
+    `List [ `String "record"; Record.to_yojson value_to_debugger_yojson value_record ]
+  | V_Map value_map ->
+    `List
+      [ `String "map"
+      ; `List
+          (List.map value_map ~f:(fun (k, v) ->
+               `List [ value_to_debugger_yojson k; value_to_debugger_yojson v ]))
+      ]
+  | V_Set values ->
+    `List [ `String "set"; `List (List.map ~f:value_to_debugger_yojson values) ]
+  | V_Construct (ctor, value) ->
+    `List
+      [ `String "constructor"; `List [ `String ctor; value_to_debugger_yojson value ] ]
+  | other -> value_to_yojson other

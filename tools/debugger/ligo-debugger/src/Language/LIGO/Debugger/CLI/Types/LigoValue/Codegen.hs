@@ -31,7 +31,7 @@ import Language.LIGO.Debugger.CLI.Types
     type t = *place for LIGO type* in
     let val = Test.parse_michelson {| *place for Michelson value* |} in
     let dec : t = Test.decompile val in
-    Test.print (Test.to_json dec)
+    Test.print (Test.to_debugger_json dec)
   @
 
   Then we should run it with "ligo run test". We'll get a JSON-formatted LIGO value.
@@ -182,7 +182,7 @@ generateDecompilation' ligoType (T.SomeValue (val :: T.Value t)) = case ligoType
           type t = #{typ} in
           let v = Test.parse_michelson {| #{replacedVal} |} in
           let dec : t = Test.decompile v in
-          Test.print (Test.to_json dec)
+          Test.print (Test.to_debugger_json dec)
         |]
   _ -> noDecompilation
   where

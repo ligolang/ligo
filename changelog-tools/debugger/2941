@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with displaying non-utf-8 byte-like values. Now they're displaying correctly.\\n\\n\\n"
+merge_request: '2941'
+title: "[#2081] Fix decompiling of byte-like LIGO values"
+type: fixed
+            
