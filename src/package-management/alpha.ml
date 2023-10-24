@@ -24,6 +24,7 @@ let ( let@ ) o f = Result.bind ~f o
 type error =
   | NotSupported
   | UnableToAccessRegistry
+  | PackageNotFound
   | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
@@ -54,6 +55,7 @@ let string_of_error = function
     "Not supported please try --legacy-package-management to install using esy"
   | UnableToAccessRegistry ->
     "Unable to access registry, cannot download the metadata json"
+  | PackageNotFound -> "Package not found"
   | VersionNotFound (n, v) -> Printf.sprintf "Version %s of %s not found" v n
   | UnableToSerializeSemver -> "The version provided is illegal Semver"
   | UnableToAccessId -> "The access id doesn't exists"
@@ -247,18 +249,18 @@ let get_metadata_json
   let endpoint_uri = Printf.sprintf "/-/api/%s" name in
   let uri = Uri.with_path ligo_registry endpoint_uri in
   let* res, body = Cohttp_lwt_unix.Client.get uri in
-  let status = Cohttp.Code.code_of_status res.status in
-  if status |> Cohttp.Code.is_success
-  then
+  match res.status with
+  | `OK ->
     let* body = Cohttp_lwt.Body.to_string body in
     let json = Json.from_string body in
     let version = get_apt_version version ~json in
-    match Json.Util.(member "versions" json |> member version) with
+    (match Json.Util.(member "versions" json |> member version) with
     | `Null -> Lwt.return_error (VersionNotFound (name, version))
     | json -> Lwt_result.return json
     | exception Yojson.Safe.Util.Type_error (msg, _) ->
-      Lwt.return_error (UnableToAccessName msg)
-  else Lwt.return_error UnableToAccessRegistry
+      Lwt.return_error (UnableToAccessName msg))
+  | `Not_found -> Lwt.return_error PackageNotFound
+  | _ -> Lwt.return_error UnableToAccessRegistry
 
 
 (* get the .tgz file, extract it and generate a directory from the .tgz file *)

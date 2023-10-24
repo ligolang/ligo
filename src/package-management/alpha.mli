@@ -3,6 +3,7 @@
 type error =
   | NotSupported
   | UnableToAccessRegistry
+  | PackageNotFound
   | VersionNotFound of string * string
   | UnableToSerializeSemver
   | UnableToAccessId
