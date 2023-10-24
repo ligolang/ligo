@@ -65,7 +65,7 @@ let get_storage () (storage : int): int = storage
 // @entry
 const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [list([]), new_storage]
 
-// @view
+@view
 const get_storage = ([_, storage] : [unit, int]): int => storage
 ```
 

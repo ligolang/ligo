@@ -17,7 +17,7 @@ You should not manually craft a `main` function that calls your entry points any
 
 If you need more fine-grained control, it is still possible to write a `main` function, but you will need to add `@entry` or `[@entry]` above that `main` function (and only that function). See [the documentation on the main function and entry points](../advanced/entrypoints-contracts.md#main-function) for more details on how to do this.
 
-[Views](../contract/views) can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO.
+[Views](../contract/views.md) can be declared in a similar way with `@view` for JsLIGO and `[@view]` for CameLIGO.
 
 As the use of `@entry` or `[@entry]` (and `@view` or `[@view]`) in the source is now mandatory, it is not possible anymore to rely on the auto-detection of the `main` function as the sole entry point, and it is not possible anymore to specify a entry points via the `-e` function on the command-line or views via the `--views` / `-v` options.
 
@@ -65,7 +65,7 @@ let get_storage () (storage : int): int = storage
 // @entry
 const set_storage = ([new_storage, _old_storage] : [int, int]): [list<operation>, int] => [list([]), new_storage]
 
-// @view
+@view
 const get_storage = ([_, storage] : [unit, int]): int => storage
 ```
 
