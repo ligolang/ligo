@@ -16,7 +16,7 @@ type Template = {
   existingSyntaxes: string[];
 };
 
-const synIds = ["mligo", "ligo", "jsligo"];
+const synIds = ["mligo", "jsligo"];
 const hardcodedTemplates = [
   { id: "empty", gitLink: undefined, display: "Empty Project", existingSyntaxes: synIds },
   { id: "increment", gitLink: undefined, display: "Increment", existingSyntaxes: synIds },

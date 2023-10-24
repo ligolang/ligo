@@ -47,17 +47,17 @@ const main = (word : string, store : storage) : ret
   => [list([]) , store + " " + word]
 
 /* view 'view1', simply returns the storage */
-// @view
+@view
 const view1 = (_arg : unit, s : storage) : storage
   => s;
 
 /* view 'v2', returns true if the storage has a given length */
-// @view
+@view
 const v2 = (expected_length : nat , s : storage) : bool
   => (String.length (s) == expected_length);
 
 /* view 'view3' does not use its parameters and returns a constant int */
-// @view
+@view
 const view3 = (_arg : unit , _s : storage) : int
   => 42;
 ```

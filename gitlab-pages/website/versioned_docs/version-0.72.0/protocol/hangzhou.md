@@ -268,15 +268,15 @@ type storage = string
 let main = ([_ , s]: [unit , storage]) : [ list<operation> , storage] => [list([]), s];
 
 /* view 'view1', simply returns the storage */
-// @view
+@view
 let view1 = ([_ , s]: [unit , storage]) : storage => s;
 
 /* view 'v2', returns true if the storage has a given length */
-// @view
+@view
 let v2 = ([expected_length,s] : [nat , storage]) : bool => (String.length (s) == expected_length);
 
 /* view 'view3' returns a constant int */
-// @view
+@view
 let view3 = ([_ , _s]: [unit , storage]) : int => 42;
 ```
 
