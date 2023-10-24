@@ -1,0 +1,7 @@
+
+author: prometheansacrifice
+description: "\\nWhen a package cannot be found on the registry, error message now says \"Package cannot be found\", instead of the earlier \"Unable to access registry...\"\\n\\n"
+merge_request: '2939'
+title: "Package management: fixes wrong error message when package is not found"
+type: fixed
+            
