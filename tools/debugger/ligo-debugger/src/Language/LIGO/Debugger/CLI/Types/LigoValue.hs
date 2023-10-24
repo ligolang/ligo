@@ -128,20 +128,15 @@ data LigoConstant
   | LCKeyHash Text
   | LCKey Text
   | LCSignature Text
-  | LCBls LigoBLS12381
+  | LCBls12_381Fr Text
+  | LCBls12_381G1 Text
+  | LCBls12_381G2 Text
   | LCChainId Text
   | LCInt Text
   | LCInt64 Integer
   | LCMutez Text
   | LCBool Bool
   | LCUnit
-  deriving stock (Generic, Show, Eq, Data)
-  deriving anyclass (NFData)
-
-data LigoBLS12381
-  = LBls12381G1 ByteString
-  | LBls12381G2 ByteString
-  | LBls12381Fr ByteString
   deriving stock (Generic, Show, Eq, Data)
   deriving anyclass (NFData)
 
@@ -194,7 +189,7 @@ tryDecompilePrimitive (SomeValue val) = case val of
   T.VKey pk -> mkConstant (LCKey $ pretty pk)
   T.VUnit -> mkConstant LCUnit
   T.VSignature sig -> mkConstant (LCSignature $ pretty sig)
-  T.VChainId chainId -> mkConstant (LCChainId $ decodeUtf8 $ T.unChainId chainId)
+  T.VChainId chainId -> mkConstant (LCChainId $ pretty chainId)
   T.VContract addr (T.SomeEpc T.EntrypointCall{..}) ->
     mkConstant
       (LCContract $ LigoContract (pretty addr)
@@ -212,9 +207,9 @@ tryDecompilePrimitive (SomeValue val) = case val of
     mkConstant
       (LCContract $ LigoContract (pretty eaAddress)
       (guard (not $ U.isDefEpName eaEntrypoint) >> pure (pretty eaEntrypoint)))
-  T.VBls12381Fr bls -> mkConstant (LCBls $ LBls12381Fr $ toMichelsonBytes bls)
-  T.VBls12381G1 bls -> mkConstant (LCBls $ LBls12381G1 $ toMichelsonBytes bls)
-  T.VBls12381G2 bls -> mkConstant (LCBls $ LBls12381G2 $ toMichelsonBytes bls)
+  T.VBls12381Fr bls -> mkConstant (LCBls12_381Fr $ [int||0x#{hexF $ toMichelsonBytes bls}|])
+  T.VBls12381G1 bls -> mkConstant (LCBls12_381G1 $ [int||0x#{hexF $ toMichelsonBytes bls}|])
+  T.VBls12381G2 bls -> mkConstant (LCBls12_381G2 $ [int||0x#{hexF $ toMichelsonBytes bls}|])
   _ -> Nothing
   where
     mkConstant :: LigoConstant -> Maybe LigoValue
@@ -281,9 +276,6 @@ instance FromJSON LigoMutFlag where
 -- The second one @drop 1@ removes an underscore. This is because
 -- @toSnakeCase@ function adds an underscore if string starts with a capital letter
 -- (e.g. SomeCtor -> _some_ctor).
-
-instance FromJSON LigoBLS12381 where
-  parseJSON = const empty
 
 instance FromJSON LigoConstant where
   parseJSON val = twoElemParser val <|> (LCUnit <$ guardOneElemList "unit" val)
@@ -411,7 +403,7 @@ buildLigoValue = buildLigoValue' Caml DpmNormal
 buildConstant' :: Lang -> DebugPrintMode -> LigoConstant -> Doc
 buildConstant' lang mode = \case
   LCString str -> build $ Debug.show @Text str
-  LCBytes bts ->  [int||0x#{buildBytes bts}|]
+  LCBytes bts -> build bts
   LCAddress addr -> case (mode, lang) of
     (DpmNormal, _) -> build addr
     (DpmEvaluated, Caml) ->  [int||(#{addr} : address)|]
@@ -431,10 +423,10 @@ buildConstant' lang mode = \case
     (DpmNormal, _) -> build sign
     (DpmEvaluated, Caml) ->  [int||("#{sign}" : signature)|]
     (DpmEvaluated, Js) ->  [int||("#{sign}" as signature)|]
-  LCBls (LBls12381G1 bts) ->  [int||0x#{hexF bts}|]
-  LCBls (LBls12381G2 bts) ->  [int||0x#{hexF bts}|]
-  LCBls (LBls12381Fr bts) ->  [int||0x#{hexF bts}|]
-  LCChainId bts -> buildChainId bts
+  LCBls12_381G1 bls -> build bls
+  LCBls12_381G2 bls -> build bls
+  LCBls12_381Fr bls -> build bls
+  LCChainId chainId -> build chainId
   LCInt n -> build n
   LCInt64 n -> build n
   LCMutez n ->  [int||#{n}mutez|]
@@ -452,12 +444,6 @@ buildConstant' lang mode = \case
         & build
     buildTimestamp other =
       throw (PluginCommunicationException [int||Unexpected string in timestamp: #{other}|])
-
-    buildBytes :: Text -> Builder
-    buildBytes bts = pretty $ hexF @ByteString $ encodeUtf8 bts
-
-    buildChainId :: Text -> Doc
-    buildChainId = build . T.UnsafeChainId . encodeUtf8
 
 buildConstant :: LigoConstant -> Doc
 buildConstant = buildConstant' Caml DpmNormal

@@ -1874,7 +1874,7 @@ test_Snapshots = testGroup "Snapshots collection"
         let largeValue = LVConstructor
               ( "Go"
               , LVRecord $ HM.fromList
-                  [ (LLabel "ch", LVCt $ LCChainId "\0\0\0\0")
+                  [ (LLabel "ch", LVCt $ LCChainId "NetXH12Aer3be93")
                   , (LLabel "state", LVConstructor ("A", LVCt $ LCTimestamp "100"))
                   , (LLabel "s", LVCt $ LCString "large")
                   ]

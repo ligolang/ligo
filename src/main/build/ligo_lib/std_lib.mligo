@@ -269,18 +269,18 @@ module Dynamic_entrypoints = struct
   [@private] let cast_dynamic_entrypoint (type p s) (x : (p,s) dynamic_entrypoint) : nat =
     [%external ("CAST_DYNAMIC_ENTRYPOINT", x)]
 
-  let set (type p s) : 
-        (p, s) dynamic_entrypoint 
-      -> (p, s) entrypoint option 
-      -> dynamic_entrypoints 
+  let set (type p s) :
+        (p, s) dynamic_entrypoint
+      -> (p, s) entrypoint option
+      -> dynamic_entrypoints
       -> dynamic_entrypoints =
     fun k v_opt dyns ->
       let v_opt = Option.map Bytes.pack v_opt in
       Big_map.update (cast_dynamic_entrypoint k) v_opt dyns
 
-  let get (type p s) : 
+  let get (type p s) :
         (p, s) dynamic_entrypoint
-      -> dynamic_entrypoints 
+      -> dynamic_entrypoints
       -> (p, s) entrypoint option =
     fun k dyns ->
       let res_opt = Big_map.find_opt (cast_dynamic_entrypoint k) dyns in
@@ -289,11 +289,11 @@ module Dynamic_entrypoints = struct
           let f_opt : (p -> s -> operation list * s) option = Bytes.unpack dyn_f in
           Option.value_exn () f_opt)
         res_opt
-  
-  let set_bytes (type p s) : 
-        (p, s) dynamic_entrypoint 
-      -> bytes option 
-      -> dynamic_entrypoints 
+
+  let set_bytes (type p s) :
+        (p, s) dynamic_entrypoint
+      -> bytes option
+      -> dynamic_entrypoints
       -> dynamic_entrypoints =
     fun k v_opt dyns ->
       Big_map.update (cast_dynamic_entrypoint k) v_opt dyns
@@ -391,6 +391,7 @@ module Test = struct
   let drop_context (u : unit) : unit = [%external ("TEST_DROP_CONTEXT", u)]
   let to_string (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 0)]
   let to_json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 1)]
+  let to_debugger_json (type a) (v : a) : string = [%external ("TEST_TO_STRING", v, 2)]
   let set_baker_policy (bp : test_baker_policy) : unit = [%external ("TEST_SET_BAKER", bp)]
   let set_baker (a : address) : unit = set_baker_policy (By_account a)
   let size (type p s) (c : (p,s) michelson_contract) : int = [%external ("TEST_SIZE", c)]
@@ -677,7 +678,7 @@ module Test = struct
       match get_storage taddr with
       | Some addr -> (cast_address addr : (vp,whole_s) typed_address)
       | None -> failwith "internal error"
-    
+
     let get_storage (type p s s2) (t : (p, s) typed_address) : s2 =
       let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
       (decompile s : s2)

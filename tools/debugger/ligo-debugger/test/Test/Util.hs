@@ -516,8 +516,7 @@ combLayout = LLInner . fmap LLField
 -- This combinator allows to run tests in legacy mode
 -- with @tree@ layout by default.
 legacyMode :: IO a -> IO a
-legacyMode act = do
-  setEnv "LIGO_LEGACY_LAYOUT_TREE" "1"
-  res <- act
-  unsetEnv "LIGO_LEGACY_LAYOUT_TREE"
-  pure res
+legacyMode act = bracket_
+  (setEnv "LIGO_LEGACY_LAYOUT_TREE" "1")
+  (unsetEnv "LIGO_LEGACY_LAYOUT_TREE")
+  act
