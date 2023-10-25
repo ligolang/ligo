@@ -197,7 +197,7 @@ tryDecompilePrimitive (SomeValue val) = case val of
   T.VInt n -> mkConstant (LCInt $ pretty n)
   T.VNat n -> mkConstant (LCNat $ pretty n)
   T.VString str -> mkConstant (LCString $ pretty str)
-  T.VBytes bts -> mkConstant (LCBytes $ decodeUtf8 bts)
+  T.VBytes bts -> mkConstant (LCBytes [int||0x#{hexF bts}|])
   T.VMutez mu -> mkConstant (LCMutez $ show $ T.unMutez mu)
   T.VBool bVal -> mkConstant (LCBool bVal)
   T.VKeyHash ha -> mkConstant (LCKeyHash $ pretty ha)
