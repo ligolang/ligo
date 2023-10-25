@@ -1,0 +1,7 @@
+
+author: tomjack
+description: "\\nDisable `opt_cond` Michelson optimization when debugging.\\n\\n"
+merge_request: '2935'
+title: "Suppress opt_cond Michelson optimization for debugging"
+type: fixed
+            

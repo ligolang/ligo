@@ -25,7 +25,12 @@ let smaller m1 m2 =
   let measure mich =
     Lwt.map Bytes.length (Proto_alpha_utils.Memory_proto_alpha.to_bytes mich)
   in
-  let optimize = optimize ~has_comment:(fun _ -> false) Environment.Protocols.current in
+  let optimize =
+    optimize
+      ~experimental_disable_optimizations_for_debugging:false
+      ~has_comment:(fun _ -> false)
+      Environment.Protocols.current
+  in
   let%bind loc1 = measure (optimize (Seq (null, m1))) in
   let%bind loc2 = measure (optimize (Seq (null, m2))) in
   Lwt.return (if loc1 <= loc2 then m1 else m2)

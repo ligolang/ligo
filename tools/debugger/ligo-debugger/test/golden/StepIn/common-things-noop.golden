@@ -1,0 +1,89 @@
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@7:9-7:10
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem s of (int * int) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Pair 0 0
+        , StackItem:
+          siLigoDesc:
+            elem p of ([@layout comb] | Noop of (unit) | Inner of (unit)) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Left Unit ] ]
+InterpretSnapshot:
+  isStatus: running / faced statement
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@8:13-8:18
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem p of ([@layout comb] | Noop of (unit) | Inner of (unit)) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Left Unit
+        , StackItem:
+          siLigoDesc:
+            elem s of (int * int) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Pair 0 0 ] ]
+InterpretSnapshot:
+  isStatus: running / upon expression
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@8:13-8:15
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem p of ([@layout comb] | Noop of (unit) | Inner of (unit)) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Left Unit
+        , StackItem:
+          siLigoDesc:
+            elem s of (int * int) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Pair 0 0 ] ]
+InterpretSnapshot:
+  isStatus: running / expression evaluated ({ } : operation list)
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@8:13-8:15
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem p of ([@layout comb] | Noop of (unit) | Inner of (unit)) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Left Unit
+        , StackItem:
+          siLigoDesc:
+            elem s of (int * int) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Pair 0 0 ] ]
+InterpretSnapshot:
+  isStatus:
+    running / expression evaluated ({ { }; 0; 0 } : (operation list * (int * int)))
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@8:13-8:18
+      sfStack:
+        [ StackItem:
+          siLigoDesc:
+            elem p of ([@layout comb] | Noop of (unit) | Inner of (unit)) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Left Unit
+        , StackItem:
+          siLigoDesc:
+            elem s of (int * int) in test/contracts/common-things-are-not-extracted.mligo
+          siValue: Pair 0 0 ] ]
+InterpretSnapshot:
+  isStatus: terminated ok
+  isStackFrames:
+    [ StackFrame:
+      sfName: main
+      sfLoc: test/contracts/common-things-are-not-extracted.mligo@8:13-8:18
+      sfStack:
+        [ StackItem:
+          siLigoDesc: elem ? of  in #generated
+          siValue: { { }; 0; 0 }
+        , StackItem:
+          siLigoDesc: elem ? of  in #generated
+          siValue: Pair 0 0 ] ]

@@ -98,6 +98,8 @@ let contract
       let%bind compiled_contract =
         Ligo_compile.Of_michelson.build_contract
           ~raise
+          ~experimental_disable_optimizations_for_debugging:
+            options.backend.experimental_disable_optimizations_for_debugging
           ~enable_typed_opt:options.backend.enable_typed_opt
           ~protocol_version:options.middle_end.protocol_version
           ~has_env_comments:options.backend.has_env_comments

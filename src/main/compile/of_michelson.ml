@@ -91,12 +91,14 @@ let dummy : Stacking.meta =
 
 (* should preserve locations, currently wipes them *)
 let build_contract ~raise
-    :  protocol_version:Environment.Protocols.t -> ?enable_typed_opt:bool
+    :  protocol_version:Environment.Protocols.t
+    -> ?experimental_disable_optimizations_for_debugging:bool -> ?enable_typed_opt:bool
     -> ?has_env_comments:bool -> ?disable_typecheck:bool -> ?constants:string list
     -> ?tezos_context:_ -> Stacking.compiled_expression
     -> (Value_var.t * Stacking.compiled_expression) list -> _ Michelson.michelson Lwt.t
   =
  fun ~protocol_version
+     ?(experimental_disable_optimizations_for_debugging = false)
      ?(enable_typed_opt = false)
      ?(has_env_comments = false)
      ?(disable_typecheck = false)
@@ -165,7 +167,7 @@ let build_contract ~raise
            (typecheck_contract_tracer protocol_version contract))
       @@ Proto_alpha_utils.Memory_proto_alpha.typecheck_contract ~environment contract'
     in
-    if enable_typed_opt
+    if enable_typed_opt && not experimental_disable_optimizations_for_debugging
     then (
       let typer_oracle : type a. (a, _) Micheline.Micheline.node -> _ Lwt.t =
        fun c ->
@@ -187,6 +189,7 @@ let build_contract ~raise
         ~raise
         ~typer_oracle
         protocol_version
+        ~experimental_disable_optimizations_for_debugging
         ~has_comment
         contract)
     else Lwt.return contract)
