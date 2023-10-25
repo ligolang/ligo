@@ -12,4 +12,20 @@ let%expect_test _ =
   [%expect
     {|
     ../../test/contracts/entry_contract_for_list_declaration.jsligo declarations:
-    Foo.$main |}]
+    Foo.$main
+    Foo.reset
+    Foo.decrement
+    Foo.increment |}];
+  run_ligo_good
+    [ "info"
+    ; "list-declarations"
+    ; "../../test/contracts/entry_contract_for_list_declaration.jsligo"
+    ; "--skip-generated"
+    ; "--only-ep"
+    ];
+  [%expect
+    {|
+    ../../test/contracts/entry_contract_for_list_declaration.jsligo declarations:
+    Foo.reset
+    Foo.decrement
+    Foo.increment |}]

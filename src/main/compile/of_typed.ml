@@ -174,10 +174,13 @@ let rec list_declarations
         when not attr.hidden ->
         if only_ep
         then
-          if is_some
-               (Ast_typed.Misc.get_type_of_contract expr.type_expression.type_content)
+          if is_some (Ast_typed.Misc.get_type_of_contract expr.type_expression)
              && (not (should_skip binder))
              && is_generated_main binder
+          then Binder.get_var binder :: prev
+          else if is_some (Ast_typed.Misc.get_type_of_entrypoint expr.type_expression)
+                  && (not (should_skip binder))
+                  && attr.entry
           then Binder.get_var binder :: prev
           else prev
         else if not (should_skip binder)

@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '2947'
+title: "List-declarations: fix `--only-ep` for non-generated `@entry` marked"
+type: fixed
+            
