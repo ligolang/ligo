@@ -952,11 +952,12 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
 let optimize
     : type meta.
       Environment.Protocols.t
+      -> experimental_disable_optimizations_for_debugging:bool
       -> has_comment:(meta -> bool)
       -> meta michelson
       -> meta michelson
   =
- fun proto ~has_comment x ->
+ fun proto ~experimental_disable_optimizations_for_debugging ~has_comment x ->
   ignore proto;
   let x = flatten_seqs ~has_comment x in
   let x = opt_tail_fail x in
@@ -968,7 +969,11 @@ let optimize
     ; peephole @@ peep3 opt_dip3
     ; peephole @@ peep2 opt_dip2
     ; peephole @@ peep1 opt_dip1
-    ; peephole @@ peep1 opt_cond
+    ; (peephole
+      @@
+      if experimental_disable_optimizations_for_debugging
+      then No_change
+      else peep1 opt_cond)
     ; peephole @@ peep2 opt_swap2
     ; peephole @@ peep3 opt_beta3
     ; peephole @@ peep5 opt_beta5
@@ -1016,11 +1021,17 @@ let rec optimize_with_types
             -> Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_tc_errors.type_map
                Lwt.t)
       -> Environment.Protocols.t
+      -> experimental_disable_optimizations_for_debugging:bool
       -> has_comment:(l -> bool)
       -> l michelson
       -> l michelson Lwt.t
   =
- fun ~raise ~typer_oracle proto ~has_comment contract ->
+ fun ~raise
+     ~typer_oracle
+     proto
+     ~experimental_disable_optimizations_for_debugging
+     ~has_comment
+     contract ->
   let open Lwt.Let_syntax in
   let node_string_of_canonical c =
     let c =
@@ -1063,7 +1074,12 @@ let rec optimize_with_types
     let code =
       Tezos_micheline.Micheline.map_node (fun x -> recover_loc x) (fun x -> x) code
     in
-    let code = if changed then optimize proto ~has_comment code else code in
+    let code =
+      if changed
+      then
+        optimize proto ~experimental_disable_optimizations_for_debugging ~has_comment code
+      else code
+    in
     let recover_locs node =
       Tezos_micheline.Micheline.map_node
         recover_loc
@@ -1080,6 +1096,13 @@ let rec optimize_with_types
           @ List.map ~f:recover_locs rest )
     in
     if changed
-    then optimize_with_types ~raise ~typer_oracle proto ~has_comment contract
+    then
+      optimize_with_types
+        ~raise
+        ~typer_oracle
+        proto
+        ~experimental_disable_optimizations_for_debugging
+        ~has_comment
+        contract
     else Lwt.return contract
   | _ -> Lwt.return contract

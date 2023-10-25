@@ -12,6 +12,7 @@ module Test.Navigation
   , test_local_function_assignments_are_statements
   , test_record_update_is_statement
   , test_partially_applied_functions
+  , test_Common_things_are_not_extracted
   , test_Module_entrypoints
   , test_Next_golden
   , test_StepOut_golden
@@ -218,6 +219,31 @@ test_partially_applied_functions = testGroup "Partially applied functions"
         (dumpAllAppliedMetas doStep)
   | ext <- supportedExtensions
   ]
+
+test_Common_things_are_not_extracted :: TestTree
+test_Common_things_are_not_extracted = testGroup "Common things are not extracted"
+  [ goldenTestWithSnapshots [int||Common things #{paramName}|]
+      "StepIn"
+      ContractRunData
+        { crdProgram = contractsDir </> "common-things-are-not-extracted.mligo"
+        , crdModuleName = Nothing
+        , crdParam = param
+        , crdStorage = (0 :: Integer, 0 :: Integer)
+        }
+      (dumpAllSnapshotsWithStep doStep)
+  | (param, paramName) <-
+      [ (noopParam, "noop" :: Text)
+      , (innerParam, "inner")
+      ]
+  ]
+  where
+    doStep = processLigoStep (CStepIn GExpExt)
+
+    noopParam :: Either () ()
+    noopParam = Left ()
+
+    innerParam :: Either () ()
+    innerParam = Right ()
 
 test_Module_entrypoints :: TestTree
 test_Module_entrypoints = testGroup "Module entrypoints"
