@@ -4,7 +4,8 @@ open Ligo_prim
 val assert_no_type_vars : type_expression -> unit option
 val assert_type_expression_eq : type_expression * type_expression -> unit option
 val get_entry : module_ -> Value_var.t -> expression option
-val get_type_of_contract : type_content -> (type_expression * type_expression) option
+val get_type_of_contract : type_expression -> (type_expression * type_expression) option
+val get_type_of_entrypoint : type_expression -> (type_expression * type_expression) option
 val build_entry_type : type_expression -> type_expression -> type_expression
 
 val parameter_from_entrypoints

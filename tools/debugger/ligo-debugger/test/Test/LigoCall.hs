@@ -105,7 +105,7 @@ test_ModuleNamesCollection = testGroup "Getting module names"
       let file = contractsDir </> "two-module-names.mligo"
 
       ModuleNamesList res <- getAvailableModules file
-      res @~=? ["Main1.$main", "Main2.$main"]
+      res @~=? ["Main1.main1", "Main1.$main", "Main2.main2", "Main2.$main"]
 
   , testCase "Zero module names" do
       let file = contractsDir </> "no-modules.mligo"
