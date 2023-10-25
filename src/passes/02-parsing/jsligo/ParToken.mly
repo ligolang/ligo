@@ -146,6 +146,7 @@
 (* TypeScript keywords *)
 
 %token <string Wrap.t> As         "as"         [@recover.expr Token.wrap_as         $loc]
+%token <string Wrap.t> Extends    "extends"    [@recover.expr Token.wrap_extends    $loc]
 %token <string Wrap.t> Function   "function"   [@recover.expr Token.wrap_function   $loc]
 %token <string Wrap.t> Implements "implements" [@recover.expr Token.wrap_implements $loc]
 %token <string Wrap.t> Interface  "interface"  [@recover.expr Token.wrap_interface  $loc]

@@ -63,10 +63,10 @@ module Type_decl (Attr : Attr) = struct
 end
 
 module Module_decl (Attr : Attr) = struct
-  type ('module_expr, 'signature_expr) t =
+  type ('module_expr, 'annotation) t =
     { module_binder : Var.Module_var.t
     ; module_ : 'module_expr
-    ; annotation : 'signature_expr
+    ; annotation : 'annotation
     ; module_attr : Attr.t
     }
   [@@deriving eq, compare, yojson, hash, fold, map]

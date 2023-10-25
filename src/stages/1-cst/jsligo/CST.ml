@@ -45,6 +45,7 @@ type kwd_default      = lexeme wrap
 type kwd_do           = lexeme wrap
 type kwd_else         = lexeme wrap
 type kwd_export       = lexeme wrap
+type kwd_extends      = lexeme wrap
 type kwd_false        = lexeme wrap [@@deriving yojson_of]
 type kwd_for          = lexeme wrap
 type kwd_from         = lexeme wrap
@@ -104,7 +105,7 @@ type minus      = lexeme wrap [@@deriving yojson_of]  (* -   *)
 type neq        = lexeme wrap [@@deriving yojson_of]  (* !=  *)
 type plus_eq    = lexeme wrap [@@deriving yojson_of]  (* +=  *)
 type plus       = lexeme wrap [@@deriving yojson_of]  (* +   *)
-type qmark      = lexeme wrap  (* ?   *)
+type qmark      = lexeme wrap [@@deriving yojson_of]  (* ?   *)
 type rbrace     = lexeme wrap  (* }   *)
 type rbracket   = lexeme wrap  (* ]   *)
 type remainder  = lexeme wrap [@@deriving yojson_of]  (* %   *)
@@ -246,6 +247,7 @@ and 'a namespace_path = {
 and interface_decl = {
   kwd_interface : (kwd_interface [@yojson.opaque]);
   intf_name     : intf_name;
+  intf_extends  : extends option;
   intf_body     : intf_body
 }
 
@@ -267,8 +269,11 @@ and intf_type = {
 and intf_const = {
   kwd_const  : (kwd_const [@yojson.opaque]);
   const_name : variable;
+  const_optional : (qmark option [@yojson.opaque]);
   const_type : type_annotation
 }
+
+and extends = ((kwd_extends [@yojson.opaque]) * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
 
 (* Namespace declaration *)
 
@@ -279,7 +284,7 @@ and namespace_decl = {
   namespace_body : statements braces
 }
 
-and interface = ((kwd_implements [@yojson.opaque]) * intf_expr) reg
+and interface = ((kwd_implements [@yojson.opaque]) * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
 
 and intf_expr =
   I_Body of intf_body

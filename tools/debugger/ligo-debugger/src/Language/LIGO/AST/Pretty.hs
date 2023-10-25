@@ -168,7 +168,7 @@ instance Pretty1 Binding where
         , ["=", body]
         ]
 
-    BSignature name sig   -> sexpr "signature" [name, sig]
+    BSignature name sig sigs   -> sexpr "signature" [name, sig, list sigs]
     BExport decl          -> sexpr "export" [decl]
     BDeclarationSeq decls -> sexpr "declarations" decls
 
@@ -198,6 +198,7 @@ instance Pretty1 SigItem where
   pp1 = \case
     SValue name typ -> sexpr "SVALUE" [name, typ]
     SType name typMb -> sexpr "STYPE" [name, fromMaybe "" typMb]
+    SInclude incl -> sexpr "INCLUDE" [incl]
 
 instance Pretty1 Variant where
   pp1 = \case
@@ -458,6 +459,7 @@ instance LPP1 'Js SigItem where
       case typMb of
         Nothing -> pref
         Just typ -> pref <+> "=" <+> typ
+    node -> error "unexpected sig item" <+> pp node
 
 instance LPP1 'Js TypeVariableName where
   lpp1 = \case
@@ -476,7 +478,13 @@ instance LPP1 'Js Binding where
     BParameter    name ty       -> pp name <> maybe "" ((":" <+>) . lpp) ty
     BModuleDecl   mname _ body    -> "export namespace" <+> lpp mname <+> brackets (lpp body) <+> ";" -- TODO: later add information about export in AST
     BModuleAlias  mname _ alias   -> "import" <+> lpp mname <+> " = "<+> lpp alias <+> ";"
-    BSignature    sname sig     -> "interface" <+> sname <+> braces sig
+    BSignature    sname sig sigs  ->
+      let extends =
+            if null sigs
+            then DPretty.empty
+            else "extends" <+> train "," sigs
+      in
+      "interface" <+> sname <+> extends <+> braces sig
     node                        -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Js QuotedTypeParams where
@@ -629,6 +637,7 @@ instance LPP1 'Caml SigItem where
       case typMb of
         Nothing -> pref
         Just typ -> pref <+> "=" <+> typ
+    SInclude incl -> "include" <+> incl
 
 instance LPP1 'Caml TypeVariableName where
   lpp1 = \case
@@ -653,8 +662,8 @@ instance LPP1 'Caml Binding where
         , ["=", body]
         ]
 
-    BSignature sname sig      -> "module type" <+> sname <+> "= sig" <+> sig <+> "end"
-    node                      -> error "unexpected `Binding` node failed with: " <+> pp node
+    BSignature sname sig _ -> "module type" <+> sname <+> "= sig" <+> sig <+> "end"
+    node                   -> error "unexpected `Binding` node failed with: " <+> pp node
 
 instance LPP1 'Caml QuotedTypeParams where
   lpp1 = \case

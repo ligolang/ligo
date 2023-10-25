@@ -9,6 +9,7 @@ module Attrs : sig
       ; dyn_entry : bool
       ; view : bool
       ; public : bool
+      ; optional : bool
       }
     [@@deriving compare, hash, equal]
 

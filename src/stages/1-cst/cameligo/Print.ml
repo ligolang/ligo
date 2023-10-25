@@ -81,6 +81,7 @@ and print_sig_item state = function
 | S_Value   d -> print_S_Value   state d
 | S_Type    d -> print_S_Type    state d
 | S_TypeVar d -> print_S_TypeVar state d
+| S_Include d -> print_S_Include state d
 
 (* Attributed declaration *)
 
@@ -263,6 +264,14 @@ and print_S_TypeVar state (node : (kwd_type * variable) reg) =
   let _kwd_type, var = value in
   let children = Tree.[mk_child print_variable var]
   in Tree.make ~region state "S_TypeVar" children
+
+(* Include (signature) *)
+
+and print_S_Include state (node : (kwd_include * signature_expr) reg) =
+  let Region.{value; region} = node in
+  let _kwd_include, sig_expr = value in
+  let children = Tree.[mk_child print_signature_expr sig_expr]
+  in Tree.make ~region state "S_Include" children
 
 (* TYPE EXPRESSIONS *)
 

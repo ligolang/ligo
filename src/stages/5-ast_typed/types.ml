@@ -125,6 +125,7 @@ and sig_item_attribute =
   { dyn_entry : bool
   ; entry : bool
   ; view : bool
+  ; optional : bool
   }
 
 and signature =

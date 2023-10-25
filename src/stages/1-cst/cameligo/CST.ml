@@ -255,6 +255,7 @@ and sig_item =
   S_Value   of ((kwd_val [@yojson.opaque]) * variable * (colon [@yojson.opaque]) * type_expr) reg
 | S_Type    of ((kwd_type [@yojson.opaque]) * type_name * (equal [@yojson.opaque]) * type_expr) reg
 | S_TypeVar of ((kwd_type [@yojson.opaque]) * type_name) reg
+| S_Include of ((kwd_include [@yojson.opaque]) * signature_expr) reg
 | S_Attr    of ((attribute [@yojson.opaque]) * sig_item) reg
 
 (* Module paths *)
@@ -790,4 +791,5 @@ let sig_item_to_region = function
   S_Attr    {region; _}
 | S_Value   {region; _}
 | S_Type    {region; _}
+| S_Include {region; _}
 | S_TypeVar {region; _} -> region

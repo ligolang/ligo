@@ -156,7 +156,7 @@ let rec decl : declaration -> Statement_result.t =
           })
   | D_module { name; mod_expr; annotation = _TODO } ->
     Binding (fun x -> e_mod_in ~loc { module_name = name; rhs = mod_expr; body = x })
-  | D_signature { name = _; sig_expr = _ } -> Binding Fun.id
+  | D_signature { name = _; sig_expr = _; extends = _ } -> Binding Fun.id
   | D_type { name; type_expr } ->
     Binding
       (fun x ->

@@ -450,6 +450,7 @@ data SigItem
   = SValue (Reg (WrappedLexeme, TypeExpr))
   | SType (Reg (WrappedLexeme, TypeExpr))
   | STypeVar (Reg (Tuple1 WrappedLexeme))
+  | SInclude (Reg (Tuple1 SignatureExpr))
   | SAttr (Reg (Tuple1 SigItem))
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
@@ -795,6 +796,7 @@ instance MessagePack SigItem where
     [ SValue   <$> (guardMsg (name == "S_Value"  ) >> fromObjectWith cfg arg)
     , SType    <$> (guardMsg (name == "S_Type"   ) >> fromObjectWith cfg arg)
     , STypeVar <$> (guardMsg (name == "S_TypeVar") >> fromObjectWith cfg arg)
+    , SInclude <$> (guardMsg (name == "S_Include") >> fromObjectWith cfg arg)
     , SAttr    <$> (guardMsg (name == "S_Attr"   ) >> fromObjectWith cfg arg)
     ]
 
@@ -899,7 +901,7 @@ toAST CST{..} =
       let
         name = makeWrappedLexeme AST.ModuleName sdName
         signature = signatureExprConv sdSignatureExpr
-      in fastMake r (AST.BSignature name signature)
+      in fastMake r (AST.BSignature name signature [])
 
     letDeclConv :: Range -> LetDecl -> LIGO Info
     letDeclConv r LetDecl{ldLetBinding = LetBinding{..}, ..} =
@@ -1246,7 +1248,7 @@ toAST CST{..} =
         modExpr = moduleExprConv mdModuleExpr
       in
         case mdModuleExpr of
-          MBody{} -> fastMake r (AST.BModuleDecl name annMb modExpr)
+          MBody{} -> fastMake r (AST.BModuleDecl name (one <$> annMb) modExpr)
           _ -> fastMake r (AST.BModuleAlias name annMb modExpr)
 
     signatureExprConv :: SignatureExpr -> LIGO Info
@@ -1272,6 +1274,8 @@ toAST CST{..} =
               let
                 typName = makeWrappedLexeme AST.TypeName name
               in fastMake r' (AST.SType typName Nothing)
+            SInclude (unpackReg -> (r', (Tuple1 sigExpr))) ->
+              fastMake r' (AST.SInclude $ signatureExprConv sigExpr)
             SAttr (unpackReg -> (_, (Tuple1 sigItem))) -> sigItemConv sigItem
 
     typeDeclConv :: Reg TypeDecl -> LIGO Info

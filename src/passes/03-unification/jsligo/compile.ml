@@ -793,7 +793,10 @@ and declaration : Eq.declaration -> Folding.declaration =
   | D_Namespace { value; _ } ->
     let I.{ kwd_namespace; namespace_name; namespace_type; namespace_body } = value in
     let annotation =
-      Option.map ~f:(fun { region = _; value = _, value } -> value) namespace_type
+      match namespace_type with
+      | None -> O.Mod_decl.{ signatures = []; filter = false }
+      | Some { region; value = _, value } ->
+        O.Mod_decl.{ signatures = nsepseq_to_list value; filter = false }
     in
     let name = TODO_do_in_parsing.mvar namespace_name in
     let mod_expr = namespace_body.value.inside in
@@ -825,9 +828,14 @@ and declaration : Eq.declaration -> Folding.declaration =
     in
     return @@ D_import import
   | D_Interface { value; _ } ->
-    let I.{ kwd_interface; intf_name; intf_body } = value in
+    let I.{ kwd_interface; intf_name; intf_extends; intf_body } = value in
     let name = TODO_do_in_parsing.mvar intf_name in
-    return @@ O.D_signature { name; sig_expr = I_Body intf_body }
+    let extends : I.intf_expr list =
+      match intf_extends with
+      | None -> []
+      | Some { region; value = _, value } -> nsepseq_to_list value
+    in
+    return @@ O.D_signature { name; sig_expr = I_Body intf_body; extends }
   | D_Value { value; _ } ->
     let I.{ kind; bindings } = value in
     let bindings =
@@ -918,7 +926,7 @@ and sig_entry : Eq.sig_entry -> Folding.sig_entry =
     | None -> return ~loc @@ O.S_type_var var
     | Some (_, type_rhs) -> return ~loc @@ O.S_type (var, type_rhs))
   | I_Const { value; _ } ->
-    let I.{ const_name; const_type; _ } = value in
+    let I.{ const_name; const_type; const_optional; _ } = value in
     let var = TODO_do_in_parsing.esc_var const_name in
     let _, type_ = const_type in
-    return ~loc @@ O.S_value (var, type_)
+    return ~loc @@ O.S_value (var, type_, Option.is_some const_optional)

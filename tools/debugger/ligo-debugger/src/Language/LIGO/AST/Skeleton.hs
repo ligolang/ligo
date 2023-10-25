@@ -145,9 +145,9 @@ data Binding it
   | BInclude      it
   | BImport       (Maybe it) [it] it -- ^ (Name) [Name] (ModuleAccess)
   | BExport       it
-  | BModuleDecl   it (Maybe it) it -- ^ (Name) (Signature) (ModuleExpr)
+  | BModuleDecl   it (Maybe [it]) it -- ^ (Name) (Signature) (ModuleExpr)
   | BModuleAlias  it (Maybe it) it   -- ^ (Name) (Signature) (ModuleAccess)
-  | BSignature    it it -- ^ (Name) (Signature)
+  | BSignature    it it [it] -- ^ (Name) (Signature) [Signature]
   | BDeclarationSeq [it] -- ^ (BVar | BConst)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
@@ -165,6 +165,7 @@ newtype Signature it = Signature
 data SigItem it
   = SValue it it -- ^ (Name) (TypeExpression)
   | SType it (Maybe it) -- ^ (TypeVariableName) (TypeExpression)
+  | SInclude it -- ^ Signature
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data QuotedTypeParams it

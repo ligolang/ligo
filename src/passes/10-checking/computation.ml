@@ -81,7 +81,12 @@ and encode_signature (sig_ : Ast_typed.signature) : Context.Signature.t =
 and encode_sig_item_attribute (attr : Ast_typed.sig_item_attribute)
     : Context.Attrs.Value.t
   =
-  { view = attr.view; entry = attr.entry; dyn_entry = attr.dyn_entry; public = true }
+  { view = attr.view
+  ; entry = attr.entry
+  ; dyn_entry = attr.dyn_entry
+  ; public = true
+  ; optional = attr.optional
+  }
 
 
 (* Load context from the outside declarations *)

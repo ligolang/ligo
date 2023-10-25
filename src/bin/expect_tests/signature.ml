@@ -47,15 +47,15 @@ let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl1" ];
   [%expect
     {|
-    { parameter int ;
+    { parameter (or (int %extra) (int %add)) ;
       storage int ;
-      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}];
+      code { UNPAIR ; IF_LEFT { SUB } { ADD } ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl2" ];
   [%expect
     {|
-    { parameter int ;
+    { parameter (or (int %extra) (int %add)) ;
       storage nat ;
-      code { UNPAIR ; ADD ; ABS ; NIL operation ; PAIR } } |}];
+      code { UNPAIR ; IF_LEFT { SUB } { ADD } ; ABS ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile"; "contract"; contract "FA0.impl.jsligo"; "-m"; "Impl3" ];
   [%expect
     {|

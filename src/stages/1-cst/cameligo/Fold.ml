@@ -627,7 +627,8 @@ let fold'
       S_Attr node -> node -| S_reg (S_tuple_2 (S_attribute, S_sig_item))
     | S_Value node -> node -| S_reg (S_tuple_4 (S_kwd_let, S_variable, S_colon, S_type_expr))
     | S_Type node -> node -| S_reg (S_tuple_4 (S_kwd_type, S_type_variable, S_equal, S_type_expr))
-    | S_TypeVar node -> node -| S_reg (S_tuple_2 (S_kwd_type, S_type_variable)))
+    | S_TypeVar node -> node -| S_reg (S_tuple_2 (S_kwd_type, S_type_variable))
+    | S_Include node -> node -| S_reg (S_tuple_2 (S_kwd_include, S_signature_expr)))
   | S_slash -> process @@ node -| S_wrap S_lexeme
   | S_slash_eq -> process @@ node -| S_wrap S_lexeme
   | S_string_literal -> process @@ node -| S_wrap S_lexeme

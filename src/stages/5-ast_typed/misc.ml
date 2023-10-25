@@ -428,12 +428,17 @@ let to_sig_items (module_ : module_) : sig_item list =
       | D_irrefutable_match { pattern; expr = _; attr = { view; entry; dyn_entry; _ } } ->
         List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
             ctx
-            @ [ S_value (Binder.get_var x, Binder.get_ascr x, { dyn_entry; view; entry })
+            @ [ S_value
+                  ( Binder.get_var x
+                  , Binder.get_ascr x
+                  , { dyn_entry; view; entry; optional = false } )
               ])
       | D_value { binder; expr; attr = { view; entry; dyn_entry; _ } } ->
         ctx
         @ [ S_value
-              (Binder.get_var binder, expr.type_expression, { view; entry; dyn_entry })
+              ( Binder.get_var binder
+              , expr.type_expression
+              , { view; entry; dyn_entry; optional = false } )
           ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
         ctx @ [ S_type (type_binder, type_expr) ]

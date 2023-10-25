@@ -107,7 +107,7 @@ end = struct
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       let default : O.sig_item_attribute =
-        { entry = false; view = false; dyn_entry = false }
+        { entry = false; view = false; dyn_entry = false; optional = false }
       in
       default
 
@@ -201,7 +201,7 @@ end = struct
         @@ D_irrefutable_match
              { pattern; expr = let_rhs; attr = Value_attr.default_attributes })
     | D_directive _ -> ret (dummy_top_level ())
-    | D_module { name; mod_expr; annotation = None } ->
+    | D_module { name; mod_expr; annotation = { signatures = []; filter = _ } } ->
       ret
       @@ D_module
            { module_binder = name
@@ -209,19 +209,30 @@ end = struct
            ; annotation = None
            ; module_attr = Type_or_module_attr.default_attributes
            }
-    | D_module { name; mod_expr; annotation = Some signature } ->
+    | D_module { name; mod_expr; annotation = { signatures = annotation; filter } } ->
+      let items : O.sig_item list =
+        List.map ~f:(fun sig_ -> O.S_include sig_) annotation
+      in
+      let signature : O.signature_expr =
+        Location.wrap ~loc:Location.generated (O.S_sig { items })
+      in
       ret
       @@ D_module
            { module_binder = name
            ; module_ = mod_expr
-           ; annotation = Some signature
+           ; annotation = Some { signature; filter }
            ; module_attr = O.TypeOrModuleAttr.default_attributes
            }
-    | D_signature { name; sig_expr } ->
+    | D_signature { name; sig_expr; extends } ->
+      let items : O.sig_item list = List.map ~f:(fun sig_ -> O.S_include sig_) extends in
+      let loc = Location.get_location sig_expr in
+      let sig_ = Location.unwrap sig_expr in
+      let items = items @ [ O.S_include (Location.wrap ~loc sig_) ] in
+      let signature = Location.wrap ~loc @@ O.S_sig { items } in
       ret
       @@ D_signature
            { signature_binder = name
-           ; signature = sig_expr
+           ; signature
            ; signature_attr = Signature_attr.default_attributes
            }
     | D_type { name; type_expr } ->
@@ -527,17 +538,18 @@ end = struct
       : (O.signature_expr, O.sig_item, O.type_expression) I.Types.sig_entry_ -> O.sig_item
     =
    fun item ->
-    let attr : O.sig_item_attribute =
-      { entry = false; view = false; dyn_entry = false }
+    let attr optional : O.sig_item_attribute =
+      { entry = false; view = false; dyn_entry = false; optional }
     in
     match Location.unwrap item with
-    | S_value (v, ty) -> S_value (v, ty, attr)
+    | S_value (v, ty, optional) -> S_value (v, ty, attr optional)
     | S_type (v, ty) -> S_type (v, ty)
     | S_type_var v -> S_type_var v
     | S_attr (attr', S_value (v, ty, attr)) ->
       let location = Location.get_location item in
       let attr = conv_vsigitem_attr ~raise location attr attr' in
       S_value (v, ty, attr)
+    | S_include se -> S_include se
     | _ ->
       invariant @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_sig_entry_ ig ig ig item)
 end

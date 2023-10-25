@@ -79,11 +79,17 @@ and expression =
 
 and expr = expression [@@deriving eq, compare, yojson, hash]
 
+and module_annotation =
+  { signature : signature_expr
+  ; filter : bool
+  }
+[@@deriving yojson, eq, compare, hash]
+
 and declaration_content =
   | D_value of (expr, ty_expr option) Value_decl.t
   | D_irrefutable_match of (expr, ty_expr option) Pattern_decl.t
   | D_type of ty_expr Type_decl.t
-  | D_module of (module_expr, signature_expr option) Module_decl.t
+  | D_module of (module_expr, module_annotation option) Module_decl.t
   | D_module_include of module_expr
   | D_signature of signature_expr Signature_decl.t
 
@@ -98,11 +104,13 @@ and sig_item =
   | S_type_var of Type_var.t
   | S_module of Module_var.t * signature
   | S_module_type of Module_var.t * signature
+  | S_include of signature_expr
 
 and sig_item_attribute =
   { entry : bool
   ; view : bool
   ; dyn_entry : bool
+  ; optional : bool
   }
 
 and signature = { items : sig_item list }

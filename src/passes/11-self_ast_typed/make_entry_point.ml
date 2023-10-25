@@ -43,8 +43,10 @@ let def_value var (expr : Ast_typed.expression) : Module.item =
          ; expr
          ; attr = Value_attr.default_attributes
          }
-  , S_value (var, expr.type_expression, { entry = false; dyn_entry = false; view = false })
-  )
+  , S_value
+      ( var
+      , expr.type_expression
+      , { entry = false; dyn_entry = false; view = false; optional = false } ) )
 
 
 let let_value var expr ~in_ =
