@@ -80,7 +80,7 @@ let error_ppformat
     | `Self_ast_typed_bad_view_io (entrypoint, loc) ->
       Format.fprintf
         f
-        "@[<hv>%a@.Invalid type for view \"%a\".@.An view must be a function. @]"
+        "@[<hv>%a@.Invalid type for view \"%a\".@.A view must be a function. @]"
         snippet_pp
         loc
         Module_var.pp
@@ -143,7 +143,7 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
   | `Self_ast_typed_bad_view_io (entrypoint, location) ->
     let message =
       Format.asprintf
-        "Invalid type for view \"%a\".@.An view must be a function."
+        "Invalid type for view \"%a\".@.A view must be a function."
         Module_var.pp
         entrypoint
     in
