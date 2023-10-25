@@ -101,7 +101,7 @@ let fv_folder =
     | D_irrefutable_match { pattern; expr = _ } ->
       let binders = Combinators.get_pattern_binders pattern in
       singleton binders
-    | D_signature { name = _; sig_expr = _ } -> empty
+    | D_signature { name = _; sig_expr = _; extends = _ } -> empty
     | _ -> empty
   in
   let block : _ block_ -> bound = fold_block_ union union empty in
@@ -111,7 +111,7 @@ let fv_folder =
   let sig_entry : _ sig_entry_ -> bound =
    fun si ->
     match Location.unwrap si with
-    | S_value (v, _) -> singleton [ v ]
+    | S_value (v, _, _) -> singleton [ v ]
     | S_attr (_, si) -> si
     | _ -> empty
   in

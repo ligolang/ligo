@@ -68,6 +68,7 @@ type _ sing =
   | S_equal : equal sing
   | S_equal_cmp : equal_cmp sing
   | S_expr : expr sing
+  | S_extends : extends sing
   | S_file_path : file_path sing
   | S_for_of_stmt : for_of_stmt sing
   | S_for_stmt : for_stmt sing
@@ -110,6 +111,7 @@ type _ sing =
   | S_kwd_do : kwd_do sing
   | S_kwd_else : kwd_else sing
   | S_kwd_export : kwd_export sing
+  | S_kwd_extends : kwd_extends sing
   | S_kwd_false : kwd_false sing
   | S_kwd_for : kwd_for sing
   | S_kwd_from : kwd_from sing
@@ -444,6 +446,7 @@ let fold'
     | E_Verbatim node -> node -| S_verbatim_literal
     | E_Xor node -> node -| S_reg (S_bin_op S_bool_xor)
     )
+  | S_extends -> process @@ node -| S_reg (S_array_2 (S_kwd_extends, S_nsepseq (S_intf_expr, S_comma)))
   | S_file_path -> process @@ node -| S_wrap S_lexeme
   | S_for_of_stmt -> let { kwd_for; range; for_of_body } = node in
     process_list
@@ -527,17 +530,19 @@ let fold'
   | S_increment -> process @@ node -| S_wrap S_lexeme
   | S_int_literal -> process @@ node -| S_wrap (S_array_2 (S_lexeme, S_z))
   | S_int64 -> () (* Leaf *)
-  | S_interface -> process @@ node -| S_reg (S_array_2 (S_kwd_implements, S_intf_expr))
-  | S_interface_decl -> let { kwd_interface; intf_name; intf_body } = node in
+  | S_interface -> process @@ node -| S_reg (S_array_2 (S_kwd_implements, S_nsepseq (S_intf_expr, S_comma)))
+  | S_interface_decl -> let { kwd_interface; intf_name; intf_extends; intf_body } = node in
     process_list
     [ kwd_interface -| S_kwd_interface
     ; intf_name -| S_intf_name
+    ; intf_extends -| S_option S_extends
     ; intf_body -| S_intf_body ]
   | S_intf_body -> process @@ node -| S_braces S_intf_entries
-  | S_intf_const -> let { kwd_const; const_name; const_type } = node in
+  | S_intf_const -> let { kwd_const; const_name; const_optional; const_type } = node in
     process_list
     [ kwd_const -| S_kwd_const
     ; const_name -| S_variable
+    ; const_optional -| S_option S_qmark
     ; const_type -| S_type_annotation ]
   | S_intf_entries -> process @@ node -| S_sep_or_term (S_intf_entry, S_semi)
   | S_intf_entry -> process
@@ -566,6 +571,7 @@ let fold'
   | S_kwd_default -> process @@ node -| S_wrap S_lexeme
   | S_kwd_else -> process @@ node -| S_wrap S_lexeme
   | S_kwd_export -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_extends -> process @@ node -| S_wrap S_lexeme
   | S_kwd_false -> process @@ node -| S_wrap S_lexeme
   | S_kwd_for -> process @@ node -| S_wrap S_lexeme
   | S_kwd_from -> process @@ node -| S_wrap S_lexeme

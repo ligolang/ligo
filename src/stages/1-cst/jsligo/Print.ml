@@ -149,7 +149,7 @@ and print_imported state (node: (property_name, comma) sep_or_term braces) =
 
 and print_D_Interface state (node : interface_decl reg) =
   let Region.{region; value} = node in
-  let {kwd_interface=_; intf_name; intf_body} = value in
+  let {kwd_interface=_; intf_name; intf_extends=_; intf_body} = value in
   let children = Tree.(mk_child make_literal intf_name)
                  :: mk_children_intf_body intf_body
   in Tree.make ~region state "D_Interface" children
@@ -182,10 +182,17 @@ and print_type_rhs state (node : equal * type_expr) =
 
 and print_I_Const state (node : intf_const reg) =
   let Region.{value; region} = node in
-  let {kwd_const=_; const_name; const_type} = value in
-  let children = Tree.[
-    mk_child print_variable        const_name;
-    mk_child print_type_annotation const_type]
+  let {kwd_const=_; const_name; const_optional; const_type} = value in
+  let children = match const_optional with
+    | None ->
+      Tree.[
+        mk_child print_variable        const_name;
+        mk_child print_type_annotation const_type]
+    | Some _ ->
+      Tree.[
+        mk_child print_variable        const_name;
+        mk_child make_node                    "?";
+        mk_child print_type_annotation const_type]
   in Tree.make ~region state "I_Const" children
 
 (* Modules *)
@@ -205,8 +212,9 @@ and print_namespace_name state (node: namespace_name) =
 
 and print_interface state (node: interface) =
   let Region.{value; region} = node in
-  let _kwd_implements, intf_expr = value in
-  Tree.make_unary ~region state "<interface>" print_intf_expr intf_expr
+  let _kwd_implements, intf_exprs = value in
+  let children = Tree.mk_children_nsepseq print_intf_expr intf_exprs in
+  Tree.make ~region state "<interface>" children
 
 and print_intf_expr state = function
   I_Body i -> print_I_Body state i

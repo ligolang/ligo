@@ -60,9 +60,112 @@ let%expect_test _ =
     [ "compile"; "contract"; contract "interfaces.extra.jsligo"; "-m"; "Impl" ];
   [%expect
     {|
-    { parameter int ;
+    { parameter (or (int %extra) (int %add)) ;
       storage int ;
-      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}]
+      code { UNPAIR ; IF_LEFT { SUB } { ADD } ; NIL operation ; PAIR } } |}];
+  run_ligo_good
+    [ "compile"; "contract"; contract "interfaces.include.jsligo"; "-m"; "ImplAll" ];
+  [%expect
+    {|
+    { parameter
+        (or (unit %other4)
+            (or (int %juju)
+                (or (unit %other3) (or (unit %other2) (or (unit %other1) (unit %transfer)))))) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT
+               { DROP }
+               { IF_LEFT
+                   { DROP }
+                   { IF_LEFT
+                       { DROP }
+                       { IF_LEFT { DROP } { IF_LEFT { DROP } { DROP } } } } } ;
+             NIL operation ;
+             PAIR } ;
+      view "v1" unit int { CDR } ;
+      view "v2" unit int { CDR } } |}];
+  run_ligo_good
+    [ "compile"; "contract"; contract "interfaces.include.jsligo"; "-m"; "ImplAllNoJuju" ];
+  [%expect
+    {|
+    { parameter
+        (or (unit %other4)
+            (or (unit %other3) (or (unit %other2) (or (unit %other1) (unit %transfer))))) ;
+      storage int ;
+      code { UNPAIR ;
+             IF_LEFT
+               { DROP }
+               { IF_LEFT
+                   { DROP }
+                   { IF_LEFT { DROP } { IF_LEFT { DROP } { DROP } } } } ;
+             NIL operation ;
+             PAIR } ;
+      view "v1" unit int { CDR } ;
+      view "v2" unit int { CDR } } |}];
+  run_ligo_good
+    [ "compile"; "contract"; contract "interfaces.include.mligo"; "-m"; "FA0EXTImpl" ];
+  [%expect
+    {|
+    { parameter (or (unit %transfer2) (unit %transfer)) ;
+      storage unit ;
+      code { LAMBDA
+               (pair unit unit)
+               (pair (list operation) unit)
+               { DROP ; UNIT ; NIL operation ; PAIR } ;
+             SWAP ;
+             UNPAIR ;
+             IF_LEFT { PAIR ; EXEC } { PAIR ; EXEC } } } |}];
+  run_ligo_bad
+    [ "compile"; "contract"; bad_contract "interfaces.optional.jsligo"; "-m"; "FAAll" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/interfaces.optional.jsligo", line 33, character 0 to line 49, character 1:
+     32 |
+     33 | namespace ImplAll implements FAAll {
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     34 |   type t = int;
+          ^^^^^^^^^^^^^^^
+     35 |
+
+     36 |   @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     37 |   @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     38 |   @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     39 |   @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     40 |   @view const v1 = (_u : unit, s : t) : t => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     41 |   /* this is wrong because juju has a different type */
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     42 |   @entry const juju = (_i : string, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     43 |
+
+     44 |   /* foo, other4 and v2 are not in FAAll, but still added, because filtering
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     45 |      is not enabled */
+          ^^^^^^^^^^^^^^^^^^^^^^
+     46 |   export const foo = (s : t) : t => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     47 |   @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     48 |   @view const v2 = (_u : unit, s : t) : t => s;
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     49 | }
+          ^
+     50 |
+
+    Value "juju" does not match.
+    Expected "string -> int -> ( list (operation) * int )", but got: "int -> int ->
+    ( list (operation) *
+      int )". |}];
+  run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value 1297n. |}]
 
 let%expect_test _ =
   run_ligo_good

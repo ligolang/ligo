@@ -99,8 +99,8 @@ let%expect_test _ =
   Sig_expr.(
     {|
     (S_body
-      ((S_value x (TY_EXPR1))
-       (S_value x (TY_EXPR2))))
+      ((S_value x (TY_EXPR1) false)
+       (S_value x (TY_EXPR2) false)))
     |}
     |->! compile;
     [%expect {|
@@ -111,10 +111,10 @@ let%expect_test _ =
   Sig_expr.(
     {|
     (S_body
-      ((S_value x (TY_EXPR1))
+      ((S_value x (TY_EXPR1) false)
        (S_type x (TY_EXPR2))))
     |}
     |-> compile;
     [%expect {|
-    (S_body ((S_value x (TY_EXPR1)) (S_type x (TY_EXPR2))))
+    (S_body ((S_value x (TY_EXPR1) false) (S_type x (TY_EXPR2))))
     |}])

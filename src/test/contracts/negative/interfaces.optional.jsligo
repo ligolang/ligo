@@ -1,0 +1,55 @@
+interface FABase {
+  type t;
+};
+
+interface FA0 extends FABase {
+  @entry const transfer : (_u : unit, s : t) => [list<operation>, t];
+};
+
+interface FA0Ext extends FA0 {
+  @entry const other1 : (_u : unit, s : t) => [list<operation>, t];
+};
+
+interface FA1 extends FABase {
+  @entry const other2 : (_u : unit, s : t) => [list<operation>, t];
+};
+
+namespace Impl implements FA0Ext, FA1 {
+  type t = int;
+
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+};
+
+interface FAAll extends FA0Ext, FA1 {
+  @entry const other3 : (_u : unit, s : t) => [list<operation>, t];
+  @view const v1 : (_u : unit, s : t) => t;
+
+  /* this one is optional */
+  @entry const juju? : (i : int, s : t) => [list<operation>, t];
+};
+
+namespace ImplAll implements FAAll {
+  type t = int;
+
+  @entry const transfer = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other1 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other2 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @entry const other3 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @view const v1 = (_u : unit, s : t) : t => s;
+  /* this is wrong because juju has a different type */
+  @entry const juju = (_i : string, s : t) : [list<operation>, t] => [list([]), s];
+
+  /* foo, other4 and v2 are not in FAAll, but still added, because filtering
+     is not enabled */
+  export const foo = (s : t) : t => s;
+  @entry const other4 = (_u : unit, s : t) : [list<operation>, t] => [list([]), s];
+  @view const v2 = (_u : unit, s : t) : t => s;
+}
+
+const test = do {
+  let orig = Test.originate(contract_of(ImplAll), ImplAll.foo(42), 0tez);
+  let p : parameter_of ImplAll = Other4();
+  Test.transfer_exn(orig.addr, p, 1mutez);
+}

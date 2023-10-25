@@ -41,7 +41,10 @@ let compile ~raise =
           m_path ~loc module_path
         in
         let wrap d = make_d ~loc @@ D_attr ({ key = "public"; value = None }, d) in
-        wrap @@ d_module ~loc { name = alias; mod_expr; annotation = None })
+        wrap
+        @@ d_module
+             ~loc
+             { name = alias; mod_expr; annotation = { signatures = []; filter = false } })
     | d -> make_d ~loc d
   in
   let program_entry

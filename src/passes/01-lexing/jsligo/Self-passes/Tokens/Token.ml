@@ -134,6 +134,7 @@ module T =
     (* TypeScript keywords *)
 
     | As         of lexeme Wrap.t  (* as         *)
+    | Extends    of lexeme Wrap.t  (* extends    *)
     | Function   of lexeme Wrap.t  (* function   *)
     | Implements of lexeme Wrap.t  (* implements *)
     | Interface  of lexeme Wrap.t  (* interface  *)
@@ -266,6 +267,7 @@ module T =
     (* TypeScript keywords *)
 
     | As         t
+    | Extends    t
     | Function   t
     | Implements t
     | Interface  t
@@ -346,12 +348,14 @@ module T =
      (* TypeScript keywords *)
 
      let wrap_as         = wrap "as"
+     let wrap_extends    = wrap "extends"
      let wrap_implements = wrap "implements"
      let wrap_interface  = wrap "interface"
      let wrap_namespace  = wrap "namespace"
      let wrap_type       = wrap "type"
 
      let mk_As         region = As         (wrap_as         region)
+     let mk_Extends    region = Extends    (wrap_extends    region)
      let mk_Function   region = Function   (wrap_function   region)
      let mk_Implements region = Implements (wrap_implements region)
      let mk_Interface  region = Interface  (wrap_interface  region)
@@ -399,6 +403,7 @@ module T =
   (*   mk_With;   *)
 
        mk_As;
+       mk_Extends;
        mk_Function;
        mk_Implements;
        mk_Interface;
@@ -1114,6 +1119,7 @@ module T =
     (* TypeScript keywords *)
 
     | As          t -> t#region, sprintf "As%s" (comments t)
+    | Extends     t -> t#region, sprintf "Extends%s" (comments t)
     | Function    t -> t#region, sprintf "Function%s" (comments t)
     | Implements  t -> t#region, sprintf "Implements%s" (comments t)
     | Interface   t -> t#region, sprintf "Interface%s" (comments t)

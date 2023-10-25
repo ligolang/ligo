@@ -217,7 +217,7 @@ contract: Namespace UIdent LBRACE While ZWSP
 ##
 contract: Return If LPAR Bytes RPAR While ZWSP
 ##
-## Ends in an error in state: 1068.
+## Ends in an error in state: 1081.
 ##
 ## while_stmt(closed_non_if_stmt) -> While . par(while_cond) closed_non_if_stmt [ SEMI_ELSE Else ]
 ## while_stmt(statement) -> While . par(while_cond) statement [ SEMI RBRACE EOF Default Case ]
@@ -289,7 +289,7 @@ At this point, the matched expression is expected.
 
 contract: Const LBRACKET ZWSP
 ##
-## Ends in an error in state: 640.
+## Ends in an error in state: 649.
 ##
 ## brackets(sep_or_term(element(pattern),COMMA)) -> LBRACKET . sep_or_term(element(pattern),COMMA) RBRACKET [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -311,7 +311,7 @@ At this point, a pattern matching the first element is expected.
 
 contract: Const LBRACE ZWSP
 ##
-## Ends in an error in state: 641.
+## Ends in an error in state: 650.
 ##
 ## braces(sep_or_term(property_pattern(pattern),property_sep)) -> LBRACE . sep_or_term(property_pattern(pattern),property_sep) RBRACE [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -333,7 +333,7 @@ At this point, a pattern matching the first property is expected.
 
 contract: Const LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 642.
+## Ends in an error in state: 651.
 ##
 ## property_pattern(pattern) -> Attr . property_pattern(pattern) [ SEMI RBRACE COMMA ]
 ##
@@ -348,7 +348,7 @@ At this point, one of the following is expected:
 
 contract: Const LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 644.
+## Ends in an error in state: 653.
 ##
 ## property_pattern(pattern) -> property_id . [ SEMI RBRACE COMMA ]
 ## property_pattern(pattern) -> property_id . COLON pattern [ SEMI RBRACE COMMA ]
@@ -375,7 +375,7 @@ At this point, one of the following is expected:
 
 contract: Const LBRACE Ident COLON ZWSP
 ##
-## Ends in an error in state: 645.
+## Ends in an error in state: 654.
 ##
 ## property_pattern(pattern) -> property_id COLON . pattern [ SEMI RBRACE COMMA ]
 ##
@@ -397,7 +397,7 @@ At this point, a pattern matching the property is expected.
 
 contract: Const Attr ZWSP
 ##
-## Ends in an error in state: 651.
+## Ends in an error in state: 660.
 ##
 ## pattern -> Attr . pattern [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -421,7 +421,7 @@ At this point, one of the following is expected:
 
 contract: Const LBRACE Ident COLON Bytes ZWSP
 ##
-## Ends in an error in state: 687.
+## Ends in an error in state: 696.
 ##
 ## nsepseq(property_pattern(pattern),property_sep) -> property_pattern(pattern) . [ RBRACE ]
 ## nsepseq(property_pattern(pattern),property_sep) -> property_pattern(pattern) . property_sep nsepseq(property_pattern(pattern),property_sep) [ RBRACE ]
@@ -451,7 +451,7 @@ At this point, one of the following is expected:
 
 contract: Const LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 688.
+## Ends in an error in state: 697.
 ##
 ## nsepseq(property_pattern(pattern),property_sep) -> property_pattern(pattern) property_sep . nsepseq(property_pattern(pattern),property_sep) [ RBRACE ]
 ## nseq(__anonymous_0(property_pattern(pattern),property_sep)) -> property_pattern(pattern) property_sep . [ RBRACE ]
@@ -479,7 +479,7 @@ At this point, one of the following is expected:
 
 contract: Const LBRACKET ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 694.
+## Ends in an error in state: 703.
 ##
 ## element(pattern) -> ELLIPSIS . pattern [ RBRACKET COMMA ]
 ##
@@ -501,7 +501,7 @@ At this point, a pattern matching the rest of the array is expected.
 
 contract: Const LBRACKET Bytes ZWSP
 ##
-## Ends in an error in state: 702.
+## Ends in an error in state: 711.
 ##
 ## nsepseq(element(pattern),COMMA) -> element(pattern) . [ RBRACKET ]
 ## nsepseq(element(pattern),COMMA) -> element(pattern) . COMMA nsepseq(element(pattern),COMMA) [ RBRACKET ]
@@ -531,7 +531,7 @@ At this point, one of following is expected:
 
 contract: Const LBRACKET Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 703.
+## Ends in an error in state: 712.
 ##
 ## nsepseq(element(pattern),COMMA) -> element(pattern) COMMA . nsepseq(element(pattern),COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(element(pattern),COMMA)) -> element(pattern) COMMA . [ RBRACKET ]
@@ -759,7 +759,7 @@ interactive_expr: Function LT GT LPAR PARAMS RPAR ZWSP
 ##
 interactive_expr: Function LPAR PARAMS RPAR ZWSP
 ##
-## Ends in an error in state: 1189.
+## Ends in an error in state: 1202.
 ##
 ## function_expr -> Function fun_par_params . braces(statements) [ While When Type Switch SEMI_ELSE SEMI Return RPAR RBRACKET RBRACE PARAMS Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA COLON Break Attr ]
 ## function_expr -> Function fun_par_params . ret_type braces(statements) [ While When Type Switch SEMI_ELSE SEMI Return RPAR RBRACKET RBRACE PARAMS Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA COLON Break Attr ]
@@ -852,7 +852,7 @@ At this point, one of the following is expected:
 
 interactive_expr: Function LT GT LPAR PARAMS RPAR COLON Ident XOR
 ##
-## Ends in an error in state: 1186.
+## Ends in an error in state: 1199.
 ##
 ## function_expr -> Function type_vars fun_par_params ret_type . braces(statements) [ While When Type Switch SEMI_ELSE SEMI Return RPAR RBRACKET RBRACE PARAMS Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA COLON Break Attr ]
 ##
@@ -870,7 +870,7 @@ interactive_expr: Function LT GT LPAR PARAMS RPAR COLON Ident XOR
 ##
 interactive_expr: Function LPAR PARAMS RPAR COLON Ident XOR
 ##
-## Ends in an error in state: 1190.
+## Ends in an error in state: 1203.
 ##
 ## function_expr -> Function fun_par_params ret_type . braces(statements) [ While When Type Switch SEMI_ELSE SEMI Return RPAR RBRACKET RBRACE PARAMS Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA COLON Break Attr ]
 ##
@@ -1383,7 +1383,7 @@ expected.
 
 interactive_expr: LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 1195.
+## Ends in an error in state: 1208.
 ##
 ## property(expr) -> Attr . property(expr) [ SEMI RBRACE COMMA ]
 ##
@@ -1398,7 +1398,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 1196.
+## Ends in an error in state: 1209.
 ##
 ## property(expr) -> property_id . [ SEMI RBRACE COMMA ]
 ## property(expr) -> property_id . COLON expr [ SEMI RBRACE COMMA ]
@@ -1415,7 +1415,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident COLON ZWSP
 ##
-## Ends in an error in state: 1197.
+## Ends in an error in state: 1210.
 ##
 ## property(expr) -> property_id COLON . expr [ SEMI RBRACE COMMA ]
 ##
@@ -1428,7 +1428,7 @@ At his point, an expression is expected for the property.
 
 interactive_expr: LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 1203.
+## Ends in an error in state: 1216.
 ##
 ## nsepseq(property(expr),property_sep) -> property(expr) property_sep . nsepseq(property(expr),property_sep) [ RBRACE ]
 ## nseq(__anonymous_0(property(expr),property_sep)) -> property(expr) property_sep . [ RBRACE ]
@@ -1445,7 +1445,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACKET ELLIPSIS ZWSP
 ##
-## Ends in an error in state: 1213.
+## Ends in an error in state: 1226.
 ##
 ## element(expr) -> ELLIPSIS . expr [ RBRACKET COMMA ]
 ##
@@ -1486,7 +1486,7 @@ At this point, the expression used to switch is expected.
 
 contract: Let ZWSP
 ##
-## Ends in an error in state: 621.
+## Ends in an error in state: 630.
 ##
 ## value_decl -> Let . bindings [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1499,7 +1499,7 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Const Bytes ZWSP
 ##
-## Ends in an error in state: 722.
+## Ends in an error in state: 731.
 ##
 ## val_binding -> pattern . EQ expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA Break Attr ]
 ## val_binding -> pattern . binding_type EQ expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA Break Attr ]
@@ -1515,7 +1515,7 @@ At this point, one of the following is expected:
 
 contract: Const Bytes COLON ZWSP
 ##
-## Ends in an error in state: 725.
+## Ends in an error in state: 734.
 ##
 ## type_annotation(__anonymous_2) -> COLON . type_expr [ EQ ]
 ## type_annotation(__anonymous_2) -> COLON . type_vars type_expr [ EQ ]
@@ -1532,7 +1532,7 @@ At this point, one of the following is expected:
 
 contract: Const Bytes COLON LT GT XOR
 ##
-## Ends in an error in state: 726.
+## Ends in an error in state: 735.
 ##
 ## type_annotation(__anonymous_2) -> COLON type_vars . type_expr [ EQ ]
 ##
@@ -1553,7 +1553,7 @@ At this point, if the type variables are complete, a type is expected.
 
 contract: Const Bytes COLON Ident XOR
 ##
-## Ends in an error in state: 730.
+## Ends in an error in state: 739.
 ##
 ## val_binding -> pattern binding_type . EQ expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA Break Attr ]
 ##
@@ -1568,8 +1568,8 @@ contract: Const Bytes COLON Ident XOR
 ## In state 172, spurious reduction of production no_par_type_expr -> type_name
 ## In state 204, spurious reduction of production core_type -> no_par_type_expr
 ## In state 214, spurious reduction of production type_expr -> core_type
-## In state 728, spurious reduction of production type_annotation(__anonymous_2) -> COLON type_expr
-## In state 729, spurious reduction of production binding_type -> type_annotation(__anonymous_2)
+## In state 737, spurious reduction of production type_annotation(__anonymous_2) -> COLON type_expr
+## In state 738, spurious reduction of production binding_type -> type_annotation(__anonymous_2)
 ##
 
 Ill-formed value declaration.
@@ -1578,7 +1578,7 @@ expected, followed by an expression.
 
 interactive_expr: Bytes WILD
 ##
-## Ends in an error in state: 1284.
+## Ends in an error in state: 1297.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -1609,7 +1609,7 @@ expected.
 
 contract: Bytes LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 1279.
+## Ends in an error in state: 1292.
 ##
 ## contract -> statements . EOF [ # ]
 ##
@@ -1621,11 +1621,11 @@ contract: Bytes LPAR RPAR ZWSP
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 417, spurious reduction of production app_expr -> call_expr
-## In state 949, spurious reduction of production expr_stmt -> app_expr
-## In state 1054, spurious reduction of production non_if_stmt(statement) -> expr_stmt
-## In state 977, spurious reduction of production statement -> non_if_stmt(statement)
-## In state 1123, spurious reduction of production last_or_more(statement) -> statement
-## In state 1128, spurious reduction of production statements -> last_or_more(statement)
+## In state 962, spurious reduction of production expr_stmt -> app_expr
+## In state 1067, spurious reduction of production non_if_stmt(statement) -> expr_stmt
+## In state 990, spurious reduction of production statement -> non_if_stmt(statement)
+## In state 1136, spurious reduction of production last_or_more(statement) -> statement
+## In state 1141, spurious reduction of production statements -> last_or_more(statement)
 ##
 
 Ill-formed contract.
@@ -1637,9 +1637,10 @@ expected:
 
 contract: Interface ZWSP
 ##
-## Ends in an error in state: 736.
+## Ends in an error in state: 745.
 ##
 ## interface_decl -> Interface . interface_name interface_body [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## interface_decl -> Interface . interface_name extends interface_body [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Interface
@@ -1650,22 +1651,25 @@ At this point, the name of the interface is expected.
 
 contract: Interface UIdent ZWSP
 ##
-## Ends in an error in state: 738.
+## Ends in an error in state: 747.
 ##
 ## interface_decl -> Interface interface_name . interface_body [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## interface_decl -> Interface interface_name . extends interface_body [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Interface interface_name
 ##
 
 Ill-formed interface declaration.
-At this point, an opening brace '{' is expected, followed by entries.
+At this point, one of the following is expected:
+  * an opening brace '{' is expected, followed by entries;
+  * the keyword 'extends'.
 
 contract: Interface UIdent LBRACE ZWSP
 ##
 ## Ends in an error in state: 588.
 ##
-## braces(interface_entries) -> LBRACE . interface_entries RBRACE [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## braces(interface_entries) -> LBRACE . interface_entries RBRACE [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case COMMA Bytes Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE
@@ -1728,6 +1732,9 @@ contract: Interface UIdent LBRACE Const ZWSP
 ## interface_const -> Const . WILD type_annotation(type_expr) [ SEMI RBRACE ]
 ## interface_const -> Const . Ident type_annotation(type_expr) [ SEMI RBRACE ]
 ## interface_const -> Const . EIdent type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const . WILD QMARK type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const . Ident QMARK type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const . EIdent QMARK type_annotation(type_expr) [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Const
@@ -1738,9 +1745,10 @@ At this point, the name of the constant is expected.
 
 contract: Interface UIdent LBRACE Const Ident ZWSP
 ##
-## Ends in an error in state: 596.
+## Ends in an error in state: 598.
 ##
 ## interface_const -> Const Ident . type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const Ident . QMARK type_annotation(type_expr) [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Const Ident
@@ -1750,18 +1758,53 @@ contract: Interface UIdent LBRACE Const WILD ZWSP
 ## Ends in an error in state: 594.
 ##
 ## interface_const -> Const WILD . type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const WILD . QMARK type_annotation(type_expr) [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Const WILD
 ##
 contract: Interface UIdent LBRACE Const EIdent ZWSP
 ##
-## Ends in an error in state: 598.
+## Ends in an error in state: 602.
 ##
 ## interface_const -> Const EIdent . type_annotation(type_expr) [ SEMI RBRACE ]
+## interface_const -> Const EIdent . QMARK type_annotation(type_expr) [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Const EIdent
+##
+
+Ill-formed interface.
+At this point, one of the following is expected:
+  * a colon ':', followed by the type of the constant.
+  * a question mark '?', marking the item as optional.
+
+contract: Interface UIdent LBRACE Const WILD QMARK ZWSP
+##
+## Ends in an error in state: 595.
+##
+## interface_const -> Const WILD QMARK . type_annotation(type_expr) [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Const WILD QMARK
+##
+contract: Interface UIdent LBRACE Const Ident QMARK ZWSP
+##
+## Ends in an error in state: 599.
+##
+## interface_const -> Const Ident QMARK . type_annotation(type_expr) [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Const Ident QMARK
+##
+contract: Interface UIdent LBRACE Const EIdent QMARK ZWSP
+##
+## Ends in an error in state: 603.
+##
+## interface_const -> Const EIdent QMARK . type_annotation(type_expr) [ SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Const EIdent QMARK
 ##
 
 Ill-formed interface.
@@ -1770,7 +1813,7 @@ constant.
 
 contract: Interface UIdent LBRACE Attr ZWSP
 ##
-## Ends in an error in state: 600.
+## Ends in an error in state: 606.
 ##
 ## interface_entry -> Attr . interface_entry [ SEMI RBRACE ]
 ##
@@ -1785,7 +1828,7 @@ At this point, one of the following is expected:
 
 contract: Interface UIdent LBRACE Const Ident COLON Ident XOR
 ##
-## Ends in an error in state: 608.
+## Ends in an error in state: 614.
 ##
 ## nsepseq(interface_entry,SEMI) -> interface_entry . [ RBRACE ]
 ## nsepseq(interface_entry,SEMI) -> interface_entry . SEMI nsepseq(interface_entry,SEMI) [ RBRACE ]
@@ -1804,8 +1847,8 @@ contract: Interface UIdent LBRACE Const Ident COLON Ident XOR
 ## In state 204, spurious reduction of production core_type -> no_par_type_expr
 ## In state 214, spurious reduction of production type_expr -> core_type
 ## In state 275, spurious reduction of production type_annotation(type_expr) -> COLON type_expr
-## In state 597, spurious reduction of production interface_const -> Const Ident type_annotation(type_expr)
-## In state 603, spurious reduction of production interface_entry -> interface_const
+## In state 601, spurious reduction of production interface_const -> Const Ident type_annotation(type_expr)
+## In state 609, spurious reduction of production interface_entry -> interface_const
 ##
 
 Ill-formed interface.
@@ -1816,7 +1859,7 @@ expected:
 
 contract: Interface UIdent LBRACE Type Ident SEMI ZWSP
 ##
-## Ends in an error in state: 609.
+## Ends in an error in state: 615.
 ##
 ## nsepseq(interface_entry,SEMI) -> interface_entry SEMI . nsepseq(interface_entry,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(interface_entry,SEMI)) -> interface_entry SEMI . [ RBRACE ]
@@ -1833,7 +1876,7 @@ At this point, one of the following is expected:
 
 contract: Import ZWSP
 ##
-## Ends in an error in state: 740.
+## Ends in an error in state: 753.
 ##
 ## import_decl -> Import . namespace_name EQ namespace_selection [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ## import_decl -> Import . TIMES As namespace_name From file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
@@ -1851,7 +1894,7 @@ At this point, one of the following is expected:
 
 contract: Import TIMES ZWSP
 ##
-## Ends in an error in state: 741.
+## Ends in an error in state: 754.
 ##
 ## import_decl -> Import TIMES . As namespace_name From file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1864,7 +1907,7 @@ At this point, the keyword 'as' is expected.
 
 contract: Import TIMES As ZWSP
 ##
-## Ends in an error in state: 742.
+## Ends in an error in state: 755.
 ##
 ## import_decl -> Import TIMES As . namespace_name From file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1877,7 +1920,7 @@ At this point, the name of the namespace is expected.
 
 contract: Import TIMES As UIdent ZWSP
 ##
-## Ends in an error in state: 743.
+## Ends in an error in state: 756.
 ##
 ## import_decl -> Import TIMES As namespace_name . From file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1886,7 +1929,7 @@ contract: Import TIMES As UIdent ZWSP
 ##
 contract: Import LBRACE RBRACE ZWSP
 ##
-## Ends in an error in state: 768.
+## Ends in an error in state: 781.
 ##
 ## import_decl -> Import braces(sep_or_term(variable,COMMA)) . From file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1899,7 +1942,7 @@ At this point, the keyword 'from' is expected.
 
 contract: Import TIMES As UIdent From ZWSP
 ##
-## Ends in an error in state: 744.
+## Ends in an error in state: 757.
 ##
 ## import_decl -> Import TIMES As namespace_name From . file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1908,7 +1951,7 @@ contract: Import TIMES As UIdent From ZWSP
 ##
 contract: Import LBRACE RBRACE From ZWSP
 ##
-## Ends in an error in state: 769.
+## Ends in an error in state: 782.
 ##
 ## import_decl -> Import braces(sep_or_term(variable,COMMA)) From . file_path [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -1921,7 +1964,7 @@ At this point, a file path to a LIGO source is expected as a string.
 
 contract: Import LBRACE ZWSP
 ##
-## Ends in an error in state: 747.
+## Ends in an error in state: 760.
 ##
 ## braces(sep_or_term(variable,COMMA)) -> LBRACE . sep_or_term(variable,COMMA) RBRACE [ From ]
 ##
@@ -1935,7 +1978,7 @@ expected.
 
 contract: Import LBRACE WILD ZWSP
 ##
-## Ends in an error in state: 748.
+## Ends in an error in state: 761.
 ##
 ## nsepseq(variable,COMMA) -> WILD . [ RBRACE ]
 ## nsepseq(variable,COMMA) -> WILD . COMMA nsepseq(variable,COMMA) [ RBRACE ]
@@ -1947,7 +1990,7 @@ contract: Import LBRACE WILD ZWSP
 ##
 contract: Import LBRACE Ident ZWSP
 ##
-## Ends in an error in state: 750.
+## Ends in an error in state: 763.
 ##
 ## nsepseq(variable,COMMA) -> Ident . [ RBRACE ]
 ## nsepseq(variable,COMMA) -> Ident . COMMA nsepseq(variable,COMMA) [ RBRACE ]
@@ -1959,7 +2002,7 @@ contract: Import LBRACE Ident ZWSP
 ##
 contract: Import LBRACE EIdent ZWSP
 ##
-## Ends in an error in state: 752.
+## Ends in an error in state: 765.
 ##
 ## nsepseq(variable,COMMA) -> EIdent . [ RBRACE ]
 ## nsepseq(variable,COMMA) -> EIdent . COMMA nsepseq(variable,COMMA) [ RBRACE ]
@@ -1977,7 +2020,7 @@ At this point, one of the following is expected:
 
 contract: Import LBRACE Ident COMMA ZWSP
 ##
-## Ends in an error in state: 751.
+## Ends in an error in state: 764.
 ##
 ## nsepseq(variable,COMMA) -> Ident COMMA . nsepseq(variable,COMMA) [ RBRACE ]
 ## nseq(__anonymous_0(variable,COMMA)) -> Ident COMMA . [ RBRACE ]
@@ -1988,7 +2031,7 @@ contract: Import LBRACE Ident COMMA ZWSP
 ##
 contract: Import LBRACE EIdent COMMA ZWSP
 ##
-## Ends in an error in state: 753.
+## Ends in an error in state: 766.
 ##
 ## nsepseq(variable,COMMA) -> EIdent COMMA . nsepseq(variable,COMMA) [ RBRACE ]
 ## nseq(__anonymous_0(variable,COMMA)) -> EIdent COMMA . [ RBRACE ]
@@ -1999,7 +2042,7 @@ contract: Import LBRACE EIdent COMMA ZWSP
 ##
 contract: Import LBRACE WILD COMMA ZWSP
 ##
-## Ends in an error in state: 749.
+## Ends in an error in state: 762.
 ##
 ## nsepseq(variable,COMMA) -> WILD COMMA . nsepseq(variable,COMMA) [ RBRACE ]
 ## nseq(__anonymous_0(variable,COMMA)) -> WILD COMMA . [ RBRACE ]
@@ -2016,7 +2059,7 @@ At this point, one of the following is expected:
 
 contract: Import UIdent ZWSP
 ##
-## Ends in an error in state: 765.
+## Ends in an error in state: 778.
 ##
 ## import_decl -> Import namespace_name . EQ namespace_selection [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -2029,7 +2072,7 @@ At this point, the assignment symbol '=' is expected.
 
 contract: Import UIdent EQ ZWSP
 ##
-## Ends in an error in state: 766.
+## Ends in an error in state: 779.
 ##
 ## import_decl -> Import namespace_name EQ . namespace_selection [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -2042,7 +2085,7 @@ At this point, a namespace name is expected.
 
 contract: Namespace UIdent LBRACE If ZWSP
 ##
-## Ends in an error in state: 771.
+## Ends in an error in state: 784.
 ##
 ## if_else_stmt(catenable_stmt) -> If . par(if_cond) closed_non_if_stmt Else catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(catenable_stmt) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -2059,7 +2102,7 @@ contract: Namespace UIdent LBRACE If ZWSP
 ##
 contract: Namespace UIdent LBRACE Return If ZWSP
 ##
-## Ends in an error in state: 1066.
+## Ends in an error in state: 1079.
 ##
 ## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
 ## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
@@ -2076,7 +2119,7 @@ contract: Namespace UIdent LBRACE Return If ZWSP
 ##
 contract: If LPAR Bytes RPAR If ZWSP
 ##
-## Ends in an error in state: 781.
+## Ends in an error in state: 794.
 ##
 ## if_else_stmt(catenable_stmt) -> If . par(if_cond) closed_non_if_stmt Else catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(catenable_stmt) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -2095,7 +2138,7 @@ contract: If LPAR Bytes RPAR If ZWSP
 ##
 contract: Return If LPAR Bytes RPAR If ZWSP
 ##
-## Ends in an error in state: 1070.
+## Ends in an error in state: 1083.
 ##
 ## if_else_stmt(closed_non_if_stmt) -> If . par(if_cond) closed_non_if_stmt Else closed_non_if_stmt [ SEMI_ELSE Else ]
 ## if_else_stmt(closed_non_if_stmt) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -2119,7 +2162,7 @@ condition.
 
 contract: Namespace UIdent LBRACE If LPAR ZWSP
 ##
-## Ends in an error in state: 772.
+## Ends in an error in state: 785.
 ##
 ## par(if_cond) -> LPAR . if_cond RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## par(if_cond) -> LPAR . if_cond PARAMS RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -2133,7 +2176,7 @@ At this point, the condition is expected as a boolean expression.
 
 contract: Function ZWSP
 ##
-## Ends in an error in state: 783.
+## Ends in an error in state: 796.
 ##
 ## fun_decl -> Function . fun_name option(ES6FUN) par(fun_params) braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function . fun_name option(ES6FUN) par(fun_params) ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2149,7 +2192,7 @@ At this point, the function name is expected.
 
 contract: Function Ident ZWSP
 ##
-## Ends in an error in state: 788.
+## Ends in an error in state: 801.
 ##
 ## fun_decl -> Function fun_name . option(ES6FUN) par(fun_params) braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name . option(ES6FUN) par(fun_params) ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2167,7 +2210,7 @@ At this point, one of the following is expected:
 
 contract: Function Ident LT GT XOR
 ##
-## Ends in an error in state: 789.
+## Ends in an error in state: 802.
 ##
 ## fun_decl -> Function fun_name type_vars . option(ES6FUN) par(fun_params) braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name type_vars . option(ES6FUN) par(fun_params) ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2185,7 +2228,7 @@ contract: Function Ident LT GT XOR
 ##
 contract: Function Ident LT GT ES6FUN ZWSP
 ##
-## Ends in an error in state: 790.
+## Ends in an error in state: 803.
 ##
 ## fun_decl -> Function fun_name type_vars option(ES6FUN) . par(fun_params) braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name type_vars option(ES6FUN) . par(fun_params) ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2195,7 +2238,7 @@ contract: Function Ident LT GT ES6FUN ZWSP
 ##
 contract: Function Ident ES6FUN ZWSP
 ##
-## Ends in an error in state: 795.
+## Ends in an error in state: 808.
 ##
 ## fun_decl -> Function fun_name option(ES6FUN) . par(fun_params) braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name option(ES6FUN) . par(fun_params) ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2209,7 +2252,7 @@ At this point, an opening parenthesis '(' is expected.
 
 contract: Function Ident LT GT LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 791.
+## Ends in an error in state: 804.
 ##
 ## fun_decl -> Function fun_name type_vars option(ES6FUN) par(fun_params) . braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name type_vars option(ES6FUN) par(fun_params) . ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2219,7 +2262,7 @@ contract: Function Ident LT GT LPAR RPAR ZWSP
 ##
 contract: Function Ident LPAR RPAR ZWSP
 ##
-## Ends in an error in state: 796.
+## Ends in an error in state: 809.
 ##
 ## fun_decl -> Function fun_name option(ES6FUN) par(fun_params) . braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## fun_decl -> Function fun_name option(ES6FUN) par(fun_params) . ret_type braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2236,7 +2279,7 @@ At this point, one of the following is expected:
 
 contract: Function Ident LT GT LPAR RPAR COLON Ident XOR
 ##
-## Ends in an error in state: 792.
+## Ends in an error in state: 805.
 ##
 ## fun_decl -> Function fun_name type_vars option(ES6FUN) par(fun_params) ret_type . braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
@@ -2254,7 +2297,7 @@ contract: Function Ident LT GT LPAR RPAR COLON Ident XOR
 ##
 contract: Function Ident LPAR RPAR COLON Ident XOR
 ##
-## Ends in an error in state: 797.
+## Ends in an error in state: 810.
 ##
 ## fun_decl -> Function fun_name option(ES6FUN) par(fun_params) ret_type . braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
@@ -2277,7 +2320,7 @@ a block of statements starting with an opening brace '{'.
 
 contract: Namespace UIdent LBRACE For LPAR ZWSP
 ##
-## Ends in an error in state: 801.
+## Ends in an error in state: 814.
 ##
 ## par(range_for) -> LPAR . range_for RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## par(range_for) -> LPAR . range_for PARAMS RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
@@ -2296,7 +2339,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE For LPAR SEMI ZWSP
 ##
-## Ends in an error in state: 802.
+## Ends in an error in state: 815.
 ##
 ## range_for -> SEMI . SEMI [ RPAR PARAMS ]
 ## range_for -> SEMI . SEMI afterthought [ RPAR PARAMS ]
@@ -2314,7 +2357,7 @@ At this point, one of the following is expected:
 
 contract: Match LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1231.
+## Ends in an error in state: 1244.
 ##
 ## match_expr -> Match match_subject . braces(match_clauses) [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ##
@@ -2327,7 +2370,7 @@ At this point, an opening brace '{' is expected.
 
 contract: Match LPAR Bytes RPAR LBRACE ZWSP
 ##
-## Ends in an error in state: 1232.
+## Ends in an error in state: 1245.
 ##
 ## braces(match_clauses) -> LBRACE . match_clauses RBRACE [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ##
@@ -2342,7 +2385,7 @@ At this point, one of the following is expected:
 
 contract: Match LPAR Bytes RPAR LBRACE When ZWSP
 ##
-## Ends in an error in state: 1233.
+## Ends in an error in state: 1246.
 ##
 ## match_clause -> When . par(when_pattern) COLON expr [ When RBRACE Default ]
 ## match_clause -> When . par(when_pattern) COLON expr SEMI [ When RBRACE Default ]
@@ -2356,7 +2399,7 @@ At this point, a pattern is expected between parentheses.
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR ZWSP
 ##
-## Ends in an error in state: 1234.
+## Ends in an error in state: 1247.
 ##
 ## par(when_pattern) -> LPAR . when_pattern RPAR [ COLON ]
 ## par(when_pattern) -> LPAR . when_pattern PARAMS RPAR [ COLON ]
@@ -2370,7 +2413,7 @@ At this point, a pattern for the clause is expected.
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes ZWSP
 ##
-## Ends in an error in state: 1240.
+## Ends in an error in state: 1253.
 ##
 ## typed_pattern -> pattern . type_annotation(type_expr) [ RPAR PARAMS ]
 ## when_pattern -> pattern . [ RPAR PARAMS ]
@@ -2386,7 +2429,7 @@ At this point, one of the following is expected:
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 1237.
+## Ends in an error in state: 1250.
 ##
 ## par(when_pattern) -> LPAR when_pattern PARAMS . RPAR [ COLON ]
 ##
@@ -2399,7 +2442,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1242.
+## Ends in an error in state: 1255.
 ##
 ## match_clause -> When par(when_pattern) . COLON expr [ When RBRACE Default ]
 ## match_clause -> When par(when_pattern) . COLON expr SEMI [ When RBRACE Default ]
@@ -2409,7 +2452,7 @@ contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR ZWSP
 ##
 contract: Match LPAR Bytes RPAR LBRACE Default ZWSP
 ##
-## Ends in an error in state: 1246.
+## Ends in an error in state: 1259.
 ##
 ## match_default -> Default . COLON expr [ RBRACE ]
 ## match_default -> Default . COLON expr SEMI [ RBRACE ]
@@ -2423,7 +2466,7 @@ At this point, a colon ':' is expected, followed by an expression.
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR COLON ZWSP
 ##
-## Ends in an error in state: 1243.
+## Ends in an error in state: 1256.
 ##
 ## match_clause -> When par(when_pattern) COLON . expr [ When RBRACE Default ]
 ## match_clause -> When par(when_pattern) COLON . expr SEMI [ When RBRACE Default ]
@@ -2433,7 +2476,7 @@ contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR COLON ZWSP
 ##
 contract: Match LPAR Bytes RPAR LBRACE Default COLON ZWSP
 ##
-## Ends in an error in state: 1247.
+## Ends in an error in state: 1260.
 ##
 ## match_default -> Default COLON . expr [ RBRACE ]
 ## match_default -> Default COLON . expr SEMI [ RBRACE ]
@@ -2853,8 +2896,8 @@ contract: Switch LPAR Bytes RPAR LBRACE Case Bytes ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 1169, spurious reduction of production core_expr -> literal_expr
-## In state 1171, spurious reduction of production lambda -> core_expr
+## In state 1182, spurious reduction of production core_expr -> literal_expr
+## In state 1184, spurious reduction of production lambda -> core_expr
 ##
 
 Ill-formed function call.
@@ -3120,7 +3163,7 @@ interactive_expr: Bytes As ZWSP
 ##
 contract: Bytes QMARK Bytes LPAR RPAR XOR
 ##
-## Ends in an error in state: 876.
+## Ends in an error in state: 889.
 ##
 ## typed_expr -> app_expr_level . As type_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ##
@@ -3132,7 +3175,7 @@ contract: Bytes QMARK Bytes LPAR RPAR XOR
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 417, spurious reduction of production app_expr -> call_expr
-## In state 938, spurious reduction of production app_expr_level -> app_expr
+## In state 951, spurious reduction of production app_expr_level -> app_expr
 ##
 
 Ill-formed typed expression.
@@ -3242,7 +3285,7 @@ At this point, a colon ':' is expected.
 
 contract: Const Bytes EQ Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 721.
+## Ends in an error in state: 730.
 ##
 ## nsepseq(val_binding,COMMA) -> val_binding COMMA . nsepseq(val_binding,COMMA) [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -3271,7 +3314,7 @@ At this point, one of the following is expected:
 
 contract: If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 780.
+## Ends in an error in state: 793.
 ##
 ## while_stmt(catenable_stmt) -> While par(while_cond) . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## while_stmt(closed_non_if_stmt) -> While par(while_cond) . closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -3283,7 +3326,7 @@ contract: If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ##
 contract: Return While LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1065.
+## Ends in an error in state: 1078.
 ##
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ## while_stmt(stmt_ending_with_expr) -> While par(while_cond) . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3294,7 +3337,7 @@ contract: Return While LPAR Bytes RPAR ZWSP
 ##
 contract: Return If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1069.
+## Ends in an error in state: 1082.
 ##
 ## while_stmt(closed_non_if_stmt) -> While par(while_cond) . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
@@ -3306,7 +3349,7 @@ contract: Return If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ##
 contract: While LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1278.
+## Ends in an error in state: 1291.
 ##
 ## while_stmt(catenable_stmt) -> While par(while_cond) . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
@@ -3321,7 +3364,7 @@ At this point, the body is expected as a statement.
 
 interactive_expr: LBRACE ELLIPSIS Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 1194.
+## Ends in an error in state: 1207.
 ##
 ## update_expr -> ELLIPSIS expr property_sep . updates [ RBRACE ]
 ##
@@ -3334,7 +3377,7 @@ At this point, property assignments are expected.
 
 contract: LBRACKET Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 1222.
+## Ends in an error in state: 1235.
 ##
 ## nsepseq(element(expr),COMMA) -> element(expr) COMMA . nsepseq(element(expr),COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(element(expr),COMMA)) -> element(expr) COMMA . [ RBRACKET ]
@@ -3351,7 +3394,7 @@ At this point, one of the following is expected:
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR COLON Bytes WILD
 ##
-## Ends in an error in state: 1244.
+## Ends in an error in state: 1257.
 ##
 ## match_clause -> When par(when_pattern) COLON expr . [ When RBRACE Default ]
 ## match_clause -> When par(when_pattern) COLON expr . SEMI [ When RBRACE Default ]
@@ -3386,7 +3429,7 @@ expected:
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR UIdent COLON Ident XOR
 ##
-## Ends in an error in state: 1235.
+## Ends in an error in state: 1248.
 ##
 ## par(when_pattern) -> LPAR when_pattern . RPAR [ COLON ]
 ## par(when_pattern) -> LPAR when_pattern . PARAMS RPAR [ COLON ]
@@ -3403,8 +3446,8 @@ contract: Match LPAR Bytes RPAR LBRACE When LPAR UIdent COLON Ident XOR
 ## In state 204, spurious reduction of production core_type -> no_par_type_expr
 ## In state 214, spurious reduction of production type_expr -> core_type
 ## In state 275, spurious reduction of production type_annotation(type_expr) -> COLON type_expr
-## In state 1241, spurious reduction of production typed_pattern -> pattern type_annotation(type_expr)
-## In state 1239, spurious reduction of production when_pattern -> typed_pattern
+## In state 1254, spurious reduction of production typed_pattern -> pattern type_annotation(type_expr)
+## In state 1252, spurious reduction of production when_pattern -> typed_pattern
 ##
 
 Ill-formed pattern matching.
@@ -3412,7 +3455,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: LPAR Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 1228.
+## Ends in an error in state: 1241.
 ##
 ## par(expr) -> LPAR expr PARAMS . RPAR [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACKET LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default DOT Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ##
@@ -3436,7 +3479,7 @@ contract: UIdent DOT UIdent ZWSP
 ##
 contract: Const UIdent DOT UIdent ZWSP
 ##
-## Ends in an error in state: 657.
+## Ends in an error in state: 666.
 ##
 ## namespace_path(qualifiable_pattern) -> namespace_name . DOT namespace_path(qualifiable_pattern) [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ## namespace_path(qualifiable_pattern) -> namespace_name . DOT qualifiable_pattern [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
@@ -3450,7 +3493,7 @@ At this point, the selection operator '.' is expected.
 
 contract: Const SHARP LBRACKET UIdent DOT ZWSP
 ##
-## Ends in an error in state: 633.
+## Ends in an error in state: 642.
 ##
 ## namespace_path(__anonymous_10) -> namespace_name DOT . namespace_path(__anonymous_10) [ RBRACKET COMMA ]
 ## namespace_path(__anonymous_10) -> namespace_name DOT . String [ RBRACKET COMMA ]
@@ -3466,7 +3509,7 @@ At this point, one of the following is expected:
 
 contract: Const UIdent DOT ZWSP
 ##
-## Ends in an error in state: 658.
+## Ends in an error in state: 667.
 ##
 ## namespace_path(qualifiable_pattern) -> namespace_name DOT . namespace_path(qualifiable_pattern) [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ## namespace_path(qualifiable_pattern) -> namespace_name DOT . qualifiable_pattern [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
@@ -3483,7 +3526,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE For LPAR SEMI SEMI ZWSP
 ##
-## Ends in an error in state: 803.
+## Ends in an error in state: 816.
 ##
 ## range_for -> SEMI SEMI . [ RPAR PARAMS ]
 ## range_for -> SEMI SEMI . afterthought [ RPAR PARAMS ]
@@ -3493,7 +3536,7 @@ contract: Namespace UIdent LBRACE For LPAR SEMI SEMI ZWSP
 ##
 contract: Namespace UIdent LBRACE For LPAR Ident MINUS2 SEMI SEMI ZWSP
 ##
-## Ends in an error in state: 853.
+## Ends in an error in state: 866.
 ##
 ## range_for -> initialiser SEMI SEMI . [ RPAR PARAMS ]
 ## range_for -> initialiser SEMI SEMI . afterthought [ RPAR PARAMS ]
@@ -3503,7 +3546,7 @@ contract: Namespace UIdent LBRACE For LPAR Ident MINUS2 SEMI SEMI ZWSP
 ##
 contract: For LPAR SEMI Bytes SEMI ZWSP
 ##
-## Ends in an error in state: 812.
+## Ends in an error in state: 825.
 ##
 ## range_for -> SEMI condition SEMI . [ RPAR PARAMS ]
 ## range_for -> SEMI condition SEMI . afterthought [ RPAR PARAMS ]
@@ -3513,7 +3556,7 @@ contract: For LPAR SEMI Bytes SEMI ZWSP
 ##
 contract: For LPAR Ident MINUS2 SEMI Bytes SEMI ZWSP
 ##
-## Ends in an error in state: 856.
+## Ends in an error in state: 869.
 ##
 ## range_for -> initialiser SEMI condition SEMI . [ RPAR PARAMS ]
 ## range_for -> initialiser SEMI condition SEMI . afterthought [ RPAR PARAMS ]
@@ -3529,7 +3572,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE For LPAR Let ZWSP
 ##
-## Ends in an error in state: 814.
+## Ends in an error in state: 827.
 ##
 ## range_of -> Let . WILD Of expr [ RPAR PARAMS ]
 ## range_of -> Let . Ident Of expr [ RPAR PARAMS ]
@@ -3541,7 +3584,7 @@ contract: Namespace UIdent LBRACE For LPAR Let ZWSP
 ##
 contract: Namespace UIdent LBRACE For LPAR Const ZWSP
 ##
-## Ends in an error in state: 824.
+## Ends in an error in state: 837.
 ##
 ## range_of -> Const . WILD Of expr [ RPAR PARAMS ]
 ## range_of -> Const . Ident Of expr [ RPAR PARAMS ]
@@ -3557,7 +3600,7 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Namespace UIdent LBRACE For LPAR Let Ident ZWSP
 ##
-## Ends in an error in state: 818.
+## Ends in an error in state: 831.
 ##
 ## pattern -> Ident . [ EQ COLON ]
 ## range_of -> Let Ident . Of expr [ RPAR PARAMS ]
@@ -3567,7 +3610,7 @@ contract: Namespace UIdent LBRACE For LPAR Let Ident ZWSP
 ##
 contract: Namespace UIdent LBRACE For LPAR Const Ident ZWSP
 ##
-## Ends in an error in state: 828.
+## Ends in an error in state: 841.
 ##
 ## pattern -> Ident . [ EQ COLON ]
 ## range_of -> Const Ident . Of expr [ RPAR PARAMS ]
@@ -3577,7 +3620,7 @@ contract: Namespace UIdent LBRACE For LPAR Const Ident ZWSP
 ##
 contract: For LPAR Let EIdent ZWSP
 ##
-## Ends in an error in state: 821.
+## Ends in an error in state: 834.
 ##
 ## pattern -> EIdent . [ EQ COLON ]
 ## range_of -> Let EIdent . Of expr [ RPAR PARAMS ]
@@ -3587,7 +3630,7 @@ contract: For LPAR Let EIdent ZWSP
 ##
 contract: For LPAR Const EIdent ZWSP
 ##
-## Ends in an error in state: 831.
+## Ends in an error in state: 844.
 ##
 ## pattern -> EIdent . [ EQ COLON ]
 ## range_of -> Const EIdent . Of expr [ RPAR PARAMS ]
@@ -3604,7 +3647,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE For LPAR Let Ident Of ZWSP
 ##
-## Ends in an error in state: 819.
+## Ends in an error in state: 832.
 ##
 ## range_of -> Let Ident Of . expr [ RPAR PARAMS ]
 ##
@@ -3613,7 +3656,7 @@ contract: Namespace UIdent LBRACE For LPAR Let Ident Of ZWSP
 ##
 contract: For LPAR Let EIdent Of ZWSP
 ##
-## Ends in an error in state: 822.
+## Ends in an error in state: 835.
 ##
 ## range_of -> Let EIdent Of . expr [ RPAR PARAMS ]
 ##
@@ -3622,7 +3665,7 @@ contract: For LPAR Let EIdent Of ZWSP
 ##
 contract: For LPAR Let WILD Of ZWSP
 ##
-## Ends in an error in state: 816.
+## Ends in an error in state: 829.
 ##
 ## range_of -> Let WILD Of . expr [ RPAR PARAMS ]
 ##
@@ -3631,7 +3674,7 @@ contract: For LPAR Let WILD Of ZWSP
 ##
 contract: Namespace UIdent LBRACE For LPAR Const Ident Of ZWSP
 ##
-## Ends in an error in state: 829.
+## Ends in an error in state: 842.
 ##
 ## range_of -> Const Ident Of . expr [ RPAR PARAMS ]
 ##
@@ -3640,7 +3683,7 @@ contract: Namespace UIdent LBRACE For LPAR Const Ident Of ZWSP
 ##
 contract: For LPAR Const EIdent Of ZWSP
 ##
-## Ends in an error in state: 832.
+## Ends in an error in state: 845.
 ##
 ## range_of -> Const EIdent Of . expr [ RPAR PARAMS ]
 ##
@@ -3649,7 +3692,7 @@ contract: For LPAR Const EIdent Of ZWSP
 ##
 contract: For LPAR Const WILD Of ZWSP
 ##
-## Ends in an error in state: 826.
+## Ends in an error in state: 839.
 ##
 ## range_of -> Const WILD Of . expr [ RPAR PARAMS ]
 ##
@@ -3662,7 +3705,7 @@ At this point, the range is expected as an expression.
 
 contract: Namespace UIdent LBRACE For LPAR SEMI SEMI PARAMS ZWSP
 ##
-## Ends in an error in state: 845.
+## Ends in an error in state: 858.
 ##
 ## par(range_for) -> LPAR range_for PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
@@ -3675,7 +3718,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: Namespace UIdent LBRACE For LPAR Ident MINUS2 BIT_AND
 ##
-## Ends in an error in state: 851.
+## Ends in an error in state: 864.
 ##
 ## range_for -> initialiser . SEMI SEMI [ RPAR PARAMS ]
 ## range_for -> initialiser . SEMI SEMI afterthought [ RPAR PARAMS ]
@@ -3691,7 +3734,7 @@ At this point, a semicolon ';' is expected.
 
 contract: Namespace UIdent LBRACE For LPAR Ident MINUS2 SEMI ZWSP
 ##
-## Ends in an error in state: 852.
+## Ends in an error in state: 865.
 ##
 ## range_for -> initialiser SEMI . SEMI [ RPAR PARAMS ]
 ## range_for -> initialiser SEMI . SEMI afterthought [ RPAR PARAMS ]
@@ -3709,7 +3752,7 @@ At this point, one of the following is expected:
 
 contract: Const ZWSP
 ##
-## Ends in an error in state: 952.
+## Ends in an error in state: 965.
 ##
 ## value_decl -> Const . bindings [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case Break Attr ]
 ##
@@ -3722,7 +3765,7 @@ At this point, a pattern is expected, e.g. a variable.
 
 contract: Namespace UIdent LBRACE For ZWSP
 ##
-## Ends in an error in state: 1049.
+## Ends in an error in state: 1062.
 ##
 ## empty_for_stmt -> For . par(range_for) [ SEMI RBRACE EOF Default Case ]
 ## for_of_stmt(catenable_stmt) -> For . par(range_of) catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -3737,7 +3780,7 @@ contract: Namespace UIdent LBRACE For ZWSP
 ##
 contract: Namespace UIdent LBRACE Return For ZWSP
 ##
-## Ends in an error in state: 1103.
+## Ends in an error in state: 1116.
 ##
 ## for_of_stmt(statement) -> For . par(range_of) statement [ SEMI RBRACE EOF Default Case ]
 ## for_of_stmt(stmt_ending_with_expr) -> For . par(range_of) stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3751,7 +3794,7 @@ contract: Namespace UIdent LBRACE Return For ZWSP
 ##
 contract: If LPAR Bytes RPAR For ZWSP
 ##
-## Ends in an error in state: 800.
+## Ends in an error in state: 813.
 ##
 ## empty_for_stmt -> For . par(range_for) [ SEMI_ELSE SEMI RBRACE Else EOF Default Case ]
 ## for_of_stmt(catenable_stmt) -> For . par(range_of) catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -3768,7 +3811,7 @@ contract: If LPAR Bytes RPAR For ZWSP
 ##
 contract: Return If LPAR Bytes RPAR For ZWSP
 ##
-## Ends in an error in state: 1072.
+## Ends in an error in state: 1085.
 ##
 ## empty_for_stmt -> For . par(range_for) [ SEMI_ELSE SEMI RBRACE Else EOF Default Case ]
 ## for_of_stmt(closed_non_if_stmt) -> For . par(range_of) closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -3785,7 +3828,7 @@ contract: Return If LPAR Bytes RPAR For ZWSP
 ##
 contract: Return Attr For ZWSP
 ##
-## Ends in an error in state: 1097.
+## Ends in an error in state: 1110.
 ##
 ## empty_for_stmt -> For . par(range_for) [ SEMI RBRACE EOF Default Case ]
 ## for_of_stmt(statement) -> For . par(range_of) statement [ SEMI RBRACE EOF Default Case ]
@@ -3804,7 +3847,7 @@ At this point, an opening parenthesis '(' is expected.
 
 contract: Namespace UIdent LBRACE Return While ZWSP
 ##
-## Ends in an error in state: 1064.
+## Ends in an error in state: 1077.
 ##
 ## while_stmt(statement) -> While . par(while_cond) statement [ SEMI RBRACE EOF Default Case ]
 ## while_stmt(stmt_ending_with_expr) -> While . par(while_cond) stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3819,7 +3862,7 @@ At this point, an opening parenthesis '(' is expected.
 
 contract: Namespace UIdent LBRACE Return Export ZWSP
 ##
-## Ends in an error in state: 1105.
+## Ends in an error in state: 1118.
 ##
 ## export(fun_decl) -> Export . fun_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ## export(import_decl) -> Export . import_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
@@ -3833,7 +3876,7 @@ contract: Namespace UIdent LBRACE Return Export ZWSP
 ##
 contract: Export ZWSP
 ##
-## Ends in an error in state: 951.
+## Ends in an error in state: 964.
 ##
 ## export(declaration) -> Export . declaration [ SEMI_ELSE SEMI RBRACE Else EOF Default Case ]
 ## export(fun_decl) -> Export . fun_decl [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -3848,7 +3891,7 @@ contract: Export ZWSP
 ##
 contract: Return If LPAR Bytes RPAR Export ZWSP
 ##
-## Ends in an error in state: 1074.
+## Ends in an error in state: 1087.
 ##
 ## export(declaration) -> Export . declaration [ SEMI_ELSE SEMI RBRACE Else EOF Default Case ]
 ## export(fun_decl) -> Export . fun_decl [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -3866,7 +3909,7 @@ At this point, a declaration is expected.
 
 contract: Namespace UIdent LBRACE Return Attr ZWSP
 ##
-## Ends in an error in state: 1112.
+## Ends in an error in state: 1125.
 ##
 ## right_rec_stmt(statement) -> Attr . statement [ SEMI RBRACE EOF Default Case ]
 ## right_rec_stmt(stmt_ending_with_expr) -> Attr . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3877,7 +3920,7 @@ contract: Namespace UIdent LBRACE Return Attr ZWSP
 ##
 contract: Attr ZWSP
 ##
-## Ends in an error in state: 1051.
+## Ends in an error in state: 1064.
 ##
 ## core_stmt(statement) -> Attr . statement [ SEMI RBRACE EOF Default Case ]
 ## right_rec_stmt(catenable_stmt) -> Attr . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -3888,7 +3931,7 @@ contract: Attr ZWSP
 ##
 contract: Return Attr Attr ZWSP
 ##
-## Ends in an error in state: 1099.
+## Ends in an error in state: 1112.
 ##
 ## core_stmt(statement) -> Attr . statement [ SEMI RBRACE EOF Default Case ]
 ## right_rec_stmt(stmt_ending_with_expr) -> Attr . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3905,7 +3948,7 @@ At this point, one of the following is expected:
 
 contract: Namespace UIdent LBRACE Return For LPAR SEMI SEMI RPAR ZWSP
 ##
-## Ends in an error in state: 1104.
+## Ends in an error in state: 1117.
 ##
 ## full_for_stmt(statement) -> For par(range_for) . statement [ SEMI RBRACE EOF Default Case ]
 ## full_for_stmt(stmt_ending_with_expr) -> For par(range_for) . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -3920,7 +3963,7 @@ At this point, the body is expected as a statement.
 
 contract: Namespace UIdent LBRACE Return BIT_AND
 ##
-## Ends in an error in state: 1184.
+## Ends in an error in state: 1197.
 ##
 ## braces(statements) -> LBRACE statements . RBRACE [ XOR While When WILD Verbatim VBAR UIdent Type True TIMES Switch String SLASH SHARP SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS2 PLUS PARAMS OR Nat Namespace NE Mutez Match MINUS2 MINUS Let LT LPAR LE LBRACKET LBRACE Interface Int Import If Ident GT Function For False Export Else EQ2 EOF EIdent Do Directive Default ContractOf Continue Const Case COMMA COLON Bytes Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ##
@@ -3932,11 +3975,11 @@ contract: Namespace UIdent LBRACE Return BIT_AND
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 581, spurious reduction of production empty_return_stmt -> Return
-## In state 1129, spurious reduction of production return_stmt -> empty_return_stmt
-## In state 1053, spurious reduction of production non_if_stmt(statement) -> return_stmt
-## In state 977, spurious reduction of production statement -> non_if_stmt(statement)
-## In state 1123, spurious reduction of production last_or_more(statement) -> statement
-## In state 1128, spurious reduction of production statements -> last_or_more(statement)
+## In state 1142, spurious reduction of production return_stmt -> empty_return_stmt
+## In state 1066, spurious reduction of production non_if_stmt(statement) -> return_stmt
+## In state 990, spurious reduction of production statement -> non_if_stmt(statement)
+## In state 1136, spurious reduction of production last_or_more(statement) -> statement
+## In state 1141, spurious reduction of production statements -> last_or_more(statement)
 ##
 
 Ill-formed block of statements.
@@ -3949,7 +3992,7 @@ contract: Namespace UIdent Implements ZWSP
 ##
 ## Ends in an error in state: 587.
 ##
-## interface -> Implements . interface_expr [ LBRACE ]
+## interface -> Implements . nsepseq(interface_expr,COMMA) [ LBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## Implements
@@ -3960,20 +4003,20 @@ At this point, an interface is expected.
 
 contract: Namespace UIdent Implements UIdent ZWSP
 ##
-## Ends in an error in state: 618.
+## Ends in an error in state: 622.
 ##
-## namespace_decl -> Namespace namespace_binder interface . braces(statements) [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## nsepseq(interface_expr,COMMA) -> interface_expr . [ LBRACE ]
+## nsepseq(interface_expr,COMMA) -> interface_expr . COMMA nsepseq(interface_expr,COMMA) [ LBRACE ]
 ##
 ## The known suffix of the stack is as follows:
-## Namespace namespace_binder interface
+## interface_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 121, spurious reduction of production namespace_selection -> namespace_name
-## In state 614, spurious reduction of production interface_expr -> namespace_selection
-## In state 615, spurious reduction of production interface -> Implements interface_expr
+## In state 621, spurious reduction of production interface_expr -> namespace_selection
 ##
 
 Ill-formed namespace declaration.
@@ -3982,7 +4025,7 @@ opening brace '{'.
 
 interactive_expr: ZWSP
 ##
-## Ends in an error in state: 1282.
+## Ends in an error in state: 1295.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -3995,7 +4038,7 @@ At this point, an expression is expected.
 
 contract: Attr Directive ZWSP
 ##
-## Ends in an error in state: 1137.
+## Ends in an error in state: 1150.
 ##
 ## statements -> catenable_stmt . statements [ RBRACE EOF Default Case ]
 ##
@@ -4008,7 +4051,7 @@ At this point, a statement is expected.
 
 contract: Const SHARP ZWSP
 ##
-## Ends in an error in state: 627.
+## Ends in an error in state: 636.
 ##
 ## ctor_app_pattern -> SHARP . brackets(bracketed_ctor_app_pattern) [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ## ctor_app_pattern -> SHARP . String [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
@@ -4040,7 +4083,7 @@ At this point, one of the following is expected:
 
 contract: Const Bytes COLON Ident EQ ZWSP
 ##
-## Ends in an error in state: 731.
+## Ends in an error in state: 740.
 ##
 ## val_binding -> pattern binding_type EQ . expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA Break Attr ]
 ##
@@ -4289,7 +4332,7 @@ At this point, if the expression is complete, a closing parenthesis
 
 contract: If LPAR Bytes WILD
 ##
-## Ends in an error in state: 773.
+## Ends in an error in state: 786.
 ##
 ## par(if_cond) -> LPAR if_cond . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## par(if_cond) -> LPAR if_cond . PARAMS RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -4313,11 +4356,11 @@ contract: If LPAR Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 777, spurious reduction of production if_cond -> expr
+## In state 790, spurious reduction of production if_cond -> expr
 ##
 contract: If LPAR Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 775.
+## Ends in an error in state: 788.
 ##
 ## par(if_cond) -> LPAR if_cond PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ##
@@ -4330,7 +4373,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 778.
+## Ends in an error in state: 791.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) . closed_non_if_stmt Else catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -4347,7 +4390,7 @@ contract: If LPAR Bytes RPAR ZWSP
 ##
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 782.
+## Ends in an error in state: 795.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) . closed_non_if_stmt Else catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -4366,7 +4409,7 @@ contract: If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ##
 contract: Return If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1067.
+## Ends in an error in state: 1080.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
 ## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
@@ -4383,7 +4426,7 @@ contract: Return If LPAR Bytes RPAR ZWSP
 ##
 contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1071.
+## Ends in an error in state: 1084.
 ##
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) . closed_non_if_stmt Else closed_non_if_stmt [ SEMI_ELSE Else ]
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -4406,7 +4449,7 @@ At this point, a statement for a true condition is expected.
 
 contract: If LPAR Bytes RPAR While ZWSP
 ##
-## Ends in an error in state: 779.
+## Ends in an error in state: 792.
 ##
 ## while_stmt(catenable_stmt) -> While . par(while_cond) catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## while_stmt(closed_non_if_stmt) -> While . par(while_cond) closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -4422,7 +4465,7 @@ At this point, the invariant is expected between parentheses.
 
 contract: For LPAR SEMI SEMI Bytes WILD
 ##
-## Ends in an error in state: 807.
+## Ends in an error in state: 820.
 ##
 ## nsepseq(after(expr),COMMA) -> after(expr) . [ RPAR PARAMS ]
 ## nsepseq(after(expr),COMMA) -> after(expr) . COMMA nsepseq(after(expr),COMMA) [ RPAR PARAMS ]
@@ -4446,7 +4489,7 @@ contract: For LPAR SEMI SEMI Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 805, spurious reduction of production after(expr) -> expr
+## In state 818, spurious reduction of production after(expr) -> expr
 ##
 
 Ill-formed for-loop.
@@ -4456,7 +4499,7 @@ At this point, one of the following is expected:
 
 contract: For LPAR SEMI SEMI Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 808.
+## Ends in an error in state: 821.
 ##
 ## nsepseq(after(expr),COMMA) -> after(expr) COMMA . nsepseq(after(expr),COMMA) [ RPAR PARAMS ]
 ##
@@ -4469,7 +4512,7 @@ At this point, an expression is expected.
 
 contract: For LPAR SEMI Bytes WILD
 ##
-## Ends in an error in state: 811.
+## Ends in an error in state: 824.
 ##
 ## range_for -> SEMI condition . SEMI [ RPAR PARAMS ]
 ## range_for -> SEMI condition . SEMI afterthought [ RPAR PARAMS ]
@@ -4493,7 +4536,7 @@ contract: For LPAR SEMI Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 810, spurious reduction of production condition -> expr
+## In state 823, spurious reduction of production condition -> expr
 ##
 
 Ill-formed for-loop.
@@ -4501,7 +4544,7 @@ At this point, a semicolon ';' is expected.
 
 contract: For LPAR Const Ident Of Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 841.
+## Ends in an error in state: 854.
 ##
 ## par(range_of) -> LPAR range_of PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ##
@@ -4514,7 +4557,7 @@ At this point, a closing parenthesis ')' is expected.
 
 contract: For LPAR Ident MINUS2 SEMI Bytes WILD
 ##
-## Ends in an error in state: 855.
+## Ends in an error in state: 868.
 ##
 ## range_for -> initialiser SEMI condition . SEMI [ RPAR PARAMS ]
 ## range_for -> initialiser SEMI condition . SEMI afterthought [ RPAR PARAMS ]
@@ -4538,7 +4581,7 @@ contract: For LPAR Ident MINUS2 SEMI Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 810, spurious reduction of production condition -> expr
+## In state 823, spurious reduction of production condition -> expr
 ##
 
 Ill-formed for-loop.
@@ -4555,7 +4598,7 @@ interactive_expr: Bytes QMARK ZWSP
 ##
 contract: Bytes QMARK ZWSP
 ##
-## Ends in an error in state: 866.
+## Ends in an error in state: 879.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK . app_expr COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK . app_expr COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4631,7 +4674,7 @@ At this point, the expression for a true condition is expected.
 
 contract: For LPAR Const Ident Of Bytes WILD
 ##
-## Ends in an error in state: 839.
+## Ends in an error in state: 852.
 ##
 ## par(range_of) -> LPAR range_of . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## par(range_of) -> LPAR range_of . PARAMS RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -4655,7 +4698,7 @@ contract: For LPAR Const Ident Of Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 830, spurious reduction of production range_of -> Const Ident Of expr
+## In state 843, spurious reduction of production range_of -> Const Ident Of expr
 ##
 
 Ill-formed for-loop.
@@ -4664,7 +4707,7 @@ parenthesis ')' is expected.
 
 contract: Bytes QMARK Bytes QMARK Ident MINUS2 COLON Ident MINUS2 BIT_AND
 ##
-## Ends in an error in state: 878.
+## Ends in an error in state: 891.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK ternary_expr(core_expr,pre_expr_stmt) . COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK ternary_expr(core_expr,pre_expr_stmt) . COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4680,7 +4723,7 @@ contract: Bytes QMARK Bytes QMARK Ident MINUS2 COLON Ident MINUS2 BIT_AND
 ##
 contract: Bytes QMARK Ident PLUS2 ZWSP
 ##
-## Ends in an error in state: 908.
+## Ends in an error in state: 921.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK incr_expr . COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK incr_expr . COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4696,7 +4739,7 @@ contract: Bytes QMARK Ident PLUS2 ZWSP
 ##
 contract: Bytes QMARK Ident MINUS2 ZWSP
 ##
-## Ends in an error in state: 918.
+## Ends in an error in state: 931.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK decr_expr . COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK decr_expr . COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4712,7 +4755,7 @@ contract: Bytes QMARK Ident MINUS2 ZWSP
 ##
 contract: Bytes QMARK Ident BIT_AND_EQ Bytes WILD
 ##
-## Ends in an error in state: 928.
+## Ends in an error in state: 941.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK assign_expr . COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK assign_expr . COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4773,7 +4816,7 @@ interactive_expr: Bytes QMARK Bytes WILD
 ##
 contract: Bytes QMARK Bytes As Ident XOR
 ##
-## Ends in an error in state: 867.
+## Ends in an error in state: 880.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK typed_expr . COLON app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK typed_expr . COLON incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4805,7 +4848,7 @@ condition.
 
 contract: Bytes QMARK Bytes QMARK Ident MINUS2 COLON Ident MINUS2 COLON ZWSP
 ##
-## Ends in an error in state: 879.
+## Ends in an error in state: 892.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK ternary_expr(core_expr,pre_expr_stmt) COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK ternary_expr(core_expr,pre_expr_stmt) COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4821,7 +4864,7 @@ contract: Bytes QMARK Bytes QMARK Ident MINUS2 COLON Ident MINUS2 COLON ZWSP
 ##
 contract: Bytes QMARK LPAR Bytes RPAR COLON ZWSP
 ##
-## Ends in an error in state: 889.
+## Ends in an error in state: 902.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK par(expr) COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK par(expr) COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4837,7 +4880,7 @@ contract: Bytes QMARK LPAR Bytes RPAR COLON ZWSP
 ##
 contract: Bytes QMARK Match LPAR Bytes RPAR LBRACE Default COLON Bytes RBRACE COLON ZWSP
 ##
-## Ends in an error in state: 899.
+## Ends in an error in state: 912.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK match_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK match_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4853,7 +4896,7 @@ contract: Bytes QMARK Match LPAR Bytes RPAR LBRACE Default COLON Bytes RBRACE CO
 ##
 contract: Bytes QMARK Ident PLUS2 COLON ZWSP
 ##
-## Ends in an error in state: 909.
+## Ends in an error in state: 922.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK incr_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK incr_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4869,7 +4912,7 @@ contract: Bytes QMARK Ident PLUS2 COLON ZWSP
 ##
 contract: Bytes QMARK Ident MINUS2 COLON ZWSP
 ##
-## Ends in an error in state: 919.
+## Ends in an error in state: 932.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK decr_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK decr_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4885,7 +4928,7 @@ contract: Bytes QMARK Ident MINUS2 COLON ZWSP
 ##
 contract: Bytes QMARK Ident BIT_AND_EQ Bytes COLON ZWSP
 ##
-## Ends in an error in state: 929.
+## Ends in an error in state: 942.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK assign_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK assign_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4901,7 +4944,7 @@ contract: Bytes QMARK Ident BIT_AND_EQ Bytes COLON ZWSP
 ##
 contract: Bytes QMARK Bytes LPAR RPAR COLON ZWSP
 ##
-## Ends in an error in state: 939.
+## Ends in an error in state: 952.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK app_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK app_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4926,7 +4969,7 @@ interactive_expr: Bytes QMARK Bytes COLON ZWSP
 ##
 contract: Bytes QMARK Bytes As Ident COLON ZWSP
 ##
-## Ends in an error in state: 868.
+## Ends in an error in state: 881.
 ##
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK typed_expr COLON . app_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
 ## ternary_expr(core_expr,pre_expr_stmt) -> core_expr QMARK typed_expr COLON . incr_expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COLON Break Attr ]
@@ -4946,7 +4989,7 @@ At this point, the expression for a false condition is expected.
 
 contract: If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 950.
+## Ends in an error in state: 963.
 ##
 ## for_of_stmt(catenable_stmt) -> For par(range_of) . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## for_of_stmt(closed_non_if_stmt) -> For par(range_of) . closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -4958,7 +5001,7 @@ contract: If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
 contract: For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1050.
+## Ends in an error in state: 1063.
 ##
 ## for_of_stmt(catenable_stmt) -> For par(range_of) . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## for_of_stmt(statement) -> For par(range_of) . statement [ SEMI RBRACE EOF Default Case ]
@@ -4969,7 +5012,7 @@ contract: For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
 contract: Return If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1073.
+## Ends in an error in state: 1086.
 ##
 ## for_of_stmt(closed_non_if_stmt) -> For par(range_of) . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## for_of_stmt(statement) -> For par(range_of) . statement [ SEMI RBRACE EOF Default Case ]
@@ -4981,7 +5024,7 @@ contract: Return If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
 contract: Return For LPAR Const Ident Of Bytes RPAR ZWSP
 ##
-## Ends in an error in state: 1098.
+## Ends in an error in state: 1111.
 ##
 ## for_of_stmt(statement) -> For par(range_of) . statement [ SEMI RBRACE EOF Default Case ]
 ## for_of_stmt(stmt_ending_with_expr) -> For par(range_of) . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -4996,7 +5039,7 @@ At this point, the body is expected as a statement.
 
 contract: If LPAR Bytes RPAR Attr ZWSP
 ##
-## Ends in an error in state: 963.
+## Ends in an error in state: 976.
 ##
 ## core_stmt(closed_non_if_stmt) -> Attr . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## core_stmt(statement) -> Attr . statement [ SEMI RBRACE EOF Default Case ]
@@ -5008,7 +5051,7 @@ contract: If LPAR Bytes RPAR Attr ZWSP
 ##
 contract: Return If LPAR Bytes RPAR Attr ZWSP
 ##
-## Ends in an error in state: 1075.
+## Ends in an error in state: 1088.
 ##
 ## core_stmt(closed_non_if_stmt) -> Attr . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## core_stmt(statement) -> Attr . statement [ SEMI RBRACE EOF Default Case ]
@@ -5026,7 +5069,7 @@ At this point, one of the following is expected:
 
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
-## Ends in an error in state: 1032.
+## Ends in an error in state: 1045.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -5038,7 +5081,7 @@ contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Break Else ZWSP
 ##
-## Ends in an error in state: 1037.
+## Ends in an error in state: 1050.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) closed_non_if_stmt Else . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) closed_non_if_stmt Else . closed_non_if_stmt [ SEMI_ELSE Else ]
@@ -5050,7 +5093,7 @@ contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Break Else ZWSP
 ##
 contract: If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
-## Ends in an error in state: 1048.
+## Ends in an error in state: 1061.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . statement [ SEMI RBRACE EOF Default Case ]
@@ -5061,7 +5104,7 @@ contract: If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
 contract: If LPAR Bytes RPAR Break Else ZWSP
 ##
-## Ends in an error in state: 1062.
+## Ends in an error in state: 1075.
 ##
 ## if_else_stmt(catenable_stmt) -> If par(if_cond) closed_non_if_stmt Else . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
@@ -5072,7 +5115,7 @@ contract: If LPAR Bytes RPAR Break Else ZWSP
 ##
 contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR Return SEMI_ELSE ZWSP
 ##
-## Ends in an error in state: 1090.
+## Ends in an error in state: 1103.
 ##
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . statement [ SEMI RBRACE EOF Default Case ]
@@ -5084,7 +5127,7 @@ contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR Return SEMI_ELSE ZWSP
 ##
 contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 1092.
+## Ends in an error in state: 1105.
 ##
 ## if_else_stmt(closed_non_if_stmt) -> If par(if_cond) closed_non_if_stmt Else . closed_non_if_stmt [ SEMI_ELSE Else ]
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
@@ -5096,7 +5139,7 @@ contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR Return Else ZWSP
 ##
 contract: Return If LPAR Bytes RPAR Return SEMI_ELSE ZWSP
 ##
-## Ends in an error in state: 1096.
+## Ends in an error in state: 1109.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . statement [ SEMI RBRACE EOF Default Case ]
 ## if_else_stmt(stmt_ending_with_expr) -> If par(if_cond) closed_non_if_stmt SEMI_ELSE . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -5107,7 +5150,7 @@ contract: Return If LPAR Bytes RPAR Return SEMI_ELSE ZWSP
 ##
 contract: Return If LPAR Bytes RPAR Return Else ZWSP
 ##
-## Ends in an error in state: 1102.
+## Ends in an error in state: 1115.
 ##
 ## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
 ## if_else_stmt(stmt_ending_with_expr) -> If par(if_cond) closed_non_if_stmt Else . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
@@ -5122,7 +5165,7 @@ At this point, a statement for a false condition is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Case ZWSP
 ##
-## Ends in an error in state: 1167.
+## Ends in an error in state: 1180.
 ##
 ## switch_case -> Case . case_expr COLON [ RBRACE Default Case ]
 ## switch_case -> Case . case_expr COLON statements [ RBRACE Default Case ]
@@ -5136,7 +5179,7 @@ At this point, a case expression is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Case Bytes COLON ZWSP
 ##
-## Ends in an error in state: 1173.
+## Ends in an error in state: 1186.
 ##
 ## switch_case -> Case case_expr COLON . [ RBRACE Default Case ]
 ## switch_case -> Case case_expr COLON . statements [ RBRACE Default Case ]
@@ -5154,7 +5197,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Case Bytes COLON Return BIT_AND
 ##
-## Ends in an error in state: 1177.
+## Ends in an error in state: 1190.
 ##
 ## nseq(switch_case) -> switch_case . [ RBRACE Default ]
 ## nseq(switch_case) -> switch_case . nseq(switch_case) [ RBRACE Default ]
@@ -5167,16 +5210,16 @@ contract: Switch LPAR Bytes RPAR LBRACE Case Bytes COLON Return BIT_AND
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 581, spurious reduction of production empty_return_stmt -> Return
-## In state 1129, spurious reduction of production return_stmt -> empty_return_stmt
-## In state 1053, spurious reduction of production non_if_stmt(statement) -> return_stmt
-## In state 977, spurious reduction of production statement -> non_if_stmt(statement)
-## In state 1123, spurious reduction of production last_or_more(statement) -> statement
-## In state 1128, spurious reduction of production statements -> last_or_more(statement)
-## In state 1174, spurious reduction of production switch_case -> Case case_expr COLON statements
+## In state 1142, spurious reduction of production return_stmt -> empty_return_stmt
+## In state 1066, spurious reduction of production non_if_stmt(statement) -> return_stmt
+## In state 990, spurious reduction of production statement -> non_if_stmt(statement)
+## In state 1136, spurious reduction of production last_or_more(statement) -> statement
+## In state 1141, spurious reduction of production statements -> last_or_more(statement)
+## In state 1187, spurious reduction of production switch_case -> Case case_expr COLON statements
 ##
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return BIT_AND
 ##
-## Ends in an error in state: 1181.
+## Ends in an error in state: 1194.
 ##
 ## braces(cases) -> LBRACE cases . RBRACE [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI_ELSE SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export Else EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
 ##
@@ -5188,13 +5231,13 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return BIT_AND
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 581, spurious reduction of production empty_return_stmt -> Return
-## In state 1129, spurious reduction of production return_stmt -> empty_return_stmt
-## In state 1053, spurious reduction of production non_if_stmt(statement) -> return_stmt
-## In state 977, spurious reduction of production statement -> non_if_stmt(statement)
-## In state 1123, spurious reduction of production last_or_more(statement) -> statement
-## In state 1128, spurious reduction of production statements -> last_or_more(statement)
-## In state 1166, spurious reduction of production switch_default -> Default COLON statements
-## In state 1176, spurious reduction of production cases -> switch_default
+## In state 1142, spurious reduction of production return_stmt -> empty_return_stmt
+## In state 1066, spurious reduction of production non_if_stmt(statement) -> return_stmt
+## In state 990, spurious reduction of production statement -> non_if_stmt(statement)
+## In state 1136, spurious reduction of production last_or_more(statement) -> statement
+## In state 1141, spurious reduction of production statements -> last_or_more(statement)
+## In state 1179, spurious reduction of production switch_default -> Default COLON statements
+## In state 1189, spurious reduction of production cases -> switch_default
 ##
 
 Ill-formed switch.
@@ -5205,7 +5248,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE ELLIPSIS Bytes WILD
 ##
-## Ends in an error in state: 1193.
+## Ends in an error in state: 1206.
 ##
 ## update_expr -> ELLIPSIS expr . property_sep updates [ RBRACE ]
 ##
@@ -5236,7 +5279,7 @@ separator (';' or ',') is expected.
 
 interactive_expr: LBRACE Ident COLON Bytes WILD
 ##
-## Ends in an error in state: 1202.
+## Ends in an error in state: 1215.
 ##
 ## nsepseq(property(expr),property_sep) -> property(expr) . [ RBRACE ]
 ## nsepseq(property(expr),property_sep) -> property(expr) . property_sep nsepseq(property(expr),property_sep) [ RBRACE ]
@@ -5262,7 +5305,7 @@ interactive_expr: LBRACE Ident COLON Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 1198, spurious reduction of production property(expr) -> property_id COLON expr
+## In state 1211, spurious reduction of production property(expr) -> property_id COLON expr
 ##
 
 Ill-formed object.
@@ -5272,7 +5315,7 @@ At this point, one of the following is expected:
 
 contract: LBRACKET Bytes WILD
 ##
-## Ends in an error in state: 1221.
+## Ends in an error in state: 1234.
 ##
 ## nsepseq(element(expr),COMMA) -> element(expr) . [ RBRACKET ]
 ## nsepseq(element(expr),COMMA) -> element(expr) . COMMA nsepseq(element(expr),COMMA) [ RBRACKET ]
@@ -5298,7 +5341,7 @@ contract: LBRACKET Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 1220, spurious reduction of production element(expr) -> expr
+## In state 1233, spurious reduction of production element(expr) -> expr
 ##
 
 Ill-formed array.
@@ -5308,7 +5351,7 @@ At this point, one of the following is expected:
 
 contract: Match LPAR Bytes RPAR LBRACE Default COLON Bytes WILD
 ##
-## Ends in an error in state: 1248.
+## Ends in an error in state: 1261.
 ##
 ## match_default -> Default COLON expr . [ RBRACE ]
 ## match_default -> Default COLON expr . SEMI [ RBRACE ]
@@ -5342,7 +5385,7 @@ following is expected:
 
 contract: Match LPAR Bytes RPAR LBRACE Default COLON Bytes SEMI ZWSP
 ##
-## Ends in an error in state: 1253.
+## Ends in an error in state: 1266.
 ##
 ## braces(match_clauses) -> LBRACE match_clauses . RBRACE [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ##
@@ -5355,7 +5398,7 @@ At this point, a closing brace is expected '}'.
 
 contract: Match LPAR Bytes RPAR LBRACE When LPAR Bytes RPAR COLON Bytes SEMI ZWSP
 ##
-## Ends in an error in state: 1255.
+## Ends in an error in state: 1268.
 ##
 ## nseq(match_clause) -> match_clause . [ RBRACE Default ]
 ## nseq(match_clause) -> match_clause . nseq(match_clause) [ RBRACE Default ]
@@ -5372,7 +5415,7 @@ At this point, one of the following is expected:
 
 contract: LPAR Bytes WILD
 ##
-## Ends in an error in state: 1226.
+## Ends in an error in state: 1239.
 ##
 ## par(expr) -> LPAR expr . RPAR [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACKET LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default DOT Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
 ## par(expr) -> LPAR expr . PARAMS RPAR [ XOR While When VBAR Type TIMES Switch SLASH SEMI_ELSE SEMI Return RPAR REM RBRACKET RBRACE QMARK PLUS PARAMS OR Namespace NE MINUS Let LT LPAR LE LBRACKET LBRACE Interface Import If GT For Export Else EQ2 EOF Directive Default DOT Continue Const Case COMMA COLON Break BIT_XOR BIT_SL BIT_AND Attr As AND ]
@@ -5404,7 +5447,7 @@ At this point, if the expression is complete, a closing parenthesis
 
 contract: While LPAR Bytes WILD
 ##
-## Ends in an error in state: 1273.
+## Ends in an error in state: 1286.
 ##
 ## par(while_cond) -> LPAR while_cond . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## par(while_cond) -> LPAR while_cond . PARAMS RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
@@ -5428,11 +5471,11 @@ contract: While LPAR Bytes WILD
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 1277, spurious reduction of production while_cond -> expr
+## In state 1290, spurious reduction of production while_cond -> expr
 ##
 contract: While LPAR Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 1275.
+## Ends in an error in state: 1288.
 ##
 ## par(while_cond) -> LPAR while_cond PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ##
@@ -5446,7 +5489,7 @@ is expected.
 
 contract: Const Bytes EQ ZWSP
 ##
-## Ends in an error in state: 723.
+## Ends in an error in state: 732.
 ##
 ## val_binding -> pattern EQ . expr [ While Type Switch SEMI_ELSE SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export Else EOF Directive Default Continue Const Case COMMA Break Attr ]
 ##
@@ -5484,7 +5527,7 @@ contract: SHARP LBRACKET UIdent ZWSP
 ##
 contract: Const SHARP LBRACKET UIdent ZWSP
 ##
-## Ends in an error in state: 632.
+## Ends in an error in state: 641.
 ##
 ## namespace_path(__anonymous_10) -> namespace_name . DOT namespace_path(__anonymous_10) [ RBRACKET COMMA ]
 ## namespace_path(__anonymous_10) -> namespace_name . DOT String [ RBRACKET COMMA ]
@@ -5544,7 +5587,7 @@ At this point, one of the following is expected:
 
 contract: Const SHARP LBRACKET ZWSP
 ##
-## Ends in an error in state: 629.
+## Ends in an error in state: 638.
 ##
 ## brackets(bracketed_ctor_app_pattern) -> LBRACKET . bracketed_ctor_app_pattern RBRACKET [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -5559,7 +5602,7 @@ At this point, one of the following is expected:
 
 contract: Const SHARP LBRACKET String ZWSP
 ##
-## Ends in an error in state: 636.
+## Ends in an error in state: 645.
 ##
 ## bracketed_ctor_app_pattern -> ctor_pattern . option(ctor_arguments(pattern)) [ RBRACKET ]
 ##
@@ -5574,7 +5617,7 @@ At this point, one of the following is expected:
 
 contract: Const SHARP LBRACKET String COMMA ZWSP
 ##
-## Ends in an error in state: 637.
+## Ends in an error in state: 646.
 ##
 ## ctor_arguments(pattern) -> COMMA . sep_or_term(ctor_arg(pattern),COMMA) [ RBRACKET ]
 ##
@@ -5589,7 +5632,7 @@ At this point, one of the following is expected:
 
 contract: Const SHARP LBRACKET String COMMA Bytes ZWSP
 ##
-## Ends in an error in state: 711.
+## Ends in an error in state: 720.
 ##
 ## nsepseq(ctor_arg(pattern),COMMA) -> ctor_arg(pattern) . [ RBRACKET ]
 ## nsepseq(ctor_arg(pattern),COMMA) -> ctor_arg(pattern) . COMMA nsepseq(ctor_arg(pattern),COMMA) [ RBRACKET ]
@@ -5607,7 +5650,7 @@ At this point, one of the following is expected:
 
 contract: Const SHARP LBRACKET String COMMA Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 712.
+## Ends in an error in state: 721.
 ##
 ## nsepseq(ctor_arg(pattern),COMMA) -> ctor_arg(pattern) COMMA . nsepseq(ctor_arg(pattern),COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(ctor_arg(pattern),COMMA)) -> ctor_arg(pattern) COMMA . [ RBRACKET ]
@@ -5707,7 +5750,7 @@ At this point, one of the following is expected:
 
 contract: Switch LPAR Bytes RPAR LBRACE Case SHARP String ZWSP
 ##
-## Ends in an error in state: 1175.
+## Ends in an error in state: 1188.
 ##
 ## path(app_expr) -> app_expr . nseq(selection) [ LPAR COLON ]
 ##
@@ -5718,7 +5761,7 @@ contract: Switch LPAR Bytes RPAR LBRACE Case SHARP String ZWSP
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 1170, spurious reduction of production app_expr -> ctor_app_expr
+## In state 1183, spurious reduction of production app_expr -> ctor_app_expr
 ##
 
 Ill-formed selection in a namespace.
@@ -5726,7 +5769,7 @@ At this point, a namespace name is expected.
 
 contract: SHARP LBRACKET String COMMA Bytes While
 ##
-## Ends in an error in state: 1264.
+## Ends in an error in state: 1277.
 ##
 ## nsepseq(ctor_arg(expr),COMMA) -> ctor_arg(expr) . [ RBRACKET ]
 ## nsepseq(ctor_arg(expr),COMMA) -> ctor_arg(expr) . COMMA nsepseq(ctor_arg(expr),COMMA) [ RBRACKET ]
@@ -5752,11 +5795,11 @@ contract: SHARP LBRACKET String COMMA Bytes While
 ## In state 408, spurious reduction of production non_object_expr -> disj_expr_level
 ## In state 400, spurious reduction of production no_attr_expr -> non_object_expr
 ## In state 401, spurious reduction of production expr -> no_attr_expr
-## In state 1263, spurious reduction of production ctor_arg(expr) -> expr
+## In state 1276, spurious reduction of production ctor_arg(expr) -> expr
 ##
 contract: SHARP LBRACKET String COMMA Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 1265.
+## Ends in an error in state: 1278.
 ##
 ## nsepseq(ctor_arg(expr),COMMA) -> ctor_arg(expr) COMMA . nsepseq(ctor_arg(expr),COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(ctor_arg(expr),COMMA)) -> ctor_arg(expr) COMMA . [ RBRACKET ]
@@ -5774,7 +5817,7 @@ expected:
 
 contract: Const UIdent LPAR ZWSP
 ##
-## Ends in an error in state: 669.
+## Ends in an error in state: 678.
 ##
 ## par(ioption(nsepseq(pattern,COMMA))) -> LPAR . RPAR [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ## par(ioption(nsepseq(pattern,COMMA))) -> LPAR . nsepseq(pattern,COMMA) RPAR [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
@@ -5792,7 +5835,7 @@ At this point, one of the following is expected:
 
 contract: Const UIdent LPAR Bytes ZWSP
 ##
-## Ends in an error in state: 673.
+## Ends in an error in state: 682.
 ##
 ## nsepseq(pattern,COMMA) -> pattern . [ RPAR PARAMS ]
 ## nsepseq(pattern,COMMA) -> pattern . COMMA nsepseq(pattern,COMMA) [ RPAR PARAMS ]
@@ -5808,7 +5851,7 @@ At this point, one of the following is expected:
 
 contract: Const UIdent LPAR Bytes COMMA ZWSP
 ##
-## Ends in an error in state: 674.
+## Ends in an error in state: 683.
 ##
 ## nsepseq(pattern,COMMA) -> pattern COMMA . nsepseq(pattern,COMMA) [ RPAR PARAMS ]
 ##
@@ -5821,7 +5864,7 @@ At this point, a pattern matching an argument is expected.
 
 contract: Const UIdent LPAR Bytes PARAMS ZWSP
 ##
-## Ends in an error in state: 680.
+## Ends in an error in state: 689.
 ##
 ## par(ioption(nsepseq(pattern,COMMA))) -> LPAR nsepseq(pattern,COMMA) PARAMS . RPAR [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -5830,7 +5873,7 @@ contract: Const UIdent LPAR Bytes PARAMS ZWSP
 ##
 contract: Const UIdent LPAR PARAMS ZWSP
 ##
-## Ends in an error in state: 671.
+## Ends in an error in state: 680.
 ##
 ## par(ioption(nsepseq(pattern,COMMA))) -> LPAR PARAMS . RPAR [ SEMI RPAR RBRACKET RBRACE PARAMS EQ COMMA COLON ]
 ##
@@ -6033,7 +6076,7 @@ opening brace '{'.
 
 contract: For LPAR Let WILD ZWSP
 ##
-## Ends in an error in state: 815.
+## Ends in an error in state: 828.
 ##
 ## pattern -> WILD . [ EQ COLON ]
 ## range_of -> Let WILD . Of expr [ RPAR PARAMS ]
@@ -6043,7 +6086,7 @@ contract: For LPAR Let WILD ZWSP
 ##
 contract: For LPAR Const WILD ZWSP
 ##
-## Ends in an error in state: 825.
+## Ends in an error in state: 838.
 ##
 ## pattern -> WILD . [ EQ COLON ]
 ## range_of -> Const WILD . Of expr [ RPAR PARAMS ]
@@ -6054,3 +6097,29 @@ contract: For LPAR Const WILD ZWSP
 
 Ill-formed for-loop.
 At this point, the keyword 'of' is expected.
+
+contract: Interface UIdent Extends UIdent COMMA ZWSP
+##
+## Ends in an error in state: 623.
+##
+## nsepseq(interface_expr,COMMA) -> interface_expr COMMA . nsepseq(interface_expr,COMMA) [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## interface_expr COMMA
+##
+
+Ill-formed interface declaration.
+At this point, an interface expression is expected.
+
+contract: Interface UIdent Extends ZWSP
+##
+## Ends in an error in state: 748.
+##
+## extends -> Extends . nsepseq(interface_expr,COMMA) [ LBRACE ]
+##
+## The known suffix of the stack is as follows:
+## Extends
+##
+
+Ill-formed interface declaration.
+At this point, an interface is expected.

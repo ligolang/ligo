@@ -124,6 +124,7 @@ let add_comment (comment : Wrap.comment) : Token.t -> Token.t = function
 (* TypeScript keywords *)
 
 | As          w -> As (w#add_comment comment)
+| Extends     w -> Extends (w#add_comment comment)
 | Function    w -> Function (w#add_comment comment)
 | Implements  w -> Implements (w#add_comment comment)
 | Interface   w -> Interface (w#add_comment comment)

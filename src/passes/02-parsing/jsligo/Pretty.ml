@@ -412,7 +412,7 @@ and print_ImportFrom state (node : import_from reg) =
 (* Interfaces *)
 
 and print_D_Interface state (node : interface_decl reg) =
-  let {kwd_interface; intf_name; intf_body} = node.value in
+  let {kwd_interface; intf_name; intf_extends = _; intf_body} = node.value in
   group (token kwd_interface ^^ space ^^ token intf_name ^^ space
          ^^ print_intf_body state intf_body)
 
@@ -446,8 +446,11 @@ and print_rhs state thread (node : (equal * type_expr) option) =
   in Option.value_map node ~default:thread ~f:(print state)
 
 and print_I_Const state (node : intf_const reg) =
-  let {kwd_const; const_name; const_type} = node.value in
-  let thread = token kwd_const ^^ space ^^ print_variable const_name
+  let {kwd_const; const_name; const_optional; const_type} = node.value in
+  let thread = match const_optional with
+    | None -> token kwd_const ^^ space ^^ print_variable const_name
+    | Some qmark -> token kwd_const ^^ space
+                    ^^ print_variable const_name ^^ token qmark
   in group (thread ^^ print_type_annotation state const_type)
 
 (* Namespace declaration *)
@@ -463,8 +466,9 @@ and print_namespace_type state (node : interface option) =
   Option.value_map node ~default:empty ~f:(print_interface state)
 
 and print_interface state (node : interface) =
-  let kwd_implements, e = node.value in
-  token kwd_implements ^^ space ^^ print_intf_expr state e
+  let kwd_implements, intf_exprs = node.value in
+  let intf_exprs = print_nsepseq (break 1) (print_intf_expr state) intf_exprs in
+  token kwd_implements ^^ space ^^ intf_exprs
 
 and print_intf_expr state = function
   I_Body i -> print_I_Body state i

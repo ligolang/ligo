@@ -341,10 +341,16 @@ namespace_path (selected):
 (* Interface declaration *)
 
 interface_decl:
-  "interface" interface_name interface_body {
-    let region = cover $1#region $3.region
-    and value  = {kwd_interface=$1; intf_name=$2; intf_body=$3}
+  "interface" interface_name ioption(extends) interface_body {
+    let region = cover $1#region $4.region
+    and value  = {kwd_interface=$1; intf_name=$2; intf_extends=$3; intf_body=$4}
     in D_Interface {region; value} }
+
+extends:
+  "extends" nsepseq(interface_expr, ",") {
+    let stop   = nsepseq_to_region intf_expr_to_region $2 in
+    let region = cover $1#region stop
+    in {region; value=($1,$2)} }
 
 interface_body:
   braces(interface_entries) { $1 }
@@ -372,7 +378,13 @@ interface_type:
 interface_const:
   "const" variable type_annotation(type_expr) {
     let region = cover $1#region (type_expr_to_region (snd $3))
-    and value  = {kwd_const=$1; const_name=$2; const_type=$3}
+    and value  = {kwd_const=$1; const_name=$2; const_optional=None;
+                  const_type=$3}
+    in {region; value} }
+| "const" variable "?" type_annotation(type_expr) {
+    let region = cover $1#region (type_expr_to_region (snd $4))
+    and value  = {kwd_const=$1; const_name=$2; const_optional = Some $3;
+                  const_type=$4}
     in {region; value} }
 
 (* Module declaration *)
@@ -388,9 +400,10 @@ namespace_binder:
   namespace_name | "_" { $1 }
 
 interface:
-  "implements" interface_expr {
-     let region = cover $1#region (intf_expr_to_region $2)
-     in {region; value=($1,$2)} }
+  "implements" nsepseq(interface_expr, ",") {
+    let stop   = nsepseq_to_region intf_expr_to_region $2 in
+    let region = cover $1#region stop
+    in {region; value=($1,$2)} }
 
 interface_expr:
   interface_body      { I_Body $1 }

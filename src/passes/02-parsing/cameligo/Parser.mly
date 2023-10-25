@@ -581,6 +581,10 @@ sig_item:
     let region = cover $1#region (variable_to_region $2)
     in S_TypeVar {region; value=$1,$2}
   }
+| "include" signature_expr {
+    let region = $1#region
+    in S_Include {region; value=$1,$2}
+  }
 | "[@attr]" sig_item {
     let region = cover $1#region (sig_item_to_region $2)
     in S_Attr {region; value = $1,$2} }

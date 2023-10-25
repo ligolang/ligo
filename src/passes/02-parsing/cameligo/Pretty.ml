@@ -252,6 +252,7 @@ and print_sig_item state = function
 | S_Value   d -> print_S_Value   state d ^^ hardline
 | S_Type    d -> print_S_Type    state d ^^ hardline
 | S_TypeVar d -> print_S_TypeVar       d ^^ hardline
+| S_Include d -> print_S_Include state d ^^ hardline
 
 (* Attributed declaration *)
 
@@ -437,6 +438,12 @@ and print_S_TypeVar (node : (kwd_type * variable) reg) =
   let kwd_type, name = node.value in
   let name           = print_variable name
   in token kwd_type ^^ space ^^ name
+
+
+and print_S_Include state (node : (kwd_include * signature_expr) reg) =
+  let kwd_include, sig_expr = node.value in
+  let sig_          = print_signature_expr state sig_expr
+  in token kwd_include ^^ space ^^ sig_
 
 (* TYPE EXPRESSIONS *)
 

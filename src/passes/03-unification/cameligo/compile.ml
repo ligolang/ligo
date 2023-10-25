@@ -564,11 +564,14 @@ let declaration : Eq.declaration -> Folding.declaration =
     ret @@ D_type_abstraction { name; params; type_expr }
   | D_Module { value = { name; module_expr; annotation; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
-    let annotation = Option.map annotation ~f:snd in
+    let annotation =
+      O.Mod_decl.
+        { signatures = Option.to_list @@ Option.map annotation ~f:snd; filter = true }
+    in
     ret @@ D_module { name; mod_expr = module_expr; annotation }
   | D_Signature { value = { name; signature_expr; _ }; _ } ->
     let name = TODO_do_in_parsing.mvar name in
-    ret @@ D_signature { name; sig_expr = signature_expr }
+    ret @@ D_signature { name; sig_expr = signature_expr; extends = [] }
   | D_Include { value = { module_expr; _ }; _ } -> ret @@ D_module_include module_expr
 
 
@@ -613,7 +616,7 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
 let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
   | S_Value { region; value = _, v, _, ty } ->
     let loc = Location.lift region in
-    Location.wrap ~loc (O.S_value (TODO_do_in_parsing.esc_var v, ty))
+    Location.wrap ~loc (O.S_value (TODO_do_in_parsing.esc_var v, ty, false))
   | S_Type { region; value = _, v, _, ty } ->
     let loc = Location.lift region in
     Location.wrap ~loc (O.S_type (TODO_do_in_parsing.esc_tvar v, ty))
@@ -625,3 +628,6 @@ let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
     Location.wrap
       ~loc
       (O.S_attr (fst @@ TODO_do_in_parsing.conv_attr attr, si) : _ O.sig_entry_content_)
+  | S_Include { region; value = _, sig_expr } ->
+    let loc = Location.lift region in
+    Location.wrap ~loc (O.S_include sig_expr)

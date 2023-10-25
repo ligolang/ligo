@@ -283,10 +283,11 @@ include struct
     ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_content_ Location.wrap
 
   and ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_content_ =
-    | S_value of Variable.t * 'ty_expr
+    | S_value of Variable.t * 'ty_expr * bool
     | S_type of Ligo_prim.Type_var.t * 'ty_expr
     | S_type_var of Ligo_prim.Type_var.t
     | S_attr of Attribute.t * 'sig_entry
+    | S_include of 'sig_expr
   [@@deriving
     map
     , fold

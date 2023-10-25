@@ -113,6 +113,7 @@ let add_comment (comment : string Region.reg) : Token.t -> Token.t = function
 (* TypeScript keywords *)
 
 | As          w -> As (w#add_line_comment comment)
+| Extends     w -> Extends (w#add_line_comment comment)
 | Function    w -> Function (w#add_line_comment comment)
 | Implements  w -> Implements (w#add_line_comment comment)
 | Interface   w -> Interface (w#add_line_comment comment)

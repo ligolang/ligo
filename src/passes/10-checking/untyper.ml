@@ -7,7 +7,7 @@ open Ligo_prim
 let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t = fun x -> x
 
 let untype_sig_item_attr : O.sig_item_attribute -> I.sig_item_attribute =
- fun { entry; dyn_entry; view; _ } -> { entry; view; dyn_entry }
+ fun { entry; dyn_entry; view; optional } -> { entry; view; dyn_entry; optional }
 
 
 (* use_orig_var param allows us to preserve the orininal type variables names, e.g. if

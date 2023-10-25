@@ -125,7 +125,7 @@ and declaration ppf (d : declaration) =
   | D_module md ->
     Types.Module_decl.pp
       module_expr
-      (Simple_utils.PP_helpers.option signature_expr)
+      Simple_utils.PP_helpers.(option module_annotation)
       ppf
       md
   | D_module_include me -> fprintf ppf "include (%a)" module_expr me
@@ -138,19 +138,25 @@ and module_expr ppf (me : module_expr) : unit =
   Location.pp_wrap (Module_expr.pp decl) ppf me
 
 
-and sig_item_attribute ppf { view; entry; dyn_entry } =
+and module_annotation ppf (annot : module_annotation) : unit =
+  fprintf ppf "%a" signature_expr annot.signature
+
+
+and sig_item_attribute ppf { view; entry; dyn_entry; optional } =
   let pp_if_set str ppf attr =
     if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
   in
   fprintf
     ppf
-    "%a%a%a"
+    "%a%a%a%a"
     (pp_if_set "view")
     view
     (pp_if_set "entry")
     entry
     (pp_if_set "dyn_entry")
     dyn_entry
+    (pp_if_set "optional")
+    optional
 
 
 and sig_item ppf (d : sig_item) =
@@ -172,6 +178,7 @@ and sig_item ppf (d : sig_item) =
     Format.fprintf ppf "@[<2>module %a :@ %a@]" Module_var.pp var signature sig_
   | S_module_type (var, sig_) ->
     Format.fprintf ppf "@[<2>module type %a =@ %a@]" Module_var.pp var signature sig_
+  | S_include sig_ -> Format.fprintf ppf "@[<2>include %a@]" signature_expr sig_
 
 
 and signature ppf (sig_ : signature) : unit =

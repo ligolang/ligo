@@ -386,10 +386,13 @@ data ImportFrom = ImportFromC
 
 data InterfaceDecl = InterfaceDecl
   { idIntfName :: WrappedLexeme
+  , idIntfExtends :: Maybe Extends
   , idIntfBody :: IntfBody
   }
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
+
+type Extends = Reg (Tuple1 [IntfExpr])
 
 type IntfBody = Par IntrEntries
 
@@ -424,7 +427,7 @@ data NamespaceDecl = NamespaceDecl
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
-type Interface = Reg (Tuple1 IntfExpr)
+type Interface = Reg (Tuple1 [IntfExpr])
 
 data IntfExpr
   = IBody IntfBody
@@ -791,6 +794,7 @@ instance MessagePack ImportDecl where
 instance MessagePack InterfaceDecl where
   fromObjectWith _ = withMsgMap "InterfaceDecl" \o -> do
     idIntfName <- o .: "intf_name"
+    idIntfExtends <- o .:? "intf_extends"
     idIntfBody <- o .: "intf_body"
     pure InterfaceDecl{..}
 
@@ -1207,8 +1211,9 @@ toAST CST{..} =
       DInterface (unpackReg -> (r, InterfaceDecl{..})) ->
         let
           intfName = makeWrappedLexeme AST.ModuleName idIntfName
+          intfExtends = maybe [] interfaceConv idIntfExtends
           intfBody = intfBodyConv idIntfBody
-        in fastMake r (AST.BSignature intfName intfBody)
+        in fastMake r (AST.BSignature intfName intfBody intfExtends)
       DNamespace (unpackReg -> (r, NamespaceDecl{..})) ->
         let
           name = makeWrappedLexeme AST.ModuleName ndNamespaceName
@@ -1246,9 +1251,9 @@ toAST CST{..} =
               Let -> AST.BVar pat typVars typAnnMb (Just expr)
               Const -> AST.BConst True pat typVars typAnnMb (Just expr)
 
-    interfaceConv :: Interface -> LIGO Info
-    interfaceConv (unpackReg -> (_, Tuple1 intfExpr)) =
-      case intfExpr of
+    interfaceConv :: Interface -> [LIGO Info]
+    interfaceConv (unpackReg -> (_, Tuple1 exprs)) = exprs
+      <&> \case
         IBody body -> intfBodyConv body
         IPath path -> namespaceSelectionConv path
 
