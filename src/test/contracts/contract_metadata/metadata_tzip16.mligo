@@ -73,6 +73,27 @@ module Entry_valid_metadata = struct
 
 end
 
+module Entry_valid_metadata_with_dynamic_entrypoints = struct
+  type storage =
+    {
+     storage
+     : {
+        data : int;
+        metadata : (string, bytes) big_map
+       };
+     dynamic_entrypoints
+    }
+
+  [@entry]
+  let main (_p : param) (s : storage) : operation list * storage = [], s
+
+  [@dyn_entry]
+  let foo () s : operation list * storage = [], s
+
+  let off_view (p : int) (s : storage) : int = p + s.storage.data
+
+end
+
 type storage = Entry_valid_metadata.storage
 
 let json =
