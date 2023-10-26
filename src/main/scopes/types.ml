@@ -63,7 +63,7 @@ type vdef =
   { name : string
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t
+  ; body_range : Location.t option
   ; t : type_case
   ; references : LSet.t
   ; def_type : def_type
@@ -74,8 +74,11 @@ type tdef =
   { name : string
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t
-  ; content : Ast_core.type_expression
+  ; body_range : Location.t option
+  ; content : Ast_core.type_expression option
+        (** The RHS ([u]) of a type definition [type t = u]. For signatures and
+            interfaces, the type might be abstract and have no content, e.g.:
+            [module type I = sig type t end]. *)
   ; def_type : def_type
   ; references : LSet.t
   ; mod_path : string list
@@ -89,7 +92,7 @@ and mdef =
   { name : string
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t
+  ; body_range : Location.t option
   ; references : LSet.t
   ; mod_case : mod_case
   ; def_type : def_type
@@ -173,5 +176,4 @@ let fix_shadowing_in_scope : scope -> scope =
   loc, defs
 
 
-let fix_shadowing_in_scopes : scopes -> scopes =
- fun scopes -> List.map scopes ~f:fix_shadowing_in_scope
+let fix_shadowing_in_scopes : scopes -> scopes = List.map ~f:fix_shadowing_in_scope

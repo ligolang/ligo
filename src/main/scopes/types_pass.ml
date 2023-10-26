@@ -31,11 +31,20 @@ module Of_Ast_typed = struct
       | S_type _ -> bindings
       | S_type_var _ -> bindings
       | S_module (_, sig_) -> extract_binding_types_from_signature bindings sig_
-      | S_module_type _ -> failwith "TODO")
+      | S_module_type _ -> bindings)
 
 
-  let rec extract_binding_types : t -> Ast_typed.declaration_content -> t =
-   fun prev decl ->
+  let rec extract_module_content : t -> Ast_typed.module_content -> t =
+   fun prev -> function
+    | M_variable _ -> prev
+    | M_module_path _ -> prev
+    | M_struct ds ->
+      List.fold_left ds ~init:prev ~f:(fun prev d ->
+          extract_binding_types prev d.wrap_content)
+
+
+  and extract_binding_types : t -> Ast_typed.declaration_content -> t =
+   fun prev ->
     let aux : t -> Ast_typed.expression -> t =
      fun env exp ->
       let return = add_bindings env in
@@ -92,7 +101,7 @@ module Of_Ast_typed = struct
       | E_mod_in { rhs = { signature; _ }; _ } ->
         extract_binding_types_from_signature env signature
     in
-    match decl with
+    function
     | D_value { attr = { hidden = true; _ }; _ } -> prev
     | D_irrefutable_match { attr = { hidden = true; _ }; _ } -> prev
     | D_value { binder; expr; _ } ->
@@ -107,15 +116,12 @@ module Of_Ast_typed = struct
       in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_type _ -> prev
-    | D_module { module_; _ } ->
-      (match module_.module_content with
-      | M_variable _ -> prev
-      | M_module_path _ -> prev
-      | M_struct ds ->
-        List.fold_left ds ~init:prev ~f:(fun prev d ->
-            extract_binding_types prev d.wrap_content))
-    | D_module_include _ -> prev (* TODO *)
-    | D_signature _ -> prev (* TODO *)
+    | D_module { module_binder = _; module_; annotation = (); module_attr = _ } ->
+      extract_module_content prev module_.module_content
+    | D_module_include { module_content; module_location = _; signature = _ } ->
+      extract_module_content prev module_content
+    | D_signature { signature_binder = _; signature; signature_attr = _ } ->
+      extract_binding_types_from_signature prev signature
 end
 
 module Of_Ast_core = struct
@@ -124,7 +130,7 @@ module Of_Ast_core = struct
 
 
   let add_bindings_in_map : t -> (Location.t * type_case) list -> t =
-   fun env bindings -> List.fold bindings ~init:env ~f:add_binding_in_map
+   fun env -> List.fold ~init:env ~f:add_binding_in_map
 
 
   let add_binders : t -> Ast_core.type_expression option Binder.t list -> t =
@@ -138,6 +144,13 @@ module Of_Ast_core = struct
         bindings
     in
     add_bindings_in_map env bindings
+
+
+  let add_binder : t -> Ast_core.type_expression Binder.t -> t =
+   fun env binding ->
+    let loc = Binder.get_loc binding in
+    let t = Core (Binder.get_ascr binding) in
+    add_binding_in_map env (loc, t)
 
 
   let add_vvar_type : t -> Value_var.t * Ast_core.type_expression -> t =
@@ -158,18 +171,18 @@ module Of_Ast_core = struct
     | Some t -> add_vvar_type env (Param.get_var param, t)
 
 
-  (** [set_core_type_if_possible] detects patterns like 
-      
+  (** [set_core_type_if_possible] detects patterns like
+
       {[
         let x : int = 1
       ]}
 
       The abstraction pass will create AST like
-      [D_irrefutable_match 
+      [D_irrefutable_match
         (E_ascription ({ expr = E_literal 1; type_annotation = int }), _)]
 
       So here we want the x to have [Core int]
-  
+
       Hence we extract the type annotation from the rhs and we set it back to
       the binder.
   *)
@@ -238,12 +251,36 @@ module Of_Ast_core = struct
       let bindings = expression bindings rhs in
       expression bindings let_result
     | E_mod_in { rhs; let_result; _ } ->
-      let bindings =
-        match Location.unwrap rhs with
-        | M_variable _ | M_module_path _ -> bindings
-        | M_struct decls -> declarations bindings decls
-      in
+      let bindings = module_expr_content bindings (Location.unwrap rhs) in
       expression bindings let_result
+
+
+  and signature_expr : t -> Ast_core.signature_expr -> t =
+   fun bindings sig_expr -> signature_content bindings (Location.unwrap sig_expr)
+
+
+  and sig_item : t -> Ast_core.sig_item -> t =
+   fun bindings -> function
+    | S_value (var, ty_expr, _attrs) ->
+      let binder = Binder.make var ty_expr in
+      add_binder bindings binder
+    | S_type (_var, _ty_expr) -> bindings
+    | S_type_var _var -> bindings
+    | S_module (_var, _sig) -> bindings
+    | S_module_type (_var, _sig) -> bindings
+    | S_include signature -> signature_expr bindings signature
+
+
+  and signature_content : t -> Ast_core.signature_content -> t =
+   fun bindings -> function
+    | S_sig items -> sig_items bindings items.items
+    | S_path _ -> bindings
+
+
+  and module_expr_content : t -> Ast_core.module_expr_content -> t =
+   fun bindings -> function
+    | M_struct decls -> declarations bindings decls
+    | M_variable _ | M_module_path _ -> bindings
 
 
   and declaration : t -> Ast_core.declaration -> t =
@@ -259,16 +296,31 @@ module Of_Ast_core = struct
       let bindings = add_binders bindings binders in
       expression bindings expr
     | D_type _ -> bindings
-    | D_module { module_ = { wrap_content = M_struct decls; _ }; _ } ->
-      declarations bindings decls
-    | D_module { module_ = { wrap_content = M_variable _; _ }; _ }
-    | D_module { module_ = { wrap_content = M_module_path _; _ }; _ } -> bindings
+    | D_module
+        { module_binder = _
+        ; module_ = { wrap_content; location = _ }
+        ; annotation
+        ; module_attr = _
+        } ->
+      let bindings = module_expr_content bindings wrap_content in
+      (match annotation with
+      | None -> bindings
+      | Some { signature = { wrap_content; location = _ }; filter = _ } ->
+        signature_content bindings wrap_content)
     | D_module_include _ -> bindings (* TODO *)
-    | D_signature _ -> bindings
+    | D_signature
+        { signature_binder
+        ; signature = { wrap_content; location = _ }
+        ; signature_attr = _
+        } -> signature_content bindings wrap_content
 
 
   and declarations : t -> Ast_core.declaration list -> t =
-   fun bindings decls -> List.fold decls ~init:bindings ~f:declaration
+   fun bindings -> List.fold ~init:bindings ~f:declaration
+
+
+  and sig_items : t -> Ast_core.sig_item list -> t =
+   fun bindings -> List.fold ~init:bindings ~f:sig_item
 end
 
 module Typing_env = struct
@@ -279,7 +331,7 @@ module Typing_env = struct
     }
 
   (** The typer normall call {!Trace.error} which internally always calls {!Stdlib.raise}
-      which stops the program, But here we want to recover from the error. That is the reason 
+      which stops the program, But here we want to recover from the error. That is the reason
       we use {!collect_warns_and_errs} *)
   let collect_warns_and_errs
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
@@ -302,27 +354,19 @@ module Typing_env = struct
     in
     Result.(
       match typed_prg with
-      (* FIXME: [Checking.type_declaration] ignores the [Ast_typed.Signature.item list]
-         that is type-checked along with the [Ast_typed.declaration list]. We are probably
-         not handling signatures in scopes. This case below is possible if a contract
-         contains just a signature. *)
-      | Ok ([], ws) ->
-        let () = List.iter ws ~f:raise.warning in
-        tenv
-      | Ok (decl, ws) ->
-        assert (List.length decl = 1);
-        let decl = List.hd_exn decl in
-        let bindings =
-          Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
-        in
-        let type_env =
-          { tenv.type_env with
-            sig_items = tenv.type_env.sig_items @ Ast_typed.Misc.to_sig_items [ decl ]
-          }
-        in
-        let decls = tenv.decls @ [ decl ] in
-        let () = List.iter ws ~f:raise.warning in
-        { type_env; bindings; decls }
+      | Ok (decls, ws) ->
+        List.fold_left decls ~init:tenv ~f:(fun tenv decl ->
+            let bindings =
+              Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
+            in
+            let type_env =
+              { tenv.type_env with
+                sig_items = tenv.type_env.sig_items @ Ast_typed.Misc.to_sig_items [ decl ]
+              }
+            in
+            let decls = tenv.decls @ [ decl ] in
+            let () = List.iter ws ~f:raise.warning in
+            { type_env; bindings; decls })
       | Error (e, ws) ->
         collect_warns_and_errs ~raise Main_errors.checking_tracer (e, ws);
         tenv)
@@ -351,7 +395,7 @@ end
 
 (** [resolve] takes your [Ast_core.program] and gives you the typing information
     in the form of [t]
-   
+
     Here we run the typer related thing first because in the following example
     {[
       let x : int = 1
@@ -365,8 +409,8 @@ end
     pass1 (just typer) -> [ x -> resolved (int) ; t -> unresolved ; y -> unresolved ]
 
     After running the typer we traverse the [Ast_core.program] to fill in the [t]
-    with type annotations available in the program 
-    
+    with type annotations available in the program
+
     pass2 -> [ x -> resolved (int) ; t -> core (int) ; y -> unresolved ]
 
     {i Note:} If we do pass2 before pass1 we will end up with

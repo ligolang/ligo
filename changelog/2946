@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nResolved some false negative errors in the LSP regarding interfaces and signatures and added some very basic support for them. Support for code navigation will come later.\\n\\n"
+merge_request: '2946'
+title: "[#2056] Add basic support for sig items in scopes"
+type: fixed
+            

@@ -286,7 +286,10 @@ let complete_fields
             | Type tdef ->
               if Ligo_prim.Type_var.is_name var tdef.name then Some tdef else None
             | Variable _ | Module _ -> None))
-        ~f:(fun tdef -> find_record_in_core tdef.content.type_content)
+        ~f:(fun tdef ->
+          match tdef.content with
+          | None -> None
+          | Some content -> find_record_in_core content.type_content)
     | _ -> None
   in
   let rec find_record_from_path

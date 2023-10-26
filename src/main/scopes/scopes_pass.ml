@@ -161,7 +161,7 @@ module Of_Ast = struct
     (* TODO : Add scopes entries with avail types, call recursively on T_for_all / T_abstraction *)
     add scopes te.location (env.avail_defs @ env.parent)
   (* match te.type_content with
-  | T_variable tv -> 
+  | T_variable tv ->
   | T_module_accessor { module_path; element } ->
   | T_app { type_operator = { module_path; element }; arguments } ->
   | T_singleton _ -> refs
@@ -171,10 +171,10 @@ module Of_Ast = struct
   | T_abstraction { ty_binder = _; kind = _; type_ } -> type_expression type_ refs env *)
 
 
-  (** [module_expression] takes a [AST.module_expr] and depending on the type of 
-    module i.e. alias or struct returns [defs_or_alias] 
+  (** [module_expression] takes a [AST.module_expr] and depending on the type of
+    module i.e. alias or struct returns [defs_or_alias]
      - for a module alias (e.g. module A = B.C.D) it resolves B.C.D to what D points
-       to. In case of an alias, it will further resolve until it finds an actual 
+       to. In case of an alias, it will further resolve until it finds an actual
        module
      - for a actual module, it returns the list of its [def]'s
     and updates the [references] & the [module_map] *)
@@ -202,6 +202,37 @@ module Of_Ast = struct
         in
         scopes, defs_or_alias_opt, env
       | M_module_path mvs ->
+        let defs_or_alias_opt =
+          match Env.resolve_mpath mvs current_defs env.module_map with
+          | None -> None
+          | Some (_, resolved, _) -> Some (Alias resolved)
+        in
+        scopes, defs_or_alias_opt, env
+    in
+    refs, defs_or_alias_opt, env.module_map
+
+
+  and signature : AST.signature -> t -> env -> t * defs_or_alias option * env =
+   fun s scopes env ->
+    (* Add 1 entry per declaration rhs *)
+    let scopes, env = sig_items s.items scopes env in
+    scopes, Some (Defs env.avail_defs), env
+
+
+  and signature_expr
+      : AST.signature_expr -> t -> env -> t * defs_or_alias option * module_map
+    =
+   fun se scopes env ->
+    (* Env update logic from References *)
+    (* Move [avail_defs] to [parent] before finding [references] in module_expr *)
+    (* TODO : Move this into a Env.enter_module function or something like that *)
+    (* TODO : This update should be done upon call to [declarations], not [module_expression] *)
+    let current_defs = env.avail_defs @ env.parent in
+    let env = { env with avail_defs = []; parent = current_defs } in
+    let refs, defs_or_alias_opt, env =
+      match se.wrap_content with
+      | S_sig items -> signature items scopes env
+      | S_path mvs ->
         let defs_or_alias_opt =
           match Env.resolve_mpath mvs current_defs env.module_map with
           | None -> None
@@ -246,11 +277,46 @@ module Of_Ast = struct
       let scopes = type_expression type_expr scopes env in
       let env = Env.add_tvar type_binder env in
       scopes, env
-    | D_module { module_binder; module_; module_attr = _; annotation = _ } ->
+    | D_module { module_binder; module_; module_attr = _; annotation } ->
       let scopes, defs_or_alias_opt, module_map = module_expression module_ scopes env in
+      let scopes, defs_or_alias_opt, module_map =
+        Option.value_map
+          annotation
+          ~default:(scopes, defs_or_alias_opt, module_map)
+          ~f:(fun annotation -> signature_expr annotation.signature scopes env)
+      in
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
       scopes, env
-    | D_module_include _ | D_signature _ -> scopes, env
+    | D_signature { signature_binder; signature; signature_attr = _ } ->
+      let scopes, defs_or_alias_opt, module_map = signature_expr signature scopes env in
+      let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
+      scopes, env
+    | D_module_include _ -> scopes, env (* TODO *)
+
+
+  and sig_item : AST.sig_item -> t -> env -> t * env =
+   fun s scopes env ->
+    match s with
+    | S_value (var, _ty_expr, _attr) ->
+      if Value_var.is_generated var
+      then scopes, env
+      else (
+        let env = Env.add_vvar var env in
+        scopes, env)
+    | S_type (type_binder, type_expr) ->
+      let scopes = type_expression type_expr scopes env in
+      let env = Env.add_tvar type_binder env in
+      scopes, env
+    | S_type_var type_binder ->
+      let env = Env.add_tvar type_binder env in
+      scopes, env
+    | S_module (var, sig') | S_module_type (var, sig') ->
+      let scopes, defs_or_alias_opt, env = signature sig' scopes env in
+      let env = Env.add_mvar var defs_or_alias_opt env.module_map env in
+      scopes, env
+    | S_include signature ->
+      let scopes, _defs_or_alias_opt, _module_map = signature_expr signature scopes env in
+      scopes, env
 
 
   (** [declarations] takes a list of [AST.declaration], [references] & [env]
@@ -261,6 +327,15 @@ module Of_Ast = struct
     let scopes, env =
       List.fold decls ~init:(scopes, env) ~f:(fun (scopes, env) decl ->
           declaration decl scopes env)
+    in
+    scopes, env
+
+
+  and sig_items : AST.sig_item list -> t -> env -> t * env =
+   fun items scopes env ->
+    let scopes, env =
+      List.fold items ~init:(scopes, env) ~f:(fun (scopes, env) item ->
+          sig_item item scopes env)
     in
     scopes, env
 

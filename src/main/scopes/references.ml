@@ -7,10 +7,10 @@ open Env
 
 (* --------------------------- Module usage --------------------------------- *)
 
-(** [module_usages] is an associative list where key the [Module_var.t] of the 
+(** [module_usages] is an associative list where key the [Module_var.t] of the
     original defintion of a module & the value is the usage [Location.t].
-    
-    This is helpful when updating the references of a [E_module_accessor], 
+
+    This is helpful when updating the references of a [E_module_accessor],
     [M_variable] & [M_module_path]
 
     e.g. module A = C.D
@@ -96,7 +96,7 @@ module References = struct
 
   (** [add_maccess] is responsible for updating the [references]
       for a module access e.g. let x = M.N.o
-      1. In case of an Alias, it will look up the rhs and recursively 
+      1. In case of an Alias, it will look up the rhs and recursively
         resolve it in the [module_map]
       2. In case of a Def, it call the callback funtion [update_element_reference] to
         updateh the reference of [element].
@@ -141,15 +141,15 @@ end
 
 type references = References.t
 
-(** [resolve_module_alias_in_env] takes a module path ([Module_var.t List.Ne.t]) 
+(** [resolve_module_alias_in_env] takes a module path ([Module_var.t List.Ne.t])
     & [env] and does two things,
     1. It takes a module path, like A.B.C, and returns the actual module it points to.
       It proceeds element by element, resolving A first :
       - if A is an alias to A', it looks for what A' points to.
-      - if A is an actual module, it takes its declaration list and looks for B in it, 
+      - if A is an actual module, it takes its declaration list and looks for B in it,
         then recursively resolves B
       It does this on A, then B, then C. And returns the actual module pointed to by C.
-    2. During the resolution of module path, it accumulates the actual module names & 
+    2. During the resolution of module path, it accumulates the actual module names &
       the location where they are used and returns [module_usages]. *)
 
 (* let resolve_mpath
@@ -195,14 +195,14 @@ let resolve_mpath
   | Some (_real, resolved, _defs) -> Ok (resolved, acc)
 
 
-(** [resolve_module_alias_and_update_mvar_references] will resolve the module path 
-    with the help of [resolve_module_alias_in_env] and in addition to that It'll 
+(** [resolve_module_alias_and_update_mvar_references] will resolve the module path
+    with the help of [resolve_module_alias_in_env] and in addition to that it'll
     update the references of all the module path elements. *)
 let resolve_module_alias_and_update_mvar_references
     :  ?update_references_for_element:
          ('a -> Module_var.t -> module_map -> references -> references)
     -> ?element:'a -> Module_var.t List.Ne.t -> env -> references
-    -> references * defs_or_alias option * env
+    -> references * defs_or_alias option
   =
  fun ?(update_references_for_element = fun _ _ _ rs -> rs) ?element mvs env refs ->
   let ma_res = resolve_mpath mvs env in
@@ -213,10 +213,10 @@ let resolve_module_alias_and_update_mvar_references
       Option.value_map element ~default:refs ~f:(fun element ->
           update_references_for_element element ma env.module_map refs)
     in
-    refs, Some (Alias ma), env
+    refs, Some (Alias ma)
   | Error module_usages ->
     let refs = References.add_module_usages module_usages refs in
-    refs, None, env
+    refs, None
 
 
 (* --------------------------- AST traversal -------------------------------- *)
@@ -235,7 +235,7 @@ let rec expression : AST.expression -> references -> env -> references =
     in
     References.add_module_usages usages refs
   | E_module_accessor { module_path; element } ->
-    let refs, _, _ =
+    let refs, _ =
       resolve_module_alias_and_update_mvar_references
         (List.Ne.of_list module_path)
         env
@@ -326,7 +326,7 @@ let rec expression : AST.expression -> references -> env -> references =
     expression let_result refs env
 
 
-(** [module_expression] takes a [AST.type_expression] it uses the [env] to 
+(** [module_expression] takes a [AST.type_expression] it uses the [env] to
     update the [references]  *)
 and type_expression : AST.type_expression -> references -> env -> references =
  fun te refs env ->
@@ -341,7 +341,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
     References.add_module_usages usages refs
   | T_constant _ -> refs (* FIXME *)
   | T_module_accessor { module_path; element } ->
-    let refs, _, _ =
+    let refs, _ =
       resolve_module_alias_and_update_mvar_references
         (List.Ne.of_list module_path)
         env
@@ -355,7 +355,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
       match module_path with
       | [] -> References.add_tvar element env refs
       | module_path ->
-        let refs, _, _ =
+        let refs, _ =
           resolve_module_alias_and_update_mvar_references
             (List.Ne.of_list module_path)
             env
@@ -376,10 +376,10 @@ and type_expression : AST.type_expression -> references -> env -> references =
   | T_abstraction { ty_binder = _; kind = _; type_ } -> type_expression type_ refs env
 
 
-(** [module_expression] takes a [AST.module_expr] and depending on the type of 
-    module i.e. alias or struct returns [defs_or_alias] 
+(** [module_expression] takes a [AST.module_expr] and depending on the type of
+    module i.e. alias or struct returns [defs_or_alias]
      - for a module alias (e.g. module A = B.C.D) it resolves B.C.D to what D points
-       to. In case of an alias, it will further resolve until it finds an actual 
+       to. In case of an alias, it will further resolve until it finds an actual
        module
      - for a actual module, it returns the list of its [def]'s
     and updates the [references] & the [module_map] *)
@@ -396,12 +396,32 @@ and module_expression
       let refs, env = declarations decls refs env in
       refs, Some (Defs env.avail_defs), env
     | M_variable mv ->
-      let refs, alias_opt, env =
+      let refs, alias_opt =
         resolve_module_alias_and_update_mvar_references (mv, []) env refs
       in
       refs, alias_opt, env
     | M_module_path mvs ->
-      let refs, alias_opt, env =
+      let refs, alias_opt =
+        resolve_module_alias_and_update_mvar_references mvs env refs
+      in
+      refs, alias_opt, env
+  in
+  refs, defs_or_alias_opt, env.module_map
+
+
+and signature_expression
+    :  AST.signature_expr -> references -> env
+    -> references * defs_or_alias option * module_map
+  =
+ fun me refs env ->
+  let env = { env with avail_defs = []; parent = env.avail_defs @ env.parent } in
+  let refs, defs_or_alias_opt, env =
+    match me.wrap_content with
+    | S_sig sig' ->
+      let refs, env = signature sig' refs env in
+      refs, Some (Defs env.avail_defs), env
+    | S_path mvs ->
+      let refs, alias_opt =
         resolve_module_alias_and_update_mvar_references mvs env refs
       in
       refs, alias_opt, env
@@ -439,24 +459,58 @@ and declaration : AST.declaration -> references -> env -> references * env =
     let refs = type_expression type_expr refs env in
     let env = Env.add_tvar type_binder env in
     refs, env
-  | D_module { module_binder; module_; module_attr = _; annotation = _ } ->
+  | D_module { module_binder; module_; module_attr = _; annotation } ->
     let refs, defs_or_alias_opt, module_map = module_expression module_ refs env in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
+    let refs, _defs_or_alias_opt, _module_map =
+      Option.value_map
+        annotation
+        ~default:(refs, defs_or_alias_opt, module_map)
+        ~f:(fun annotation -> signature_expression annotation.signature refs env)
+    in
     refs, env
-  | D_module_include _ -> refs, env (* TODO *)
-  | D_signature _ -> refs, env
+  | D_module_include _module_expr -> refs, env (* TODO *)
+  | D_signature { signature_binder; signature; signature_attr = _ } ->
+    let refs, defs_or_alias_opt, module_map = signature_expression signature refs env in
+    let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
+    refs, env
+
+
+and sig_item : AST.sig_item -> references -> env -> references * env =
+ fun s refs env ->
+  match s with
+  | S_value (var, ty_expr, _attr) ->
+    let refs = type_expression ty_expr refs env in
+    let env = Env.add_vvar var env in
+    refs, env
+  | S_type (var, ty_expr) ->
+    let refs = type_expression ty_expr refs env in
+    let env = Env.add_tvar var env in
+    refs, env
+  | S_type_var var ->
+    let env = Env.add_tvar var env in
+    refs, env
+  | S_module (var, sig') | S_module_type (var, sig') ->
+    let refs, module_map = signature sig' refs env in
+    let env = Env.add_mvar var None env.module_map env in
+    refs, env
+  | S_include signature ->
+    let refs, _defs_or_alias_opt, _module_map = signature_expression signature refs env in
+    refs, env
 
 
 (** [declarations] takes a list of [AST.declaration], [references] & [env]
-    and for each delcaration it calls the [delcaration] function with updates
+    and for each declaration it calls the [declaration] function with updates
     the [references] & [env] *)
 and declarations : AST.declaration list -> references -> env -> references * env =
  fun decls refs env ->
-  let refs, env =
-    List.fold decls ~init:(refs, env) ~f:(fun (refs, env) decl ->
-        declaration decl refs env)
-  in
-  refs, env
+  List.fold decls ~init:(refs, env) ~f:(fun (refs, env) decl -> declaration decl refs env)
+
+
+and signature : AST.signature -> references -> env -> references * env =
+ fun sig' refs env ->
+  List.fold sig'.items ~init:(refs, env) ~f:(fun (refs, env) item ->
+      sig_item item refs env)
 
 
 let declarations : AST.declaration list -> references =
