@@ -54,40 +54,11 @@ annotations, as otherwise it's unclear which entrypoint you are
 referring to.
 :::
 
-## Default LIGO output
+## Michelson layout of LIGO data structures
 
-By default LIGO translates its datatypes into a alphabetically left
-balanced tree. So, for example:
+### Right-comb tree by default
 
-<Syntax syntax="cameligo">
-
-```cameligo group=orig
-type animal = Elephant | Dog | Cat
-```
-
-</Syntax>
-
-<Syntax syntax="jsligo">
-
-```jsligo group=orig
-type animal = | ["Elephant"] | ["Dog"] | ["Cat"];
-```
-
-</Syntax>
-
-will translate to:
-
-```michelson
-(or
-  (or
-    (unit %cat)
-    (unit %dog))
-  (unit %elephant))
-```
-
-## Right-combed tree output
-
-If you want to change the data representation in Michelson to a
+By default, the Michelson data representation of LIGO data structures is a
 location retaining right combed tree, like this:
 
 ```
@@ -99,7 +70,7 @@ location retaining right combed tree, like this:
 
 <Syntax syntax="cameligo">
 
-You can use the `@layout comb` (or `@layout:comb`) attribute:
+You can use the `@layout comb` (or `@layout:comb`) attribute to make this choice explicitly:
 
 ```cameligo
 type animal =
@@ -113,7 +84,7 @@ type animal =
 
 <Syntax syntax="jsligo">
 
-You can use the decorator `@layout("comb")`, like so:
+You can use the decorator `@layout comb` to make this choice explicitly:
 
 ```jsligo
 type animal =
@@ -157,6 +128,40 @@ type artist =
 
 </Syntax>
 
+The next section discusses an alternative layout, which used to be the default one until LIGO version 1.0.
+
+### Alternative alphabetically-ordered left-balanced tree layout
+
+Before version 1.0, LIGO used to translate its datatypes into a alphabetically-ordered left
+balanced tree by detault. So, for example:
+
+<Syntax syntax="cameligo">
+
+```cameligo group=orig
+type animal = Elephant | Dog | Cat
+```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=orig
+type animal = | ["Elephant"] | ["Dog"] | ["Cat"];
+```
+
+</Syntax>
+
+will translate to:
+
+```michelson
+(or
+  (or
+    (unit %cat)
+    (unit %dog))
+  (unit %elephant))
+```
+
+This behaviour can be obtained using `@layout("tree")`.
 
 ## Different Michelson annotations
 
@@ -564,6 +569,6 @@ This currently only works for `or`'s or variant types in LIGO.
 
 ## Amendment
 With the upcoming 007 amendment to Tezos this will change though, and also
-`pair`'s can be ordered differently.
+`pair`s can be ordered differently.
 
 <!-- updated use of entry -->

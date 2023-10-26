@@ -47,6 +47,7 @@ const sidebars = {
       "language-basics/math-numbers-tez",
       "language-basics/loops",
       "language-basics/unit-option-pattern-matching",
+      "advanced/decorators",
       "advanced/entrypoints-contracts",
       "contract/views",
       "contract/events",
