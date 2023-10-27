@@ -8,80 +8,115 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   last_project_file := project_root;
   match Docs_cache.find get_scope_buffers file, project_root with
   | None, None ->
-    let variants =
-      [ ".ligoproject"; "esy.json" ]
-      |> List.filter_map ~f:Path.(find_file_in_dir_and_parents @@ dirname file)
-      |> List.cons file
-      |> List.map ~f:Path.dirname
-      |> List.dedup_and_sort ~compare:Path.compare
-      |> List.map ~f:Path.to_string
-      |> List.mapi ~f:(fun i dir ->
-             let i = Int.to_string (i + 1) in
-             Format.sprintf "%s: Create %s at %s." i Project_root.ligoproject dir, i, dir)
-    in
-    let no = "No" in
-    let messages, options, _ = List.unzip3 variants in
-    let options = no :: options in
-    let message =
-      Format.sprintf
-        "Can't find %s. Do you want to create it? %s"
-        Project_root.ligoproject
-        (String.concat ~sep:"\n" messages)
-    in
-    let handler
-        :  (Lsp.Types.MessageActionItem.t option, Jsonrpc.Response.Error.t) result
-        -> unit Handler.t
-      = function
-      | Error error -> send_log_msg ~type_:Error error.message
-      | Ok None -> pass
-      | Ok (Some { title }) ->
-        if String.equal no title
-        then pass
-        else (
-          match
-            List.find variants ~f:(fun (_, option, _) -> String.equal title option)
-          with
-          | None ->
-            send_log_msg ~type_:Error (Format.sprintf "Invalid button title: %s" title)
-          | Some (_, _, dir) ->
-            let project_root =
-              Path.concat (Path.from_absolute dir) Project_root.ligoproject
+    send_request WorkspaceFolders (fun folders ->
+        let@ folders =
+          match folders with
+          | Ok folders -> return folders
+          | Error error ->
+            let@ () = send_log_msg ~type_:Error error.message in
+            return []
+        in
+        let folders =
+          List.map folders ~f:(fun { WorkspaceFolder.uri; _ } -> DocumentUri.to_path uri)
+        in
+        let variants =
+          [ ".ligoproject"; "esy.json" ] (* Top priority *)
+          |> List.filter_map ~f:Path.(find_file_in_dir_and_parents @@ dirname file)
+          |> List.map ~f:Path.dirname
+          |> List.append folders (* Middle priority *)
+          |> List.cons (Path.dirname file) (* Low priority *)
+          (* Now we have an order we wanted, but reversed *)
+          (* Deduplication and reverse without sorting *)
+          |> List.fold ~init:[] ~f:(fun acc folder ->
+                 if List.exists ~f:(Path.equal folder) acc then acc else folder :: acc)
+          |> List.map ~f:(Fun.flip String.( ^ ) Filename.dir_sep <@ Path.to_string)
+        in
+        let open Simple_utils.List in
+        match Ne.of_list_opt variants with
+        | None -> send_message ~type_:Error "No variants to create `ligo.json`"
+        | Some variants ->
+          let common_prefix_length =
+            let step = function
+              | (_, false) as acc -> Fun.const acc
+              | n, true ->
+                fun x ->
+                  if Ne.fold
+                       (fun acc path ->
+                         acc && String.length path > n && Char.equal (String.get path n) x)
+                       true
+                       variants
+                  then n + 1, true
+                  else n, false
             in
-            let@ () =
-              send_log_msg
-                ~type_:Info
-                (Format.sprintf
-                   "Creating project file at: %s."
-                   (Path.to_string project_root))
-            in
-            let uri = DocumentUri.of_path project_root in
-            let document_change = `CreateFile (Lsp.Types.CreateFile.create ~uri ()) in
-            let edit = WorkspaceEdit.create ~documentChanges:[ document_change ] () in
-            let w_e_params = Lsp.Types.ApplyWorkspaceEditParams.create ~edit () in
-            send_request (WorkspaceApplyEdit w_e_params) (function
-                | Error error -> send_log_msg ~type_:Error error.message
-                | Ok { applied; failureReason; failedChange = _ } ->
-                  if applied
-                  then
-                    let@ last_project_file = ask_last_project_file in
-                    let () = last_project_file := Some project_root in
-                    send_message
-                      ~type_:Info
-                      (Format.sprintf
-                         "Created project file at: %s."
-                         (Path.to_string project_root))
-                  else (
-                    let msg =
-                      Option.value_map
-                        ~default:""
-                        ~f:(Format.sprintf " %s.")
-                        failureReason
-                    in
-                    send_message
-                      ~type_:Error
-                      (Format.sprintf "Failed to create project file.%s" msg))))
-    in
-    send_message_with_buttons ~message ~options ~type_:Info ~handler
+            Ne.hd variants |> String.fold ~init:(0, true) ~f:step |> fst
+          in
+          let common_prefix = String.prefix (Ne.hd variants) common_prefix_length in
+          let variants =
+            Ne.map
+              (fun variant ->
+                let variant = String.drop_prefix variant common_prefix_length in
+                if String.is_empty variant then Filename.current_dir_name else variant)
+              variants
+          in
+          let message =
+            Format.sprintf
+              "Can't find %s. Please pick a directory relative to \"%s\" to let LIGO \
+               Language Server create it, or select \"No\" to ignore."
+              Project_root.ligoproject
+              common_prefix
+          in
+          let no = "No" in
+          let options = Ne.to_list variants @ [ no ] in
+          let handler
+              :  (MessageActionItem.t option, Jsonrpc.Response.Error.t) result
+              -> unit Handler.t
+            = function
+            | Error error -> send_log_msg ~type_:Error error.message
+            | Ok None -> pass
+            | Ok (Some { title }) ->
+              if String.equal no title
+              then pass
+              else (
+                let project_root =
+                  Path.concat
+                    (Path.from_absolute (common_prefix ^ title))
+                    Project_root.ligoproject
+                in
+                let@ () =
+                  send_log_msg
+                    ~type_:Info
+                    (Format.sprintf
+                       "Creating project file at: %s."
+                       (Path.to_string project_root))
+                in
+                let uri = DocumentUri.of_path project_root in
+                let document_change = `CreateFile (CreateFile.create ~uri ()) in
+                let edit = WorkspaceEdit.create ~documentChanges:[ document_change ] () in
+                let w_e_params = ApplyWorkspaceEditParams.create ~edit () in
+                send_request (WorkspaceApplyEdit w_e_params) (function
+                    | Error error -> send_log_msg ~type_:Error error.message
+                    | Ok { applied; failureReason; failedChange = _ } ->
+                      if applied
+                      then
+                        let@ last_project_file = ask_last_project_file in
+                        let () = last_project_file := Some project_root in
+                        send_message
+                          ~type_:Info
+                          (Format.sprintf
+                             "Created project file at: %s."
+                             (Path.to_string project_root))
+                      else (
+                        let msg =
+                          Option.value_map
+                            ~default:""
+                            ~f:(Format.sprintf " %s.")
+                            failureReason
+                        in
+                        send_message
+                          ~type_:Error
+                          (Format.sprintf "Failed to create project file.%s" msg))))
+          in
+          send_message_with_buttons ~message ~options ~type_:Info ~handler)
   | None, Some project_root ->
     send_log_msg
       ~type_:Info

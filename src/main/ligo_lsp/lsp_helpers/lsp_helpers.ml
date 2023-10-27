@@ -111,12 +111,18 @@ module FormattingOptions = struct
   let default : t = create ~tabSize:2 ~insertSpaces:false ()
 end
 
+module ApplyWorkspaceEditParams = Lsp.Types.ApplyWorkspaceEditParams
 module ClientCapabilities = Lsp.Types.ClientCapabilities
 module CompletionItemKind = Lsp.Types.CompletionItemKind
 module CompletionOptions = Lsp.Types.CompletionOptions
 module ConfigurationItem = Lsp.Types.ConfigurationItem
+module CreateFile = Lsp.Types.CreateFile
 module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
+module FileOperationFilter = Lsp.Types.FileOperationFilter
+module FileOperationOptions = Lsp.Types.FileOperationOptions
+module FileOperationPattern = Lsp.Types.FileOperationPattern
+module FileOperationRegistrationOptions = Lsp.Types.FileOperationRegistrationOptions
 module FoldingRangeKind = Lsp.Types.FoldingRangeKind
 module Hover = Lsp.Types.Hover
 module InitializeParams = Lsp.Types.InitializeParams
@@ -132,11 +138,8 @@ module ShowMessageRequestParams = Lsp.Types.ShowMessageRequestParams
 module TextDocumentContentChangeEvent = Lsp.Types.TextDocumentContentChangeEvent
 module TextEdit = Lsp.Types.TextEdit
 module WorkspaceEdit = Lsp.Types.WorkspaceEdit
+module WorkspaceFolder = Lsp.Types.WorkspaceFolder
 module WorkspaceFoldersServerCapabilities = Lsp.Types.WorkspaceFoldersServerCapabilities
-module FileOperationOptions = Lsp.Types.FileOperationOptions
-module FileOperationRegistrationOptions = Lsp.Types.FileOperationRegistrationOptions
-module FileOperationFilter = Lsp.Types.FileOperationFilter
-module FileOperationPattern = Lsp.Types.FileOperationPattern
 
 (* Lsp reexports *)
 module Client_notification = Lsp.Client_notification
