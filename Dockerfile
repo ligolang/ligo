@@ -21,6 +21,9 @@ RUN apk update && apk upgrade && apk --no-cache add \
 
 # make bls12-381 build ???
 ENV RUSTFLAGS='--codegen target-feature=-crt-static'
+# Make sure BLST_PORTABLE is used to build tezos sub-module
+# If this flag is not setup, old processor can raise an illegal hardware instruction when Tezos emit ADX instructions
+ENV ENV BLST_PORTABLE=y
 
 # Install opam switch & deps
 COPY scripts/setup_switch.sh /ligo/scripts/setup_switch.sh
