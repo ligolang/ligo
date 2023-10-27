@@ -43,6 +43,54 @@ let pretty_print_cst pp_mode ~(dialect_cst : Dialect_cst.t) : string =
     dialect_cst
 
 
+type pretty_print_result =
+  [ `Ok of string
+  | `Nonpretty of [ `Exn of exn | `PassesError of Passes.Errors.t ] * string
+  ]
+
+let pretty_print_signature
+    : syntax:Syntax_types.t -> Ast_core.signature -> pretty_print_result
+  =
+ fun ~syntax core_sig ->
+  let unified_sig_result
+      : (Ast_unified.sig_expr, [> `Exn of exn | `PassesError of Passes.Errors.t ]) result
+    =
+    try
+      match
+        Simple_utils.Trace.to_stdlib_result
+        @@ Nanopasses.decompile_sig_expr
+             ~syntax
+             (Simple_utils.Location.wrap ~loc:Simple_utils.Location.generated
+             @@ Ast_core.S_sig core_sig)
+      with
+      | Ok (unified_sig_expr, _) -> Ok unified_sig_expr
+      | Error (err, _) -> Error (`PassesError err)
+    with
+    | exn -> Error (`Exn exn)
+  in
+  match unified_sig_result with
+  | Ok unified_sig ->
+    let to_syntax =
+      match syntax with
+      | CameLIGO ->
+        let open Parsing.Cameligo in
+        Buffer.contents
+        <@ pretty_print_signature_expr Parsing.Cameligo.Pretty.default_state
+        <@ Unification.Cameligo.decompile_sig_expr
+      | JsLIGO ->
+        let open Parsing.Jsligo in
+        Buffer.contents
+        <@ pretty_print_signature_expr Parsing.Cameligo.Pretty.default_state
+        <@ Unification.Jsligo.decompile_sig_expr
+    in
+    `Ok (to_syntax unified_sig)
+  | Error err ->
+    `Nonpretty
+      ( err
+      , Helpers_pretty.doc_to_string ~width:10000
+        @@ PPrint.(string (Format.asprintf "%a" Ast_core.PP.signature core_sig)) )
+
+
 let pretty_print_type_expression
     (* We try to decompile Ast_core to Ast_unified and then to CST.
      If this fails, we use the pretty printer for AST which gives nonpretty result *)
@@ -50,10 +98,7 @@ let pretty_print_type_expression
          PPrint.document
          (* In hovers we need to append things like `type t =` to type exprs,
             and since it should be done before [doc_to_string], such option is exposed here *)
-    -> pp_mode -> syntax:Syntax_types.t -> Ast_core.type_expression
-    -> [ `Ok of string
-       | `Nonpretty of [ `Exn of exn | `PassesError of Passes.Errors.t ] * string
-       ]
+    -> pp_mode -> syntax:Syntax_types.t -> Ast_core.type_expression -> pretty_print_result
   =
  fun ?prefix pp_mode ~syntax te ->
   let decompiled_cst_result

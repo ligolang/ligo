@@ -4,22 +4,77 @@ open Types
 module LMap = Simple_utils.Map.Make (Location_ordered)
 module Pattern = Ast_typed.Pattern
 
-type t = type_case LMap.t
+type t =
+  { type_cases : type_case LMap.t
+  ; module_signatures : signature_case LMap.t
+  ; module_env : Env.t
+  }
 
-let empty = LMap.empty
+let empty (module_env : Env.t) =
+  { type_cases = LMap.empty; module_signatures = LMap.empty; module_env }
+
+
+let add_type_case loc type_case env =
+  { env with type_cases = LMap.add loc type_case env.type_cases }
+
+
+let add_module_signature loc signature env =
+  { env with
+    module_signatures =
+      LMap.update
+        loc
+        (fun old ->
+          Option.some
+          @@ Option.value_map
+               ~default:signature
+               ~f:(fun old ->
+                 (* Signatures in CameLIGO and JsLIGO have different meanings.
+                  In CameLIGO they're used to declare what would be exported from the module.
+
+                  In JsLIGO they declare a set of things that should be present in the namespace,
+                  so, the resulting signature could be wider than in `implements` section.
+
+                  Typed signatures already handle this, so, we'll do the next hack:
+                  1. If we want to add a resolved signature then put it in the map.
+                  2. Otherwise add it only when the key is absent.*)
+                 match old, signature with
+                 | _, Resolved _ -> signature
+                 | _ -> old)
+               old)
+        env.module_signatures
+  }
+
+
+let lookup_signature : Location.t -> t -> signature_case option =
+ fun key { module_signatures; _ } -> LMap.find_opt key module_signatures
+
+
+let resolve_module_path : Module_var.t Types.List.Ne.t -> t -> Module_var.t option =
+ fun path { module_env; _ } ->
+  let defs = module_env.avail_defs @ module_env.parent in
+  let mmap = module_env.module_map in
+  Option.map ~f:(fun (_, resolved, _) -> resolved) (Env.resolve_mpath path defs mmap)
+
 
 module Of_Ast_typed = struct
-  let add_binding : t -> Ast_typed.expression_variable * Ast_typed.type_expression -> t =
-   fun env binding ->
-    let v, t = binding in
-    let t =
-      match t.orig_var with
-      | Some t' -> { t with type_content = T_variable t' }
-      | None -> t
-    in
-    let loc = Value_var.get_location v in
-    let type_case = Resolved t in
-    LMap.add loc type_case env
+  type binding =
+    | Type_binding of (Ast_typed.expression_variable * Ast_typed.type_expression)
+    | Module_binding of (Ast_typed.module_variable * Ast_typed.signature)
+
+  let add_binding : t -> binding -> t =
+   fun env -> function
+    | Type_binding (v, t) ->
+      let t =
+        match t.orig_var with
+        | Some t' -> { t with type_content = T_variable t' }
+        | None -> t
+      in
+      let loc = Value_var.get_location v in
+      let type_case = Resolved t in
+      add_type_case loc type_case env
+    | Module_binding (v, s) ->
+      let loc = Module_var.get_location v in
+      add_module_signature loc (Resolved s) env
 
 
   let add_bindings env bindings = List.fold bindings ~init:env ~f:add_binding
@@ -27,11 +82,13 @@ module Of_Ast_typed = struct
   let rec extract_binding_types_from_signature : t -> Ast_typed.signature -> t =
    fun bindings sig_ ->
     List.fold sig_.sig_items ~init:bindings ~f:(fun bindings -> function
-      | S_value (v, t, _) -> add_bindings bindings [ v, t ]
+      | S_value (v, t, _) -> add_bindings bindings [ Type_binding (v, t) ]
       | S_type _ -> bindings
       | S_type_var _ -> bindings
-      | S_module (_, sig_) -> extract_binding_types_from_signature bindings sig_
-      | S_module_type _ -> bindings)
+      | S_module (v, sig_) ->
+        let bindings = add_bindings bindings [ Module_binding (v, sig_) ] in
+        extract_binding_types_from_signature bindings sig_
+      | S_module_type (v, sig_) -> add_bindings bindings [ Module_binding (v, sig_) ])
 
 
   let rec extract_module_content : t -> Ast_typed.module_content -> t =
@@ -65,72 +122,145 @@ module Of_Ast_typed = struct
       | E_constant _ -> return []
       | E_type_inst _ -> return []
       | E_coerce _ -> return []
-      | E_variable v -> return [ v, exp.type_expression ]
-      | E_lambda { binder; _ } -> return [ Param.get_var binder, Param.get_ascr binder ]
+      | E_variable v -> return [ Type_binding (v, exp.type_expression) ]
+      | E_lambda { binder; _ } ->
+        return [ Type_binding (Param.get_var binder, Param.get_ascr binder) ]
       | E_recursive { fun_name; fun_type; lambda = { binder; _ }; force_lambdarec = _ } ->
-        return [ fun_name, fun_type; Param.get_var binder, Param.get_ascr binder ]
+        return
+          [ Type_binding (fun_name, fun_type)
+          ; Type_binding (Param.get_var binder, Param.get_ascr binder)
+          ]
       | E_let_mut_in { let_binder; rhs = _; _ } | E_let_in { let_binder; rhs = _; _ } ->
         return
         @@ List.map
-             ~f:(fun binder -> Binder.get_var binder, Binder.get_ascr binder)
+             ~f:(fun binder ->
+               Type_binding (Binder.get_var binder, Binder.get_ascr binder))
              (Pattern.binders let_binder)
       | E_matching { matchee = _; cases } ->
         let bindings =
           List.concat
           @@ List.map cases ~f:(fun { pattern; _ } ->
                  let binders = Pattern.binders pattern in
-                 List.map binders ~f:(fun b -> Binder.get_var b, Binder.get_ascr b))
+                 List.map binders ~f:(fun b ->
+                     Type_binding (Binder.get_var b, Binder.get_ascr b)))
         in
         return bindings
-      | E_module_accessor { element = e; _ } -> return [ e, exp.type_expression ]
-      | E_for { binder; start; _ } -> return [ binder, start.type_expression ]
+      | E_module_accessor { element = e; _ } ->
+        return [ Type_binding (e, exp.type_expression) ]
+      | E_for { binder; start; _ } ->
+        return [ Type_binding (binder, start.type_expression) ]
       | E_for_each { fe_binder = binder1, Some binder2; collection; _ } ->
         let key_type, val_type = Ast_typed.get_t_map_exn collection.type_expression in
-        return [ binder1, key_type; binder2, val_type ]
+        return [ Type_binding (binder1, key_type); Type_binding (binder2, val_type) ]
       | E_for_each { fe_binder = binder, None; collection; _ } ->
         let type_ = collection.type_expression in
         if Ast_typed.is_t_set type_
-        then return [ binder, Ast_typed.get_t_set_exn type_ ]
+        then return [ Type_binding (binder, Ast_typed.get_t_set_exn type_) ]
         else if Ast_typed.is_t_list type_
-        then return [ binder, Ast_typed.get_t_list_exn type_ ]
+        then return [ Type_binding (binder, Ast_typed.get_t_list_exn type_) ]
         else if Ast_typed.is_t_map type_
         then (
           let k, v = Ast_typed.get_t_map_exn type_ in
-          return [ binder, Ast_typed.t_pair ~loc k v ])
+          return [ Type_binding (binder, Ast_typed.t_pair ~loc k v) ])
         else return []
-      | E_mod_in { rhs = { signature; _ }; _ } ->
+      | E_mod_in { rhs = { signature; _ }; module_binder; _ } ->
+        let env = return [ Module_binding (module_binder, signature) ] in
         extract_binding_types_from_signature env signature
     in
     function
     | D_value { attr = { hidden = true; _ }; _ } -> prev
     | D_irrefutable_match { attr = { hidden = true; _ }; _ } -> prev
     | D_value { binder; expr; _ } ->
-      let prev = add_bindings prev [ Binder.get_var binder, expr.type_expression ] in
+      let prev =
+        add_bindings prev [ Type_binding (Binder.get_var binder, expr.type_expression) ]
+      in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_irrefutable_match { pattern; expr; _ } ->
       let prev =
         let f acc binder =
-          add_bindings acc [ Binder.get_var binder, expr.type_expression ]
+          add_bindings acc [ Type_binding (Binder.get_var binder, expr.type_expression) ]
         in
         List.fold (Pattern.binders pattern) ~f ~init:prev
       in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_type _ -> prev
-    | D_module { module_binder = _; module_; annotation = (); module_attr = _ } ->
+    | D_module { module_binder; module_; annotation = (); module_attr = _ } ->
+      let prev =
+        add_bindings prev [ Module_binding (module_binder, module_.signature) ]
+      in
       extract_module_content prev module_.module_content
     | D_module_include { module_content; module_location = _; signature = _ } ->
       extract_module_content prev module_content
-    | D_signature { signature_binder = _; signature; signature_attr = _ } ->
+    | D_signature { signature_binder; signature; signature_attr = _ } ->
+      let prev = add_bindings prev [ Module_binding (signature_binder, signature) ] in
       extract_binding_types_from_signature prev signature
 end
 
 module Of_Ast_core = struct
   let add_binding_in_map : t -> Location.t * type_case -> t =
-   fun env (loc, type_case) -> LMap.add loc type_case env
+   fun env (loc, type_case) -> add_type_case loc type_case env
 
 
   let add_bindings_in_map : t -> (Location.t * type_case) list -> t =
    fun env -> List.fold ~init:env ~f:add_binding_in_map
+
+
+  (* S_include is kinda weird thing. After Ast_unified -> Ast_core they occur in JsLIGO
+    and it's impossible to decompile them back into CST. So, it would be convenient to inline them. *)
+  let rec inline_generated_include_sig_item
+      : t -> Ast_typed.signature -> Ast_core.sig_item -> Ast_core.sig_item list
+    =
+   fun env prg_sig -> function
+    | (S_value _ | S_type _ | S_type_var _) as sig_item -> [ sig_item ]
+    | S_module (mvar, sig_) ->
+      [ S_module (mvar, inline_generated_include_signature env prg_sig sig_) ]
+    | S_module_type (mvar, sig_) ->
+      [ S_module_type (mvar, inline_generated_include_signature env prg_sig sig_) ]
+    | S_include { wrap_content = sig_expr; location = _ } ->
+      let f = inline_generated_include_sig_item env prg_sig in
+      (match sig_expr with
+      | S_sig { items } -> List.concat_map ~f items
+      | S_path path ->
+        Option.value
+          ~default:[]
+          (let open Simple_utils.Option in
+          let* resolved_module = resolve_module_path path env in
+          let* signature_case =
+            lookup_signature (Module_var.get_location resolved_module) env
+          in
+          match signature_case with
+          | Resolved sig_ ->
+            return @@ (Checking.untype_signature ~use_orig_var:true sig_).items
+          | Core { items } -> return @@ List.concat_map ~f items
+          | Unresolved -> None))
+
+
+  and inline_generated_include_signature
+      : t -> Ast_typed.signature -> Ast_core.signature -> Ast_core.signature
+    =
+   fun env prg_sig { items } ->
+    { items = List.concat_map items ~f:(inline_generated_include_sig_item env prg_sig) }
+
+
+  let add_module_signature
+      : t -> Ast_typed.signature -> Module_var.t -> Ast_core.signature_expr option -> t
+    =
+   fun env prg_sig v -> function
+    | Some { wrap_content = S_sig signature; _ } ->
+      add_module_signature
+        (Module_var.get_location v)
+        (Core (inline_generated_include_signature env prg_sig signature))
+        env
+    | Some { wrap_content = S_path path; _ } ->
+      Option.value
+        ~default:env
+        (let open Simple_utils.Option in
+        let* resolved_module = resolve_module_path path env in
+        let* signature_case =
+          lookup_signature (Module_var.get_location resolved_module) env
+        in
+        return @@ add_module_signature (Module_var.get_location v) signature_case env)
+    | None -> env
 
 
   let add_binders : t -> Ast_core.type_expression option Binder.t list -> t =
@@ -198,8 +328,9 @@ module Of_Ast_core = struct
     | _ -> binders, expr
 
 
-  let rec expression : t -> Ast_core.expression -> t =
-   fun bindings expr ->
+  let rec expression : Ast_typed.signature -> t -> Ast_core.expression -> t =
+   fun prg_sig bindings expr ->
+    let expression = expression prg_sig in
     match expr.expression_content with
     | E_literal _ | E_variable _ | E_module_accessor _ | E_contract _ -> bindings
     | E_raw_code { code; _ } -> expression bindings code
@@ -251,7 +382,7 @@ module Of_Ast_core = struct
       let bindings = expression bindings rhs in
       expression bindings let_result
     | E_mod_in { rhs; let_result; _ } ->
-      let bindings = module_expr_content bindings (Location.unwrap rhs) in
+      let bindings = module_expr_content prg_sig bindings (Location.unwrap rhs) in
       expression bindings let_result
 
 
@@ -277,32 +408,39 @@ module Of_Ast_core = struct
     | S_path _ -> bindings
 
 
-  and module_expr_content : t -> Ast_core.module_expr_content -> t =
-   fun bindings -> function
-    | M_struct decls -> declarations bindings decls
+  and module_expr_content : Ast_typed.signature -> t -> Ast_core.module_expr_content -> t =
+   fun prg_sig bindings -> function
+    | M_struct decls -> declarations bindings prg_sig decls
     | M_variable _ | M_module_path _ -> bindings
 
 
-  and declaration : t -> Ast_core.declaration -> t =
-   fun bindings decl ->
+  and declaration : Ast_typed.signature -> t -> Ast_core.declaration -> t =
+   fun prg_sig bindings decl ->
     match Location.unwrap decl with
     | D_value { binder; expr; _ } ->
       let binders, expr = set_core_type_if_possible [ binder ] expr in
       let bindings = add_binders bindings binders in
-      expression bindings expr
+      expression prg_sig bindings expr
     | D_irrefutable_match { pattern; expr; _ } ->
       let binders = Pattern.binders pattern in
       let binders, expr = set_core_type_if_possible binders expr in
       let bindings = add_binders bindings binders in
-      expression bindings expr
+      expression prg_sig bindings expr
     | D_type _ -> bindings
     | D_module
-        { module_binder = _
+        { module_binder
         ; module_ = { wrap_content; location = _ }
         ; annotation
         ; module_attr = _
         } ->
-      let bindings = module_expr_content bindings wrap_content in
+      let bindings =
+        add_module_signature
+          bindings
+          prg_sig
+          module_binder
+          (Option.map ~f:(fun annotation -> annotation.signature) annotation)
+      in
+      let bindings = module_expr_content prg_sig bindings wrap_content in
       (match annotation with
       | None -> bindings
       | Some { signature = { wrap_content; location = _ }; filter = _ } ->
@@ -310,13 +448,17 @@ module Of_Ast_core = struct
     | D_module_include _ -> bindings (* TODO *)
     | D_signature
         { signature_binder
-        ; signature = { wrap_content; location = _ }
+        ; signature = { wrap_content; location = _ } as signature
         ; signature_attr = _
-        } -> signature_content bindings wrap_content
+        } ->
+      let bindings =
+        add_module_signature bindings prg_sig signature_binder (Some signature)
+      in
+      signature_content bindings wrap_content
 
 
-  and declarations : t -> Ast_core.declaration list -> t =
-   fun bindings -> List.fold ~init:bindings ~f:declaration
+  and declarations : t -> Ast_typed.signature -> Ast_core.declaration list -> t =
+   fun bindings prg_sig -> List.fold ~init:bindings ~f:(declaration prg_sig)
 
 
   and sig_items : t -> Ast_core.sig_item list -> t =
@@ -324,6 +466,15 @@ module Of_Ast_core = struct
 end
 
 module Typing_env = struct
+  let rec add_stdlib_modules : t -> Ast_typed.signature -> t =
+   fun env stdlib_sig ->
+    List.fold_left stdlib_sig.sig_items ~init:env ~f:(fun env -> function
+      | S_module (name, sig_) | S_module_type (name, sig_) ->
+        let env = add_stdlib_modules env sig_ in
+        Of_Ast_typed.add_binding env (Module_binding (name, sig_))
+      | _ -> env)
+
+
   type nonrec t =
     { type_env : Ast_typed.signature
     ; bindings : t
@@ -413,9 +564,9 @@ module Typing_env = struct
       collect_warns_and_errs ~raise Main_errors.self_ast_typed_tracer (e, ws)
 
 
-  let init stdlib_decls =
+  let init stdlib_decls env =
     let type_env = Ast_typed.Misc.to_signature stdlib_decls in
-    { type_env; bindings = LMap.empty; decls = stdlib_decls }
+    { type_env; bindings = add_stdlib_modules (empty env) type_env; decls = stdlib_decls }
 end
 
 (** [resolve] takes your [Ast_core.program] and gives you the typing information
@@ -445,15 +596,15 @@ end
 let resolve
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib_decls:Ast_typed.program
-    -> Ast_core.program -> Typing_env.t
+    -> module_env:Env.t -> Ast_core.program -> Typing_env.t
   =
- fun ~raise ~options ~stdlib_decls prg ->
+ fun ~raise ~options ~stdlib_decls ~module_env prg ->
   let loc = Checking.loc_of_program prg in
-  let tenv = Typing_env.init stdlib_decls.pr_module in
+  let tenv = Typing_env.init stdlib_decls.pr_module module_env in
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
   let tenv = Typing_env.signature_sort_pass ~raise ~options ~loc tenv in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
-  let bindings = Of_Ast_core.declarations tenv.bindings prg in
+  let bindings = Of_Ast_core.declarations tenv.bindings tenv.type_env prg in
   { tenv with bindings }
 
 
@@ -462,7 +613,7 @@ let rec patch : t -> Types.def list -> Types.def list =
   List.map defs ~f:(fun def ->
       match def with
       | Variable v ->
-        (match v.t, LMap.find_opt v.range bindings with
+        (match v.t, LMap.find_opt v.range bindings.type_cases with
         | Unresolved, Some t -> Types.Variable { v with t }
         | _ -> Variable v)
       | Type t -> Type t
@@ -472,5 +623,10 @@ let rec patch : t -> Types.def list -> Types.def list =
           | Alias { module_path; resolved_module; file_name } ->
             Types.Alias { module_path; resolved_module; file_name }
           | Def defs -> Def (patch bindings defs)
+        in
+        let m =
+          match m.signature, LMap.find_opt m.range bindings.module_signatures with
+          | Unresolved, Some signature -> { m with signature }
+          | _ -> m
         in
         Module { m with mod_case })

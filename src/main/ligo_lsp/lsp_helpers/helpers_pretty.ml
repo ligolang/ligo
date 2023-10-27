@@ -44,7 +44,7 @@ let unresolved_type_as_comment syntax =
 type module_pp_mode =
   { module_keyword : string
   ; import_keyword : string
-  ; sign_on_definition : string option
+  ; sign_on_signature : string
   ; sign_on_import : string option
   ; open_ : string
   ; close : string
@@ -54,7 +54,7 @@ type module_pp_mode =
 let cameligo_module =
   { module_keyword = "module"
   ; import_keyword = "module"
-  ; sign_on_definition = Some "="
+  ; sign_on_signature = ":"
   ; sign_on_import = Some "="
   ; open_ = "struct"
   ; close = "end"
@@ -65,7 +65,7 @@ let cameligo_module =
 let jsligo_module =
   { module_keyword = "namespace"
   ; import_keyword = "import"
-  ; sign_on_definition = None
+  ; sign_on_signature = "implements"
   ; sign_on_import = Some "="
   ; open_ = "{"
   ; close = "}"
@@ -74,10 +74,10 @@ let jsligo_module =
 
 
 let print_module_with_description
-    :  project_root:Path.t option -> syntax:Syntax_types.t -> module_pp_mode
-    -> string * string -> Scopes.Types.mdef -> [> `List of Lsp.Types.MarkedString.t list ]
+    :  Syntax_types.t -> project_root:Path.t option -> module_pp_mode -> string
+    -> Scopes.Types.mdef -> [> `List of Lsp.Types.MarkedString.t list ]
   =
- fun ~project_root ~syntax description (opening_comment, closing_comment) mdef ->
+ fun syntax ~project_root description signature mdef ->
   let open Lsp.Types in
   let project_root = Option.map project_root ~f:Path.to_string in
   let language = Some (Syntax.to_string syntax) in
@@ -87,15 +87,10 @@ let print_module_with_description
       description.module_keyword
       ^ " "
       ^ Format.asprintf "%a" (Scopes.PP.mod_name project_root) mdef.name
-      ^ (Option.value ~default:" "
-        @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_definition)
-      ^ description.open_
       ^ " "
-      ^ opening_comment
-      ^ " ... " (* TODO: print module*)
-      ^ closing_comment
+      ^ description.sign_on_signature
       ^ " "
-      ^ description.close
+      ^ signature
     in
     `List [ MarkedString.{ language; value } ]
   | Alias { module_path; file_name; resolved_module = _ } ->
@@ -138,13 +133,11 @@ let print_module_with_description
 
 
 let print_module
-    :  Syntax_types.t -> project_root:Path.t option -> Scopes.Types.mdef
+    :  Syntax_types.t -> project_root:Path.t option -> string -> Scopes.Types.mdef
     -> [> `List of Lsp.Types.MarkedString.t list ]
   = function
-  | CameLIGO ->
-    print_module_with_description ~syntax:CameLIGO cameligo_module (get_comment CameLIGO)
-  | JsLIGO ->
-    print_module_with_description ~syntax:JsLIGO jsligo_module (get_comment JsLIGO)
+  | CameLIGO -> print_module_with_description CameLIGO cameligo_module
+  | JsLIGO -> print_module_with_description JsLIGO jsligo_module
 
 
 (* Functions made for debugging *)
