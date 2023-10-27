@@ -372,6 +372,31 @@ module Typing_env = struct
         tenv)
 
 
+  (* If our file contains entrypoints, we should type-check them (e.g. check that
+     they have the same storage), and attach corresponding storage and parameter
+     to our program, so they will be available during self_ast_typed_pass *)
+  let signature_sort_pass
+      ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
+      ~(options : Compiler_options.middle_end)
+      ~(loc : Location.t)
+      (tenv : t)
+      : t
+    =
+    let sig_sort : Ast_typed.sig_sort =
+      match
+        Simple_utils.Trace.to_stdlib_result
+        @@ Checking.eval_signature_sort ~options ~loc tenv.type_env
+      with
+      | Ok (sig_sort, ws) ->
+        List.iter ws ~f:raise.warning;
+        sig_sort
+      | Error (e, ws) ->
+        collect_warns_and_errs ~raise Main_errors.checking_tracer (e, ws);
+        Ss_module
+    in
+    { tenv with type_env = { tenv.type_env with sig_sort } }
+
+
   let self_ast_typed_pass
       ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
       ~(options : Compiler_options.middle_end)
@@ -423,8 +448,10 @@ let resolve
     -> Ast_core.program -> Typing_env.t
   =
  fun ~raise ~options ~stdlib_decls prg ->
+  let loc = Checking.loc_of_program prg in
   let tenv = Typing_env.init stdlib_decls.pr_module in
   let tenv = List.fold prg ~init:tenv ~f:(Typing_env.update_typing_env ~raise ~options) in
+  let tenv = Typing_env.signature_sort_pass ~raise ~options ~loc tenv in
   let () = Typing_env.self_ast_typed_pass ~raise ~options tenv in
   let bindings = Of_Ast_core.declarations tenv.bindings prg in
   { tenv with bindings }

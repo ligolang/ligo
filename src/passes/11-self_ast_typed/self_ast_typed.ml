@@ -6,4 +6,4 @@ let all_program
     program
   =
   View_passes.program ~raise program;
-  program |> Dynamic_entrypoints.program ~raise |> Make_entry_point.program
+  program |> Dynamic_entrypoints.program ~raise |> Make_entry_point.program ~raise

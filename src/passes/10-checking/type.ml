@@ -455,8 +455,8 @@ end = struct
         else (
           (* User-defined name. We'd like to try keep the name. However
              a collision could occur if we've previously used this name.
-             
-             We resolve the collision by adding a number to the end until we reach 
+
+             We resolve the collision by adding a number to the end until we reach
              a unique name *)
           let name = Type_var.to_name_exn tvar in
           let curr_name = ref name in
@@ -627,7 +627,7 @@ let dynamic_entrypoint : t -> (t, [> `Not_entry_point_form of t ]) result =
 let parameter_from_entrypoints
     :  (Value_var.t * t) Simple_utils.List.Ne.t
     -> ( t * t
-       , [> `Not_entry_point_form of t
+       , [> `Not_entry_point_form of Value_var.t * t
          | `Storage_does_not_match of Value_var.t * t * Value_var.t * t
          | `Duplicate_entrypoint of Value_var.t
          | `Wrong_dynamic_storage_definition of t
@@ -649,7 +649,7 @@ let parameter_from_entrypoints
   let%bind parameter, storage =
     Result.of_option
       (get_entrypoint entrypoint_type)
-      ~error:(`Not_entry_point_form entrypoint_type)
+      ~error:(`Not_entry_point_form (entrypoint, entrypoint_type))
   in
   let%bind parameter_list =
     List.fold_result
@@ -658,7 +658,7 @@ let parameter_from_entrypoints
         let%bind parameter_, storage_ =
           Result.of_option
             (get_entrypoint ep_type)
-            ~error:(`Not_entry_point_form entrypoint_type)
+            ~error:(`Not_entry_point_form (entrypoint, entrypoint_type))
         in
         let%bind () =
           Result.of_option

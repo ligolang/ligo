@@ -1,5 +1,7 @@
 open Errors
 open Ligo_prim
+open Simple_utils.Trace
+
 (* Approach:
     For a module with a contract sort:
       - Generate a type binder $storage
@@ -62,36 +64,20 @@ let let_storage_and_parameter_types ~parameter_type ~storage_type ~in_ =
   >:: (def_type Magic_vars.storage storage_type >:: in_)
 
 
-let views_help_message =
-  {|Views must be functions taking exactly two arguments: their input, and the storage.|}
-
-
-let exit_with_error str =
-  prerr_endline ("Error: " ^ str);
-  exit 1
-
-
-let e_views ~storage_type view_types =
+let e_views ~storage_type ~raise view_types =
   let open Ast_typed in
   List.fold_right
     view_types
     ~init:(e_a_test_nil_views ~loc storage_type)
     ~f:(fun (view, view_type) views_list ->
       let name = Value_var.to_name_exn view in
+      let loc = Value_var.get_location view in
       let view_expr =
         match Ast_typed.should_uncurry_view ~storage_ty:storage_type view_type with
         | `Yes _ -> Option.value_exn @@ Ast_typed.uncurry_wrap ~loc ~type_:view_type view
-        | `Bad ->
-          exit_with_error
-            (Printf.sprintf "The view `%s` has too few parameter. " name
-            ^ views_help_message
-            ^ "\n\
-               If you get this error while migrating a contract to a new version of \
-               LIGO, this is likely due to the depreciation of uncurried views. See the \
-               documentation on migration to LIGO v. 1.0.")
+        | `Bad -> raise.error (`Self_ast_typed_bad_view_too_few_arguments (name, loc))
         | `Bad_not_function ->
-          exit_with_error
-            (Printf.sprintf "The view `%s` is not a function. " name ^ views_help_message)
+          raise.error (`Self_ast_typed_bad_view_not_a_function (name, loc))
       in
       e_a_test_cons_views
         ~loc
@@ -101,7 +87,7 @@ let e_views ~storage_type view_types =
         views_list)
 
 
-let e_main ~storage_type ~parameter_type entrypoint_types =
+let e_main ~storage_type ~parameter_type ~raise entrypoint_types =
   let open Ast_typed in
   let p_var = Value_var.of_input_var ~loc "p" in
   let s_var = Value_var.of_input_var ~loc "s" in
@@ -165,23 +151,29 @@ let e_main ~storage_type ~parameter_type entrypoint_types =
     fun_type
 
 
-let let_main ~storage_type ~parameter_type (sig_items : Ast_typed.sig_item list) ~in_ =
+let let_main
+    ~storage_type
+    ~parameter_type
+    ~raise
+    (sig_items : Ast_typed.sig_item list)
+    ~in_
+  =
   let entrypoint_types =
     List.filter_map sig_items ~f:(function
         | S_value (var, type_, attr) when attr.entry -> Some (var, type_)
         | _ -> None)
   in
-  let main = e_main ~storage_type ~parameter_type entrypoint_types in
+  let main = e_main ~storage_type ~parameter_type ~raise entrypoint_types in
   let_value Magic_vars.generated_main main ~in_
 
 
-let let_views ~storage_type (sig_items : Ast_typed.sig_item list) ~in_ =
+let let_views ~storage_type (sig_items : Ast_typed.sig_item list) ~raise ~in_ =
   let view_types =
     List.filter_map sig_items ~f:(function
         | S_value (var, type_, attr) when attr.view -> Some (var, type_)
         | _ -> None)
   in
-  let views = e_views ~storage_type view_types in
+  let views = e_views ~storage_type ~raise view_types in
   let_value Magic_vars.views views ~in_
 
 
@@ -189,13 +181,14 @@ let let_initial_dynamic_entrypoints
     ~storage_type
     (sig_items : Ast_typed.sig_item list)
     ~in_
+    ~raise
   =
   let view_types =
     List.filter_map sig_items ~f:(function
         | S_value (var, type_, attr) when attr.view -> Some (var, type_)
         | _ -> None)
   in
-  let views = e_views ~storage_type view_types in
+  let views = e_views ~storage_type ~raise view_types in
   let_value Magic_vars.views views ~in_
 
 
@@ -210,7 +203,7 @@ let def_contract ~main ~views ~has_dynamic_entrypoints : Module.item =
   def_value Magic_vars.contract contract
 
 
-let map_contract ~storage_type ~parameter_type sig_items module_ =
+let map_contract ~storage_type ~parameter_type ~raise sig_items module_ =
   let open Module in
   let has_dynamic_entrypoints =
     List.exists sig_items ~f:(function
@@ -222,22 +215,22 @@ let map_contract ~storage_type ~parameter_type sig_items module_ =
       ~parameter_type
       ~storage_type
       ~in_:
-        (let_main ~storage_type ~parameter_type sig_items ~in_:(fun main ->
-             let_views ~storage_type sig_items ~in_:(fun views ->
+        (let_main ~storage_type ~parameter_type ~raise sig_items ~in_:(fun main ->
+             let_views ~storage_type ~raise sig_items ~in_:(fun views ->
                  def_contract ~main ~views ~has_dynamic_entrypoints >:: empty)))
   in
   module_ <@ items
 
 
-let map_module : Module.t -> Module.t =
- fun ((_, { sig_items; sig_sort }) as module_) ->
+let map_module : raise:_ -> Module.t -> Module.t =
+ fun ~raise ((_, { sig_items; sig_sort }) as module_) ->
   match sig_sort with
   | Ss_module -> module_
   | Ss_contract { storage = storage_type; parameter = parameter_type } ->
-    map_contract ~storage_type ~parameter_type sig_items module_
+    map_contract ~storage_type ~parameter_type ~raise sig_items module_
 
 
-let mapper =
+let mapper ~raise =
   Helpers.Declaration_mapper.map_module (fun decl ->
       match Location.unwrap decl with
       | Ast_typed.D_module
@@ -246,7 +239,7 @@ let mapper =
           ; module_ = { module_content = M_struct module_; module_location; signature }
           ; annotation
           } ->
-        let module_, signature = map_module (module_, signature) in
+        let module_, signature = map_module ~raise (module_, signature) in
         Location.wrap ~loc:(Location.get_location decl)
         @@ Ast_typed.D_module
              { module_binder
@@ -257,15 +250,15 @@ let mapper =
       | _ -> decl)
 
 
-let generate_entry_logic : Ast_typed.program -> Ast_typed.program =
- fun prg ->
+let generate_entry_logic : raise:_ -> Ast_typed.program -> Ast_typed.program =
+ fun ~raise prg ->
   match prg.pr_sig.sig_sort with
   | Ss_module ->
-    let pr_module = mapper prg.pr_module in
+    let pr_module = mapper ~raise prg.pr_module in
     { pr_module; pr_sig = Ast_typed.to_signature pr_module }
   | Ss_contract { storage = storage_type; parameter = parameter_type } ->
     (* Map the entire program first  *)
-    let module_ = mapper prg.pr_module in
+    let module_ = mapper ~raise prg.pr_module in
     (* Determine new signature of module_ *)
     let sig_items = Ast_typed.Misc.to_sig_items module_ in
     (* Generate the main entrypoint for the program's module *)
@@ -273,6 +266,7 @@ let generate_entry_logic : Ast_typed.program -> Ast_typed.program =
       map_contract
         ~storage_type
         ~parameter_type
+        ~raise
         sig_items
         (module_, { prg.pr_sig with sig_items })
     in
@@ -293,5 +287,8 @@ let expand_e_contract =
                 exp.type_expression)))
 
 
-let program : Ast_typed.program -> Ast_typed.program =
- fun prg -> prg |> generate_entry_logic |> expand_e_contract
+let program
+    :  raise:(Errors.self_ast_typed_error, _) raise -> Ast_typed.program
+    -> Ast_typed.program
+  =
+ fun ~raise prg -> prg |> generate_entry_logic ~raise |> expand_e_contract

@@ -23,7 +23,7 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
       ~syntax:(Syntax.to_string syntax)
       ()
   in
-  let%map ({ errors; warnings = _; storage_diagnostics = _; definitions }
+  let%map ({ errors; warnings = _; definitions }
             : Lsp_helpers.Ligo_interface.Get_scope.defs_and_diagnostics)
     =
     Lsp_helpers.Ligo_interface.Get_scope.get_defs_and_diagnostics

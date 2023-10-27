@@ -22,15 +22,11 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
 
 
 let get_defs_and_diagnostics
-    :  ?json_download:bool -> project_root:Path.t option -> code:string -> Path.t
-    -> defs_and_diagnostics Lwt.t
+    : project_root:Path.t option -> code:string -> Path.t -> defs_and_diagnostics Lwt.t
   =
- fun ?json_download ~project_root ~code path ->
+ fun ~project_root ~code path ->
   let options = lsp_raw_options ~project_root in
-  get_defs_and_diagnostics
-    ?json_download
-    options
-    (Raw_input_lsp { file = Path.to_string path; code })
+  get_defs_and_diagnostics options (Raw_input_lsp { file = Path.to_string path; code })
 
 
 let get_scopes

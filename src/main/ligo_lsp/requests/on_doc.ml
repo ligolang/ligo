@@ -121,7 +121,6 @@ let on_doc
     lift_IO
     @@ Ligo_interface.get_defs_and_diagnostics
          ~project_root:!last_project_file
-         ?json_download:None
          ~code:contents
          file
   in
