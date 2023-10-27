@@ -40,7 +40,7 @@ let error_to_string = function
   | Unknown_error e -> unknown_error_msg e
 
 
-let handle_interruption f =
+let handle_interruption ?fallback_env_var f =
   let open Lwt.Syntax in
   let* stdout_term = Lazy.force LTerm.stdout in
   if LTerm.is_a_tty stdout_term
@@ -53,7 +53,15 @@ let handle_interruption f =
       (function
         | LTerm_read_line.Interrupt | Caml.Sys.Break -> Lwt_result.lift @@ Error Cancelled
         | e -> Lwt_result.lift @@ Error (Unknown_error e))
-  else Lwt_result.lift @@ Error Not_tty
+  else
+    Lwt_result.lift
+    @@
+    match fallback_env_var with
+    | Some v ->
+      (match Sys.getenv v with
+      | Some v -> Ok v
+      | None -> Error Not_tty)
+    | None -> Error Not_tty
 
 
 let prompt ~msg =
@@ -61,6 +69,6 @@ let prompt ~msg =
   handle_interruption f
 
 
-let prompt_sensitive ~msg =
+let prompt_sensitive ~fallback_env_var ~msg =
   let f stdout_term = (new prompt_sensitive stdout_term msg)#run in
-  handle_interruption f
+  handle_interruption ~fallback_env_var f
