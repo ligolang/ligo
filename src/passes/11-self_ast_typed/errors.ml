@@ -13,6 +13,8 @@ type self_ast_typed_error =
   | `Self_ast_typed_bad_view_io of Module_var.t * Location.t
   | `Self_ast_typed_bad_view_storage of
     Module_var.t * Ast_typed.type_expression * Location.t
+  | `Self_ast_typed_bad_view_not_a_function of string * Location.t
+  | `Self_ast_typed_bad_view_too_few_arguments of string * Location.t
   | `Self_ast_typed_storage_view_contract of
     Location.t
     * Module_var.t
@@ -94,7 +96,26 @@ let error_ppformat
         Module_var.pp
         entrypoint
         Ast_typed.PP.type_expression
-        storage_ty)
+        storage_ty
+    | `Self_ast_typed_bad_view_not_a_function (name, loc) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.The view \"%s\" is not a function.@.Views must be functions taking \
+         exactly two arguments: their input, and the storage. @]"
+        snippet_pp
+        loc
+        name
+    | `Self_ast_typed_bad_view_too_few_arguments (name, loc) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.The view \"%s\" has too few parameters.@.Views must be functions \
+         taking exactly two arguments: their input, and the storage.@.If you get this \
+         error while migrating a contract to a new version of LIGO, this is likely due \
+         to the depreciation of uncurried views. See the documentation on migration to \
+         LIGO v. 1.0. @]"
+        snippet_pp
+        loc
+        name)
 
 
 let error_json : self_ast_typed_error -> Simple_utils.Error.t =
@@ -158,6 +179,14 @@ let error_json : self_ast_typed_error -> Simple_utils.Error.t =
         Ast_typed.PP.type_expression
         storage_ty
     in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_typed_bad_view_not_a_function (name, location) ->
+    let message = Format.asprintf "The view \"%s\" is not a function." name in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Self_ast_typed_bad_view_too_few_arguments (name, location) ->
+    let message = Format.asprintf "The view \"%s\" has too few parameters." name in
     let content = make_content ~message ~location () in
     make ~stage ~content
   | `Self_ast_typed_corner_case desc ->

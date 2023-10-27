@@ -1189,9 +1189,9 @@ let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_failure3.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 1, characters 11-56:
+    File "../../test/contracts/negative//interpreter_tests/test_failure3.mligo", line 1, characters 31-32:
       1 | module C = struct [@entry] let f = (fun () () -> ()) end
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                         ^
       2 | let test =
 
     Not an entrypoint: unit -> unit -> unit |}]

@@ -249,25 +249,104 @@ let test_cases =
               ; path = Path.from_relative "contracts/lsp/test_metadata.mligo"
               }
           }
-        ; { severity = DiagnosticSeverity.Warning
-          ; message = "Cannot parse big-map metadata."
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows a duplicate entrypoint error."
+    ; file_path = "contracts/lsp/entrypoints_repeated.mligo"
+    ; diagnostics =
+        [ { message = "Duplicate entry-point ep_int"
           ; location =
-              { range = interval 4 4 11
-              ; path = Path.from_relative "contracts/lsp/test_metadata.mligo"
+              { range = interval 1 4 10
+              ; path = Path.from_relative "contracts/lsp/entrypoints_repeated.mligo"
               }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows an error when two toplevel entrypoints have different storage."
+    ; file_path = "contracts/lsp/entrypoints_different_storage.mligo"
+    ; diagnostics =
+        [ { message =
+              "Storage types do not match for different entrypoints:\n\
+               - ep_int : int\n\
+               - ep_string : string"
+          ; location =
+              { range = interval 1 4 10
+              ; path =
+                  Path.from_relative "contracts/lsp/entrypoints_different_storage.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name =
+        "Shows views-related errors and storage warnings."
+        (* TODO #2086 add tests for more complicated errors *)
+    ; file_path = "contracts/lsp/entrypoints_views.mligo"
+    ; diagnostics =
+        [ { message =
+              "Warning: If the following metadata is meant to be TZIP-16 compliant,\n\
+               then it should be a 'big_map' from 'string' to 'bytes'.\n\
+               Hint: The corresponding type should be :\n\
+              \  (string, bytes) big_map\n\
+               You can disable this warning with the '--no-metadata-check' flag.\n"
+          ; location =
+              { range = interval 4 16 20
+              ; path = Path.from_relative "contracts/lsp/entrypoints_views.mligo"
+              }
+          ; severity = DiagnosticSeverity.Warning
+          }
+        ; { message = "The view \"bad_view_not_func\" is not a function."
+          ; location =
+              { range = interval 21 4 21
+              ; path = Path.from_relative "contracts/lsp/entrypoints_views.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows entrypoint-related errors in many modules simultaneously."
+    ; file_path = "contracts/lsp/entrypoints_modules.mligo"
+    ; diagnostics =
+        [ { message = "Invalid type for view \"Bad_4\".\nA view must be a function."
+          ; location =
+              { range = interval 51 6 7
+              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ; { message = "Not an entrypoint: unit -> ( list (operation) * string )"
+          ; location =
+              { range = interval 41 6 12
+              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ; { message = "Duplicate entry-point ep_string"
+          ; location =
+              { range = interval 32 6 15
+              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ; { message =
+              "Storage types do not match for different entrypoints:\n\
+               - ep_string : string\n\
+               - ep_int : int"
+          ; location =
+              { range = interval 23 6 15
+              ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
           }
         ]
     ; max_number_of_problems = None
     }
   ]
-
-
-let send_virtual_change : Range.t -> string -> Path.t -> string -> unit Requests.Handler.t
-  =
- fun range text file contents ->
-  let change = TextDocumentContentChangeEvent.create ~range ~text () in
-  let changes = [ change ] in
-  Requests.on_doc ~changes file contents
 
 
 let tests = "diagnostics", List.map ~f:get_diagnostics_test test_cases

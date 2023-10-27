@@ -3,7 +3,7 @@ open Ligo_prim
 module List = Simple_utils.List
 module Location = Simple_utils.Location
 
-(** [('a, 'err, 'wrn) t] computation returns a value of type ['a], potentially 
+(** [('a, 'err, 'wrn) t] computation returns a value of type ['a], potentially
     raising errors and warnings of type ['err] and ['wrn]. *)
 type ('a, 'err, 'wrn) t
 
@@ -34,7 +34,7 @@ val raise_l : loc:Location.t -> 'err Errors.with_loc -> ('a, 'err, 'wrn) t
 (** [warn wrn] reports the warning [wrn] at location [loc ()] (the current location). *)
 val warn : 'wrn Errors.with_loc -> (unit, 'err, 'wrn) t
 
-(** [raise_result ~error result] simply lifts the value of the result into a computation. 
+(** [raise_result ~error result] simply lifts the value of the result into a computation.
     If [result] is [Error err], then the computation is equivalent to [raise (error err)]. *)
 val raise_result
   :  ('a, 'b) result
@@ -45,11 +45,11 @@ val raise_result
     If [opt] is [None], then the computation raises [error]. *)
 val raise_opt : 'a option -> error:'err Errors.with_loc -> ('a, 'err, 'wrn) t
 
-(** [assert_ ~error cond] asserts that [cond] is [true]. If [false], then [error] 
+(** [assert_ ~error cond] asserts that [cond] is [true]. If [false], then [error]
     is raised. *)
 val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
 
-(** [try_ comp ~with_] executes the computation [comp]. If [comp] raises 
+(** [try_ comp ~with_] executes the computation [comp]. If [comp] raises
     an error [err], then the handler [with_] is called with [err]. *)
 val try_ : ('a, 'err, 'wrn) t -> with_:('err -> ('a, 'err, 'wrn) t) -> ('a, 'err, 'wrn) t
 
@@ -63,11 +63,11 @@ val try_all
 val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
 
 module Options : sig
-  (** [test ()] returns whether the [--test] flag was passed via compiler options.  
+  (** [test ()] returns whether the [--test] flag was passed via compiler options.
       This is equivalent to [options () >>| fun opt -> opt.test] *)
   val test : unit -> (bool, 'err, 'wrn) t
 
-  (** [syntax ()] returns the syntax passed by the [--syntax] flag. 
+  (** [syntax ()] returns the syntax passed by the [--syntax] flag.
       This is equivalent to [options () >>| fun opt -> opt.syntax] *)
   val syntax : unit -> (Syntax_types.t option, 'err, 'wrn) t
 
@@ -81,7 +81,7 @@ end
 (** [context ()] returns the context. *)
 val context : unit -> (Context.t, 'err, 'wrn) t
 
-(** [hash_context ()] hashes the current context (required for the hashing used to 
+(** [hash_context ()] hashes the current context (required for the hashing used to
     improve types when reporting errors). *)
 val hash_context : unit -> (unit, 'err, 'wrn) t
 
@@ -90,9 +90,9 @@ val hash_context : unit -> (unit, 'err, 'wrn) t
 type 'a exit =
   | Drop : 'a exit (** [Drop] simply drops all context items up until the scope marker *)
   | Lift_type : (Type.t * 'a) exit
-      (** [Lift_type] drops everything up until the scope marker *except* existential variables 
+      (** [Lift_type] drops everything up until the scope marker *except* existential variables
           and applies any dropped equations to the returned type.
-          
+
           Hint: You probably want to use this when exiting the scope during inference. *)
   | Lift_sig : (Context.Signature.t * 'a) exit
       (** Similar to [Lift_type] but for signatures. *)
@@ -103,10 +103,10 @@ module Context : sig
 
   (** {1 Context lookup functions} *)
 
-  (** [get_value var] returns the mutable flag and type of variable [var] in 
-      the current context. 
-      
-      If unbound or if [var] is a mutable variable (and would be 
+  (** [get_value var] returns the mutable flag and type of variable [var] in
+      the current context.
+
+      If unbound or if [var] is a mutable variable (and would be
       captured by a closure), then we return [Error]. *)
   val get_value
     :  Value_var.t
@@ -144,8 +144,8 @@ module Context : sig
 
   (** [get_type_var tvar] returns the kind of the type variable [tvar].
       Returning [None] if not found in the current context.
-        
-      Warning: you may encouter shadowing issues if you also want to access 
+
+      Warning: you may encouter shadowing issues if you also want to access
       declared types. e.g. [type foo = int in ...] *)
 
   val get_type_var : Type_var.t -> (Kind.t option, 'err, 'wrn) t
@@ -157,8 +157,8 @@ module Context : sig
 
   (** [get_type tvar] returns the type bound to the type variable [tvar].
       Returning [None] if not found in the current context.
-        
-      Warning: you may encouter shadowing issues if you also want to access 
+
+      Warning: you may encouter shadowing issues if you also want to access
       bound type variables. e.g. [fun (type a) ... -> ...] *)
 
   val get_type : Type_var.t -> (Type.t option, 'err, 'wrn) t
@@ -209,8 +209,8 @@ module Context : sig
 
   (** [get_sum constr] returns a list of [(type_name, type_params, constr_type, sum_type)] for any sum type in the context
       containing [constr].
-      
-      Note (for some reason): We return all the matching types found in the modules (and submodules) in the current context. 
+
+      Note (for some reason): We return all the matching types found in the modules (and submodules) in the current context.
       For example:
       {|
         module Mod_a = struct
@@ -234,13 +234,13 @@ module Context : sig
     :  Type.t Label.Map.t
     -> ((Type_var.t option * Type.row) option, 'err, 'wrn) t
 
-  (** [lock ~on_exit ~in_] adds a local fitch-style lock for mutable variables to 
+  (** [lock ~on_exit ~in_] adds a local fitch-style lock for mutable variables to
       the context in [in_]. *)
 
   val lock : on_exit:'a exit -> in_:('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
 
   (** [tapply type_] applies the context substitution to [type_].
-      
+
       Hint: you often want to use this when passing a type from an inference function
       to a checking function. *)
 
@@ -267,7 +267,7 @@ val lexists : Label.Set.t -> (Type.layout, 'err, 'wrn) t
     with the location automatically provided *)
 val create_type : Type.constr -> (Type.t, 'err, 'wrn) t
 
-(** [def bindings ~on_exit ~in_] binds the context bindings [bindings] in 
+(** [def bindings ~on_exit ~in_] binds the context bindings [bindings] in
     computation [in_] *)
 
 val def
@@ -276,7 +276,7 @@ val def
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t
 
-(** [def_type types ~on_exit ~in_] binds the type definitions [types] in 
+(** [def_type types ~on_exit ~in_] binds the type definitions [types] in
     computation [in_] *)
 val def_type
   :  (Type_var.t * Type.t) list
@@ -284,10 +284,10 @@ val def_type
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t
 
-(** [def_type_var tvars ~on_exit ~in_] binds the universal type variables 
-    in computation [in_]. 
+(** [def_type_var tvars ~on_exit ~in_] binds the universal type variables
+    in computation [in_].
 
-    Similar to [fun (type a) -> ...] in OCaml.    
+    Similar to [fun (type a) -> ...] in OCaml.
 *)
 val def_type_var
   :  (Type_var.t * Kind.t) list
@@ -295,7 +295,7 @@ val def_type_var
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t
 
-(** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in 
+(** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in
     computation [in_]. *)
 val def_module
   :  (Module_var.t * Context.Signature.t) list
@@ -303,7 +303,7 @@ val def_module
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t
 
-(** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in 
+(** [def_module modules ~on_exit ~in_] binds the module bindings [modules] in
     computation [in_]. *)
 val def_module_type
   :  (Module_var.t * Context.Signature.t) list
@@ -335,15 +335,15 @@ type unify_error =
 (** [unify_texists tvar type_] unifies the existential (unification) variable [tvar] with the type [type_]. *)
 val unify_texists : Type_var.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 
-(** [unify type1 type2] unifies the types [type1] and [type2]. 
-    
+(** [unify type1 type2] unifies the types [type1] and [type2].
+
     Hint: In general, use [unify] over [subtype]. *)
 val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 
 type subtype_error = unify_error
 
-(** [subtype ~received ~expected] ensures [received] is the subtype of [expected] 
-    and returns a coercion [f] that accepts an expression of type [received] and 
+(** [subtype ~received ~expected] ensures [received] is the subtype of [expected]
+    and returns a coercion [f] that accepts an expression of type [received] and
     elaborates to an expression of type [expected]. *)
 
 val subtype
@@ -357,8 +357,8 @@ val subtype
 (** {6 Fragments} *)
 
 (** A fragment is defined as a collection of variable bindings. They're used in the typing
-    of patterns. 
-    
+    of patterns.
+
     For example:
       {|
         type recd = { a : int; b : bool; c : char }
@@ -367,7 +367,7 @@ val subtype
         match foo with
         | Bar (x, y, { a; b; c }) -> ...
       |}
-    would generate the fragment: [ [ "x", int; "y", string; "a", int; "b", bool; "c", char ] ]. 
+    would generate the fragment: [ [ "x", int; "y", string; "a", int; "b", bool; "c", char ] ].
 *)
 
 module With_frag : sig
@@ -427,11 +427,13 @@ end
 
 (** This section defines functions related to running computations. *)
 
-(** [encode type_] encodes an [Ast_typed.type_expression] representation of a type into the typer's 
+(** [encode type_] encodes an [Ast_typed.type_expression] representation of a type into the typer's
     internal representation [Type.t]. *)
 val encode : Ast_typed.type_expression -> Type.t
 
-(** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler 
+val encode_signature : Ast_typed.signature -> Context.Signature.t
+
+(** [run_elab comp ~raise ~options ~loc ~env] runs and elaborates the computation [comp] with the handler
     provided by [~raise], compiler options [~options] and initial environment [~env]. *)
 val run_elab
   :  ('a Elaboration.t, Errors.typer_error, Main_warnings.all) t

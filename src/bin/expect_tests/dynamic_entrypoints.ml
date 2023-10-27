@@ -4,25 +4,10 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "dynamic_entry_wrong_storage.mligo" ];
   [%expect
     {|
-    File "../../test/contracts/negative/dynamic_entry_wrong_storage.mligo", line 1, character 0 to line 9, character 67:
-      1 | type storage =
-          ^^^^^^^^^^^^^^
-      2 |   {
-          ^^^
-      3 |     storage : int;
-          ^^^^^^^^^^^^^^^^^^
-      4 |     dynamic_entrypoints;
-          ^^^^^^^^^^^^^^^^^^^^^^^^
-      5 |     extra : int
-          ^^^^^^^^^^^^^^^
-      6 |   }
-          ^^^
-      7 |
-
+    File "../../test/contracts/negative/dynamic_entry_wrong_storage.mligo", line 9, characters 18-25:
       8 | [@entry]
-          ^^^^^^^^
       9 |   let foo () (_ : storage) : operation list * storage = failwith ()
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            ^^^^^^^
 
      Wrong dynamic entrypoints storage definition record[dynamic_entrypoints -> big_map (nat , bytes) ,
                                                          extra -> int ,
@@ -33,26 +18,11 @@ let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "dynamic_entry_wrong_storage.jsligo" ];
   [%expect
     {|
-      File "../../test/contracts/negative/dynamic_entry_wrong_storage.jsligo", line 1, character 0 to line 9, character 89:
-        1 | type storage =
-            ^^^^^^^^^^^^^^
-        2 |   {
-            ^^^
-        3 |     storage : int;
-            ^^^^^^^^^^^^^^^^^^
-        4 |     dynamic_entrypoints;
-            ^^^^^^^^^^^^^^^^^^^^^^^^
-        5 |     extra : int
-            ^^^^^^^^^^^^^^^
-        6 |   }
-            ^^^
-        7 |
-  
+      File "../../test/contracts/negative/dynamic_entry_wrong_storage.jsligo", line 9, characters 37-44:
         8 | @entry
-            ^^^^^^
         9 |   const foo = (_u : unit, _storage : storage) : [list<operation>, storage] => failwith ()
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  
+                                                 ^^^^^^^
+
        Wrong dynamic entrypoints storage definition record[dynamic_entrypoints -> big_map (nat , bytes) ,
                                                            extra -> int ,
                                                            storage -> int].

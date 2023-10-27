@@ -2,21 +2,13 @@ module Raw_options = Compiler_options.Raw_options
 module Trace = Simple_utils.Trace
 open Scopes.Types
 
-(** Caches diagnostics for a storage definition. Useful to avoid excessive TZIP-16 checks,
-    which can download JSONs from the internet and lag the language server. For now, just
-    warnings as errors aren't thrown. *)
-type storage_diagnostics = { storage_warnings : Main_warnings.all list }
-
-let empty_storage_diagnostics = { storage_warnings = [] }
-
 (** This is used by the LSP. Note: defs must be unfolded before constructing this,
-    see [unfold_defs]. [storage_errors] and [storage_warnings] are separated from other
-    diagnostics in order to be cached, as these diagnostics may require downloads, which
-    can be slow. *)
+    see [unfold_defs].
+    [errors] and [warnings] can come from [Scopes] module (which runs compiler up to self_ast_typed pass)
+    , or from [following_passes_diagnostics] (collected in this module) *)
 type defs_and_diagnostics =
   { errors : Main_errors.all list
   ; warnings : Main_warnings.all list
-  ; storage_diagnostics : storage_diagnostics
   ; definitions : Def.t list
   }
 
@@ -126,9 +118,7 @@ let get_scopes
 (** Currently [Scopes.defs] result contains definitions from modules inside `mdef`.
     We want to search stuff only in `definitions`, so we traverse all local modules.
     TODO: change `Scopes.scopes_and_defs` so it produces list that we need *)
-let unfold_defs (errors, warnings, { storage_warnings }, nested_defs_opt)
-    : defs_and_diagnostics
-  =
+let unfold_defs (errors, warnings, nested_defs_opt) : defs_and_diagnostics =
   let extract_defs : def list -> def list =
     let rec from_module (m : mdef) =
       match m.mod_case with
@@ -151,7 +141,7 @@ let unfold_defs (errors, warnings, { storage_warnings }, nested_defs_opt)
     | None -> []
     | Some nested_defs -> extract_defs nested_defs
   in
-  { errors; warnings; storage_diagnostics = { storage_warnings }; definitions }
+  { errors; warnings; definitions }
 
 
 let storage_name = "storage"
@@ -160,13 +150,15 @@ let virtual_main_name = "lsp_virtual_main"
 (** When compiling past the typed AST, we need to provide an entry-point, otherwise the
     compilation may fail. This function will generate a virtual entry-point with the name
     provided by [virtual_main_name], using the never type as the parameter, and
-    [storage_type_name] as the storage. This will be type-checked using [context]. *)
+    [storage_type_expr] as the storage. This will be type-checked using [context].
+
+    Can be used with custom storage type to proceed with compiling the storage expr. *)
 let make_lsp_virtual_main
     ~raise
     ~(options : Compiler_options.t)
     ~(context : Ast_typed.signature)
     ~(syntax : Syntax_types.t)
-    (storage_type_name : string)
+    (storage_type_expr : string)
     : Ast_typed.program * Ast_core.program
   =
   let main =
@@ -176,28 +168,34 @@ let make_lsp_virtual_main
       | JsLIGO ->
         "@entry\nconst %s = (_: never, s: %s): [list<operation>, %s] => [list([]), s]")
       virtual_main_name
-      storage_type_name
-      storage_type_name
+      storage_type_expr
+      storage_type_expr
   in
-  Ligo_compile.Utils.type_program_string ~raise ~options ~context syntax main
+  let typed, core =
+    Ligo_compile.Utils.type_program_string ~raise ~options ~context syntax main
+  in
+  let sig_sort =
+    Option.value ~default:Ast_typed.Ss_module
+    @@ Trace.to_option
+    @@ Checking.eval_signature_sort
+         ~options:options.middle_end
+         ~loc:Location.dummy
+         { typed.pr_sig with sig_items = typed.pr_sig.sig_items @ context.sig_items }
+  in
+  { typed with pr_sig = { typed.pr_sig with sig_sort } }, core
 
 
-let find_storage =
-  List.find_map ~f:(function
-      | Variable vdef ->
-        Option.some_if Caml.(vdef.name = storage_name && vdef.def_type = Global) vdef
-      | Type _ | Module _ -> None)
-
-
-let storage_diagnostics
-    ?(json_download : bool option)
+(* Compiles (Ast_typed -> Ast_aggrefgated -> Ast_expanded -> mini_c -> michelson)
+  the unit expression with the program as a context. This is enough to raise the
+  unused variable warnings, warnings about wrong storage metadata type and some others.
+  This require our file to have an entrypoint, so we can add a virtual one. *)
+let following_passes_diagnostics
     ~(raise : (Main_errors.all, Main_warnings.all) Trace.raise)
     ~(stdlib_context : Ast_typed.signature)
     ~(syntax : Syntax_types.t)
     (raw_options : Raw_options.t)
     (env : Ast_typed.signature)
     (prg : Ast_typed.declaration list)
-    (defs : def list)
     : unit Lwt.t
   =
   let options =
@@ -212,127 +210,63 @@ let storage_diagnostics
       ()
   in
   try%lwt
-    (* Do we have a definition called "storage"? *)
-    match find_storage defs with
-    | None ->
-      (* No storage, but let's try to proceed with the compilation anyway to show more
-         diagnostics. This is done by compiling the virtual entry-point using the never
-         type as the storage. *)
-      let storage_type = "never" in
-      let virtual_main_typed, _virtual_main_core =
-        make_lsp_virtual_main ~raise ~options ~context:stdlib_context ~syntax storage_type
-      in
-      let prg_with_ep : Ast_typed.program =
-        { pr_module = virtual_main_typed.pr_module @ prg
-        ; pr_sig =
-            { sig_items = virtual_main_typed.pr_sig.sig_items @ env.sig_items
-            ; sig_sort = virtual_main_typed.pr_sig.sig_sort
-            }
-        }
-      in
-      let ast_aggregated =
-        Ligo_compile.Of_typed.compile_expression_in_context
-          ~self_pass:true
-          ~self_program:true
-          ~raise
-          ~options:options.middle_end
-          None
-          prg_with_ep
-          (Ast_typed.e_a_unit ~loc:Simple_utils.Location.dummy ())
-      in
-      let ast_expanded =
-        Ligo_compile.Of_aggregated.compile_expression ~raise ast_aggregated
-      in
-      let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise ast_expanded in
-      let open Lwt.Let_syntax in
-      let%map _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
-      ()
-    | Some storage ->
-      (* Introduce a virtual entry-point using this storage. *)
-      let storage_type =
-        let core_to_string =
-          Pretty.pretty_print_type_expression
-            { indent = 2; width = Int.max_value }
-            ~syntax
+    let contract_sig, pr_sig_items, prg =
+      match env.sig_sort with
+      | Ss_contract contract_sig ->
+        (* There is an entrypoint in a contract, so we know the storage *)
+        Some contract_sig, env.sig_items, prg
+      | Ss_module ->
+        let storage_type = "never" in
+        let context = { stdlib_context with sig_items = env.sig_items } in
+        let virtual_main_typed, _virtual_main_core =
+          make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
         in
-        (* We might not have the type, or we might not be able to pretty-print it for
-           whatever reason. Let's not fail, but rather just use the never type. *)
-        match
-          match storage.t with
-          | Core t -> core_to_string t
-          | Resolved t ->
-            core_to_string @@ Checking.untype_type_expression ~use_orig_var:true t
-          | Unresolved -> `Ok "never"
-        with
-        | `Nonpretty _ -> "never"
-        | `Ok t -> t
-      in
-      let context : Ast_typed.signature =
-        { sig_items = env.sig_items @ stdlib_context.sig_items; sig_sort = env.sig_sort }
-      in
-      let virtual_main_typed, _virtual_main_core =
-        make_lsp_virtual_main ~raise ~options ~context ~syntax storage_type
-      in
-      let prg_with_ep : Ast_typed.program =
-        { pr_module = virtual_main_typed.pr_module @ prg
-        ; pr_sig =
-            { sig_items = virtual_main_typed.pr_sig.sig_items @ env.sig_items
-            ; sig_sort = virtual_main_typed.pr_sig.sig_sort
-            }
-        }
-      in
-      Lwt.map ignore
-      @@ snd
-           ~raise
-           (Ligo_api.Compile.storage_of_typed
-              { raw_options with json_download }
-              ~syntax
-              prg_with_ep
-              storage.name
-              (Some storage.range)
-              ~amount:"0"
-              ~balance:"0"
-              `Text)
+        ( (match virtual_main_typed.pr_sig.sig_sort with
+          | Ss_module ->
+            None (* Should be impossible since virtual main is an entrypoint *)
+          | Ss_contract contract_sig -> Some contract_sig)
+        , env.sig_items @ virtual_main_typed.pr_sig.sig_items
+        , prg @ virtual_main_typed.pr_module )
+    in
+    let prg : Ast_typed.program =
+      { pr_module = prg
+      ; pr_sig =
+          { sig_sort =
+              Option.value_map
+                ~default:Ast_typed.Ss_module
+                ~f:(fun x -> Ss_contract x)
+                contract_sig
+          ; sig_items = pr_sig_items
+          }
+      }
+    in
+    let ast_aggregated =
+      Ligo_compile.Of_typed.compile_expression_in_context
+        ~self_pass:true
+        ~self_program:true
+        ~raise
+        ~options:options.middle_end
+        contract_sig
+        prg
+        (Ast_typed.e_a_unit ~loc:Simple_utils.Location.dummy ())
+    in
+    let ast_expanded =
+      Ligo_compile.Of_aggregated.compile_expression ~raise ast_aggregated
+    in
+    let mini_c = Ligo_compile.Of_expanded.compile_expression ~raise ast_expanded in
+    let open Lwt.Let_syntax in
+    let%map _mich = Ligo_compile.Of_mini_c.compile_expression ~raise ~options mini_c in
+    ()
   with
+  (* Virtual main can be a non-compiling thing e.g. when we have [let storage : t = ...]
+    when [t] is not found.
+    It's ok to hide the error in that case because this error is already
+    raised by type checker during get-scope *)
   | _exn -> Lwt.return ()
-
-
-(** Returns [true] if this is an expensive check that might require downloading from the
-    internet and thus lag the language server, or [false] otherwise. *)
-let is_metadata_check : Main_warnings.all -> bool = function
-  | `Self_ast_aggregated_deprecated _
-  | `Self_ast_aggregated_warning_unused _
-  | `Self_ast_aggregated_warning_muchused _
-  | `Self_ast_aggregated_warning_unused_rec _
-  | `Self_ast_aggregated_metadata_invalid_type _
-  | `Checking_ambiguous_constructor_expr _
-  | `Checking_ambiguous_constructor_pat _
-  | `Nanopasses_attribute_ignored _
-  | `Nanopasses_infinite_for_loop _
-  | `Self_ast_imperative_warning_deprecated_polymorphic_variable _
-  | `Main_view_ignored _
-  | `Main_entry_ignored _
-  | `Michelson_typecheck_failed_with_different_protocol _
-  | `Jsligo_deprecated_failwith_no_return _
-  | `Jsligo_deprecated_toplevel_let _
-  | `Jsligo_unreachable_code _
-  | `Use_meta_ligo _
-  | `Self_ast_aggregated_warning_bad_self_type _ -> false
-  | `Metadata_cannot_parse _
-  | `Metadata_no_empty_key _
-  | `Metadata_tezos_storage_not_found _
-  | `Metadata_not_valid_URI _
-  | `Metadata_slash_not_valid_URI _
-  | `Metadata_invalid_JSON _
-  | `Metadata_error_JSON_object _
-  | `Metadata_hash_fails _
-  | `Metadata_error_download _
-  | `Metadata_json_download _ -> true
 
 
 (** Used by LSP, we're trying to get as many errors/warnings as possible *)
 let get_defs_and_diagnostics
-    ?(json_download : bool option)
     (raw_options : Raw_options.t)
     (code_input : BuildSystem.Source_input.code_input)
     : defs_and_diagnostics Lwt.t
@@ -343,7 +277,7 @@ let get_defs_and_diagnostics
        ~fast_fail:false
        (fun ~raise ~catch ->
          let open Lwt.Let_syntax in
-         let%map errors, warnings, storage_diagnostics, v =
+         let%map errors, warnings, v =
            with_code_input
              ~raw_options
              ~raise
@@ -352,45 +286,28 @@ let get_defs_and_diagnostics
                let defs, prg =
                  Scopes.defs_and_typed_program ~raise ~with_types ~options ~stdlib ~prg
                in
-               let%map errors, warnings, storage_diagnostics =
+               let%map errors, warnings =
                  match prg with
-                 | None -> Lwt.return ([], [], empty_storage_diagnostics)
+                 | None -> Lwt.return ([], [])
                  | Some (env, prg) ->
                    let stdlib_context = (fst stdlib).pr_sig in
                    Trace.try_with_lwt
                      ~fast_fail:false
                      (fun ~raise ~catch ->
                        let%map () =
-                         storage_diagnostics
-                           ?json_download
+                         following_passes_diagnostics
                            ~raise
                            ~stdlib_context
                            ~syntax
                            raw_options
                            env
                            prg
-                           defs
                        in
-                       (* The only thing we really want to cache are those checks that
-                          might require a download, so we partition them into storage and
-                          ordinary warnings. *)
-                       let storage_warnings, other_warnings =
-                         List.partition_tf (catch.warnings ()) ~f:is_metadata_check
-                       in
-                       catch.errors (), other_warnings, { storage_warnings })
+                       catch.errors (), catch.warnings ())
                      (fun ~catch e ->
-                       let storage_warnings, other_warnings =
-                         List.partition_tf (catch.warnings ()) ~f:is_metadata_check
-                       in
-                       Lwt.return
-                         (e :: catch.errors (), other_warnings, { storage_warnings }))
+                       Lwt.return (e :: catch.errors (), catch.warnings ()))
                in
-               errors, warnings, storage_diagnostics, defs)
+               errors, warnings, defs)
          in
-         ( errors @ catch.errors ()
-         , warnings @ catch.warnings ()
-         , storage_diagnostics
-         , Some v ))
-       (fun ~catch e ->
-         Lwt.return
-           (e :: catch.errors (), catch.warnings (), empty_storage_diagnostics, None))
+         errors @ catch.errors (), warnings @ catch.warnings (), Some v)
+       (fun ~catch e -> Lwt.return (e :: catch.errors (), catch.warnings (), None))

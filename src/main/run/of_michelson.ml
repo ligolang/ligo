@@ -524,7 +524,7 @@ module Checks = struct
           let str =
             Format.asprintf
               "could not successfully typecheck the view \"%s\" w.r.t. to parameter, \
-               returntType and storage of the contract"
+               returnType and storage of the contract"
               name
           in
           `Metadata_error_JSON_object (loc, str))

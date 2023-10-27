@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nLSP server now displays errors related to invalid entrypoints/views\\n\\n"
+merge_request: '2927'
+title: "Draft: [#2076] Support entrypoint and view related errors in LSP"
+type: added
+            

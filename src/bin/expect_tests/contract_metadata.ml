@@ -431,7 +431,7 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    Warning: Error in JSON in storage's metadata: could not successfully typecheck the view "get-allowance-for-user" w.r.t. to parameter, returntType and storage of the contract.
+    Warning: Error in JSON in storage's metadata: could not successfully typecheck the view "get-allowance-for-user" w.r.t. to parameter, returnType and storage of the contract.
     (Pair 42
           { Elt "" 0x74657a6f732d73746f726167653a68656c6c6f253246776f726c64 ;
             Elt "hello/world"
