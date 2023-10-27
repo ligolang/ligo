@@ -17,10 +17,6 @@ open Simple_utils.Trace
 *)
 let ig _ = Sexp.Atom "XXX"
 
-let invariant str =
-  failwith (Format.asprintf "This node should have been reduced:\n %s" str)
-
-
 module To_core : sig
   val program
     :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
@@ -47,12 +43,12 @@ end = struct
   let rec folder ~raise =
     I.Catamorphism.
       { expr = expr ~raise
-      ; ty_expr
-      ; pattern
-      ; statement
-      ; block
+      ; ty_expr = ty_expr ~raise
+      ; pattern = pattern ~raise
+      ; statement = statement ~raise
+      ; block = block ~raise
       ; mod_expr
-      ; instruction
+      ; instruction = instruction ~raise
       ; declaration = declaration ~raise
       ; program_entry = program_entry ~raise
       ; program = Fun.id
@@ -248,8 +244,9 @@ end = struct
     | D_let _ | D_import _ | D_export _ | D_var _ | D_multi_const _ | D_multi_var _
     | D_const { type_params = Some _; _ }
     | _ ->
-      invariant
-      @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_declaration_ ig ig ig ig ig ig d)
+      raise.error
+        (Passes.Errors.invariant_trivial location
+        @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_declaration_ ig ig ig ig ig ig d))
 
 
   and expr ~raise
@@ -385,11 +382,12 @@ end = struct
            ; attributes = Value_attr.default_attributes
            }
     | _ ->
-      invariant
-      @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_expression_ ig ig ig ig ig e)
+      raise.error
+        (Passes.Errors.invariant_trivial location
+        @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_expression_ ig ig ig ig ig e))
 
 
-  and ty_expr : O.type_expression I.ty_expr_ -> O.type_expression =
+  and ty_expr ~raise : O.type_expression I.ty_expr_ -> O.type_expression =
    fun t ->
     let location = Location.get_location t in
     let ret type_content : O.type_expression = O.{ type_content; location } in
@@ -416,7 +414,7 @@ end = struct
              { type_operator = { module_path = []; element = type_operator }
              ; arguments = List.Ne.to_list type_args
              }
-      | _ -> invariant "type")
+      | _ -> raise.error (Passes.Errors.invariant_trivial location "type"))
     | T_fun (type1, type2) -> ret @@ T_arrow { type1; type2 }
     | T_string str -> ret @@ T_singleton (Literal_string (Ligo_string.standard str))
     | T_int (_, x) -> ret @@ T_singleton (Literal_int x)
@@ -428,10 +426,12 @@ end = struct
     | T_abstraction abs -> ret @@ T_abstraction abs
     | T_for_all forall -> ret @@ T_for_all forall
     | _ ->
-      invariant @@ Format.asprintf "To_core : %a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t)
+      raise.error
+        (Passes.Errors.invariant_trivial location
+        @@ Format.asprintf "To_core : %a" Sexp.pp_hum (I.sexp_of_ty_expr_ ig t))
 
 
-  and pattern
+  and pattern ~raise
       :  (O.type_expression option O.Pattern.t, O.type_expression) I.pattern_
       -> O.type_expression option O.Pattern.t
     =
@@ -463,16 +463,29 @@ end = struct
         List.map
           ~f:(function
             | Complete x -> x
-            | Punned _ -> invariant "pattern")
+            | Punned _ -> raise.error (Passes.Errors.invariant_trivial location "pattern"))
           lst
       in
       ret @@ P_record (Ligo_prim.Record.of_list lst)
-    | _ -> invariant @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_pattern_ ig ig p)
+    | _ ->
+      raise.error
+        (Passes.Errors.invariant_trivial location
+        @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_pattern_ ig ig p))
 
 
-  and statement : _ I.statement_ -> statement = fun _ -> invariant "stmt"
-  and block : _ I.block_ -> statement = fun _ -> invariant "block"
-  and instruction : _ I.instruction_ -> instruction = fun _ -> invariant "instr"
+  and statement ~raise : _ I.statement_ -> statement =
+   fun s -> raise.error (Passes.Errors.invariant_trivial (Location.get_location s) "stmt")
+
+
+  and block ~raise : _ I.block_ -> statement =
+   fun b ->
+    raise.error (Passes.Errors.invariant_trivial (Location.get_location b) "block")
+
+
+  and instruction ~raise : _ I.instruction_ -> instruction =
+   fun i ->
+    raise.error (Passes.Errors.invariant_trivial (Location.get_location i) "instr")
+
 
   and program_entry ~raise
       : (O.declaration, O.declaration, unit) I.program_entry_ -> O.declaration
@@ -504,8 +517,9 @@ end = struct
            }
     | PE_declaration d -> d
     | PE_preproc_directive _ -> Location.wrap ~loc:Location.generated (dummy_top_level ())
-    | PE_top_level_instruction _ -> invariant "pe"
-    | PE_export _ -> invariant "pe"
+    | PE_top_level_instruction _ ->
+      raise.error (Passes.Errors.invariant_trivial Location.generated "pe")
+    | PE_export _ -> raise.error (Passes.Errors.invariant_trivial Location.generated "pe")
 
 
   and mod_expr : (O.module_expr, O.program) I.mod_expr_ -> O.module_expr =
@@ -551,14 +565,31 @@ end = struct
       S_value (v, ty, attr)
     | S_include se -> S_include se
     | _ ->
-      invariant @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_sig_entry_ ig ig ig item)
+      raise.error
+        (Passes.Errors.invariant_trivial (Location.get_location item)
+        @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_sig_entry_ ig ig ig item))
 end
 
 module From_core : sig
-  val program : Ast_core.program -> Ast_unified.program
-  val pattern : Ast_core.type_expression option Ast_core.Pattern.t -> Ast_unified.pattern
-  val expression : Ast_core.expression -> Ast_unified.expr
-  val type_expression : Ast_core.type_expression -> Ast_unified.ty_expr
+  val program
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_core.program
+    -> Ast_unified.program
+
+  val pattern
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_core.type_expression option Ast_core.Pattern.t
+    -> Ast_unified.pattern
+
+  val expression
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_core.expression
+    -> Ast_unified.expr
+
+  val type_expression
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_core.type_expression
+    -> Ast_unified.ty_expr
 end = struct
   module I = Ast_core
   module O = Ast_unified
@@ -567,10 +598,10 @@ end = struct
   (* type instruction = unit
   type statement = unit *)
 
-  let rec unfolder =
+  let rec unfolder ~raise =
     Ast_unified.Anamorphism.
-      { expr
-      ; ty_expr
+      { expr = expr ~raise
+      ; ty_expr = ty_expr ~raise
       ; pattern = pattern_
       ; statement = (fun _ -> assert false)
       ; block = (fun _ -> assert false)
@@ -584,17 +615,20 @@ end = struct
       }
 
 
-  and program p = Ast_unified.Anamorphism.ana_program ~f:unfolder p
-  and expression e = Ast_unified.Anamorphism.ana_expr ~f:unfolder e
-  and pattern p = Ast_unified.Anamorphism.ana_pattern ~f:unfolder p
-  and type_expression t = Ast_unified.Anamorphism.ana_ty_expr ~f:unfolder t
+  and program ~raise p = Ast_unified.Anamorphism.ana_program ~f:(unfolder ~raise) p
+  and expression ~raise e = Ast_unified.Anamorphism.ana_expr ~f:(unfolder ~raise) e
+  and pattern ~raise p = Ast_unified.Anamorphism.ana_pattern ~f:(unfolder ~raise) p
+
+  and type_expression ~raise t =
+    Ast_unified.Anamorphism.ana_ty_expr ~f:(unfolder ~raise) t
+
 
   and conv_row_attr : string option -> O.Attribute.t list = function
     | None -> []
     | Some annot -> [ { key = "annot"; value = Some annot } ]
 
 
-  and expr
+  and expr ~raise
       :  I.expression
       -> ( I.expression
          , I.type_expression
@@ -618,7 +652,9 @@ end = struct
       let module_path =
         match List.Ne.of_list_opt module_path with
         | Some x -> x
-        | None -> invariant "module accessor decompilation"
+        | None ->
+          raise.error
+            (Passes.Errors.invariant_trivial e.location "module accessor decompilation")
       in
       ret @@ E_module_access { module_path; field = element; field_as_open = false }
     | E_matching { matchee; cases } ->
@@ -671,7 +707,7 @@ end = struct
       assert false
 
 
-  and ty_expr : I.type_expression -> I.type_expression O.ty_expr_ =
+  and ty_expr ~raise : I.type_expression -> I.type_expression O.ty_expr_ =
    fun ty ->
     let loc = Location.dummy in
     let ret content : _ O.ty_expr_ =
@@ -696,7 +732,8 @@ end = struct
     | T_arrow { type1; type2 } -> ret @@ T_fun (type1, type2)
     | T_singleton (Literal_string x) -> ret @@ T_string (Ligo_string.extract x)
     | T_singleton (Literal_int x) -> ret @@ T_int (Z.to_string x, x)
-    | T_singleton _ -> invariant "unknown singleton"
+    | T_singleton _ ->
+      raise.error (Passes.Errors.invariant_trivial ty.location "unknown singleton")
     | T_module_accessor { module_path; element } ->
       ret
       @@ T_module_access
@@ -726,7 +763,7 @@ end = struct
     | T_record row when Row.is_tuple row ->
       let t =
         match Row.to_tuple row with
-        | [] -> invariant "empty record"
+        | [] -> raise.error (Passes.Errors.invariant_trivial ty.location "empty record")
         | a :: b -> a, b
       in
       ret @@ T_prod t

@@ -184,22 +184,22 @@ let execute_nanopasses
 
 let decompile_program ~raise ~syntax : O.program -> I.program =
   decompile_passes ~raise ~sort:Selector.program (get_passes_no_options syntax)
-  <@ Trivial.From_core.program
+  <@ Trivial.From_core.program ~raise
 
 
 let decompile_expression ~raise ~syntax : O.expression -> I.expr =
   decompile_passes ~raise ~sort:Selector.expr (get_passes_no_options syntax)
-  <@ Trivial.From_core.expression
+  <@ Trivial.From_core.expression ~raise
 
 
 let decompile_pattern ~raise ~syntax : O.type_expression option O.Pattern.t -> I.pattern =
   decompile_passes ~raise ~sort:Selector.pattern (get_passes_no_options syntax)
-  <@ Trivial.From_core.pattern
+  <@ Trivial.From_core.pattern ~raise
 
 
 let decompile_ty_expr ~raise ~syntax =
   decompile_passes ~raise ~sort:Selector.ty_expr (get_passes_no_options syntax)
-  <@ Trivial.From_core.type_expression
+  <@ Trivial.From_core.type_expression ~raise
 
 
 let compile_program ~raise ~(options : Compiler_options.t) ?stop_before

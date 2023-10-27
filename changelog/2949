@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '2949'
+title: "Error handling: use passes errors instead of failwith in 04-nanopasses' trivial"
+type: fixed
+            
