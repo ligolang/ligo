@@ -40,6 +40,7 @@ type t =
   | `Small_passes_only_variable_in_prefix of expr
   | `Small_passes_only_variable_in_postfix of expr
   | `Small_passes_sys_error of Location.t * string
+  | `Small_passes_invariant_trivial of Location.t * string
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -55,6 +56,14 @@ let error_ppformat
   | Dev -> Format.fprintf f "%a" (Sexp.pp_hum_indent 4) (sexp_of_t a)
   | Human_readable ->
     (match a with
+    | `Small_passes_invariant_trivial (loc, str) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Found an unexpected structure that could not have been reduced.@.This \
+         node should have been reduced:@.%s@]"
+        snippet_pp
+        loc
+        str
     | `Small_passes_unsupported_disc_union_type ty ->
       Format.fprintf
         f
@@ -245,6 +254,15 @@ let error_json : t -> Simple_utils.Error.t =
  fun e ->
   let open Simple_utils.Error in
   match e with
+  | `Small_passes_invariant_trivial (location, str) ->
+    let message =
+      Format.asprintf
+        "Found an unexpected structure that could not have been reduced.@.This node \
+         should have been reduced:@.%s"
+        str
+    in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
   | `Small_passes_wrong_reduction pass ->
     let message = Format.asprintf "@[<hv>Pass %s did not reduce.@]" pass in
     let content = make_content ~message () in
