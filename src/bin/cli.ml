@@ -2981,17 +2981,74 @@ let registry_unpublish =
     <*> skip_analytics)
 
 
+let username_optional =
+  let open Command.Param in
+  let name = "--username" in
+  let doc = "Username registered with the registry" in
+  let spec = optional string in
+  flag ~doc name spec
+
+
+let email_optional =
+  let open Command.Param in
+  let name = "--email" in
+  let doc = "Email of the user registered with the registry" in
+  let spec = optional string in
+  flag ~doc name spec
+
+
+let prompt_sensitive_with_env_fallback ~fallback_env_var ~prompt_msg =
+  match Lwt_main.run @@ Prompt.prompt_sensitive ~fallback_env_var ~msg:prompt_msg with
+  | Ok v -> Ok v
+  | Error e -> Error (Prompt.error_to_string e, "")
+
+
+let prompt_and_env_fallback ~fallback_env_var ~prompt_msg = function
+  | Some v -> Ok v
+  | None ->
+    (match Sys.getenv fallback_env_var with
+    | Some v -> Ok v
+    | None ->
+      (match Lwt_main.run @@ Prompt.prompt ~msg:prompt_msg with
+      | Ok username -> Ok username
+      | Error prompt_error -> Error (Prompt.error_to_string prompt_error, "")))
+
+
 let add_user =
   let summary = "[BETA] create a new user for the LIGO package registry" in
   let readme () =
     "[BETA] Prompt the user for details to create a new user on registry server"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"add-user" in
-  let f ligo_registry ligorc_path skip_analytics () =
+  let f username email ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> User.create ~ligo_registry ~ligorc_path
+    @@ fun () ->
+    let ( let* ) = Caml.Result.bind in
+    let* username =
+      prompt_and_env_fallback
+        ~fallback_env_var:"LIGO_USERNAME"
+        ~prompt_msg:"Username: "
+        username
+    in
+    let* email =
+      prompt_and_env_fallback ~fallback_env_var:"LIGO_EMAIL" ~prompt_msg:"Email: " email
+    in
+    let* password =
+      prompt_sensitive_with_env_fallback
+        ~fallback_env_var:"USER_PASSWORD"
+        ~prompt_msg:"Password: "
+    in
+    User.create ~username ~password ~email ~ligo_registry ~ligorc_path
   in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> username_optional
+    <*> email_optional
+    <*> ligo_registry
+    <*> ligorc_path
+    <*> skip_analytics)
 
 
 let login =
@@ -3001,11 +3058,27 @@ let login =
      server"
   in
   let cli_analytic = Analytics.generate_cli_metric ~command:"login" in
-  let f ligo_registry ligorc_path skip_analytics () =
+  let f username ligo_registry ligorc_path skip_analytics () =
     return_with_custom_formatter ~skip_analytics ~cli_analytics:[ cli_analytic ] ~return
-    @@ fun () -> User.login ~ligo_registry ~ligorc_path
+    @@ fun () ->
+    let ( let* ) = Caml.Result.bind in
+    let* username =
+      prompt_and_env_fallback
+        ~fallback_env_var:"LIGO_USERNAME"
+        ~prompt_msg:"Username: "
+        username
+    in
+    let* password =
+      prompt_sensitive_with_env_fallback
+        ~fallback_env_var:"USER_PASSWORD"
+        ~prompt_msg:"Password: "
+    in
+    User.login ~username ~password ~ligo_registry ~ligorc_path
   in
-  Command.basic ~summary ~readme (f <$> ligo_registry <*> ligorc_path <*> skip_analytics)
+  Command.basic
+    ~summary
+    ~readme
+    (f <$> username_optional <*> ligo_registry <*> ligorc_path <*> skip_analytics)
 
 
 let registry_group =

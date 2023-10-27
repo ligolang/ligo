@@ -69,33 +69,11 @@ let ping ~email ~user ~pass ~ligo_registry ~ligorc_path =
   handle_server_response ~update_token response body
 
 
-let login ~ligo_registry ~ligorc_path =
-  let prompt () =
-    let open Lwt_result.Syntax in
-    let* user = Prompt.prompt ~msg:"Username: " in
-    let* password = Prompt.prompt_sensitive ~msg:"Password: " in
-    Lwt_result.return (user, password)
-  in
-  match Lwt_main.run @@ prompt () with
-  | Ok (user, pass) -> ping ~user ~email:None ~pass ~ligo_registry ~ligorc_path
-  | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
-  | Error Prompt.Cancelled -> Error ("Aborted", "")
-  | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")
+let login ~username ~password ~ligo_registry ~ligorc_path =
+  ping ~user:username ~email:None ~pass:password ~ligo_registry ~ligorc_path
 
 
 (* (Caml.Sys.getenv "LIGO_USERNAME", Caml.Sys.getenv "LIGO_PASSWORD") *)
 
-let create ~ligo_registry ~ligorc_path =
-  let prompt () =
-    let open Lwt_result.Syntax in
-    let* user = Prompt.prompt ~msg:"Username: " in
-    let* password = Prompt.prompt_sensitive ~msg:"Password: " in
-    let* email = Prompt.prompt ~msg:"Email: " in
-    Lwt_result.return (user, password, email)
-  in
-  match Lwt_main.run @@ prompt () with
-  | Ok (user, pass, email) ->
-    ping ~email:(Some email) ~user ~pass ~ligo_registry ~ligorc_path
-  | Error (Prompt.Unknown_error e) -> Error (Exn.to_string e, "")
-  | Error Prompt.Cancelled -> Error ("Aborted", "")
-  | Error Prompt.Not_tty -> Error ("Not an interactive terminal", "")
+let create ~username ~password ~email ~ligo_registry ~ligorc_path =
+  ping ~email:(Some email) ~user:username ~pass:password ~ligo_registry ~ligorc_path
