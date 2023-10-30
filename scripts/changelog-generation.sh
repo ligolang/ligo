@@ -38,7 +38,7 @@ generate_changelog() {
   mustache ./release-notes.json ./scripts/release-notes.txt.mustache > release-notes.txt
 
   #save in cache
-  if [ -n "$activate_cache" ]; then
+  if [ "$activate_cache" = "true" ]; then
     save_in_cache $cache_hash
   fi
 }
@@ -81,7 +81,7 @@ save_in_cache() {
   echo "Changelog saved to cache."
 }
 
-if [ -n "$activate_cache" ]; then
+if [ "$activate_cache" = "true" ]; then
   copy_from_cache $cache_hash
   delete_old_cache
 else
