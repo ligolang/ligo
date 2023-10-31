@@ -1,0 +1,15 @@
+type int_set = set<int>;
+
+const my_set: set<int> = Set.literal(list([3, 2, 2, 1]));
+
+const contains_3: bool = Set.mem(3, my_set);
+
+const set_size: nat = Set.size(my_set);
+
+const larger_set: int_set = Set.add(4, my_set);
+
+const smaller_set: int_set = Set.remove(3, my_set);
+
+const sum = ([acc, i]: [int, int]): int => acc + i;
+
+const sum_of_elements: int = Set.fold(sum, my_set, 0);

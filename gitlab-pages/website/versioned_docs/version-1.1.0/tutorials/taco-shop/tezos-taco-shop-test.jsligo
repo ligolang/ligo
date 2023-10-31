@@ -1,0 +1,107 @@
+#include "tezos-taco-shop-smart-contract.jsligo"
+function assert_string_failure(res: test_exec_result, expected: string) {
+  let expected_bis = Test.eval(expected);
+  match(res) {
+    when (Fail(x)):
+      match(x) {
+        when (Rejected(y)):
+          assert(Test.michelson_equal(y[0], expected_bis))
+        when (Balance_too_low(_)):
+          failwith("contract failed for an unknown reason")
+        when (Other(_)):
+          failwith("contract failed for an unknown reason")
+      }
+    when (Success(_)):
+      failwith("bad price check")
+  };
+}
+const test =
+  (
+    (_: unit): unit => {
+      /* Originate the contract with a initial storage */
+
+      let init_storage =
+        Map.literal(
+          list(
+            [
+              [1n, { current_stock: 50n, max_price: 50000000mutez }],
+              [2n, { current_stock: 20n, max_price: 75000000mutez }]
+            ]
+          )
+        );
+      let [pedro_taco_shop_ta, _code, _size] =
+        Test.originate(TacoShop.buy_taco, init_storage, 0mutez);
+      /* Convert typed_address to contract */
+
+      let pedro_taco_shop_ctr = Test.to_contract(pedro_taco_shop_ta);
+      /* Test inputs */
+
+      let clasico_kind = 1n;
+      let unknown_kind = 3n;
+      /* Auxiliary function for testing equality in maps */
+
+      let eq_in_map = (
+        r: TacoShop.taco_supply,
+        m: TacoShop.taco_shop_storage,
+        k: nat
+      ) =>
+        match(Map.find_opt(k, m)) {
+          when (None):
+            false
+          when (Some(v)):
+            v.current_stock == r.current_stock && v.max_price == r.max_price
+        };
+      /* Purchasing a Taco with 1tez and checking that the stock has been updated */
+
+      let ok_case: test_exec_result =
+        Test.transfer_to_contract(
+          pedro_taco_shop_ctr,
+          clasico_kind,
+          1000000mutez
+        );
+      let _u =
+        match(ok_case) {
+          when (Success(_)):
+            do {
+              let storage = Test.get_storage(pedro_taco_shop_ta);
+              assert(
+                eq_in_map(
+                  { current_stock: 49n, max_price: 50000000mutez },
+                  storage,
+                  1n
+                )
+                && eq_in_map(
+                     { current_stock: 20n, max_price: 75000000mutez },
+                     storage,
+                     2n
+                   )
+              );
+            }
+          when (Fail(_)):
+            failwith("ok test case failed")
+        };
+      /* Purchasing an unregistred Taco */
+
+      let nok_unknown_kind =
+        Test.transfer_to_contract(
+          pedro_taco_shop_ctr,
+          unknown_kind,
+          1000000mutez
+        );
+      let _u2 = assert_string_failure(nok_unknown_kind, "Unknown kind of taco");
+      /* Attempting to Purchase a Taco with 2tez */
+
+      let nok_wrong_price =
+        Test.transfer_to_contract(
+          pedro_taco_shop_ctr,
+          clasico_kind,
+          2000000mutez
+        );
+      let _u3 =
+        assert_string_failure(
+          nok_wrong_price,
+          "Sorry, the taco you are trying to purchase has a different price"
+        );
+      return unit
+    }
+  )();

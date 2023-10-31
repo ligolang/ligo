@@ -1,0 +1,5 @@
+type magnitude = ["Small"] | ["Large"]; // See variant types.
+
+const compare = (n) => {
+  if (n < 10n) return Small() else return Large()
+};

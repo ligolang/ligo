@@ -1,0 +1,35 @@
+// This is mutation-contract-test.jsligo
+
+#import "mutation-contract.jsligo" "MutationContract"
+
+type storage = int
+type param = parameter_of MutationContract;
+const initial_storage = 7;
+
+const tester = (taddr : typed_address<param, storage>, _c : michelson_contract, _i : int) : unit => {
+  let contr = Test.to_contract(taddr);
+  let _xfer = Test.transfer_to_contract_exn(contr, Add(7), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 7);
+}
+
+const test_original = (() => {
+  let [taddr, _x, _y] = Test.originate_module(contract_of(MutationContract), initial_storage, 0tez);
+  return tester(taddr);
+})();
+
+const test_mutation =
+  match(Test.originate_module_and_mutate(contract_of(MutationContract), initial_storage, 0tez, tester)) {
+    when(None()): unit;
+    when(Some(pmutation)): do {
+      Test.log(pmutation[1]);
+      failwith("A mutation of the contract still passes the tests!");
+    }
+  };
+
+const tester_add_and_sub = (taddr : typed_address<param, storage>, _c : michelson_contract, _i : int) : unit => {
+  let contr = Test.to_contract(taddr);
+  let _xfer1 = Test.transfer_to_contract_exn(contr, Add(7), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 7);
+  let _xfer2 = Test.transfer_to_contract_exn(contr, Sub(3), 1mutez);
+  assert(Test.get_storage(taddr) == initial_storage + 4);
+}

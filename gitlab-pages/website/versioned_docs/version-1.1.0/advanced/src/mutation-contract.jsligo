@@ -1,0 +1,8 @@
+// This is mutation-contract.mligo
+type storage = int;
+
+type result = [list<operation>, storage];
+
+// Two entrypoints
+@entry const add = (delta : int, store : storage) : result => [list([]), store + delta];
+@entry const sub = (delta : int, store : storage) : result => [list([]), store - delta];
