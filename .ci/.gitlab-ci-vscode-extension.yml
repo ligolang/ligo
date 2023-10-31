@@ -39,13 +39,6 @@ vscode-extension-extest-deploy:
     - docker image rm lsp-vscode-test:$CI_JOB_ID
   allow_failure: true
 
-vscode-extension-publish-check:
-  stage: tools-check
-  rules: *vscode_extension_mr_dev
-  needs: []
-  script:
-    - nix flake $FLAKE_FLAGS check ./tools/vsce
-
 emacs-lsp-client-test:
   stage: tools-check
   tags:
@@ -72,20 +65,31 @@ vscode-extension:
     - !reference [.vscode_extension_mr_changes]
     - !reference [.dev]
     - !reference [.vscode_production]
-  needs: []
+  needs: [debugger-build, debugger-build-macos]
+  tags:
+    - docker
+  image: node:18-buster
   script:
-    - nix build $FLAKE_FLAGS ./tools/vscode#vscode-extension
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/*.vsix ligo-extension.vsix
+    - mkdir -p tools/vscode/bin
+    - cp -r Linux tools/vscode/bin
+    - cp -r Darwin tools/vscode/bin
+    - cd tools/vscode
+    - mv ligo-debugger-platform-dispatcher.sh bin/ligo-debugger
+    - make package
   artifacts:
     paths:
-      - ligo-extension.vsix
+      - ./tools/vscode/*.vsix
 
 vscode-extension-publish:
   stage: push
   rules:
     - !reference [.vscode_production]
   needs: [vscode-extension]
+  tags:
+    - docker
+  image: node:18-buster
   when: manual
   script:
-    - nix develop ./tools/vsce --command vsce publish --packagePath *.vsix # Uses VSCE_PAT env variable as personal access token
-    - nix develop ./tools/vsce --command ovsx publish *.vsix # Uses OVSX_PAT env variable as personal access token
+    - yarn global add @vscode/vsce ovsx
+    - vsce publish --packagePath ./tools/vscode/*.vsix # Uses VSCE_PAT env variable as personal access token
+    - ovsx publish ./tools/vscode/*.vsix # Uses OVSX_PAT env variable as personal access token

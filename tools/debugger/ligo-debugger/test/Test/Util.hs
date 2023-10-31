@@ -3,7 +3,7 @@ module Test.Util
     (</>)
   , (<.>)
   , contractsDir
-  , compilerContractsDir
+  , getCompilerContractsDir
   , AST.Lang (..)
   , AST.allLangs
   , AST.langExtension
@@ -74,7 +74,7 @@ import Data.Singletons.Decide (decideEquality)
 import Fmt (Buildable (..), blockListF', pretty)
 import Hedgehog (Gen)
 import Hedgehog.Gen qualified as Gen
-import System.Environment (setEnv, unsetEnv)
+import System.Environment (lookupEnv, setEnv, unsetEnv)
 import System.FilePath ((<.>), (</>))
 import Test.HUnit (Assertion)
 import Test.HUnit.Lang qualified as HUnit
@@ -111,8 +111,10 @@ import "ligo-debugger" Util
 contractsDir :: FilePath
 contractsDir = "test" </> "contracts"
 
-compilerContractsDir :: FilePath
-compilerContractsDir = ".." </> ".." </> ".." </> "src" </> "test" </> "contracts"
+getCompilerContractsDir :: IO FilePath
+getCompilerContractsDir = lookupEnv "LIGO_TEST_CONTRACTS_DIR" >>= \case
+  Nothing -> pure $ ".." </> ".." </> ".." </> "src" </> "test" </> "contracts"
+  Just dir -> pure dir
 
 renderNoLineLengthLimit :: Doc -> Text
 renderNoLineLengthLimit = toText . renderStyle style{lineLength = maxBound}
