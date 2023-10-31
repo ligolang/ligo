@@ -1,0 +1,22 @@
+//PART 0
+#include "remove-balance.jsligo"
+let x = Test.reset_state (5n, list([]) as list <tez> );
+
+//PART 1
+let balances : balances =
+  Map.literal(list([[Test.nth_bootstrap_account(1), 10tez],
+                    [Test.nth_bootstrap_account(2), 100tez],
+                    [Test.nth_bootstrap_account(3), 1000tez]]));
+
+//PART 2
+let test =
+  List.iter
+    ( ([threshold , expected_size] : [tez , nat]) : unit => {
+      let tester = ([balances, threshold] : [balances, tez]) : nat => Map.size (balances_under (balances, threshold));
+      let size = Test.run(tester, [balances, threshold]);
+      let expected_size = Test.eval(expected_size) ;
+      let unit = Test.log (["expected", expected_size]) ;
+      let unit = Test.log (["actual",size]) ;
+      return (assert (Test.michelson_equal (size,expected_size)))
+    },
+    list ([ [15tez, 2n] , [130tez, 1n] , [1200tez, 0n]]) );

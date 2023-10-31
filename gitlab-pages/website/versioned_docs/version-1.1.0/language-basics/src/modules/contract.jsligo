@@ -1,0 +1,13 @@
+namespace C {
+  @entry
+  const increment = (p : int, s : int) : [list<operation>, int] => [list([]), s + p];
+  @entry
+  const decrement = (p : int, s : int) : [list<operation>, int] => [list([]), s - p];
+};
+
+const test = (() => {
+  let [taddr, _, _] = Test.originate(contract_of(C), 0, 0tez);
+  let contr = Test.to_contract(taddr);
+  let _ = Test.transfer_to_contract_exn(contr, (Increment (42)), 1mutez);
+  return assert(Test.get_storage(taddr) == 42);
+}) ();

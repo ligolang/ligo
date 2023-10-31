@@ -1,0 +1,14 @@
+type color = ["Blue"] | ["Green"];
+
+type preferences = {
+  color : color,
+  other : int
+};
+
+type account = {
+  id          : int,
+  preferences : preferences
+};
+
+const change_color_preference = (account : account, color : color) =>
+  ({ ...account, preferences: {...account.preferences, color: color }});
