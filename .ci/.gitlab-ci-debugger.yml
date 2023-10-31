@@ -3,38 +3,28 @@
 include:
   - '/.ci/.gitlab-ci-tools-common.yml'
 
+variables:
+  LIGO_DEBUGGER_IMAGE_TAG: "ligo-debugger:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 # Reads ligo version from 'LIGO_VERSION_FILE' env variable,
 # gets ligo binary from the corresponding release, and does
 # 'git add ligo' to make binary available for flake.
 .get_release_ligo_binary: &get_release_ligo_binary
   # strip all comments form the version file and grep for version
   - ligo_version="$(cat "$LIGO_VERSION_FILE" | sed '/^#/d' | grep -E '([0-9]{1,}\.)+[0-9]{1,}')"
-  - ligo_link="$(nix-shell --packages curl jq --run
-      "curl --silent https://gitlab.com/api/v4/projects/ligolang%2Fligo/releases/"$ligo_version"/assets/links |
-      jq -r '.[] | select(.name == \"Static Linux binary\") | .direct_asset_url'")"
-  - nix-shell --packages wget --run "wget --quiet -O ligo "$ligo_link""
+  - ligo_link="$(curl --silent https://gitlab.com/api/v4/projects/ligolang%2Fligo/releases/"$ligo_version"/assets/links |
+      jq -r '.[] | select(.name == \"Static Linux binary\") | .direct_asset_url')"
+  - wget --quiet -O ligo "$ligo_link"
   - chmod +x ligo
   - ./ligo --version
-  - git add ./ligo
-
-# This one is supposed to be used for jobs that want to use ligo binary from
-# 'ligo-build' job and have 'needs: [ ligo-build ]'. This script basically
-# does 'git add ligo' to make binary available for flake.
-.get_latest_ligo_binary: &get_latest_ligo_binary
-  - git add ./ligo
 
 # This one runs 'ligo-debugger-test' with flags in 'LIGO_TEST_FLAGS' env variable.
 .run_ligo_debugger_tests: &run_ligo_debugger_tests
-  # Gitlab CI terminal has 'TERM=dumb' environment variable.
-  # Guys from LIGO are using pretty-printing from 'ligo-utils' library.
-  # As you can see here (https://gitlab.com/serokell/ligo/ligo/-/blob/tooling/vendors/ligo-utils/simple-utils/snippet.ml#L15)
-  # if 'is_dumb' is true then we won't see any ANSI color sequences.
-  # However, we have some tests that rely on colored output, so, we want to disable this var.
-  - unset TERM
-  - export LIGO_BINARY_PATH=$PWD/ligo
-  - cd ./tools/debugger
-  - nix build $FLAKE_FLAGS .#tests.x86_64-linux.ligo-debugger-test
-  - cd ligo-debugger && ../result/bin/ligo-debugger-test $LIGO_TEST_FLAGS
+  - docker build tools/debugger -t "${LIGO_DEBUGGER_IMAGE_TAG}-test"
+  - docker run -v $PWD/ligo:/usr/bin/ligo -v $PWD/src/test/contracts:/contracts
+      --env="LIGO_TEST_CONTRACTS_DIR=/contracts"
+      --rm "${LIGO_DEBUGGER_IMAGE_TAG}-test" stack test --system-ghc --test-arguments="${LIGO_TEST_ARGS}"
+.cleanup_ligo_debugger_test: &cleanup_ligo_debugger_test
+  - docker image rm --force "${LIGO_DEBUGGER_IMAGE_TAG}-test" || true
 
 debugger-danger-instant-checks:
   stage: tools-precheck
@@ -46,8 +36,13 @@ debugger-danger-instant-checks:
   needs: []
   allow_failure: true
   interruptible: true
+  tags:
+    - docker
+  image: ruby:3.2.2
+  before_script: &install_danger
+    - gem install --quiet danger-gitlab
   script:
-    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+    - danger --fail-on-errors=true
         --dangerfile=./danger/instant-checks.rb
         --danger_id=instant
 
@@ -56,8 +51,15 @@ debugger-danger-hlint:
   rules: *debugger_danger_checks
   needs: []
   interruptible: true
+  tags:
+    - docker
+  image: ruby:3.2.2
+  before_script:
+    - gem install --quiet danger-gitlab
+    - wget -qO- https://github.com/ndmitchell/hlint/releases/download/v3.6.1/hlint-3.6.1-x86_64-linux.tar.gz | tar xz
+    - ln -sf "$PWD/hlint-3.6.1/hlint" /usr/bin/hlint
   script:
-    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+    - danger --fail-on-errors=true
         --dangerfile=./danger/hlint.rb
         --danger_id=hlint
 
@@ -67,8 +69,12 @@ debugger-danger-premerge-checks:
   needs: ["debugger-danger-instant-checks"]  # To get messages in MRs ordered right
   when: always
   interruptible: true
+  tags:
+    - docker
+  image: ruby:3.2.2
+  before_script: *install_danger
   script:
-    - nix develop ./tools/debugger#ci -c danger --fail-on-errors=true
+    - danger --fail-on-errors=true
         --dangerfile=./danger/premerge-checks.rb
         --danger_id=premerge
   allow_failure: true
@@ -81,16 +87,33 @@ debugger-build:
     - !reference [.vscode_production]
   needs: []
   script:
-    - nix build $FLAKE_FLAGS ./tools/debugger#packages.x86_64-linux.ligo-debugger
+    - docker build tools/debugger -t "${LIGO_DEBUGGER_IMAGE_TAG}" --target debugger-build
+    - LIGO_DEBUGGER_CONTAINER="$(docker create "${LIGO_DEBUGGER_IMAGE_TAG}")"
+    - mkdir -p Linux/bin
+    - docker cp "$LIGO_DEBUGGER_CONTAINER":/ligo-debugger/ligo-debugger Linux/bin
+  after_script:
+    - docker image rm --force "${LIGO_DEBUGGER_IMAGE_TAG}" || true
+    - docker container rm --force "$LIGO_DEBUGGER_CONTAINER" || true
+  artifacts:
+    paths:
+      - Linux
 
-debugger-weeder:
-  stage: tools-check
+debugger-build-macos:
+  stage: tools-build
   rules: *debugger_mr_dev
-  needs: [debugger-build]
+  needs: []
+  tags:
+    - mac
+    - i7
   script:
-    - cd ./tools/debugger
-    - nix build $FLAKE_FLAGS .#packages.x86_64-linux.weeder-script
-    - ./result
+    - mkdir -p Darwin/bin
+    - OUT_DIR="$PWD/Darwin/bin"
+    - cd tools/debugger/ligo-debugger
+    - stack build --ghc-options '-Werror' --copy-bins --local-bin-path="$OUT_DIR"
+    - ../../scripts/relink-mac-binary.sh "$OUT_DIR/ligo-debugger" ../lib
+  artifacts:
+    paths:
+      - Darwin
 
 debugger-test-ligo-recommended:
   stage: tools-check
@@ -102,17 +125,18 @@ debugger-test-ligo-recommended:
     LIGO_TEST_FLAGS: "-r"
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
+  after_script: *cleanup_ligo_debugger_test
 
 debugger-test-ligo-latest:
   stage: tools-check
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
-  needs: [docker_extract]
+  needs: [docker_extract, debugger-build]
   variables:
     LIGO_TEST_FLAGS: "-r"
-  before_script: *get_latest_ligo_binary
   script: *run_ligo_debugger_tests
+  after_script: *cleanup_ligo_debugger_test
 
 debugger-test-static-debugger-binary:
   stage: tools-check
@@ -120,10 +144,7 @@ debugger-test-static-debugger-binary:
   needs: [debugger-build]
   allow_failure: true
   script:
-    - nix build $FLAKE_FLAGS ./tools/debugger#ligo-debugger-static
-    # 'ldd' returns non-zero exit code when binary is not dynamically linked, so || true is needed
-    # to workaround 'pipefail'
-    - (ldd ./result/bin/ligo-debugger || true) 2>&1 | grep -q "not a dynamic executable"
+    - (ldd Linux/bin/ligo-debugger || true) 2>&1 | grep -q "not a dynamic executable"
 
 debugger-test-ligo-minimal-supported:
   stage: push
@@ -136,4 +157,16 @@ debugger-test-ligo-minimal-supported:
     LIGO_TEST_FLAGS: "-r -m"
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
+  after_script: *cleanup_ligo_debugger_test
   allow_failure: true
+
+debugger-build-and-publish-build-base-image:
+  stage: push
+  rules:
+   - !reference [.dev]
+  script:
+    - docker build tools/debugger -t "debugger-build-base:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}" --target debugger-build
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker push "$CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest"
+  after_script:
+    - docker image rm --force debugger-build-base:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID} || true

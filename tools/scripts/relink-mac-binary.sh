@@ -4,18 +4,19 @@
 #
 # SPDX-License-Identifier: LicenseRef-MIT-TQ
 
-# This script relinks macOS binary to use libraries from the adjacent directory
-# instead of /nix/store, thus this binary can be reused on any macOS machine.
+# This script relinks macOS binary to use non-system libraries from the adjacent directory,
+# thus this binary can be reused on any macOS machine with the same versions of system libraries.
 # It accepts full path to the binary as a first argument, and relative path
 # (relative to the first argument) to the directory where the libraries will be stored
 #
-# Example: ./relink-mac-binary.sh $PWD/bin/morley-debug-adapter ../lib
+# Example: ./relink-mac-binary.sh $PWD/bin/ligo ../lib
 # Binary will be linked to the libraries in '$PWD/lib'
 
 set -euo pipefail
 
 executable_to_relink="$1"
 relative_library_path="$2"
+mkdir -p "$(dirname "$executable_to_relink")/$relative_library_path"
 
 lib_system="libSystem.B.dylib"
 
@@ -34,11 +35,8 @@ relink_file() {
         lib_path="$(echo "$lib" | cut -d '(' -f 1 | xargs)"
         local lib_name
         lib_name="$(basename "$lib_path")"
-        if [[ "$lib_name" != "$file_name" ]]; then
-            if [[ "$lib_name" == "$lib_system" ]]; then
-                echo "Changing $lib_path to /usr/lib/libSystem.B.dylib"
-                install_name_tool -change "$lib_path" /usr/lib/libSystem.B.dylib "$file_to_relink"
-            else
+        if [[ "$lib_name" != "$file_name" && "$lib_path" =~ $(brew --prefix) ]]; then
+            if [[ "$lib_name" != "$lib_system" ]]; then
                 local lib_local_path
                 lib_local_path="$(dirname "$executable_to_relink")/$relative_library_path/$lib_name"
                 echo "Changing $lib_path to $lib_local_path"

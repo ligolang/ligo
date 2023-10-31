@@ -496,6 +496,7 @@ test_config_resolution = testGroup "LIGO config resolution"
 
 test_Dumped_cst_parse :: TestTree
 test_Dumped_cst_parse = reinsuring $ testCase "Dumped cst parse" do
+  compilerContractsDir <- getCompilerContractsDir
   contracts <- scanContracts (const True) compilerContractsDir
 
   errors <- newIORef []
