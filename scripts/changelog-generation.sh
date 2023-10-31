@@ -6,7 +6,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}"/..)"
 cache_dir="$HOME/.ligo_changelog_cache"
 cache_hash=$(find ./changelog -type f -exec md5sum {} + | sort -k 2 | md5sum | awk '{print $1}')
-activate_cache=true
+activate_cache=${1:-true}
 
 generate_changelog() {
   ./scripts/changelog-json.sh > changelog.json

@@ -44,7 +44,8 @@ include:
 changelog:
   stage: pretooling
   script:
-    - ./scripts/changelog-generation.sh
+    - FORCE_GENERATION=$([ -n "$CI_COMMIT_TAG" ] && echo "false" || echo "true")
+    - ./scripts/changelog-generation.sh ${FORCE_GENERATION}
   rules:
     - if: '$CI_COMMIT_REF_NAME =~ /^release/ && $CI_PROJECT_PATH == "ligolang/ligo"  &&  $TRIGGER_DOC_UPDATE != null'
       when: always
