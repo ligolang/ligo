@@ -44,7 +44,7 @@ let get_location : Scopes.def -> Def_location.t =
 let get_name : Scopes.def -> string = function
   | Variable vdef -> vdef.name
   | Type tdef -> tdef.name
-  | Module mdef -> mdef.name
+  | Module mdef -> Scopes.Types.get_mod_name_name mdef.name
 
 
 let get_def_type : Scopes.def -> Scopes.Types.def_type = function

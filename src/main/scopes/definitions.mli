@@ -1,7 +1,11 @@
 module AST = Ast_core
 
-val definitions : AST.program -> Types.def list -> Types.def list
+val definitions
+  :  AST.program
+  -> string Map.Make(String).t
+  -> Types.def list
+  -> Types.def list
 
 module Of_Stdlib : sig
-  val definitions : AST.program -> Types.def list
+  val definitions : AST.program -> string Map.Make(String).t -> Types.def list
 end

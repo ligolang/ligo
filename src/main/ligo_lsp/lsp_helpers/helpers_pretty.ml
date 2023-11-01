@@ -74,37 +74,77 @@ let jsligo_module =
 
 
 let print_module_with_description
-    : module_pp_mode -> string * string -> Scopes.Types.mdef -> string
+    :  project_root:Path.t option -> syntax:Syntax_types.t -> module_pp_mode
+    -> string * string -> Scopes.Types.mdef -> [> `List of Lsp.Types.MarkedString.t list ]
   =
- fun description (opening_comment, closing_comment) mdef ->
+ fun ~project_root ~syntax description (opening_comment, closing_comment) mdef ->
+  let open Lsp.Types in
+  let project_root = Option.map project_root ~f:Path.to_string in
+  let language = Some (Syntax.to_string syntax) in
   match mdef.mod_case with
   | Def _ ->
-    description.module_keyword
-    ^ " "
-    ^ mdef.name
-    ^ (Option.value ~default:" "
-      @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_definition)
-    ^ description.open_
-    ^ " "
-    ^ opening_comment
-    ^ " ... " (* TODO: print module*)
-    ^ closing_comment
-    ^ " "
-    ^ description.close
-  | Alias (module_path_list, _) ->
-    description.import_keyword
-    ^ " "
-    ^ mdef.name
-    ^ (Option.value ~default:" "
-      @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_import)
-    ^ (module_path_list
-      |> List.map ~f:(List.hd_exn <@ String.split ~on:'#' <@ Scopes.Types.Uid.to_name)
-      |> String.concat ~sep:".")
+    let value =
+      description.module_keyword
+      ^ " "
+      ^ Format.asprintf "%a" (Scopes.PP.mod_name project_root) mdef.name
+      ^ (Option.value ~default:" "
+        @@ Option.map ~f:(fun s -> " " ^ s ^ " ") description.sign_on_definition)
+      ^ description.open_
+      ^ " "
+      ^ opening_comment
+      ^ " ... " (* TODO: print module*)
+      ^ closing_comment
+      ^ " "
+      ^ description.close
+    in
+    `List [ MarkedString.{ language; value } ]
+  | Alias { module_path; file_name; resolved_module = _ } ->
+    let marked_string =
+      match file_name with
+      | Some file_name ->
+        let value =
+          Format.asprintf
+            {|#import %a "%a"|}
+            (Scopes.PP.mod_name project_root)
+            (Filename file_name)
+            (Scopes.PP.mod_name project_root)
+            mdef.name
+        in
+        MarkedString.{ language; value }
+      | None ->
+        let alias_rhs =
+          Option.value_map
+            ~default:
+              (module_path
+              |> List.map ~f:Scopes.Types.Uid.to_name
+              |> String.concat ~sep:".")
+            ~f:(fun file_name ->
+              Format.asprintf "%a" (Scopes.PP.mod_name project_root) (Filename file_name))
+            file_name
+        in
+        let value =
+          description.import_keyword
+          ^ " "
+          ^ Format.asprintf "%a" (Scopes.PP.mod_name project_root) mdef.name
+          ^ Option.value_map
+              ~default:" "
+              ~f:(fun s -> " " ^ s ^ " ")
+              description.sign_on_import
+          ^ alias_rhs
+        in
+        MarkedString.{ language; value }
+    in
+    `List [ marked_string ]
 
 
-let print_module : Syntax_types.t -> Scopes.Types.mdef -> string = function
-  | CameLIGO -> print_module_with_description cameligo_module (get_comment CameLIGO)
-  | JsLIGO -> print_module_with_description jsligo_module (get_comment JsLIGO)
+let print_module
+    :  Syntax_types.t -> project_root:Path.t option -> Scopes.Types.mdef
+    -> [> `List of Lsp.Types.MarkedString.t list ]
+  = function
+  | CameLIGO ->
+    print_module_with_description ~syntax:CameLIGO cameligo_module (get_comment CameLIGO)
+  | JsLIGO ->
+    print_module_with_description ~syntax:JsLIGO jsligo_module (get_comment JsLIGO)
 
 
 (* Functions made for debugging *)

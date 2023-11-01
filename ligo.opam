@@ -91,6 +91,7 @@ depends: [
   "linol" { = "0.4" }
   "linol-lwt" { = "0.4" }
   "aches-lwt"
+  "fileutils"
   # Networking
   "conduit" {= "6.1.0"}
 ]
