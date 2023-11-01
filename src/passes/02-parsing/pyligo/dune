@@ -39,6 +39,7 @@
   lexing_pyligo
   lexing_shared
   cst_pyligo
+  parsing_shared
   ;; Vendors
   simple-utils
   ParserLib

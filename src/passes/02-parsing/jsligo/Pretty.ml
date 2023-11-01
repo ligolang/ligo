@@ -16,6 +16,7 @@ module Option = Simple_utils.Option
 
 module CST = Cst_jsligo.CST
 module PrettyComb = Parsing_shared.PrettyComb
+module ErrorPrefix = Parsing_shared.Errors.ErrorPrefix
 
 (* Global openings *)
 
@@ -61,13 +62,13 @@ let print_comments = function
 (* Tokens *)
 
 let token ?(sep=empty) (t : string Wrap.t) : document =
-  let prefix = print_comments t#comments ^/^ string t#payload
+  let prefix = print_comments t#comments ^/^ string (ErrorPrefix.remove t#payload)
   in print_line_comment_opt ~sep prefix t#line_comment
 
 let print_variable ?(sep=empty) = function
   Var t -> token ~sep t
 | Esc t ->
-    let prefix = print_comments t#comments ^/^ string ("@" ^ t#payload)
+    let prefix = print_comments t#comments ^/^ string (ErrorPrefix.remove "@" ^ t#payload)
     in print_line_comment_opt ~sep prefix t#line_comment
 
 (* Enclosed documents *)

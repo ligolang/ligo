@@ -46,3 +46,13 @@ let error_json : t -> Simple_utils.Error.t =
       let message = value in
       let content = make_content ~message ~location () in
       make ~stage ~content
+
+module ErrorPrefix = struct
+  let prefix = "⚠You are not supposed to see this prefix⚠"
+  let add s = prefix ^ s
+  let remove s =
+    match String.chop_prefix ~prefix s with
+    | Some s -> s
+    | None -> s
+  let is_contained = String.is_substring ~substring:prefix
+end
