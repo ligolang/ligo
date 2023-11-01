@@ -161,7 +161,7 @@ debugger-build-and-publish-build-base-image:
   rules:
    - !reference [.dev]
   script:
-    - docker build tools/debugger -t "debugger-build-base:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}" --target debugger-build
+    - docker build tools/debugger -t "$CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest" --target debugger-build-base
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
     - docker push "$CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest"
   after_script:
