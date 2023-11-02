@@ -158,11 +158,13 @@ debugger-test-ligo-minimal-supported:
 
 debugger-build-and-publish-build-base-image:
   stage: push
+  variables:
+    DEBUGGER_BASE_IMAGE: "${CI_REGISTRY}/${CI_PROJECT_PATH}/debugger-build-base:latest"
   rules:
-   - !reference [.dev]
+    - !reference [.dev]
   script:
-    - docker build tools/debugger -t "$CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest" --target debugger-build-base
+    - docker build tools/debugger -t "$DEBUGGER_BASE_IMAGE" --target debugger-build-base
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - docker push "$CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest"
+    - docker push "$DEBUGGER_BASE_IMAGE"
   after_script:
-    - docker image rm --force $CI_REGISTRY/$CI_REGISTRY_IMAGE/debugger-build-base:latest || true
+    - docker image rm --force "$DEBUGGER_BASE_IMAGE" || true
