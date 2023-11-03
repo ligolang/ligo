@@ -78,6 +78,7 @@ module Selector : sig
   val ty_expr : Ast_unified.ty_expr t
   val declaration : Ast_unified.declaration t
   val instruction : Ast_unified.instruction t
+  val sig_expr : Ast_unified.sig_expr t
 end
 
 (* [decompile_passes] decompile any value of of type 'a of the sort [sort] stoping

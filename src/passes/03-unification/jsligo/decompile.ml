@@ -24,6 +24,8 @@ let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
  fun t -> T_Var (Var (ghost_tvar t))
 
 
+let decompile_tvar_into_var v = CST.Var (ghost_tvar v)
+
 let rec folder =
   let todo _ = failwith ("TODO" ^ __LOC__) in
   AST.Catamorphism.
@@ -37,8 +39,8 @@ let rec folder =
     ; declaration = todo
     ; program_entry = todo
     ; program = todo
-    ; sig_expr = todo
-    ; sig_entry = todo
+    ; sig_expr
+    ; sig_entry
     }
 
 
@@ -46,14 +48,82 @@ and decompile_program p = AST.Catamorphism.cata_program ~f:folder p
 and decompile_expression e = AST.Catamorphism.cata_expr ~f:folder e
 and decompile_type_expression e = AST.Catamorphism.cata_ty_expr ~f:folder e
 and decompile_pattern p = AST.Catamorphism.cata_pattern ~f:folder p
+and decompile_sig_expr p = AST.Catamorphism.cata_sig_expr ~f:folder p
 
 (* Helpers *)
+and decompile_mvar x = ghost_ident @@ Format.asprintf "%a" AST.Mod_variable.pp x
+and decompile_var v = CST.Var (ghost_ident @@ Format.asprintf "%a" AST.Variable.pp v)
+(* and decompile_tvar v = ghost_ident @@ Format.asprintf "%a" AST.Ty_variable.pp v *)
+
 
 and decompile_attr : AST.Attribute.t -> CST.attribute =
  fun { key; value } -> ghost_attr key (Option.map ~f:(fun x -> Attr.String x) value)
 
 
 (* ^ XXX Attr.String or Attr.Ident? *)
+
+and sig_expr
+    : (CST.intf_expr, CST.intf_entry, CST.type_expr) AST.sig_expr_ -> CST.intf_expr
+  =
+  let w = Region.wrap_ghost in
+  function
+  | { wrap_content = AST.S_body inside; location } ->
+    let inside = Utils.sep_or_term_of_list ~sep:ghost_semi ~sep_or_term:`Sep inside in
+    CST.(I_Body (w { lbrace = ghost_lbrace; inside; rbrace = ghost_rbrace }))
+  | { wrap_content = AST.S_path lst; location } ->
+    let lst = List.Ne.map decompile_mvar lst in
+    let module_path_opt, property =
+      let last, lst = List.Ne.rev lst in
+      ( (match List.Ne.of_list_opt lst with
+        | None -> None
+        | Some lst -> Some (List.Ne.rev lst))
+      , last )
+    in
+    (match module_path_opt with
+    | Some namespace_path ->
+      let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot lst in
+      let xx : _ CST.namespace_path =
+        CST.{ namespace_path; selector = ghost_dot; property }
+      in
+      let x : CST.namespace_selection = CST.M_Path (w xx) in
+      CST.(I_Path x)
+    | None -> CST.(I_Path (M_Alias property)))
+
+
+and sig_entry
+    : (CST.intf_expr, CST.intf_entry, CST.type_expr) AST.sig_entry_ -> CST.intf_entry
+  =
+ fun se ->
+  let w = Region.wrap_ghost in
+  match Location.unwrap se with
+  | AST.S_value (v, ty, optional) ->
+    CST.(
+      I_Const
+        (w
+           { kwd_const = ghost_const
+           ; const_name = decompile_var v
+           ; const_type = ghost_colon, ty
+           ; const_optional = (if optional then Some ghost_qmark else None)
+           }))
+  | AST.S_type (v, ty) ->
+    CST.(
+      I_Type
+        (w
+           { kwd_type = ghost_type
+           ; type_name = decompile_tvar_into_var v
+           ; type_rhs = Some (ghost_eq, ty)
+           }))
+  | AST.S_type_var v ->
+    CST.(
+      I_Type
+        (w
+           { kwd_type = ghost_type
+           ; type_name = decompile_tvar_into_var v
+           ; type_rhs = None
+           }))
+  | AST.S_attr (attr, se) -> CST.(I_Attr (decompile_attr attr, se))
+  | AST.S_include _ -> failwith "Decompile: got S_include in JsLIGO"
+
 
 and decompile_to_namespace_path
     : type a. AST.Mod_variable.t Simple_utils.List.Ne.t -> a -> a CST.namespace_path
@@ -89,16 +159,13 @@ and decompile_to_namespace_selection
          CST.{ namespace_path = init; selector = ghost_dot; property = last })
 
 
-and decompile_mvar x = Format.asprintf "%a" AST.Mod_variable.pp x
-
 and decompile_namespace_path
     : type a.
       (AST.Mod_variable.t Simple_utils.List.Ne.t, a) AST.Mod_access.t
       -> a CST.namespace_path
   =
  fun { module_path; field; field_as_open = _ } ->
-  let f v = ghost_ident @@ Format.asprintf "%a" AST.Mod_variable.pp v in
-  let module_path = List.Ne.map f module_path in
+  let module_path = List.Ne.map decompile_mvar module_path in
   let namespace_path = Utils.nsepseq_of_nseq ~sep:ghost_dot module_path in
   (* XXX: What is [field_as_open]?? Do we expect module path with more than 1 element here? *)
   CST.{ namespace_path; selector = ghost_dot; property = field }

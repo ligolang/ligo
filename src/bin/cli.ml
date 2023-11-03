@@ -2542,6 +2542,74 @@ let print_ast_aggregated =
     <*> libraries)
 
 
+let print_module_signature =
+  let f
+      source_file
+      syntax
+      module_
+      protocol_version
+      display_format
+      self_pass
+      project_root
+      warn_unused_rec
+      warn_infinite_loop
+      test
+      no_colour
+      skip_analytics
+      libraries
+      ()
+    =
+    let raw_options =
+      Raw_options.make
+        ~syntax
+        ~protocol_version
+        ~self_pass
+        ~module_
+        ~project_root
+        ~warn_unused_rec
+        ~warn_infinite_loop
+        ~test
+        ~no_colour
+        ~libraries
+        ()
+    in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"print_ast-options"
+        ~raw_options
+        ~source_file
+        ()
+    in
+    return_result
+      ~skip_analytics
+      ~cli_analytics
+      ~return
+      ~display_format
+      ~no_colour
+      ~warning_as_error:raw_options.warning_as_error
+    @@ Api.Print.signature raw_options source_file
+  in
+  let summary = "print the file signature in the desired syntax" in
+  let readme () = "This sub-command prints the source file signature." in
+  Command.basic
+    ~summary
+    ~readme
+    (f
+    <$> source_file
+    <*> syntax
+    <*> module_
+    <*> protocol_version
+    <*> display_format
+    <*> self_pass
+    <*> project_root
+    <*> warn_unused_rec
+    <*> warn_infinite_loop
+    <*> test_mode
+    <*> no_colour
+    <*> skip_analytics
+    <*> libraries)
+
+
 let print_ast_expanded =
   let f
       source_file
@@ -2686,6 +2754,7 @@ let print_group =
   Command.group ~summary ~preserve_subcommand_order:()
   @@ [ "preprocessed", preprocessed
      ; "pretty", pretty_print
+     ; "signature", print_module_signature
      ; "dependency-graph", print_graph
      ; "cst", print_cst
      ; "ast-core", print_ast_core

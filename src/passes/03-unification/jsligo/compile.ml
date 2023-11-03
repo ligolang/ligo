@@ -95,10 +95,8 @@ module TODO_do_in_parsing = struct
     match t with
     | M_Alias p -> List.Ne.singleton p
     | M_Path path ->
-      let path = path.value in
-      let last = path.property in
-      let init = path.namespace_path in
-      let init = nsepseq_to_list init in
+      let I.{ namespace_path; property = last; _ } = path.value in
+      let init = nsepseq_to_list namespace_path in
       List.Ne.of_list (init @ [ last ])
 
 

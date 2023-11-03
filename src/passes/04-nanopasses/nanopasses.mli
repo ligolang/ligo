@@ -53,3 +53,9 @@ val decompile_expression
   -> syntax:Syntax_types.t
   -> Ast_core.expression
   -> Ast_unified.expr
+
+val decompile_sig_expr
+  :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+  -> syntax:Syntax_types.t
+  -> Ast_core.signature_expr
+  -> Ast_unified.sig_expr

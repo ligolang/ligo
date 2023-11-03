@@ -22,6 +22,7 @@ type morphing =
   ; instruction : instruction sub_pass
   ; block : block sub_pass
   ; declaration : declaration sub_pass
+  ; sig_expr : sig_expr sub_pass
   }
 
 let idle_fold = Catamorphism.idle
@@ -202,4 +203,5 @@ let morph
   ; block = mk_sub_pass block_morphers
   ; declaration = mk_sub_pass declaration_morphers
   ; instruction = mk_sub_pass instruction_morphers
+  ; sig_expr = mk_sub_pass sig_expr_morphers
   }

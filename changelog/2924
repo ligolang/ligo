@@ -1,0 +1,7 @@
+
+author: lesenechal.remi
+description: "\\nA new command `ligo print signature` to print module signature.\\n\\n"
+merge_request: '2924'
+title: "Print module signature"
+type: added
+            

@@ -36,6 +36,7 @@ val eval_signature_sort
 
 val untype_expression : O.expression -> I.expression
 val untype_type_expression : ?use_orig_var:bool -> O.type_expression -> I.type_expression
+val untype_signature : ?use_orig_var:bool -> O.signature -> I.signature
 
 val assert_type_expression_eq
   :  raise:(typer_error, Main_warnings.all) raise

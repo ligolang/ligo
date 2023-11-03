@@ -1488,9 +1488,11 @@ let print_type_expr = print_type_expr
 let print_pattern   = print_pattern
 let print_expr      = print_expr
 let print_statement = print_statement
+let print_signature_expr = print_intf_expr
 
 type cst       = CST.t
 type expr      = CST.expr
 type type_expr = CST.type_expr
 type pattern   = CST.pattern
 type statement = CST.statement
+type signature_expr = CST.intf_expr

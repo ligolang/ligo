@@ -432,12 +432,12 @@ module T =
     let ghost_of      = wrap_of      Region.ghost
     let ghost_or      = wrap_or      Region.ghost
     let ghost_rec     = wrap_rec     Region.ghost
-    let ghost_sig     = wrap_with    Region.ghost
+    let ghost_sig     = wrap_sig     Region.ghost
     let ghost_struct  = wrap_struct  Region.ghost
     let ghost_then    = wrap_then    Region.ghost
     let ghost_true    = wrap_true    Region.ghost
     let ghost_type    = wrap_type    Region.ghost
-    let ghost_val     = wrap_with    Region.ghost
+    let ghost_val     = wrap_val     Region.ghost
     let ghost_while   = wrap_while   Region.ghost
     let ghost_with    = wrap_with    Region.ghost
 

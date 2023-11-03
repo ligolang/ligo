@@ -926,3 +926,7 @@ let intf_expr_to_region = function
 let parameters_to_region = function
   ParParams {region; _} -> region
 | NakedParam p -> pattern_to_region p
+
+
+(* exposing types so that the Parsing_shared.Common.MakePretty functor works *)
+type signature_expr = intf_expr

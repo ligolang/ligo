@@ -149,13 +149,15 @@ type ('a, 'b, 'c) sig_entry_ = [%import: ('a, 'b, 'c) Types.sig_entry_]
         ]
     }]
 
-type ('a, 'b, 'c) sig_expr_ = [%import: ('a, 'b, 'c) Types.sig_expr_]
+type ('a, 'b, 'c) sig_expr_content_ = [%import: ('a, 'b, 'c) Types.sig_expr_content_]
 [@@deriving
   ez
     { prefixes =
-        [ ("make_sig_expr", fun content : sig_expr -> { fp = content })
-        ; ("get_sig_expr", fun (x : Types.sig_expr) -> x.fp)
+        [ ( "make_sig_expr"
+          , fun ~loc content : sig_expr -> { fp = Location.wrap ~loc content } )
         ]
+    ; wrap_constructor =
+        ("sig_expr_content_", fun ~loc content -> make_sig_expr ~loc content)
     }]
 
 let e_literal ~loc l : expr = make_e ~loc @@ E_literal l

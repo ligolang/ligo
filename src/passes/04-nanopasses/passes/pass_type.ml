@@ -33,6 +33,7 @@ module Selector : sig
   val ty_expr : ty_expr t
   val declaration : declaration t
   val instruction : instruction t
+  val sig_expr : sig_expr t
 end = struct
   type 'a t = morphing -> 'a sub_pass
 
@@ -42,6 +43,7 @@ end = struct
   let program x = x.program
   let pattern x = x.pattern
   let ty_expr x = x.ty_expr
+  let sig_expr x = x.sig_expr
   let declaration x = x.declaration
   let instruction x = x.instruction
 end

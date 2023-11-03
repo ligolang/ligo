@@ -29,11 +29,13 @@ module type PRETTY =
     type expr
     type type_expr
     type pattern
+    type signature_expr
 
     val print           : state -> cst       -> PPrint.document
     val print_expr      : state -> expr      -> PPrint.document
     val print_type_expr : state -> type_expr -> PPrint.document
     val print_pattern   : state -> pattern   -> PPrint.document
+    val print_signature_expr : state -> signature_expr -> PPrint.document
   end
 
 (* PARSING *)
@@ -44,6 +46,7 @@ module type CST =
     type expr
     type type_expr
     type pattern
+    type signature_expr
   end
 
 module type PAR_ERR =
@@ -195,6 +198,7 @@ module MakePretty (CST    : CST)
                             with type cst       = CST.t
                             and  type expr      = CST.expr
                             and  type type_expr = CST.type_expr
+                            and  type signature_expr = CST.signature_expr
                             and  type pattern   = CST.pattern) :
   sig
     (* Pretty-print a contract from its CST *)
@@ -216,4 +220,5 @@ module MakePretty (CST    : CST)
     (* Pretty-print a type expression from its CST *)
 
     val pretty_print_type_expr : Pretty.state -> CST.type_expr -> Buffer.t
+    val pretty_print_signature_expr : Pretty.state -> CST.signature_expr -> Buffer.t
   end
