@@ -536,7 +536,8 @@ let rec patch : references -> Types.def list -> Types.def list =
       | Module m ->
         let mod_case =
           match m.mod_case with
-          | Alias (a, resolved) -> Types.Alias (a, resolved)
+          | Alias { module_path; resolved_module; file_name } ->
+            Types.Alias { module_path; resolved_module; file_name }
           | Def defs -> Def (patch refs defs)
         in
         let m =

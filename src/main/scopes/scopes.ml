@@ -9,6 +9,7 @@ module LSet = Types.LSet
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace
 module Types = Types
+module SMap = Map.Make (String)
 
 [@@@landmark "auto"]
 
@@ -25,17 +26,18 @@ type scopes = Types.scopes
 let defs_and_typed_program
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> with_types:bool
+    -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
     -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
   =
- fun ~raise ~options ~stdlib ~prg ~with_types ->
+ fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let stdlib_decls, stdlib_core = stdlib in
   let stdlib_defs =
     if options.no_stdlib
     then []
     else (
       let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
-      Definitions.Of_Stdlib.definitions stdlib_core |> Types_pass.patch stdlib_core_types)
+      Definitions.Of_Stdlib.definitions stdlib_core module_deps
+      |> Types_pass.patch stdlib_core_types)
   in
   let bindings, typed =
     if with_types
@@ -46,7 +48,7 @@ let defs_and_typed_program
       bindings, Some (type_env, decls))
     else Types_pass.empty, None
   in
-  ( Definitions.definitions prg stdlib_defs
+  ( Definitions.definitions prg module_deps stdlib_defs
     |> (if with_types then Types_pass.patch bindings else Fn.id)
     |> References.patch (References.declarations (stdlib_core @ prg))
     |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
@@ -55,16 +57,16 @@ let defs_and_typed_program
 
 let scopes
     :  options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> definitions:def list -> scopes
+    -> prg:Ast_core.module_ -> module_deps:string SMap.t -> definitions:def list -> scopes
   =
- fun ~options ~stdlib ~prg ~definitions ->
+ fun ~options ~stdlib ~prg ~module_deps ~definitions ->
   let _stdlib_decls, stdlib_core = stdlib in
   let stdlib_defs, env_preload_decls =
     if options.no_stdlib
     then [], []
     else
       ( (let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
-         Definitions.Of_Stdlib.definitions stdlib_core
+         Definitions.Of_Stdlib.definitions stdlib_core module_deps
          |> Types_pass.patch stdlib_core_types)
       , stdlib_core )
   in
@@ -76,12 +78,12 @@ let scopes
 let defs_and_typed_program_and_scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> with_types:bool
+    -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
     -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes
   =
- fun ~raise ~options ~stdlib ~prg ~with_types ->
+ fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let definitions, typed =
-    defs_and_typed_program ~raise ~options ~stdlib ~prg ~with_types
+    defs_and_typed_program ~raise ~options ~stdlib ~prg ~module_deps ~with_types
   in
-  let scopes = scopes ~options ~stdlib ~prg ~definitions in
+  let scopes = scopes ~options ~stdlib ~prg ~module_deps ~definitions in
   definitions, typed, scopes

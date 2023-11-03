@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 
 module Bench.Hovers
   ( HoverRequest (..),
@@ -13,6 +14,7 @@ import Universum
 
 import Bench.Util
 import Criterion
+import Data.Row.Records (Label (..), pattern (:+), pattern (:==))
 import Data.Text qualified as T
 import Language.LSP.Protocol.Types qualified as LSP
 import Language.LSP.Test qualified as LSP
@@ -35,12 +37,11 @@ requestHover hr@HoverRequest {..} = do
   doc <- getDoc hrFile
   LSP.getHover doc (LSP.Position (line - 1) (col - 1)) >>= \case
     Nothing -> fail $ "No hover for " <> show hr
-    Just result@(LSP.Hover {_contents = LSP.InL (LSP.MarkupContent _ msg)})
-      | hrExpectedName `T.isPrefixOf` withoutDialect msg -> return result
-    otherHover -> fail $ "Hover for " <> show hr <> " is malformed (expected MarkupContent): " <> show otherHover
+    Just result@(LSP.Hover {_contents = LSP.InR (LSP.InR [LSP.MarkedString (LSP.InR ((_ :: Label "language") :== "cameligo" :+ _ :== msg))])})
+      | hrExpectedName `T.isPrefixOf` msg -> return result
+    otherHover -> fail $ "Hover for " <> show hr <> " is malformed (expected MarkedString): " <> show otherHover
   where
     (line, col) = hrPos
-    withoutDialect = T.tail . T.dropWhile (/= '\n')
 
 bench_simple_hovers :: [Benchmark]
 bench_simple_hovers =

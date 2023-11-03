@@ -2033,7 +2033,7 @@ let%expect_test _ =
   [%expect
     {|
     Scopes:
-    [ X#1:7-8 x#1:5-6 y#3:4-5 x#4:4-5 Mangled_module_____________________test__contracts__get_scope_tests__x____mligo#env  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
+    [ X#1:7-8 x#1:5-6 y#3:4-5 x#4:4-5 ../../test/contracts/get_scope_tests/x.mligo#env  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
     [  ] File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 9-33
     [ x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 8-9
     [ x#1:5-6 y#3:4-5  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
@@ -2056,7 +2056,7 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9
 
-    (Mangled_module_____________________test__contracts__get_scope_tests__x____mligo#env -> Mangled_module_____________________test__contracts__get_scope_tests__x____mligo)
+    (../../test/contracts/get_scope_tests/x.mligo#env -> ../../test/contracts/get_scope_tests/x.mligo)
     Range:
     Body Range:
     Content: Members: Variable definitions:

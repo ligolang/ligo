@@ -245,15 +245,20 @@ let get_top_level_syntax ~options ?filename () : Syntax_types.t =
     | None -> failwith "Top-level syntax not found")
 
 
-let dependency_graph ~raise : options:Compiler_options.t -> Source_input.file_name -> _ =
- fun ~options filename ->
+let dependency_graph ~raise : options:Compiler_options.t -> Source_input.code_input -> _ =
+ fun ~options code_input ->
   let open Build_core (struct
     let raise = raise
     let options = options
     let std_lib = Stdlib.get ~options
-    let top_level_syntax = get_top_level_syntax ~options ~filename ()
+
+    let top_level_syntax =
+      get_top_level_syntax
+        ~options
+        ~filename:(Source_input.id_of_code_input code_input)
+        ()
   end) in
-  dependency_graph (Source_input.From_file filename)
+  dependency_graph code_input
 
 
 (* unqualified usages : list-declaration ; print *)

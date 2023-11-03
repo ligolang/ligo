@@ -1,5 +1,6 @@
 module Raw_options = Compiler_options.Raw_options
 module Trace = Simple_utils.Trace
+module SMap = Map.Make (String)
 open Scopes.Types
 
 (** This is used by the LSP. Note: defs must be unfolded before constructing this,
@@ -18,6 +19,7 @@ let with_code_input
           -> syntax:Syntax_types.t
           -> stdlib:Ast_typed.program * Ast_core.program
           -> prg:Ast_core.module_
+          -> module_deps:string SMap.t
           -> 'a)
     -> raw_options:Raw_options.t -> raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> code_input:BuildSystem.Source_input.code_input -> 'a
@@ -38,15 +40,34 @@ let with_code_input
   in
   let options = Compiler_options.make ~raw_options ~syntax ~protocol_version () in
   (* let Compiler_options.{ with_types; _ } = options.tools in *)
-  let prg =
+
+  (* Here we need to extract module dependencies in order to show
+    to the user file paths of mangled modules *)
+  let prg, module_deps =
     (* While building [Build.qualified_core] we need a smaller AST (without stdlib)
        that is the reason for no_stdlib as true *)
     let options = Compiler_options.set_no_stdlib options true in
-    match code_input with
-    | From_file _ | HTTP _ -> Build.qualified_core ~raise ~options code_input
-    | Raw file -> Build.qualified_core_from_string ~raise ~options file
-    | Raw_input_lsp { file; code } ->
-      Build.qualified_core_from_raw_input ~raise ~options file code
+    (* Let's build a dependency graph for the given code input.
+      It will collect a [(file_name * module_name) list] which we can use
+      to create a module name to file name mapping.*)
+    let module_deps =
+      let module Deps_map = Stdlib__Map.Make (Stdlib__String) in
+      Build.dependency_graph ~raise ~options code_input
+      |> snd
+      |> Deps_map.to_seq
+      |> Seq.fold_left (fun acc (_, (_, _, _, lst)) -> lst :: acc) []
+      |> List.concat
+      |> List.fold_left ~init:SMap.empty ~f:(fun acc (file_name, mangled_name) ->
+             match SMap.add ~key:mangled_name ~data:file_name acc with
+             | `Duplicate -> acc
+             | `Ok added -> added)
+    in
+    ( (match code_input with
+      | From_file _ | HTTP _ -> Build.qualified_core ~raise ~options code_input
+      | Raw file -> Build.qualified_core_from_string ~raise ~options file
+      | Raw_input_lsp { file; code } ->
+        Build.qualified_core_from_raw_input ~raise ~options file code)
+    , module_deps )
   in
   let lib =
     (* We need stdlib for [Build.Stdlib.get],
@@ -58,7 +79,7 @@ let with_code_input
     Build.Stdlib.select_lib_typed syntax lib, Build.Stdlib.select_lib_core syntax lib
   in
   (* let () = assert (List.length (fst stdlib) = List.length (snd stdlib)) in *)
-  f ~options:options.middle_end ~stdlib ~prg ~syntax
+  f ~options:options.middle_end ~stdlib ~prg ~syntax ~module_deps
 
 
 (** Internal function, uses `raise` for throwing errors *)
@@ -74,15 +95,27 @@ let get_scope_raw
     ~raw_options
     ~raise
     ~code_input:source_file
-    ~f:(fun ~options ~syntax:_ ~stdlib ~prg ->
+    ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps ->
       if defs_only
       then (
         let defs, typed =
-          Scopes.defs_and_typed_program ~with_types ~raise ~options ~stdlib ~prg
+          Scopes.defs_and_typed_program
+            ~with_types
+            ~raise
+            ~options
+            ~stdlib
+            ~prg
+            ~module_deps
         in
         defs, typed, [])
       else
-        Scopes.defs_and_typed_program_and_scopes ~with_types ~raise ~options ~stdlib ~prg)
+        Scopes.defs_and_typed_program_and_scopes
+          ~with_types
+          ~raise
+          ~options
+          ~stdlib
+          ~prg
+          ~module_deps)
 
 
 (** Used by CLI, formats all definitions, errors and warnings and returns strings *)
@@ -282,9 +315,15 @@ let get_defs_and_diagnostics
              ~raw_options
              ~raise
              ~code_input
-             ~f:(fun ~options ~syntax ~stdlib ~prg ->
+             ~f:(fun ~options ~syntax ~stdlib ~prg ~module_deps ->
                let defs, prg =
-                 Scopes.defs_and_typed_program ~raise ~with_types ~options ~stdlib ~prg
+                 Scopes.defs_and_typed_program
+                   ~raise
+                   ~with_types
+                   ~options
+                   ~stdlib
+                   ~prg
+                   ~module_deps
                in
                let%map errors, warnings =
                  match prg with
