@@ -1,5 +1,6 @@
 module Location = Simple_utils.Location
 open Api_helpers
+open Simple_utils.Function
 module Compile = Ligo_compile
 module Helpers = Ligo_compile.Helpers
 module Raw_options = Compiler_options.Raw_options
@@ -174,6 +175,46 @@ let ast_aggregated (raw_options : Raw_options.t) source_file =
           typed
           (Ast_typed.e_a_unit ~loc ())
       , [] ) )
+
+
+let signature (raw_options : Raw_options.t) source_file =
+  ( Parsing.Formatter.ppx_format
+  , fun ~raise ->
+      let syntax =
+        Syntax.of_string_opt ~raise (Syntax_name raw_options.syntax) (Some source_file)
+      in
+      let options =
+        (* TODO: options should be computed outside of the API *)
+        let protocol_version =
+          Helpers.protocol_to_variant ~raise raw_options.protocol_version
+        in
+        Compiler_options.make ~protocol_version ~raw_options ~syntax ()
+      in
+      let sig_ =
+        let Compiler_options.{ module_; _ } = options.frontend in
+        let module_path = Build.parse_module_path ~loc module_ in
+        let typed =
+          Build.qualified_typed ~raise ~options (Build.Source_input.From_file source_file)
+        in
+        Option.value_exn ~message:"could not find module"
+        @@ Ast_typed.Misc.get_path_signature typed.pr_sig module_path
+      in
+      let core_sig = Checking.untype_signature ~use_orig_var:true sig_ in
+      let unified_sig_expr =
+        Trace.trace ~raise Main_errors.nanopasses_tracer
+        @@ Nanopasses.decompile_sig_expr ~syntax
+        @@ Location.wrap ~loc:Location.generated (Ast_core.S_sig core_sig)
+      in
+      let to_syntax =
+        match syntax with
+        | Syntax_types.CameLIGO ->
+          Parsing.Cameligo.(pretty_print_signature_expr Pretty.default_state)
+          <@ Unification.Cameligo.decompile_sig_expr
+        | Syntax_types.JsLIGO ->
+          Parsing.Jsligo.(pretty_print_signature_expr Pretty.default_state)
+          <@ Unification.Jsligo.decompile_sig_expr
+      in
+      to_syntax unified_sig_expr, [] )
 
 
 let ast_expanded (raw_options : Raw_options.t) source_file =

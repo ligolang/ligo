@@ -12,7 +12,7 @@ let dummy_loc : _ Recursion_schemes.Catamorphism.fold =
   ; program_entry = Combinators.make_pe
   ; program = Combinators.make_prg
   ; sig_entry = Combinators.make_sig_entry
-  ; sig_expr = Combinators.make_sig_expr
+  ; sig_expr = rm_loc (Combinators.make_sig_expr ~loc:dummy)
   }
 
 

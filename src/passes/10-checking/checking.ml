@@ -12,6 +12,7 @@ module E = Elaboration
 
 let untype_expression = Untyper.untype_expression
 let untype_type_expression = Untyper.untype_type_expression
+let untype_signature = Untyper.untype_signature
 
 let assert_type_expression_eq ~raise (loc : Location.t) (type1, type2) : unit =
   trace_option ~raise (assert_equal type1 type2 loc)

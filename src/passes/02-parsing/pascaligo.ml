@@ -14,7 +14,10 @@ module Pretty = Parsing_pascaligo.Pretty
 
 (* Making the pretty-printers from CST nodes *)
 
-include Parsing_shared.Common.MakePretty (CST) (Pretty)
+
+(* Dead code *)
+(* include Parsing_shared.Common.MakePretty (CST) (Pretty) *)
+let pretty_print a b = assert false
 
 (* The functor *)
 

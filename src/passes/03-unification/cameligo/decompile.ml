@@ -2,13 +2,13 @@ module CST = Cst.Cameligo
 module AST = Ast_unified
 module Helpers = Unification_shared.Helpers
 open Simple_utils
-open Simple_utils.Function
 module Label = Ligo_prim.Label
 open Lexing_cameligo.Token
 module Value_escaped_var = Nano_prim.Value_escaped_var
 module Ty_escaped_var = Nano_prim.Ty_escaped_var
 
 let ghost_var v = ghost_ident (Format.asprintf "%a" AST.Variable.pp v)
+let decompile_var v = CST.Var (ghost_var v)
 
 let decompile_var_esc = function
   | Value_escaped_var.Raw v -> CST.Var (ghost_var v)
@@ -26,6 +26,8 @@ let decompile_tvar : AST.Ty_variable.t -> CST.type_expr =
  fun t -> T_Var (Var (ghost_tvar t))
 
 
+let decompile_tvar_into_var v = CST.Var (ghost_tvar v)
+
 let rec folder =
   let todo _ = failwith ("TODO" ^ __LOC__) in
   AST.Catamorphism.
@@ -39,8 +41,8 @@ let rec folder =
     ; declaration = todo
     ; program_entry = todo
     ; program = todo
-    ; sig_expr = todo
-    ; sig_entry = todo
+    ; sig_expr
+    ; sig_entry
     }
 
 
@@ -48,14 +50,16 @@ and decompile_program p = AST.Catamorphism.cata_program ~f:folder p
 and decompile_expression e = AST.Catamorphism.cata_expr ~f:folder e
 and decompile_pattern p = AST.Catamorphism.cata_pattern ~f:folder p
 and decompile_type_expression t = AST.Catamorphism.cata_ty_expr ~f:folder t
-and decompile_mvar x = Format.asprintf "%a" AST.Mod_variable.pp x
+and decompile_sig_expr t = AST.Catamorphism.cata_sig_expr ~f:folder t
+and decompile_mvar x = ghost_ident @@ Format.asprintf "%a" AST.Mod_variable.pp x
 
 (* Helpers *)
 
 and decompile_attr : AST.Attribute.t -> CST.attribute =
  fun { key; value } -> ghost_attr key (Option.map ~f:(fun x -> Attr.String x) value)
-(* ^ XXX Attr.String or Attr.Ident? *)
 
+
+(* ^ XXX Attr.String or Attr.Ident? *)
 
 and decompile_mod_path
     : type a.
@@ -63,17 +67,56 @@ and decompile_mod_path
   =
  fun { module_path; field; field_as_open = _ } ->
   let module_path =
-    Utils.nsepseq_of_nseq ~sep:ghost_dot
-    @@ Utils.nseq_map
-         Function.(ghost_ident <@ Format.asprintf "%a" Ligo_prim.Module_var.pp)
-         module_path
+    Utils.nsepseq_of_nseq ~sep:ghost_dot @@ Utils.nseq_map decompile_mvar module_path
   in
-  (* XXX: What is [field_as_open]?? *)
+  (* XXX: What is [field_as_open]??
+     answer: it basically means you need to add a parenthesis after module_path
+     i.e. `A.B.x` is an access `A.B.(x)` is an module opening
+  *)
   CST.{ module_path; selector = ghost_dot; field }
 
 
 (* Decompilers: expect that all Ast nodes are initial, i.e.
    that backwards nanopasses were applied to Ast_unified before decompiler *)
+
+and sig_expr
+    :  (CST.signature_expr, CST.sig_item, CST.type_expr) AST.sig_expr_
+    -> CST.signature_expr
+  =
+  let w = Region.wrap_ghost in
+  function
+  | { wrap_content = AST.S_body sig_items; location } ->
+    CST.(S_Sig (w { kwd_sig = ghost_sig; sig_items; kwd_end = ghost_end }))
+  | { wrap_content = AST.S_path lst; location } ->
+    let lst = List.Ne.map decompile_mvar lst in
+    let module_path_opt, field =
+      let last, lst = List.Ne.rev lst in
+      ( (match List.Ne.of_list_opt lst with
+        | None -> None
+        | Some lst -> Some (List.Ne.rev lst))
+      , last )
+    in
+    (match module_path_opt with
+    | Some module_path ->
+      let module_path = Utils.nsepseq_of_nseq ~sep:ghost_dot lst in
+      CST.(S_Path (w { module_path; selector = ghost_dot; field }))
+    | None -> CST.(S_Var field))
+
+
+and sig_entry
+    : (CST.signature_expr, CST.sig_item, CST.type_expr) AST.sig_entry_ -> CST.sig_item
+  =
+ fun se ->
+  let w = Region.wrap_ghost in
+  match Location.unwrap se with
+  | AST.S_value (v, ty, _) ->
+    CST.(S_Value (w (ghost_val, decompile_var v, ghost_colon, ty)))
+  | AST.S_type (v, ty) ->
+    CST.(S_Type (w (ghost_type, decompile_tvar_into_var v, ghost_eq, ty)))
+  | AST.S_type_var v -> CST.(S_TypeVar (w (ghost_type, decompile_tvar_into_var v)))
+  | AST.S_attr (attr, se) -> CST.(S_Attr (w (decompile_attr attr, se)))
+  | AST.S_include se -> CST.(S_Include (w (ghost_include, se)))
+
 
 (* TODO: The E_variable case can be removed once
    Nanopasses.Espaced_variables.decompile is implemented. *)
@@ -364,9 +407,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_disc_union _ -> failwith "Decompiler: disc unions should appear only in JsLIGO"
   | T_named_fun _ -> failwith "Decompiler: Named arguments should appear only in JsLIGO"
   | T_contract_parameter x ->
-    let lst =
-      Utils.nsepseq_of_nseq (List.Ne.map (Wrap.ghost <@ decompile_mvar) x) ~sep:ghost_dot
-    in
+    let lst = Utils.nsepseq_of_nseq (List.Ne.map decompile_mvar x) ~sep:ghost_dot in
     T_ParameterOf (w lst)
   (* This node is not initial,
   i.e. types like [∀ a : * . option (a) -> bool] can not exist at Ast_unified level,

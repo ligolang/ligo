@@ -199,6 +199,14 @@ let sep_or_term_to_list = function
   None -> []
 | Some seq -> nsep_or_term_to_list seq
 
+let sep_or_term_of_list ~sep ~sep_or_term lst : ('a,'sep) sep_or_term =
+  match lst with
+    [] -> None
+  | lst ->
+    Some (match sep_or_term with
+    | `Sep -> `Sep (nsepseq_of_nseq ~sep (X_list.Ne.of_list lst))
+    | `Term -> `Term ( X_list.Ne.of_list (List.map ~f:(fun x -> (x,sep)) lst)))
+
 let nsep_or_pref_to_list = function
   `Sep s -> nsepseq_to_list s
 | `Pref (hd,tl) -> List.map ~f:snd (hd::tl)

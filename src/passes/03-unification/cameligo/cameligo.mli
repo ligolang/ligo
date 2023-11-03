@@ -7,3 +7,4 @@ val decompile_expression : AST.expr -> CST.expr
 val decompile_program : AST.program -> CST.t
 val decompile_pattern : AST.pattern -> CST.pattern
 val decompile_ty_expr : AST.ty_expr -> CST.type_expr
+val decompile_sig_expr : AST.sig_expr -> CST.signature_expr

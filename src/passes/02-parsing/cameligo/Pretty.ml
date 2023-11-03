@@ -1309,3 +1309,4 @@ type expr        = CST.expr
 type type_expr   = CST.type_expr
 type pattern     = CST.pattern
 type declaration = CST.declaration
+type signature_expr = CST.signature_expr

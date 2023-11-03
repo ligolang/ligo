@@ -208,19 +208,23 @@ and untype_module_expr : O.module_expr -> I.module_expr =
   | M_variable v -> return (M_variable v)
 
 
-and untype_sig_item : O.sig_item -> I.sig_item =
+and untype_sig_item ?(use_orig_var = false) : O.sig_item -> I.sig_item =
  fun sig_item ->
   match sig_item with
   | S_value (var, type_, attr) ->
-    S_value (var, untype_type_expression type_, untype_sig_item_attr attr)
-  | S_type (var, type_) -> S_type (var, untype_type_expression type_)
+    S_value (var, untype_type_expression ~use_orig_var type_, untype_sig_item_attr attr)
+  | S_type (var, type_) when Option.is_some @@ type_.orig_var ->
+    (* we do not want to print the original variable if that is the first definition or an alias *)
+    S_type (var, untype_type_expression type_)
+  | S_type (var, type_) -> S_type (var, untype_type_expression ~use_orig_var type_)
   | S_type_var var -> S_type_var var
-  | S_module (var, sig_) -> S_module (var, untype_signature sig_)
-  | S_module_type (var, sig_) -> S_module_type (var, untype_signature sig_)
+  | S_module (var, sig_) -> S_module (var, untype_signature ~use_orig_var sig_)
+  | S_module_type (var, sig_) -> S_module_type (var, untype_signature ~use_orig_var sig_)
 
 
-and untype_signature : O.signature -> I.signature =
- fun signature -> { items = List.map ~f:untype_sig_item signature.sig_items }
+and untype_signature ?(use_orig_var = false) : O.signature -> I.signature =
+ fun signature ->
+  { items = List.map ~f:(untype_sig_item ~use_orig_var) signature.sig_items }
 
 
 and untype_declaration_constant

@@ -590,6 +590,11 @@ module From_core : sig
     :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
     -> Ast_core.type_expression
     -> Ast_unified.ty_expr
+
+  val signature
+    :  raise:(Passes.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
+    -> Ast_core.signature_expr
+    -> Ast_unified.sig_expr
 end = struct
   module I = Ast_core
   module O = Ast_unified
@@ -610,8 +615,8 @@ end = struct
       ; declaration = (fun _ -> assert false)
       ; program_entry = (fun _ -> assert false)
       ; program = Fun.id
-      ; sig_expr = (fun _ -> assert false)
-      ; sig_entry = (fun _ -> assert false)
+      ; sig_expr
+      ; sig_entry
       }
 
 
@@ -623,9 +628,52 @@ end = struct
     Ast_unified.Anamorphism.ana_ty_expr ~f:(unfolder ~raise) t
 
 
+  and signature ~raise s = Ast_unified.Anamorphism.ana_sig_expr ~f:(unfolder ~raise) s
+
   and conv_row_attr : string option -> O.Attribute.t list = function
     | None -> []
     | Some annot -> [ { key = "annot"; value = Some annot } ]
+
+
+  and conv_sig_entry_attr
+      : I.sig_item_attribute -> (O.Attribute.t * I.sig_item_attribute) option
+    =
+   fun ({ dyn_entry; entry; view; optional } as i_attr) ->
+    if dyn_entry
+    then Some ({ key = "dyn_entry"; value = None }, { i_attr with dyn_entry = false })
+    else if entry
+    then Some ({ key = "entry"; value = None }, { i_attr with entry = false })
+    else if view
+    then Some ({ key = "view"; value = None }, { i_attr with view = false })
+    else if optional
+    then Some ({ key = "optional"; value = None }, { i_attr with optional = false })
+    else None
+
+
+  and sig_expr
+      : I.signature_expr -> (I.signature_expr, I.sig_item, I.type_expression) O.sig_expr_
+    =
+   fun { wrap_content = content; location = loc } ->
+    match content with
+    | S_sig { items } -> Location.wrap ~loc (O.S_body items)
+    | S_path path -> Location.wrap ~loc (O.S_path path)
+
+
+  and sig_entry
+      : I.sig_item -> (I.signature_expr, I.sig_item, I.type_expression) O.sig_entry_
+    =
+   fun sig_item ->
+    let ret ~loc content : _ O.sig_entry_ = Location.wrap ~loc content in
+    match sig_item with
+    | I.S_value (v, ty, attr) ->
+      (match conv_sig_entry_attr attr with
+      | None -> ret ~loc:ty.location (S_value (v, ty, attr.optional))
+      | Some (attr, attr_rest) ->
+        ret ~loc:ty.location (S_attr (attr, I.S_value (v, ty, attr_rest))))
+    | I.S_type (v, ty) -> ret ~loc:ty.location (S_type (v, ty))
+    | I.S_type_var v -> ret ~loc:(O.Ty_variable.get_location v) (S_type_var v)
+    | I.S_include se -> ret ~loc:se.location (S_include se)
+    | I.S_module (_, _) | I.S_module_type (_, _) -> failwith "Impossible"
 
 
   and expr ~raise

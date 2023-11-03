@@ -55,8 +55,8 @@ module Make (Options: Options.S) :
   end
 
 (* Pretty-printing from the CST *)
-
+(* 
 val pretty_print            : Pretty.state -> CST.t -> Buffer.t
 val pretty_print_expression : Pretty.state -> CST.expr -> Buffer.t
 val pretty_print_pattern    : ?cols:int -> Pretty.state -> CST.pattern -> Buffer.t
-val pretty_print_type_expr  : Pretty.state -> CST.type_expr -> Buffer.t
+val pretty_print_type_expr  : Pretty.state -> CST.type_expr -> Buffer.t *)
