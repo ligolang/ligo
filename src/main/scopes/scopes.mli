@@ -12,6 +12,7 @@ val defs_and_typed_program
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
+  -> module_deps:string Map.Make(String).t
   -> with_types:bool
   -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
 
@@ -19,6 +20,7 @@ val scopes
   :  options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
+  -> module_deps:string Map.Make(String).t
   -> definitions:def list
   -> scopes
 
@@ -27,5 +29,6 @@ val defs_and_typed_program_and_scopes
   -> options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
+  -> module_deps:string Map.Make(String).t
   -> with_types:bool
   -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes

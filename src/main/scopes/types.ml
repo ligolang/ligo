@@ -86,10 +86,20 @@ type tdef =
 
 type mod_case =
   | Def of def list
-  | Alias of Uid.t list * Uid.t option
+  | Alias of
+      { module_path : Uid.t list
+      ; resolved_module : Uid.t option
+      ; file_name : string option
+            (** If module name is mangled (i.e. it was obtained from preprocessing some import directive)
+                then this field will contain a file name of a module. *)
+      }
+
+and mod_name =
+  | Original of string
+  | Filename of string
 
 and mdef =
-  { name : string
+  { name : mod_name
   ; uid : Uid.t
   ; range : Location.t
   ; body_range : Location.t option
@@ -104,11 +114,19 @@ and def =
   | Type of tdef
   | Module of mdef
 
+let mod_name_compare a b =
+  match a, b with
+  | Original a, Original b -> String.compare a b
+  | Filename a, Filename b -> String.compare a b
+  | Original _, Filename _ -> -1
+  | Filename _, Original _ -> 1
+
+
 let def_compare a b =
   match a, b with
   | Variable x, Variable y -> String.compare x.name y.name
   | Type x, Type y -> String.compare x.name y.name
-  | Module x, Module y -> String.compare x.name y.name
+  | Module x, Module y -> mod_name_compare x.name y.name
   | Variable _, (Type _ | Module _) -> -1
   | (Type _ | Module _), Variable _ -> 1
   | Type _, Module _ -> 1
@@ -117,10 +135,15 @@ let def_compare a b =
 
 let def_equal a b = 0 = def_compare a b
 
+let get_mod_name_name = function
+  | Original n -> n
+  | Filename n -> n
+
+
 let get_def_name = function
   | Variable d -> d.name
   | Type d -> d.name
-  | Module d -> d.name
+  | Module d -> get_mod_name_name d.name
 
 
 let get_def_uid = function

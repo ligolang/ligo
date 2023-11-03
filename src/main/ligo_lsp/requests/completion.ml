@@ -335,8 +335,8 @@ let complete_fields
     let rec get_module_defs : Scopes.Types.mod_case -> CompletionItem.t list option
       = function
       | Def defs -> Some (module_defs_to_completion_items defs)
-      | Alias (_alias, resolved) ->
-        Option.bind resolved ~f:(fun resolved ->
+      | Alias { module_path = _; resolved_module; file_name = _ } ->
+        Option.bind resolved_module ~f:(fun resolved ->
             List.find_map definitions ~f:(function
                 | Variable _ | Type _ -> None
                 | Module m ->

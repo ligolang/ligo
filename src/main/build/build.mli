@@ -100,7 +100,7 @@ val build_expression
 val dependency_graph
   :  raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
   -> options:Compiler_options.t
-  -> string
+  -> Source_input.code_input
   -> Graph__Persistent.Digraph.Concrete(BuildSystem__Types.Node).t
      * (string * Ligo_compile.Helpers.meta * Buffer.t * (string * string) list)
        Stdlib__Map.Make(Stdlib__String).t

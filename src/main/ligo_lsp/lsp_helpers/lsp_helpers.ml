@@ -111,6 +111,22 @@ module FormattingOptions = struct
   let default : t = create ~tabSize:2 ~insertSpaces:false ()
 end
 
+module MarkupContent = struct
+  include Lsp.Types.MarkupContent
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
+module MarkedString = struct
+  include Lsp.Types.MarkedString
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module ApplyWorkspaceEditParams = Lsp.Types.ApplyWorkspaceEditParams
 module ClientCapabilities = Lsp.Types.ClientCapabilities
 module CompletionItemKind = Lsp.Types.CompletionItemKind
@@ -127,7 +143,6 @@ module FoldingRangeKind = Lsp.Types.FoldingRangeKind
 module Hover = Lsp.Types.Hover
 module InitializeParams = Lsp.Types.InitializeParams
 module InitializeResult = Lsp.Types.InitializeResult
-module MarkupContent = Lsp.Types.MarkupContent
 module MessageActionItem = Lsp.Types.MessageActionItem
 module MessageType = Lsp.Types.MessageType
 module Registration = Lsp.Types.Registration

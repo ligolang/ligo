@@ -73,7 +73,12 @@ let rec definitions : Format.formatter -> def list -> unit =
         | Some content -> Format.fprintf ppf "%a" Ast_core.PP.type_expression content
       in
       Format.fprintf ppf ": |%a|@ %a" content t.content refs t.references
-    | Module { mod_case = Alias (a, _resolved); references; _ } ->
+    | Module
+        { mod_case =
+            Alias { module_path = a; resolved_module = _resolved; file_name = _file_name }
+        ; references
+        ; _
+        } ->
       Format.fprintf
         ppf
         "Alias: %s @ %a @ "
@@ -178,14 +183,21 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         } ->
       ( uid
       , `Assoc
-          [ "definition", definition ~name ~range ~body_range ~references ~t:Unresolved
+          [ ( "definition"
+            , definition
+                ~name:(get_mod_name_name name)
+                ~range
+                ~body_range
+                ~references
+                ~t:Unresolved )
           ; "members", defs_json d
           ] )
     | Module
         { name
         ; range
         ; body_range
-        ; mod_case = Alias (a, _resolved)
+        ; mod_case =
+            Alias { module_path = a; resolved_module = _resolved; file_name = _file_name }
         ; references
         ; uid
         ; def_type = _
@@ -194,7 +206,13 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       let alias = `List (List.map a ~f:(fun s -> `String (Uid.to_string s))) in
       ( uid
       , `Assoc
-          [ "definition", definition ~name ~range ~body_range ~references ~t:Unresolved
+          [ ( "definition"
+            , definition
+                ~name:(get_mod_name_name name)
+                ~range
+                ~body_range
+                ~references
+                ~t:Unresolved )
           ; "alias", alias
           ] )
   in
@@ -258,3 +276,14 @@ let scopes_json (scopes : scopes) : Yojson.Safe.t =
            ; "module_environment", `List ms
            ])
        scopes)
+
+
+let mod_name (base_path : string option) : Format.formatter -> mod_name -> unit =
+ fun f -> function
+  | Original n -> Format.fprintf f "%s" n
+  | Filename n ->
+    Format.fprintf
+      f
+      {|"%s"|}
+      (Option.value_map base_path ~default:n ~f:(fun base_path ->
+           FilePath.make_relative base_path n))

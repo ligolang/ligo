@@ -5,7 +5,10 @@ let hovers_pp_mode : Pretty.pp_mode =
   { width = Helpers_pretty.default_line_width_for_hovers; indent = 2 }
 
 
-let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
+let hover_string
+    :  Syntax_types.t -> Scopes.def
+    -> [> `MarkupContent of MarkupContent.t | `List of MarkedString.t list ] Handler.t
+  =
  fun syntax ->
   let print_type_with_prefix ?prefix t =
     match Pretty.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t with
@@ -22,14 +25,18 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
       in
       return nonpretty_type
   in
+  let language = Some (Syntax.to_string syntax) in
   function
   | Variable vdef ->
     let prefix = PPrint.(string vdef.name ^//^ colon) in
     let type_info = Type_definition.get_type vdef in
-    Option.value_map
-      ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
-      ~f:(print_type_with_prefix ~prefix <@ Type_definition.use_var_name_if_availiable)
-      type_info
+    let@ value =
+      Option.value_map
+        ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
+        ~f:(print_type_with_prefix ~prefix <@ Type_definition.use_var_name_if_availiable)
+        type_info
+    in
+    return @@ `List [ MarkedString.{ language; value } ]
   | Type tdef ->
     let rec get_params (t : Ast_core.type_content) =
       match t with
@@ -60,14 +67,19 @@ let hover_string : Syntax_types.t -> Scopes.def -> string Handler.t =
     in
     (match tdef.content with
     | None ->
-      return
-      @@ Helpers_pretty.doc_to_string
-           ~width:10000
-           PPrint.(string "type" ^//^ string name_with_params)
+      let value =
+        Helpers_pretty.doc_to_string
+          ~width:10000
+          PPrint.(string "type" ^//^ string name_with_params)
+      in
+      return @@ `List [ MarkedString.{ language; value } ]
     | Some content ->
       let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
-      print_type_with_prefix ~prefix content)
-  | Module mdef -> return @@ Helpers_pretty.print_module syntax mdef
+      let@ value = print_type_with_prefix ~prefix content in
+      return @@ `List [ MarkedString.{ language; value } ])
+  | Module mdef ->
+    let@ project_root = ask_last_project_file in
+    return @@ Helpers_pretty.print_module ~project_root:!project_root syntax mdef
 
 
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
@@ -76,10 +88,6 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   @@ fun { definitions; syntax; _ } ->
   when_some' (Go_to_definition.get_definition pos file definitions)
   @@ fun definition ->
-  let@ hover_string = hover_string syntax definition in
-  (* Since a hover contents is a Markdown code block (e.g. starts with "```cameligo"), the text editor
-     will apply nice highlight (i.e. highlight for corresponding LIGO syntax) to hover message *)
-  let markdown = Format.sprintf "```%s\n%s\n```" (Syntax.to_string syntax) hover_string in
-  let contents = `MarkupContent MarkupContent.{ kind = Markdown; value = markdown } in
+  let@ contents = hover_string syntax definition in
   let hover = Hover.create ~contents () in
   return (Some hover)
