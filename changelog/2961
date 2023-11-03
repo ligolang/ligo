@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed mangled module names on imports hovering. Now you can see the correct file paths like:\\n\\n```ocaml\\nmodule K = \"../A.mligo\"\\n\\n```\\n\\n\\n"
+merge_request: '2961'
+title: "[#1748] Fix mangled module names on hovering"
+type: fixed
+            
