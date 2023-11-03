@@ -21,7 +21,7 @@ variables:
   - docker build tools/debugger -t "${LIGO_DEBUGGER_IMAGE_TAG}-test"
   - docker run -v $PWD/ligo:/usr/bin/ligo -v $PWD/src/test/contracts:/contracts
       --env="LIGO_TEST_CONTRACTS_DIR=/contracts"
-      --rm "${LIGO_DEBUGGER_IMAGE_TAG}-test" stack test --system-ghc --test-arguments="${LIGO_TEST_ARGS}"
+      --rm "${LIGO_DEBUGGER_IMAGE_TAG}-test" stack test --system-ghc --test-arguments="${LIGO_TEST_FLAGS}"
 .cleanup_ligo_debugger_test: &cleanup_ligo_debugger_test
   - docker image rm --force "${LIGO_DEBUGGER_IMAGE_TAG}-test" || true
 
@@ -122,6 +122,7 @@ debugger-test-ligo-recommended:
   needs: [debugger-build]
   variables:
     LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/recommended"
+    LIGO_TEST_FLAGS: "-r"
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
   after_script: *cleanup_ligo_debugger_test
@@ -132,6 +133,8 @@ debugger-test-ligo-latest:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
   needs: [docker_extract, debugger-build]
+  variables:
+    LIGO_TEST_FLAGS: "-r"
   script: *run_ligo_debugger_tests
   after_script: *cleanup_ligo_debugger_test
 
@@ -151,6 +154,7 @@ debugger-test-ligo-minimal-supported:
   when: manual
   variables:
     LIGO_VERSION_FILE: "./tools/debugger/ligo-debugger/src/resources/versions/minimal-supported"
+    LIGO_TEST_FLAGS: "-r -m"
   before_script: *get_release_ligo_binary
   script: *run_ligo_debugger_tests
   after_script: *cleanup_ligo_debugger_test
