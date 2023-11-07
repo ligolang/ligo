@@ -1,0 +1,32 @@
+namespace C {
+  export type param = [ int , ticket<string>]
+
+  @entry
+  function main (p: param, _s: [string , address]) : [list<operation> , [string , address]] {
+    let [_v,ticket] = p ;
+    let [[_addr,[v,_t]] , _ticket] = Tezos.read_ticket (ticket) ;
+    return ([list([]) , [v, Tezos.get_sender ()]])
+  };
+}
+
+const test_transfer_to_contract = do {
+  let {addr : main_taddr, code , size } = Test.originate (contract_of(C), ["bye",Test.nth_bootstrap_account (1)], 1mutez) ;
+  let main_addr = Test.to_address (main_taddr) ;
+
+  /* mk_param is executed __by the proxy contract__ */
+  const mk_param = (t:ticket<string>) : C.param => { return [42,t] } ;
+  /* Use this address everytime you want to send tickets from the same proxy-contract */
+  /* initialize a proxy contract in charge of creating and sending your tickets */
+  let proxy_taddr = Test.Proxy_ticket.init_transfer (mk_param) ;
+  Test.log (["poxy addr:", proxy_taddr]) ;
+
+  /* ticket_info lets you control the amount and the value of the tickets you send */
+  let ticket_info1 = ["hello", 10n];
+  /* we send ticket to main through the proxy-contract */
+  Test.Proxy_ticket.transfer (proxy_taddr, [ticket_info1,main_addr]) ;
+  Test.log (Test.get_storage (main_taddr)) ;
+
+  let ticket_info2 = ["world",5n] ;
+  Test.Proxy_ticket.transfer (proxy_taddr, [ticket_info2,main_addr]) ;
+  Test.log (Test.get_storage (main_taddr));
+};

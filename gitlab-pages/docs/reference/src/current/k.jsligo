@@ -1,0 +1,11 @@
+type storage = bytes;
+
+@entry
+let main = (_ignore: unit, storage: storage) : [list<operation>, storage] => {
+  let packed = Bytes.pack(Tezos.get_chain_id());
+  if (storage != packed) {
+    return failwith("wrong chain") as [list<operation>, storage];
+  } else {
+    return [list([]), packed];
+  };
+};

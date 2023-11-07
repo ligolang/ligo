@@ -1,2 +1,2 @@
-let add (a : int) (b : int) : int =
-  let c : int = a + b in c
+let add (a : int) (b : int) =
+  let c = a + b in c

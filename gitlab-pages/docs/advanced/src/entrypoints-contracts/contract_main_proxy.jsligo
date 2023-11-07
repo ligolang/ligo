@@ -1,0 +1,8 @@
+#import "gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main.jsligo" "C"
+
+namespace Proxy {
+  @entry
+  const proxy =
+    (p: C.parameter, s: C.storage): [list<operation>, C.storage] =>
+    C.main(p, s)
+}

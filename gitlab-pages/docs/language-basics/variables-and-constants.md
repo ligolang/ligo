@@ -16,7 +16,7 @@ declaration. When defining a constant you need to provide a `name`,
 
 <Syntax syntax="cameligo">
 
-```cameligo group=a
+```cameligo group=const
 let age : int = 25
 ```
 
@@ -64,7 +64,7 @@ const x = () => {
 You can evaluate a constant definition using the following CLI
 command:
 
-```jsligo
+```jsligo group=const
 const age : int = 25;
 ```
 
@@ -84,8 +84,8 @@ As expected in the pure subset of a functional language, CameLIGO only
 features *constant values*: once they are declared, the value cannot
 be changed (or "mutated").
 
-```cameligo group=c
-let add (a, b : int * int) =
+```cameligo group=add
+let add (a : int) (b : int) =
   let c = a + b in c
 ```
 
@@ -109,7 +109,7 @@ Variables, unlike constants, are *mutable*.
 > environment is therefore lost when the function returns.
 
 
-```jsligo group=b
+```jsligo group=add
 let add = (a: int, b: int): int => {
   let c = a;
   c = c + b;

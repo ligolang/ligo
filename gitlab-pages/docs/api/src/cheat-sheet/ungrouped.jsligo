@@ -1,0 +1,97 @@
+const name: string = "Tezos";
+const t: string = "t";
+const i: int = 42;
+const n: nat = 7n;
+const u: unit = unit;
+const has_drivers_license: bool = false
+const adult: bool = true
+const booleanLogic: bool =
+    (!true) ==
+    false ==
+    (false && true) ==
+    (false || false)
+const tez_amount: tez = 42tez
+const tez_amount2: tez = tez_amount + 7mutez // == 42000007mutez
+const tz1address: address =
+  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+const kt1address: address =
+  "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" as address;
+const my_str : string = "Hello World!";
+const verbatim_str : string = `verbatim string`;
+const add_int: int = 3 + 4;
+const add_nat: nat = 3n + 4n;
+const mul_int: int = 3 * 4;
+const mul_nat: nat = 3n * 4n;
+
+const div_int: int = 10 / 5;
+const div_nat: nat = 10n / 5n; // can fail (division by zero), check your inputs first.
+const mod_nat: nat = 10 % 3; // can fail (division by zero), check your inputs first.
+type name = [string, string];
+
+const winner: name = ["John", "Doe"];
+
+const firstName: string = winner[0];
+const lastName: string = winner[1];
+const add = (a: int, b: int): int =>
+  a + b;
+function if_statement (age : nat): string {
+  if (age >= 16n) return "yes" else return "no"
+}
+type middle_name = option<string>;
+const a_middle_name : middle_name = Some("Foo");
+const no_middle_name : middle_name = None();
+const age: int = 5
+const someAddress: address =
+  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+type person = {
+  age: int,
+  name: string
+}
+
+const john : person = {
+  age: 18,
+  name: "john doe"
+}
+
+const name_: string = john.name
+type prices = map<nat, tez>;
+
+const prices: prices = Map.literal(list([
+  [10n, 60mutez],
+  [50n, 30mutez],
+  [100n, 10mutez]
+]));
+
+const price: option<tez> = Map.find_opt(50n, prices)
+
+const prices2: prices = Map.update(200n, Some (5mutez), prices)
+const fail = (u: unit) : unit =>
+  failwith("a failure message")
+type animal =
+@layout("comb")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+type animal =
+@layout("tree")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+namespace FA0_inferred {
+  type storage = int;
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+}
+interface FA0_INTF {
+  type storage;
+  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+}
+interface FA0_EXT_INTF extends FA0_INTF {
+  type storage;
+  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+}
+namespace FA0 implements FA0_INTF {
+  type storage = int;
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+}

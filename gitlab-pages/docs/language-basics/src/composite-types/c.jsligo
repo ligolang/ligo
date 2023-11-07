@@ -1,0 +1,20 @@
+// Type aliasing
+
+type account = address;
+type number_of_transactions = nat;
+
+// The type account_data is a record with two fields.
+
+type account_data = {
+  balance: tez,
+  transactions: number_of_transactions
+};
+
+// A ledger is a map from accounts to account_data
+
+type ledger = map <account, account_data>;
+
+const my_ledger : ledger =
+  Map.literal(list([
+    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address,
+     {balance: 10mutez, transactions: 5n}]]));

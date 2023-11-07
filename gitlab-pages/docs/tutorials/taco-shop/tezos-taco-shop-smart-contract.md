@@ -80,7 +80,7 @@ into a map, consisting of the entire offer of Pedro's shop.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=b
+```cameligo group=TacoShop
 type taco_supply = { current_stock : nat ; max_price : tez }
 
 type taco_shop_storage = (nat, taco_supply) map
@@ -90,10 +90,10 @@ type taco_shop_storage = (nat, taco_supply) map
 
 <Syntax syntax="jsligo">
 
-```jsligo group=b
-type taco_supply = { current_stock : nat , max_price : tez };
+```jsligo group=TacoShop
+export type taco_supply = { current_stock : nat , max_price : tez };
 
-type taco_shop_storage = map <nat, taco_supply>;
+export type taco_shop_storage = map <nat, taco_supply>;
 ```
 
 </Syntax>
@@ -212,8 +212,8 @@ our storage's value will be defined as follows:
 
 <Syntax syntax="cameligo">
 
-```cameligo group=b12
-let default_storage: TacoShop.taco_shop_storage  = Map.literal [
+```cameligo group=TacoShop
+let default_storage: taco_shop_storage  = Map.literal [
   (1n, { current_stock = 50n ; max_price = 50tez }) ;
   (2n, { current_stock = 20n ; max_price = 75tez }) ;
 ]
@@ -223,8 +223,8 @@ let default_storage: TacoShop.taco_shop_storage  = Map.literal [
 
 <Syntax syntax="jsligo">
 
-```jsligo group=b12
-const default_storage: TacoShop.taco_shop_storage = Map.literal (list([
+```jsligo group=TacoShop
+const default_storage: taco_shop_storage = Map.literal (list([
   [1n, { current_stock : 50n, max_price : 50tez }],
   [2n, { current_stock : 20n, max_price : 75tez }]
 ]));
@@ -240,7 +240,7 @@ Out of curiosity, let's try to use LIGO `compile storage` command compile this v
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo compile storage taco_shop.jsligo default_storage -m TacoShop
+ligo compile storage TacoShop.jsligo default_storage -m TacoShop
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -251,7 +251,7 @@ ligo compile storage taco_shop.jsligo default_storage -m TacoShop
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo compile storage taco_shop.jsligo default_storage -m TacoShop
+ligo compile storage TacoShop.jsligo default_storage -m TacoShop
 # Output:
 #
 # { Elt 1 (Pair 50 50000000) ; Elt 2 (Pair 20 75000000) }
@@ -344,7 +344,8 @@ To make sure we get paid, we will:
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=TacoShop
+[@entry]
 let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage)
   : operation list * taco_shop_storage =
     (* Retrieve the taco_kind from the contract's storage or fail *)
@@ -377,7 +378,8 @@ let buy_taco (taco_kind_index : nat) (taco_shop_storage : taco_shop_storage)
 
 <Syntax syntax="jsligo">
 
-```jsligo group=b
+```jsligo group=TacoShop
+@entry
 const buy_taco = (taco_kind_index: nat, taco_shop_storage: taco_shop_storage) : [
     list<operation>,
     taco_shop_storage
@@ -411,7 +413,7 @@ For that, we will have another file in which will describe our test:
 <Syntax syntax="cameligo">
 
 ```cameligo test-ligo group=test
-#import "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.mligo" "C"
+#import "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.mligo" "TacoShop"
 
 let assert_string_failure (res : test_exec_result) (expected : string) =
   let expected = Test.eval expected in
@@ -426,14 +428,14 @@ let test =
       (1n, { current_stock = 50n ; max_price = 50tez }) ;
       (2n, { current_stock = 20n ; max_price = 75tez }) ; ]
   in
-  let { addr ; code = _; size = _ } = Test.originate (contract_of C.TacoShop) init_storage 0tez in
+  let { addr ; code = _; size = _ } = Test.originate (contract_of TacoShop) init_storage 0tez in
 
   (* Test inputs *)
-  let clasico_kind : C.TacoShop parameter_of = Buy_taco 1n in
-  let unknown_kind : C.TacoShop parameter_of = Buy_taco 3n in
+  let clasico_kind : TacoShop parameter_of = Buy_taco 1n in
+  let unknown_kind : TacoShop parameter_of = Buy_taco 3n in
 
   (* Auxiliary function for testing equality in maps *)
-  let eq_in_map (r : C.TacoShop.taco_supply) (m : C.TacoShop.taco_shop_storage) (k : nat) =
+  let eq_in_map (r : TacoShop.taco_supply) (m : TacoShop.taco_shop_storage) (k : nat) =
     match Map.find_opt k m with
     | None -> false
     | Some v -> v.current_stock = r.current_stock && v.max_price = r.max_price in
@@ -463,7 +465,7 @@ let test =
 <Syntax syntax="jsligo">
 
 ```jsligo test-ligo group=test
-#import "gitlab-pages/docs/tutorials/taco-shop/tezos-taco-shop-smart-contract.jsligo" "C"
+#import "gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/TacoShop.jsligo" "TacoShop"
 
 function assert_string_failure (res: test_exec_result, expected: string) {
   const expected_bis = Test.eval(expected);
@@ -496,15 +498,15 @@ const test = (
           )
         );
       const { addr , code , size } =
-        Test.originate(contract_of(C.TacoShop), init_storage, 0mutez);
+        Test.originate(contract_of(TacoShop), init_storage, 0mutez);
 
       /* Test inputs */
 
-      const clasico_kind : parameter_of C.TacoShop = Buy_taco (1n);
-      const unknown_kind : parameter_of C.TacoShop = Buy_taco (3n);
+      const clasico_kind : parameter_of TacoShop = Buy_taco (1n);
+      const unknown_kind : parameter_of TacoShop = Buy_taco (3n);
       /* Auxiliary function for testing equality in maps */
 
-      const eq_in_map = (r: C.TacoShop.taco_supply, m: C.TacoShop.taco_shop_storage, k: nat) =>
+      const eq_in_map = (r: TacoShop.taco_supply, m: TacoShop.taco_shop_storage, k: nat) =>
         match(Map.find_opt(k, m)) {
           when (None):
             false
@@ -590,7 +592,7 @@ with `"test"`:
 <Syntax syntax="cameligo">
 
 ```zsh
-ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
+ligo run test gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/test.mligo
 # Output:
 #
 # Everything at the top-level was executed.
@@ -602,7 +604,7 @@ ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.mligo
 <Syntax syntax="jsligo">
 
 ```zsh
-ligo run test gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-test.jsligo
+ligo run test gitlab-pages/docs/tutorials/taco-shop/src/tezos-taco-shop-smart-contract/test.jsligo
 # Output:
 #
 # Everything at the top-level was executed.

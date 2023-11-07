@@ -18,20 +18,51 @@ as if it were deployed on a real chain. You need to provide the
 following:
 
 - `file` - contract to run
-- `entrypoint` - name of the function to execute
-- `parameter` - parameter passed to the main function (in a
+- `parameter` - parameter passed to the contract (in a
   theoretical invocation operation)
 - `storage` - a mock storage value, as if it were stored on a real chain
 
 Here is a full example:
 
-```shell
-ligo run dry-run src/basic.mligo Unit Unit --entry-point main
+<Syntax syntax="cameligo">
+
+```cameligo group=first-contract
+type storage = int
+
+[@entry]
+let main (_action : unit) (store : storage) : operation list * storage =
+  ([], store + 1)
+```
+
+```shell skip
+ligo run dry-run src/basic.mligo unit 42 ./gitlab-pages/docs/advanced/src/first-contract.mligo
 // Outputs:
 // tuple[   list[]
 //          Unit
 // ]
 ```
+
+</Syntax>
+
+<Syntax syntax="jsligo">
+
+```jsligo group=first-contract
+type storage = int
+
+@entry
+const main = (_action : unit, store : storage) : [list<operation>, storage] =>
+  [list([]), store + 1]
+```
+
+```shell skip
+ligo run dry-run src/basic.mligo unit 42 ./gitlab-pages/docs/advanced/src/first-contract.jsligo
+// Outputs:
+// tuple[   list[]
+//          Unit
+// ]
+```
+
+</Syntax>
 
 Output of the `dry-run` is the return value of our main function, we
 can see the operations emitted (in our case an empty list, and the new
@@ -46,7 +77,7 @@ function to two entrypoints for `add` (addition) and `sub`
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=counter
 type storage = int
 type result = operation list * storage
 
@@ -61,7 +92,7 @@ type result = operation list * storage
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=counter
 
 type storage = int;
 type result = [list<operation>, storage];
@@ -85,7 +116,7 @@ with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.
 
 ```shell
-ligo run dry-run ./gitlab-pages/docs/advanced/src/counter.mligo "Increment(5)" 5
+ligo run dry-run ./gitlab-pages/docs/advanced/src/first-contract/counter.mligo "Increment(5)" 5
 # tuple[   list[]
 #          10
 # ]
@@ -100,7 +131,7 @@ have to compile it first, this can be done with the help of the
 `compile-contract` CLI command:
 
 ```shell
-ligo compile contract ./gitlab-pages/docs/advanced/src/counter.mligo
+ligo compile contract ./gitlab-pages/docs/advanced/src/first-contract/counter.mligo
 ```
 
 Command above will output the following Michelson code:
@@ -118,7 +149,7 @@ need to provide the initial storage value, we can use
 Michelson.
 
 ```shell
-ligo compile storage ./gitlab-pages/docs/advanced/src/counter.mligo 5
+ligo compile storage ./gitlab-pages/docs/advanced/src/first-contract/counter.mligo 5
 # Outputs: 5
 ```
 
@@ -133,7 +164,7 @@ values to Michelson. We will need to use `compile-parameter` to
 compile our `action` variant into Michelson, here's how:
 
 ```shell
-ligo compile parameter ./gitlab-pages/docs/advanced/src/counter.mligo 'Increment(5)'
+ligo compile parameter ./gitlab-pages/docs/advanced/src/first-contract/counter.mligo 'Increment(5)'
 # Outputs: (Right 5)
 ```
 

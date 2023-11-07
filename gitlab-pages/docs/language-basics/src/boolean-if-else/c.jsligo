@@ -1,0 +1,8 @@
+const a  = 5;
+const b  = 4;
+const c = (a == b);
+const d = (a > b);
+const e = (a < b);
+const f = (a <= b);
+const g = (a >= b);
+const h = (a != b);

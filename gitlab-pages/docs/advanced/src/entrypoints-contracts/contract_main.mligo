@@ -7,15 +7,16 @@ type storage = {
   name    : string
 }
 
-type return = operation list * storage
+type result = operation list * storage
 
-let entry_A (n : nat) (store : storage) : return =
+let entry_A (n : nat) (store : storage) : result =
   [], {store with counter = n}
 
-let entry_B (s : string) (store : storage) : return =
+let entry_B (s : string) (store : storage) : result =
   [], {store with name = s}
 
-let main (action : parameter) (store: storage) : return =
+[@entry]
+let main (action : parameter) (store: storage) : result =
   match action with
     Action_A n -> entry_A n store
   | Action_B s -> entry_B s store

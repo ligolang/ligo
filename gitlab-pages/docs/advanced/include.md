@@ -40,7 +40,7 @@ so:
 <Syntax syntax="cameligo">
 
 ```cameligo
-#include "gitlab-pages/docs/advanced/src/included.mligo"
+#include "gitlab-pages/docs/advanced/src/include/included.mligo"
 
 let bar = foo
 ```
@@ -50,7 +50,7 @@ let bar = foo
 <Syntax syntax="jsligo">
 
 ```jsligo
-#include "gitlab-pages/docs/advanced/src/included.jsligo"
+#include "gitlab-pages/docs/advanced/src/include/included.jsligo"
 
 const bar = foo;
 ```

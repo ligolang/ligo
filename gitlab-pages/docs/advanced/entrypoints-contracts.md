@@ -165,7 +165,7 @@ and call one of its entry points by passing e.g. the parameter `Increment(5)`.
 
 <Syntax syntax="cameligo">
 
-```mligo
+```cameligo group=test
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.mligo" "C"
 
 let test =
@@ -178,7 +178,7 @@ let test =
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=test
 #import "gitlab-pages/docs/advanced/src/entrypoints-contracts/incdec.jsligo" "C"
 
 const test = do {
@@ -195,7 +195,7 @@ The file above can be run with e.g. the `ligo run test` sub-command.
 <Syntax syntax="cameligo">
 
 ```shell
-ligo run test gitlab-pages/docs/advanced/src/entrypoints-contracts/test.mligo
+ligo run test --library . gitlab-pages/docs/advanced/src/entrypoints-contracts/test.mligo
 ```
 
 </Syntax>
@@ -203,7 +203,7 @@ ligo run test gitlab-pages/docs/advanced/src/entrypoints-contracts/test.mligo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo run test gitlab-pages/docs/advanced/src/entrypoints-contracts/test.jsligo
+ligo run test --library . gitlab-pages/docs/advanced/src/entrypoints-contracts/test.jsligo
 ```
 
 </Syntax>
@@ -322,7 +322,7 @@ end
 The contract can then be compiled using the following command:
 
 ```shell
-ligo compile contract -m Proxy contract_main_proxy.mligo
+ligo compile contract --library . -m Proxy gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo
 ```
 
 </Syntax>
@@ -343,7 +343,9 @@ namespace Proxy {
 The contract can then be compiled using the following command:
 
 ```shell
-ligo compile contract -m Proxy contract_main_proxy.jsligo
+ligo compile contract --library . \
+  -m Proxy \
+  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo
 ```
 
 </Syntax>
@@ -355,11 +357,17 @@ constructor:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile parameter -m Proxy -e proxy contract_main_proxy.mligo "Action_A(42n)"
+ligo compile parameter --library . \
+  -m Proxy -e proxy \
+  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+  "Action_A(42n)"
 ```
 
 ```shell
-ligo compile parameter -m Proxy contract_main_proxy.mligo "Proxy(Action_A(42n))"
+ligo compile parameter --library . \
+  -m Proxy \
+  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.mligo \
+  "Proxy(Action_A(42n))"
 ```
 
 </Syntax>
@@ -367,11 +375,17 @@ ligo compile parameter -m Proxy contract_main_proxy.mligo "Proxy(Action_A(42n))"
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile parameter -m Proxy -e proxy contract_main_proxy.jsligo "Action_A(42n)"
+ligo compile parameter --library . \
+  -m Proxy -e proxy \
+  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "Action_A(42n)"
 ```
 
 ```shell
-ligo compile parameter -m Proxy contract_main_proxy.jsligo "Proxy(Action_A(42n))"
+ligo compile parameter --library . \
+  -m Proxy \
+  gitlab-pages/docs/advanced/src/entrypoints-contracts/contract_main_proxy.jsligo \
+  "Proxy(Action_A(42n))"
 ```
 
 </Syntax>
