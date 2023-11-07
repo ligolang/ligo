@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nThe internal name mangling for imported modules was incomplete and non-injective.\\n\\n"
+merge_request: '2965'
+title: "Module name mangling for #import"
+type: fixed
+            

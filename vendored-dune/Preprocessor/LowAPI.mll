@@ -206,15 +206,15 @@ module Make (Config : Config.S) (Options : Options.S) =
                  | Some incl_file_str -> incl_path, incl_file_str, state
                  | None -> Error.Failed_opening (incl_path, (incl_path ^ "not found")) |> fail state incl_region)
             in
-            
-            (* We check if the current file exists in the stack of ancestors 
+
+            (* We check if the current file exists in the stack of ancestors
                in which case we fail with the error [Error.Cyclic_inclusion]
             *)
             let () =
-              if List.exists ~f:(String.equal state#pos#file) state#ancestors 
+              if List.exists ~f:(String.equal state#pos#file) state#ancestors
               then
-                fail state incl_region 
-                  (Error.Cyclic_inclusion (state#ancestors, state#pos#file)) 
+                fail state incl_region
+                  (Error.Cyclic_inclusion (state#ancestors, state#pos#file))
             in
 
             (* We are ready now to output the linemarker before
@@ -313,12 +313,17 @@ module Make (Config : Config.S) (Options : Options.S) =
 let import_action ~callback hash_pos state lexbuf =
   let mangle str =
     let name =
-        Str.global_replace (Str.regexp_string ".") "____" str
-      |> Str.global_replace (Str.regexp_string ":") "__"
-      |> Str.global_replace (Str.regexp_string "\\") "__"
-      |> Str.global_replace (Str.regexp_string "/") "__"
-      |> Str.global_replace (Str.regexp_string "@") "_"
-      |> Str.global_replace (Str.regexp_string "-") "_"
+      let open Str in
+     str
+     |> global_replace (regexp_string "_")  "_u_"
+      |> global_replace (regexp_string ".")  "_p_"
+      |> global_replace (regexp_string ":")  "_c_"
+      |> global_replace (regexp_string "\\") "_b_"
+      |> global_replace (regexp_string "/")  "_s_"
+      |> global_replace (regexp_string "@")  "_a_"
+      |> global_replace (regexp_string "-")  "_d_"
+      |> global_replace (regexp_string "(")  "_l_"
+      |> global_replace (regexp_string ")")  "_r_"
     in "Mangled_module_" ^ name
   in
   match Directive.scan_import hash_pos state lexbuf with
