@@ -172,7 +172,7 @@ points on a plane.
 The syntax for the functional updates of record in CameLIGO follows
 that of OCaml:
 
-```cameligo group=records2
+```cameligo group=record_update
 type point = {x : int; y : int; z : int}
 type vector = {dx : int; dy : int}
 
@@ -186,9 +186,9 @@ You can call the function `xy_translate` defined above by running the
 following command of the shell:
 
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
-"({x=2;y=3;z=1}, {dx=3;dy=4})" --entry-point xy_translate
+ligo run evaluate-call \
+  gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo \
+  xy_translate "({x=2;y=3;z=1}, {dx=3;dy=4})"
 # Outputs: {z = 1 , y = 7 , x = 5}
 ```
 
@@ -202,7 +202,7 @@ gitlab-pages/docs/language-basics/src/maps-records/record_update.mligo
 
 The syntax for the functional updates of record in JsLIGO:
 
-```jsligo group=records2
+```jsligo group=record_update
 type point = {x: int, y: int, z: int}
 type vector = {dx: int, dy: int}
 
@@ -235,7 +235,7 @@ ligo run evaluate-expr \
 A unique feature of LIGO is the ability to perform nested updates on
 records. For example if you have the following record structure:
 
-```cameligo
+```cameligo group=record_nested_update
 type color = Blue | Green
 
 type preferences = {
@@ -259,7 +259,7 @@ The following however also does the trick.
 
 For example if you have the following record structure:
 
-```jsligo
+```jsligo group=record_nested_update
 type color = ["Blue"] | ["Green"];
 
 type preferences = {
@@ -279,7 +279,7 @@ You can update the nested record with the following code:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=record_nested_update
 let change_color_preference (account : account) (color : color) : account =
   { account with preferences.color = color }
 ```
@@ -288,7 +288,7 @@ let change_color_preference (account : account) (color : color) : account =
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=record_nested_update
 const change_color_preference = (account : account, color : color) =>
   ({ ...account, preferences: {...account.preferences, color: color }});
 ```

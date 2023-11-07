@@ -14,7 +14,7 @@ constant, therefore the preferred way to write iterations is by means
 of recursive functions. Here is how to compute the greatest common
 divisors of two natural numbers by means of Euclid's algorithm:
 
-```cameligo group=a
+```cameligo group=gcd
 let rec iter (x, y : nat * nat) : nat =
   if y = 0n then x else iter (y, x mod y)
 
@@ -26,8 +26,9 @@ let gcd (x, y : nat * nat) : nat =
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/loops/gcd.mligo '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)' --entry-point gcd
+ligo run evaluate-call \
+  gitlab-pages/docs/language-basics/src/loops/gcd.mligo \
+  gcd '(2n*2n*3n*11n, 2n*2n*2n*3n*3n*5n*7n)'
 # Outputs: +12
 ```
 
@@ -36,7 +37,7 @@ constructs where the state of a stopping condition is mutated. There
 are two kinds of loops: for-loops and while-loops. Here is again
 Euclid's algorithm, but using mutation and a while-loop:
 
-```cameligo group=a
+```cameligo group=gcd-loop
 let gcd (a, b : nat * nat) =
   let mut x, y = a, b in // we will modify x and y
   let () =
@@ -95,7 +96,7 @@ function isPalindrome (s: string): bool {
 Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm with using a while loop:
 
-```jsligo group=a
+```jsligo group=gcd
 function gcd (a: nat, b: nat) {
   let [x,y] = [a,b]; // we will modify x and y
   if (x < y) {
@@ -115,7 +116,7 @@ function gcd (a: nat, b: nat) {
 And here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm using tail recursion:
 
-```jsligo group=a
+```jsligo group=gcd
 function iter (x: nat,y: nat): nat {
   if (y == 0n) return x else return iter (y, x % y)
 };
@@ -158,7 +159,7 @@ of the form `for (const <element var> of <collection var>) <block>`.
 
 Here is an example where the integers in a list are summed up.
 
-```jsligo group=d
+```jsligo group=collection
 function sum_list (l : list<int>) {
   let total = 0;
   for (const i of l) total = total + i;
@@ -177,7 +178,7 @@ ligo run evaluate-expr \
 
 Here is an example where the integers in a set are summed up.
 
-```jsligo group=d
+```jsligo group=collection
 function sum_set (s : set<int>) {
   let total : int = 0;
   for (const i of s) total = total + i;
@@ -190,7 +191,7 @@ like so:
 ```shell
 ligo run evaluate-expr \
   gitlab-pages/docs/language-basics/src/loops/collection.jsligo \
-  'sum_set(Set.literal(list([1;2;2;3])))'
+  'sum_set(Set.literal(list([1,2,2,3])))'
 # Outputs: 6
 ```
 
@@ -199,7 +200,7 @@ Given a map from strings to integers, here is how to sum
 all the integers and concatenate all the strings.
 
 
-```jsligo
+```jsligo group=collection
 function sum_map (m: map<string, int>) {
   let string_total = ""
   let int_total = 0

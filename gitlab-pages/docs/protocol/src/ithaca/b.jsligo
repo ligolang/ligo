@@ -1,0 +1,2 @@
+let d : option<tez> = (5 as mutez) - (1 as mutez); /* Some (4mutez) */
+let e : option<tez> = (1 as mutez) - (5 as mutez); /* None */

@@ -422,7 +422,7 @@ state.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=e
+```cameligo group=cond
 type magnitude = Small | Large (* See variant types. *)
 
 let compare (n : nat) : magnitude =
@@ -432,8 +432,7 @@ let compare (n : nat) : magnitude =
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call
-gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo '21n' --entry-point compare
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo compare '21n'
 # Outputs: Large
 ```
 
@@ -445,7 +444,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.mligo '21n' --entry-p
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=e
+```jsligo group=cond
 type magnitude = ["Small"] | ["Large"]; // See variant types.
 
 const compare = (n) => {
@@ -456,7 +455,7 @@ const compare = (n) => {
 You can run the `compare` function defined above using the LIGO compiler
 like this:
 ```shell
-ligo run evaluate-call  gitlab-pages/docs/language-basics/src/boolean-if-else/cond.jsligo compare '21n'
+ligo run evaluate-call gitlab-pages/docs/language-basics/src/boolean-if-else/cond.jsligo compare '21n'
 # Outputs: Large
 ```
 

@@ -24,7 +24,7 @@ Functions in CameLIGO are defined using the `let` keyword, like other
 values. The difference is that a succession of parameters is provided
 after the value name, followed by the return type. This follows OCaml
 syntax. For example:
-```cameligo group=c
+```cameligo group=add
 let add (a : int) (b : int) : int = a + b
 ```
 
@@ -32,7 +32,7 @@ You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
 ligo run evaluate-expr \
-  gitlab-pages/docs/language-basics/src/functions/blockless.mligo \
+  gitlab-pages/docs/language-basics/src/functions/add.mligo \
   'add 1 2'
 # Outputs: 3
 ```
@@ -59,7 +59,7 @@ a single parameter.
 Here is how you define a basic function that accepts two integers and
 returns an integer as well:
 
-```cameligo group=b
+```cameligo group=curry
 let add (a, b : int * int) : int = a + b             // Uncurried
 let add_curry (a : int) (b : int) : int = add (a, b) // Curried
 let increment : int -> int = add_curry 1             // Partial application
@@ -147,7 +147,7 @@ this instance). The latter manner is preferred when the function body
 is an expression. For example, here is how you define a basic function
 that sums two integers:
 
-```jsligo group=b
+```jsligo group=add
 const add = (a: int, b: int) => a + b;
 ```
 
@@ -155,7 +155,7 @@ You can call the function `add` defined above using the LIGO compiler
 like this:
 ```shell
 ligo run evaluate-expr \
-  gitlab-pages/docs/language-basics/src/functions/blockless.jsligo \
+  gitlab-pages/docs/language-basics/src/functions/add.jsligo \
   'add(1,2)'
 # Outputs: 3
 ```
@@ -206,7 +206,7 @@ Here is how to define an anonymous function:
 
 <Syntax syntax="cameligo">
 
-```cameligo group=c
+```cameligo group=anon
 let increment (b : int) : int = (fun (a : int) -> a + 1) b
 let a = increment 1 // a = 2
 ```
@@ -222,7 +222,7 @@ ligo run evaluate-expr gitlab-pages/docs/language-basics/src/functions/anon.mlig
 
 <Syntax syntax="jsligo">
 
-```jsligo group=c
+```jsligo group=anon
 const increment = (b) => ((a) => a + 1) (b);
 const a = increment(1); // a == 2
 ```
@@ -244,7 +244,7 @@ function to all its elements.
 
 <Syntax syntax="cameligo">
 
-```cameligo group=c
+```cameligo group=incr_map
 let incr_map (l : int list) : int list =
   List.map (fun (i : int) -> i + 1) l
 ```
@@ -261,7 +261,7 @@ ligo run evaluate-call \
 
 <Syntax syntax="jsligo">
 
-```jsligo group=c
+```jsligo group=incr_map
 let incr_map = l => List.map(i => i + 1, l);
 ```
 You can call the function `incr_map` defined above using the LIGO compiler

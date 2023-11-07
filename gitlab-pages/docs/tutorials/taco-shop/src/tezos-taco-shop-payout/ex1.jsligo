@@ -1,0 +1,8 @@
+const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address)
+const receiver : contract<unit> =
+  match (Tezos.get_contract_opt(ownerAddress) as option<contract<unit>>) {
+    when(Some(contract)): contract;
+    when(None()): (failwith ("Not a contract") as contract<unit>)
+  }
+const payoutOperation : operation = Tezos.transaction (unit, Tezos.get_amount (), receiver) ;
+const operations : list <operation> = list([payoutOperation]);

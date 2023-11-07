@@ -1,5 +1,7 @@
-#import "imported.mligo" "EURO"
+#import "gitlab-pages/docs/language-basics/src/modules/imported.mligo" "EURO"
+
 type storage = EURO.t
 
-let main (action, store : unit * storage) : operation list * storage =
- (([] : operation list), EURO.add(store, EURO.one))
+[@entry]
+let main (_action : unit) (store : storage) : operation list * storage =
+ ([], EURO.add(store, EURO.one))

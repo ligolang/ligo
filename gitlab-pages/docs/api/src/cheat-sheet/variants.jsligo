@@ -1,0 +1,10 @@
+type action =
+  ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+let a: action = Increment(5)
+const result: int = match(a) {
+  when(Increment(n)): n + 1;
+  when(Decrement(n)): n - 1;
+  when(Reset()): 0;
+}

@@ -30,7 +30,7 @@ contract:
 
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=mockup_testme
 (* This is mockup_testme.mligo *)
 type storage = string
 
@@ -46,7 +46,7 @@ let append (s : string) (store : storage) : result =
 
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=mockup_testme
 // This is mockup_testme.jsligo
 type storage = string;
 
@@ -64,7 +64,7 @@ To obtain Michelson code from it, we run the LIGO compiler like so:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo
+ligo compile contract gitlab-pages/docs/advanced/src/michelson_testing/mockup_testme.mligo
 # Outputs:
 # { parameter string ;
 #   storage string ;
@@ -76,7 +76,7 @@ ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.jsligo
+ligo compile contract gitlab-pages/docs/advanced/src/michelson_testing/mockup_testme.jsligo
 # Outputs:
 # { parameter string ;
 #   storage string ;
@@ -93,7 +93,7 @@ tell LIGO to write it in a file called `mockup_testme.tz`:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo --output-file mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/michelson_testing/mockup_testme.mligo --output-file mockup_testme.tz
 ```
 
 </Syntax>
@@ -101,7 +101,7 @@ ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.mligo --outpu
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract gitlab-pages/docs/advanced/src/mockup_testme.jsligo --output-file mockup_testme.tz
+ligo compile contract gitlab-pages/docs/advanced/src/michelson_testing/mockup_testme.jsligo --output-file mockup_testme.tz
 ```
 
 </Syntax>
@@ -117,7 +117,7 @@ mockup protocols`. In this example, we will use Edo for testing, so
 the command we use for creating a mockup instance on the directory
 `/tmp/mockup/` is:
 
-```shell
+```shell skip
 tezos-client \
   --protocol PtEdoTezd3RHSC31mpxxo1npxFjoWWcFgQtxapi51Z8TLu6v6Uq \
   --base-dir /tmp/mockup \
@@ -135,7 +135,7 @@ alias mockup-client='tezos-client --mode mockup --base-dir /tmp/mockup'
 
 We can list the addresses returned above by running:
 
-```shell
+```shell skip
 mockup-client list known addresses
 # Outputs:
 # bootstrap5: tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv (unencrypted sk known)
@@ -148,7 +148,7 @@ mockup-client list known addresses
 We are now ready to originate (or "deploy") the contract on our mockup
 Tezos:
 
-```shell
+```shell skip
 mockup-client originate contract mockup_testme \
               transferring 0 from bootstrap1 \
               running "`cat mockup_testme.tz`" \
@@ -166,7 +166,7 @@ the contract updates its storage to `"foobar"`.
 
 As a first sanity check, we can confirm that the storage is currently `"foo"`:
 
-```shell
+```shell skip
 mockup-client get contract storage for mockup_testme
 # Outputs:
 # "foo"
@@ -178,7 +178,7 @@ Then, we execute a call to our contract with parameter `Append
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile parameter gitlab-pages/docs/advanced/src/testing/mockup_testme.mligo "Append (\"bar\")" --entry-point main
+ligo compile parameter gitlab-pages/docs/advanced/src/michelson_testing/mockup_testme.mligo "Append (\"bar\")"
 # Outputs:
 # "bar"
 ```
@@ -189,7 +189,7 @@ So our parameter is simply the string (notice that the constructor
 `Append` was removed). We execute a call to the contract with this
 compiled parameter as follows:
 
-```shell
+```shell skip
 mockup-client transfer 0 from bootstrap2 \
               to mockup_testme \
               --arg \"bar\" --burn-cap 0.01
@@ -201,7 +201,7 @@ particular reason, any address could do).
 We can finally check that that our property holds: the storage is now
 "foobar":
 
-```shell
+```shell skip
 mockup-client get contract storage for mockup_testme
 # Outputs:
 # "foobar"

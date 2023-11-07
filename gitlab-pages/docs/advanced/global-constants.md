@@ -44,16 +44,24 @@ In a contract, we can make reference to a global constant by using the
 
 <Syntax syntax="cameligo">
 
-```
-(Tezos.constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2" : int -> int)
+```cameligo group=global_call
+let c : int -> int = Tezos.constant "expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2"
+
+[@entry]
+let main (_p : unit) (s : int) : operation list * int =
+  ([], c s)
 ```
 
 </Syntax>
 
 <Syntax syntax="jsligo">
 
-```
-(Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2") as ((_p : int) => int))
+```jsligo group=global_call
+const c : ((_p : int) => int) = Tezos.constant("expruCKsgmUZjC7k8NRcwbcGbFSuLHv5rUyApNd972MwArLuxEZQm2")
+
+@entry
+let main = (_p : unit, s : int) : [list<operation>, int] =>
+  [list([]), c(s)]
 ```
 
 </Syntax>
@@ -68,7 +76,7 @@ contract` sub-command in the `--constants` argument:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract ./gitlab-pages/docs/advanced/src/global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract ./gitlab-pages/docs/advanced/src/global-constants/global_call.mligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
@@ -76,7 +84,7 @@ ligo compile contract ./gitlab-pages/docs/advanced/src/global_call.mligo --const
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract ./gitlab-pages/docs/advanced/src/global_call.jsligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
+ligo compile contract ./gitlab-pages/docs/advanced/src/global-constants/global_call.jsligo --constants "{ PUSH int 2 ; PUSH int 3 ; DIG 2 ; MUL ; ADD }"
 ```
 
 </Syntax>
@@ -152,7 +160,7 @@ step is to ask LIGO to compile the constant:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global_const.mligo
+ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global-constants/global_const.mligo
 # Outputs:
 # Michelson constant as JSON string:
 # "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -178,7 +186,7 @@ ligo compile constant cameligo "helper" --init-file ./gitlab-pages/docs/advanced
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile constant jsligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global_const.jsligo
+ligo compile constant jsligo "helper" --init-file ./gitlab-pages/docs/advanced/src/global-constants/global_const.jsligo
 # Outputs:
 # Michelson constant as JSON string:
 # "{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"
@@ -242,7 +250,8 @@ The new version of `global_call` looks as follows:
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=global_call_2
+[@entry]
 let main (p : string) (s : int) : operation list * int =
   ([], (Tezos.constant "exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s))
 ```
@@ -251,9 +260,10 @@ let main (p : string) (s : int) : operation list * int =
 
 <Syntax syntax="jsligo">
 
-```jsligo skip
+```jsligo group=global_call_2
+@entry
 const main = (p: string, s: int) : [list<operation>, int] =>
-  [ list([]), Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")(p, s) ];
+  [ list([]), Tezos.constant("exprv547Y7U5wKLbQGmkDU9Coh5tKPzvEJjyUed7px9yGt9nrkELXf")([p, s]) ];
 ```
 
 </Syntax>
@@ -264,6 +274,8 @@ consisting of the string returned by `compile constant`:
 
 <Syntax syntax="cameligo">
 
+<!-- NOTE: this snippet is not automatically extracted to consts_cameligo.json, please update the file when modifying this snippet -->
+
 ```
 ["{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"]
 ```
@@ -272,8 +284,10 @@ consisting of the string returned by `compile constant`:
 
 <Syntax syntax="jsligo">
 
+<!-- NOTE: this snippet is not automatically extracted to consts_jsligo.json, please update the file when modifying this snippet -->
+
 ```
-["{ PUSH int 2 ;\n  PUSH int 3 ;\n  DUP 3 ;\n  CDR ;\n  MUL ;\n  DIG 2 ;\n  CAR ;\n  SIZE ;\n  ADD ;\n  ADD }"]
+["{ UNPAIR ;\n  PUSH int 2 ;\n  PUSH int 3 ;\n  DIG 3 ;\n  MUL ;\n  DIG 2 ;\n  SIZE ;\n  ADD ;\n  ADD }"]
 ```
 
 </Syntax>
@@ -284,7 +298,7 @@ passing the file with constants in the flag `--file-constants`:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract global_call.mligo --file-constants consts.json
+ligo compile contract ./gitlab-pages/docs/advanced/src/global-constants/global_call_2.mligo --file-constants ./gitlab-pages/docs/advanced/src/global-constants/consts_cameligo.json
 # Outputs:
 # { parameter string ;
 #   storage int ;
@@ -298,7 +312,7 @@ ligo compile contract global_call.mligo --file-constants consts.json
 <Syntax syntax="jsligo">
 
 ```shell
-ligo compile contract global_call.jsligo --file-constants consts.json
+ligo compile contract ./gitlab-pages/docs/advanced/src/global-constants/global_call_2.jsligo --file-constants ./gitlab-pages/docs/advanced/src/global-constants/consts_jsligo.json
 # Outputs:
 # { parameter string ;
 #   storage int ;

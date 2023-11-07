@@ -100,7 +100,7 @@ branch when matching on the parameter of our contract:
 
 <Syntax syntax="cameligo">
 
-```cameligo skip
+```cameligo group=never
 type parameter =
   Increment of int
 | Extend of never
@@ -145,7 +145,7 @@ can compile it using the following command:
 <Syntax syntax="cameligo">
 
 ```shell
-ligo compile contract --protocol edo --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo
+ligo compile contract --protocol nairobi --disable-michelson-typechecking gitlab-pages/docs/advanced/src/code-injection/never.mligo
 ```
 
 </Syntax>

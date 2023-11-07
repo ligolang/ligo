@@ -1,4 +1,4 @@
-let quarter = (n : int) : string => {
+let quarter = n => {
   let output = "";
   switch (n) {
     case 1:

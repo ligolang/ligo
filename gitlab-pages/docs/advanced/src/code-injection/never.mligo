@@ -4,9 +4,9 @@ type parameter =
 
 type storage = int
 
-let main(action, store : parameter * storage) : operation list * storage =
-  ([] : operation list), 
+[@entry]
+let main (action : parameter) (store : storage) : operation list * storage =
+  [],
   (match action with
-    Increment n -> store + n
-  | Extend k -> [%Michelson ({| { NEVER } |} : never -> int)] k)
-
+     Increment n -> store + n
+   | Extend k    -> [%Michelson ({| { NEVER } |} : never -> int)] k)

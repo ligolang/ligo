@@ -1,0 +1,26 @@
+namespace C {
+  export type storage = int;
+
+  @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+
+  @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+
+  @view
+  const get_storage = (must_be_positive: bool, storage: int): int => {
+    if (must_be_positive && storage < 0) {
+      return failwith("Negative value in storage");
+    } else {
+      return storage;
+    }
+  }
+};
+
+const testC = do {
+    let initial_storage = 42;
+    let originated = Test.originate(contract_of(C), initial_storage, 0tez);
+    let p : parameter_of C = Increment(1);
+    Test.transfer_exn(originated.addr, p, 1mutez);
+    return assert(Test.get_storage(originated.addr) == initial_storage + 1);
+}
