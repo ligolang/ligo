@@ -2051,8 +2051,8 @@ let%expect_test _ =
     Module definitions:
     (X#1:7-8 -> X)
     Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 7-8
-    Body Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-90
-    Content: Alias: Mangled_module_____________________test__contracts__get_scope_tests__x____mligo#env
+    Body Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-94
+    Content: Alias: Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo#env
     references:
       File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9
 
@@ -2066,7 +2066,7 @@ let%expect_test _ =
                       Content: |resolved: int|
                       references:
                         File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
-                      Mod Path = "Mangled_module_____________________test__contracts__get_scope_tests__x____mligo"
+                      Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
                       Def Type = Module_field
                       (x#4:4-5 -> x)
                       Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 4-5
@@ -2074,7 +2074,7 @@ let%expect_test _ =
                       Content: |resolved: x|
                       references:
                         File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 10-11
-                      Mod Path = "Mangled_module_____________________test__contracts__get_scope_tests__x____mligo"
+                      Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
                       Def Type = Module_field
                       Type definitions:
                       (x#1:5-6 -> x)
@@ -2086,7 +2086,7 @@ let%expect_test _ =
                       Module definitions:
 
     references:
-      File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-90 |}];
+      File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-94 |}];
   run_ligo_good
     [ "info"
     ; "get-scope"
