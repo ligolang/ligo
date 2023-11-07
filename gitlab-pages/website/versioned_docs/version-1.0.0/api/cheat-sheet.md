@@ -10,6 +10,40 @@ import Syntax from '@theme/Syntax';
 <Syntax syntax="cameligo">
 
 <div className="codeTable">
+<div className="primitive">
+Contract, view and test
+</div>
+<div className="example">
+
+```cameligo group=simple_contract_with_view_and_test
+module C = struct
+  type storage = int
+
+  [@entry]
+  let increment (action: int) (store: storage) : operation list * storage =
+    [], store + action
+
+  [@entry]
+  let decrement (action: int) (store: storage) : operation list * storage =
+    [], store - action
+
+  [@view]
+  let get_storage (must_be_positive: bool) (storage: int) : int =
+    if must_be_positive && storage < 0 then
+      failwith "Negative value in storage"
+    else
+      storage
+end
+
+let testC =
+    let initial_storage = 42 in
+    let originated = Test.originate (contract_of C) initial_storage 0tez in
+    let p : C parameter_of = Increment 1 in
+    let _ = Test.transfer_exn originated.addr p 1mutez in
+    assert (Test.get_storage originated.addr = initial_storage + 1)
+```
+
+</div>
 <div className="primitive">Strings</div>
 <div className="example">
 
@@ -108,6 +142,26 @@ let kt1address : address =
 
 </div>
 <div className="primitive">
+String
+</div>
+<div className="example">
+
+```cameligo
+let my_str : string = "Hello World!"
+```
+
+</div>
+<div className="primitive">
+Verbatim string
+</div>
+<div className="example">
+
+```cameligo
+let verbatim_str : string = {|verbatim string|}
+```
+
+</div>
+<div className="primitive">
 Addition
 </div>
 <div className="example">
@@ -169,11 +223,24 @@ type name = string
 
 </div>
 <div className="primitive">
-Includes
+Include (prefer import)
 </div>
 <div className="example">
 
-```#include "library.mligo"```
+```cameligo skip
+#include "library.mligo"
+```
+
+</div>
+<div className="primitive">
+Import (better)
+</div>
+<div className="example">
+
+```cameligo skip
+#import "library.mligo" "MyLibrary"
+let foo = MyLibrary.bar
+```
 
 </div>
 <div className="primitive">
@@ -340,6 +407,99 @@ let fail (u : unit) : unit =
 ```
 
 </div>
+<div className="primitive">
+Comb layout (default)
+</div>
+<div className="example">
+
+```cameligo
+type animal =
+[@layout comb]
+| Elephant
+| Dog
+| Cat
+```
+
+</div>
+<div className="primitive">
+Tree layout
+</div>
+<div className="example">
+
+```cameligo
+type animal =
+[@layout tree]
+| Elephant
+| Dog
+| Cat
+```
+
+</div>
+<div className="primitive">
+Module definition (auto-inferred type)
+</div>
+<div className="example">
+
+```cameligo
+module FA0_inferred = struct
+  type t = unit
+  [@entry] let transfer (_ : unit) (_ : t) : operation list * t = [], ()
+end
+```
+
+</div>
+<div className="primitive">
+Module Type
+</div>
+<div className="example">
+
+```cameligo
+module type FA0_SIG = sig
+  type t
+  [@entry] val transfer : unit -> t -> operation list * t
+end
+```
+
+</div>
+<div className="primitive">
+Extending Module Type
+</div>
+<div className="example">
+
+```cameligo
+module type FA0Ext_SIG = sig
+  include FA0_SIG
+  [@entry] val transfer2 : unit -> t -> operation list * t
+end
+```
+
+</div>
+<div className="primitive">
+Module definition
+</div>
+<div className="example">
+
+```cameligo
+module FA0 : FA0_SIG = struct
+  type t = unit
+  [@entry] let transfer (_ : unit) (_ : t) : operation list * t = [], ()
+end
+```
+
+</div>
+<div className="primitive">
+Extending module definition
+</div>
+<div className="example">
+
+```cameligo
+module FA0Ext : FA0Ext_SIG = struct
+  include FA0
+  [@entry] let transfer2 (a : unit) (b : t) = transfer a b
+end
+```
+
+</div>
 </div>
 
 </Syntax>
@@ -347,11 +507,46 @@ let fail (u : unit) : unit =
 <Syntax syntax="jsligo">
 
 <div className="codeTable">
+<div className="primitive">
+Contract, view and test
+</div>
+<div className="example">
+
+```jsligo group=simple_contract_with_view_and_test
+namespace C {
+  export type storage = int;
+
+  @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+
+  @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+
+  @view
+  const get_storage = (must_be_positive: bool, storage: int): int => {
+    if (must_be_positive && storage < 0) {
+      return failwith("Negative value in storage");
+    } else {
+      return storage;
+    }
+  }
+};
+
+const testC = do {
+    let initial_storage = 42;
+    let originated = Test.originate(contract_of(C), initial_storage, 0tez);
+    let p : parameter_of C = Increment(1);
+    Test.transfer_exn(originated.addr, p, 1mutez);
+    return assert(Test.get_storage(originated.addr) == initial_storage + 1);
+}
+```
+
+</div>
 <div className="primitive">Strings</div>
 <div className="example">
 
 ```jsligo
-let name: string = "Tezos";
+const name: string = "Tezos";
 ```
 
 </div>
@@ -361,7 +556,7 @@ Characters
 <div className="example">
 
 ```jsligo
-let t: string = "t";
+const t: string = "t";
 ```
 
 </div>
@@ -371,7 +566,7 @@ Integers
 <div className="example">
 
 ```jsligo
-let i: int = 42;
+const i: int = 42;
 ```
 
 </div>
@@ -381,7 +576,7 @@ Natural numbers
 <div className="example">
 
 ```jsligo
-let n: nat = 7n;
+const n: nat = 7n;
 ```
 
 </div>
@@ -391,7 +586,7 @@ Unit
 <div className="example">
 
 ```jsligo
-let u: unit = unit;
+const u: unit = unit;
 ```
 
 </div>
@@ -401,8 +596,8 @@ Boolean
 <div className="example">
 
 ```jsligo
-let has_drivers_license: bool = false
-let adult: bool = true
+const has_drivers_license: bool = false
+const adult: bool = true
 ```
 
 </div>
@@ -412,7 +607,7 @@ Boolean Logic
 <div className="example">
 
 ```jsligo
-let booleanLogic: bool =
+const booleanLogic: bool =
     (!true) ==
     false ==
     (false && true) ==
@@ -426,8 +621,8 @@ Mutez (micro tez)
 <div className="example">
 
 ```jsligo
-let tez: tez = 42tez
-let tez2: tez = 7mutez
+const tez_amount: tez = 42tez
+const tez_amount2: tez = tez_amount + 7mutez // == 42000007mutez
 ```
 
 </div>
@@ -437,10 +632,30 @@ Address
 <div className="example">
 
 ```jsligo
-let tz1address: address =
+const tz1address: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
-let kt1address: address =
+const kt1address: address =
   "KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD" as address;
+```
+
+</div>
+<div className="primitive">
+String
+</div>
+<div className="example">
+
+```jsligo
+const my_str : string = "Hello World!";
+```
+
+</div>
+<div className="primitive">
+Verbatim string
+</div>
+<div className="example">
+
+```jsligo
+const verbatim_str : string = `verbatim string`;
 ```
 
 </div>
@@ -450,8 +665,8 @@ Addition
 <div className="example">
 
 ```jsligo
-let add_int: int = 3 + 4;
-let add_nat: nat = 3n + 4n;
+const add_int: int = 3 + 4;
+const add_nat: nat = 3n + 4n;
 ```
 
 </div>
@@ -461,11 +676,11 @@ Multiplication & Division
 <div className="example">
 
 ```jsligo
-let mul_int: int = 3 * 4;
-let mul_nat: nat = 3n * 4n;
+const mul_int: int = 3 * 4;
+const mul_nat: nat = 3n * 4n;
 
-let div_int: int = 10 / 5;
-let div_nat: nat = 10n / 5n;
+const div_int: int = 10 / 5;
+const div_nat: nat = 10n / 5n; // can fail (division by zero), check your inputs first.
 ```
 
 </div>
@@ -475,7 +690,7 @@ Modulo
 <div className="example">
 
 ```jsligo
-let mod_nat: nat = 10 % 3
+const mod_nat: nat = 10 % 3; // can fail (division by zero), check your inputs first.
 ```
 
 </div>
@@ -487,10 +702,10 @@ Tuples
 ```jsligo
 type name = [string, string];
 
-let winner: name = ["John", "Doe"];
+const winner: name = ["John", "Doe"];
 
-let firstName: string = winner[0];
-let lastName: string = winner[1];
+const firstName: string = winner[0];
+const lastName: string = winner[1];
 ```
 
 </div>
@@ -506,11 +721,24 @@ type name = string
 
 </div>
 <div className="primitive">
-Includes
+Include (prefer import)
 </div>
 <div className="example">
 
-```#include "library.jsligo"```
+```jsligo skip
+#include "library.jsligo"
+```
+
+</div>
+<div className="primitive">
+Import (better)
+</div>
+<div className="example">
+
+```jsligo skip
+#import "library.jsligo" "MyLibrary"
+const foo = MyLibrary.bar;
+```
 
 </div>
 <div className="primitive">
@@ -519,7 +747,7 @@ Functions (short form)
 <div className="example">
 
 ```jsligo
-let add = (a: int, b: int): int =>
+const add = (a: int, b: int): int =>
   a + b;
 ```
 
@@ -530,7 +758,7 @@ Functions (long form)
 <div className="example">
 
 ```jsligo group=b
-let add = (a: int, b: int): int => {
+const add = (a: int, b: int): int => {
   let c = a;
   let d = b;
   return c + d
@@ -539,7 +767,7 @@ let add = (a: int, b: int): int => {
 
 </div>
 <div className="primitive">
-If Statement
+If/else Statement
 </div>
 <div className="example">
 
@@ -557,8 +785,8 @@ Options
 
 ```jsligo
 type middle_name = option<string>;
-let middle_name : middle_name = Some("Foo");
-let middle_name_ : middle_name = None();
+const a_middle_name : middle_name = Some("Foo");
+const no_middle_name : middle_name = None();
 ```
 
 </div>
@@ -568,7 +796,7 @@ Variable Binding
 <div className="example">
 
 ```jsligo
-let age: int = 5
+const age: int = 5
 ```
 
 </div>
@@ -578,39 +806,41 @@ Type Annotations
 <div className="example">
 
 ```jsligo
-let someAddress: address =
+const someAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 ```
 
 </div>
 <div className="primitive">
-Variants
+Variants (label + optional value)
 </div>
 <div className="example">
 
 ```jsligo group=variants
 type action =
   ["Increment", int]
-| ["Decrement", int];
+| ["Decrement", int]
+| ["Reset"];
 ```
 
 </div>
 <div className="primitive">
-Variant *(pattern)* matching
+Matching on variant cases
 </div>
 <div className="example">
 
 ```jsligo group=variants
 let a: action = Increment(5)
-let result: int = match(a) {
+const result: int = match(a) {
   when(Increment(n)): n + 1;
-  when(Decrement(n)): n - 1
+  when(Decrement(n)): n - 1;
+  when(Reset()): 0;
 }
 ```
 
 </div>
 <div className="primitive">
-Records
+Records / Plain Old Data Objects
 </div>
 <div className="example">
 
@@ -620,12 +850,12 @@ type person = {
   name: string
 }
 
-let john : person = {
+const john : person = {
   age: 18,
   name: "john doe"
 }
 
-let name_: string = john.name
+const name_: string = john.name
 ```
 
 </div>
@@ -637,15 +867,15 @@ Maps
 ```jsligo
 type prices = map<nat, tez>;
 
-let prices: prices = Map.literal(list([
+const prices: prices = Map.literal(list([
   [10n, 60mutez],
   [50n, 30mutez],
   [100n, 10mutez]
 ]));
 
-let price: option<tez> = Map.find_opt(50n, prices)
+const price: option<tez> = Map.find_opt(50n, prices)
 
-let prices2: prices = Map.update(200n, Some (5mutez), prices)
+const prices2: prices = Map.update(200n, Some (5mutez), prices)
 ```
 
 </div>
@@ -655,13 +885,13 @@ Contracts & Accounts
 <div className="example">
 
 ```jsligo group=tezos_specific
-let destinationAddress: address =
+const destinationAddress: address =
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-let contract : contract<unit> =
+const contract : contract<unit> =
   match(Tezos.get_contract_opt(Tezos.get_sender()) as option<contract<unit>>) {
     when(Some(contract)): contract;
-    when(None()): (failwith("no contract") as contract<unit>)
+    when(None()): failwith("no contract or wrong contract type")
   }
 ```
 
@@ -672,10 +902,8 @@ Transactions
 <div className="example">
 
 ```jsligo group=tezos_specific
-
-let payment: operation =
+const payment: operation =
   Tezos.transaction(unit, 100mutez, contract);
-
 ```
 
 </div>
@@ -685,35 +913,99 @@ Exception/Failure
 <div className="example">
 
 ```jsligo
-let fail = (u: unit) : unit =>
+const fail = (u: unit) : unit =>
   failwith("a failure message")
 ```
 
 </div>
 <div className="primitive">
-contract_of and parameter_of
+Comb layout (default)
 </div>
 <div className="example">
 
-```jsligo group=tezos_specific
-namespace C {
+```jsligo
+type animal =
+@layout("comb")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</div>
+<div className="primitive">
+Tree layout
+</div>
+<div className="example">
+
+```jsligo
+type animal =
+@layout("tree")
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</div>
+<div className="primitive">
+Namespace (auto-inferred type)
+</div>
+<div className="example">
+
+```jsligo
+namespace FA0_inferred {
   type storage = int;
-
-  @entry
-  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
-
-  @entry
-  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
-};
-
-const testC = () => {
-    let initial_storage = 42;
-    let orig = Test.originate(contract_of(C), initial_storage, 0tez);
-    let p : parameter_of C = Increment(1);
-    Test.transfer_exn(orig.addr, p, 1mutez);
-    return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
 }
 ```
+
+</div>
+<div className="primitive">
+Interface
+</div>
+<div className="example">
+
+```jsligo
+interface FA0_INTF {
+  type storage;
+  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+}
+```
+
+</div>
+<div className="primitive">
+Extending Interface
+</div>
+<div className="example">
+
+```jsligo
+interface FA0_EXT_INTF extends FA0_INTF {
+  type storage;
+  @entry const add : (s : int, k : storage) => [list<operation>, storage];
+}
+```
+
+</div>
+<div className="primitive">
+Namespace impmlementing
+</div>
+<div className="example">
+
+```jsligo
+namespace FA0 implements FA0_INTF {
+  type storage = int;
+  @entry const add = (s : int, k : int) : [list<operation>, int] => [list([]), s + k];
+  @entry const extra = (s : int, k : int) : [list<operation>, int] => [list([]), s - k];
+}
+```
+
+</div>
+<div className="primitive">
+Extending namespace
+</div>
+<div className="example">
+
+Not available in JsLIGO, use CameLIGO.
 
 </div>
 </div>
