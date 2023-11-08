@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with broken document links to library files. Now if you `ctrl+click` them it'll show you the correct file.\\n\\n\\n"
+merge_request: '2967'
+title: "Draft: [#1962] Fix broken links to library files"
+type: fixed
+            

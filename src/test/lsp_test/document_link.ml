@@ -73,6 +73,28 @@ let test_cases =
           }
         ]
     }
+  ; { file_path = "contracts/lsp/registry.jsligo" (* with #import *)
+    ; document_links =
+        [ { range = interval 0 8 43
+          ; target =
+              relative
+                "contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
+          ; tooltip = None
+          ; data = None
+          }
+        ]
+    }
+  ; { file_path = "contracts/lsp/registry_include.jsligo" (* with #include *)
+    ; document_links =
+        [ { range = interval 0 9 44
+          ; target =
+              relative
+                "contracts/lsp/.ligo/source/i/ligo__s__bigarray__1.0.0__cf1c9d6c/lib/bigarray.mligo"
+          ; tooltip = None
+          ; data = None
+          }
+        ]
+    }
   ]
 
 

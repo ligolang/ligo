@@ -20,6 +20,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       ; config
       ; docs_cache = Docs_cache.create ()
       ; last_project_file = ref None
+      ; mod_res = ref None
       }
       session
   in

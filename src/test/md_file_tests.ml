@@ -8,9 +8,9 @@ type syntax = string
 type group_name = string
 
 type lang =
-  | Meta   (* Meta = ligo test framework code *)
+  | Meta (* Meta = ligo test framework code *)
   | Object (* Object = normal LIGO code *)
-  | Shell  (* Shell = compilation commands and other sh code *)
+  | Shell (* Shell = compilation commands and other sh code *)
 
 module SnippetsGroup = Caml.Map.Make (struct
   type t = syntax * group_name * Environment.Protocols.t
@@ -35,6 +35,7 @@ let get_proto p =
   | Some x -> x
   | None -> failwith (Format.asprintf "unknown protocol %s" p)
 
+
 let current_proto = get_proto "current"
 let in_use_proto = Environment.Protocols.in_use
 
@@ -48,10 +49,8 @@ let execute_command command : int * string =
         let line = In_channel.input_line ic in
         match line with
         | Some line ->
-          begin
           Buffer.add_string all_output line;
           Buffer.add_char all_output '\n'
-          end
         | None -> raise End_of_file
       done;
       0
@@ -59,9 +58,11 @@ let execute_command command : int * string =
     | End_of_file ->
       let status = Ligo_unix.close_process_in ic in
       (match status with
-       | Ligo_unix.WEXITED code | Ligo_unix.WSIGNALED code | Ligo_unix.WSTOPPED code -> code)
+      | Ligo_unix.WEXITED code | Ligo_unix.WSIGNALED code | Ligo_unix.WSTOPPED code ->
+        code)
   in
   exit_code, Buffer.contents all_output
+
 
 (*
   Binds the snippets by (syntax, group_name).
@@ -75,7 +76,7 @@ let get_groups md_file : snippetsmap =
   let channel = In_channel.create md_file in
   let lexbuf = Lexing.from_channel channel in
   let code_blocks = Md.token lexbuf in
-  let aux : (int * snippetsmap) -> Md.block -> (int * snippetsmap) =
+  let aux : int * snippetsmap -> Md.block -> int * snippetsmap =
    fun (nb_shell_blocks, grp_map) el ->
     match el.header with
     | Some "shell" ->
@@ -84,120 +85,121 @@ let get_groups md_file : snippetsmap =
         List.iter
           ~f:(fun arg ->
             match arg with
-            | Md.Field ""
-            | Md.Field "skip"
-            | Md.Field "run" -> ()
+            | Md.Field "" | Md.Field "skip" | Md.Field "run" -> ()
             (*| Md.NameValue ("group", _)
             | Md.Field "test-ligo"
             | Md.NameValue ("protocol", _)*)
             | Md.Field f ->
               failwith
                 (Format.asprintf
-                  "unknown Field '%s' in code block at line %d of file %s (%s)"
-                  f
-                  el.line
-                  el.file
-                  md_file)
+                   "unknown Field '%s' in code block at line %d of file %s (%s)"
+                   f
+                   el.line
+                   el.file
+                   md_file)
             | Md.NameValue (k, v) ->
               failwith
                 (Format.asprintf
-                  "unknown argument '%s=%s' in code block at line %d of file %s (%s)"
-                  k v
-                  el.line
-                  el.file
-                  md_file))
-          el.arguments
-      in
-      (
-        match el.arguments with
-        (* Run everything by default, some code below tests for GITLAB_CI to only actually run things on the CI *)
-        | [ Md.Field "" ]
-        | [ Md.Field "run" ] ->
-          nb_shell_blocks + 1,
-          SnippetsGroup.update
-            ("shell", Format.sprintf "run_shell_%d" nb_shell_blocks, current_proto)
-            (function
-              (* TODO: should use String.concat only once at the top *)
-              | Some (Shell, sh) -> Some (Shell, String.concat ~sep:"\n" (sh :: el.contents))
-              | None             -> Some (Shell, String.concat ~sep:"\n" el.contents)
-              | Some (_, sh) -> failwith "internal test error: group name shouldn't be 'run_shell_xxx'")
-            grp_map
-        | [ Md.Field "skip" ] | _ -> nb_shell_blocks, grp_map
-      )
-    | Some ("cameligo" as s) | Some ("jsligo" as s) ->
-      nb_shell_blocks,
-      let () =
-        (*sanity check*)
-        List.iter
-          ~f:(fun arg ->
-            match arg with
-            | Md.Field ""
-            | Md.Field "skip"
-            | Md.NameValue ("group", _)
-            | Md.Field "test-ligo"
-            | Md.NameValue ("protocol", _) -> ()
-            | Md.Field _ | Md.NameValue (_, _) ->
-              failwith
-                (Format.asprintf
-                   "unknown argument '%s' in code block at line %d of file %s"
-                   (arg_to_string arg)
+                   "unknown argument '%s=%s' in code block at line %d of file %s (%s)"
+                   k
+                   v
                    el.line
-                   el.file))
+                   el.file
+                   md_file))
           el.arguments
       in
       (match el.arguments with
-      | [ Md.Field "" ] ->
-        SnippetsGroup.update
-          (s, "ungrouped", current_proto)
-          (fun arg_content ->
-            match arg_content with
-            | Some (lang, ct) -> Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
-            | None -> Some (Object, String.concat ~sep:"\n" el.contents))
-          grp_map
-      | [ Md.Field "skip" ] -> grp_map
-      | [ Md.Field "test-ligo"; Md.NameValue ("group", name) ] ->
-        let lang = Meta in
-        SnippetsGroup.update
-          (s, name, in_use_proto)
-          (fun arg_content ->
-            match arg_content with
-            | Some (lang', ct) when Caml.( = ) lang lang' ->
-              Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
-            | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-          grp_map
-      | [ Md.NameValue ("group", name); Md.NameValue ("protocol", x) ] ->
-        let lang = Object in
-        SnippetsGroup.update
-          (s, name, get_proto x)
-          (fun arg_content ->
-            match arg_content with
-            | Some (lang', ct) when Caml.( = ) lang lang' ->
-              Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
-            | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-          grp_map
-      | [ Md.NameValue ("group", name) ] ->
-        let lang = Object in
-        SnippetsGroup.update
-          (s, name, current_proto)
-          (fun arg_content ->
-            match arg_content with
-            | Some (lang', ct) when Caml.( = ) lang lang' ->
-              Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
-            | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
-          grp_map
-      | args ->
-        let () =
+      (* Run everything by default, some code below tests for GITLAB_CI to only actually run things on the CI *)
+      | [ Md.Field "" ] | [ Md.Field "run" ] ->
+        ( nb_shell_blocks + 1
+        , SnippetsGroup.update
+            ("shell", Format.sprintf "run_shell_%d" nb_shell_blocks, current_proto)
+            (function
+              (* TODO: should use String.concat only once at the top *)
+              | Some (Shell, sh) ->
+                Some (Shell, String.concat ~sep:"\n" (sh :: el.contents))
+              | None -> Some (Shell, String.concat ~sep:"\n" el.contents)
+              | Some (_, sh) ->
+                failwith "internal test error: group name shouldn't be 'run_shell_xxx'")
+            grp_map )
+      | [ Md.Field "skip" ] | _ -> nb_shell_blocks, grp_map)
+    | Some ("cameligo" as s) | Some ("jsligo" as s) ->
+      ( nb_shell_blocks
+      , let () =
+          (*sanity check*)
           List.iter
-            ~f:(function
-              | Md.NameValue (x, y) -> Format.printf "NamedValue %s %s\n" x y
-              | Md.Field x -> Format.printf "%s\n" x)
-            args
+            ~f:(fun arg ->
+              match arg with
+              | Md.Field ""
+              | Md.Field "skip"
+              | Md.NameValue ("group", _)
+              | Md.Field "test-ligo"
+              | Md.NameValue ("protocol", _) -> ()
+              | Md.Field _ | Md.NameValue (_, _) ->
+                failwith
+                  (Format.asprintf
+                     "unknown argument '%s' in code block at line %d of file %s"
+                     (arg_to_string arg)
+                     el.line
+                     el.file))
+            el.arguments
         in
-        failwith "Block arguments (above) not supported")
+        (match el.arguments with
+        | [ Md.Field "" ] ->
+          SnippetsGroup.update
+            (s, "ungrouped", current_proto)
+            (fun arg_content ->
+              match arg_content with
+              | Some (lang, ct) -> Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
+              | None -> Some (Object, String.concat ~sep:"\n" el.contents))
+            grp_map
+        | [ Md.Field "skip" ] -> grp_map
+        | [ Md.Field "test-ligo"; Md.NameValue ("group", name) ] ->
+          let lang = Meta in
+          SnippetsGroup.update
+            (s, name, in_use_proto)
+            (fun arg_content ->
+              match arg_content with
+              | Some (lang', ct) when Caml.( = ) lang lang' ->
+                Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
+            grp_map
+        | [ Md.NameValue ("group", name); Md.NameValue ("protocol", x) ] ->
+          let lang = Object in
+          SnippetsGroup.update
+            (s, name, get_proto x)
+            (fun arg_content ->
+              match arg_content with
+              | Some (lang', ct) when Caml.( = ) lang lang' ->
+                Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
+            grp_map
+        | [ Md.NameValue ("group", name) ] ->
+          let lang = Object in
+          SnippetsGroup.update
+            (s, name, current_proto)
+            (fun arg_content ->
+              match arg_content with
+              | Some (lang', ct) when Caml.( = ) lang lang' ->
+                Some (lang, String.concat ~sep:"\n" (ct :: el.contents))
+              | _ -> Some (lang, String.concat ~sep:"\n" el.contents))
+            grp_map
+        | args ->
+          let () =
+            List.iter
+              ~f:(function
+                | Md.NameValue (x, y) -> Format.printf "NamedValue %s %s\n" x y
+                | Md.Field x -> Format.printf "%s\n" x)
+              args
+          in
+          failwith "Block arguments (above) not supported") )
     | None | Some _ -> nb_shell_blocks, grp_map
   in
-  let ((_nb_shell_blocks : int), grp_map) = List.fold_left ~f:aux ~init:(0, SnippetsGroup.empty) code_blocks in
+  let (_nb_shell_blocks : int), grp_map =
+    List.fold_left ~f:aux ~init:(0, SnippetsGroup.empty) code_blocks
+  in
   grp_map
+
 
 (** Write contents to filename if the file doesn't already have the same contents.
     This avoids floppy disk wear and spurious updates of timestamps,
@@ -205,47 +207,62 @@ let get_groups md_file : snippetsmap =
 let write_if_different (filename : string) ~(contents : string) : bool =
   let old_contents, same =
     try
-      let old_contents = Caml.In_channel.with_open_bin filename Caml.In_channel.input_all in
+      let old_contents =
+        Caml.In_channel.with_open_bin filename Caml.In_channel.input_all
+      in
       old_contents, String.equal old_contents contents
-    with _ -> "<error>", false (* if there is any error while reading, assume we need to write. *)
+    with
+    | _ ->
+      "<error>", false (* if there is any error while reading, assume we need to write. *)
   in
-  if same then
-    false
-  else
+  if same
+  then false
+  else (
     let () = Out_channel.write_all filename ~data:contents in
-    true
+    true)
+
 
 let write_to_files ~raise md_filename grp_list : bool =
-  let aux
-    : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> bool
-    = fun ((syntax, grp, protocol_version), (lang, contents)) ->
-      if String.equal syntax "shell" then
-        false
-      else
-        let root_dir =
-          if Caml.Sys.file_exists "../../dune-project" then "../.."
-          else if Caml.Sys.file_exists "../../../dune-project" then "../../.."
-          else failwith "Could not find root_dir, please fix src/test/md_file_tsts.ml"
-        in
-        let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
-        let dirname =
-          if String.equal ".md" (String.sub md_filename ~pos:(String.length md_filename - 3) ~len:3)
-          then
-            let d, b = Filename.split (String.sub md_filename ~pos:0 ~len:(String.length md_filename - 3)) in
-            Filename.of_parts [d; "src"; b]
-          else failwith "Unexpected Markdown filename: does not end with .md" in
-        let extension = match syntax with CameLIGO -> ".mligo" | JsLIGO -> ".jsligo" in
-        let output_filename = Filename.of_parts [dirname; grp ^ extension] in
-
-        (* Create directory both in _build and in the repository (otherwise the _build uses the old version) *)
-        (*let () = Ligo_unix.mkdir_p ~perm:0o777 dirname in*)
-        let () = Ligo_unix.mkdir_p ~perm:0o777 (Filename.of_parts [root_dir; dirname]) in
-
-        (* Write file both in _build and in the repository (otherwise the _build uses the old version) *)
-        (* let () = write_if_different output_filename ~contents *)
-        write_if_different (Filename.of_parts [root_dir; output_filename]) ~contents
+  let aux : (syntax * group_name * Environment.Protocols.t) * (lang * string) -> bool =
+   fun ((syntax, grp, protocol_version), (lang, contents)) ->
+    if String.equal syntax "shell"
+    then false
+    else (
+      let root_dir =
+        if Caml.Sys.file_exists "../../dune-project"
+        then "../.."
+        else if Caml.Sys.file_exists "../../../dune-project"
+        then "../../.."
+        else failwith "Could not find root_dir, please fix src/test/md_file_tsts.ml"
+      in
+      let syntax = Syntax.of_string_opt ~raise (Syntax_name syntax) None in
+      let dirname =
+        if String.equal
+             ".md"
+             (String.sub md_filename ~pos:(String.length md_filename - 3) ~len:3)
+        then (
+          let d, b =
+            Filename.split
+              (String.sub md_filename ~pos:0 ~len:(String.length md_filename - 3))
+          in
+          Filename.of_parts [ d; "src"; b ])
+        else failwith "Unexpected Markdown filename: does not end with .md"
+      in
+      let extension =
+        match syntax with
+        | CameLIGO -> ".mligo"
+        | JsLIGO -> ".jsligo"
+      in
+      let output_filename = Filename.of_parts [ dirname; grp ^ extension ] in
+      (* Create directory both in _build and in the repository (otherwise the _build uses the old version) *)
+      (*let () = Ligo_unix.mkdir_p ~perm:0o777 dirname in*)
+      let () = Ligo_unix.mkdir_p ~perm:0o777 (Filename.of_parts [ root_dir; dirname ]) in
+      (* Write file both in _build and in the repository (otherwise the _build uses the old version) *)
+      (* let () = write_if_different output_filename ~contents *)
+      write_if_different (Filename.of_parts [ root_dir; output_filename ]) ~contents)
   in
   List.length (List.filter ~f:aux grp_list) > 0
+
 
 (**
   if Meta : run the ligo test framework
@@ -299,21 +316,37 @@ let compile_groups ~raise filename grp_list =
       in
       ()
     | Shell ->
-      Lwt.return @@
-      let running_in_CI = match Sys.getenv "GITLAB_CI" with Some "true" -> true | _ -> false in
-      if running_in_CI then 
-        let () = Format.eprintf "\nWill run shell command from %s:\n%s\n\n" filename contents in
+      Lwt.return
+      @@
+      let running_in_CI =
+        match Sys.getenv "GITLAB_CI" with
+        | Some "true" -> true
+        | _ -> false
+      in
+      if running_in_CI
+      then (
+        let () =
+          Format.eprintf "\nWill run shell command from %s:\n%s\n\n" filename contents
+        in
         let exit_code, output = execute_command contents in
-        if exit_code = 0 then
-          Format.eprintf "The shell command exited successfully"
-        else
-          let () = Format.eprintf "The shell command exited with code %d, output:\n%s\n" exit_code output in
-          failwith "Command failed"
+        if exit_code = 0
+        then Format.eprintf "The shell command exited successfully"
+        else (
+          let () =
+            Format.eprintf
+              "The shell command exited with code %d, output:\n%s\n"
+              exit_code
+              output
+          in
+          failwith "Command failed"))
       else
-        Format.eprintf "Would run shell command if env var GITLAB_CI was true: %s\n" contents
+        Format.eprintf
+          "Would run shell command if env var GITLAB_CI was true: %s\n"
+          contents
   in
   let%map () = Lwt_list.iter_s aux grp_list in
   ()
+
 
 let write_all_to_files ~raise md_filenames () =
   let aux filename =
@@ -321,24 +354,26 @@ let write_all_to_files ~raise md_filenames () =
        having it duplicated allows having it inside a proper "test". *)
     let groups = get_groups filename in
     let groups_map = SnippetsGroup.bindings groups in
-
     write_to_files ~raise filename groups_map
   in
   let updates = List.filter ~f:aux md_filenames in
-  if List.length updates > 0 then
-    failwith ("Some documentation snippets from the following .md were written to external files; please simply re-run `dune runtest'.\n"
-              ^
-              String.concat ~sep:"\n" updates)
-  else
-    ()
+  if List.length updates > 0
+  then
+    failwith
+      ("Some documentation snippets from the following .md were written to external \
+        files; please simply re-run `dune runtest'.\n"
+      ^ String.concat ~sep:"\n" updates)
+  else ()
+
 
 let compile ~raise filename () =
   (* Format.printf "[compile] Filename: %s@." filename; *)
   let groups = get_groups filename in
   let groups_map = SnippetsGroup.bindings groups in
-  let _ : bool = write_to_files ~raise filename groups_map in
+  let (_ : bool) = write_to_files ~raise filename groups_map in
   let () = compile_groups ~raise filename groups_map in
   ()
+
 
 let get_all_md_files () =
   let exclude_files = [ "./gitlab-pages/docs/demo/ligo-snippet.md" ] in
@@ -356,14 +391,15 @@ let get_all_md_files () =
     with
     | End_of_file -> In_channel.close ic
   in
-  !all_input  
+  !all_input
+
 
 let main =
   Caml.Sys.chdir "../..";
   test_suite "Markdown files"
-  @@ let all_md_files = get_all_md_files () in
-     test ("Update files") (write_all_to_files all_md_files)
-     ::
-     List.map
+  @@
+  let all_md_files = get_all_md_files () in
+  test "Update files" (write_all_to_files all_md_files)
+  :: List.map
        ~f:(fun md_file -> test ("File : " ^ md_file ^ "\"") (compile md_file))
        all_md_files

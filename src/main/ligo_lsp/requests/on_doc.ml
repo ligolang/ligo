@@ -3,9 +3,8 @@ open Lsp_helpers
 
 let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   let@ get_scope_buffers = ask_docs_cache in
-  let@ last_project_file = ask_last_project_file in
   let project_root = Project_root.get_project_root file in
-  last_project_file := project_root;
+  let@ () = update_project_root project_root in
   match Docs_cache.find get_scope_buffers file, project_root with
   | None, None ->
     send_request WorkspaceFolders (fun folders ->
@@ -98,8 +97,7 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
                     | Ok { applied; failureReason; failedChange = _ } ->
                       if applied
                       then
-                        let@ last_project_file = ask_last_project_file in
-                        let () = last_project_file := Some project_root in
+                        let@ () = update_project_root (Some project_root) in
                         send_message
                           ~type_:Info
                           (Format.sprintf

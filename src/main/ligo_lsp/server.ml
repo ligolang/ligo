@@ -37,6 +37,8 @@ class lsp_server =
     (** Stores the path to the last ligo.json file, if found. *)
     val last_project_file : Path.t option ref = ref None
 
+    val mod_res : Preprocessor.ModRes.t option ref = ref None
+
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
@@ -46,6 +48,7 @@ class lsp_server =
         ; config
         ; docs_cache = get_scope_buffers
         ; last_project_file
+        ; mod_res
         }
       @@ Requests.on_doc file content
 
@@ -64,6 +67,7 @@ class lsp_server =
         ; config
         ; docs_cache = get_scope_buffers
         ; last_project_file
+        ; mod_res
         }
       @@ Requests.on_doc ~changes file new_content
 
@@ -307,7 +311,9 @@ class lsp_server =
           if List.exists changes ~f:(fun { type_ = _; uri } ->
                  let path = Path.to_string (DocumentUri.to_path uri) in
                  Filename.(basename path = Project_root.ligoproject))
-          then last_project_file := None;
+          then (
+            last_project_file := None;
+            mod_res := None);
           IO.return ()
         | notification -> super#on_notification ~notify_back ~server_request notification
 
@@ -352,6 +358,7 @@ class lsp_server =
               ; config
               ; docs_cache = get_scope_buffers
               ; last_project_file
+              ; mod_res
               }
               (bind repopulate_cache (fun () -> handler))
           else IO.return default
