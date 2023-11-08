@@ -35,23 +35,27 @@ let defs_and_typed_program
     if options.no_stdlib
     then []
     else (
-      let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
+      let stdlib_core_types =
+        Types_pass.(
+          Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
+      in
       Definitions.Of_Stdlib.definitions stdlib_core module_deps
       |> Types_pass.patch stdlib_core_types)
   in
+  let m_alias, env = Module_aliases_pass.declarations prg in
   let bindings, typed =
     if with_types
     then (
       let Types_pass.Typing_env.{ type_env; bindings; decls } =
-        Types_pass.resolve ~raise ~options ~stdlib_decls prg
+        Types_pass.resolve ~raise ~options ~stdlib_decls ~module_env:env prg
       in
       bindings, Some (type_env, decls))
-    else Types_pass.empty, None
+    else Types_pass.empty Env.empty, None
   in
   ( Definitions.definitions prg module_deps stdlib_defs
+    |> Module_aliases_pass.patch m_alias
     |> (if with_types then Types_pass.patch bindings else Fn.id)
     |> References.patch (References.declarations (stdlib_core @ prg))
-    |> Module_aliases_pass.patch (Module_aliases_pass.declarations prg)
   , typed )
 
 
@@ -60,12 +64,15 @@ let scopes
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> definitions:def list -> scopes
   =
  fun ~options ~stdlib ~prg ~module_deps ~definitions ->
-  let _stdlib_decls, stdlib_core = stdlib in
+  let stdlib_decls, stdlib_core = stdlib in
   let stdlib_defs, env_preload_decls =
     if options.no_stdlib
     then [], []
     else
-      ( (let stdlib_core_types = Types_pass.(Of_Ast_core.declarations empty stdlib_core) in
+      ( (let stdlib_core_types =
+           Types_pass.(
+             Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
+         in
          Definitions.Of_Stdlib.definitions stdlib_core module_deps
          |> Types_pass.patch stdlib_core_types)
       , stdlib_core )

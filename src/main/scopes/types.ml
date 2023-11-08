@@ -48,10 +48,13 @@ end = struct
   let pp (ppf : Format.formatter) (Uid uid : t) : unit = Format.fprintf ppf "%s" uid
 end
 
-type type_case =
-  | Core of Ast_core.type_expression
-  | Resolved of Ast_typed.type_expression
+type ('core_expr, 'typed_expr) resolve_case =
+  | Core of 'core_expr
+  | Resolved of 'typed_expr
   | Unresolved
+
+type type_case = (Ast_core.type_expression, Ast_typed.type_expression) resolve_case
+type signature_case = (Ast_core.signature, Ast_typed.signature) resolve_case
 
 type def_type =
   | Local
@@ -107,6 +110,7 @@ and mdef =
   ; mod_case : mod_case
   ; def_type : def_type
   ; mod_path : string list
+  ; signature : signature_case
   }
 
 and def =

@@ -153,7 +153,7 @@ let test_cases =
         ; pos ~line:5 ~character:11, one "#import \"A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"B.mligo\" = struct (* ... *) end")
+            ~f:(fun p -> p, one "module \"B.mligo\" : sig\n\nend")
             [ pos ~line:0 ~character:11
             ; pos ~line:0 ~character:19
             ; pos ~line:1 ~character:11
@@ -168,7 +168,8 @@ let test_cases =
         ; pos ~line:2 ~character:23, one "#import \"A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"inner/inner.mligo\" = struct (* ... *) end")
+            ~f:(fun p ->
+              p, one "module \"inner/inner.mligo\" : sig\n  val test : int\n\nend")
             [ pos ~line:0 ~character:17; pos ~line:0 ~character:31 ]
     }
   ; { test_name = "inner.mligo"
@@ -178,8 +179,157 @@ let test_cases =
         ; pos ~line:2 ~character:17, one "#import \"../A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"../C.mligo\" = struct (* ... *) end")
+            ~f:(fun p -> p, one "module \"../C.mligo\" : sig\n  val test : int\n\nend")
             [ pos ~line:0 ~character:15; pos ~line:0 ~character:23 ]
+    }
+  ; { test_name = "hover_module.mligo"
+    ; file = "contracts/lsp/hover/hover_module.mligo"
+    ; hovers =
+        [ ( pos ~line:0 ~character:7
+          , one "module A : sig\n  val foo : int\n\n  val bar : int\n\nend" )
+        ; ( pos ~line:10 ~character:7
+          , one "module B : sig\n  type t = nat\n\n  type int = string\n\nend" )
+        ; ( pos ~line:17 ~character:7
+          , one "module C : sig\n  val another : int\n\n  val foo : tez\n\nend" )
+        ; ( pos ~line:33 ~character:24
+          , one
+              "module Bytes : sig\n\
+              \  val concats : bytes list -> bytes\n\n\
+              \  val pack : a -> bytes\n\n\
+              \  val unpack : bytes -> a option\n\n\
+              \  val length : bytes -> nat\n\n\
+              \  val concat : bytes -> bytes -> bytes\n\n\
+              \  val sub : nat -> nat -> bytes -> bytes\n\n\
+               end" )
+        ; pos ~line:43 ~character:13, one "module Mangled : (* Unresolved *)"
+        ; ( pos ~line:48 ~character:12
+          , one "module Mangled_with_sig : sig\n  type t\n\n  type int = string\n\nend" )
+        ; ( pos ~line:54 ~character:10
+          , one "module Mangled_with_inlined_sig : sig\n  val foo : int\n\nend" )
+        ; ( pos ~line:70 ~character:20
+          , one
+              "module With_included : sig\n\
+              \  type t\n\n\
+              \  type int = string\n\n\
+              \  val b : bool\n\n\
+              \  val z : string\n\n\
+               end" )
+        ; ( pos ~line:77 ~character:14
+          , one
+              "module With_included : sig\n\
+              \  type t = int\n\n\
+              \  type int = string\n\n\
+              \  val b : bool\n\n\
+               end" )
+        ]
+        @ List.map
+            ~f:(fun p ->
+              p, one "module Outer : sig\n  val outer_foo : int -> int -> int\n\nend")
+            [ pos ~line:25 ~character:9; pos ~line:41 ~character:21 ]
+        @ List.map
+            ~f:(fun p ->
+              p, one "module Inner : sig\n  val inner_foo : int -> int -> int\n\nend")
+            [ pos ~line:28 ~character:11; pos ~line:41 ~character:25 ]
+        @ List.map
+            ~f:(fun p -> p, one "module Bytes : sig\n  val overwritten : string\n\nend")
+            [ pos ~line:35 ~character:8; pos ~line:39 ~character:35 ]
+        @ List.map
+            ~f:(fun p -> p, one "module M : sig\n  val v : int\n\nend")
+            [ pos ~line:62 ~character:9; pos ~line:64 ~character:9 ]
+        @ List.map
+            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int = string\n\nend")
+            [ pos ~line:5 ~character:12
+            ; pos ~line:10 ~character:11
+            ; pos ~line:48 ~character:26
+            ; pos ~line:71 ~character:10
+            ]
+        @ List.map
+            ~f:(fun p -> p, one "module I : sig\n  val b : bool\n\nend")
+            [ pos ~line:66 ~character:12; pos ~line:72 ~character:10 ]
+    }
+  ; { test_name = "hover_module.jsligo"
+    ; file = "contracts/lsp/hover/hover_module.jsligo"
+    ; hovers =
+        [ ( pos ~line:0 ~character:10
+          , one "namespace A implements {\n  const foo: int;\n  const bar: int\n}" )
+        ; ( pos ~line:10 ~character:10
+          , one
+              "namespace B implements {\n\
+              \  type t = nat;\n\
+              \  type int = string;\n\
+              \  const b: t\n\
+               }" )
+        ; ( pos ~line:17 ~character:10
+          , one "namespace C implements {\n  const foo: tez;\n  const another: int\n}" )
+        ; ( pos ~line:33 ~character:27
+          , one
+              "namespace Bytes implements {\n\
+              \  const concats: (_: list<bytes>) => bytes;\n\
+              \  const pack: (_: a) => bytes;\n\
+              \  const unpack: (_: bytes) => option<a>;\n\
+              \  const length: (_: bytes) => nat;\n\
+              \  const concat: (_: bytes) => (_: bytes) => bytes;\n\
+              \  const sub: (_: nat) => (_: nat) => (_: bytes) => bytes\n\
+               }" )
+        ; pos ~line:43 ~character:11, one "namespace Mangled implements /* Unresolved */"
+        ; ( pos ~line:48 ~character:13
+          , one
+              "namespace Mangled_with_sig implements {\n  type t;\n  type int = string\n}"
+          )
+        ; ( pos ~line:54 ~character:26
+          , one "namespace Mangled_with_inlined_sig implements {\n  const foo: int\n}" )
+        ; ( pos ~line:72 ~character:17
+          , one
+              "namespace With_included implements {\n\
+              \  type t;\n\
+              \  type int = string;\n\
+              \  const b: bool;\n\
+              \  const z: string\n\
+               }" )
+        ; ( pos ~line:76 ~character:22
+          , one
+              "namespace With_included implements {\n\
+              \  type t = int;\n\
+              \  type int = string;\n\
+              \  const b: bool\n\
+               }" )
+        ]
+        @ List.map
+            ~f:(fun p ->
+              ( p
+              , one
+                  "namespace Outer implements {\n\
+                  \  const outer_foo: (_: int) => (_: int) => int\n\
+                   }" ))
+            [ pos ~line:25 ~character:11; pos ~line:41 ~character:21 ]
+        @ List.map
+            ~f:(fun p ->
+              ( p
+              , one
+                  "namespace Inner implements {\n\
+                  \  const inner_foo: (_: int) => (_: int) => int\n\
+                   }" ))
+            [ pos ~line:28 ~character:20; pos ~line:41 ~character:26 ]
+        @ List.map
+            ~f:(fun p ->
+              p, one "namespace Bytes implements {\n  const overwritten: string\n}")
+            [ pos ~line:35 ~character:13; pos ~line:39 ~character:35 ]
+        @ List.map
+            ~f:(fun p -> p, one "namespace M implements {\n  const v: int\n}")
+            [ pos ~line:62 ~character:12; pos ~line:65 ~character:9 ]
+        @ List.map
+            ~f:(fun p ->
+              p, one "namespace T implements {\n  type t;\n  type int = string\n}")
+            [ pos ~line:5 ~character:10
+            ; pos ~line:10 ~character:23
+            ; pos ~line:48 ~character:38
+            ]
+        @ List.map
+            ~f:(fun p -> p, one "namespace I implements {\n  const b: bool\n}")
+            [ pos ~line:68 ~character:10
+            ; pos ~line:72 ~character:35
+            ; pos ~line:76 ~character:38
+            ]
     }
   ]
 

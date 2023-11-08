@@ -92,7 +92,17 @@ let defs_of_mvar ?(bindee_location : Location.t option) ~(mod_case : mod_case)
       let range : Location.t = MVar.get_location mvar in
       let body_range : Location.t option = bindee_location in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
-      { name; uid; range; body_range; references; mod_case; def_type; mod_path }
+      let signature = Unresolved (* Filled in a later pass *) in
+      { name
+      ; uid
+      ; range
+      ; body_range
+      ; references
+      ; mod_case
+      ; def_type
+      ; mod_path
+      ; signature
+      }
     in
     Module mdef :: acc)
 
