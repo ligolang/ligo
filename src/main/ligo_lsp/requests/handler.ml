@@ -37,6 +37,7 @@ type handler_env =
   ; config : config
   ; docs_cache : Docs_cache.t
   ; last_project_file : Path.t option ref
+  ; mod_res : Preprocessor.ModRes.t option ref
   }
 
 (** Handler monad : allows sending messages to user and reading docs cache *)
@@ -84,6 +85,10 @@ let ask_last_project_file : Path.t option ref Handler.t =
   fmap (fun x -> x.last_project_file) ask
 
 
+let ask_mod_res : Preprocessor.ModRes.t option ref Handler.t =
+  fmap (fun x -> x.mod_res) ask
+
+
 (** Sequencing handlers *)
 
 let iter (xs : 'a list) ~f:(h : 'a -> unit Handler.t) : unit Handler.t =
@@ -128,6 +133,16 @@ let when_some_m' (m_opt_monadic : 'a option Handler.t) (f : 'a -> 'b option Hand
   =
   let@ m_opt = m_opt_monadic in
   when_some' m_opt f
+
+
+let sequence_m (lst : 'a Handler.t list) : 'a list Handler.t =
+  fmap List.rev
+  @@ List.fold_left
+       ~init:(return [])
+       ~f:(fun acc_m elt_m ->
+         let@ elt = elt_m in
+         fmap (fun acc -> elt :: acc) acc_m)
+       lst
 
 
 let send_log_msg ~(type_ : MessageType.t) (s : string) : unit Handler.t =
@@ -268,3 +283,18 @@ let with_cst
     let@ () = on_error err in
     return default
   | Ok cst -> f cst
+
+
+let update_project_root : Path.t option -> unit Handler.t =
+ fun path ->
+  let@ last_project_file = ask_last_project_file in
+  let@ mod_res = ask_mod_res in
+  return
+  @@
+  match path with
+  | None ->
+    last_project_file := None;
+    mod_res := None
+  | Some path ->
+    last_project_file := Some path;
+    mod_res := Preprocessor.ModRes.make (Path.to_string path)
