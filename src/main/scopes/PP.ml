@@ -180,6 +180,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; uid
         ; def_type = _
         ; mod_path = _
+        ; signature = _
         } ->
       ( uid
       , `Assoc
@@ -202,6 +203,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; uid
         ; def_type = _
         ; mod_path = _
+        ; signature = _
         } ->
       let alias = `List (List.map a ~f:(fun s -> `String (Uid.to_string s))) in
       ( uid

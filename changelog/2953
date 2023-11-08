@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added signatures for modules on hovering. They're displayed like:\\n\\n```ocaml\\nmodule Bytes : sig\\n  val concats : bytes list -> bytes\\n\\n  val pack : a -> bytes\\n\\n  val unpack : bytes -> a option\\n\\n  val length : bytes -> nat\\n\\n  val concat : bytes -> bytes -> bytes\\n\\n  val sub : nat -> nat -> bytes -> bytes\\n\\nend\\n\\n```\\n\\n\\n"
+merge_request: '2953'
+title: "[#1675] Add module signatures on hover"
+type: added
+            

@@ -1,0 +1,82 @@
+namespace A {
+  export const foo = 42
+  export const bar = 24
+}
+
+interface T {
+  type t;
+  type int = string
+}
+
+namespace B implements T {
+  export type t = nat;
+  export type int = string;
+
+  export const b : t = 1n
+}
+
+namespace C implements {
+  const foo : tez;
+  const another : int;
+} {
+  export const foo = 1tez
+  export const another = 100
+}
+
+namespace Outer {
+  export const outer_foo = (a, b) => a - b
+
+  export namespace Inner {
+    export const inner_foo = (a, b) => a + b
+  }
+}
+
+const thing_with_bytes = Bytes.unpack
+
+namespace Bytes {
+  export const overwritten = "yes"
+}
+
+const another_thing_with_bytes = Bytes.overwritten
+
+const inner_func = Outer.Inner.inner_foo
+
+namespace Mangled {
+  export const where =
+  export const v = 42
+}
+
+namespace Mangled_with_sig implements T {
+  export const where =
+  export type t = string
+  export type int = string
+}
+
+namespace Mangled_with_inlined_sig implements {
+  const foo : int
+} {
+  export const where =
+  export const foo = 42
+}
+
+const namespace_in = do {
+  namespace M {
+    export const v = 42
+  };
+  return M.v;
+}
+
+interface I {
+  const b : bool
+}
+
+interface With_included extends T, I {
+  const z : int
+}
+
+namespace With_included implements T, I {
+  export type t = int
+  export type int = string
+
+  export const b = false
+}

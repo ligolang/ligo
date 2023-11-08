@@ -152,6 +152,22 @@ and module_expression
   m_alias, defs_or_alias_opt, env.module_map
 
 
+and signature_expression
+    :  Module_var.t -> AST.signature_expr -> t -> env
+    -> t * defs_or_alias option * module_map
+  =
+ fun lhs_mv se m_alias env ->
+  let env = { env with avail_defs = []; parent = env.avail_defs @ env.parent } in
+  let m_alias, defs_or_alias_opt, env =
+    match se.wrap_content with
+    | S_sig _ -> m_alias, Some (Defs env.avail_defs), env
+    | S_path path ->
+      let m_alias, alias_opt = resolve_module_alias lhs_mv path env m_alias in
+      m_alias, alias_opt, env
+  in
+  m_alias, defs_or_alias_opt, env.module_map
+
+
 (** [declaration] builds the [env] and tries to resolves module aliases *)
 and declaration : AST.declaration -> t -> env -> t * env =
  fun d m_alias env ->
@@ -169,7 +185,12 @@ and declaration : AST.declaration -> t -> env -> t * env =
     in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     m_alias, env
-  | D_signature _ -> m_alias, env
+  | D_signature { signature_binder; signature; signature_attr = _ } ->
+    let m_alias, defs_or_alias_opt, module_map =
+      signature_expression signature_binder signature m_alias env
+    in
+    let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
+    m_alias, env
   | D_module_include _ -> m_alias, env (* TODO *)
 
 
@@ -184,12 +205,11 @@ and declarations : AST.declaration list -> t -> env -> t * env =
 
 
 (** [declarations] sets up the initial env and calls [declarations] *)
-let declarations : AST.declaration list -> t =
+let declarations : AST.declaration list -> t * env =
  fun decls ->
   let m_alias = LMap.empty in
   let env = Env.empty in
-  let m_alias, _ = declarations decls m_alias env in
-  m_alias
+  declarations decls m_alias env
 
 
 (** [patch] fixes the module aliases in the [defs]. It looks for module aliases
