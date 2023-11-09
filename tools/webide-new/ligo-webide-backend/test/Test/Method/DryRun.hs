@@ -27,7 +27,6 @@ test_singleFile = mkTest "compiles basic single-file input correctly" $ do
               },
             drrParameters = "Increment (1)",
             drrStorage = "0",
-            drrEntrypoint = Nothing,
             drrProtocol = Nothing,
             drrDisplayFormat = Nothing
           }

@@ -83,6 +83,16 @@ const ExpressionManagerModal = ({
     return match ? match[0] : input;
   };
 
+  function capitalizeFirstLetter(input: string): string {
+    if (!input) {
+      return input;
+    }
+    return input.charAt(0).toUpperCase() + input.slice(1).toLowerCase();
+  }
+
+  const generateEntrypointParameter = (entrypoint: string, parameter: string): string =>
+    `${capitalizeFirstLetter(entrypoint)}(${parameter})`;
+
   const extractModule = (input: string): string => {
     if (!input.includes(".")) return "";
     const regex = /^[^.]+/;
@@ -94,15 +104,15 @@ const ExpressionManagerModal = ({
     setLoading(true);
 
     const entrypoint = extractEntrypoint(name);
+    const parameterIncludingVariant = generateEntrypointParameter(entrypoint, params);
     const module = extractModule(name);
 
     await (managerType === "dryRun"
       ? WebIdeApi.dryRun({
-          entrypoint,
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           project: { sourceFiles: files, main: projectManager.mainFilePath, module },
           storage,
-          parameters: params,
+          parameters: parameterIncludingVariant,
         })
       : WebIdeApi.compileExpression({
           function: name,

@@ -22,7 +22,6 @@ dryRun request =
            (\df -> ["--display-format", prettyDisplayFormat df])
            (drrDisplayFormat request)
       ++ maybe [] (\p -> ["-p", Text.unpack p]) (drrProtocol request)
-      ++ maybe [] (\e -> ["-e", Text.unpack e]) (drrEntrypoint request)
 
     case ec of
       ExitSuccess -> pure (CompilerResponse $ Text.pack out)

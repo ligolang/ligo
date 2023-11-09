@@ -15,7 +15,6 @@ data DryRunRequest = DryRunRequest
   { drrProject :: Project
   , drrParameters :: Text
   , drrStorage :: Text
-  , drrEntrypoint :: Maybe Text
   , drrProtocol :: Maybe Text
   , drrDisplayFormat :: Maybe DisplayFormat
   } deriving stock (Eq, Show, Ord, Generic)

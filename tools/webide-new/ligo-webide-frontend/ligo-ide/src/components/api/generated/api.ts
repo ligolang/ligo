@@ -146,12 +146,6 @@ export interface DryRunRequest {
      * @type {string}
      * @memberof DryRunRequest
      */
-    'entrypoint'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof DryRunRequest
-     */
     'parameters': string;
     /**
      * 
