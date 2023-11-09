@@ -8,10 +8,10 @@ let rename_reference : string -> Range.t -> TextEdit.t =
 let on_req_rename : string -> Position.t -> Path.t -> WorkspaceEdit.t Handler.t =
  fun new_name pos file ->
   let@ get_scope_buffers = ask_docs_cache in
-  with_cached_doc file (WorkspaceEdit.create ())
+  with_cached_doc file ~default:(WorkspaceEdit.create ())
   @@ fun { definitions; _ } ->
   let@ value =
-    when_some' (Go_to_definition.get_definition pos file definitions)
+    when_some' (Def.get_definition pos file definitions)
     @@ fun definition ->
     let references =
       References.get_all_references_grouped_by_file

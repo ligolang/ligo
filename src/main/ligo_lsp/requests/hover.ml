@@ -29,11 +29,11 @@ let hover_string
   function
   | Variable vdef ->
     let prefix = PPrint.(string vdef.name ^//^ colon) in
-    let type_info = Type_definition.get_type vdef in
+    let type_info = Def.get_type vdef in
     let@ value =
       Option.value_map
         ~default:(return @@ Helpers_pretty.unresolved_type_as_comment syntax)
-        ~f:(print_type_with_prefix ~prefix <@ Type_definition.use_var_name_if_availiable)
+        ~f:(print_type_with_prefix ~prefix <@ Def.use_var_name_if_available)
         type_info
     in
     return @@ `List [ MarkedString.{ language; value } ]
@@ -133,9 +133,9 @@ let hover_string
 
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
  fun pos file ->
-  with_cached_doc file None
+  with_cached_doc file ~default:None
   @@ fun { definitions; syntax; _ } ->
-  when_some' (Go_to_definition.get_definition pos file definitions)
+  when_some' (Def.get_definition pos file definitions)
   @@ fun definition ->
   let@ contents = hover_string syntax definition in
   let hover = Hover.create ~contents () in

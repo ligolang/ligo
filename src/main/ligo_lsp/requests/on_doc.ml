@@ -145,11 +145,6 @@ let on_doc
     | Some s -> return s
   in
   let@ () = detect_or_ask_to_create_project_file file in
-  (* We want the following behavior:
-     * no changes (document opened): download JSON, update storage diagnostics
-     * storage not found: do not download JSON, clear storage diagnostics
-     * storage not changed: do not download JSON, keep previous storage diagnostics
-     * storage changed: download JSON, update storage diagnostics *)
   let@ ({ definitions; _ } as defs_and_diagnostics) =
     lift_IO
     @@ Ligo_interface.get_defs_and_diagnostics

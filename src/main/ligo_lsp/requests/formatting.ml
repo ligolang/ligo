@@ -65,7 +65,7 @@ let on_req_formatting : Path.t -> FormattingOptions.t -> TextEdit.t list option 
     let on_error _err =
       send_message ~type_:Error @@ "Can not format a file with syntax errors"
     in
-    with_cst ~strict:true ~on_error file None
+    with_cst ~strict:true ~on_error file ~default:None
     @@ fun cst ->
     let result = Pretty.pretty_print_cst pp_mode ~dialect_cst:cst in
     return @@ Some [ TextEdit.create ~newText:result ~range:Range.whole_file ])

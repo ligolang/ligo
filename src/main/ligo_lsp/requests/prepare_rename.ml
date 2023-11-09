@@ -4,7 +4,7 @@ open Lsp_helpers
 let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
  fun pos file defs ->
   let open Option in
-  Go_to_definition.get_definition pos file defs
+  Def.get_definition pos file defs
   >>= fun def ->
   Option.some_if
     (match Def.get_location def with
@@ -25,5 +25,5 @@ let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
 
 let on_req_prepare_rename : Position.t -> Path.t -> Range.t option Handler.t =
  fun pos file ->
-  with_cached_doc file None
+  with_cached_doc file ~default:None
   @@ fun { definitions; _ } -> return @@ prepare_rename pos file definitions
