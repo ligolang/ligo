@@ -7,4 +7,4 @@
   (backend bisect_ppx))
  (preprocess
   (pps ppx_let))
- (libraries lsp linol lsp_helpers compiler_options checking))
+ (libraries lsp linol lsp_helpers compiler_options checking completion_lib))

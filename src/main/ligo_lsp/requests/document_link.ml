@@ -55,7 +55,7 @@ let on_req_document_link (file : Path.t) : DocumentLink.t list option handler =
   let dir = Path.dirname file in
   let@ mod_res = ask_mod_res in
   let@ directives_opt =
-    with_cst file None
+    with_cst file ~default:None
     @@ fun cst ->
     return
     @@ Option.some

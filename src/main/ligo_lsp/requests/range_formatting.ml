@@ -95,7 +95,7 @@ let on_req_range_formatting
       send_message ~type_:Error
       @@ "Can not apply range formatting on a file with syntax errors"
     in
-    with_cst ~strict:true ~on_error file None
+    with_cst ~strict:true ~on_error file ~default:None
     @@ fun cst ->
     let edits = range_formatting pp_mode (decls_of_cst cst) range in
     let@ () =

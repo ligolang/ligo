@@ -46,7 +46,7 @@ let folding_range_jsligo : Cst.Jsligo.t -> FoldingRange.t list option =
 
 let on_req_folding_range : Path.t -> FoldingRange.t list option Handler.t =
  fun file ->
-  Handler.with_cst file None
+  Handler.with_cst file ~default:None
   @@ fun cst ->
   Handler.return
   @@ Dialect_cst.from_dialect
