@@ -619,6 +619,15 @@ module Test = struct
   let assert_some_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> failwith s | Some _ -> ()
   let assert_none_with_error (type a) (v : a option) (s : string) : unit = match v with | None -> () | Some _ -> failwith s
 
+  [@private] let compare (type a) (lhs : a) (rhs : a) : int = [%external ("TEST_COMPARE", lhs, rhs)]
+
+  let equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs = 0
+  let not_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs <> 0
+  let greater (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs > 0
+  let less (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs < 0
+  let greater_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs >= 0
+  let less_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs <= 0
+
   module Proxy_ticket = struct
     [@private] let proxy_transfer_contract (type vt whole_p)
         (mk_param : vt ticket -> whole_p)
