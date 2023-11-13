@@ -247,6 +247,8 @@ xrefcheck:
     - npm --prefix $WEBSITE_PATH run build
     - cp -Lr --no-preserve=mode,ownership,timestamps $WEBSITE_PATH/build public
     - touch to-dos.html; cp to-dos.html public/to-dos.html
+    # Install _redirects onto website https://docs.gitlab.com/ee/user/project/pages/redirects.html 
+    - cp .ci/_redirects public/_redirects
   artifacts:
     paths:
       - public
