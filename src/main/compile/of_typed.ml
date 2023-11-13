@@ -216,3 +216,29 @@ let list_type_declarations (m : Ast_typed.program) : Type_var.t list =
       | _ -> prev)
     ~init:[]
     m.pr_module
+
+
+let get_modules_with_entries (prg : Ast_typed.program) : Module_var.t list list =
+  let module ModPathOrd = struct
+    type t = Module_var.t list
+
+    let compare = List.compare Module_var.compare
+  end
+  in
+  let module ModSet = Caml.Set.Make (ModPathOrd) in
+  let rec aux ?(current_module = []) (prg : Ast_typed.program) : ModSet.t =
+    List.fold_left prg.pr_module ~init:ModSet.empty ~f:(fun acc decl ->
+        match decl.wrap_content with
+        | D_value { attr; _ } | D_irrefutable_match { attr; _ } ->
+          if attr.entry then ModSet.add current_module acc else acc
+        | D_module
+            { module_binder
+            ; module_ = { module_content = M_struct pr_module; signature = pr_sig; _ }
+            ; _
+            } ->
+          Ast_typed.{ pr_module; pr_sig }
+          |> aux ~current_module:(module_binder :: current_module)
+          |> ModSet.union acc
+        | D_module _ | D_type _ | D_module_include _ | D_signature _ -> acc)
+  in
+  aux prg |> ModSet.to_seq |> Seq.fold_left (fun acc elt -> List.rev elt :: acc) []

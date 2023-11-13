@@ -31,7 +31,7 @@ let partition_simple_diagnostics
          let is_x_current_path = Path.equal x.location.path current_path in
          let is_y_current_path = Path.equal y.location.path current_path in
          if is_x_current_path && is_y_current_path
-         then 0
+         then Range.compare x.location.range y.location.range
          else if is_x_current_path
          then -1
          else if is_y_current_path
@@ -45,21 +45,36 @@ let partition_simple_diagnostics
 
 
 (** Extract all errors and warnings for the given scopes and collect them in a list. *)
-let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list =
+let get_diagnostics (current_path : Path.t)
+    : Ligo_interface.defs_and_diagnostics -> simple_diagnostic list
+  =
  fun { errors; warnings; definitions = _ } ->
   let open Option.Let_syntax in
-  let mk_diag region message severity =
-    let range = Range.of_region region in
-    let location = Def.Loc_in_file.{ path = Path.from_absolute region#file; range } in
+  let mk_diag range file message severity =
+    let location = Def.Loc_in_file.{ path = Path.from_absolute file; range } in
     Some { message; severity; location }
   in
   let extract_error_information : Main_errors.all -> simple_diagnostic list =
    fun errs ->
+    let insert_dummy =
+      match errs with
+      | `Self_ast_aggregated_tracer (`Self_ast_aggregated_expected_obj_ligo _)
+      | `Self_ast_aggregated_tracer (`Self_ast_aggregated_expected_obj_ligo_type _) ->
+        true
+      | _ -> false
+    in
     let errs = Main_errors.Formatter.error_json errs in
     List.filter_map
       ~f:(fun ({ content = { message; location; _ }; _ } : Simple_utils.Error.t) ->
         match%bind location with
-        | File region -> mk_diag region message DiagnosticSeverity.Error
+        | File region ->
+          mk_diag (Range.of_region region) region#file message DiagnosticSeverity.Error
+        | Virtual _ when insert_dummy ->
+          mk_diag
+            Range.dummy
+            (Path.to_string current_path)
+            message
+            DiagnosticSeverity.Error
         | Virtual _ -> None)
       errs
   in
@@ -69,7 +84,8 @@ let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic l
       Main_warnings.to_warning warn
     in
     match location with
-    | File region -> mk_diag region message DiagnosticSeverity.Warning
+    | File region ->
+      mk_diag (Range.of_region region) region#file message DiagnosticSeverity.Warning
     | Virtual _ -> None
   in
   List.concat_map ~f:extract_error_information errors

@@ -413,6 +413,35 @@ let test_cases =
         ]
     ; max_number_of_problems = None
     }
+  ; { test_name = "Shows wrong test primitive usage error"
+    ; file_path = "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
+    ; diagnostics =
+        [ { message = "Invalid usage of a Test primitive."
+          ; location =
+              { range = Range.dummy (* TODO: show a proper location here *)
+              ; path =
+                  Path.from_relative
+                    "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows a warning for deprecated functions"
+    ; file_path = "contracts/deprecated.mligo"
+    ; diagnostics =
+        [ { message =
+              "\nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n"
+          ; location =
+              { range = interval 4 74 75
+              ; path = Path.from_relative "contracts/deprecated.mligo"
+              }
+          ; severity = DiagnosticSeverity.Warning
+          }
+        ]
+    ; max_number_of_problems = None
+    }
   ]
 
 
