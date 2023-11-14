@@ -28,3 +28,9 @@ val to_ppformat    : pp_formater (* Alias of [error_ppformat] *)
 (* JSON *)
 
 val error_json : t -> Simple_utils.Error.t
+
+module ErrorPrefix : sig
+  val add : string -> string
+  val remove : string -> string
+  val is_contained : string -> bool
+end

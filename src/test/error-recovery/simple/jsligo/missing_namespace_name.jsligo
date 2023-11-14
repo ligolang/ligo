@@ -1,0 +1,2 @@
+import = B;
+export const y = B.y;

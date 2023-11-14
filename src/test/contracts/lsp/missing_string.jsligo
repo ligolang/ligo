@@ -1,0 +1,7 @@
+type coin = ["Head"] | [];
+
+const flip = (c: coin): coin =>
+  match (c) {
+    when (Head): Tail()
+    when (Tail): Head()
+  };
