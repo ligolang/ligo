@@ -180,14 +180,6 @@ docker_push_ligo:
     - export LIGO_REGISTRY_FULL_NAME="ligolang/ligo:$LIGO_TAG"
     - docker tag "${LIGO_IMAGE_TAG}" "${LIGO_REGISTRY_FULL_NAME}"
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
-    - | 
-      if test "$CI_COMMIT_REF_NAME" = "dev"; 
-      then
-        export LIGO_TAG=alpha; 
-        export LIGO_REGISTRY_FULL_NAME="ligolang/ligo:$LIGO_TAG"
-        docker tag "${LIGO_IMAGE_TAG}" "${LIGO_REGISTRY_FULL_NAME}"
-        docker push "${LIGO_REGISTRY_FULL_NAME}"
-      fi
 
   after_script:
     - docker image rm "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
@@ -247,8 +239,6 @@ xrefcheck:
     - npm --prefix $WEBSITE_PATH run build
     - cp -Lr --no-preserve=mode,ownership,timestamps $WEBSITE_PATH/build public
     - touch to-dos.html; cp to-dos.html public/to-dos.html
-    # Install _redirects onto website https://docs.gitlab.com/ee/user/project/pages/redirects.html 
-    - cp .ci/_redirects public/_redirects
   artifacts:
     paths:
       - public
