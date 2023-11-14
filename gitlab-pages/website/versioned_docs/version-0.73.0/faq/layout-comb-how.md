@@ -1,6 +1,6 @@
 ---
 id: layout-comb-how
-title: How to deal with the change of the default datatype layout to `@layout comb` ?
+title: How to deal with the change of the default datatype layout to @layout comb ?
 ---
 
 See [Why did the default datatype layout change to `@layout comb` ?](layout-comb-why.md)
