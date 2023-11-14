@@ -75,7 +75,14 @@ let test1 =
 let test2 =
   { file_path = "contracts/lsp/missing_a_lot.mligo"
   ; expected =
-      Some [ "ghost_ident"; "in"; "ghost_ident"; "="; "=" ] (* Reversed because of fold *)
+      Some
+        [ "\226\154\160You are not supposed to see this prefix\226\154\160ghost_ident"
+        ; "in"
+        ; "\226\154\160You are not supposed to see this prefix\226\154\160ghost_ident"
+        ; "="
+        ; "="
+        ]
+      (* Reversed because of fold *)
   ; accumulator = Some []
   ; fold_function =
       (fun l x -> Option.bind l ~f:(fun l -> Option.bind x ~f:(fun x -> Some (x :: l))))

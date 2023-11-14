@@ -39,11 +39,23 @@ let get_diagnostics_test
     then diags_by_file
     else (uri, []) :: diags_by_file
   in
-  should_match_list
+  let module AML = Alcotest_map_of_lists (Path) in
+  let module Map = Map.Make (Path) in
+  let to_map l =
+    match Map.of_alist l with
+    | `Ok map -> map
+    | `Duplicate_key path -> failf "Key duplication: %s." (Path.to_string path)
+  in
+  let actual = to_map @@ Requests.Handler.Path_hashtbl.to_alist actual_diagnostics in
+  let expected =
+    to_map @@ List.map ~f:(Tuple2.map_fst ~f:DocumentUri.to_path) expected_diagnostics
+  in
+  AML.should_match
     ~msg:(Format.asprintf "Diagnostics mismatch for %s:" file_path)
-    Alcotest.(pair Path.testable (unordered_list Diagnostic.testable))
-    ~actual:(Requests.Handler.Path_hashtbl.to_alist actual_diagnostics)
-    ~expected:(List.map ~f:(Tuple2.map_fst ~f:DocumentUri.to_path) expected_diagnostics)
+    Path.testable
+    Diagnostic.testable
+    ~actual
+    ~expected
 
 
 let test_cases =
@@ -112,20 +124,6 @@ let test_cases =
     ; file_path = "contracts/lsp/syntax_plus_type_errors.jsligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
-          ; message = "Variable \"ghost_ident\" not found. "
-          ; location =
-              { range = point 4 18
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
-          ; message = "Variable \"ghost_ident\" not found. "
-          ; location =
-              { range = point 4 14
-              ; path = Path.from_relative "contracts/lsp/syntax_plus_type_errors.jsligo"
-              }
-          }
-        ; { severity = DiagnosticSeverity.Error
           ; message = "Invalid type(s).\nExpected \"string\", but got: \"int\"."
           ; location =
               { range = interval 2 19 21
@@ -342,6 +340,57 @@ let test_cases =
               ; path = Path.from_relative "contracts/lsp/entrypoints_modules.mligo"
               }
           ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "ghost_ident filter"
+    ; file_path = "contracts/lsp/missing_value.mligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Error
+          ; message =
+              "Ill-formed value declaration.\nAt this point, an expression is expected.\n"
+          ; location =
+              { range = point 0 7
+              ; path = Path.from_relative "contracts/lsp/missing_value.mligo"
+              }
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "ghost string filter"
+    ; file_path = "contracts/lsp/missing_string.jsligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Error
+          ; message = "Expected constructor \"Tail\" in expected sum type \"coin\"."
+          ; location =
+              { range = interval 4 17 23
+              ; path = Path.from_relative "contracts/lsp/missing_string.jsligo"
+              }
+          }
+        ; { severity = DiagnosticSeverity.Error
+          ; message =
+              "Ill-formed variant type.\n\
+               At this point, a string denoting a constructor is expected.\n"
+          ; location =
+              { range = interval 0 24 25
+              ; path = Path.from_relative "contracts/lsp/missing_string.jsligo"
+              }
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Ghost_ident filter"
+    ; file_path = "contracts/lsp/missing_module_name.mligo"
+    ; diagnostics =
+        [ { severity = DiagnosticSeverity.Error
+          ; message =
+              "Ill-formed module declaration.\n\
+               At this point, the name of the module being declared is expected.\n"
+          ; location =
+              { range = interval 0 7 8
+              ; path = Path.from_relative "contracts/lsp/missing_module_name.mligo"
+              }
           }
         ]
     ; max_number_of_problems = None

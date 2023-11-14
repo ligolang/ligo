@@ -15,6 +15,7 @@
   module Directive = Preprocessor.Directive
   module Region    = Simple_utils.Region
   module Token     = Lexing_jsligo.Token
+  module ErrorPrefix = Parsing_shared.Errors.ErrorPrefix
 
   let mk_Directive region =
     let linenum   = Region.wrap_ghost 1
@@ -29,16 +30,16 @@
 
   (* Ghost semantic values for inserted tokens *)
 
-  let mk_string    = Token.wrap_string    "ghost string"
-  let mk_verbatim  = Token.wrap_verbatim  "ghost verbatim"
+  let mk_string    = Token.wrap_string    @@ ErrorPrefix.add "ghost string"
+  let mk_verbatim  = Token.wrap_verbatim  @@ ErrorPrefix.add "ghost verbatim"
   let mk_bytes     = Token.wrap_bytes    (Hex.of_string "Ghost bytes")
   let mk_int       = Token.wrap_int       Z.zero
   let mk_nat       = Token.wrap_nat       Z.zero
   let mk_mutez     = Token.wrap_mutez     Int64.zero
-  let mk_ident     = Token.wrap_ident     "ghost_ident"
-  let mk_uident    = Token.wrap_uident    "Ghost_uident"
-  let mk_eident    = Token.wrap_eident    "@ghost_eident"
-  let mk_attr      = Token.wrap_attr      "ghost_attr" None
+  let mk_ident     = Token.wrap_ident     @@ ErrorPrefix.add "ghost_ident"
+  let mk_uident    = Token.wrap_uident    @@ ErrorPrefix.add "Ghost_uident"
+  let mk_eident    = Token.wrap_eident    @@ ErrorPrefix.add "@ghost_eident"
+  let mk_attr      = Token.wrap_attr      (ErrorPrefix.add "ghost_attr") None
   let mk_block_com = Token.wrap_block_com "/* comment */"
   let mk_line_com  = Token.wrap_line_com  "// comment"
 ]

@@ -74,3 +74,5 @@ let get_diagnostics : Ligo_interface.defs_and_diagnostics -> simple_diagnostic l
   in
   List.concat_map ~f:extract_error_information errors
   @ List.filter_map ~f:extract_warning_information warnings
+  |> List.filter ~f:(fun { message; _ } ->
+         not @@ Parsing_shared.Errors.ErrorPrefix.is_contained message)

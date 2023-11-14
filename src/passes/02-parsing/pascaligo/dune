@@ -40,6 +40,7 @@
   lexing_shared
   cst_jsligo
   cst_pascaligo
+  parsing_shared
   ;; Vendors
   simple-utils
   ParserLib

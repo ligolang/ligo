@@ -50,6 +50,36 @@ let should_match_list
       (List.map ~f:to_string missing)
 
 
+module Alcotest_map_of_lists (Key : Map_intf.Key) = struct
+  module M = Map.Make (Key)
+
+  let should_match
+      ?(msg : string option)
+      (testable_key : Key.t Alcotest.testable)
+      (testable_a : 'a Alcotest.testable)
+      ~(actual : 'a list M.t)
+      ~(expected : 'a list M.t)
+      : unit
+    =
+    let msg = Option.value_map ~default:"" ~f:(Fun.flip ( ^ ) "\n") msg in
+    let () =
+      should_match_list
+        ~msg:(msg ^ "Keys do not match.")
+        testable_key
+        ~actual:(M.keys actual)
+        ~expected:(M.keys expected)
+    in
+    M.iteri actual ~f:(fun ~key ~data ->
+        match M.find expected key with
+        | None -> failf "impossible"
+        | Some expected_data ->
+          should_match_list
+            ~msg:(msg ^ "Values do not match.")
+            testable_a
+            ~actual:data
+            ~expected:expected_data)
+end
+
 let should_be_contained_in
     ?(msg : string option)
     (testable_a : 'a Alcotest.testable)
