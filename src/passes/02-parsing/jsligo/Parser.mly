@@ -53,6 +53,7 @@ let mk_mod_path :
 (* Reductions on error *)
 
 %on_error_reduce
+  literal_expr
   ctor
   ctor_app_pattern
   chevrons(sep_or_term(type_var,COMMA))
@@ -68,7 +69,6 @@ let mk_mod_path :
   unary_expr_level
   add_expr_level
   eq_expr_level
-  object_or_array
   var_path
   path_expr
   bit_shift_level
@@ -97,7 +97,8 @@ let mk_mod_path :
   catenable_stmt
   nsepseq(val_binding,COMMA)
 %on_error_reduce
-  ternary_expr(core_expr,pre_expr_stmt)
+  left_hs
+  ternary_expr(expr_stmt_cond,pre_expr_stmt)
   non_if_stmt(statement)
   last_or_more(statement)
   expr_stmt
@@ -760,8 +761,18 @@ export_stmt:
 pre_expr_stmt:
   app_expr | incr_expr | decr_expr
 | assign_expr | match_expr | typed_expr
-| ternary_expr (core_expr, pre_expr_stmt) { $1 }
-| par (expr)                              { E_Par $1 }
+| ternary_expr (expr_stmt_cond, pre_expr_stmt) { $1 }
+| par (expr) { E_Par $1 }
+
+expr_stmt_cond:
+  var_path   { $1 }
+| par (expr) { E_Par $1 }
+
+var_path:
+  path (var) | var { $1 }
+
+%inline
+var: variable { E_Var $1 }
 
 expr_stmt: pre_expr_stmt { S_Expr $1 }
 
@@ -771,22 +782,21 @@ decl_stmt:
 (* Assignments *)
 
 assign_expr:
-  bin_op (var_path,   "=", expr) { E_Assign   $1 }
-| bin_op (var_path,  "*=", expr) { E_MultEq   $1 }
-| bin_op (var_path,  "/=", expr) { E_DivEq    $1 }
-| bin_op (var_path,  "%=", expr) { E_RemEq    $1 }
-| bin_op (var_path,  "+=", expr) { E_AddEq    $1 }
-| bin_op (var_path,  "-=", expr) { E_SubEq    $1 }
-| bin_op (var_path,  "|=", expr) { E_BitOrEq  $1 }
-| bin_op (var_path,  "^=", expr) { E_BitXorEq $1 }
-| bin_op (var_path,  "&=", expr) { E_BitAndEq $1 }
-| bin_op (var_path, "<<=", expr) { E_BitSlEq  $1 }
-| bin_op (var_path, ">>=", expr) { E_BitSrEq  $1 }
+  bin_op (left_hs,   "=", expr) { E_Assign   $1 }
+| bin_op (left_hs,  "*=", expr) { E_MultEq   $1 }
+| bin_op (left_hs,  "/=", expr) { E_DivEq    $1 }
+| bin_op (left_hs,  "%=", expr) { E_RemEq    $1 }
+| bin_op (left_hs,  "+=", expr) { E_AddEq    $1 }
+| bin_op (left_hs,  "-=", expr) { E_SubEq    $1 }
+| bin_op (left_hs,  "|=", expr) { E_BitOrEq  $1 }
+| bin_op (left_hs,  "^=", expr) { E_BitXorEq $1 }
+| bin_op (left_hs,  "&=", expr) { E_BitAndEq $1 }
+| bin_op (left_hs, "<<=", expr) { E_BitSlEq  $1 }
+| bin_op (left_hs, ">>=", expr) { E_BitSrEq  $1 }
 
-var_path:
-  path (object_or_array) | object_or_array { $1 }
-
-object_or_array: variable { E_Var $1 }
+left_hs:
+  var_path     { $1 }
+| array (expr) { E_Array  $1 }
 
 path (root_expr):
   root_expr nseq(selection) {
