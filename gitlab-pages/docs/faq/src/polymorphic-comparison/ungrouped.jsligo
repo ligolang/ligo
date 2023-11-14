@@ -1,0 +1,3 @@
+// @inline
+const compare_equal = <k>(a : k, b : k) : bool =>
+  (Michelson `{ UNPAIR; COMPARE; EQ }` as ((x : [k, k]) => bool)) ([a, b])

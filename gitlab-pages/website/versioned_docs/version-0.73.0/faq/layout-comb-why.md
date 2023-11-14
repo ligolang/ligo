@@ -1,6 +1,6 @@
 ---
 id: layout-comb-why
-title: Why did the default datatype layout change to `@layout comb` ?
+title: Why did the default datatype layout change to @layout comb?
 ---
 
 ## Background
