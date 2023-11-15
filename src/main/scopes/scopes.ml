@@ -39,7 +39,7 @@ let defs_and_typed_program
         Types_pass.(
           Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
       in
-      Definitions.Of_Stdlib.definitions stdlib_core module_deps
+      Definitions.Of_Stdlib_Ast.definitions stdlib_core module_deps
       |> Types_pass.patch stdlib_core_types)
   in
   let m_alias, env = Module_aliases_pass.declarations prg in
@@ -52,7 +52,7 @@ let defs_and_typed_program
       bindings, Some (type_env, decls))
     else Types_pass.empty Env.empty, None
   in
-  ( Definitions.definitions prg module_deps stdlib_defs
+  ( Definitions.Of_Ast.definitions prg module_deps stdlib_defs
     |> Module_aliases_pass.patch m_alias
     |> (if with_types then Types_pass.patch bindings else Fn.id)
     |> References.patch (References.declarations (stdlib_core @ prg))
@@ -73,7 +73,7 @@ let scopes
            Types_pass.(
              Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
          in
-         Definitions.Of_Stdlib.definitions stdlib_core module_deps
+         Definitions.Of_Stdlib_Ast.definitions stdlib_core module_deps
          |> Types_pass.patch stdlib_core_types)
       , stdlib_core )
   in
