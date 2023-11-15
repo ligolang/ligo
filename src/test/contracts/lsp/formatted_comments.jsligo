@@ -12,7 +12,6 @@
 
 /* Block comment attached to decl */
 /* One more block comment attached to decl */
-
 const x =
   3 //trailing comment
 

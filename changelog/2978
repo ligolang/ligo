@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\n\\n"
+merge_request: '2978'
+title: "Print attribute values between quotes in CameLIGO + remove blank line after comments"
+type: fixed
+            

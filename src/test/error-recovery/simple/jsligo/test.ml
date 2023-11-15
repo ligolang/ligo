@@ -41,20 +41,20 @@ let%expect_test "error_recovery_simple_jsligo" =
     FAIL : can parse test file (but shouldn't)./switch_with_missing_semicolon.jsligo
     PASS, 11, 21, 5, 114, 2, ./switch_with_not_last_default.jsligo
     PASS, 0, 0, 0, 0, 0, ./triple_eq_in_if_condition.jsligo
-    PASS, 3, 10, 10, 501, 0, ./unfinished_code00.jsligo
-    PASS, 6, 2, 2, 366, 0, ./unfinished_code01.jsligo
+    PASS, 2, 10, 10, 467, 0, ./unfinished_code00.jsligo
+    PASS, 5, 2, 2, 390, 0, ./unfinished_code01.jsligo
     PASS, 3, 11, 9, 750, 0, ./unfinished_code02.jsligo
-    PASS, 4, 9, 5, 866, 0, ./unfinished_code03.jsligo
-    PASS, 5, 31, 29, 291, 0, ./unfinished_code04.jsligo
-    PASS, 4, 9, 9, 426, 0, ./unfinished_code05.jsligo
-    PASS, 6, 8, 6, 473, 0, ./unfinished_code06.jsligo
+    PASS, 3, 9, 5, 902, 0, ./unfinished_code03.jsligo
+    PASS, 4, 31, 29, 25, 0, ./unfinished_code04.jsligo
+    PASS, 3, 9, 9, 456, 0, ./unfinished_code05.jsligo
+    PASS, 5, 8, 6, 473, 0, ./unfinished_code06.jsligo
     FAIL : can parse test file (but shouldn't)./unfinished_code07.jsligo
     PASS, 2, 7, 5, 20, 0, ./unfinished_code08.jsligo
-    PASS, 4, 2, 2, 131, 0, ./unfinished_code09.jsligo
+    PASS, 3, 2, 2, 131, 0, ./unfinished_code09.jsligo
     PASS, 4, 11, 9, 301, 0, ./unfinished_code10.jsligo
-    PASS, 6, 3, 3, 192, 0, ./unfinished_code11.jsligo
-    PASS, 4, 7, 5, 259, 0, ./unfinished_code12.jsligo
-    PASS, 4, 7, 5, 259, 0, ./unfinished_code13.jsligo
+    PASS, 5, 3, 3, 192, 0, ./unfinished_code11.jsligo
+    PASS, 3, 7, 5, 257, 0, ./unfinished_code12.jsligo
+    PASS, 3, 7, 5, 257, 0, ./unfinished_code13.jsligo
     FAIL : can't recover test file./unreadable_symbol.jsligo
     PASS, 6, 65, 5, 137, 1, ./using_then_in_if_expr.jsligo
     PASS, 15, 112, 12, 217, 0, ./var_kw_instead_of_let_kw.jsligo |}]

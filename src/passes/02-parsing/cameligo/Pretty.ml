@@ -59,13 +59,15 @@ let print_comments = function
 (* Tokens *)
 
 let token (t : string Wrap.t) : document =
-  let prefix = print_comments t#comments ^/^ string (ErrorPrefix.remove t#payload)
+  let prefix = print_comments t#comments
+               ^^ string (ErrorPrefix.remove t#payload)
   in print_line_comment_opt prefix t#line_comment
 
 let print_variable = function
   Var t -> token t
 | Esc t ->
-    let prefix = print_comments t#comments ^/^ string (ErrorPrefix.remove "@" ^ t#payload)
+    let prefix = print_comments t#comments
+                 ^^ string (ErrorPrefix.remove "@" ^ t#payload)
     in print_line_comment_opt prefix t#line_comment
 
 (* Enclosed documents *)
@@ -266,8 +268,11 @@ and print_attribute state (node : Attr.t wrap) =
   let key, val_opt = node#payload in
   let thread = string key in
   let thread = match val_opt with
-                 Some (String value | Ident value) ->
+                 Some Ident value ->
                    group (thread ^/^ nest state#indent (string value))
+               | Some String value ->
+                   let string = string ("\"" ^ value ^ "\"") in
+                   group (thread ^/^ nest state#indent string)
                | None -> thread in
   let thread = print_comments node#comments
                ^/^ lbracket ^^ at ^^ thread ^^ rbracket
