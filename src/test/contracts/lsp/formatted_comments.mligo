@@ -9,7 +9,6 @@
 #import "dummy.mligo" "DUMMY" // trailing comment for #import
 (* Block comment attached to decl *)
 (* One more block comment attached to decl *)
-
 let x = 3 + 4 //trailing comment for decl
 
 //comment for #if
