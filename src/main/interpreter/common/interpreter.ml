@@ -383,6 +383,16 @@ let rec apply_comparison ~no_colour ~raise
     raise.error @@ Errors.meta_lang_eval loc calltrace @@ v_string msg
 
 
+let apply_comparison_int ~no_colour ~raise
+    :  Location.t -> calltrace -> Ast_aggregated.type_expression
+    -> Ligo_prim.Constant.constant' -> value -> value -> value Monad.t
+  =
+ fun loc calltrace type_ c operand operand' ->
+  let open Monad in
+  let cmpres = apply_comparison ~no_colour ~raise loc calltrace type_ operand operand' in
+  return @@ v_int (Z.of_int cmpres)
+
+
 let apply_comparison ~no_colour ~raise
     :  Location.t -> calltrace -> Ast_aggregated.type_expression
     -> Ligo_prim.Constant.constant' -> value -> value -> value Monad.t
@@ -1501,6 +1511,11 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
   | C_TEST_CONS_VIEWS, [ V_Ct (C_string n); V_Func_val f; V_Views vs ] ->
     return @@ v_views @@ ((n, f) :: vs)
   | C_TEST_CONS_VIEWS, _ -> fail @@ error_type ()
+  | C_TEST_COMPARE, [ operand; operand' ] ->
+    (* we use the type of the first argument to guide comparison *)
+    let type_ = nth_type 0 in
+    apply_comparison_int ~no_colour ~raise loc calltrace type_ c operand operand'
+  | C_TEST_COMPARE, _ -> fail @@ error_type ()
   | C_POLYMORPHIC_ADD, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->

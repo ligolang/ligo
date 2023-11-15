@@ -165,6 +165,7 @@ type constant' =
   | C_TEST_SET_PRINT_VALUES [@only_interpreter]
   | C_TEST_NIL_VIEWS [@only_interpreter]
   | C_TEST_CONS_VIEWS [@only_interpreter]
+  | C_TEST_COMPARE [@only_interpreter]
   (* New with EDO*)
   | C_GLOBAL_CONSTANT [@pure]
   (* JsLIGO *)

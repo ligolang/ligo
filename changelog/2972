@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added extended comparators to the `Test` module. They could be used to compare values that couldn't be compared via regular `=` (e.g. lists and big maps).\\n\\nHandle wrong test primitives usage in the LSP. Now you can see an error at the beginning of your file.\\n\\n\\n"
+merge_request: '2972'
+title: "[#1740] Add extended comparator functions to the `Test` module + show errors on wrong test primitive usages"
+type: added
+            

@@ -154,7 +154,7 @@ let on_doc
   in
   Docs_cache.set docs_cache ~key:file ~data:{ definitions; syntax; code = contents };
   let diags_by_file =
-    let simple_diags = Diagnostics.get_diagnostics defs_and_diagnostics in
+    let simple_diags = Diagnostics.get_diagnostics file defs_and_diagnostics in
     Diagnostics.partition_simple_diagnostics
       file
       (Some max_number_of_problems)

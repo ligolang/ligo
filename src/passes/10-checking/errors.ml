@@ -402,7 +402,10 @@ let extract_loc_and_message : typer_error -> Location.t * string =
     let type2 = type_improve type2 in
     ( loc
     , Format.asprintf
-        "@[<hv>Invalid arguments.@.These types cannot be compared: \"%a\" and \"%a\".%a@]"
+        "@[<hv>Invalid arguments.@.These types cannot be compared: \"%a\" and \
+         \"%a\".%a@.Use \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \
+         \"Test.less\", \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare \
+         lists, maps, sets, etc.@]"
         pp_type
         type1
         pp_type

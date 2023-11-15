@@ -395,6 +395,53 @@ let test_cases =
         ]
     ; max_number_of_problems = None
     }
+  ; { test_name = "Shows comparing error and suggests to use functions from Test module"
+    ; file_path = "contracts/lsp/diagnostics_equal.mligo"
+    ; diagnostics =
+        [ { message =
+              "Invalid arguments.\n\
+               These types cannot be compared: \"list (int)\" and \"list (int)\".\n\
+               Use \"Test.equal\", \"Test.not_equal\", \"Test.greater\", \"Test.less\", \
+               \"Test.greater_or_equal\", or \"Test.less_or_equal\" to compare lists, \
+               maps, sets, etc."
+          ; location =
+              { range = interval 2 12 27
+              ; path = Path.from_relative "contracts/lsp/diagnostics_equal.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows wrong test primitive usage error"
+    ; file_path = "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
+    ; diagnostics =
+        [ { message = "Invalid usage of a Test primitive."
+          ; location =
+              { range = Range.dummy (* TODO: show a proper location here *)
+              ; path =
+                  Path.from_relative
+                    "contracts/lsp/diagnostics_wrong_usage_of_test_primitives.mligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows a warning for deprecated functions"
+    ; file_path = "contracts/deprecated.mligo"
+    ; diagnostics =
+        [ { message =
+              "\nWarning: deprecated value.\nReplace me by...\ng!\nmail: foo@bar.com\n"
+          ; location =
+              { range = interval 4 74 75
+              ; path = Path.from_relative "contracts/deprecated.mligo"
+              }
+          ; severity = DiagnosticSeverity.Warning
+          }
+        ]
+    ; max_number_of_problems = None
+    }
   ]
 
 
