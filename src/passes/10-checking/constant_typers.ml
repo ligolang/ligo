@@ -1513,6 +1513,12 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
                 ^-> t_views a ~loc ()
                 ^~> t_views a ~loc ()
               ]) )
+    ; ( C_TEST_COMPARE
+      , of_type
+          (for_all "a"
+          @@ fun a ->
+          create ~mode_annot:[ Inferred; Inferred ] ~types:[ a ^-> a ^~> t_int ~loc () ])
+      )
     ; C_EQ, of_comparator Comparable.comparator
     ; C_NEQ, of_comparator Comparable.comparator
     ; C_LT, of_comparator Comparable.comparator
