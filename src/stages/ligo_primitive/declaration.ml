@@ -77,10 +77,10 @@ module Module_decl (Attr : Attr) = struct
       "@[<2>module %a : %a =@ %a%a@]"
       Var.Module_var.pp
       module_binder
-      h
-      module_
       a
       annotation
+      h
+      module_
       Attr.pp
       module_attr
 end

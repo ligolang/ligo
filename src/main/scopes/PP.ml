@@ -1,6 +1,8 @@
 module PP_helpers = Simple_utils.PP_helpers
 open Types
 
+let ( <@ ) = Simple_utils.Utils.( <@ )
+
 let resolve_case
     :  'core_expr Fmt.t -> 'typed_expr Fmt.t
     -> ('core_expr, 'typed_expr) resolve_case Fmt.t
@@ -41,64 +43,134 @@ let scopes : Format.formatter -> scopes -> unit =
   Format.fprintf f "@[<v>Scopes:@ %a@]" pp_scopes s
 
 
-let rec definitions : Format.formatter -> def list -> unit =
- fun f defs ->
+let refs : Format.formatter -> LSet.t -> unit =
+ fun ppf locs ->
+  match LSet.elements locs with
+  | [] -> Format.fprintf ppf "references: []"
+  | locs ->
+    let locs = List.sort locs ~compare:Location.compare in
+    Format.fprintf
+      ppf
+      "@[<hv 2>references:@ %a@]"
+      PP_helpers.(list_sep Location.pp (tag " ,@ "))
+      locs
+
+
+let vdef : Format.formatter -> vdef -> unit =
+ fun ppf { t; references; mod_path; def_type; _ } ->
+  let pp_def_type ppf =
+    Format.fprintf ppf
+    <@ function
+    | Local -> "Local"
+    | Global -> "Global"
+    | Parameter -> "Parameter"
+    | Module_field -> "Module_field"
+  in
+  Format.fprintf
+    ppf
+    "|%a|@ %a @ Mod Path = %a @ Def Type = %a"
+    type_case
+    t
+    refs
+    references
+    (PP_helpers.list (fun ppf -> String.pp ppf <@ Uid.to_name))
+    mod_path
+    pp_def_type
+    def_type
+
+
+let tdef : Format.formatter -> tdef -> unit =
+ fun ppf { content; references; _ } ->
+  let pp_content ppf content =
+    match content with
+    | None -> Format.fprintf ppf ""
+    | Some content -> Format.fprintf ppf "%a" Ast_core.PP.type_expression content
+  in
+  Format.fprintf ppf ": |%a|@ %a" pp_content content refs references
+
+
+let rec mdef : Format.formatter -> mdef -> unit =
+ fun ppf { mod_case = mod_case'; references; implements; _ } ->
+  let pp_implements ppf =
+    List.iter ~f:(Format.fprintf ppf "Implements: %a\n" implementation)
+  in
+  Format.fprintf
+    ppf
+    "%a @ %a @ %a @ "
+    mod_case
+    mod_case'
+    refs
+    references
+    pp_implements
+    implements
+
+
+and implementation : Format.formatter -> implementation -> unit =
+ fun ppf -> function
+  | Ad_hoc_signature d -> Format.fprintf ppf "Ad hoc: %a" definitions d
+  | Standalone_signature_or_module { module_path; resolved_module } ->
+    let alias ppf =
+      Option.value_or_thunk ~default:(fun () -> Format.fprintf ppf "unresolved")
+      <@ Option.map ~f:(Format.fprintf ppf "%a" Uid.pp)
+    in
+    Format.fprintf
+      ppf
+      "Standalone: %s (%a)"
+      (String.concat ~sep:"."
+      @@ Either.value_map ~first:Fn.id ~second:(List.map ~f:Uid.to_string) module_path)
+      alias
+      resolved_module
+
+
+and mod_case : Format.formatter -> mod_case -> unit =
+ fun ppf -> function
+  | Alias { module_path; resolved_module; file_name = _ } ->
+    let alias ppf =
+      Option.value_or_thunk ~default:(fun () -> Format.fprintf ppf "unresolved")
+      <@ Option.map ~f:(Format.fprintf ppf "%a" Uid.pp)
+    in
+    Format.fprintf
+      ppf
+      "Alias (%a): %s"
+      alias
+      resolved_module
+      (String.concat ~sep:"." @@ List.map ~f:Uid.to_string module_path)
+  | Def d -> Format.fprintf ppf "Members: %a" definitions d
+
+
+and definition : Format.formatter -> def -> unit =
+ fun ppf def ->
+  let pp_content ppf = function
+    | Variable v -> vdef ppf v
+    | Type t -> tdef ppf t
+    | Module m -> mdef ppf m
+  in
+  let pp_body_range ppf def =
+    match get_body_range def with
+    | None -> Format.fprintf ppf ""
+    | Some range -> Format.fprintf ppf "%a" Location.pp range
+  in
+  let pp_def ppf def =
+    Format.fprintf
+      ppf
+      "(%s -> %s) @ Range: %a @ Body Range: %a @ Content: %a@ "
+      (Uid.to_string @@ get_def_uid def)
+      (get_def_name def)
+      Location.pp
+      (get_range def)
+      pp_body_range
+      def
+      pp_content
+      def
+  in
+  Format.fprintf ppf "%a" pp_def def
+
+
+and definitions : Format.formatter -> def list -> unit =
+ fun ppf defs ->
   let defs =
     List.sort defs ~compare:(fun d1 d2 ->
         Simple_utils.Location_ordered.compare (get_range d1) (get_range d2))
-  in
-  let refs ppf locs =
-    let locs = LSet.elements locs in
-    match locs with
-    | [] -> Format.fprintf ppf "references: []"
-    | locs ->
-      let locs = List.sort locs ~compare:Location.compare in
-      Format.fprintf
-        ppf
-        "@[<hv 2>references:@ %a@]"
-        PP_helpers.(list_sep Location.pp (tag " ,@ "))
-        locs
-  in
-  let pp_def_type ppf = function
-    | Local -> Format.fprintf ppf "Local"
-    | Global -> Format.fprintf ppf "Global"
-    | Parameter -> Format.fprintf ppf "Parameter"
-    | Module_field -> Format.fprintf ppf "Module_field"
-  in
-  let pp_content ppf = function
-    | Variable v ->
-      Format.fprintf
-        ppf
-        "|%a|@ %a @ Mod Path = %a @ Def Type = %a"
-        type_case
-        v.t
-        refs
-        v.references
-        (PP_helpers.list String.pp)
-        v.mod_path
-        pp_def_type
-        v.def_type
-    | Type t ->
-      let content ppf content =
-        match content with
-        | None -> Format.fprintf ppf ""
-        | Some content -> Format.fprintf ppf "%a" Ast_core.PP.type_expression content
-      in
-      Format.fprintf ppf ": |%a|@ %a" content t.content refs t.references
-    | Module
-        { mod_case =
-            Alias { module_path = a; resolved_module = _resolved; file_name = _file_name }
-        ; references
-        ; _
-        } ->
-      Format.fprintf
-        ppf
-        "Alias: %s @ %a @ "
-        (String.concat ~sep:"." @@ List.map ~f:Uid.to_string a)
-        refs
-        references
-    | Module { mod_case = Def d; references; _ } ->
-      Format.fprintf ppf "Members: %a @ %a @ " definitions d refs references
   in
   let variables, types_modules =
     List.partition_tf
@@ -111,36 +183,18 @@ let rec definitions : Format.formatter -> def list -> unit =
     List.partition_tf
       ~f:(function
         | Type _ -> true
-        | _ -> false)
+        | Variable _ | Module _ -> false)
       types_modules
   in
-  let pp_body_range f def =
-    match get_body_range def with
-    | None -> Format.fprintf f ""
-    | Some range -> Format.fprintf f "%a" Location.pp range
-  in
-  let pp_def f =
-    List.iter ~f:(fun def ->
-        Format.fprintf
-          f
-          "(%s -> %s) @ Range: %a @ Body Range: %a @ Content: %a@ "
-          (Uid.to_string @@ get_def_uid def)
-          (get_def_name def)
-          Location.pp
-          (get_range def)
-          pp_body_range
-          def
-          pp_content
-          def)
-  in
+  let pp_defs ppf = List.iter ~f:(definition ppf) in
   Format.fprintf
-    f
+    ppf
     "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]"
-    pp_def
+    pp_defs
     variables
-    pp_def
+    pp_defs
     types
-    pp_def
+    pp_defs
     modules
 
 
@@ -204,50 +258,32 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         { name
         ; range
         ; body_range
-        ; mod_case = Def d
+        ; mod_case
         ; references
         ; uid
         ; def_type = _
         ; mod_path = _
         ; signature = _
         ; attributes = _
+        ; implements = _
+        ; mdef_type = _
         } ->
-      ( uid
-      , `Assoc
-          [ ( "definition"
-            , definition
-                ~name:(get_mod_name_name name)
-                ~range
-                ~body_range
-                ~references
-                ~t:Unresolved )
-          ; "members", defs_json d
-          ] )
-    | Module
-        { name
-        ; range
-        ; body_range
-        ; mod_case =
-            Alias { module_path = a; resolved_module = _resolved; file_name = _file_name }
-        ; references
-        ; uid
-        ; def_type = _
-        ; mod_path = _
-        ; signature = _
-        ; attributes = _
-        } ->
-      let alias = `List (List.map a ~f:(fun s -> `String (Uid.to_string s))) in
-      ( uid
-      , `Assoc
-          [ ( "definition"
-            , definition
-                ~name:(get_mod_name_name name)
-                ~range
-                ~body_range
-                ~references
-                ~t:Unresolved )
-          ; "alias", alias
-          ] )
+      let def =
+        ( "definition"
+        , definition
+            ~name:(get_mod_name_name name)
+            ~range
+            ~body_range
+            ~references
+            ~t:Unresolved )
+      in
+      let body =
+        match mod_case with
+        | Def d -> "members", defs_json d
+        | Alias { module_path; resolved_module = _resolved; file_name = _file_name } ->
+          "alias", `List (List.map module_path ~f:(fun s -> `String (Uid.to_string s)))
+      in
+      uid, `Assoc [ def; body ]
   in
   Tuple2.map_fst ~f:Uid.to_string @@ aux def
 

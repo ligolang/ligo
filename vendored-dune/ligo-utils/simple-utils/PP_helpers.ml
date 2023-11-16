@@ -33,9 +33,7 @@ let list_sep_d_par f ppf lst =
 let list value = pp_print_list ~pp_sep:(tag "") value
 
 let ne_list_sep value separator ppf (hd, tl) =
-  value ppf hd;
-  separator ppf ();
-  pp_print_list ~pp_sep:separator value ppf tl
+  pp_print_list ~pp_sep:separator value ppf (hd :: tl)
 
 let prepend s f ppf a = fprintf ppf "%s%a" s f a
 

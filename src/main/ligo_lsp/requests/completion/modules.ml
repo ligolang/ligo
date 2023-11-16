@@ -32,7 +32,7 @@ let get_module_from_pos
                 else None))
     | Def defs ->
       let is_module_field_in_scope def =
-        match Def.get_def_type def with
+        match Scopes.Types.get_def_type def with
         | Module_field -> in_scope def scope
         | Local | Parameter | Global -> false
       in

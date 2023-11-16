@@ -227,7 +227,7 @@ let test_cases =
           , one "module Mangled_with_inlined_sig : sig\n  val foo : int\n  end" )
         ; ( pos ~line:70 ~character:20
           , one
-              "module With_included : sig\n\
+              "module type With_included = sig\n\
               \  type t\n\n\
               \  type int =  string\n\n\
               \  val b : bool\n\n\
@@ -256,14 +256,15 @@ let test_cases =
             ~f:(fun p -> p, one "module M : sig\n  val v : int\n  end")
             [ pos ~line:62 ~character:9; pos ~line:64 ~character:9 ]
         @ List.map
-            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int =  string\n  end")
+            ~f:(fun p ->
+              p, one "module type T = sig\n  type t\n\n  type int =  string\n  end")
             [ pos ~line:5 ~character:12
             ; pos ~line:10 ~character:11
             ; pos ~line:48 ~character:26
             ; pos ~line:71 ~character:10
             ]
         @ List.map
-            ~f:(fun p -> p, one "module I : sig\n  val b : bool\n  end")
+            ~f:(fun p -> p, one "module type I = sig\n  val b : bool\n  end")
             [ pos ~line:66 ~character:12; pos ~line:72 ~character:10 ]
     }
   ; { test_name = "hover_module.jsligo"
@@ -299,7 +300,7 @@ let test_cases =
           , one "namespace Mangled_with_inlined_sig implements {\n  const foo: int\n}" )
         ; ( pos ~line:72 ~character:17
           , one
-              "namespace With_included implements {\n\
+              "interface With_included {\n\
               \  type t;\n\
               \  type int = string;\n\
               \  const b: bool;\n\
@@ -337,14 +338,13 @@ let test_cases =
             ~f:(fun p -> p, one "namespace M implements {\n  const v: int\n}")
             [ pos ~line:62 ~character:12; pos ~line:65 ~character:9 ]
         @ List.map
-            ~f:(fun p ->
-              p, one "namespace T implements {\n  type t;\n  type int = string\n}")
+            ~f:(fun p -> p, one "interface T {\n  type t;\n  type int = string\n}")
             [ pos ~line:5 ~character:10
             ; pos ~line:10 ~character:23
             ; pos ~line:48 ~character:38
             ]
         @ List.map
-            ~f:(fun p -> p, one "namespace I implements {\n  const b: bool\n}")
+            ~f:(fun p -> p, one "interface I {\n  const b: bool\n}")
             [ pos ~line:68 ~character:10
             ; pos ~line:72 ~character:35
             ; pos ~line:76 ~character:38
@@ -355,8 +355,7 @@ let test_cases =
     ; hovers =
         (let hover_for_module_type_X =
            List
-             [ (* FIXME I'm a module type not a module *)
-               ( "module X : sig\n\
+             [ ( "module type X = sig\n\
                  \  [@view]\n\
                  \  val y : int -> int\n\n\
                  \  type t\n\n\
@@ -433,8 +432,7 @@ let test_cases =
     ; hovers =
         (let hover_for_namespace_X =
            List
-             [ (* FIXME I'm an interface, not a namespace *)
-               ( "namespace X implements {\n\
+             [ ( "interface X {\n\
                  \  @view\n\
                  \  const y: (_: int) => int;\n\
                  \  type t;\n\

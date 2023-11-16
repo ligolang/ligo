@@ -656,15 +656,21 @@ let rec patch : t -> Types.def list -> Types.def list =
         | _ -> Variable v)
       | Type t -> Type t
       | Module m ->
-        let mod_case =
-          match m.mod_case with
-          | Alias { module_path; resolved_module; file_name } ->
-            Types.Alias { module_path; resolved_module; file_name }
+        let patch_mod_case = function
+          | Alias _ as alias -> alias
           | Def defs -> Def (patch bindings defs)
+        in
+        let patch_implementation = function
+          | Ad_hoc_signature defs -> Ad_hoc_signature (patch bindings defs)
+          | Standalone_signature_or_module _ as path -> path
         in
         let m =
           match m.signature, LMap.find_opt m.range bindings.module_signatures with
           | Unresolved, Some signature -> { m with signature }
           | _ -> m
         in
-        Module { m with mod_case })
+        Module
+          { m with
+            mod_case = patch_mod_case m.mod_case
+          ; implements = List.map ~f:patch_implementation m.implements
+          })

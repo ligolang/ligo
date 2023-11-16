@@ -19,17 +19,18 @@ module List = Simple_utils.List
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 module Uid : sig
-  type t
+  type t [@@deriving compare]
 
   val make : string -> Location.t -> t
   val ( = ) : t -> t -> bool
+  val equal : t -> t -> bool
   val to_name : t -> string
   val to_string : t -> string
   val pp : Format.formatter -> t -> unit
 end = struct
-  type t = Uid of string [@@unboxed]
+  type t = Uid of string [@@unboxed] [@@deriving compare]
 
-  let make name (loc : Location.t) : t =
+  let make (name : string) (loc : Location.t) : t =
     Uid
       (match loc with
       | File region -> Format.sprintf "%s#%s" name (region#compact ~file:false `Point)
@@ -37,6 +38,7 @@ end = struct
 
 
   let ( = ) (Uid a : t) (Uid b : t) : bool = String.(a = b)
+  let equal : t -> t -> bool = ( = )
 
   (** Given an UID of format [{name}#{line}:{start_col}-{end_col}], returns only
     the [{name}] part. *)
@@ -52,30 +54,44 @@ type ('core_expr, 'typed_expr) resolve_case =
   | Core of 'core_expr
   | Resolved of 'typed_expr
   | Unresolved
+[@@deriving compare]
 
 type type_case = (Ast_core.type_expression, Ast_typed.type_expression) resolve_case
+[@@deriving compare]
+
 type signature_case = (Ast_core.signature, Ast_typed.signature) resolve_case
+[@@deriving compare]
+
+(** Whether a [mdef] was declared as a module/namespace or signature/interface. *)
+type mdef_type =
+  | Module
+  | Signature
+[@@deriving compare]
 
 type def_type =
   | Local
   | Parameter
   | Module_field
   | Global
+[@@deriving compare]
 
 type vdef_attributes =
   | No_attributes
   | Value_attr of Value_attr.t
   | Sig_item of Sig_item_attr.t
+[@@deriving compare]
 
 type tdef_attributes =
   | Type_attr of Type_or_module_attr.t
   | Sig_type of Sig_type_attr.t
   | No_attributes
+[@@deriving compare]
 
 type mdef_attributes =
   | Module_attr of Type_or_module_attr.t
   | Signature_attr of Signature_attr.t
   | No_attributes
+[@@deriving compare]
 
 type vdef =
   { name : string
@@ -85,9 +101,11 @@ type vdef =
   ; t : type_case
   ; references : LSet.t
   ; def_type : def_type
-  ; mod_path : string list
+  ; mod_path : Uid.t list
   ; attributes : vdef_attributes
   }
+
+let compare_vdef (v1 : vdef) (v2 : vdef) : int = Uid.compare v1.uid v2.uid
 
 type tdef =
   { name : string
@@ -100,11 +118,26 @@ type tdef =
             [module type I = sig type t end]. *)
   ; def_type : def_type
   ; references : LSet.t
-  ; mod_path : string list
+  ; mod_path : Uid.t list
   ; attributes : tdef_attributes
   }
 
-type mod_case =
+let compare_tdef (t1 : tdef) (t2 : tdef) : int = Uid.compare t1.uid t2.uid
+
+type mod_name =
+  | Original of string
+  | Filename of string
+[@@deriving compare]
+
+type implementation =
+  | Ad_hoc_signature of def list
+  | Standalone_signature_or_module of
+      { (* Unlike [mod_case], we don't want to generate new UIDs here. *)
+        module_path : (string list, Uid.t list) Either.t
+      ; resolved_module : Uid.t option
+      }
+
+and mod_case =
   | Def of def list
   | Alias of
       { module_path : Uid.t list
@@ -114,10 +147,6 @@ type mod_case =
                 then this field will contain a file name of a module. *)
       }
 
-and mod_name =
-  | Original of string
-  | Filename of string
-
 and mdef =
   { name : mod_name
   ; uid : Uid.t
@@ -126,36 +155,29 @@ and mdef =
   ; references : LSet.t
   ; mod_case : mod_case
   ; def_type : def_type
-  ; mod_path : string list
+  ; mod_path : Uid.t list
   ; signature : signature_case
   ; attributes : mdef_attributes
+  ; implements : implementation list
+  ; mdef_type : mdef_type
   }
 
 and def =
   | Variable of vdef
   | Type of tdef
   | Module of mdef
+[@@deriving compare]
 
-let mod_name_compare a b =
+let compare_mdef (m1 : mdef) (m2 : mdef) : int = Uid.compare m1.uid m2.uid
+let equal_def a b = 0 = compare_def a b
+
+let equal_def_by_name (a : def) (b : def) : bool =
   match a, b with
-  | Original a, Original b -> String.compare a b
-  | Filename a, Filename b -> String.compare a b
-  | Original _, Filename _ -> -1
-  | Filename _, Original _ -> 1
+  | Variable x, Variable y -> String.equal x.name y.name
+  | Type x, Type y -> String.equal x.name y.name
+  | Module x, Module y -> compare_mod_name x.name y.name = 0
+  | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false
 
-
-let def_compare a b =
-  match a, b with
-  | Variable x, Variable y -> String.compare x.name y.name
-  | Type x, Type y -> String.compare x.name y.name
-  | Module x, Module y -> mod_name_compare x.name y.name
-  | Variable _, (Type _ | Module _) -> -1
-  | (Type _ | Module _), Variable _ -> 1
-  | Type _, Module _ -> 1
-  | Module _, Type _ -> -1
-
-
-let def_equal a b = 0 = def_compare a b
 
 let get_mod_name_name = function
   | Original n -> n
@@ -186,6 +208,18 @@ let get_body_range = function
   | Module m -> m.body_range
 
 
+let get_def_type = function
+  | Type t -> t.def_type
+  | Variable v -> v.def_type
+  | Module m -> m.def_type
+
+
+let get_mod_path = function
+  | Type t -> t.mod_path
+  | Variable v -> v.mod_path
+  | Module m -> m.mod_path
+
+
 (** [mvar_to_id] takes and [Module_var.t] and gives id of the form
     [{name}#{line}:{start_col}-{end_col}] *)
 let mvar_to_id (m : Module_var.t) : Uid.t =
@@ -201,7 +235,7 @@ let rec flatten_defs defs =
   match defs with
   | [] -> []
   | (Module { mod_case = Def d; _ } as def) :: defs ->
-    [ def ] @ flatten_defs (shadow_defs d) @ flatten_defs defs
+    def :: (flatten_defs (shadow_defs d) @ flatten_defs defs)
   | def :: defs -> def :: flatten_defs defs
 
 
@@ -210,7 +244,7 @@ and shadow_defs : def list -> def list =
   match defs with
   | [] -> []
   | def :: defs ->
-    let shadow_def def' = not @@ def_equal def def' in
+    let shadow_def def' = not @@ equal_def_by_name def def' in
     def :: shadow_defs (List.filter defs ~f:shadow_def)
 
 

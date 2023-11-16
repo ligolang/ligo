@@ -613,7 +613,7 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
     let field = TODO_do_in_parsing.mvar m.field in
     Location.wrap ~loc @@ O.S_path (List.Ne.append module_path (field, []))
   | S_Var name ->
-    let loc = Location.generated in
+    let loc = Location.lift name#region in
     let name = TODO_do_in_parsing.mvar name in
     Location.wrap ~loc @@ O.S_path (name, [])
 
