@@ -37,9 +37,10 @@ module Regexp = struct
 
   let type_definition_end : Core.regexp =
     { (* FIXME: Emacs doesn't support positive look-ahead... too bad! *)
-      emacs = {|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\)\\b\\|)|}
-    ; textmate = {|(?=^#|\[@|\b(let|in|type|end|module|sig|val)\b|\))|}
-    ; vim = {|\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\)\>\|)\)\@=|}
+      emacs =
+        {|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\|include\\)\\b\\|)|}
+    ; textmate = {|(?=^#|\[@|\b(let|in|type|end|module|sig|val|include)\b|\))|}
+    ; vim = {|\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|include\)\>\|)\)\@=|}
     }
 
   let type_name_match : Core.regexp =
@@ -74,10 +75,11 @@ module Regexp = struct
   let type_annotation_end : Core.regexp =
     { (* FIXME: Emacs doesn't support positive look-ahead *)
       emacs =
-        {r|)\\|=\\|;\\|}\\|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\|end\\)\\b|r}
-    ; textmate = {r|(?=\)|=|;|}|^#|\[@|\b(let|in|type|end|module|sig|val|end)\b)|r}
+        {r|)\\|=\\|;\\|}\\|^#\\|\\[@\\|\\b\\(let\\|in\\|type\\|end\\|module\\|sig\\|val\\|end\\|include\\)\\b|r}
+    ; textmate =
+        {r|(?=\)|=|;|}|^#|\[@|\b(let|in|type|end|module|sig|val|end|include)\b)|r}
     ; vim =
-        {r|\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\)\>\)\@=|r}
+        {r|\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\|include\)\>\)\@=|r}
     }
 
   let type_annotation_begin_lambda : Core.regexp = type_annotation_begin
