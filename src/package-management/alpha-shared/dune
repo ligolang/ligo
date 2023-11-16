@@ -1,3 +1,4 @@
 (library
  (name package_management_alpha_shared)
+ (public_name ligo.package_management.alpha_shared)
  (libraries core package_management_external_libs rresult))

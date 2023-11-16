@@ -4,6 +4,11 @@ type t
 
 type dependency_path = Path of string
 
+module Esy :
+  sig
+    val installation_json_path : string -> string option
+  end
+
 val equal_paths : dependency_path -> dependency_path -> bool
 
 val make : string -> t option (* The parameter is the project root. *)

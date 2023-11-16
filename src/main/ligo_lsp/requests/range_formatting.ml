@@ -84,7 +84,7 @@ let on_req_range_formatting
          Pretty.pp_pp_mode
          pp_mode
   in
-  if Helpers_file.is_packaged file
+  if Helpers_file.is_packaged @@ Path.to_string file
   then
     let@ () =
       send_message ~type_:Error @@ "Can not format a file from an imported package."

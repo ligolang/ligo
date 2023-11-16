@@ -50,7 +50,7 @@ Those are being actively worked on.
 - [X] Module fields
 - [X] Keywords and operators
 - [ ] Constructors
-- [ ] Files
+- [x] Files
 - [ ] Type-aware code completion
 
 ### Formatting
