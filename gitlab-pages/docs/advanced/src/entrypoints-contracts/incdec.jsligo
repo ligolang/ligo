@@ -2,11 +2,15 @@ export namespace IncDec {
   type storage = int;
   type result = [list<operation>, storage];
 
-  // Three entrypoints
+  // Four entrypoints
 
   @entry
   const increment = (delta : int, store : storage) : result =>
     [list([]), store + delta];
+
+  @entry
+  const @default = (_u : unit, store : storage) : result =>
+    increment(1, store)
 
   @entry
   const decrement = (delta : int, store : storage) : result =>
