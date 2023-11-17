@@ -27,11 +27,15 @@ export namespace IncDec {
   type storage = int;
   type result = [list<operation>, storage];
 
-  // Three entrypoints
+  // Four entrypoints
 
   @entry
   const increment = (delta : int, store : storage) : result =>
     [list([]), store + delta];
+
+  @entry
+  const @default = (_u : unit, store : storage) : result =>
+    increment(1, store)
 
   @entry
   const decrement = (delta : int, store : storage) : result =>
@@ -52,9 +56,11 @@ module IncDec = struct
   type storage = int
   type result = operation list * storage
 
-  (* Three entrypoints *)
+  (* Four entrypoints *)
   [@entry] let increment (delta : int) (store : storage) : result =
     [], store + delta
+  [@entry] let default (() : unit) (store : storage) : result =
+    increment 1 store
   [@entry] let decrement (delta : int) (store : storage) : result =
     [], store - delta
   [@entry] let reset (() : unit) (_ : storage) : result =
@@ -74,6 +80,16 @@ contract designer, but the type for the list of operations is not.
 The return type of an entry point is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
+
+<Syntax syntax="jsligo">
+
+Note that the name `default` has a special meaning for a Tezos entry point,
+and denotes the default entry point to be called unless another one is
+specified. Due to the fact that `default` is a reserved keyword in JsLIGO,
+we use the escape notation `@default` to write the function name, without
+it being misinterpreted as a keyword.
+
+</Syntax>
 
 <Syntax syntax="cameligo">
 
