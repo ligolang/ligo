@@ -37,6 +37,12 @@ let from_relative : string -> t =
   from_absolute abs_path
 
 
+(** Create a filename which is relative to the base filename.
+  The resulting type is [string] since it's expected for [Path.t] to be always absolute. *)
+let make_relative : t -> t -> string =
+ fun base p -> FilePath.make_relative (to_string base) (to_string p)
+
+
 let dirname : t -> t = fun p -> from_absolute @@ Filename.dirname @@ to_string p
 
 (** Concat absolute path to dir and relative path inside this dir *)
