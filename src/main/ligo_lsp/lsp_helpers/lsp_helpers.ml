@@ -5,6 +5,7 @@ module Helpers_pretty = Helpers_pretty
 module Path = Path
 module Pretty = Pretty
 module Project_root = Project_root
+module Files = Files
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def

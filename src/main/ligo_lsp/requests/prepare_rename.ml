@@ -8,7 +8,7 @@ let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
   >>= fun def ->
   Option.some_if
     (match Def.get_location def with
-    | File { path; range = _ } -> not (Helpers_file.is_packaged path)
+    | File { path; range = _ } -> not (Helpers_file.is_packaged @@ Path.to_string path)
     | StdLib _ | Virtual _ -> false)
     ()
   >>= fun () ->

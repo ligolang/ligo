@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added completions for files. Now if you press `Ctrl` + `Space` in `vscode` inside quotes in the `#import`/`#include` directive then you'll see files that you can import.\\n\\n\\n"
+merge_request: '2980'
+title: "[#2091] Show completions for files in imports"
+type: added
+            

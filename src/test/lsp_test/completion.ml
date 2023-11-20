@@ -368,6 +368,114 @@ let test_cases_cameligo =
         ]
     ; negative_labels = []
     }
+  ; { test_name = "File completions in import for outer file in the project"
+    ; file_name = "contracts/lsp/completion_files/completion_files.mligo"
+    ; position = Position.create ~line:0 ~character:9
+    ; completions =
+        [ CompletionItem.create
+            ~label:"@ligo/math-lib/core/math.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"ligo-breathalyzer/lib/model.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"inner/inner.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"outer.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ]
+    ; negative_labels = [ "completion_files.mligo" ]
+    }
+  ; { test_name = "File completions in include for outer file in the project"
+    ; file_name = "contracts/lsp/completion_files/completion_files.mligo"
+    ; position = Position.create ~line:1 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"@ligo/math-lib/core/math.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"ligo-breathalyzer/lib/model.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"inner/inner.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"outer.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ]
+    ; negative_labels = [ "completion_files.mligo" ]
+    }
+  ; { test_name = "File completions in import for inner file in the project"
+    ; file_name = "contracts/lsp/completion_files/inner/inner.mligo"
+    ; position = Position.create ~line:0 ~character:9
+    ; completions =
+        [ CompletionItem.create
+            ~label:"@ligo/math-lib/core/math.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"ligo-breathalyzer/lib/model.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"../completion_files.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"../outer.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ]
+    ; negative_labels = [ "inner.mligo" ]
+    }
+  ; { test_name = "File completions in include for inner file in the project"
+    ; file_name = "contracts/lsp/completion_files/inner/inner.mligo"
+    ; position = Position.create ~line:1 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"@ligo/math-lib/core/math.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"ligo-breathalyzer/lib/model.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"../completion_files.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ; CompletionItem.create
+            ~label:"../outer.mligo"
+            ~kind:CompletionItemKind.File
+            ~sortText:"\x00"
+            ()
+        ]
+    ; negative_labels = [ "inner.mligo" ]
+    }
   ]
 
 

@@ -1,11 +1,28 @@
-(* TODO #2091*)
 open Common
 open Lsp_helpers
+
+let get_files_for_completions
+    ~(current_file : Path.t)
+    ~(project_root : Path.t option)
+    (mod_res : Preprocessor.ModRes.t option)
+    : string list
+  =
+  Option.value_map
+    ~default:[]
+    ~f:(fun project_root ->
+      Files.list_directory project_root
+      |> List.filter_map ~f:(fun file ->
+             if Path.equal current_file file
+             then None
+             else Option.some @@ Path.make_relative (Path.dirname current_file) file)
+      |> List.append (Files.list_library_files project_root mod_res))
+    project_root
+
 
 let complete_files (pos : Position.t) (code : string) (files : string list)
     : CompletionItem.t list
   =
-  let regex = Str.regexp {|^#[ \t]*\(include\|import\)[ \t]*\"|} in
+  let regex = Str.regexp {|#[ \t]*\(include\|import\)[ \t]*"|} in
   (* n.b.: We may not use [List.nth_exn] because if the user happens to trigger
      a completion at the last line while "Editor: Render Final Newline" is
      enabled, it will crash the language server. *)

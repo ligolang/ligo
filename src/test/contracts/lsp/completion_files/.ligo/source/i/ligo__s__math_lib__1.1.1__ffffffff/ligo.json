@@ -1,0 +1,20 @@
+{
+  "name": "@ligo/math-lib",
+  "version": "1.1.1",
+  "description": "A math library for LIGO with support for Float & Rational numbers",
+  "directories": {
+    "test": "test"
+  },
+  "main": "lib.mligo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ligolang/math-lib-cameligo.git"
+  },
+  "keywords": ["tezos", "ligo", "math", "float", "rational"],
+  "author": "ligoLANG <https://ligolang.org/>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ligolang/math-lib-cameligo/issues"
+  },
+  "homepage": "https://github.com/ligolang/math-lib-cameligo#readme"
+}

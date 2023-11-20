@@ -15,10 +15,15 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   with_cached_doc ~default:None path
   @@ fun { definitions; code; syntax } ->
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
-  (* TODO (#2091): After a project system is implemented, we should support
-     completing from files here. Meanwhile, we leave it with []. *)
-  (* let file_completions = complete_files pos code files in *)
-  let file_completions = [] in
+  let project_root = Project_root.get_project_root path in
+  let@ mod_res = ask_mod_res in
+  let files =
+    Completion_lib.Files.get_files_for_completions
+      ~current_file:path
+      ~project_root
+      !mod_res
+  in
+  let file_completions = Completion_lib.Files.complete_files pos code files in
   let completions_without_cst = file_completions @ keyword_completions in
   (* Even if parsing fail for whatever reason (e.g. preprocessor error),
     we can at least show files and keywords to the user. *)
@@ -34,13 +39,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
        suggest scopes or keywords. *)
     if List.is_empty field_completions
     then (
-      let scopes =
-        Ligo_interface.get_scopes
-          ~project_root:(Project_root.get_project_root path)
-          ~definitions
-          ~code
-          path
-      in
+      let scopes = Ligo_interface.get_scopes ~project_root ~definitions ~code path in
       Completion_lib.Scope.get_scope_completions input scopes @ completions_without_cst)
     else field_completions
   in
