@@ -1,10 +1,11 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
-import { ContractMetadata, generatedModuleName, getBinaryPath, InputValueLang, interruptExecution, isDefined, Maybe, tryExecuteCommand } from './base'
-import { LigoDebugContext } from './LigoDebugContext'
-import { LigoProtocolClient, showErrorWithOpenLaunchJson } from './LigoProtocolClient'
+import { ContractMetadata, generatedModuleName, getBinaryPath, interruptExecution, tryExecuteCommand } from './base'
+import { LigoContext } from '../common/LigoContext'
+import { LigoProtocolClient, showErrorWithOpenLaunchJson } from '../common/LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
 import { createConfigSnippet, createRememberingQuickPick, getConfigPath, getModuleName, getParameterOrStorage } from './ui'
+import { InputValueLang, isDefined, Maybe } from '../common/base'
 
 function createLogDir(logDir: string): void | undefined {
   if (!fs.existsSync(logDir)) {
@@ -32,9 +33,9 @@ export type ConfigCommand
 
 export default class LigoDebugConfigurationProvider implements vscode.DebugConfigurationProvider {
   private client: LigoProtocolClient;
-  private context: LigoDebugContext;
+  private context: LigoContext;
 
-  constructor(client: LigoProtocolClient, context: LigoDebugContext) {
+  constructor(client: LigoProtocolClient, context: LigoContext) {
     this.client = client;
     this.context = context;
   }
@@ -205,6 +206,9 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
     config: vscode.DebugConfiguration,
     _token?: vscode.CancellationToken,
   ): Promise<vscode.DebugConfiguration> {
+    // Binary path would be passed later
+    await this.client.sendMsg('initializeLanguageServerState', { binaryPath: null });
+
     if (this.configDoesntExist(config)) {
       const editor = vscode.window.activeTextEditor
       if (editor && (editor.document.languageId === 'mligo' || editor.document.languageId === 'jsligo')) {

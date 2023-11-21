@@ -4,5 +4,3 @@ export const extensionName = 'ligo-vscode'
 export const extensionId = `${extensionPublisher}.${extensionName}`
 
 export const extensions = ['.mligo', '.jsligo'];
-
-export type Maybe<T> = T | undefined

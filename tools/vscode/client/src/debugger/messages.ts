@@ -1,5 +1,6 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
-import { ContractMetadata, InputValueLang, LigoLaunchRequest } from './base'
+import { InputValueLang } from '../common/base'
+import { ContractMetadata, LigoLaunchRequest } from './base'
 import { SteppingGranularity } from './ui'
 
 // ResolveConfigFromLigo //
@@ -15,6 +16,20 @@ export interface ResolveConfigFromLigoArguments {
 
 export interface ResolveConfigFromLigoResponse extends DebugProtocol.Response {
   body: LigoLaunchRequest
+}
+
+// InitializeLanguageServerState //
+
+export interface InitializeLanguageServerStateRequest extends DebugProtocol.Request {
+  command: 'initializeLanguageServerState'
+  arguments: InitializeLanguageServerStateArguments
+}
+
+export interface InitializeLanguageServerStateArguments {
+  binaryPath?: string
+}
+
+export interface InitializeLanguageServerStateResponse extends DebugProtocol.Response {
 }
 
 // InitializeLogger //

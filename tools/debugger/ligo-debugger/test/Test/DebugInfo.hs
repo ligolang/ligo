@@ -75,7 +75,7 @@ test_SourceMapper = testGroup "Reading source mapper"
       let file = contractsDir </> "simple-ops.mligo"
 
       LigoMapperResult exprLocs (T.SomeContract contract) allFiles _ _ ligoTypesVec _
-        <- buildSourceMapper file "main"
+        <- buildSourceMapper file ""
 
       parsedContracts <- parseContracts allFiles
 
@@ -295,7 +295,7 @@ test_SourceMapper = testGroup "Reading source mapper"
   , testCase "metas are not shifted in `if` blocks" do
       let file = contractsDir </> "if.mligo"
       LigoMapperResult _ (T.SomeContract contract) allFiles _ _ _ _
-        <- buildSourceMapper file "main"
+        <- buildSourceMapper file ""
 
       parsedContracts <- parseContracts allFiles
 
@@ -314,7 +314,7 @@ test_Errors :: TestTree
 test_Errors = testGroup "Errors"
   [ testCase "duplicated ticket error is recognized" do
       let file = contractsDir </> "dupped-ticket.mligo"
-      ligoMapper <- compileLigoContractDebug "main" file
+      ligoMapper <- compileLigoContractDebug "" file
       case readLigoMapper ligoMapper of
         Left (PreprocessError UnsupportedTicketDup) -> pass
         _ -> assertFailure [int||Expected "UnsupportedTicketDup" error.|]
@@ -335,7 +335,7 @@ test_Function_call_locations = testGroup "Function call locations"
       let file = contractsDir </> contractName
       LigoMapperResult
         { lmrExpressionLocation = Set.map (rangeToSourceLocation . eslRange) -> locs
-        } <- buildSourceMapper file "main"
+        } <- buildSourceMapper file ""
 
       forM_ (uncurry (makeSourceLocation file) <$> expectedLocs) \loc -> do
         if Set.member loc locs

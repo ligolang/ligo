@@ -1,13 +1,13 @@
 import * as os from 'os'
 import * as vscode from 'vscode'
-import { LanguageClient, RequestType } from 'vscode-languageclient/node'
 import { extname, join, dirname } from 'path';
 import { existsSync } from 'fs'
 import { execFileSync } from 'child_process';
 
-import { extensions, Maybe } from '../common'
+import { extensions } from '../common'
 
 import * as ex from '../exceptions'
+import { Maybe } from '../../common/base';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 

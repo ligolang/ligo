@@ -34,6 +34,11 @@ COPY ./tools/vscode /vscode
 
 # Broken symlink
 RUN rm /vscode/LICENSE.md && touch /vscode/LICENSE.md
+
+RUN mkdir /vscode/bin
+COPY ./Linux/bin/ligo-debugger /vscode/bin
+RUN chmod +x /vscode/bin/ligo-debugger
+
 # To avoid running vscode as a root
 RUN chown -R vscode:vscode /vscode
 WORKDIR /vscode

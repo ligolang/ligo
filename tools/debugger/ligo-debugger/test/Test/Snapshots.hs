@@ -2029,7 +2029,7 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
 
       ligoMapper <-
         compileLigoContractDebug
-          (fromMaybe "$main" coModuleName)
+          (fromMaybe "" coModuleName)
           (contractsDir </> contractName)
 
       LigoMapperResult{..} <-
@@ -2065,13 +2065,13 @@ test_Contracts_are_sensible = reinsuring $ testCase "Contracts are sensible" do
       , ("self", def & coCheckSourceLocationsL .~ False)
       , ("iterate-big-map", def & coCheckSourceLocationsL .~ False)
       , ("big-map-storage", def & coCheckSourceLocationsL .~ False)
-      , ("two-module-names", def & coModuleNameL ?~ "Main1.$main")
+      , ("two-module-names", def & coModuleNameL ?~ "Main1")
       , ("if-no-else", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("statement-visiting", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("computations-in-list", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("complex-function-type", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
       , ("builtins-locations", def & coCheckSourceLocationsL .~ False) -- no filename at some locations
-      , ("module-entrypoints", def & coModuleNameL ?~ "IncDec.$main")
+      , ("module-entrypoints", def & coModuleNameL ?~ "IncDec")
       ]
 
     -- Valid contracts that can't be used in debugger for some reason.

@@ -1,21 +1,21 @@
 // SPDX-FileCopyrightText: 2022 Oxhead Alpha
 // SPDX-License-Identifier: LicenseRef-MIT-OA
 
-// Utilities for managing debugger context.
+// Utilities for managing context.
 
 import * as vscode from 'vscode';
-import { Maybe, isDefined, InputBoxType, InputValueLang } from './base'
+import { InputBoxType, InputValueLang, isDefined, Maybe } from './base';
 
 // Our wrapper over ExtensionContext that provides custom set of operations.
-export class LigoDebugContext {
+export class LigoContext {
   context: vscode.ExtensionContext
-  workspaceState: LigoDebugLocalStorage
-  globalState: LigoDebugGlobalStorage
+  workspaceState: LigoLocalStorage
+  globalState: LigoGlobalStorage
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context
-    this.workspaceState = new LigoDebugLocalStorage(context.workspaceState)
-    this.globalState = new LigoDebugGlobalStorage(context.globalState)
+    this.workspaceState = new LigoLocalStorage(context.workspaceState)
+    this.globalState = new LigoGlobalStorage(context.globalState)
   }
 
   asAbsolutePath(relativePath: string): string {
@@ -55,7 +55,7 @@ class NoValueCell<T> implements ValueAccess<T> {
   set value(_newVal: Maybe<T>) { }
 }
 
-abstract class AbstractLigoDebugStorage {
+abstract class AbstractLigoStorage {
   public state: vscode.Memento;
 
   constructor(state: vscode.Memento) {
@@ -68,6 +68,7 @@ abstract class AbstractLigoDebugStorage {
   // 'undefined' keys will be skipped when constructing the total key.
   protected access(...keys: Maybe<string>[]): ValueAccess<any> {
     const keysClear = keys.filter(k => k !== undefined)
+
     const currentFilePath = vscode.window.activeTextEditor?.document.uri.fsPath
 
     if (isDefined(currentFilePath)) {
@@ -80,7 +81,7 @@ abstract class AbstractLigoDebugStorage {
 }
 
 // Local storage with our custom format.
-export class LigoDebugLocalStorage extends AbstractLigoDebugStorage {
+export class LigoLocalStorage extends AbstractLigoStorage {
   constructor(state: vscode.Memento) {
     super(state);
   }
@@ -101,9 +102,13 @@ export class LigoDebugLocalStorage extends AbstractLigoDebugStorage {
   askedForLigoConfig(): ValueAccess<boolean> {
     return this.access("ask", "for", "ligo", "config");
   }
+
+  lspRememberedValue(...keys: string[]): ValueAccess<string> {
+    return this.access("lsp", ...keys);
+  }
 }
 
-export class LigoDebugGlobalStorage extends AbstractLigoDebugStorage {
+export class LigoGlobalStorage extends AbstractLigoStorage {
   constructor(state: vscode.Memento) {
     super(state);
   }

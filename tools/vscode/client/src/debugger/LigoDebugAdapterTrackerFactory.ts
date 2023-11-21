@@ -1,7 +1,8 @@
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol';
 import * as vscode from 'vscode';
-import { interruptExecution, isDefined, Maybe } from './base';
-import { processErrorResponse } from './LigoProtocolClient';
+import { isDefined, Maybe } from '../common/base';
+import { interruptExecution } from './base';
+import { processErrorResponse } from '../common/LigoProtocolClient';
 
 class LigoDebugAdapterTracker implements vscode.DebugAdapterTracker {
   private readonly session: vscode.DebugSession;

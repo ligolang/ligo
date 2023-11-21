@@ -9,52 +9,54 @@ import * as lc from './commands/ligoCommands'
 import * as tc from './commands/tezosCommands'
 import * as ui from './ui'
 import * as ex from './exceptions'
+import { LigoContext } from '../common/LigoContext'
+import { LigoProtocolClient } from '../common/LigoProtocolClient'
 
 function reportException(exception: Error) {
   if (!(exception instanceof ex.UserInterruptionException)) {
     vscode.window.showErrorMessage('Exception happened during execution.\n'
-                                   + 'See console (LIGO Compiler) for additional information', 'Ok')
+      + 'See console (LIGO Compiler) for additional information', 'Ok')
     ligoOutput.appendLine(exception.message)
     ligoOutput.show()
   }
 }
 
-async function executeChooseLigoOption() {
+async function executeChooseLigoOption(context: LigoContext, client: LigoProtocolClient) {
   const possibleOptions = ['Compile contract', 'Compile storage', 'Compile expression', 'Dry run', 'Evaluate function', 'Evaluate value']
   const curCommand = await ui.createQuickPickBox(possibleOptions, 'ligo compiler command', 'command')
   switch (curCommand) {
     case 'Compile contract':
-      await lc.executeCompileContract()
+      await lc.executeCompileContract(context, client)
       break;
     case 'Compile storage':
-      await lc.executeCompileStorage()
+      await lc.executeCompileStorage(context, client)
       break;
     case 'Compile expression':
       await lc.executeCompileExpression()
       break;
     case 'Dry run':
-      await lc.executeDryRun()
+      await lc.executeDryRun(context, client)
       break;
     case 'Evaluate function':
-      await lc.executeEvaluateFunction()
+      await lc.executeEvaluateFunction(context)
       break;
     case 'Evaluate value':
-      await lc.executeEvaluateValue()
+      await lc.executeEvaluateValue(context)
       break;
     default:
       throw new ex.InvalidChoiceException(curCommand, possibleOptions)
   }
 }
 
-async function executeChooseDeployOptions() {
+async function executeChooseDeployOptions(context: LigoContext, client: LigoProtocolClient) {
   const possibleOptions = ['Deploy contract', 'Generate deploy script']
   const curCommand = await ui.createQuickPickBox(possibleOptions, 'Deployment options', 'command')
   switch (curCommand) {
     case 'Deploy contract':
-      await tc.executeDeploy()
+      await tc.executeDeploy(context, client)
       break;
     case 'Generate deploy script':
-      await tc.executeGenerateDeployScript()
+      await tc.executeGenerateDeployScript(context, client)
       break;
     default:
       throw new ex.InvalidChoiceException(curCommand, possibleOptions)
@@ -99,18 +101,20 @@ const LigoCommands = {
   },
   CompileContract: {
     name: 'ligo.compileContract',
-    run: async () => lc.executeCompileContract().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      lc.executeCompileContract(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.CompileContract.name,
-      async () => LigoCommands.CompileContract.run(),
+      async () => LigoCommands.CompileContract.run(context, client),
     ),
   },
   CompileStorage: {
     name: 'ligo.compileStorage',
-    run: async () => lc.executeCompileStorage().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      lc.executeCompileStorage(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.CompileStorage.name,
-      async () => LigoCommands.CompileStorage.run(),
+      async () => LigoCommands.CompileStorage.run(context, client),
     ),
   },
   CompileExpression: {
@@ -123,81 +127,86 @@ const LigoCommands = {
   },
   DryRun: {
     name: 'ligo.dryRun',
-    run: async () => lc.executeDryRun().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      lc.executeDryRun(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.DryRun.name,
-      async () => LigoCommands.DryRun.run(),
+      async () => LigoCommands.DryRun.run(context, client),
     ),
   },
   EvaluateFunction: {
     name: 'ligo.evaluateFunction',
-    run: async () => lc.executeEvaluateFunction().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext) => lc.executeEvaluateFunction(context).catch(reportException),
+    register: (context: LigoContext) => vscode.commands.registerCommand(
       LigoCommands.EvaluateFunction.name,
-      async () => LigoCommands.EvaluateFunction.run(),
+      async () => LigoCommands.EvaluateFunction.run(context),
     ),
   },
   EvaluateValue: {
     name: 'ligo.evaluateValue',
-    run: async () => lc.executeEvaluateValue().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext) => lc.executeEvaluateValue(context).catch(reportException),
+    register: (context: LigoContext) => vscode.commands.registerCommand(
       LigoCommands.EvaluateValue.name,
-      async () => LigoCommands.EvaluateValue.run(),
+      async () => LigoCommands.EvaluateValue.run(context),
     ),
   },
   Deploy: {
     name: 'ligo.deploy',
-    run: async () => tc.executeDeploy().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      tc.executeDeploy(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.Deploy.name,
-      async () => LigoCommands.Deploy.run(),
+      async () => LigoCommands.Deploy.run(context, client),
     ),
   },
   GenerateDeployScript: {
     name: 'ligo.generateDeployScript',
-    run: async () => tc.executeGenerateDeployScript().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      tc.executeGenerateDeployScript(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.GenerateDeployScript.name,
-      async () => LigoCommands.GenerateDeployScript.run(),
+      async () => LigoCommands.GenerateDeployScript.run(context, client),
     ),
   },
   ChooseLigoOption: {
     name: 'ligo.chooseOption',
-    run: async () => executeChooseLigoOption().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+    run: async (context: LigoContext, client: LigoProtocolClient) =>
+      executeChooseLigoOption(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.ChooseLigoOption.name,
-      async () => LigoCommands.ChooseLigoOption.run(),
+      async () => LigoCommands.ChooseLigoOption.run(context, client),
     ),
   },
   ChooseDeploymentOption: {
     name: 'tezos.chooseOption',
     run:
-      async () => executeChooseDeployOptions().catch(reportException),
-    register: () => vscode.commands.registerCommand(
+      async (context: LigoContext, client: LigoProtocolClient) =>
+        executeChooseDeployOptions(context, client).catch(reportException),
+    register: (context: LigoContext, client: LigoProtocolClient) => vscode.commands.registerCommand(
       LigoCommands.ChooseDeploymentOption.name,
-      async () => LigoCommands.ChooseDeploymentOption.run(),
+      async () => LigoCommands.ChooseDeploymentOption.run(context, client),
     ),
   },
 }
 
 export default LigoCommands
 
-export function registerCommands(client: LanguageClient) {
+export function registerCommands(context: LigoContext, client: LanguageClient, protocolClient: LigoProtocolClient) {
   // Boot
   LigoCommands.StartServer.register(client);
   LigoCommands.StopServer.register(client);
   LigoCommands.RestartServer.register(client);
   // Buttons
-  LigoCommands.ChooseLigoOption.register();
-  LigoCommands.ChooseDeploymentOption.register();
+  LigoCommands.ChooseLigoOption.register(context, protocolClient);
+  LigoCommands.ChooseDeploymentOption.register(context, protocolClient);
   // LIGO commands
-  LigoCommands.CompileContract.register();
+  LigoCommands.CompileContract.register(context, protocolClient);
   LigoCommands.CompileExpression.register();
-  LigoCommands.CompileStorage.register();
-  LigoCommands.DryRun.register();
-  LigoCommands.EvaluateFunction.register();
-  LigoCommands.EvaluateValue.register();
+  LigoCommands.CompileStorage.register(context, protocolClient);
+  LigoCommands.DryRun.register(context, protocolClient);
+  LigoCommands.EvaluateFunction.register(context);
+  LigoCommands.EvaluateValue.register(context);
   // Tezos commands
-  LigoCommands.Deploy.register();
-  LigoCommands.GenerateDeployScript.register();
+  LigoCommands.Deploy.register(context, protocolClient);
+  LigoCommands.GenerateDeployScript.register(context, protocolClient);
 }

@@ -1,11 +1,17 @@
 import * as vscode from 'vscode';
-import { LanguageClient } from 'vscode-languageclient/node'
+
 import { createRememberingInputBox, createQuickPickBox } from '../ui'
 import {
-  CommandRequiredArguments, executeCommand, ligoBinaryInfo
+  CommandRequiredArguments, executeCommand, getBinaryPath, getLastContractPath, ligoBinaryInfo
 } from './common';
-import { Maybe } from '../common'
 import * as ex from '../exceptions'
+import { InputBoxType, InputValueLang, isDefined, Maybe } from '../../common/base';
+import { LigoContext } from '../../common/LigoContext';
+import { LigoProtocolClient } from '../../common/LigoProtocolClient';
+
+import { getModuleName, getParameterOrStorage } from '../../debugger/ui';
+import { ContractMetadata } from '../../debugger/base';
+import { ValidateValueCategory } from '../../debugger/messages';
 
 /* eslint-disable no-bitwise */
 
@@ -36,19 +42,109 @@ const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<str
   return args
 }
 
+async function prepareState(client: LigoProtocolClient): Promise<[string, string][]> {
+  const binaryPath = getBinaryPath(ligoBinaryInfo, vscode.workspace.getConfiguration())
+  await client.sendMsg('initializeLanguageServerState', { binaryPath });
+  return (await client.sendMsg('setProgramPath', { program: getLastContractPath().path })).body.moduleNames.reverse();
+}
+
+async function getEntrypoint(
+  context: LigoContext,
+  client: LigoProtocolClient,
+  entrypoints: [string, string][]
+): Promise<string> {
+  return getModuleName(
+    context,
+    async (moduleName) => {
+      return (await client.sendMsg('validateModuleName', { moduleName })).body?.errorMessage;
+    },
+    entrypoints
+  );
+}
+
+type ValidateInputType =
+  (inputType: InputBoxType, valueLang: InputValueLang)
+    => (value: string)
+      => Promise<Maybe<string>>;
+
+async function prepareParameterStorageValidatorAndContractMetadata(
+  client: LigoProtocolClient,
+  entrypoint: string
+): Promise<[ValidateInputType, ContractMetadata]> {
+  const contractMetadata: ContractMetadata =
+    (await client.sendMsg('getContractMetadata', { moduleName: entrypoint })).body;
+
+  // It will resolve into default one
+  const pickedEntrypoint = "";
+  await client.sendMsg('validateEntrypoint', { pickedEntrypoint });
+
+  const validateInput =
+    (category: ValidateValueCategory, valueLang: InputValueLang) => async (value: string): Promise<Maybe<string>> => {
+      return (
+        await client.sendMsg(
+          'validateValue',
+          { value, category, valueLang }
+        )
+      ).body?.errorMessage;
+    }
+
+  return [validateInput, contractMetadata];
+}
+
+async function getParameter(
+  context: LigoContext,
+  validateInput: ValidateInputType,
+  entrypoint: string,
+  contractMetadata: ContractMetadata
+): Promise<string> {
+  const pickedEntrypoint = "";
+
+  return (await getParameterOrStorage(
+    context,
+    validateInput,
+    "parameter",
+    "Input the contract parameter",
+    "Parameter value",
+    entrypoint,
+    contractMetadata,
+    pickedEntrypoint,
+    false
+  ))[0];
+}
+
+async function getStorage(
+  context: LigoContext,
+  validateInput: ValidateInputType,
+  entrypoint: string,
+  contractMetadata: ContractMetadata
+): Promise<string> {
+  const pickedEntrypoint = "";
+
+  return (await getParameterOrStorage(
+    context,
+    validateInput,
+    "storage",
+    "Input the contract storage",
+    "Storage value",
+    entrypoint,
+    contractMetadata,
+    pickedEntrypoint,
+    false
+  ))[0];
+}
+
 /* eslint-disable no-param-reassign */
 export async function executeCompileContract(
+  context: LigoContext,
+  client: LigoProtocolClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   showOutput = true,
 ): Promise<CompileContractResult> {
-  if (entrypoint === null || entrypoint === undefined) {
-    entrypoint = await createRememberingInputBox({
-      title: 'Entrypoint',
-      placeHolder: 'Enter entrypoint to compile',
-      rememberingKey: 'compile-contract',
-      defaultValue: '',
-    });
+  const entrypoints = await prepareState(client);
+
+  if (!isDefined(entrypoint)) {
+    entrypoint = await getEntrypoint(context, client, entrypoints);
   }
 
   const formats = ['text', 'hex', 'json']
@@ -80,27 +176,26 @@ export async function executeCompileContract(
 
 /* eslint-disable no-param-reassign */
 export async function executeCompileStorage(
+  context: LigoContext,
+  client: LigoProtocolClient,
   entrypoint: Maybe<string> = undefined,
   format: Maybe<string> = 'text',
   storage: Maybe<string> = undefined,
   showOutput = true,
 ): Promise<CompileStorageResult> {
-  if (entrypoint === null || entrypoint === undefined) {
-    entrypoint = await createRememberingInputBox({
-      title: 'Entrypoint',
-      placeHolder: 'Enter entrypoint to compile',
-      rememberingKey: 'storage-entrypoint',
-      defaultValue: '',
-    });
+  const entrypoints = await prepareState(client);
+
+  if (!isDefined(entrypoint)) {
+    entrypoint = await getEntrypoint(context, client, entrypoints);
   }
-  if (!storage) {
-    storage = await createRememberingInputBox({
-      title: 'Storage expression',
-      placeHolder: 'Enter storage expression',
-      rememberingKey: 'storage-expression',
-      defaultValue: '',
-    });
+
+  if (!isDefined(storage)) {
+    const [validateInput, contractMetadata] =
+      await prepareParameterStorageValidatorAndContractMetadata(client, entrypoint);
+
+    storage = await getStorage(context, validateInput, entrypoint, contractMetadata);
   }
+
   if (!format) {
     format = await createQuickPickBox(['text', 'hex', 'json'], 'Format', 'Compilation format')
   }
@@ -157,47 +252,35 @@ export async function executeCompileExpression() {
   )
 }
 
-export async function executeDryRun() {
-  const maybeEntrypoint = await createRememberingInputBox({
-    title: 'Entrypoint',
-    placeHolder: 'Enter entrypoint to compile',
-    rememberingKey: 'dry-run-entrypoint',
-    defaultValue: '',
-  });
-  const maybeParameter = await createRememberingInputBox({
-    title: 'Parameter',
-    placeHolder: 'Entrypoint parameter',
-    rememberingKey: 'dry-run-parameter',
-    defaultValue: undefined,
-  })
-  const maybeStorage = await createRememberingInputBox({
-    title: 'Storage',
-    placeHolder: 'Entrypoint storage',
-    rememberingKey: 'dry-run-storage',
-    defaultValue: undefined,
-  })
+export async function executeDryRun(context: LigoContext, client: LigoProtocolClient) {
+  const entrypoints = await prepareState(client);
+  const entrypoint = await getEntrypoint(context, client, entrypoints);
+
+  const [validateInput, contractMetadata] =
+    await prepareParameterStorageValidatorAndContractMetadata(client, entrypoint);
+
+  const parameter = await getParameter(context, validateInput, entrypoint, contractMetadata);
+  const storage = await getStorage(context, validateInput, entrypoint, contractMetadata);
 
   return executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
-      ['run', 'dry-run', path, maybeParameter, maybeStorage],
-      Boolean(maybeEntrypoint) ? ['-m', maybeEntrypoint] : [],
+      ['run', 'dry-run', path, parameter, storage],
+      Boolean(entrypoint) ? ['-m', entrypoint] : [],
     ].flat()),
   )
 }
 
-export async function executeEvaluateFunction() {
-  const maybeEntrypoint = await createRememberingInputBox({
+export async function executeEvaluateFunction(context: LigoContext) {
+  const maybeEntrypoint = await createRememberingInputBox(context, {
     title: 'Function',
     placeHolder: 'Enter function to evaluate',
-    rememberingKey: 'evaluate-function',
-    defaultValue: 'main',
+    rememberingKey: 'call-expression',
   });
-  const maybeExpr = await createRememberingInputBox({
+  const maybeExpr = await createRememberingInputBox(context, {
     title: 'Parameter',
     placeHolder: 'Parameter expression',
-    rememberingKey: 'param-expr',
-    defaultValue: undefined,
+    rememberingKey: 'call-arg',
   })
 
   return executeCommand(
@@ -208,12 +291,11 @@ export async function executeEvaluateFunction() {
   )
 }
 
-export async function executeEvaluateValue() {
-  const maybeValue = await createRememberingInputBox({
+export async function executeEvaluateValue(context: LigoContext) {
+  const maybeValue = await createRememberingInputBox(context, {
     title: 'Value',
     placeHolder: 'Enter value to evaluate',
     rememberingKey: 'call-value',
-    defaultValue: 'main',
   });
 
   return executeCommand(
