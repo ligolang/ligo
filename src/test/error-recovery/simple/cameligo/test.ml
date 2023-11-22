@@ -25,11 +25,11 @@ let%expect_test "error_recovery_simple_cameligo" =
     PASS, 2, 2, 2, 6, 0, ./missing_ident_in_type_decl.mligo
     PASS, 0, 0, 0, 0, 0, ./missing_in_kw.mligo
     PASS, 2, 5, 5, 10, 0, ./missing_int.mligo
-    PASS, 13, 93, 3, 179, 1, ./missing_module_kw_in_module_decl.mligo
+    PASS, 12, 93, 3, 179, 1, ./missing_module_kw_in_module_decl.mligo
     PASS, 2, 2, 2, 6, 0, ./missing_module_name.mligo
     PASS, 2, 2, 2, 18, 0, ./missing_name_of_argument.mligo
     PASS, 3, 17, 11, 194, 0, ./missing_semicolon_in_record_decl.mligo
-    PASS, 13, 95, 3, 179, 1, ./missing_struct_kw_in_module_decl.mligo
+    PASS, 14, 95, 3, 77, 1, ./missing_struct_kw_in_module_decl.mligo
     PASS, 10, 158, 16, 93, 2, ./missing_then_kw.mligo
     PASS, 3, 31, 13, 90, 0, ./missing_vertical_bar.mligo
     PASS, 0, 0, 0, 0, 0, ./missing_with_kw_in_match_expr.mligo
