@@ -155,3 +155,4 @@ ligo compile contract --protocol nairobi --disable-michelson-typechecking gitlab
 > instruction `NEVER` directly from LIGO, using `Tezos.never`.
 
 <!-- updated use of entry -->
+
