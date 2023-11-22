@@ -385,7 +385,8 @@ and print_M_Body state (node : module_body reg) =
   let {kwd_struct; declarations; kwd_end} = node.value in
   let decls = print_decl_list state declarations in
   let decls = nest state#indent (break 0 ^^ decls) in
-  group (token kwd_struct ^^ decls ^^ token kwd_end)
+  group (token kwd_struct ^^ (if List.is_empty declarations then space else decls)
+         ^^ token kwd_end)
 
 and print_M_Path (node : module_name module_path reg) =
   print_module_path token node
@@ -410,7 +411,8 @@ and print_S_sig state (node : signature_body reg) =
   let {kwd_sig; sig_items; kwd_end} = node.value in
   let decls = print_sig_item_list state sig_items in
   let decls = nest state#indent (break 0 ^^ decls) in
-  group (token kwd_sig ^^ decls ^^ token kwd_end)
+  group (token kwd_sig ^^ (if List.is_empty sig_items then space else decls)
+         ^^ token kwd_end)
 
 and print_S_path (node : module_name module_path reg) =
   print_module_path token node

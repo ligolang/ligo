@@ -153,7 +153,7 @@ let test_cases =
         ; pos ~line:5 ~character:11, one "#import \"A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"B.mligo\" : sigend")
+            ~f:(fun p -> p, one "module \"B.mligo\" : sig end")
             [ pos ~line:0 ~character:11
             ; pos ~line:0 ~character:19
             ; pos ~line:1 ~character:11
