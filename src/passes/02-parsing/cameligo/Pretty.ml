@@ -228,34 +228,48 @@ let rec print state (cst: CST.t) =
 (* DECLARATIONS (top-level) *)
 
 and print_declarations state (node : declaration Utils.nseq) =
-   print_decl_list state (Utils.nseq_to_list node)
+  print_decl_list state (Utils.nseq_to_list node)
 
 and print_decl_list state (node : declaration list) =
-  List.map ~f:(print_declaration state) node
-  |> separate_map hardline group
+  match node with
+    [] -> empty
+  | [d] -> print_declaration state d ^^ hardline
+  | D_Directive d :: (D_Directive _ :: _ as decls) ->
+      print_D_Directive state d ^^ hardline
+      ^^ print_decl_list state decls
+  | d :: decls ->
+      print_declaration state d ^^ hardline ^^ hardline
+      ^^ print_decl_list state decls
 
 and print_declaration state = function
   D_Attr      d -> print_D_Attr      state d
 | D_Directive d -> print_D_Directive state d
-| D_Let       d -> print_D_Let       state d ^^ hardline
-| D_Module    d -> print_D_Module    state d ^^ hardline
-| D_Include   d -> print_D_Include   state d ^^ hardline
-| D_Type      d -> print_D_Type      state d ^^ hardline
-| D_Signature d -> print_D_Signature state d ^^ hardline
+| D_Let       d -> print_D_Let       state d
+| D_Module    d -> print_D_Module    state d
+| D_Include   d -> print_D_Include   state d
+| D_Type      d -> print_D_Type      state d
+| D_Signature d -> print_D_Signature state d
 
 
 (* SIGNATURE DECLARATIONS *)
 
 and print_sig_item_list state (node : sig_item list) =
-  List.map ~f:(print_sig_item state) node
-  |> separate_map hardline group
+  match node with
+    [] -> empty
+  | [i] -> print_sig_item state i ^^ hardline
+  | i :: items ->
+      print_sig_item state i ^^ hardline ^^ hardline
+      ^^ print_sig_item_list state items
+
+(*  List.map ~f:(print_sig_item state) node
+    |> separate_map hardline group*)
 
 and print_sig_item state = function
   S_Attr    d -> print_S_Attr    state d
-| S_Value   d -> print_S_Value   state d ^^ hardline
-| S_Type    d -> print_S_Type    state d ^^ hardline
-| S_TypeVar d -> print_S_TypeVar       d ^^ hardline
-| S_Include d -> print_S_Include state d ^^ hardline
+| S_Value   d -> print_S_Value   state d
+| S_Type    d -> print_S_Type    state d
+| S_TypeVar d -> print_S_TypeVar       d
+| S_Include d -> print_S_Include state d
 
 (* Attributed declaration *)
 
@@ -280,7 +294,8 @@ and print_attribute state (node : Attr.t wrap) =
 
 and print_attributes state thread = function
   [] -> thread
-| a  -> group (separate_map (break 0) (print_attribute state) a ^/^ thread)
+| a  -> group (separate_map (break 0) (print_attribute state) a
+               ^^ hardline ^^ thread)
 
 (* Attributed sig. item *)
 
@@ -352,7 +367,7 @@ and print_D_Module state (node : module_decl reg) =
     match annotation with
       None -> empty
     | Some (colon, sig_) ->
-        token colon ^^ space ^/^ print_signature_expr state sig_ ^^ space
+        group (token colon ^/^ print_signature_expr state sig_ ^^ space)
   in group (token kwd_module ^^ space ^^ name ^^ space ^^ sig_expr
             ^^ token eq ^^ space ^^ module_expr)
 
@@ -370,7 +385,7 @@ and print_M_Body state (node : module_body reg) =
   let {kwd_struct; declarations; kwd_end} = node.value in
   let decls = print_decl_list state declarations in
   let decls = nest state#indent (break 0 ^^ decls) in
-  group (token kwd_struct ^^ decls ^^ hardline ^^ token kwd_end)
+  group (token kwd_struct ^^ decls ^^ token kwd_end)
 
 and print_M_Path (node : module_name module_path reg) =
   print_module_path token node
@@ -395,7 +410,7 @@ and print_S_sig state (node : signature_body reg) =
   let {kwd_sig; sig_items; kwd_end} = node.value in
   let decls = print_sig_item_list state sig_items in
   let decls = nest state#indent (break 0 ^^ decls) in
-  group (token kwd_sig ^^ decls ^^ hardline ^^ token kwd_end)
+  group (token kwd_sig ^^ decls ^^ token kwd_end)
 
 and print_S_path (node : module_name module_path reg) =
   print_module_path token node

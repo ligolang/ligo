@@ -1,5 +1,6 @@
 #include "../simple.mligo"
 #import "../local_module.mligo" "A"
+
 let format_me =
   let x = 20 in
   x * 2

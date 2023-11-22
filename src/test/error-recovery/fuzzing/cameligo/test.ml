@@ -3,17 +3,17 @@ let%expect_test "error_recovery_fuzzing_cameligo" =
   [%expect
     {|
     STATUS, LOC, CST, SYMBOLS, TOKENS, ERRORS, FILE
-    PASS, 30, 133, 41, 252, 8, ./1annotated_michelson_record_tree.mligo
+    PASS, 35, 133, 41, 244, 8, ./1annotated_michelson_record_tree.mligo
     PASS, 9, 57, 1, 154, 1, ./1condition.mligo
     PASS, 9, 103, 9, 59, 1, ./1incr_decr.mligo
     PASS, 16, 68, 26, 49, 3, ./1local_type_decl.mligo
     PASS, 9, 103, 9, 57, 1, ./1match_bis.mligo
     PASS, 127, 705, 57, 492, 17, ./1record.mligo
     PASS, 40, 207, 49, 358, 6, ./1ticket_builder.mligo
-    PASS, 149, 1159, 131, 816, 23, ./1ticket_wallet.mligo
+    PASS, 148, 1159, 131, 816, 23, ./1ticket_wallet.mligo
     PASS, 13, 118, 44, 91, 2, ./1voting.mligo
     PASS, 16, 76, 12, 41, 3, ./2address.mligo
-    PASS, 15, 125, 9, 16, 4, ./2annotated_michelson_record_comb.mligo
+    PASS, 17, 125, 9, 390, 4, ./2annotated_michelson_record_comb.mligo
     PASS, 149, 1083, 67, 769, 14, ./2let_destructuring.mligo
     PASS, 51, 608, 58, 481, 15, ./2let_multiple.mligo
     PASS, 18, 84, 14, 40, 2, ./2local_type_decl.mligo

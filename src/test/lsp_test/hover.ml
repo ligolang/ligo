@@ -153,7 +153,7 @@ let test_cases =
         ; pos ~line:5 ~character:11, one "#import \"A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"B.mligo\" : sig\n\nend")
+            ~f:(fun p -> p, one "module \"B.mligo\" : sigend")
             [ pos ~line:0 ~character:11
             ; pos ~line:0 ~character:19
             ; pos ~line:1 ~character:11
@@ -169,7 +169,7 @@ let test_cases =
         ]
         @ List.map
             ~f:(fun p ->
-              p, one "module \"inner/inner.mligo\" : sig\n  val test : int\n\nend")
+              p, one "module \"inner/inner.mligo\" : sig\n  val test : int\n  end")
             [ pos ~line:0 ~character:17; pos ~line:0 ~character:31 ]
     }
   ; { test_name = "inner.mligo"
@@ -179,18 +179,18 @@ let test_cases =
         ; pos ~line:2 ~character:17, one "#import \"../A.mligo\" \"K\""
         ]
         @ List.map
-            ~f:(fun p -> p, one "module \"../C.mligo\" : sig\n  val test : int\n\nend")
+            ~f:(fun p -> p, one "module \"../C.mligo\" : sig\n  val test : int\n  end")
             [ pos ~line:0 ~character:15; pos ~line:0 ~character:23 ]
     }
   ; { test_name = "hover_module.mligo"
     ; file = "contracts/lsp/hover/hover_module.mligo"
     ; hovers =
         [ ( pos ~line:0 ~character:7
-          , one "module A : sig\n  val foo : int\n\n  val bar : int\n\nend" )
+          , one "module A : sig\n  val foo : int\n\n  val bar : int\n  end" )
         ; ( pos ~line:10 ~character:7
-          , one "module B : sig\n  type t = nat\n\n  type int = string\n\nend" )
+          , one "module B : sig\n  type t = nat\n\n  type int = string\n  end" )
         ; ( pos ~line:17 ~character:7
-          , one "module C : sig\n  val another : int\n\n  val foo : tez\n\nend" )
+          , one "module C : sig\n  val another : int\n\n  val foo : tez\n  end" )
         ; ( pos ~line:33 ~character:24
           , one
               "module Bytes : sig\n\
@@ -199,52 +199,52 @@ let test_cases =
               \  val unpack : bytes -> a option\n\n\
               \  val length : bytes -> nat\n\n\
               \  val concat : bytes -> bytes -> bytes\n\n\
-              \  val sub : nat -> nat -> bytes -> bytes\n\n\
-               end" )
+              \  val sub : nat -> nat -> bytes -> bytes\n\
+              \  end" )
         ; pos ~line:43 ~character:13, one "module Mangled : (* Unresolved *)"
         ; ( pos ~line:48 ~character:12
-          , one "module Mangled_with_sig : sig\n  type t\n\n  type int = string\n\nend" )
+          , one "module Mangled_with_sig : sig\n  type t\n\n  type int = string\n  end" )
         ; ( pos ~line:54 ~character:10
-          , one "module Mangled_with_inlined_sig : sig\n  val foo : int\n\nend" )
+          , one "module Mangled_with_inlined_sig : sig\n  val foo : int\n  end" )
         ; ( pos ~line:70 ~character:20
           , one
               "module With_included : sig\n\
               \  type t\n\n\
               \  type int = string\n\n\
               \  val b : bool\n\n\
-              \  val z : string\n\n\
-               end" )
+              \  val z : string\n\
+              \  end" )
         ; ( pos ~line:77 ~character:14
           , one
               "module With_included : sig\n\
               \  type t = int\n\n\
               \  type int = string\n\n\
-              \  val b : bool\n\n\
-               end" )
+              \  val b : bool\n\
+              \  end" )
         ]
         @ List.map
             ~f:(fun p ->
-              p, one "module Outer : sig\n  val outer_foo : int -> int -> int\n\nend")
+              p, one "module Outer : sig\n  val outer_foo : int -> int -> int\n  end")
             [ pos ~line:25 ~character:9; pos ~line:41 ~character:21 ]
         @ List.map
             ~f:(fun p ->
-              p, one "module Inner : sig\n  val inner_foo : int -> int -> int\n\nend")
+              p, one "module Inner : sig\n  val inner_foo : int -> int -> int\n  end")
             [ pos ~line:28 ~character:11; pos ~line:41 ~character:25 ]
         @ List.map
-            ~f:(fun p -> p, one "module Bytes : sig\n  val overwritten : string\n\nend")
+            ~f:(fun p -> p, one "module Bytes : sig\n  val overwritten : string\n  end")
             [ pos ~line:35 ~character:8; pos ~line:39 ~character:35 ]
         @ List.map
-            ~f:(fun p -> p, one "module M : sig\n  val v : int\n\nend")
+            ~f:(fun p -> p, one "module M : sig\n  val v : int\n  end")
             [ pos ~line:62 ~character:9; pos ~line:64 ~character:9 ]
         @ List.map
-            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int = string\n\nend")
+            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int = string\n  end")
             [ pos ~line:5 ~character:12
             ; pos ~line:10 ~character:11
             ; pos ~line:48 ~character:26
             ; pos ~line:71 ~character:10
             ]
         @ List.map
-            ~f:(fun p -> p, one "module I : sig\n  val b : bool\n\nend")
+            ~f:(fun p -> p, one "module I : sig\n  val b : bool\n  end")
             [ pos ~line:66 ~character:12; pos ~line:72 ~character:10 ]
     }
   ; { test_name = "hover_module.jsligo"
