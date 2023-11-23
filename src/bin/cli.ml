@@ -650,6 +650,13 @@ let esy_legacy =
   flag ~doc name no_arg
 
 
+let type_doc =
+  let open Command.Param in
+  let name = "--type-doc" in
+  let doc = "Translate JsLIGO program into TypeScript for generating documentation." in
+  flag ~doc name no_arg
+
+
 module Api = Ligo_api
 
 let ( <*> ) = Command.Param.( <*> )
@@ -2405,6 +2412,7 @@ let print_ast_core =
 let print_ast_typed =
   let f
       source_file
+      type_doc
       syntax
       protocol_version
       display_format
@@ -2445,7 +2453,7 @@ let print_ast_typed =
       ~display_format
       ~no_colour
       ~warning_as_error:raw_options.warning_as_error
-    @@ Api.Print.ast_typed raw_options source_file
+    @@ Api.Print.ast_typed raw_options type_doc source_file
   in
   let summary =
     "print the typed AST.\n\
@@ -2459,6 +2467,7 @@ let print_ast_typed =
   Command.basic ~summary ~readme
   @@ (f
      <$> source_file
+     <*> type_doc
      <*> syntax
      <*> protocol_version
      <*> display_format

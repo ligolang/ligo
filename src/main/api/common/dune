@@ -17,7 +17,8 @@
   decompress.gz
   ligo.formatter
   cst
-  msgpck)
+  msgpck
+  pprint)
  (preprocess
   (pps ppx_yojson_conv ppx_let)))
 

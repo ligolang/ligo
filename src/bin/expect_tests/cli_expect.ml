@@ -33,6 +33,7 @@ let run_ligo_good args =
     match args with
     | "print" :: "dependency-graph" :: _ -> ()
     | "print" :: "preprocessed" :: _ -> ()
+    | "print" :: "ast-typed" :: "--type-doc" :: _ -> ()
     | "print" :: _ ->
       failwith "DO NOT PRINT ASTs IN EXPECT TESTS: PLEASE USE src/test/ast_production.ml"
     | _ -> ()
