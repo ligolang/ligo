@@ -557,7 +557,7 @@ end = struct
     in
     match Location.unwrap item with
     | S_value (v, ty, optional) -> S_value (v, ty, attr optional)
-    | S_type (v, ty) -> S_type (v, ty)
+    | S_type (v, _TODO_generics, ty) -> S_type (v, ty)
     | S_type_var v -> S_type_var v
     | S_attr (attr', S_value (v, ty, attr)) ->
       let location = Location.get_location item in
@@ -670,7 +670,7 @@ end = struct
       | None -> ret ~loc:ty.location (S_value (v, ty, attr.optional))
       | Some (attr, attr_rest) ->
         ret ~loc:ty.location (S_attr (attr, I.S_value (v, ty, attr_rest))))
-    | I.S_type (v, ty) -> ret ~loc:ty.location (S_type (v, ty))
+    | I.S_type (v, ty) -> ret ~loc:ty.location (S_type (v, [], ty)) (* TODO *)
     | I.S_type_var v -> ret ~loc:(O.Ty_variable.get_location v) (S_type_var v)
     | I.S_include se -> ret ~loc:se.location (S_include se)
     | I.S_module (_, _) | I.S_module_type (_, _) -> failwith "Impossible"

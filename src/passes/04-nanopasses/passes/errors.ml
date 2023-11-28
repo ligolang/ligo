@@ -41,6 +41,7 @@ type t =
   | `Small_passes_only_variable_in_postfix of expr
   | `Small_passes_sys_error of Location.t * string
   | `Small_passes_invariant_trivial of Location.t * string
+  | `Small_passes_unsupported_parametric_type_in_signature of Location.t
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -247,7 +248,13 @@ let error_ppformat
         snippet_pp
         (get_e_loc e)
     | `Small_passes_sys_error (l, msg) ->
-      Format.fprintf f "@[<hv>%a@ Found a system error: %s. @]" snippet_pp l msg)
+      Format.fprintf f "@[<hv>%a@ Found a system error: %s. @]" snippet_pp l msg
+    | `Small_passes_unsupported_parametric_type_in_signature l ->
+      Format.fprintf
+        f
+        "@[<hv>%a@ Parametric types are not supported in interfaces yet. @]"
+        snippet_pp
+        l)
 
 
 let error_json : t -> Simple_utils.Error.t =
@@ -472,5 +479,11 @@ let error_json : t -> Simple_utils.Error.t =
     make ~stage ~content
   | `Small_passes_sys_error (location, msg) ->
     let message = Format.sprintf "Found a system error: %s" msg in
+    let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_unsupported_parametric_type_in_signature location ->
+    let message =
+      Format.sprintf "Parametric types are not supported in interfaces yet."
+    in
     let content = make_content ~message ~location () in
     make ~stage ~content

@@ -101,6 +101,7 @@ let hook_T_Attr = hook @@ fun a t -> T_Attr (a,t)
 %on_error_reduce nseq(long_variant(fun_type_level))
 %on_error_reduce nseq(no_attr_expr)
 %on_error_reduce nsepseq(module_name,DOT)
+%on_error_reduce no_attr_type
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -492,10 +493,10 @@ fun_decl:
 
 non_fun_decl:
   irrefutable type_params rhs_type "=" expr {
-    let start = pattern_to_region $1 in
-    let stop = expr_to_region $5 in
-    let region = cover start stop in
-    mk_reg region {binders=($1,[]); type_params=$2; rhs_type=$3; eq=$4; let_rhs=$5} }
+    let region = cover (pattern_to_region $1) (expr_to_region $5)
+    and value  = {binders=($1,[]); type_params=$2; rhs_type=$3;
+                  eq=$4; let_rhs=$5}
+    in mk_reg region value}
 
 %inline
 rhs_type:
@@ -553,6 +554,11 @@ signature_decl:
                   signature_expr=$5}
     in {region; value} }
 
+signature_expr:
+  module_path(module_name) { S_Path (mk_mod_path $1 (fun x -> x#region)) }
+| module_name              { S_Var $1 }
+| signature_sig            { S_Sig $1 }
+
 signature_sig:
   "sig" ioption(nseq(sig_item)) "end" {
     let sig_items =
@@ -564,35 +570,43 @@ signature_sig:
     in {region;value} }
 
 sig_item:
-  "val" variable type_annotation(type_expr) {
-    let colon, t_expr = $3 in
-    let value  = $1, $2, colon, t_expr
-    and stop   = type_expr_to_region t_expr in
-    let region = cover $1#region stop
-    in S_Value {region; value}
-  }
-| "type" type_name "=" type_expr {
-    let value  = $1, $2, $3, $4
-    and stop   = type_expr_to_region $4 in
-    let region = cover $1#region stop
-    in S_Type {region; value}
-  }
-| "type" type_name {
-    let region = cover $1#region (variable_to_region $2)
-    in S_TypeVar {region; value=$1,$2}
-  }
-| "include" signature_expr {
-    let region = $1#region
-    in S_Include {region; value=$1,$2}
-  }
-| "[@attr]" sig_item {
-    let region = cover $1#region (sig_item_to_region $2)
-    in S_Attr {region; value = $1,$2} }
+  sig_val     { S_Value   $1 }
+| sig_type    { S_Type    $1 }
+| sig_include { S_Include $1 }
+| sig_attr    { S_Attr    $1 }
 
-signature_expr:
-  module_path(module_name) { S_Path (mk_mod_path $1 (fun x -> x#region)) }
-| module_name { S_Var $1 }
-| signature_sig { S_Sig $1 }
+sig_attr:
+  "[@attr]" sig_item {
+    let region = cover $1#region (sig_item_to_region $2)
+    in {region; value = $1,$2} }
+
+sig_val:
+  "val" variable type_annotation(gen_type_expr) {
+    let colon, val_type = $3 in
+    let value  = {kwd_val=$1; var=$2; colon; val_type}
+    and region = cover $1#region (type_expr_to_region val_type)
+    in {region; value} }
+
+gen_type_expr:
+  type_expr { $1 }
+| nseq(quoted_type_var) "." type_expr {
+    let region = nseq_to_region (fun x -> x.region) $1
+    in T_ForAll {region; value = $1,$2,$3} }
+
+sig_type:
+  "type" ioption(type_vars) type_name "=" type_expr { (* = type_decl *)
+    let type_rhs = Some ($4, $5) in
+    let value    = {kwd_type=$1; type_vars=$2; type_name=$3; type_rhs}
+    and region   = cover $1#region (type_expr_to_region $5)
+    in {region; value}
+  }
+| "type" ioption(type_vars) type_name { (* Abstract type *)
+    let value  = {kwd_type=$1; type_vars=$2; type_name=$3; type_rhs=None}
+    and region = cover $1#region (variable_to_region $3)
+    in {region; value} }
+
+sig_include:
+  "include" signature_expr { {region=$1#region; value=$1,$2} }
 
 (* PATTERNS *)
 

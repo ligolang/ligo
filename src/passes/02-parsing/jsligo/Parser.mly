@@ -109,7 +109,7 @@ let mk_mod_path :
   last_or_more(stmt_not_starting_with_expr_nor_block)
 %on_error_reduce
   last_or_more(block_stmt)
-  nseq(__anonymous_3)
+  nseq(__anonymous_2)
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -294,15 +294,17 @@ bindings:
 val_binding:
   pattern ioption(binding_type) "=" expr {
     let region = cover (pattern_to_region $1) (expr_to_region $4) in
-    let generics, rhs_type =
-      match $2 with
-        None -> None, None
-      | Some (colon, (tv_opt, te)) -> tv_opt, Some (colon, te) in
-    let value = {pattern=$1; generics; rhs_type; eq=$3; rhs_expr=$4}
+    let value  = {pattern=$1; rhs_type=$2; eq=$3; rhs_expr=$4}
     in {region; value} }
 
 binding_type:
-  type_annotation(ioption(type_vars) type_expr { $1,$2 }) { $1 }
+  type_annotation(gen_type_expr) { $1 }
+
+gen_type_expr:
+  type_expr           { $1 }
+| type_vars type_expr {
+    let region = cover $1.region (type_expr_to_region $2)
+    in T_ForAll {region; value = $1,$2} }
 
 type_annotation (right_type_expr):
   ":" right_type_expr { $1,$2 }
@@ -365,26 +367,22 @@ interface_entry:
 | interface_const           { I_Const      $1 }
 
 interface_type:
-  "type" type_name "=" type_expr {
-    let value  = {kwd_type=$1; type_name=$2; type_rhs = Some ($3,$4)}
-    and stop   = type_expr_to_region $4 in
-    let region = cover $1#region stop
+  "type" type_name ioption(type_vars) "=" type_expr { (* = type_decl *)
+    let type_rhs = Some ($4, $5) in
+    let value    = {kwd_type=$1; type_name=$2; generics=$3; type_rhs}
+    and region   = cover $1#region (type_expr_to_region $5)
     in {region; value}
   }
-| "type" type_name {
-    let value  = {kwd_type=$1; type_name=$2; type_rhs=None}
+| "type" type_name { (* Abstract type *)
+    let value  = {kwd_type=$1; type_name=$2;
+                  generics=None; type_rhs=None}
     and region = cover $1#region (variable_to_region $2)
     in {region; value} }
 
 interface_const:
-  "const" variable type_annotation(type_expr) {
-    let region = cover $1#region (type_expr_to_region (snd $3))
-    and value  = {kwd_const=$1; const_name=$2; const_optional=None;
-                  const_type=$3}
-    in {region; value} }
-| "const" variable "?" type_annotation(type_expr) {
+  "const" variable "?"? binding_type {
     let region = cover $1#region (type_expr_to_region (snd $4))
-    and value  = {kwd_const=$1; const_name=$2; const_optional = Some $3;
+    and value  = {kwd_const=$1; const_name=$2; const_optional=$3;
                   const_type=$4}
     in {region; value} }
 
@@ -426,12 +424,12 @@ type_expr:
 (* Functional types *)
 
 fun_type:
-  ES6FUN fun_type_params "=>" type_expr {
+  ES6FUN par(fun_type_params) "=>" type_expr {
     let region = cover $2.region (type_expr_to_region $4)
     in T_Fun {region; value=($2,$3,$4)} }
 
 fun_type_params:
-  par (sep_or_term (fun_type_param, ",")) { $1 }
+  sep_or_term (fun_type_param, ",") { $1 }
 
 fun_type_param:
   variable type_annotation(type_expr) {
@@ -1070,7 +1068,8 @@ match_default:
   "default" ":" expr ioption(";") {
     let region = cover $1#region (expr_to_region $3)
     and value  = {kwd_default=$1; colon=$2; default_expr=$3}
-    in {region; value} }
+    in {region; value}
+ }
 
 (* Logical disjunction *)
 

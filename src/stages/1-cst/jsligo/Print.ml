@@ -171,9 +171,10 @@ and print_I_Attr state (node : attribute * intf_entry) =
 
 and print_I_Type state (node : intf_type reg) =
   let Region.{region; value} = node in
-  let {kwd_type=_; type_name; type_rhs} = value in
+  let {kwd_type=_; type_name; generics; type_rhs} = value in
   let children = Tree.[
     mk_child     print_variable type_name;
+    mk_child_opt print_generics generics;
     mk_child_opt print_type_rhs type_rhs]
   in Tree.make ~region state "I_Type" children
 
@@ -264,11 +265,10 @@ and mk_children_bindings (node: (val_binding reg, comma) Utils.nsepseq) =
 
 and print_val_binding state (node: val_binding reg) =
   let Region.{region; value} = node in
-  let {pattern; generics; rhs_type; eq=_; rhs_expr} = value in
+  let {pattern; rhs_type; eq=_; rhs_expr} = value in
 
   let children = Tree.[
     mk_child     print_binders         pattern;
-    mk_child_opt print_generics        generics;
     mk_child_opt print_type_annotation rhs_type;
     mk_child     print_rhs             rhs_expr]
   in Tree.make state ~region "<binding>" children
@@ -293,12 +293,13 @@ and print_type_expr state = function
   T_App         t -> print_T_App          state t
 | T_Array       t -> print_T_Array        state t
 | T_Attr        t -> print_T_Attr         state t
+| T_ForAll      t -> print_T_ForAll       state t
 | T_Fun         t -> print_T_Fun          state t
 | T_Int         t -> print_T_Int          state t
 | T_NamePath    t -> print_T_NamePath     state t
 | T_Object      t -> print_T_Object       state t
 | T_Par         t -> print_T_Par          state t
-| T_ParameterOf  t -> print_T_ParameterOf state t
+| T_ParameterOf t -> print_T_ParameterOf  state t
 | T_String      t -> print_T_String       state t
 | T_Union       t -> print_T_Union        state t
 | T_Var         t -> print_T_Var          state t
@@ -322,7 +323,17 @@ and print_T_Attr state (node : attribute * type_expr) =
   let children = Tree.[
     mk_child print_attribute attribute;
     mk_child print_type_expr type_expr]
-  in Tree.make state "T_Attr"children
+  in Tree.make state "T_Attr" children
+
+(* Universally quantified type *)
+
+and print_T_ForAll state (node : (generics * type_expr) reg) =
+  let Region.{value; region} = node in
+  let generics, type_expr = value in
+  let children = Tree.[
+    mk_child print_generics  generics;
+    mk_child print_type_expr type_expr]
+  in Tree.make ~region state "T_ForAll" children
 
 (* Array types *)
 

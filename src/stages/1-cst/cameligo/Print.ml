@@ -74,15 +74,6 @@ and print_declaration state = function
 | D_Include   d -> print_D_Include   state d
 | D_Signature d -> print_D_Signature state d
 
-(* SIGNATURE DECLARATIONS *)
-
-and print_sig_item state = function
-  S_Attr    d -> print_S_Attr    state d
-| S_Value   d -> print_S_Value   state d
-| S_Type    d -> print_S_Type    state d
-| S_TypeVar d -> print_S_TypeVar state d
-| S_Include d -> print_S_Include state d
-
 (* Attributed declaration *)
 
 and print_D_Attr state (node : (attribute * declaration) reg) =
@@ -91,15 +82,6 @@ and print_D_Attr state (node : (attribute * declaration) reg) =
     mk_child print_attribute   attribute;
     mk_child print_declaration declaration]
   in Tree.make state "D_Attr" children
-
-(* Attributed sig. item *)
-
-and print_S_Attr state (node : (attribute * sig_item) reg) =
-  let attribute, sig_item = node.value in
-  let children = Tree.[
-    mk_child print_attribute   attribute;
-    mk_child print_sig_item     sig_item]
-  in Tree.make state "S_Attr" children
 
 (* Preprocessing directives *)
 
@@ -149,26 +131,27 @@ and print_D_Type state (node : type_decl reg) =
 
 and mk_children_type_decl (node : type_decl) =
   let {name; params; type_expr; _} = node
-  in
-  let print_TV_Single state (node : type_var) =
-    Tree.make_unary state "TV_Single" print_type_var node
+  in Tree.[mk_child     print_variable  name;
+           mk_child_opt print_type_vars params;
+           mk_child     print_type_expr type_expr]
 
-  and print_TV_Tuple state (node : type_var tuple par) =
-      let Region.{value; region} = node in
-      Tree.of_nsepseq state ~region "TV_Tuple" print_type_var value.inside
-  in
-  let print_type_vars state = function
-    TV_Single tv -> print_TV_Single state tv
-  | TV_Tuple  tv -> print_TV_Tuple  state tv
-  in
-  Tree.[mk_child     print_variable  name;
-        mk_child_opt print_type_vars params;
-        mk_child     print_type_expr type_expr]
+and print_type_vars state = function
+  TV_Single tv -> print_TV_Single state tv
+| TV_Tuple  tv -> print_TV_Tuple  state tv
+
+and print_TV_Single state (node : type_var) =
+  Tree.make_unary state "TV_Single" print_type_var node
+
+and print_TV_Tuple state (node : type_var tuple par) =
+  let Region.{value; region} = node in
+  Tree.of_nsepseq state ~region "TV_Tuple" print_type_var value.inside
 
 and print_type_var state (node : type_var) =
   let Region.{value; region} = node in
-  (* We don't print the backquote, if any. *)
-  print_variable state (snd value)
+  match value with
+    None, tv -> print_variable state tv
+  | Some _, Var w -> Tree.make_node ~region:w#region state ("'" ^ w#payload)
+  | Some _, Esc w -> Tree.make_node ~region:w#region state ("'@" ^ w#payload)
 
 (* Module declaration *)
 
@@ -219,7 +202,7 @@ and print_D_Signature state (node : signature_decl reg) =
   in Tree.make state ~region "D_Signature" children
 
 and mk_children_signature_decl (node : signature_decl) =
-  Tree.[mk_child make_literal      node.name;
+  Tree.[mk_child make_literal         node.name;
         mk_child print_signature_expr node.signature_expr]
 
 and print_signature_expr state = function
@@ -239,31 +222,22 @@ and print_S_Path state (node : module_name module_path reg) =
 and print_S_Var state (node : module_name) =
   Tree.(make_unary state "S_Var" make_literal node)
 
-(* Value declarations (signature) *)
+(* SIGNATURE DECLARATIONS *)
 
-and print_S_Value state (node : (kwd_val * variable * colon * type_expr) reg) =
-  let Region.{value; region} = node in
-  let _kwd_val, var, _colon, type_expr = value in
-  let children = Tree.[mk_child print_variable  var;
-                       mk_child print_type_expr type_expr]
-  in Tree.make ~region state "S_Value" children
+and print_sig_item state = function
+  S_Attr    d -> print_S_Attr    state d
+| S_Include d -> print_S_Include state d
+| S_Type    d -> print_S_Type    state d
+| S_Value   d -> print_S_Value   state d
 
-(* Type declarations (signature) *)
+(* Attributed signature item *)
 
-and print_S_Type state (node : (kwd_type * variable * equal * type_expr) reg) =
-  let Region.{value; region} = node in
-  let _kwd_type, var, _eq, type_expr = value in
-  let children = Tree.[mk_child print_variable  var;
-                       mk_child print_type_expr type_expr]
-  in Tree.make ~region state "S_Type" children
-
-(* Type declarations (signature) *)
-
-and print_S_TypeVar state (node : (kwd_type * variable) reg) =
-  let Region.{value; region} = node in
-  let _kwd_type, var = value in
-  let children = Tree.[mk_child print_variable var]
-  in Tree.make ~region state "S_TypeVar" children
+and print_S_Attr state (node : (attribute * sig_item) reg) =
+  let attribute, sig_item = node.value in
+  let children = Tree.[
+    mk_child print_attribute attribute;
+    mk_child print_sig_item  sig_item]
+  in Tree.make state "S_Attr" children
 
 (* Include (signature) *)
 
@@ -273,6 +247,30 @@ and print_S_Include state (node : (kwd_include * signature_expr) reg) =
   let children = Tree.[mk_child print_signature_expr sig_expr]
   in Tree.make ~region state "S_Include" children
 
+(* Type declarations (signature) *)
+
+and print_S_Type state (node : sig_type reg) =
+  let Region.{value; region} = node in
+  let {kwd_type=_; type_vars; type_name; type_rhs} = value in
+  let children = Tree.[
+    mk_child     print_variable  type_name;
+    mk_child_opt print_type_vars type_vars;
+    mk_child_opt print_type_rhs  type_rhs]
+  in Tree.make ~region state "S_Type" children
+
+and print_type_rhs state (node : equal * type_expr) =
+  print_type_expr state (snd node)
+
+(* Value declarations (signature) *)
+
+and print_S_Value state (node : sig_value reg) =
+  let Region.{value; region} = node in
+  let {kwd_val=_; var; colon=_; val_type} = value in
+  let children = Tree.[
+    mk_child print_variable  var;
+    mk_child print_type_expr val_type]
+  in Tree.make ~region state "S_Value" children
+
 (* TYPE EXPRESSIONS *)
 
 and print_type_expr state = function
@@ -280,6 +278,7 @@ and print_type_expr state = function
 | T_Arg         t -> print_T_Arg         state t
 | T_Attr        t -> print_T_Attr        state t
 | T_Cart        t -> print_T_Cart        state t
+| T_ForAll      t -> print_T_ForAll      state t
 | T_Fun         t -> print_T_Fun         state t
 | T_Int         t -> print_T_Int         state t
 | T_ModPath     t -> print_T_ModPath     state t
@@ -324,11 +323,23 @@ and print_T_Attr state (node : attribute * type_expr) =
 
 (* Cartesian products *)
 
-and print_T_Cart state (node : cartesian) =
+and print_T_Cart state (node : cartesian reg) =
   let Region.{value; region} = node in
   let first, sep, others = value in
   let seq = Utils.nsepseq_cons first sep others in
   Tree.of_nsepseq ~region state "T_Cart" print_type_expr seq
+
+(* Universally quantified type *)
+
+and print_T_ForAll state (node : for_all reg) =
+  let Region.{value; region} = node in
+  let type_var_nseq, _, type_expr = value in
+  let mk_vars state (node : type_var nseq) =
+    Tree.of_nseq state "<type vars>" print_type_var node in
+  let children = Tree.[
+    mk_child mk_vars type_var_nseq;
+    mk_child print_type_expr type_expr]
+  in Tree.make ~region state "T_ForAll" children
 
 (* Functional types *)
 

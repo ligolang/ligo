@@ -105,13 +105,14 @@ and sig_entry
            ; const_type = ghost_colon, ty
            ; const_optional = (if optional then Some ghost_qmark else None)
            }))
-  | AST.S_type (v, ty) ->
+  | AST.S_type (v, _TODO, ty) ->
     CST.(
       I_Type
         (w
            { kwd_type = ghost_type
            ; type_name = decompile_tvar_into_var v
            ; type_rhs = Some (ghost_eq, ty)
+           ; generics = None
            }))
   | AST.S_type_var v ->
     CST.(
@@ -120,6 +121,7 @@ and sig_entry
            { kwd_type = ghost_type
            ; type_name = decompile_tvar_into_var v
            ; type_rhs = None
+           ; generics = None
            }))
   | AST.S_attr (attr, se) -> CST.(I_Attr (decompile_attr attr, se))
   | AST.S_include _ -> failwith "Decompile: got S_include in JsLIGO"
@@ -431,5 +433,19 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   so we'll just drop the quantifiers here *)
   | T_abstraction Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ }
   | T_for_all Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
+  | T_for_alls Ligo_prim.Abstractions.{ ty_binders = []; kind = _; type_ } -> type_
+  | T_for_alls Ligo_prim.Abstractions.{ ty_binders; kind = _; type_ } ->
+    let ty_binders = List.map ~f:decompile_tvar_into_var ty_binders in
+    let ty_binders = List.Ne.of_list ty_binders in
+    let generics_nsepseq = Utils.nsepseq_of_nseq ty_binders ~sep:ghost_comma in
+    let generics : CST.generics =
+      w
+      @@ CST.
+           { lchevron = ghost_lt
+           ; inside = Some (`Sep generics_nsepseq)
+           ; rchevron = ghost_gt
+           }
+    in
+    T_ForAll (w @@ (generics, type_))
   | T_module_app _ | T_constant _ ->
     Helpers.failwith_not_initial_node_decompiler @@ `Ty_expr te

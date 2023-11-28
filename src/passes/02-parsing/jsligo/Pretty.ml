@@ -436,11 +436,12 @@ and print_I_Attr state (node : attribute * intf_entry) =
   in print_attributes state thread attributes
 
 and print_I_Type state (node : intf_type reg) =
-  let {kwd_type; type_name; type_rhs} = node.value in
-  let thread = token kwd_type ^^ space ^^ print_variable type_name
-  in group (print_rhs state thread type_rhs)
+  let {kwd_type; type_name; generics; type_rhs} = node.value in
+  let thread = token kwd_type ^^ space ^^ print_variable type_name in
+  let thread = thread ^^ print_generics_opt state generics
+  in group (print_type_rhs state thread type_rhs)
 
-and print_rhs state thread (node : (equal * type_expr) option) =
+and print_type_rhs state thread (node : (equal * type_expr) option) =
   let print state (eq, type_expr) =
     let rhs = print_type_expr state type_expr in
     if is_enclosed_type type_expr
@@ -507,7 +508,7 @@ and print_var_kind = function
 | `Const kwd_const -> token kwd_const
 
 and print_val_binding state (node : val_binding reg) =
-  let {pattern; generics; rhs_type; eq; rhs_expr} = node.value in
+  let {pattern; rhs_type; eq; rhs_expr} = node.value in
   (* In case the RHS is a lambda function, we want to try to display
      it in the same line instead of causing a line break. For example,
      we want to see this:
@@ -1270,6 +1271,7 @@ and print_type_expr state = function
   T_App         t -> print_T_App         state t
 | T_Attr        t -> print_T_Attr        state t
 | T_Array       t -> print_T_Array       state t
+| T_ForAll      t -> print_T_ForAll      state t
 | T_Fun         t -> print_T_Fun         state t
 | T_Int         t -> print_T_Int               t
 | T_NamePath    t -> print_T_NamePath    state t
@@ -1303,6 +1305,12 @@ and print_T_Attr state (node : attribute * type_expr) =
 and print_T_Array state (node : array_type) =
   let seq = print_nsep_or_term (break 1) (print_type_expr state)
   in group (print_brackets state seq node)
+
+(* Universal type *)
+
+and print_T_ForAll state (node : (generics * type_expr) reg) =
+  let generics, type_expr = node.value in
+  print_generics state generics ^^ print_type_expr state type_expr
 
 (* Function type *)
 

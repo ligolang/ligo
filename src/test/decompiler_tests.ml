@@ -195,7 +195,7 @@ let decompiler_ty_expr_tests =
       ; code =
           "let x (type a) (v : a option) : bool = match v with | None -> False | Some _ \
            -> True"
-      ; expected = "a option -> bool"
+      ; expected = "'a.'a option -> bool"
       ; syntax = CameLIGO
       }
     ; { name = "modules"

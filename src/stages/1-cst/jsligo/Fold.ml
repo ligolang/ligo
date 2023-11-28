@@ -71,6 +71,7 @@ type _ sing =
   | S_extends : extends sing
   | S_file_path : file_path sing
   | S_for_of_stmt : for_of_stmt sing
+  | S_for_all : (generics * type_expr) sing
   | S_for_stmt : for_stmt sing
   | S_fun_body : fun_body sing
   | S_fun_decl : fun_decl sing
@@ -453,6 +454,7 @@ let fold'
     [ kwd_for -| S_kwd_for
     ; range -| S_par S_range_of
     ; for_of_body -| S_statement]
+  | S_for_all -> process @@ node -| S_array_2 (S_generics, S_type_expr)
   | S_for_stmt ->
     let { kwd_for; range; for_body } = node in
     process_list
@@ -557,10 +559,11 @@ let fold'
     | I_Path node -> node -| S_namespace_selection
     )
   | S_intf_name -> process @@ node -| S_wrap S_lexeme
-  | S_intf_type -> let { kwd_type; type_name; type_rhs } = node in
+  | S_intf_type -> let { kwd_type; type_name; generics; type_rhs } = node in
     process_list
     [ kwd_type -| S_kwd_type
     ; type_name -| S_type_name
+    ; generics -| S_option S_generics
     ; type_rhs -| S_option (S_array_2 (S_equal, S_type_expr)) ]
   | S_kwd_as -> process @@ node -| S_wrap S_lexeme
   | S_kwd_break -> process @@ node -| S_wrap S_lexeme
@@ -833,6 +836,7 @@ let fold'
       T_App node -> node -| S_reg (S_array_2 (S_type_expr, S_type_ctor_args))
     | T_Array node -> node -| S_array_type
     | T_Attr node -> node -| S_array_2 (S_attribute, S_type_expr)
+    | T_ForAll node -> node -| S_reg (S_array_2 (S_generics, S_type_expr))
     | T_Fun node -> node -| S_fun_type
     | T_Int node -> node -| S_int_literal
     | T_NamePath node -> node -| S_reg (S_namespace_path S_type_expr)
@@ -858,10 +862,9 @@ let fold'
     ; _object -| S_expr
     ; sep -| S_property_sep
     ; updates -| S_sep_or_term (S_reg (S_property S_expr), S_semi) ]
-  | S_val_binding -> let { pattern; generics; rhs_type; eq; rhs_expr } = node in
+  | S_val_binding -> let { pattern; rhs_type; eq; rhs_expr } = node in
     process_list
     [ pattern -| S_pattern
-    ; generics -| S_option S_generics
     ; rhs_type -| S_option S_type_annotation
     ; eq -| S_equal
     ; rhs_expr -| S_expr ]

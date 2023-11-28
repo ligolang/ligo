@@ -5,6 +5,20 @@ module Option = Simple_utils.Option
 module O = Ast_unified
 module I = Cst.Jsligo
 
+(* Generics *)
+
+let split_for_all = function
+  | I.T_ForAll { value = generics, type_expr; _ } -> Some generics, type_expr
+  | type_expr -> None, type_expr
+
+
+let split_for_all_opt = function
+  | None -> None, None
+  | Some te ->
+    let gen, te = split_for_all te in
+    gen, Some te
+
+
 let ghost : string I.wrap = I.Wrap.ghost ""
 
 let sep_or_term_to_nelist : ('a, 'b) Utils.sep_or_term -> 'a List.Ne.t option =
@@ -427,6 +441,13 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
     | _ -> None
   in
   match t with
+  | T_ForAll { value = generics, t; _ } ->
+    let ty_binders =
+      List.map ~f:TODO_do_in_parsing.esc_tvar
+      @@ sep_or_term_to_list (r_fst generics).inside
+    and kind = Ligo_prim.Kind.Type
+    and type_ = t in
+    return @@ O.T_for_alls { ty_binders; kind; type_ }
   | T_Attr (attr, t) -> return @@ O.T_attr (TODO_do_in_parsing.conv_attr attr, t)
   | T_Array { value = { inside; _ }; _ } ->
     let t = List.Ne.of_list @@ nsep_or_term_to_list inside in
@@ -777,14 +798,15 @@ and declaration : Eq.declaration -> Folding.declaration =
   let compile_val_binding
       : I.val_binding -> (Eq.pattern, I.expr, I.type_expr) O.Simple_decl.t
     =
-   fun { pattern; generics; rhs_type; eq = _; rhs_expr } ->
+   fun { pattern; rhs_type; eq = _; rhs_expr } ->
+    let rhs_type = Option.map ~f:snd rhs_type in
+    let generics, rhs_type = split_for_all_opt rhs_type in
     let type_params =
       let open Simple_utils.Option in
       let* generics in
       let* tvs = sep_or_term_to_nelist (r_fst generics).inside in
       return (List.Ne.map TODO_do_in_parsing.esc_tvar tvs)
     in
-    let rhs_type = Option.map ~f:snd rhs_type in
     { type_params; pattern; rhs_type; let_rhs = rhs_expr }
   in
   match d with
@@ -843,7 +865,7 @@ and declaration : Eq.declaration -> Folding.declaration =
     | `Let _ -> return @@ O.D_multi_var bindings
     | `Const _ -> return @@ O.D_multi_const bindings)
   | D_Type { value; region } ->
-    let I.{ name; generics; type_expr; _ } = value in
+    let I.{ name; type_expr; generics; _ } = value in
     let name = TODO_do_in_parsing.esc_tvar name in
     let params =
       let open Simple_utils.Option in
@@ -918,11 +940,18 @@ and sig_entry : Eq.sig_entry -> Folding.sig_entry =
     return ~loc
     @@ (O.S_attr (TODO_do_in_parsing.conv_attr attr, entry) : _ O.sig_entry_content_)
   | I_Type { value; _ } ->
-    let I.{ type_name; type_rhs; _ } = value in
+    let I.{ kwd_type = _; type_name; type_rhs; generics } = value in
     let var = TODO_do_in_parsing.esc_tvar type_name in
+    let generics =
+      match generics with
+      | None -> []
+      | Some generics ->
+        List.map ~f:TODO_do_in_parsing.esc_tvar
+        @@ sep_or_term_to_list (r_fst generics).inside
+    in
     (match type_rhs with
     | None -> return ~loc @@ O.S_type_var var
-    | Some (_, type_rhs) -> return ~loc @@ O.S_type (var, type_rhs))
+    | Some (_, type_rhs) -> return ~loc @@ O.S_type (var, generics, type_rhs))
   | I_Const { value; _ } ->
     let I.{ const_name; const_type; const_optional; _ } = value in
     let var = TODO_do_in_parsing.esc_var const_name in

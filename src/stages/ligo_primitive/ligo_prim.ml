@@ -16,6 +16,7 @@ module Kind = Kind
 module Row = Row
 module Arrow = Arrow
 module Abstraction = Abstraction
+module Abstractions = Abstractions
 module Type_app = Type_app
 module Type_abs = Type_abs
 module Tuple = Tuple
