@@ -1,0 +1,42 @@
+/** 
+ * Colors following tezos guidelines,
+ * should not change things here, just add more colors variants like transparent
+ */
+:root {
+  --ligo-base-color_purple: #9f329f;
+  --ligo-base-color_purple-transparent: #9f329fbe;
+  --ligo-base-color-secondary-brand-color: #fc683a;
+
+  --ligo-base-color_white-dark: #6d6d7b;
+  --ligo-base-color_white-light: #cfd1d9;
+  --ligo-base-color_white-lighter: #e6e8ee;
+  --ligo-base-color_white-lightest: #f2f3f7;
+  --ligo-base-color_white: #fff;
+  --ligo-base-color_white-transparent: #ffffffad;
+
+  --ligo-base-color_blue-dark: #003ee0;
+  --ligo-base-color_blue: #0f61ff;
+  --ligo-base-color_blue-transparent: #0f5fffbe;
+  --ligo-base-color_blue-light: #408dff;
+  --ligo-base-color_blue-lighter: #7cb3ff;
+  --ligo-base-color_blue-lightest: #bedfff;
+
+  --ligo-base-color_stealth-dark: #030405;
+  --ligo-base-color_stealth: #1d2227;
+  --ligo-base-color_stealth-light: #4a4e52;
+  --ligo-base-color_stealth-lighter: #787d82;
+  --ligo-base-color_stealth-lightest: #9fa4a9;
+
+  --ligo-base-color_slate-dark: #263042;
+  --ligo-base-color_slate: #616f82;
+  --ligo-base-color_slate-light: #818c9b;
+  --ligo-base-color_slate-lighter: #9ba6b5;
+  --ligo-base-color_slate-lightest: #b9c2cf;
+
+  --ligo-base-color_steel-dark: #505561;
+  --ligo-base-color_steel: #838893;
+  --ligo-base-color_steel-transparent: #83889310;
+  --ligo-base-color_steel-light: #aeb1b9;
+  --ligo-base-color_steel-lighter: #e3e4e5;
+  --ligo-base-color_steel-lightest: #f6f8fa;
+}

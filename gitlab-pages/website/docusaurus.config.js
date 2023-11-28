@@ -1,40 +1,41 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
-const singleTheme = require('prism-react-renderer/themes/duotoneLight');
+const lightCodeTheme = require("prism-react-renderer/themes/github");
+const darkCodeTheme = require("prism-react-renderer/themes/dracula");
+const singleTheme = require("prism-react-renderer/themes/duotoneLight");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'LIGO',
-  tagline: 'LIGO is a friendly smart contract language for Tezos',
-  url: 'https://ligolang.org',
-  baseUrl: '/',
-  onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/favicon.svg',
-  projectName: 'ligo',
-  organizationName: 'Marigold',
-
+  title: "Ligo",
+  url: "https://ligolang.org",
+  baseUrl: "/",
+  onBrokenLinks: "throw",
+  onBrokenMarkdownLinks: "warn",
+  favicon: "img/favicon.svg",
+  projectName: "ligo",
+  organizationName: "Marigold",
+  customFields: {
+    REACT_APP_GOOGLE_ANALYTICS_ID: "G-V5S4SDLK4Z",
+  },
   // Even if you don't use internalization, you can use this field to set useful
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
-  plugins: ["@ligo/syntax"],
+  plugins: ["@ligo/syntax", "docusaurus-plugin-sass"],
 
   presets: [
     [
-      'classic',
+      "@docusaurus/preset-classic",
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
-          path: '../docs',
-          sidebarPath: require.resolve('./sidebars.js'),
+          path: "../docs",
+          sidebarPath: require.resolve("./sidebars.js"),
         },
         blog: {
           showReadingTime: true,
@@ -44,10 +45,12 @@ const config = {
           //   'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
-        },
-        gtag: {
-          trackingID: 'G-V5S4SDLK4Z'
+          customCss: [
+            require.resolve("./src/css/colors.css"),
+            require.resolve("./src/css/breakpoints.scss"),
+            require.resolve("./src/css/theme-light.css"),
+            require.resolve("./src/css/custom.css"),
+          ],
         },
       }),
     ],
@@ -56,108 +59,133 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        defaultMode: "dark",
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
+      },
       announcementBar: {
-        id: 'support_us',
+        id: "support_us",
         content:
-          '<b>Ligo v1 is now available ! Check the migration guide : https://ligolang.org/docs/next/faq/v1-migration-guide ! </b>',
-        backgroundColor: '#0e74ff',
-        textColor: '#efefef',
+          "<b>Ligo v1 is now available ! Check the migration guide : https://ligolang.org/docs/next/faq/v1-migration-guide ! </b>",
+        backgroundColor: "#003ee0",
+        textColor: "#efefef",
         isCloseable: false,
       },
       navbar: {
         logo: {
-          alt: 'LIGO Logo',
-          src: 'img/logo/logo.svg',
-          srcDark: 'img/logo/logo-night.svg'
+          width: "104",
+          height: "32",
+          alt: "LIGO Logo",
+          src: "img/logo/logo.svg",
+          srcDark: "img/logo/logo-night.svg",
         },
         items: [
-          { type: 'docsVersionDropdown', position: 'left' },
-          { to: 'docs/intro/introduction', label: 'Docs', position: 'left', target: '_self' },
-          { to: 'docs/reference/toplevel', label: 'API', position: 'left' },
-          { to: 'docs/faq/intro', label: 'FAQ', position: 'left' },
-          { to: 'https://packages.ligolang.org/packages', label: 'Registry', position: 'right' },
-          { to: 'https://ide.ligolang.org/', label: 'Web IDE', position: 'right' }
+          { type: "docsVersionDropdown", position: "left" },
+          { to: "docs/intro/introduction", label: "Docs", position: "left", target: "_self" },
+          { to: "docs/reference/toplevel", label: "API", position: "left" },
+          { to: "docs/faq/intro", label: "FAQ", position: "left" },
+          { to: "https://packages.ligolang.org/packages", label: "Registry", position: "right" },
+          { to: "https://ide.ligolang.org/", label: "Web IDE", position: "right" },
         ],
       },
       footer: {
-        style: 'dark',
+        logo: {
+          alt: "Ligo Logo",
+          src: "img/ligo-logo.svg",
+          srcDark: "img/ligo-logo-light.svg",
+          width: 50,
+          height: 50,
+        },
+        style: "dark",
         links: [
           {
-            title: 'Tooling',
+            title: "LEARN LIGO",
             items: [
               {
-                label: 'Taqueria',
-                to: 'docs/intro/installation',
+                label: "Get started",
+                to: "docs/intro/introduction",
               },
               {
-                label: 'Registry',
-                to: 'docs/api/cli-commands',
+                label: "Registry",
+                href: "https://packages.ligolang.org/packages",
               },
               {
-                label: 'Octez-client',
-                to: 'docs/api/cheat-sheet',
+                label: "Ligo CLI",
+                to: "docs/api/cli-commands",
               },
               {
-                label: 'Templates',
-                to: 'docs/api/cheat-sheet',
-              }
-            ],
-          },
-          {
-            title: 'Need help',
-            items: [
-              {
-                label: 'FAQ',
-                href: 'https://tezos.stackexchange.com/questions/tagged/ligo',
+                label: "Changelog",
+                to: "docs/intro/changelog",
               },
               {
-                label: 'Discord',
-                href: 'https://discord.gg/tezos',
-              },
-              {
-                label: 'Telegram',
-                href: 'https://t.me/LigoLang',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/LigoLang',
+                label: "FAQ",
+                to: "docs/faq/intro",
               },
             ],
           },
           {
-            title: 'Open source',
+            title: "COMMUNITY",
             items: [
               {
-                label: 'Ligo Gitlab',
-                to: 'docs/tutorials/getting-started',
+                label: "Discord",
+                href: "https://discord.gg/tezos",
+                rel: "noopener noreferrer nofollow",
               },
               {
-                label: 'Open an issue',
-                to: 'https://forum.tezosagora.org/tag/ligo',
+                label: "YouTube",
+                href: "https://www.youtube.com/playlist?list=PLmDOlM4rqLvInuervAU4YuU39ThuHw3fM",
+                rel: "noopener noreferrer nofollow",
               },
               {
-                label: 'Website sources',
-                href: 'https://gitlab.com/ligolang/ligo',
-              }
+                label: "X",
+                href: "https://x.com/LigoLang",
+                rel: "noopener noreferrer nofollow",
+              },
+              {
+                label: "Telegram",
+                href: "https://t.me/LigoLang",
+                rel: "noopener noreferrer nofollow",
+              },
+              {
+                label: "LinkedIn",
+                href: "https://www.linkedin.com/company/marigold-ligolang/",
+                rel: "noopener noreferrer nofollow",
+              },
+            ],
+          },
+          {
+            title: "CONTRIBUTE",
+            items: [
+              {
+                label: "Sources",
+                href: "https://gitlab.com/ligolang/ligo",
+                rel: "noopener noreferrer nofollow",
+              },
+              {
+                label: "Issues",
+                href: "https://gitlab.com/ligolang/ligo/-/issues",
+                rel: "noopener noreferrer nofollow",
+              },
             ],
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} LIGO. All rights reserved.`,
       },
-      image: 'img/logo/logo.png',
+      image: "img/logo/logo.png",
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
-        singleTheme: singleTheme
+        singleTheme: singleTheme,
       },
       algolia: {
         // The application ID provided by Algolia
-        appId: 'ZJTW93II01',
+        appId: "ZJTW93II01",
 
         // Public API key: it is safe to commit it
-        apiKey: '666cd6151b57b31964fece17ad094ba9',
+        apiKey: "666cd6151b57b31964fece17ad094ba9",
 
-        indexName: 'ligolang',
+        indexName: "ligolang",
 
         // Optional: see doc section below
         contextualSearch: true,
@@ -166,10 +194,9 @@ const config = {
         searchParameters: {},
 
         // Optional: path for search page that enabled by default (`false` to disable it)
-        searchPagePath: 'search',
-
+        searchPagePath: "search",
       },
-    })
+    }),
 };
 
 module.exports = config;
