@@ -1468,9 +1468,8 @@ and cast_items
     let%bind () =
       match Signature.get_value inferred_sig v with
       | Some (ty', attr') ->
-        if Bool.equal attr.entry attr'.entry
-           && Bool.equal attr.view attr'.view
-           && Type.equal ty ty'
+        let%bind eq = eq ty ty' in
+        if Bool.equal attr.entry attr'.entry && Bool.equal attr.view attr'.view && eq
         then return ()
         else raise (signature_not_match_value v ty ty')
       | None when attr.optional -> return ()

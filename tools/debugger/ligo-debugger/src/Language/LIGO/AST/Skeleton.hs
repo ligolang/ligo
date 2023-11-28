@@ -195,6 +195,7 @@ data Type it
   | TParen     it                   -- ^ (Type)
   | TInt       it                   -- ^ (TInt)
   | TParameter it                   -- ^ (ModuleAccess)
+  | TForAll    [it]   it            -- ^ [TypeVariableName] (Type)
   deriving stock (Generic, Eq, Functor, Foldable, Traversable)
 
 data Variant it

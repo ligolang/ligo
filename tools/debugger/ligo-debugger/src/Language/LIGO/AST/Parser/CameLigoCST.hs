@@ -59,11 +59,15 @@ data LetBinding = LetBinding
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+type AttrPattern = Tuple1 Pattern
+
+type ConsPattern = (Pattern, Pattern)
+
 data Pattern
   = PApp (Reg (Pattern, Maybe Pattern))
-  | PAttr (Tuple1 Pattern)
+  | PAttr AttrPattern
   | PBytes WrappedTupleLexeme
-  | PCons (Reg (Pattern, Pattern))
+  | PCons (Reg ConsPattern)
   | PCtor WrappedLexeme
   | PFalse WrappedLexeme
   | PInt WrappedTupleLexeme
@@ -126,18 +130,22 @@ type TypeAnnotation = Tuple1 TypeExpr
 type SomeBinOp = Reg (BinOp WrappedLexeme)
 type SomeUnOp = Reg (UnOp WrappedLexeme)
 
+type AttrExpr = Tuple1 Expr
+
+type ContractOf = Reg (NonEmpty WrappedLexeme)
+
 data Expr
   = EAdd SomeBinOp
   | EAnd SomeBinOp
   | EApp (Reg (Expr, NonEmpty Expr))
   | EAssign (Reg Assign)
-  | EAttr (Tuple1 Expr)
+  | EAttr AttrExpr
   | EBytes WrappedTupleLexeme
   | ECat SomeBinOp
   | ECodeInj (Reg CodeInj)
   | ECond (Reg CondExpr)
   | ECons SomeBinOp
-  | EContractOf (Reg (NonEmpty WrappedLexeme))
+  | EContractOf ContractOf
   | ECtor WrappedLexeme
   | EDiv SomeBinOp
   | EEqual SomeBinOp
@@ -390,16 +398,27 @@ data TypeVars
 
 type TypeVar = Reg (Tuple1 WrappedLexeme)
 
+type TypeAttr = Tuple1 TypeExpr
+
+type Cartesian = (TypeExpr, NonEmpty TypeExpr)
+
+type ForAll = (NonEmpty TypeVar, TypeExpr)
+
+type FunType = (TypeExpr, TypeExpr)
+
+type ParameterOf = NonEmpty WrappedLexeme
+
 data TypeExpr
   = TApp (Reg (TypeExpr, TypeCtorArg))
   | TArg TypeVar
-  | TAttr (Tuple1 TypeExpr)
-  | TCart (Reg (TypeExpr, NonEmpty TypeExpr))
-  | TFun (Reg (TypeExpr, TypeExpr))
+  | TAttr TypeAttr
+  | TCart (Reg Cartesian)
+  | TForAll (Reg ForAll)
+  | TFun (Reg FunType)
   | TInt WrappedTupleLexeme
   | TModPath (Reg (ModulePath TypeExpr))
   | TPar (Par TypeExpr)
-  | TParameterOf (Reg (NonEmpty WrappedLexeme))
+  | TParameterOf (Reg ParameterOf)
   | TRecord (Record (Reg FieldDecl))
   | TString WrappedLexeme
   | TVar WrappedLexeme
@@ -446,12 +465,30 @@ newtype SignatureBody = SignatureBody
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
+type SigAttr = Tuple1 SigItem
+
+type SigInclude = Tuple1 SignatureExpr
+
+data SigType = SigType
+  { stTypeVars :: Maybe TypeVars
+  , stTypeName :: WrappedLexeme
+  , stTypeRhs :: Maybe (Tuple1 TypeExpr)
+  }
+  deriving stock (Show, Generic)
+  deriving anyclass (NFData)
+
+data SigValue = SigValue
+  { svVar :: WrappedLexeme
+  , svValType :: TypeExpr
+  }
+  deriving stock (Show, Generic)
+  deriving anyclass (NFData)
+
 data SigItem
-  = SValue (Reg (WrappedLexeme, TypeExpr))
-  | SType (Reg (WrappedLexeme, TypeExpr))
-  | STypeVar (Reg (Tuple1 WrappedLexeme))
-  | SInclude (Reg (Tuple1 SignatureExpr))
-  | SAttr (Reg (Tuple1 SigItem))
+  = SAttr (Reg SigAttr)
+  | SInclude (Reg SigInclude)
+  | SType (Reg SigType)
+  | SValue (Reg SigValue)
   deriving stock (Show, Generic)
   deriving anyclass (NFData)
 
@@ -578,6 +615,7 @@ instance MessagePack TypeExpr where
     , TArg         <$> (guardMsg (name == "T_Arg"        ) >> fromObjectWith cfg arg)
     , TAttr        <$> (guardMsg (name == "T_Attr"       ) >> fromObjectWith cfg arg)
     , TCart        <$> (guardMsg (name == "T_Cart"       ) >> fromObjectWith cfg arg)
+    , TForAll      <$> (guardMsg (name == "T_ForAll"     ) >> fromObjectWith cfg arg)
     , TFun         <$> (guardMsg (name == "T_Fun"        ) >> fromObjectWith cfg arg)
     , TInt         <$> (guardMsg (name == "T_Int"        ) >> fromObjectWith cfg arg)
     , TModPath     <$> (guardMsg (name == "T_ModPath"    ) >> fromObjectWith cfg arg)
@@ -795,10 +833,22 @@ instance MessagePack SigItem where
   fromObjectWith cfg = withMsgVariant "SigItem" \(name, arg) -> asumMsg
     [ SValue   <$> (guardMsg (name == "S_Value"  ) >> fromObjectWith cfg arg)
     , SType    <$> (guardMsg (name == "S_Type"   ) >> fromObjectWith cfg arg)
-    , STypeVar <$> (guardMsg (name == "S_TypeVar") >> fromObjectWith cfg arg)
     , SInclude <$> (guardMsg (name == "S_Include") >> fromObjectWith cfg arg)
     , SAttr    <$> (guardMsg (name == "S_Attr"   ) >> fromObjectWith cfg arg)
     ]
+
+instance MessagePack SigType where
+  fromObjectWith _ = withMsgMap "SigType" \o -> do
+    stTypeVars <- o .:? "type_vars"
+    stTypeName <- o .: "type_name"
+    stTypeRhs <- o .:? "type_rhs"
+    pure SigType{..}
+
+instance MessagePack SigValue where
+  fromObjectWith _ = withMsgMap "SigValue" \o -> do
+    svVar <- o .: "var"
+    svValType <- o .: "val_type"
+    pure SigValue{..}
 
 instance MessagePack ModuleExpr where
   fromObjectWith cfg = withMsgVariant "ModuleExpr" \(name, arg) -> asumMsg
@@ -1176,6 +1226,11 @@ toAST CST{..} =
         let
           types = toList $ typeExprConv <$> x <| xs
         in fastMake r (AST.TProduct types)
+      TForAll (unpackReg -> (r, (typeVars, typeExpr))) ->
+        let
+          vars = toList $ typeVarConv <$> typeVars
+          tExpr = typeExprConv typeExpr
+        in fastMake r (AST.TForAll vars tExpr)
       TFun (unpackReg -> (r, (dom, codom))) ->
         fastMake r (AST.TArrow (typeExprConv dom) (typeExprConv codom))
       TInt n@(unpackWrap -> (r, _)) ->
@@ -1260,23 +1315,23 @@ toAST CST{..} =
         where
           sigItemConv :: SigItem -> LIGO Info
           sigItemConv = \case
-            SValue (unpackReg -> (r', (name, typ))) ->
+            SValue (unpackReg -> (r', SigValue{..})) ->
               let
-                name' = makeWrappedLexeme AST.Name name
-                typ' = typeExprConv typ
+                name' = makeWrappedLexeme AST.Name svVar
+                typ' = typeExprConv svValType
               in fastMake r' (AST.SValue name' typ')
-            SType (unpackReg -> (r', (name, typ))) ->
+            SType (unpackReg -> (r', SigType{..})) ->
               let
-                typName = makeWrappedLexeme AST.TypeName name
-                typ' = typeExprConv typ
-              in fastMake r' (AST.SType typName (Just typ'))
-            STypeVar (unpackReg -> (r', (Tuple1 name))) ->
-              let
-                typName = makeWrappedLexeme AST.TypeName name
-              in fastMake r' (AST.SType typName Nothing)
+                typName = makeWrappedLexeme AST.TypeName stTypeName
+                typ' = typeExprConv . unTuple1 <$> stTypeRhs
+              in fastMake r' (AST.SType typName typ')
             SInclude (unpackReg -> (r', (Tuple1 sigExpr))) ->
               fastMake r' (AST.SInclude $ signatureExprConv sigExpr)
             SAttr (unpackReg -> (_, (Tuple1 sigItem))) -> sigItemConv sigItem
+
+    typeVarConv :: TypeVar -> LIGO Info
+    typeVarConv (unpackReg -> (_, Tuple1 typVar)) =
+      makeWrappedLexeme AST.TypeVariableName typVar
 
     typeDeclConv :: Reg TypeDecl -> LIGO Info
     typeDeclConv (unpackReg -> (r, TypeDecl{..})) =
@@ -1292,7 +1347,3 @@ toAST CST{..} =
                     in fastMake r' (AST.QuotedTypeParams varNames)
         typ = typeExprConv tdTypeExpr
       in fastMake r (AST.BTypeDecl name params typ)
-      where
-        typeVarConv :: TypeVar -> LIGO Info
-        typeVarConv (unpackReg -> (_, Tuple1 typVar)) =
-          makeWrappedLexeme AST.TypeVariableName typVar

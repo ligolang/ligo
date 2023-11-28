@@ -635,6 +635,59 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
   | _ -> fail ()
 
 
+let rec eq (type1 : Type.t) (type2 : Type.t) =
+  let open Let_syntax in
+  let eq_ type1 type2 =
+    let%bind type1 = Context.tapply type1 in
+    let%bind type2 = Context.tapply type2 in
+    eq type1 type2
+  in
+  match type1.content, type2.content with
+  | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 -> return true
+  | T_variable tvar1, T_variable tvar2 when Type_var.equal tvar1 tvar2 -> return true
+  | ( T_construct { language = lang1; constructor = constr1; parameters = params1 }
+    , T_construct { language = lang2; constructor = constr2; parameters = params2 } )
+    when String.(lang1 = lang2) && Literal_types.equal constr1 constr2 ->
+    (match List.map2 params1 params2 ~f:eq_ with
+    | Ok ts ->
+      let%bind ts = all ts in
+      return (List.for_all ~f:Fn.id ts)
+    | Unequal_lengths -> raise (assert false))
+  | T_arrow { type1 = type11; type2 = type12 }, T_arrow { type1 = type21; type2 = type22 }
+    ->
+    let%bind b1 = eq type11 type21 in
+    let%bind b2 = eq_ type12 type22 in
+    return (b1 && b2)
+  | ( T_for_all { ty_binder = tvar1; kind = kind1; type_ = type1 }
+    , T_for_all { ty_binder = tvar2; kind = kind2; type_ = type2 } )
+  | ( T_abstraction { ty_binder = tvar1; kind = kind1; type_ = type1 }
+    , T_abstraction { ty_binder = tvar2; kind = kind2; type_ = type2 } )
+    when Kind.equal kind1 kind2 ->
+    let%bind tvar = fresh_type_var () in
+    let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
+    let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
+    Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(eq type1 type2)
+  | ( T_sum { fields = fields1; layout = layout1 }
+    , T_sum { fields = fields2; layout = layout2 } )
+  | ( T_record { fields = fields1; layout = layout1 }
+    , T_record { fields = fields2; layout = layout2 } )
+    when equal_domains fields1 fields2 ->
+    (* Invariant [Map.key_set fields1 = Map.key_set fields2] *)
+    let%bind () =
+      unify_layout type1 type2 ~fields:(Map.key_set fields1) layout1 layout2
+    in
+    (* TODO: This should be replaced by [map2] or smth *)
+    let%bind bs =
+      fields1
+      |> Map.mapi ~f:(fun ~key:label ~data:row_elem1 ->
+             let row_elem2 = Map.find_exn fields2 label in
+             eq_ row_elem1 row_elem2)
+      |> all_lmap
+    in
+    return (List.for_all ~f:Fn.id @@ Label.Map.data bs)
+  | _ -> return false
+
+
 type subtype_error = unify_error
 
 module O = Ast_typed

@@ -198,7 +198,11 @@ and fun_decl = {
   fun_body     : statements braces
 }
 
+and generics = (generic, (comma [@yojson.opaque])) sep_or_term chevrons
+
 and fun_params = (pattern, (comma [@yojson.opaque])) sep_or_term par
+
+and type_annotation = (colon [@yojson.opaque]) * type_expr
 
 (* Import declaration *)
 
@@ -263,17 +267,20 @@ and intf_entry =
 and intf_type = {
   kwd_type  : (kwd_type [@yojson.opaque]);
   type_name : type_name;
+  generics  : generics option;
   type_rhs  : ((equal [@yojson.opaque]) * type_expr) option
 }
 
 and intf_const = {
-  kwd_const  : (kwd_const [@yojson.opaque]);
-  const_name : variable;
+  kwd_const      : (kwd_const [@yojson.opaque]);
+  const_name     : variable;
   const_optional : (qmark option [@yojson.opaque]);
-  const_type : type_annotation
+  const_type     : type_annotation
 }
 
-and extends = ((kwd_extends [@yojson.opaque]) * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
+and extends =
+  ((kwd_extends [@yojson.opaque])
+   * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
 
 (* Namespace declaration *)
 
@@ -284,7 +291,9 @@ and namespace_decl = {
   namespace_body : statements braces
 }
 
-and interface = ((kwd_implements [@yojson.opaque]) * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
+and interface =
+  ((kwd_implements [@yojson.opaque])
+   * (intf_expr, (comma [@yojson.opaque])) nsepseq) reg
 
 and intf_expr =
   I_Body of intf_body
@@ -314,15 +323,10 @@ and var_kind = [
 
 and val_binding = {
   pattern   : pattern;
-  generics  : generics option;
   rhs_type  : type_annotation option;
   eq        : (equal [@yojson.opaque]);
   rhs_expr  : expr
 }
-
-and generics = (generic, (comma [@yojson.opaque])) sep_or_term chevrons
-
-and type_annotation = (colon [@yojson.opaque]) * type_expr
 
 (* TYPE EXPRESSIONS *)
 
@@ -330,23 +334,25 @@ and type_annotation = (colon [@yojson.opaque]) * type_expr
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_App         of (type_expr * type_ctor_args) reg           (* M.t<u,v>       *)
-| T_Attr        of ((attribute [@yojson.opaque]) * type_expr) (* @a e           *)
-| T_Array       of array_type                                 (* [t, [u, v]]    *)
-| T_Fun         of fun_type                                   (* (a : t) => u   *)
-| T_Int         of int_literal                                (* 42             *)
-| T_NamePath    of type_expr namespace_path reg               (* A.B.list<u>    *)
-| T_Object      of type_expr _object                          (* {x; @a y : t}  *)
-| T_Par         of type_expr par                              (* (t)            *)
-| T_ParameterOf of parameter_of_type reg                      (* parameter_of m *)
-| T_String      of string_literal                             (* "x"            *)
-| T_Union       of union_type                              (* {kind: "C", x: t} *)
-| T_Var         of type_var                                (* t                 *)
-| T_Variant     of variant_type                            (* ["A"] | ["B", t]  *)
+  T_App         of (type_expr * type_ctor_args) reg    (* M.t<u,v>          *)
+| T_Attr        of ((attribute [@yojson.opaque]) * type_expr) (* @a e       *)
+| T_Array       of array_type                          (* [t, [u, v]]       *)
+| T_ForAll      of (generics * type_expr) reg          (* <T>(x: T) => T    *)
+| T_Fun         of fun_type                            (* (a : t) => u      *)
+| T_Int         of int_literal                         (* 42                *)
+| T_NamePath    of type_expr namespace_path reg        (* A.B.list<u>       *)
+| T_Object      of type_expr _object                   (* {x; @a y : t}     *)
+| T_Par         of type_expr par                       (* (t)               *)
+| T_ParameterOf of parameter_of_type reg               (* parameter_of m    *)
+| T_String      of string_literal                      (* "x"               *)
+| T_Union       of union_type                          (* {kind: "C", x: t} *)
+| T_Var         of type_var                            (* t                 *)
+| T_Variant     of variant_type                        (* ["A"] | ["B", t]  *)
 
 (* Type application *)
 
-and type_ctor_args = (type_expr, (comma [@yojson.opaque])) nsep_or_term chevrons
+and type_ctor_args =
+  (type_expr, (comma [@yojson.opaque])) nsep_or_term chevrons
 
 (* Array type type *)
 
@@ -354,8 +360,11 @@ and array_type = (type_expr, (comma [@yojson.opaque])) nsep_or_term brackets
 
 (* Functional type *)
 
-and fun_type        = (fun_type_params * (arrow [@yojson.opaque]) * type_expr) reg
-and fun_type_params = (fun_type_param reg, (comma [@yojson.opaque])) sep_or_term par
+and fun_type = (fun_type_params * (arrow [@yojson.opaque]) * type_expr) reg
+
+and fun_type_params =
+  (fun_type_param reg, (comma [@yojson.opaque])) sep_or_term par
+
 and fun_type_param  = pattern * type_annotation
 
 (* Parameter of type *)
@@ -367,12 +376,13 @@ and parameter_of_type = {
 
 (* Object type *)
 
-and 'a _object = ('a property reg, (property_sep [@yojson.opaque])) sep_or_term braces
+and 'a _object =
+  ('a property reg, (property_sep [@yojson.opaque])) sep_or_term braces
 
 and 'a property = {
   attributes   : (attribute list [@yojson.opaque]);
   property_id  : property_id;
-  property_rhs : ((colon [@yojson.opaque]) * 'a) option (* [None] means punning *)
+  property_rhs : ((colon [@yojson.opaque]) * 'a) option (* [None] is punning *)
 }
 
 and property_id =
@@ -582,69 +592,69 @@ and while_stmt = {
    add or modify some, please make sure they remain in order. *)
 
 and expr =
-  E_Add        of plus bin_op reg                       (* x + y             *)
-| E_AddEq      of plus_eq bin_op reg                    (* x += y            *)
-| E_And        of bool_and bin_op reg                   (* x && y            *)
-| E_App        of (expr * arguments) reg                (* f(x,y)  foo()     *)
-| E_Array      of expr _array                           (* [x, ...y, z]  []  *)
-| E_ArrowFun   of arrow_fun_expr reg                    (* (x : int) => e    *)
-| E_Assign     of equal bin_op reg                      (* x = y             *)
+  E_Add        of plus bin_op reg                      (* x + y              *)
+| E_AddEq      of plus_eq bin_op reg                   (* x += y             *)
+| E_And        of bool_and bin_op reg                  (* x && y             *)
+| E_App        of (expr * arguments) reg               (* f(x,y)  foo()      *)
+| E_Array      of expr _array                          (* [x, ...y, z]  []   *)
+| E_ArrowFun   of arrow_fun_expr reg                   (* (x : int) => e     *)
+| E_Assign     of equal bin_op reg                     (* x = y              *)
 | E_Attr       of ((attribute [@yojson.opaque]) * expr) (* @a [x, y]         *)
-| E_BitAnd     of bit_and bin_op reg                    (* x & y             *)
-| E_BitAndEq   of bit_and_eq bin_op reg                 (* x &= y            *)
-| E_BitNeg     of bit_neg un_op reg                     (* ~x                *)
-| E_BitOr      of bit_or bin_op reg                     (* x | y             *)
-| E_BitOrEq    of bit_or_eq bin_op reg                  (* x |= y            *)
-| E_BitSl      of bit_sl bin_op reg                     (* x << y            *)
-| E_BitSlEq    of bit_sl_eq bin_op reg                  (* x <<= y           *)
-| E_BitSr      of bit_sr bin_op reg                     (* x >> y            *)
-| E_BitSrEq    of bit_sr_eq bin_op reg                  (* x >>= y           *)
-| E_BitXor     of bit_xor bin_op reg                    (* x ^ y             *)
-| E_BitXorEq   of bit_xor_eq bin_op reg                 (* x ^= y            *)
-| E_Bytes      of bytes_literal                         (* 0xFFFA            *)
+| E_BitAnd     of bit_and bin_op reg                   (* x & y              *)
+| E_BitAndEq   of bit_and_eq bin_op reg                (* x &= y             *)
+| E_BitNeg     of bit_neg un_op reg                    (* ~x                 *)
+| E_BitOr      of bit_or bin_op reg                    (* x | y              *)
+| E_BitOrEq    of bit_or_eq bin_op reg                 (* x |= y             *)
+| E_BitSl      of bit_sl bin_op reg                    (* x << y             *)
+| E_BitSlEq    of bit_sl_eq bin_op reg                 (* x <<= y            *)
+| E_BitSr      of bit_sr bin_op reg                    (* x >> y             *)
+| E_BitSrEq    of bit_sr_eq bin_op reg                 (* x >>= y            *)
+| E_BitXor     of bit_xor bin_op reg                   (* x ^ y              *)
+| E_BitXorEq   of bit_xor_eq bin_op reg                (* x ^= y             *)
+| E_Bytes      of bytes_literal                        (* 0xFFFA             *)
 | E_CodeInj    of code_inj reg
-| E_ContractOf of contract_of_expr reg                  (* contract_of (M.N) *)
-| E_CtorApp    of expr variant_kind                     (* #["C",4]          *)
-| E_Div        of slash bin_op reg                      (* x / y             *)
-| E_DivEq      of div_eq bin_op reg                     (* x /= y            *)
-| E_Do         of do_expr reg                           (* do { return 4 }   *)
-| E_Equal      of equal_cmp bin_op reg                  (* x == y            *)
-| E_False      of kwd_false                             (* false             *)
-| E_Function   of function_expr reg                     (* function (x) {...} *)
-| E_Geq        of geq bin_op reg                        (* x >= y            *)
-| E_Gt         of gt bin_op reg                         (* x > y             *)
-| E_Int        of int_literal                           (* 42                *)
-| E_Leq        of leq bin_op reg                        (* x <= y            *)
-| E_Lt         of lt bin_op reg                         (* x < y             *)
-| E_Match      of match_expr reg                        (* match (e) { ... } *)
-| E_Mult       of times bin_op reg                      (* x * y             *)
-| E_MultEq     of times_eq bin_op reg                   (* x *= y            *)
-| E_Mutez      of mutez_literal                         (* 5mutez            *)
-| E_NamePath   of expr namespace_path reg               (* M.N.x.0           *)
-| E_Nat        of nat_literal                           (* 42n               *)
-| E_Neg        of minus un_op reg                       (* -x                *)
-| E_Neq        of neq bin_op reg                        (* x != y            *)
-| E_Not        of bool_neg un_op reg                    (* !x                *)
-| E_Object     of expr _object                          (* {x : e, y}        *)
-| E_Or         of bool_or bin_op reg                    (* x || y            *)
-| E_Par        of expr par                              (* (x + y)           *)
-| E_PostDecr   of decrement un_op reg                   (* x--               *)
-| E_PostIncr   of increment un_op reg                   (* x++               *)
-| E_PreDecr    of decrement un_op reg                   (* --x               *)
-| E_PreIncr    of increment un_op reg                   (* ++x               *)
-| E_Proj       of projection reg                        (* e.x.1             *)
-| E_Rem        of remainder bin_op reg                  (* x % n             *)
-| E_RemEq      of rem_eq bin_op reg                     (* x %= y            *)
-| E_String     of string_literal                        (* "abcdef"          *)
-| E_Sub        of minus bin_op reg                      (* x - y             *)
-| E_SubEq      of minus_eq bin_op reg                   (* x -= y            *)
-| E_Ternary    of ternary reg                           (* x ? y : z         *)
-| E_True       of kwd_true                              (* true              *)
-| E_Typed      of typed_expr reg                        (* e as t            *)
-| E_Update     of update_expr braces                    (* {...x, y : z}     *)
-| E_Var        of variable                              (* x                 *)
-| E_Verbatim   of verbatim_literal                      (* {|foo|}           *)
-| E_Xor        of bool_xor bin_op reg                   (* x ^^ y            *)
+| E_ContractOf of contract_of_expr reg                 (* contract_of (M.N)  *)
+| E_CtorApp    of expr variant_kind                    (* #["C",4]           *)
+| E_Div        of slash bin_op reg                     (* x / y              *)
+| E_DivEq      of div_eq bin_op reg                    (* x /= y             *)
+| E_Do         of do_expr reg                          (* do { return 4 }    *)
+| E_Equal      of equal_cmp bin_op reg                 (* x == y             *)
+| E_False      of kwd_false                            (* false              *)
+| E_Function   of function_expr reg                    (* function (x) {...} *)
+| E_Geq        of geq bin_op reg                       (* x >= y             *)
+| E_Gt         of gt bin_op reg                        (* x > y              *)
+| E_Int        of int_literal                          (* 42                 *)
+| E_Leq        of leq bin_op reg                       (* x <= y             *)
+| E_Lt         of lt bin_op reg                        (* x < y              *)
+| E_Match      of match_expr reg                       (* match (e) { ... }  *)
+| E_Mult       of times bin_op reg                     (* x * y              *)
+| E_MultEq     of times_eq bin_op reg                  (* x *= y             *)
+| E_Mutez      of mutez_literal                        (* 5mutez             *)
+| E_NamePath   of expr namespace_path reg              (* M.N.x.0            *)
+| E_Nat        of nat_literal                          (* 42n                *)
+| E_Neg        of minus un_op reg                      (* -x                 *)
+| E_Neq        of neq bin_op reg                       (* x != y             *)
+| E_Not        of bool_neg un_op reg                   (* !x                 *)
+| E_Object     of expr _object                         (* {x : e, y}         *)
+| E_Or         of bool_or bin_op reg                   (* x || y             *)
+| E_Par        of expr par                             (* (x + y)            *)
+| E_PostDecr   of decrement un_op reg                  (* x--                *)
+| E_PostIncr   of increment un_op reg                  (* x++                *)
+| E_PreDecr    of decrement un_op reg                  (* --x                *)
+| E_PreIncr    of increment un_op reg                  (* ++x                *)
+| E_Proj       of projection reg                       (* e.x.1              *)
+| E_Rem        of remainder bin_op reg                 (* x % n              *)
+| E_RemEq      of rem_eq bin_op reg                    (* x %= y             *)
+| E_String     of string_literal                       (* "abcdef"           *)
+| E_Sub        of minus bin_op reg                     (* x - y              *)
+| E_SubEq      of minus_eq bin_op reg                  (* x -= y             *)
+| E_Ternary    of ternary reg                          (* x ? y : z          *)
+| E_True       of kwd_true                             (* true               *)
+| E_Typed      of typed_expr reg                       (* e as t             *)
+| E_Update     of update_expr braces                   (* {...x, y : z}      *)
+| E_Var        of variable                             (* x                  *)
+| E_Verbatim   of verbatim_literal                     (* {|foo|}            *)
+| E_Xor        of bool_xor bin_op reg                  (* x ^^ y             *)
 
 (* Arguments of function calls *)
 
@@ -788,6 +798,7 @@ let rec type_expr_to_region = function
   T_App         {region; _}
 | T_Array       {region; _} -> region
 | T_Attr        (_, t) -> type_expr_to_region t
+| T_ForAll      {region; _}
 | T_Fun         {region; _} -> region
 | T_Int         w -> w#region
 | T_NamePath    {region; _}
@@ -927,6 +938,6 @@ let parameters_to_region = function
   ParParams {region; _} -> region
 | NakedParam p -> pattern_to_region p
 
+(* Exposing types for the functor [Parsing_shared.Common.MakePretty] *)
 
-(* exposing types so that the Parsing_shared.Common.MakePretty functor works *)
 type signature_expr = intf_expr

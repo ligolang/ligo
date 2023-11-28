@@ -253,6 +253,7 @@ data TypeExpr
   = TApp (Reg (TypeExpr, TypeCtorArgs))
   | TAttr (Tuple1 TypeExpr)
   | TArray ArrayType
+  | TForAll (Reg (Generics, TypeExpr))
   | TFun FunType
   | TInt WrappedTupleLexeme
   | TNamePath (Reg (NamespacePath TypeExpr))
@@ -407,6 +408,7 @@ data IntfEntry
 
 data IntfType = IntfType
   { itTypeName :: WrappedLexeme
+  , itGenerics :: Maybe Generics
   , itTypeRhs :: Maybe (Tuple1 TypeExpr)
   }
   deriving stock (Show, Generic)
@@ -452,7 +454,6 @@ data ValueDecl = ValueDecl
 
 data ValBinding = ValBinding
   { vbPattern :: Pattern
-  , vbGenerics :: Maybe Generics
   , vbRhsType :: Maybe TypeAnnotation
   , vbRhsExpr :: Expr
   }
@@ -911,6 +912,7 @@ instance MessagePack TypeExpr where
     [ TApp         <$> (guardMsg (name == "T_App"        ) >> fromObjectWith cfg arg)
     , TAttr        <$> (guardMsg (name == "T_Attr"       ) >> fromObjectWith cfg arg)
     , TArray       <$> (guardMsg (name == "T_Array"      ) >> fromObjectWith cfg arg)
+    , TForAll      <$> (guardMsg (name == "T_ForAll"     ) >> fromObjectWith cfg arg)
     , TFun         <$> (guardMsg (name == "T_Fun"        ) >> fromObjectWith cfg arg)
     , TInt         <$> (guardMsg (name == "T_Int"        ) >> fromObjectWith cfg arg)
     , TNamePath    <$> (guardMsg (name == "T_NamePath"   ) >> fromObjectWith cfg arg)
@@ -1007,7 +1009,6 @@ instance MessagePack VarKind where
 instance MessagePack ValBinding where
   fromObjectWith _ = withMsgMap "ValBinding" \o -> do
     vbPattern <- o .: "pattern"
-    vbGenerics <- o .:? "generics"
     vbRhsType <- o .:? "rhs_type"
     vbRhsExpr <- o .: "rhs_expr"
     pure ValBinding{..}
@@ -1074,6 +1075,7 @@ instance MessagePack SwitchDefault where
 instance MessagePack IntfType where
   fromObjectWith _ = withMsgMap "IntfType" \o -> do
     itTypeName <- o .: "type_name"
+    itGenerics <- o .:? "generics"
     itTypeRhs <- o .:? "type_rhs"
     pure IntfType{..}
 
@@ -1243,13 +1245,12 @@ toAST CST{..} =
           let
             bindingRange = fromMaybe r rangeMb
             pat = patternConv vbPattern
-            typVars = maybe [] genericsConv vbGenerics
             typAnnMb = typeAnnotationConv <$> vbRhsType
             expr = exprConv vbRhsExpr
           in fastMake bindingRange
             case kind of
-              Let -> AST.BVar pat typVars typAnnMb (Just expr)
-              Const -> AST.BConst True pat typVars typAnnMb (Just expr)
+              Let -> AST.BVar pat [] typAnnMb (Just expr)
+              Const -> AST.BConst True pat [] typAnnMb (Just expr)
 
     interfaceConv :: Interface -> [LIGO Info]
     interfaceConv (unpackReg -> (_, Tuple1 exprs)) = exprs
@@ -1572,6 +1573,11 @@ toAST CST{..} =
         let
           elts = typeExprConv <$> lst
         in fastMake r (AST.TProduct elts)
+      TForAll (unpackReg -> (r, (generics, typeExpr))) ->
+        let
+          typeVars = genericsConv generics
+          typExpr = typeExprConv typeExpr
+        in fastMake r (AST.TForAll typeVars typExpr)
       TFun (unpackReg -> (r, (typeParams, codomain))) ->
         let
           (paramsR, Par' params) = unpackReg typeParams

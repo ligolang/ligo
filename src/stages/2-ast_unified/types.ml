@@ -41,6 +41,7 @@ module Pattern_decl = Nano_prim.Pattern_decl
 module Simple_let_in = Nano_prim.Simple_let_in
 module Recursive = Nano_prim.Recursive
 module Abstraction = Ligo_prim.Abstraction
+module Abstractions = Ligo_prim.Abstractions
 module Row = Ligo_prim.Row.With_optional_layout
 
 module Empty_label = struct
@@ -122,6 +123,7 @@ and 'self type_expression_content_ =
   | T_sum of 'self Row.t [@not_initial]
   | T_record of 'self Row.t [@not_initial]
   | T_for_all of 'self Abstraction.t [@not_initial]
+  | T_for_alls of 'self Abstractions.t
 [@@deriving
   map
   , fold
@@ -284,7 +286,7 @@ include struct
 
   and ('sig_expr, 'sig_entry, 'ty_expr) sig_entry_content_ =
     | S_value of Variable.t * 'ty_expr * bool
-    | S_type of Ligo_prim.Type_var.t * 'ty_expr
+    | S_type of Ligo_prim.Type_var.t * Ligo_prim.Type_var.t list * 'ty_expr
     | S_type_var of Ligo_prim.Type_var.t
     | S_attr of Attribute.t * 'sig_entry
     | S_include of 'sig_expr

@@ -410,6 +410,13 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   let loc = Location.lift (I.type_expr_to_region te) in
   let ret = Location.wrap ~loc in
   match te with
+  | T_ForAll { value = generics, _, t; _ } ->
+    let ty_binders =
+      List.map ~f:(fun v -> TODO_do_in_parsing.esc_tvar @@ snd @@ r_fst v)
+      @@ nseq_to_list generics
+    and kind = Ligo_prim.Kind.Type
+    and type_ = t in
+    ret @@ O.T_for_alls { ty_binders; kind; type_ }
   | T_Var v -> ret @@ TODO_do_in_parsing.mk_T_var_esc v
   | T_Arg v -> ret @@ T_var_esc (Raw (TODO_do_in_parsing.quoted_tvar v))
   | T_Attr (x, y) -> ret @@ T_attr (fst @@ TODO_do_in_parsing.conv_attr x, y)
@@ -614,13 +621,18 @@ let sig_expr : Eq.sig_expr -> Folding.sig_expr = function
 
 
 let sig_entry : Eq.sig_entry -> Folding.sig_entry = function
-  | S_Value { region; value = _, v, _, ty } ->
+  | S_Value { region; value = { kwd_val = _; var = v; colon = _; val_type = ty } } ->
     let loc = Location.lift region in
     Location.wrap ~loc (O.S_value (TODO_do_in_parsing.esc_var v, ty, false))
-  | S_Type { region; value = _, v, _, ty } ->
+  | S_Type
+      { region
+      ; value = { kwd_type = _; type_name = v; type_vars = _; type_rhs = Some (_, ty) }
+      } ->
     let loc = Location.lift region in
-    Location.wrap ~loc (O.S_type (TODO_do_in_parsing.esc_tvar v, ty))
-  | S_TypeVar { region; value = _, v } ->
+    Location.wrap ~loc (O.S_type (TODO_do_in_parsing.esc_tvar v, [], ty))
+  | S_Type
+      { region; value = { kwd_type = _; type_name = v; type_vars = _; type_rhs = None } }
+    ->
     let loc = Location.lift region in
     Location.wrap ~loc (O.S_type_var (TODO_do_in_parsing.esc_tvar v))
   | S_Attr { region; value = attr, si } ->

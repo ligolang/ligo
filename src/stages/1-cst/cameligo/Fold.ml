@@ -40,9 +40,11 @@ type _ sing =
   | S_field_decl : field_decl sing
   | S_field_name : field_name sing
   | S_for_in_loop : for_in_loop sing
+  | S_for_all : for_all sing
   | S_for_loop : for_loop sing
   | S_full_field : 'a sing * 'b sing * 'c sing -> ('a, 'b, 'c) full_field sing
   | S_fun_expr : fun_expr sing
+  | S_fun_type : fun_type sing
   | S_geq : geq sing
   | S_gt : gt sing
   | S_hex : Hex.t sing
@@ -78,6 +80,7 @@ type _ sing =
   | S_kwd_true : kwd_true sing
   | S_kwd_type : kwd_type sing
   | S_kwd_upto : kwd_upto sing
+  | S_kwd_val  : kwd_val sing
   | S_kwd_while : kwd_while sing
   | S_kwd_with : kwd_with sing
   | S_language : language sing
@@ -133,6 +136,10 @@ type _ sing =
   | S_sepseq : 'a sing * 'b sing -> ('a, 'b) Utils.sepseq sing
   | S_sequence_expr : sequence_expr sing
   | S_sig_item : sig_item sing
+  | S_sig_attr : sig_attr sing
+  | S_sig_include : sig_include sing
+  | S_sig_type : sig_type sing
+  | S_sig_value : sig_value sing
   | S_signature_body : signature_body sing
   | S_signature_decl : signature_decl sing
   | S_signature_expr : signature_expr sing
@@ -227,7 +234,7 @@ let fold'
     ; rbracket -| S_rbracket ]
   | S_caret ->  process @@ node -| S_wrap S_lexeme
   | S_cartesian -> process @@ node -|
-    S_reg (S_tuple_3 ( S_type_expr, S_times, S_nsepseq (S_type_expr, S_times)))
+    S_tuple_3 ( S_type_expr, S_times, S_nsepseq (S_type_expr, S_times))
   | S_code_inj ->
     let { language; code; rbracket } = node in
     process_list
@@ -354,6 +361,8 @@ let fold'
     ; field_name -| S_field_name
     ; field_type -| S_option S_type_annotation ]
   | S_field_name -> process @@ node -| S_variable
+  | S_for_all ->
+    process @@ node -| S_tuple_3 (S_nseq S_type_var, S_dot, S_type_expr)
   | S_for_in_loop ->
     let { kwd_for; pattern; kwd_in; collection; body } = node in
     process_list
@@ -381,6 +390,7 @@ let fold'
     ; rhs_type -| S_option (S_tuple_2 (S_colon, S_type_expr))
     ; arrow -| S_arrow
     ; body -| S_expr ]
+  | S_fun_type -> process @@ node -| S_tuple_3 (S_type_expr, S_arrow, S_type_expr)
   | S_geq -> process @@ node -| S_wrap S_lexeme
   | S_gt -> process @@ node -| S_wrap S_lexeme
   | S_hex -> () (* Leaf *)
@@ -416,6 +426,7 @@ let fold'
   | S_kwd_true -> process @@ node -| S_wrap S_lexeme
   | S_kwd_type -> process @@ node -| S_wrap S_lexeme
   | S_kwd_upto -> process @@ node -| S_wrap S_lexeme
+  | S_kwd_val -> process @@ node -| S_wrap S_lexeme
   | S_kwd_while -> process @@ node -| S_wrap S_lexeme
   | S_kwd_with -> process @@ node -| S_wrap S_lexeme
   | S_language -> process @@ node -| S_wrap (S_reg S_lexeme)
@@ -591,6 +602,22 @@ let fold'
   | S_region -> () (* Leaf *)
   | S_rev_app -> process @@ node -| S_wrap S_lexeme
   | S_rpar -> process @@ node -| S_wrap S_lexeme
+  | S_sig_attr -> process @@ node -| S_tuple_2 (S_attribute, S_sig_item)
+  | S_sig_include -> process @@ node -| S_tuple_2 (S_kwd_include, S_signature_expr)
+  | S_sig_type ->
+    let { kwd_type; type_vars; type_name; type_rhs } = node in
+    process_list
+      [ kwd_type -| S_kwd_type
+      ; type_vars -| S_option S_type_vars
+      ; type_name -| S_type_name
+      ; type_rhs -| S_option (S_tuple_2 (S_equal, S_type_expr)) ]
+  | S_sig_value ->
+    let { kwd_val; var; colon; val_type} = node in
+    process_list
+      [ kwd_val -| S_kwd_val
+      ; var -| S_variable
+      ; colon -| S_colon
+      ; val_type -| S_type_expr]
   | S_selection -> process
     (match node with
       FieldName node -> node -| S_variable
@@ -624,11 +651,10 @@ let fold'
     | S_Var node -> node -| S_module_name)
   | S_sig_item -> process
     (match node with
-      S_Attr node -> node -| S_reg (S_tuple_2 (S_attribute, S_sig_item))
-    | S_Value node -> node -| S_reg (S_tuple_4 (S_kwd_let, S_variable, S_colon, S_type_expr))
-    | S_Type node -> node -| S_reg (S_tuple_4 (S_kwd_type, S_type_variable, S_equal, S_type_expr))
-    | S_TypeVar node -> node -| S_reg (S_tuple_2 (S_kwd_type, S_type_variable))
-    | S_Include node -> node -| S_reg (S_tuple_2 (S_kwd_include, S_signature_expr)))
+      S_Attr node -> node -| S_reg S_sig_attr
+    | S_Value node -> node -| S_reg S_sig_value
+    | S_Type node -> node -| S_reg S_sig_type
+    | S_Include node -> node -| S_reg S_sig_include)
   | S_slash -> process @@ node -| S_wrap S_lexeme
   | S_slash_eq -> process @@ node -| S_wrap S_lexeme
   | S_string_literal -> process @@ node -| S_wrap S_lexeme
@@ -672,8 +698,9 @@ let fold'
       T_App node -> node -| S_reg (S_tuple_2 (S_type_expr, S_type_ctor_arg))
     | T_Arg node -> node -| S_type_var
     | T_Attr node -> node -| S_tuple_2 (S_attribute, S_type_expr)
-    | T_Cart node -> node -| S_cartesian
-    | T_Fun node -> node -| S_reg (S_tuple_3 (S_type_expr, S_arrow, S_type_expr))
+    | T_Cart node -> node -| S_reg S_cartesian
+    | T_ForAll node -> node -| S_reg S_for_all
+    | T_Fun node -> node -| S_reg S_fun_type
     | T_Int node -> node -| S_wrap (S_tuple_2 (S_lexeme, S_z))
     | T_ModPath node -> node -| S_reg (S_module_path S_type_expr)
     | T_Par node -> node -| S_par S_type_expr

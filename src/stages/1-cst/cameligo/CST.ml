@@ -137,32 +137,44 @@ type ctor          = lexeme wrap [@@deriving yojson_of]
 type module_name   = lexeme wrap [@@deriving yojson_of]
 type attribute     = Attr.t wrap
 
-type bytes_literal    = (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
-type int_literal      = (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
-type mutez_literal    = (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+type bytes_literal =
+  (lexeme * (Hex.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+
+type int_literal =
+  (lexeme * (Z.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+
+type mutez_literal =
+  (lexeme * (Int64.t [@yojson.opaque])) wrap [@@deriving yojson_of]
+
 type nat_literal      = int_literal [@@deriving yojson_of]
 type string_literal   = lexeme wrap [@@deriving yojson_of]
 type verbatim_literal = lexeme wrap [@@deriving yojson_of]
 
 (* Parentheses, braces, brackets *)
 
-type 'a par'      = {lpar: (lpar [@yojson.opaque]); inside: 'a; rpar: (rpar [@yojson.opaque])}
-[@@deriving yojson_of]
+type 'a par'= {
+  lpar   : (lpar [@yojson.opaque]);
+  inside : 'a;
+  rpar   : (rpar [@yojson.opaque])
+} [@@deriving yojson_of]
 
-type 'a par       = 'a par' reg
-[@@deriving yojson_of]
+type 'a par = 'a par' reg [@@deriving yojson_of]
 
-type 'a braces'   = {lbrace: (lbrace [@yojson.opaque]); inside: 'a; rbrace: (rbrace [@yojson.opaque])}
-[@@deriving yojson_of]
+type 'a braces'= {
+  lbrace : (lbrace [@yojson.opaque]);
+  inside : 'a;
+  rbrace : (rbrace [@yojson.opaque])
+} [@@deriving yojson_of]
 
-type 'a braces    = 'a braces' reg
-[@@deriving yojson_of]
+type 'a braces = 'a braces' reg [@@deriving yojson_of]
 
-type 'a brackets' = {lbracket: (lbracket [@yojson.opaque]); inside: 'a; rbracket: (rbracket [@yojson.opaque])}
-[@@deriving yojson_of]
+type 'a brackets' = {
+  lbracket : (lbracket [@yojson.opaque]);
+  inside   : 'a;
+  rbracket : (rbracket [@yojson.opaque])
+} [@@deriving yojson_of]
 
-type 'a brackets  = 'a brackets' reg
-[@@deriving yojson_of]
+type 'a brackets = 'a brackets' reg [@@deriving yojson_of]
 
 (* The Abstract Syntax Tree *)
 
@@ -171,8 +183,7 @@ type t = {
   eof  : eof
 }
 
-and cst = t
-[@@deriving yojson_of]
+and cst = t [@@deriving yojson_of]
 
 (* DECLARATIONS (top-level) *)
 
@@ -190,13 +201,16 @@ and declaration =
 
 (* Non-recursive, top-level values *)
 
-and let_decl = (kwd_let [@yojson.opaque]) * (kwd_rec [@yojson.opaque]) option * let_binding
+and let_decl =
+  (kwd_let [@yojson.opaque])
+  * (kwd_rec [@yojson.opaque]) option
+  * let_binding
 
 and let_binding = {
   binders     : pattern nseq;
   type_params : type_params par option;
   rhs_type    : type_annotation option;
-  eq          : (equal [@yojson.opaque]);
+  eq          : equal [@yojson.opaque];
   let_rhs     : expr
 }
 
@@ -210,7 +224,7 @@ and module_decl = {
   kwd_module  : (kwd_module [@yojson.opaque]);
   name        : module_name;
   annotation  : ((colon [@yojson.opaque]) * signature_expr) option;
-  eq          : (equal [@yojson.opaque]);
+  eq          : equal [@yojson.opaque];
   module_expr : module_expr
 }
 
@@ -236,14 +250,8 @@ and signature_decl = {
   kwd_module     : (kwd_module [@yojson.opaque]);
   kwd_type       : (kwd_type [@yojson.opaque]);
   name           : module_name;
-  eq             : (equal [@yojson.opaque]);
+  eq             : equal [@yojson.opaque];
   signature_expr : signature_expr
-}
-
-and signature_body = {
-  kwd_sig      : (kwd_sig [@yojson.opaque]);
-  sig_items    : sig_item list;
-  kwd_end      : (kwd_end [@yojson.opaque])
 }
 
 and signature_expr =
@@ -251,12 +259,35 @@ and signature_expr =
 | S_Path of module_name module_path reg
 | S_Var  of module_name
 
+and signature_body = {
+  kwd_sig   : (kwd_sig [@yojson.opaque]);
+  sig_items : sig_item list;
+  kwd_end   : (kwd_end [@yojson.opaque])
+}
+
 and sig_item =
-  S_Value   of ((kwd_val [@yojson.opaque]) * variable * (colon [@yojson.opaque]) * type_expr) reg
-| S_Type    of ((kwd_type [@yojson.opaque]) * type_name * (equal [@yojson.opaque]) * type_expr) reg
-| S_TypeVar of ((kwd_type [@yojson.opaque]) * type_name) reg
-| S_Include of ((kwd_include [@yojson.opaque]) * signature_expr) reg
-| S_Attr    of ((attribute [@yojson.opaque]) * sig_item) reg
+  S_Attr    of sig_attr reg
+| S_Include of sig_include reg
+| S_Type    of sig_type reg
+| S_Value   of sig_value reg
+
+and sig_attr = (attribute [@yojson.opaque]) * sig_item
+
+and sig_include = (kwd_include [@yojson.opaque]) * signature_expr
+
+and sig_type = {
+  kwd_type  : (kwd_type [@yojson.opaque]);
+  type_vars : type_vars option;
+  type_name : type_name;
+  type_rhs  : ((equal [@yojson.opaque]) * type_expr) option
+}
+
+and sig_value = {
+  kwd_val  : (kwd_val [@yojson.opaque]);
+  var      : variable;
+  colon    : (colon [@yojson.opaque]);
+  val_type : type_expr
+}
 
 (* Module paths *)
 
@@ -272,7 +303,7 @@ and type_decl = {
   kwd_type  : (kwd_type [@yojson.opaque]);
   params    : type_vars option;
   name      : type_name;
-  eq        : (equal [@yojson.opaque]);
+  eq        : equal [@yojson.opaque];
   type_expr : type_expr
 }
 
@@ -280,7 +311,8 @@ and type_vars =
   TV_Single of type_var
 | TV_Tuple  of type_var tuple par
 
-and type_var = ((quote option [@yojson.opaque]) * type_variable) reg  (* 'a or ' a or _ *)
+and type_var =
+  ((quote option [@yojson.opaque]) * type_variable) reg  (* 'a or ' a or _ *)
 
 and 'a tuple = ('a, (comma [@yojson.opaque])) nsepseq
 
@@ -290,19 +322,20 @@ and 'a tuple = ('a, (comma [@yojson.opaque])) nsepseq
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_App         of (type_expr * type_ctor_arg) reg                    (* M.t (x,y,z)     *)
-| T_Arg         of type_var                                           (* 'a              *)
-| T_Attr        of ((attribute [@yojson.opaque]) * type_expr)         (* [@a] x          *)
-| T_Cart        of cartesian                                          (* x * (y * z)     *)
-| T_Fun         of (type_expr * (arrow [@yojson.opaque]) * type_expr) reg (* x -> y      *)
-| T_Int         of int_literal                                        (* 42              *)
-| T_ModPath     of type_expr module_path reg                          (* A.B.(x * y)     *)
-| T_Par         of type_expr par                                      (* (t)             *)
-| T_ParameterOf of (module_name, (dot [@yojson.opaque])) nsepseq reg  (* parameter_of m  *)
-| T_Record      of field_decl reg record                              (* {a; [@x] b: t}  *)
-| T_String      of string_literal                                     (* "x"             *)
-| T_Var         of type_variable                                      (* x   @x          *)
-| T_Variant     of variant_type reg                                   (* [@a] A | B of t *)
+  T_App         of (type_expr * type_ctor_arg) reg (* M.t (x,y,z)     *)
+| T_Arg         of type_var                        (* 'a              *)
+| T_Attr        of type_attr                       (* [@a]            *)
+| T_Cart        of cartesian reg                   (* x * (y * z)     *)
+| T_ForAll      of for_all reg                     (* 'a.'a -> 'a     *)
+| T_Fun         of fun_type reg                    (* x -> y          *)
+| T_Int         of int_literal                     (* 42              *)
+| T_ModPath     of type_expr module_path reg       (* A.B.(x * y)     *)
+| T_Par         of type_expr par                   (* (t)             *)
+| T_ParameterOf of parameter_of reg                (* parameter_of M  *)
+| T_Record      of field_decl reg record           (* {a; [@x] b: t}  *)
+| T_String      of string_literal                  (* "x"             *)
+| T_Var         of type_variable                   (* x   @x          *)
+| T_Variant     of variant_type reg                (* [@a] A | B of t *)
 
 (* Type application *)
 
@@ -310,9 +343,28 @@ and type_ctor_arg =
   TC_Single of type_expr
 | TC_Tuple  of type_expr tuple par
 
+(* Type attribute *)
+
+and type_attr = (attribute [@yojson.opaque]) * type_expr
+
 (* Cartesian type *)
 
-and cartesian = (type_expr * (times [@yojson.opaque]) * (type_expr,(times [@yojson.opaque])) nsepseq) reg
+and cartesian =
+  type_expr
+  * (times [@yojson.opaque])
+  * (type_expr,(times [@yojson.opaque])) nsepseq
+
+(* Parametric type *)
+
+and for_all = type_var nseq * (dot [@yojson.opaque]) * type_expr
+
+(* Functional type *)
+
+and fun_type = type_expr * (arrow [@yojson.opaque]) * type_expr
+
+(* Parameter-of *)
+
+and parameter_of = (module_name, (dot [@yojson.opaque])) nsepseq
 
 (* Record type *)
 
@@ -345,26 +397,34 @@ and variant = {
    add or modify some, please make sure they remain in order. *)
 
 and pattern =
-  P_App      of (pattern * pattern option) reg                     (* M.C (x,y) *)
-| P_Attr     of ((attribute [@yojson.opaque]) * pattern)           (* [@var] x  *)
-| P_Bytes    of bytes_literal                                      (* 0xFFFA    *)
-| P_Cons     of (pattern * (cons [@yojson.opaque]) * pattern) reg  (* x :: y    *)
-| P_Ctor     of ctor                                               (* C         *)
-| P_False    of kwd_false                                          (* false     *)
-| P_Int      of int_literal                                        (* 42        *)
-| P_List     of pattern list_                                      (* [x; 4]    *)
-| P_ModPath  of pattern module_path reg                            (* M.N.x     *)
-| P_Mutez    of mutez_literal                                      (* 5mutez    *)
-| P_Nat      of nat_literal                                        (* 4n        *)
-| P_Par      of pattern par                                        (* (C, 4)    *)
-| P_Record   of record_pattern                                     (* {x=y; z}  *)
-| P_String   of string_literal                                     (* "string"  *)
-| P_True     of kwd_true                                           (* true      *)
-| P_Tuple    of pattern tuple reg                                  (* 1, x      *)
-| P_Typed    of typed_pattern reg                                  (* (x : int) *)
-| P_Unit     of the_unit reg                                       (* ()        *)
-| P_Var      of variable                                           (* x  @x     *)
-| P_Verbatim of verbatim_literal                                   (* {|foo|}   *)
+  P_App      of (pattern * pattern option) reg  (* M.C (x,y) *)
+| P_Attr     of attr_pattern                    (* [@var] x  *)
+| P_Bytes    of bytes_literal                   (* 0xFFFA    *)
+| P_Cons     of cons_pattern reg                (* x :: y    *)
+| P_Ctor     of ctor                            (* C         *)
+| P_False    of kwd_false                       (* false     *)
+| P_Int      of int_literal                     (* 42        *)
+| P_List     of pattern list_                   (* [x; 4]    *)
+| P_ModPath  of pattern module_path reg         (* M.N.x     *)
+| P_Mutez    of mutez_literal                   (* 5mutez    *)
+| P_Nat      of nat_literal                     (* 4n        *)
+| P_Par      of pattern par                     (* (C, 4)    *)
+| P_Record   of record_pattern                  (* {x=y; z}  *)
+| P_String   of string_literal                  (* "string"  *)
+| P_True     of kwd_true                        (* true      *)
+| P_Tuple    of pattern tuple reg               (* 1, x      *)
+| P_Typed    of typed_pattern reg               (* (x : int) *)
+| P_Unit     of the_unit reg                    (* ()        *)
+| P_Var      of variable                        (* x  @x     *)
+| P_Verbatim of verbatim_literal                (* {|foo|}   *)
+
+(* Attributed pattern *)
+
+and attr_pattern = (attribute [@yojson.opaque]) * pattern
+
+(* List consing pattern *)
+
+and cons_pattern = pattern * (cons [@yojson.opaque]) * pattern
 
 (* List pattern *)
 
@@ -396,7 +456,7 @@ and typed_pattern = pattern * type_annotation
 
 (* Unit pattern *)
 
-and the_unit = (lpar * rpar [@yojson.opaque])
+and the_unit = lpar * rpar [@yojson.opaque]
 
 (* EXPRESSIONS *)
 
@@ -404,64 +464,64 @@ and the_unit = (lpar * rpar [@yojson.opaque])
    add or modify some, please make sure they remain in order. *)
 
 and expr =
-  E_Add        of plus bin_op reg                             (* x + y               *)
-| E_And        of bool_and bin_op reg                         (* x && y              *)
-| E_App        of (expr * expr nseq) reg                      (* f x y     C (x,y)   *)
-| E_Assign     of assign reg                                  (* x := e              *)
-| E_Attr       of ((attribute [@yojson.opaque]) * expr)       (* [@a] e              *)
-| E_Bytes      of bytes_literal                               (* 0xFFFA              *)
-| E_Cat        of caret bin_op reg                            (* "Hello" ^ world     *)
+  E_Add        of plus bin_op reg        (* x + y                         *)
+| E_And        of bool_and bin_op reg    (* x && y                        *)
+| E_App        of (expr * expr nseq) reg (* f x y     C (x,y)             *)
+| E_Assign     of assign reg             (* x := e                        *)
+| E_Attr       of attr_expr              (* [@a] e                        *)
+| E_Bytes      of bytes_literal          (* 0xFFFA                        *)
+| E_Cat        of caret bin_op reg       (* "Hello" ^ world               *)
 | E_CodeInj    of code_inj reg
-| E_Cond       of cond_expr reg                               (* if x then y         *)
-| E_Cons       of cons bin_op reg                             (* head :: tail        *)
-| E_ContractOf of (module_name, (dot [@yojson.opaque])) nsepseq reg (* contract_of M *)
-| E_Ctor       of ctor                                        (* C                   *)
-| E_Div        of slash bin_op reg                            (* x / y               *)
-| E_Equal      of equal bin_op reg                            (* x = y               *)
-| E_False      of kwd_false                                   (* false               *)
-| E_For        of for_loop reg                      (* for x = e1 upto e2 do e3 done *)
-| E_ForIn      of for_in_loop reg                          (* for x in e1 do e2 done *)
-| E_Fun        of fun_expr reg                                (* fun x -> x          *)
-| E_Geq        of geq bin_op reg                              (* x >= y              *)
-| E_Gt         of gt bin_op reg                               (* x > y               *)
-| E_Int        of int_literal                                 (* 42                  *)
-| E_Land       of kwd_land bin_op reg                         (* x land y            *)
-| E_Leq        of leq bin_op reg                              (* x <= y              *)
-| E_LetIn      of let_in reg                                  (* let x = e1 in e2    *)
-| E_LetMutIn   of let_mut_in reg                             (* let mut x = e1 in e2 *)
-| E_List       of expr list_                                  (* [f x; 5]            *)
-| E_Lor        of kwd_lor bin_op reg                          (* x lor y             *)
-| E_Lsl        of kwd_lsl bin_op reg                          (* x lsl y             *)
-| E_Lsr        of kwd_lsr bin_op reg                          (* x lsr y             *)
-| E_Lt         of lt bin_op reg                               (* x < y               *)
-| E_Lxor       of kwd_lxor bin_op reg                         (* x lxor y            *)
-| E_Match      of match_expr reg                              (* match e with p -> i *)
-| E_Mod        of kwd_mod bin_op reg                          (* x mod n             *)
-| E_ModIn      of module_in reg                               (* module M = N in e   *)
-| E_ModPath    of expr module_path reg                        (* M.N.x.0             *)
-| E_Mult       of times bin_op reg                            (* x * y               *)
-| E_Mutez      of mutez_literal                               (* 5mutez              *)
-| E_Nat        of nat_literal                                 (* 4n                  *)
-| E_Neg        of minus un_op reg                             (* -a                  *)
-| E_Neq        of neq bin_op reg                              (* x <> y              *)
-| E_Not        of kwd_not un_op reg                           (* not x               *)
-| E_Or         of kwd_or bin_op reg                           (* x or y              *)
-| E_Par        of expr par                                    (* (x - M.y)           *)
-| E_Proj       of projection reg                              (* e.x.1               *)
-| E_Record     of record_expr                                 (* {x=y; z}            *)
-| E_RevApp     of rev_app bin_op reg                          (* y |> f |> g x       *)
-| E_Seq        of sequence_expr reg                           (* x; 3                *)
-| E_String     of string_literal                              (* "string"            *)
-| E_Sub        of minus bin_op reg                            (* a - b               *)
-| E_True       of kwd_true                                    (* true                *)
-| E_Tuple      of expr tuple reg                              (* (1, x)              *)
-| E_Typed      of typed_expr par                              (* (x : int)           *)
-| E_TypeIn     of type_in reg                                 (* type t = u in e     *)
-| E_Unit       of the_unit reg                                (* ()                  *)
-| E_Update     of update_expr braces                          (* {x with y=z}        *)
-| E_Var        of variable                                    (* x  @x               *)
-| E_Verbatim   of verbatim_literal                            (* {|foo|}             *)
-| E_While      of while_loop reg                              (* while e1 do e2 done *)
+| E_Cond       of cond_expr reg          (* if x then y                   *)
+| E_Cons       of cons bin_op reg        (* head :: tail                  *)
+| E_ContractOf of contract_of            (* contract_of M                 *)
+| E_Ctor       of ctor                   (* C                             *)
+| E_Div        of slash bin_op reg       (* x / y                         *)
+| E_Equal      of equal bin_op reg       (* x = y                         *)
+| E_False      of kwd_false              (* false                         *)
+| E_For        of for_loop reg           (* for x = e1 upto e2 do e3 done *)
+| E_ForIn      of for_in_loop reg        (* for x in e1 do e2 done        *)
+| E_Fun        of fun_expr reg           (* fun x -> x                    *)
+| E_Geq        of geq bin_op reg         (* x >= y                        *)
+| E_Gt         of gt bin_op reg          (* x > y                         *)
+| E_Int        of int_literal            (* 42                            *)
+| E_Land       of kwd_land bin_op reg    (* x land y                      *)
+| E_Leq        of leq bin_op reg         (* x <= y                        *)
+| E_LetIn      of let_in reg             (* let x = e1 in e2              *)
+| E_LetMutIn   of let_mut_in reg         (* let mut x = e1 in e2          *)
+| E_List       of expr list_             (* [f x; 5]                      *)
+| E_Lor        of kwd_lor bin_op reg     (* x lor y                       *)
+| E_Lsl        of kwd_lsl bin_op reg     (* x lsl y                       *)
+| E_Lsr        of kwd_lsr bin_op reg     (* x lsr y                       *)
+| E_Lt         of lt bin_op reg          (* x < y                         *)
+| E_Lxor       of kwd_lxor bin_op reg    (* x lxor y                      *)
+| E_Match      of match_expr reg         (* match e with p -> i           *)
+| E_Mod        of kwd_mod bin_op reg     (* x mod n                       *)
+| E_ModIn      of module_in reg          (* module M = N in e             *)
+| E_ModPath    of expr module_path reg   (* M.N.x.0                       *)
+| E_Mult       of times bin_op reg       (* x * y                         *)
+| E_Mutez      of mutez_literal          (* 5mutez                        *)
+| E_Nat        of nat_literal            (* 4n                            *)
+| E_Neg        of minus un_op reg        (* -a                            *)
+| E_Neq        of neq bin_op reg         (* x <> y                        *)
+| E_Not        of kwd_not un_op reg      (* not x                         *)
+| E_Or         of kwd_or bin_op reg      (* x or y                        *)
+| E_Par        of expr par               (* (x - M.y)                     *)
+| E_Proj       of projection reg         (* e.x.1                         *)
+| E_Record     of record_expr            (* {x=y; z}                      *)
+| E_RevApp     of rev_app bin_op reg     (* y |> f |> g x                 *)
+| E_Seq        of sequence_expr reg      (* x; 3                          *)
+| E_String     of string_literal         (* "string"                      *)
+| E_Sub        of minus bin_op reg       (* a - b                         *)
+| E_True       of kwd_true               (* true                          *)
+| E_Tuple      of expr tuple reg         (* (1, x)                        *)
+| E_Typed      of typed_expr par         (* (x : int)                     *)
+| E_TypeIn     of type_in reg            (* type t = u in e               *)
+| E_Unit       of the_unit reg           (* ()                            *)
+| E_Update     of update_expr braces     (* {x with y=z}                  *)
+| E_Var        of variable               (* x  @x                         *)
+| E_Verbatim   of verbatim_literal       (* {|foo|}                       *)
+| E_While      of while_loop reg         (* while e1 do e2 done           *)
 
 (* Binary and unary arithmetic operators *)
 
@@ -563,6 +623,10 @@ and assign = {
   expr   : expr
 }
 
+(* Attributed expression *)
+
+and attr_expr = (attribute [@yojson.opaque]) * expr
+
 (* Local type definition *)
 
 and type_in = {
@@ -609,6 +673,12 @@ and code_inj = {
   code     : expr;
   rbracket : (rbracket [@yojson.opaque])
 }
+
+(* Contract-of *)
+
+and contract_of = (module_name, (dot [@yojson.opaque])) nsepseq reg
+
+(* Loops *)
 
 and for_loop = {
   kwd_for   : (kwd_for [@yojson.opaque]);
@@ -669,6 +739,7 @@ let rec type_expr_to_region = function
 | T_App     {region; _} -> region
 | T_Attr    (_, e) -> type_expr_to_region e
 | T_Cart    {region; _}
+| T_ForAll  {region; _}
 | T_Fun     {region; _} -> region
 | T_Int     w -> w#region
 | T_ModPath {region; _}
@@ -791,5 +862,4 @@ let sig_item_to_region = function
   S_Attr    {region; _}
 | S_Value   {region; _}
 | S_Type    {region; _}
-| S_Include {region; _}
-| S_TypeVar {region; _} -> region
+| S_Include {region; _} -> region

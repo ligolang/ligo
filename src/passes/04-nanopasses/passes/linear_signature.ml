@@ -47,7 +47,7 @@ module Type_vars = struct
     let sig_entry : _ sig_entry_ -> bound =
      fun si ->
       match Location.unwrap si with
-      | S_type (v, _) -> [ singleton v ]
+      | S_type (v, _TODO, _) -> [ singleton v ]
       | S_type_var v -> [ singleton v ]
       | _ -> empty
     in
@@ -89,8 +89,9 @@ let%expect_test _ =
     {|
     (S_body
       ((S_type_var t)
-       (S_type t (TY_EXPR))))
-    |} |->! compile;
+       (S_type t (GEN) (TY_EXPR))))
+    |}
+    |->! compile;
     [%expect {|
     Err : (Small_passes_duplicate_ty_identifier t)
     |}])
@@ -112,9 +113,10 @@ let%expect_test _ =
     {|
     (S_body
       ((S_value x (TY_EXPR1) false)
-       (S_type x (TY_EXPR2))))
+       (S_type x (GEN) (TY_EXPR2))))
     |}
     |-> compile;
-    [%expect {|
-    (S_body ((S_value x (TY_EXPR1) false) (S_type x (TY_EXPR2))))
+    [%expect
+      {|
+    (S_body ((S_value x (TY_EXPR1) false) (S_type x (GEN) (TY_EXPR2))))
     |}])

@@ -289,7 +289,7 @@ deploy_website_preview:
   script:
     - apt-get update
     - apt-get install -y --no-install-recommends jq
-    - npm install netlify-cli
+    - npm install netlify-cli@17.6.0
     - npx netlify deploy --site $NETLIFY_SITE_ID_LIGOLANG --dir=./public --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_MERGE_REQUEST_IID-$CI_COMMIT_SHORT_SHA" > netlify.json
     - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)

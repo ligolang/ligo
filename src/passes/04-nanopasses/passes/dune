@@ -14,6 +14,7 @@
   unit_test_helpers
   break_continue_outside
   single_switch_block
+  t_for_alls
   t_constant
   t_arg
   type_abstraction_declaration

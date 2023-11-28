@@ -110,10 +110,32 @@ and sig_entry
   let w = Region.wrap_ghost in
   match Location.unwrap se with
   | AST.S_value (v, ty, _) ->
-    CST.(S_Value (w (ghost_val, decompile_var v, ghost_colon, ty)))
-  | AST.S_type (v, ty) ->
-    CST.(S_Type (w (ghost_type, decompile_tvar_into_var v, ghost_eq, ty)))
-  | AST.S_type_var v -> CST.(S_TypeVar (w (ghost_type, decompile_tvar_into_var v)))
+    CST.(
+      S_Value
+        (w
+        @@ { kwd_val = ghost_val
+           ; var = decompile_var v
+           ; colon = ghost_colon
+           ; val_type = ty
+           }))
+  | AST.S_type (v, _TODO, ty) ->
+    CST.(
+      S_Type
+        (w
+        @@ { kwd_type = ghost_type
+           ; type_name = decompile_tvar_into_var v
+           ; type_vars = None
+           ; type_rhs = Some (ghost_eq, ty)
+           }))
+  | AST.S_type_var v ->
+    CST.(
+      S_Type
+        (w
+        @@ { kwd_type = ghost_type
+           ; type_name = decompile_tvar_into_var v
+           ; type_vars = None
+           ; type_rhs = None
+           }))
   | AST.S_attr (attr, se) -> CST.(S_Attr (w (decompile_attr attr, se)))
   | AST.S_include se -> CST.(S_Include (w (ghost_include, se)))
 
@@ -270,6 +292,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     (* When we apply type constr to some type, sometimes we need to add parens
       e.g. [A of int] -> [(A of int) option] vs [{a : int}] -> [{ a : int }] option. *)
     | T_Fun _ | T_Cart _ | T_Variant _ | T_Attr _ | T_ParameterOf _ -> true
+    | T_ForAll _
     | T_Par _
     | T_App _
     | T_Var _
@@ -417,5 +440,12 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   so we'll just drop the quantifiers here *)
   | T_abstraction Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ }
   | T_for_all Ligo_prim.Abstraction.{ ty_binder = _; kind = _; type_ } -> type_
+  | T_for_alls Ligo_prim.Abstractions.{ ty_binders = []; kind = _; type_ } -> type_
+  | T_for_alls Ligo_prim.Abstractions.{ ty_binders; kind = _; type_ } ->
+    let ty_binders =
+      List.map ~f:(fun v -> w @@ (None, decompile_tvar_into_var v)) ty_binders
+    in
+    let ty_binders : CST.type_var Utils.nseq = List.Ne.of_list ty_binders in
+    T_ForAll (w @@ (ty_binders, ghost_dot, type_))
   | T_module_app _ | T_constant _ ->
     Helpers.failwith_not_initial_node_decompiler @@ `Ty_expr te

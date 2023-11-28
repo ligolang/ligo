@@ -190,6 +190,7 @@ instance Pretty1 AST.Type where
     TParen     t               -> sexpr "par" [t]
     TInt       t               -> sexpr "TINT" [pp t]
     TParameter t               -> sexpr "TPARAMETER" [pp t]
+    TForAll    vars     typ    -> sexpr "TFORALL" (pp <$> vars <> [typ])
 
 instance Pretty1 Signature where
   pp1 (Signature elements) = block' elements
@@ -447,6 +448,7 @@ instance LPP1 'Js AST.Type where
     TParen    t         -> "(" <+> lpp t <+> ")"
     TInt       t        -> t
     TParameter _t       -> error "implement"
+    TForAll  _vars _typ -> error "implement"
 
 instance LPP1 'Js Signature where
   lpp1 (Signature elements) = braces $ block' elements
@@ -625,6 +627,7 @@ instance LPP1 'Caml AST.Type where
     TParen     t         -> parens (lpp t)
     TInt       t         -> t
     TParameter p         -> p <+> "parameter_of"
+    TForAll    vars typ  -> train " " vars <+> "." <+> typ
 
 instance LPP1 'Caml Signature where
   lpp1 (Signature elements) = block' elements

@@ -92,9 +92,9 @@ let test_cases =
   ; { test_name = "registry.jsligo"
     ; file = "contracts/lsp/registry.jsligo"
     ; hovers =
-        [ pos ~line:11 ~character:19, one "get_exn : (_: list<a>) => (_: int) => a"
+        [ pos ~line:11 ~character:19, one "get_exn : <a>(_: list<a>) => (_: int) => a"
         ; ( pos ~line:26 ~character:10
-          , one "map : (_: (_: a) => b) => (_: list<a>) => list<b>" )
+          , one "map : <a, b>(_: (_: a) => b) => (_: list<a>) => list<b>" )
         ; pos ~line:28 ~character:31, one "primes : list<int>"
         ; pos ~line:39 ~character:28, one "store : storage"
         ; pos ~line:40 ~character:50, one "store : storage"
@@ -108,7 +108,8 @@ let test_cases =
         [ pos ~line:0 ~character:8, one "type 'a endo = Endo of ('a -> 'a)"
         ; pos ~line:4 ~character:61, one "type 'a endo = Endo of ('a -> 'a)"
         ; ( pos ~line:4 ~character:20
-          , one "compose_endo_with_type_annotation :\n  a endo -> a endo -> a endo" )
+          , one "compose_endo_with_type_annotation :\n  'a.'a endo -> 'a endo -> 'a endo"
+          )
         ; pos ~line:5 ~character:12, one "f : a -> a"
         ; pos ~line:5 ~character:37, one "x : a"
         ; pos ~line:5 ~character:47, one "x : a"
@@ -118,18 +119,19 @@ let test_cases =
         ; pos ~line:40 ~character:18, one "f : int -> int"
         ; pos ~line:56 ~character:12, one "x : t"
         ; pos ~line:58 ~character:28, one "f : a -> a"
-        ; pos ~line:59 ~character:15, one "map : (a -> b) -> a list -> b list"
+        ; pos ~line:59 ~character:15, one "map : 'a 'b.('a -> 'b) -> 'a list -> 'b list"
         ; pos ~line:65 ~character:41, one "type 'a list2 = 'a list list"
         ; pos ~line:70 ~character:5, one "x1 : int list list -> int list list list"
-        ; pos ~line:72 ~character:23, one "endo_list2 : a endo -> a list2 endo"
+        ; pos ~line:72 ~character:23, one "endo_list2 : 'a.'a endo -> 'a list2 endo"
         ; ( pos ~line:75 ~character:4
           , one "z : key_hash option -> tez -> int -> (operation * address)" )
         ; pos ~line:75 ~character:35, one "x : int"
         ; ( pos ~line:75 ~character:27
           , one
               "create_contract :\n\
-              \  (p -> s -> (operation list * s)) ->\n\
-              \  key_hash option -> tez -> s -> (operation * address)" )
+              \  'p\n\
+              \  's.('p -> 's -> (operation list * 's)) ->\n\
+              \  key_hash option -> tez -> 's -> (operation * address)" )
         ; ( pos ~line:77 ~character:28
           , one "type 'v proxy_address =\n  ('v * nat * address, unit) typed_address" )
         ; pos ~line:79 ~character:8, one "type 'v p = 'v proxy_address"
@@ -188,37 +190,37 @@ let test_cases =
         [ ( pos ~line:0 ~character:7
           , one "module A : sig\n  val foo : int\n\n  val bar : int\n  end" )
         ; ( pos ~line:10 ~character:7
-          , one "module B : sig\n  type t = nat\n\n  type int = string\n  end" )
+          , one "module B : sig\n  type t =  nat\n\n  type int =  string\n  end" )
         ; ( pos ~line:17 ~character:7
           , one "module C : sig\n  val another : int\n\n  val foo : tez\n  end" )
         ; ( pos ~line:33 ~character:24
           , one
               "module Bytes : sig\n\
               \  val concats : bytes list -> bytes\n\n\
-              \  val pack : a -> bytes\n\n\
-              \  val unpack : bytes -> a option\n\n\
+              \  val pack : 'a.'a -> bytes\n\n\
+              \  val unpack : 'a.bytes -> 'a option\n\n\
               \  val length : bytes -> nat\n\n\
               \  val concat : bytes -> bytes -> bytes\n\n\
               \  val sub : nat -> nat -> bytes -> bytes\n\
               \  end" )
         ; pos ~line:43 ~character:13, one "module Mangled : (* Unresolved *)"
         ; ( pos ~line:48 ~character:12
-          , one "module Mangled_with_sig : sig\n  type t\n\n  type int = string\n  end" )
+          , one "module Mangled_with_sig : sig\n  type t\n\n  type int =  string\n  end" )
         ; ( pos ~line:54 ~character:10
           , one "module Mangled_with_inlined_sig : sig\n  val foo : int\n  end" )
         ; ( pos ~line:70 ~character:20
           , one
               "module With_included : sig\n\
               \  type t\n\n\
-              \  type int = string\n\n\
+              \  type int =  string\n\n\
               \  val b : bool\n\n\
               \  val z : string\n\
               \  end" )
         ; ( pos ~line:77 ~character:14
           , one
               "module With_included : sig\n\
-              \  type t = int\n\n\
-              \  type int = string\n\n\
+              \  type t =  int\n\n\
+              \  type int =  string\n\n\
               \  val b : bool\n\
               \  end" )
         ]
@@ -237,7 +239,7 @@ let test_cases =
             ~f:(fun p -> p, one "module M : sig\n  val v : int\n  end")
             [ pos ~line:62 ~character:9; pos ~line:64 ~character:9 ]
         @ List.map
-            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int = string\n  end")
+            ~f:(fun p -> p, one "module T : sig\n  type t\n\n  type int =  string\n  end")
             [ pos ~line:5 ~character:12
             ; pos ~line:10 ~character:11
             ; pos ~line:48 ~character:26
@@ -265,8 +267,8 @@ let test_cases =
           , one
               "namespace Bytes implements {\n\
               \  const concats: (_: list<bytes>) => bytes;\n\
-              \  const pack: (_: a) => bytes;\n\
-              \  const unpack: (_: bytes) => option<a>;\n\
+              \  const pack: <a>(_: a) => bytes;\n\
+              \  const unpack: <a>(_: bytes) => option<a>;\n\
               \  const length: (_: bytes) => nat;\n\
               \  const concat: (_: bytes) => (_: bytes) => bytes;\n\
               \  const sub: (_: nat) => (_: nat) => (_: bytes) => bytes\n\

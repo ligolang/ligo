@@ -340,6 +340,11 @@ val unify_texists : Type_var.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
     Hint: In general, use [unify] over [subtype]. *)
 val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
 
+(** [eq type1 type2] unifies the types [type1] and [type2].
+
+    Hint: In general, use [unify] over [subtype]. *)
+val eq : Type.t -> Type.t -> (bool, [> unify_error ], 'wrn) t
+
 type subtype_error = unify_error
 
 (** [subtype ~received ~expected] ensures [received] is the subtype of [expected]

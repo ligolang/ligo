@@ -24,6 +24,7 @@ type flags =
   ; projections : Syntax_types.t
   ; mod_res : ModRes.t option
   ; wildcards : bool
+  ; t_for_alls : bool
   }
 
 let passes ~(flags : flags) : (module T) list =
@@ -45,6 +46,7 @@ let passes ~(flags : flags) : (module T) list =
       ; projections
       ; mod_res
       ; wildcards
+      ; t_for_alls
       }
     =
     flags
@@ -77,6 +79,7 @@ let passes ~(flags : flags) : (module T) list =
   ; entry (module Import_restriction) ~flag:always ~arg:()
   ; entry (module External_hack) ~flag:always ~arg:()
   ; entry (module Linearity) ~flag:always ~arg:()
+  ; entry (module T_for_alls) ~flag:always ~arg:t_for_alls
   ; entry (module T_constant) ~flag:always ~arg:()
   ; entry (module T_arg) ~flag:always ~arg:()
   ; entry (module Constructor_application) ~flag:always ~arg:()
@@ -149,6 +152,7 @@ let extract_flags_from_options : disable_initial_check:bool -> Compiler_options.
   ; projections = syntax
   ; mod_res
   ; wildcards = is_cameligo
+  ; t_for_alls = is_cameligo
   }
 
 
