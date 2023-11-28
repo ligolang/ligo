@@ -20,18 +20,21 @@ import {
   ResolveConfigFromLigoArguments,
   ValidateResponse,
   ValidateEntrypointArguments,
-} from "./messages";
+  InitializeLanguageServerStateArguments,
+  InitializeLanguageServerStateResponse,
+} from "../debugger/messages";
 import { DebugProtocol } from '@vscode/debugprotocol/lib/debugProtocol'
 import stream from 'stream'
 import * as ee from 'events'
 import * as vscode from 'vscode'
-import { isDefined, Maybe } from './base';
 import { DebugAdapterTracker, DebugAdapterTrackerFactory } from "vscode";
-import { SteppingGranularity } from "./ui";
+import { SteppingGranularity } from "../debugger/ui";
 import * as ncp from 'copy-paste';
+import { isDefined, Maybe } from './base';
 
 type LigoSpecificRequest
   = 'resolveConfigFromLigo'
+  | 'initializeLanguageServerState'
   | 'initializeLogger'
   | 'setLigoConfig'
   | 'setProgramPath'
@@ -353,6 +356,7 @@ export class LigoProtocolClient extends ProtocolClient {
   }
 
   sendMsg(command: 'resolveConfigFromLigo', args: ResolveConfigFromLigoArguments): Promise<ResolveConfigFromLigoResponse>
+  sendMsg(command: 'initializeLanguageServerState', args: InitializeLanguageServerStateArguments): Promise<InitializeLanguageServerStateResponse>
   sendMsg(command: 'initializeLogger', args: InitializeLoggerArguments): Promise<InitializeLoggerResponse>
   sendMsg(command: 'setLigoConfig', args: SetLigoConfigArguments): Promise<SetLigoConfigResponse>
   sendMsg(command: 'setProgramPath', args: SetProgramPathArguments): Promise<SetProgramPathResponse>

@@ -12,7 +12,6 @@ import {
 } from 'vscode-languageclient/node';
 
 import { registerCommands } from './command'
-import { initializeExtensionState } from './ui'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
 import { BinaryNotFoundException } from './exceptions'
@@ -20,6 +19,10 @@ import { LigoExtension } from "../LigoExtension";
 
 import { extensions } from './common'
 import { changeLastContractPath, getBinaryPath, ligoBinaryInfo } from './commands/common';
+import { LigoContext } from '../common/LigoContext';
+import { LigoProtocolClient } from '../common/LigoProtocolClient';
+
+import LigoServer from '../debugger/LigoServer';
 
 export class LspExtension extends LigoExtension {
   private client: LanguageClient;
@@ -77,7 +80,7 @@ export class LspExtension extends LigoExtension {
   }
 
 
-  public activate(context: vscode.ExtensionContext): void {
+  public activate(context: LigoContext, _server: LigoServer, protocolClient: LigoProtocolClient): void {
     const config = vscode.workspace.getConfiguration()
     let ligoPath: string
     try {
@@ -94,16 +97,15 @@ export class LspExtension extends LigoExtension {
       command: ligoPath,
       args: ["lsp"],
       options: {
-        cwd: context.extensionPath,
+        cwd: context.context.extensionPath,
       },
     };
 
-    // Initializes buttons, and command state
-    initializeExtensionState();
+    // Initializes buttons
     this.ligoOptionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
     this.deployOptionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 0);
-    this.initializeStatusBarButton(this.ligoOptionButton, context, 'ligo.chooseOption', 'LIGO Options', 'Display LIGO options');
-    this.initializeStatusBarButton(this.deployOptionButton, context, 'tezos.chooseOption', 'Deploy LIGO', 'Deploy smart-contract');
+    this.initializeStatusBarButton(this.ligoOptionButton, context.context, 'ligo.chooseOption', 'LIGO Options', 'Display LIGO options');
+    this.initializeStatusBarButton(this.deployOptionButton, context.context, 'tezos.chooseOption', 'Deploy LIGO', 'Deploy smart-contract');
 
     // Options to control the language client
     const clientOptions: LanguageClientOptions = {
@@ -130,13 +132,13 @@ export class LspExtension extends LigoExtension {
     );
 
     // Check for LIGO and ligo-vscode updates
-    if (context.extensionMode === vscode.ExtensionMode.Production) {
+    if (context.context.extensionMode === vscode.ExtensionMode.Production) {
       updateLigo(this.client)
-      updateExtension(context)
+      updateExtension(context.context)
     }
 
     // Register VSC-specific server commands
-    registerCommands(this.client);
+    registerCommands(context, this.client, protocolClient);
 
     // Start the client. This will also launch the server
     if (ligoPath) {

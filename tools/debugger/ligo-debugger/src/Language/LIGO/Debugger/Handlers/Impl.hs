@@ -107,6 +107,7 @@ instance HasLigoClient (RIO LIGO) where
 ligoCustomHandlers :: DAP.HandlersSet (RIO LIGO)
 ligoCustomHandlers =
   [ resolveConfigFromLigo
+  , initializeLanguageServerState
   , initializeLoggerHandler
   , setLigoConfigHandler
   , setProgramPathHandler
@@ -169,8 +170,7 @@ instance HasSpecificMessages LIGO where
 
         let convertInfos = zipWith PreLigoConvertInfo someValues types
 
-        lServVar <- getServerState @LIGO
-        let DV.Manager{..} = lsToLigoValueConverter lServVar
+        DV.Manager{..} <- getToLigoValueConverter
 
         -- @writeTerminatedEvent@ would be executed only once (on last snapshot)
         -- So, we can call this heavy computation in a synchronous way.
@@ -359,7 +359,7 @@ instance HasSpecificMessages LIGO where
         & getExt @(Either UnsupportedExtension)
         & either throwM pure
 
-    let valConvertManager = lsToLigoValueConverter lServVar
+    valConvertManager <- getToLigoValueConverter
 
     let applicationMetaConv ApplicationMeta{..} = do
           let pcaaFunctionName = maybe "<fun>" pretty amFunctionName
@@ -425,7 +425,9 @@ instance HasSpecificMessages LIGO where
       -- We are fine with the thread's death if it gets outdated, it's better
       -- than having 100500 @ligo@ threads running at a time.
       logMessage "Going to compute pending variables"
-      AbortingThreadPool.runAbortableAsync (lsVarsComputeThreadPool lServVar) do
+
+      pool <- getVarsComputeThreadPool
+      AbortingThreadPool.runAbortableAsync pool do
         computedSmthNew <- DV.runPendingComputations valConvertManager
 
         when computedSmthNew do
@@ -478,7 +480,8 @@ terminateHandler = mkLigoHandler \req@DAP.TerminateRequest{} -> do
   resetDAPState
   unless (req.restart == Just True) do
     lServState <- getServerState
-    AbortingThreadPool.close (lsVarsComputeThreadPool lServState)
+    whenJust (lsVarsComputeThreadPool lServState) \pool ->
+      AbortingThreadPool.close pool
 
     lServVar <- asks _rcLSState
     atomically $ writeTVar lServVar Nothing
@@ -623,15 +626,9 @@ convertMichelsonValuesToLigo logger inps = do
       typesAndValues
       decompiledValues
 
-setLigoConfigHandler :: DAP.Handler (RIO LIGO)
-setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
-  let maxStepsMb = RemainingSteps <$> req.maxSteps
-
-  UnliftIO unliftIO <- askUnliftIO
-
+initializeLanguageServerState :: DAP.Handler (RIO LIGO)
+initializeLanguageServerState = mkLigoHandler \req@LigoInitializeLanguageServerStateRequest{} -> do
   lServVar <- asks _rcLSState
-  varsComputeThreadPool <- AbortingThreadPool.newPool 10
-  toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigo logMessage)
   atomically $ writeTVar lServVar $ Just LigoLanguageServerState
     { lsProgram = Nothing
     , lsCollectedRunInfo = Nothing
@@ -642,13 +639,30 @@ setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
     , lsLigoTypesVec = Nothing
     , lsEntrypoints = Nothing
     , lsPickedEntrypoint = Nothing
-    , lsToLigoValueConverter = toLigoValueConverter
-    , lsVarsComputeThreadPool = varsComputeThreadPool
+    , lsToLigoValueConverter = Nothing
+    , lsVarsComputeThreadPool = Nothing
     , lsMoveId = 0
-    , lsMaxSteps = maxStepsMb
+    , lsMaxSteps = Nothing
     , lsEntrypointType = Nothing
     , lsScopes = Nothing
     , lsArgumentRanges = Nothing
+    }
+  DAP.respond ()
+
+setLigoConfigHandler :: DAP.Handler (RIO LIGO)
+setLigoConfigHandler = mkLigoHandler \req@LigoSetLigoConfigRequest{} -> do
+  let maxStepsMb = RemainingSteps <$> req.maxSteps
+
+  UnliftIO unliftIO <- askUnliftIO
+
+  lServVar <- asks _rcLSState
+  varsComputeThreadPool <- AbortingThreadPool.newPool 10
+  toLigoValueConverter <- DV.newManager (unliftIO . convertMichelsonValuesToLigo logMessage)
+  atomically $ modifyTVar lServVar $ fmap \lServ -> lServ
+    { lsBinaryPath = req.binaryPath
+    , lsToLigoValueConverter = Just toLigoValueConverter
+    , lsVarsComputeThreadPool = Just varsComputeThreadPool
+    , lsMaxSteps = maxStepsMb
     }
   do let binaryPath = req.binaryPath
      logMessage [int||Set LIGO binary path: #s{binaryPath}|]
@@ -677,7 +691,7 @@ setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
     }
   LigoSetProgramPathResponse
     { moduleNames = unModuleNamesList
-        <&> \modName@ModuleName{..} -> ([int||#{enModule}.#{enName}|], pretty modName)
+        <&> \modName@ModuleName{..} -> (enModule, pretty modName)
     }
     `respondAndAlso` do
 
@@ -687,7 +701,7 @@ setProgramPathHandler = mkLigoHandler \req@LigoSetProgramPathRequest{} -> do
 validateModuleNameHandler :: DAP.Handler (RIO LIGO)
 validateModuleNameHandler = mkLigoHandler \req@LigoValidateModuleNameRequest{} -> do
   program <- getProgram
-  result <- try @_ @LigoCallException (checkCompilation (mkModuleName req.moduleName) program)
+  result <- try @_ @LigoCallException (checkCompilation (ModuleName req.moduleName) program)
 
   respond $ ligoValidateFromEither (first pretty result)
 
@@ -699,7 +713,7 @@ getContractMetadataHandler = mkLigoHandler \req@LigoGetContractMetadataRequest{}
   unlessM (doesFileExist program) $
     throwIO $ ConfigurationException [int||Contract file not found: #{toText program}|]
 
-  let moduleName = mkModuleName req.moduleName
+  let moduleName = ModuleName req.moduleName
 
   -- Here we're catching exception explicitly in order to store it
   -- inside language server state and rethrow it in @initDebuggerSession@

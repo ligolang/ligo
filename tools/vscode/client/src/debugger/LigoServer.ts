@@ -6,7 +6,7 @@ import { randomBytes } from 'crypto'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { platform } from 'process'
-import { Maybe } from './base'
+import { Maybe } from '../common/base'
 
 // Server to forward requests from the debugger adapter to the process stdin and
 // stdout of the process to the client.

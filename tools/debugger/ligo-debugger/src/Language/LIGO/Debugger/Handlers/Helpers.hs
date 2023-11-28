@@ -101,8 +101,8 @@ data LigoLanguageServerState = LigoLanguageServerState
   , lsEntrypoints :: Maybe (Map U.EpName U.Ty)
     -- ^ A list of available @Michelson@ entrypoints.
   , lsPickedEntrypoint :: Maybe Text
-  , lsVarsComputeThreadPool :: AbortingThreadPool.Pool
-  , lsToLigoValueConverter :: DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue
+  , lsVarsComputeThreadPool :: Maybe AbortingThreadPool.Pool
+  , lsToLigoValueConverter :: Maybe (DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue)
   , lsMoveId :: Word
     -- ^ The identifier of position, assigned a unique id after each step
     -- (visiting the same snapshot twice will also result in different ids).
@@ -273,6 +273,18 @@ getArgumentRanges
   :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
   => MonadRIO ext m => m (HashSet Range)
 getArgumentRanges = "Argument ranges are not initialized" `expectInitialized` (lsArgumentRanges <$> getServerState)
+
+getVarsComputeThreadPool
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => MonadRIO ext m => m AbortingThreadPool.Pool
+getVarsComputeThreadPool =
+  "Thread pool is not initialized" `expectInitialized` (lsVarsComputeThreadPool <$> getServerState)
+
+getToLigoValueConverter
+  :: (LanguageServerStateExt ext ~ LigoLanguageServerState)
+  => MonadRIO ext m => m (DelayedValues.Manager PreLigoConvertInfo LigoOrMichValue)
+getToLigoValueConverter =
+  "To LIGO value converter is not initialized" `expectInitialized` (lsToLigoValueConverter <$> getServerState)
 
 getParameterStorageAndOpsTypes :: LigoType -> (LigoType, LigoType, LigoType)
 getParameterStorageAndOpsTypes (LigoTypeResolved typ) =

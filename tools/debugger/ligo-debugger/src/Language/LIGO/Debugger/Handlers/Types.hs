@@ -8,6 +8,7 @@ module Language.LIGO.Debugger.Handlers.Types
   , VotingPowersConfig (..)
   , SimpleVotingPowersInfo (..)
   , LigoResolveConfigFromLigoRequest (..)
+  , LigoInitializeLanguageServerStateRequest (..)
   , LigoInitializeLoggerRequest (..)
   , LigoSetLigoConfigRequest (..)
   , LigoSetProgramPathRequest (..)
@@ -84,6 +85,10 @@ instance Default LigoContractEnv where
 
 data LigoResolveConfigFromLigoRequest = LigoResolveConfigFromLigoRequest
   { configPath :: FilePath
+  } deriving stock (Eq, Show, Generic)
+
+data LigoInitializeLanguageServerStateRequest = LigoInitializeLanguageServerStateRequest
+  { binaryPath :: Maybe FilePath
   } deriving stock (Eq, Show, Generic)
 
 data LigoInitializeLoggerRequest = LigoInitializeLoggerRequest
@@ -191,6 +196,7 @@ concatMapM (deriveFromJSON Aeson.defaultOptions)
   [ ''LigoContractEnv
   , ''LigoLaunchRequest
   , ''LigoResolveConfigFromLigoRequest
+  , ''LigoInitializeLanguageServerStateRequest
   , ''LigoInitializeLoggerRequest
   , ''LigoSetLigoConfigRequest
   , ''LigoSetProgramPathRequest
@@ -208,6 +214,10 @@ instance IsRequest LigoLaunchRequest where
 instance IsRequest LigoResolveConfigFromLigoRequest where
   type CommandFor LigoResolveConfigFromLigoRequest = "resolveConfigFromLigo"
   type ResponseFor LigoResolveConfigFromLigoRequest = LigoLaunchRequest
+
+instance IsRequest LigoInitializeLanguageServerStateRequest where
+  type CommandFor LigoInitializeLanguageServerStateRequest = "initializeLanguageServerState"
+  type ResponseFor LigoInitializeLanguageServerStateRequest = ()
 
 instance IsRequest LigoInitializeLoggerRequest where
   type CommandFor LigoInitializeLoggerRequest = "initializeLogger"
