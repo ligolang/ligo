@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { LanguageClient } from 'vscode-languageclient/node'
 import { TezosToolkit } from '@taquito/taquito';
 import { importKey } from '@taquito/signer';
 
@@ -10,6 +9,8 @@ import {
   CompileContractResult, CompileStorageResult, executeCompileContract, executeCompileStorage,
 } from './ligoCommands';
 import { getLastContractPath, ligoOutput } from './common';
+import { LigoContext } from '../../common/LigoContext';
+import { LigoProtocolClient } from '../../common/LigoProtocolClient';
 
 const AUTHORIZATION_HEADER = 'Bearer ligo-ide';
 
@@ -37,17 +38,23 @@ type ContractAndStorage = {
 }
 
 async function askForContractAndStorage(
+  context: LigoContext,
+  client: LigoProtocolClient,
   format: string,
   prevEntrypoint = undefined,
   prevStorage = undefined,
 ): Promise<ContractAndStorage> {
   const code = await executeCompileContract(
+    context,
+    client,
     prevEntrypoint,
     format,
     false,
   )
 
   const storage = await executeCompileStorage(
+    context,
+    client,
     code.entrypoint,
     format,
     prevStorage,
@@ -76,8 +83,8 @@ const showUnsupportedMessage = (network: string, msg?: string) => {
   )
 }
 
-export async function executeDeploy(): Promise<void> {
-  const { code, storage } = await askForContractAndStorage('json')
+export async function executeDeploy(context: LigoContext, client: LigoProtocolClient): Promise<void> {
+  const { code, storage } = await askForContractAndStorage(context, client, 'json')
   const network = await askForNetwork()
 
   vscode.window.withProgress(
@@ -129,9 +136,11 @@ export async function executeDeploy(): Promise<void> {
   )
 }
 
-export async function executeGenerateDeployScript(): Promise<void> {
-  const { code: codeJson, storage: storageJson } = await askForContractAndStorage('json')
+export async function executeGenerateDeployScript(context: LigoContext, client: LigoProtocolClient): Promise<void> {
+  const { code: codeJson, storage: storageJson } = await askForContractAndStorage(context, client, 'json')
   const { code, storage } = await askForContractAndStorage(
+    context,
+    client,
     'text',
     codeJson.entrypoint,
     storageJson.storage,

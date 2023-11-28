@@ -36,7 +36,7 @@ test_Compilation = testGroup "Getting debug info"
   [ testCase "simple-ops.mligo contract" do
       let file = contractsDir </> "simple-ops.mligo"
       let (a, b) <-> (c, d) = Range (LigoPosition a b) (LigoPosition c d) file
-      res <- compileLigoContractDebug "main" file
+      res <- compileLigoContractDebug "" file
 
       let returnType = mkPairType
             (mkConstantType "List" [mkSimpleConstantType "Operation"])
@@ -105,7 +105,7 @@ test_ModuleNamesCollection = testGroup "Getting module names"
       let file = contractsDir </> "two-module-names.mligo"
 
       ModuleNamesList res <- getAvailableModules file
-      res @~=? ["Main1.main1", "Main1.$main", "Main2.main2", "Main2.$main"]
+      res @~=? ["Main1", "Main2"]
 
   , testCase "Zero module names" do
       let file = contractsDir </> "no-modules.mligo"

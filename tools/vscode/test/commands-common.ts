@@ -85,6 +85,9 @@ export function testDriver(
         await inputBox.sendKeys(input)
       }
       await inputBox.confirm()
+
+      // Just waiting for some validation stuff
+      await delay(2000)
     }
 
     const bottomBar = new tester.BottomBarPanel()

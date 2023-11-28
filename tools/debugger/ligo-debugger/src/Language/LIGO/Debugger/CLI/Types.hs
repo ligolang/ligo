@@ -23,6 +23,7 @@ import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Foldable qualified
 import Data.HashMap.Strict qualified as HM
+import Data.List (nub)
 import Data.List qualified as List
 import Data.Map qualified as M
 import Data.MessagePack
@@ -419,9 +420,8 @@ data LigoMapper u = LigoMapper
   , lmMichelsonCode :: Micheline.Expression
   }
 
-data ModuleName = ModuleName
+newtype ModuleName = ModuleName
   { enModule :: Text
-  , enName :: Text
   } deriving stock (Show, Eq, Ord, Generic, Data)
     deriving anyclass (NFData)
 
@@ -864,21 +864,13 @@ instance MessagePack LigoTypeConstant where
     _ltcInjection <- o .: "injection"
     pure LigoTypeConstant{..}
 
--- This @Buildable@ instance handles only generated
--- main functions for module entrypoints.
--- For example:
--- 1. someFoo -> someFoo
--- 2. SomeModule.$main -> SomeModule
--- 3. $main -> Current module
 instance Buildable ModuleName where
   build ModuleName{..}
-    | not (T.null enModule) && enName /= generatedMainName = [int||#{enModule}.#{enName}|]
-    | not (T.null enModule) || enName /= generatedMainName =
-        [int||#{enModule}#{if enName == generatedMainName then "" else enName}|]
+    | not (T.null enModule) = build enModule
     | otherwise = [int||Current module|]
 
 instance IsString ModuleName where
-  fromString = mkModuleName . toText
+  fromString = ModuleName . toText
 
 instance MessagePack LigoFileRange where
   fromObjectWith _ = withMsgMap "LigoFileRange" \o -> do
@@ -1246,8 +1238,7 @@ buildLigoTypeF typ = case sing @u of
 
 mkModuleName :: Text -> ModuleName
 mkModuleName txt =
-  let enName = T.takeWhileEnd (/= '.') txt in
-  let enModule = T.dropEnd (T.length enName + 1) txt in
+  let enModule = T.dropEnd 1 $ T.dropWhileEnd (/= '.') txt in
   ModuleName{..}
 
 makeLensesWith postfixLFields ''LigoExposedStackEntry
@@ -1295,7 +1286,7 @@ makeConciseLigoIndexedInfo vec indexedInfo =
 parseModuleNamesList :: Text -> Maybe ModuleNamesList
 parseModuleNamesList (lines -> parts) = do
   moduleNames <- safeTail >=> safeInit $ parts
-  pure $ ModuleNamesList (mkModuleName <$> moduleNames)
+  pure $ ModuleNamesList (nub $ mkModuleName <$> moduleNames)
   where
     safeTail :: [a] -> Maybe [a]
     safeTail = fmap tail . nonEmpty

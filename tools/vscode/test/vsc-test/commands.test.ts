@@ -25,7 +25,7 @@ function compileContract(expected: CompileContract): void {
     'LIGO Options',
     'Should compile the contract',
     expected.output,
-    expected.entrypoint,
+    ...(expected.entrypoint ? [expected.entrypoint] : [])
   )
 }
 
@@ -35,8 +35,10 @@ function compileStorage(expected: CompileStorage): void {
     'LIGO Options',
     'Should compile the storage',
     expected.output,
-    expected.entrypoint,
-    expected.storage,
+    ...[
+      ...expected.entrypoint ? [expected.entrypoint] : [],
+      ...[expected.storage],
+    ]
   )
 }
 
@@ -56,9 +58,11 @@ function dryRun(expected: DryRun): void {
     'LIGO Options',
     'Should dry run the contract',
     expected.output,
-    expected.entrypoint,
-    expected.parameter,
-    expected.storage,
+    ...[
+      ...expected.entrypoint ? [expected.entrypoint] : [],
+      ...[expected.parameter],
+      ...[expected.storage],
+    ]
   )
 }
 
@@ -84,8 +88,8 @@ function evaluateValue(expected: EvaluateValue): void {
 }
 
 function runTestsForFile(expectation: Expectation): void {
-  initializeTests(expectation.testFile)
   suite(`Run LIGO Options commands for ${expectation.testFile}`, () => {
+    initializeTests(expectation.testFile)
     if (expectation.compileContract) compileContract(expectation.compileContract)
     if (expectation.compileStorage) compileStorage(expectation.compileStorage)
     if (expectation.compileExpression) compileExpression(expectation.compileExpression)
@@ -121,6 +125,42 @@ suite('LIGO: Commands work', () => {
     evaluateValue: {
       value: 'main',
       output: /"\[lambda of type: \(lambda unit \(lambda unit \(pair \(list operation\) unit\)\)\) \]"/,
+    },
+  }))
+  runTestsForFile(({
+    testFile: 'two-entrypoints.mligo',
+    compileContract: {
+      entrypoint: 'First',
+      output: /{ parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } }/,
+    },
+    compileStorage: {
+      entrypoint: 'First',
+      storage: '42',
+      output: /42/,
+    },
+    dryRun: {
+      entrypoint: 'First',
+      parameter: 'unit',
+      storage: '42',
+      output: /\( LIST_EMPTY\(\) , 42 \)/,
+    },
+  }))
+  runTestsForFile(({
+    testFile: 'two-entrypoints.mligo',
+    compileContract: {
+      entrypoint: 'Second',
+      output: /{ parameter unit ;\n  storage int ;\n  code { CDR ; PUSH int 2 ; ADD ; NIL operation ; PAIR } }/,
+    },
+    compileStorage: {
+      entrypoint: 'Second',
+      storage: '42',
+      output: /42/,
+    },
+    dryRun: {
+      entrypoint: 'Second',
+      parameter: 'unit',
+      storage: '42',
+      output: /\( LIST_EMPTY\(\) , 44 \)/,
     },
   }))
 })

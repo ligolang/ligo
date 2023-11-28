@@ -17,9 +17,11 @@ function deploy(expected: Deploy): void {
     'Deploy LIGO',
     'Should deploy the contract to ghostnet',
     expected.output,
-    expected.entrypoint,
-    expected.storage,
-    expected.network,
+    ...[
+      ...expected.entrypoint ? [expected.entrypoint] : [],
+      ...[expected.storage],
+      ...[expected.network],
+    ]
   )
 }
 
@@ -29,15 +31,17 @@ function generateDeployScript(expected: GenerateDeployScript): void {
     'Deploy LIGO',
     'Should generate a deploy script for the contract',
     expected.output,
-    expected.entrypoint,
-    expected.storage,
-    expected.network,
+    ...[
+      ...expected.entrypoint ? [expected.entrypoint] : [],
+      ...[expected.storage],
+      ...[expected.network],
+    ]
   )
 }
 
 function runTestsForFile(expectation: Expectation): void {
-  initializeTests(expectation.testFile)
   suite(`Run Deploy LIGO commands for ${expectation.testFile}`, () => {
+    initializeTests(expectation.testFile)
     if (expectation.deploy) deploy(expectation.deploy)
     if (expectation.generateDeployScript) generateDeployScript(expectation.generateDeployScript)
   })
@@ -68,6 +72,21 @@ suite('LIGO: Commands work', () => {
       storage: 'unit',
       network: 'nairobinet',
       output: /Generated deploy script for 'simple' contract:\noctez-client originate contract simple transferring 0 from baker running { parameter unit ; storage unit ; code { CAR ; NIL operation ; PAIR } }\n\n --init Unit\n\n --burn-cap 0.07375/,
+    },
+  }))
+  runTestsForFile(({
+    testFile: 'two-entrypoints.mligo',
+    deploy: {
+      entrypoint: 'First',
+      storage: '42',
+      network: 'nairobinet',
+      output: /The contract was successfully deployed on the nairobinet test network\nView your contract here: https:\/\/better-call\.dev\/nairobinet\/[a-zA-Z0-9]{36}\nThe address of your new contract is: [a-zA-Z0-9]{36}\nThe initial storage of your contract is: { *"int": *"42" *}/,
+    },
+    generateDeployScript: {
+      entrypoint: 'First',
+      storage: '42',
+      network: 'nairobinet',
+      output: /Generated deploy script for 'two-entrypoints' contract:\noctez-client originate contract two-entrypoints transferring 0 from baker running { parameter unit ; storage int ; code { CDR ; NIL operation ; PAIR } }\n\n --init 42\n\n --burn-cap 0.07375/,
     },
   }))
 })

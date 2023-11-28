@@ -6,9 +6,8 @@
 
 import { execFileSync } from 'child_process';
 import * as vscode from 'vscode';
+import { isDefined, Maybe } from '../common/base';
 import { ConfigCommand, ConfigField } from './LigoDebugConfigurationProvider';
-
-export type Maybe<T> = T | undefined
 
 // Interrupts debugging execution.
 //
@@ -18,15 +17,6 @@ export function interruptExecution(): never {
   // 1000 - 7 is just a random value. We're throwing it
   // in order not to trigger all internal `vscode` executions.
   throw 1000 - 7;
-}
-
-// Make from an object reference
-export type Ref<T> = {
-  ref: T
-}
-
-export function isDefined<T>(x: T | undefined | null): x is T {
-  return x !== null && x !== undefined
 }
 
 // Extract the name of a pseudo-command (like `(*@AskOnStart@*)`).
@@ -77,18 +67,6 @@ export interface ContractMetadata {
 }
 
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>
-
-// Type if input box that initializ
-export type InputBoxType = "parameter" | "storage"
-
-export type InputValueLang = "LIGO" | "Michelson";
-
-/** The type of validation in an input box.
- *
- * `undefined` would stand for validation pass, and a `string` would mean
- * the reason of a failure.
- */
-export type InputValidationResult = Maybe<string>
 
 type BinaryInfo = {
   name: string,
@@ -152,7 +130,7 @@ export function impossible(x: never) {
 }
 
 export function getCurrentWorkspacePath(): Maybe<vscode.Uri> {
-  return vscode.workspace.workspaceFolders?.[0].uri;;
+  return vscode.workspace.workspaceFolders?.[0].uri;
 }
 
 export function generatedModuleName(module: string): string {
