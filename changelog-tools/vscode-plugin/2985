@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improve commands in `LIGO Options` and `Deploy LIGO`. Now you can see a list of available entrypoints and a validation for parameter/storage.\\n\\n\\n"
+merge_request: '2985'
+title: "[#2068] Share UI primitives between debugger and LSP"
+type: added
+            
