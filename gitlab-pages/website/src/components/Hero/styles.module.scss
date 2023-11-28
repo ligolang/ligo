@@ -1,0 +1,178 @@
+@use "/src/css/breakpoints.scss" as breakpoints;
+
+.hero {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.hero::before {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  top: 0%;
+  bottom: 10%;
+  width: 150%;
+  left: -25%;
+  background: linear-gradient(
+    83.21deg,
+    var(--ligo-base-color_blue) 0%,
+    var(--ligo-base-color_purple) 100%
+  );
+  mask-image: radial-gradient(rgba(0, 0, 0, 0.3), transparent 70%);
+}
+
+.hero > svg {
+  position: absolute;
+}
+
+.hero > h1 {
+  font-size: var(--ligo-text_size-7xl);
+  text-align: center;
+  text-transform: capitalize;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.hero .hero__title-small {
+  font-size: var(--ligo-text_size-6xl);
+  text-transform: lowercase;
+  letter-spacing: normal;
+}
+
+[data-theme="dark"] {
+  .hero::before {
+    mask-image: radial-gradient(rgba(0, 0, 0, 0.4), transparent 70%);
+  }
+  .hero > h1 {
+    background: linear-gradient(
+      90deg,
+      var(--ligo-base-color_blue-lighter) 0%,
+      var(--ligo-base-color_purple) 100%
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+[data-theme="light"] {
+  .hero > h1 span {
+    background: linear-gradient(
+      90deg,
+      var(--ligo-base-color_blue) 0%,
+      var(--ligo-base-color_purple) 100%
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.hero > p {
+  text-align: center;
+  font-size: var(--ligo-text_size-2xl);
+  line-height: 2rem;
+  color: var(--ligo-color_content-primary-transparent);
+}
+
+.hero__cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.hero__cta > * {
+  margin: 10px;
+}
+
+.hero__best-users {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  margin: 2rem 0;
+  width: 70%;
+  /* flex-wrap: wrap; */
+  justify-content: center;
+}
+
+.hero__best-users > h3 {
+  font-weight: normal;
+  text-align: center;
+  max-width: 20rem;
+  width: 100%;
+  margin: 10px 20px;
+}
+
+.hero__best-users > div {
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+  mask: linear-gradient(
+    to right,
+    hsla(0, 0%, 0%, 0),
+    hsla(0, 0%, 0%, 1) 20%,
+    hsla(0, 0%, 0%, 1) 80%,
+    hsla(0, 0%, 0%, 0)
+  );
+}
+
+.hero__marquee {
+  --gap: 1rem;
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  gap: var(--gap);
+}
+
+.hero__marquee-content {
+  list-style: none;
+  padding: 0;
+  margin: 10px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  min-width: 100%;
+  gap: var(--gap);
+  animation: scroll 40s linear infinite;
+}
+
+.hero__marquee:hover .hero__marquee-content {
+  animation-play-state: paused;
+}
+
+.hero__marquee-content > li {
+  margin: 0 1rem;
+}
+
+.hero__marquee-content > li a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
+  .hero__best-users {
+    display: flex;
+    flex-flow: row;
+  }
+}
+
+/* Pause animation when reduced-motion is set */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__content {
+    animation-play-state: paused !important;
+  }
+}

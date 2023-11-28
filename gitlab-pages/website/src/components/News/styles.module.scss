@@ -1,0 +1,82 @@
+@use "/src/css/breakpoints.scss" as breakpoints;
+
+.home__news {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2rem;
+  grid-template-columns: 1fr;
+  width: 100%;
+  color: var(--ligo-base-color_white);
+}
+
+.news-item {
+  position: relative;
+  padding: 2rem;
+  text-align: start;
+  background: linear-gradient(
+      45deg,
+      var(--ligo-base-color_blue-transparent) 0%,
+      var(--ligo-base-color_purple-transparent) 100%
+    ),
+    url(https://grainy-gradients.vercel.app/noise.svg);
+
+  border-radius: 0.75rem;
+  grid-column: span 4;
+}
+
+.news-item__overlay {
+  transition: opacity 0.2s;
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  font-size: var(--ligo-text_size-5xl);
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 2rem;
+  line-height: 1;
+  text-align: start;
+}
+
+.news-item__content {
+  display: flex;
+  flex-flow: column;
+  justify-content: start;
+  height: 100%;
+}
+
+.news-item__content > *:not(.news-item__content-title) {
+  color: var(--ligo-base-color_white-light);
+}
+
+.news-item__content img {
+  margin-left: 0.5rem;
+}
+
+.news-item__content-title {
+  font-size: var(--ligo-text_size-5xl);
+  text-transform: uppercase;
+}
+
+.news-item__content-description {
+  max-width: 550px;
+  font-size: var(--ligo-text_size-2xl);
+  line-height: 1.1;
+  flex: 1;
+}
+
+@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
+  .home__news {
+    grid-template-columns: repeat(10, 1fr);
+  }
+
+  .news-item--large {
+    grid-column: span 6;
+  }
+
+  .news-item--small {
+    grid-column: span 4;
+  }
+}

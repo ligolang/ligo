@@ -1,0 +1,65 @@
+@use "/src/css/breakpoints.scss" as breakpoints;
+
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+.home__main {
+  --s: 200px; /* control the size */
+
+  --_g: #0000 90deg, var(--ligo-color_background-secondary-transparent) 0;
+  background: conic-gradient(from 90deg at 1px 1px, var(--_g)),
+    conic-gradient(from 90deg at 1px 1px, var(--_g));
+  background-size: var(--s) var(--s), calc(var(--s) / 5) calc(var(--s) / 5);
+  mask-image: linear-gradient(to bottom, transparent, 1%, white, 96%, transparent);
+}
+
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.section__title-highlighted {
+  background: linear-gradient(
+    90deg,
+    var(--ligo-base-color_blue-lighter) 0%,
+    var(--ligo-base-color_purple) 100%
+  );
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme="light"] {
+  .section__title-highlighted {
+    background: linear-gradient(
+      90deg,
+      var(--ligo-base-color_blue) 0%,
+      var(--ligo-base-color_purple) 100%
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@media screen and (min-width: breakpoints.$ligo-breakpoint_sm) {
+  .container {
+    max-width: breakpoints.$ligo-breakpoint_sm;
+  }
+}
+@media screen and (min-width: breakpoints.$ligo-breakpoint_md) {
+  .container {
+    max-width: breakpoints.$ligo-breakpoint_md;
+  }
+}
+@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
+  .container {
+    max-width: breakpoints.$ligo-breakpoint_lg;
+  }
+}
+@media screen and (min-width: breakpoints.$ligo-breakpoint_xl) {
+  .container {
+    max-width: breakpoints.$ligo-breakpoint_xl;
+  }
+}

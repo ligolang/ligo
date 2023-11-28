@@ -1,0 +1,67 @@
+@use "/src/css/breakpoints.scss" as breakpoints;
+
+.footer__content {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.footer__brand {
+  margin-bottom: 2rem;
+}
+
+.footer__brand-subtitle {
+  font-size: var(--ligo-text_size-xl);
+}
+
+.footer__links {
+  text-align: center;
+}
+
+.footer__links > * {
+  margin: 0;
+}
+
+.footer__after {
+  background-color: var(--ifm-background-color);
+  padding: 2rem;
+}
+
+.footer__after-content {
+  display: flex;
+  flex-flow: wrap;
+  justify-content: space-around;
+}
+
+.footer__after-content > * {
+  margin: 1rem 0;
+}
+
+.footer__socials {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-flow: wrap;
+  justify-content: center;
+  justify-self: end;
+}
+
+.footer__socials-item {
+  display: flex;
+  margin: 0.5rem 1rem;
+}
+
+.footer__socials-item > a {
+  display: flex;
+  align-self: center;
+}
+
+@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
+  .footer__content {
+    text-align: start;
+    justify-content: space-between;
+  }
+}

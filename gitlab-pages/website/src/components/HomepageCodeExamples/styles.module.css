@@ -1,15 +1,43 @@
-.features {
-  display: flex;
-  align-items: center;
-  padding: 2rem 0;
+.code-examples {
+  max-width: 800px;
   width: 100%;
 }
-
-.featureSvg {
-  height: 200px;
-  width: 200px;
+.code-examples__ide {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-.tabPannel {
-  border: 5px;
+.code-examples__cta {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--ligo-color_background-brand-primary);
+  color: var(--ligo-base-color_white);
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+  border-bottom-left-radius: var(--ifm-pre-border-radius);
+  border-bottom-right-radius: var(--ifm-pre-border-radius);
+}
+
+.code-examples__cta:hover {
+  transition: all 0.2s;
+  color: var(--ligo-base-color_white);
+  text-decoration: none;
+  background-color: var(--ligo-color_hover-brand);
+  cursor: pointer;
+}
+
+.code-examples__cta:active {
+  color: var(--ligo-base-color_white);
+  background-color: var(--ligo-color_active-brand);
+}
+
+.code-examples__cta:focus-visible {
+  outline: none;
+  box-shadow: var(--ligo-shadow_focus-visible);
+}
+
+.code-examples__cta {
+  outline: none;
 }

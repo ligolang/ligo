@@ -1,0 +1,68 @@
+@use "/src/css/breakpoints.scss" as breakpoints;
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  column-gap: 1rem;
+  row-gap: 1rem;
+  margin-top: 2rem;
+}
+
+.feature {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-radius: 0.75rem;
+  background-image: linear-gradient(
+    to bottom,
+    var(--ligo-color_background-secondary),
+    var(--ligo-color_background-secondary-transparent)
+  );
+  padding: 1rem;
+  color: var(--ligo-color_content-primary);
+}
+
+.feature:hover {
+  transition: all 0.5s;
+  background-image: linear-gradient(
+    to bottom,
+    var(--ligo-color_background-secondary) 70%,
+    var(--ligo-color_background-secondary-transparent) 100%
+  );
+  box-shadow: rgb(255, 255, 255) 0px 0px 0px 0px, var(--ligo-base-color_slate-dark) 0px 0px 0px 2px,
+    rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px;
+  text-decoration: none;
+}
+
+.feature__title {
+  margin: 1rem 0;
+}
+
+.feature__description {
+  flex: 1;
+  text-align: center;
+  font-size: var(--ligo-text_size-lg);
+  color: var(--ligo-color_content-secondary);
+}
+
+.feature__link {
+  width: 100%;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  padding-top: 13em;
+  margin-top: -13em;
+}
+
+.feature__icon {
+  height: 80px;
+  width: 80px;
+}
+
+@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
+  .features {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

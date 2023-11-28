@@ -1,0 +1,33 @@
+/* Light theme */
+:root {
+  /* Background */
+  --ligo-color_background-primary: var(--ligo-base-color_white);
+  --ligo-color_background-secondary: var(--ligo-base-color_white-lightest);
+  --ligo-color_background-secondary-transparent: var(--ligo-base-color_steel-transparent);
+  --ligo-color_background-tertiary: var(--ligo-base-color_slate);
+  --ligo-color_background-brand-primary: var(--ligo-base-color_blue-light);
+  --ligo-color_background-brand-primary-reversed: var(--ligo-base-color_white);
+  /* Content */
+  --ligo-color_content-primary: var(--ligo-base-color_stealth-dark);
+  --ligo-color_content-secondary: var(--ligo-base-color_stealth);
+  --ligo-color_content-tertiary: var(--ligo-base-color_stealth-light);
+  --ligo-color_content-action: var(--ligo-base-color_blue);
+  --ligo-color_content-active: var(--ligo-base-color_blue-dark);
+  --ligo-color_content-inactive: var(--ligo-base-color_stealth-lightest);
+  --ligo-color_content-warning: var(--ligo-base-color_stealth);
+  --ligo-color_content-positive: var(--ligo-base-color_stealth);
+  --ligo-color_content-information: var(--ligo-base-color_stealth);
+  --ligo-color_content-accent: var(--ligo-base-color_stealth);
+  --ligo-color_content-visited: var(--ligo-base-color_stealth);
+  /* Shadow */
+  --ligo-color_content-shadow: var(--ligo-base-color_stealth);
+  /* Hover */
+  --ligo-color_hover-primary: var(--ligo-base-color_blue-light);
+  --ligo-color_hover-brand: var(--ligo-base-color_blue);
+  /* Active */
+  --ligo-color_active-brand: var(--ligo-base-color_blue-dark);
+  --ligo-color_active-primary: var(--ligo-base-color_blue-dark);
+
+  /* Other (not sorted yet) */
+  --blockquote-color: #efefef;
+}

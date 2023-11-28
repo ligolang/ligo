@@ -1,0 +1,79 @@
+.btn {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  block-size: 48px;
+  border: 0;
+  line-height: 1;
+  text-decoration: none;
+  inline-size: max-content;
+  padding-block: 14px;
+  padding-inline: 24px;
+  font-weight: bold;
+  letter-spacing: 0.4px;
+  border-radius: 9999px;
+  color: var(--ligo-base-color_white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: var(--ligo-color_background-brand-primary);
+  text-transform: uppercase;
+}
+
+.btn:not(:disabled):hover {
+  transition: all 0.2s;
+  color: var(--ligo-base-color_white);
+  text-decoration: none;
+  background-color: var(--ligo-color_hover-brand);
+  cursor: pointer;
+}
+
+.btn:not(:disabled):active {
+  color: var(--ligo-base-color_white);
+  background-color: var(--ligo-color_active-brand);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: var(--ligo-opacity_disabled-state);
+}
+
+.btn:not(:disabled):focus-visible {
+  outline: none;
+  box-shadow: var(--ligo-shadow_focus-visible);
+}
+
+.btn:not(:disabled) {
+  outline: none;
+}
+
+.btn_variant--ghost {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px transparent;
+  color: inherit;
+  border: 2px solid var(--ligo-color_background-brand-primary);
+}
+
+.btn_variant--ghost:not(:disabled):hover {
+  color: inherit;
+
+  background-color: transparent;
+  border: 2px solid var(--ligo-color_hover-brand);
+}
+
+.btn_variant--ghost:not(:disabled):active {
+  color: inherit;
+
+  background-color: transparent;
+
+  border: 2px solid var(--ligo-color_active-primary);
+}
+
+.btn_variant--ghost:not(:disabled):focus-visible {
+  color: inherit;
+
+  outline: none;
+  box-shadow: inset 0 0 0 2px transparent, var(--ligo-shadow_focus-visible);
+}

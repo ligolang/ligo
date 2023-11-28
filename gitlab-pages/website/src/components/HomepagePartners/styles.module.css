@@ -1,11 +1,15 @@
-.features {
+.partners {
   display: flex;
-  align-items: center;
-  padding: 2rem 0;
-  width: 100%;
+  flex-flow: wrap;
+  justify-content: center;
 }
 
-.featureSvg {
-  height: 200px;
-  width: 200px;
+.partner {
+  line-height: 0;
+  margin: 2rem;
+}
+
+.partner > svg {
+  height: 80px;
+  color: var(--ligo-color_content-primary);
 }
