@@ -654,8 +654,11 @@ stmt_ending_with_expr:
 | full_return_stmt | right_rec_stmt (stmt_ending_with_expr) { $1 }
 
 stmt_not_ending_with_expr:
-  stmt_not_starting_with_expr_nor_block2_bis | block_stmt
-| right_rec_stmt (stmt_not_ending_with_expr) { $1 }
+  stmt_not_starting_with_expr_nor_block2_bis
+| block_stmt
+| right_rec_stmt (stmt_not_ending_with_expr)
+| right_rec_stmt (type_decl { S_Decl $1 })
+| right_rec_stmt (export (type_decl)) { $1 }
 
 right_rec_stmt (right_stmt):
   "[@attr]" right_stmt { S_Attr ($1,$2) }
@@ -676,7 +679,7 @@ stmt_not_starting_with_expr_nor_block1_bis: (* and ending like [expr] *)
 
 stmt_not_starting_with_expr_nor_block1:
   stmt_not_starting_with_expr_nor_block1_bis
-| right_rec_stmt (stmt_ending_with_expr) { $1 }
+| right_rec_stmt (stmt_not_starting_with_expr_nor_block1_bis) { $1 }
 
 stmt_not_starting_with_expr_nor_block2_bis: (* and not ending like [expr] *)
   interface_decl | namespace_decl { S_Decl $1 }
