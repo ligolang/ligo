@@ -21,6 +21,6 @@ let%expect_test "error_recovery_fuzzing_jsligo" =
     PASS, 24, 162, 54, 134, 14, ./4match.jsligo
     PASS, 39, 171, 51, 130, 12, ./4never.jsligo
     PASS, 35, 221, 43, 189, 12, ./4recursion.jsligo
-    PASS, 19, 171, 41, 154, 7, ./8assert.jsligo
+    PASS, 20, 152, 56, 142, 8, ./8assert.jsligo
     PASS, 11, 86, 8, 86, 1, ./8eq_bool.jsligo
     PASS, 16, 65, 5, 221, 0, ./8recursion.jsligo |}]

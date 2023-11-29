@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nMore optional semicolons.\\n\\n"
+merge_request: '2996'
+title: "Fixed some optional semicolons. Added making attributes from @comment."
+type: added
+            

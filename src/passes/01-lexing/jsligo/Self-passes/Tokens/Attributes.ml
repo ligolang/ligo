@@ -46,18 +46,11 @@ let collect_attributes tokens =
       | "thunk" ->
           let attr = Token.mk_attr ~key:"thunk" id#region
           in inner (attr :: acc) tokens
-      | "annot" -> (
+      | "comment" | "annot" | "layout" | "deprecated" -> (
           match tokens with
             LPAR _ :: String value :: RPAR _ :: rest ->
               let value = Attr.String value#payload in
-              let attr = Token.mk_attr ~key:"annot" ~value id#region
-              in inner (attr :: acc) rest
-          | _ -> inner (token :: acc) tokens)
-      | "layout" -> (
-          match tokens with
-            LPAR _ :: String value :: RPAR _ :: rest ->
-              let value = Attr.String value#payload in
-              let attr = Token.mk_attr ~key:"layout" ~value id#region
+              let attr = Token.mk_attr ~key:id#payload ~value id#region
               in inner (attr :: acc) rest
           | _ -> inner (token :: acc) tokens)
       | _ -> inner (token :: acc) tokens)
