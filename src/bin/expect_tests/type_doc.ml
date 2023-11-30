@@ -27,7 +27,7 @@ let%expect_test _ =
     export import SomeFile = SomeFile
 
     /**
-     * Top leve value doc
+     * Top level value doc
      */
     export const top_level_value : int = "..."
     import * as Map from '/../../test/contracts/map'

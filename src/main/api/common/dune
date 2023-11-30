@@ -8,6 +8,7 @@
   ligo.ligo_compile
   ligo.decompile
   ligo.scopes
+  ligo.commands
   build
   interpreter
   bos

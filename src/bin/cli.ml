@@ -1,4 +1,5 @@
 open Cli_helpers
+module Constants = Commands.Constants
 module Default_options = Compiler_options.Default_options
 module Raw_options = Compiler_options.Raw_options
 
@@ -74,6 +75,11 @@ let source_file =
 let source_files =
   let name = "SOURCE_FILES" in
   Command.Param.(anon @@ non_empty_sequence_as_pair (name %: create_arg_type Fn.id))
+
+
+let directory =
+  let name = "DIRECTORY" in
+  Command.Param.(anon (name %: create_arg_type Fn.id))
 
 
 let package_name =
@@ -655,6 +661,17 @@ let type_doc =
   let name = "--type-doc" in
   let doc = "Translate JsLIGO program into TypeScript for generating documentation." in
   flag ~doc name no_arg
+
+
+let doc_args =
+  let open Command.Param in
+  let name = "--doc-args" in
+  let doc =
+    "ARGUMENTS Arguments that would be passed into documentation generating tool \
+     (typedoc for JsLIGO)"
+  in
+  let spec = optional_with_default "" string in
+  flag ~doc name spec
 
 
 module Api = Ligo_api
@@ -3270,6 +3287,27 @@ let analytics =
     [ "accept", analytics_accept; "deny", analytics_deny ]
 
 
+let doc =
+  let f syntax directory doc_args skip_analytics protocol_version () =
+    let raw_options = Raw_options.make ~syntax ~protocol_version () in
+    let cli_analytics =
+      Analytics.generate_cli_metrics_with_syntax_and_protocol
+        ~command:"doc"
+        ~raw_options
+        ()
+    in
+    return_with_custom_formatter ~skip_analytics ~cli_analytics ~return
+    @@ Api.Doc.doc raw_options directory doc_args
+  in
+  let summary = "[BETA] Generate a documentation for your project" in
+  let readme () =
+    "[BETA] Generate a documentation for your project. At this moment only JsLIGO is \
+     supported and it requires typedoc to be installed"
+  in
+  Command.basic ~summary ~readme
+  @@ (f <$> req_syntax <*> directory <*> doc_args <*> skip_analytics <*> protocol_version)
+
+
 let main =
   Command.group ~preserve_subcommand_order:() ~summary:"The LigoLANG compiler"
   @@ [ "compile", compile_group
@@ -3283,6 +3321,7 @@ let main =
      ; "print", print_group
      ; "install", install
      ; "lsp", lsp
+     ; "doc", doc
      ; "analytics", analytics
      ; "registry", registry_group
      ]

@@ -2,7 +2,7 @@
 #import "address.mligo" "MligoWontBeInTheOutput"
 
 /**
- * Top leve value doc
+ * Top level value doc
  */
 export const top_level_value = 42
 

@@ -5,6 +5,7 @@ let ligo_rc_path () = Filename.concat (Ligo_unix.home_directory ()) ".ligorc"
 let ligo_registry = "https://packages.ligolang.org"
 let esy = "esy"
 let windows = "Win32"
+let typedoc = "typedoc"
 
 let esy_add ~package_name ~cache_path ~ligo_registry =
   ( ""
@@ -38,3 +39,6 @@ let git_clone ~project_url ~project_name =
 
 
 let git_checkout ~dir_path ~ref = "", [| "git"; "--git-dir"; dir_path; "checkout"; ref |]
+
+let typedoc_generate ~arguments ~files =
+  "", Array.concat [ [| typedoc |]; Array.of_list arguments; Array.of_list files ]

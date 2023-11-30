@@ -19,7 +19,7 @@
 (library
  (name cli_helpers)
  (public_name ligo.cli_helpers)
- (modules cli_helpers ligo_rc ligo_ignore constants)
+ (modules cli_helpers ligo_rc ligo_ignore)
  (instrumentation
   (backend bisect_ppx))
  (libraries
@@ -35,3 +35,11 @@
   re)
  (preprocess
   (pps ppx_deriving_yojson)))
+
+(library
+ (name commands)
+ (public_name ligo.commands)
+ (modules commands constants)
+ (instrumentation
+  (backend bisect_ppx))
+ (libraries simple-utils lwt lwt.unix ligo.unix))
