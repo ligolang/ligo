@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nMore optional semicolons between statements.\\n\\n"
+merge_request: '2997'
+title: "Enable multiple decorators of statements not separated by semicolons"
+type: added
+            
