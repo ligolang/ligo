@@ -39,29 +39,6 @@ const News = () => {
     {
       title: (
         <>
-          Follow-us
-          <br />
-          on X
-        </>
-      ),
-      description: "Ligo team shares news on X (Twitter); don't miss them and follow us.",
-      size: "small",
-      href: "https://x.com/LigoLang",
-      cta: (
-        <>
-          Follow-us on{" "}
-          <Image
-            src={useBaseUrl("img/communication_channels/x-white.svg")}
-            height={15}
-            width={15}
-            alt={"Follow Ligo on X"}
-          />
-        </>
-      ),
-    },
-    {
-      title: (
-        <>
           Take a look <br />
           at the Changelog
         </>
@@ -74,15 +51,6 @@ const News = () => {
       cta: "Go to Ligo Changelog",
     },
     {
-      title: "Events",
-      description:
-        "The Ligo team is contributing too. See us at conferences to discover Ligo through a talk given by one of our teammates.",
-      size: "large",
-      href: "https://tezos.com/tez-dev",
-
-      cta: "ligo at tez/dev",
-    },
-    {
       title: "GitLab",
       description:
         "Ligo sources are available on our GitLab. Feel free to open an issue or contribute.",
@@ -90,6 +58,38 @@ const News = () => {
       href: "https://gitlab.com/ligolang/ligo",
 
       cta: "Contribute to Ligo",
+    },
+    {
+      title: "Events",
+      description:
+        "The Ligo team is contributing too. See us at conferences to discover Ligo through a talk given by one of our teammates.",
+      size: "small",
+      href: "https://tezos.com/tez-dev",
+
+      cta: "ligo at tez/dev",
+    },
+    {
+      title: (
+        <>
+          Follow-us
+          <br />
+          on X
+        </>
+      ),
+      description: "Ligo team shares news on X (Twitter); don't miss them and follow us.",
+      size: "large",
+      href: "https://x.com/LigoLang",
+      cta: (
+        <>
+          Follow-us on{" "}
+          <Image
+            src={useBaseUrl("img/communication_channels/x-white.svg")}
+            height={15}
+            width={15}
+            alt={"Follow Ligo on X"}
+          />
+        </>
+      ),
     },
   ];
   return (
