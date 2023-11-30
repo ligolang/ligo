@@ -4,12 +4,19 @@ open Lsp_helpers
 module Requests = Ligo_lsp.Server.Requests
 open Requests.Handler
 
+(* when we send code, we wrap it in "```cameligo ... ```" or in "```jsligo ... ```"
+   to have a syntax highlight,
+   but when we show a documentation to user, we show it just as a markdown *)
+type language =
+  | Ligo
+  | Markdown
+
 type hover_type =
-  | List of string list
+  | List of (string * language) list
   | MarkedString of string
   | MarkupContent of string
 
-let one elt = List [ elt ]
+let one elt = List [ elt, Ligo ]
 
 type hover_test =
   { test_name : string
@@ -44,7 +51,11 @@ let get_hover_test ({ test_name; file; hovers } : hover_test) : unit Alcotest.te
       @@ Option.map ~f:Syntax.to_string
       @@ Path.get_syntax path
     in
-    let mk_marked_string value = MarkedString.{ language = Some syntax; value } in
+    let mk_marked_string language value =
+      match language with
+      | Ligo -> MarkedString.{ language = Some syntax; value }
+      | Markdown -> MarkedString.{ language = None; value }
+    in
     let mk_markup_content value =
       let value = Format.asprintf "```%s\n%s\n```" syntax value in
       MarkupContent.{ kind = Markdown; value }
@@ -56,12 +67,18 @@ let get_hover_test ({ test_name; file; hovers } : hover_test) : unit Alcotest.te
         { range = _; contents } ->
       (match contents, expected_hover with
       | `List actual_hovers, List expected_hovers ->
-        let expected_hovers = List.map ~f:mk_marked_string expected_hovers in
+        let expected_hovers =
+          List.map ~f:(fun (lang, s) -> mk_marked_string s lang) expected_hovers
+        in
         let msg = "List hovers mismatch.\n" ^ test_info in
         check (Alcotest.list MarkedString.testable) msg expected_hovers actual_hovers
       | `MarkedString actual_hover, MarkedString expected_hover ->
         let msg = "Marked string hover mismatch.\n" ^ test_info in
-        check MarkedString.testable msg (mk_marked_string expected_hover) actual_hover
+        check
+          MarkedString.testable
+          msg
+          (mk_marked_string Ligo expected_hover)
+          actual_hover
       | `MarkupContent actual_hover, MarkupContent expected_hover ->
         let msg = "Hover message mismatch.\n" ^ test_info in
         check MarkupContent.testable msg (mk_markup_content expected_hover) actual_hover
@@ -332,6 +349,164 @@ let test_cases =
             ; pos ~line:72 ~character:35
             ; pos ~line:76 ~character:38
             ]
+    }
+  ; { test_name = "doc_comments.mligo"
+    ; file = "contracts/lsp/hover/doc_comments.mligo"
+    ; hovers =
+        (let hover_for_module_type_X =
+           List
+             [ (* FIXME I'm a module type not a module *)
+               ( "module X : sig\n\
+                 \  [@view]\n\
+                 \  val y : int -> int\n\n\
+                 \  type t\n\n\
+                 \  val p : t option\n\
+                 \  end"
+               , Ligo )
+             ; "MODULE SIG", Markdown
+             ]
+         and hover_for_term_x =
+           List
+             [ "x : int t", Ligo
+             ; ( "JUST A TERM\n\n\
+                 \  with some doc\n\
+                 \  in **several** lines\n\n\
+                 \  one ~~more~~ `line`"
+               , Markdown )
+             ]
+         in
+         [ pos ~line:1 ~character:12, hover_for_module_type_X
+         ; pos ~line:15 ~character:11, hover_for_module_type_X
+         ; pos ~line:5 ~character:6, List [ "y : int -> int", Ligo; "SIG ITEM", Markdown ]
+         ; pos ~line:8 ~character:7, List [ "type t", Ligo; "SIG TYPE", Markdown ]
+         ; pos ~line:11 ~character:6, List [ "p : t option", Ligo; "SIG ITEM", Markdown ]
+         ; ( pos ~line:15 ~character:7
+           , List
+               [ ( "module M : sig\n\
+                   \  type t =  {foo : nat}\n\n\
+                   \  val p : t option\n\n\
+                   \  [@view]\n\
+                   \  val y : int -> int\n\
+                   \  end"
+                 , Ligo )
+               ; "MODULE", Markdown
+               ] )
+         ; ( pos ~line:19 ~character:6
+           , List [ "y : int -> int", Ligo; "TERM IN MODULE", Markdown ] )
+         ; ( pos ~line:22 ~character:7
+           , List [ "type t = {foo : nat}", Ligo; "TYPE IN MODULE", Markdown ] )
+         ; ( pos ~line:25 ~character:6
+           , List [ "p : t option", Ligo; "TERM IN MODULE", Markdown ] )
+         ; ( pos ~line:29 ~character:8
+           , List [ "type 'a t = 'a list", Ligo; "JUST A TYPE", Markdown ] )
+         ; pos ~line:38 ~character:4, hover_for_term_x
+         ; pos ~line:40 ~character:8, hover_for_term_x
+         ; ( pos ~line:43 ~character:7
+           , List
+               [ ( "module M1 : sig\n\
+                   \  [@entry]\n\
+                   \  val y : int -> int -> (operation list * int)\n\
+                   \  end"
+                 , Ligo )
+               ; "MODULE WITH ENTRY POINT", Markdown
+               ] )
+         ; ( pos ~line:49 ~character:6
+           , List
+               [ "y : int -> int -> (operation list * int)", Ligo
+               ; "BEFORE DECORATOR", Markdown
+               ; "AFTER DECORATOR", Markdown
+               ; "ENTRY POINT TERM", Markdown
+               ] )
+         ; ( pos ~line:52 ~character:9
+           , List
+               [ "module C : sig\n  val f : int -> int\n  end", Ligo
+               ; "NESTED MODULE", Markdown
+               ] )
+         ; ( pos ~line:54 ~character:8
+           , List [ "f : int -> int", Ligo; "NESTED MODULE TERM", Markdown ] )
+         ; ( pos ~line:59 ~character:4
+           , List [ "t : int list", Ligo; "Has type with comment inside", Markdown ] )
+         ])
+    }
+  ; { test_name = "doc_comments.jsligo"
+    ; file = "contracts/lsp/hover/doc_comments.jsligo"
+    ; hovers =
+        (let hover_for_namespace_X =
+           List
+             [ (* FIXME I'm an interface, not a namespace *)
+               ( "namespace X implements {\n\
+                 \  @view\n\
+                 \  const y: (_: int) => int;\n\
+                 \  type t;\n\
+                 \  const p: option<t>\n\
+                  }"
+               , Ligo )
+             ; "INTERFACE", Markdown
+             ]
+         and hover_for_term_x =
+           List
+             [ "x : t<int>", Ligo
+             ; ( "JUST A TERM\nwith some doc\nin **several** lines\n\none ~~more~~ `line`"
+               , Markdown )
+             ]
+         in
+         [ pos ~line:1 ~character:10, hover_for_namespace_X
+         ; pos ~line:14 ~character:23, hover_for_namespace_X
+         ; ( pos ~line:5 ~character:8
+           , List [ "y : (_: int) => int", Ligo; "INTERFACE ITEM", Markdown ] )
+         ; pos ~line:8 ~character:7, List [ "type t", Ligo; "INTERFACE TYPE", Markdown ]
+         ; ( pos ~line:10 ~character:8
+           , List [ "p : option<t>", Ligo; "INTERFACE ITEM", Markdown ] )
+         ; ( pos ~line:14 ~character:10
+           , List
+               [ ( "namespace M implements {\n\
+                   \  @view\n\
+                   \  const y: (_: int) => int;\n\
+                   \  type t = { foo: nat };\n\
+                   \  const p: option<t>\n\
+                    }"
+                 , Ligo )
+               ; "NAMESPACE", Markdown
+               ] )
+         ; ( pos ~line:18 ~character:15
+           , List [ "y : (_: int) => int", Ligo; "TERM IN NAMESPACE", Markdown ] )
+         ; ( pos ~line:20 ~character:14
+           , List [ "type t = { foo: nat }", Ligo; "TYPE IN NAMESPACE", Markdown ] )
+         ; ( pos ~line:22 ~character:15
+           , List [ "p : option<t>", Ligo; "TERM IN NAMESPACE", Markdown ] )
+         ; ( pos ~line:26 ~character:5
+           , List [ "type t<a> = list<a>", Ligo; "JUST A TYPE", Markdown ] )
+         ; pos ~line:35 ~character:6, hover_for_term_x
+         ; pos ~line:37 ~character:10, hover_for_term_x
+         ; ( pos ~line:40 ~character:11
+           , List
+               [ ( "namespace M1 implements {\n\
+                   \  @entry\n\
+                   \  const y: (_: int) => (_: int) => [list<operation>, int]\n\
+                    }"
+                 , Ligo )
+               ; "NAMESPACE WITH ENTRY POINT", Markdown
+               ] )
+         ; ( pos ~line:46 ~character:15
+           , List
+               [ "y : (_: int) => (_: int) => [list<operation>, int]", Ligo
+               ; "BEFORE DECORATOR", Markdown
+               ; "AFTER DECORATOR", Markdown
+               ; "ENTRY POINT TERM", Markdown
+               ] )
+         ; ( pos ~line:49 ~character:19
+           , List
+               [ "namespace C implements {\n  const f: (_: int) => int\n}", Ligo
+               ; "NESTED NAMESPACE", Markdown
+               ] )
+         ; ( pos ~line:51 ~character:17
+           , List [ "f : (_: int) => int", Ligo; "NESTED NAMESPACE TERM", Markdown ] )
+         ; ( pos ~line:56 ~character:6
+           , List
+               [ "t : (_: unit) => list<int>", Ligo
+               ; "Has type with comment inside", Markdown
+               ] )
+         ])
     }
   ]
 

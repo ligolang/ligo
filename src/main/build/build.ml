@@ -133,7 +133,8 @@ module Separate (Params : Params) = struct
                         ~sig_sort:module_intf.sig_sort
                   ; module_location = loc
                   }
-              ; module_attr = { public = true; hidden = true }
+              ; module_attr =
+                  { Type_or_module_attr.default_attributes with hidden = true }
               ; annotation = ()
               })
       in
@@ -209,7 +210,7 @@ module Infer (Params : Params) = struct
           D_module
             { module_binder
             ; module_
-            ; module_attr = { public = true; hidden = true }
+            ; module_attr = { Type_or_module_attr.default_attributes with hidden = true }
             ; annotation = None
             })
       :: ast

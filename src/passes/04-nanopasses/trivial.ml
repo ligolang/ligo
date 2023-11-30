@@ -2,6 +2,8 @@ module Location = Simple_utils.Location
 module Row = Ligo_prim.Row.With_optional_layout
 module Value_attr = Ligo_prim.Value_attr
 module Type_or_module_attr = Ligo_prim.Type_or_module_attr
+module Sig_item_attr = Ligo_prim.Sig_item_attr
+module Sig_type_attr = Ligo_prim.Sig_type_attr
 module Signature_attr = Ligo_prim.Signature_attr
 open Simple_utils
 open Simple_utils.Trace
@@ -83,7 +85,8 @@ end = struct
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
-    | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "comment"; value = Some comment } ->
+      { o_attr with leading_comments = comment :: o_attr.leading_comments }
     | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
     | { key = "deprecated"; value } -> { o_attr with deprecated = value }
     | _ ->
@@ -92,20 +95,30 @@ end = struct
 
 
   and conv_vsigitem_attr ~raise
-      : Location.t -> O.sig_item_attribute -> I.Attribute.t -> O.sig_item_attribute
+      : Location.t -> Sig_item_attr.t -> I.Attribute.t -> Sig_item_attr.t
     =
    fun loc o_attr i_attr ->
     match i_attr with
     | { key = "view"; value = None } -> { o_attr with view = true }
     | { key = "entry"; value = None } -> { o_attr with entry = true }
     | { key = "dyn_entry"; value = None } -> { o_attr with dyn_entry = true }
-    | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "comment"; value = Some comment } ->
+      { o_attr with leading_comments = comment :: o_attr.leading_comments }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
-      let default : O.sig_item_attribute =
-        { entry = false; view = false; dyn_entry = false; optional = false }
-      in
-      default
+      Sig_item_attr.default_attributes
+
+
+  and conv_sigtype_attr ~raise
+      : Location.t -> Sig_type_attr.t -> I.Attribute.t -> Sig_type_attr.t
+    =
+   fun loc o_attr i_attr ->
+    match i_attr with
+    | { key = "comment"; value = Some comment } ->
+      { leading_comments = comment :: o_attr.leading_comments }
+    | _ ->
+      raise.warning (`Nanopasses_attribute_ignored loc);
+      Sig_type_attr.default_attributes
 
 
   and conv_exp_attr ~raise : Location.t -> Value_attr.t -> I.Attribute.t -> Value_attr.t =
@@ -116,7 +129,8 @@ end = struct
     | { key = "thunk"; value = None } -> { o_attr with thunk = true }
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
-    | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "comment"; value = Some comment } ->
+      { o_attr with leading_comments = comment :: o_attr.leading_comments }
     | { key = "deprecated"; value } -> { o_attr with deprecated = value }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
@@ -131,7 +145,8 @@ end = struct
     | { key = "private"; value = None } -> { o_attr with public = false }
     | { key = "public"; value = None } -> { o_attr with public = true }
     | { key = "hidden"; value = None } -> { o_attr with hidden = true }
-    | { key = "comment"; value = _ } -> o_attr (* TODO: We might want to keep it *)
+    | { key = "comment"; value = Some comment } ->
+      { o_attr with leading_comments = comment :: o_attr.leading_comments }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       Type_or_module_attr.default_attributes
@@ -142,8 +157,10 @@ end = struct
     =
    fun loc o_attr i_attr ->
     match i_attr with
-    | { key = "private"; value = None } -> { public = false }
-    | { key = "public"; value = None } -> { public = true }
+    | { key = "private"; value = None } -> { o_attr with public = false }
+    | { key = "public"; value = None } -> { o_attr with public = true }
+    | { key = "comment"; value = Some comment } ->
+      { o_attr with leading_comments = comment :: o_attr.leading_comments }
     | _ ->
       raise.warning (`Nanopasses_attribute_ignored loc);
       o_attr
@@ -182,6 +199,10 @@ end = struct
            { x with
              signature_attr = conv_signature_attr ~raise location x.signature_attr attr
            }
+    | D_attr (attr, node) ->
+      if not @@ String.equal attr.key "comment"
+      then raise.warning (`Nanopasses_attribute_ignored location);
+      node
     | D_const { type_params = None; pattern; rhs_type; let_rhs }
     | D_var { type_params = None; pattern; rhs_type; let_rhs } ->
       let let_rhs =
@@ -271,6 +292,10 @@ end = struct
       ret ~location
       @@ E_let_mut_in
            { x with attributes = conv_exp_attr ~raise location x.attributes attr }
+    | E_attr (attr, node) ->
+      if not @@ String.equal attr.key "comment"
+      then raise.warning (`Nanopasses_attribute_ignored location);
+      node
     | E_literal x -> ret @@ E_literal x
     | E_variable x -> ret @@ E_variable x
     | E_contract x -> ret @@ E_contract x
@@ -552,22 +577,31 @@ end = struct
       : (O.signature_expr, O.sig_item, O.type_expression) I.Types.sig_entry_ -> O.sig_item
     =
    fun item ->
-    let attr optional : O.sig_item_attribute =
-      { entry = false; view = false; dyn_entry = false; optional }
+    let attr optional : Sig_item_attr.t =
+      { Sig_item_attr.default_attributes with optional }
     in
+    let location = item.location in
     match Location.unwrap item with
     | S_value (v, ty, optional) -> S_value (v, ty, attr optional)
-    | S_type (v, _TODO_generics, ty) -> S_type (v, ty)
-    | S_type_var v -> S_type_var v
+    | S_type (v, _TODO_generics, ty) -> S_type (v, ty, Sig_type_attr.default_attributes)
+    | S_type_var v -> S_type_var (v, Sig_type_attr.default_attributes)
     | S_attr (attr', S_value (v, ty, attr)) ->
       let location = Location.get_location item in
       let attr = conv_vsigitem_attr ~raise location attr attr' in
       S_value (v, ty, attr)
+    | S_attr (attr', S_type (v, ty, attr)) ->
+      let location = Location.get_location item in
+      let attr = conv_sigtype_attr ~raise location attr attr' in
+      S_type (v, ty, attr)
+    | S_attr (attr', S_type_var (v, attr)) ->
+      let location = Location.get_location item in
+      let attr = conv_sigtype_attr ~raise location attr attr' in
+      S_type_var (v, attr)
+    | S_attr (attr, node) ->
+      if not @@ String.equal attr.key "comment"
+      then raise.warning (`Nanopasses_attribute_ignored location);
+      node
     | S_include se -> S_include se
-    | _ ->
-      raise.error
-        (Passes.Errors.invariant_trivial (Location.get_location item)
-        @@ Format.asprintf "%a" Sexp.pp_hum (I.sexp_of_sig_entry_ ig ig ig item))
 end
 
 module From_core : sig
@@ -635,10 +669,8 @@ end = struct
     | Some annot -> [ { key = "annot"; value = Some annot } ]
 
 
-  and conv_sig_entry_attr
-      : I.sig_item_attribute -> (O.Attribute.t * I.sig_item_attribute) option
-    =
-   fun ({ dyn_entry; entry; view; optional } as i_attr) ->
+  and conv_sig_entry_attr : Sig_item_attr.t -> (O.Attribute.t * Sig_item_attr.t) option =
+   fun ({ dyn_entry; entry; view; optional; leading_comments } as i_attr) ->
     if dyn_entry
     then Some ({ key = "dyn_entry"; value = None }, { i_attr with dyn_entry = false })
     else if entry
@@ -647,7 +679,18 @@ end = struct
     then Some ({ key = "view"; value = None }, { i_attr with view = false })
     else if optional
     then Some ({ key = "optional"; value = None }, { i_attr with optional = false })
-    else None
+    else (
+      match leading_comments with
+      | c :: rest ->
+        Some ({ key = "comment"; value = Some c }, { i_attr with leading_comments = rest })
+      | [] -> None)
+
+
+  and conv_sig_type_attr : Sig_type_attr.t -> (O.Attribute.t * Sig_type_attr.t) option =
+   fun { leading_comments } ->
+    match leading_comments with
+    | c :: rest -> Some ({ key = "comment"; value = Some c }, { leading_comments = rest })
+    | [] -> None
 
 
   and sig_expr
@@ -670,8 +713,18 @@ end = struct
       | None -> ret ~loc:ty.location (S_value (v, ty, attr.optional))
       | Some (attr, attr_rest) ->
         ret ~loc:ty.location (S_attr (attr, I.S_value (v, ty, attr_rest))))
-    | I.S_type (v, ty) -> ret ~loc:ty.location (S_type (v, [], ty)) (* TODO *)
-    | I.S_type_var v -> ret ~loc:(O.Ty_variable.get_location v) (S_type_var v)
+    | I.S_type (v, ty, attr) ->
+      (match conv_sig_type_attr attr with
+      | None -> ret ~loc:ty.location (S_type (v, [], ty))
+      | Some (attr, attr_rest) ->
+        ret ~loc:ty.location (S_attr (attr, I.S_type (v, ty, attr_rest))))
+    | I.S_type_var (v, attr) ->
+      (match conv_sig_type_attr attr with
+      | None -> ret ~loc:(O.Ty_variable.get_location v) (S_type_var v)
+      | Some (attr, attr_rest) ->
+        ret
+          ~loc:(O.Ty_variable.get_location v)
+          (S_attr (attr, I.S_type_var (v, attr_rest))))
     | I.S_include se -> ret ~loc:se.location (S_include se)
     | I.S_module (_, _) | I.S_module_type (_, _) -> failwith "Impossible"
 

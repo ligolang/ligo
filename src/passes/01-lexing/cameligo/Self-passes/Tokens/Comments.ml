@@ -3,10 +3,9 @@
 
 (* Vendor dependencies *)
 
-module Region  = Simple_utils.Region
-module Std     = Simple_utils.Std
-module Utils   = Simple_utils.Utils
-module Snippet = Simple_utils.Snippet
+module Region = Simple_utils.Region
+module Std    = Simple_utils.Std
+module Utils  = Simple_utils.Utils
 
 (* Local dependencies *)
 

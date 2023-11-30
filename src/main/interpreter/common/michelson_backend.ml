@@ -140,16 +140,7 @@ let add_ast_env
         (Pattern.var ~loc (Ligo_prim.Binder.make let_binder expr.type_expression))
         expr
         e
-        { inline
-        ; no_mutation
-        ; view = false
-        ; public = false
-        ; hidden = false
-        ; thunk = false
-        ; entry = false
-        ; dyn_entry = false
-        ; deprecated = None
-        }
+        { ValueAttr.default_attributes with inline; no_mutation; public = false }
     else e
   in
   let typed_exp' = List.fold_right ~f:aux ~init:body env in

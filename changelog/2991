@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nNow we show documentation comments (like `(** *)` in CameLIGO and `/** */` in JsLIGO) in LSP hovers\\n\\n"
+merge_request: '2991'
+title: "[#2094] Add documentation to LSP hovers"
+type: added
+            

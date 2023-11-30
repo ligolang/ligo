@@ -62,6 +62,21 @@ type def_type =
   | Module_field
   | Global
 
+type vdef_attributes =
+  | No_attributes
+  | Value_attr of Value_attr.t
+  | Sig_item of Sig_item_attr.t
+
+type tdef_attributes =
+  | Type_attr of Type_or_module_attr.t
+  | Sig_type of Sig_type_attr.t
+  | No_attributes
+
+type mdef_attributes =
+  | Module_attr of Type_or_module_attr.t
+  | Signature_attr of Signature_attr.t
+  | No_attributes
+
 type vdef =
   { name : string
   ; uid : Uid.t
@@ -71,6 +86,7 @@ type vdef =
   ; references : LSet.t
   ; def_type : def_type
   ; mod_path : string list
+  ; attributes : vdef_attributes
   }
 
 type tdef =
@@ -85,6 +101,7 @@ type tdef =
   ; def_type : def_type
   ; references : LSet.t
   ; mod_path : string list
+  ; attributes : tdef_attributes
   }
 
 type mod_case =
@@ -111,6 +128,7 @@ and mdef =
   ; def_type : def_type
   ; mod_path : string list
   ; signature : signature_case
+  ; attributes : mdef_attributes
   }
 
 and def =

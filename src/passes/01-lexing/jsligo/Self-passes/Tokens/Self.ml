@@ -31,7 +31,8 @@ module Make (Options : Options.S) =
       ES6FUN.filter;
       PARAMS.filter;
       SEMI_ELSE.filter;
-      Attributes.filter;
-      Comments.filter
+      Decorators.filter;
+      Comments.filter;
+      Attributes.filter
     ]
   end

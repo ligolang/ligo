@@ -33,9 +33,9 @@ let def_type var type_ : Module.item =
     @@ Ast_typed.D_type
          { type_binder = var
          ; type_expr = type_
-         ; type_attr = { public = true; hidden = false }
+         ; type_attr = Type_or_module_attr.default_attributes
          }
-  , S_type (var, type_) )
+  , S_type (var, type_, Sig_type_attr.default_attributes) )
 
 
 let def_value var (expr : Ast_typed.expression) : Module.item =
@@ -45,10 +45,7 @@ let def_value var (expr : Ast_typed.expression) : Module.item =
          ; expr
          ; attr = Value_attr.default_attributes
          }
-  , S_value
-      ( var
-      , expr.type_expression
-      , { entry = false; dyn_entry = false; view = false; optional = false } ) )
+  , S_value (var, expr.type_expression, Sig_item_attr.default_attributes) )
 
 
 let let_value var expr ~in_ =

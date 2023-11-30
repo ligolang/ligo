@@ -13,7 +13,7 @@
   preprocessing_cameligo
   lexing_shared
   mh_ml_tokens)
- (modules Token Comments Self))
+ (modules Token Comments Attributes Self))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of

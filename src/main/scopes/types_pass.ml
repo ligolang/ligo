@@ -395,8 +395,8 @@ module Of_Ast_core = struct
     | S_value (var, ty_expr, _attrs) ->
       let binder = Binder.make var ty_expr in
       add_binder bindings binder
-    | S_type (_var, _ty_expr) -> bindings
-    | S_type_var _var -> bindings
+    | S_type (_var, _ty_expr, _) -> bindings
+    | S_type_var (_var, _) -> bindings
     | S_module (_var, _sig) -> bindings
     | S_module_type (_var, _sig) -> bindings
     | S_include signature -> signature_expr bindings signature

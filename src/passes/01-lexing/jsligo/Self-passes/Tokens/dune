@@ -13,7 +13,7 @@
   preprocessing_jsligo
   lexing_shared
   menhir_js_tokens)
- (modules Token PARAMS Attributes Comments ES6FUN SEMI_ELSE Self))
+ (modules Token PARAMS Attributes Comments ES6FUN SEMI_ELSE Self Decorators))
 
 ;; --------------------------------------------------------------------
 ;; Build the type ['a terminal] to complete the inspection API of

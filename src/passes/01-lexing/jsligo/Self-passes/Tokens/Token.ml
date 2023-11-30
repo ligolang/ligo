@@ -1151,6 +1151,128 @@ module T =
     | EOF t -> t#region, sprintf "EOF%s" (comments t)
 
 
+    (* FROM TOKENS TO ATTACHED COMMENTS *)
+
+    let to_comments = function
+      (* Preprocessing directives *)
+
+      Directive _ -> []
+
+      (* Comments *)
+
+    | LineCom  w
+    | BlockCom w
+
+      (* Literals *)
+
+    | String   w
+    | Verbatim w -> w#comments
+    | Bytes    w -> w#comments
+    | Int      w
+    | Nat      w -> w#comments
+    | Mutez    w -> w#comments
+    | Ident    w
+    | UIdent   w
+    | EIdent   w -> w#comments
+    | Attr     w -> w#comments
+
+    (* Symbols *)
+
+    | SHARP      w
+    | MINUS      w
+    | PLUS       w
+    | SLASH      w
+    | TIMES      w
+    | REM        w
+    | QMARK      w
+    | PLUS2      w
+    | MINUS2     w
+    | LPAR       w
+    | RPAR       w
+    | LBRACE     w
+    | RBRACE     w
+    | LBRACKET   w
+    | RBRACKET   w
+    | COMMA      w
+    | SEMI       w
+    | COLON      w
+    | DOT        w
+    | ELLIPSIS   w
+    | OR         w
+    | AND        w
+    | NOT        w
+    | XOR        w
+    | BIT_AND    w
+    | BIT_NOT    w
+    | BIT_XOR    w
+    | BIT_SL     w
+    | EQ         w
+    | EQ2        w
+    | NE         w
+    | LT         w
+    | GT         w
+    | LE         w
+    | PLUS_EQ    w
+    | MINUS_EQ   w
+    | MULT_EQ    w
+    | REM_EQ     w
+    | DIV_EQ     w
+    | BIT_SL_EQ  w
+    | BIT_SR_EQ  w
+    | BIT_AND_EQ w
+    | BIT_OR_EQ  w
+    | BIT_XOR_EQ w
+    | VBAR       w
+    | ARROW      w
+    | WILD       w
+
+    (* JavaScript Keywords *)
+
+    | Case     w
+    | Const    w
+    | Continue w
+    | Default  w
+    | Else     w
+    | Export   w
+    | False    w
+    | For      w
+    | If       w
+    | Import   w
+    | Let      w
+    | Of       w
+    | Return   w
+    | Break    w
+    | Switch   w
+    | True     w
+    | While    w
+    | From     w
+
+    | As          w
+    | Extends     w
+    | Function    w
+    | Implements  w
+    | Interface   w
+    | Namespace   w
+    | Type        w
+
+    (* JsLIGO-specific keywords *)
+
+    | ContractOf  w
+    | Do          w
+    | Match       w
+    | ParameterOf w
+    | When        w
+
+    (* Virtual tokens *)
+
+    | ZWSP      w
+    | PARAMS    w
+    | ES6FUN    w -> w#comments
+    | SEMI_ELSE (w1, w2) -> w1#comments @ w2#comments
+    (* End-Of-File *)
+
+    | EOF w -> w#comments
+
     (* CONVERSIONS *)
 
     let to_string ~offsets mode token =

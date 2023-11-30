@@ -139,6 +139,7 @@ and expression_content ppf (ec : expression_content) =
           ; hidden = true
           ; thunk = _
           ; deprecated = _
+          ; leading_comments = _
           }
       } -> fprintf ppf "%a" expression let_result
   | E_mod_in mi -> Mod_in.pp expression module_expr ppf mi
@@ -207,9 +208,9 @@ and sig_item ppf (d : sig_item) =
   match d with
   | S_value (var, type_, _) ->
     Format.fprintf ppf "@[<2>val %a :@ %a@]" Value_var.pp var type_expression type_
-  | S_type (var, type_) ->
+  | S_type (var, type_, _) ->
     Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
-  | S_type_var var -> Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
+  | S_type_var (var, _) -> Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
   | S_module (var, sig_) ->
     Format.fprintf ppf "@[<2>module %a =@ %a@]" Module_var.pp var signature sig_
   | S_module_type (var, sig_) ->

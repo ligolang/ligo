@@ -101,11 +101,12 @@ let decode type_ ~raise subst =
            else loc)))
 
 
-let decode_attribute (attr : Context.Attrs.Value.t) : O.sig_item_attribute =
+let decode_attribute (attr : Context.Attrs.Value.t) : Sig_item_attr.t =
   { entry = attr.entry
   ; dyn_entry = attr.dyn_entry
   ; view = attr.view
   ; optional = attr.optional
+  ; leading_comments = attr.leading_comments
   }
 
 
@@ -113,8 +114,12 @@ let rec decode_sig_item (item : Context.Signature.item) ~raise subst : O.sig_ite
   match item with
   | S_value (var, type_, attr) ->
     Some (S_value (var, decode ~raise type_ subst, decode_attribute attr))
-  | S_type (var, type_, _attr) -> Some (S_type (var, decode ~raise type_ subst))
-  | S_type_var (var, _attr) -> Some (S_type_var var)
+  | S_type (var, type_, attr) ->
+    Some
+      (S_type
+         (var, decode ~raise type_ subst, { leading_comments = attr.leading_comments }))
+  | S_type_var (var, attr) ->
+    Some (S_type_var (var, { leading_comments = attr.leading_comments }))
   | S_module (var, sig_, _attr) ->
     Some (S_module (var, decode_signature ~raise sig_ subst))
   | S_module_type (var, sig_, attr) ->

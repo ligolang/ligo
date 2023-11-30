@@ -225,7 +225,7 @@ module With_default_layout = struct
       type_
 
 
-  and evaluate_signature_item_attribute (attr : Ast_core.sig_item_attribute) =
+  and evaluate_signature_item_attribute (attr : Sig_item_attr.t) =
     let open C in
     let open Let_syntax in
     return
@@ -235,6 +235,7 @@ module With_default_layout = struct
          ; dyn_entry = attr.dyn_entry
          ; public = true
          ; optional = attr.optional
+         ; leading_comments = attr.leading_comments
          }
 
 
@@ -248,19 +249,35 @@ module With_default_layout = struct
       let%bind attr = evaluate_signature_item_attribute attr in
       let%bind { items; sort }, () = evaluate_signature { items = sig_ } in
       return @@ (Signature.{ sort; items = S_value (v, ty, attr) :: items }, ())
-    | S_type (v, ty) :: sig_ ->
+    | S_type (v, ty, attr) :: sig_ ->
       let%bind ty = evaluate_type ty in
       let%bind { sort; items }, () =
         def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
       in
       return
-      @@ (Signature.{ sort; items = S_type (v, ty, { public = true }) :: items }, ())
-    | S_type_var v :: sig_ ->
+      @@ ( Signature.
+             { sort
+             ; items =
+                 S_type
+                   (v, ty, { public = true; leading_comments = attr.leading_comments })
+                 :: items
+             }
+         , () )
+    | S_type_var (v, attr) :: sig_ ->
       let%bind { sort; items }, () =
         def_type_var [ v, Type ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
       in
       return
-      @@ (Signature.{ sort; items = S_type_var (v, Attrs.Type.default) :: items }, ())
+      @@ ( Signature.
+             { sort
+             ; items =
+                 S_type_var
+                   ( v
+                   , { Attrs.Type.default with leading_comments = attr.leading_comments }
+                   )
+                 :: items
+             }
+         , () )
     | S_module (v, items) :: sig_ ->
       let%bind signature, () = evaluate_signature items in
       let%bind { sort; items }, () =
@@ -1622,14 +1639,14 @@ and infer_declaration (decl : I.declaration)
          ~f:(fun (v, _, ty) ->
            Context.Signature.S_value (v, ty, Context.Attr.of_core_attr attr))
          frags)
-  | D_type { type_binder; type_expr; type_attr = { public; hidden } as attr } ->
+  | D_type { type_binder; type_expr; type_attr } ->
     let%bind type_expr = With_default_layout.evaluate_type type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
     const
       E.(
         let%bind type_expr = decode type_expr in
-        return @@ O.D_type { type_binder; type_expr; type_attr = { public; hidden } })
-      [ S_type (type_binder, type_expr, Attrs.Type.of_core_attr attr) ]
+        return @@ O.D_type { type_binder; type_expr; type_attr })
+      [ S_type (type_binder, type_expr, Attrs.Type.of_core_attr type_attr) ]
   | D_value { binder; attr; expr } ->
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
@@ -1645,8 +1662,7 @@ and infer_declaration (decl : I.declaration)
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
       [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
-  | D_module
-      { module_binder; module_; module_attr = { public; hidden } as attr; annotation } ->
+  | D_module { module_binder; module_; module_attr; annotation } ->
     let%bind module_, sig_ =
       match annotation with
       | None ->
@@ -1681,10 +1697,10 @@ and infer_declaration (decl : I.declaration)
         @@ O.D_module
              { module_binder
              ; module_ = { module_ with signature }
-             ; module_attr = { public; hidden }
+             ; module_attr
              ; annotation = ()
              })
-      [ S_module (module_binder, sig_, Attrs.Module.of_core_attr attr) ]
+      [ S_module (module_binder, sig_, Attrs.Module.of_core_attr module_attr) ]
   | D_signature { signature_binder; signature; signature_attr } ->
     let%bind signature = With_default_layout.evaluate_signature_expr signature in
     const

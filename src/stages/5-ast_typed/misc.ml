@@ -135,6 +135,7 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
             ; thunk = _
             ; entry = _
             ; deprecated = _
+            ; leading_comments = _
             }
         } -> if Binder.apply (Value_var.equal name) binder then Some expr else None
     | D_module_include { module_content = M_struct x; _ } -> get_entry x name
@@ -406,8 +407,7 @@ let get_contract_signature
 
 
 let get_sig_value
-    :  Module_var.t list -> Value_var.t -> signature
-    -> (ty_expr * sig_item_attribute) option
+    : Module_var.t list -> Value_var.t -> signature -> (ty_expr * Sig_item_attr.t) option
   =
  fun path v sig_ ->
   let open Simple_utils.Option in
@@ -447,17 +447,17 @@ let to_sig_items (module_ : module_) : sig_item list =
             @ [ S_value
                   ( Binder.get_var x
                   , Binder.get_ascr x
-                  , { dyn_entry; view; entry; optional = false } )
+                  , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
               ])
       | D_value { binder; expr; attr = { view; entry; dyn_entry; _ } } ->
         ctx
         @ [ S_value
               ( Binder.get_var binder
               , expr.type_expression
-              , { view; entry; dyn_entry; optional = false } )
+              , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
           ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
-        ctx @ [ S_type (type_binder, type_expr) ]
+        ctx @ [ S_type (type_binder, type_expr, Sig_type_attr.default_attributes) ]
       | D_module_include x -> x.signature.sig_items
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
         ctx @ [ S_module (module_binder, module_.signature) ]

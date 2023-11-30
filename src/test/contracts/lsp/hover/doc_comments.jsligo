@@ -1,0 +1,61 @@
+/** INTERFACE */
+interface X {
+  /** INTERFACE ITEM */
+
+  @view
+  const y: (_: int) => int; // TODO pretty printer: newline above
+
+  /** INTERFACE TYPE */
+  type t;
+  /** INTERFACE ITEM */
+  const p: option<t>;
+}
+
+/** NAMESPACE */
+namespace M implements X{
+  /** TERM IN NAMESPACE */
+
+  @view
+  export const y = (x: int) => x + 1
+  /** TYPE IN NAMESPACE */
+  export type t = { foo: nat };
+  /** TERM IN NAMESPACE */
+  export const p = Some({ foo: 4n })
+}
+
+/** JUST A TYPE */
+type t<a> = list<a>
+
+/**
+ * JUST A TERM
+ *  with some doc
+ *  in **several** lines
+ *
+ *  one ~~more~~ `line`
+ */
+const x: t<int> = list([3])
+
+const y = x
+
+/** NAMESPACE WITH ENTRY POINT */
+namespace M1 {
+  /** BEFORE DECORATOR */
+
+  @entry
+  /** AFTER DECORATOR */
+  /** ENTRY POINT TERM */
+  export const y = (x: int, _: int) =>
+    [(list([]) as list<operation>), 2 * x - 1]
+  /** NESTED NAMESPACE */
+  export namespace C {
+    /** NESTED NAMESPACE TERM */
+    export const f = t => t + 3
+  }
+}
+
+/** Has type with comment inside */
+const t = () => {
+  /* comment that should not break the file */
+  type x = int;
+  return x
+}

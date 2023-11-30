@@ -22,7 +22,7 @@ let get_location_of_module_path : Module_var.t list -> Location.t =
     @param body The expression bound to the given variable.
     @return The provided list of definitions augmented with the given variable.
     *)
-let defs_of_vvar ?(body : AST.expression option)
+let defs_of_vvar ?(body : AST.expression option) ~(attributes : vdef_attributes option)
     : VVar.t -> def_type -> string list -> t -> t
   =
  fun vvar def_type mod_path acc ->
@@ -44,7 +44,8 @@ let defs_of_vvar ?(body : AST.expression option)
       in
       let t : type_case = Unresolved (* Filled in a later pass *) in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
-      { name; uid; range; body_range; t; references; def_type; mod_path }
+      let attributes = Option.value attributes ~default:No_attributes in
+      { name; uid; range; body_range; t; references; def_type; mod_path; attributes }
     in
     Variable vdef :: acc)
 
@@ -58,11 +59,11 @@ let defs_of_vvar ?(body : AST.expression option)
     @param body The expression bound to the given variable.
     @return The provided list of definitions augmented with the given binder.
     *)
-let defs_of_binder ~(body : AST.expression)
+let defs_of_binder ~(body : AST.expression) ~(attributes : vdef_attributes option)
     : _ Binder.t -> def_type -> string list -> t -> t
   =
  fun binder def_type mod_path acc ->
-  defs_of_vvar ~body (Binder.get_var binder) def_type mod_path acc
+  defs_of_vvar ~attributes ~body (Binder.get_var binder) def_type mod_path acc
 
 
 (**
@@ -72,7 +73,9 @@ let defs_of_binder ~(body : AST.expression)
     @param bindee The type expression bound to the given type variable.
     @return The provided list of definitions augmented with the given type variable.
     *)
-let defs_of_tvar ?(bindee : Ast_core.type_expression option)
+let defs_of_tvar
+    ?(bindee : Ast_core.type_expression option)
+    ~(attributes : tdef_attributes option)
     : TVar.t -> def_type -> string list -> t -> t
   =
  fun tvar def_type mod_path acc ->
@@ -88,7 +91,17 @@ let defs_of_tvar ?(bindee : Ast_core.type_expression option)
       in
       let content : Ast_core.type_expression option = bindee in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
-      { name; uid; range; body_range; content; def_type; references; mod_path }
+      let attributes = Option.value ~default:No_attributes attributes in
+      { name
+      ; uid
+      ; range
+      ; body_range
+      ; content
+      ; def_type
+      ; references
+      ; mod_path
+      ; attributes
+      }
     in
     Type tdef :: acc)
 
@@ -100,7 +113,10 @@ let defs_of_tvar ?(bindee : Ast_core.type_expression option)
     @param bindee The module expression bound to the given module variable.
     @return The provided list of definitions augmented with the given module variable.
     *)
-let defs_of_mvar ?(bindee_location : Location.t option) ~(mod_case : mod_case)
+let defs_of_mvar
+    ?(bindee_location : Location.t option)
+    ~(attributes : mdef_attributes option)
+    ~(mod_case : mod_case)
     : string SMap.t -> MVar.t -> def_type -> string list -> t -> t
   =
  fun module_deps mvar def_type mod_path acc ->
@@ -120,6 +136,7 @@ let defs_of_mvar ?(bindee_location : Location.t option) ~(mod_case : mod_case)
       let body_range : Location.t option = bindee_location in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
       let signature = Unresolved (* Filled in a later pass *) in
+      let attributes = Option.value ~default:No_attributes attributes in
       { name
       ; uid
       ; range
@@ -129,6 +146,7 @@ let defs_of_mvar ?(bindee_location : Location.t option) ~(mod_case : mod_case)
       ; def_type
       ; mod_path
       ; signature
+      ; attributes
       }
     in
     Module mdef :: acc)
@@ -181,7 +199,9 @@ module Of_Ast = struct
       if unless then fun _ acc -> acc else f
   end
 
-  let defs_of_mvar_mod_expr ~(bindee : Ast_core.module_expr)
+  let defs_of_mvar_mod_expr
+      ~(bindee : Ast_core.module_expr)
+      ~(attributes : mdef_attributes option)
       : mod_case:mod_case -> string SMap.t -> MVar.t -> def_type -> string list -> t -> t
     =
     let bindee_location =
@@ -190,10 +210,10 @@ module Of_Ast = struct
       | M_variable mvar -> MVar.get_location mvar
       | M_module_path mpath -> get_location_of_module_path @@ List.Ne.to_list mpath
     in
-    defs_of_mvar ~bindee_location
+    defs_of_mvar ~bindee_location ~attributes
 
 
-  let defs_of_mvar_sig_expr ~(bindee : Ast_core.signature_expr)
+  let defs_of_mvar_sig_expr ~(bindee : Ast_core.signature_expr) ~attributes
       : mod_case:mod_case -> string SMap.t -> MVar.t -> def_type -> string list -> t -> t
     =
     let bindee_location =
@@ -201,21 +221,21 @@ module Of_Ast = struct
       | S_sig _ -> Location.get_location bindee
       | S_path mpath -> get_location_of_module_path @@ List.Ne.to_list mpath
     in
-    defs_of_mvar ~bindee_location
+    defs_of_mvar ~attributes ~bindee_location
 
 
   let defs_of_mvar_signature ~(bindee : Ast_core.signature)
       : mod_case:mod_case -> string SMap.t -> MVar.t -> def_type -> string list -> t -> t
     =
-    defs_of_mvar ?bindee_location:None
+    defs_of_mvar ~attributes:None ?bindee_location:None
 
 
-  let defs_of_pattern ~(body : AST.expression)
+  let defs_of_pattern ~(body : AST.expression) ~(attributes : vdef_attributes option)
       : AST.type_expression option Linear_pattern.t -> def_type -> string list -> t -> t
     =
    fun ptrn def_type mod_path acc ->
     let ptrn_binders = AST.Pattern.binders ptrn in
-    let f defs binder = defs_of_binder ~body binder def_type mod_path defs in
+    let f defs binder = defs_of_binder ~attributes ~body binder def_type mod_path defs in
     let defs = List.fold ~init:acc ~f ptrn_binders in
     defs
 
@@ -237,7 +257,8 @@ module Of_Ast = struct
     let defs_of_lambda : _ Lambda.t -> t -> t =
      fun { binder; output_type; result } acc ->
       let vvar = Param.get_var binder in
-      self result @@ defs_of_vvar ~body:result vvar Parameter mod_path acc
+      self result
+      @@ defs_of_vvar ~attributes:None ~body:result vvar Parameter mod_path acc
     in
     match e.expression_content with
     (* Base *)
@@ -253,16 +274,18 @@ module Of_Ast = struct
     | E_type_abstraction { type_binder; result } -> self result acc
     | E_let_in { let_binder; rhs; let_result; attributes }
     | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
-      defs_of_pattern ~body:rhs let_binder Local mod_path
+      defs_of_pattern ~attributes:None ~body:rhs let_binder Local mod_path
       @@ self rhs
       @@ self let_result acc
     | E_type_in { type_binder; rhs; let_result } ->
-      defs_of_tvar ~bindee:rhs type_binder Local mod_path @@ self let_result acc
+      defs_of_tvar ~attributes:None ~bindee:rhs type_binder Local mod_path
+      @@ self let_result acc
     | E_mod_in { module_binder; rhs; let_result } ->
       let inner_mod_path = add_inner_mod_path module_binder mod_path in
       let mod_case = mod_case_of_mod_expr ~defs_of_decls module_deps rhs inner_mod_path in
       defs_of_mvar_mod_expr
         ~mod_case
+        ~attributes:None
         ~bindee:rhs
         module_deps
         module_binder
@@ -275,7 +298,7 @@ module Of_Ast = struct
     | E_matching { matchee; cases } ->
       let defs_of_match_cases cases acc =
         let defs_of_match_case acc ({ pattern; body } : _ AST.Match_expr.match_case) =
-          defs_of_pattern ~body pattern Local mod_path @@ self body acc
+          defs_of_pattern ~attributes:None ~body pattern Local mod_path @@ self body acc
         in
         List.fold ~init:acc ~f:defs_of_match_case cases
       in
@@ -293,7 +316,7 @@ module Of_Ast = struct
       (* binder := new_value, the binder is already declared so we don't add it to the dec list *)
       self expression acc
     | E_for { binder; start; final; incr; f_body } ->
-      defs_of_vvar ~body:f_body binder Local mod_path
+      defs_of_vvar ~attributes:None ~body:f_body binder Local mod_path
       @@ self start
       @@ self final
       @@ self incr
@@ -304,10 +327,12 @@ module Of_Ast = struct
       let body = fe_body in
       let acc =
         match vvar2_opt with
-        | Some vvar -> defs_of_vvar ~body vvar Local mod_path acc
+        | Some vvar -> defs_of_vvar ~attributes:None ~body vvar Local mod_path acc
         | None -> acc
       in
-      self fe_body @@ self collection @@ defs_of_vvar ~body vvar1 Local mod_path acc
+      self fe_body
+      @@ self collection
+      @@ defs_of_vvar ~attributes:None ~body vvar1 Local mod_path acc
     | E_while { cond; body } -> self cond @@ self body acc
 
 
@@ -362,13 +387,29 @@ module Of_Ast = struct
     in
     match Location.unwrap decl with
     | D_value { binder; expr; attr } ->
-      defs_of_binder ~body:expr binder def_type mod_path
+      defs_of_binder
+        ~attributes:(Some (Value_attr attr))
+        ~body:expr
+        binder
+        def_type
+        mod_path
       @@ defs_of_expr ~unless:waivers.d_value_expr expr acc
     | D_irrefutable_match { pattern; expr; attr } ->
-      defs_of_pattern ~body:expr pattern def_type mod_path
+      defs_of_pattern
+        ~attributes:(Some (Value_attr attr))
+        ~body:expr
+        pattern
+        def_type
+        mod_path
       @@ defs_of_expr ~unless:waivers.d_irrefutable_match_expr expr acc
     | D_type { type_binder; type_expr; type_attr } ->
-      defs_of_tvar ~bindee:type_expr type_binder def_type mod_path acc
+      defs_of_tvar
+        ~attributes:(Some (Type_attr type_attr))
+        ~bindee:type_expr
+        type_binder
+        def_type
+        mod_path
+        acc
     | D_module { module_binder; module_; module_attr; annotation } ->
       let inner_mod_path = add_inner_mod_path module_binder mod_path in
       (* Here, the module body's defs are within the lhs_def, mod_case_of_mod_expr
@@ -379,6 +420,7 @@ module Of_Ast = struct
       let acc =
         defs_of_mvar_mod_expr
           ~mod_case
+          ~attributes:(Some (Module_attr module_attr))
           ~bindee:module_
           module_deps
           module_binder
@@ -394,11 +436,12 @@ module Of_Ast = struct
       (match mod_case_of_mod_expr ~defs_of_decls module_deps module_ mod_path with
       | Alias _ -> acc
       | Def x -> x @ acc)
-    | D_signature { signature_binder; signature; signature_attr = _ } ->
+    | D_signature { signature_binder; signature; signature_attr } ->
       let inner_mod_path = add_inner_mod_path signature_binder mod_path in
       let mod_case = mod_case_of_sig_expr module_deps signature inner_mod_path in
       defs_of_mvar_sig_expr
         ~mod_case
+        ~attributes:(Some (Signature_attr signature_attr))
         ~bindee:signature
         module_deps
         signature_binder
@@ -421,9 +464,18 @@ module Of_Ast = struct
     =
    fun module_deps item def_type mod_path acc ->
     match item with
-    | S_value (var, ty_expr, _attrs) -> defs_of_vvar var def_type mod_path acc
-    | S_type (var, ty_expr) -> defs_of_tvar ~bindee:ty_expr var def_type mod_path acc
-    | S_type_var var -> defs_of_tvar var def_type mod_path acc
+    | S_value (var, ty_expr, attr) ->
+      defs_of_vvar ~attributes:(Some (Sig_item attr)) var def_type mod_path acc
+    | S_type (var, ty_expr, attr) ->
+      defs_of_tvar
+        ~attributes:(Some (Sig_type attr))
+        ~bindee:ty_expr
+        var
+        def_type
+        mod_path
+        acc
+    | S_type_var (var, attr) ->
+      defs_of_tvar ~attributes:(Some (Sig_type attr)) var def_type mod_path acc
     | S_module (var, sig') | S_module_type (var, sig') ->
       let inner_mod_path = add_inner_mod_path var mod_path in
       let mod_case : mod_case = mod_case_of_signature module_deps sig' inner_mod_path in

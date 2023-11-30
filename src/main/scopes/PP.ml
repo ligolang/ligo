@@ -166,11 +166,28 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       ]
   in
   let aux = function
-    | Variable { name; range; body_range; t; references; uid; def_type = _; mod_path = _ }
-      -> uid, definition ~name ~range ~body_range ~t ~references
+    | Variable
+        { name
+        ; range
+        ; body_range
+        ; t
+        ; references
+        ; uid
+        ; def_type = _
+        ; mod_path = _
+        ; attributes = _
+        } -> uid, definition ~name ~range ~body_range ~t ~references
     | Type
-        { name; range; body_range; content; uid; def_type = _; references; mod_path = _ }
-      -> uid, type_definition ~name ~range ~body_range ~content ~references
+        { name
+        ; range
+        ; body_range
+        ; content
+        ; uid
+        ; def_type = _
+        ; references
+        ; mod_path = _
+        ; attributes = _
+        } -> uid, type_definition ~name ~range ~body_range ~content ~references
     | Module
         { name
         ; range
@@ -181,6 +198,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; def_type = _
         ; mod_path = _
         ; signature = _
+        ; attributes = _
         } ->
       ( uid
       , `Assoc
@@ -204,6 +222,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; def_type = _
         ; mod_path = _
         ; signature = _
+        ; attributes = _
         } ->
       let alias = `List (List.map a ~f:(fun s -> `String (Uid.to_string s))) in
       ( uid

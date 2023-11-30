@@ -1,15 +1,23 @@
 type t =
   { public : bool
   ; hidden : bool
+  ; leading_comments : string list
   }
 [@@deriving eq, compare, yojson, hash]
 
 open Format
+open Value_attr.PP_attributes
 
-let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
+let pp ppf { public; hidden; leading_comments } =
+  fprintf
+    ppf
+    "%a%a%a"
+    (pp_if_set "private")
+    (not public)
+    (pp_if_set "hidden")
+    hidden
+    pp_comments
+    leading_comments
 
-let pp ppf { public; hidden } =
-  fprintf ppf "%a%a" (pp_if_set "private") (not public) (pp_if_set "hidden") hidden
 
-
-let default_attributes = { public = true; hidden = false }
+let default_attributes = { public = true; hidden = false; leading_comments = [] }

@@ -32,6 +32,8 @@ type state = PrettyComb.state
 let prefix = PrettyComb.prefix
 let (^/^)  = PrettyComb.(^/^)
 
+let (<@) = Utils.(<@)
+
 (* Placement *)
 
 let default_state : state =
@@ -259,9 +261,14 @@ let print_attribute state (node : Attr.t wrap) =
               | _ -> thread
   in group (print_comments node#comments ^/^ thread)
 
-let print_attributes state thread = function
-  []    -> thread
-| attrs -> separate_map (break 0) (print_attribute state) attrs ^/^ thread
+let print_attributes state thread attributes =
+  let drop_comment_attr attributes =
+    let is_comment w = fst (w#payload) = "comment"
+    in List.filter ~f:(not <@ is_comment) attributes
+  in
+  match drop_comment_attr attributes with
+    []    -> thread
+  | attrs -> separate_map (break 0) (print_attribute state) attrs ^/^ thread
 
 (* PRINTING THE CST *)
 

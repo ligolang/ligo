@@ -142,23 +142,6 @@ and module_annotation ppf (annot : module_annotation) : unit =
   fprintf ppf "%a" signature_expr annot.signature
 
 
-and sig_item_attribute ppf { view; entry; dyn_entry; optional } =
-  let pp_if_set str ppf attr =
-    if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
-  in
-  fprintf
-    ppf
-    "%a%a%a%a"
-    (pp_if_set "view")
-    view
-    (pp_if_set "entry")
-    entry
-    (pp_if_set "dyn_entry")
-    dyn_entry
-    (pp_if_set "optional")
-    optional
-
-
 and sig_item ppf (d : sig_item) =
   match d with
   | S_value (var, type_, attr) ->
@@ -169,11 +152,20 @@ and sig_item ppf (d : sig_item) =
       var
       type_expression
       type_
-      sig_item_attribute
+      Sig_item_attr.pp
       attr
-  | S_type (var, type_) ->
-    Format.fprintf ppf "@[<2>type %a =@ %a@]" Type_var.pp var type_expression type_
-  | S_type_var var -> Format.fprintf ppf "@[<2>type %a@]" Type_var.pp var
+  | S_type (var, type_, attr) ->
+    Format.fprintf
+      ppf
+      "@[<2>type %a =@ %a%a@]"
+      Type_var.pp
+      var
+      type_expression
+      type_
+      Sig_type_attr.pp
+      attr
+  | S_type_var (var, attr) ->
+    Format.fprintf ppf "@[<2>type %a%a@]" Type_var.pp var Sig_type_attr.pp attr
   | S_module (var, sig_) ->
     Format.fprintf ppf "@[<2>module %a :@ %a@]" Module_var.pp var signature sig_
   | S_module_type (var, sig_) ->

@@ -147,17 +147,6 @@ let print_sepseq :
 let print_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
   fun print (head, tail) -> separate_map (break 1) print (head::tail)
 
-(* Enclosed structures *)
-(*
-let is_enclosed_expr = function
-  E_List _ | E_Par _ | E_Record _ | E_Update _ | E_Seq _ -> true
-| _ -> false
-
-let is_enclosed_type = function
-  T_Par _ | T_Record _ -> true
-| _ -> false
-*)
-
 (* UTILITIES *)
 
 let unroll_D_Attr (attr, decl) =
@@ -272,10 +261,15 @@ and print_attribute state (node : Attr.t wrap) =
                ^/^ lbracket ^^ at ^^ thread ^^ rbracket
   in print_line_comment_opt thread node#line_comment
 
-and print_attributes state thread = function
-  [] -> thread
-| a  -> group (separate_map (break 0) (print_attribute state) a
-               ^^ hardline ^^ thread)
+and print_attributes state thread attributes =
+  match drop_comment_attr attributes with
+   [] -> thread
+  | a -> group (separate_map (break 0) (print_attribute state) a
+                ^^ hardline ^^ thread)
+
+and drop_comment_attr attributes =
+  let is_comment w = fst (w#payload) = "comment"
+  in List.filter ~f:(not <@ is_comment) attributes
 
 (* Preprocessing directives *)
 

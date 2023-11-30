@@ -126,3 +126,21 @@ let get_type (vdef : Scopes.Types.vdef) : type_info option =
           Checking.untype_type_expression ~use_orig_var:true { ty with orig_var = None }
       }
   | Unresolved -> None
+
+
+let get_comments : t -> string list = function
+  | Variable vdef ->
+    (match vdef.attributes with
+    | Value_attr attr -> attr.leading_comments
+    | Sig_item attr -> attr.leading_comments
+    | No_attributes -> [])
+  | Type tdef ->
+    (match tdef.attributes with
+    | Type_attr attr -> attr.leading_comments
+    | Sig_type attr -> attr.leading_comments
+    | No_attributes -> [])
+  | Module mdef ->
+    (match mdef.attributes with
+    | Module_attr attr -> attr.leading_comments
+    | Signature_attr attr -> attr.leading_comments
+    | No_attributes -> [])
