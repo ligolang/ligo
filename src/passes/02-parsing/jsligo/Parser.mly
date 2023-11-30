@@ -651,7 +651,9 @@ statements:
 stmt_ending_with_expr:
   import_decl | value_decl { S_Decl $1 }
 | expr_stmt | export (import_decl) | export (value_decl)
-| full_return_stmt | right_rec_stmt (stmt_ending_with_expr) { $1 }
+| full_return_stmt
+| right_rec_stmt (stmt_ending_with_expr) { $1 }
+| "[@attr]" stmt_ending_with_expr { S_Attr ($1,$2) }
 
 stmt_not_ending_with_expr:
   stmt_not_starting_with_expr_nor_block2_bis
@@ -659,10 +661,10 @@ stmt_not_ending_with_expr:
 | right_rec_stmt (stmt_not_ending_with_expr)
 | right_rec_stmt (type_decl { S_Decl $1 })
 | right_rec_stmt (export (type_decl)) { $1 }
+| "[@attr]" stmt_not_ending_with_expr { S_Attr ($1,$2) }
 
 right_rec_stmt (right_stmt):
-  "[@attr]" right_stmt { S_Attr ($1,$2) }
-| if_stmt (right_stmt) | if_else_stmt (right_stmt)
+  if_stmt (right_stmt) | if_else_stmt (right_stmt)
 | full_for_stmt (right_stmt) | for_of_stmt (right_stmt)
 | while_stmt (right_stmt) { $1 }
 
@@ -671,6 +673,7 @@ catenable_stmt:
 | stmt_not_starting_with_expr_nor_block2_bis (* and not ending like [expr] *)
 | directive_stmt | block_stmt | export (type_decl)
 | right_rec_stmt (catenable_stmt) { $1 }
+| "[@attr]" catenable_stmt { S_Attr ($1,$2) }
 
 stmt_not_starting_with_expr_nor_block1_bis: (* and ending like [expr] *)
   import_decl | value_decl | type_decl { S_Decl $1 }
@@ -680,6 +683,7 @@ stmt_not_starting_with_expr_nor_block1_bis: (* and ending like [expr] *)
 stmt_not_starting_with_expr_nor_block1:
   stmt_not_starting_with_expr_nor_block1_bis
 | right_rec_stmt (stmt_not_starting_with_expr_nor_block1_bis) { $1 }
+| "[@attr]" stmt_not_starting_with_expr_nor_block1 { S_Attr ($1,$2) }
 
 stmt_not_starting_with_expr_nor_block2_bis: (* and not ending like [expr] *)
   interface_decl | namespace_decl { S_Decl $1 }
@@ -689,6 +693,7 @@ stmt_not_starting_with_expr_nor_block2_bis: (* and not ending like [expr] *)
 stmt_not_starting_with_expr_nor_block2:
   stmt_not_starting_with_expr_nor_block2_bis
 | right_rec_stmt (stmt_not_ending_with_expr) { $1 }
+| "[@attr]" stmt_not_starting_with_expr_nor_block2 { S_Attr ($1,$2) }
 
 stmts_not_starting_with_expr_nor_block:
   stmt_not_starting_with_expr_nor_block1 stmts_not_starting_with_expr
@@ -702,6 +707,7 @@ stmt_not_starting_with_expr_nor_block:
 | stmt_not_starting_with_expr_nor_block2_bis
 | right_rec_stmt (statement)
 | empty_return_stmt { $1 }
+| "[@attr]" stmt_not_starting_with_expr_nor_block { S_Attr ($1,$2) }
 
 stmts_not_starting_with_expr:
   block_stmt statements { nseq_cons ($1, None) $2 }
@@ -710,15 +716,15 @@ stmts_not_starting_with_expr:
 
 statement:
   non_if_stmt (statement) | if_stmt (statement) { $1 }
+| "[@attr]" statement { S_Attr ($1,$2) }
 
 non_if_stmt (right_stmt):
   core_stmt (right_stmt) | block_stmt | empty_for_stmt
+| switch_stmt | break_stmt | continue_stmt
 | decl_stmt | expr_stmt | export_stmt | return_stmt { $1 }
 
 core_stmt (right_stmt):
-  "[@attr]" right_stmt { S_Attr ($1,$2) }
-| switch_stmt | for_of_stmt (right_stmt) | while_stmt (right_stmt)
-| break_stmt | continue_stmt
+  for_of_stmt (right_stmt) | while_stmt (right_stmt)
 | full_for_stmt (right_stmt) | if_else_stmt (right_stmt) { $1 }
 
 closed_non_if_stmt: non_if_stmt (closed_non_if_stmt) { $1 }

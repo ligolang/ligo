@@ -30,7 +30,7 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 2, 2, 2, 8, 0, ./missing_namespace_name.jsligo
     PASS, 16, 133, 1, 260, 1, ./missing_open_curly_bracket_in_namespace_decl.jsligo
     PASS, 2, 9, 5, 23, 0, ./missing_par_in_call.jsligo
-    PASS, 6, 106, 10, 100, 2, ./missing_par_in_if_condition.jsligo
+    PASS, 0, 0, 0, 0, 1, ./missing_par_in_if_condition.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_before_return_on_same_line.jsligo
     FAIL : can parse test file (but shouldn't)./missing_semicolon_in_top_level.jsligo
     PASS, 2, 2, 2, 6, 0, ./missing_string.jsligo
