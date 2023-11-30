@@ -94,8 +94,8 @@
   flex-flow: column;
   align-items: center;
   margin: 2rem 0;
-  width: 70%;
-  /* flex-wrap: wrap; */
+  width: 100%;
+  max-width: 1024px;
   justify-content: center;
 }
 
@@ -120,54 +120,16 @@
   );
 }
 
-.hero__marquee {
-  --gap: 1rem;
-  display: flex;
-  overflow: hidden;
-  user-select: none;
-  gap: var(--gap);
-}
-
 .hero__marquee-content {
-  list-style: none;
-  padding: 0;
-  margin: 10px;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  min-width: 100%;
-  gap: var(--gap);
-  animation: scroll 40s linear infinite;
-}
-
-.hero__marquee:hover .hero__marquee-content {
-  animation-play-state: paused;
-}
-
-.hero__marquee-content > li {
+  color: inherit;
+  text-decoration: none;
   margin: 0 1rem;
 }
 
-.hero__marquee-content > li a {
+.hero__marquee-content {
   color: inherit;
   text-decoration: none;
-}
-
-@keyframes scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100% - var(--gap)));
-  }
-}
-
-@media screen and (min-width: breakpoints.$ligo-breakpoint_lg) {
-  .hero__best-users {
-    display: flex;
-    flex-flow: row;
-  }
+  margin: 0 1.5rem;
 }
 
 /* Pause animation when reduced-motion is set */

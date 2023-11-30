@@ -25,7 +25,7 @@
   margin: 2rem;
 }
 .community__article-kpi {
-  top: -20px;
+  top: -25px;
   position: absolute;
   font-size: var(--ligo-text_size-10xl);
 }
