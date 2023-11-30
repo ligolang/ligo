@@ -27,6 +27,7 @@ module Make (Options : Options.S) =
     (* Listing all self-passes on tokens (resulting in [filters]) *)
 
     let filters : t = [
-      Comments.filter
+      Comments.filter;
+      Attributes.filter
     ]
   end

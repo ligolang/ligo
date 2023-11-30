@@ -292,6 +292,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
           ; entry = _
           ; dyn_entry = _
           ; deprecated = _
+          ; leading_comments = _
           }
       } ->
     let rhs' = self rhs in

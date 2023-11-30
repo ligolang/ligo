@@ -6,10 +6,6 @@ open Ligo_prim
 
 let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t = fun x -> x
 
-let untype_sig_item_attr : O.sig_item_attribute -> I.sig_item_attribute =
- fun { entry; dyn_entry; view; optional } -> { entry; view; dyn_entry; optional }
-
-
 (* use_orig_var param allows us to preserve the orininal type variables names, e.g. if
    we have [type t = A | B] then type of [Some A] will be transformed to [t option]
   instead of default [(A | B) option].
@@ -212,12 +208,13 @@ and untype_sig_item ?(use_orig_var = false) : O.sig_item -> I.sig_item =
  fun sig_item ->
   match sig_item with
   | S_value (var, type_, attr) ->
-    S_value (var, untype_type_expression ~use_orig_var type_, untype_sig_item_attr attr)
-  | S_type (var, type_) when Option.is_some @@ type_.orig_var ->
+    S_value (var, untype_type_expression ~use_orig_var type_, attr)
+  | S_type (var, type_, { leading_comments }) when Option.is_some @@ type_.orig_var ->
     (* we do not want to print the original variable if that is the first definition or an alias *)
-    S_type (var, untype_type_expression type_)
-  | S_type (var, type_) -> S_type (var, untype_type_expression ~use_orig_var type_)
-  | S_type_var var -> S_type_var var
+    S_type (var, untype_type_expression type_, { leading_comments })
+  | S_type (var, type_, { leading_comments }) ->
+    S_type (var, untype_type_expression ~use_orig_var type_, { leading_comments })
+  | S_type_var (var, attr) -> S_type_var (var, attr)
   | S_module (var, sig_) -> S_module (var, untype_signature ~use_orig_var sig_)
   | S_module_type (var, sig_) -> S_module_type (var, untype_signature ~use_orig_var sig_)
 
@@ -252,16 +249,19 @@ and untype_declaration_pattern
 
 
 and untype_declaration_type : _ O.Type_decl.t -> _ I.Type_decl.t =
- fun { type_binder; type_expr; type_attr = { public; hidden } } ->
+ fun { type_binder; type_expr; type_attr } ->
   let type_expr = untype_type_expression type_expr in
-  let type_attr = ({ public; hidden } : I.TypeOrModuleAttr.t) in
   { type_binder; type_expr; type_attr }
 
 
 and untype_declaration_module : _ O.Module_decl.t -> _ I.Module_decl.t =
- fun { module_binder; module_; module_attr = { public; hidden }; annotation } ->
+ fun { module_binder
+     ; module_
+     ; module_attr = { public; hidden; leading_comments }
+     ; annotation
+     } ->
   let module_ = untype_module_expr module_ in
-  let module_attr = ({ public; hidden } : I.TypeOrModuleAttr.t) in
+  let module_attr = ({ public; hidden; leading_comments } : I.TypeOrModuleAttr.t) in
   { module_binder; module_; module_attr; annotation }
 
 

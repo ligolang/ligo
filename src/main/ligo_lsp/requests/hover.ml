@@ -6,10 +6,9 @@ let hovers_pp_mode : Pretty.pp_mode =
 
 
 let hover_string
-    :  Syntax_types.t -> Scopes.def
-    -> [> `MarkupContent of MarkupContent.t | `List of MarkedString.t list ] Handler.t
+    : Syntax_types.t -> Scopes.def -> [> `List of MarkedString.t list ] Handler.t
   =
- fun syntax ->
+ fun syntax def ->
   let print_type_with_prefix ?prefix t =
     match Pretty.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t with
     | `Ok str -> return str
@@ -26,7 +25,45 @@ let hover_string
       return nonpretty_type
   in
   let language = Some (Syntax.to_string syntax) in
-  function
+  let doc_comment_hovers =
+    let comments =
+      Def.get_comments def
+      (* Contents of all comments that are attached to declaration.
+         For example, content of (* x *) is " x " *)
+    in
+    let doc_comments =
+      List.filter
+        ~f:(String.is_prefix ~prefix:"*")
+        (* Comments like [(** *)] in CameLIGO are considered as documentation comments *)
+        comments
+    in
+    let format_comment =
+      let source_syntax =
+        match Def.get_location def with
+        | File { path; _ } -> Path.get_syntax path
+        | StdLib _ -> Some CameLIGO (* Since Stdlib is written in CameLIGO *)
+        | Virtual _ -> None
+      in
+      (* we don't want to show "*" at hover, and for JsLIGO we strip "*" from every
+         string of a comment, to match the TypeDoc's behaviour *)
+      let strip_spaces_and_star =
+        String.strip ~drop:Char.is_whitespace
+        <@ String.chop_prefix_if_exists ~prefix:"*"
+        <@ String.strip ~drop:Char.is_whitespace
+      in
+      match source_syntax with
+      | Some CameLIGO | None -> strip_spaces_and_star
+      | Some JsLIGO ->
+        String.strip ~drop:Char.is_whitespace
+        <@ String.concat ~sep:"\n"
+        <@ List.map ~f:strip_spaces_and_star
+        <@ String.split_lines
+    in
+    List.map
+      ~f:(fun str -> MarkedString.{ language = None; value = format_comment str })
+      doc_comments
+  in
+  match def with
   | Variable vdef ->
     let prefix = PPrint.(string vdef.name ^//^ colon) in
     let type_info = Def.get_type vdef in
@@ -36,7 +73,7 @@ let hover_string
         ~f:(print_type_with_prefix ~prefix <@ Def.use_var_name_if_available)
         type_info
     in
-    return @@ `List [ MarkedString.{ language; value } ]
+    return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
   | Type tdef ->
     let rec get_params (t : Ast_core.type_content) =
       match t with
@@ -72,18 +109,18 @@ let hover_string
           ~width:10000
           PPrint.(string "type" ^//^ string name_with_params)
       in
-      return @@ `List [ MarkedString.{ language; value } ]
+      return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
     | Some content ->
       let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
       let@ value = print_type_with_prefix ~prefix content in
-      return @@ `List [ MarkedString.{ language; value } ])
+      return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
   | Module mdef ->
     let rec strip_generated : Ast_core.signature -> Ast_core.signature =
       let open Ligo_prim in
       fun { items } ->
         let strip_item : Ast_core.sig_item -> Ast_core.sig_item option = function
           | S_value (v, _, _) when Value_var.is_generated v -> None
-          | (S_type (v, _) | S_type_var v) when Type_var.is_generated v -> None
+          | (S_type (v, _, _) | S_type_var (v, _)) when Type_var.is_generated v -> None
           | (S_value _ | S_type _ | S_type_var _) as sig_item -> Some sig_item
           | (S_module (v, _) | S_module_type (v, _)) when Module_var.is_generated v ->
             None
@@ -128,7 +165,10 @@ let hover_string
         core_sig
     in
     let@ project_root = ask_last_project_file in
-    return @@ Helpers_pretty.print_module ~project_root:!project_root syntax sig_str mdef
+    let printed_module =
+      Helpers_pretty.print_module ~project_root:!project_root syntax sig_str mdef
+    in
+    return @@ `List (printed_module :: doc_comment_hovers)
 
 
 let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =

@@ -51,31 +51,52 @@ module Attrs = struct
       ; view : bool
       ; public : bool
       ; optional : bool
+      ; leading_comments : string list
       }
     [@@deriving compare, hash, equal]
 
     let default =
-      { entry = false; dyn_entry = false; view = false; public = true; optional = false }
+      { entry = false
+      ; dyn_entry = false
+      ; view = false
+      ; public = true
+      ; optional = false
+      ; leading_comments = []
+      }
 
 
-    let of_core_attr ({ entry; dyn_entry; view; public; _ } : Ast_typed.ValueAttr.t) =
-      { entry; dyn_entry; view; public; optional = false }
+    let of_core_attr
+        ({ entry; dyn_entry; view; public; leading_comments; _ } : Ast_typed.ValueAttr.t)
+      =
+      { entry; dyn_entry; view; public; leading_comments; optional = false }
   end
 
   module Type = struct
-    type t = { public : bool } [@@deriving compare, hash, equal]
+    type t =
+      { public : bool
+      ; leading_comments : string list
+      }
+    [@@deriving compare, hash, equal]
 
-    let default = { public = true }
-    let of_core_attr ({ public; _ } : Ast_typed.TypeOrModuleAttr.t) = { public }
+    let default = { public = true; leading_comments = [] }
+
+    let of_core_attr ({ public; leading_comments; _ } : Ast_typed.TypeOrModuleAttr.t) =
+      { public; leading_comments }
   end
 
   module Module = Type
 
   module Signature = struct
-    type t = { public : bool } [@@deriving compare, hash, equal]
+    type t =
+      { public : bool
+      ; leading_comments : string list
+      }
+    [@@deriving compare, hash, equal]
 
-    let default = { public = true }
-    let of_core_attr ({ public } : Ast_typed.SignatureAttr.t) = { public }
+    let default = { public = true; leading_comments = [] }
+
+    let of_core_attr ({ public; leading_comments } : Ast_typed.SignatureAttr.t) =
+      { public; leading_comments }
   end
 end
 

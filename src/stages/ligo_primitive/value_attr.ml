@@ -15,26 +15,44 @@ type t =
   ; (* Controls whether it should be inlined at AST level *)
     thunk : bool
   ; deprecated : string option
+  ; leading_comments : string list
   }
 [@@deriving eq, compare, yojson, hash]
 
 open Format
 
-let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
+module PP_attributes = struct
+  let pp_if_set str ppf attr = if attr then fprintf ppf "[@@%s]" str else fprintf ppf ""
 
-let pp_if_some str ppf attr =
-  if Option.is_some attr
-  then fprintf ppf "[@@%s %s]" str (Option.value_exn attr)
-  else fprintf ppf ""
+  let pp_if_some str ppf attr =
+    if Option.is_some attr
+    then fprintf ppf "[@@%s %s]" str (Option.value_exn attr)
+    else fprintf ppf ""
 
+
+  let pp_comments ppf comments =
+    List.iter comments ~f:(fun comment -> pp_if_some "comment" ppf (Some comment))
+end
+
+open PP_attributes
 
 let pp
     ppf
-    { inline; no_mutation; view; entry; dyn_entry; public; hidden; thunk; deprecated }
+    { inline
+    ; no_mutation
+    ; view
+    ; entry
+    ; dyn_entry
+    ; public
+    ; hidden
+    ; thunk
+    ; deprecated
+    ; leading_comments
+    }
   =
   fprintf
     ppf
-    "%a%a%a%a%a%a%a%a%a"
+    "%a%a%a%a%a%a%a%a%a%a"
     (pp_if_set "inline")
     inline
     (pp_if_set "no_mutation")
@@ -53,6 +71,8 @@ let pp
     thunk
     (pp_if_some "deprecated")
     deprecated
+    pp_comments
+    leading_comments
 
 
 let default_attributes =
@@ -65,4 +85,5 @@ let default_attributes =
   ; thunk = false
   ; dyn_entry = false
   ; deprecated = None
+  ; leading_comments = []
   }

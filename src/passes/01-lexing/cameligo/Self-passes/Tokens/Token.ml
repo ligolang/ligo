@@ -982,6 +982,120 @@ module T =
     | EOF t -> t#region, sprintf "EOF"
 
 
+    (* FROM TOKENS TO ATTACHED COMMENTS *)
+
+    let to_comments = function
+     (* Preprocessing directives *)
+
+      Directive _ -> []
+
+      (* Comments *)
+
+    | BlockCom w
+    | LineCom  w
+
+      (* Literals *)
+
+    | String   w
+    | Verbatim w -> w#comments
+    | Bytes    w -> w#comments
+    | Int      w
+    | Nat      w -> w#comments
+    | Mutez    w -> w#comments
+    | Ident    w
+    | UIdent   w
+    | EIdent   w -> w#comments
+    | Lang     w -> w#comments
+    | Attr     w -> w#comments
+
+    (* Symbols *)
+
+    | ARROW    w
+    | ASS      w
+    | CONS     w
+    | CARET    w
+    | MINUS    w
+    | PLUS     w
+    | SLASH    w
+    | TIMES    w
+    | LPAR     w
+    | RPAR     w
+    | LBRACKET w
+    | RBRACKET w
+    | LBRACE   w
+    | RBRACE   w
+    | COMMA    w
+    | SEMI     w
+    | VBAR     w
+    | COLON    w
+    | DOT      w
+    | WILD     w
+    | EQ       w
+    | NE       w
+    | LT       w
+    | GT       w
+    | LE       w
+    | BOOL_OR  w
+    | BOOL_AND w
+    | QUOTE    w
+    | REV_APP  w
+    | PLUS_EQ  w
+    | MINUS_EQ w
+    | TIMES_EQ w
+    | SLASH_EQ w
+    | VBAR_EQ  w -> w#comments
+
+    (* OCaml keywords *)
+
+    | Begin       w
+    | Do          w
+    | Done        w
+    | Downto      w
+    | Else        w
+    | End         w
+    | False       w
+    | For         w
+    | Fun         w
+    | If          w
+    | In          w
+    | Include     w
+    | Land        w
+    | Let         w
+    | Lor         w
+    | Lsl         w
+    | Lsr         w
+    | Lxor        w
+    | Match       w
+    | Mod         w
+    | Module      w
+    | Mut         w
+    | Not         w
+    | Of          w
+    | Or          w
+    | Rec         w
+    | Sig         w
+    | Struct      w
+    | Then        w
+    | True        w
+    | Type        w
+    | Val         w
+    | While       w
+    | With        w -> w#comments
+
+    (* CameLIGO-specific keywords *)
+
+    | ContractOf  w
+    | ParameterOf w
+    | Upto        w -> w#comments
+
+    (* Virtual tokens *)
+
+    | ZWSP w -> w#comments
+
+    (* End-Of-File *)
+
+    | EOF w -> w#comments
+
     (* CONVERSIONS *)
 
     let to_string ~offsets mode token =

@@ -43,14 +43,14 @@ let%expect_test "error_recovery_simple_jsligo" =
     PASS, 0, 0, 0, 0, 0, ./triple_eq_in_if_condition.jsligo
     PASS, 2, 10, 10, 467, 0, ./unfinished_code00.jsligo
     PASS, 5, 2, 2, 390, 0, ./unfinished_code01.jsligo
-    PASS, 3, 11, 9, 750, 0, ./unfinished_code02.jsligo
-    PASS, 3, 9, 5, 902, 0, ./unfinished_code03.jsligo
+    PASS, 3, 279, 17, 753, 0, ./unfinished_code02.jsligo
+    PASS, 3, 8, 8, 906, 0, ./unfinished_code03.jsligo
     PASS, 4, 31, 29, 25, 0, ./unfinished_code04.jsligo
     PASS, 3, 9, 9, 456, 0, ./unfinished_code05.jsligo
     PASS, 5, 8, 6, 473, 0, ./unfinished_code06.jsligo
     FAIL : can parse test file (but shouldn't)./unfinished_code07.jsligo
     PASS, 2, 7, 5, 20, 0, ./unfinished_code08.jsligo
-    PASS, 3, 2, 2, 131, 0, ./unfinished_code09.jsligo
+    PASS, 3, 20, 6, 132, 0, ./unfinished_code09.jsligo
     PASS, 4, 11, 9, 301, 0, ./unfinished_code10.jsligo
     PASS, 5, 3, 3, 192, 0, ./unfinished_code11.jsligo
     PASS, 3, 7, 5, 257, 0, ./unfinished_code12.jsligo

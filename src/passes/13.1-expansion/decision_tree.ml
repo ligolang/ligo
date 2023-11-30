@@ -12,7 +12,7 @@
       match x with
       | A ->
           match y with
-          | A -> (* 3 *) 
+          | A -> (* 3 *)
           | B -> (* 1 *)
       | B ->
           match y with
@@ -24,14 +24,14 @@
     2. Matrix (P -> A): Match expressions are represented as matrices, each row
        corresponds to a clause in the match. A row looks like (pi1, ..., pin) -> ai
        Here p's are patterns and a's are the body of clause
-    3. Occrance: Occurance is a path to a sub-pattern. 
+    3. Occrance: Occurance is a path to a sub-pattern.
        e.g. | A(D(E)), B, C -> ...
-       The occurance of E is x.A.D.E 
+       The occurance of E is x.A.D.E
     4. Head constructor: Head constructor of a pattern is the set of constructors
        that occur in the first column of the matrix.
        e.g. Head constructor of (A, B, _, C) is {A}
             Head constrcutor of (_, B, _, C) is {}
-    
+
     Future optimizations
     1. Implement necessity based heuristics: This module implements the basic algorithm
        described in the paper. In the paper the author also describes some heuristics
@@ -39,8 +39,8 @@
     2. Implement maximal sharing: The bodies of clauses are sometimes repeated many times
        when wildcard pattern are used. If these bodies of caluses are large this may
        increses the code-size if they are repeated. To avoid this probelm we can lift
-       the bodies of clauses into functions and replace the bodies by call to the 
-       corresponding functions. 
+       the bodies of clauses into functions and replace the bodies by call to the
+       corresponding functions.
  *)
 module Location = Simple_utils.Location
 
@@ -215,7 +215,7 @@ type vars_and_projections =
   }
 
 (** This function scans a pattern an find occurances for each sub-pattern
-    and generates fresh variables for them and also return a list of 
+    and generates fresh variables for them and also return a list of
     [vars_and_projections] i.e. a list of variables to be substituted by
     new fresh variables *)
 let get_vars_and_projections
@@ -240,8 +240,8 @@ let get_vars_and_projections
 
 (** This functions get the type of argument of a constructor.
     e.g. type a = A of int * int * int | B of { a : int ; b : int } | C of int
-    get_variant_nested_type A a => int * int * int 
-    get_variant_nested_type B a => { a : int ; b : int } 
+    get_variant_nested_type A a => int * int * int
+    get_variant_nested_type B a => { a : int ; b : int }
     get_variant_nested_type C a => int *)
 let get_variant_nested_type c ty =
   match C.get_t_sum ty with
@@ -353,8 +353,8 @@ let get_occurances : O.type_expression -> occurances =
   else [ empty_label, t ]
 
 
-(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the 
-    specialized occurances (o1.1, ..., o1.a, o2, ..., on) 
+(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the
+    specialized occurances (o1.1, ..., o1.a, o2, ..., on)
     where a is the arity of the constructor *)
 let specialize_occurances : Label.t -> occurances -> O.type_expression -> occurances =
  fun c os ty ->
@@ -374,7 +374,7 @@ let specialize_occurances : Label.t -> occurances -> O.type_expression -> occura
     | c (q1, ..., qa)             | q1, ..., qa, pi2, ..., pin -> ai          |
     | c' (q1, ..., qa)  (c != c') | No row                                    |
     | _                           | _, ... a times ... _, pi2, ..., pin -> ai |
-    +-----------------------------+-------------------------------------------+  
+    +-----------------------------+-------------------------------------------+
 *)
 let specialize : Label.t -> int -> matrix -> matrix =
  fun c a matrix ->
@@ -391,7 +391,7 @@ let specialize : Label.t -> int -> matrix -> matrix =
         Some (n_vars ~loc a @ ps, body))
 
 
-(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the 
+(** This function takes a list of [occurance] (o1, o2, ... , on) and returns the
     default occurances (o2, ..., on) *)
 let default_occurances : occurances -> occurances =
  fun os ->
@@ -407,8 +407,8 @@ let default_occurances : occurances -> occurances =
     | c (q1, ..., qa)         | No row                  |
     |                         |                         |
     | _                       | pi2 ... p2n -> ai       |
-    +-------------------------+-------------------------+           
-    This tranformation filters out all the row with constructors in the first 
+    +-------------------------+-------------------------+
+    This tranformation filters out all the row with constructors in the first
     column *)
 let default : matrix -> matrix =
  fun matrix ->
@@ -577,10 +577,10 @@ let rec generate_match_record
        succeeds and we emit a [Leaf] node with the action/body of the first row
     3. In any other case the matrix has more than one row and column.
        Here we look for a column index i such that there is at least one constructor
-       pattern. 
+       pattern.
        a. Let us consider that i = 0 (first column)
           We get the set of head constructors of the first column call it Σ1
-          
+
             For each constructor ck we find the [subtree] like
             Ak = to_decision_tree((o1·1 ... o1·a o2 ... on), S(ck, P → A))
             i.e. we specialize the occurances & the marix
@@ -636,7 +636,7 @@ let rec to_decision_tree : Names.t -> occurances -> matrix -> decision_tree =
                    (specialize c a matrix)
                in
                let constructor_label = join_labels [ o; c ] in
-               (* If a constructor pattern contains are record pattern we wrap the 
+               (* If a constructor pattern contains are record pattern we wrap the
                   decision tree in a [SwitchRecord] *)
                let t = generate_match_record loc constructor_label ty names t in
                let constructor_var, _ = Names.get constructor_label names in
@@ -678,8 +678,8 @@ let rec to_match_expression : body_type:O.type_expression -> decision_tree -> O.
  fun ~body_type tree ->
   match tree with
   | Fail ->
-    (* This case will likely never occur because we do the anomaly detection in 
-      an earlier pass, this case will happen only when match expression is not 
+    (* This case will likely never occur because we do the anomaly detection in
+      an earlier pass, this case will happen only when match expression is not
       well-formed (redundant cases or non-exhaustive match) *)
     corner_case
       "not a well-formed match expression, this should have been caught while typing"
@@ -750,16 +750,7 @@ let compile
                 ; let_result = body
                 ; (* ??? *)
                   attributes =
-                    { inline = false
-                    ; no_mutation = false
-                    ; dyn_entry = false
-                    ; view = false
-                    ; entry = false
-                    ; public = false
-                    ; hidden = false
-                    ; thunk = false
-                    ; deprecated = None
-                    }
+                    { Ligo_prim.Value_attr.default_attributes with public = false }
                 }
                 body_type
                 ~loc:Location.generated)

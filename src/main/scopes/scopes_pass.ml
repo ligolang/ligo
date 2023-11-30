@@ -303,11 +303,11 @@ module Of_Ast = struct
       else (
         let env = Env.add_vvar var env in
         scopes, env)
-    | S_type (type_binder, type_expr) ->
+    | S_type (type_binder, type_expr, _) ->
       let scopes = type_expression type_expr scopes env in
       let env = Env.add_tvar type_binder env in
       scopes, env
-    | S_type_var type_binder ->
+    | S_type_var (type_binder, _) ->
       let env = Env.add_tvar type_binder env in
       scopes, env
     | S_module (var, sig') | S_module_type (var, sig') ->

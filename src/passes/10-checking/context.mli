@@ -10,6 +10,7 @@ module Attrs : sig
       ; view : bool
       ; public : bool
       ; optional : bool
+      ; leading_comments : string list
       }
     [@@deriving compare, hash, equal]
 
@@ -18,7 +19,11 @@ module Attrs : sig
   end
 
   module Type : sig
-    type t = { public : bool } [@@deriving compare, hash, equal]
+    type t =
+      { public : bool
+      ; leading_comments : string list
+      }
+    [@@deriving compare, hash, equal]
 
     val default : t
     val of_core_attr : Ast_typed.TypeOrModuleAttr.t -> t
@@ -27,7 +32,11 @@ module Attrs : sig
   module Module = Type
 
   module Signature : sig
-    type t = { public : bool } [@@deriving compare, hash, equal]
+    type t =
+      { public : bool
+      ; leading_comments : string list
+      }
+    [@@deriving compare, hash, equal]
 
     val default : t
     val of_core_attr : Ast_typed.SignatureAttr.t -> t
@@ -90,11 +99,11 @@ and item =
   | C_lexists_var of Layout_var.t * fields
   | C_lexists_eq of Layout_var.t * fields * Type.layout
   | C_pos of pos
-      (** A mutable lock is a "fitch-style lock". A lock is used to 
-          "lock" mutable variables in the context from being used. 
-          
-          Namely, this is used to prevent functions from capturing 
-          mutable variables. 
+      (** A mutable lock is a "fitch-style lock". A lock is used to
+          "lock" mutable variables in the context from being used.
+
+          Namely, this is used to prevent functions from capturing
+          mutable variables.
       *)
   | C_mut_lock of mut_lock
 

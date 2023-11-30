@@ -38,16 +38,16 @@ let%expect_test "error_recovery_simple_cameligo" =
     PASS, 2, 27, 17, 10, 1, ./typo_in_with_kw_in_record_update.mligo
     PASS, 2, 435, 7, 343, 0, ./unfinished_code00.mligo
     PASS, 2, 2, 2, 2, 0, ./unfinished_code01.mligo
-    PASS, 3, 11, 9, 513, 0, ./unfinished_code02.mligo
-    PASS, 7, 9, 5, 650, 0, ./unfinished_code03.mligo
+    PASS, 3, 245, 17, 516, 1, ./unfinished_code02.mligo
+    PASS, 3, 9, 9, 625, 0, ./unfinished_code03.mligo
     PASS, 3, 32, 30, 190, 0, ./unfinished_code04.mligo
     PASS, 3, 14, 12, 149, 0, ./unfinished_code05.mligo
     PASS, 3, 8, 6, 323, 0, ./unfinished_code06.mligo
     PASS, 5, 2, 2, 34, 0, ./unfinished_code07.mligo
     PASS, 5, 7, 5, 514, 0, ./unfinished_code08.mligo
-    PASS, 3, 2, 2, 94, 0, ./unfinished_code09.mligo
+    PASS, 3, 18, 6, 95, 0, ./unfinished_code09.mligo
     PASS, 6, 26, 22, 274, 0, ./unfinished_code10.mligo
     PASS, 7, 3, 3, 118, 0, ./unfinished_code11.mligo
     PASS, 3, 7, 5, 184, 0, ./unfinished_code12.mligo
-    PASS, 47, 284, 24, 185, 1, ./unfinished_code13.mligo
+    PASS, 47, 288, 28, 186, 1, ./unfinished_code13.mligo
     FAIL : can't recover test file./unreadable_symbol.mligo |}]

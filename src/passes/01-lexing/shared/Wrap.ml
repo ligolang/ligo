@@ -16,6 +16,12 @@ type comment =
   Block of string Region.reg
 | Line  of string Region.reg
 
+let comment_to_region = function
+  Block r | Line r -> r.Region.region
+
+let comment_to_string = function
+  Block r | Line r -> r.Region.value
+
 (* Wrapping tokens with metadata *)
 
 type 'payload wrap = <

@@ -82,7 +82,7 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
         S_value
           ( Magic_vars.initial_dynamic_entrypoints
           , t_dyn_entries
-          , { dyn_entry = false; entry = false; view = false; optional = false } )
+          , Sig_item_attr.default_attributes )
       in
       new_sig :: sig_.sig_items
     in

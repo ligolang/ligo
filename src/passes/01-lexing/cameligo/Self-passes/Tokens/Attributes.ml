@@ -27,7 +27,7 @@ let comments_to_attr token acc =
   let init = token :: acc in
   let open! Token in
   match token with
-    Type _ | Let _ | Const _ | Namespace _ | Attr _ | Interface _ | Export _ ->
+    Type _ | Let _ | Module _ | Attr _ | Include _ | Sig _ | Val _ ->
       let comments = Token.to_comments token
       and f = List.cons <@ mk_comment_attr
       in List.fold_right ~f ~init comments
@@ -54,7 +54,7 @@ let filter :
     match print_passes with
       Some std ->
         Std.(add_line std.out
-             "Running JsLIGO token self-pass: \
+             "Running CameLIGO token self-pass: \
               Some comments into attributes.")
     | None -> ()
   in Ok (filter tokens)

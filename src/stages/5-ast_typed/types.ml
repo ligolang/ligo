@@ -115,18 +115,11 @@ and module_expr =
 [@@deriving eq, compare, yojson, hash]
 
 and sig_item =
-  | S_value of Value_var.t * ty_expr * sig_item_attribute
-  | S_type of Type_var.t * ty_expr
-  | S_type_var of Type_var.t
+  | S_value of Value_var.t * ty_expr * Sig_item_attr.t
+  | S_type of Type_var.t * ty_expr * Sig_type_attr.t
+  | S_type_var of Type_var.t * Sig_type_attr.t
   | S_module of Module_var.t * signature
   | S_module_type of Module_var.t * signature
-
-and sig_item_attribute =
-  { dyn_entry : bool
-  ; entry : bool
-  ; view : bool
-  ; optional : bool
-  }
 
 and signature =
   { sig_items : sig_item list

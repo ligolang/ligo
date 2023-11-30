@@ -59,6 +59,6 @@ val get_sig_value
   :  Module_var.t list
   -> Value_var.t
   -> signature
-  -> (ty_expr * sig_item_attribute) option
+  -> (ty_expr * Sig_item_attr.t) option
 
 val get_path_signature : signature -> Module_var.t list -> signature option

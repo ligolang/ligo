@@ -419,19 +419,7 @@ let uncurry_expression (expr : expression) : expression =
             let result =
               e_a_application ~loc (e_a_variable ~loc fun_name fun_type) args ret_type
             in
-            let attr =
-              ValueAttr.
-                { inline = true
-                ; no_mutation = false
-                ; view = false
-                ; public = true
-                ; hidden = false
-                ; thunk = false
-                ; entry = false
-                ; dyn_entry = false
-                ; deprecated = None
-                }
-            in
+            let attr = { Value_attr.default_attributes with inline = true } in
             (* Construct the let *)
             let result =
               e_a_let_in

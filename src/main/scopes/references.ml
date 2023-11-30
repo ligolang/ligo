@@ -483,11 +483,11 @@ and sig_item : AST.sig_item -> references -> env -> references * env =
     let refs = type_expression ty_expr refs env in
     let env = Env.add_vvar var env in
     refs, env
-  | S_type (var, ty_expr) ->
+  | S_type (var, ty_expr, _) ->
     let refs = type_expression ty_expr refs env in
     let env = Env.add_tvar var env in
     refs, env
-  | S_type_var var ->
+  | S_type_var (var, _) ->
     let env = Env.add_tvar var env in
     refs, env
   | S_module (var, sig') | S_module_type (var, sig') ->
