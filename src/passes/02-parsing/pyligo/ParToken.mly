@@ -15,7 +15,7 @@
   module Directive = Preprocessor.Directive
   module Region    = Simple_utils.Region
   module Token     = Lexing_pyligo.Token
-  module ErrorPrefix = Parsing_shared.Errors.ErrorPrefix
+  module ErrorWrapper = Parsing_shared.Errors.ErrorWrapper
 
   let mk_Directive region =
     let linenum   = Region.wrap_ghost 1
@@ -25,20 +25,20 @@
     PP_Linemarker (mk_line_directive region linenum filename flag)
 
   let mk_lang region =
-    Region.{value = {value = (ErrorPrefix.add "Ghost_lang"); region}; region}
+    Region.{value = {value = (ErrorWrapper.wrap "Ghost_lang"); region}; region}
 
   (* Ghost semantic values for inserted tokens *)
 
-  let mk_string   = Token.wrap_string   @@ ErrorPrefix.add "ghost string"
-  let mk_verbatim = Token.wrap_verbatim @@ ErrorPrefix.add "ghost verbatim"
+  let mk_string   = Token.wrap_string   @@ ErrorWrapper.wrap "ghost string"
+  let mk_verbatim = Token.wrap_verbatim @@ ErrorWrapper.wrap "ghost verbatim"
   let mk_bytes    = Token.wrap_bytes    (Hex.of_string "Ghost bytes")
   let mk_int      = Token.wrap_int      Z.zero
   let mk_nat      = Token.wrap_nat      Z.zero
   let mk_mutez    = Token.wrap_mutez    Int64.zero
-  let mk_ident    = Token.wrap_ident    @@ ErrorPrefix.add "ghost_ident"
-  let mk_uident   = Token.wrap_uident   @@ ErrorPrefix.add "Ghost_uident"
-  let mk_eident   = Token.wrap_eident   @@ ErrorPrefix.add "@ghost_eident"
-  let mk_attr     = Token.wrap_attr     (ErrorPrefix.add "ghost_attr") None
+  let mk_ident    = Token.wrap_ident    @@ ErrorWrapper.wrap "ghost_ident"
+  let mk_uident   = Token.wrap_uident   @@ ErrorWrapper.wrap "Ghost_uident"
+  let mk_eident   = Token.wrap_eident   @@ ErrorWrapper.wrap "@ghost_eident"
+  let mk_attr     = Token.wrap_attr     (ErrorWrapper.wrap "ghost_attr") None
 ]
 
 (* Make the recovery pay more attention to the number of synthesized

@@ -47,12 +47,12 @@ let error_json : t -> Simple_utils.Error.t =
       let content = make_content ~message ~location () in
       make ~stage ~content
 
-module ErrorPrefix = struct
-  let prefix = "⚠You are not supposed to see this prefix⚠"
-  let add s = prefix ^ s
-  let remove s =
-    match String.chop_prefix ~prefix s with
-    | Some s -> s
-    | None -> s
-  let is_contained = String.is_substring ~substring:prefix
+module ErrorWrapper = struct
+  let prefix = "⚠"
+  let suffix = "☠"
+  let regexp = Str.regexp @@ Printf.sprintf {|%s\([^%s]*\)%s|} prefix suffix suffix
+  let wrap s = Format.sprintf "%s%s%s" prefix s suffix
+  let unwrap = Str.global_replace regexp {|\1|}
+  let replace_with = Str.global_replace regexp
+  let is_wrapped = String.is_substring ~substring:prefix
 end

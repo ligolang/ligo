@@ -109,6 +109,12 @@ struct
 
   let no_colour = true
 
+  let unwrap_buffer buff =
+    let contents = Buffer.contents buff in
+    Buffer.clear buff;
+    Buffer.add_string buff @@ Parsing_shared.Errors.ErrorWrapper.unwrap contents
+
+
   let print_pretty cst out_buffer =
     PPrint.ToBuffer.pretty 1.0 80 out_buffer PrettyPrinter.(print default_state cst)
 
@@ -206,8 +212,11 @@ struct
     let replace = Result.map_error ~f:(fun _ -> "FAIL : can't recover test file") in
     let%bind cst, error = replace @@ recovery_file (to_string file (Some Blank) Test) in
     print_pretty cst recovered_pretty;
+    unwrap_buffer recovered_pretty;
     print_cst (cst_state ()) cst recovered_cst;
+    unwrap_buffer recovered_cst;
     print_cst (cst_symbols_state ()) cst recovered_cst_symbols;
+    unwrap_buffer recovered_cst_symbols;
     let recovered_errors_list = print_recovered_errors error recovered_errors in
     let replace = Result.map_error ~f:(fun _ -> "FAIL : can't parse recovered file") in
     let%bind _ = replace @@ parse_string (Buffer.contents recovered_pretty) in
