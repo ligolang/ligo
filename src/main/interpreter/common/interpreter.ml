@@ -2116,6 +2116,25 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
         ~init:(v_unit ())
         elts
     | _ -> failwith (Format.asprintf "Expected map value for for-each loop"))
+  | E_for_each { fe_binder = binder1, None; collection; fe_body; _ }
+    when AST.is_t_map collection.type_expression ->
+    let* k_ty, v_ty =
+      monad_option
+        (Errors.generic_error collection.location "Expected map type")
+        (AST.get_t_map collection.type_expression)
+    in
+    let* collection = eval_ligo collection calltrace env in
+    (match collection with
+    | V_Map elts ->
+      Monad.bind_fold_list
+        ~f:(fun _ (k_val, v_val) ->
+          let env =
+            Env.extend env binder1 (AST.t_pair ~loc k_ty v_ty, v_pair (k_val, v_val))
+          in
+          eval_ligo fe_body calltrace env)
+        ~init:(v_unit ())
+        elts
+    | _ -> failwith (Format.asprintf "Expected map value for for-each loop"))
   | E_for_each { fe_binder = binder1, None; collection; fe_body; _ } ->
     let type_ = collection.type_expression in
     let* v_ty =

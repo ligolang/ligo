@@ -1066,7 +1066,12 @@ let%expect_test "for loops" =
   [%expect
     {|
     Everything at the top-level was executed.
-    - testLoop exited with value (). |}]
+    - testLoop exited with value (). |}];
+  run_ligo_good [ "run"; "test"; test "/for_loop/for_map.jsligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value Some ((2 , "goodbye")). |}]
 
 let%expect_test "aggregation regression" =
   run_ligo_good [ "run"; "test"; test "agg_bar.mligo" ];
