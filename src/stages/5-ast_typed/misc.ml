@@ -449,11 +449,11 @@ let to_sig_items (module_ : module_) : sig_item list =
                   , Binder.get_ascr x
                   , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
               ])
-      | D_value { binder; expr; attr = { view; entry; dyn_entry; _ } } ->
+      | D_value { binder; expr = _; attr = { view; entry; dyn_entry; _ } } ->
         ctx
         @ [ S_value
               ( Binder.get_var binder
-              , expr.type_expression
+              , Binder.get_ascr binder
               , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
           ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
