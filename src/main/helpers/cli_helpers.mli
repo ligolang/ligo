@@ -1,6 +1,5 @@
 module LigoRC = Ligo_rc
 module LigoIgnore = Ligo_ignore
-module Constants = Constants
 
 type unzip_error = UnableToUnzip
 
@@ -22,11 +21,6 @@ type return =
   | Done
   | Compileur_Error
   | Exception of exn
-
-type command = string * string array
-
-(* Checks if executable is present *)
-val does_command_exist : string -> (bool, string) result
 
 val return_with_custom_formatter
   :  cli_analytics:Analytics.analytics_input list
@@ -66,6 +60,3 @@ val return_result
      * (raise:(Main_errors.all, Main_warnings.all) Simple_utils.Trace.raise
         -> 'value * Analytics.analytics_inputs)
   -> unit
-
-(* Runs a commands in a separate process *)
-val run_command : command -> (unit, string) result

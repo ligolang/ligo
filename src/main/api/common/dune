@@ -8,6 +8,7 @@
   ligo.ligo_compile
   ligo.decompile
   ligo.scopes
+  ligo.commands
   build
   interpreter
   bos
@@ -17,7 +18,8 @@
   decompress.gz
   ligo.formatter
   cst
-  msgpck)
+  msgpck
+  pprint)
  (preprocess
   (pps ppx_yojson_conv ppx_let)))
 

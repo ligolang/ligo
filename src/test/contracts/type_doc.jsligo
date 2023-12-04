@@ -1,0 +1,71 @@
+#import "tuples_sequences_functions.jsligo" "SomeFile"
+#import "address.mligo" "MligoWontBeInTheOutput"
+
+/**
+ * Top level value doc
+ */
+export const top_level_value = 42
+
+#import "map.jsligo" "Map"
+
+/** Doc for type */
+export type t<a, b> =
+  | #["A", int]
+  | ["B", a]
+  | #["C", b];
+
+/**
+ * Extracts `int` value from `t<int, int>`
+ */
+export function extract_int (v : t<int, int>): int {
+  return match(v) {
+    when (A(n)): n;
+    when (B(n)): n;
+    when (C(n)): n;
+  }
+}
+
+/** Some storage */
+export type storage = {
+  a : int;
+  b : bool;
+  c : string;
+};
+
+/** Doc for all 3 values */
+export const { a: x; b: y; c: z } : storage = { a: 42; b: false; c: "aaa" };
+
+function process_storage (_s : storage) : bool {
+  return false
+}
+
+export type d = ["D", int]
+
+export const [a, [b, D(c)]] = [42, [42, D(42)]]
+
+/** Doc for namespace */
+export namespace Outer {
+  /** Doc for inner type */
+  export type t = int
+
+  /** Doc for inner function */
+  export const add = (a, b) => a + b
+
+  /** Doc for inner namespace */
+  export namespace Inner {
+    /** Doc for deep const */
+    export const inner : storage = { a: x; b: y; c: z }
+  }
+}
+
+/** Doc for interface */
+export interface Iface {
+  /** Doc for type var in interface */
+  type t;
+
+  /** Doc for type in interface */
+  type string = int;
+
+  /** Doc for value in interface */
+  const v : t
+}

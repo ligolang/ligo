@@ -76,6 +76,8 @@ type all =
   | `Main_invalid_sender of string
   | `Main_invalid_source of string
   | `Main_invalid_timestamp of string
+  | `Main_typedoc_doesnt_exist
+  | `Main_typedoc_failed of string
   | `Test_err_tracer of string * all
   | `Test_run_tracer of string * all
   | `Test_expect_tracer of Ast_core.expression * Ast_core.expression

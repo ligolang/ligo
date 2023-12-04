@@ -30,6 +30,7 @@ let%expect_test _ =
                                    break at any time
       install                    . install LIGO dependencies declared in ligo.json
       lsp                        . [BETA] launch a LIGO lsp server
+      doc                        . [BETA] Generate a documentation for your project
       analytics                  . Manage analytics
       registry                   . Commands to interact with Ligo Package Registry
       version                    . print version information
@@ -558,4 +559,27 @@ let%expect_test _ =
                                    syntaxes are "cameligo" and "jsligo". By default,
                                    the syntax is guessed from the extension (.mligo
                                    and .jsligo respectively).
+      [-help], -?                . print this help text and exit |}]
+
+let%expect_test _ =
+  run_ligo_good [ "doc"; "-help" ];
+  print_endline @@ remove_last_line [%expect.output];
+  [%expect
+    {|
+    [BETA] Generate a documentation for your project
+
+      ligo doc SYNTAX DIRECTORY
+
+    [BETA] Generate a documentation for your project. At this moment only JsLIGO is supported and it requires typedoc to be installed
+
+    === flags ===
+
+      [--doc-args ARGUMENTS]     . Arguments that would be passed into documentation
+                                   generating tool (typedoc for JsLIGO)
+      [--skip-analytics]         . Avoid ligo analytics publication. Configurable
+                                   with environment variable LIGO_SKIP_ANALYTICS too
+      [-p PROTOCOL], --protocol  . choose protocol's types/values pre-loaded into
+                                   the LIGO environment (mumbai ,
+                                   nairobi). By default, the current protocol
+                                   (nairobi) will be used
       [-help], -?                . print this help text and exit |}]
