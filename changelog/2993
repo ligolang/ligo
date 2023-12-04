@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added a `ligo doc` command which will generate documentation for your project. At this moment only JsLIGO is supported and it requires `typedoc` to be installed.\\n\\nRelated [MR](https://gitlab.com/ligolang/ligo/-/merge_requests/2993)\\n\\n\\n"
+merge_request: '2993'
+title: "Draft: [#2094] Translate `Ast_typed` into TypeScript for docs generation"
+type: added
+            
