@@ -266,6 +266,10 @@ let check = (p: unit) => Tezos.self("%default");
 val implicit_account : key_hash -> 'a contract
 </SyntaxTitle>
 
+<SyntaxTitle syntax="jsligo">
+let implicit_account : (_: key_hash) => contract&lt;unit&gt;
+</SyntaxTitle>
+
 Get the default contract associated with an on-chain key-pair. This
 contract does not execute code, instead it exists to receive tokens on
 behalf of a key's owner.
