@@ -28,6 +28,16 @@ let%expect_test _ =
     - test_cmp_list exited with value ().
     - test_cmp_record exited with value (). |}]
 
+(* test loops on maps *)
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_loop_map.jsligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - testmap exited with value [0 -> 1 ; 1 -> 2 ; 2 -> 4].
+    - test_entries exited with value [(2 , 4) ; (1 , 2) ; (0 , 1)].
+    - test_unzipped_entries exited with value ([2 ; 1 ; 0] , [4 ; 2 ; 1]). |}]
+
 (* events payload being records and not decompiled to pairs in the interpreter *)
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_events_pair_vs_record.mligo" ];

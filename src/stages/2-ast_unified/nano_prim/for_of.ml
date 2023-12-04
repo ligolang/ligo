@@ -1,6 +1,6 @@
-type ('expr, 'statement) t =
+type ('expr, 'pattern, 'statement) t =
   { index_kind : [ `Let | `Const ]
-  ; index : Ligo_prim.Value_var.t
+  ; index : 'pattern
   ; expr : 'expr
   ; for_stmt : 'statement
   }

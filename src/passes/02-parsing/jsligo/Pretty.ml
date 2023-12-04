@@ -585,7 +585,8 @@ and print_S_ForOf state (node: for_of_stmt reg) =
 and print_range_for_of state (node : range_of par) =
   let {lpar; inside; rpar} = node.value in
   let {index_kind; index; kwd_of; expr} = inside in
-  let par = print_var_kind index_kind ^^ space ^^ print_variable index
+  let par = print_var_kind index_kind ^^ space
+            ^^ print_pattern state index
             ^^ space ^^ token kwd_of ^^ space ^^ print_expr state expr
   in print_par_like_document state par lpar rpar
 

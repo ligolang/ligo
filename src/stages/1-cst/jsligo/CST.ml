@@ -171,8 +171,7 @@ type 'a chevrons  = 'a chevrons' reg [@@deriving yojson_of]
 
 type t = {statements : statements; eof : eof}
 
-and cst = t
-[@@deriving yojson_of]
+and cst = t [@@deriving yojson_of]
 
 (* DECLARATIONS *)
 
@@ -542,7 +541,7 @@ and for_of_stmt = {
 
 and range_of = {
   index_kind : (var_kind [@yojson.opaque]);
-  index      : variable;
+  index      : pattern;
   kwd_of     : (kwd_of [@yojson.opaque]);
   expr       : expr
 }

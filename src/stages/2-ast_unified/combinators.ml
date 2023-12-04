@@ -414,3 +414,36 @@ let get_pattern_binders (p : pattern) : Variable.t list =
       }
   in
   Recursion_schemes.Catamorphism.cata_pattern ~f:folder p
+
+
+let expr_of_pattern_opt (p : pattern) : expr option =
+  let fp : (expr option, ty_expr) pattern_ -> expr option =
+   fun p ->
+    let open Option in
+    let open Let_syntax in
+    let loc = Location.get_location p in
+    match Location.unwrap p with
+    | P_var x -> return @@ e_variable ~loc x
+    | P_var_typed (t, x) -> return @@ e_annot ~loc (e_variable ~loc x, t)
+    | P_var_esc x -> return @@ e_variable_esc ~loc x
+    | P_unit -> return @@ e_unit ~loc
+    | P_typed (t, e) ->
+      let%bind e = e in
+      return @@ e_annot ~loc (e, t)
+    | P_literal l -> return @@ e_literal ~loc l
+    | P_tuple_with_ellipsis (_ :: _ as l)
+      when List.for_all ~f:(fun { ellipsis; pattern = _ } -> not ellipsis) l ->
+      let exprs = List.map ~f:(fun { ellipsis = _; pattern } -> pattern) l in
+      let%bind exprs = Option.all exprs in
+      let exprs = List.Ne.of_list exprs in
+      return @@ e_tuple ~loc exprs
+    | P_tuple (_ :: _ as l) ->
+      let%bind exprs = Option.all l in
+      let exprs = List.Ne.of_list exprs in
+      return @@ e_tuple ~loc exprs
+    | _ -> None
+  in
+  let rec fold_pattern ~f (x : pattern) =
+    map_pattern_ (fold_pattern ~f) Fun.id x.fp |> f
+  in
+  fold_pattern ~f:fp p

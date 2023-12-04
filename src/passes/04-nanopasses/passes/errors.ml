@@ -27,6 +27,7 @@ type t =
   | `Small_passes_unsupported_rest_property of expr
   | `Small_passes_unsupported_projection of expr
   | `Small_passes_unsupported_disc_union_type of ty_expr
+  | `Small_passes_unsupported_pattern_loop of Location.t
   | `Small_passes_recursive_no_annot of expr
   | `Small_passes_non_linear_pattern of (pattern, ty_expr) pattern_
   | `Small_passes_non_linear_type of [ `Decl of declaration | `Ty of ty_expr ty_expr_ ]
@@ -157,6 +158,13 @@ let error_ppformat
       Format.fprintf f "@[<hv>%a@.Unsupported update@]" snippet_pp (get_e_loc e)
     | `Small_passes_unsupported_rest_property e ->
       Format.fprintf f "@[<hv>%a@.Unsupported rest property@]" snippet_pp (get_e_loc e)
+    | `Small_passes_unsupported_pattern_loop loc ->
+      Format.fprintf
+        f
+        "@[<hv>%a@.Unsupported pattern in loop. Only single variables or pairs of \
+         variables (for maps) are allowed.@]"
+        snippet_pp
+        loc
     | `Small_passes_recursive_no_annot e ->
       Format.fprintf
         f
@@ -376,6 +384,9 @@ let error_json : t -> Simple_utils.Error.t =
   | `Small_passes_unsupported_rest_property e ->
     let location = get_e_loc e in
     let content = make_content ~message:"Unsupported rest property" ~location () in
+    make ~stage ~content
+  | `Small_passes_unsupported_pattern_loop location ->
+    let content = make_content ~message:"Unsupported pattern in loop" ~location () in
     make ~stage ~content
   | `Small_passes_recursive_no_annot e ->
     let location = get_e_loc e in
