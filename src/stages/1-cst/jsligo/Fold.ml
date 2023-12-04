@@ -732,7 +732,7 @@ let fold'
   | S_range_of -> let { index_kind; index; kwd_of; expr } = node in
     process_list
     [ index_kind -| S_var_kind
-    ; index -| S_variable
+    ; index -| S_pattern
     ; kwd_of -| S_kwd_of
     ; expr -| S_expr ]
   | S_rbrace -> process @@ node -| S_wrap S_lexeme

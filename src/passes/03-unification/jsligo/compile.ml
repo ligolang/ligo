@@ -778,7 +778,6 @@ and instruction : Eq.instruction -> Folding.instruction =
       | `Let _ -> `Let
       | `Const _ -> `Const
     in
-    let index = TODO_do_in_parsing.esc_var index in
     return @@ I_for_of { index_kind; index; expr; for_stmt = for_of_body }
   | S_For s ->
     let I.{ range; for_body; _ } = s.value in

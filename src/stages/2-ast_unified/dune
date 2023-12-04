@@ -5,6 +5,7 @@
  (preprocess
   (staged_pps
    ppx_import
+   ppx_let
    ppx_map
    ppx_woo
    ppx_deriving.eq

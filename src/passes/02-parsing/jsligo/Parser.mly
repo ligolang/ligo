@@ -895,7 +895,7 @@ for_of_stmt(right_stmt):
     in S_ForOf {region; value} }
 
 range_of:
-  index_kind variable "of" expr {
+  index_kind pattern "of" expr {
     {index_kind=$1; index=$2; kwd_of=$3; expr=$4} }
 
 %inline

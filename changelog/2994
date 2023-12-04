@@ -1,0 +1,7 @@
+
+author: rinderkn
+description: "\\nWe can now write `for ([key, value] of map) { ... }`.\\n\\n"
+merge_request: '2994'
+title: "[JsLIGO] For-of loops with patterns instead of a variable ranging over the collection."
+type: added
+            

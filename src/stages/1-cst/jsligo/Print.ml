@@ -1260,8 +1260,8 @@ and print_S_ForOf state (node: for_of_stmt reg) =
   let range = range.value.inside in
   let {index_kind; index; kwd_of=_; expr} = range in
   let print_index state = function
-    `Let _,   var -> Tree.(make_unary state "let"   print_variable var)
-  | `Const _, var -> Tree.(make_unary state "const" print_variable var) in
+    `Let _,   p -> Tree.(make_unary state "let"   print_pattern p)
+  | `Const _, p -> Tree.(make_unary state "const" print_pattern p) in
   let children = Tree.[
     mk_child print_index     (index_kind, index);
     mk_child print_expr      expr;

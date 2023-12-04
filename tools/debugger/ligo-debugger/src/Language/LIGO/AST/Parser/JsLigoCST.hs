@@ -180,7 +180,7 @@ data ForOfStmt = ForOfStmt
   deriving anyclass (NFData)
 
 data RangeOf = RangeOf
-  { roIndex :: WrappedLexeme
+  { roIndex :: Pattern
   , roExpr :: Expr
   }
   deriving stock (Show, Generic)
@@ -1132,7 +1132,7 @@ toAST CST{..} =
       SForOf (unpackReg -> (r, ForOfStmt{..})) ->
         let
           Par' RangeOf{..} = rValue fosRange
-          index = makeWrappedLexeme AST.Name roIndex
+          index = patternConv roIndex
           ofExpr = exprConv roExpr
           body = statementConv fosForOfBody
         in fastMake r (AST.ForOfLoop index ofExpr body)

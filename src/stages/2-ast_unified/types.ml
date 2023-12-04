@@ -187,7 +187,7 @@ and ('self, 'expr, 'pattern, 'statement, 'block) instruction_content_ =
   | I_cond of ('expr, ('self, 'block) Test_clause.t) Cond.t
   | I_for of ('expr, 'block) For_int.t
   | I_for_in of ('pattern, 'expr, 'block) For_collection.t
-  | I_for_of of ('expr, 'statement) For_of.t
+  | I_for_of of ('expr, 'pattern, 'statement) For_of.t
   | I_for_stmt of ('expr, 'statement) For_stmt.t
   | I_patch of 'expr Patch.t
   | I_remove of 'expr Removal.t

@@ -1,0 +1,9 @@
+const broken_unzipped_entries = (x : map<int, int>) : [list<int>, list<int>] => {
+    let keys = list ([]) ;
+    let values = list ([]) ;
+    for (const [k, v, z] of x) {
+      keys = list([k, ...keys]);
+      values = list([v, ...values]);
+    };
+    return [keys, values];
+};

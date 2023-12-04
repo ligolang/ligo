@@ -54,3 +54,13 @@ const entries = (x : map<int, int>) : list<[int,int]> => {
     };
     return lst
 };
+
+const unzipped_entries = (x : map<int, int>) : [list<int>, list<int>] => {
+    let keys = list ([]) ;
+    let values = list ([]) ;
+    for (const [k, v] of x) {
+      keys = list([k, ...keys]);
+      values = list([v, ...values]);
+    };
+    return [keys, values];
+};

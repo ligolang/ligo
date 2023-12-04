@@ -3262,6 +3262,58 @@ let%expect_test _ =
     - test_increment exited with value (). |}]
 
 let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "broken_unzipped_entries"
+    ; "--init-file"
+    ; bad_contract "loop.jsligo"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/loop.jsligo", line 4, character 4 to line 7, character 5:
+      3 |     let values = list ([]) ;
+      4 |     for (const [k, v, z] of x) {
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |       keys = list([k, ...keys]);
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      6 |       values = list([v, ...values]);
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |     };
+          ^^^^^
+      8 |     return [keys, values];
+
+    Unsupported pattern in loop. Only single variables or pairs of variables (for maps) are allowed. |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "jsligo"
+    ; "broken_unzipped_entries"
+    ; "--init-file"
+    ; bad_contract "loop2.jsligo"
+    ];
+  [%expect
+    {|
+    File "../../test/contracts/negative/loop2.jsligo", line 4, character 4 to line 7, character 5:
+      3 |     let values : list<int> = list([]);
+      4 |     for (const [k, v] of x) {
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+      5 |       keys = list([k, ...keys]);
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      6 |       values = list([v, ...values]);
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      7 |     };
+          ^^^^^
+      8 |     return [keys, values];
+
+    Expected collection of type "any", but recieved collection of type "list (
+    ( int *
+      int ))". |}]
+
+let%expect_test _ =
   run_ligo_good
     [ "compile"; "contract"; contract "reverse_string_for_loop.jsligo"; "-m"; "C" ];
   [%expect
