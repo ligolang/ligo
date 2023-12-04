@@ -4,7 +4,7 @@ open Api_helpers
 module OS = Bos.OS
 module Cmd = Bos.Cmd
 module Trace = Simple_utils.Trace
-module Constants = Cli_helpers.Constants
+module Constants = Commands.Constants
 module T = Core
 module Formatter = Ligo_formatter
 module Checksum = Cli_helpers.Checksum
@@ -71,7 +71,7 @@ end = struct
     ; tarball : Uri.t
     ; shasum : string
     }
-  (* 
+  (*
   4. Clean up formatter code
 *)
 
@@ -245,7 +245,7 @@ let list ~kind ~display_format ~no_colour () =
 
 
 let new_project' ~project_url ~project_name ~version =
-  let gc = Cli_helpers.run_command (Constants.git_clone ~project_url ~project_name) in
+  let gc = Commands.run_command (Constants.git_clone ~project_url ~project_name) in
   match gc with
   | Ok () ->
     let is_release = Str.string_match idregex version 0 in
@@ -253,7 +253,7 @@ let new_project' ~project_url ~project_name ~version =
       if is_release
       then (
         let _ =
-          Cli_helpers.run_command
+          Commands.run_command
             (Constants.git_checkout ~ref:version ~dir_path:project_name)
         in
         ())

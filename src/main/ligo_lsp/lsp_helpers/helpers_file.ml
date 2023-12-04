@@ -4,9 +4,4 @@ let is_stdlib (file : string) : bool =
   String.(file = "")
 
 
-(** This heuristic checks whether the given file refers to a file defined within
-    a LIGO registry package. *)
-let is_packaged (file : string) : bool =
-  (* Here we use a heuristic: if the file is defined within any directory called
-     ".ligo", we suppose that it was imported. *)
-  List.mem (String.split_on_chars ~on:[ '\\'; '/' ] file) ".ligo" ~equal:String.( = )
+let is_packaged = Ligo_api.Api_helpers.is_packaged

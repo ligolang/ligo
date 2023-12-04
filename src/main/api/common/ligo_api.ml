@@ -14,3 +14,4 @@ module Print = Print
 module Resolve_config = Resolve_config
 module Dump_cst = Dump_cst
 module Dialect_cst = Dialect_cst
+module Doc = Doc

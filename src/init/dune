@@ -5,6 +5,7 @@
   bos
   simple-utils
   cli_helpers
+  commands
   cohttp-lwt-unix
   decompress.gz
   tar-unix

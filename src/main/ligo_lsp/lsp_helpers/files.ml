@@ -1,26 +1,6 @@
 let list_directory ?(include_library = false) (dir : Path.t) : Path.t list =
-  let rec aux ?(include_library = include_library) (res : Path.t list)
-      : Path.t list -> Path.t list
-    = function
-    | f :: fs when Caml.Sys.is_directory (Path.to_string f) ->
-      let is_packaged = Helpers_file.is_packaged @@ Path.make_relative dir f in
-      if (not include_library) && is_packaged
-      then aux res fs
-      else
-        Caml.Sys.readdir (Path.to_string f)
-        |> Array.to_list
-        |> List.map ~f:(Path.concat f)
-        |> List.append fs
-        (* We don't want to display the completions for nested dependencies *)
-        |> aux ~include_library:(include_library && not is_packaged) res
-    | f :: fs ->
-      let ext = Path.get_extension f in
-      (match Syntax.of_ext_opt ext with
-      | Some _ -> aux (f :: res) fs
-      | None -> aux res fs)
-    | [] -> res
-  in
-  aux [] [ dir ]
+  Ligo_api.Api_helpers.list_directory ~include_library (Path.to_string dir)
+  |> List.map ~f:Path.from_absolute
 
 
 let list_library_files (dir : Path.t) (mod_res : Preprocessor.ModRes.t option)

@@ -295,6 +295,12 @@ let rec error_ppformat
          Error: %s@]"
         fn
         s
+    | `Main_typedoc_doesnt_exist ->
+      Format.fprintf
+        f
+        "Typedoc does not exist. You can install it by running \"npm install -g typedoc\""
+    | `Main_typedoc_failed err ->
+      Format.fprintf f "@[<hv>Typedoc failed with the next error:@.%s @]" err
     | `Unparsing_michelson_tracer errs ->
       let errs =
         List.map
@@ -738,6 +744,12 @@ let rec error_json : Types.all -> Simple_utils.Error.t list =
   | `Main_entrypoint_not_found ->
     let content = make_content ~message:"Missing entrypoint" () in
     [ make ~stage:"top-level glue" ~content ]
+  | `Main_typedoc_doesnt_exist ->
+    let content = make_content ~message:"Typedoc does not exist" () in
+    [ make ~stage:"doc" ~content ]
+  | `Main_typedoc_failed _ ->
+    let content = make_content ~message:"Typedoc failure" () in
+    [ make ~stage:"doc" ~content ]
   | `Preproc_tracer e -> [ Preprocessing.Errors.error_json e ]
   | `Parser_tracer e -> [ Parsing.Errors.error_json e ]
   | `Nanopasses_tracer e -> [ Nanopasses.Errors.error_json e ]
