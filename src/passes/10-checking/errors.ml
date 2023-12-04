@@ -355,7 +355,7 @@ let extract_loc_and_message : typer_error -> Location.t * string =
   | `Typer_michelson_or_no_annotation (c, loc) ->
     ( loc
     , Format.asprintf
-        "@[<hv>Incorrect usage of type \"michelson_or\".@.The contructor \"%a\" must be \
+        "@[<hv>Incorrect usage of type \"michelson_or\".@.The constructor \"%a\" must be \
          annotated with a variant type. @]"
         Label.pp
         c )
