@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fix false negative errors for dynamic entry points (`Cannot unify ...`). Now dynamic entry points are typed correctly in the LSP.\\n\\n\\n"
+merge_request: '3004'
+title: "[#2087] Fix false negative for dynamic entrypoints"
+type: fixed
+            

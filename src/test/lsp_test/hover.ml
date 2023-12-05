@@ -508,6 +508,32 @@ let test_cases =
                ] )
          ])
     }
+  ; { test_name = "dynamic_entrypoints.mligo"
+    ; file = "contracts/dynamic_entrypoints.mligo"
+    ; hovers =
+        List.map
+          ~f:(fun p -> p, one "one : (unit, int) dynamic_entrypoint")
+          [ pos ~line:7 ~character:5
+          ; pos ~line:15 ~character:33
+          ; pos ~line:32 ~character:30
+          ]
+        @ List.map
+            ~f:(fun p -> p, one "tick : (int ticket, int * int) dynamic_entrypoint")
+            [ pos ~line:10 ~character:7; pos ~line:23 ~character:35 ]
+    }
+  ; { test_name = "dynamic_entrypoints.jsligo"
+    ; file = "contracts/dynamic_entrypoints.jsligo"
+    ; hovers =
+        List.map
+          ~f:(fun p -> p, one "one : dynamic_entrypoint<unit, int>")
+          [ pos ~line:7 ~character:9
+          ; pos ~line:15 ~character:35
+          ; pos ~line:36 ~character:29
+          ]
+        @ List.map
+            ~f:(fun p -> p, one "tick : dynamic_entrypoint<ticket<int>, [int, int]>")
+            [ pos ~line:11 ~character:9; pos ~line:25 ~character:36 ]
+    }
   ]
 
 

@@ -442,6 +442,16 @@ let test_cases =
         ]
     ; max_number_of_problems = None
     }
+  ; { test_name = "No diagnostics for dynamic entrypoints (mligo)."
+    ; file_path = "contracts/dynamic_entrypoints.mligo"
+    ; diagnostics = []
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "No diagnostics for dynamic entrypoints (jsligo)."
+    ; file_path = "contracts/dynamic_entrypoints.jsligo"
+    ; diagnostics = []
+    ; max_number_of_problems = None
+    }
   ]
 
 
