@@ -5,7 +5,8 @@ let get_definition : Position.t -> Path.t -> Scopes.def list -> Scopes.def optio
  fun pos uri -> List.find ~f:(Def.is_reference pos uri)
 
 
-type def_or_impl =
+type decl_def_or_impl =
+  | Decl
   | Def
   | Impl
 
@@ -160,6 +161,12 @@ let rec try_to_resolve_mod_case
     try_to_resolve_mod_case mdefs mdef.mod_case
 
 
+(** Given some definition, look for the module/namespace and signature/interface that
+    declares it. *)
+let get_declaration : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
+ fun def _mdefs -> [ def ]
+
+
 (** Given some definition, look for all modules/namespaces and signatures/interfaces that
     implement it. *)
 let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
@@ -253,13 +260,15 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
   | _ :: _ as defs -> defs
 
 
-let on_req_impl : def_or_impl -> Position.t -> Path.t -> Locations.t option Handler.t =
- fun def_or_impl pos file ->
+let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option Handler.t
+  =
+ fun decl_def_or_impl pos file ->
   with_cached_doc_pure file ~default:None
   @@ fun { definitions; _ } ->
   let%bind.Option definition = get_definition pos file definitions in
   let definitions =
-    (match def_or_impl with
+    (match decl_def_or_impl with
+    | Decl -> get_declaration
     | Def -> get_definitions
     | Impl -> get_implementations)
       definition
@@ -276,6 +285,10 @@ let on_req_impl : def_or_impl -> Position.t -> Path.t -> Locations.t option Hand
   with
   | [] -> None
   | _ :: _ as definitions -> Some (`Location definitions)
+
+
+let on_req_declaration : Position.t -> Path.t -> Locations.t option Handler.t =
+  on_req_impl Decl
 
 
 let on_req_definition : Position.t -> Path.t -> Locations.t option Handler.t =

@@ -163,6 +163,9 @@ class lsp_server (capability_mode : capability_mode) =
     method config_range_formatting =
       Some (`Bool (self#is_request_enabled "textDocument/rangeFormatting"))
 
+    method config_declaration =
+      Some (`Bool (self#is_request_enabled "textDocument/declaration"))
+
     method! config_definition =
       Some (`Bool (self#is_request_enabled "textDocument/definition"))
 
@@ -228,6 +231,7 @@ class lsp_server (capability_mode : capability_mode) =
         hoverProvider = self#config_hover
       ; documentFormattingProvider = self#config_formatting
       ; definitionProvider = self#config_definition
+      ; declarationProvider = self#config_declaration
       ; implementationProvider = self#config_implementation
       ; renameProvider = self#config_rename
       ; referencesProvider = self#config_references
@@ -421,6 +425,10 @@ class lsp_server (capability_mode : capability_mode) =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_formatting (DocumentUri.to_path uri) options
+        | Client_request.TextDocumentDeclaration { textDocument; position; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_declaration position (DocumentUri.to_path uri)
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None

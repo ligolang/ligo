@@ -6,6 +6,7 @@ open Range.Construct
 open Requests.Handler
 
 type def_type =
+  | Decl
   | Def
   | Impl
   | Type_def
@@ -35,6 +36,7 @@ let get_definition_test
   let get_definition =
     Requests.(
       match def_type with
+      | Decl -> on_req_declaration
       | Def -> on_req_definition
       | Impl -> on_req_implementation
       | Type_def -> on_req_type_definition)
@@ -229,6 +231,14 @@ let test_cases =
         Path.from_relative "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
     ; definitions = Some [ interval 3 6 7 ]
     ; def_type = Def
+    }
+  ; { test_name = "Find declaration from top level"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; reference = Position.create ~line:12 ~character:13
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; definitions = Some [ interval 9 6 7 ]
+    ; def_type = Decl
     }
   ]
 
