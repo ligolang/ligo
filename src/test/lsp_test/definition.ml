@@ -5,13 +5,18 @@ open Lsp_helpers
 open Range.Construct
 open Requests.Handler
 
+type def_type =
+  | Def
+  | Impl
+  | Type_def
+
 type definition_test =
   { test_name : string
   ; file_with_reference : string
   ; reference : Position.t
   ; file_with_definition : Path.t (* To support packaged files *)
-  ; definition : Range.t option
-  ; type_definition : bool
+  ; definitions : Range.t list option
+  ; def_type : def_type
   }
 
 let get_definition_test
@@ -19,8 +24,8 @@ let get_definition_test
      ; file_with_reference
      ; reference
      ; file_with_definition
-     ; definition
-     ; type_definition
+     ; definitions
+     ; def_type
      } :
       definition_test)
     : unit Alcotest.test_case
@@ -28,17 +33,27 @@ let get_definition_test
   Alcotest.test_case test_name `Quick
   @@ fun () ->
   let get_definition =
-    Requests.(if type_definition then on_req_type_definition else on_req_definition)
+    Requests.(
+      match def_type with
+      | Def -> on_req_definition
+      | Impl -> on_req_implementation
+      | Type_def -> on_req_type_definition)
   in
-  let actual_definition, diagnostics =
+  let actual_definitions, diagnostics =
     test_run_session
     @@ let@ uri = open_file (Path.from_relative file_with_reference) in
        get_definition reference uri
   in
-  let expected_definition =
-    Option.map definition ~f:(fun def ->
-        `Location
-          [ Location.create ~uri:(DocumentUri.of_path file_with_definition) ~range:def ])
+  let expected_definitions =
+    Option.bind definitions ~f:(function
+        | [] -> None
+        | _ :: _ as definitions ->
+          Some
+            (`Location
+              (List.map definitions ~f:(fun def ->
+                   Location.create
+                     ~uri:(DocumentUri.of_path file_with_definition)
+                     ~range:def))))
   in
   check
     Alcotest.(option Locations.testable)
@@ -49,8 +64,8 @@ let get_definition_test
        reference
        Fmt.Dump.(list (pair Path.pp (list Diagnostic.pp)))
        (Path_hashtbl.to_alist diagnostics))
-    expected_definition
-    actual_definition
+    expected_definitions
+    actual_definitions
 
 
 let test_cases =
@@ -58,57 +73,57 @@ let test_cases =
     ; file_with_reference = "contracts/lsp/simple.mligo"
     ; reference = Position.create ~line:1 ~character:8
     ; file_with_definition = Path.from_relative "contracts/lsp/simple.mligo"
-    ; definition = Some (interval 0 4 5)
-    ; type_definition = false
+    ; definitions = Some [ interval 0 4 5 ]
+    ; def_type = Def
     }
   ; { test_name = "Imported identifier"
     ; file_with_reference = "contracts/build/B.mligo"
     ; reference = Position.create ~line:7 ~character:19
     ; file_with_definition = Path.from_relative "contracts/build/A.mligo"
-    ; definition = Some (interval 0 4 8)
-    ; type_definition = false
+    ; definitions = Some [ interval 0 4 8 ]
+    ; def_type = Def
     }
   ; { test_name = "Identifier (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:18
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = Some (interval 2 4 5)
-    ; type_definition = false
+    ; definitions = Some [ interval 2 4 5 ]
+    ; def_type = Def
     }
   ; { test_name = "Type"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:9 ~character:8
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = Some (interval 8 5 9)
-    ; type_definition = false
+    ; definitions = Some [ interval 8 5 9 ]
+    ; def_type = Def
     }
   ; { test_name = "Type (local module)"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:8 ~character:14
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = Some (interval 1 5 8)
-    ; type_definition = false
+    ; definitions = Some [ interval 1 5 8 ]
+    ; def_type = Def
     }
   ; { test_name = "Local module"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:6 ~character:8
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = Some (interval 0 7 8)
-    ; type_definition = false
+    ; definitions = Some [ interval 0 7 8 ]
+    ; def_type = Def
     }
   ; { test_name = "stdlib definition"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:11
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = None
-    ; type_definition = false
+    ; definitions = None
+    ; def_type = Def
     }
   ; { test_name = "stdlib type definition"
     ; file_with_reference = "contracts/lsp/local_module.mligo"
     ; reference = Position.create ~line:5 ~character:11
     ; file_with_definition = Path.from_relative "contracts/lsp/local_module.mligo"
-    ; definition = None
-    ; type_definition = true
+    ; definitions = None
+    ; def_type = Type_def
     }
   ; { test_name = "Registry package imported identifier"
     ; file_with_reference = "contracts/lsp/registry.jsligo"
@@ -121,8 +136,99 @@ let test_cases =
              ~file:"contracts/lsp/registry.jsligo"
              ~lib_name:"bigarray"
              ~file_path:(Filename.concat "lib" "bigarray.mligo")
-    ; definition = Some (interval 27 4 11)
-    ; type_definition = false
+    ; definitions = Some [ interval 27 4 11 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Can find type t from module in signature"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/simple.mligo"
+    ; reference = Position.create ~line:5 ~character:7
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/simple.mligo"
+    ; definitions = Some [ interval 1 7 8 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Can find type t from signature in module"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/simple.mligo"
+    ; reference = Position.create ~line:1 ~character:7
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/simple.mligo"
+    ; definitions = Some [ interval 5 7 8 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Can find inlined type t from module in signature"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/inline.mligo"
+    ; reference = Position.create ~line:1 ~character:7
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/inline.mligo"
+    ; definitions = Some [ interval 0 20 21 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Can find inline type t from signature in module"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/inline.mligo"
+    ; reference = Position.create ~line:0 ~character:20
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/inline.mligo"
+    ; definitions = Some [ interval 1 7 8 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Can find two implementations from definition"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+    ; reference = Position.create ~line:2 ~character:8
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+    ; definitions = Some [ interval 7 8 9; interval 12 8 9 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Can find the definition from an implementation"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+    ; reference = Position.create ~line:12 ~character:8
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+    ; definitions = Some [ interval 2 8 9 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Can find implementations across aliases and includes"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; reference = Position.create ~line:5 ~character:6
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; definitions = Some [ interval 25 8 9; interval 32 6 7 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Can find definition across aliases and includes"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; reference = Position.create ~line:32 ~character:6
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; definitions = Some [ interval 5 6 7 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Can find definition across aliases and includes"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; reference = Position.create ~line:25 ~character:8
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; definitions = Some [ interval 5 6 7 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Multiple definitions"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/multiple_definitions.jsligo"
+    ; reference = Position.create ~line:9 ~character:7
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/multiple_definitions.jsligo"
+    ; definitions =
+        Some [ interval 1 7 8; interval 5 7 8; interval 8 38 39; interval 8 70 71 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Find definition from top level"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; reference = Position.create ~line:12 ~character:13
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; definitions = Some [ interval 3 6 7 ]
+    ; def_type = Def
     }
   ]
 
