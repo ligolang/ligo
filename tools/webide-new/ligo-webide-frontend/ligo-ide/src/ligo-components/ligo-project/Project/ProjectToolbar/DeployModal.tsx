@@ -122,15 +122,30 @@ const DeployModal: React.FC<DeployModalProps> = ({
     const contractFiles: any[] = await projectManager.getMainContract();
 
     if (tzFilePath && storage && networkManager.sdk) {
-      const compiledStorage = await WebIdeApi.compileContract({
-        project: {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          sourceFiles: contractFiles,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          main: projectManager.mainFilePath,
-        },
-        storage,
-      })
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      const module: string = projectManager.projectSettings?.get("module") ?? "";
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      const project =
+        module !== ""
+          ? {
+              project: {
+                sourceFiles: contractFiles,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+                main: projectManager.mainFilePath,
+                module,
+              },
+              storage,
+            }
+          : {
+              project: {
+                sourceFiles: contractFiles,
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+                main: projectManager.mainFilePath,
+              },
+              storage,
+            };
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      const compiledStorage = await WebIdeApi.compileContract(project)
         .then((resp) => {
           return resp.data;
         })
