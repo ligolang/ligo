@@ -172,7 +172,7 @@ module Of_Ast_typed = struct
     | D_irrefutable_match { attr = { hidden = true; _ }; _ } -> prev
     | D_value { binder; expr; _ } ->
       let prev =
-        add_bindings prev [ Type_binding (Binder.get_var binder, expr.type_expression) ]
+        add_bindings prev [ Type_binding (Binder.get_var binder, Binder.get_ascr binder) ]
       in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_irrefutable_match { pattern; expr; _ } ->
@@ -317,12 +317,23 @@ module Of_Ast_core = struct
       the binder.
   *)
   let set_core_type_if_possible
-      :  Ast_core.type_expression option Binder.t list -> Ast_core.expression
+      :  dyn_entry:bool -> Ast_core.type_expression option Binder.t list
+      -> Ast_core.expression
       -> Ast_core.type_expression option Binder.t list * Ast_core.expression
     =
-   fun binders expr ->
+   fun ~dyn_entry binders expr ->
+    let binders =
+      (* We don't want to get core type for dynamic entrypoints
+        because it'll result in the wrong hover
+        (i.e. we'll get `'p -> 's -> operation list * 's`
+        instead of `('p, 's) dynamic_entrypoint`). *)
+      if dyn_entry
+      then List.map binders ~f:(fun binder -> Binder.set_ascr binder None)
+      else binders
+    in
     match binders, expr.expression_content with
-    | [ binder ], Ast_core.E_ascription { anno_expr; type_annotation } ->
+    | [ binder ], Ast_core.E_ascription { anno_expr; type_annotation } when not dyn_entry
+      ->
       let binder = Binder.set_ascr binder (Some type_annotation) in
       [ binder ], anno_expr
     | _ -> binders, expr
@@ -374,10 +385,10 @@ module Of_Ast_core = struct
           let bindings = expression bindings body in
           let binders = Pattern.binders pattern in
           add_binders bindings binders)
-    | E_let_mut_in { let_binder; rhs; let_result; _ }
-    | E_let_in { let_binder; rhs; let_result; _ } ->
+    | E_let_mut_in { let_binder; rhs; let_result; attributes = { dyn_entry; _ } }
+    | E_let_in { let_binder; rhs; let_result; attributes = { dyn_entry; _ } } ->
       let binders = Pattern.binders let_binder in
-      let binders, rhs = set_core_type_if_possible binders rhs in
+      let binders, rhs = set_core_type_if_possible ~dyn_entry binders rhs in
       let bindings = add_binders bindings binders in
       let bindings = expression bindings rhs in
       expression bindings let_result
@@ -417,13 +428,13 @@ module Of_Ast_core = struct
   and declaration : Ast_typed.signature -> t -> Ast_core.declaration -> t =
    fun prg_sig bindings decl ->
     match Location.unwrap decl with
-    | D_value { binder; expr; _ } ->
-      let binders, expr = set_core_type_if_possible [ binder ] expr in
+    | D_value { binder; expr; attr = { dyn_entry; _ } } ->
+      let binders, expr = set_core_type_if_possible ~dyn_entry [ binder ] expr in
       let bindings = add_binders bindings binders in
       expression prg_sig bindings expr
-    | D_irrefutable_match { pattern; expr; _ } ->
+    | D_irrefutable_match { pattern; expr; attr = { dyn_entry; _ } } ->
       let binders = Pattern.binders pattern in
-      let binders, expr = set_core_type_if_possible binders expr in
+      let binders, expr = set_core_type_if_possible ~dyn_entry binders expr in
       let bindings = add_binders bindings binders in
       expression prg_sig bindings expr
     | D_type _ -> bindings
