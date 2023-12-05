@@ -268,8 +268,8 @@ and print_attributes state thread attributes =
                 ^^ hardline ^^ thread)
 
 and drop_comment_attr attributes =
-  let is_comment w = fst (w#payload) = "comment"
-  in List.filter ~f:(not <@ is_comment) attributes
+  let not_a_comment w = fst (w#payload) <> "comment"
+  in List.filter ~f:not_a_comment attributes
 
 (* Preprocessing directives *)
 

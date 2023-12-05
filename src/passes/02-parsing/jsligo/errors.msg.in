@@ -132,7 +132,7 @@ interactive_expr: ContractOf LPAR UIdent DOT ZWSP
 ## namespace_name DOT
 ##
 
-Ill-formed namespace selection.
+Ill-formed selection in a namespace.
 At this point, a namespace name is expected.
 
 interactive_expr: ES6FUN LPAR Ident COLON ZWSP
@@ -266,6 +266,17 @@ contract: Return While LPAR Bytes RPAR While ZWSP
 ## The known suffix of the stack is as follows:
 ## While
 ##
+contract: Namespace UIdent LBRACE Return While ZWSP
+##
+## Ends in an error in state: 1069.
+##
+## while_stmt(statement) -> While . par(while_cond) statement [ SEMI RBRACE EOF Default Case ]
+## while_stmt(stmt_not_ending_with_expr) -> While . par(while_cond) stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## while_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> While . par(while_cond) stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## While
+##
 
 Ill-formed while-loop.
 At this point, the invariant between parentheses is expected.
@@ -367,8 +378,8 @@ interactive_expr: ES6FUN LPAR LBRACE ZWSP
 ## LBRACE
 ##
 
-Ill-formed object pattern.
-At this point, a pattern matching the first property is expected.
+Ill-formed record pattern.
+At this point, a pattern matching the first field is expected.
 
 contract: Const LBRACE Attr ZWSP
 ##
@@ -380,10 +391,10 @@ contract: Const LBRACE Attr ZWSP
 ## Attr
 ##
 
-Ill-formed decorated property pattern.
+Ill-formed decorated field pattern.
 At this point, one of the following is expected:
   * another decorator;
-  * a property pattern.
+  * a field pattern.
 
 contract: Const LBRACE Ident ZWSP
 ##
@@ -406,11 +417,11 @@ interactive_expr: ES6FUN LPAR LBRACE Ident ZWSP
 ## property_id
 ##
 
-Ill-formed object pattern.
+Ill-formed record pattern.
 At this point, one of the following is expected:
-  * a colon ':' followed by a pattern matching the property;
-  * a property separator (';' or ',');
-  * a closing brace '}' if no more properties.
+  * a colon ':' followed by a pattern matching the field;
+  * a field separator (';' or ',');
+  * a closing brace '}' if no more fields.
 
 contract: Const LBRACE Ident COLON ZWSP
 ##
@@ -431,8 +442,8 @@ interactive_expr: ES6FUN LPAR LBRACE Ident COLON ZWSP
 ## property_id COLON
 ##
 
-Ill-formed object pattern.
-At this point, a pattern matching the property is expected.
+Ill-formed record pattern.
+At this point, a pattern matching the field is expected.
 
 contract: Const Attr ZWSP
 ##
@@ -483,10 +494,10 @@ interactive_expr: ES6FUN LPAR LBRACE Ident COLON Ident ZWSP
 ## property_pattern(param_pattern)
 ##
 
-Ill-formed object pattern.
+Ill-formed record pattern.
 At this point, one of the following is expected:
-  * a property separator (';' or ',');
-  * a closing brace '}' if no more properties.
+  * a field separator (';' or ',');
+  * a closing brace '}' if no more fields.
 
 contract: Const LBRACE Ident COMMA ZWSP
 ##
@@ -511,10 +522,10 @@ interactive_expr: ES6FUN LPAR LBRACE Ident COMMA ZWSP
 ## property_pattern(param_pattern) property_sep
 ##
 
-Ill-formed object pattern.
+Ill-formed record pattern.
 At this point, one of the following is expected:
-  * a property pattern;
-  * a closing brace '}' if no more properties.
+  * a field pattern;
+  * a closing brace '}' if no more fields.
 
 contract: Const LBRACKET ELLIPSIS ZWSP
 ##
@@ -635,10 +646,10 @@ interactive_expr: LBRACE ZWSP
 ## LBRACE
 ##
 
-Ill-formed object or object update.
+Ill-formed record or record update.
 At this point, one of the following is expected:
-  * the first property of an object;
-  * a rest expression ('...') denoting the object being updated.
+  * the first field of a record;
+  * a rest expression ('...') denoting the record being updated.
 
 interactive_expr: LBRACE ELLIPSIS ZWSP
 ##
@@ -650,8 +661,8 @@ interactive_expr: LBRACE ELLIPSIS ZWSP
 ## ELLIPSIS
 ##
 
-Ill-formed object update.
-At this point, the object to update is expected.
+Ill-formed record update.
+At this point, the record to update is expected.
 
 interactive_expr: Function ZWSP
 ##
@@ -807,7 +818,7 @@ interactive_expr: Function LPAR PARAMS RPAR ZWSP
 ## Function fun_par_params
 ##
 
-Ill-formed function.
+Ill-formed function expression.
 At this point, one of the following is expected:
   * a colon ':' followed by the return type;
   * a block of statements starting with an opening brace '{'.
@@ -1134,7 +1145,7 @@ interactive_expr: ES6FUN EIdent ARROW ZWSP
 
 Ill-formed arrow function.
 At this point, one of the following is expected:
-  * the body as a non-object expression (use parentheses otherwise);
+  * the body as a non-record expression (use parentheses otherwise);
   * a block of statements starting with an opening brace '{'.
 
 interactive_expr: ContractOf ZWSP
@@ -1204,10 +1215,10 @@ interactive_expr: Ident LBRACKET ZWSP
 ## LBRACKET
 ##
 
-Ill-formed property selection.
+Ill-formed field selection.
 At this point, one of the following is expected:
-  * an integer denoting the property,
-  * a string denoting the property.
+  * an integer denoting the field,
+  * a string denoting the field.
 
 interactive_expr: Ident LBRACKET String ZWSP
 ##
@@ -1228,7 +1239,7 @@ interactive_expr: Ident LBRACKET Int ZWSP
 ## LBRACKET Int
 ##
 
-Ill-formed property selection.
+Ill-formed field selection.
 At this point, a closing bracket ']' is expected.
 
 interactive_expr: Ident DOT ZWSP
@@ -1241,8 +1252,8 @@ interactive_expr: Ident DOT ZWSP
 ## DOT
 ##
 
-Ill-formed property selection.
-At this point, a property name is expected.
+Ill-formed field selection.
+At this point, a field name is expected.
 
 interactive_expr: UIdent DOT ZWSP
 ##
@@ -1259,7 +1270,7 @@ Ill-formed namespace selection.
 At this point, one of the following is expected:
   * a namespace name;
   * a string denoting a constructor;
-  * an object or array.
+  * a record or array.
 
 interactive_expr: Attr ZWSP
 ##
@@ -1430,10 +1441,10 @@ interactive_expr: LBRACE Attr ZWSP
 ## Attr
 ##
 
-Ill-formed decorated property.
+Ill-formed decorated field.
 At this point, one of the following is expected:
   * another decorator;
-  * a property.
+  * a field without decorator.
 
 interactive_expr: LBRACE Ident ZWSP
 ##
@@ -1446,11 +1457,11 @@ interactive_expr: LBRACE Ident ZWSP
 ## property_id
 ##
 
-Ill-formed object.
+Ill-formed record.
 At this point, one of the following is expected:
   * a colon ':' followed by an expression;
-  * a property separator (';' or ',') if name punning;
-  * a closing brace '}' if no more properties.
+  * a field separator (';' or ',') if name punning;
+  * a closing brace '}' if no more fields.
 
 interactive_expr: LBRACE Ident COLON ZWSP
 ##
@@ -1462,8 +1473,8 @@ interactive_expr: LBRACE Ident COLON ZWSP
 ## property_id COLON
 ##
 
-Ill-formed object.
-At his point, an expression is expected for the property.
+Ill-formed record.
+At this point, an expression is expected for the field.
 
 interactive_expr: LBRACE Ident COMMA ZWSP
 ##
@@ -1477,10 +1488,10 @@ interactive_expr: LBRACE Ident COMMA ZWSP
 ## property(expr) property_sep
 ##
 
-Ill-formed object.
+Ill-formed record.
 At this point, one of the following is expected:
-  * a property;
-  * a closing brace '}' if no more properties.
+  * a field;
+  * a closing brace '}' if no more fields.
 
 interactive_expr: LBRACKET ELLIPSIS ZWSP
 ##
@@ -1747,9 +1758,11 @@ contract: Interface UIdent LBRACE Type Ident ZWSP
 ## Type type_name
 ##
 
-Ill-formed type entry in interface.
+Ill-formed type declaration in an interface.
 At this point, one of the following is expected:
   * the assignment symbol '=' followed by a type;
+  * type parameters (variables) between chevrons ('<', '>') if the
+    type is generic.
   * a semicolon ';' followed by another entry;
   * a closing brace '}' if no more entries.
 
@@ -1778,7 +1791,7 @@ contract: Interface UIdent LBRACE Const ZWSP
 ## Const
 ##
 
-Ill-formed interface.
+Ill-formed value declaration in an interface.
 At this point, the name of the constant is expected.
 
 contract: Interface UIdent LBRACE Const Ident ZWSP
@@ -1809,10 +1822,10 @@ contract: Interface UIdent LBRACE Const EIdent ZWSP
 ## Const EIdent
 ##
 
-Ill-formed interface.
+Ill-formed value declarations in an interface.
 At this point, one of the following is expected:
-  * a colon ':', followed by the type of the constant.
-  * a question mark '?', marking the item as optional.
+  * a colon ':', followed by the type of the value.
+  * a question mark '?', marking the declaration as optional.
 
 contract: Interface UIdent LBRACE Const WILD QMARK ZWSP
 ##
@@ -1842,9 +1855,9 @@ contract: Interface UIdent LBRACE Const EIdent QMARK ZWSP
 ## Const EIdent option(QMARK)
 ##
 
-Ill-formed interface.
+Ill-formed value declaration in an interface.
 At this point, a colon ':' is expected, followed by the type of the
-constant.
+value.
 
 contract: Interface UIdent LBRACE Attr ZWSP
 ##
@@ -1856,10 +1869,11 @@ contract: Interface UIdent LBRACE Attr ZWSP
 ## Attr
 ##
 
-Ill-formed interface entry.
+Ill-formed decorated declaration in an interface.
 At this point, one of the following is expected:
-  * another decorator for the entry;
-  * the entry itself starting with the keyword 'type' or 'const'.
+  * another decorator;
+  * a declaration without a decorator (starting with 'type' or
+    'const').
 
 contract: Interface UIdent LBRACE Const Ident COLON Ident XOR
 ##
@@ -1889,10 +1903,10 @@ contract: Interface UIdent LBRACE Const Ident COLON Ident XOR
 ##
 
 Ill-formed interface.
-At this point, if the entry is complete, one of the following is
+At this point, if the declaration is complete, one of the following is
 expected:
-  * a semicolon ';' followed by another entry ('type' or 'const');
-  * a closing brace '}' if no more entries.
+  * a semicolon ';' followed by another declaration ('type' or 'const');
+  * a closing brace '}' if no more declarations.
 
 contract: Interface UIdent LBRACE Type Ident SEMI ZWSP
 ##
@@ -1908,8 +1922,8 @@ contract: Interface UIdent LBRACE Type Ident SEMI ZWSP
 
 Ill-formed interface.
 At this point, one of the following is expected:
-  * an entry starting with the keyword 'type' or 'const';
-  * a closing brace '}' if no more entries.
+  * a declaration starting with the keyword 'type' or 'const';
+  * a closing brace '}' if no more declarations.
 
 contract: Import ZWSP
 ##
@@ -2010,8 +2024,7 @@ contract: Import LBRACE ZWSP
 ##
 
 Ill-formed import declaration.
-At this point, the name of an imported entry (type or constant) is
-expected.
+At this point, the name of an imported type or value is expected.
 
 contract: Import LBRACE WILD ZWSP
 ##
@@ -2052,7 +2065,7 @@ contract: Import LBRACE EIdent ZWSP
 
 Ill-formed import declaration.
 At this point, one of the following is expected:
-  * a comma ',' followed by the name of an imported entry;
+  * a comma ',' followed by the name of an imported type or value;
   * a closing brace '}' if no more imports.
 
 contract: Import LBRACE Ident COMMA ZWSP
@@ -2091,7 +2104,7 @@ contract: Import LBRACE WILD COMMA ZWSP
 
 Ill-formed import declaration.
 At this point, one of the following is expected:
-  * the name of an imported entry (type or constant);
+  * the name of an imported type or value;
   * a closing brace '}' if no more imports.
 
 contract: Import UIdent ZWSP
@@ -2137,6 +2150,23 @@ contract: Namespace UIdent LBRACE If ZWSP
 ## The known suffix of the stack is as follows:
 ## If
 ##
+contract: Namespace UIdent LBRACE Return If ZWSP
+##
+## Ends in an error in state: 1146.
+##
+## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
+## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
+## if_else_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) closed_non_if_stmt Else stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_else_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) closed_non_if_stmt Else stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+## if_stmt(statement) -> If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
+## if_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## If
+##
 contract: If LPAR Bytes RPAR If ZWSP
 ##
 ## Ends in an error in state: 799.
@@ -2174,23 +2204,6 @@ contract: Return If LPAR Bytes RPAR If ZWSP
 ## if_stmt(export(type_decl)) -> If . par(if_cond) export(type_decl) [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_stmt(statement) -> If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## If
-##
-contract: Return Attr If ZWSP
-##
-## Ends in an error in state: 1146.
-##
-## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
-## if_else_stmt(statement) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
-## if_else_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) closed_non_if_stmt Else stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_else_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) closed_non_if_stmt Else stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) closed_non_if_stmt SEMI_ELSE stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-## if_stmt(statement) -> If . par(if_cond) statement [ SEMI RBRACE EOF Default Case ]
-## if_stmt(stmt_not_ending_with_expr) -> If . par(if_cond) stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If . par(if_cond) stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## If
@@ -2558,11 +2571,11 @@ interactive_expr: Bytes As LBRACE ZWSP
 ## LBRACE
 ##
 
-Ill-formed object type.
+Ill-formed record type.
 At this point, one of the following is expected:
-  * a property name,
-  * an integer denoting the property,
-  * a string denoting the property.
+  * a field name,
+  * an integer denoting the field,
+  * a string denoting the field.
 
 interactive_expr: Bytes As LBRACE Ident ZWSP
 ##
@@ -2575,11 +2588,11 @@ interactive_expr: Bytes As LBRACE Ident ZWSP
 ## property_id
 ##
 
-Ill-formed object type.
+Ill-formed record type.
 At this point, one of the following is expected:
-  * a property separator (',' or ';');
-  * a closing brace '}' if no more properties;
-  * a colon ':' followed by the type of the property.
+  * a field separator (',' or ';');
+  * a closing brace '}' if no more fields;
+  * a colon ':' followed by the type of the field.
 
 interactive_expr: Bytes As LBRACE Ident COLON Ident XOR
 ##
@@ -2605,11 +2618,10 @@ interactive_expr: Bytes As LBRACE Ident COLON Ident XOR
 ## In state 146, spurious reduction of production property_decl -> property_id type_annotation(type_expr)
 ##
 
-Ill-formed object type.
+Ill-formed record type.
 At this point, one of the following is expected:
-  * a property separator (';' or ',') followed by another property
-    declaration;
-  * a closing brace '}' if no more properties.
+  * a field separator (';' or ',') followed by another field;
+  * a closing brace '}' if no more fields.
 
 interactive_expr: Bytes As LBRACE Ident COMMA ZWSP
 ##
@@ -2623,10 +2635,10 @@ interactive_expr: Bytes As LBRACE Ident COMMA ZWSP
 ## property_decl property_sep
 ##
 
-Ill-formed object type.
+Ill-formed record type.
 At this point, one of the following is expected:
-  * another property declaration;
-  * a closing brace '}' if no more properties.
+  * another field declaration;
+  * a closing brace '}' if no more fields.
 
 interactive_expr: Bytes As ParameterOf ZWSP
 ##
@@ -2812,7 +2824,7 @@ interactive_expr: Bytes As Ident LT ZWSP
 ## LT
 ##
 
-Ill-formed generic type.
+Ill-formed generic type instantiation.
 At this point, a type is expected.
 
 interactive_expr: Bytes As Ident LT Ident XOR
@@ -2838,7 +2850,7 @@ interactive_expr: Bytes As Ident LT Ident XOR
 ## In state 196, spurious reduction of production type_ctor_arg -> type_expr
 ##
 
-Ill-formed generic type.
+Ill-formed generic type instantiation.
 At this point, one of the following is expected:
   * a comma ',' followed by another type;
   * a closing chevron '>' if no more arguments.
@@ -2870,8 +2882,8 @@ interactive_expr: Bytes As LBRACE RBRACE VBAR ZWSP
 ## object_type VBAR
 ##
 
-Ill-formed union type.
-At this point, an object type is expected.
+Ill-formed discriminated union type.
+At this point, a record type is expected.
 
 interactive_expr: Bytes As UIdent DOT ZWSP
 ##
@@ -2910,11 +2922,6 @@ interactive_expr: Bytes As LPAR Ident XOR
 ## In state 217, spurious reduction of production core_type -> no_par_type_expr
 ## In state 227, spurious reduction of production type_expr -> core_type
 ##
-
-Ill-formed parenthesised type.
-At this point, if the type is complete, a closing parenthesis ')' is
-expected.
-
 interactive_expr: Bytes As LPAR Ident PARAMS ZWSP
 ##
 ## Ends in an error in state: 266.
@@ -2926,7 +2933,8 @@ interactive_expr: Bytes As LPAR Ident PARAMS ZWSP
 ##
 
 Ill-formed parenthesised type.
-At this point, a closing parenthesis ')' is expected.
+At this point, if the type is complete, a closing parenthesis ')' is
+expected.
 
 interactive_expr: ES6FUN LPAR RPAR COLON VBAR ZWSP
 ##
@@ -2939,8 +2947,8 @@ interactive_expr: ES6FUN LPAR RPAR COLON VBAR ZWSP
 ## VBAR
 ##
 
-Ill-formed union type.
-At this point, an object type is expected to start with an opening
+Ill-formed discriminated union type.
+At this point, a record type is expected to start with an opening
 brace '{'.
 
 contract: Switch LPAR Bytes RPAR LBRACE Case Bytes ZWSP
@@ -3368,6 +3376,17 @@ contract: If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ## The known suffix of the stack is as follows:
 ## While par(while_cond)
 ##
+contract: Return While LPAR Bytes RPAR ZWSP
+##
+## Ends in an error in state: 1070.
+##
+## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
+## while_stmt(stmt_not_ending_with_expr) -> While par(while_cond) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## while_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> While par(while_cond) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## While par(while_cond)
+##
 contract: Return If LPAR Bytes RPAR While LPAR Bytes RPAR ZWSP
 ##
 ## Ends in an error in state: 1076.
@@ -3388,17 +3407,6 @@ contract: While LPAR Bytes RPAR ZWSP
 ## while_stmt(catenable_stmt) -> While par(while_cond) . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ## while_stmt(stmt_ending_with_expr) -> While par(while_cond) . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## While par(while_cond)
-##
-contract: Return Attr While LPAR Bytes RPAR ZWSP
-##
-## Ends in an error in state: 1070.
-##
-## while_stmt(statement) -> While par(while_cond) . statement [ SEMI RBRACE EOF Default Case ]
-## while_stmt(stmt_not_ending_with_expr) -> While par(while_cond) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## while_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> While par(while_cond) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## While par(while_cond)
@@ -3429,8 +3437,8 @@ interactive_expr: LBRACE ELLIPSIS Bytes COMMA ZWSP
 ## ELLIPSIS expr property_sep
 ##
 
-Ill-formed object update.
-At this point, property assignments are expected.
+Ill-formed record update.
+At this point, record assignments are expected.
 
 contract: LBRACKET Bytes COMMA ZWSP
 ##
@@ -3562,7 +3570,7 @@ contract: Const SHARP LBRACKET UIdent DOT ZWSP
 Ill-formed selection of a constructor in a namespace.
 At this point, one of the following is expected:
   * a string denoting the constructor;
-  * a namespace name.
+  * another namespace name.
 
 contract: Const UIdent DOT ZWSP
 ##
@@ -3577,8 +3585,8 @@ contract: Const UIdent DOT ZWSP
 
 Ill-formed selection in a nested namespace.
 At this point, one of the following is expected:
-  * a namespace name;
-  * an object pattern;
+  * another namespace name;
+  * a record pattern;
   * a variable.
 
 contract: Namespace UIdent LBRACE For LPAR SEMI SEMI ZWSP
@@ -3625,7 +3633,7 @@ contract: For LPAR Ident MINUS2 SEMI Bytes SEMI ZWSP
 Ill-formed for-loop.
 At this point, one of the following is expected:
   * an afterthought, e.g. incrementing a variable;
-  * a closing parenthesis ')' otherwise.
+  * a closing parenthesis ')' if none.
 
 contract: Namespace UIdent LBRACE For LPAR Let ZWSP
 ##
@@ -3661,6 +3669,17 @@ contract: For LPAR Const EIdent ZWSP
 ##
 ## The known suffix of the stack is as follows:
 ## Const pattern
+##
+contract: For LPAR Let WILD ZWSP
+##
+## Ends in an error in state: 833.
+##
+## range_of -> Let pattern . Of expr [ RPAR PARAMS ]
+## val_binding -> pattern . EQ expr [ SEMI COMMA ]
+## val_binding -> pattern . binding_type EQ expr [ SEMI COMMA ]
+##
+## The known suffix of the stack is as follows:
+## Let pattern
 ##
 
 Ill-formed for-loop.
@@ -3837,22 +3856,21 @@ contract: Return While LPAR Bytes RPAR For ZWSP
 Ill-formed for-loop.
 At this point, an opening parenthesis '(' is expected.
 
-contract: Namespace UIdent LBRACE Return While ZWSP
+contract: Namespace UIdent LBRACE Return Export ZWSP
 ##
-## Ends in an error in state: 1069.
+## Ends in an error in state: 1159.
 ##
-## while_stmt(statement) -> While . par(while_cond) statement [ SEMI RBRACE EOF Default Case ]
-## while_stmt(stmt_not_ending_with_expr) -> While . par(while_cond) stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## while_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> While . par(while_cond) stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+## export(fun_decl) -> Export . fun_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## export(import_decl) -> Export . import_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
+## export(interface_decl) -> Export . interface_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## export(namespace_decl) -> Export . namespace_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
+## export(type_decl) -> Export . type_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
+## export(value_decl) -> Export . value_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## While
+## Export
 ##
-
-Ill-formed while-loop.
-At this point, an opening parenthesis '(' is expected.
-
-contract: Export ZWSP
+contract: Return If LPAR Bytes RPAR Export ZWSP
 ##
 ## Ends in an error in state: 958.
 ##
@@ -3907,11 +3925,32 @@ contract: Return Attr Attr ZWSP
 ## The known suffix of the stack is as follows:
 ## Attr
 ##
+contract: If LPAR Bytes RPAR Attr ZWSP
+##
+## Ends in an error in state: 970.
+##
+## catenable_stmt -> Attr . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## statement -> Attr . statement [ SEMI RBRACE EOF Default Case ]
+## stmt_ending_with_expr -> Attr . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
+contract: Return If LPAR Bytes RPAR Attr ZWSP
+##
+## Ends in an error in state: 1082.
+##
+## statement -> Attr . statement [ SEMI RBRACE EOF Default Case ]
+## stmt_not_ending_with_expr -> Attr . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## Attr
+##
 
 Ill-formed decorated statement.
 At this point, one of the following is expected:
   * another decorator;
-  * a statement.
+  * a statement without a decorator.
 
 contract: Namespace UIdent LBRACE Return For LPAR SEMI SEMI RPAR ZWSP
 ##
@@ -3987,8 +4026,10 @@ contract: Namespace UIdent Implements UIdent ZWSP
 ##
 
 Ill-formed namespace declaration.
-At this point, a block of statements is expected to start with an
-opening brace '{'.
+At this point, if the interface is complete, one of the following is
+expected:
+  * a comma ',' followed by another interface to be implemented;
+  * a closing brace '}' is no more interface.
 
 interactive_expr: ZWSP
 ##
@@ -4090,10 +4131,10 @@ interactive_expr: Bytes As LBRACE Attr ZWSP
 ## Attr
 ##
 
-Ill-formed decorated property.
+Ill-formed decorated field.
 At this point, one of the following is expected:
   * another decorator;
-  * a property declaration.
+  * a field without a decorator.
 
 interactive_expr: Bytes As VBAR Attr ZWSP
 ##
@@ -4127,7 +4168,8 @@ interactive_expr: Bytes As VBAR SHARP String VBAR ZWSP
 Ill-formed variant type.
 At this point, one of the following is expected:
   * a decorator for the variant;
-  * a variant starting with '#'.
+  * a variant starting with '#';
+  * a variant starting with an opening bracket '['.
 
 interactive_expr: Bytes As Attr ZWSP
 ##
@@ -4177,9 +4219,9 @@ interactive_expr: Bytes As VBAR ZWSP
 ## VBAR
 ##
 
-Ill-formed variant or union type.
+Ill-formed variant or discriminated union type.
 At this point, one of the following is expected:
-  * an object type if defining a union type;
+  * a record type if defining a union type;
   * a variant.
 
 interactive_expr: Bytes As LBRACKET Ident XOR
@@ -4374,6 +4416,23 @@ contract: If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ## The known suffix of the stack is as follows:
 ## If par(if_cond)
 ##
+contract: Return If LPAR Bytes RPAR ZWSP
+##
+## Ends in an error in state: 1147.
+##
+## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
+## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
+## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . closed_non_if_stmt Else stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . closed_non_if_stmt Else stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+## if_stmt(statement) -> If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
+## if_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## If par(if_cond)
+##
 contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ##
 ## Ends in an error in state: 1078.
@@ -4392,23 +4451,6 @@ contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ## if_stmt(export(type_decl)) -> If par(if_cond) . export(type_decl) [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
 ## if_stmt(statement) -> If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
 ## if_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## If par(if_cond)
-##
-contract: Return Attr If LPAR Bytes RPAR ZWSP
-##
-## Ends in an error in state: 1147.
-##
-## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt Else statement [ SEMI RBRACE EOF Default Case ]
-## if_else_stmt(statement) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE statement [ SEMI RBRACE EOF Default Case ]
-## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . closed_non_if_stmt Else stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . closed_non_if_stmt Else stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . closed_non_if_stmt SEMI_ELSE stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-## if_stmt(statement) -> If par(if_cond) . statement [ SEMI RBRACE EOF Default Case ]
-## if_stmt(stmt_not_ending_with_expr) -> If par(if_cond) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## If par(if_cond)
@@ -4435,7 +4477,7 @@ contract: Return While LPAR Bytes RPAR If LPAR Bytes RPAR ZWSP
 ##
 
 Ill-formed conditional statement.
-At this point, a statement for a true condition is expected.
+At this point, the statement for a true condition is expected.
 
 contract: If LPAR Bytes RPAR While ZWSP
 ##
@@ -4528,23 +4570,6 @@ contract: For LPAR SEMI Bytes WILD
 ## In state 401, spurious reduction of production expr -> no_attr_expr
 ## In state 828, spurious reduction of production condition -> expr
 ##
-
-Ill-formed for-loop.
-At this point, a semicolon ';' is expected.
-
-contract: For LPAR Const Ident Of Bytes PARAMS ZWSP
-##
-## Ends in an error in state: 848.
-##
-## par(range_of) -> LPAR range_of PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## LPAR range_of PARAMS
-##
-
-Ill-formed for-loop.
-At this point, a closing parenthesis ')' is expected.
-
 contract: For LPAR Ident MINUS2 SEMI Bytes WILD
 ##
 ## Ends in an error in state: 862.
@@ -4576,6 +4601,19 @@ contract: For LPAR Ident MINUS2 SEMI Bytes WILD
 
 Ill-formed for-loop.
 At this point, a semicolon ';' is expected.
+
+contract: For LPAR Const Ident Of Bytes PARAMS ZWSP
+##
+## Ends in an error in state: 848.
+##
+## par(range_of) -> LPAR range_of PARAMS . RPAR [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## LPAR range_of PARAMS
+##
+
+Ill-formed for-loop.
+At this point, a closing parenthesis ')' is expected.
 
 interactive_expr: Bytes QMARK ZWSP
 ##
@@ -4833,7 +4871,7 @@ contract: EIdent QMARK EIdent BIT_AND_EQ Bytes WILD
 
 Ill-formed ternary conditional expression.
 At this point, if the expression for the true condition is complete, a
-colon ':' is expected, followed by an expresion for the false
+colon ':' is expected, followed by the expresion for the false
 condition.
 
 contract: If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
@@ -4872,7 +4910,18 @@ contract: Return If LPAR Bytes RPAR For LPAR Const Ident Of Bytes RPAR ZWSP
 ## The known suffix of the stack is as follows:
 ## For par(range_of)
 ##
-contract: Return While LPAR Bytes RPAR For LPAR Const UIdent Of Bytes RPAR ZWSP
+contract: Return For LPAR Const Ident Of Bytes RPAR ZWSP
+##
+## Ends in an error in state: 1155.
+##
+## for_of_stmt(statement) -> For par(range_of) . statement [ SEMI RBRACE EOF Default Case ]
+## for_of_stmt(stmt_not_ending_with_expr) -> For par(range_of) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## for_of_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> For par(range_of) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## For par(range_of)
+##
+contract: Return While LPAR Bytes RPAR For LPAR Const EIdent Of Bytes RPAR ZWSP
 ##
 ## Ends in an error in state: 1084.
 ##
@@ -4887,33 +4936,6 @@ contract: Return While LPAR Bytes RPAR For LPAR Const UIdent Of Bytes RPAR ZWSP
 
 Ill-formed for-loop.
 At this point, the body is expected as a statement.
-
-contract: If LPAR Bytes RPAR Attr ZWSP
-##
-## Ends in an error in state: 970.
-##
-## catenable_stmt -> Attr . catenable_stmt [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## statement -> Attr . statement [ SEMI RBRACE EOF Default Case ]
-## stmt_ending_with_expr -> Attr . stmt_ending_with_expr [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## Attr
-##
-contract: Return If LPAR Bytes RPAR Attr ZWSP
-##
-## Ends in an error in state: 1082.
-##
-## statement -> Attr . statement [ SEMI RBRACE EOF Default Case ]
-## stmt_not_ending_with_expr -> Attr . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## Attr
-##
-
-Ill-formed decorated statement.
-At this point, one of the following is expected:
-  * another decorator;
-  * a statement.
 
 contract: If LPAR Bytes RPAR If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
@@ -4987,18 +5009,7 @@ contract: Return If LPAR Bytes RPAR If LPAR Bytes RPAR Return Else ZWSP
 ## The known suffix of the stack is as follows:
 ## If par(if_cond) closed_non_if_stmt Else
 ##
-contract: Return Attr If LPAR Bytes RPAR Break Else ZWSP
-##
-## Ends in an error in state: 1152.
-##
-## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
-## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) closed_non_if_stmt Else . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) closed_non_if_stmt Else . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## If par(if_cond) closed_non_if_stmt Else
-##
-contract: Return Attr If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
+contract: Return If LPAR Bytes RPAR Return SEMI_ELSE ZWSP
 ##
 ## Ends in an error in state: 1150.
 ##
@@ -5008,6 +5019,17 @@ contract: Return Attr If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
 ## The known suffix of the stack is as follows:
 ## If par(if_cond) closed_non_if_stmt SEMI_ELSE
+##
+contract: Return If LPAR Bytes RPAR Return Else ZWSP
+##
+## Ends in an error in state: 1152.
+##
+## if_else_stmt(statement) -> If par(if_cond) closed_non_if_stmt Else . statement [ SEMI RBRACE EOF Default Case ]
+## if_else_stmt(stmt_not_ending_with_expr) -> If par(if_cond) closed_non_if_stmt Else . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
+## if_else_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> If par(if_cond) closed_non_if_stmt Else . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
+##
+## The known suffix of the stack is as follows:
+## If par(if_cond) closed_non_if_stmt Else
 ##
 contract: Return While LPAR Bytes RPAR If LPAR Bytes RPAR Break SEMI_ELSE ZWSP
 ##
@@ -5035,7 +5057,7 @@ contract: Return While LPAR Bytes RPAR If LPAR Bytes RPAR Break Else ZWSP
 ##
 
 Ill-formed conditional statement.
-At this point, a statement for a false condition is expected.
+At this point, the statement for a false condition is expected.
 
 contract: Switch LPAR Bytes RPAR LBRACE Case ZWSP
 ##
@@ -5091,6 +5113,13 @@ contract: Switch LPAR Bytes RPAR LBRACE Case Bytes COLON Return BIT_AND
 ## In state 1204, spurious reduction of production statements -> last_or_more(statement)
 ## In state 1232, spurious reduction of production switch_case -> Case case_expr COLON statements
 ##
+
+Ill-formed switch.
+At this point, one of the following is expected:
+  * the keyword 'case' to start a new case;
+  * the keyword 'default' to start the default case;
+  * a closing brace '}' if no more cases.
+
 contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return BIT_AND
 ##
 ## Ends in an error in state: 1239.
@@ -5115,10 +5144,10 @@ contract: Switch LPAR Bytes RPAR LBRACE Default COLON Return BIT_AND
 ##
 
 Ill-formed switch.
-At this point, one of the following is expected:
-  * the keyword 'case' to start a new case;
-  * the keyword 'default' to start the default case;
-  * a closing brace '}' if no more cases.
+At this point, if the case is complete, one of the following is
+expected:
+  * another case (starting by 'case' or 'default');
+  * a closing brace '}' is no more cases.
 
 interactive_expr: LBRACE ELLIPSIS Bytes WILD
 ##
@@ -5147,9 +5176,9 @@ interactive_expr: LBRACE ELLIPSIS Bytes WILD
 ## In state 401, spurious reduction of production expr -> no_attr_expr
 ##
 
-Ill-formed object update.
-At this point, if the object to update is complete, a property
-separator (';' or ',') is expected.
+Ill-formed record update.
+At this point, if the record to update is complete, a field separator
+(';' or ',') is expected.
 
 interactive_expr: LBRACE Ident COLON Bytes WILD
 ##
@@ -5182,10 +5211,10 @@ interactive_expr: LBRACE Ident COLON Bytes WILD
 ## In state 1256, spurious reduction of production property(expr) -> property_id COLON expr
 ##
 
-Ill-formed object.
+Ill-formed record.
 At this point, one of the following is expected:
-  * a property separator (';' or ',');
-  * a closing brace '}' if no more properties.
+  * a field separator (';' or ',');
+  * a closing brace '}' if no more fields.
 
 contract: LBRACKET Bytes WILD
 ##
@@ -5387,7 +5416,7 @@ contract: SHARP LBRACKET ZWSP
 Ill-formed constructor application.
 At this point, one of the following is expected:
   * a string denoting the constructor;
-  * a namespace where to select the constructor.
+  * a namespace where to select a constructor.
 
 contract: SHARP LBRACKET UIdent ZWSP
 ##
@@ -5427,7 +5456,7 @@ contract: SHARP LBRACKET UIdent DOT ZWSP
 Ill-formed selection of a constructor.
 At this point, one of the following is expected:
   * a string denoting the selected constructor;
-  * a namespace name.
+  * another namespace name.
 
 contract: SHARP LBRACKET String ZWSP
 ##
@@ -5948,21 +5977,6 @@ Ill-formed do-expression.
 At this point, a block of statements is expected to start with an
 opening brace '{'.
 
-contract: For LPAR Let WILD ZWSP
-##
-## Ends in an error in state: 833.
-##
-## range_of -> Let pattern . Of expr [ RPAR PARAMS ]
-## val_binding -> pattern . EQ expr [ SEMI COMMA ]
-## val_binding -> pattern . binding_type EQ expr [ SEMI COMMA ]
-##
-## The known suffix of the stack is as follows:
-## Let pattern
-##
-
-Ill-formed for-loop.
-At this point, the keyword 'of' is expected.
-
 contract: Interface UIdent Extends UIdent COMMA ZWSP
 ##
 ## Ends in an error in state: 633.
@@ -6178,40 +6192,8 @@ contract: Bytes ZWSP
 ##
 
 Ill-formed typed expression.
-At this point, the keyword 'as' is expected, followed by a type.
-
-contract: Return Attr Attr Export ZWSP
-##
-## Ends in an error in state: 1159.
-##
-## export(fun_decl) -> Export . fun_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
-## export(import_decl) -> Export . import_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
-## export(interface_decl) -> Export . interface_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
-## export(namespace_decl) -> Export . namespace_decl [ While WILD Verbatim UIdent Type True Switch String SHARP SEMI Return RBRACE PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EOF EIdent Do Directive Default ContractOf Continue Const Case Bytes Break Attr ]
-## export(type_decl) -> Export . type_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
-## export(value_decl) -> Export . value_decl [ While Type Switch SEMI Return RBRACE Namespace Let LBRACE Interface Import If For Export EOF Directive Default Continue Const Case Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## Export
-##
-
-Ill-formed export statement.
-At this point, a declaration is expected.
-
-contract: Return Attr For LPAR Const EIdent Of Bytes RPAR ZWSP
-##
-## Ends in an error in state: 1155.
-##
-## for_of_stmt(statement) -> For par(range_of) . statement [ SEMI RBRACE EOF Default Case ]
-## for_of_stmt(stmt_not_ending_with_expr) -> For par(range_of) . stmt_not_ending_with_expr [ While WILD Verbatim UIdent Type True Switch String SHARP Return PLUS2 Nat Namespace Mutez Match MINUS2 Let LPAR LBRACKET LBRACE Interface Int Import If Ident Function For False Export EIdent Do Directive ContractOf Continue Const Bytes Break Attr ]
-## for_of_stmt(stmt_not_starting_with_expr_nor_block1_bis) -> For par(range_of) . stmt_not_starting_with_expr_nor_block1_bis [ While Type Switch Return Namespace Let LBRACE Interface Import If For Export Directive Continue Const Break Attr ]
-##
-## The known suffix of the stack is as follows:
-## For par(range_of)
-##
-
-Ill-formed loop.
-At this point, a statement is expected.
+At this point, if the expression is complete, the keyword 'as' is
+expected, followed by a type.
 
 contract: Return If LPAR Bytes RPAR Directive BIT_AND
 ##
@@ -6224,4 +6206,4 @@ contract: Return If LPAR Bytes RPAR Directive BIT_AND
 ##
 
 Ill-formed statement.
-At this point, a statement that is not an expression is expected.
+At this point, a statement other than an expresswion is expected.

@@ -28,7 +28,7 @@ let%expect_test _ =
     At this point, one of the following is expected:
       * a namespace name;
       * a string denoting a constructor;
-      * an object or array. |}];
+      * a record or array. |}];
   run_ligo_bad [ "print"; "ast-core"; bad_test "modules_access_not_open2.jsligo" ];
   [%expect
     {|
@@ -39,7 +39,7 @@ let%expect_test _ =
     At this point, one of the following is expected:
       * a namespace name;
       * a string denoting a constructor;
-      * an object or array. |}]
+      * a record or array. |}]
 
 (*
   run_ligo_bad

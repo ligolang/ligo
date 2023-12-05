@@ -474,8 +474,7 @@ variant:
 | brackets(legacy_variant) {
     let region = $1.region
     and value  = {attributes=[]; tuple=$1}
-    in Legacy {region; value}
-  }
+    in Legacy {region; value} }
 
 %inline
 legacy_variant:
