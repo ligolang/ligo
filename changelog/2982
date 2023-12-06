@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2982'
+title: "Fix: make monomorphisation descent into E_raw_code for %michelson"
+type: fixed
+            

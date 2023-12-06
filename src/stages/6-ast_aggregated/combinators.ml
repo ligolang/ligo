@@ -438,6 +438,20 @@ let e_a_contract_entrypoint_opt ~loc e a t =
   make_e ~loc (e_contract_entrypoint_opt ~loc e a) (t_option ~loc (t_contract ~loc t))
 
 
+let rec e_a_applications ~loc lamb args : expression =
+  let e_a_application_no_t ~loc lamb args =
+    let Arrow.{ type1 = _; type2 } = get_t_arrow_exn lamb.type_expression in
+    e_application ~loc { lamb; args } type2
+  in
+  match args with
+  | [] -> lamb
+  | args :: argss -> e_a_application_no_t ~loc (e_a_applications ~loc lamb argss) args
+
+
+let e_a_applications ~loc lamb args : expression =
+  e_a_applications ~loc lamb (List.rev args)
+
+
 let get_record_field_type (t : type_expression) (label : Label.t) : type_expression option
   =
   match get_t_record_opt t with

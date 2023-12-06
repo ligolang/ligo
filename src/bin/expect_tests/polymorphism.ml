@@ -6,6 +6,29 @@ let () = Caml.Sys.chdir "../../test/contracts/polymorphism/"
 
 let%expect_test _ =
   run_ligo_good
+    [ "compile"; "storage"; test "monomorphisation_raw.mligo"; "foo"; "-m"; "C" ];
+  [%expect {| 0x0502000000110320074303680100000004686168610327 |}];
+  run_ligo_bad
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "foo2"
+    ; "--init-file"
+    ; test "monomorphisation_raw.mligo"
+    ];
+  [%expect {| An error occurred while evaluating an expression: "hehe" |}];
+  run_ligo_good
+    [ "compile"
+    ; "expression"
+    ; "cameligo"
+    ; "foo3"
+    ; "--init-file"
+    ; test "monomorphisation_raw.mligo"
+    ];
+  [%expect {| 0x09 |}]
+
+let%expect_test _ =
+  run_ligo_good
     [ "compile"
     ; "expression"
     ; "cameligo"
