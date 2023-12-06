@@ -1,0 +1,20 @@
+type storage = {rewardsLeft: tez, beneficiaryAddress: address };
+
+let treasury = (p : unit, s : storage) => {
+  // We do our computations first
+  let newStorage = {...s, rewardsLeft: 0mutez};
+
+  // Then we find our beneficiary's `handleRewards` entrypoint:
+  let beneficiaryOpt = Tezos.get_entrypoint_opt("%handleTransfer", s.beneficiaryAddress);
+  let beneficiary =
+    match(beneficiaryOpt) {
+     when(Some(contract)): contract;
+     when(None()): failwith("Beneficiary does not exist")
+    };
+
+  // Then we prepare the internal operation we want to perform
+  let operation = Tezos.transaction(unit, s.rewardsLeft, beneficiary);
+
+  // ...and return both the operations and the updated storage
+  return [list([operation]), newStorage];
+};

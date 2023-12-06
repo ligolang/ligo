@@ -1,0 +1,1 @@
+const twice = (x: int): int => x * x;

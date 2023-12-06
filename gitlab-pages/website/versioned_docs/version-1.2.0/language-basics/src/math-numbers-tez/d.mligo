@@ -1,0 +1,11 @@
+let a : int = 10 / 3
+let b : nat = 10n / 3n
+let c : nat = 10mutez / 3mutez
+let a : int = 120
+let b : int = 9
+let rem1 : nat = a mod b  // 3
+let c : nat = 120n
+let rem2 : nat = c mod b  // 3
+let d : nat = 9n
+let rem3 : nat = c mod d  // 3
+let rem4 : nat = a mod d  // 3
