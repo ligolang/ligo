@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '3006'
+title: "Fix: handle tick `'` in CameLIGO's `T_ForAll`"
+type: fixed
+            

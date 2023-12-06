@@ -411,9 +411,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
   let ret = Location.wrap ~loc in
   match te with
   | T_ForAll { value = generics, _, t; _ } ->
-    let ty_binders =
-      List.map ~f:(fun v -> TODO_do_in_parsing.esc_tvar @@ snd @@ r_fst v)
-      @@ nseq_to_list generics
+    let ty_binders = List.map ~f:TODO_do_in_parsing.quoted_tvar @@ nseq_to_list generics
     and kind = Ligo_prim.Kind.Type
     and type_ = t in
     ret @@ O.T_for_alls { ty_binders; kind; type_ }
