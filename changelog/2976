@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n"
+merge_request: '2976'
+title: "Fix: dynamic entries in top-level module and stdlib"
+type: fixed
+            
