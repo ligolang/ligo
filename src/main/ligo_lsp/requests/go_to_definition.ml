@@ -41,10 +41,9 @@ let find_defs_by_name_and_level (def : Scopes.def) : Scopes.def list -> Scopes.d
     ~f:
       Scopes.Types.(
         fun def' ->
-          String.equal (get_def_name def) (get_def_name def')
-          &&
           match def, def' with
-          | Variable _, Variable _ | Type _, Type _ | Module _, Module _ -> true
+          | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
+            String.equal (get_def_name def) (get_def_name def')
           | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
 
 
@@ -167,6 +166,21 @@ let get_declaration : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
  fun def _mdefs -> [ def ]
 
 
+let try_to_get_mdef_uid
+    :  Scopes.def -> Scopes.Types.mdef list -> Scopes.Types.implementation Mod_map.t
+    -> Mod_identifier.t option
+  =
+ fun def mdefs mod_ids ->
+  match find_module_by_uid_path (Scopes.Types.get_mod_path def) mdefs with
+  | None ->
+    Seq.find_map (function
+        | id, Scopes.Types.Ad_hoc_signature defs ->
+          if List.is_empty @@ find_defs_by_name_and_level def defs then None else Some id
+        | _, Standalone_signature_or_module _ -> None)
+    @@ Mod_map.to_seq mod_ids
+  | Some def_mod -> Some (Mod_identifier.Standalone_signature_or_module def_mod.uid)
+
+
 (** Given some definition, look for all modules/namespaces and signatures/interfaces that
     implement it. *)
 let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
@@ -175,18 +189,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
   match
     (* Is [def] defined inside a module? We need to find the module in order to look into
        every signature/interface. *)
-    let%bind.Option def_mod_id =
-      match find_module_by_uid_path (Scopes.Types.get_mod_path def) mdefs with
-      | None ->
-        Seq.find_map (function
-            | id, Scopes.Types.Ad_hoc_signature defs ->
-              if List.is_empty @@ find_defs_by_name_and_level def defs
-              then None
-              else Some id
-            | _, Standalone_signature_or_module _ -> None)
-        @@ Mod_map.to_seq mod_ids
-      | Some def_mod -> Some (Mod_identifier.Standalone_signature_or_module def_mod.uid)
-    in
+    let%bind.Option def_mod_id = try_to_get_mdef_uid def mdefs mod_ids in
     (* Find everything that implements [def_mod] by looking at its children. *)
     let%map.Option implementers =
       Mod_graph.reachable def_mod_id (Mod_graph.transpose @@ build_mod_graph mdefs)
@@ -260,6 +263,12 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
   | _ :: _ as defs -> defs
 
 
+let filter_mdefs : Scopes.def list -> Scopes.Types.mdef list =
+  List.filter_map ~f:(function
+      | Scopes.Types.Variable _ | Type _ -> None
+      | Module mdef -> Some mdef)
+
+
 let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option Handler.t
   =
  fun decl_def_or_impl pos file ->
@@ -272,9 +281,7 @@ let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option
     | Def -> get_definitions
     | Impl -> get_implementations)
       definition
-      (List.filter_map definitions ~f:(function
-          | Variable _ | Type _ -> None
-          | Module mdef -> Some mdef))
+      (filter_mdefs definitions)
   in
   match
     List.filter_map definitions ~f:(fun definition ->

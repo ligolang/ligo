@@ -10,6 +10,8 @@ module Loc_in_file = struct
     ; range : Range.t
     }
   [@@deriving eq, ord, sexp]
+
+  let pp : t Fmt.t = fun ppf -> Format.fprintf ppf "%a" Sexp.pp <@ sexp_of_t
 end
 
 module Def_location = struct
@@ -25,6 +27,9 @@ module Def_location = struct
     | File region ->
       File { range = Range.of_region region; path = Path.from_absolute region#file }
     | Virtual s -> Virtual s
+
+
+  let pp : t Fmt.t = fun ppf -> Format.fprintf ppf "%a" Sexp.pp <@ sexp_of_t
 end
 
 module Def_locations = Set.Make (Def_location)
