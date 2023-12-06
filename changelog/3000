@@ -1,0 +1,7 @@
+
+author: XJIE6
+description: "\\n`Unresolved` appears instead of ghost tokens on hover request\\n\\n"
+merge_request: '3000'
+title: "[Chore] Remove ghost_ident from hover"
+type: fixed
+            
