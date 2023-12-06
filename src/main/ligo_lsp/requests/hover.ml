@@ -177,6 +177,13 @@ let on_req_hover : Position.t -> Path.t -> Hover.t option Handler.t =
   @@ fun { definitions; syntax; _ } ->
   when_some' (Def.get_definition pos file definitions)
   @@ fun definition ->
-  let@ contents = hover_string syntax definition in
+  let@ (`List strings) = hover_string syntax definition in
+  let replace =
+    Parsing_shared.Errors.ErrorWrapper.replace_with
+      (Helpers_pretty.unresolved_type_as_comment syntax)
+  in
+  let contents =
+    `List (List.map ~f:(fun str -> { str with value = replace str.value }) strings)
+  in
   let hover = Hover.create ~contents () in
   return (Some hover)

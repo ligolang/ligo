@@ -91,4 +91,4 @@ let get_diagnostics (current_path : Path.t)
   List.concat_map ~f:extract_error_information errors
   @ List.filter_map ~f:extract_warning_information warnings
   |> List.filter ~f:(fun { message; _ } ->
-         not @@ Parsing_shared.Errors.ErrorPrefix.is_contained message)
+         not @@ Parsing_shared.Errors.ErrorWrapper.is_wrapped message)
