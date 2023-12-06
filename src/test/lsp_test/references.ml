@@ -48,22 +48,68 @@ let get_references_test
 
 
 let test_cases =
+  let open Range.Construct in
+  let intervals file = List.map ~f:(fun range -> file, range) in
   [ { test_name = "references in included file"
     ; test_file = "contracts/lsp/includer/includer.mligo"
     ; reference = Position.create ~line:1 ~character:8
     ; references =
-        [ "contracts/lsp/includer/includer.mligo", Range.Construct.interval 1 8 9
-        ; "contracts/lsp/included.mligo", Range.Construct.interval 0 4 5
+        [ "contracts/lsp/includer/includer.mligo", interval 1 8 9
+        ; "contracts/lsp/included.mligo", interval 0 4 5
         ]
     }
   ; { test_name = "references in a file with michelson injections"
     ; test_file = "contracts/lsp/references_michelson_inj.mligo"
     ; reference = Position.create ~line:4 ~character:8
     ; references =
-        [ "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 0 4 5
-        ; "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 4 8 9
-        ; "contracts/lsp/references_michelson_inj.mligo", Range.Construct.interval 4 11 12
-        ]
+        intervals
+          "contracts/lsp/references_michelson_inj.mligo"
+          [ interval 0 4 5; interval 4 8 9; interval 4 11 12 ]
+    }
+  ; { test_name = "references in a file with michelson injections"
+    ; test_file = "contracts/lsp/references_michelson_inj.mligo"
+    ; reference = Position.create ~line:4 ~character:8
+    ; references =
+        intervals
+          "contracts/lsp/references_michelson_inj.mligo"
+          [ interval 0 4 5; interval 4 8 9; interval 4 11 12 ]
+    }
+  ; { test_name = "references of term with sig items and top level ref"
+    ; test_file = "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; reference = Position.create ~line:9 ~character:6
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+          [ interval 3 6 7; interval 9 6 7; interval 12 13 14 ]
+    }
+  ; { test_name = "references of type with sig items and top level ref"
+    ; test_file = "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+    ; reference = Position.create ~line:9 ~character:10
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
+          [ interval 1 7 8; interval 3 10 11; interval 7 7 8; interval 9 10 11 ]
+    }
+  ; { test_name = "references from inline and standalone sigs and mods"
+    ; test_file = "contracts/lsp/go_to_implementations/multiple_definitions.jsligo"
+    ; reference = Position.create ~line:8 ~character:70
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/multiple_definitions.jsligo"
+          [ interval 1 7 8
+          ; interval 5 7 8
+          ; interval 8 38 39
+          ; interval 8 70 71
+          ; interval 9 7 8
+          ]
+    }
+  ; { test_name = "references from multiple impls"
+    ; test_file = "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+    ; reference = Position.create ~line:6 ~character:7
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
+          [ interval 1 7 8; interval 2 12 13; interval 6 7 8; interval 11 7 8 ]
     }
   ]
 
