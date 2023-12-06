@@ -51,12 +51,27 @@ let is_opted_out rhs : bool =
 
 let map_contract ~storage_type ~parameter_type decls sig_ =
   let open Ast_typed in
+  let fold_concat_map t ~init ~f =
+    let acc = ref init in
+    let result =
+      List.concat_map t ~f:(fun x ->
+          let new_acc, y = f !acc x in
+          acc := new_acc;
+          y)
+    in
+    !acc, result
+  in
+  let nth_binder ~loc i =
+    Binder.make
+      Value_var.(of_input_var ~loc ("$dyn_" ^ string_of_int i))
+      (t_bytes ~loc:Location.generated ())
+  in
   (*
     - morph dynamic entrypoints RHS to nat
     - record dynamic entrypoints indexes and old RHS
   *)
   let (_, dyns), casted_items =
-    List.fold_map decls ~init:(0, []) ~f:(fun (ctr, acc) el ->
+    fold_concat_map decls ~init:(0, []) ~f:(fun (ctr, acc) el ->
         let Location.{ wrap_content; location } = el in
         match wrap_content with
         | D_value { binder; attr; expr }
@@ -66,13 +81,24 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
           let d =
             Location.{ wrap_content = D_value { binder; attr; expr = nat_rhs }; location }
           in
-          (ctr + 1, (binder, nat_rhs, expr) :: acc), d
+          let d' =
+            Location.
+              { wrap_content =
+                  D_value
+                    { binder = nth_binder ~loc:location ctr
+                    ; attr = { Value_attr.default_attributes with hidden = true }
+                    ; expr = e_packed_entry expr expr.type_expression
+                    }
+              ; location
+              }
+          in
+          (ctr + 1, (binder, ctr, nat_rhs, expr) :: acc), [ d; d' ]
         | D_value _
         | D_irrefutable_match _
         | D_type _
         | D_module _
         | D_module_include _
-        | D_signature _ -> (ctr, acc), el)
+        | D_signature _ -> (ctr, acc), [ el ])
   in
   match dyns with
   | [] -> decls, sig_
@@ -92,16 +118,20 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
         let lst =
           dyns
           (* filter out non initial entrypoints *)
-          |> List.filter ~f:(fun (_, _, rhs) -> not (is_opted_out rhs))
+          |> List.filter ~f:(fun (_, _, _, rhs) -> not (is_opted_out rhs))
           (* generate the packing expression *)
-          |> List.map ~f:(fun (_, key, rhs) ->
-                 key, e_packed_entry rhs rhs.type_expression)
+          |> List.map ~f:(fun (_, ctr, key, rhs) ->
+                 ( key
+                 , e_variable
+                     ~loc
+                     (Binder.get_var (nth_binder ~loc ctr))
+                     (t_bytes ~loc ()) ))
         in
         e_dynamic_entries lst
       in
       Location.wrap ~loc @@ D_value { binder; attr = ValueAttr.default_attributes; expr }
     in
-    initial :: casted_items, { sig_ with sig_items }
+    casted_items @ [ initial ], { sig_ with sig_items }
 
 
 let map_module module_ sig_ =

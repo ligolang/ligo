@@ -1,6 +1,32 @@
 open Cli_expect
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; test "dynamic_entrypoints_top_stdlib.jsligo" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage (pair (unit %storage) (big_map %dynamic_entrypoints nat bytes)) ;
+      code { CDR ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "contract"; test "dynamic_entrypoints_context.mligo"; "-m"; "C" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage (pair (int %storage) (big_map %dynamic_entrypoints nat bytes)) ;
+      code { CDR ; PUSH int -1 ; UPDATE 1 ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good
+    [ "compile"; "storage"; test "dynamic_entrypoints_context.mligo"; "0"; "-m"; "C" ];
+  [%expect
+    {|
+    (Pair 0
+          { Elt 0
+                0x05020000004103200931000000350765035b07610362036909650000000c055f036d035b0761036203690000000002000000100743035b002a05500001053d036d034200000000 }) |}]
+
+let%expect_test _ =
   run_ligo_bad [ "compile"; "contract"; bad_test "dynamic_entry_wrong_storage.mligo" ];
   [%expect
     {|
