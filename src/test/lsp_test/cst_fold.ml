@@ -76,9 +76,9 @@ let test2 =
   { file_path = "contracts/lsp/missing_a_lot.mligo"
   ; expected =
       Some
-        [ "\226\154\160You are not supposed to see this prefix\226\154\160ghost_ident"
+        [ "\226\154\160ghost_ident\226\152\160"
         ; "in"
-        ; "\226\154\160You are not supposed to see this prefix\226\154\160ghost_ident"
+        ; "\226\154\160ghost_ident\226\152\160"
         ; "="
         ; "="
         ]

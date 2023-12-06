@@ -14,7 +14,6 @@ module Option = Simple_utils.Option
 
 module CST = Cst_cameligo.CST
 module PrettyComb = Parsing_shared.PrettyComb
-module ErrorPrefix = Parsing_shared.Errors.ErrorPrefix
 
 (* Global openings *)
 
@@ -60,15 +59,13 @@ let print_comments = function
 (* Tokens *)
 
 let token (t : string Wrap.t) : document =
-  let prefix = print_comments t#comments
-               ^^ string (ErrorPrefix.remove t#payload)
+  let prefix = print_comments t#comments ^^ string t#payload
   in print_line_comment_opt prefix t#line_comment
 
 let print_variable = function
   Var t -> token t
 | Esc t ->
-    let prefix = print_comments t#comments
-                 ^^ string (ErrorPrefix.remove "@" ^ t#payload)
+    let prefix = print_comments t#comments ^^ string ("@" ^ t#payload)
     in print_line_comment_opt prefix t#line_comment
 
 (* Enclosed documents *)

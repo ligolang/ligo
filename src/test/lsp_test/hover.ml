@@ -534,6 +534,18 @@ let test_cases =
             ~f:(fun p -> p, one "tick : dynamic_entrypoint<ticket<int>, [int, int]>")
             [ pos ~line:11 ~character:9; pos ~line:25 ~character:36 ]
     }
+  ; { test_name = "missing_module.mligo"
+    ; file = "contracts/lsp/hover/missing_module.mligo"
+    ; hovers = [ pos ~line:0 ~character:7, one "module A = (* Unresolved *)" ]
+    }
+  ; { test_name = "missing_type_annot.mligo"
+    ; file = "contracts/lsp/hover/missing_type_annot.mligo"
+    ; hovers = [ pos ~line:0 ~character:4, one "a : (* Unresolved *)" ]
+    }
+  ; { test_name = "missing_type.mligo"
+    ; file = "contracts/lsp/hover/missing_type.mligo"
+    ; hovers = [ pos ~line:0 ~character:5, one "type a = (* Unresolved *)" ]
+    }
   ]
 
 

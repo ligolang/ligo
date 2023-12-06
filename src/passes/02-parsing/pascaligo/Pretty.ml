@@ -12,7 +12,6 @@ open! Region
 
 module CST = Cst_pascaligo.CST
 open CST
-module ErrorPrefix = Parsing_shared.Errors.ErrorPrefix
 
 (* Third party dependencies *)
 
@@ -56,11 +55,11 @@ let unroll_E_Attr (attr, expr) =
 
 (* PRINTING LITERALS *)
 
-let token (t : string Wrap.t) : document = string (ErrorPrefix.remove t#payload)
+let token (t : string Wrap.t) : document = string t#payload
 
 let print_variable = function
-  Var t -> string (ErrorPrefix.remove t#payload)
-| Esc t -> string (ErrorPrefix.remove "@" ^ t#payload)
+  Var t -> string t#payload
+| Esc t -> string ("@" ^ t#payload)
 
 let print_bytes (node : (lexeme * Hex.t) wrap) =
   string ("0x" ^ Hex.show (snd node#payload))

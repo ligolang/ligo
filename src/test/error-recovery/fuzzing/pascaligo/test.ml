@@ -7,7 +7,7 @@ let%expect_test "error_recovery_fuzzing_pascaligo" =
     PASS, 24, 166, 14, 133, 2, ./1loop7.ligo
     PASS, 44, 262, 48, 274, 6, ./1multisig.ligo
     PASS, 4, 54, 30, 39, 5, ./1recursion.ligo
-    PASS, 17, 132, 44, 868, 11, ./1set_arithmetic.ligo
+    PASS, 20, 132, 44, 868, 11, ./1set_arithmetic.ligo
     PASS, 6, 99, 51, 68, 11, ./2condition.ligo
     PASS, 11, 60, 56, 45, 2, ./2function-complex.ligo
     PASS, 34, 307, 51, 574, 11, ./2hashlock.ligo
