@@ -137,6 +137,29 @@ let apply_table_expr table (expr : AST.expression) =
             }
           in
           return @@ E_raw_code { language; code = tuple }
+        | E_raw_code { language; code = { expression_content = _; _ } as expr }
+          when Option.is_some (AST.get_e_application expr)
+               && String.equal language "michelson" ->
+          let applications = AST.get_e_applications expr in
+          let code, args =
+            match applications with
+            | [] -> failwith "expected non-empty applications in %michelson"
+            | hd :: tl -> hd, tl
+          in
+          let args =
+            List.map
+              ~f:(fun t ->
+                let te = t.type_expression in
+                let te =
+                  List.fold ~init:te table ~f:(fun te (v, t) ->
+                      AST.Helpers.subst_type v t te)
+                in
+                { t with type_expression = te })
+              args
+          in
+          let code = AST.e_a_applications ~loc code args in
+          return @@ E_raw_code { language; code }
+        | E_raw_code _
         | E_deref _
         | E_while _
         | E_for _
@@ -146,7 +169,6 @@ let apply_table_expr table (expr : AST.expression) =
         | E_variable _
         | E_application _
         | E_type_abstraction _
-        | E_raw_code _
         | E_constructor _
         | E_record _
         | E_accessor _
@@ -254,7 +276,24 @@ let rec mono_polymorphic_expression ~raise
   let return ec = { expr with expression_content = ec } in
   let loc = expr.location in
   match expr.expression_content with
-  | E_variable _ | E_literal _ | E_raw_code _ | E_deref _ -> data, expr
+  | E_raw_code { language; code }
+    when Option.is_some (AST.get_e_application code) && String.equal language "michelson"
+    ->
+    let applications = AST.get_e_applications code in
+    let code, args =
+      match applications with
+      | [] -> failwith "expected non-empty applications in %michelson"
+      | hd :: tl -> hd, tl
+    in
+    let data, args =
+      List.fold_right args ~init:(data, []) ~f:(fun arg (data, args) ->
+          let data, arg = self data arg in
+          data, arg :: args)
+    in
+    let code = AST.e_a_applications ~loc code args in
+    data, return (E_raw_code { language; code })
+  | E_raw_code _ -> data, expr
+  | E_variable _ | E_literal _ | E_deref _ -> data, expr
   | E_constant { cons_name; arguments } ->
     let data, arguments =
       List.fold_right arguments ~init:(data, []) ~f:(fun arg (data, args) ->
