@@ -101,3 +101,15 @@ type input_d = Dialect_cst.t input
 
 let mk_input_d ~(cst : Dialect_cst.t) ~syntax ~path ~definitions ~pos : input_d =
   { cst; syntax; path; definitions; pos }
+
+
+(* Scopes are not perfect so sometimes they can show 2 things with same identifiers
+   "belonging to our scope". To make the output more compact,
+   we're keeping only one for them *)
+let nub_sort_items : CompletionItem.t list -> CompletionItem.t list =
+ fun with_possible_duplicates ->
+  List.remove_consecutive_duplicates
+    ~which_to_keep:`First
+    ~equal:CompletionItem.(fun x y -> String.equal x.label y.label)
+  @@ List.sort with_possible_duplicates ~compare:(fun x y ->
+         String.compare x.label y.label)

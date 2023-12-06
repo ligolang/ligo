@@ -1,0 +1,7 @@
+
+author: Sorokin-Anton
+description: "\\nAdded new faster implementations for the LSP completion request. If LIGO LSP stuck while computing completions, you can choose other implementations in the VSCode extension settings.\\n\\n"
+merge_request: '2827'
+title: "[#2021] Allow user to choose faster implementations for LSP completions"
+type: added
+            
