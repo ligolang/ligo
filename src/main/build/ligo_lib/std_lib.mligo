@@ -92,13 +92,13 @@ module Tezos = struct
   let get_contract_with_error (type a) (a : address) (s : string) : a contract =
     let v = get_contract_opt a in
     match v with | None -> failwith s | Some c -> c
-  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%Michelson ({| { UNPAIR ; TICKET } |} : a * nat -> (a ticket) option)] (v, n)
+  let create_ticket (type a) (v : a) (n : nat) : (a ticket) option = [%michelson ({| { TICKET } |} v n : (a ticket) option)]
 #if LEGACY_LAYOUT_TREE
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
-    [%Michelson ({| { UNPAIR ; UNPAIR ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+    [%michelson ({| { TRANSFER_TOKENS } |} a mu c : operation)]
 #else
   let transaction (type a) (a : a) (mu : tez) (c : a contract) : operation =
-    [%Michelson ({| { UNPAIR 3 ; TRANSFER_TOKENS } |} : a * tez * a contract -> operation)] (a, mu, c)
+    [%michelson ({| { TRANSFER_TOKENS } |} a mu c : operation)]
 #endif
   [@inline] [@thunk] let call_view (type a b) (s : string) (x : a) (a : address)  : b option =
     let _ : unit = [%external ("CHECK_CALL_VIEW_LITSTR", s)] in
@@ -122,11 +122,11 @@ module Tezos = struct
 end
 
 module Bitwise = struct
-  let @and        (type a b) (l : a) (r : b) : (a, b) external_and = [%Michelson ({| { UNPAIR ; AND } |} : a * b -> (a, b) external_and)] (l, r)
-  let xor         (type a b) (l : a) (r : b) : (a, b) external_or  = [%Michelson ({| { UNPAIR ; XOR } |} : a * b -> (a, b) external_or )] (l, r)
-  let @or         (type a b) (l : a) (r : b) : (a, b) external_xor = [%Michelson ({| { UNPAIR ; OR  } |} : a * b -> (a, b) external_xor)] (l, r)
-  let shift_left  (type a b) (l : a) (r : b) : (a, b) external_lsl = [%Michelson ({| { UNPAIR ; LSL } |} : a * b -> (a, b) external_lsl)] (l, r)
-  let shift_right (type a b) (l : a) (r : b) : (a, b) external_lsr = [%Michelson ({| { UNPAIR ; LSR } |} : a * b -> (a, b) external_lsr)] (l, r)
+  let @and        (type a b) (l : a) (r : b) : (a, b) external_and = [%michelson ({| { AND } |} l r : (a, b) external_and)]
+  let xor         (type a b) (l : a) (r : b) : (a, b) external_or  = [%michelson ({| { XOR } |} l r : (a, b) external_or )]
+  let @or         (type a b) (l : a) (r : b) : (a, b) external_xor = [%michelson ({| { OR  } |} l r : (a, b) external_xor)]
+  let shift_left  (type a b) (l : a) (r : b) : (a, b) external_lsl = [%michelson ({| { LSL } |} l r : (a, b) external_lsl)]
+  let shift_right (type a b) (l : a) (r : b) : (a, b) external_lsr = [%michelson ({| { LSR } |} l r : (a, b) external_lsr)]
 end
 
 module Big_map = struct
@@ -251,9 +251,9 @@ let assert_none (type a) (v : a option) : unit = match v with | None -> () | Som
 let abs (i : int) : nat = [%michelson ({| { ABS } |} i : nat)]
 let is_nat (i : int) : nat option = [%michelson ({| { ISNAT } |} i : nat option)]
 [@inline] let unit : unit = [%external ("UNIT")]
-let int (type a) (v : a) : a external_int = [%Michelson ({| { INT } |} : a -> a external_int)] v
-let nat (v : bytes) : nat = [%Michelson ({| { NAT } |} : bytes -> nat)] v
-let bytes (type a) (v : a) : a external_bytes = [%Michelson ({| { BYTES } |} : a -> a external_bytes)] v
+let int (type a) (v : a) : a external_int = [%michelson ({| { INT } |} v : a external_int)]
+let nat (v : bytes) : nat = [%michelson ({| { NAT } |} v : nat)]
+let bytes (type a) (v : a) : a external_bytes = [%michelson ({| { BYTES } |} v : a external_bytes)]
 let ignore (type a) (_ : a) : unit = ()
 let curry (type a b c) (f : a * b -> c) (x : a) (y : b) : c = f (x, y)
 let uncurry (type a b c) (f : a -> b -> c) (xy : a * b) : c = f xy.0 xy.1
