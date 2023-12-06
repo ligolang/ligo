@@ -19,6 +19,16 @@ type config =
         (** Disabled requests, i.e., they are not handled by the language server. Defaults to []. *)
   ; max_line_width : int option
         (** Override the max line width for formatted file (80 by default) *)
+  ; completion_implementation :
+      [ `With_scopes | `All_definitions | `Only_keywords_and_fields ]
+        (** There are different ways to show a LSP completion: we can
+            - [`With_scopes]: provide all definitions available in current scope, but this is slow
+              since it uses [Ligo_interface.get_scopes]
+            - [`All_definitions]: provide all definitions in current file, including
+              things that are not available in the current scope
+            - [`OnlyKeywordsAndRecordFields]: provide record/module fields if the coursor
+              is located after a dot (like M.x|), otherwise provide keywords only.
+              This is fast and always correct, but don't contain even the stdlib stuff. *)
   }
 
 (** We can send diagnostics to user or just save them to list in case of testing *)

@@ -67,9 +67,4 @@ let get_scope_completions
     @@ Option.value ~default:definitions
     @@ get_defs_completions cst pos scopes
   in
-  (* Keep the first item to deal with shadowing. *)
-  List.remove_consecutive_duplicates
-    ~which_to_keep:`First
-    ~equal:(fun x y -> String.equal x.label y.label)
-    (List.sort with_possible_duplicates ~compare:(fun x y ->
-         String.compare x.label y.label))
+  Common.nub_sort_items with_possible_duplicates

@@ -1,6 +1,7 @@
 {
     "name": "ligo-vscode",
-    "description": "LIGO VSCode extension includes syntax highlighting, and a language server for LIGO.",
+    "displayName": "LIGO",
+    "description": "LIGO VSCode extension includes syntax highlighting, debugger, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
     "version": "1.1.0",
@@ -113,11 +114,25 @@
                         "null"
                     ],
                     "default": null,
-                    "description": "Sets custom max line width for a formatted file. Default is 80. If a custom `printWidth` is set in `.ligopretty` file, this setting has no effect (see [the README.md](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md)). Requires LIGO 0.67.0 or newer."
+                    "markdownDescription": "Sets custom max line width for a formatted file. Default is 80. If a custom `printWidth` is set in `.ligopretty` file, this setting has no effect (see [the README.md](https://gitlab.com/ligolang/ligo/-/blob/dev/tools/vscode/README.md)). Requires LIGO 0.67.0 or newer."
+                },
+                "ligoLanguageServer.completionImplementation": {
+                    "scope": "resource",
+                    "type": "string",
+                    "enum": [
+                        "in-scope identifiers (can be slow)",
+                        "all identifiers",
+                        "only fields and keywords"
+                    ],
+                    "default": "in-scope identifiers (can be slow)",
+                    "markdownDescription": "There are different implementations for LSP-based completion suggestions:\n- 'in-scope identifiers' is most accurate, but can be slow (leading to LSP being stuck) on big files.\n- 'all identifiers' is faster, but contains identifiers that are not in scope.\n- 'only fields and keywords' shows only keywords unless we're completing a module item or a record field."
                 },
                 "ligoDebugger.maxSteps": {
                     "scope": "resource",
-                    "type": ["integer", "null"],
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
                     "default": 1000,
                     "minimum": 1,
                     "maximum": 18446744073709551615,

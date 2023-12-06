@@ -14,6 +14,7 @@ type completion_test =
 
 let completion_test
     (dialect : Syntax_types.t)
+    ?(config : config option)
     { test_name; file_name; position; completions; negative_labels }
     : unit Alcotest.test_case
   =
@@ -25,7 +26,7 @@ let completion_test
   Alcotest.test_case (Format.sprintf "%s: %s" pretty_syntax_type test_name) `Quick
   @@ fun () ->
   let actual_completions, _diagnostics =
-    test_run_session
+    test_run_session ?config
     @@ let@ uri = open_file (Path.from_relative file_name) in
        Requests.on_req_completion position uri
   in
@@ -791,7 +792,83 @@ let test_cases_jsligo =
   ]
 
 
+let completion_implementations_test : unit Alcotest.test_case list =
+  let file_name = "contracts/lsp/completion_inside_module.jsligo" in
+  let position = Position.create ~line:8 ~character:20 in
+  let cases =
+    [ ( `With_scopes
+      , { test_name = "Completion implementations: scopes"
+        ; file_name
+        ; position
+        ; completions =
+            [ CompletionItem.create
+                ~label:"Inner"
+                ~kind:CompletionItemKind.Module
+                ~sortText:"\x08"
+                ()
+            ; CompletionItem.create
+                ~label:"outer"
+                ~kind:CompletionItemKind.Variable
+                ~detail:"/* Unresolved */"
+                ~sortText:"\x08"
+                ()
+            ]
+        ; negative_labels = [ "Outer"; "inner"; "completion" ]
+        } )
+    ; ( `All_definitions
+      , { test_name = "Completion implementations: all definitions"
+        ; file_name
+        ; position
+        ; completions =
+            [ CompletionItem.create
+                ~label:"Inner"
+                ~kind:CompletionItemKind.Module
+                ~sortText:"\x08"
+                ()
+            ; CompletionItem.create
+                ~label:"Outer"
+                ~kind:CompletionItemKind.Module
+                ~sortText:"\x08"
+                ()
+            ; CompletionItem.create
+                ~label:"inner"
+                ~kind:CompletionItemKind.Variable
+                ~detail:"/* Unresolved */"
+                ~sortText:"\x08"
+                ()
+            ; CompletionItem.create
+                ~label:"outer"
+                ~kind:CompletionItemKind.Variable
+                ~detail:"/* Unresolved */"
+                ~sortText:"\x08"
+                ()
+            ]
+        ; negative_labels = []
+        } )
+    ; ( `Only_keywords_and_fields
+      , { test_name = "Completion implementations: only keywords"
+        ; file_name
+        ; position
+        ; completions =
+            [ CompletionItem.create
+                ~label:"let"
+                ~kind:CompletionItemKind.Keyword
+                ~sortText:"\x0c"
+                ()
+            ]
+        ; negative_labels = [ "inner"; "outer"; "Inner"; "Outer" ]
+        } )
+    ]
+  in
+  List.map
+    ~f:(fun (completion_implementation, test) ->
+      let config = { default_test_config with completion_implementation } in
+      completion_test ~config CameLIGO test)
+    cases
+
+
 let tests =
   ( "completion"
   , List.map ~f:(completion_test CameLIGO) test_cases_cameligo
-    @ List.map ~f:(completion_test JsLIGO) test_cases_jsligo )
+    @ List.map ~f:(completion_test JsLIGO) test_cases_jsligo
+    @ completion_implementations_test )

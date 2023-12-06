@@ -11,6 +11,7 @@ let default_config : config =
   ; logging_verbosity = MessageType.Info
   ; disabled_features = []
   ; max_line_width = None
+  ; completion_implementation = `With_scopes
   }
 
 
@@ -82,8 +83,7 @@ class lsp_server =
         =
       let open Yojson.Safe.Util in
       config
-        <- { config with
-             max_number_of_problems =
+        <- { max_number_of_problems =
                ligo_language_server
                |> member "maxNumberOfProblems"
                |> to_int_option
@@ -105,6 +105,15 @@ class lsp_server =
                |> Option.value_map ~f:(List.map ~f:to_string) ~default:[]
            ; max_line_width =
                ligo_language_server |> member "maxLineWidth" |> to_int_option
+           ; completion_implementation =
+               (ligo_language_server
+               |> member "completionImplementation"
+               |> to_string_option
+               |> function
+               | Some "in-scope identifiers (can be slow)" -> `With_scopes
+               | Some "all identifiers" -> `All_definitions
+               | Some "only fields and keywords" -> `Only_keywords_and_fields
+               | Some _ | None -> default_config.completion_implementation)
            }
 
     method! on_req_initialize

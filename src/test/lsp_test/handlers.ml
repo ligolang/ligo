@@ -7,6 +7,7 @@ let default_test_config : config =
   ; logging_verbosity = Log
   ; disabled_features = []
   ; max_line_width = None
+  ; completion_implementation = `With_scopes
   }
 
 
