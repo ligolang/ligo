@@ -1,0 +1,5 @@
+type storage = int;
+
+@entry
+const compute = (func: ((v : int) => int), s: storage) : [list<operation>, int] =>
+  [list([]), func(s)]

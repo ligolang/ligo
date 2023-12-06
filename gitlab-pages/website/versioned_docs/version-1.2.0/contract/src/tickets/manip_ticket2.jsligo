@@ -1,0 +1,3 @@
+const ta = Option.unopt(Tezos.create_ticket(1, 10n));
+const tb = Option.unopt(Tezos.create_ticket(1, 5n));
+const tc = Tezos.join_tickets([ta, tb]);

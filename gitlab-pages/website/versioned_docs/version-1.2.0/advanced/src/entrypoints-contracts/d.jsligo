@@ -1,0 +1,18 @@
+// proxy.jsligo
+
+type parameter =
+| ["Increment", int]
+| ["Decrement", int]
+| ["Reset"];
+
+type storage = unit;
+
+type result = [list<operation>, storage];
+
+const dest = "KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address;
+
+const proxy = (action: parameter, store: storage): result => {
+  let counter : contract<parameter> = Tezos.get_contract_with_error(dest, "not found");
+  let op = Tezos.transaction(Increment(5), 0tez, counter);
+  return [list([op]), store];
+};

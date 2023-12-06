@@ -1,0 +1,6 @@
+
+let v_opt : option<int> = Some(1);
+
+let v : int = Option.unopt_with_error (v_opt, "FooBar"); /* 1 */
+
+let none : int = Option.unopt_with_error (None() as option<int>, "FooBar"); /* fails with "FooBar" */

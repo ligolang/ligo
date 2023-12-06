@@ -1,0 +1,15 @@
+const logical_and = true && true;
+const logical_or = false || true;
+const logical_not = !false;
+const eq = 2 == 3;
+const not_eq = 2 != 3;
+const gt = 4 > 3;
+const lt = 4 < 3;
+const gte = 4 >= 3;
+const lte = 4 <= 3;
+const ternary = a => a == 1 ? true : false;
+const ternary_nested = a =>
+  a == 1 ? "one"   :
+  a == 2 ? "two"   :
+  a == 3 ? "three" :
+           "other"

@@ -1,0 +1,16 @@
+let my_set: set<int> = Set.empty;
+let card: nat = Set.cardinal(my_set);
+let updated_set = Set.add (4, my_set);
+// in case of true value will be added to the set
+let updated_set2 = Set.update (4, true, my_set);
+
+// in case of false value will be removed from the set
+let updated_set3 = Set.update (4, false, my_set);
+let iter_op = (s: set<int>): unit => {
+  let predicate = (i : int): unit => assert(i > 3);
+  Set.iter(predicate, s);
+};
+let sum = ([acc, i]: [int, int]): int => acc + i;
+let sum_of_elements: int = Set.fold(sum, my_set, 0);
+let sum_right = ([i, acc]: [int, int]) : int => acc + i;
+let sum_of_elements_desc : int = Set.fold_desc (sum_right, my_set, 0);

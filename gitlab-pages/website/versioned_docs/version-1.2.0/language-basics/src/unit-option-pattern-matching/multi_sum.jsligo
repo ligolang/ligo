@@ -1,0 +1,19 @@
+type t2 = ["A", int] | ["B", int];
+
+namespace MyModule {
+  type t5 = ["A", int] | ["C", bool];
+  type t4 = ["A", int] | ["D", int];
+
+  namespace MySubModule {
+    type t6 = ["A", int] | ["E", tez];
+  }
+}
+
+namespace MySecondModule {
+  type t3 = ["A", int] | ["F", int];
+}
+
+type t1 = ["A", int] | ["G", tez];
+
+// The compiler will search above for sum types with an 'A' constructor
+const x = A(42);

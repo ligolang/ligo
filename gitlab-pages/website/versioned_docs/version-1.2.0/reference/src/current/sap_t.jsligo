@@ -1,0 +1,8 @@
+type st = sapling_state<8>;
+type tr = sapling_transaction<8>;
+let x = Tezos.sapling_empty_state ;
+let f = (tr : tr) =>
+  match (Tezos.sapling_verify_update(tr, x)) {
+    when(Some(p)): p[1];
+    when(None()): failwith ("failed")
+  };
