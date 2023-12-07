@@ -1,13 +1,13 @@
-import React, { useContext } from "react";
-import clsx from "clsx";
 import { useThemeConfig } from "@docusaurus/theme-common";
-import Logo from "@theme/Logo";
+import Title from "@site/src/components/Titles";
 import CollapseButton from "@theme/DocSidebar/Desktop/CollapseButton";
 import Content from "@theme/DocSidebar/Desktop/Content";
-import styles from "./styles.module.css";
+import Logo from "@theme/Logo";
+import { useSyntax } from "@theme/Syntax/SyntaxContext";
 import SyntaxSwitch from "@theme/Syntax/SyntaxSwitch";
-import SyntaxContext from "@theme/Syntax/SyntaxContext";
-
+import clsx from "clsx";
+import React from "react";
+import styles from "./styles.module.css";
 function DocSidebarDesktop({ path, sidebar, onCollapse, isHidden }) {
   const {
     navbar: { hideOnScroll },
@@ -16,7 +16,7 @@ function DocSidebarDesktop({ path, sidebar, onCollapse, isHidden }) {
     },
   } = useThemeConfig();
 
-  const { syntax, setSyntax } = useContext(SyntaxContext);
+  const { syntax, setSyntax } = useSyntax();
 
   return (
     <div
@@ -27,8 +27,10 @@ function DocSidebarDesktop({ path, sidebar, onCollapse, isHidden }) {
       )}
     >
       {hideOnScroll && <Logo tabIndex={-1} className={styles.sidebarLogo} />}
-      <div className={styles.switchContainer}>
-        Display syntax:{" "}
+      <div className="navbar-sidebar__switch-container">
+        <Title level={5} className="navbar-sidebar__switch-container-title">
+          Syntax Preference
+        </Title>
         <SyntaxSwitch syntax={syntax} onSyntaxChange={setSyntax} />
       </div>
       <Content path={path} sidebar={sidebar} />

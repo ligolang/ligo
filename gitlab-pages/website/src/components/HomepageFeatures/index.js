@@ -21,7 +21,7 @@ const FEATURES = [
     image: "img/ligo_features/ligo-feature-optimized.svg",
     title: "Optimized by Design",
     content: "Ligo is a high-level language that compiles to optimized Tezos bytecode.",
-    link: "docs/intro/introduction",
+    link: "docs/intro/introduction#ligo-designed-to-be-cost-effective",
   },
   {
     image: "img/ligo_features/ligo-feature-testing-system.svg",
@@ -50,7 +50,7 @@ const Feature = (props) => (
   <a
     className={styles.feature}
     key={props.title}
-    href={useBaseUrl(props.link)}
+    href={props.link}
     title={`Ligo ${props.title}`}
     aria-label={`Ligo ${props.title}`}
   >

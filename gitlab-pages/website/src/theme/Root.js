@@ -1,51 +1,60 @@
+import { useHistory, useLocation } from "@docusaurus/router";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
-
 import Image from "@site/src/components/Image";
+import ScrollToAnchor from "@site/src/components/ScrollToAnchor";
 import SyntaxContext from "@theme/Syntax/SyntaxContext";
 import React, { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import CookieConsent, { Cookies, getCookieConsentValue } from "react-cookie-consent";
+import CookieConsent, { Cookies } from "react-cookie-consent";
 import { initGA } from "../utils/analytics";
+
 const USER_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const COOKIE_CONSENT_NAME = "cookie_consent";
 const isUserInEurope = () => USER_TIME_ZONE.toLocaleLowerCase().startsWith("europe");
 
+const VALID_SYNTAXES = ["jsligo", "cameligo", "pascaligo"];
+const DEFAULT_SYNTAX = "jsligo";
+const LOCAL_STORAGE_SYNTAX_KEY = "syntax";
+
+const isSyntaxValid = (syntax) => VALID_SYNTAXES.includes(syntax);
+const extractQueryString = (searchParams) => new URLSearchParams(searchParams).get("lang");
+const isLangOnQueryString = (queryString) => Boolean(queryString);
+
 // Default implementation, that you can customize
 export default function Root({ children }) {
+  const location = useLocation();
+  const { search } = location;
+  const history = useHistory();
   const { siteConfig } = useDocusaurusContext();
   const [_, setCookie] = useCookies([COOKIE_CONSENT_NAME]);
 
   const [syntax, setSyntax] = useState(() => {
     if (typeof window === "undefined") return "jsligo";
-
-    const syntax = localStorage.getItem("syntax");
-
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop) => searchParams.get(prop),
-    });
-
-    // Remove "pascaligo" after 0.60.0 doc is deleted
-    const valid = ["jsligo", "cameligo", "pascaligo"];
-
-    const lang = (params.lang || "").toLowerCase();
-
-    if (valid.includes(lang)) return lang;
-
-    return syntax ?? "jsligo";
+    // Initialize syntax based on query-string, local-storage or default value
+    const syntaxFromLocalStorage = localStorage.getItem(LOCAL_STORAGE_SYNTAX_KEY);
+    const langFromQueryString = extractQueryString(search.toLowerCase());
+    if (isSyntaxValid(langFromQueryString)) {
+      return langFromQueryString;
+    }
+    if (isSyntaxValid(syntaxFromLocalStorage)) {
+      return syntaxFromLocalStorage;
+    }
+    return DEFAULT_SYNTAX;
   });
 
   useEffect(() => {
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop) => searchParams.get(prop),
-    });
-
-    if (!!params.lang) return;
-
-    const url = new URL(window.location);
-    url.searchParams.set("lang", syntax);
-    window.history.replaceState(null, "", url.toString());
-  });
+    const lang = extractQueryString(search.toLowerCase());
+    // Make lang query string always in the URL (useful to share links)
+    if (!isLangOnQueryString(lang)) {
+      history.replace({
+        search: `?lang=${syntax}`,
+      });
+    } else {
+      setSyntax(lang);
+      localStorage.setItem("syntax", lang);
+    }
+  }, [location.pathname, location.search]);
 
   const handleAcceptCookie = () => {
     if (siteConfig.customFields.REACT_APP_GOOGLE_ANALYTICS_ID) {
@@ -68,11 +77,11 @@ export default function Root({ children }) {
         expires: dateIn90Days,
       });
     }
-    // initialize cookies if user consent at app load
-    const isConsent = getCookieConsentValue(COOKIE_CONSENT_NAME);
-    if (isConsent === "true") {
-      handleAcceptCookie();
-    }
+    // uncomment to initialize cookies if user consent at app load
+    // const isConsent = getCookieConsentValue(COOKIE_CONSENT_NAME);
+    // if (isConsent === "true") {
+    handleAcceptCookie();
+    // }
   }, []);
 
   return (
@@ -107,6 +116,7 @@ export default function Root({ children }) {
           </p>
         </CookieConsent>
       )}
+      <ScrollToAnchor />
       <SyntaxContext.Provider value={{ syntax, setSyntax }}>{children}</SyntaxContext.Provider>
     </>
   );

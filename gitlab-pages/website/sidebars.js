@@ -193,7 +193,14 @@ const sidebars = {
       //TODO: write doc "testing/debugging"
     ],
     "Combining Code": [
-      "language-basics/modules",
+      {
+        type: "doc",
+        id: "language-basics/modules",
+        label: "Modules",
+        customProps: {
+          jsLigoName: "Namespaces"
+        }
+      },
       "advanced/global-constants",
       "advanced/package-management"
     ],

@@ -1,9 +1,22 @@
 ---
 id: modules
 title: Modules
+jsLigoTitle: Namespaces
+hide_title: true
 ---
 
 import Syntax from '@theme/Syntax';
+
+<Syntax syntax="jsligo">
+
+# Namespaces
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+# Modules
+
+</Syntax>
 
 <Syntax syntax="jsligo">
 
