@@ -12,7 +12,7 @@ variables:
   # strip all comments form the version file and grep for version
   - ligo_version="$(cat "$LIGO_VERSION_FILE" | sed '/^#/d' | grep -E '([0-9]{1,}\.)+[0-9]{1,}')"
   - ligo_link="$(curl --silent https://gitlab.com/api/v4/projects/ligolang%2Fligo/releases/"$ligo_version"/assets/links |
-      jq -r '.[] | select(.name == \"Static Linux binary\") | .direct_asset_url')"
+      jq -r '.[] | select(.name == "Static Linux binary") | .direct_asset_url')"
   - wget --quiet -O ligo "$ligo_link"
   - chmod +x ligo
   - ./ligo --version
