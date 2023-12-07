@@ -52,7 +52,7 @@ The [LIGO registry](https://packages.ligolang.org/) is used to host LIGO package
 ## Consuming
 
 To fetch (download) & maintain different versions of external libraries we need a package manager.
-LIGO libraries can be published to [LIGO's registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
+LIGO libraries can be published to the [LIGO registry](https://packages.ligolang.org/) as well as [npm](https://www.npmjs.com/).
 Using `ligo install` command we can fetch these ligo libraries.
 
 Note:
@@ -275,7 +275,7 @@ For LIGO packages, authors must provide a manifest file (ligo.json).
 
 The structure of a LIGO manifest is as follows,
 
-#### Required fields:
+#### Required fields
 
 - **`name`** : Name of the package.
 - **`version`** : Version of the package (Should be a valid [sem-ver](https://semver.org/)).

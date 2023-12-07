@@ -161,12 +161,6 @@ module Map = struct
 
 end
 
-module Transpiled = struct
-  let map_find_opt (type k b) (k : k) (m : b) : (k, b) external_map_find_opt = [%michelson ({| { GET } |} k m : (k, b) external_map_find_opt)]
-  let map_add (type k v b) (k : k) (v : v) (m : b) : (k, v, b) external_map_add = [%michelson ({| { DIP { SOME } ; UPDATE } |} k v m : (k, v, b) external_map_add)]
-  let map_remove (type k b) (k : k) (m : b) : (k, b) external_map_remove = [%michelson ({| { DIP { NONE (typeopt $0) } ; UPDATE } |} (None : ((k, b) external_map_remove_value) option) k m : (k, b) external_map_remove)]
-end
-
 module Set = struct
   let empty (type a) : a set = [%external ("SET_EMPTY")]
   let size (type a) (s : a set) : nat = [%external ("SET_SIZE", s)]
@@ -182,6 +176,8 @@ module Set = struct
   let fold_desc (type a b) (f : a * b -> b) (s : a set) (i : b) : b = [%external ("SET_FOLD_DESC", f, s, i)]
   let filter_map (type a b) (f : a -> b option) (xs : a set) : b set =
     fold_desc (fun (a : a * b set) -> match f a.0 with | None -> a.1 | Some b -> add b a.1) xs (empty : b set)
+  let map (type a b) (f : a -> b) (xs : a set) : b set =
+    fold (fun (x : b set * a) -> add (f x.1) x.0) xs (empty : b set)
 end
 
 module List = struct
@@ -207,6 +203,7 @@ module List = struct
 end
 
 module String = struct
+  let size (b : string) : nat = [%external ("SIZE", b)]
   let length (b : string) : nat = [%external ("SIZE", b)]
   let concats (bs : string list) : string = [%external ("CONCATS", bs)]
 
@@ -693,4 +690,3 @@ module Test = struct
       (decompile s : s2)
   end
 end
-

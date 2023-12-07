@@ -1,0 +1,5 @@
+let s : int set = Set.literal [1; 2; 3]
+// incr = [3; 2; 1]
+let incr : int list = Set.fold (fun (a,i) -> i::a) s []
+// decr = [1; 2; 3]
+let decr : int list = Set.fold_desc (fun (i,a) -> i::a) s []

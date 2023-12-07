@@ -1,0 +1,5 @@
+const compose = f => g => x => f (g (x));
+const double_incr = compose (x => x + 1) (x => 2*x)  // 2*x + 1
+const increment = x => x + 1;
+const double = x => 2*x;
+const double_incr2 = compose (increment) (double);
