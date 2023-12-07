@@ -1,6 +1,6 @@
 {
     "name": "ligo-vscode",
-    "displayName": "LIGO",
+    "displayName": "LIGO Lang",
     "description": "LIGO VSCode extension includes syntax highlighting, debugger, and a language server for LIGO.",
     "author": "Serokell",
     "license": "MIT",
