@@ -1,37 +1,49 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from "@docusaurus/router";
+import React, { useCallback, useEffect, useState } from "react";
 import styles from "./styles.module.css";
 
 function SyntaxSwitch(props) {
-  const [_, setState] = useState(0);
   const [isNext, setIsNext] = useState(false);
-  const location = useLocation(); // All this thing is a trick to force rerender
-  // because it looks like there's a bug with static generation
-  // so we have to trigger a render to make sure the correct value is rendered
-
-  useEffect(() => {
-    setState(1);
-  }, []);
+  const location = useLocation();
+  const history = useHistory();
   useEffect(() => {
     let hidePascaligo = !location.pathname?.startsWith("/docs/0.72.0") && !location.pathname?.startsWith("/docs/0.73.0");
     setIsNext(hidePascaligo);
   }, [location]);
-  return /*#__PURE__*/React.createElement("select", {
+  const onSyntaxChange = useCallback(value => {
+    if (typeof window === "undefined") return;
+    history.replace({
+      search: `?lang=${value}`
+    });
+    localStorage.setItem("syntax", value);
+    props.onSyntaxChange(value);
+  }, [props.syntax]);
+  return isNext ? /*#__PURE__*/React.createElement("form", null, /*#__PURE__*/React.createElement("div", {
+    className: styles["switch__container"]
+  }, /*#__PURE__*/React.createElement("label", {
+    className: styles["switch__options-jsligo"],
+    onClick: () => onSyntaxChange("jsligo")
+  }, "JsLIGO"), /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    role: "switch",
+    className: styles.switch__button,
+    "aria-label": `prefer ${props.syntax}`,
+    "aria-checked": props.syntax === "cameligo",
+    onClick: () => onSyntaxChange(props.syntax === "jsligo" ? "cameligo" : "jsligo")
+  }, /*#__PURE__*/React.createElement("span", {
+    className: styles["switch__button-circle"]
+  })), /*#__PURE__*/React.createElement("label", {
+    className: styles["switch__options-cameligo"],
+    onClick: () => onSyntaxChange("cameligo")
+  }, "CameLIGO"))) : /*#__PURE__*/React.createElement("select", {
     className: styles.syntaxSwitch,
     value: props.syntax,
-    onChange: e => {
-      if (typeof window === "undefined") return;
-      const url = new URL(window.location);
-      url.searchParams.set("lang", e.target.value);
-      window.history.replaceState(null, "", url.toString());
-      localStorage.setItem("syntax", e.target.value);
-      props.onSyntaxChange(e.target.value);
-    }
+    onChange: e => onSyntaxChange(e.target.value)
   }, /*#__PURE__*/React.createElement("option", {
     value: "cameligo"
   }, "CameLIGO"), /*#__PURE__*/React.createElement("option", {
     value: "jsligo"
-  }, "JsLIGO"), !isNext && /*#__PURE__*/React.createElement("option", {
+  }, "JsLIGO"), /*#__PURE__*/React.createElement("option", {
     value: "pascaligo"
   }, "PascaLIGO"));
 }

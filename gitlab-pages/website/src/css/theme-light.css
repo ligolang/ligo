@@ -9,7 +9,7 @@
   --ligo-color_background-brand-primary-reversed: var(--ligo-base-color_white);
   /* Content */
   --ligo-color_content-primary: var(--ligo-base-color_stealth-dark);
-  --ligo-color_content-secondary: var(--ligo-base-color_stealth);
+  --ligo-color_content-secondary: var(--ligo-base-color_stealth-lighter);
   --ligo-color_content-tertiary: var(--ligo-base-color_stealth-light);
   --ligo-color_content-action: var(--ligo-base-color_blue);
   --ligo-color_content-active: var(--ligo-base-color_blue-dark);

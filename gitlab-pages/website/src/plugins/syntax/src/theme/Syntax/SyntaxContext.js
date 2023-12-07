@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 
 const valid = ["jsligo", "cameligo", "pascaligo"];
 
@@ -18,9 +18,15 @@ const ctx = {
 
     return syntax ?? "jsligo";
   })(),
-  setSyntax: () => { },
+  setSyntax: () => {},
 };
 
 const SyntaxContext = React.createContext(ctx);
+
+export const useSyntax = () => {
+  const syntaxContext = useContext(SyntaxContext);
+
+  return syntaxContext;
+};
 
 export default SyntaxContext;

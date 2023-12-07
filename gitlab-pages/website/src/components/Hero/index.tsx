@@ -18,18 +18,42 @@ import Marquee from "react-fast-marquee";
 import styles from "./styles.module.scss";
 
 const BRANDS = [
-  { link: "https://plentydefi.com/", component: <Plenty height={50} /> },
-  { link: "https://sliced.art/", component: <SlicedArt height={50} /> },
-  { link: "https://tzsafe.marigold.dev/", component: <TZSafe height={70} /> },
-  { link: "https://tzvote.marigold.dev/", component: <TZVote height={60} /> },
-  { link: "https://batcher.marigold.dev/", component: <Batcher height={50} /> },
-  { link: "https://focused.art/", component: <FocusedArt height={40} /> },
-  { link: "https://crunchy.network/", component: <Crunchy height={40} /> },
-  { link: "https://starlords.xyz/", component: <Starlords height={50} /> },
-  { link: "https://tezos.domains", component: <TezosDomains height={50} /> },
-  { link: "https://www.smart-chain.fr/", component: <Smartchain height={50} /> },
-  { link: "https://3route.io/", component: <Route3 height={40} /> },
-  { link: "https://www.playmakers.co/", component: <PlayMakers height={50} /> },
+  { link: "https://plentydefi.com/", component: <Plenty height={50} />, name: "Plenty DeFi" },
+  { link: "https://sliced.art/", component: <SlicedArt height={50} />, name: "Sliced Art" },
+  {
+    link: "https://tzsafe.marigold.dev/",
+    component: <TZSafe height={70} />,
+    name: "Marigold TZSafe",
+  },
+  {
+    link: "https://tzvote.marigold.dev/",
+    component: <TZVote height={60} />,
+    name: "Marigold TZWeek",
+  },
+  {
+    link: "https://batcher.marigold.dev/",
+    component: <Batcher height={50} />,
+    name: "Marigold Batcher",
+  },
+  { link: "https://focused.art/", component: <FocusedArt height={40} />, name: "Focused Art" },
+  { link: "https://crunchy.network/", component: <Crunchy height={40} />, name: "Crunchy Network" },
+  { link: "https://starlords.xyz/", component: <Starlords height={50} />, name: "Starlords" },
+  {
+    link: "https://tezos.domains",
+    component: <TezosDomains height={50} />,
+    name: "Tezos Domains",
+  },
+  {
+    link: "https://www.smart-chain.fr/",
+    component: <Smartchain height={50} />,
+    name: "Smart Chain",
+  },
+  { link: "https://3route.io/", component: <Route3 height={40} />, name: "3 Route" },
+  {
+    link: "https://www.playmakers.co/",
+    component: <PlayMakers height={50} />,
+    name: "Playmakers",
+  },
 ].sort(() => 0.5 - Math.random());
 
 const SPEED_PIXELS_PER_SECONDS = BRANDS.length * 3;
@@ -69,6 +93,7 @@ const Hero = () => {
               rel="noopener noreferrer nofollow"
               target="_blank"
               className={styles["hero__marquee-content"]}
+              aria-label={user.name}
             >
               {user.component}
             </a>

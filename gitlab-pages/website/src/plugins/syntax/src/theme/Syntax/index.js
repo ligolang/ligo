@@ -1,12 +1,12 @@
 import React from 'react';
-import SyntaxContext from './SyntaxContext'
+import SyntaxContext from './SyntaxContext';
 
-function Syntax(props) {    
+function Syntax(props) {
   return (
     <SyntaxContext.Consumer>
       {(({syntax}) => {
          if (syntax === props.syntax) {
-             return props.children
+             return props.children;
          } else {
              return <></>
          }
@@ -17,4 +17,5 @@ function Syntax(props) {
 
 export default Syntax
 
-export { SyntaxContext }
+export { SyntaxContext };
+

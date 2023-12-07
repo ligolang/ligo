@@ -33,7 +33,7 @@
   --ligo-color_content-primary: var(--ligo-base-color_white);
   --ligo-color_content-primary-transparent: var(--ligo-base-color_white-transparent);
   --ligo-color_content-secondary: var(--ligo-base-color_steel-light);
-  --ligo-color_content-action: var(--ligo-base-color_blue-lighter);
+  --ligo-color_content-action: var(--ligo-base-color_blue-light);
 }
 
 /* You can override the default Infima variables here using light theme tokens. */
@@ -42,8 +42,10 @@
 
   --ifm-background-color: var(--ligo-color_background-primary);
   /* colors */
-  --ifm-color-primary: var(--ligo-base-color_blue);
-
+  --ifm-color-primary: var(--ligo-color_content-action);
+  --ifm-menu-color-active: var(--ligo-color_content-action);
+  --ifm-breadcrumb-color-active: var(--ligo-color_content-action);
+  --ifm-breadcrumb-color-active: var(--ligo-color_content-action);
   /* header */
   --ifm-navbar-link-hover-color: var(--ligo-color_hover-primary);
   --ifm-navbar-background-color: var(--ifm-background-color);
@@ -92,7 +94,8 @@ pre {
 h1,
 h2,
 h3,
-h4 {
+h4,
+h5 {
   font-family: "Roboto", sans-serif;
   font-weight: bold;
 }
@@ -196,6 +199,7 @@ blockquote code {
   text-transform: uppercase;
   font-weight: bold;
   letter-spacing: 0.4px;
+  font-size: 1rem;
 }
 
 .cookies__button {
@@ -207,6 +211,54 @@ blockquote code {
   background: var(--ligo-base-color_slate);
 
   border-bottom-left-radius: var(--ifm-pre-border-radius);
+}
+
+.navbar-sidebar,
+.theme-doc-sidebar-container {
+  font-size: 0.9rem;
+}
+
+.navbar-sidebar__switch-container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ifm-pre-background);
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--ifm-contents-border-color);
+}
+.navbar-sidebar__switch-container-title {
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+nav.menu > .menu__list > .menu__list-item {
+  margin-bottom: 0.6rem;
+}
+
+.menu__list-item:not(:first-child) {
+  margin-top: 0;
+}
+
+.menu__list .menu__list {
+  margin-top: 0;
+}
+
+a.menu__link.menu__link--sublist.menu__link--sublist-caret {
+  font-weight: bold;
+  color: inherit;
+  letter-spacing: 0.5px;
+}
+
+.menu__link {
+  color: var(--ligo-color_content-secondary);
+  flex: 1;
+  line-height: 1.25;
+  padding: 0.3rem;
+}
+
+.menu__link--active {
+  color: var(--ifm-menu-color-active);
 }
 
 .cheatsheet tr > td:first-of-type {
