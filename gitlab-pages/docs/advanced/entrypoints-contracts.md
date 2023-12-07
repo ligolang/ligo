@@ -314,7 +314,7 @@ const main = (action: parameter, store: storage): result =>
 
 In most cases, adding `[@entry]` for CameLIGO or `@entry` for JsLIGO
 before the existing `main` function should suffice. However in cases
-where it is not possible or desiarable to convert an existing
+where it is not possible or desirable to convert an existing
 `contract_main` contract to the new `@entry` format (e.g. generated
 code or a code review process that forbids making changes to an
 already-audited file), the deprecation can be circumvented by adding a
@@ -529,7 +529,7 @@ module IncDec = struct
 
   [@entry] let increment (delta : int) (store : storage) : return =
     [], store + delta
-  
+
   (* And so on, as above *)
 end
 ```

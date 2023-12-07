@@ -1,0 +1,9 @@
+const incr_if_true = (b: bool, n: int) : int => {
+  assert(b);
+  return n+1;
+};
+
+const incr_if_some = (b: option<unit>, n: int) : int => {
+  assert_some(b);
+  return n+1;
+};

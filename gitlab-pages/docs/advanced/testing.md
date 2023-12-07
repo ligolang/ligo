@@ -388,7 +388,7 @@ Here is an example using `Proxy_ticket.originate` and the type `unforged_ticket`
 5. we call `originate` and retrieve the address of the newly originated contract
 6. we use the address to fetch the current contract storage using `Test.get_storage_of_address` and decompile it
    as a `human_storage`
-7. we read the content of the ticket and perform a serie of assertions
+7. we read the content of the ticket and perform a series of assertions
 
 <Syntax syntax="cameligo">
 

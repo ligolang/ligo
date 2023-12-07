@@ -26,33 +26,6 @@ const sidebars = {
       },
       "tutorials/getting-started/getting-started"
     ],
-    "Learn": [
-      {
-        "type": "link",
-        "label": "Learn with Marigold",
-        "href": "https://www.marigold.dev/learn",
-      },
-    ],
-    "Basics": [
-      "language-basics/types",
-      "language-basics/composite-types",
-      "language-basics/type-annotations",
-      "language-basics/functions",
-      "language-basics/boolean-if-else",
-      "language-basics/constants-and-variables",
-      "language-basics/maps-records",
-      "language-basics/sets-lists-tuples",
-      /* TODO: + mutation */
-      "language-basics/exceptions",
-      "language-basics/math-numbers-tez",
-      "language-basics/loops",
-      "language-basics/unit-option-pattern-matching",
-      "advanced/decorators",
-      "advanced/entrypoints-contracts",
-      "contract/views",
-      "contract/events",
-      "language-basics/tezos-specific"
-    ],
     "Writing a Contract": [
       {
         "type": "category",
@@ -64,6 +37,155 @@ const sidebars = {
       },
       "tutorials/start-a-project-from-a-template",
     ],
+    "Comments": [
+      "comments/comments"
+    ],
+    "Keywords": [
+      "keywords/keywords",
+      "keywords/escaped_vars"
+    ],
+    "Constants": [
+      "constants/constants",
+      "constants/silent_vars"
+    ],
+    "Numbers": [
+      "numbers/declaring",
+      "numbers/casting",
+      "numbers/adding",
+      "numbers/subtracting",
+      "numbers/negating",
+      "numbers/multiplying",
+      "numbers/dividing"
+    ],
+    "Strings": [
+      "strings/strings",
+      "strings/concatenating",
+      "strings/sizing",
+      "strings/slicing",
+      "strings/verbatim"
+    ],
+    "Booleans": [
+      "booleans/booleans",
+      "booleans/or",
+      "booleans/and",
+      "booleans/not",
+      "booleans/comparing",
+      "booleans/conditionals"
+    ],
+    "Tuples": [
+      "tuples/declaring",
+      "tuples/accessing"
+    ],
+    "Functions": [
+      "functions/declaring",
+      "functions/lambdas",
+      "functions/higher-order",
+      "functions/inlining",
+      "functions/recursion"
+    ],
+    "Polymorphism": [
+      "polymorphism/polymorphism",
+      "polymorphism/parametric_types",
+      "polymorphism/functions"
+    ],
+    "Variants": [
+      "variants/unit",
+      "variants/variants",
+      "variants/options",
+      "variants/matching"
+    ],
+    "Side effects": [
+      "imperative/mutating",
+      "imperative/looping",
+      "imperative/failing",
+      "imperative/asserting"
+    ],
+    "Lists": [
+      "lists/declaring",
+      "lists/adding",
+      "lists/matching",
+      "lists/updating",
+      "lists/folding",
+      "lists/mapping",
+      "lists/looping"
+    ],
+    "Records": [
+      "records/declaring",
+      "records/accessing",
+      "records/assigning"
+    ],
+    "Sets": [
+      "sets/declaring",
+      "sets/sizing",
+      "sets/searching",
+      "sets/adding",
+      "sets/removing",
+      "sets/updating",
+      "sets/folding",
+      "sets/mapping",
+      "sets/iterating",
+      "sets/looping"
+    ],
+    "Maps": [
+      "maps/declaring",
+      "maps/sizing",
+      "maps/searching",
+      "maps/adding",
+      "maps/removing",
+      "maps/updating",
+      "maps/folding",
+      "maps/mapping",
+      "maps/iterating",
+      "maps/looping"
+    ],
+    "Modules/Namespaces": [
+      "modules/declaring",
+      "modules/accessing",
+      "modules/nesting",
+      "modules/aliasing",
+      "modules/importing",
+      "modules/including"
+    ],
+    "Signatures/Interfaces": [
+      "signatures/declaring",
+      "signatures/extending"
+    ],
+    "Switches": [
+      "switches/switches" //,
+//      "switches/discriminated"
+    ],
+    "Preprocessor": [
+      "preprocessor/preprocessor",
+      "preprocessor/comments",
+      "preprocessor/strings",
+      "preprocessor/if",
+      "preprocessor/define",
+      "preprocessor/include",
+      "preprocessor/import",
+      "preprocessor/error"
+    ],
+    "Tezos features": [
+      "advanced/decorators",
+      "advanced/entrypoints-contracts",
+      "contract/views",
+      "contract/events",
+      "language-basics/tezos-specific"
+    ],
+    // "Basics": [
+    //   "language-basics/types",
+    //   "language-basics/composite-types",
+    //   "language-basics/type-annotations",
+    //   "language-basics/functions",
+    //   "language-basics/boolean-if-else",
+    //   "language-basics/constants-and-variables",
+    //   "language-basics/maps-records",
+    //   "language-basics/sets-lists-tuples",
+    //   /* TODO: + mutation */
+    //   "language-basics/exceptions",
+    //   "language-basics/math-numbers-tez",
+    //   "language-basics/loops",
+    //   "language-basics/unit-option-pattern-matching"
+    // ],
     "Testing and Debugging": [
       "advanced/testing",
       "advanced/mutation-testing",
@@ -94,17 +216,16 @@ const sidebars = {
       "intro/editor-support",
       "api/cli-commands",
       "api/cheat-sheet",
-      "contributors/origin",
-      "contributors/philosophy",
-      "contributors/getting-started",
-      "contributors/documentation-and-releases",
-      "contributors/big-picture/overview",
-      "contributors/big-picture/front-end",
-      "contributors/big-picture/middle-end",
-      "contributors/big-picture/back-end",
-      "contributors/big-picture/vendors",
-      "contributors/road-map/short-term",
-      "contributors/road-map/long-term",
+      // "contributors/origin",
+      // "contributors/philosophy",
+      // "contributors/getting-started",
+      // "contributors/documentation-and-releases",
+      // "contributors/big-picture/overview",
+      // "contributors/big-picture/front-end",
+      // "contributors/big-picture/middle-end",
+      // "contributors/big-picture/vendors",
+      // "contributors/road-map/short-term",
+      // "contributors/road-map/long-term",
       "tutorials/registry/what-is-the-registry",
       "tutorials/registry/how-to-make-an-audit",
       "tutorials/tz-vs-eth/tz-vs-eth",

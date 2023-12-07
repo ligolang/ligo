@@ -1,0 +1,7 @@
+type point = {x: int, y: int, z: int}
+type vector = {dx: int, dy: int}
+
+const origin = {x: 0, y: 0, z: 0};
+
+const xy_translate = (p: point, vec: vector) =>
+  ({...p, x: p.x + vec.dx, y: p.y + vec.dy});

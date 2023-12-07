@@ -1,0 +1,2 @@
+const assert_all_greater_than_3 =
+  (s: set<int>) : unit => Set.iter(i => assert(i > 3), s);

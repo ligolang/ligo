@@ -21,7 +21,7 @@ To clarify:
 
 ```michelson
 (pair (int %foo) (string %bar))
-````
+```
 
 works with
 
@@ -113,7 +113,7 @@ type artist =
 </Syntax>
 
 <Syntax syntax="jsligo">
-The decorator `@layout("comb")` can also be used on object types:
+The decorator `@layout("comb")` can also be used on record types:
 
 
 ```jsligo
@@ -130,10 +130,10 @@ type artist =
 
 The next section discusses an alternative layout, which used to be the default one until LIGO version 1.0.
 
-### Alternative alphabetically-ordered left-balanced tree layout
+### Alternative alphabetically ordered left-balanced tree layout
 
-Before version 1.0, LIGO used to translate its datatypes into a alphabetically-ordered left
-balanced tree by detault. So, for example:
+Before version 1.0, LIGO used to translate its datatypes into an
+alphabetically ordered left balanced tree by default. So, for example:
 
 <Syntax syntax="cameligo">
 
@@ -221,7 +221,7 @@ interoperability features, which we will we discuss next.
 
 <Syntax syntax="jsligo">
 
-The decorator `@annot("<name>")` can also be used on object field
+The decorator `@annot("<name>")` can also be used on record field
 annotations:
 
 ```jsligo group=annot
@@ -471,7 +471,7 @@ type storage = int
 
 </Syntax>
 
-is tranlated internally to a contract similar to this one:
+is translated internally to a contract similar to this one:
 
 <Syntax syntax="cameligo">
 
