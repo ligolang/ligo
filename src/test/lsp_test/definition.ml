@@ -240,6 +240,22 @@ let test_cases =
     ; definitions = Some [ interval 9 6 7 ]
     ; def_type = Decl
     }
+  ; { test_name = "Find implementations of included signature"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; reference = Position.create ~line:4 ~character:12
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; definitions = Some [ interval 17 7 20; interval 29 7 21 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Find implementations of signature alias"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; reference = Position.create ~line:29 ~character:24
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/sig_alias.mligo"
+    ; definitions = Some [ interval 17 7 20; interval 29 7 21 ]
+    ; def_type = Impl
+    }
   ]
 
 

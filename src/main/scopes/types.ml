@@ -129,6 +129,15 @@ type mod_name =
   | Filename of string
 [@@deriving compare]
 
+type alias =
+  { module_path : Uid.t list
+  ; resolved_module : Uid.t option
+  ; file_name : string option
+        (** If module name is mangled (i.e. it was obtained from preprocessing some import
+            directive) then this field will contain a file name of a module. *)
+  }
+[@@deriving compare]
+
 type implementation =
   | Ad_hoc_signature of def list
   | Standalone_signature_or_module of
@@ -139,13 +148,7 @@ type implementation =
 
 and mod_case =
   | Def of def list
-  | Alias of
-      { module_path : Uid.t list
-      ; resolved_module : Uid.t option
-      ; file_name : string option
-            (** If module name is mangled (i.e. it was obtained from preprocessing some import directive)
-                then this field will contain a file name of a module. *)
-      }
+  | Alias of alias
 
 and mdef =
   { name : mod_name

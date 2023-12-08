@@ -358,7 +358,7 @@ module Of_Ast = struct
     Standalone_signature_or_module { module_path; resolved_module = None }
 
 
-  and alias_of_mvars : string SMap.t -> Module_var.t list -> mod_case =
+  and alias_of_mvars : string SMap.t -> Module_var.t list -> alias =
    fun module_deps mvars ->
     let module_path = List.map ~f:mvar_to_id mvars in
     let file_name =
@@ -367,7 +367,11 @@ module Of_Ast = struct
       | _ -> None
     in
     (* The resolved name will be filled later. *)
-    Alias { module_path; resolved_module = None; file_name }
+    { module_path; resolved_module = None; file_name }
+
+
+  and mod_case_of_mvars : string SMap.t -> Module_var.t list -> mod_case =
+   fun module_deps mvars -> Alias (alias_of_mvars module_deps mvars)
 
 
   and mod_case_of_mod_expr
@@ -377,8 +381,8 @@ module Of_Ast = struct
    fun ~defs_of_decls module_deps mod_expr mod_path ->
     match Location.unwrap mod_expr with
     | M_struct decls -> Def (defs_of_decls (decls, Module_field, mod_path) [])
-    | M_variable mod_var -> alias_of_mvars module_deps [ mod_var ]
-    | M_module_path mod_path -> alias_of_mvars module_deps @@ List.Ne.to_list mod_path
+    | M_variable mod_var -> mod_case_of_mvars module_deps [ mod_var ]
+    | M_module_path mod_path -> mod_case_of_mvars module_deps @@ List.Ne.to_list mod_path
 
 
   and mod_case_of_signature : string SMap.t -> AST.signature -> Uid.t list -> mod_case =
@@ -395,6 +399,14 @@ module Of_Ast = struct
            ...
          end
        end
+     ]}
+
+     On the other hand, an alias [module type A = ...] will be translated into this:
+
+     {[
+      module type A = sig
+        include ...
+      end
      ]}
 
      Rather than directly calling [defs_of_sig_expr], we directly handle this
@@ -425,25 +437,30 @@ module Of_Ast = struct
      definition. As of this writing, LIGO does not support first-class modules, but in
      case it ever will, we still won't consider [I.x] and [M.x] as references. *)
   and implementations_of_sig_expr_from_D_signature
-      : string SMap.t -> AST.signature_expr -> Uid.t list -> implementation list
+      :  string SMap.t -> AST.signature_expr -> Uid.t list
+      -> [ `Alias of alias | `Implementations of implementation list ]
     =
    fun module_deps sig_expr mod_path ->
     match Location.unwrap sig_expr with
+    | S_sig { items = [ S_include { wrap_content = S_path mod_path; location = _ } ] } ->
+      `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
     | S_sig sig' ->
       let Ast_core.{ items } = Misc.flatten_includes sig' in
-      List.map items ~f:(function
-          | S_include { wrap_content = S_path mod_path; location = _ } ->
-            standalone_mvars @@ List.Ne.to_list mod_path
-          | (S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _) as item
-            ->
-            Ad_hoc_signature (defs_of_sig_item module_deps item Module_field mod_path [])
-          | S_include { wrap_content = S_sig _; location = _ } ->
-            failwith
-            @@ Format.asprintf
-                 "implementations_of_sig_expr_from_D_signature: corner case reached: %a"
-                 AST.PP.signature_expr
-                 sig_expr)
-    | S_path mod_path -> [ standalone_mvars @@ List.Ne.to_list mod_path ]
+      `Implementations
+        (List.map items ~f:(function
+            | S_include { wrap_content = S_path mod_path; location = _ } ->
+              standalone_mvars @@ List.Ne.to_list mod_path
+            | (S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _) as item
+              ->
+              Ad_hoc_signature
+                (defs_of_sig_item module_deps item Module_field mod_path [])
+            | S_include { wrap_content = S_sig _; location = _ } ->
+              failwith
+              @@ Format.asprintf
+                   "implementations_of_sig_expr_from_D_signature: corner case reached: %a"
+                   AST.PP.signature_expr
+                   sig_expr))
+    | S_path mod_path -> `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
 
 
   and implementations_of_sig_expr_from_annotation
@@ -607,13 +624,17 @@ module Of_Ast = struct
         implementations_of_sig_expr_from_D_signature module_deps signature inner_mod_path
       in
       let implements, mod_case =
-        List.fold_left impls ~init:([], Def []) ~f:(fun (implements, impl) -> function
-          | Ad_hoc_signature defs ->
-            ( implements
-            , (match impl with
-              | Def defs' -> Def (defs' @ defs)
-              | Alias _ -> impl) )
-          | Standalone_signature_or_module _ as inclusion -> inclusion :: implements, impl)
+        match impls with
+        | `Alias alias -> [], Alias alias
+        | `Implementations impls ->
+          List.fold_left impls ~init:([], Def []) ~f:(fun (implements, impl) -> function
+            | Ad_hoc_signature defs ->
+              ( implements
+              , (match impl with
+                | Def defs' -> Def (defs' @ defs)
+                | Alias _ -> impl) )
+            | Standalone_signature_or_module _ as inclusion ->
+              inclusion :: implements, impl)
       in
       let defs =
         match mod_case with

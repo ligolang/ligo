@@ -49,8 +49,8 @@ let find_defs_by_name_and_level (def : Scopes.def) : Scopes.def list -> Scopes.d
 
 module Mod_identifier = struct
   type t =
-    | Standalone_signature_or_module of Scopes.Uid.t
     | Ad_hoc_signature of Scopes.Uid.t
+    | Standalone_signature_or_module of Scopes.Uid.t
 
   let compare (id1 : t) (id2 : t) : int =
     match id1, id2 with
@@ -87,7 +87,7 @@ let try_to_resolve_standalone
 
 
 let implementation_to_identifier
-    : Scopes.Types.mdef list -> Scopes.Types.implementation -> Mod_graph.vertex option
+    : Scopes.Types.mdef list -> Scopes.Types.implementation -> Mod_identifier.t option
   =
  fun mdefs -> function
   | Ad_hoc_signature [] -> None
@@ -141,7 +141,7 @@ let build_mod_graph : Scopes.Types.mdef list -> Mod_graph.t =
   @@ List.concat_map mdefs ~f:(fun (child : Scopes.Types.mdef) ->
          let child_id = Mod_identifier.Standalone_signature_or_module child.uid in
          List.filter_map
-           child.implements
+           (mod_case_to_implementation child.mod_case :: child.implements)
            ~f:
              (Option.map ~f:(fun parent -> child_id, parent)
              <@ implementation_to_identifier mdefs))
@@ -186,17 +186,37 @@ let try_to_get_mdef_uid
 let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
  fun def mdefs ->
   let mod_ids = mdefs_to_identifiers mdefs in
+  (* Is [def] defined inside a module? We need to find the module in order to look into
+     every signature/interface. It's possible that [def] is a signature, in which case we
+     want to just look for its implementing modules. *)
+  let sig_uid_opt =
+    match def with
+    | Variable _ | Type _ -> None
+    | Module mdef ->
+      (match mdef.mdef_type with
+      | Module -> None
+      | Signature ->
+        (match mdef.mod_case with
+        | Def _ -> Some mdef.uid
+        | Alias { module_path = _; resolved_module; file_name = _ } -> resolved_module))
+  in
   match
-    (* Is [def] defined inside a module? We need to find the module in order to look into
-       every signature/interface. *)
-    let%bind.Option def_mod_id = try_to_get_mdef_uid def mdefs mod_ids in
+    let%bind.Option def_mod_id =
+      (* If we are looking at a signature, and not a signature item, then we need to
+         search for the signature itself. *)
+      Option.first_some
+        (try_to_get_mdef_uid def mdefs mod_ids)
+        (Option.map sig_uid_opt ~f:(fun sig_uid ->
+             Mod_identifier.Standalone_signature_or_module sig_uid))
+    in
     (* Find everything that implements [def_mod] by looking at its children. *)
     let%map.Option implementers =
       Mod_graph.reachable def_mod_id (Mod_graph.transpose @@ build_mod_graph mdefs)
     in
     let find_defs_in_implementation : Scopes.Types.implementation -> Def.t list option
       = function
-      | Ad_hoc_signature _defs -> None (* We don't care about signatures *)
+      (* We don't care about signatures, as they don't implement anything. *)
+      | Ad_hoc_signature _defs -> None
       | Standalone_signature_or_module { module_path; resolved_module } ->
         let%bind.Option uid =
           try_to_resolve_standalone mdefs ~module_path ~resolved_module
@@ -208,8 +228,14 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
                 | Module -> String.equal (Uid.to_name uid) (get_mod_name_name mdef.name)
                 | Signature -> false))
         in
-        let%map.Option defs = try_to_resolve_mod_case mdefs mdef.mod_case in
-        find_defs_by_name_and_level def defs
+        (* It might be that we are not looking at a signature item, but rather at a
+           signature name. In this case, we don't need to search inside the module
+           definitions, but rather just return the module itself. *)
+        if Option.is_some sig_uid_opt
+        then Some [ (Module mdef : Scopes.def) ]
+        else (
+          let%map.Option defs = try_to_resolve_mod_case mdefs mdef.mod_case in
+          find_defs_by_name_and_level def defs)
     in
     (* Search for [def] within the modules. *)
     List.concat
