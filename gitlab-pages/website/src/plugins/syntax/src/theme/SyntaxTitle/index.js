@@ -100,10 +100,12 @@ function SyntaxTitle(props) {
               theme={lightModeTheme}
             >
               {({ className, tokens, getLineProps, getTokenProps }) => (
-                <pre
+                <h4
                   className={className}
                   style={{
                     backgroundColor: "var(--ifm-background-color)",
+                    fontFamily: "var(--ifm-font-family-monospace)",
+                    lineHeight: "var(--ifm-pre-line-height)",
                     fontSize: "1.1rem",
                     fontWeight: "bold",
                     padding: 0,
@@ -118,7 +120,7 @@ function SyntaxTitle(props) {
                       ))}
                     </div>
                   ))}
-                </pre>
+                </h4>
               )}
             </Highlight>
           );
