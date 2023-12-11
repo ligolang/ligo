@@ -82,10 +82,12 @@ function SyntaxTitle(props) {
         tokens,
         getLineProps,
         getTokenProps
-      }) => /*#__PURE__*/React.createElement("pre", {
+      }) => /*#__PURE__*/React.createElement("h4", {
         className: className,
         style: {
           backgroundColor: "var(--ifm-background-color)",
+          fontFamily: "var(--ifm-font-family-monospace)",
+          lineHeight: "var(--ifm-pre-line-height)",
           fontSize: "1.1rem",
           fontWeight: "bold",
           padding: 0,
