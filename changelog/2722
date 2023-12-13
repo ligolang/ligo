@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nAdded support for semantic tokens for all three dialects in the LIGO Language Server.\\n\\n"
+merge_request: '2722'
+title: "[#1642] Implement semantic tokens"
+type: added
+            
