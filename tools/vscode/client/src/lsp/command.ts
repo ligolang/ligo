@@ -66,37 +66,39 @@ async function executeChooseDeployOptions(context: LigoContext, client: LigoProt
 const LigoCommands = {
   StartServer: {
     name: 'ligo.startServer',
-    run: async (client: LanguageClient) => {
+    run: async (client: LanguageClient, semanticTokensClient: LanguageClient) => {
       client.info('Starting LIGO LSP server')
       await client.start()
+      await semanticTokensClient.start()
       client.info('Started LIGO LSP server')
     },
-    register: (client: LanguageClient) => vscode.commands.registerCommand(
+    register: (client: LanguageClient, semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.StartServer.name,
-      async () => LigoCommands.StartServer.run(client).catch(reportException),
+      async () => LigoCommands.StartServer.run(client, semanticTokensClient).catch(reportException),
     ),
   },
   StopServer: {
     name: 'ligo.stopServer',
-    run: async (client: LanguageClient) => {
+    run: async (client: LanguageClient, semanticTokensClient: LanguageClient) => {
       client.info('Stopping LIGO LSP server')
       await client.stop()
+      await semanticTokensClient.stop()
       client.info('Stopped LIGO LSP server')
     },
-    register: (client: LanguageClient) => vscode.commands.registerCommand(
+    register: (client: LanguageClient, semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.StopServer.name,
-      async () => LigoCommands.StopServer.run(client).catch(reportException),
+      async () => LigoCommands.StopServer.run(client, semanticTokensClient).catch(reportException),
     ),
   },
   RestartServer: {
     name: 'ligo.restartServer',
-    run: async (client: LanguageClient) => {
-      await LigoCommands.StopServer.run(client)
-      await LigoCommands.StartServer.run(client)
+    run: async (client: LanguageClient,semanticTokensClient: LanguageClient) => {
+      await LigoCommands.StopServer.run(client, semanticTokensClient)
+      await LigoCommands.StartServer.run(client, semanticTokensClient)
     },
-    register: (client: LanguageClient) => vscode.commands.registerCommand(
+    register: (client: LanguageClient,semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.RestartServer.name,
-      async () => LigoCommands.RestartServer.run(client).catch(reportException),
+      async () => LigoCommands.RestartServer.run(client, semanticTokensClient).catch(reportException),
     ),
   },
   CompileContract: {
@@ -191,11 +193,16 @@ const LigoCommands = {
 
 export default LigoCommands
 
-export function registerCommands(context: LigoContext, client: LanguageClient, protocolClient: LigoProtocolClient) {
+export function registerCommands(
+  context: LigoContext,
+  client: LanguageClient,
+  semanticTokensClient: LanguageClient,
+  protocolClient: LigoProtocolClient
+) {
   // Boot
-  LigoCommands.StartServer.register(client);
-  LigoCommands.StopServer.register(client);
-  LigoCommands.RestartServer.register(client);
+  LigoCommands.StartServer.register(client, semanticTokensClient);
+  LigoCommands.StopServer.register(client, semanticTokensClient);
+  LigoCommands.RestartServer.register(client, semanticTokensClient);
   // Buttons
   LigoCommands.ChooseLigoOption.register(context, protocolClient);
   LigoCommands.ChooseDeploymentOption.register(context, protocolClient);

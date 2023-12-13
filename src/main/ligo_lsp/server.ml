@@ -15,7 +15,14 @@ let default_config : config =
   }
 
 
-(* Lsp server class
+type capability_mode =
+  | Only_semantic_tokens
+  | All_capabilities
+  | No_semantic_tokens
+
+let default_modes : capability_mode list = [ All_capabilities; No_semantic_tokens ]
+
+(** Lsp server class
 
    This is the main point of interaction beetween the code checking documents
    (parsing, typing, etc...), and the code of linol.
@@ -27,7 +34,7 @@ let default_config : config =
    actually meaningfully interpret and respond to.
 *)
 
-class lsp_server =
+class lsp_server (capability_mode : capability_mode) =
   object (self)
     inherit Linol_lwt.Jsonrpc2.server as super
     method spawn_query_handler = Linol_lwt.spawn
@@ -40,6 +47,11 @@ class lsp_server =
 
     val mod_res : Preprocessor.ModRes.t option ref = ref None
 
+    val on_doc =
+      match capability_mode with
+      | All_capabilities | No_semantic_tokens -> Requests.on_doc
+      | Only_semantic_tokens -> Requests.on_doc_semantic_tokens
+
     (* We now override the [on_notify_doc_did_open] method that will be called
        by the server each time a new document is opened. *)
     method on_notif_doc_did_open ~notify_back document ~content : unit IO.t =
@@ -51,7 +63,7 @@ class lsp_server =
         ; last_project_file
         ; mod_res
         }
-      @@ Requests.on_doc file content
+      @@ on_doc file content
 
     (* Similarly, we also override the [on_notify_doc_did_change] method that will be called
        by the server each time a document is changed. *)
@@ -70,7 +82,7 @@ class lsp_server =
         ; last_project_file
         ; mod_res
         }
-      @@ Requests.on_doc ~changes file new_content
+      @@ on_doc ~changes file new_content
 
     method decode_apply_settings (settings : Yojson.Safe.t) : unit =
       let open Yojson.Safe.Util in
@@ -188,6 +200,26 @@ class lsp_server =
       in
       Some completion_options
 
+    method config_semantic_tokens =
+      match capability_mode with
+      | All_capabilities | Only_semantic_tokens ->
+        let legend =
+          SemanticTokensLegend.create
+            ~tokenModifiers:
+              (Array.to_list
+              @@ Array.map ~f:Requests.mk_modifier_legend Requests.all_modifiers)
+            ~tokenTypes:
+              (Array.to_list @@ Array.map ~f:Requests.mk_type_legend Requests.all_types)
+        in
+        Some
+          (`SemanticTokensOptions
+            (SemanticTokensOptions.create
+               ~full:(`Full { delta = Some false })
+               ~legend
+               ~range:true
+               ()))
+      | No_semantic_tokens -> None
+
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
         hoverProvider = self#config_hover
@@ -200,6 +232,7 @@ class lsp_server =
       ; foldingRangeProvider = self#config_folding_range
       ; documentRangeFormattingProvider = self#config_range_formatting
       ; completionProvider = self#config_completion
+      ; semanticTokensProvider = self#config_semantic_tokens
       }
 
     method! on_notification
@@ -333,7 +366,13 @@ class lsp_server =
                   -> r Client_request.t
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
-        let run ~(uri : DocumentUri.t) ~(default : r) (handler : r Handler.t) : r IO.t =
+        let run
+            ~(allowed_modes : capability_mode list)
+            ~(uri : DocumentUri.t)
+            ~(default : r)
+            (handler : r Handler.t)
+            : r IO.t
+          =
           let method_ = (Client_request.to_jsonrpc_request r ~id).method_ in
           (* If the project root changed, let's repopulate the cache by running
              [Requests.on_doc] again. *)
@@ -350,9 +389,10 @@ class lsp_server =
                    last_project_file
                    (Project_root.get_project_root file)
               then pass
-              else Requests.on_doc ?changes:None file code
+              else on_doc ?changes:None file code
           in
           if self#is_request_enabled method_
+             && List.mem ~equal:Caml.( = ) allowed_modes capability_mode
           then
             run_handler
               { notify_back =
@@ -375,52 +415,60 @@ class lsp_server =
         match r with
         | Client_request.TextDocumentFormatting { textDocument; options; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_formatting (DocumentUri.to_path uri) options
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_definition position (DocumentUri.to_path uri)
         | Client_request.TextDocumentHover { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_hover position (DocumentUri.to_path uri)
         | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_prepare_rename position (DocumentUri.to_path uri)
         | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
-          let uri = textDocument.uri in
           let default = WorkspaceEdit.create () in
-          run ~uri ~default
+          let uri = textDocument.uri in
+          run ~allowed_modes:default_modes ~uri ~default
           @@ Requests.on_req_rename newName position (DocumentUri.to_path uri)
         | Client_request.TextDocumentReferences { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_references position (DocumentUri.to_path uri)
         | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_type_definition position (DocumentUri.to_path uri)
         | Client_request.TextDocumentLink { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_document_link (DocumentUri.to_path uri)
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_folding_range (DocumentUri.to_path uri)
         | Client_request.TextDocumentRangeFormatting { range; textDocument; options; _ }
           ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range options
         | Client_request.TextDocumentCompletion { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~uri ~default:None
+          run ~allowed_modes:default_modes ~uri ~default:None
           @@ Requests.on_req_completion position (DocumentUri.to_path uri)
         | Client_request.UnknownRequest { meth = "DebugEcho"; _ } ->
           (* Used in tools/lsp-bench *)
           IO.return @@ `String "DebugEchoResponse"
+        | Client_request.SemanticTokensFull { textDocument; _ } ->
+          let uri = textDocument.uri in
+          run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None
+          @@ Requests.on_req_semantic_tokens_full (DocumentUri.to_path uri)
+        | Client_request.SemanticTokensRange { textDocument; range; _ } ->
+          let uri = textDocument.uri in
+          run ~allowed_modes:[ All_capabilities; Only_semantic_tokens ] ~uri ~default:None
+          @@ Requests.on_req_semantic_tokens_range (DocumentUri.to_path uri) range
         | _ -> super#on_request ~notify_back ~server_request ~id r
   end

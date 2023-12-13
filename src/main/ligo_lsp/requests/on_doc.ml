@@ -125,6 +125,21 @@ let detect_or_ask_to_create_project_file (file : Path.t) : unit Handler.t =
   | Some _, (None | Some _) -> pass
 
 
+let try_to_get_syntax : Path.t -> Syntax_types.t Handler.t =
+ fun file ->
+  match Path.get_syntax file with
+  | None ->
+    lift_IO @@ failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string file
+  | Some s -> return s
+
+
+let set_cache : Syntax_types.t -> Def.t list -> Path.t -> string -> unit Handler.t =
+ fun syntax definitions file contents ->
+  let@ docs_cache = ask_docs_cache in
+  return
+  @@ Docs_cache.set docs_cache ~key:file ~data:{ definitions; syntax; code = contents }
+
+
 (** We define here a helper that will:
     - process a document
     - store the state resulting from the processing
@@ -135,15 +150,8 @@ let on_doc
   =
  fun ?changes:_ file contents ->
   let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
-  let@ { config = { max_number_of_problems; _ }; docs_cache; last_project_file; _ } =
-    ask
-  in
-  let@ syntax =
-    match Path.get_syntax file with
-    | None ->
-      lift_IO @@ failwith @@ "Expected file with LIGO code, got: " ^ Path.to_string file
-    | Some s -> return s
-  in
+  let@ { config = { max_number_of_problems; _ }; last_project_file; _ } = ask in
+  let@ syntax = try_to_get_syntax file in
   let@ () = detect_or_ask_to_create_project_file file in
   let@ ({ definitions; _ } as defs_and_diagnostics) =
     lift_IO
@@ -152,7 +160,7 @@ let on_doc
          ~code:contents
          file
   in
-  Docs_cache.set docs_cache ~key:file ~data:{ definitions; syntax; code = contents };
+  let@ () = set_cache syntax definitions file contents in
   let diags_by_file =
     let simple_diags = Diagnostics.get_diagnostics file defs_and_diagnostics in
     Diagnostics.partition_simple_diagnostics
@@ -168,3 +176,13 @@ let on_doc
     else send_diagnostic uri []
   in
   iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic)
+
+
+(** The same as [on_doc] but only updates file caches. *)
+let on_doc_semantic_tokens
+    : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
+  =
+ fun ?changes:_ file contents ->
+  let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
+  let@ syntax = try_to_get_syntax file in
+  set_cache syntax [] file contents

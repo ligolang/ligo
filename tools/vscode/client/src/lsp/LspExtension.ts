@@ -25,7 +25,8 @@ import { LigoProtocolClient } from '../common/LigoProtocolClient';
 import LigoServer from '../debugger/LigoServer';
 
 export class LspExtension extends LigoExtension {
-  private client: LanguageClient;
+  private languageServerClient: LanguageClient;
+  private semanticTokensClient: LanguageClient;
   private ligoOptionButton: vscode.StatusBarItem;
   private deployOptionButton: vscode.StatusBarItem;
 
@@ -93,9 +94,17 @@ export class LspExtension extends LigoExtension {
       }
     }
 
-    const serverOptions: ServerOptions = {
+    const languageServerServerOptions: ServerOptions = {
       command: ligoPath,
-      args: ["lsp"],
+      args: ["lsp", "no-semantic-tokens"],
+      options: {
+        cwd: context.context.extensionPath,
+      },
+    };
+
+    const semanticTokensServerOptions: ServerOptions = {
+      command: ligoPath,
+      args: ["lsp", "only-semantic-tokens"],
       options: {
         cwd: context.context.extensionPath,
       },
@@ -108,7 +117,7 @@ export class LspExtension extends LigoExtension {
     this.initializeStatusBarButton(this.deployOptionButton, context.context, 'tezos.chooseOption', 'Deploy LIGO', 'Deploy smart-contract');
 
     // Options to control the language client
-    const clientOptions: LanguageClientOptions = {
+    const languageServerClientOptions: LanguageClientOptions = {
       // Register the server for plain text documents
       documentSelector: [
         { scheme: 'file', language: 'mligo' },
@@ -123,30 +132,49 @@ export class LspExtension extends LigoExtension {
       },
     };
 
+    const semanticTokensClientOptions: LanguageClientOptions = languageServerClientOptions;
+
+    // Register the server for plain text documents
+    this.semanticTokensClient = new LanguageClient(
+      'ligoSemanticTokens',
+      'LIGO Semantic Tokens',
+      semanticTokensServerOptions,
+      semanticTokensClientOptions
+    );
+
     // Create the language client and start the client.
-    this.client = new LanguageClient(
+    this.languageServerClient = new LanguageClient(
       'ligoLanguageServer',
       'LIGO Language Server',
-      serverOptions,
-      clientOptions
+      languageServerServerOptions,
+      languageServerClientOptions
     );
 
     // Check for LIGO and ligo-vscode updates
     if (context.context.extensionMode === vscode.ExtensionMode.Production) {
-      updateLigo(this.client)
+      // TODO: handle semanticTokensClient here
+      updateLigo(this.languageServerClient)
       updateExtension(context.context)
     }
 
     // Register VSC-specific server commands
-    registerCommands(context, this.client, protocolClient);
+    registerCommands(
+      context,
+      this.languageServerClient,
+      this.semanticTokensClient,
+      protocolClient,
+    );
 
     // Start the client. This will also launch the server
     if (ligoPath) {
-      this.client.start()
+      this.semanticTokensClient.start()
+      this.languageServerClient.start()
     }
   }
 
   public deactivate(): Thenable<void> | undefined {
-    return this.client?.stop();
+    this.semanticTokensClient?.stop();
+    this.languageServerClient?.stop();
+    return;
   }
 }

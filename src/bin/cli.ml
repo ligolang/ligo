@@ -3194,9 +3194,9 @@ module Lsp_server = struct
   module Requests = Ligo_lsp.Server.Requests
   module Server = Ligo_lsp.Server
 
-  let run ?(log_requests = true) () =
+  let run ?(log_requests = true) capability_mode () =
     let run_lsp () =
-      let s = new Server.lsp_server in
+      let s = new Server.lsp_server capability_mode in
       let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
       let shutdown () = Caml.(s#get_status = `ReceivedExit) in
       let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
@@ -3236,7 +3236,7 @@ module Lsp_server = struct
               | "linol" -> Logs.Src.set_level src (Some Logs.Debug)
               | _ -> Logs.Src.set_level src None);
           Logs.set_level (Some Logs.Debug);
-          let s = new Server.lsp_server in
+          let s = new Server.lsp_server capability_mode in
           let server = Linol_lwt.Jsonrpc2.create_stdio (s :> Linol_lwt.Jsonrpc2.server) in
           let shutdown () = Caml.(s#get_status = `ReceivedExit) in
           let task = Linol_lwt.Jsonrpc2.run ~shutdown server in
@@ -3250,15 +3250,28 @@ module Lsp_server = struct
     if log_requests then with_request_logging run_lsp () else run_lsp ()
 end
 
+let capability_mode =
+  let open Command.Param in
+  let name = "CAPABILITY_MODE" in
+  anon
+    (name
+    %: (Command.Arg_type.create
+       @@ function
+       | "only-semantic-tokens" -> Ligo_lsp.Server.Only_semantic_tokens
+       | "all-capabilities" -> All_capabilities
+       | "no-semantic-tokens" -> No_semantic_tokens
+       | s -> failwithf "Unexpected value for %s: %s" name s ()))
+
+
 let lsp =
   let summary = "[BETA] launch a LIGO lsp server" in
   let readme () = "[BETA] Run the lsp server which is used by editor extensions" in
-  let f disable_logging () =
+  let f disable_logging capability_mode () =
     let log_requests = not disable_logging in
     return_with_custom_formatter ~skip_analytics:true ~cli_analytics:[] ~return
-    @@ Lsp_server.run ~log_requests
+    @@ Lsp_server.run ~log_requests capability_mode
   in
-  Command.basic ~summary ~readme (f <$> disable_lsp_request_logging)
+  Command.basic ~summary ~readme (f <$> disable_lsp_request_logging <*> capability_mode)
 
 
 let analytics_accept =
