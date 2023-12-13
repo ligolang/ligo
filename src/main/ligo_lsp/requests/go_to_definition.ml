@@ -5,6 +5,52 @@ let get_definition : Position.t -> Path.t -> Scopes.def list -> Scopes.def optio
  fun pos uri -> List.find ~f:(Def.is_reference pos uri)
 
 
+(** The type of the request we are getting. The Language Server Protocol doesn't explain
+    the differences between each request, so we've implemented them in the following ways:
+
+    * The [Decl]aration points to the exact symbol that gave a concrete body
+      implementation to that symbol. It's a strict match on the UID of that symbol from
+      where it was defined.
+    * The [Def]inition tries to find the given symbol in all the signatures and interfaces
+      that match its name and level (term, type, or module), provided that the module that
+      implements it are implementers of such signatures. In other words, it looks for the
+      abstract/virtual definitions of a symbol.
+    * The [Impl]ementation looks into all modules and namespaces that give a concrete body
+      to the target. It's the opposite of the [Def]inition in the sense that we are
+      concerned in finding the symbol in modules and namespaces rather than signatures and
+      interfaces.
+
+    Assume that the top-level [t] is our target, then the following CameLIGO example
+    should summarize it:
+    {[
+      module type I1 = sig
+        (* Definition of t *)
+        type t
+      end
+
+      module type I2 = sig
+        (* Definition of t *)
+        type t
+      end
+
+      module type I = sig
+        include I1
+        include I2
+      end
+
+      module M1 : I = struct
+        (* Implementation of t *)
+        (* Declaration of t *)
+        type t = unit
+      end
+
+      module M2 : I = struct
+        (* Implementation of t *)
+        type t = int
+      end
+
+      type t = M1.t
+    ]} *)
 type decl_def_or_impl =
   | Decl
   | Def
