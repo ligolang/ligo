@@ -1,6 +1,8 @@
 (library
  (name lsp_test_requests)
  (public_name ligo.lsp_test.requests)
+ (preprocess
+  (pps ppx_yojson_conv))
  (libraries
   lsp
   linol

@@ -379,7 +379,10 @@ For debugging.
       "  (add-to-list 'lsp-language-id-configuration '(ligo-caml-mode . \"ligo\"))\n";
     fprintf fmt "  (lsp-register-client\n";
     fprintf fmt "   (make-lsp-client\n";
-    fprintf fmt "    :new-connection (lsp-stdio-connection `(,ligo-bin \"lsp\"))\n";
+    fprintf
+      fmt
+      "    :new-connection (lsp-stdio-connection `(,ligo-bin \"lsp\" \
+       \"all-capabilities\"))\n";
     fprintf fmt "    :major-modes '(ligo-caml-mode)\n";
     fprintf fmt "    :server-id 'ligo)))\n"
 

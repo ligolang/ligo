@@ -398,7 +398,9 @@ let vim_plugin (syntaxes : (string * Core.t) list) : string =
   fprintf fmt "      autocmd User lsp_setup\n";
   fprintf fmt "          \\ call lsp#register_server({\n";
   fprintf fmt "          \\   'name': 'ligo_lsp',\n";
-  fprintf fmt "          \\   'cmd': {server_info->['ligo', 'lsp']},\n";
+  fprintf
+    fmt
+    "          \\   'cmd': {server_info->['ligo', 'lsp', 'all-capabilities']},\n";
   fprintf fmt "          \\   'allowlist': [%s],\n" allow_list;
   fprintf fmt "          \\ })\n";
   fprintf fmt "    augroup END\n";

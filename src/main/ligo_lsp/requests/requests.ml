@@ -10,5 +10,6 @@ include Prepare_rename
 include Range_formatting
 include References
 include Rename
+include Semantic_highlight
 include Type_definition
 module Handler = Handler

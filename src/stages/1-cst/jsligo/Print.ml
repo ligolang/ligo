@@ -821,7 +821,7 @@ and print_E_ContractOf state (node: contract_of_expr reg) =
   let path = namespace_path.value.inside in
   Tree.make_unary state "E_ContractOf" print_namespace_selection path
 
-(* Application of data constructor as expressions *)
+(* Constructor *)
 
 and print_E_CtorApp state (node : expr variant_kind) =
   print_variant_kind print_expr state node
