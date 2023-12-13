@@ -146,11 +146,13 @@ let on_doc
   in
   let@ () = detect_or_ask_to_create_project_file file in
   let@ ({ definitions; _ } as defs_and_diagnostics) =
-    lift_IO
-    @@ Ligo_interface.get_defs_and_diagnostics
-         ~project_root:!last_project_file
-         ~code:contents
-         file
+    with_run_in_IO
+    @@ fun { unlift_IO } ->
+    Ligo_interface.get_defs_and_diagnostics
+      ~project_root:!last_project_file
+      ~code:contents
+      ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
+      file
   in
   Docs_cache.set docs_cache ~key:file ~data:{ definitions; syntax; code = contents };
   let diags_by_file =

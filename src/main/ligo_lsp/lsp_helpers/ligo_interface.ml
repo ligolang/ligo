@@ -2,6 +2,7 @@
    get-scope that collects information about definitions in a file *)
 module Get_scope = Get_scope
 open Get_scope
+open Lsp.Types
 
 type nonrec defs_and_diagnostics = defs_and_diagnostics
 type scopes = Scopes.scopes
@@ -22,11 +23,16 @@ let lsp_raw_options : project_root:Path.t option -> Compiler_options.Raw_options
 
 
 let get_defs_and_diagnostics
-    : project_root:Path.t option -> code:string -> Path.t -> defs_and_diagnostics Lwt.t
+    :  project_root:Path.t option -> code:string
+    -> logger:(type_:MessageType.t -> string -> unit Lwt.t) -> Path.t
+    -> defs_and_diagnostics Lwt.t
   =
- fun ~project_root ~code path ->
+ fun ~project_root ~code ~logger path ->
   let options = lsp_raw_options ~project_root in
-  get_defs_and_diagnostics options (Raw_input_lsp { file = Path.to_string path; code })
+  get_defs_and_diagnostics
+    ~logger
+    options
+    (Raw_input_lsp { file = Path.to_string path; code })
 
 
 let get_scopes
