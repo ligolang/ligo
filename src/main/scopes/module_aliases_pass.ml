@@ -302,6 +302,25 @@ let declarations : AST.declaration list -> t * env =
   declarations decls m_alias env
 
 
+let patch_resolve_mod_name (type mvar) (m : Types.mdef) (m_alias : t)
+    : mvar Types.resolve_mod_name -> mvar Types.resolve_mod_name
+  =
+  match LMap.find_opt m.range m_alias with
+  | None -> Fn.id
+  | Some (resolved_alias, resolved_name) ->
+    let resolve_path module_path =
+      Types.Resolved_path
+        { module_path
+        ; resolved_module_path = resolved_alias
+        ; resolved_module = resolved_name
+        }
+    in
+    (function
+    | Unresolved_path { module_path } -> resolve_path module_path
+    | Resolved_path { module_path; resolved_module_path = _; resolved_module = _ } ->
+      resolve_path module_path)
+
+
 (** [patch] fixes the module aliases in the [defs]. It looks for module aliases
     definitions & then looks up the range of the module definition in [t] *)
 let rec patch : t -> Types.def list -> Types.def list =
@@ -312,27 +331,16 @@ let rec patch : t -> Types.def list -> Types.def list =
       | Module m ->
         let patch_mod_case = function
           | Def defs -> Def (patch m_alias defs)
-          | Alias { module_path = _; resolved_module = _; file_name } as alias ->
-            (match LMap.find_opt m.range m_alias with
-            | None -> alias
-            | Some (resolved_alias, resolved_name) ->
-              Alias
-                { module_path = resolved_alias
-                ; resolved_module = Some resolved_name
-                ; file_name
-                })
+          | Alias { resolve_mod_name; file_name } ->
+            Alias
+              { resolve_mod_name = patch_resolve_mod_name m m_alias resolve_mod_name
+              ; file_name
+              }
         in
         let patch_implementation = function
           | Ad_hoc_signature defs -> Ad_hoc_signature (patch m_alias defs)
-          | Standalone_signature_or_module { module_path = _; resolved_module = _ } as
-            path ->
-            (match LMap.find_opt m.range m_alias with
-            | None -> path
-            | Some (resolved_alias, resolved_name) ->
-              Standalone_signature_or_module
-                { module_path = Second resolved_alias
-                ; resolved_module = Some resolved_name
-                })
+          | Standalone_signature_or_module path ->
+            Standalone_signature_or_module (patch_resolve_mod_name m m_alias path)
         in
         Module
           { m with

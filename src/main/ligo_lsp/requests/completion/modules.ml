@@ -22,14 +22,16 @@ let get_module_from_pos
   let open Option.Monad_infix in
   let rec get_module_defs : Scopes.Types.mod_case -> CompletionItem.t list option
     = function
-    | Alias { resolved_module; _ } ->
-      Option.bind resolved_module ~f:(fun resolved ->
-          List.find_map definitions ~f:(function
-              | Variable _ | Type _ -> None
-              | Module m ->
-                if Scopes.Types.Uid.(m.uid = resolved)
-                then get_module_defs m.mod_case
-                else None))
+    | Alias { resolve_mod_name; file_name = _ } ->
+      (match resolve_mod_name with
+      | Unresolved_path { module_path = _ } -> None
+      | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
+        List.find_map definitions ~f:(function
+            | Variable _ | Type _ -> None
+            | Module m ->
+              if Scopes.Uid.(m.uid = resolved_module)
+              then get_module_defs m.mod_case
+              else None))
     | Def defs ->
       let is_module_field_in_scope def =
         match Scopes.Types.get_def_type def with

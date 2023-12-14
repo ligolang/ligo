@@ -117,19 +117,25 @@ end
 module Mod_graph = Graph.Make (Mod_identifier)
 module Mod_map = Caml.Map.Make (Mod_identifier)
 
-let try_to_resolve_standalone
-    :  Scopes.Types.mdef list -> module_path:(string list, Scopes.Uid.t list) Either.t
-    -> resolved_module:Scopes.Uid.t option -> Scopes.Uid.t option
+let try_to_resolve_path
+    :  Scopes.Types.mdef list -> string Scopes.Types.resolve_mod_name
+    -> Scopes.Uid.t option
   =
- fun mdefs ~module_path ~resolved_module ->
-  match resolved_module with
-  | None ->
-    (match module_path with
-    | First module_path ->
-      let%map.Option mdef = find_module_by_string_path module_path mdefs in
-      mdef.uid
-    | Second module_path -> List.last module_path)
-  | Some resolved_module -> Some resolved_module
+ fun mdefs -> function
+  | Scopes.Types.Unresolved_path { module_path } ->
+    let%map.Option mdef = find_module_by_string_path module_path mdefs in
+    mdef.uid
+  | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
+    Some resolved_module
+
+
+let path_to_identifier
+    :  Scopes.Types.mdef list -> string Scopes.Types.resolve_mod_name
+    -> Mod_identifier.t option
+  =
+ fun mdefs ->
+  Option.map ~f:(fun path -> Mod_identifier.Standalone_signature_or_module path)
+  <@ try_to_resolve_path mdefs
 
 
 let implementation_to_identifier
@@ -138,34 +144,38 @@ let implementation_to_identifier
  fun mdefs -> function
   | Ad_hoc_signature [] -> None
   | Ad_hoc_signature (dec :: _) -> Some (Ad_hoc_signature (Scopes.Types.get_def_uid dec))
-  | Standalone_signature_or_module { module_path; resolved_module } ->
-    let uid =
-      match try_to_resolve_standalone mdefs ~module_path ~resolved_module with
-      | None ->
-        let name =
-          String.concat ~sep:"."
-          @@ Either.value_map
-               ~first:Fn.id
-               ~second:(List.map ~f:Scopes.Uid.to_name)
-               module_path
-        in
-        Scopes.Uid.make name Loc.generated
-      | Some uid -> uid
-    in
-    Some (Standalone_signature_or_module uid)
+  | Standalone_signature_or_module path -> path_to_identifier mdefs path
 
 
 let mod_case_to_implementation : Scopes.Types.mod_case -> Scopes.Types.implementation
   = function
   | Def defs -> Ad_hoc_signature defs
-  | Alias { module_path; resolved_module; file_name = _ } ->
-    Standalone_signature_or_module { module_path = Second module_path; resolved_module }
+  | Alias { resolve_mod_name; file_name = _ } ->
+    let resolve_mod_name : string Scopes.Types.resolve_mod_name =
+      match resolve_mod_name with
+      | Unresolved_path { module_path } ->
+        Unresolved_path { module_path = List.map module_path ~f:Scopes.Uid.to_name }
+      | Resolved_path { module_path; resolved_module_path; resolved_module } ->
+        Resolved_path
+          { module_path = List.map module_path ~f:Scopes.Uid.to_name
+          ; resolved_module_path
+          ; resolved_module
+          }
+    in
+    Standalone_signature_or_module resolve_mod_name
 
 
 let mdef_to_implementation : Scopes.Types.mdef -> Scopes.Types.implementation =
  fun mdef ->
-  Standalone_signature_or_module
-    { module_path = Second mdef.mod_path; resolved_module = Some mdef.uid }
+  match mod_case_to_implementation mdef.mod_case with
+  | Ad_hoc_signature _ ->
+    Standalone_signature_or_module
+      (Resolved_path
+         { module_path = List.map (mdef.mod_path @ [ mdef.uid ]) ~f:Scopes.Uid.to_name
+         ; resolved_module_path = mdef.mod_path
+         ; resolved_module = mdef.uid
+         })
+  | Standalone_signature_or_module _ as impl -> impl
 
 
 let mdefs_to_identifiers : Scopes.Types.mdef list -> Scopes.Types.implementation Mod_map.t
@@ -187,7 +197,7 @@ let build_mod_graph : Scopes.Types.mdef list -> Mod_graph.t =
   @@ List.concat_map mdefs ~f:(fun (child : Scopes.Types.mdef) ->
          let child_id = Mod_identifier.Standalone_signature_or_module child.uid in
          List.filter_map
-           (mod_case_to_implementation child.mod_case :: child.implements)
+           (mdef_to_implementation child :: child.implements)
            ~f:
              (Option.map ~f:(fun parent -> child_id, parent)
              <@ implementation_to_identifier mdefs))
@@ -198,8 +208,13 @@ let rec try_to_resolve_mod_case
   =
  fun mdefs -> function
   | Def defs -> Some defs
-  | Alias { module_path = _; resolved_module; file_name = _ } ->
-    let%bind.Option resolved_module = resolved_module in
+  | Alias { resolve_mod_name; file_name = _ } ->
+    let%bind.Option resolved_module =
+      match resolve_mod_name with
+      | Unresolved_path { module_path = _ } -> None
+      | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
+        Some resolved_module
+    in
     let%bind.Option mdef =
       List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal mdef.uid resolved_module)
     in
@@ -244,7 +259,11 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
       | Signature ->
         (match mdef.mod_case with
         | Def _ -> Some mdef.uid
-        | Alias { module_path = _; resolved_module; file_name = _ } -> resolved_module))
+        | Alias { resolve_mod_name; file_name = _ } ->
+          (match resolve_mod_name with
+          | Unresolved_path _ -> None
+          | Resolved_path { module_path = _; resolved_module_path = _; resolved_module }
+            -> Some resolved_module)))
   in
   match
     let%bind.Option def_mod_id =
@@ -257,16 +276,16 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
     in
     (* Find everything that implements [def_mod] by looking at its children. *)
     let%map.Option implementers =
-      Mod_graph.reachable def_mod_id (Mod_graph.transpose @@ build_mod_graph mdefs)
+      List.find
+        (Mod_graph.wcc (Mod_graph.transpose @@ build_mod_graph mdefs))
+        ~f:(Mod_graph.mem def_mod_id)
     in
     let find_defs_in_implementation : Scopes.Types.implementation -> Def.t list option
       = function
       (* We don't care about signatures, as they don't implement anything. *)
       | Ad_hoc_signature _defs -> None
-      | Standalone_signature_or_module { module_path; resolved_module } ->
-        let%bind.Option uid =
-          try_to_resolve_standalone mdefs ~module_path ~resolved_module
-        in
+      | Standalone_signature_or_module path ->
+        let%bind.Option uid = try_to_resolve_path mdefs path in
         let%bind.Option mdef =
           List.find mdefs ~f:(fun mdef ->
               Scopes.Types.(
@@ -307,7 +326,7 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
          compare by [Scopes.Uid.t] since we consider each declaration and implementation
          to be distinct. *)
       find_defs_by_name_and_level def defs
-    | Standalone_signature_or_module { module_path; resolved_module = _ } ->
+    | Standalone_signature_or_module path ->
       (* This is an alias to an existing signature/interface, so we need to resolve it
          until it's [Def] to get its definitions and look if [def] is inside. We need to
          also look into every parent signature/interface.
@@ -317,12 +336,17 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
       let%bind.List mdef =
         Option.to_list
         @@
-        match module_path with
-        | First module_path -> find_module_by_string_path module_path mdefs
-        | Second module_path -> find_module_by_uid_path module_path mdefs
+        match path with
+        | Unresolved_path { module_path } -> find_module_by_string_path module_path mdefs
+        | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
+          List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal mdef.uid resolved_module)
       in
       List.concat_map
-        (* XXX: [mdef_to_implementation mdef] doesn't work. Why? *)
+        (* Note: [mdef_to_implementation mdef] doesn't work because it resolves to
+           [Standalone_signature_or_module] and creates a loop within
+           [find_defs_in_implementation]. We want [mod_case_to_implementation
+           mdef.mod_case] because if we get [Def], we'll resolve to [Ad_hoc_signature]. We
+           could match directly on [mdef.mod_case], but we take this shortcut instead. *)
         (mod_case_to_implementation mdef.mod_case :: mdef.implements)
         ~f:find_defs_in_implementation
   in

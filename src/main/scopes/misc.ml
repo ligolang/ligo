@@ -2,6 +2,7 @@ module AST = Ast_core
 open Types
 
 (** Given some signature:
+
     {[
       module type I = sig
         (* In no particular order: *)

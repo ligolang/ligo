@@ -73,10 +73,8 @@ let try_to_get_all_linked_locations : Def.t -> Def.t list -> Def_location.t list
          let%map.Option defs =
            match%bind.Option Mod_map.find_opt id mod_ids with
            | Ad_hoc_signature defs -> Some defs
-           | Standalone_signature_or_module { module_path; resolved_module } ->
-             let%bind.Option uid =
-               try_to_resolve_standalone mdefs ~module_path ~resolved_module
-             in
+           | Standalone_signature_or_module path ->
+             let%bind.Option uid = try_to_resolve_path mdefs path in
              let%bind.Option mdef =
                List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal uid mdef.uid)
              in

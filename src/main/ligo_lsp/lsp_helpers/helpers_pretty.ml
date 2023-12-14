@@ -110,7 +110,7 @@ let print_module_with_description
           signature
     in
     MarkedString.{ language; value }
-  | Alias { module_path; file_name; resolved_module = _ } ->
+  | Alias { resolve_mod_name; file_name } ->
     (match file_name with
     | Some file_name ->
       let value =
@@ -126,7 +126,9 @@ let print_module_with_description
       let alias_rhs =
         Option.value_map
           ~default:
-            (module_path |> List.map ~f:Scopes.Types.Uid.to_name |> String.concat ~sep:".")
+            (Scopes.Types.get_module_path resolve_mod_name
+            |> List.map ~f:Scopes.Types.Uid.to_name
+            |> String.concat ~sep:".")
           ~f:(fun file_name ->
             Format.asprintf "%a" (Scopes.PP.mod_name project_root) (Filename file_name))
           file_name

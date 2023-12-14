@@ -89,6 +89,43 @@ let tdef : Format.formatter -> tdef -> unit =
   Format.fprintf ppf ": |%a|@ %a" pp_content content refs references
 
 
+let rec path : 'mvar Fmt.t -> 'mvar list Fmt.t =
+ fun mvar ppf -> function
+  | [] -> ()
+  | [ m ] -> mvar ppf m
+  | m :: ms -> Format.fprintf ppf "%a.%a" mvar m (path mvar) ms
+
+
+let resolve_mod_name (type mvar) : mvar Fmt.t -> mvar resolve_mod_name Fmt.t =
+ fun mvar ppf -> function
+  | Unresolved_path { module_path } ->
+    Format.fprintf ppf "%a (unresolved)" (path mvar) module_path
+  | Resolved_path { module_path; resolved_module_path; resolved_module } ->
+    if Option.equal Uid.equal (List.last resolved_module_path) (Some resolved_module)
+    then
+      Format.fprintf
+        ppf
+        "%a (-> %a)"
+        (path mvar)
+        module_path
+        (path Uid.pp)
+        resolved_module_path
+    else
+      Format.fprintf
+        ppf
+        "%a (%a -> %a)"
+        (path mvar)
+        module_path
+        (path Uid.pp)
+        resolved_module_path
+        Uid.pp
+        resolved_module
+
+
+let string_path : string resolve_mod_name Fmt.t =
+  resolve_mod_name (fun ppf -> Format.fprintf ppf "%s")
+
+
 let rec mdef : Format.formatter -> mdef -> unit =
  fun ppf { mod_case = mod_case'; references; implements; _ } ->
   let pp_implements ppf =
@@ -108,33 +145,13 @@ let rec mdef : Format.formatter -> mdef -> unit =
 and implementation : Format.formatter -> implementation -> unit =
  fun ppf -> function
   | Ad_hoc_signature d -> Format.fprintf ppf "Ad hoc: %a" definitions d
-  | Standalone_signature_or_module { module_path; resolved_module } ->
-    let alias ppf =
-      Option.value_or_thunk ~default:(fun () -> Format.fprintf ppf "unresolved")
-      <@ Option.map ~f:(Format.fprintf ppf "%a" Uid.pp)
-    in
-    Format.fprintf
-      ppf
-      "Standalone: %s (%a)"
-      (String.concat ~sep:"."
-      @@ Either.value_map ~first:Fn.id ~second:(List.map ~f:Uid.to_string) module_path)
-      alias
-      resolved_module
+  | Standalone_signature_or_module path ->
+    Format.fprintf ppf "Standalone: %a" string_path path
 
 
 and mod_case : Format.formatter -> mod_case -> unit =
  fun ppf -> function
-  | Alias { module_path; resolved_module; file_name = _ } ->
-    let alias ppf =
-      Option.value_or_thunk ~default:(fun () -> Format.fprintf ppf "unresolved")
-      <@ Option.map ~f:(Format.fprintf ppf "%a" Uid.pp)
-    in
-    Format.fprintf
-      ppf
-      "Alias (%a): %s"
-      alias
-      resolved_module
-      (String.concat ~sep:"." @@ List.map ~f:Uid.to_string module_path)
+  | Alias { resolve_mod_name = path; file_name = _ } -> resolve_mod_name Uid.pp ppf path
   | Def d -> Format.fprintf ppf "Members: %a" definitions d
 
 
@@ -280,8 +297,11 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
       let body =
         match mod_case with
         | Def d -> "members", defs_json d
-        | Alias { module_path; resolved_module = _resolved; file_name = _file_name } ->
-          "alias", `List (List.map module_path ~f:(fun s -> `String (Uid.to_string s)))
+        | Alias { resolve_mod_name; file_name = _file_name } ->
+          ( "alias"
+          , `List
+              (List.map (get_module_path resolve_mod_name) ~f:(fun s ->
+                   `String (Uid.to_string s))) )
       in
       uid, `Assoc [ def; body ]
   in

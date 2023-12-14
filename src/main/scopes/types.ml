@@ -129,22 +129,31 @@ type mod_name =
   | Filename of string
 [@@deriving compare]
 
+type 'mvar resolve_mod_name =
+  | Unresolved_path of { module_path : 'mvar list }
+  | Resolved_path of
+      { module_path : 'mvar list
+      ; resolved_module_path : Uid.t list
+      ; resolved_module : Uid.t
+      }
+[@@deriving compare]
+
 type alias =
-  { module_path : Uid.t list
-  ; resolved_module : Uid.t option
+  { resolve_mod_name : Uid.t resolve_mod_name
   ; file_name : string option
         (** If module name is mangled (i.e. it was obtained from preprocessing some import
             directive) then this field will contain a file name of a module. *)
   }
 [@@deriving compare]
 
+let get_module_path (type mvar) : mvar resolve_mod_name -> mvar list = function
+  | Unresolved_path path -> path.module_path
+  | Resolved_path path -> path.module_path
+
+
 type implementation =
   | Ad_hoc_signature of def list
-  | Standalone_signature_or_module of
-      { (* Unlike [mod_case], we don't want to generate new UIDs here. *)
-        module_path : (string list, Uid.t list) Either.t
-      ; resolved_module : Uid.t option
-      }
+  | Standalone_signature_or_module of string resolve_mod_name
 
 and mod_case =
   | Def of def list
