@@ -119,11 +119,13 @@ let pp_defs_or_alias (ppf : Format.formatter) : defs_or_alias -> unit = function
 
 (******************************************************************************)
 
-(** Maps the encountered modules to :
-    - their aliasee (in case of module alias)
+(** Maps the encountered modules to:
+    - their aliases (in case of module alias)
     - their list of defs (in case of mod expr)
 
     Two different modules will always correspond to two different entries.
+
+    Moreover, we use [option] so that [None] will represent the global module.
 
     However, {!Module_var.compare} doesn't account for location, so same-name
     modules will wrongly correspond to the same key, so same entry.
@@ -131,12 +133,14 @@ let pp_defs_or_alias (ppf : Format.formatter) : defs_or_alias -> unit = function
     This is why we augment {!Module_var} with a location-aware comparison function. *)
 module Module_map = struct
   module Mvar_map = Map.Make (struct
-    type t = Module_var.t
+    type t = Module_var.t option
 
-    let compare m1 m2 =
-      match Module_var.compare m1 m2 with
-      | 0 -> Location.compare (Module_var.get_location m1) (Module_var.get_location m2)
-      | cmp -> cmp
+    let compare =
+      Option.compare (fun m1 m2 ->
+          match Module_var.compare m1 m2 with
+          | 0 ->
+            Location.compare (Module_var.get_location m1) (Module_var.get_location m2)
+          | cmp -> cmp)
   end)
 
   include Mvar_map
@@ -148,11 +152,9 @@ module Module_map = struct
       in case of module alias it recusively resolves the alias in the [module_map]. *)
   let rec resolve_mvar : Module_var.t -> t -> (Module_var.t * def list) option =
    fun mv module_map ->
-    let self mv = resolve_mvar mv module_map in
-    match Mvar_map.find_opt mv module_map with
-    | Some (Defs defs) -> Some (mv, defs)
-    | Some (Alias mv') -> self mv'
-    | None -> None
+    match%bind.Option Mvar_map.find_opt (Some mv) module_map with
+    | Defs defs -> Some (mv, defs)
+    | Alias mv' -> resolve_mvar mv' module_map
 
 
   (** For debugging. *)
@@ -161,7 +163,7 @@ module Module_map = struct
     Format.fprintf
       ppf
       "%a"
-      Fmt.Dump.(seq (pair Module_var.pp pp_defs_or_alias))
+      Fmt.Dump.(seq (pair (option Module_var.pp) pp_defs_or_alias))
       (to_seq module_map)
 end
 
@@ -176,40 +178,45 @@ type module_map = Module_map.t
         & in the context of an expression it represents the bindings encountered so far.
     3. [module_map] is a map from [Module_var.t] -> [defs_or_alias] this is a flat
         representation of modules & its contents, this simplifies the handling
-        for nested modules *)
+        for nested modules.
+    4. [parent_mod] is the last seen module ([None] means global), used for handling
+       inclusions. *)
 type env =
   { parent : def list
   ; avail_defs : def list
   ; module_map : module_map
+  ; parent_mod : Module_var.t option
   }
 
 type t = env
 
-let empty = { parent = []; avail_defs = []; module_map = Module_map.empty }
+let empty =
+  { parent = []; avail_defs = []; module_map = Module_map.empty; parent_mod = None }
+
 
 (** For debugging. *)
 let pp : env Fmt.t =
- fun ppf { parent; avail_defs; module_map } ->
+ fun ppf { parent; avail_defs; module_map; parent_mod } ->
   Format.fprintf
     ppf
-    "{ avail_defs: %a\n; module_map: %a\n; parent_mod: %a\n}"
+    "{ parent: %a\n; avail_defs: %a\n; module_map: %a\n; parent_mod: %a\n}"
     Fmt.Dump.(list Def.pp)
     parent
     Fmt.Dump.(list Def.pp)
     avail_defs
     Module_map.pp
     module_map
+    Fmt.Dump.(option Module_var.pp)
+    parent_mod
 
 
 (******************************************************************************)
 (** Lookup functions *)
 
-(* TODO : Doc comment doesn't match function, what was meant here ? *)
-
-(** [find_definition_location] is a helper function which will look up the [env]
-    and try to find the [Location.t] of the [def]
-    It first tries to look up the [avail_defs] then if it does not find the [def]
-    there it looks up the [parent] defs *)
+(** [lookup_def_opt] is a helper function which will look up the [env] and try to find the
+    [def] matching the given [def] predicate.
+    It first tries to look up the [avail_defs] in the [env], and if it does not find the
+    [def] there it looks up the [parent] defs. *)
 let lookup_def_opt : env -> (def -> bool) -> def option =
  fun env f ->
   let find (defs : def list) = List.find ~f defs in
@@ -218,8 +225,8 @@ let lookup_def_opt : env -> (def -> bool) -> def option =
   | None -> find env.parent
 
 
-(** [vvar_definition_location] looks up the [Value_var.t] in the [env] with the
-    help of [find_definition_location] *)
+(** [lookup_vvar_opt] looks up the [Value_var.t] in the [env] with the
+    help of [lookup_def_opt] *)
 let lookup_vvar_opt : env -> Value_var.t -> def option =
  fun env v ->
   lookup_def_opt env (function
@@ -227,8 +234,8 @@ let lookup_vvar_opt : env -> Value_var.t -> def option =
       | Type _ | Module _ -> false)
 
 
-(** [tvar_definition_location] looks up the [Type_var.t] in the [env] with the
-    help of [find_definition_location] *)
+(** [lookup_tvar_opt] looks up the [Type_var.t] in the [env] with the
+    help of [lookup_def_opt] *)
 let lookup_tvar_opt : env -> Type_var.t -> def option =
  fun env t ->
   lookup_def_opt env (function
@@ -241,13 +248,9 @@ let lookup_tvar_opt : env -> Type_var.t -> def option =
 (** [lookup_mvar_in_defs_opt] tries to find the defintion of the [Module_var.t] in the [defs] *)
 let lookup_mvar_in_defs_opt : Module_var.t -> def list -> Module_var.t option =
  fun m defs ->
-  let open Def in
-  List.find defs ~f:(function
-      | Variable _ | Type _ -> false
-      | Module m' -> Module_var.equal m m')
-  |> Option.find_map ~f:(function
-         | Module m -> Some m
-         | Variable _ | Type _ -> None)
+  List.find_map defs ~f:(function
+      | Variable _ | Type _ -> None
+      | Module m' -> Option.some_if (Module_var.equal m m') m')
 
 
 (** [resolve_mvar] a [Module_var.t] and looks up in the defs ([def list])
@@ -269,9 +272,7 @@ let lookup_mvar_in_defs_opt : Module_var.t -> def list -> Module_var.t option =
   [Some (N2, M1, [a; b; c])]. These elements represent :
   - Which [N] does [N3] refers to (here [N2] and not [N1])
   - Which actual non-alias module does [N2] point to
-  - The list of declaration of that non-alias module
-
-  *)
+  - The list of declaration of that non-alias module. *)
 let resolve_mvar
     :  Module_var.t -> def list -> module_map
     -> (Module_var.t * Module_var.t * def list) option
@@ -307,13 +308,12 @@ let rec resolve_mpath
     -> (Module_var.t * Module_var.t * def list) option
   =
  fun (hd, tl) defs mmap ->
-  let self defs mdefs = resolve_mpath defs mdefs mmap in
   match resolve_mvar hd defs mmap with
   | None -> None
   | Some (_real, _m, mdefs) as res ->
     (match tl with
     | [] -> res
-    | hd' :: tl' -> self (hd', tl') mdefs)
+    | hd' :: tl' -> resolve_mpath (hd', tl') mdefs mmap)
 
 
 (**
@@ -366,23 +366,63 @@ let rec fold_resolve_mpath
 (******************************************************************************)
 (** Update functions *)
 
-(** [add_vvar_to_avail_defs] adds [Value_var.t] to [avail_defs] in the [env] *)
+(** [add_vvar] adds [Value_var.t] to [avail_defs] in the [env]. *)
 let add_vvar : Value_var.t -> env -> env =
  fun v env -> { env with avail_defs = Variable v :: env.avail_defs }
 
 
-(** [add_tvar_to_avail_defs] adds [Type_var.t] to [avail_defs] in the [env] *)
+(** [add_tvar] adds [Type_var.t] to [avail_defs] in the [env]. *)
 let add_tvar : Type_var.t -> env -> env =
  fun t env -> { env with avail_defs = Type t :: env.avail_defs }
 
 
-(** [add_mvar] adds [Module_var.t] to the [avail_defs] and also adds an
-    [defs_or_alias] to the [module_map] in the [env] *)
+(** [add_mvar] adds the [Module_var.t] to the [avail_defs]. It also adds a [defs_or_alias]
+    to the [module_map] in the [env]. *)
 let add_mvar : Module_var.t -> defs_or_alias option -> module_map -> env -> env =
  fun m defs_or_alias_opt module_map env ->
-  let env = { env with module_map } in
-  Option.fold defs_or_alias_opt ~init:env ~f:(fun env defs_or_alias ->
+  Option.value_map
+    defs_or_alias_opt
+    ~default:{ env with module_map }
+    ~f:(fun defs_or_alias ->
       { env with
         avail_defs = Module m :: env.avail_defs
-      ; module_map = Module_map.add m defs_or_alias env.module_map
+      ; module_map = Module_map.add (Some m) defs_or_alias module_map
       })
+
+
+(** [include_mvar] resolves the given [defs_or_alias option] as what is being included and
+    adds it to [env.parent_mod] in the following manner:
+    * If the [module_map] doesn't contain [env.parent_module], it will insert the child
+      definitions.
+    * If it contains the parent module and its value is [Alias _], it will keep this old
+      entry.
+    * Otherwise, if it contains the parent module and its value is [Defs _], it will be
+      concatenated with the child definitions.
+    All of this only holds if the given [defs_or_alias_opt] is [Some _] and it could be
+    resolved, otherwise the old [env] is just returned updated with the given [module_map]. *)
+let include_mvar : defs_or_alias option -> module_map -> env -> env =
+ fun defs_or_alias_opt module_map env ->
+  match
+    match%bind.Option defs_or_alias_opt with
+    | Defs child_defs -> Some child_defs
+    | Alias child_binder ->
+      let%map.Option _resolved_child_binder, child_defs =
+        (* TODO: shouldn't we use [Env.resolve_mvar] instead? Note that it might be [None]
+           if [env.avail_defs] is [[]]. *)
+        Module_map.resolve_mvar child_binder module_map
+      in
+      child_defs
+  with
+  | None -> { env with module_map }
+  | Some child_defs ->
+    { env with
+      avail_defs = child_defs @ env.avail_defs
+    ; module_map =
+        Module_map.update
+          env.parent_mod
+          (function
+            | None -> Some (Defs child_defs)
+            | Some (Alias _) as alias -> alias
+            | Some (Defs defs') -> Some (Defs (child_defs @ defs')))
+          module_map
+    }

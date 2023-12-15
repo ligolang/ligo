@@ -648,8 +648,7 @@ let resolve
 
 let rec patch : t -> Types.def list -> Types.def list =
  fun bindings defs ->
-  List.map defs ~f:(fun def ->
-      match def with
+  List.map defs ~f:(function
       | Variable v ->
         (match v.t, LMap.find_opt v.range bindings.type_cases with
         | Unresolved, Some t -> Types.Variable { v with t }

@@ -1,5 +1,6 @@
 open Ligo_prim
 open Simple_utils
+open Simple_utils.Function
 module AST = Ast_core
 module LSet = Types.LSet
 module LMap = Map.Make (Location_ordered)
@@ -24,6 +25,13 @@ type module_usages = module_usage list
 module References = struct
   type references = LSet.t LMap.t
   type t = references
+
+  (** For debugging. *)
+  let[@warning "-32"] pp : t Fmt.t =
+   fun ppf ->
+    Fmt.Dump.(seq (pair Location.pp (fun ppf -> seq Location.pp ppf <@ LSet.to_seq))) ppf
+    <@ LMap.to_seq
+
 
   let union : t -> t -> t = LMap.union (fun _loc x y -> Some (LSet.union x y))
 
@@ -110,7 +118,9 @@ module References = struct
     match Module_map.resolve_mvar mv module_map with
     | None -> Fn.id
     | Some (_orig, defs) ->
-      update_element_reference element { parent = []; avail_defs = defs; module_map }
+      update_element_reference
+        element
+        { parent = []; avail_defs = defs; module_map; parent_mod = Some mv }
 
 
   (** [update_references_for_module_access_var] updates refences of a module accessed value/var *)
@@ -305,7 +315,9 @@ let rec expression : AST.expression -> references -> env -> references =
     let refs = expression cond refs env in
     expression body refs env
   | E_mod_in { module_binder; rhs; let_result } ->
-    let refs, defs_or_alias_opt, module_map = module_expression rhs refs env in
+    let refs, defs_or_alias_opt, module_map =
+      module_expression (Some module_binder) rhs refs env
+    in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     expression let_result refs env
 
@@ -368,12 +380,14 @@ and type_expression : AST.type_expression -> references -> env -> references =
      - for a actual module, it returns the list of its [def]'s
     and updates the [references] & the [module_map] *)
 and module_expression
-    :  AST.module_expr -> references -> env
+    :  Module_var.t option -> AST.module_expr -> references -> env
     -> references * defs_or_alias option * module_map
   =
- fun me refs env ->
+ fun parent_mod me refs env ->
   (* Move [avail_defs] to [parent] before finding [references] in module_expr *)
-  let env = { env with avail_defs = []; parent = env.avail_defs @ env.parent } in
+  let env =
+    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
+  in
   let refs, defs_or_alias_opt, env =
     match me.wrap_content with
     | M_struct decls ->
@@ -450,12 +464,12 @@ and declaration : AST.declaration -> references -> env -> references * env =
     refs, env
   | D_module { module_binder; module_; module_attr = _; annotation } ->
     let ((refs, defs_or_alias_opt, module_map) as result) =
-      module_expression module_ refs env
+      module_expression (Some module_binder) module_ refs env
     in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     let refs, _defs_or_alias_opt, _module_map =
       Option.value_map annotation ~default:result ~f:(fun annotation ->
-          let refs, _defs_or_alias_opt, _module_map =
+          let refs, defs_or_alias_opt, module_map =
             signature_expression annotation.signature refs env
           in
           (* TODO: not sure what to do here? It seems to work, but it's not clear whether
@@ -464,7 +478,10 @@ and declaration : AST.declaration -> references -> env -> references * env =
     in
     refs, env
   | D_module_include module_expr ->
-    let refs, _defs_or_alias_opt, _module_map = module_expression module_expr refs env in
+    let refs, defs_or_alias_opt, module_map =
+      module_expression env.parent_mod module_expr refs env
+    in
+    let env = Env.include_mvar defs_or_alias_opt module_map env in
     refs, env
   | D_signature { signature_binder; signature; signature_attr = _ } ->
     let refs, defs_or_alias_opt, module_map = signature_expression signature refs env in

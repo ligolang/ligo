@@ -25,29 +25,32 @@ module Uid : sig
   val ( = ) : t -> t -> bool
   val equal : t -> t -> bool
   val to_name : t -> string
+  val to_location : t -> Location.t
   val to_string : t -> string
   val pp : Format.formatter -> t -> unit
 end = struct
-  type t = Uid of string [@@unboxed] [@@deriving compare]
+  type t = Uid of string * Location.t [@@deriving compare]
 
-  let make (name : string) (loc : Location.t) : t =
-    Uid
-      (match loc with
-      | File region -> Format.sprintf "%s#%s" name (region#compact ~file:false `Point)
-      | Virtual v -> Format.sprintf "%s#%s" name v)
-
-
-  let ( = ) (Uid a : t) (Uid b : t) : bool = String.(a = b)
-  let equal : t -> t -> bool = ( = )
+  let make name loc = Uid (name, loc)
+  let ( = ) (Uid (n1, l1)) (Uid (n2, l2)) = String.equal n1 n2 && Location.equal l1 l2
+  let equal = ( = )
 
   (** Given an UID of format [{name}#{line}:{start_col}-{end_col}], returns only
     the [{name}] part. *)
-  let to_name (Uid uid : t) : string = String.take_while uid ~f:(Char.( <> ) '#')
+  let to_name (Uid (name, _loc)) = name
+
+  (** Given an UID of format [{name}#{line}:{start_col}-{end_col}], returns only
+    the [{line}:{start_col}-{end_col}] part. *)
+  let to_location (Uid (_name, loc)) = loc
 
   (** Returns an UID of format [{name}#{line}:{start_col}-{end_col}]. *)
-  let to_string (Uid uid : t) : string = uid
+  let to_string (Uid (name, loc)) =
+    match loc with
+    | File region -> Format.sprintf "%s#%s" name (region#compact ~file:false `Point)
+    | Virtual v -> Format.sprintf "%s#%s" name v
 
-  let pp (ppf : Format.formatter) (Uid uid : t) : unit = Format.fprintf ppf "%s" uid
+
+  let pp : t Fmt.t = fun ppf uid -> Format.fprintf ppf "%s" (to_string uid)
 end
 
 type ('core_expr, 'typed_expr) resolve_case =
@@ -151,6 +154,8 @@ let get_module_path : resolve_mod_name -> Uid.t list = function
   | Resolved_path path -> path.module_path
 
 
+type extension = resolve_mod_name [@@deriving compare]
+
 type implementation =
   | Ad_hoc_signature of def list
   | Standalone_signature_or_module of resolve_mod_name
@@ -171,6 +176,7 @@ and mdef =
   ; signature : signature_case
   ; attributes : mdef_attributes
   ; implements : implementation list
+  ; extends : extension list
   ; mdef_type : mdef_type
   }
 

@@ -64,9 +64,8 @@ let try_to_get_all_linked_locations : Def.t -> Def.t list -> Def_location.t list
   let mdefs = filter_mdefs definitions in
   let mod_ids = mdefs_to_identifiers mdefs in
   let%bind.Option def_mod_id = try_to_get_mdef_uid definition mdefs mod_ids in
-  let mod_graph = build_mod_graph mdefs in
   let%map.Option defining_mods =
-    List.find (Mod_graph.wcc mod_graph) ~f:(Mod_graph.mem def_mod_id)
+    List.find (Mod_graph.wcc @@ build_mod_graph mdefs) ~f:(Mod_graph.mem def_mod_id)
   in
   List.concat_map ~f:(List.map ~f:Def.get_location)
   @@ List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->

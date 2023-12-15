@@ -120,6 +120,7 @@ let defs_of_mvar
     ~(attributes : mdef_attributes option)
     ~(mod_case : mod_case)
     ~(implements : implementation list)
+    ~(extends : extension list)
     : mdef_type -> string SMap.t -> MVar.t -> def_type -> Uid.t list -> t -> t
   =
  fun mdef_type module_deps mvar def_type mod_path acc ->
@@ -151,6 +152,7 @@ let defs_of_mvar
       ; signature
       ; attributes
       ; implements
+      ; extends
       ; mdef_type
       }
     in
@@ -207,8 +209,8 @@ module Of_Ast = struct
   let defs_of_mvar_mod_expr
       ~(bindee : Ast_core.module_expr)
       ~(attributes : mdef_attributes option)
-      :  mod_case:mod_case -> implements:implementation list -> string SMap.t -> MVar.t
-      -> def_type -> Uid.t list -> t -> t
+      :  mod_case:mod_case -> implements:implementation list -> extends:extension list
+      -> string SMap.t -> MVar.t -> def_type -> Uid.t list -> t -> t
     =
     let bindee_location =
       match Location.unwrap bindee with
@@ -230,14 +232,19 @@ module Of_Ast = struct
       | S_sig _ -> Location.get_location bindee
       | S_path mpath -> get_location_of_module_path @@ List.Ne.to_list mpath
     in
-    defs_of_mvar Signature ~attributes ~bindee_location
+    defs_of_mvar Signature ~attributes ~bindee_location ~extends:[]
 
 
   let defs_of_mvar_signature
       :  mod_case:mod_case -> string SMap.t -> MVar.t -> def_type -> Uid.t list
       -> def list -> def list
     =
-    defs_of_mvar Signature ~attributes:None ?bindee_location:None ~implements:[]
+    defs_of_mvar
+      Signature
+      ~attributes:None
+      ?bindee_location:None
+      ~implements:[]
+      ~extends:[]
 
 
   let defs_of_pattern ~(body : AST.expression) ~(attributes : vdef_attributes option)
@@ -297,11 +304,13 @@ module Of_Ast = struct
     | E_mod_in { module_binder; rhs; let_result } ->
       let inner_mod_path = add_inner_mod_path module_binder mod_path in
       let mod_case = mod_case_of_mod_expr ~defs_of_decls module_deps rhs inner_mod_path in
+      let extends = extends rhs in
       defs_of_mvar_mod_expr
         ~mod_case
         ~attributes:None
         ~bindee:rhs
         ~implements:[]
+        ~extends
         module_deps
         module_binder
         Local
@@ -376,6 +385,33 @@ module Of_Ast = struct
 
   and mod_case_of_mvars : string SMap.t -> Module_var.t list -> mod_case =
    fun module_deps mvars -> Alias (alias_of_mvars module_deps mvars)
+
+
+  and extends_of_declaration : AST.declaration -> extension list -> extension list =
+   fun decl acc ->
+    match Location.unwrap decl with
+    | D_module_include mod_expr -> extends_of_mod_expr mod_expr acc
+    | D_value _ | D_irrefutable_match _ | D_type _ | D_module _ | D_signature _ -> acc
+
+
+  and extends_of_declarations : AST.declaration list -> extension list -> extension list =
+   fun decls acc -> List.fold_right decls ~init:acc ~f:extends_of_declaration
+
+
+  and extends_of_mod_expr : AST.module_expr -> extension list -> extension list =
+   fun mod_expr acc ->
+    match Location.unwrap mod_expr with
+    | M_struct decls -> extends_of_declarations decls acc
+    | M_variable mod_var -> unresolved_path [ mod_var ] :: acc
+    | M_module_path mod_path -> unresolved_path (List.Ne.to_list mod_path) :: acc
+
+
+  and extends : AST.module_expr -> extension list =
+   fun mod_expr ->
+    match Location.unwrap mod_expr with
+    | M_struct decls -> extends_of_declarations decls []
+    | M_variable _mod_var -> []
+    | M_module_path _mod_path -> []
 
 
   and mod_case_of_mod_expr
@@ -605,11 +641,13 @@ module Of_Ast = struct
       let mod_case =
         mod_case_of_mod_expr ~defs_of_decls module_deps module_ inner_mod_path
       in
+      let extends = extends module_ in
       defs_of_mvar_mod_expr
         ~mod_case
         ~attributes:(Some (Module_attr module_attr))
         ~bindee:module_
         ~implements:(List.concat_map ~f:snd @@ Option.to_list sig_defs_and_mod_cases)
+        ~extends
         module_deps
         module_binder
         def_type

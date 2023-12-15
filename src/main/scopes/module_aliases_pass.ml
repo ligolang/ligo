@@ -140,16 +140,22 @@ let rec expression : AST.expression -> t -> env -> t =
     let m_alias = expression cond m_alias env in
     expression body m_alias env
   | E_mod_in { module_binder; rhs; let_result } ->
-    let m_alias, env = module_expression module_binder rhs m_alias env in
+    let m_alias, defs_or_alias_opt, module_map =
+      module_expression (Some module_binder) rhs m_alias env
+    in
+    let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     expression let_result m_alias env
 
 
 (** [module_expression] walks the module expression and builds the [env] and
     looks for module aliases and calls [resolve_module_alias] on it. *)
-and module_expression : Module_var.t -> AST.module_expr -> t -> env -> t * env =
- fun lhs_mv me m_alias old_env ->
+and module_expression
+    :  Module_var.t option -> AST.module_expr -> t -> env
+    -> t * defs_or_alias option * module_map
+  =
+ fun parent_mod me m_alias env ->
   let env =
-    { old_env with avail_defs = []; parent = old_env.avail_defs @ old_env.parent }
+    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
   in
   let m_alias, defs_or_alias_opt, env =
     match me.wrap_content with
@@ -157,14 +163,13 @@ and module_expression : Module_var.t -> AST.module_expr -> t -> env -> t * env =
       let m_alias, env = declarations decls m_alias env in
       m_alias, Some (Defs env.avail_defs), env
     | M_variable mv ->
-      let m_alias, alias_opt = resolve_module_alias (Some lhs_mv) (mv, []) env m_alias in
+      let m_alias, alias_opt = resolve_module_alias parent_mod (mv, []) env m_alias in
       m_alias, alias_opt, env
     | M_module_path mvs ->
-      let m_alias, alias_opt = resolve_module_alias (Some lhs_mv) mvs env m_alias in
+      let m_alias, alias_opt = resolve_module_alias parent_mod mvs env m_alias in
       m_alias, alias_opt, env
   in
-  let env = Env.add_mvar lhs_mv defs_or_alias_opt env.module_map old_env in
-  m_alias, env
+  m_alias, defs_or_alias_opt, env.module_map
 
 
 (** [signature_expression] walks the signature expression and builds the [env] and
@@ -186,28 +191,28 @@ and signature_expression : AST.signature_expr -> t -> env -> t * env =
 (** [signature_expression_from_D_signature] is like [signature_expression] but with
     similar considerations of [Definitions.mod_cases_of_sig_expr_from_D_signature]. *)
 and signature_expression_from_D_signature
-    : Module_var.t -> AST.signature_expr -> t -> env -> t * env
+    :  Module_var.t option -> AST.signature_expr -> t -> env
+    -> t * defs_or_alias option * module_map
   =
- fun lhs_mv se m_alias old_env ->
+ fun parent_mod se m_alias env ->
   let env =
-    { old_env with avail_defs = []; parent = old_env.avail_defs @ old_env.parent }
+    { env with avail_defs = []; parent = env.avail_defs @ env.parent; parent_mod }
   in
   let m_alias, defs_or_alias_opt, env =
     match se.wrap_content with
     (* Signature alias: *)
     | S_sig { items = [ S_include { wrap_content = S_path path; location = _ } ] } ->
-      let m_alias, alias_opt = resolve_module_alias (Some lhs_mv) path env m_alias in
+      let m_alias, alias_opt = resolve_module_alias parent_mod path env m_alias in
       m_alias, alias_opt, env
     | S_sig decls ->
       let m_alias, env = signature decls m_alias env in
       let alias_opt = Some (Defs env.avail_defs) in
       m_alias, alias_opt, env
     | S_path path ->
-      let m_alias, alias_opt = resolve_module_alias (Some lhs_mv) path env m_alias in
+      let m_alias, alias_opt = resolve_module_alias parent_mod path env m_alias in
       m_alias, alias_opt, env
   in
-  let env = Env.add_mvar lhs_mv defs_or_alias_opt env.module_map old_env in
-  m_alias, env
+  m_alias, defs_or_alias_opt, env.module_map
 
 
 (** [signature_expression_from_annotation] is like [signature_expression] but with similar
@@ -277,14 +282,23 @@ and declaration : AST.declaration -> t -> env -> t * env =
       Option.value_map annotation ~default:(m_alias, env) ~f:(fun annotation ->
           module_annotation annotation m_alias env)
     in
-    let m_alias, env = module_expression module_binder module_ m_alias env in
+    let m_alias, defs_or_alias_opt, module_map =
+      module_expression (Some module_binder) module_ m_alias env
+    in
+    let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     m_alias, env
   | D_signature { signature_binder; signature; signature_attr = _ } ->
-    let m_alias, env =
-      signature_expression_from_D_signature signature_binder signature m_alias env
+    let m_alias, defs_or_alias_opt, module_map =
+      signature_expression_from_D_signature (Some signature_binder) signature m_alias env
     in
+    let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
     m_alias, env
-  | D_module_include _ -> m_alias, env (* TODO *)
+  | D_module_include mod_expr ->
+    let m_alias, defs_or_alias_opt, module_map =
+      module_expression env.parent_mod mod_expr m_alias env
+    in
+    let env = Env.include_mvar defs_or_alias_opt module_map env in
+    m_alias, env
 
 
 (** [declarations] builds the [env] and tries to resolves module aliases *)
@@ -302,49 +316,64 @@ let declarations : AST.declaration list -> t * env =
   declarations decls m_alias env
 
 
-let patch_resolve_mod_name (m : Types.mdef) (m_alias : t)
-    : Types.resolve_mod_name -> Types.resolve_mod_name
-  =
-  match LMap.find_opt m.range m_alias with
-  | None -> Fn.id
-  | Some (resolved_alias, resolved_name) ->
-    let resolve_path module_path =
-      Types.Resolved_path
-        { module_path
-        ; resolved_module_path = resolved_alias
-        ; resolved_module = resolved_name
-        }
-    in
-    (function
-    | Unresolved_path { module_path } -> resolve_path module_path
-    | Resolved_path { module_path; resolved_module_path = _; resolved_module = _ } ->
-      resolve_path module_path)
-
-
 (** [patch] fixes the module aliases in the [defs]. It looks for module aliases
     definitions & then looks up the range of the module definition in [t] *)
 let rec patch : t -> Types.def list -> Types.def list =
- fun m_alias defs ->
+ fun m_alias ->
   let open Types in
-  List.map defs ~f:(fun def ->
-      match def with
+  (* Find the largest location smaller than or equal to the path that matches the name. *)
+  (* TODO: the resolved module path might not match what we expect *)
+  let find_uid : Uid.t -> (Uid.t list * Uid.t) option =
+   fun uid ->
+    let name = Uid.to_name uid in
+    let loc = Uid.to_location uid in
+    let same_name_lte =
+      LMap.filter
+        (fun _loc (_resolved_module_path, resolved_module) ->
+          Location_ordered.compare (Uid.to_location resolved_module) loc <= 0
+          && String.equal (Uid.to_name resolved_module) name)
+        m_alias
+    in
+    Option.map ~f:snd @@ LMap.max_binding_opt same_name_lte
+  in
+  let patch_resolve_mod_name path =
+    let module_path = get_module_path path in
+    match
+      let%bind.Option uid = List.last module_path in
+      find_uid uid
+    with
+    | None -> path
+    | Some (resolved_module_path, resolved_module) ->
+      Resolved_path { module_path; resolved_module_path; resolved_module }
+  in
+  let patch_implementation = function
+    | Ad_hoc_signature defs -> Ad_hoc_signature (patch m_alias defs)
+    | Standalone_signature_or_module path ->
+      Standalone_signature_or_module (patch_resolve_mod_name path)
+  in
+  let patch_extension = patch_resolve_mod_name in
+  List.map ~f:(function
       | Module m ->
         let patch_mod_case = function
           | Def defs -> Def (patch m_alias defs)
-          | Alias { resolve_mod_name; file_name } ->
-            Alias
-              { resolve_mod_name = patch_resolve_mod_name m m_alias resolve_mod_name
-              ; file_name
-              }
-        in
-        let patch_implementation = function
-          | Ad_hoc_signature defs -> Ad_hoc_signature (patch m_alias defs)
-          | Standalone_signature_or_module path ->
-            Standalone_signature_or_module (patch_resolve_mod_name m m_alias path)
+          | Alias { resolve_mod_name; file_name } as alias ->
+            (match LMap.find_opt m.range m_alias with
+            | None -> alias
+            | Some (resolved_module_path, resolved_module) ->
+              Alias
+                { resolve_mod_name =
+                    Resolved_path
+                      { module_path = get_module_path resolve_mod_name
+                      ; resolved_module_path
+                      ; resolved_module
+                      }
+                ; file_name
+                })
         in
         Module
           { m with
             mod_case = patch_mod_case m.mod_case
           ; implements = List.map ~f:patch_implementation m.implements
+          ; extends = List.map ~f:patch_extension m.extends
           }
-      | Variable _ | Type _ -> def)
+      | (Variable _ | Type _) as def -> def)

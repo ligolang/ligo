@@ -116,19 +116,24 @@ let resolve_mod_name : resolve_mod_name Fmt.t =
 
 
 let rec mdef : Format.formatter -> mdef -> unit =
- fun ppf { mod_case = mod_case'; references; implements; _ } ->
+ fun ppf { mod_case = mod_case'; references; implements; extends; _ } ->
   let pp_implements ppf =
     List.iter ~f:(Format.fprintf ppf "Implements: %a\n" implementation)
   in
+  let pp_extends ppf =
+    List.iter ~f:(Format.fprintf ppf "Extends: %a\n" resolve_mod_name)
+  in
   Format.fprintf
     ppf
-    "%a @ %a @ %a @ "
+    "%a @ %a @ %a @ %a @ "
     mod_case
     mod_case'
     refs
     references
     pp_implements
     implements
+    pp_extends
+    extends
 
 
 and implementation : Format.formatter -> implementation -> unit =
@@ -272,6 +277,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; signature = _
         ; attributes = _
         ; implements = _
+        ; extends = _
         ; mdef_type = _
         } ->
       let def =
