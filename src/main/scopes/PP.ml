@@ -89,41 +89,30 @@ let tdef : Format.formatter -> tdef -> unit =
   Format.fprintf ppf ": |%a|@ %a" pp_content content refs references
 
 
-let rec path : 'mvar Fmt.t -> 'mvar list Fmt.t =
- fun mvar ppf -> function
+let rec path : Uid.t list Fmt.t =
+ fun ppf -> function
   | [] -> ()
-  | [ m ] -> mvar ppf m
-  | m :: ms -> Format.fprintf ppf "%a.%a" mvar m (path mvar) ms
+  | [ m ] -> Uid.pp ppf m
+  | m :: ms -> Format.fprintf ppf "%a.%a" Uid.pp m path ms
 
 
-let resolve_mod_name (type mvar) : mvar Fmt.t -> mvar resolve_mod_name Fmt.t =
- fun mvar ppf -> function
+let resolve_mod_name : resolve_mod_name Fmt.t =
+ fun ppf -> function
   | Unresolved_path { module_path } ->
-    Format.fprintf ppf "%a (unresolved)" (path mvar) module_path
+    Format.fprintf ppf "%a (unresolved)" path module_path
   | Resolved_path { module_path; resolved_module_path; resolved_module } ->
     if Option.equal Uid.equal (List.last resolved_module_path) (Some resolved_module)
-    then
-      Format.fprintf
-        ppf
-        "%a (-> %a)"
-        (path mvar)
-        module_path
-        (path Uid.pp)
-        resolved_module_path
+    then Format.fprintf ppf "%a (-> %a)" path module_path path resolved_module_path
     else
       Format.fprintf
         ppf
         "%a (%a -> %a)"
-        (path mvar)
+        path
         module_path
-        (path Uid.pp)
+        path
         resolved_module_path
         Uid.pp
         resolved_module
-
-
-let string_path : string resolve_mod_name Fmt.t =
-  resolve_mod_name (fun ppf -> Format.fprintf ppf "%s")
 
 
 let rec mdef : Format.formatter -> mdef -> unit =
@@ -146,12 +135,12 @@ and implementation : Format.formatter -> implementation -> unit =
  fun ppf -> function
   | Ad_hoc_signature d -> Format.fprintf ppf "Ad hoc: %a" definitions d
   | Standalone_signature_or_module path ->
-    Format.fprintf ppf "Standalone: %a" string_path path
+    Format.fprintf ppf "Standalone: %a" resolve_mod_name path
 
 
 and mod_case : Format.formatter -> mod_case -> unit =
  fun ppf -> function
-  | Alias { resolve_mod_name = path; file_name = _ } -> resolve_mod_name Uid.pp ppf path
+  | Alias { resolve_mod_name = path; file_name = _ } -> resolve_mod_name ppf path
   | Def d -> Format.fprintf ppf "Members: %a" definitions d
 
 

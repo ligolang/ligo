@@ -118,20 +118,20 @@ module Mod_graph = Graph.Make (Mod_identifier)
 module Mod_map = Caml.Map.Make (Mod_identifier)
 
 let try_to_resolve_path
-    :  Scopes.Types.mdef list -> string Scopes.Types.resolve_mod_name
-    -> Scopes.Uid.t option
+    : Scopes.Types.mdef list -> Scopes.Types.resolve_mod_name -> Scopes.Uid.t option
   =
  fun mdefs -> function
   | Scopes.Types.Unresolved_path { module_path } ->
-    let%map.Option mdef = find_module_by_string_path module_path mdefs in
+    let%map.Option mdef =
+      find_module_by_string_path (List.map ~f:Scopes.Uid.to_name module_path) mdefs
+    in
     mdef.uid
   | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
     Some resolved_module
 
 
 let path_to_identifier
-    :  Scopes.Types.mdef list -> string Scopes.Types.resolve_mod_name
-    -> Mod_identifier.t option
+    : Scopes.Types.mdef list -> Scopes.Types.resolve_mod_name -> Mod_identifier.t option
   =
  fun mdefs ->
   Option.map ~f:(fun path -> Mod_identifier.Standalone_signature_or_module path)
@@ -151,17 +151,6 @@ let mod_case_to_implementation : Scopes.Types.mod_case -> Scopes.Types.implement
   = function
   | Def defs -> Ad_hoc_signature defs
   | Alias { resolve_mod_name; file_name = _ } ->
-    let resolve_mod_name : string Scopes.Types.resolve_mod_name =
-      match resolve_mod_name with
-      | Unresolved_path { module_path } ->
-        Unresolved_path { module_path = List.map module_path ~f:Scopes.Uid.to_name }
-      | Resolved_path { module_path; resolved_module_path; resolved_module } ->
-        Resolved_path
-          { module_path = List.map module_path ~f:Scopes.Uid.to_name
-          ; resolved_module_path
-          ; resolved_module
-          }
-    in
     Standalone_signature_or_module resolve_mod_name
 
 
@@ -171,7 +160,7 @@ let mdef_to_implementation : Scopes.Types.mdef -> Scopes.Types.implementation =
   | Ad_hoc_signature _ ->
     Standalone_signature_or_module
       (Resolved_path
-         { module_path = List.map (mdef.mod_path @ [ mdef.uid ]) ~f:Scopes.Uid.to_name
+         { module_path = mdef.mod_path @ [ mdef.uid ]
          ; resolved_module_path = mdef.mod_path
          ; resolved_module = mdef.uid
          })
@@ -337,7 +326,8 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
         Option.to_list
         @@
         match path with
-        | Unresolved_path { module_path } -> find_module_by_string_path module_path mdefs
+        | Unresolved_path { module_path } ->
+          find_module_by_string_path (List.map ~f:Scopes.Uid.to_name module_path) mdefs
         | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
           List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal mdef.uid resolved_module)
       in

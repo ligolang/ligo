@@ -302,8 +302,8 @@ let declarations : AST.declaration list -> t * env =
   declarations decls m_alias env
 
 
-let patch_resolve_mod_name (type mvar) (m : Types.mdef) (m_alias : t)
-    : mvar Types.resolve_mod_name -> mvar Types.resolve_mod_name
+let patch_resolve_mod_name (m : Types.mdef) (m_alias : t)
+    : Types.resolve_mod_name -> Types.resolve_mod_name
   =
   match LMap.find_opt m.range m_alias with
   | None -> Fn.id

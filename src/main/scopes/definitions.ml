@@ -351,15 +351,15 @@ module Of_Ast = struct
     | E_while { cond; body } -> self cond @@ self body acc
 
 
-  and unresolved_string_path : Module_var.t list -> string resolve_mod_name =
+  and unresolved_path : Module_var.t list -> resolve_mod_name =
    fun mvars ->
-    let module_path = List.map ~f:(Format.asprintf "%a" Module_var.pp) mvars in
+    let module_path = List.map ~f:mvar_to_id mvars in
     (* The resolved path and name will be filled later. *)
     Unresolved_path { module_path }
 
 
   and standalone_mvars : Module_var.t list -> implementation =
-   fun mvars -> Standalone_signature_or_module (unresolved_string_path mvars)
+   fun mvars -> Standalone_signature_or_module (unresolved_path mvars)
 
 
   and alias_of_mvars : string SMap.t -> Module_var.t list -> alias =
