@@ -71,7 +71,7 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
       , "baker_hash" )]
 
 
-let ez_t_sum ~loc ?layout lst =
+let ez_t_sum ~loc ?layout ?orig_name lst =
   (* inconsistent naming conventions, but [t_sum_ez] is already taken *)
   let layout =
     match layout with
@@ -80,7 +80,7 @@ let ez_t_sum ~loc ?layout lst =
   in
   let layout = Some layout in
   let row = Row.of_alist_exn ~layout lst in
-  make_t ~loc @@ T_sum row
+  make_t ~loc @@ T_sum (row, orig_name)
 
 
 let t_sum_ez ~loc ?layout (lst : (string * type_expression) list) : type_expression =
@@ -95,7 +95,7 @@ let t_bool ~loc () : type_expression =
 
 let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
     then Some ()
@@ -105,7 +105,7 @@ let get_t_bool (t : type_expression) : unit option =
 
 let get_t_option (t : type_expression) : type_expression option =
   match t.type_content with
-  | T_sum { fields; _ } ->
+  | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
     if Set.length keys = 2 && Set.mem keys (Label "Some") && Set.mem keys (Label "None")
     then Map.find fields (Label "Some")

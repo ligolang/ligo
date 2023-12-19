@@ -446,7 +446,7 @@ end = struct
     | T_module_access { module_path; field; _ } ->
       ret
       @@ T_module_accessor { module_path = List.Ne.to_list module_path; element = field }
-    | T_sum r -> ret @@ T_sum r
+    | T_sum (r, orig_name) -> ret @@ T_sum (r, orig_name)
     | T_record r -> ret @@ T_record r
     | T_abstraction abs -> ret @@ T_abstraction abs
     | T_for_all forall -> ret @@ T_for_all forall
@@ -844,7 +844,7 @@ end = struct
            }
     | T_sum _ when is_some (I.get_t_bool ty) ->
       ret @@ T_var (O.Ty_variable.of_input_var ~loc "bool")
-    | T_sum { fields; layout = _ } when is_some (I.get_t_option ty) ->
+    | T_sum ({ fields; layout = _ }, _) when is_some (I.get_t_option ty) ->
       let constr = I.make_t ~loc (T_variable (O.Ty_variable.of_input_var ~loc "option"))
       and arg = Ligo_prim.Label.Map.find_exn fields (Label "Some") in
       ret
@@ -855,11 +855,11 @@ end = struct
                (* XXX for some reason matching on [I.get_t_option ty] transforms "int option"
                         to "a option" so we have manual matching here instead *)
            }
-    | T_sum { fields; layout } ->
+    | T_sum ({ fields; layout }, orig_name) ->
       ignore layout;
       (* TODO .. ? how ? *)
       ignore conv_row_attr;
-      ret @@ T_sum_raw (conv_fields fields)
+      ret @@ T_sum_raw (conv_fields fields, orig_name)
       (* ret @@ T_attr (attr, I.make_t ~loc @@ T_record { recc with layout = None }) *)
     | T_record row when Row.is_tuple row ->
       let t =

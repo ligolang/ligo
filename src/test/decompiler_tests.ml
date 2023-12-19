@@ -299,9 +299,12 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "disc union"
       ; code = {|type t = {a : "1"; b : int} | {a : "2"; b : bool}|}
-      ; expected =
-          (* TODO #1811 save disc union field name *)
-          {|["1", { b: int }] | ["2", { b: bool }]|}
+      ; expected = {|{ a: "1"; b: int } | { a: "2"; b: bool }|}
+      ; syntax = JsLIGO
+      }
+    ; { name = "disc union with 1 argument"
+      ; code = {|type t = { x: "C" } | { x: "B" }|}
+      ; expected = {|{ x: "B" } | { x: "C" }|}
       ; syntax = JsLIGO
       }
     ; { name = "union"

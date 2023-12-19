@@ -31,7 +31,7 @@ let compile ~raise =
     | T_named_fun (args, _) ->
       if unlinear_type String.compare (List.map args ~f:(fun x -> x.name))
       then raise.error (non_linear_type (`Ty ty))
-    | T_record_raw rows | T_sum_raw rows ->
+    | T_record_raw rows | T_sum_raw (rows, _) ->
       if unlinear_type Label.compare (List.map rows ~f:fst)
       then raise.error (non_linear_type (`Ty ty))
     | _ -> ()

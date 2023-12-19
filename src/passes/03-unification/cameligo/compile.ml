@@ -429,7 +429,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       let lst = List.map (nsepseq_to_list variants) ~f:(compile_variant <@ r_fst) in
       TODO_do_in_parsing.compile_rows lst
     in
-    ret @@ T_sum_raw sum
+    ret @@ T_sum_raw (sum, None)
   | T_Record { value; region = _ } ->
     let elements = TODO_do_in_parsing.should_be_nseq value.inside in
     let fields =

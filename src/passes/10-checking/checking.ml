@@ -91,7 +91,7 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
     const @@ T_arrow { type1; type2; param_names }
-  | T_sum row ->
+  | T_sum (row, _) ->
     let%bind row = evaluate_row ~default_layout row in
     const @@ T_sum row
   | T_record row ->

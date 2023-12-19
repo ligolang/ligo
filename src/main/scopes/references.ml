@@ -367,7 +367,7 @@ and type_expression : AST.type_expression -> references -> env -> references =
     in
     List.fold arguments ~init:refs ~f:(fun refs te -> type_expression te refs env)
   | T_singleton _ -> refs
-  | T_sum { layout = _; fields } | T_record { layout = _; fields } ->
+  | T_sum ({ layout = _; fields }, _) | T_record { layout = _; fields } ->
     Record.fold fields ~init:refs ~f:(fun refs te -> type_expression te refs env)
   | T_arrow { type1; type2; param_names = _ } ->
     let refs = type_expression type1 refs env in
