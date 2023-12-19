@@ -475,7 +475,7 @@ let rec decompile_value
     let lst = List.map ~f:(fun (x, y, z) -> x, self y z) lst in
     let m' = Record.of_list lst in
     V_Record m'
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names = _ } ->
     (* We now patch the types *)
     (* Mut flag is ignored bcs not required in the case when we patch raw code to a function *)
     let { arg_binder; arg_mut_flag = _; body; rec_name = _; orig_lambda = _; env = _ } =

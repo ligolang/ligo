@@ -1209,7 +1209,7 @@ let%expect_test _ =
                                          ^
       2 | let test =
 
-    Not an entrypoint: unit -> unit -> unit |}]
+    Not an entrypoint: [_, _]unit -> unit -> unit |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_trace.mligo" ];

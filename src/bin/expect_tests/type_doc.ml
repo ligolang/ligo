@@ -39,7 +39,7 @@ let%expect_test _ =
     /**
      * Extracts `int` value from `t<int, int>`
      */
-    export const extract_int : (_: ["A", int] | ["B", int] | ["C", int]) => int =
+    export const extract_int : (v: ["A", int] | ["B", int] | ["C", int]) => int =
     "..."
 
     /** Some storage */
@@ -53,7 +53,7 @@ let%expect_test _ =
 
     /** Doc for all 3 values */
     export const x : int = "..."
-    const process_storage : (_: storage) => bool = "..."
+    const process_storage : (_s: storage) => bool = "..."
     export type d = | ["D", int]
     export const c : int = "..."
     export const b : int = "..."
@@ -65,7 +65,7 @@ let%expect_test _ =
     export type t = int
 
     /** Doc for inner function */
-    export const add : (_: int) => (_: int) => int = "..."
+    export const add : (a: int, b: int) => int = "..."
 
     /** Doc for inner namespace */
     export namespace Inner {

@@ -445,7 +445,7 @@ let occurs_check ~tvar (type_ : Type.t) =
     match type_.content with
     | T_variable _tvar' -> ()
     | T_exists tvar' -> if Type_var.equal tvar tvar' then fail ()
-    | T_arrow { type1; type2 } ->
+    | T_arrow { type1; type2; param_names = _ } ->
       loop type1;
       loop type2
     | T_for_all { type_; _ } | T_abstraction { type_; _ } -> loop type_
@@ -514,10 +514,10 @@ let rec lift ~(mode : Mode.t) ~kind ~tvar (type_ : Type.t) : (Type.t, _, _) t =
       Context.add [ C_type_var (tvar'', kind) ] ~on_exit:Drop ~in_:(lift ~mode type_)
     in
     const @@ T_abstraction { ty_binder = tvar'; kind; type_ }
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let%bind type1 = lift ~mode:(Mode.invert mode) type1 in
     let%bind type2 = Context.tapply type2 >>= lift ~mode in
-    const @@ T_arrow { type1; type2 }
+    const @@ T_arrow { type1; type2; param_names }
   | T_sum row ->
     let%bind row = lift_row row in
     const @@ T_sum row
@@ -609,8 +609,8 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     (match List.map2 params1 params2 ~f:unify_ with
     | Ok ts -> all_unit ts
     | Unequal_lengths -> raise (assert false))
-  | T_arrow { type1 = type11; type2 = type12 }, T_arrow { type1 = type21; type2 = type22 }
-    ->
+  | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
+    , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
     let%bind () = unify type11 type21 in
     unify_ type12 type22
   | ( T_for_all { ty_binder = tvar1; kind = kind1; type_ = type1 }
@@ -658,8 +658,8 @@ let rec eq (type1 : Type.t) (type2 : Type.t) =
       let%bind ts = all ts in
       return (List.for_all ~f:Fn.id ts)
     | Unequal_lengths -> raise (assert false))
-  | T_arrow { type1 = type11; type2 = type12 }, T_arrow { type1 = type21; type2 = type22 }
-    ->
+  | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
+    , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
     let%bind b1 = eq type11 type21 in
     let%bind b2 = eq_ type12 type22 in
     return (b1 && b2)
@@ -712,8 +712,8 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
   in
   let%bind loc = loc () in
   match received.content, expected.content with
-  | T_arrow { type1 = type11; type2 = type12 }, T_arrow { type1 = type21; type2 = type22 }
-    ->
+  | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
+    , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
     let%bind f1 = subtype type21 type11 in
     let%bind type12 = Context.tapply type12 in
     let%bind type22 = Context.tapply type22 in

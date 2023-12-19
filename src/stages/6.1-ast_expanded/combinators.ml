@@ -182,8 +182,8 @@ let get_t__type__exn t =
       , "baker_hash" )]
 
 
-let t_arrow param result ~loc ?source_type () : type_expression =
-  t_arrow ~loc ?source_type { type1 = param; type2 = result } ()
+let t_arrow param result ~loc ?source_type ?(param_names = []) () : type_expression =
+  t_arrow ~loc ?source_type { type1 = param; type2 = result; param_names } ()
 
 
 let default_layout = Layout.default

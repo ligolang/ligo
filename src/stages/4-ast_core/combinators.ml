@@ -211,6 +211,12 @@ let get_e_ascription a =
   | _ -> None
 
 
+let get_e_lambda t =
+  match t with
+  | E_lambda lam -> Some lam
+  | _ -> None
+
+
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) option =
  fun e ->

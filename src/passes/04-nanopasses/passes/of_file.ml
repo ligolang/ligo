@@ -78,7 +78,7 @@ let compile ~raise =
         let ty_tgt =
           t_prod ~loc (t_constant ~loc "operation", [ t_constant ~loc "address" ])
         in
-        let ty_type_ = t_fun ~loc (ty_src, ty_tgt) in
+        let ty_type_ = t_fun ~loc ([], ty_src, ty_tgt) in
         let code = e_annot ~loc (code, ty_type_) in
         let code = e_raw_code ~loc { language = "Michelson"; code } in
         let storage = Variable.fresh ~loc ~name:"storage" () in

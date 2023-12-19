@@ -460,7 +460,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       | I.TC_Tuple tes -> nsepseq_to_nseq (r_fst tes).inside
     in
     ret @@ T_app { constr; type_args }
-  | T_Fun { value = te1, _, te2; _ } -> ret @@ T_fun (te1, te2)
+  | T_Fun { value = te1, _, te2; _ } -> ret @@ T_fun ([], te1, te2)
   | T_Par t -> ty_expr (r_fst t).inside
   | T_String v -> ret @@ T_string (w_fst v)
   | T_Int v ->

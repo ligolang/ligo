@@ -392,10 +392,10 @@ module Michelson_formatter = struct
           T_constant { injection; parameters }
         | T_sum row_expr -> T_sum (Row.With_layout.map shrink_type row_expr)
         | T_record row_expr -> T_record (Row.With_layout.map shrink_type row_expr)
-        | T_arrow { type1; type2 } ->
+        | T_arrow { type1; type2; param_names } ->
           let type1 = shrink_type type1 in
           let type2 = shrink_type type2 in
-          T_arrow { type1; type2 }
+          T_arrow { type1; type2; param_names }
         | T_singleton literal_val -> T_singleton literal_val
         | T_abstraction abstr_ty_expr -> T_abstraction abstr_ty_expr
         | T_for_all abstr_ty_expr -> T_for_all abstr_ty_expr

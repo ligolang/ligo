@@ -440,7 +440,7 @@ end = struct
              ; arguments = List.Ne.to_list type_args
              }
       | _ -> raise.error (Passes.Errors.invariant_trivial location "type"))
-    | T_fun (type1, type2) -> ret @@ T_arrow { type1; type2 }
+    | T_fun (param_names, type1, type2) -> ret @@ T_arrow { type1; type2; param_names }
     | T_string str -> ret @@ T_singleton (Literal_string (Ligo_string.standard str))
     | T_int (_, x) -> ret @@ T_singleton (Literal_int x)
     | T_module_access { module_path; field; _ } ->
@@ -830,7 +830,7 @@ end = struct
       (* TODO *)
       let constr = I.make_t ~loc (T_variable type_operator.element) in
       ret @@ T_app { constr; type_args = List.Ne.of_list arguments }
-    | T_arrow { type1; type2 } -> ret @@ T_fun (type1, type2)
+    | T_arrow { type1; type2; param_names } -> ret @@ T_fun (param_names, type1, type2)
     | T_singleton (Literal_string x) -> ret @@ T_string (Ligo_string.extract x)
     | T_singleton (Literal_int x) -> ret @@ T_int (Z.to_string x, x)
     | T_singleton _ ->

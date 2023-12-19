@@ -1,1 +1,2 @@
-type 'ty t = 'ty * 'ty [@@deriving yojson, map, fold, iter, sexp, eq, compare, hash]
+type 'ty t = string list * 'ty * 'ty
+[@@deriving yojson, map, fold, iter, sexp, eq, compare, hash]

@@ -40,7 +40,7 @@ let%expect_test _ =
       2 | let g (x, y : int * int) : int = f (x, y)
 
     Invalid type(s)
-    Cannot unify "( int * int ) -> int" with "int". |}];
+    Cannot unify "[_]( int * int ) -> int" with "int". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"

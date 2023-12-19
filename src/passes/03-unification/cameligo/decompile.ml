@@ -328,7 +328,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_arg s -> T_Arg (w (Some ghost_quote, CST.Var (ghost_ident s)))
   | T_var t -> decompile_tvar t
   | T_var_esc t -> decompile_tvar_esc t
-  | T_fun (t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
+  | T_fun (_param_names, t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
   | T_prod (first, rest) ->
     (match Utils.list_to_sepseq rest ghost_times with
     | Some nsepseq -> T_Cart (w (first, ghost_times, nsepseq))

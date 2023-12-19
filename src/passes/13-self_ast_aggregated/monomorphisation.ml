@@ -182,10 +182,10 @@ let apply_table_expr table (expr : AST.expression) =
 let rec subst_external_type et t (u : AST.type_expression) =
   let self = subst_external_type in
   match u.type_content with
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = self et t type1 in
     let type2 = self et t type2 in
-    { u with type_content = T_arrow { type1; type2 } }
+    { u with type_content = T_arrow { type1; type2; param_names } }
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = self et t type_ in
     { u with type_content = T_for_all { ty_binder; kind; type_ } }

@@ -375,7 +375,7 @@ let e_bool ~loc b =
 let t_fun_of_list ~loc (lst : ty_expr list) =
   match List.rev lst with
   | [] -> assert false
-  | hd :: tl -> List.fold tl ~init:hd ~f:(fun acc t -> t_fun ~loc (t, acc))
+  | hd :: tl -> List.fold tl ~init:hd ~f:(fun acc t -> t_fun ~loc ([], t, acc))
 
 
 let e_type_abstract_ez ty_params init =
@@ -447,3 +447,30 @@ let expr_of_pattern_opt (p : pattern) : expr option =
     map_pattern_ (fold_pattern ~f) Fun.id x.fp |> f
   in
   fold_pattern ~f:fp p
+
+
+let inject_param_names (param_names : string list) ({ fp } : ty_expr) : ty_expr =
+  match fp.wrap_content with
+  | T_fun (_, ty1, ty2) -> t_fun ~loc:fp.location (param_names, ty1, ty2)
+  | _ -> { fp }
+
+
+let rec extract_arguments_from_arrows (depth : int) (ty : ty_expr)
+    : ty_expr list * ty_expr
+  =
+  if depth <= 0
+  then [], ty
+  else (
+    match ty.fp.wrap_content with
+    | T_named_fun ([ { name = _; type_expr = lhs } ], rhs) ->
+      let params, ret = extract_arguments_from_arrows (depth - 1) rhs in
+      lhs :: params, ret
+    | _ -> [], ty)
+
+
+let set_initial_arg (lambda : expr) : expr =
+  match lambda.fp.wrap_content with
+  | E_lambda lam ->
+    let lam = { lam with binder = Ligo_prim.Param.set_initial_arg lam.binder } in
+    e_lambda ~loc:lambda.fp.location lam
+  | _ -> lambda

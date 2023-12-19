@@ -836,7 +836,7 @@ and make_ast_func ~raise ?name env mut_flag arg body orig =
   let loc = Location.interpreter in
   let env = make_subst_ast_env_exp ~raise env in
   let typed_exp' = add_ast_env ?name env arg body in
-  let Ligo_prim.Arrow.{ type1 = in_ty; type2 = out_ty } =
+  let Ligo_prim.Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
     get_t_arrow_exn orig.type_expression
   in
   let lambda =
@@ -1438,7 +1438,7 @@ let rec compile_value ~raise ~options ~loc
       let open Ast_aggregated in
       let%map env = make_subst_ast_env_exp ~raise env in
       let typed_exp' = add_ast_env ?name env arg body in
-      let Ligo_prim.Arrow.{ type1 = in_ty; type2 = out_ty } =
+      let Ligo_prim.Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
         get_t_arrow_exn orig.type_expression
       in
       let lambda =
