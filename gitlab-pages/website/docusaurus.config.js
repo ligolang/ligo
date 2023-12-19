@@ -168,6 +168,11 @@ const config = {
                 href: "https://gitlab.com/ligolang/ligo/-/issues",
                 rel: "noopener noreferrer nofollow",
               },
+              {
+                label: "Bounties",
+                href: "https://bounties.ligolang.org",
+                rel: "noopener noreferrer nofollow",
+              },
             ],
           },
         ],
