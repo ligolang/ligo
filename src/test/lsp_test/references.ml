@@ -111,6 +111,14 @@ let test_cases =
           "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
           [ interval 1 7 8; interval 2 12 13; interval 6 7 8; interval 11 7 8 ]
     }
+  ; { test_name = "signature and include"
+    ; test_file = "contracts/lsp/go_to_implementations/signature_and_include.mligo"
+    ; reference = Position.create ~line:12 ~character:11
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/signature_and_include.mligo"
+          [ interval 1 6 7; interval 7 10 11; interval 12 10 11 ]
+    }
   ]
 
 
