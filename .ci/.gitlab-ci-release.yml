@@ -109,6 +109,39 @@ determine_new_stable_version:
     - STABLE_VERSION=$(jq '.[1]' gitlab-pages/website/versions.json | tr -d '"')
     - echo "STABLE_VERSION=${STABLE_VERSION}" >> stableversion.env
 
+
+docker-m1:
+  stage: build
+  variables:
+    GIT_STRATEGY: clone
+  tags:
+    - mac
+    - m1
+  needs:
+    - job: changelog
+      artifacts: true
+  script:
+    - git submodule update --init --recursive # because of a gitlab caching issue
+    - VERSION=$(./scripts/version.sh)
+    - LIGO_DOCKER_SKIPTEST="true" .ci/scripts/pipeline_optimization/mr_dockerfile_pre_process.sh
+    - DOCKER_BUILDKIT=1 docker build .
+      --build-arg=ligo_version="$VERSION"
+      --target ligo-builder
+      -t ${LIGO_IMAGE_TAG}-builder
+    - DOCKER_BUILDKIT=1 docker build .
+      --build-arg=ligo_version="$VERSION"
+      -t ${LIGO_IMAGE_TAG} --target ligo
+    - docker cp $(docker create ${LIGO_IMAGE_TAG}):/root/ligo ./ligo_arm64_unix
+  after_script:
+    - docker image rm -f "${LIGO_IMAGE_TAG}-builder" >/dev/null 2>&1 || true
+    - docker image rm -f "${LIGO_IMAGE_TAG}" >/dev/null 2>&1 || true
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when: always
+  artifacts:
+    paths:
+        - ligo_arm64_unix
+
 release:
   stage: push
   image: registry.gitlab.com/gitlab-org/release-cli
@@ -121,6 +154,7 @@ release:
     - docker_extract
     - changelog
     - initialize-git
+    - docker-m1
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -128,6 +162,7 @@ release:
       - ligo
       - ligo.deb
       - highlighting
+      - ligo_arm64_unix
     reports:
       dotenv: releaseCiJobId.env
   script:
@@ -138,6 +173,7 @@ release:
           --description "$(cat release-notes.md)" \
           --assets-link '{"name": "Static Linux binary", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo"}' \
           --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}' \
+          --assets-link '{"name": "ligo ARM64 Unix", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo_arm64_unix"}' \
           --assets-link '{"name": "jsligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/jsligo.configuration.json"}' \
           --assets-link '{"name": "jsligo highlighting", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/jsligo.tmLanguage.json"}' \
           --assets-link '{"name": "mligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/mligo.configuration.json"}' \

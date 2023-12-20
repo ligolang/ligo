@@ -47,20 +47,27 @@ COPY scripts/version.sh /ligo/scripts/version.sh
 
 COPY tools/ligo-syntax-highlighting ligo-syntax-highlighting
 
+# Tests
+##################
+# Code between TAG_REMOVE_IN_CASE_OF_SKIPTEST will be removed in case of skip test.
+# Useful if the package is build but have already been tested
+##################
+### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
 # Run tests
 RUN opam exec -- dune runtest --profile static --no-buffer \
 # Coverage (only the overall)
   && find . -name '*.coverage' | xargs rm -f \
-  && opam exec -- dune clean \
-  && mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode highlighting/textmate \
-  # Generate syntax highlighting files
-  && opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
+  && opam exec -- dune clean
+### TAG_REMOVE_IN_CASE_OF_SKIPTEST ###
 
+# Generate syntax highlighting files
+RUN mkdir highlighting highlighting/vim highlighting/emacs highlighting/vscode highlighting/textmate \
+  && opam exec -- dune exec ligo-syntax-highlighting/LigoSyntaxHighlighting.exe -- --vim=highlighting/vim --emacs=highlighting/emacs --vscode=highlighting/vscode --textmate=highlighting/textmate
 
 COPY changelog.txt /ligo/changelog.txt
 ENV CHANGELOG_PATH=/ligo/changelog.txt
 
-# Version info and changelog
+# Version info
 ##################
 # Code between TAG_REMOVE_IN_CASE_OF_MR is used for the ligo changelog command. It's useful 
 # to trace the used version in case of debugging or usage of next tag. But it'll create divergence on cache for each commit.
