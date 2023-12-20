@@ -1,6 +1,24 @@
 module PP_helpers = Simple_utils.PP_helpers
 open Types
 
+let resolve_case
+    :  'core_expr Fmt.t -> 'typed_expr Fmt.t
+    -> ('core_expr, 'typed_expr) resolve_case Fmt.t
+  =
+ fun pp_core pp_typed ppf -> function
+  | Core core -> Format.fprintf ppf "core: %a" pp_core core
+  | Resolved typed -> Format.fprintf ppf "resolved: %a" pp_typed typed
+  | Unresolved -> Format.fprintf ppf "unresolved"
+
+
+let type_case : type_case Fmt.t =
+  resolve_case Ast_core.PP.type_expression Ast_typed.PP.type_expression
+
+
+let signature_case : signature_case Fmt.t =
+  resolve_case Ast_core.PP.signature Ast_typed.PP.signature
+
+
 let scopes : Format.formatter -> scopes -> unit =
  fun f s ->
   let pp_scope f (scope : scope) =
@@ -49,16 +67,10 @@ let rec definitions : Format.formatter -> def list -> unit =
   in
   let pp_content ppf = function
     | Variable v ->
-      let typ ppf t =
-        match t with
-        | Core t -> Format.fprintf ppf "core: %a" Ast_core.PP.type_expression t
-        | Resolved t -> Format.fprintf ppf "resolved: %a" Ast_typed.PP.type_expression t
-        | Unresolved -> Format.fprintf ppf "unresolved"
-      in
       Format.fprintf
         ppf
         "|%a|@ %a @ Mod Path = %a @ Def Type = %a"
-        typ
+        type_case
         v.t
         refs
         v.references
