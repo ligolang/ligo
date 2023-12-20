@@ -1,7 +1,7 @@
 type 'a t =
   { type1 : 'a
   ; type2 : 'a
-  ; param_names : string list
+  ; param_names : string list [@eq.ignore] [@hash.ignore] [@compare.ignore]
   }
 [@@deriving eq, compare, yojson, hash, fold, map, sexp]
 
