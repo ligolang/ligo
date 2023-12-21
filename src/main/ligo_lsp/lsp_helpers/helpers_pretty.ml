@@ -43,9 +43,11 @@ let unresolved_type_as_comment syntax =
 
 type module_pp_mode =
   { module_keyword : string
+  ; signature_keyword : string
   ; import_keyword : string
-  ; sign_on_signature : string
-  ; sign_on_import : string option
+  ; module_annotation_sign : string
+  ; signature_annotation_sign : string option
+  ; sign_on_import : string
   ; open_ : string
   ; close : string
   ; semicolon_at_the_end : bool
@@ -53,9 +55,11 @@ type module_pp_mode =
 
 let cameligo_module =
   { module_keyword = "module"
+  ; signature_keyword = "module type"
   ; import_keyword = "module"
-  ; sign_on_signature = ":"
-  ; sign_on_import = Some "="
+  ; module_annotation_sign = ":"
+  ; signature_annotation_sign = Some "="
+  ; sign_on_import = "="
   ; open_ = "struct"
   ; close = "end"
   ; semicolon_at_the_end = false
@@ -64,9 +68,11 @@ let cameligo_module =
 
 let jsligo_module =
   { module_keyword = "namespace"
+  ; signature_keyword = "interface"
   ; import_keyword = "import"
-  ; sign_on_signature = "implements"
-  ; sign_on_import = Some "="
+  ; module_annotation_sign = "implements"
+  ; signature_annotation_sign = None
+  ; sign_on_import = "="
   ; open_ = "{"
   ; close = "}"
   ; semicolon_at_the_end = true
@@ -84,16 +90,27 @@ let print_module_with_description
   match mdef.mod_case with
   | Def _ ->
     let value =
-      description.module_keyword
-      ^ " "
-      ^ Format.asprintf "%a" (Scopes.PP.mod_name project_root) mdef.name
-      ^ " "
-      ^ description.sign_on_signature
-      ^ " "
-      ^ signature
+      match mdef.mdef_type with
+      | Module ->
+        Format.asprintf
+          "%s %a %s %s"
+          description.module_keyword
+          (Scopes.PP.mod_name project_root)
+          mdef.name
+          description.module_annotation_sign
+          signature
+      | Signature ->
+        Format.asprintf
+          "%s %a %a%s"
+          description.signature_keyword
+          (Scopes.PP.mod_name project_root)
+          mdef.name
+          (fun ppf -> Option.value_map ~default:() ~f:(Format.fprintf ppf "%s "))
+          description.signature_annotation_sign
+          signature
     in
     MarkedString.{ language; value }
-  | Alias { module_path; file_name; resolved_module = _ } ->
+  | Alias { resolve_mod_name; file_name } ->
     (match file_name with
     | Some file_name ->
       let value =
@@ -109,20 +126,21 @@ let print_module_with_description
       let alias_rhs =
         Option.value_map
           ~default:
-            (module_path |> List.map ~f:Scopes.Types.Uid.to_name |> String.concat ~sep:".")
+            (Scopes.Types.get_module_path resolve_mod_name
+            |> List.map ~f:Scopes.Types.Uid.to_name
+            |> String.concat ~sep:".")
           ~f:(fun file_name ->
             Format.asprintf "%a" (Scopes.PP.mod_name project_root) (Filename file_name))
           file_name
       in
       let value =
-        description.import_keyword
-        ^ " "
-        ^ Format.asprintf "%a" (Scopes.PP.mod_name project_root) mdef.name
-        ^ Option.value_map
-            ~default:" "
-            ~f:(fun s -> " " ^ s ^ " ")
-            description.sign_on_import
-        ^ alias_rhs
+        Format.asprintf
+          "%s %a %s %s"
+          description.import_keyword
+          (Scopes.PP.mod_name project_root)
+          mdef.name
+          description.sign_on_import
+          alias_rhs
       in
       MarkedString.{ language; value })
 

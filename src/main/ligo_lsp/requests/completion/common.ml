@@ -67,7 +67,7 @@ let defs_to_completion_items
     : CompletionItem.t list
   =
   List.map defs ~f:(fun def ->
-      let name = Def.get_name def in
+      let name = Scopes.Types.get_def_name def in
       let same_file = Option.map (Def.get_path def) ~f:(Path.equal path) in
       let sortText = completion_context_priority ?same_file context in
       let kind, detail =

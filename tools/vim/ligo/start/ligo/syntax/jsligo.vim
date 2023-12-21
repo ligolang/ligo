@@ -136,7 +136,7 @@ syntax match controlkeywords "\<\(switch\|if\|else\|for\|of\|while\|return\|brea
 highlight link controlkeywords Conditional 
 
 " keywords
-syntax match keywords "\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|false\|true\)\>" 
+syntax match keywords "\<\(export\|import\|from\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|extends\|false\|true\)\>" 
 highlight link keywords Keyword 
 
 " letbinding

@@ -13,9 +13,10 @@ let on_req_rename : string -> Position.t -> Path.t -> WorkspaceEdit.t Handler.t 
   let@ value =
     when_some' (Def.get_definition pos file definitions)
     @@ fun definition ->
+    let locations = References.get_all_linked_locations_or_def definition definitions in
     let references =
       References.get_all_references_grouped_by_file
-        (Def.get_location definition)
+        (Sequence.of_list locations)
         get_scope_buffers
     in
     let changes =

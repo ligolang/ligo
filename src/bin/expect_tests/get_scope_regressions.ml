@@ -261,8 +261,10 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 17-18
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-16
+
 
     (C#8:7-8 -> C)
     Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 8, characters 7-8
@@ -280,9 +282,10 @@ let%expect_test _ =
                       (D#9:11-12 -> D)
                       Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 11-12
                       Body Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-18
-                      Content: Alias: A#2:7-8.B#3:11-12
+                      Content: A#9:15-16.B#9:17-18 (-> A#2:7-8.B#3:11-12)
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-16
+
 
 
     references: [] |}]
@@ -348,21 +351,24 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 17-18
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12 ,
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-16
 
+
     (D#8:7-8 -> D)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12
-    Content: Alias: A#1:7-8
+    Content: A#8:11-12 (-> A#1:7-8)
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-12
+
 
     (E#11:11-12 -> E)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-18
-    Content: Alias: A#1:7-8.C#3:11-12
+    Content: A#11:15-16.C#11:17-18 (-> A#1:7-8.C#3:11-12)
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-5 |}]
 
@@ -419,8 +425,10 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 21-22
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-20
+
 
     (E#7:11-12 -> E)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 7, characters 11-12
@@ -439,9 +447,10 @@ let%expect_test _ =
                       (F#8:15-16 -> F)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 15-16
                       Body Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-22
-                      Content: Alias: A#2:11-12.C#3:15-16
+                      Content: A#8:19-20.C#8:21-22 (-> A#2:11-12.C#3:15-16)
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-20
+
 
 
     references:

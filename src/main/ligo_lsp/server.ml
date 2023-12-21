@@ -163,8 +163,14 @@ class lsp_server (capability_mode : capability_mode) =
     method config_range_formatting =
       Some (`Bool (self#is_request_enabled "textDocument/rangeFormatting"))
 
+    method config_declaration =
+      Some (`Bool (self#is_request_enabled "textDocument/declaration"))
+
     method! config_definition =
       Some (`Bool (self#is_request_enabled "textDocument/definition"))
+
+    method config_implementation =
+      Some (`Bool (self#is_request_enabled "textDocument/implementation"))
 
     method config_document_link_provider =
       if self#is_request_enabled "textDocument/documentLink"
@@ -225,6 +231,8 @@ class lsp_server (capability_mode : capability_mode) =
         hoverProvider = self#config_hover
       ; documentFormattingProvider = self#config_formatting
       ; definitionProvider = self#config_definition
+      ; declarationProvider = self#config_declaration
+      ; implementationProvider = self#config_implementation
       ; renameProvider = self#config_rename
       ; referencesProvider = self#config_references
       ; typeDefinitionProvider = self#config_type_definition
@@ -367,7 +375,7 @@ class lsp_server (capability_mode : capability_mode) =
                   -> r IO.t =
       fun ~notify_back ~server_request ~id (r : r Client_request.t) ->
         let run
-            ~(allowed_modes : capability_mode list)
+            ?(allowed_modes : capability_mode list = default_modes)
             ~(uri : DocumentUri.t)
             ~(default : r)
             (handler : r Handler.t)
@@ -415,49 +423,57 @@ class lsp_server (capability_mode : capability_mode) =
         match r with
         | Client_request.TextDocumentFormatting { textDocument; options; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_formatting (DocumentUri.to_path uri) options
+        | Client_request.TextDocumentDeclaration { textDocument; position; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_declaration position (DocumentUri.to_path uri)
         | Client_request.TextDocumentDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_definition position (DocumentUri.to_path uri)
+        | Client_request.TextDocumentImplementation { textDocument; position; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_implementation position (DocumentUri.to_path uri)
         | Client_request.TextDocumentHover { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_hover position (DocumentUri.to_path uri)
         | Client_request.TextDocumentPrepareRename { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_prepare_rename position (DocumentUri.to_path uri)
         | Client_request.TextDocumentRename { newName; position; textDocument; _ } ->
           let default = WorkspaceEdit.create () in
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default
+          run ~uri ~default
           @@ Requests.on_req_rename newName position (DocumentUri.to_path uri)
         | Client_request.TextDocumentReferences { position; textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_references position (DocumentUri.to_path uri)
         | Client_request.TextDocumentTypeDefinition { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_type_definition position (DocumentUri.to_path uri)
         | Client_request.TextDocumentLink { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_document_link (DocumentUri.to_path uri)
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_folding_range (DocumentUri.to_path uri)
         | Client_request.TextDocumentRangeFormatting { range; textDocument; options; _ }
           ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_range_formatting (DocumentUri.to_path uri) range options
         | Client_request.TextDocumentCompletion { textDocument; position; _ } ->
           let uri = textDocument.uri in
-          run ~allowed_modes:default_modes ~uri ~default:None
+          run ~uri ~default:None
           @@ Requests.on_req_completion position (DocumentUri.to_path uri)
         | Client_request.UnknownRequest { meth = "DebugEcho"; _ } ->
           (* Used in tools/lsp-bench *)
