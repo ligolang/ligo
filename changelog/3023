@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Fixed a bug with wrong hovers for named functions and discriminated union types in JsLIGO.\\n\\n\\n"
+merge_request: '3023'
+title: "[#1811] Preserve more info for types decompilation in JsLIGO"
+type: fixed
+            
