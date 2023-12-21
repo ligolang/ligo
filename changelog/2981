@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nMade various improvements to signatures and interfaces in the language server:\\n\\nChanged \"go to definition\" to try to find the signatures/interfaces that define some module element.Implemented \"go to implementations\" to try to find the modules/namespaces that implement some signature item.Also added support to look for implementations from signature names themselves.Implemented \"go to declaration\" to point to where a variable was originally defined (mimics the original \"go to definition\" behavior before this patch).Fixed hovers to properly distinguish between modules/namespaces and signatures/interfaces.Fixed \"find references\" (and \"rename\") to include signature items.[VSCode/Vim/Emacs extensions] Fixed syntax highlighting for signatures and interfaces.\\n"
+merge_request: '2981'
+title: "[#2056] Better signature items support"
+type: added
+            
