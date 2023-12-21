@@ -315,7 +315,7 @@ let%expect_test _ =
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     Cannot monomorphise the expression.
-    The inferred type was "unit -> ∀ a . option (nat) -> option (a)".
+    The inferred type was "[_]unit -> ∀ a . [_]option (nat) -> option (a)".
     Hint: Try adding additional annotations. |}]
 
 let%expect_test _ =
@@ -452,7 +452,7 @@ let%expect_test _ =
       2 |
 
     Cannot monomorphise the expression.
-    The inferred type was "unit -> ∀ a . ∀ b . a -> ( list (b) * a )".
+    The inferred type was "[_]unit -> ∀ a . ∀ b . [s]a -> ( list (b) * a )".
     Hint: Try adding additional annotations. |}]
 
 let%expect_test _ =

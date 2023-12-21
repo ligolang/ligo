@@ -1154,7 +1154,7 @@ end = struct
         then return Type
         else None
       | T_singleton _ -> return Singleton
-      | T_arrow { type1 = arg_type; type2 = ret_type } ->
+      | T_arrow { type1 = arg_type; type2 = ret_type; param_names = _ } ->
         let%bind arg_kind = loop arg_type in
         let%bind ret_kind = loop ret_type in
         (match arg_kind, ret_kind with

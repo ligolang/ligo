@@ -17,7 +17,7 @@ let%expect_test _ =
      16 |     (a 1) + (fo b)
 
     Invalid type(s)
-    Cannot unify "int -> int" with "optioni". |}]
+    Cannot unify "[b]int -> int" with "optioni". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =

@@ -729,13 +729,13 @@ let test_cases_jsligo =
         [ CompletionItem.create
             ~label:"add"
             ~kind:CompletionItemKind.Variable
-            ~detail:"(_: int) => (_: int) => storage"
+            ~detail:"(a: int, b: int) => storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create
             ~label:"sub"
             ~kind:CompletionItemKind.Variable
-            ~detail:"(_: int) => (_: int) => storage"
+            ~detail:"(a: int, b: int) => storage"
             ~sortText:"\x05"
             ()
         ; CompletionItem.create

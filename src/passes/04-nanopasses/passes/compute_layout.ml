@@ -91,7 +91,8 @@ module Normalize_layout = struct
             | _ -> false)
           ~f:(fun layout_attr_opt ty ->
             match get_t ty with
-            | T_sum_raw row -> t_sum ~loc (compile_row_sum ~loc layout_attr_opt row)
+            | T_sum_raw (row, orig_name) ->
+              t_sum ~loc (compile_row_sum ~loc layout_attr_opt row) orig_name
             | T_record_raw row ->
               t_record ~loc (compile_row_record ~loc layout_attr_opt row)
             | _ -> ty)
@@ -114,7 +115,7 @@ module Normalize_no_layout = struct
      fun t ->
       let loc = Location.get_location t in
       match Location.unwrap t with
-      | T_sum_raw row -> t_sum ~loc (compile_row_sum ~loc None row)
+      | T_sum_raw (row, orig_name) -> t_sum ~loc (compile_row_sum ~loc None row) orig_name
       | T_record_raw row -> t_record ~loc (compile_row_record ~loc None row)
       | t -> make_t ~loc t
     in

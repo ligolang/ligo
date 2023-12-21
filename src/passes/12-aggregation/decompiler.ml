@@ -112,10 +112,10 @@ and decompile_type : I.type_expression -> O.type_expression =
   | T_record { fields; layout } ->
     let fields = Record.map ~f:decompile_type fields in
     return (O.T_record { fields; layout })
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = decompile_type type1 in
     let type2 = decompile_type type2 in
-    return (O.T_arrow { type1; type2 })
+    return (O.T_arrow { type1; type2; param_names })
   | T_singleton l -> return (O.T_singleton l)
   | T_for_all { ty_binder; kind; type_ } ->
     let type_ = decompile_type type_ in

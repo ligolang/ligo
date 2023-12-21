@@ -240,25 +240,56 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "fun"
       ; code = "type t = (a: option<int>) => int"
-      ; expected = (* TODO #1811 save arg names *)
-                   "(_: option<int>) => int"
+      ; expected = "(a: option<int>) => int"
       ; syntax = JsLIGO
       }
     ; { name = "fun (inferred)"
       ; code = "let x = a => a + 1"
-      ; expected = "(_: int) => int" (* TODO #1811 *)
+      ; expected = "(a: int) => int"
       ; syntax = JsLIGO
       }
     ; { name = "nested fun (inferred)"
       ; code = "let x = a => b => a + b + 1"
-      ; expected = "(_: int) => (_: int) => int" (* TODO #1811 *)
+      ; expected = "(a: int) => (b: int) => int"
+      ; syntax = JsLIGO
+      }
+    ; { name = "applied fun (inferred)"
+      ; code =
+          "let x = do { const a = 42; return ((c, d) => (x, y) => c + d + x + y)(a) }"
+      ; expected = "(d: int) => (x: int, y: int) => int"
+      ; syntax = JsLIGO
+      }
+    ; { name = "ascription fun (inferred)"
+      ; code = "let x = (a : int, b : int) : int => a + b"
+      ; expected = "(a: int, b: int) => int"
+      ; syntax = JsLIGO
+      }
+    ; { name = "function type (inferred)"
+      ; code = "function x(a, b) { return a + b }"
+      ; expected = "(a: int, b: int) => int"
+      ; syntax = JsLIGO
+      }
+    ; { name = "recursive function type"
+      ; code =
+          "function fib(n : int, _m : int) : int {\n\
+          \  if (n == 0 || n == 1) {\n\
+          \    return 0\n\
+          \  } else {\n\
+          \    return fib(n - 1, 42) + fib(n - 2, 42)\n\
+          \  }\n\
+           }"
+      ; expected = "(n: int, _m: int) => int"
+      ; syntax = JsLIGO
+      }
+    ; { name = "many times applied fun (inferred)"
+      ; code =
+          "let x = do { const a = 42; return (a => b => c => d => a + b + c + d)(a, a) }"
+      ; expected = "(c: int) => (d: int) => int"
       ; syntax = JsLIGO
       }
     ; { name = "fun with multiple args"
       ; code = "type t = (a: option<int>, b: bool) => string"
-      ; expected =
-          (* TODO #1811 save arity as metadata or workaround: always create multi-arg fun *)
-          "(_: option<int>) => (_: bool) => string"
+      ; expected = "(a: option<int>, b: bool) => string"
       ; syntax = JsLIGO
       }
     ; { name = "product (inferred)"
@@ -268,9 +299,12 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "disc union"
       ; code = {|type t = {a : "1"; b : int} | {a : "2"; b : bool}|}
-      ; expected =
-          (* TODO #1811 save disc union field name *)
-          {|["1", { b: int }] | ["2", { b: bool }]|}
+      ; expected = {|{ a: "1"; b: int } | { a: "2"; b: bool }|}
+      ; syntax = JsLIGO
+      }
+    ; { name = "disc union with 1 argument"
+      ; code = {|type t = { x: "C" } | { x: "B" }|}
+      ; expected = {|{ x: "B" } | { x: "C" }|}
       ; syntax = JsLIGO
       }
     ; { name = "union"

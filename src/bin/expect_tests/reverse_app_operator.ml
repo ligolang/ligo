@@ -32,4 +32,4 @@ let%expect_test _ =
                              ^^^^^^^^^^
 
     Invalid type(s)
-    Cannot unify "int -> int" with "int". |}]
+    Cannot unify "[y]int -> int" with "int". |}]

@@ -272,7 +272,11 @@ let t_triplet t1 t2 t3 ~loc () = t_tuple [ t1; t2; t3 ] ~loc ()
 let t_sum_ez fields ~loc ?layout () = t_sum ~loc (row_ez fields ?layout ()) ()
 let t_bool ~loc () = t_sum_ez ~loc [ "False", t_unit ~loc (); "True", t_unit ~loc () ] ()
 let t_option t ~loc () = t_sum_ez ~loc [ "None", t_unit ~loc (); "Some", t ] ()
-let t_arrow param result ~loc () : t = t_arrow ~loc { type1 = param; type2 = result } ()
+
+let t_arrow param result ~loc ?(param_names = []) () : t =
+  t_arrow ~loc { type1 = param; type2 = result; param_names } ()
+
+
 let t_mutez = t_tez
 
 let t_record_with_orig_var row ~orig_var ~loc () =
@@ -378,7 +382,7 @@ let get_t_pair (t : t) : (t * t) option =
 
 let rec get_arrows_result t =
   match t.content with
-  | T_arrow { type1 = _; type2 } -> get_arrows_result type2
+  | T_arrow { type1 = _; type2; param_names = _ } -> get_arrows_result type2
   | _ -> t
 
 
@@ -607,8 +611,8 @@ let assert_t_list_operation (t : t) : unit option =
 let get_entrypoint ty =
   let ty_eq a b = if equal a b then Some () else None in
   let open Option.Let_syntax in
-  let%bind { type1 = parameter; type2 } = get_t_arrow ty in
-  let%bind { type1 = storage; type2 } = get_t_arrow type2 in
+  let%bind { type1 = parameter; type2; param_names = _ } = get_t_arrow ty in
+  let%bind { type1 = storage; type2; param_names = _ } = get_t_arrow type2 in
   let%bind list_op, storage' = get_t_pair type2 in
   let%bind () = assert_t_list_operation list_op in
   let%bind () = ty_eq storage storage' in
@@ -685,3 +689,15 @@ let parameter_from_entrypoints
   in
   return
     (t_sum_ez ~loc:Location.generated ~layout:default_layout parameter_list (), storage)
+
+
+let get_param_names (ty : t) : string list =
+  match ty.content with
+  | T_arrow arr -> arr.param_names
+  | _ -> []
+
+
+let set_param_names (names : string list) (ty : t) : t =
+  match ty.content with
+  | T_arrow arr -> { ty with content = T_arrow { arr with param_names = names } }
+  | _ -> ty

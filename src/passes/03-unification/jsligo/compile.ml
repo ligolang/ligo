@@ -537,7 +537,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
         , TODO_do_in_parsing.conv_attrs attributes )
     in
     let variants = variants |> List.map ~f:destruct |> TODO_do_in_parsing.compile_rows in
-    return @@ T_sum_raw variants
+    return @@ T_sum_raw (variants, None)
   | T_Object { value = { inside = ne_elements; _ }; region } ->
     let fields =
       let destruct (I.{ property_id; property_rhs; attributes } : _ I.property) =

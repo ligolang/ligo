@@ -25,7 +25,7 @@ let rec untype_type_expression ?(use_orig_var = false) (t : O.type_expression)
     (match t.type_content with
     | O.T_sum { fields; layout } ->
       let fields = Map.map fields ~f:self in
-      I.T_sum { fields; layout = Some layout }
+      I.T_sum ({ fields; layout = Some layout }, None)
     | O.T_record { fields; layout } ->
       let fields = Map.map fields ~f:self in
       I.T_record { fields; layout = Some layout }

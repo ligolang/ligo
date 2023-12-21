@@ -131,8 +131,8 @@ let t_option ~loc typ : type_expression =
   t_sum_ez ~loc [ "None", t_unit ~loc (); "Some", typ ]
 
 
-let t_arrow param result ~loc ?source_type () : type_expression =
-  t_arrow ~loc ?source_type { type1 = param; type2 = result } ()
+let t_arrow param result ~loc ?source_type ?(param_names = []) () : type_expression =
+  t_arrow ~loc ?source_type { type1 = param; type2 = result; param_names } ()
 
 
 let get_t_bool (t : type_expression) : unit option =
@@ -440,7 +440,9 @@ let e_a_contract_entrypoint_opt ~loc e a t =
 
 let rec e_a_applications ~loc lamb args : expression =
   let e_a_application_no_t ~loc lamb args =
-    let Arrow.{ type1 = _; type2 } = get_t_arrow_exn lamb.type_expression in
+    let Arrow.{ type1 = _; type2; param_names = _ } =
+      get_t_arrow_exn lamb.type_expression
+    in
     e_application ~loc { lamb; args } type2
   in
   match args with
@@ -487,7 +489,7 @@ let rec get_e_applications t =
 
 let get_lambda_with_type e =
   match e.expression_content, e.type_expression.type_content with
-  | E_lambda l, T_arrow { type1; type2 } -> Some (l, (type1, type2))
+  | E_lambda l, T_arrow { type1; type2; param_names = _ } -> Some (l, (type1, type2))
   | _ -> None
 
 
@@ -588,7 +590,7 @@ let uncurry_wrap e =
   let type_ = e.type_expression in
   let rec destruct_type type_ =
     match get_t_arrow type_ with
-    | Some { type1; type2 } ->
+    | Some { type1; type2; param_names = _ } ->
       let args, result = destruct_type type2 in
       (type1, type2) :: args, result
     | None -> [], type_

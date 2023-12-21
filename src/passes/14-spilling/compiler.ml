@@ -258,7 +258,7 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
     | None ->
       let fields = Label.Map.map fields ~f:compile_type in
       Layout.t_record ~raise ?source_type:t.source_type fields layout)
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names = _ } ->
     let param' = compile_type type1 in
     let result' = compile_type type2 in
     return @@ T_function (param', result')
@@ -409,7 +409,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
   | E_constant { cons_name = name; arguments = lst } ->
     let iterator_generator (iterator_name : Constant.constant') =
       let expression_to_iterator_body (f : AST.expression) =
-        let Arrow.{ type1 = input; type2 = output } =
+        let Arrow.{ type1 = input; type2 = output; param_names = _ } =
           trace_option ~raise (corner_case ~loc:__LOC__ "expected function type")
           @@ AST.get_t_arrow f.type_expression
         in

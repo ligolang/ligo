@@ -27,7 +27,7 @@ let decompile_value_from_contract_execution
   match runned_result with
   | Fail s -> Fail s
   | Success ex_ty_value ->
-    let Ligo_prim.Arrow.{ type1 = _; type2 = return_type } =
+    let Ligo_prim.Arrow.{ type1 = _; type2 = return_type; param_names = _ } =
       trace_option ~raise main_entrypoint_not_a_function
       @@ Ast_aggregated.get_t_arrow output_type
     in
