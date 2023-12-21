@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nFixed a problem where the LSP would display the wrong types for complex patterns. For example, previously, `let a, b = 1, \"hello\"` would show both `a` and `b` as having type `int * string`. Now, it will correctly display `a : int` and `b : string`.\\n\\n"
+merge_request: '3024'
+title: "[#2110] Fix the inferred type for complex patterns in the LSP"
+type: fixed
+            

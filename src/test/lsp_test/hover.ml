@@ -546,6 +546,20 @@ let test_cases =
     ; file = "contracts/lsp/hover/missing_type.mligo"
     ; hovers = [ pos ~line:0 ~character:5, one "type a = (* Unresolved *)" ]
     }
+  ; { test_name = "Hovers for variables in complex patterns show the correct types"
+    ; file = "contracts/get_scope_tests/complex_patterns.mligo"
+    ; hovers =
+        [ pos ~line:0 ~character:4, one "a : int"
+        ; pos ~line:0 ~character:7, one "b : string"
+        ; pos ~line:3 ~character:6, one "a : int"
+        ; pos ~line:3 ~character:9, one "b : string"
+        ; pos ~line:6 ~character:9, one "x : int"
+        ; pos ~line:9 ~character:10, one "i : int"
+        ; pos ~line:9 ~character:13, one "j : string"
+        ; pos ~line:12 ~character:10, one "a : int"
+        ; pos ~line:12 ~character:13, one "b : string"
+        ]
+    }
   ]
 
 

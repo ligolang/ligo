@@ -4,10 +4,10 @@
  (instrumentation
   (backend bisect_ppx))
  (preprocess
-  (pps ppx_here))
+  (pps ppx_here ppx_let))
  ; For profiling
  ; (preprocess
- ;  (pps ppx_here landmarks-ppx --auto))
+ ;  (pps ppx_here ppx_let landmarks-ppx --auto))
  (libraries
   main_errors
   ligo_compile

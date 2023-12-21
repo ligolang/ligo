@@ -10,6 +10,20 @@ type t =
   ; module_env : Env.t
   }
 
+(** For debugging. *)
+let pp : t Fmt.t =
+ fun ppf { type_cases; module_signatures; module_env } ->
+  Format.fprintf
+    ppf
+    "{ type_cases: %a\n; module_signatures: %a\n; module_env: %a\n}"
+    Fmt.Dump.(seq (pair Location.pp PP.type_case))
+    (LMap.to_seq type_cases)
+    Fmt.Dump.(seq (pair Location.pp PP.signature_case))
+    (LMap.to_seq module_signatures)
+    Env.pp
+    module_env
+
+
 let empty (module_env : Env.t) =
   { type_cases = LMap.empty; module_signatures = LMap.empty; module_env }
 
@@ -178,7 +192,9 @@ module Of_Ast_typed = struct
     | D_irrefutable_match { pattern; expr; _ } ->
       let prev =
         let f acc binder =
-          add_bindings acc [ Type_binding (Binder.get_var binder, expr.type_expression) ]
+          add_bindings
+            acc
+            [ Type_binding (Binder.get_var binder, Binder.get_ascr binder) ]
         in
         List.fold (Pattern.binders pattern) ~f ~init:prev
       in
@@ -266,12 +282,9 @@ module Of_Ast_core = struct
   let add_binders : t -> Ast_core.type_expression option Binder.t list -> t =
    fun env bindings ->
     let bindings =
-      List.filter_map
-        ~f:(fun binder ->
-          match Binder.get_ascr binder with
-          | None -> None
-          | Some t -> Some (Binder.get_loc binder, Core t))
-        bindings
+      List.filter_map bindings ~f:(fun binder ->
+          let%map.Option t = Binder.get_ascr binder in
+          Binder.get_loc binder, Core t)
     in
     add_bindings_in_map env bindings
 
@@ -491,6 +504,20 @@ module Typing_env = struct
     ; bindings : t
     ; decls : Ast_typed.declaration list
     }
+
+  (** For debugging. *)
+  let[@warning "-32"] pp : t Fmt.t =
+   fun ppf { type_env; bindings; decls } ->
+    Format.fprintf
+      ppf
+      "{ type_env: %a\n; bindings: %a\n; decls: %a\n}"
+      Ast_typed.PP.signature
+      type_env
+      pp
+      bindings
+      Fmt.Dump.(list Ast_typed.PP.declaration)
+      decls
+
 
   (** The typer normall call {!Trace.error} which internally always calls {!Stdlib.raise}
       which stops the program, But here we want to recover from the error. That is the reason
