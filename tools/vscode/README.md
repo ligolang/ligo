@@ -23,6 +23,7 @@ Those are being actively worked on.
 ### Code navigation
 
 - [x] Jump to definition
+- [x] Jump to implementation
 - [x] Find references (only in open files)
 - [x] Folding range
 - [ ] Selection range
@@ -98,6 +99,7 @@ The supported features that may be disabled are listed below:
 
 - `textDocument/definition`
 - `textDocument/typeDefinition`
+- `textDocument/implementation`
 - `textDocument/references`
 - `textDocument/completion`
 - `textDocument/signatureHelp`

@@ -10,6 +10,8 @@ module Loc_in_file = struct
     ; range : Range.t
     }
   [@@deriving eq, ord, sexp]
+
+  let pp : t Fmt.t = fun ppf -> Format.fprintf ppf "%a" Sexp.pp <@ sexp_of_t
 end
 
 module Def_location = struct
@@ -25,6 +27,9 @@ module Def_location = struct
     | File region ->
       File { range = Range.of_region region; path = Path.from_absolute region#file }
     | Virtual s -> Virtual s
+
+
+  let pp : t Fmt.t = fun ppf -> Format.fprintf ppf "%a" Sexp.pp <@ sexp_of_t
 end
 
 module Def_locations = Set.Make (Def_location)
@@ -41,22 +46,10 @@ let get_location : Scopes.def -> Def_location.t =
   | Module mdef -> mdef.range
 
 
-let get_name : Scopes.def -> string = function
-  | Variable vdef -> vdef.name
-  | Type tdef -> tdef.name
-  | Module mdef -> Scopes.Types.get_mod_name_name mdef.name
-
-
-let get_def_type : Scopes.def -> Scopes.Types.def_type = function
-  | Variable vdef -> vdef.def_type
-  | Type tdef -> tdef.def_type
-  | Module mdef -> mdef.def_type
-
-
-let get_mod_path : Scopes.def -> string list = function
-  | Variable vdef -> vdef.mod_path
-  | Type tdef -> tdef.mod_path
-  | Module mdef -> mdef.mod_path
+let get_plain_location : Scopes.def -> Loc.t = function
+  | Variable vdef -> vdef.range
+  | Type tdef -> tdef.range
+  | Module mdef -> mdef.range
 
 
 let get_path : Scopes.def -> Path.t option =

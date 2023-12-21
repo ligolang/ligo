@@ -282,7 +282,7 @@
 		(,"\\b\\(let\\|const\\)\\b"
 			(1 font-lock-keyword-face)
 		)
-		(,"\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|false\\|true\\)\\b"
+		(,"\\b\\(export\\|import\\|from\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|extends\\|false\\|true\\)\\b"
 			(1 font-lock-keyword-face)
 		)
 		(,"\\b\\(switch\\|if\\|else\\|for\\|of\\|while\\|return\\|break\\|continue\\|match\\)\\b"

@@ -1,0 +1,12 @@
+interface I1 {
+  type t
+}
+
+interface I2 {
+  type t
+}
+
+namespace M implements I1, I2, { type t }, { const t : unit }, { type t } {
+  type t = unit
+  const t = unit
+}

@@ -104,11 +104,11 @@ module Regexp = struct
   (** Keywords that will be highlighted with [Keyword]. *)
   let keywords_match : Core.regexp =
     { emacs =
-        {|\\b\\(export\\|import\\|from\\|implements\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|false\\|true\\)\\b|}
+        {|\\b\\(export\\|import\\|from\\|contract_of\\|parameter_of\\|function\\|do\\|namespace\\|interface\\|implements\\|extends\\|false\\|true\\)\\b|}
     ; textmate =
-        {|\b(export|import|from|implements|contract_of|parameter_of|function|do|namespace|interface|implements|false|true)\b|}
+        {|\b(export|import|from|contract_of|parameter_of|function|do|namespace|interface|implements|extends|false|true)\b|}
     ; vim =
-        {|\<\(export\|import\|from\|implements\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|false\|true\)\>|}
+        {|\<\(export\|import\|from\|contract_of\|parameter_of\|function\|do\|namespace\|interface\|implements\|extends\|false\|true\)\>|}
     }
 
   (** Keywords that will be highlighted with [Conditional]. *)

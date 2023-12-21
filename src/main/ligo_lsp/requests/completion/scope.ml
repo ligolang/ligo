@@ -47,7 +47,9 @@ let get_defs_completions
   (* We want to show [M1.M2.x] in completions only if cursor is located in [M1.M2]
      (or [M1.M2.M3]), since if we're at toplevel we're already showing [M1] *)
   let available_in_current_module (def : Def.t) : bool =
-    List.is_prefix ~prefix:(Def.get_mod_path def) ~equal:String.equal
+    List.is_prefix
+      ~prefix:Scopes.Types.(List.map ~f:Uid.to_name @@ get_mod_path def)
+      ~equal:String.equal
     @@ List.map ~f:(fun x -> x#payload) module_path
   in
   Option.map ~f:(List.filter ~f:available_in_current_module) scope_defs

@@ -25,32 +25,20 @@ module References = struct
   type references = LSet.t LMap.t
   type t = references
 
-  let[@warning "-32"] pp : Format.formatter -> t -> unit =
-   fun ppf refs ->
-    let pp_refs_set ppf refs_set =
-      LSet.iter (fun ref_loc -> Format.fprintf ppf "%a,\n" Location.pp ref_loc) refs_set
-    in
-    LMap.iter
-      (fun loc refs_set ->
-        Format.fprintf ppf "%a -> [ %a ] \n" Location.pp loc pp_refs_set refs_set)
-      refs
+  let union : t -> t -> t = LMap.union (fun _loc x y -> Some (LSet.union x y))
 
-
-  (** Updates the references map, adding [usgae_loc] to the list of locations mentioning [def]. *)
-  let add_def_usage : def:def -> usage_loc:Location.t -> references -> references =
-   fun ~def ~usage_loc refs ->
-    LMap.update
-      (Def.get_location def)
-      (function
+  (** Updates the references map, adding [usage_loc] to the list of locations mentioning [def]. *)
+  let add_def_usage : def:def -> usage_loc:Location.t -> t -> t =
+   fun ~def ~usage_loc ->
+    LMap.update (Def.get_location def) (function
         | None -> Some (LSet.singleton usage_loc)
         | Some locs -> Some (LSet.add usage_loc locs))
-      refs
 
 
   (** Wrapper over [add_def_usage].
       If the def option is [Some def], calls [add_def_usage] with [def].
       Else, leave the reference map untouched *)
-  let add_def_opt_usage : Location.t -> def option -> references -> references =
+  let add_def_opt_usage : Location.t -> def option -> t -> t =
    fun usage_loc def_opt refs ->
     match def_opt with
     | Some def -> add_def_usage ~def ~usage_loc refs
@@ -59,27 +47,27 @@ module References = struct
 
   (** [update_vvar_reference] looks up the [Value_var.t] in the [env] and updates
       the [references] with the help of [add_def_opt_usage] *)
-  let add_vvar : Value_var.t -> env -> references -> references =
-   fun v env refs ->
+  let add_vvar : Value_var.t -> env -> t -> t =
+   fun v env ->
     let def_opt = Env.lookup_vvar_opt env v in
-    add_def_opt_usage (Value_var.get_location v) def_opt refs
+    add_def_opt_usage (Value_var.get_location v) def_opt
 
 
   (** [update_tvar_reference] looks up the [Type_var.t] in the [env] and updates
       the [references] with the help of [add_def_opt_usage] *)
-  let add_tvar : Type_var.t -> env -> references -> references =
-   fun t env refs ->
+  let add_tvar : Type_var.t -> env -> t -> t =
+   fun t env ->
     let def_opt = Env.lookup_tvar_opt env t in
-    add_def_opt_usage (Type_var.get_location t) def_opt refs
+    add_def_opt_usage (Type_var.get_location t) def_opt
 
 
   (* TODO : Shouldn't this be the same as the two above ?? *)
 
   (** [update_mvar_references] takes [module_usages] and updates the [references]
       for each [Module_var.t] it adds a usage [Location.t] to it's [references] *)
-  let add_module_usages : module_usages -> references -> references =
+  let add_module_usages : module_usages -> t -> t =
    fun module_usages references ->
-    let add_module_usage : references -> module_usage -> references =
+    let add_module_usage : t -> module_usage -> t =
      fun refs (orig, `Usage use) -> add_def_usage ~def:(Module orig) ~usage_loc:use refs
     in
     List.fold module_usages ~init:references ~f:add_module_usage
@@ -115,28 +103,24 @@ module References = struct
     | None -> refs *)
 
   let add_maccess
-      :  update_element_reference:('a -> env -> references -> references) -> 'a
-      -> Module_var.t -> module_map -> references -> references
+      :  update_element_reference:('a -> env -> t -> t) -> 'a -> Module_var.t
+      -> module_map -> t -> t
     =
-   fun ~update_element_reference element mv module_map refs ->
+   fun ~update_element_reference element mv module_map ->
     match Module_map.resolve_mvar mv module_map with
+    | None -> Fn.id
     | Some (_orig, defs) ->
-      update_element_reference element { parent = []; avail_defs = defs; module_map } refs
-    | None -> refs
+      update_element_reference element { parent = []; avail_defs = defs; module_map }
 
 
   (** [update_references_for_module_access_var] updates refences of a module accessed value/var *)
-  let add_maccess_vvar
-      : Value_var.t -> Module_var.t -> module_map -> references -> references
-    =
-   fun v -> add_maccess ~update_element_reference:add_vvar v
+  let add_maccess_vvar : Value_var.t -> Module_var.t -> module_map -> t -> t =
+    add_maccess ~update_element_reference:add_vvar
 
 
   (** [update_references_for_module_access_type] updates refences of a module accessed type *)
-  let add_maccess_tvar
-      : Type_var.t -> Module_var.t -> module_map -> references -> references
-    =
-   fun t -> add_maccess ~update_element_reference:add_tvar t
+  let add_maccess_tvar : Type_var.t -> Module_var.t -> module_map -> t -> t =
+    add_maccess ~update_element_reference:add_tvar
 end
 
 type references = References.t
@@ -414,8 +398,13 @@ and signature_expression
     -> references * defs_or_alias option * module_map
   =
  fun me refs env ->
+  (* TODO: do we really want to treat a signature as a module? Don't we want to assume
+     they are coming from the module that implements them?
+     Note: I guess we still need to add the module names as references, and for
+     signatures, we need to add sig items as references. And for both, we need to link the
+     definitions with the references. *)
   let env = { env with avail_defs = []; parent = env.avail_defs @ env.parent } in
-  let refs, defs_or_alias_opt, env =
+  let refs, alias_opt, env =
     match me.wrap_content with
     | S_sig sig' ->
       let refs, env = signature sig' refs env in
@@ -426,7 +415,7 @@ and signature_expression
       in
       refs, alias_opt, env
   in
-  refs, defs_or_alias_opt, env.module_map
+  refs, alias_opt, env.module_map
 
 
 (** [declaration] takes [AST.declaration] and updates the [references] & [env] *)
@@ -460,16 +449,23 @@ and declaration : AST.declaration -> references -> env -> references * env =
     let env = Env.add_tvar type_binder env in
     refs, env
   | D_module { module_binder; module_; module_attr = _; annotation } ->
-    let refs, defs_or_alias_opt, module_map = module_expression module_ refs env in
+    let ((refs, defs_or_alias_opt, module_map) as result) =
+      module_expression module_ refs env
+    in
     let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
     let refs, _defs_or_alias_opt, _module_map =
-      Option.value_map
-        annotation
-        ~default:(refs, defs_or_alias_opt, module_map)
-        ~f:(fun annotation -> signature_expression annotation.signature refs env)
+      Option.value_map annotation ~default:result ~f:(fun annotation ->
+          let refs, _defs_or_alias_opt, _module_map =
+            signature_expression annotation.signature refs env
+          in
+          (* TODO: not sure what to do here? It seems to work, but it's not clear whether
+             it's correct. *)
+          References.union (Tuple3.get1 result) refs, defs_or_alias_opt, module_map)
     in
     refs, env
-  | D_module_include _module_expr -> refs, env (* TODO *)
+  | D_module_include module_expr ->
+    let refs, _defs_or_alias_opt, _module_map = module_expression module_expr refs env in
+    refs, env
   | D_signature { signature_binder; signature; signature_attr = _ } ->
     let refs, defs_or_alias_opt, module_map = signature_expression signature refs env in
     let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
@@ -523,8 +519,7 @@ let declarations : AST.declaration list -> references =
 
 let rec patch : references -> Types.def list -> Types.def list =
  fun refs defs ->
-  List.map defs ~f:(fun def ->
-      match def with
+  List.map defs ~f:(function
       | Variable v ->
         (match LMap.find_opt v.range refs with
         | None -> Types.Variable v
@@ -534,15 +529,21 @@ let rec patch : references -> Types.def list -> Types.def list =
         | None -> Types.Type t
         | Some references -> Type { t with references })
       | Module m ->
-        let mod_case =
-          match m.mod_case with
-          | Alias { module_path; resolved_module; file_name } ->
-            Types.Alias { module_path; resolved_module; file_name }
+        let patch_mod_case = function
+          | Types.Alias _ as alias -> alias
           | Def defs -> Def (patch refs defs)
+        in
+        let patch_implementation = function
+          | Types.Ad_hoc_signature defs -> Types.Ad_hoc_signature (patch refs defs)
+          | Standalone_signature_or_module _ as path -> path
         in
         let m =
           match LMap.find_opt m.range refs with
           | None -> m
           | Some references -> { m with references }
         in
-        Module { m with mod_case })
+        Module
+          { m with
+            mod_case = patch_mod_case m.mod_case
+          ; implements = List.map ~f:patch_implementation m.implements
+          })

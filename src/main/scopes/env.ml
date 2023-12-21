@@ -173,8 +173,7 @@ type module_map = Module_map.t
 (** In [env] the record fields represent the following:
     1. [parent] represents the defintions from the parent(ancestors) modules.
     2. [avail_defs] represents the top-level defintions of the current module
-        & in the context of an expression it represents the bindings encountered
-        sofar.
+        & in the context of an expression it represents the bindings encountered so far.
     3. [module_map] is a map from [Module_var.t] -> [defs_or_alias] this is a flat
         representation of modules & its contents, this simplifies the handling
         for nested modules *)

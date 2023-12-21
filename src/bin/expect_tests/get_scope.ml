@@ -1035,12 +1035,14 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 8-9 ,
       File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 11-12
 
+
     (B#7:7-8 -> B)
     Range: File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 11-12
-    Content: Alias: A#1:7-8
+    Content: A#7:11-12 (-> A#1:7-8)
     references:
       File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 8-9
+
 
     (C#12:11-12 -> C)
     Range: File "../../test/contracts/get_scope_tests/module.mligo", line 12, characters 11-12
@@ -1060,10 +1062,11 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
 
+
     (D#15:11-12 -> D)
     Range: File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
-    Content: Alias: C#12:11-12
+    Content: C#15:15-16 (-> C#12:11-12)
     references:
       File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-5 |}];
   run_ligo_good
@@ -1161,12 +1164,14 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/module2.mligo", line 9, characters 13-14 ,
                         File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 11-12
 
+
                       (E#6:11-12 -> E)
                       Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 6, characters 11-12
                       Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 6, characters 15-16
-                      Content: Alias: B#3:11-12
+                      Content: B#6:15-16 (-> B#3:11-12)
                       references:
                         File "../../test/contracts/get_scope_tests/module2.mligo", line 13, characters 13-14
+
 
 
     references:
@@ -1176,24 +1181,27 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module2.mligo", line 16, characters 9-10
 
+
     (C#9:7-8 -> C)
     Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 9, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 9, characters 11-14
-    Content: Alias: A#1:7-8.B#3:11-12
+    Content: A#9:11-12.B#9:13-14 (-> A#1:7-8.B#3:11-12)
     references:
       File "../../test/contracts/get_scope_tests/module2.mligo", line 17, characters 9-10
+
 
     (D#11:7-8 -> D)
     Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 11, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 11, characters 11-12
-    Content: Alias: A#1:7-8
+    Content: A#11:11-12 (-> A#1:7-8)
     references:
       File "../../test/contracts/get_scope_tests/module2.mligo", line 18, characters 9-10
+
 
     (F#13:7-8 -> F)
     Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 13, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 13, characters 11-14
-    Content: Alias: A#1:7-8.E#6:11-12
+    Content: A#13:11-12.E#13:13-14 (A#1:7-8.E#6:11-12 -> B#3:11-12)
     references:
       File "../../test/contracts/get_scope_tests/module2.mligo", line 19, characters 9-10 |}];
   run_ligo_good
@@ -1361,6 +1369,7 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 8, characters 16-17
 
+
     (B#6:11-12 -> B)
     Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 6, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 6, character 15 to line 14, character 7
@@ -1434,6 +1443,7 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 15-16
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 16, characters 15-16 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 17, characters 15-16 ,
@@ -1443,10 +1453,11 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module3.mligo", line 22, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 23, characters 13-14
 
+
     (D#16:11-12 -> D)
     Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 16, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 16, characters 15-16
-    Content: Alias: B#6:11-12
+    Content: B#16:15-16 (-> B#6:11-12)
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 25, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 13-14 ,
@@ -1454,10 +1465,11 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 13-14
 
+
     (E#17:11-12 -> E)
     Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 17, characters 11-12
     Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 17, characters 15-18
-    Content: Alias: B#6:11-12.C#9:15-16
+    Content: B#17:15-16.C#17:17-18 (-> B#6:11-12.C#9:15-16)
     references:
       File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 13-14 ,
       File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 13-14 ,
@@ -1635,16 +1647,18 @@ let%expect_test _ =
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 13-14 ,
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 13-14
 
+
                                         (F#6:15-16 -> F)
                                         Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 15-16
                                         Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20
-                                        Content: Alias: C#3:15-16
+                                        Content: C#6:19-20 (-> C#3:15-16)
                                         references:
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 15-16 ,
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 13-14 ,
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 13-14 ,
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 13-14 ,
                                           File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 13-14
+
 
 
                       references:
@@ -1654,16 +1668,18 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 11-12 ,
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 11-12
 
+
                       (E#8:11-12 -> E)
                       Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 11-12
                       Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 15-16
-                      Content: Alias: B#2:11-12
+                      Content: B#8:15-16 (-> B#2:11-12)
                       references:
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 13-14 ,
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 11-12 ,
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 11-12 ,
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 11-12 ,
                         File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 11-12
+
 
 
     references:
@@ -1673,10 +1689,11 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 9-10
 
+
     (D#11:7-8 -> D)
     Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 11, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 11, characters 11-12
-    Content: Alias: A#1:7-8
+    Content: A#11:11-12 (-> A#1:7-8)
     references:
       File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 11-12 ,
       File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 9-10 ,
@@ -1684,10 +1701,11 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 9-10
 
+
     (G#13:7-8 -> G)
     Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 11-16
-    Content: Alias: D#11:7-8.E#8:11-12.F#6:15-16
+    Content: D#13:11-12.E#13:13-14.F#13:15-16 (D#11:7-8.E#8:11-12.F#6:15-16 -> C#3:15-16)
     references: [] |}];
   run_ligo_good
     [ "info"
@@ -1743,11 +1761,13 @@ let%expect_test _ =
         File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 5, characters 11-12 ,
         File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 10, characters 16-17
 
+
       (D#5:7-8 -> D)
       Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 5, characters 7-8
       Body Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 5, characters 11-12
-      Content: Alias: A#1:7-8
+      Content: A#5:11-12 (-> A#1:7-8)
       references: []
+
 
       (A#9:11-12 -> A)
       Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 9, characters 11-12
@@ -1768,10 +1788,11 @@ let%expect_test _ =
         File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 12, characters 15-16 ,
         File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 13, characters 8-9
 
+
       (C#12:11-12 -> C)
       Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 12, characters 11-12
       Body Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 12, characters 15-16
-      Content: Alias: A#9:11-12
+      Content: A#12:15-16 (-> A#9:11-12)
       references: [] |}];
   run_ligo_good
     [ "info"
@@ -2014,10 +2035,11 @@ let%expect_test _ =
         File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 11-12 ,
         File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 18-19
 
+
       (B#18:7-8 -> B)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 18, characters 7-8
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 18, characters 11-12
-      Content: Alias: A#1:7-8
+      Content: A#18:11-12 (-> A#1:7-8)
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-9 ,
         File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-12 |}];
@@ -2052,9 +2074,10 @@ let%expect_test _ =
     (X#1:7-8 -> X)
     Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-94
-    Content: Alias: Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo#env
+    Content: Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo#1:11-94 (-> Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo#env)
     references:
       File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-9
+
 
     (../../test/contracts/get_scope_tests/x.mligo#env -> ../../test/contracts/get_scope_tests/x.mligo)
     Range:
@@ -2172,6 +2195,7 @@ let%expect_test _ =
 
     references:
       File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 8, characters 4-5
+
 
     (C#14:11-12 -> C)
     Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 14, characters 11-12

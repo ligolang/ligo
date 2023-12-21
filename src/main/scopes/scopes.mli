@@ -3,6 +3,7 @@ module Api_helper = Api_helper
 module Trace = Simple_utils.Trace
 module Types = Types
 module PP = PP
+module Uid = Types.Uid
 
 type def = Types.def
 type scopes = Types.scopes

@@ -32,11 +32,11 @@ syntax region typeannotationlambda matchgroup=typeannotationlambda_ start=":" en
 highlight link typeannotationlambda_ Operator 
 
 " typeannotation
-syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\)\>\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
+syntax region typeannotation matchgroup=typeannotation_ start=":" end="\()\|=\|;\|}\|^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|end\|include\)\>\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typeannotation_ Operator 
 
 " typedefinition
-syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
+syntax region typedefinition matchgroup=typedefinition_ start="\<type\>" end="\(^#\|\[@\|\<\(let\|in\|type\|end\|module\|sig\|val\|include\)\>\|)\)\@=" contains=uppercaseidentifier,ofkeyword,typeoperator,typename,typevar,typeparentheses,typeint,typeproduct,string0 
 highlight link typedefinition_ Keyword 
 
 " lowercaseidentifier

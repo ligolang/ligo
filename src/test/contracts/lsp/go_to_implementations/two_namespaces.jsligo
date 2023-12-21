@@ -1,0 +1,14 @@
+interface IM {
+  type t;
+  const x : t;
+}
+
+namespace M1 implements IM {
+  type t = int;
+  const x = 42;
+}
+
+namespace M2 implements IM {
+  type t = string;
+  const x = "second";
+}
