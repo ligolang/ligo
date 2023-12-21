@@ -153,6 +153,16 @@ module Module_map = struct
     | Some (Defs defs) -> Some (mv, defs)
     | Some (Alias mv') -> self mv'
     | None -> None
+
+
+  (** For debugging. *)
+  let pp : t Fmt.t =
+   fun ppf module_map ->
+    Format.fprintf
+      ppf
+      "%a"
+      Fmt.Dump.(seq (pair Module_var.pp pp_defs_or_alias))
+      (to_seq module_map)
 end
 
 type module_map = Module_map.t
@@ -177,6 +187,20 @@ type env =
 type t = env
 
 let empty = { parent = []; avail_defs = []; module_map = Module_map.empty }
+
+(** For debugging. *)
+let pp : env Fmt.t =
+ fun ppf { parent; avail_defs; module_map } ->
+  Format.fprintf
+    ppf
+    "{ avail_defs: %a\n; module_map: %a\n; parent_mod: %a\n}"
+    Fmt.Dump.(list Def.pp)
+    parent
+    Fmt.Dump.(list Def.pp)
+    avail_defs
+    Module_map.pp
+    module_map
+
 
 (******************************************************************************)
 (** Lookup functions *)

@@ -2199,6 +2199,128 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-5 |}]
 
+let%expect_test _ =
+  run_ligo_good
+    [ "info"
+    ; "get-scope"
+    ; gs "complex_patterns.mligo"
+    ; "--format"
+    ; "dev"
+    ; "--with-types"
+    ; "--no-stdlib"
+    ];
+  [%expect
+    {|
+    Scopes:
+    [  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 11-12
+    [  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 14-21
+    [ a#1:4-5 b#1:7-8  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 9-32
+    [ a#1:4-5 b#1:7-8 t#3:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 17-18
+    [ a#1:4-5 b#1:7-8 t#3:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 20-21
+    [ t#3:5-6 a#4:6-7 b#4:9-10  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 9-19
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 7, characters 18-20
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-28
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 24-25
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 27-28
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-17
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14 w#12:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 24-25
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14 w#12:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 27-28
+
+    Variable definitions:
+    (a#1:4-5 -> a)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 11-21
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 17-18
+    Mod Path =
+    Def Type = Global
+    (b#1:7-8 -> b)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 7-8
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 1, characters 11-21
+    Content: |resolved: string|
+    references:
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 20-21
+    Mod Path =
+    Def Type = Global
+    (a#4:6-7 -> a)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 6-7
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 15-23
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 24-25 ,
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 24-25
+    Mod Path =
+    Def Type = Global
+    (b#4:9-10 -> b)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 9-10
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 15-23
+    Content: |resolved: string|
+    references:
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 27-28 ,
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 27-28
+    Mod Path =
+    Def Type = Global
+    (x#7:9-10 -> x)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 7, characters 9-10
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 7, characters 14-20
+    Content: |resolved: int|
+    references: []
+    Mod Path =
+    Def Type = Global
+    (i#10:10-11 -> i)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 19-29
+    Content: |resolved: int|
+    references: []
+    Mod Path =
+    Def Type = Global
+    (j#10:13-14 -> j)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 13-14
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 19-29
+    Content: |resolved: string|
+    references: []
+    Mod Path =
+    Def Type = Global
+    (a#13:10-11 -> a)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 10-11
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 19-29
+    Content: |resolved: int|
+    references: []
+    Mod Path =
+    Def Type = Global
+    (b#13:13-14 -> b)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 13-14
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 19-29
+    Content: |resolved: string|
+    references: []
+    Mod Path =
+    Def Type = Global
+    Type definitions:
+    (t#3:5-6 -> t)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 5-6
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 9-32
+    Content: : |record[a -> int , b -> string({ name: a }, { name: b })]|
+    references:
+      File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 16-17
+    (u#6:5-6 -> u)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 5-6
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 9-19
+    Content: : |sum[Foo -> int({ name: Foo })]|
+    references: []
+    (v#9:5-6 -> v)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 5-6
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-28
+    Content: : |sum[Bar -> ( int * string )({ name: Bar })]|
+    references: []
+    (w#12:5-6 -> w)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 5-6
+    Body Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-17
+    Content: : |sum[Qux -> t({ name: Qux })]|
+    references: []
+    Module definitions:
+ |}]
+
 (* Unresponsive "go-to-definition" VSCode extension command
    cause by [Location.compare] behaviour w.r.t. LSet / LMap
    (https://gitlab.com/ligolang/ligo/-/merge_requests/2532)
