@@ -101,10 +101,10 @@ let rec swap_type_expression : Scope.swapper -> type_expression -> type_expressi
   | T_record row ->
     let row = Row.map self row in
     return @@ T_record row
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = self type1 in
     let type2 = self type2 in
-    return @@ T_arrow { type1; type2 }
+    return @@ T_arrow { type1; type2; param_names }
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:self parameters in
     return @@ T_constant { language; injection; parameters }
@@ -287,10 +287,10 @@ let rec type_expression : Scope.t -> type_expression -> type_expression =
   | T_record row ->
     let row = Row.map self row in
     return @@ T_record row
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = self type1 in
     let type2 = self type2 in
-    return @@ T_arrow { type1; type2 }
+    return @@ T_arrow { type1; type2; param_names }
   | T_constant { language; injection; parameters } ->
     let parameters = List.map ~f:self parameters in
     return @@ T_constant { language; injection; parameters }

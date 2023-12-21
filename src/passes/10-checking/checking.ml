@@ -87,11 +87,11 @@ let rec evaluate_type ~default_layout (type_ : I.type_expression)
       raise_opt ~error:not_a_contract @@ Signature.get_contract_sort sort
     in
     lift parameter
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let%bind type1 = evaluate_type ~default_layout type1 in
     let%bind type2 = evaluate_type ~default_layout type2 in
-    const @@ T_arrow { type1; type2 }
-  | T_sum row ->
+    const @@ T_arrow { type1; type2; param_names }
+  | T_sum (row, _) ->
     let%bind row = evaluate_row ~default_layout row in
     const @@ T_sum row
   | T_record row ->
@@ -422,7 +422,7 @@ let rec check_expression (expr : I.expression) (type_ : Type.t)
       E.(
         let%bind result = result in
         return @@ O.E_type_abstraction { type_binder = tvar; result })
-  | E_lambda lambda, T_arrow { type1 = arg_type; type2 = ret_type } ->
+  | E_lambda lambda, T_arrow { type1 = arg_type; type2 = ret_type; param_names = _ } ->
     let%bind lambda = check_lambda lambda arg_type ret_type in
     const
       E.(
@@ -690,7 +690,7 @@ and infer_expression (expr : I.expression)
     return (ascr, expr)
   | E_recursive { fun_name; fun_type; lambda; force_lambdarec } ->
     let%bind fun_type = With_default_layout.evaluate_type fun_type in
-    let%bind Arrow.{ type1 = arg_type; type2 = ret_type } =
+    let%bind Arrow.{ type1 = arg_type; type2 = ret_type; param_names = _ } =
       raise_opt
         ~error:(corner_case "Expected function type annotation for recursive function")
       @@ Type.get_t_arrow fun_type
@@ -1011,6 +1011,14 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
           let%bind type_ = decode type_ in
           return @@ O.make_e ~loc content type_) )
   in
+  let is_initial_arg =
+    match I.(get_e_lambda result.expression_content) with
+    | Some lam ->
+      (match Param.get_initial_arg lam.binder with
+      | Initial -> true
+      | Not_initial -> false)
+    | None -> false
+  in
   (* Desugar return ascription to (result : ret_ascr) *)
   let result =
     Option.value_map ret_ascr ~default:result ~f:(fun ret_ascr ->
@@ -1025,17 +1033,31 @@ and infer_lambda ({ binder; output_type = ret_ascr; result } : _ Lambda.t)
             | Some arg_ascr -> With_default_layout.evaluate_type arg_ascr
             | None -> exists Type
           in
+          let var_name = Param.get_var binder in
           let%bind ret_type, result =
             def
-              [ ( Param.get_var binder
-                , Param.get_mut_flag binder
-                , arg_type
-                , Context.Attr.default )
-              ]
+              [ var_name, Param.get_mut_flag binder, arg_type, Context.Attr.default ]
               ~on_exit:Lift_type
               ~in_:(infer_expression result)
           in
-          let%bind type_ = create_type @@ Type.t_arrow arg_type ret_type in
+          let var_name =
+            if Value_var.is_generated var_name
+            then "_"
+            else Value_var.to_name_exn var_name
+          in
+          let arg_names, ret_names =
+            let collected_names = Type.get_param_names ret_type in
+            if is_initial_arg
+            then [ var_name ], collected_names
+            else var_name :: collected_names, []
+          in
+          let%bind type_ =
+            create_type
+            @@ Type.t_arrow
+                 ~param_names:arg_names
+                 arg_type
+                 (Type.set_param_names ret_names ret_type)
+          in
           const
             E.(
               let%bind result = result
@@ -1092,7 +1114,7 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
                  (E_type_inst { forall = hole; type_ = texists })
                  lamb_type))
       , args )
-  | T_arrow { type1 = arg_type; type2 = ret_type } ->
+  | T_arrow { type1 = arg_type; type2 = ret_type; param_names } ->
     let%bind args = check_expression args arg_type in
     let%bind ret_type =
       try_
@@ -1123,11 +1145,17 @@ and infer_application (lamb_type : Type.t) (args : I.expression)
          | _ -> return ret_type)
         ~with_:(fun _ -> return ret_type)
     in
+    let applied_param_names = List.drop param_names 1 in
+    let ret_type =
+      if List.is_empty applied_param_names
+      then ret_type
+      else Type.set_param_names applied_param_names ret_type
+    in
     return (ret_type, E.return, args)
   | T_exists tvar ->
     let%bind tvar1 = exists Type in
     let%bind tvar2 = exists Type in
-    let%bind arr = create_type @@ Type.t_arrow tvar1 tvar2 in
+    let%bind arr = create_type @@ Type.t_arrow ~param_names:[] tvar1 tvar2 in
     let%bind () = unify_texists tvar arr in
     let%bind args = check_expression args tvar1 in
     return (tvar2, E.return, args)

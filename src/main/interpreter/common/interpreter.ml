@@ -1125,7 +1125,7 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
           }
       ] ) ->
     let eval_branch arg_binder arg_mut_flag orig_lambda body calltrace env =
-      let Arrow.{ type1 = in_ty; type2 = _ } =
+      let Arrow.{ type1 = in_ty; type2 = _; param_names = _ } =
         AST.get_t_arrow_exn orig_lambda.type_expression
       in
       bind_param
@@ -1611,7 +1611,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
     let* args' = eval_ligo args calltrace env in
     (match f' with
     | V_Func_val { arg_binder; arg_mut_flag; body; env; rec_name = None; orig_lambda } ->
-      let Arrow.{ type1 = in_ty; type2 = _ } =
+      let Arrow.{ type1 = in_ty; type2 = _; param_names = _ } =
         AST.get_t_arrow_exn orig_lambda.type_expression
       in
       bind_param env arg_binder arg_mut_flag (in_ty, args') ~in_:(fun f_env' ->
@@ -1621,7 +1621,7 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
             f_env')
     | V_Func_val
         { arg_binder; arg_mut_flag; body; env; rec_name = Some fun_name; orig_lambda } ->
-      let Arrow.{ type1 = in_ty; type2 = _ } =
+      let Arrow.{ type1 = in_ty; type2 = _; param_names = _ } =
         AST.get_t_arrow_exn orig_lambda.type_expression
       in
       let f_env' = Env.extend env fun_name (orig_lambda.type_expression, f') in

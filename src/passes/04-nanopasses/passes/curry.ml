@@ -52,17 +52,17 @@ let make_ty_fun ~loc (fun_type : _ Recursive.general_fun_type) =
       let hd, tl = List.Ne.rev ty_lst in
       hd, List.rev tl
     in
-    List.fold_right tys ~init:ret ~f:(fun ty acc -> t_fun ~loc (ty, acc))
+    List.fold_right tys ~init:ret ~f:(fun ty acc -> t_fun ~loc ([], ty, acc))
 
 
 (* fun_return_types [parameters] [ret_type] associates each parameter of a lambda with
    its return type if possible, e.g:
 
-   parameters == [ Some (a : unit) ; Some (b : nat) ; Some (c : string) ]
+   parameters == [ Some (a : int) ; Some (b : nat) ; Some (c : string) ]
    ret_type == Some (int)
 
    result ==
-    [ Some (a:int) , nat -> string -> int 
+    [ Some (a:int) , nat -> string -> int
     ; Some (b:nat) , string -> nat
     ; Some (c:string) , int]
 *)
@@ -92,7 +92,25 @@ let fun_return_types parameters ret_type : (_ Types.Param.t * ty_expr option) li
       | [] -> []
     in
     let ret_types = aux (tl_param_type @ [ ret_type ]) in
-    List.zip_exn parameters ret_types
+    assert (List.length parameters = List.length ret_types);
+    let rec zip_binders_and_types acc param_names
+        : _ Types.Param.t list * ty_expr option list -> _ list
+      = function
+      | [], _ | _, [] -> acc
+      | binder :: xs, typ :: ys ->
+        let var_name =
+          Option.value
+            ~default:"_"
+            (let open Simple_utils.Option in
+            let _, var_name_opt = get_var_or_ty_pattern binder.pattern in
+            let* var_name = var_name_opt in
+            let* () = Option.some_if (not @@ Variable.is_generated var_name) () in
+            return @@ Variable.to_name_exn var_name)
+        in
+        let typ = Option.map ~f:(inject_param_names param_names) typ in
+        zip_binders_and_types ((binder, typ) :: acc) (var_name :: param_names) (xs, ys)
+    in
+    zip_binders_and_types [] [] (List.rev parameters, List.rev ret_types)
   | [] -> []
 
 
@@ -132,6 +150,7 @@ let compile_curry ~raise ~loc recursive_opt parameters ret_type body =
     let nested_lambdas =
       List.fold_right nested_lambda_data ~init:body' ~f:(fun x acc ->
           e_lambda ~loc (mk_lambda x acc))
+      |> set_initial_arg
     in
     push_within nested_lambdas
   | Some (fun_name, fun_type) ->
@@ -143,17 +162,22 @@ let compile_curry ~raise ~loc recursive_opt parameters ret_type body =
     let nested_lambdas =
       List.fold_right tl ~init:body' ~f:(fun x acc -> e_lambda ~loc (mk_lambda x acc))
     in
-    let top_binder_ty, top_lambda_ty =
+    let _, top_binder_ty, top_lambda_ty =
       trace_option ~raise (recursive_no_annot body) @@ get_t_fun fun_type
     in
-    let binder = Param.set_ascr top_param top_binder_ty in
-    push_within
-    @@ e_recursive
-         ~loc
-         { fun_name
-         ; fun_type
-         ; lambda = mk_lambda (binder, top_lambda_ty, top_prelude_opt) nested_lambdas
-         }
+    let binder = Param.set_ascr top_param top_binder_ty |> Param.set_initial_arg in
+    let lambda = mk_lambda (binder, top_lambda_ty, top_prelude_opt) nested_lambdas in
+    let param_names =
+      List.map ~f:(fun (param, _, _) -> Param.get_var param) nested_lambda_data
+    in
+    let param_names =
+      List.map
+        ~f:(fun var_name ->
+          if Variable.is_generated var_name then "_" else Variable.to_name_exn var_name)
+        param_names
+    in
+    let fun_type = inject_param_names param_names fun_type in
+    push_within @@ e_recursive ~loc { fun_name; fun_type; lambda }
 
 
 let compile ~raise =

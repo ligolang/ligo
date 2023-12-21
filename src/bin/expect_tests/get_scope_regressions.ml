@@ -23,7 +23,7 @@ let%expect_test _ =
     (iter_op#1:6-13 -> iter_op)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, characters 6-13
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, character 16 to line 4, character 1
-    Content: |resolved: list (int) -> unit|
+    Content: |resolved: [s]list (int) -> unit|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
     Mod Path =
@@ -39,7 +39,7 @@ let%expect_test _ =
     (do_nothing#2:6-16 -> do_nothing)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 6-16
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 19-48
-    Content: |resolved: int -> unit|
+    Content: |resolved: [_useless]int -> unit|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 13-23
     Mod Path =
@@ -54,7 +54,7 @@ let%expect_test _ =
     (test#6:6-10 -> test)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 6-10
     Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 6, characters 13-20
-    Content: |resolved: list (int) -> unit|
+    Content: |resolved: [s]list (int) -> unit|
     references: []
     Mod Path =
     Def Type = Global
@@ -196,7 +196,7 @@ let%expect_test _ =
     (f#2:4-5 -> f)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
-    Content: |resolved: ∀ gen#3 : * . gen#3 -> int|
+    Content: |resolved: ∀ gen#3 : * . [x]gen#3 -> int|
     references: []
     Mod Path =
     Def Type = Global

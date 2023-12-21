@@ -59,7 +59,7 @@ let morph_t_disc ~raise ~err ~loc (rows : ty_expr Non_linear_disc_rows.t) : reg 
               ( Label.of_string id
               , Non_linear_rows.{ associated_type = ty; attributes = []; decl_pos } ))
         in
-        t_sum_raw ~loc rows
+        t_sum_raw ~loc rows (Some label)
       in
       let reg =
         { label; id_set = StrSet.of_list (List.map ~f:snd3 singleton_rows); ty }
@@ -134,7 +134,7 @@ let compile ~raise =
     let i = Option.value opt ~default:i in
     default_unfold.instruction (i, registered_unions)
   in
-  (* the fold register disc_unions types and morph them to variant 
+  (* the fold register disc_unions types and morph them to variant
      the unfold use registered disc_unions and morph switches into matches
   *)
   Refold_acc
@@ -151,5 +151,46 @@ let reduction ~raise =
   }
 
 
-(* TODO #1811 *)
-let decompile ~raise:_ = Nothing
+let decompile ~raise:_ =
+  let pass_ty : _ ty_expr_ -> ty_expr = function
+    | { location = loc; wrap_content = T_sum_raw (rows, Some orig_name) } ->
+      let singleton_rows =
+        List.map rows ~f:(fun (Label id, Non_linear_rows.{ associated_type = ty; _ }) ->
+            orig_name, id, ty)
+      in
+      let rows_record =
+        let typs =
+          List.map singleton_rows ~f:(fun (label, id, ty_rest) ->
+              let str_type = t_string ~loc:Location.generated id in
+              let rest_lst =
+                Option.value
+                  ~default:[]
+                  (let open Simple_utils.Option in
+                  let* ty_rest in
+                  (* TODO #1758 *)
+                  let unit_case =
+                    let* name = get_t_var ty_rest in
+                    let* () = Option.some_if (not @@ Ty_variable.is_generated name) () in
+                    let* () =
+                      Option.some_if
+                        (String.equal (Ty_variable.to_name_exn name) "unit")
+                        ()
+                    in
+                    return []
+                  in
+                  let record_case = get_t_record_raw ty_rest in
+                  Option.first_some unit_case record_case)
+              in
+              let row_fst =
+                ( label
+                , Non_linear_rows.
+                    { associated_type = Some str_type; attributes = []; decl_pos = 0 } )
+              in
+              (), t_record_raw ~loc:Location.generated (row_fst :: rest_lst), [])
+        in
+        Non_linear_disc_rows.make typs
+      in
+      t_disc_union ~loc rows_record
+    | { location = loc; wrap_content } -> make_t ~loc wrap_content
+  in
+  Fold { idle_fold with ty_expr = pass_ty }

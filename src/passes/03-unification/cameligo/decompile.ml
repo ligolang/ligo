@@ -328,12 +328,12 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_arg s -> T_Arg (w (Some ghost_quote, CST.Var (ghost_ident s)))
   | T_var t -> decompile_tvar t
   | T_var_esc t -> decompile_tvar_esc t
-  | T_fun (t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
+  | T_fun (_param_names, t1, t2) -> T_Fun (w (p t1, ghost_arrow, p ~arrow_rhs:true t2))
   | T_prod (first, rest) ->
     (match Utils.list_to_sepseq rest ghost_times with
     | Some nsepseq -> T_Cart (w (first, ghost_times, nsepseq))
     | None -> failwith "Decompiler: got a T_prod with only one element")
-  | T_sum { fields; layout = _ } ->
+  | T_sum ({ fields; layout = _ }, _) ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
        T_record -> T_record_raw is not implemented, so we need to handle those here*)
     (* TODO #1758 support nullary constructors *)
@@ -394,7 +394,7 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
         ghost_semi
     in
     T_Record (w CST.{ lbrace = ghost_lbrace; inside = pairs; rbrace = ghost_rbrace })
-  | T_sum_raw row ->
+  | T_sum_raw (row, _) ->
     let pairs =
       Utils.list_to_sepseq
         (List.map

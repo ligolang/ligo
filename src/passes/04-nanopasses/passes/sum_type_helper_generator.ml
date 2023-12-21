@@ -97,7 +97,7 @@ let compile ~raise:_ =
             let* d = get_pe_declaration pe in
             let* { key; value }, decl = get_d_attr d in
             let* { name; type_expr } = get_d_type decl in
-            let* sum = get_t_sum_raw type_expr in
+            let* sum, _ = get_t_sum_raw type_expr in
             if String.equal key "ppx_helpers" && Option.is_none value
             then Some (decl, name, sum, get_t_loc type_expr)
             else None
@@ -133,7 +133,7 @@ let%expect_test "compile" =
        (type_expr
         (T_sum_raw
          (((Label Foo) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-          ((Label Bar) ((associated_type ()) (decl_pos 1))))))))))))
+          ((Label Bar) ((associated_type ()) (decl_pos 1))))()))))))))
   |}
   |-> compile;
   [%expect
@@ -144,7 +144,8 @@ let%expect_test "compile" =
         (type_expr
          (T_sum_raw
           (((Label Foo) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-           ((Label Bar) ((associated_type ()) (decl_pos 1)))))))))
+           ((Label Bar) ((associated_type ()) (decl_pos 1))))
+          ())))))
      (PE_declaration
       (D_let
        ((pattern ((P_var make_foo) (P_var x)))

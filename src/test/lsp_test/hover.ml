@@ -319,7 +319,7 @@ let test_cases =
               ( p
               , one
                   "namespace Outer implements {\n\
-                  \  const outer_foo: (_: int) => (_: int) => int\n\
+                  \  const outer_foo: (a: int, b: int) => int\n\
                    }" ))
             [ pos ~line:25 ~character:11; pos ~line:41 ~character:21 ]
         @ List.map
@@ -327,7 +327,7 @@ let test_cases =
               ( p
               , one
                   "namespace Inner implements {\n\
-                  \  const inner_foo: (_: int) => (_: int) => int\n\
+                  \  const inner_foo: (a: int, b: int) => int\n\
                    }" ))
             [ pos ~line:28 ~character:20; pos ~line:41 ~character:26 ]
         @ List.map
@@ -459,7 +459,7 @@ let test_cases =
            , List
                [ ( "namespace M implements {\n\
                    \  @view\n\
-                   \  const y: (_: int) => int;\n\
+                   \  const y: (x: int) => int;\n\
                    \  type t = { foo: nat };\n\
                    \  const p: option<t>\n\
                     }"
@@ -467,7 +467,7 @@ let test_cases =
                ; "NAMESPACE", Markdown
                ] )
          ; ( pos ~line:18 ~character:15
-           , List [ "y : (_: int) => int", Ligo; "TERM IN NAMESPACE", Markdown ] )
+           , List [ "y : (x: int) => int", Ligo; "TERM IN NAMESPACE", Markdown ] )
          ; ( pos ~line:20 ~character:14
            , List [ "type t = { foo: nat }", Ligo; "TYPE IN NAMESPACE", Markdown ] )
          ; ( pos ~line:22 ~character:15
@@ -480,25 +480,25 @@ let test_cases =
            , List
                [ ( "namespace M1 implements {\n\
                    \  @entry\n\
-                   \  const y: (_: int) => (_: int) => [list<operation>, int]\n\
+                   \  const y: (x: int, _: int) => [list<operation>, int]\n\
                     }"
                  , Ligo )
                ; "NAMESPACE WITH ENTRY POINT", Markdown
                ] )
          ; ( pos ~line:46 ~character:15
            , List
-               [ "y : (_: int) => (_: int) => [list<operation>, int]", Ligo
+               [ "y : (x: int, _: int) => [list<operation>, int]", Ligo
                ; "BEFORE DECORATOR", Markdown
                ; "AFTER DECORATOR", Markdown
                ; "ENTRY POINT TERM", Markdown
                ] )
          ; ( pos ~line:49 ~character:19
            , List
-               [ "namespace C implements {\n  const f: (_: int) => int\n}", Ligo
+               [ "namespace C implements {\n  const f: (t: int) => int\n}", Ligo
                ; "NESTED NAMESPACE", Markdown
                ] )
          ; ( pos ~line:51 ~character:17
-           , List [ "f : (_: int) => int", Ligo; "NESTED NAMESPACE TERM", Markdown ] )
+           , List [ "f : (t: int) => int", Ligo; "NESTED NAMESPACE TERM", Markdown ] )
          ; ( pos ~line:56 ~character:6
            , List
                [ "t : (_: unit) => list<int>", Ligo

@@ -27,10 +27,10 @@ let rec subst_type ?(fv = VarSet.empty) v t (u : type_expression) =
   let loc = u.location in
   match u.type_content with
   | T_variable v' when Type_var.equal v v' -> t
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = self v t type1 in
     let type2 = self v t type2 in
-    { u with type_content = T_arrow { type1; type2 } }
+    { u with type_content = T_arrow { type1; type2; param_names } }
   | T_abstraction { ty_binder; kind; type_ } when VarSet.mem ty_binder fv ->
     let ty_binder' = Type_var.fresh ~loc () in
     let type_ = self ty_binder (Combinators.t_variable ~loc ty_binder' ()) type_ in
@@ -218,7 +218,7 @@ let rec fold_type_expression
   | T_variable _ -> init
   | T_constant { parameters; _ } -> List.fold parameters ~init ~f
   | T_sum row | T_record row -> Row.fold f init row
-  | T_arrow { type1; type2 } -> self type2 ~init:(self type1 ~init)
+  | T_arrow { type1; type2; param_names = _ } -> self type2 ~init:(self type1 ~init)
   | T_singleton _ -> init
   | T_abstraction { type_; _ } | T_for_all { type_; _ } -> self type_ ~init
 

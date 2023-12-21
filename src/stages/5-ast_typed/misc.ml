@@ -47,7 +47,8 @@ let rec assert_type_expression_eq ((a, b) : type_expression * type_expression)
       ()
   | T_record _, _ -> None
   | T_sum _, _ -> None
-  | T_arrow { type1; type2 }, T_arrow { type1 = type1'; type2 = type2' } ->
+  | ( T_arrow { type1; type2; param_names = _ }
+    , T_arrow { type1 = type1'; type2 = type2'; param_names = _ } ) ->
     let* _ = assert_type_expression_eq (type1, type1') in
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
@@ -147,7 +148,7 @@ let rec get_entry (lst : module_) (name : Value_var.t) : expression option =
 
 let get_type_of_contract ty =
   match Combinators.get_t_arrow ty with
-  | Some { type1; type2 } ->
+  | Some { type1; type2; param_names = _ } ->
     (match Combinators.get_t_pair type1, Combinators.get_t_pair type2 with
     | Some (parameter, storage), Some (listop, storage') ->
       let open Simple_utils.Option in
@@ -164,10 +165,10 @@ let get_type_of_entrypoint ty =
     Option.is_some @@ Combinators.assert_t_list_operation listop
   in
   match Combinators.get_t_arrow ty with
-  | Some { type1 = tin; type2 = return } ->
+  | Some { type1 = tin; type2 = return; param_names = _ } ->
     let parameter = tin in
     (match Combinators.get_t_arrow return with
-    | Some { type1 = storage; type2 = return } ->
+    | Some { type1 = storage; type2 = return; param_names = _ } ->
       (match Combinators.get_t_pair return with
       | Some (listop, storage') ->
         if is_t_list_operation listop && type_expression_eq (storage, storage')
@@ -193,10 +194,10 @@ let should_uncurry_entry entry_ty =
     Option.is_some @@ Combinators.assert_t_list_operation listop
   in
   match Combinators.get_t_arrow entry_ty with
-  | Some { type1 = tin; type2 = return } ->
+  | Some { type1 = tin; type2 = return; param_names = _ } ->
     let parameter = tin in
     (match Combinators.get_t_arrow return with
-    | Some { type1 = storage; type2 = return } ->
+    | Some { type1 = storage; type2 = return; param_names = _ } ->
       (match Combinators.get_t_pair return with
       | Some (listop, storage') ->
         if is_t_list_operation listop && type_expression_eq (storage, storage')
@@ -210,9 +211,9 @@ let should_uncurry_entry entry_ty =
 (* We cannot really tell the difference, this is just an heuristic when we try with curried first *)
 let should_uncurry_view ~storage_ty view_ty =
   match Combinators.get_t_arrow view_ty with
-  | Some { type1 = tin; type2 = return } ->
+  | Some { type1 = tin; type2 = return; param_names = _ } ->
     (match Combinators.get_t_arrow return with
-    | Some { type1 = storage; type2 = return }
+    | Some { type1 = storage; type2 = return; param_names = _ }
       when Option.is_some (assert_type_expression_eq (storage_ty, storage)) ->
       `Yes (tin, storage, return)
     | _ -> `Bad)
@@ -267,8 +268,8 @@ let parameter_from_entrypoints
 let uncurry_wrap ~loc ~type_ var =
   let open Combinators in
   let open Simple_utils.Option in
-  let* { type1 = input_ty; type2 = output_ty } = get_t_arrow type_ in
-  let* { type1 = storage; type2 = output_ty } = get_t_arrow output_ty in
+  let* { type1 = input_ty; type2 = output_ty; param_names = _ } = get_t_arrow type_ in
+  let* { type1 = storage; type2 = output_ty; param_names = _ } = get_t_arrow output_ty in
   (* We create a wrapper to uncurry it: *)
   let parameter = input_ty in
   let p_var = Value_var.fresh ~loc ~name:"parameter" () in

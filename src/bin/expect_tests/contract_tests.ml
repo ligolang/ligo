@@ -158,7 +158,7 @@ let%expect_test _ =
      50 |
 
     Value "juju" does not match.
-    Expected "string -> int -> ( list (operation) * int )", but got: "int -> int ->
+    Expected "[_i, s]string -> int -> ( list (operation) * int )", but got: "[i, s]int -> int ->
     ( list (operation) *
       int )". |}];
   run_ligo_good [ "run"; "test"; contract "interfaces.include.jsligo" ];
@@ -2843,7 +2843,7 @@ let%expect_test _ =
                 ^^^^^^
       9 |     return failwith("You need to be part of Tezos organization to activate an organization");
 
-    Not an entrypoint: record[admins -> int , name -> string] -> ∀ gen#5 : * . int -> gen#5 |}]
+    Not an entrypoint: [_p]record[admins -> int , name -> string] -> ∀ gen#5 : * . [_s]int -> gen#5 |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile"; "contract"; contract "increment_module.jsligo"; "-m"; "C" ];

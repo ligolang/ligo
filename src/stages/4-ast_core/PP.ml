@@ -38,7 +38,7 @@ and type_content : formatter -> type_content -> unit =
       Simple_utils.PP_helpers.(list_sep Module_var.pp (const "."))
       (List.Ne.to_list x)
   | T_constant (t, _) -> string ppf (Literal_types.to_string t)
-  | T_sum row -> Row.PP.sum_type type_expression layout ppf row
+  | T_sum (row, _) -> Row.PP.sum_type type_expression layout ppf row
   | T_record row -> Row.PP.record_type type_expression layout ppf row
   | T_arrow a -> Arrow.pp type_expression ppf a
   | T_app app -> Type_app.pp (Module_access.pp Type_var.pp) type_expression ppf app

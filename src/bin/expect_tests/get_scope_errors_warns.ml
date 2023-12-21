@@ -244,7 +244,7 @@ let%expect_test _ =
     (foo#7:4-7 -> foo)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 4-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
-    Content: |resolved: int -> int|
+    Content: |resolved: [x]int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 14, characters 10-13
     Mod Path =
@@ -260,7 +260,7 @@ let%expect_test _ =
     (bar#9:4-7 -> bar)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 4-7
     Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
-    Content: |resolved: int -> int|
+    Content: |resolved: [x]int -> int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 15, characters 10-13
     Mod Path =
@@ -276,9 +276,9 @@ let%expect_test _ =
     (main#12:4-8 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 4-8
     Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
-    Content: |resolved: int -> record[x -> int , y -> int] -> ( list (operation) *
-                                                                record[x -> int ,
-                                                                       y -> int] )|
+    Content: |resolved: [_, s]int -> record[x -> int , y -> int] -> ( list (operation) *
+                                                                      record[x -> int ,
+                                                                        y -> int] )|
     references: []
     Mod Path =
     Def Type = Global

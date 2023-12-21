@@ -264,7 +264,7 @@ module Command = struct
       let contract =
         trace_option ~raise (corner_case ()) @@ LC.get_michelson_contract contract
       in
-      let Arrow.{ type1 = input_ty; type2 = _ } =
+      let Arrow.{ type1 = input_ty; type2 = _; param_names = _ } =
         trace_option ~raise (corner_case ()) @@ Ast_aggregated.get_t_arrow contract_ty
       in
       let parameter_ty, _ =
@@ -444,7 +444,7 @@ module Command = struct
     | Run (loc, f, v) ->
       let open Ligo_interpreter.Types in
       let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise f.env in
-      let Arrow.{ type1 = in_ty; type2 = out_ty } =
+      let Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
         trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?")
         @@ Ast_aggregated.get_t_arrow f.orig_lambda.type_expression
       in
@@ -533,7 +533,7 @@ module Command = struct
         | LT.V_Func_val
             { arg_binder; arg_mut_flag = Immutable; body; orig_lambda; env; rec_name } ->
           let subst_lst = Michelson_backend.make_subst_ast_env_exp ~raise env in
-          let Arrow.{ type1 = in_ty; type2 = out_ty } =
+          let Arrow.{ type1 = in_ty; type2 = out_ty; param_names = _ } =
             trace_option ~raise (Errors.generic_error loc "Trying to run a non-function?")
             @@ Ast_aggregated.get_t_arrow orig_lambda.type_expression
           in

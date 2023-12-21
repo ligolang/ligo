@@ -180,7 +180,7 @@ let core_prod =
         "core_abstraction/fun_type_var.mligo"
         "\n\
          const foo : ∀ a : * . list (a) -> list (a) =\n\
-        \  Λ a ->  Λ b ->  fun ( xs : list (b)) : list (b) -> xs"
+        \  Λ a ->  Λ b ->  fun (init xs : list (b)) : list (b) -> xs"
     ]
 
 

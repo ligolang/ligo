@@ -409,7 +409,7 @@ let%expect_test _ =
     (c#4:10-11 -> c)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 10-11
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 5, character 4 to line 6, character 11
-    Content: |core: ( int * int ) -> int|
+    Content: |core: [_]( int * int ) -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 6, characters 4-5 ,
       File "../../test/contracts/get_scope_tests/rec.mligo", line 13, characters 2-3
@@ -442,7 +442,7 @@ let%expect_test _ =
     (z#8:10-11 -> z)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 10-11
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 4-36
-    Content: |core: int -> int -> int|
+    Content: |core: [n, m]int -> int -> int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 25-26 ,
       File "../../test/contracts/get_scope_tests/rec.mligo", line 11, characters 10-11
@@ -485,7 +485,7 @@ let%expect_test _ =
     (x#15:8-9 -> x)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 15, characters 8-9
     Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 2 to line 17, character 16
-    Content: |core: int -> unit|
+    Content: |core: [y]int -> unit|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 17, characters 7-8
     Mod Path =
@@ -1907,7 +1907,7 @@ let%expect_test _ =
       (fn#49:4-6 -> fn)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 4-6
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 9-35
-      Content: |resolved: int -> nat|
+      Content: |resolved: [x]int -> nat|
       references: []
       Mod Path =
       Def Type = Global

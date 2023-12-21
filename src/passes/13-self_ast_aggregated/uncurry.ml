@@ -408,7 +408,8 @@ let uncurry_expression (expr : expression) : expression =
                     ; force_lambdarec
                     }
               ; type_expression =
-                  { type_content = T_arrow { type1 = record_type; type2 = ret_type }
+                  { type_content =
+                      T_arrow { type1 = record_type; type2 = ret_type; param_names = [] }
                   ; orig_var = None
                   ; location = loc
                   ; source_type = None

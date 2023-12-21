@@ -12,10 +12,10 @@ let rec subst_type (binder : Type_var.t) (value : type_expression) (te : type_ex
     let parameters = List.map ~f:self parameters in
     return @@ T_constant { language; injection; parameters }
   | T_singleton _ -> te
-  | T_arrow { type1; type2 } ->
+  | T_arrow { type1; type2; param_names } ->
     let type1 = self type1 in
     let type2 = self type2 in
-    return @@ T_arrow { type1; type2 }
+    return @@ T_arrow { type1; type2; param_names }
   | T_sum m -> return @@ T_sum (Row.map self m)
   | T_record m -> return @@ T_record (Row.map self m)
   | T_for_all { ty_binder; kind; type_ } ->
@@ -38,7 +38,7 @@ let destruct_for_alls (t : type_expression) =
 let destruct_arrows_n (t : type_expression) (n : int) =
   let rec destruct_arrows type_vars (t : type_expression) =
     match t.type_content with
-    | T_arrow { type1; type2 } when List.length type_vars < n ->
+    | T_arrow { type1; type2; param_names = _ } when List.length type_vars < n ->
       destruct_arrows (type1 :: type_vars) type2
     | _ -> List.rev type_vars, t
   in
@@ -49,7 +49,8 @@ let destruct_arrows_n (t : type_expression) (n : int) =
 let destruct_arrows (t : type_expression) =
   let rec destruct_arrows type_vars (t : type_expression) =
     match t.type_content with
-    | T_arrow { type1; type2 } -> destruct_arrows (type1 :: type_vars) type2
+    | T_arrow { type1; type2; param_names = _ } ->
+      destruct_arrows (type1 :: type_vars) type2
     | _ -> List.rev type_vars, t
   in
   destruct_arrows [] t
@@ -124,7 +125,8 @@ let rec assert_type_expression_eq
       ~init:(Some ())
       (List.zip_exn ra' rb')
   | T_record _, _ -> None
-  | T_arrow { type1; type2 }, T_arrow { type1 = type1'; type2 = type2' } ->
+  | ( T_arrow { type1; type2; param_names = _ }
+    , T_arrow { type1 = type1'; type2 = type2'; param_names = _ } ) ->
     let* _ = assert_type_expression_eq ~unforged_tickets (type1, type1') in
     assert_type_expression_eq ~unforged_tickets (type2, type2')
   | T_arrow _, _ -> None

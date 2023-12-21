@@ -162,8 +162,8 @@ let fields_with_no_annot fields =
 
 (* by default { a : int ; b : string} will be 'pair (int %a) (b %b)' I think *)
 (* leave this to the backend. Typer shouldn't determine default rendered michelson *)
-(* i am not so sure, or we forget the annot altogether. Oh I see, typer needs to care about annots. .Uh this is a mess. 
-   Currently the typer doesn't insert any annotations. Lets keep that for now and raise an issue later 
+(* i am not so sure, or we forget the annot altogether. Oh I see, typer needs to care about annots. .Uh this is a mess.
+   Currently the typer doesn't insert any annotations. Lets keep that for now and raise an issue later
 hopefully test won't pass but I am uncertain :D *)
 
 let ez_t_record ~loc ?(layout = default_layout) (lst : (Label.t * type_expression) list)
@@ -191,13 +191,13 @@ let t_bool ~loc () : type_expression =
   t_sum_ez ~loc [ "True", t_unit ~loc (); "False", t_unit ~loc () ]
 
 
-let t_arrow param result ~loc () : type_expression =
-  t_arrow ~loc { type1 = param; type2 = result } ()
+let t_arrow param result ~loc ?(param_names = []) () : type_expression =
+  t_arrow ~loc { type1 = param; type2 = result; param_names } ()
 
 
 let get_lambda_with_type e =
   match e.expression_content, e.type_expression.type_content with
-  | E_lambda l, T_arrow { type1; type2 } -> Some (l, (type1, type2))
+  | E_lambda l, T_arrow { type1; type2; param_names = _ } -> Some (l, (type1, type2))
   | _ -> None
 
 
@@ -429,7 +429,9 @@ let e_a_variable ~loc v ty = e_variable ~loc v ty
 let e_a_application ~loc lamb args t = e_application ~loc { lamb; args } t
 
 let e_a_application_exn ~loc lamb args =
-  let Arrow.{ type1 = _; type2 } = get_t_arrow_exn lamb.type_expression in
+  let Arrow.{ type1 = _; type2; param_names = _ } =
+    get_t_arrow_exn lamb.type_expression
+  in
   e_application ~loc { lamb; args } type2
 
 
@@ -466,7 +468,7 @@ let get_record_fields (t : type_expression) : (Label.t * type_expression) list o
 (* getter for a function of the form p * s -> ret *)
 let get_view_form ty =
   match get_t_arrow ty with
-  | Some { type1 = tin; type2 = return } ->
+  | Some { type1 = tin; type2 = return; param_names = _ } ->
     (match get_t_tuple tin with
     | Some [ arg; storage ] -> Some (arg, storage, return)
     | _ -> None)
