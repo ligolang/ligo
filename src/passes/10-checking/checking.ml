@@ -365,6 +365,23 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
   | Literal_bls12_381_fr _ -> const Type.t_bls12_381_fr
 
 
+let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
+  let open C in
+  let open Let_syntax in
+  match%bind Context.get_record fields with
+  | None ->
+    let%bind layout = lexists (Map.key_set fields) in
+    create_type @@ Type.t_record { fields; layout }
+  | Some (orig_var, row) ->
+    (match orig_var with
+    | None -> create_type @@ Type.t_record row
+    | Some orig_var ->
+      return
+        { (Type.t_record row ~loc:(Type_var.get_location orig_var) ()) with
+          orig_var = Some orig_var
+        })
+
+
 let rec check_expression (expr : I.expression) (type_ : Type.t)
     : (O.expression E.t, _, _) C.t
   =
@@ -719,13 +736,7 @@ and infer_expression (expr : I.expression)
         record
         ~init:(return Label.Map.(empty, empty))
     in
-    let%bind record_type =
-      match%bind Context.get_record fields with
-      | None ->
-        let%bind layout = lexists (Map.key_set fields) in
-        create_type @@ Type.t_record { fields; layout }
-      | Some (orig_var, row) -> create_type @@ Type.t_record_with_orig_var row ~orig_var
-    in
+    let%bind record_type = t_record_with_orig_var fields in
     const
       E.(
         let%bind record = all_lmap record in
@@ -1413,13 +1424,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
         record_pat
         ~init:(return Label.Map.(empty, empty))
     in
-    let%bind record_type =
-      match%bind Context.get_record fields with
-      | None ->
-        let%bind layout = lexists (Map.key_set fields) in
-        create_type @@ Type.t_record { fields; layout }
-      | Some (orig_var, row) -> create_type @@ Type.t_record_with_orig_var row ~orig_var
-    in
+    let%bind record_type = lift @@ t_record_with_orig_var fields in
     const
       E.(
         let%bind record_pat = all_lmap record_pat in
