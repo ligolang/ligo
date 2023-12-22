@@ -279,10 +279,6 @@ let t_arrow param result ~loc ?(param_names = []) () : t =
 
 let t_mutez = t_tez
 
-let t_record_with_orig_var row ~orig_var ~loc () =
-  { (t_record row ~loc ()) with orig_var }
-
-
 let t_test_baker_policy ~loc () =
   t_sum_ez
     ~loc

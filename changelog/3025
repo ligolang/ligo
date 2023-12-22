@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nFixes *go to type definition* pointing to a record expression's body rather than the actual type definition when there is no type annotation in the LSP.\\n\\n"
+merge_request: '3025'
+title: "[#1957] Fix go to type definition for inferred records"
+type: fixed
+            
