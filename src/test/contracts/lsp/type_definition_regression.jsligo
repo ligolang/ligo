@@ -1,0 +1,3 @@
+type t = { left: int; right: int }
+
+const x = { left: 1; right: 2 }

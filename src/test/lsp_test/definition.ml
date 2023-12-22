@@ -256,6 +256,22 @@ let test_cases =
     ; definitions = Some [ interval 17 7 20; interval 29 7 21 ]
     ; def_type = Impl
     }
+  ; { test_name = "Find type definition of inferred record type (CameLIGO)"
+    ; file_with_reference = "contracts/lsp/type_definition_regression.mligo"
+    ; reference = Position.create ~line:5 ~character:4
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/type_definition_regression.mligo"
+    ; definitions = Some [ interval 0 5 6 ]
+    ; def_type = Type_def
+    }
+  ; { test_name = "Find type definition of inferred record type (JsLIGO)"
+    ; file_with_reference = "contracts/lsp/type_definition_regression.jsligo"
+    ; reference = Position.create ~line:2 ~character:6
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/type_definition_regression.jsligo"
+    ; definitions = Some [ interval 0 5 6 ]
+    ; def_type = Type_def
+    }
   ]
 
 
