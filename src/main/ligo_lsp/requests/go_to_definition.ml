@@ -77,15 +77,20 @@ let find_module_by_string_path
   find_module_with_uid_conversion Scopes.Uid.to_name
 
 
-let find_defs_by_name_and_level (def : Scopes.def) : Scopes.def list -> Scopes.def list =
-  List.filter
-    ~f:
-      Scopes.Types.(
-        fun def' ->
-          match def, def' with
-          | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
-            String.equal (get_def_name def) (get_def_name def')
-          | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
+let find_last_def_by_name_and_level (def : Scopes.def)
+    : Scopes.def list -> Scopes.def option
+  =
+  List.max_elt ~compare:(fun def1 def2 ->
+      let open Scopes.Types in
+      Simple_utils.Location_ordered.compare (get_range def1) (get_range def2))
+  <@ List.filter
+       ~f:
+         Scopes.Types.(
+           fun def' ->
+             match def, def' with
+             | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
+               String.equal (get_def_name def) (get_def_name def')
+             | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
 
 
 module Mod_identifier = struct
@@ -234,7 +239,7 @@ let try_to_get_mdef_uid
   | None ->
     Seq.find_map (function
         | id, Scopes.Types.Ad_hoc_signature defs ->
-          if List.is_empty @@ find_defs_by_name_and_level def defs then None else Some id
+          Option.map (find_last_def_by_name_and_level def defs) ~f:(const id)
         | _, Standalone_signature_or_module _ -> None)
     @@ Mod_map.to_seq mod_ids
   | Some def_mod -> Some (Mod_identifier.Standalone_signature_or_module def_mod.uid)
@@ -275,7 +280,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
     let%map.Option defining_mods =
       List.find (Mod_graph.wcc @@ build_mod_graph mdefs) ~f:(Mod_graph.mem def_mod_id)
     in
-    let find_defs_in_implementation : Scopes.Types.implementation -> Def.t list option
+    let find_defs_in_implementation : Scopes.Types.implementation -> Def.t option
       = function
       (* We don't care about signatures, as they don't implement anything. *)
       | Ad_hoc_signature _defs -> None
@@ -292,15 +297,14 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
            signature name. In this case, we don't need to search inside the module
            definitions, but rather just return the module itself. *)
         if Option.is_some sig_uid_opt
-        then Some [ (Module mdef : Scopes.def) ]
+        then Some (Module mdef : Scopes.def)
         else (
-          let%map.Option defs = try_to_resolve_mod_case mdefs mdef.mod_case in
-          find_defs_by_name_and_level def defs)
+          let%bind.Option defs = try_to_resolve_mod_case mdefs mdef.mod_case in
+          find_last_def_by_name_and_level def defs)
     in
     (* Search for [def] within the modules. *)
-    List.concat
-    @@ List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
-           Option.bind ~f:find_defs_in_implementation @@ Mod_map.find_opt id mod_ids)
+    List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
+        Option.bind ~f:find_defs_in_implementation @@ Mod_map.find_opt id mod_ids)
   with
   | None | Some [] -> [ def ]
   | Some (_ :: _ as implementers) -> implementers
@@ -320,7 +324,7 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
       (* Got all definitions of this signature/interface, but is [def] inside? We do not
          compare by [Scopes.Uid.t] since we consider each declaration and implementation
          to be distinct. *)
-      find_defs_by_name_and_level def defs
+      Option.to_list @@ find_last_def_by_name_and_level def defs
     | Standalone_signature_or_module path ->
       (* This is an alias to an existing signature/interface, so we need to resolve it
          until it's [Def] to get its definitions and look if [def] is inside. We need to

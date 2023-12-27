@@ -140,6 +140,14 @@ let test_cases =
           "contracts/lsp/go_to_implementations/include.mligo"
           [ interval 12 7 9; interval 19 10 12 ]
     }
+  ; { test_name = "references of shadowed identifier"
+    ; test_file = "contracts/lsp/go_to_implementations/shadow.mligo"
+    ; reference = Position.create ~line:13 ~character:11
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/shadow.mligo"
+          [ interval 1 7 8; interval 10 7 8; interval 13 11 12 ]
+    }
   ]
 
 
