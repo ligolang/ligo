@@ -111,6 +111,43 @@ let test_cases =
           "contracts/lsp/go_to_implementations/two_namespaces.jsligo"
           [ interval 1 7 8; interval 2 12 13; interval 6 7 8; interval 11 7 8 ]
     }
+  ; { test_name = "signature and include"
+    ; test_file = "contracts/lsp/go_to_implementations/signature_and_include.mligo"
+    ; reference = Position.create ~line:12 ~character:11
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/signature_and_include.mligo"
+          [ interval 1 6 7; interval 7 10 11; interval 12 10 11 ]
+    }
+  ; { test_name = "references from included type"
+    ; test_file = "contracts/lsp/go_to_implementations/include.mligo"
+    ; reference = Position.create ~line:22 ~character:12
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/include.mligo"
+          [ interval 1 7 8
+          ; interval 5 7 8
+          ; interval 9 7 8
+          ; interval 15 7 8
+          ; interval 22 12 13
+          ]
+    }
+  ; { test_name = "references of included module"
+    ; test_file = "contracts/lsp/go_to_implementations/include.mligo"
+    ; reference = Position.create ~line:19 ~character:10
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/include.mligo"
+          [ interval 12 7 9; interval 19 10 12 ]
+    }
+  ; { test_name = "references of shadowed identifier"
+    ; test_file = "contracts/lsp/go_to_implementations/shadow.mligo"
+    ; reference = Position.create ~line:13 ~character:11
+    ; references =
+        intervals
+          "contracts/lsp/go_to_implementations/shadow.mligo"
+          [ interval 1 7 8; interval 10 7 8; interval 13 11 12 ]
+    }
   ]
 
 
