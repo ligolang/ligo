@@ -4,10 +4,12 @@ open Lsp_helpers
 type def_scope =
   | Term_scope
   | Type_scope
+  | Module_scope
 
 let in_scope (def : Def.t) (scope : def_scope) =
   match def, scope with
-  | Module _, _ -> true (* We'll show modules both for term and type completions *)
+  | Module _, (Term_scope | Type_scope | Module_scope) ->
+    true (* We'll show modules for all definition scopes *)
   | Variable _, Term_scope -> true
   | Type _, Type_scope -> true
   | _ -> false

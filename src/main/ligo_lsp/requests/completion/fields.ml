@@ -7,24 +7,27 @@ open Lsp_helpers
 module Utils = Simple_utils.Utils
 module Fold = Cst_shared.Fold
 
-type ('module_expr, 'module_type_expr) expr_kind =
+type ('module_expr, 'module_type_expr, 'module_name) expr_kind =
   | Module_path_expr of 'module_expr
   | Module_path_type_expr of 'module_type_expr
+  | Module_path_selection of 'module_name
 
 (** We want to prove to the compiler that a module of type [Compatible_CST]
     is containing either CameLIGO or JsLIGO cst *)
-type (_, _, _, _) cst_witness =
+type (_, _, _, _, _) cst_witness =
   | Witness_CameLIGO
       : ( Cst_cameligo.CST.cst
         , Cst_cameligo.CST.projection
         , Cst_cameligo.CST.expr Cst_cameligo.CST.module_path
-        , Cst_cameligo.CST.type_expr Cst_cameligo.CST.module_path )
+        , Cst_cameligo.CST.type_expr Cst_cameligo.CST.module_path
+        , Cst_cameligo.CST.module_name Cst_cameligo.CST.module_path )
         cst_witness
   | Witness_JsLIGO
       : ( Cst_jsligo.CST.cst
         , Cst_jsligo.CST.projection
         , Cst_jsligo.CST.expr Cst_jsligo.CST.namespace_path
-        , Cst_jsligo.CST.type_expr Cst_jsligo.CST.namespace_path )
+        , Cst_jsligo.CST.type_expr Cst_jsligo.CST.namespace_path
+        , Cst_jsligo.CST.namespace_name Cst_jsligo.CST.namespace_path )
         cst_witness
 
 module type Compatible_CST = sig
@@ -34,9 +37,10 @@ module type Compatible_CST = sig
   type projection
   type selection (* Note: this selection must include the dot (as in JsLIGO) *)
 
-  (* OCaml compiler wants  concrete types to make the witness thing working *)
+  (* OCaml compiler wants concrete types to make the witness thing working *)
   type expr_module_path
   type type_expr_module_path
+  type module_name_path
 
   val expr_to_region : expr -> Region.t
   val expr_of_projection : projection -> expr
@@ -46,11 +50,18 @@ module type Compatible_CST = sig
   val selections_of_projection : projection -> selection Utils.nseq
 
   val lexemes_of_module_path
-    :  (expr_module_path, type_expr_module_path) expr_kind
+    :  (expr_module_path, type_expr_module_path, module_name_path) expr_kind
     -> lexeme wrap list
 
   val field_of_module_path : expr_module_path -> expr
-  val cst_witness : (cst, projection, expr_module_path, type_expr_module_path) cst_witness
+
+  val cst_witness
+    : ( cst
+      , projection
+      , expr_module_path
+      , type_expr_module_path
+      , module_name_path )
+      cst_witness
 end
 
 module C_CameLIGO : Compatible_CST with type cst = Cst_cameligo.CST.t = struct
@@ -59,6 +70,7 @@ module C_CameLIGO : Compatible_CST with type cst = Cst_cameligo.CST.t = struct
   type nonrec selection = dot * selection
   type expr_module_path = expr module_path
   type type_expr_module_path = type_expr module_path
+  type module_name_path = module_name module_path
 
   let expr_of_projection node = node.record_or_tuple
 
@@ -86,6 +98,7 @@ module C_CameLIGO : Compatible_CST with type cst = Cst_cameligo.CST.t = struct
   let lexemes_of_module_path = function
     | Module_path_expr node -> Utils.nsepseq_to_list node.module_path
     | Module_path_type_expr node -> Utils.nsepseq_to_list node.module_path
+    | Module_path_selection node -> Utils.nsepseq_to_list node.module_path
 
 
   let field_of_module_path node = node.field
@@ -97,6 +110,7 @@ module C_JsLIGO : Compatible_CST with type cst = Cst_jsligo.CST.t = struct
 
   type expr_module_path = expr namespace_path
   type type_expr_module_path = type_expr namespace_path
+  type module_name_path = namespace_name namespace_path
 
   let expr_of_projection node = node.object_or_array
 
@@ -125,6 +139,8 @@ module C_JsLIGO : Compatible_CST with type cst = Cst_jsligo.CST.t = struct
     | Module_path_expr (node : _ namespace_path) ->
       Utils.nsepseq_to_list node.namespace_path
     | Module_path_type_expr (node : _ namespace_path) ->
+      Utils.nsepseq_to_list node.namespace_path
+    | Module_path_selection (node : _ namespace_path) ->
       Utils.nsepseq_to_list node.namespace_path
 
 
@@ -256,14 +272,15 @@ let complete_fields
   in
   (* Returns list of module names before the cursor *)
   let linearize_module_path
-      (node : (C.expr_module_path, C.type_expr_module_path) expr_kind)
+      (node : (C.expr_module_path, C.type_expr_module_path, C.module_name_path) expr_kind)
       : lexeme wrap list
     =
     List.take_while (C.lexemes_of_module_path node) ~f:(fun name ->
         Position.(is_to_the_left (of_pos name#region#stop))
           farthest_dot_position_before_cursor)
   in
-  let expr_path_impl (node : (C.expr_module_path, C.type_expr_module_path) expr_kind)
+  let expr_path_impl
+      (node : (C.expr_module_path, C.type_expr_module_path, C.module_name_path) expr_kind)
       : CompletionItem.t list option
     =
     match node with
@@ -275,6 +292,11 @@ let complete_fields
         linearize_module_path (Module_path_type_expr type_expr)
       in
       Modules.module_path_impl module_names_before_cursor input Type_scope
+    | Module_path_selection module_name ->
+      let module_names_before_cursor =
+        linearize_module_path (Module_path_selection module_name)
+      in
+      Modules.module_path_impl module_names_before_cursor input Module_scope
   in
   let is_region_of_interest (region : Region.t) : bool =
     let open Range in
@@ -312,6 +334,8 @@ let complete_fields
           Continue (expr_path_impl (Module_path_expr node.value))
         | S_reg (S_module_path S_type_expr) when is_region_of_interest node.region ->
           Continue (expr_path_impl (Module_path_type_expr node.value))
+        | S_reg (S_module_path S_module_name) when is_region_of_interest node.region ->
+          Continue (expr_path_impl (Module_path_selection node.value))
         | _ -> Skip
       in
       fold_map_cst Fold.last_monoid instruction cst
@@ -327,6 +351,8 @@ let complete_fields
           Continue (expr_path_impl (Module_path_expr node.value))
         | S_reg (S_namespace_path S_type_expr) when is_region_of_interest node.region ->
           Continue (expr_path_impl (Module_path_type_expr node.value))
+        | S_reg (S_namespace_path S_namespace_name) when is_region_of_interest node.region
+          -> Continue (expr_path_impl (Module_path_selection node.value))
         | _ -> Skip
       in
       fold_map_cst Fold.last_monoid instruction cst

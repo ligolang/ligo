@@ -477,6 +477,42 @@ let test_cases_cameligo =
         ]
     ; negative_labels = [ "inner.mligo" ]
     }
+  ; { test_name = "Scope completions for modules"
+    ; file_name = "contracts/lsp/completion_imported_module.mligo"
+    ; position = Position.create ~line:2 ~character:11
+    ; completions =
+        [ CompletionItem.create
+            ~label:"A"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "After"; "N"; "K" ]
+    }
+  ; { test_name = "Field completions for imported modules"
+    ; file_name = "contracts/lsp/completion_imported_module.mligo"
+    ; position = Position.create ~line:8 ~character:13
+    ; completions =
+        [ CompletionItem.create
+            ~label:"M"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "After"; "K" ]
+    }
+  ; { test_name = "Module scope in field completions"
+    ; file_name = "contracts/lsp/completion_imported_module.mligo"
+    ; position = Position.create ~line:9 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"N"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "t"; "y" ]
+    }
   ]
 
 
@@ -788,6 +824,42 @@ let test_cases_jsligo =
             ()
         ]
     ; negative_labels = []
+    }
+  ; { test_name = "Scope completions for modules"
+    ; file_name = "contracts/lsp/completion_imported_module.jsligo"
+    ; position = Position.create ~line:2 ~character:11
+    ; completions =
+        [ CompletionItem.create
+            ~label:"A"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "After"; "N"; "K" ]
+    }
+  ; { test_name = "Field completions for imported modules"
+    ; file_name = "contracts/lsp/completion_imported_module.jsligo"
+    ; position = Position.create ~line:8 ~character:13
+    ; completions =
+        [ CompletionItem.create
+            ~label:"M"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "After"; "K" ]
+    }
+  ; { test_name = "Module scope in field completions"
+    ; file_name = "contracts/lsp/completion_imported_module.jsligo"
+    ; position = Position.create ~line:9 ~character:15
+    ; completions =
+        [ CompletionItem.create
+            ~label:"N"
+            ~kind:CompletionItemKind.Module
+            ~sortText:"\x06"
+            ()
+        ]
+    ; negative_labels = [ "t"; "y" ]
     }
   ]
 
