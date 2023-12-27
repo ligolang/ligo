@@ -53,10 +53,12 @@ let defs_and_typed_program
       bindings, Some (type_env, decls))
     else Types_pass.empty Env.empty, None
   in
-  ( Definitions.Of_Ast.definitions prg module_deps stdlib_defs
+  let mangled_uids, defs = Definitions.Of_Ast.definitions prg module_deps stdlib_defs in
+  ( defs
     |> Module_aliases_pass.patch m_alias
     |> (if with_types then Types_pass.patch bindings else Fn.id)
     |> References.patch (References.declarations (stdlib_core @ prg))
+    |> Inline_mangled_modules_pass.patch mangled_uids
   , typed )
 
 

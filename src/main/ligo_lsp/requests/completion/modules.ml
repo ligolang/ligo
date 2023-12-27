@@ -31,8 +31,7 @@ let get_module_from_pos
   and get_defs_from_mdef (m : Scopes.Types.mdef) : CompletionItem.t list option =
     let%map.Option defs =
       match m.mod_case with
-      | Alias { resolve_mod_name; file_name = _ } ->
-        get_defs_from_resolve_mod_name resolve_mod_name
+      | Alias { resolve_mod_name } -> get_defs_from_resolve_mod_name resolve_mod_name
       | Def defs ->
         let is_module_field_in_scope def =
           match Scopes.Types.get_def_type def with

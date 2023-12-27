@@ -127,8 +127,7 @@ let rec try_to_resolve_path
     in
     (match mdef.mod_case with
     | Def _ -> Some mdef.uid
-    | Alias { resolve_mod_name; file_name = _ } ->
-      try_to_resolve_path mdefs resolve_mod_name)
+    | Alias { resolve_mod_name } -> try_to_resolve_path mdefs resolve_mod_name)
   | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
     Some resolved_module
 
@@ -163,8 +162,7 @@ let extension_to_identifier
 let mod_case_to_implementation : Scopes.Types.mod_case -> Scopes.Types.implementation
   = function
   | Def defs -> Ad_hoc_signature defs
-  | Alias { resolve_mod_name; file_name = _ } ->
-    Standalone_signature_or_module resolve_mod_name
+  | Alias { resolve_mod_name } -> Standalone_signature_or_module resolve_mod_name
 
 
 let mdef_to_implementation : Scopes.Types.mdef -> Scopes.Types.implementation =
@@ -211,7 +209,7 @@ let rec try_to_resolve_mod_case
   =
  fun mdefs -> function
   | Def defs -> Some defs
-  | Alias { resolve_mod_name; file_name = _ } ->
+  | Alias { resolve_mod_name } ->
     let%bind.Option resolved_module =
       match resolve_mod_name with
       | Unresolved_path { module_path = _ } -> None
@@ -262,7 +260,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
       | Signature ->
         (match mdef.mod_case with
         | Def _ -> Some mdef.uid
-        | Alias { resolve_mod_name; file_name = _ } ->
+        | Alias { resolve_mod_name } ->
           (match resolve_mod_name with
           | Unresolved_path _ -> None
           | Resolved_path { module_path = _; resolved_module_path = _; resolved_module }
@@ -290,7 +288,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
           List.find mdefs ~f:(fun mdef ->
               Scopes.Types.(
                 match mdef.mdef_type with
-                | Module -> String.equal (Uid.to_name uid) (get_mod_name_name mdef.name)
+                | Module -> String.equal (Uid.to_name uid) mdef.name
                 | Signature -> false))
         in
         (* It might be that we are not looking at a signature item, but rather at a
