@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n`include`s are now handled for CameLIGO for modules and at the top-level in the language server.\\n\\n"
+merge_request: '3021'
+title: "[#2056] Handle module and top-level includes"
+type: added
+            
