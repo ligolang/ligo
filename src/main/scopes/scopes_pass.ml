@@ -149,7 +149,9 @@ module Of_Ast = struct
       let scopes = self body scopes env in
       scopes
     | E_mod_in { module_binder; rhs; let_result } ->
-      let scopes, defs_or_alias_opt, module_map = module_expression rhs scopes env in
+      let scopes, defs_or_alias_opt, module_map =
+        module_expression (Some module_binder) rhs scopes env
+      in
       (* Env update logic from References *)
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
       let scopes = self ~env_changed:true let_result scopes env in
@@ -179,15 +181,16 @@ module Of_Ast = struct
      - for a actual module, it returns the list of its [def]'s
     and updates the [references] & the [module_map] *)
   and module_expression
-      : AST.module_expr -> t -> env -> t * defs_or_alias option * module_map
+      :  Module_var.t option -> AST.module_expr -> t -> env
+      -> t * defs_or_alias option * module_map
     =
-   fun me scopes env ->
+   fun parent_mod me scopes env ->
     (* Env update logic from References *)
     (* Move [avail_defs] to [parent] before finding [references] in module_expr *)
     (* TODO : Move this into a Env.enter_module function or something like that *)
     (* TODO : This update should be done upon call to [declarations], not [module_expression] *)
     let current_defs = env.avail_defs @ env.parent in
-    let env = { env with avail_defs = []; parent = current_defs } in
+    let env = { env with avail_defs = []; parent = current_defs; parent_mod } in
     let refs, defs_or_alias_opt, env =
       match me.wrap_content with
       | M_struct decls ->
@@ -278,20 +281,27 @@ module Of_Ast = struct
       let env = Env.add_tvar type_binder env in
       scopes, env
     | D_module { module_binder; module_; module_attr = _; annotation } ->
-      let scopes, defs_or_alias_opt, module_map = module_expression module_ scopes env in
+      let scopes, defs_or_alias_opt, module_map =
+        module_expression (Some module_binder) module_ scopes env
+      in
+      let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
       let scopes, defs_or_alias_opt, module_map =
         Option.value_map
           annotation
           ~default:(scopes, defs_or_alias_opt, module_map)
           ~f:(fun annotation -> signature_expr annotation.signature scopes env)
       in
-      let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
       scopes, env
     | D_signature { signature_binder; signature; signature_attr = _ } ->
       let scopes, defs_or_alias_opt, module_map = signature_expr signature scopes env in
       let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
       scopes, env
-    | D_module_include _ -> scopes, env (* TODO *)
+    | D_module_include mod_expr ->
+      let scopes, defs_or_alias_opt, module_map =
+        module_expression env.parent_mod mod_expr scopes env
+      in
+      let env = Env.include_mvar defs_or_alias_opt module_map env in
+      scopes, env
 
 
   and sig_item : AST.sig_item -> t -> env -> t * env =

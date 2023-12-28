@@ -64,23 +64,22 @@ let try_to_get_all_linked_locations : Def.t -> Def.t list -> Def_location.t list
   let mdefs = filter_mdefs definitions in
   let mod_ids = mdefs_to_identifiers mdefs in
   let%bind.Option def_mod_id = try_to_get_mdef_uid definition mdefs mod_ids in
-  let mod_graph = build_mod_graph mdefs in
   let%map.Option defining_mods =
-    List.find (Mod_graph.wcc mod_graph) ~f:(Mod_graph.mem def_mod_id)
+    List.find (Mod_graph.wcc @@ build_mod_graph mdefs) ~f:(Mod_graph.mem def_mod_id)
   in
-  List.concat_map ~f:(List.map ~f:Def.get_location)
-  @@ List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
-         let%map.Option defs =
-           match%bind.Option Mod_map.find_opt id mod_ids with
-           | Ad_hoc_signature defs -> Some defs
-           | Standalone_signature_or_module path ->
-             let%bind.Option uid = try_to_resolve_path mdefs path in
-             let%bind.Option mdef =
-               List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal uid mdef.uid)
-             in
-             try_to_resolve_mod_case mdefs mdef.mod_case
-         in
-         find_defs_by_name_and_level definition defs)
+  List.filter_map (Mod_graph.to_vertices defining_mods) ~f:(fun id ->
+      let%bind.Option defs =
+        match%bind.Option Mod_map.find_opt id mod_ids with
+        | Ad_hoc_signature defs -> Some defs
+        | Standalone_signature_or_module path ->
+          let%bind.Option uid = try_to_resolve_path mdefs path in
+          let%bind.Option mdef =
+            List.find mdefs ~f:(fun mdef -> Scopes.Uid.equal uid mdef.uid)
+          in
+          try_to_resolve_mod_case mdefs mdef.mod_case
+      in
+      let%map.Option def = find_last_def_by_name_and_level definition defs in
+      Def.get_location def)
 
 
 let get_all_linked_locations_or_def : Def.t -> Def.t list -> Def_location.t list =

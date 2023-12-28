@@ -272,6 +272,39 @@ let test_cases =
     ; definitions = Some [ interval 0 5 6 ]
     ; def_type = Type_def
     }
+  ; { test_name = "Find implementations in other modules from inclusions"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/include.mligo"
+    ; reference = Position.create ~line:1 ~character:7
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/include.mligo"
+    ; definitions = Some [ interval 5 7 8; interval 9 7 8; interval 15 7 8 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Find declaration in inclusion"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/include.mligo"
+    ; reference = Position.create ~line:22 ~character:12
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/include.mligo"
+    ; definitions = Some [ interval 15 7 8 ]
+    ; def_type = Decl
+    }
+  ; { test_name = "Find implementations of signature within included module"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/include.mligo"
+    ; reference = Position.create ~line:0 ~character:12
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/include.mligo"
+    ; definitions =
+        Some [ interval 4 7 9; interval 8 7 9; interval 12 7 9; interval 18 7 9 ]
+    ; def_type = Impl
+    }
+  ; { test_name = "Go to definition of included variable in top-level inside module"
+    ; file_with_reference = "contracts/lsp/go_to_implementations/top_level_include.mligo"
+    ; reference = Position.create ~line:8 ~character:8
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/go_to_implementations/top_level_include.mligo"
+    ; definitions = Some [ interval 1 6 7 ]
+    ; def_type = Decl
+    }
   ]
 
 

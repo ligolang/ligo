@@ -262,8 +262,10 @@ let%expect_test _ =
 
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-16
+
 
 
     (C#8:7-8 -> C)
@@ -285,6 +287,7 @@ let%expect_test _ =
                       Content: A#9:15-16.B#9:17-18 (-> A#2:7-8.B#3:11-12)
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-16
+
 
 
 
@@ -352,9 +355,11 @@ let%expect_test _ =
 
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12 ,
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-16
+
 
 
     (D#8:7-8 -> D)
@@ -363,6 +368,7 @@ let%expect_test _ =
     Content: A#8:11-12 (-> A#1:7-8)
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-12
+
 
 
     (E#11:11-12 -> E)
@@ -426,8 +432,10 @@ let%expect_test _ =
 
 
 
+
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-20
+
 
 
     (E#7:11-12 -> E)
@@ -450,6 +458,7 @@ let%expect_test _ =
                       Content: A#8:19-20.C#8:21-22 (-> A#2:11-12.C#3:15-16)
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-20
+
 
 
 

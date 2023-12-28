@@ -58,17 +58,13 @@ module type S = sig
   val pp : vertex Fmt.t -> t Fmt.t
 end
 
-module Make (Ordered_type : sig
-  type t
-
-  val compare : t -> t -> int
-end) : S with type vertex = Ordered_type.t = struct
-  module Node_map = Caml.Map.Make (Ordered_type)
-  module Node_set = Caml.Set.Make (Ordered_type)
+module Make (Ord : Caml.Map.OrderedType) : S with type vertex = Ord.t = struct
+  module Node_map = Caml.Map.Make (Ord)
+  module Node_set = Caml.Set.Make (Ord)
 
   let set_to_list = Caml.List.of_seq <@ Node_set.to_seq
 
-  type vertex = Ordered_type.t
+  type vertex = Ord.t
   type t = Node_set.t Node_map.t
 
   let empty = Node_map.empty
