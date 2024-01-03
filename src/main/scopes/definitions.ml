@@ -641,6 +641,12 @@ module Of_Ast = struct
         mod_case_of_mod_expr ~defs_of_decls module_deps module_ inner_mod_path
       in
       let extends = extends module_ in
+      let defs =
+        match mod_case with
+        | Def defs -> defs
+        | Alias _ -> []
+      in
+      let acc = defs @ acc in
       defs_of_mvar_mod_expr
         ~mod_case
         ~attributes:(Some (Module_attr module_attr))
@@ -668,14 +674,13 @@ module Of_Ast = struct
         match impls with
         | `Alias alias -> [], Alias alias
         | `Implementations impls ->
-          List.fold_left impls ~init:([], Def []) ~f:(fun (implements, impl) -> function
-            | Ad_hoc_signature defs ->
-              ( implements
-              , (match impl with
-                | Def defs' -> Def (defs' @ defs)
-                | Alias _ -> impl) )
-            | Standalone_signature_or_module _ as inclusion ->
-              inclusion :: implements, impl)
+          let implements, defs =
+            List.fold_left impls ~init:([], []) ~f:(fun (implements, defs) -> function
+              | Ad_hoc_signature defs' -> implements, defs' @ defs
+              | Standalone_signature_or_module _ as inclusion ->
+                inclusion :: implements, defs)
+          in
+          implements, Def defs
       in
       let defs =
         match mod_case with

@@ -3,10 +3,8 @@ module Trace = Simple_utils.Trace
 module SMap = Map.Make (String)
 open Scopes.Types
 
-(** This is used by the LSP. Note: defs must be unfolded before constructing this,
-    see [unfold_defs].
-    [errors] and [warnings] can come from [Scopes] module (which runs compiler up to self_ast_typed pass)
-    , or from [following_passes_diagnostics] (collected in this module) *)
+(** [errors] and [warnings] can come from [Scopes] module (which runs compiler up to
+    self_ast_typed pass), or from [following_passes_diagnostics] (collected in this module) *)
 type defs_and_diagnostics =
   { errors : Main_errors.all list
   ; warnings : Main_warnings.all list
@@ -148,34 +146,10 @@ let get_scopes
     (fun ~catch:_ _ -> [])
 
 
-(** Currently [Scopes.defs] result contains definitions from modules inside `mdef`.
-    We want to search stuff only in `definitions`, so we traverse all local modules.
-    TODO: change `Scopes.scopes_and_defs` so it produces list that we need *)
-let unfold_defs (errors, warnings, nested_defs_opt) : defs_and_diagnostics =
+let make_defs_and_diagnostics (errors, warnings, defs_opt) : defs_and_diagnostics =
   let errors = List.dedup_and_sort ~compare:Caml.compare errors in
   let warnings = List.dedup_and_sort ~compare:Caml.compare warnings in
-  let extract_defs : def list -> def list =
-    let rec from_module (m : mdef) =
-      match m.mod_case with
-      | Alias _ -> []
-      | Def defs -> from_defs defs
-    and from_defs defs =
-      let current_module_defs : mdef list =
-        List.filter_map
-          ~f:(function
-            | Module m -> Some m
-            | Variable _ | Type _ -> None)
-          defs
-      in
-      defs @ List.concat_map ~f:from_module current_module_defs
-    in
-    from_defs
-  in
-  let definitions =
-    match nested_defs_opt with
-    | None -> []
-    | Some nested_defs -> extract_defs nested_defs
-  in
+  let definitions = Option.value ~default:[] defs_opt in
   { errors; warnings; definitions }
 
 
@@ -336,7 +310,7 @@ let get_defs_and_diagnostics
     : defs_and_diagnostics Lwt.t
   =
   let with_types = raw_options.with_types in
-  Lwt.map unfold_defs
+  Lwt.map make_defs_and_diagnostics
   @@ Trace.try_with_lwt
        ~fast_fail:false
        (fun ~raise ~catch ->

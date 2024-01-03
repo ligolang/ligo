@@ -242,27 +242,29 @@ let mvar_to_id (m : Module_var.t) : Uid.t =
 type scope = Location.t * def list
 type scopes = scope list
 
-let rec flatten_defs defs =
-  match defs with
+let rec flatten_defs : def list -> def list = function
   | [] -> []
   | (Module { mod_case = Def d; _ } as def) :: defs ->
-    def :: (flatten_defs (shadow_defs d) @ flatten_defs defs)
+    def :: List.concat_map ~f:flatten_defs [ d; defs ]
   | def :: defs -> def :: flatten_defs defs
 
 
-and shadow_defs : def list -> def list =
- fun defs ->
-  match defs with
+let rec shadow_defs : def list -> def list = function
   | [] -> []
   | def :: defs ->
-    let shadow_def def' = not @@ equal_def_by_name def def' in
+    let shadow_def def' =
+      not
+      @@ (equal_def_by_name def def'
+         && List.is_prefix ~equal:Uid.equal ~prefix:(get_mod_path def') (get_mod_path def)
+         )
+    in
     def :: shadow_defs (List.filter defs ~f:shadow_def)
 
 
 let fix_shadowing_in_scope : scope -> scope =
  fun (loc, defs) ->
-  let defs = shadow_defs defs in
   let defs = flatten_defs defs in
+  let defs = shadow_defs defs in
   loc, defs
 
 

@@ -990,10 +990,19 @@ let%expect_test _ =
     [ A#1:7-8 toto#2:8-12 a#5:4-5  ] File "../../test/contracts/get_scope_tests/module.mligo", line 7, characters 11-12
     [ A#1:7-8 toto#2:8-12 a#5:4-5 B#7:7-8  ] File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 8-14
     [ A#1:7-8 toto#2:8-12 a#5:4-5 B#7:7-8 b#9:4-5  ] File "../../test/contracts/get_scope_tests/module.mligo", line 13, characters 16-17
-    [ A#1:7-8 toto#2:8-12 a#5:4-5 B#7:7-8 b#9:4-5 C#12:11-12 a#13:12-13  ] File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
-    [ A#1:7-8 toto#2:8-12 a#5:4-5 B#7:7-8 b#9:4-5 C#12:11-12 a#13:12-13 D#15:11-12  ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
+    [ A#1:7-8 toto#2:8-12 B#7:7-8 b#9:4-5 C#12:11-12 a#13:12-13  ] File "../../test/contracts/get_scope_tests/module.mligo", line 15, characters 15-16
+    [ A#1:7-8 toto#2:8-12 B#7:7-8 b#9:4-5 C#12:11-12 a#13:12-13 D#15:11-12  ] File "../../test/contracts/get_scope_tests/module.mligo", line 16, characters 4-7
 
     Variable definitions:
+    (toto#2:8-12 -> toto)
+    Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 8-12
+    Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 2, characters 15-16
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 10-14 ,
+      File "../../test/contracts/get_scope_tests/module.mligo", line 9, characters 10-14
+    Mod Path = "A"
+    Def Type = Module_field
     (a#5:4-5 -> a)
     Range: File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/module.mligo", line 5, characters 8-14
@@ -1099,6 +1108,25 @@ let%expect_test _ =
     [ A#1:7-8 x#2:8-9 B#3:11-12 y#4:12-13 E#6:11-12 C#9:7-8 D#11:7-8 F#13:7-8 a1#15:4-6 a2#16:4-6 a3#17:4-6 a4#18:4-6  ] File "../../test/contracts/get_scope_tests/module2.mligo", line 19, characters 9-12
 
     Variable definitions:
+    (x#2:8-9 -> x)
+    Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 2, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 2, characters 12-13
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 16, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 18, characters 11-12
+    Mod Path = "A"
+    Def Type = Module_field
+    (y#4:12-13 -> y)
+    Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 12-13
+    Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 16-17
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 17, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 19, characters 11-12
+    Mod Path = "A""B"
+    Def Type = Module_field
     (a1#15:4-6 -> a1)
     Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 4-6
     Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 9-14
@@ -1149,6 +1177,16 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/module2.mligo", line 18, characters 11-12
                       Mod Path = "A"
                       Def Type = Module_field
+                      (y#4:12-13 -> y)
+                      Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 17, characters 11-12 ,
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 19, characters 11-12
+                      Mod Path = "A""B"
+                      Def Type = Module_field
                       Type definitions:
                       Module definitions:
                       (B#3:11-12 -> B)
@@ -1191,6 +1229,39 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module2.mligo", line 13, characters 11-12 ,
       File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module2.mligo", line 16, characters 9-10
+
+
+
+    (B#3:11-12 -> B)
+    Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 3, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 3, character 15 to line 5, character 7
+    Content: Members: Variable definitions:
+                      (y#4:12-13 -> y)
+                      Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 12-13
+                      Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 4, characters 16-17
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 17, characters 11-12 ,
+                        File "../../test/contracts/get_scope_tests/module2.mligo", line 19, characters 11-12
+                      Mod Path = "A""B"
+                      Def Type = Module_field
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 6, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 9, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 15, characters 11-12
+
+
+
+    (E#6:11-12 -> E)
+    Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 6, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 6, characters 15-16
+    Content: B#6:15-16 (-> B#3:11-12)
+    references:
+      File "../../test/contracts/get_scope_tests/module2.mligo", line 13, characters 13-14
 
 
 
@@ -1254,6 +1325,14 @@ let%expect_test _ =
     [ A#1:7-8 x#2:8-9 B#6:11-12 y#7:12-13 z#8:12-13 C#9:15-16 a1#10:16-18 a2#11:16-18 a3#12:16-18 D#16:11-12 E#17:11-12 b1#19:8-10 b2#20:8-10 b3#21:8-10 b4#22:8-10 b5#23:8-10 c1#25:8-10 c2#26:8-10 c3#27:8-10 c4#28:8-10 c5#29:8-10 e1#31:8-10 e2#32:8-10 e3#33:8-10  ] File "../../test/contracts/get_scope_tests/module3.mligo", line 35, character 4 to line 38, character 16
 
     Variable definitions:
+    (x#2:8-9 -> x)
+    Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 2, characters 8-9
+    Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 2, characters 12-13
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/module3.mligo", line 8, characters 18-19
+    Mod Path = "A"
+    Def Type = Module_field
     (x#5:4-5 -> x)
     Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 5, characters 4-5
     Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 6, character 4 to line 38, character 16
@@ -1410,6 +1489,36 @@ let%expect_test _ =
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 20, characters 15-16 ,
                         File "../../test/contracts/get_scope_tests/module3.mligo", line 26, characters 15-16
                       Mod Path = "B"
+                      Def Type = Module_field
+                      (a1#10:16-18 -> a1)
+                      Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 10, characters 16-18
+                      Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 10, characters 21-22
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 21, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 27, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 31, characters 15-17
+                      Mod Path = "B""C"
+                      Def Type = Module_field
+                      (a2#11:16-18 -> a2)
+                      Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 11, characters 16-18
+                      Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 11, characters 21-22
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 22, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 28, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 32, characters 15-17
+                      Mod Path = "B""C"
+                      Def Type = Module_field
+                      (a3#12:16-18 -> a3)
+                      Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 12, characters 16-18
+                      Body Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 12, characters 21-22
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 23, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 29, characters 17-19 ,
+                        File "../../test/contracts/get_scope_tests/module3.mligo", line 33, characters 15-17
+                      Mod Path = "B""C"
                       Def Type = Module_field
                       Type definitions:
                       Module definitions:
@@ -1572,6 +1681,21 @@ let%expect_test _ =
     [ A#1:7-8 B#2:11-12 C#3:15-16 x#4:16-17 F#6:15-16 E#8:11-12 D#11:7-8 G#13:7-8 x1#15:4-6 x2#16:4-6 x3#17:4-6 x4#18:4-6 x5#19:4-6 x6#20:4-6 x7#21:4-6  ] File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 9-16
 
     Variable definitions:
+    (x#4:16-17 -> x)
+    Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+    Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+    Mod Path = "A""B""C"
+    Def Type = Module_field
     (x1#15:4-6 -> x1)
     Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 4-6
     Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 9-16
@@ -1634,12 +1758,42 @@ let%expect_test _ =
     Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 1, characters 7-8
     Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 1, character 11 to line 9, character 3
     Content: Members: Variable definitions:
+                      (x#4:16-17 -> x)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                      Mod Path = "A""B""C"
+                      Def Type = Module_field
                       Type definitions:
                       Module definitions:
                       (B#2:11-12 -> B)
                       Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 2, characters 11-12
                       Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 2, character 15 to line 7, character 7
                       Content: Members: Variable definitions:
+                                        (x#4:16-17 -> x)
+                                        Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                                        Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                                        Content: |resolved: int|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                                        Mod Path = "A""B""C"
+                                        Def Type = Module_field
                                         Type definitions:
                                         Module definitions:
                                         (C#3:15-16 -> C)
@@ -1696,6 +1850,50 @@ let%expect_test _ =
 
 
 
+                      (C#3:15-16 -> C)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, character 19 to line 5, character 11
+                      Content: Members: Variable definitions:
+                                        (x#4:16-17 -> x)
+                                        Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                                        Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                                        Content: |resolved: int|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                                        Mod Path = "A""B""C"
+                                        Def Type = Module_field
+                                        Type definitions:
+                                        Module definitions:
+
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 13-14
+
+
+
+                      (F#6:15-16 -> F)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20
+                      Content: C#6:19-20 (-> C#3:15-16)
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 13-14
+
+
+
                       (E#8:11-12 -> E)
                       Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 11-12
                       Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 15-16
@@ -1716,6 +1914,138 @@ let%expect_test _ =
       File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 9-10 ,
       File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 9-10
+
+
+
+    (B#2:11-12 -> B)
+    Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 2, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 2, character 15 to line 7, character 7
+    Content: Members: Variable definitions:
+                      (x#4:16-17 -> x)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                      Mod Path = "A""B""C"
+                      Def Type = Module_field
+                      Type definitions:
+                      Module definitions:
+                      (C#3:15-16 -> C)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, character 19 to line 5, character 11
+                      Content: Members: Variable definitions:
+                                        (x#4:16-17 -> x)
+                                        Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                                        Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                                        Content: |resolved: int|
+                                        references:
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                                          File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                                        Mod Path = "A""B""C"
+                                        Def Type = Module_field
+                                        Type definitions:
+                                        Module definitions:
+
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 13-14
+
+
+
+                      (F#6:15-16 -> F)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 15-16
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20
+                      Content: C#6:19-20 (-> C#3:15-16)
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 13-14 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 13-14
+
+
+
+
+    references:
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 11-12
+
+
+
+    (C#3:15-16 -> C)
+    Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, characters 15-16
+    Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, character 19 to line 5, character 11
+    Content: Members: Variable definitions:
+                      (x#4:16-17 -> x)
+                      Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 16-17
+                      Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 4, characters 20-21
+                      Content: |resolved: int|
+                      references:
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 15-16 ,
+                        File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 15-16
+                      Mod Path = "A""B""C"
+                      Def Type = Module_field
+                      Type definitions:
+                      Module definitions:
+
+    references:
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 15, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 19, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 13-14
+
+
+
+    (F#6:15-16 -> F)
+    Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 15-16
+    Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 6, characters 19-20
+    Content: C#6:19-20 (-> C#3:15-16)
+    references:
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 15-16 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 16, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 20, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 13-14
+
+
+
+    (E#8:11-12 -> E)
+    Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 11-12
+    Body Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 8, characters 15-16
+    Content: B#8:15-16 (-> B#2:11-12)
+    references:
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 13, characters 13-14 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 17, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 18, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 21, characters 11-12 ,
+      File "../../test/contracts/get_scope_tests/module5.mligo", line 22, characters 11-12
 
 
 
@@ -1753,10 +2083,18 @@ let%expect_test _ =
       [ A#1:7-8 x#2:8-9  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 5, characters 11-12
       [ A#1:7-8 x#2:8-9 D#5:7-8  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 8, characters 12-13
       [ A#1:7-8 x#2:8-9 D#5:7-8 x#8:8-9  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 10, characters 16-19
-      [ D#5:7-8 x#8:8-9 A#9:11-12 x#10:12-13  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 12, characters 15-16
-      [ D#5:7-8 x#8:8-9 A#9:11-12 x#10:12-13 C#12:11-12  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 13, characters 4-11
+      [ x#2:8-9 D#5:7-8 A#9:11-12 x#10:12-13  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 12, characters 15-16
+      [ x#2:8-9 D#5:7-8 A#9:11-12 x#10:12-13 C#12:11-12  ] File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 13, characters 4-11
 
       Variable definitions:
+      (x#2:8-9 -> x)
+      Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 2, characters 8-9
+      Body Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 2, characters 12-13
+      Content: |resolved: int|
+      references:
+        File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 10, characters 18-19
+      Mod Path = "A"
+      Def Type = Module_field
       (y#7:4-5 -> y)
       Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 7, characters 4-5
       Body Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 8, character 4 to line 13, character 11
@@ -1877,6 +2215,41 @@ let%expect_test _ =
       [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 exp2#40:4-8 x#49:14-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
 
       Variable definitions:
+      (a#5:8-9 -> a)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 8-9
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 16-17
+      Content: |core: t|
+      references: []
+      Mod Path = "A"
+      Def Type = Module_field
+      (b#6:8-9 -> b)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 8-9
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 23-38
+      Content: |core: x (string)|
+      references: []
+      Mod Path = "A"
+      Def Type = Module_field
+      (exp1#8:8-12 -> exp1)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 8, characters 8-12
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, character 8 to line 15, character 10
+      Content: |resolved: unit|
+      references: []
+      Mod Path = "A"
+      Def Type = Module_field
+      (g#12:12-13 -> g)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 12-13
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 22-29
+      Content: |core: foo|
+      references: []
+      Mod Path = "A"
+      Def Type = Local
+      (h#14:12-13 -> h)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 12-13
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 29-46
+      Content: |core: bar (string)|
+      references: []
+      Mod Path = "A"
+      Def Type = Local
       (c#21:4-5 -> c)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 4-5
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
@@ -1956,6 +2329,35 @@ let%expect_test _ =
       Mod Path =
       Def Type = Parameter
       Type definitions:
+      (t#2:9-10 -> t)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 9-10
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 13-16
+      Content: : |int|
+      references:
+        File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 12-13 ,
+        File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 10-11 ,
+        File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 10-11 ,
+        File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 20-21
+      (x#3:12-13 -> x)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 12-13
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 16-28
+      Content: : |funtype 'a : * . record[foo -> 'a({ name: foo })]|
+      references:
+        File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 19-20 ,
+        File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 13-14 ,
+        File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 13-14
+      (foo#9:13-16 -> foo)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, characters 13-16
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, characters 19-25
+      Content: : |string|
+      references:
+        File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 16-19
+      (bar#10:16-19 -> bar)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 16-19
+      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 22-34
+      Content: : |funtype 'a : * . record[bar -> 'a({ name: bar })]|
+      references:
+        File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 23-26
       (hmm#23:5-8 -> hmm)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 5-8
       Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-14
@@ -2107,7 +2509,28 @@ let%expect_test _ =
     references: []
     Mod Path =
     Def Type = Global
+    (y#3:4-5 -> y)
+    Range: File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 8-9
+    Content: |resolved: int|
+    references:
+      File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
+    Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
+    Def Type = Module_field
+    (x#4:4-5 -> x)
+    Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 4-5
+    Body Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 8-25
+    Content: |resolved: x|
+    references:
+      File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 10-11
+    Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
+    Def Type = Module_field
     Type definitions:
+    (x#1:5-6 -> x)
+    Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 5-6
+    Body Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 9-33
+    Content: : |record[a -> int , b -> string({ name: a }, { name: b })]|
+    references: []
     Module definitions:
     (X#1:7-8 -> X)
     Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 7-8
@@ -2160,7 +2583,7 @@ let%expect_test _ =
     [ a#1:4-5 b#3:4-5 c#10:4-5  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 13, characters 12-13
     [ a#1:4-5 b#3:4-5 c#13:8-9  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 15, characters 16-17
     [ a#1:4-5 b#3:4-5 c#15:12-13  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 16, characters 16-17
-    [ a#1:4-5 b#3:4-5 c#13:8-9 C#14:11-12 c#15:12-13 x#16:12-13  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-7
+    [ a#1:4-5 b#3:4-5 C#14:11-12 c#15:12-13 x#16:12-13  ] File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 18, characters 4-7
 
     Variable definitions:
     (a#1:4-5 -> a)
