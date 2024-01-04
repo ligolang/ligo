@@ -52,7 +52,7 @@ let%expect_test _ =
     Def Type = Local
     (i#4:37-38 -> i)
     Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 37-38
-    Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, character 32 to line 7, character 21
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 16-17 ,
@@ -62,7 +62,7 @@ let%expect_test _ =
     Def Type = Parameter
     (j#4:47-48 -> j)
     Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 47-48
-    Body Range: File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, character 4 to line 7, character 21
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 5, characters 12-13 ,
@@ -213,7 +213,7 @@ let%expect_test _ =
     Def Type = Local
     (i#4:36-37 -> i)
     Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 36-37
-    Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 31-63
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 62-63
@@ -221,7 +221,7 @@ let%expect_test _ =
     Def Type = Parameter
     (j#4:46-47 -> j)
     Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 46-47
-    Body Range: File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-63
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 58-59
@@ -450,7 +450,7 @@ let%expect_test _ =
     Def Type = Local
     (n#8:13-14 -> n)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 13-14
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 4-36
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 7-8 ,
@@ -459,7 +459,7 @@ let%expect_test _ =
     Def Type = Parameter
     (m#8:23-24 -> m)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 8, characters 23-24
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 4-36
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 9, characters 18-19 ,
@@ -492,7 +492,7 @@ let%expect_test _ =
     Def Type = Global
     (y#15:11-12 -> y)
     Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 15, characters 11-12
-    Body Range: File "../../test/contracts/get_scope_tests/rec.mligo", line 16, character 2 to line 17, character 16
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/rec.mligo", line 16, characters 5-6 ,
@@ -701,7 +701,7 @@ let%expect_test _ =
     Def Type = Global
     (c#5:10-11 -> c)
     Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 10-11
-    Body Range: File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 22-44
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 39-40
@@ -764,7 +764,7 @@ let%expect_test _ =
     Def Type = Local
     (i#2:36-37 -> i)
     Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 36-37
-    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 31-63
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 62-63
@@ -772,7 +772,7 @@ let%expect_test _ =
     Def Type = Parameter
     (j#2:46-47 -> j)
     Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 46-47
-    Body Range: File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-63
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 58-59
@@ -948,7 +948,7 @@ let%expect_test _ =
     Def Type = Global
     (p#13:11-12 -> p)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 11-12
-    Body Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-48
+    Body Range:
     Content: |core: foo_record|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-44
@@ -2322,7 +2322,7 @@ let%expect_test _ =
       Def Type = Global
       (x#49:14-15 -> x)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 14-15
-      Body Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
+      Body Range:
       Content: |core: A.t|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 34-35

@@ -148,7 +148,7 @@ class lsp_server (capability_mode : capability_mode) =
       super#on_req_initialize ~notify_back init_params
 
     method is_request_enabled : string -> bool =
-      fun req -> not @@ List.mem config.disabled_features ~equal:String.equal req
+      not <@ List.mem config.disabled_features ~equal:String.equal
 
     (* TODO: When the document closes, we should thinking about removing the
        state associated to the file from the global hashtable state, to avoid
@@ -176,6 +176,9 @@ class lsp_server (capability_mode : capability_mode) =
       if self#is_request_enabled "textDocument/documentLink"
       then Some (DocumentLinkOptions.create ())
       else None
+
+    method! config_symbol =
+      Some (`Bool (self#is_request_enabled "textDocument/documentSymbol"))
 
     method config_rename =
       if self#is_request_enabled "textDocument/rename"
@@ -230,6 +233,7 @@ class lsp_server (capability_mode : capability_mode) =
       { c with
         hoverProvider = self#config_hover
       ; documentFormattingProvider = self#config_formatting
+      ; documentSymbolProvider = self#config_symbol
       ; definitionProvider = self#config_definition
       ; declarationProvider = self#config_declaration
       ; implementationProvider = self#config_implementation
@@ -421,6 +425,10 @@ class lsp_server (capability_mode : capability_mode) =
           else IO.return default
         in
         match r with
+        | Client_request.DocumentSymbol { textDocument; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_document_symbol (DocumentUri.to_path uri)
         | Client_request.TextDocumentFormatting { textDocument; options; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None

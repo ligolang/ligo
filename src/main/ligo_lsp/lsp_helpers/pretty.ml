@@ -140,3 +140,15 @@ let pretty_print_type_expression
         in
         PPrint.(
           prefix_doc ^^ string (Format.asprintf "%a" Ast_core.PP.type_expression te)) )
+
+
+let show_type : syntax:Syntax_types.t -> Ast_core.type_expression -> string =
+  (* VSCode is ignoring any newlines in completion detail *)
+  let pp_mode = { width = 60; indent = 2 } in
+  fun ~syntax te ->
+    match pretty_print_type_expression pp_mode ~syntax te with
+    | `Ok str -> str
+    (* Sending log messages from here or adding exn to return type will make the code less
+       straightforward, so we're just silently ignoring it since one can use hover on this
+       term to see the exn anyway. *)
+    | `Nonpretty (_exn, str) -> str

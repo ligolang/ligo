@@ -107,7 +107,7 @@ let%expect_test _ =
     Def Type = Global
     (u#1:16-17 -> u)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 1, characters 16-17
-    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 2, character 2 to line 5, character 6
+    Body Range:
     Content: |core: unit|
     references: []
     Mod Path =
@@ -128,7 +128,7 @@ let%expect_test _ =
     Def Type = Local
     (b#4:11-12 -> b)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 11-12
-    Body Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
+    Body Range:
     Content: |core: toto|
     references:
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 30-31
@@ -251,7 +251,7 @@ let%expect_test _ =
     Def Type = Global
     (x#7:9-10 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 9-10
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 7, characters 20-21
@@ -267,7 +267,7 @@ let%expect_test _ =
     Def Type = Global
     (x#9:9-10 -> x)
     Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 9-10
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 9, characters 20-29
+    Body Range:
     Content: |core: int|
     references:
       File "../../test/contracts/warning_unused.mligo", line 9, characters 20-21
@@ -284,14 +284,14 @@ let%expect_test _ =
     Def Type = Global
     (_#12:10-11 -> _)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 10-11
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
+    Body Range:
     Content: |core: int|
     references: []
     Mod Path =
     Def Type = Parameter
     (s#12:20-21 -> s)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 20-21
-    Body Range: File "../../test/contracts/warning_unused.mligo", line 13, character 2 to line 16, character 39
+    Body Range:
     Content: |core: storage|
     references:
       File "../../test/contracts/warning_unused.mligo", line 13, characters 10-11 ,

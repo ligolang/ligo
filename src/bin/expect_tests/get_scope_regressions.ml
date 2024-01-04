@@ -30,7 +30,7 @@ let%expect_test _ =
     Def Type = Global
     (s#1:17-18 -> s)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 1, characters 17-18
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 6-48
+    Body Range:
     Content: |core: list (int)|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 3, characters 25-26
@@ -46,7 +46,7 @@ let%expect_test _ =
     Def Type = Local
     (_useless#2:20-28 -> _useless)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 20-28
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib_and_let_mut_in.jsligo", line 2, characters 44-48
+    Body Range:
     Content: |core: int|
     references: []
     Mod Path =
@@ -88,7 +88,7 @@ let%expect_test _ =
     Def Type = Global
     (p#1:11-12 -> p)
     Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 1, characters 11-12
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, character 2 to line 3, character 17
+    Body Range:
     Content: |core: key_hash|
     references:
       File "../../test/contracts/get_scope_tests/regressions/missing_stdlib.mligo", line 2, characters 50-51
@@ -202,7 +202,7 @@ let%expect_test _ =
     Def Type = Global
     (x#2:6-7 -> x)
     Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 6-7
-    Body Range: File "../../test/contracts/get_scope_tests/regressions/wrong_reference1.mligo", line 2, characters 10-11
+    Body Range:
     Content: |resolved: gen#3|
     references: []
     Mod Path =

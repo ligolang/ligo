@@ -47,18 +47,6 @@ let completion_context_priority
   String.of_char (Char.of_int_exn ((base * max_score) - score))
 
 
-let show_type : syntax:Syntax_types.t -> Ast_core.type_expression -> string =
-  (* VSCode is ignoring any newlines in completion detail *)
-  let pp_mode = Pretty.{ width = 60; indent = 2 } in
-  fun ~syntax te ->
-    match Pretty.pretty_print_type_expression pp_mode ~syntax te with
-    | `Ok str -> str
-    (* Sending log messages from here or adding exn to return type will make the code
-            less straightforward, so we're just silently ignoring it
-            since one can use hover on this term to see the exn anyway. *)
-    | `Nonpretty (_exn, str) -> str
-
-
 let defs_to_completion_items
     (context : completion_context)
     (path : Path.t)
@@ -77,7 +65,7 @@ let defs_to_completion_items
           , Option.some
             @@ Option.value_map
                  ~default:(Helpers_pretty.unresolved_type_as_comment syntax)
-                 ~f:(show_type ~syntax <@ Def.use_var_name_if_available)
+                 ~f:(Pretty.show_type ~syntax <@ Def.use_var_name_if_available)
             @@ Def.get_type vdef )
         | Scopes.Types.Type _ -> CompletionItemKind.TypeParameter, None
         | Scopes.Types.Module _ -> CompletionItemKind.Module, None

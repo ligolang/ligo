@@ -282,8 +282,7 @@ module Of_Ast = struct
     let defs_of_lambda : _ Lambda.t -> t -> t =
      fun { binder; output_type; result } acc ->
       let vvar = Param.get_var binder in
-      self result
-      @@ defs_of_vvar ~attributes:None ~body:result vvar Parameter mod_path acc
+      self result @@ defs_of_vvar ~attributes:None ?body:None vvar Parameter mod_path acc
     in
     match e.expression_content with
     (* Base *)
