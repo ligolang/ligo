@@ -480,24 +480,30 @@ module Of_Ast = struct
     =
    fun module_deps sig_expr mod_path ->
     match Location.unwrap sig_expr with
-    | S_sig { items = [ S_include { wrap_content = S_path mod_path; location = _ } ] } ->
-      `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
+    | S_sig
+        { items =
+            [ { wrap_content = S_include { wrap_content = S_path mod_path; location = _ }
+              ; location = _
+              }
+            ]
+        } -> `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
     | S_sig sig' ->
       let Ast_core.{ items } = Misc.flatten_includes sig' in
       `Implementations
-        (List.map items ~f:(function
-            | S_include { wrap_content = S_path mod_path; location = _ } ->
-              standalone_mvars @@ List.Ne.to_list mod_path
-            | (S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _) as item
-              ->
-              Ad_hoc_signature
-                (defs_of_sig_item module_deps item Module_field mod_path [])
-            | S_include { wrap_content = S_sig _; location = _ } ->
-              failwith
-              @@ Format.asprintf
-                   "implementations_of_sig_expr_from_D_signature: corner case reached: %a"
-                   AST.PP.signature_expr
-                   sig_expr))
+        (List.map items ~f:(fun item ->
+             match Location.unwrap item with
+             | S_include { wrap_content = S_path mod_path; location = _ } ->
+               standalone_mvars @@ List.Ne.to_list mod_path
+             | S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _ ->
+               Ad_hoc_signature
+                 (defs_of_sig_item module_deps item Module_field mod_path [])
+             | S_include { wrap_content = S_sig _; location = _ } ->
+               failwith
+               @@ Format.asprintf
+                    "implementations_of_sig_expr_from_D_signature: corner case reached: \
+                     %a"
+                    AST.PP.signature_expr
+                    sig_expr))
     | S_path mod_path -> `Alias (alias_of_mvars module_deps @@ List.Ne.to_list mod_path)
 
 
@@ -507,7 +513,8 @@ module Of_Ast = struct
    fun module_deps sig_expr mod_path ->
     match Location.unwrap sig_expr with
     | S_sig { items } ->
-      List.map items ~f:(function
+      List.map items ~f:(fun item ->
+          match Location.unwrap item with
           | S_include { wrap_content = S_sig sig'; location = _ } ->
             Ad_hoc_signature (defs_of_signature module_deps sig' Module_field mod_path [])
           | S_include { wrap_content = S_path mod_path; location = _ } ->
@@ -557,7 +564,7 @@ module Of_Ast = struct
       : string SMap.t -> AST.sig_item -> def_type -> Uid.t list -> def list -> def list
     =
    fun module_deps item def_type mod_path acc ->
-    match item with
+    match Location.unwrap item with
     | S_value (var, ty_expr, attr) ->
       defs_of_vvar ~attributes:(Some (Sig_item attr)) var def_type mod_path acc
     | S_type (var, ty_expr, attr) ->

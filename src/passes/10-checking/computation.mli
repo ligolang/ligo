@@ -312,7 +312,7 @@ val def_module_type
   -> ('a, 'err, 'wrn) t
 
 val def_sig_item
-  :  Context.Signature.item list
+  :  Context.Signature.item Location.wrap list
   -> on_exit:'a exit
   -> in_:('a, 'err, 'wrn) t
   -> ('a, 'err, 'wrn) t

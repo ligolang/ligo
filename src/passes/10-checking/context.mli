@@ -45,7 +45,7 @@ end
 
 module Signature : sig
   type t =
-    { items : item list
+    { items : item Location.wrap list
     ; sort : sort
     }
 
@@ -77,7 +77,7 @@ module Signature : sig
   val get_type : t -> Type_var.t -> Type.t option
   val get_module : t -> Module_var.t -> t option
   val pp : Format.formatter -> t -> unit
-  val pp_item : Format.formatter -> item -> unit
+  val pp_item : Format.formatter -> item Location.wrap -> unit
 end
 
 type t
@@ -115,7 +115,7 @@ val of_list : item list -> t
 val ( |:: ) : t -> item -> t
 val join : t -> t -> t
 val ( |@ ) : t -> t -> t
-val item_of_signature_item : Signature.item -> item
+val item_of_signature_item : Signature.item Location.wrap -> item
 val pp : Format.formatter -> t -> unit
 val add_value : t -> Value_var.t -> mutable_flag -> Type.t -> Attrs.Value.t -> t
 val add_mut : t -> Value_var.t -> Type.t -> t
@@ -154,8 +154,8 @@ val get_type_or_type_var
   -> Type_var.t
   -> [ `Type of Type.t | `Type_var of Kind.t ] option
 
-val add_signature_item : t -> Signature.item -> t
-val add_signature_items : t -> Signature.item list -> t
+val add_signature_item : t -> Signature.item Location.wrap -> t
+val add_signature_items : t -> Signature.item Location.wrap list -> t
 val insert_at : t -> at:item -> hole:t -> t
 val split_at : t -> at:item -> t * t
 val mark : t -> t * pos
@@ -189,7 +189,7 @@ module Apply : sig
   val type_ : t -> Type.t -> Type.t
   val row : t -> Type.row -> Type.row
   val layout : t -> Type.layout -> Type.layout
-  val sig_item : t -> Signature.item -> Signature.item
+  val sig_item : t -> Signature.item Location.wrap -> Signature.item Location.wrap
   val sig_ : t -> Signature.t -> Signature.t
 end
 

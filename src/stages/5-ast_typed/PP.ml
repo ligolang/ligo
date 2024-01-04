@@ -205,7 +205,7 @@ and module_expr ppf (me : module_expr) : unit =
 
 
 and sig_item ppf (d : sig_item) =
-  match d with
+  match Location.unwrap d with
   | S_value (var, type_, _) ->
     Format.fprintf ppf "@[<2>val %a :@ %a@]" Value_var.pp var type_expression type_
   | S_type (var, type_, _) ->

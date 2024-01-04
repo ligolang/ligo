@@ -312,7 +312,7 @@ module Of_Ast = struct
 
   and sig_item : AST.sig_item -> t -> env -> t * env =
    fun s scopes env ->
-    match s with
+    match Location.unwrap s with
     | S_value (var, _ty_expr, _attr) ->
       if Value_var.is_generated var
       then scopes, env

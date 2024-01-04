@@ -228,7 +228,8 @@ end = struct
            }
     | D_module { name; mod_expr; annotation = { signatures = annotation; filter } } ->
       let items : O.sig_item list =
-        List.map ~f:(fun sig_ -> O.S_include sig_) annotation
+        List.map annotation ~f:(fun sig_ ->
+            Location.wrap ~loc:Location.generated @@ O.S_include sig_)
       in
       let signature : O.signature_expr =
         Location.wrap ~loc:Location.generated (O.S_sig { items })
@@ -241,10 +242,14 @@ end = struct
            ; module_attr = O.TypeOrModuleAttr.default_attributes
            }
     | D_signature { name; sig_expr; extends } ->
-      let items : O.sig_item list = List.map ~f:(fun sig_ -> O.S_include sig_) extends in
+      let items : O.sig_item list =
+        List.map extends ~f:(fun sig_ ->
+            Location.wrap ~loc:Location.generated @@ O.S_include sig_)
+      in
       let loc = Location.get_location sig_expr in
-      let sig_ = Location.unwrap sig_expr in
-      let items = items @ [ O.S_include (Location.wrap ~loc sig_) ] in
+      let items =
+        items @ [ Location.wrap ~loc:Location.generated @@ O.S_include sig_expr ]
+      in
       let signature = Location.wrap ~loc @@ O.S_sig { items } in
       ret
       @@ D_signature
@@ -582,26 +587,26 @@ end = struct
     in
     let location = item.location in
     match Location.unwrap item with
-    | S_value (v, ty, optional) -> S_value (v, ty, attr optional)
-    | S_type (v, _TODO_generics, ty) -> S_type (v, ty, Sig_type_attr.default_attributes)
-    | S_type_var v -> S_type_var (v, Sig_type_attr.default_attributes)
-    | S_attr (attr', S_value (v, ty, attr)) ->
-      let location = Location.get_location item in
+    | S_value (v, ty, optional) ->
+      Location.wrap ~loc:location @@ O.S_value (v, ty, attr optional)
+    | S_type (v, _TODO_generics, ty) ->
+      Location.wrap ~loc:location @@ O.S_type (v, ty, Sig_type_attr.default_attributes)
+    | S_type_var v ->
+      Location.wrap ~loc:location @@ O.S_type_var (v, Sig_type_attr.default_attributes)
+    | S_attr (attr', { wrap_content = S_value (v, ty, attr); location = _ }) ->
       let attr = conv_vsigitem_attr ~raise location attr attr' in
-      S_value (v, ty, attr)
-    | S_attr (attr', S_type (v, ty, attr)) ->
-      let location = Location.get_location item in
+      Location.wrap ~loc:location @@ O.S_value (v, ty, attr)
+    | S_attr (attr', { wrap_content = S_type (v, ty, attr); location = _ }) ->
       let attr = conv_sigtype_attr ~raise location attr attr' in
-      S_type (v, ty, attr)
-    | S_attr (attr', S_type_var (v, attr)) ->
-      let location = Location.get_location item in
+      Location.wrap ~loc:location @@ O.S_type (v, ty, attr)
+    | S_attr (attr', { wrap_content = S_type_var (v, attr); location = _ }) ->
       let attr = conv_sigtype_attr ~raise location attr attr' in
-      S_type_var (v, attr)
+      Location.wrap ~loc:location @@ O.S_type_var (v, attr)
     | S_attr (attr, node) ->
       if not @@ String.equal attr.key "comment"
       then raise.warning (`Nanopasses_attribute_ignored location);
       node
-    | S_include se -> S_include se
+    | S_include se -> Location.wrap ~loc:location @@ O.S_include se
 end
 
 module From_core : sig
@@ -707,24 +712,29 @@ end = struct
     =
    fun sig_item ->
     let ret ~loc content : _ O.sig_entry_ = Location.wrap ~loc content in
-    match sig_item with
+    let loc = Location.get_location sig_item in
+    match Location.unwrap sig_item with
     | I.S_value (v, ty, attr) ->
       (match conv_sig_entry_attr attr with
       | None -> ret ~loc:ty.location (S_value (v, ty, attr.optional))
       | Some (attr, attr_rest) ->
-        ret ~loc:ty.location (S_attr (attr, I.S_value (v, ty, attr_rest))))
+        ret
+          ~loc:ty.location
+          (S_attr (attr, Location.wrap ~loc @@ I.S_value (v, ty, attr_rest))))
     | I.S_type (v, ty, attr) ->
       (match conv_sig_type_attr attr with
       | None -> ret ~loc:ty.location (S_type (v, [], ty))
       | Some (attr, attr_rest) ->
-        ret ~loc:ty.location (S_attr (attr, I.S_type (v, ty, attr_rest))))
+        ret
+          ~loc:ty.location
+          (S_attr (attr, Location.wrap ~loc @@ I.S_type (v, ty, attr_rest))))
     | I.S_type_var (v, attr) ->
       (match conv_sig_type_attr attr with
       | None -> ret ~loc:(O.Ty_variable.get_location v) (S_type_var v)
       | Some (attr, attr_rest) ->
         ret
           ~loc:(O.Ty_variable.get_location v)
-          (S_attr (attr, I.S_type_var (v, attr_rest))))
+          (S_attr (attr, Location.wrap ~loc @@ I.S_type_var (v, attr_rest))))
     | I.S_include se -> ret ~loc:se.location (S_include se)
     | I.S_module (_, _) | I.S_module_type (_, _) -> failwith "Impossible"
 

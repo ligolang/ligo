@@ -108,7 +108,7 @@ module Separate (Params : Params) = struct
           ~sig_items:module_intf.sig_items
           ~sig_sort:module_intf.sig_sort
       in
-      env @ [ S_module (module_binder, module_sig) ]
+      env @ [ Location.wrap ~loc @@ Ast_typed.S_module (module_binder, module_sig) ]
 
 
     let add_interface_to_environment : interface -> environment -> environment =
@@ -145,11 +145,12 @@ module Separate (Params : Params) = struct
      fun module_binder module_intf ast ->
       let module_binder = Module_var.of_input_var ~loc module_binder in
       let new_item =
-        Ast_typed.S_module
-          ( module_binder
-          , Ast_typed.signature_make
-              ~sig_items:module_intf.sig_items
-              ~sig_sort:module_intf.sig_sort )
+        Location.wrap ~loc
+        @@ Ast_typed.S_module
+             ( module_binder
+             , Ast_typed.signature_make
+                 ~sig_items:module_intf.sig_items
+                 ~sig_sort:module_intf.sig_sort )
       in
       { ast with sig_items = new_item :: ast.sig_items }
   end

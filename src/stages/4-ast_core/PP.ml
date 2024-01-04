@@ -143,7 +143,7 @@ and module_annotation ppf (annot : module_annotation) : unit =
 
 
 and sig_item ppf (d : sig_item) =
-  match d with
+  match Location.unwrap d with
   | S_value (var, type_, attr) ->
     Format.fprintf
       ppf
