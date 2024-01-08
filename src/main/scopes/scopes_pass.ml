@@ -198,6 +198,7 @@ module Of_Ast = struct
         let scopes, env = declarations decls scopes env in
         scopes, Some (Defs env.avail_defs), env
       | M_variable mv ->
+        let scopes = add scopes (Module_var.get_location mv) current_defs in
         let defs_or_alias_opt =
           match Env.resolve_mvar mv current_defs env.module_map with
           | None -> None
@@ -205,6 +206,11 @@ module Of_Ast = struct
         in
         scopes, defs_or_alias_opt, env
       | M_module_path mvs ->
+        let scopes =
+          let hd_loc = Module_var.get_location (List.Ne.hd mvs) in
+          let last_loc = Module_var.get_location (List.Ne.last mvs) in
+          add scopes (Location.cover hd_loc last_loc) current_defs
+        in
         let defs_or_alias_opt =
           match Env.resolve_mpath mvs current_defs env.module_map with
           | None -> None

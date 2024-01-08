@@ -4,10 +4,12 @@ open Lsp_helpers
 type def_scope =
   | Term_scope
   | Type_scope
+  | Module_scope
 
 let in_scope (def : Def.t) (scope : def_scope) =
   match def, scope with
-  | Module _, _ -> true (* We'll show modules both for term and type completions *)
+  | Module _, (Term_scope | Type_scope | Module_scope) ->
+    true (* We'll show modules for all definition scopes *)
   | Variable _, Term_scope -> true
   | Type _, Type_scope -> true
   | _ -> false
@@ -31,8 +33,7 @@ let get_module_from_pos
   and get_defs_from_mdef (m : Scopes.Types.mdef) : CompletionItem.t list option =
     let%map.Option defs =
       match m.mod_case with
-      | Alias { resolve_mod_name; file_name = _ } ->
-        get_defs_from_resolve_mod_name resolve_mod_name
+      | Alias { resolve_mod_name } -> get_defs_from_resolve_mod_name resolve_mod_name
       | Def defs ->
         let is_module_field_in_scope def =
           match Scopes.Types.get_def_type def with

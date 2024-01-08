@@ -6,10 +6,13 @@ module TVar = Type_var
 module MVar = Module_var
 module LSet = Types.LSet
 module SMap = Map.Make (String)
+module Mangled_pass = Inline_mangled_modules_pass
 
 let ( <@ ) = Simple_utils.Function.( <@ )
 
 type t = def list
+
+let mangled_uids_hashtbl = Hashtbl.create (module Uid)
 
 let get_location_of_module_path : Module_var.t list -> Location.t =
  fun mvs ->
@@ -127,20 +130,20 @@ let defs_of_mvar
   if MVar.is_generated mvar
   then acc
   else (
-    let name =
+    let name, file_name_opt =
       let name = get_mod_binder_name mvar in
-      Option.value_map
-        ~default:(Original name)
-        (SMap.find module_deps name)
-        ~f:(fun name -> Filename name)
+      name, SMap.find module_deps name
     in
     let mdef : mdef =
-      let uid : Uid.t = Uid.make (get_mod_name_name name) (MVar.get_location mvar) in
+      let uid : Uid.t = Uid.make name (MVar.get_location mvar) in
+      Option.iter file_name_opt ~f:(fun file_name ->
+          Hashtbl.update mangled_uids_hashtbl uid ~f:(Fn.const file_name));
       let range : Location.t = MVar.get_location mvar in
       let body_range : Location.t option = bindee_location in
       let references : LSet.t = LSet.empty (* Filled in a later pass *) in
       let signature = Unresolved (* Filled in a later pass *) in
       let attributes = Option.value ~default:No_attributes attributes in
+      let inlined_name = None (* Filled in a later pass *) in
       { name
       ; uid
       ; range
@@ -154,6 +157,7 @@ let defs_of_mvar
       ; implements
       ; extends
       ; mdef_type
+      ; inlined_name
       }
     in
     Module mdef :: acc)
@@ -374,13 +378,8 @@ module Of_Ast = struct
   and alias_of_mvars : string SMap.t -> Module_var.t list -> alias =
    fun module_deps mvars ->
     let module_path = List.map ~f:mvar_to_id mvars in
-    let file_name =
-      match module_path with
-      | [ mangled_name ] -> SMap.find module_deps (Uid.to_name mangled_name)
-      | _ -> None
-    in
     (* The resolved name will be filled later. *)
-    { resolve_mod_name = Unresolved_path { module_path }; file_name }
+    { resolve_mod_name = Unresolved_path { module_path } }
 
 
   and mod_case_of_mvars : string SMap.t -> Module_var.t list -> mod_case =
@@ -703,8 +702,19 @@ module Of_Ast = struct
         defs_of_decl ~waivers module_deps def_type mod_path decl accu)
 
 
-  let definitions ?(waivers = Waivers.default) : AST.program -> string SMap.t -> t -> t =
-   fun prg module_deps acc -> defs_of_decls ~waivers module_deps [] Global prg acc
+  let definitions ?(waivers = Waivers.default)
+      : AST.program -> string SMap.t -> t -> Mangled_pass.t * t
+    =
+   fun prg module_deps acc ->
+    Hashtbl.clear mangled_uids_hashtbl;
+    let defs = defs_of_decls ~waivers module_deps [] Global prg acc in
+    let mangled_uids_map =
+      mangled_uids_hashtbl
+      |> Hashtbl.to_alist
+      |> Caml.List.to_seq
+      |> Mangled_pass.UidMap.of_seq
+    in
+    mangled_uids_map, defs
 end
 
 module Of_Stdlib_Ast = struct
@@ -713,5 +723,5 @@ module Of_Stdlib_Ast = struct
     let waivers =
       { Of_Ast.Waivers.default with d_value_expr = true; d_irrefutable_match_expr = true }
     in
-    Of_Ast.definitions ~waivers prg module_deps []
+    snd @@ Of_Ast.definitions ~waivers prg module_deps []
 end
