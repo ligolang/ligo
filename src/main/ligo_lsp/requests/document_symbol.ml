@@ -8,7 +8,8 @@ let create_hierarchy : Def.t list -> Def.t Rose.forest =
        ~compare:(fun ((range1 : Range.t), _def1) (range2, _def2) ->
          let ord = Position.compare range1.start range2.start in
          if ord = 0 then Position.compare range2.end_ range1.end_ else ord)
-       ~intersects:(fun (range1, _def1) (range2, _def2) -> Range.intersects range1 range2)
+       ~intersects:(fun (range1, _def1) (range2, _def2) ->
+         Position.compare range1.end_ range2.start > 0)
   <@ List.filter_map ~f:(fun def ->
          let%map.Option range = Range.of_loc @@ Scopes.Types.get_decl_range def in
          range, def)
@@ -75,7 +76,8 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
       detail, kind, name, decl_range, range
   in
   let%bind.Option selectionRange = Range.of_loc range in
-  let%map.Option range = Range.of_loc decl_range in
+  let%bind.Option range = Range.of_loc decl_range in
+  let%map.Option () = Option.some_if (Range.inside ~small:selectionRange ~big:range) () in
   detail, kind, name, selectionRange, range
 
 
@@ -97,7 +99,10 @@ let rec get_all_symbols_hierarchy
       @@ List.fold tl ~init:(Scopes.Types.get_range hd) ~f:(fun acc def ->
              Loc.cover acc @@ Scopes.Types.get_range def)
     in
-    let%map.Option range = Range.of_loc @@ Scopes.Types.get_decl_range hd in
+    let%bind.Option range = Range.of_loc @@ Scopes.Types.get_decl_range hd in
+    let%map.Option () =
+      Option.some_if (Range.inside ~small:selectionRange ~big:range) ()
+    in
     let ctor_children = hd :: tl in
     let detail = None in
     let kind = SymbolKind.Constructor in
