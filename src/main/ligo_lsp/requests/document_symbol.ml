@@ -157,11 +157,5 @@ let on_req_document_symbol (path : Path.t)
         | Virtual _ -> false)
   in
   let hierarchy = create_hierarchy definitions in
-  Format.eprintf
-    "hierarchy: %a\n%!"
-    (Rose.pp_forest (fun ppf def ->
-         let open Scopes.Types in
-         Format.fprintf ppf "%s#%a" (get_def_name def) Loc.pp (get_decl_range def)))
-    hierarchy;
   Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
       `DocumentSymbol symbols)

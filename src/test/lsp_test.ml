@@ -9,6 +9,7 @@ let _main =
     ; Definition.tests
     ; Diagnostics.tests
     ; Document_link.tests
+    ; Document_symbol.tests
     ; Folding_range.tests
     ; Formatting.tests
     ; Hover.tests

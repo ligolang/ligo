@@ -100,6 +100,14 @@ module DocumentLink = struct
     Lsp.Types.DocumentLink.create ~target:(path_to_target target)
 end
 
+module DocumentSymbol = struct
+  include Lsp.Types.DocumentSymbol
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module FoldingRange = struct
   include Lsp.Types.FoldingRange
 
@@ -138,7 +146,6 @@ module ConfigurationItem = Lsp.Types.ConfigurationItem
 module CreateFile = Lsp.Types.CreateFile
 module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
-module DocumentSymbol = Lsp.Types.DocumentSymbol
 module DocumentSymbolOptions = Lsp.Types.DocumentSymbolOptions
 module FileOperationFilter = Lsp.Types.FileOperationFilter
 module FileOperationOptions = Lsp.Types.FileOperationOptions
