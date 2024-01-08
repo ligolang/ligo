@@ -9,12 +9,7 @@ let create_hierarchy : Def.t list -> Def.t Rose.forest =
          if ord = 0 then Position.compare range2.end_ range1.end_ else ord)
        ~intersects:(fun (range1, _def1) (range2, _def2) -> Range.intersects range1 range2)
   <@ List.filter_map ~f:(fun def ->
-         let loc =
-           match Scopes.Types.get_body_range def with
-           | None -> Scopes.Types.get_range def
-           | Some range -> range
-         in
-         let%map.Option range = Range.of_loc loc in
+         let%map.Option range = Range.of_loc @@ Scopes.Types.get_decl_range def in
          range, def)
 
 
@@ -22,9 +17,9 @@ let rec get_all_symbols_hierarchy
     : Syntax_types.t -> Def.t Rose.tree -> DocumentSymbol.t option
   =
  fun syntax (Tree (def, defs)) ->
-  let detail, kind, name, body_range, range =
+  let detail, kind, name, decl_range, range =
     match def with
-    | Variable ({ name; range; body_range; def_type; _ } as vdef) ->
+    | Variable ({ name; range; decl_range; def_type; _ } as vdef) ->
       let type_info = Def.get_type vdef in
       let detail =
         Option.map type_info ~f:(Pretty.show_type ~syntax <@ Def.use_var_name_if_available)
@@ -44,8 +39,8 @@ let rec get_all_symbols_hierarchy
           | T_arrow _ -> if is_field then Method else Function
           | _ -> Variable)
       in
-      detail, kind, name, body_range, range
-    | Type { name; range; body_range; content; _ } ->
+      detail, kind, name, decl_range, range
+    | Type { name; range; decl_range; content; _ } ->
       let detail = Option.map content ~f:(Pretty.show_type ~syntax) in
       let kind =
         match content with
@@ -55,8 +50,8 @@ let rec get_all_symbols_hierarchy
           | T_sum _ -> Enum
           | _ -> Struct)
       in
-      detail, kind, name, body_range, range
-    | Module { name; range; body_range; mdef_type; signature; _ } ->
+      detail, kind, name, decl_range, range
+    | Module { name; range; decl_range; mdef_type; signature; _ } ->
       let detail =
         match%bind.Option
           match signature with
@@ -77,16 +72,10 @@ let rec get_all_symbols_hierarchy
         | JsLIGO, Module -> Namespace
         | JsLIGO, Signature -> Interface
       in
-      detail, kind, name, body_range, range
+      detail, kind, name, decl_range, range
   in
-  let%map.Option selectionRange = Range.of_loc range in
-  (* If the definition is a signature item, then it won't have a body range. *)
-  let range =
-    Option.value ~default:selectionRange @@ Option.bind ~f:Range.of_loc body_range
-  in
-  (* The selection range must be contained in the range, so let's extend the range since
-     it doesn't in scopes. *)
-  let range = Range.cover selectionRange range in
+  let%bind.Option selectionRange = Range.of_loc range in
+  let%map.Option range = Range.of_loc decl_range in
   let children = get_all_symbols_hierarchies syntax defs in
   DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ()
 
@@ -116,12 +105,7 @@ let on_req_document_symbol (path : Path.t)
     "hierarchy: %a\n%!"
     (Rose.pp_forest (fun ppf def ->
          let open Scopes.Types in
-         Format.fprintf
-           ppf
-           "%s#%a"
-           (get_def_name def)
-           Loc.pp
-           (Option.value ~default:(get_range def) (get_body_range def))))
+         Format.fprintf ppf "%s#%a" (get_def_name def) Loc.pp (get_decl_range def)))
     hierarchy;
   Option.map (get_all_symbols_hierarchies syntax hierarchy) ~f:(fun symbols ->
       `DocumentSymbol symbols)

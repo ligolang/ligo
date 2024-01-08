@@ -103,7 +103,7 @@ type vdef =
   { name : string
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t option
+  ; decl_range : Location.t
   ; t : type_case
   ; references : LSet.t
   ; def_type : def_type
@@ -117,7 +117,7 @@ type tdef =
   { name : string
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t option
+  ; decl_range : Location.t
   ; content : Ast_core.type_expression option
         (** The RHS ([u]) of a type definition [type t = u]. For signatures and
             interfaces, the type might be abstract and have no content, e.g.:
@@ -162,7 +162,7 @@ and mdef =
   { name : mod_name
   ; uid : Uid.t
   ; range : Location.t
-  ; body_range : Location.t option
+  ; decl_range : Location.t
   ; references : LSet.t
   ; mod_case : mod_case
   ; def_type : def_type
@@ -213,10 +213,10 @@ let get_range = function
   | Module m -> m.range
 
 
-let get_body_range = function
-  | Type t -> t.body_range
-  | Variable v -> v.body_range
-  | Module m -> m.body_range
+let get_decl_range = function
+  | Type t -> t.decl_range
+  | Variable v -> v.decl_range
+  | Module m -> m.decl_range
 
 
 let get_def_type = function

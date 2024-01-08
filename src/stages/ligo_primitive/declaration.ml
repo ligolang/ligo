@@ -1,4 +1,3 @@
-module Option = Simple_utils.Option
 module Location = Simple_utils.Location
 
 module type Attr = sig
