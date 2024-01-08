@@ -4,6 +4,7 @@ open Lsp_helpers
 let create_hierarchy : Def.t list -> Def.t Rose.forest =
   Rose.map_forest ~f:snd
   <@ Rose.forest_of_list
+     (* See the expect test in [Rose] on why we compare and check for intersection like this. *)
        ~compare:(fun ((range1 : Range.t), _def1) (range2, _def2) ->
          let ord = Position.compare range1.start range2.start in
          if ord = 0 then Position.compare range2.end_ range1.end_ else ord)
@@ -13,10 +14,9 @@ let create_hierarchy : Def.t list -> Def.t Rose.forest =
          range, def)
 
 
-let rec get_all_symbols_hierarchy
-    : Syntax_types.t -> Def.t Rose.tree -> DocumentSymbol.t option
+let make_def_info (syntax : Syntax_types.t) (def : Def.t)
+    : (string option * SymbolKind.t * string * Range.t * Range.t) option
   =
- fun syntax (Tree (def, defs)) ->
   let detail, kind, name, decl_range, range =
     match def with
     | Variable ({ name; range; decl_range; def_type; _ } as vdef) ->
@@ -34,7 +34,7 @@ let rec get_all_symbols_hierarchy
         | None -> if is_field then SymbolKind.Field else Variable
         | Some { var_name = _; contents = { type_content; location = _ } } ->
           (match type_content with
-          | T_sum _ -> Constructor (* or maybe [EnumMember]? *)
+          | T_sum _ -> EnumMember
           | T_record _ -> Field
           | T_arrow _ -> if is_field then Method else Function
           | _ -> Variable)
@@ -76,8 +76,53 @@ let rec get_all_symbols_hierarchy
   in
   let%bind.Option selectionRange = Range.of_loc range in
   let%map.Option range = Range.of_loc decl_range in
-  let children = get_all_symbols_hierarchies syntax defs in
-  DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ()
+  detail, kind, name, selectionRange, range
+
+
+let rec get_all_symbols_hierarchy
+    : Syntax_types.t -> Def.t Rose.tree -> DocumentSymbol.t option
+  =
+ fun syntax (Tree ((hd, tl), defs)) ->
+  if List.is_empty tl
+  then (
+    let%map.Option detail, kind, name, selectionRange, range = make_def_info syntax hd in
+    let children = get_all_symbols_hierarchies syntax defs in
+    DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ())
+  else (
+    (* TODO: we should use constructor info for this, but we don't have them in scopes
+       yet, so we use a placeholder for now. Note that this also assumes a single
+       constructor being destructured, but there may be many of them. *)
+    let%bind.Option selectionRange =
+      Range.of_loc
+      @@ List.fold tl ~init:(Scopes.Types.get_range hd) ~f:(fun acc def ->
+             Loc.cover acc @@ Scopes.Types.get_range def)
+    in
+    let%map.Option range = Range.of_loc @@ Scopes.Types.get_decl_range hd in
+    let ctor_children = hd :: tl in
+    let detail = None in
+    let kind = SymbolKind.Constructor in
+    let name =
+      String.concat ~sep:", " @@ List.map ctor_children ~f:Scopes.Types.get_def_name
+    in
+    let children = get_all_symbols_hierarchies syntax defs in
+    let ctor_children =
+      match
+        List.filter_map ctor_children ~f:(fun def ->
+            let%map.Option detail, kind, name, selectionRange, range =
+              make_def_info syntax def
+            in
+            DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ())
+      with
+      | [] -> None
+      | _ :: _ as children -> Some children
+    in
+    let children =
+      match ctor_children, children with
+      | None, None -> None
+      | None, Some nested_children -> Some nested_children
+      | Some ctor_children, (* already nested in ctor_children *) _ -> Some ctor_children
+    in
+    DocumentSymbol.create ?children ?detail ~kind ~name ~range ~selectionRange ())
 
 
 and get_all_symbols_hierarchies
