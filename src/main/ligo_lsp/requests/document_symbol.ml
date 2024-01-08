@@ -15,6 +15,10 @@ let create_hierarchy : Def.t list -> Def.t Rose.forest =
          range, def)
 
 
+let guard_ghost (input : string) : string option =
+  Option.some_if (not @@ Parsing.Errors.ErrorWrapper.is_wrapped input) input
+
+
 let make_def_info (syntax : Syntax_types.t) (def : Def.t)
     : (string option * SymbolKind.t * string * Range.t * Range.t) option
   =
@@ -75,9 +79,11 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
       in
       detail, kind, name, decl_range, range
   in
+  let%bind.Option name = guard_ghost name in
   let%bind.Option selectionRange = Range.of_loc range in
   let%bind.Option range = Range.of_loc decl_range in
   let%map.Option () = Option.some_if (Range.inside ~small:selectionRange ~big:range) () in
+  let detail = Option.bind ~f:guard_ghost detail in
   detail, kind, name, selectionRange, range
 
 
