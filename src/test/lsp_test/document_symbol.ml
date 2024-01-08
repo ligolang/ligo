@@ -141,6 +141,27 @@ let test_cases =
             ()
         ]
     }
+  ; { test_name = "Missing module name still shows hierarchy"
+    ; file_name = "contracts/lsp/missing_module_name.mligo"
+    ; symbols =
+        [ DocumentSymbol.create
+            ~children:
+              [ DocumentSymbol.create
+                  ~detail:"int"
+                  ~kind:SymbolKind.Variable
+                  ~name:"y"
+                  ~range:(interval 1 2 12)
+                  ~selectionRange:(interval 1 6 7)
+                  ()
+              ]
+            ~detail:"sig\n  val y : int\n  end"
+            ~kind:SymbolKind.Module
+            ~name:"?"
+            ~range:(range (0, 0) (2, 3))
+            ~selectionRange:(point 0 6)
+            ()
+        ]
+    }
   ]
 
 
