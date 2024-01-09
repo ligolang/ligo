@@ -1,4 +1,5 @@
 module AST = Ast_core
+module Mangled_pass = Inline_mangled_modules_pass
 
 module Of_Ast : sig
   module Waivers : sig
@@ -18,7 +19,7 @@ module Of_Ast : sig
     -> AST.program
     -> string Map.Make(String).t
     -> Types.def list
-    -> Types.def list
+    -> Mangled_pass.t * Types.def list
 end
 
 module Of_Stdlib_Ast : sig

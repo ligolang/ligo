@@ -85,64 +85,65 @@ let print_module_with_description
   =
  fun syntax ~project_root description signature mdef ->
   let open Lsp.Types in
+  let relative_file_path_pp (base_path : string option)
+      : Format.formatter -> string -> unit
+    =
+   fun ppf path ->
+    Format.fprintf
+      ppf
+      {|"%s"|}
+      (Option.value_map base_path ~default:path ~f:(fun base_path ->
+           FilePath.make_relative base_path path))
+  in
   let project_root = Option.map project_root ~f:Path.to_string in
   let language = Some (Syntax.to_string syntax) in
   match mdef.mod_case with
   | Def _ ->
-    let value =
-      match mdef.mdef_type with
-      | Module ->
-        Format.asprintf
-          "%s %a %s %s"
-          description.module_keyword
-          (Scopes.PP.mod_name project_root)
-          mdef.name
-          description.module_annotation_sign
-          signature
-      | Signature ->
-        Format.asprintf
-          "%s %a %a%s"
-          description.signature_keyword
-          (Scopes.PP.mod_name project_root)
-          mdef.name
-          (fun ppf -> Option.value_map ~default:() ~f:(Format.fprintf ppf "%s "))
-          description.signature_annotation_sign
-          signature
-    in
-    MarkedString.{ language; value }
-  | Alias { resolve_mod_name; file_name } ->
-    (match file_name with
+    (match mdef.inlined_name with
     | Some file_name ->
       let value =
         Format.asprintf
-          {|#import %a "%a"|}
-          (Scopes.PP.mod_name project_root)
-          (Filename file_name)
-          (Scopes.PP.mod_name project_root)
+          {|#import %a "%s"|}
+          (relative_file_path_pp project_root)
+          file_name
           mdef.name
       in
       MarkedString.{ language; value }
     | None ->
-      let alias_rhs =
-        Option.value_map
-          ~default:
-            (Scopes.Types.get_module_path resolve_mod_name
-            |> List.map ~f:Scopes.Types.Uid.to_name
-            |> String.concat ~sep:".")
-          ~f:(fun file_name ->
-            Format.asprintf "%a" (Scopes.PP.mod_name project_root) (Filename file_name))
-          file_name
-      in
       let value =
-        Format.asprintf
-          "%s %a %s %s"
-          description.import_keyword
-          (Scopes.PP.mod_name project_root)
-          mdef.name
-          description.sign_on_import
-          alias_rhs
+        match mdef.mdef_type with
+        | Module ->
+          Format.asprintf
+            "%s %s %s %s"
+            description.module_keyword
+            mdef.name
+            description.module_annotation_sign
+            signature
+        | Signature ->
+          Format.asprintf
+            "%s %s %a%s"
+            description.signature_keyword
+            mdef.name
+            (fun ppf -> Option.value_map ~default:() ~f:(Format.fprintf ppf "%s "))
+            description.signature_annotation_sign
+            signature
       in
       MarkedString.{ language; value })
+  | Alias { resolve_mod_name } ->
+    let alias_rhs =
+      Scopes.Types.get_module_path resolve_mod_name
+      |> List.map ~f:Scopes.Types.Uid.to_name
+      |> String.concat ~sep:"."
+    in
+    let value =
+      Format.asprintf
+        "%s %s %s %s"
+        description.import_keyword
+        mdef.name
+        description.sign_on_import
+        alias_rhs
+    in
+    MarkedString.{ language; value }
 
 
 let print_module

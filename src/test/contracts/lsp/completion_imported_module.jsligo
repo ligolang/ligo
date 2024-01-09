@@ -1,0 +1,10 @@
+#import "completion_x.mligo" "A"
+
+import M = 
+
+namespace After {
+  export const x = 42
+}
+
+import N = A.
+import K = A.M.

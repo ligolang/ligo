@@ -171,13 +171,6 @@ let test_cases =
         ; pos ~line:3 ~character:13, one "#import \"A.mligo\" \"C\""
         ; pos ~line:5 ~character:11, one "#import \"A.mligo\" \"K\""
         ]
-        @ List.map
-            ~f:(fun p -> p, one "module \"B.mligo\" : sig end")
-            [ pos ~line:0 ~character:11
-            ; pos ~line:0 ~character:19
-            ; pos ~line:1 ~character:11
-            ; pos ~line:1 ~character:19 (* [#2090] The last 2 hoverings are incorrect *)
-            ]
     }
   ; { test_name = "outer.mligo"
     ; file = "contracts/lsp/hover/imports/outer.mligo"
@@ -186,10 +179,6 @@ let test_cases =
         ; pos ~line:2 ~character:20, one "#import \"C.mligo\" \"Outer\""
         ; pos ~line:2 ~character:23, one "#import \"A.mligo\" \"K\""
         ]
-        @ List.map
-            ~f:(fun p ->
-              p, one "module \"inner/inner.mligo\" : sig\n  val test : int\n  end")
-            [ pos ~line:0 ~character:17; pos ~line:0 ~character:31 ]
     }
   ; { test_name = "inner.mligo"
     ; file = "contracts/lsp/hover/imports/inner/inner.mligo"
@@ -197,9 +186,6 @@ let test_cases =
         [ pos ~line:2 ~character:12, one "#import \"../C.mligo\" \"Outer\""
         ; pos ~line:2 ~character:17, one "#import \"../A.mligo\" \"K\""
         ]
-        @ List.map
-            ~f:(fun p -> p, one "module \"../C.mligo\" : sig\n  val test : int\n  end")
-            [ pos ~line:0 ~character:15; pos ~line:0 ~character:23 ]
     }
   ; { test_name = "hover_module.mligo"
     ; file = "contracts/lsp/hover/hover_module.mligo"

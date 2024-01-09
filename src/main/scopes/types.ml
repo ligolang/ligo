@@ -19,7 +19,7 @@ module List = Simple_utils.List
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
 
 module Uid : sig
-  type t [@@deriving compare]
+  type t [@@deriving compare, sexp]
 
   val make : string -> Location.t -> t
   val ( = ) : t -> t -> bool
@@ -28,8 +28,10 @@ module Uid : sig
   val to_location : t -> Location.t
   val to_string : t -> string
   val pp : Format.formatter -> t -> unit
+  val sexp_of_t : t -> Sexp.t
+  val hash : t -> int
 end = struct
-  type t = Uid of string * Location.t [@@deriving compare]
+  type t = Uid of string * Location.t [@@deriving compare, sexp]
 
   let make name loc = Uid (name, loc)
   let ( = ) (Uid (n1, l1)) (Uid (n2, l2)) = String.equal n1 n2 && Location.equal l1 l2
@@ -51,6 +53,7 @@ end = struct
 
 
   let pp : t Fmt.t = fun ppf uid -> Format.fprintf ppf "%s" (to_string uid)
+  let hash uid = String.hash (to_string uid)
 end
 
 type ('core_expr, 'typed_expr) resolve_case =
@@ -127,10 +130,7 @@ type tdef =
 
 let compare_tdef (t1 : tdef) (t2 : tdef) : int = Uid.compare t1.uid t2.uid
 
-type mod_name =
-  | Original of string
-  | Filename of string
-[@@deriving compare]
+type mod_name = string [@@deriving compare]
 
 type resolve_mod_name =
   | Unresolved_path of { module_path : Uid.t list }
@@ -141,13 +141,7 @@ type resolve_mod_name =
       }
 [@@deriving compare]
 
-type alias =
-  { resolve_mod_name : resolve_mod_name
-  ; file_name : string option
-        (** If module name is mangled (i.e. it was obtained from preprocessing some import
-            directive) then this field will contain a file name of a module. *)
-  }
-[@@deriving compare]
+type alias = { resolve_mod_name : resolve_mod_name } [@@deriving compare]
 
 let get_module_path : resolve_mod_name -> Uid.t list = function
   | Unresolved_path path -> path.module_path
@@ -178,6 +172,10 @@ and mdef =
   ; implements : implementation list
   ; extends : extension list
   ; mdef_type : mdef_type
+  ; inlined_name : string option
+        (* We want to preserve the original name
+           of mangled module when it's inlined.
+           This info could be helpful (e.g. in hovers) *)
   }
 
 and def =
@@ -197,15 +195,10 @@ let equal_def_by_name (a : def) (b : def) : bool =
   | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false
 
 
-let get_mod_name_name = function
-  | Original n -> n
-  | Filename n -> n
-
-
 let get_def_name = function
   | Variable d -> d.name
   | Type d -> d.name
-  | Module d -> get_mod_name_name d.name
+  | Module d -> d.name
 
 
 let get_def_uid = function

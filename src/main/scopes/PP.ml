@@ -145,7 +145,7 @@ and implementation : Format.formatter -> implementation -> unit =
 
 and mod_case : Format.formatter -> mod_case -> unit =
  fun ppf -> function
-  | Alias { resolve_mod_name = path; file_name = _ } -> resolve_mod_name ppf path
+  | Alias { resolve_mod_name = path } -> resolve_mod_name ppf path
   | Def d -> Format.fprintf ppf "Members: %a" definitions d
 
 
@@ -279,20 +279,15 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; implements = _
         ; extends = _
         ; mdef_type = _
+        ; inlined_name = _
         } ->
       let def =
-        ( "definition"
-        , definition
-            ~name:(get_mod_name_name name)
-            ~range
-            ~body_range
-            ~references
-            ~t:Unresolved )
+        "definition", definition ~name ~range ~body_range ~references ~t:Unresolved
       in
       let body =
         match mod_case with
         | Def d -> "members", defs_json d
-        | Alias { resolve_mod_name; file_name = _file_name } ->
+        | Alias { resolve_mod_name } ->
           ( "alias"
           , `List
               (List.map (get_module_path resolve_mod_name) ~f:(fun s ->
@@ -360,14 +355,3 @@ let scopes_json (scopes : scopes) : Yojson.Safe.t =
            ; "module_environment", `List ms
            ])
        scopes)
-
-
-let mod_name (base_path : string option) : Format.formatter -> mod_name -> unit =
- fun f -> function
-  | Original n -> Format.fprintf f "%s" n
-  | Filename n ->
-    Format.fprintf
-      f
-      {|"%s"|}
-      (Option.value_map base_path ~default:n ~f:(fun base_path ->
-           FilePath.make_relative base_path n))

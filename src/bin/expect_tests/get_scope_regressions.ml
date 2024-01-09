@@ -231,6 +231,7 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 19-20
+    [ A#2:7-8 B#3:11-12 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-18
     [ A#2:7-8 B#3:11-12 toto#4:12-16 D#9:11-12  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
 
     Variable definitions:
@@ -309,7 +310,9 @@ let%expect_test _ =
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 16-19
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
+    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12
     [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
+    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-18
     [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8 E#11:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
 
     Variable definitions:
@@ -393,6 +396,7 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 1, characters 11-14
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
+    [ A#2:11-12 C#3:15-16 toto#4:16-20  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-22
     [ A#2:11-12 C#3:15-16 toto#4:16-20 F#8:15-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
     [ A#2:11-12 C#3:15-16 toto#4:16-20 E#7:11-12 F#8:15-16 toto#9:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
 

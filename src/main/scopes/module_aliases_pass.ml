@@ -356,7 +356,7 @@ let rec patch : t -> Types.def list -> Types.def list =
       | Module m ->
         let patch_mod_case = function
           | Def defs -> Def (patch m_alias defs)
-          | Alias { resolve_mod_name; file_name } as alias ->
+          | Alias { resolve_mod_name } as alias ->
             (match LMap.find_opt m.range m_alias with
             | None -> alias
             | Some (resolved_module_path, resolved_module) ->
@@ -367,7 +367,6 @@ let rec patch : t -> Types.def list -> Types.def list =
                       ; resolved_module_path
                       ; resolved_module
                       }
-                ; file_name
                 })
         in
         Module
