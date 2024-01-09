@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improved completions for modules. Now they behave like completions for types and values.Mangled module names are stripped from completions.\\n\\n"
+merge_request: '3026'
+title: "[#2080] Improve completions for modules"
+type: fixed
+            
