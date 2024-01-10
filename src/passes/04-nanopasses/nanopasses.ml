@@ -170,6 +170,10 @@ let get_passes_no_options syntax =
   passes ~flags
 
 
+let passes_names : string list =
+  List.map (get_passes_no_options CameLIGO) ~f:(fun (module T) -> process_name @@ T.name)
+
+
 let execute_nanopasses
     ~raise
     ~options

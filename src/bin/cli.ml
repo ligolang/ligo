@@ -5,8 +5,8 @@ module Raw_options = Compiler_options.Raw_options
 
 let is_dev = ref true
 
-let create_arg_type ?key of_string =
-  Core.Command.Arg_type.create ?key of_string ~complete:(fun _ ~part ->
+let file_type =
+  Core.Command.Arg_type.create Fn.id ~complete:(fun _ ~part ->
       let completions =
         (* `compgen -f` handles some fiddly things nicely, e.g. completing "foo" and
          "foo/" appropriately. *)
@@ -17,7 +17,7 @@ let create_arg_type ?key of_string =
         List.map (List.sort ~compare:String.compare completions) ~f:(fun comp ->
             match Caml.Sys.is_directory comp with
             | true -> comp ^ "/"
-            | _ -> comp)
+            | _ | (exception _) -> comp)
       in
       match completions with
       | [ dir ] when String.is_suffix dir ~suffix:"/" ->
@@ -29,6 +29,29 @@ let create_arg_type ?key of_string =
       *)
         [ dir; dir ^ "x" ]
       | _ -> completions)
+
+
+let create_arg_type_with_static_completion
+    (type a)
+    ~(items : (string * a) list)
+    ~(default : string -> a)
+  =
+  Core.Command.Arg_type.create
+    ~complete:(fun _ ~part ->
+      List.filter (List.map ~f:fst items) ~f:(String.is_prefix ~prefix:part))
+    (fun str ->
+      match
+        List.find_map items ~f:(fun (key, value) ->
+            Option.some_if (String.equal key str) value)
+      with
+      | Some elt -> elt
+      | None -> default str)
+
+
+let create_string_arg_type_with_static_completion ~items =
+  create_arg_type_with_static_completion
+    ~items:(List.map items ~f:(fun x -> x, x))
+    ~default:Fn.id
 
 
 let entry_point =
@@ -56,7 +79,7 @@ let parameter_entrypoint =
 
 let function_name =
   let name = "FUNCTION" in
-  Command.Param.(anon (name %: create_arg_type Fn.id))
+  Command.Param.(anon (name %: string))
 
 
 let module_ =
@@ -69,17 +92,17 @@ let module_ =
 
 let source_file =
   let name = "SOURCE_FILE" in
-  Command.Param.(anon (name %: create_arg_type Fn.id))
+  Command.Param.(anon (name %: file_type))
 
 
 let source_files =
   let name = "SOURCE_FILES" in
-  Command.Param.(anon @@ non_empty_sequence_as_pair (name %: create_arg_type Fn.id))
+  Command.Param.(anon @@ non_empty_sequence_as_pair (name %: file_type))
 
 
 let directory =
   let name = "DIRECTORY" in
-  Command.Param.(anon (name %: create_arg_type Fn.id))
+  Command.Param.(anon (name %: file_type))
 
 
 let package_name =
@@ -164,6 +187,11 @@ let project_name =
   Command.Param.(anon (maybe (name %: string)))
 
 
+let syntax_type ?(required = false) () =
+  create_string_arg_type_with_static_completion
+    ~items:((if required then [] else [ "auto" ]) @ [ "cameligo"; "jsligo" ])
+
+
 let syntax =
   let open Command.Param in
   let doc =
@@ -171,21 +199,21 @@ let syntax =
      and \"jsligo\". By default, the syntax is guessed from the extension (.mligo and \
      .jsligo respectively)."
   in
-  let spec = optional_with_default Default_options.syntax string in
+  let spec = optional_with_default Default_options.syntax (syntax_type ()) in
   flag ~doc ~aliases:[ "s" ] "--syntax" spec
 
 
 let from_syntax =
   let open Command.Param in
   let doc = "SYNTAX the syntax to the transpilation input." in
-  let spec = optional_with_default Default_options.syntax string in
+  let spec = optional_with_default Default_options.syntax (syntax_type ()) in
   flag ~doc "--from-syntax" spec
 
 
 let to_syntax =
   let open Command.Param in
   let doc = "SYNTAX the syntax to the transpilation output." in
-  let spec = optional_with_default Default_options.syntax string in
+  let spec = optional_with_default Default_options.syntax (syntax_type ()) in
   flag ~doc "--to-syntax" spec
 
 
@@ -195,7 +223,10 @@ let nanopass =
     "NANOPASS the nanopass name before/after which we stop executing the nanopasses. Use \
      NAME+ for after and NAME for before, case do not matter (only for debug prints)"
   in
-  let spec = optional string in
+  let nanopass_type =
+    create_string_arg_type_with_static_completion ~items:Nanopasses.passes_names
+  in
+  let spec = optional nanopass_type in
   flag ~doc ~aliases:[ "nano" ] "--nanopass" spec
 
 
@@ -258,7 +289,10 @@ let protocol_version =
       plist
       (variant_to_string current)
   in
-  let spec = optional_with_default Default_options.protocol_version string in
+  let protocol_type =
+    create_string_arg_type_with_static_completion ~items:protocols_str
+  in
+  let spec = optional_with_default Default_options.protocol_version protocol_type in
   flag ~doc ~aliases:[ "--protocol" ] "p" spec
 
 
@@ -275,7 +309,7 @@ let cli_expr_inj =
 let req_syntax =
   let open Command.Param in
   let name = "SYNTAX" in
-  anon (name %: string)
+  anon (name %: syntax_type ~required:true ())
 
 
 let init_file =
@@ -283,7 +317,7 @@ let init_file =
   let doc =
     "FILENAME the path to the smart contract file to be used for context initialization."
   in
-  let spec = optional string in
+  let spec = optional file_type in
   flag ~doc "--init-file" spec
 
 
@@ -468,9 +502,13 @@ let hide_sort : _ Command.Param.t =
       (Simple_utils.PP_helpers.list String.pp)
       all_sorts
   in
+  let sort_type = create_string_arg_type_with_static_completion ~items:all_sorts in
   let spec =
     optional_with_default []
-    @@ Command.Arg_type.comma_separated ~strip_whitespace:true ~unique_values:true string
+    @@ Command.Arg_type.comma_separated
+         ~strip_whitespace:true
+         ~unique_values:true
+         sort_type
   in
   flag ~doc ~aliases:[ "hide" ] "--hide-sort" spec
 
@@ -493,12 +531,9 @@ let display_format =
   in
   flag ~doc ~aliases:[ "--format" ] name
   @@ optional_with_default human_readable
-  @@ Command.Arg_type.create
-  @@ function
-  | "human-readable" -> human_readable
-  | "dev" -> dev
-  | "json" -> json
-  | _ -> failwith "todo"
+  @@ create_arg_type_with_static_completion
+       ~items:[ "human-readable", human_readable; "dev", dev; "json", json ]
+       ~default:(fun _ -> failwith "todo")
 
 
 let output_file =
@@ -506,7 +541,7 @@ let output_file =
   let doc =
     "FILENAME if used, prints the output into the specified file instead of stdout"
   in
-  let spec = optional string in
+  let spec = optional file_type in
   flag ~doc ~aliases:[ "o" ] "--output-file" spec
 
 
@@ -519,13 +554,9 @@ let michelson_code_format =
   in
   flag ~doc docv
   @@ optional_with_default `Text
-  @@ Command.Arg_type.create
-  @@ function
-  | "text" -> `Text
-  | "json" -> `Json
-  | "hex" -> `Hex
-  | "msgpack" -> `Msgpack
-  | _ -> failwith "todo"
+  @@ create_arg_type_with_static_completion
+       ~items:[ "text", `Text; "json", `Json; "hex", `Hex; "msgpack", `Msgpack ]
+       ~default:(fun _ -> failwith "todo")
 
 
 let michelson_comments =
@@ -539,10 +570,9 @@ let michelson_comments =
   let name = "--michelson-comments" in
   flag ~doc name
   @@ listed
-  @@ Command.Arg_type.create (function
-         | "location" -> `Location
-         | "env" -> `Env
-         | s -> failwithf "unexpected value for --%s: %s" name s ())
+  @@ create_arg_type_with_static_completion
+       ~items:[ "location", `Location; "env", `Env ]
+       ~default:(fun str -> failwithf "unexpected value for --%s: %s" name str ())
 
 
 let optimize =
@@ -605,7 +635,7 @@ let project_root =
   let open Command.Param in
   let name = "--project-root" in
   let doc = "PATH The path to root of the project." in
-  let spec = optional string in
+  let spec = optional file_type in
   let spec =
     map_flag spec ~f:(function
         | None -> Cli_helpers.find_project_root ()
@@ -625,7 +655,7 @@ let cache_path =
   let open Command.Param in
   let name = "--cache-path" in
   let doc = "PATH The path where dependencies are installed." in
-  let spec = optional_with_default Constants.ligo_install_path string in
+  let spec = optional_with_default Constants.ligo_install_path file_type in
   flag ~doc name spec
 
 
@@ -645,7 +675,7 @@ let ligorc_path =
   let open Command.Param in
   let name = "--ligorc-path" in
   let doc = "PATH path to .ligorc file." in
-  let spec = optional_with_default (Constants.ligo_rc_path ()) string in
+  let spec = optional_with_default (Constants.ligo_rc_path ()) file_type in
   flag ~doc name spec
 
 
@@ -3255,12 +3285,13 @@ let capability_mode =
   let name = "CAPABILITY_MODE" in
   anon
     (name
-    %: (Command.Arg_type.create
-       @@ function
-       | "only-semantic-tokens" -> Ligo_lsp.Server.Only_semantic_tokens
-       | "all-capabilities" -> All_capabilities
-       | "no-semantic-tokens" -> No_semantic_tokens
-       | s -> failwithf "Unexpected value for %s: %s" name s ()))
+    %: create_arg_type_with_static_completion
+         ~items:
+           [ "only-semantic-tokens", Ligo_lsp.Server.Only_semantic_tokens
+           ; "all-capabilities", All_capabilities
+           ; "no-semantic-tokens", No_semantic_tokens
+           ]
+         ~default:(fun str -> failwithf "Unexpected value for %s: %s" name str ()))
 
 
 let lsp =
@@ -3347,7 +3378,7 @@ let run ?argv () =
       "Protocol built-in: %s"
       Environment.Protocols.(variant_to_string in_use)
   in
-  Command_unx.run ~build_info ~version:Version.version ?argv main;
+  Command_unix.run ~build_info ~version:Version.version ?argv main;
   (* Effect to error code *)
   match !return with
   | Done -> 0
