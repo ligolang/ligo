@@ -61,8 +61,10 @@ let list_directory ?(include_library = false) ?syntax (dir : string) : string li
       : string list -> string list
     = function
     | f :: fs when Caml.Sys.is_directory f ->
-      let is_packaged = is_packaged @@ FilePath.make_relative dir f in
-      if (not include_library) && is_packaged
+      let rel_f = FilePath.make_relative dir f in
+      let is_packaged = is_packaged rel_f in
+      let is_hidden = String.is_prefix ~prefix:"." rel_f in
+      if ((not include_library) && is_packaged) || ((not is_packaged) && is_hidden)
       then aux res fs
       else
         Caml.Sys.readdir f

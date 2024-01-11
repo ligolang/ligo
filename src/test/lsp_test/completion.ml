@@ -394,7 +394,7 @@ let test_cases_cameligo =
             ~sortText:"\x00"
             ()
         ]
-    ; negative_labels = [ "completion_files.mligo" ]
+    ; negative_labels = [ "completion_files.mligo"; ".hidden_dir/hidden.mligo" ]
     }
   ; { test_name = "File completions in include for outer file in the project"
     ; file_name = "contracts/lsp/completion_files/completion_files.mligo"
@@ -421,7 +421,7 @@ let test_cases_cameligo =
             ~sortText:"\x00"
             ()
         ]
-    ; negative_labels = [ "completion_files.mligo" ]
+    ; negative_labels = [ "completion_files.mligo"; ".hidden_dir/hidden.mligo" ]
     }
   ; { test_name = "File completions in import for inner file in the project"
     ; file_name = "contracts/lsp/completion_files/inner/inner.mligo"
@@ -448,7 +448,7 @@ let test_cases_cameligo =
             ~sortText:"\x00"
             ()
         ]
-    ; negative_labels = [ "inner.mligo" ]
+    ; negative_labels = [ "inner.mligo"; ".hidden_dir/hidden.mligo" ]
     }
   ; { test_name = "File completions in include for inner file in the project"
     ; file_name = "contracts/lsp/completion_files/inner/inner.mligo"
@@ -475,7 +475,7 @@ let test_cases_cameligo =
             ~sortText:"\x00"
             ()
         ]
-    ; negative_labels = [ "inner.mligo" ]
+    ; negative_labels = [ "inner.mligo"; ".hidden_dir/hidden.mligo" ]
     }
   ; { test_name = "Scope completions for modules"
     ; file_name = "contracts/lsp/completion_imported_module.mligo"

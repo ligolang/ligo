@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improved performance for file completions. Now we list files only on demand.\\n\\n\\n"
+merge_request: '3032'
+title: "[#2122] Improve performance for file completions"
+type: performance
+            
