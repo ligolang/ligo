@@ -33,11 +33,13 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   let@ mod_res = ask_mod_res in
   let files =
     Completion_lib.Files.get_files_for_completions
+      ~pos
+      ~code
       ~current_file:path
       ~project_root
       !mod_res
   in
-  let file_completions = Completion_lib.Files.complete_files pos code files in
+  let file_completions = Completion_lib.Files.complete_files files in
   let completions_without_cst = file_completions @ keyword_completions in
   (* Even if parsing fail for whatever reason (e.g. preprocessor error),
     we can at least show files and keywords to the user. *)
