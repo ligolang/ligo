@@ -197,6 +197,9 @@ class lsp_server (capability_mode : capability_mode) =
     method config_type_definition =
       Some (`Bool (self#is_request_enabled "textDocument/typeDefinition"))
 
+    method config_highlight =
+      Some (`Bool (self#is_request_enabled "textDocument/documentHighlight"))
+
     method config_folding_range =
       Some (`Bool (self#is_request_enabled "textDocument/foldingRange"))
 
@@ -240,6 +243,7 @@ class lsp_server (capability_mode : capability_mode) =
       ; renameProvider = self#config_rename
       ; referencesProvider = self#config_references
       ; typeDefinitionProvider = self#config_type_definition
+      ; documentHighlightProvider = self#config_highlight
       ; documentLinkProvider = self#config_document_link_provider
       ; foldingRangeProvider = self#config_folding_range
       ; documentRangeFormattingProvider = self#config_range_formatting
@@ -470,6 +474,10 @@ class lsp_server (capability_mode : capability_mode) =
           let uri = textDocument.uri in
           run ~uri ~default:None
           @@ Requests.on_req_document_link (DocumentUri.to_path uri)
+        | Client_request.TextDocumentHighlight { textDocument; position; _ } ->
+          let uri = textDocument.uri in
+          run ~uri ~default:None
+          @@ Requests.on_req_highlight position (DocumentUri.to_path uri)
         | Client_request.TextDocumentFoldingRange { textDocument; _ } ->
           let uri = textDocument.uri in
           run ~uri ~default:None

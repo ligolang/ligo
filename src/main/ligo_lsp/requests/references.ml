@@ -37,11 +37,11 @@ let get_all_references_grouped_by_file
     :  Def_location.t Sequence.t -> Docs_cache.t
     -> (Path.t * Range.t Sequence.t) Sequence.t
   =
- fun locations get_scope_buffers ->
+ fun locations cache ->
   let go (_path, { definitions; _ }) =
     get_references locations @@ Sequence.of_list definitions
   in
-  get_scope_buffers
+  cache
   |> Docs_cache.to_alist
   |> Sequence.of_list
   |> Sequence.concat_map ~f:go
@@ -51,8 +51,8 @@ let get_all_references_grouped_by_file
 
 
 let get_all_references : Def_location.t list -> Docs_cache.t -> Loc_in_file.t list =
- fun locations get_scope_buffers ->
-  get_all_references_grouped_by_file (Sequence.of_list locations) get_scope_buffers
+ fun locations cache ->
+  get_all_references_grouped_by_file (Sequence.of_list locations) cache
   |> Sequence.concat_map ~f:(fun (path, ranges) ->
          Sequence.map ~f:(fun range -> Loc_in_file.{ path; range }) ranges)
   |> Sequence.to_list
@@ -95,17 +95,21 @@ let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t
   @@ fun { definitions; _ } ->
   when_some (Def.get_definition pos file definitions)
   @@ fun definition ->
-  let@ get_scope_buffers = ask_docs_cache in
+  let@ cache = ask_docs_cache in
   let locations = get_all_linked_locations_or_def definition definitions in
-  let references = get_all_references locations get_scope_buffers in
-  let@ () = send_debug_msg @@ "On references request on " ^ Path.to_string file in
-  let show_reference Loc_in_file.{ path; range } =
-    Format.asprintf "%a\n%a" Path.pp path Range.pp range
+  let references = get_all_references locations cache in
+  let show_reference fmt Loc_in_file.{ path; range } =
+    Format.fprintf fmt "%a\n%a" Path.pp path Range.pp range
   in
   let@ () =
-    send_debug_msg @@ String.concat ~sep:"\n" @@ List.map ~f:show_reference references
+    send_debug_msg
+    @@ Format.asprintf
+         "On references request on %a\n%a"
+         Path.pp
+         file
+         (Format.pp_print_list ~pp_sep:Format.pp_force_newline show_reference)
+         references
   in
   return
-  @@ List.map
-       ~f:(fun { range; path } -> Location.create ~range ~uri:(DocumentUri.of_path path))
-       references
+  @@ List.map references ~f:(fun { range; path } ->
+         Location.create ~range ~uri:(DocumentUri.of_path path))
