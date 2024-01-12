@@ -52,8 +52,10 @@ and encode_row ({ fields; layout } : Ast_typed.row) : Type.row =
 
 and encode_layout (layout : Layout.t) : Type.layout = L_concrete layout
 
-and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item =
-  match item with
+and encode_sig_item (item : Ast_typed.sig_item) : Context.Signature.item Location.wrap =
+  Location.wrap ~loc:(Location.get_location item)
+  @@
+  match Location.unwrap item with
   | Ast_typed.S_value (v, ty, attr) ->
     Context.Signature.S_value (v, encode ty, encode_sig_item_attribute attr)
   | S_type (v, ty, attr) ->
@@ -105,7 +107,7 @@ let ctx_init_of_sig ?env () =
       | Ss_contract _ -> false
       | Ss_module -> true);
     let f ctx decl =
-      match decl with
+      match Location.unwrap decl with
       | Ast_typed.S_value (v, ty, _attr) -> Context.add_imm ctx v (encode ty)
       | S_type (v, ty, _) -> Context.add_type ctx v (encode ty)
       | S_type_var (v, _) -> Context.add_type_var ctx v Kind.Type

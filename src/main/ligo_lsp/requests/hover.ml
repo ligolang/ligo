@@ -118,21 +118,25 @@ let hover_string
     let rec strip_generated : Ast_core.signature -> Ast_core.signature =
       let open Ligo_prim in
       fun { items } ->
-        let strip_item : Ast_core.sig_item -> Ast_core.sig_item option = function
+        let strip_item : Ast_core.sig_item -> Ast_core.sig_item option =
+         fun sig_item ->
+          let loc = Loc.get_location sig_item in
+          match Loc.unwrap sig_item with
           | S_value (v, _, _) when Value_var.is_generated v -> None
           | (S_type (v, _, _) | S_type_var (v, _)) when Type_var.is_generated v -> None
-          | (S_value _ | S_type _ | S_type_var _) as sig_item -> Some sig_item
+          | S_value _ | S_type _ | S_type_var _ -> Some sig_item
           | (S_module (v, _) | S_module_type (v, _)) when Module_var.is_generated v ->
             None
-          | S_module (v, signature) -> Some (S_module (v, strip_generated signature))
+          | S_module (v, signature) ->
+            Some (Loc.wrap ~loc @@ Ast_core.S_module (v, strip_generated signature))
           | S_module_type (v, signature) ->
-            Some (S_module_type (v, strip_generated signature))
+            Some (Loc.wrap ~loc @@ Ast_core.S_module_type (v, strip_generated signature))
           | S_include ({ wrap_content = S_sig signature; location = _ } as sig_expr) ->
             Some
-              (S_include
-                 { sig_expr with wrap_content = S_sig (strip_generated signature) })
-          | S_include { wrap_content = S_path _; location = _ } as s_include ->
-            Some s_include
+              (Loc.wrap ~loc
+              @@ Ast_core.S_include
+                   { sig_expr with wrap_content = S_sig (strip_generated signature) })
+          | S_include { wrap_content = S_path _; location = _ } -> Some sig_item
         in
         { items = List.filter_map ~f:strip_item items }
     in

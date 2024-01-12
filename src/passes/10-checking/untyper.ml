@@ -205,10 +205,12 @@ and untype_module_expr : O.module_expr -> I.module_expr =
 
 
 and untype_sig_item ?(use_orig_var = false) : O.sig_item -> I.sig_item =
- fun sig_item ->
+ fun { wrap_content = sig_item; location } ->
+  Location.wrap ~loc:location
+  @@
   match sig_item with
   | S_value (var, type_, attr) ->
-    S_value (var, untype_type_expression ~use_orig_var type_, attr)
+    I.S_value (var, untype_type_expression ~use_orig_var type_, attr)
   | S_type (var, type_, { leading_comments }) when Option.is_some @@ type_.orig_var ->
     (* we do not want to print the original variable if that is the first definition or an alias *)
     S_type (var, untype_type_expression type_, { leading_comments })

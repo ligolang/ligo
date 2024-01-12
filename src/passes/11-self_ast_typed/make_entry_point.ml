@@ -35,7 +35,8 @@ let def_type var type_ : Module.item =
          ; type_expr = type_
          ; type_attr = Type_or_module_attr.default_attributes
          }
-  , S_type (var, type_, Sig_type_attr.default_attributes) )
+  , Location.wrap ~loc @@ Ast_typed.S_type (var, type_, Sig_type_attr.default_attributes)
+  )
 
 
 let def_value var (expr : Ast_typed.expression) : Module.item =
@@ -45,7 +46,8 @@ let def_value var (expr : Ast_typed.expression) : Module.item =
          ; expr
          ; attr = Value_attr.default_attributes
          }
-  , S_value (var, expr.type_expression, Sig_item_attr.default_attributes) )
+  , Location.wrap ~loc
+    @@ Ast_typed.S_value (var, expr.type_expression, Sig_item_attr.default_attributes) )
 
 
 let let_value var expr ~in_ =
@@ -157,7 +159,8 @@ let let_main
   =
   let entrypoint_types =
     List.filter_map sig_items ~f:(function
-        | S_value (var, type_, attr) when attr.entry -> Some (var, type_)
+        | { wrap_content = S_value (var, type_, attr); location = _ } when attr.entry ->
+          Some (var, type_)
         | _ -> None)
   in
   let main = e_main ~storage_type ~parameter_type ~raise entrypoint_types in
@@ -167,7 +170,8 @@ let let_main
 let let_views ~storage_type (sig_items : Ast_typed.sig_item list) ~raise ~in_ =
   let view_types =
     List.filter_map sig_items ~f:(function
-        | S_value (var, type_, attr) when attr.view -> Some (var, type_)
+        | { wrap_content = S_value (var, type_, attr); location = _ } when attr.view ->
+          Some (var, type_)
         | _ -> None)
   in
   let views = e_views ~storage_type ~raise view_types in
@@ -182,7 +186,8 @@ let let_initial_dynamic_entrypoints
   =
   let view_types =
     List.filter_map sig_items ~f:(function
-        | S_value (var, type_, attr) when attr.view -> Some (var, type_)
+        | { wrap_content = S_value (var, type_, attr); location = _ } when attr.view ->
+          Some (var, type_)
         | _ -> None)
   in
   let views = e_views ~storage_type ~raise view_types in
@@ -204,7 +209,8 @@ let map_contract ~storage_type ~parameter_type ~raise sig_items module_ =
   let open Module in
   let has_dynamic_entrypoints =
     List.exists sig_items ~f:(function
-        | Ast_typed.S_value (_, _, attr) when attr.dyn_entry -> true
+        | { Location.wrap_content = Ast_typed.S_value (_, _, attr); location = _ }
+          when attr.dyn_entry -> true
         | _ -> false)
   in
   let items =

@@ -863,3 +863,8 @@ let sig_item_to_region = function
 | S_Value   {region; _}
 | S_Type    {region; _}
 | S_Include {region; _} -> region
+
+let signature_expr_to_region = function
+  S_Sig  {region; _}
+| S_Path {region; _} -> region
+| S_Var e -> e#region

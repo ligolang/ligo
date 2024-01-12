@@ -391,7 +391,8 @@ let get_path_signature : signature -> Module_var.t list -> signature option =
     ~f:(fun acc el ->
       let* acc in
       List.find_map acc.sig_items ~f:(function
-          | S_module (m, sig_) when Module_var.equal el m -> Some sig_
+          | { wrap_content = S_module (m, sig_); location = _ } when Module_var.equal el m
+            -> Some sig_
           | _ -> None))
     ~init:(Some prg_sig)
 
@@ -414,7 +415,8 @@ let get_sig_value
   let open Simple_utils.Option in
   let* sig_ = get_path_signature sig_ path in
   List.find_map sig_.sig_items ~f:(function
-      | S_value (v', ty, attr) when Value_var.equal v v' -> Some (ty, attr)
+      | { wrap_content = S_value (v', ty, attr); location = _ } when Value_var.equal v v'
+        -> Some (ty, attr)
       | _ -> None)
 
 
@@ -441,29 +443,35 @@ let get_entrypoint_storage_type : program -> Module_var.t list -> type_expressio
 
 let to_sig_items (module_ : module_) : sig_item list =
   List.fold module_ ~init:[] ~f:(fun ctx decl ->
+      let loc = Location.get_location decl in
       match Location.unwrap decl with
       | D_irrefutable_match { pattern; expr = _; attr = { view; entry; dyn_entry; _ } } ->
         List.fold (Pattern.binders pattern) ~init:ctx ~f:(fun ctx x ->
             ctx
-            @ [ S_value
-                  ( Binder.get_var x
-                  , Binder.get_ascr x
-                  , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
+            @ [ Location.wrap ~loc
+                @@ S_value
+                     ( Binder.get_var x
+                     , Binder.get_ascr x
+                     , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
               ])
       | D_value { binder; expr = _; attr = { view; entry; dyn_entry; _ } } ->
         ctx
-        @ [ S_value
-              ( Binder.get_var binder
-              , Binder.get_ascr binder
-              , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
+        @ [ Location.wrap ~loc
+            @@ S_value
+                 ( Binder.get_var binder
+                 , Binder.get_ascr binder
+                 , { Sig_item_attr.default_attributes with dyn_entry; view; entry } )
           ]
       | D_type { type_binder; type_expr; type_attr = _ } ->
-        ctx @ [ S_type (type_binder, type_expr, Sig_type_attr.default_attributes) ]
+        ctx
+        @ [ Location.wrap ~loc
+            @@ S_type (type_binder, type_expr, Sig_type_attr.default_attributes)
+          ]
       | D_module_include x -> x.signature.sig_items
       | D_module { module_binder; module_; module_attr = _; annotation = () } ->
-        ctx @ [ S_module (module_binder, module_.signature) ]
+        ctx @ [ Location.wrap ~loc @@ S_module (module_binder, module_.signature) ]
       | D_signature { signature_binder; signature; signature_attr } ->
-        ctx @ [ S_module_type (signature_binder, signature) ])
+        ctx @ [ Location.wrap ~loc @@ S_module_type (signature_binder, signature) ])
 
 
 let to_signature (module_ : module_) : signature =

@@ -549,7 +549,7 @@ module_constraint:
 
 signature_decl:
   "module" "type" module_name "=" signature_expr {
-    let region = cover $1#region $4#region
+    let region = cover $1#region (signature_expr_to_region $5)
     and value  = {kwd_module=$1; kwd_type=$2; name=$3; eq=$4;
                   signature_expr=$5}
     in {region; value} }

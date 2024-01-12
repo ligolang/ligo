@@ -1,3 +1,4 @@
+module Location = Simple_utils.Location
 open PPrint
 open Ligo_prim
 open Simple_utils.Function
@@ -178,7 +179,8 @@ let rec decl_to_typescript (decl : Ast_typed.decl) : document =
       else (
         (* $ prefix here is needed for distinguishing JsLIGO's interfaces and namespaces *)
         let name = "$" ^ Module_var.to_name_exn binder in
-        let sig_item : Ast_typed.sig_item -> document = function
+        let sig_item (sig_item : Ast_typed.sig_item) : document =
+          match Location.unwrap sig_item with
           | S_value (var, ascr, Sig_item_attr.{ leading_comments; _ }) ->
             binder_doc true (comments_to_doc leading_comments) @@ Binder.make var ascr
           | S_type (name, ty_expr, { leading_comments }) ->

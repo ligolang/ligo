@@ -105,10 +105,11 @@ let map_contract ~storage_type ~parameter_type decls sig_ =
   | _ ->
     let sig_items =
       let new_sig =
-        S_value
-          ( Magic_vars.initial_dynamic_entrypoints
-          , t_dyn_entries
-          , Sig_item_attr.default_attributes )
+        Location.wrap ~loc:Location.generated
+        @@ S_value
+             ( Magic_vars.initial_dynamic_entrypoints
+             , t_dyn_entries
+             , Sig_item_attr.default_attributes )
       in
       new_sig :: sig_.sig_items
     in

@@ -522,11 +522,8 @@ data LigoVariableDefinitionScope = LigoVariableDefinitionScope
   { -- | `"name"`
     _lvdsName       :: Text
     -- | Binding location
-    -- `"location"`
+    -- `"range"`
   , _lvdsRange      :: LigoRange
-    -- | Definition body location
-    -- `"body_location"`
-  , _lvdsBodyRange  :: LigoRange
     -- | The type itself
     -- `"t"`
   , _lvdsT          :: Value
@@ -565,11 +562,8 @@ data LigoTypeDefinitionScope = LigoTypeDefinitionScope
   { -- | `"name"`
     _ltdsName      :: Text
     -- | Binding location
-    -- `"location"`
+    -- `"range"`
   , _ltdsRange     :: LigoRange
-    -- | Definition body location
-    -- `"body_location"`
-  , _ltdsBodyRange :: LigoRange
   , _ltdsContent   :: Value
   }
   deriving stock (Generic, Show)

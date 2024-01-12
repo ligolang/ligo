@@ -103,7 +103,7 @@ end
 module Signature = struct
   module T = struct
     type t =
-      { items : item list
+      { items : item Location.wrap list
       ; sort : sort
       }
 
@@ -136,8 +136,8 @@ module Signature = struct
           list)
       option
     =
-    let f (tvars, items) (item : item) =
-      match item with
+    let f (tvars, items) (item : item Location.wrap) =
+      match Location.unwrap item with
       | S_value (v, t, a) -> Result.Ok (tvars, `S_value (v, t, a) :: items)
       | S_type (v, t, a) -> Result.Ok (tvars, `S_type (v, t, a) :: items)
       | S_type_var (v, _) -> Result.Ok (v :: tvars, items)
@@ -161,8 +161,8 @@ module Signature = struct
       (module Value_var)
       (fun t var ->
         (find_map t.items ~f:(function
-            | S_value (var', type_, attr) when Value_var.equal var var' ->
-              Some (type_, attr)
+            | { wrap_content = S_value (var', type_, attr); location = _ }
+              when Value_var.equal var var' -> Some (type_, attr)
             | _ -> None) [@landmark "get_value"]))
 
 
@@ -172,7 +172,8 @@ module Signature = struct
       (module Type_var)
       (fun t tvar ->
         (find_map t.items ~f:(function
-            | S_type (tvar', type_, _) when Type_var.equal tvar tvar' -> Some type_
+            | { wrap_content = S_type (tvar', type_, _); location = _ }
+              when Type_var.equal tvar tvar' -> Some type_
             | _ -> None) [@landmark "get_type"]))
 
 
@@ -182,7 +183,8 @@ module Signature = struct
       (module Module_var)
       (fun t mvar ->
         (find_map t.items ~f:(function
-            | S_module (mvar', sig_, _) when Module_var.equal mvar mvar' -> Some sig_
+            | { wrap_content = S_module (mvar', sig_, _); location = _ }
+              when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
@@ -192,7 +194,8 @@ module Signature = struct
       (module Module_var)
       (fun t mvar ->
         (find_map t.items ~f:(function
-            | S_module_type (mvar', sig_, _) when Module_var.equal mvar mvar' -> Some sig_
+            | { wrap_content = S_module_type (mvar', sig_, _); location = _ }
+              when Module_var.equal mvar mvar' -> Some sig_
             | _ -> None) [@landmark "get_module"]))
 
 
@@ -202,7 +205,8 @@ module Signature = struct
         (List.fold_right t.items ~init:Type_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
-             | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:(!next, type_)
+             | { wrap_content = S_type (tvar, type_, _); location = _ } ->
+               Map.set map ~key:tvar ~data:(!next, type_)
              | _ -> map) [@landmark "to_type_mapi"]))
 
 
@@ -212,7 +216,8 @@ module Signature = struct
         (List.fold_right t.items ~init:Module_var.Map.empty ~f:(fun item map ->
              Int.incr next;
              match item with
-             | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:(!next, t)
+             | { wrap_content = S_module (mvar, t, _); location = _ } ->
+               Map.set map ~key:mvar ~data:(!next, t)
              | _ -> map) [@landmark "to_module_map"]))
 
 
@@ -220,7 +225,8 @@ module Signature = struct
     memoize hashable (fun t ->
         (List.fold_right t.items ~init:Type_var.Map.empty ~f:(fun item map ->
              match item with
-             | S_type (tvar, type_, _) -> Map.set map ~key:tvar ~data:type_
+             | { wrap_content = S_type (tvar, type_, _); location = _ } ->
+               Map.set map ~key:tvar ~data:type_
              | _ -> map) [@landmark "to_type_map"]))
 
 
@@ -228,7 +234,8 @@ module Signature = struct
     memoize hashable (fun t ->
         (List.fold_right t.items ~init:Module_var.Map.empty ~f:(fun item map ->
              match item with
-             | S_module (mvar, t, _) -> Map.set map ~key:mvar ~data:t
+             | { wrap_content = S_module (mvar, t, _); location = _ } ->
+               Map.set map ~key:mvar ~data:t
              | _ -> map) [@landmark "to_module_map"]))
 
 
@@ -242,7 +249,7 @@ module Signature = struct
 
 
     let rec pp_item ppf item =
-      match item with
+      match Location.unwrap item with
       | S_value (var, type_, _attr) ->
         Format.fprintf ppf "%a : %a" Value_var.pp var Type.pp type_
       | S_type (tvar, type_, _attr) ->
@@ -380,8 +387,8 @@ let add_module t mvar mctx = t |:: C_module (mvar, mctx)
 let add_module_type t mvar mctx = t |:: C_module_type (mvar, mctx)
 let add_lexists_var t lvar fields = t |:: C_lexists_var (lvar, fields)
 
-let item_of_signature_item (sig_item : Signature.item) : item =
-  match sig_item with
+let item_of_signature_item (sig_item : Signature.item Location.wrap) : item =
+  match Location.unwrap sig_item with
   | S_value (var, type_, attr) -> C_value (var, Immutable, type_, attr)
   | S_type (tvar, type_, _attr) -> C_type (tvar, type_)
   | S_type_var (tvar, _attr) -> C_type_var (tvar, Type)
@@ -389,11 +396,11 @@ let item_of_signature_item (sig_item : Signature.item) : item =
   | S_module_type (mvar, sig_, _attr) -> C_module_type (mvar, sig_)
 
 
-let add_signature_item t (sig_item : Signature.item) =
+let add_signature_item t (sig_item : Signature.item Location.wrap) =
   add t (item_of_signature_item sig_item)
 
 
-let add_signature_items t (sig_items : Signature.item list) =
+let add_signature_items t (sig_items : Signature.item Location.wrap list) =
   List.fold ~f:add_signature_item ~init:t (List.rev sig_items)
 
 
@@ -605,9 +612,13 @@ module Apply = struct
       | None -> t)
 
 
-  let rec sig_item ctx (sig_item : Signature.item) : Signature.item =
-    match sig_item with
-    | S_type (tvar, type', attr) -> S_type (tvar, type_ ctx type', attr)
+  let rec sig_item ctx (sig_item : Signature.item Location.wrap)
+      : Signature.item Location.wrap
+    =
+    Location.wrap ~loc:(Location.get_location sig_item)
+    @@
+    match Location.unwrap sig_item with
+    | S_type (tvar, type', attr) -> Signature.S_type (tvar, type_ ctx type', attr)
     | S_value (var, type', attr) -> S_value (var, type_ ctx type', attr)
     | S_type_var (var, attr) -> S_type_var (var, attr)
     | S_module (mvar, sig', attr) -> S_module (mvar, sig_ ctx sig', attr)
@@ -1194,8 +1205,8 @@ end = struct
       | _ -> false)
 
 
-  and signature_item ~ctx (sig_item : Signature.item) =
-    match sig_item with
+  and signature_item ~ctx (sig_item : Signature.item Location.wrap) =
+    match Location.unwrap sig_item with
     | S_value (_var, type', _) ->
       (match type_ ~ctx type' with
       | Some Type -> true

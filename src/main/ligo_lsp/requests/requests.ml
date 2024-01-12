@@ -1,6 +1,7 @@
 include Diagnostics
 include Completion
 include Document_link
+include Document_symbol
 include Folding_range
 include Formatting
 include Go_to_definition

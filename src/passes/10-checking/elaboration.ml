@@ -110,10 +110,14 @@ let decode_attribute (attr : Context.Attrs.Value.t) : Sig_item_attr.t =
   }
 
 
-let rec decode_sig_item (item : Context.Signature.item) ~raise subst : O.sig_item option =
-  match item with
+let rec decode_sig_item (item : Context.Signature.item Location.wrap) ~raise subst
+    : O.sig_item option
+  =
+  Option.map ~f:(Location.wrap ~loc:(Location.get_location item))
+  @@
+  match Location.unwrap item with
   | S_value (var, type_, attr) ->
-    Some (S_value (var, decode ~raise type_ subst, decode_attribute attr))
+    Some (O.S_value (var, decode ~raise type_ subst, decode_attribute attr))
   | S_type (var, type_, attr) ->
     Some
       (S_type

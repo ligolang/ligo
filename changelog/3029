@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nAdded support for document symbols in the language server.\\n\\n"
+merge_request: '3029'
+title: "[#1650] Implement document symbol"
+type: added
+            
