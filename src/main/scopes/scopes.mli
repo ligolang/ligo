@@ -7,6 +7,7 @@ module Uid = Types.Uid
 
 type def = Types.def
 type scopes = Types.scopes
+type inlined_scopes = Types.inlined_scopes
 
 val defs_and_typed_program
   :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
@@ -17,12 +18,17 @@ val defs_and_typed_program
   -> with_types:bool
   -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
 
+val inlined_scopes
+  :  options:Compiler_options.middle_end
+  -> stdlib:Ast_typed.program * Ast_core.program
+  -> prg:Ast_core.module_
+  -> definitions:def list
+  -> inlined_scopes
+
 val scopes
   :  options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
-  -> module_deps:string Map.Make(String).t
-  -> definitions:def list
   -> scopes
 
 val defs_and_typed_program_and_scopes
@@ -32,4 +38,4 @@ val defs_and_typed_program_and_scopes
   -> prg:Ast_core.module_
   -> module_deps:string Map.Make(String).t
   -> with_types:bool
-  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes
+  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * inlined_scopes

@@ -2,7 +2,7 @@ open Ligo_prim
 open Simple_utils
 module AST = Ast_core
 module LSet = Types.LSet
-module LMap = Map.Make (Location_ordered)
+module LMap = Types.LMap
 open Env
 
 type t = (Types.Uid.t list * Types.Uid.t) LMap.t

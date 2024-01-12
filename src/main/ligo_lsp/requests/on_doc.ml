@@ -133,11 +133,17 @@ let try_to_get_syntax : Path.t -> Syntax_types.t Handler.t =
   | Some s -> return s
 
 
-let set_cache : Syntax_types.t -> Def.t list -> Path.t -> string -> unit Handler.t =
- fun syntax definitions file contents ->
+let set_cache
+    :  Syntax_types.t -> Def.t list -> Path.t -> string -> Ligo_interface.scopes
+    -> unit Handler.t
+  =
+ fun syntax definitions file contents scopes ->
   let@ docs_cache = ask_docs_cache in
   return
-  @@ Docs_cache.set docs_cache ~key:file ~data:{ definitions; syntax; code = contents }
+  @@ Docs_cache.set
+       docs_cache
+       ~key:file
+       ~data:{ definitions; syntax; code = contents; scopes }
 
 
 (** We define here a helper that will:
@@ -162,7 +168,10 @@ let on_doc
       ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
       file
   in
-  let@ () = set_cache syntax definitions file contents in
+  let scopes =
+    Ligo_interface.get_scope ~project_root:!last_project_file ~code:contents file
+  in
+  let@ () = set_cache syntax definitions file contents scopes in
   let diags_by_file =
     let simple_diags = Diagnostics.get_diagnostics file defs_and_diagnostics in
     Diagnostics.partition_simple_diagnostics
@@ -187,4 +196,4 @@ let on_doc_semantic_tokens
  fun ?changes:_ file contents ->
   let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
   let@ syntax = try_to_get_syntax file in
-  set_cache syntax [] file contents
+  set_cache syntax [] file contents []
