@@ -101,7 +101,7 @@ and decl = declaration [@@deriving eq, compare, yojson, hash]
 and module_expr_content = decl Module_expr.t
 and module_expr = module_expr_content Location.wrap [@@deriving eq, compare, yojson, hash]
 
-and sig_item =
+and sig_item_content =
   | S_value of Value_var.t * ty_expr * Sig_item_attr.t
   | S_type of Type_var.t * ty_expr * Sig_type_attr.t
   | S_type_var of Type_var.t * Sig_type_attr.t
@@ -109,6 +109,7 @@ and sig_item =
   | S_module_type of Module_var.t * signature
   | S_include of signature_expr
 
+and sig_item = sig_item_content Location.wrap
 and signature = { items : sig_item list }
 
 and signature_content =

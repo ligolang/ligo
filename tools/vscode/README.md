@@ -28,7 +28,7 @@ Those are being actively worked on.
 - [x] Folding range
 - [ ] Selection range
 - [x] Jump to type definition
-- [ ] Document symbols
+- [x] Document symbols
 - [x] Document links
 - [ ] Workspace symbols
 

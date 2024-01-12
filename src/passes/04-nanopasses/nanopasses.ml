@@ -215,7 +215,8 @@ let decompile_sig_expr ~raise ~syntax =
     | O.S_sig { items } ->
       O.S_sig
         { items =
-            List.filter items ~f:(function
+            List.filter items ~f:(fun { wrap_content; location = _ } ->
+                match wrap_content with
                 | S_module _ | S_module_type _ -> false
                 | S_include _ | S_value _ | S_type _ | S_type_var _ -> true)
         }

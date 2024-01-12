@@ -491,7 +491,7 @@ and declaration : AST.declaration -> references -> env -> references * env =
 
 and sig_item : AST.sig_item -> references -> env -> references * env =
  fun s refs env ->
-  match s with
+  match Location.unwrap s with
   | S_value (var, ty_expr, _attr) ->
     let refs = type_expression ty_expr refs env in
     let env = Env.add_vvar var env in

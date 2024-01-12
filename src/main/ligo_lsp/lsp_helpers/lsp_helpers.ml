@@ -1,12 +1,13 @@
 (* Helpers provided by this lib *)
-module Ligo_interface = Ligo_interface
+module Files = Files
 module Graph = Graph
 module Helpers_file = Helpers_file
 module Helpers_pretty = Helpers_pretty
+module Ligo_interface = Ligo_interface
 module Path = Path
 module Pretty = Pretty
 module Project_root = Project_root
-module Files = Files
+module Rose = Rose
 
 (* Wrappers / extended versions for modules from LIGO and Lsp.Types *)
 module Def = Def
@@ -99,6 +100,14 @@ module DocumentLink = struct
     Lsp.Types.DocumentLink.create ~target:(path_to_target target)
 end
 
+module DocumentSymbol = struct
+  include Lsp.Types.DocumentSymbol
+
+  let pp = Helpers_pretty.pp_with_yojson yojson_of_t
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module FoldingRange = struct
   include Lsp.Types.FoldingRange
 
@@ -137,6 +146,7 @@ module ConfigurationItem = Lsp.Types.ConfigurationItem
 module CreateFile = Lsp.Types.CreateFile
 module DiagnosticSeverity = Lsp.Types.DiagnosticSeverity
 module DocumentLinkOptions = Lsp.Types.DocumentLinkOptions
+module DocumentSymbolOptions = Lsp.Types.DocumentSymbolOptions
 module FileOperationFilter = Lsp.Types.FileOperationFilter
 module FileOperationOptions = Lsp.Types.FileOperationOptions
 module FileOperationPattern = Lsp.Types.FileOperationPattern
@@ -158,6 +168,8 @@ module SemanticTokenTypes = Lsp.Types.SemanticTokenTypes
 module ServerCapabilities = Lsp.Types.ServerCapabilities
 module ShowMessageParams = Lsp.Types.ShowMessageParams
 module ShowMessageRequestParams = Lsp.Types.ShowMessageRequestParams
+module SymbolInformation = Lsp.Types.SymbolInformation
+module SymbolKind = Lsp.Types.SymbolKind
 module TextDocumentContentChangeEvent = Lsp.Types.TextDocumentContentChangeEvent
 module TextEdit = Lsp.Types.TextEdit
 module WorkspaceEdit = Lsp.Types.WorkspaceEdit

@@ -14,7 +14,8 @@ let internal_for_loop_identifier = "internal_for_loop_identifier"
 
 (* creates a dummy declaration (const nternal_for_loop_identifier#123 = unit;)
    used to delimit different parts of for-loop  *)
-let internal_delimiter ~loc () =
+let internal_delimiter () =
+  let loc = Location.generated in
   let loop_id = Ligo_prim.Value_var.fresh ~loc ~name:internal_for_loop_identifier () in
   s_decl
     ~loc
@@ -71,7 +72,7 @@ let while_loop
             let internal_for_loop_identifier#125 = unit ;
          }
       *)
-      let block = Location.wrap ~loc (List.Ne.of_list [ internal_delimiter ~loc () ]) in
+      let block = Location.wrap ~loc (List.Ne.of_list [ internal_delimiter () ]) in
       ({ fp = block } : block)
     | Some (loc, afterthought), None ->
       (* If only afterthought is present, we do
@@ -81,9 +82,7 @@ let while_loop
          }
       *)
       let block =
-        Location.wrap
-          ~loc
-          (List.Ne.of_list ([ internal_delimiter ~loc () ] @ afterthought))
+        Location.wrap ~loc (List.Ne.of_list ([ internal_delimiter () ] @ afterthought))
       in
       ({ fp = block } : block)
     | None, Some (loc, statement) ->
@@ -94,7 +93,7 @@ let while_loop
          }
       *)
       let block =
-        Location.wrap ~loc (List.Ne.of_list (statement @ [ internal_delimiter ~loc () ]))
+        Location.wrap ~loc (List.Ne.of_list (statement @ [ internal_delimiter () ]))
       in
       ({ fp = block } : block)
     | Some (_, afterthought), Some (loc, statement) ->
@@ -108,7 +107,7 @@ let while_loop
       let block =
         Location.wrap
           ~loc
-          (List.Ne.of_list (statement @ [ internal_delimiter ~loc () ] @ afterthought))
+          (List.Ne.of_list (statement @ [ internal_delimiter () ] @ afterthought))
       in
       ({ fp = block } : block)
   in
@@ -134,31 +133,31 @@ let compile ~raise =
     | I_for_stmt { initialiser; condition; afterthought; statement } ->
       (* 'for' loops are desugared into 'while' loops like,
 
-        for (opt(initialiser) ; opt(condition) ; opt(afterthought)) opt(body) 
-          
+        for (opt(initialiser) ; opt(condition) ; opt(afterthought)) opt(body)
+
         ==>
-        
-        { 
+
+        {
           let internal_for_loop_identifier#123 = unit ;
 
           opt(initialiser) ;
-          
+
           let internal_for_loop_identifier#124 = unit ; // acts as a separator
-          
+
           while (condition) // If condition is None we consider it as e_true
-          { 
-            opt(body) ; 
-          
+          {
+            opt(body) ;
+
             let internal_for_loop_identifier#125 = unit ; // acts as a separator
-          
+
             opt(afterthought) ;
-          } 
+          }
         }
       *)
       let statements =
-        [ internal_delimiter ~loc () ]
+        [ internal_delimiter () ]
         @ Option.value_map initialiser ~default:[] ~f:List.return
-        @ [ internal_delimiter ~loc () ]
+        @ [ internal_delimiter () ]
         @ [ while_loop ~raise ~loc ~condition ~afterthought ~statement ]
       in
       i_block ~loc { fp = Location.wrap ~loc (List.Ne.of_list statements) }

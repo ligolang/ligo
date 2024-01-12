@@ -201,7 +201,13 @@ and signature_expression_from_D_signature
   let m_alias, defs_or_alias_opt, env =
     match se.wrap_content with
     (* Signature alias: *)
-    | S_sig { items = [ S_include { wrap_content = S_path path; location = _ } ] } ->
+    | S_sig
+        { items =
+            [ { wrap_content = S_include { wrap_content = S_path path; location = _ }
+              ; location = _
+              }
+            ]
+        } ->
       let m_alias, alias_opt = resolve_module_alias parent_mod path env m_alias in
       m_alias, alias_opt, env
     | S_sig decls ->
@@ -225,17 +231,18 @@ and signature_expression_from_annotation : AST.signature_expr -> t -> env -> t *
   let m_alias, env =
     match se.wrap_content with
     | S_sig { items } ->
-      List.fold items ~init:(m_alias, env) ~f:(fun (m_alias, env) -> function
-        | S_include { wrap_content = S_sig sig'; location = _ } ->
-          let m_alias, env' = signature sig' m_alias env in
-          m_alias, { env' with module_map = env.module_map }
-        | S_include { wrap_content = S_path _path; location = _ } -> m_alias, env
-        | S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _ ->
-          failwith
-          @@ Format.asprintf
-               "signature_expression_from_annotation: corner case reached: %a"
-               AST.PP.signature_expr
-               se)
+      List.fold items ~init:(m_alias, env) ~f:(fun (m_alias, env) sig_item ->
+          match Location.unwrap sig_item with
+          | S_include { wrap_content = S_sig sig'; location = _ } ->
+            let m_alias, env' = signature sig' m_alias env in
+            m_alias, { env' with module_map = env.module_map }
+          | S_include { wrap_content = S_path _path; location = _ } -> m_alias, env
+          | S_value _ | S_type _ | S_type_var _ | S_module _ | S_module_type _ ->
+            failwith
+            @@ Format.asprintf
+                 "signature_expression_from_annotation: corner case reached: %a"
+                 AST.PP.signature_expr
+                 se)
     | S_path path -> m_alias, env
   in
   m_alias, { old_env with module_map = env.module_map }
@@ -251,7 +258,7 @@ and signature : AST.signature -> t -> env -> t * env =
 (** [sig_item] builds the [env] and tries to resolves module aliases *)
 and sig_item : AST.sig_item -> t -> env -> t * env =
  fun si m_alias env ->
-  match si with
+  match Location.unwrap si with
   | S_value _ | S_type _ | S_type_var _ -> m_alias, env
   | S_module (var, sig') | S_module_type (var, sig') ->
     let m_alias, env = signature sig' m_alias env in

@@ -156,21 +156,16 @@ and definition : Format.formatter -> def -> unit =
     | Type t -> tdef ppf t
     | Module m -> mdef ppf m
   in
-  let pp_body_range ppf def =
-    match get_body_range def with
-    | None -> Format.fprintf ppf ""
-    | Some range -> Format.fprintf ppf "%a" Location.pp range
-  in
   let pp_def ppf def =
     Format.fprintf
       ppf
-      "(%s -> %s) @ Range: %a @ Body Range: %a @ Content: %a@ "
+      "(%s -> %s) @ Range: %a @ Decl Range: %a @ Content: %a@ "
       (Uid.to_string @@ get_def_uid def)
       (get_def_name def)
       Location.pp
       (get_range def)
-      pp_body_range
-      def
+      Location.pp
+      (get_decl_range def)
       pp_content
       def
   in
@@ -220,24 +215,21 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
     | None -> `Null
     | Some x -> to_yojson x
   in
-  let body_range_to_yojson = option_to_yojson Location.to_yojson in
   let content_to_yojson = option_to_yojson Ast_core.type_expression_to_yojson in
-  let definition ~name ~range ~body_range ~t ~references =
+  let definition ~name ~range ~t ~references =
     let references = LSet.elements references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range
-      ; "body_range", body_range_to_yojson body_range
       ; "t", type_case_to_yojson t
       ; "references", `List (List.map ~f:Location.to_yojson references)
       ]
   in
-  let type_definition ~name ~range ~body_range ~content ~references =
+  let type_definition ~name ~range ~content ~references =
     let references = LSet.elements references in
     `Assoc
       [ "name", `String name
       ; "range", Location.to_yojson range
-      ; "body_range", body_range_to_yojson body_range
       ; "content", content_to_yojson content
       ; "references", `List (List.map ~f:Location.to_yojson references)
       ]
@@ -246,29 +238,29 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
     | Variable
         { name
         ; range
-        ; body_range
+        ; decl_range = _
         ; t
         ; references
         ; uid
         ; def_type = _
         ; mod_path = _
         ; attributes = _
-        } -> uid, definition ~name ~range ~body_range ~t ~references
+        } -> uid, definition ~name ~range ~t ~references
     | Type
         { name
         ; range
-        ; body_range
+        ; decl_range = _
         ; content
         ; uid
         ; def_type = _
         ; references
         ; mod_path = _
         ; attributes = _
-        } -> uid, type_definition ~name ~range ~body_range ~content ~references
+        } -> uid, type_definition ~name ~range ~content ~references
     | Module
         { name
         ; range
-        ; body_range
+        ; decl_range = _
         ; mod_case
         ; references
         ; uid
@@ -281,10 +273,8 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; mdef_type = _
         ; inlined_name = _
         } ->
-      let def =
-        "definition", definition ~name ~range ~body_range ~references ~t:Unresolved
-      in
-      let body =
+      let def = "definition", definition ~name ~range ~references ~t:Unresolved in
+      let decl =
         match mod_case with
         | Def d -> "members", defs_json d
         | Alias { resolve_mod_name } ->
@@ -293,7 +283,7 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
               (List.map (get_module_path resolve_mod_name) ~f:(fun s ->
                    `String (Uid.to_string s))) )
       in
-      uid, `Assoc [ def; body ]
+      uid, `Assoc [ def; decl ]
   in
   Tuple2.map_fst ~f:Uid.to_string @@ aux def
 

@@ -95,14 +95,15 @@ module Of_Ast_typed = struct
 
   let rec extract_binding_types_from_signature : t -> Ast_typed.signature -> t =
    fun bindings sig_ ->
-    List.fold sig_.sig_items ~init:bindings ~f:(fun bindings -> function
-      | S_value (v, t, _) -> add_bindings bindings [ Type_binding (v, t) ]
-      | S_type _ -> bindings
-      | S_type_var _ -> bindings
-      | S_module (v, sig_) ->
-        let bindings = add_bindings bindings [ Module_binding (v, sig_) ] in
-        extract_binding_types_from_signature bindings sig_
-      | S_module_type (v, sig_) -> add_bindings bindings [ Module_binding (v, sig_) ])
+    List.fold sig_.sig_items ~init:bindings ~f:(fun bindings sig_item ->
+        match Location.unwrap sig_item with
+        | S_value (v, t, _) -> add_bindings bindings [ Type_binding (v, t) ]
+        | S_type _ -> bindings
+        | S_type_var _ -> bindings
+        | S_module (v, sig_) ->
+          let bindings = add_bindings bindings [ Module_binding (v, sig_) ] in
+          extract_binding_types_from_signature bindings sig_
+        | S_module_type (v, sig_) -> add_bindings bindings [ Module_binding (v, sig_) ])
 
 
   let rec extract_module_content : t -> Ast_typed.module_content -> t =
@@ -226,12 +227,19 @@ module Of_Ast_core = struct
   let rec inline_generated_include_sig_item
       : t -> Ast_typed.signature -> Ast_core.sig_item -> Ast_core.sig_item list
     =
-   fun env prg_sig -> function
-    | (S_value _ | S_type _ | S_type_var _) as sig_item -> [ sig_item ]
+   fun env prg_sig sig_item ->
+    let loc = Location.get_location sig_item in
+    match Location.unwrap sig_item with
+    | S_value _ | S_type _ | S_type_var _ -> [ sig_item ]
     | S_module (mvar, sig_) ->
-      [ S_module (mvar, inline_generated_include_signature env prg_sig sig_) ]
+      [ Location.wrap ~loc
+        @@ Ast_core.S_module (mvar, inline_generated_include_signature env prg_sig sig_)
+      ]
     | S_module_type (mvar, sig_) ->
-      [ S_module_type (mvar, inline_generated_include_signature env prg_sig sig_) ]
+      [ Location.wrap ~loc
+        @@ Ast_core.S_module_type
+             (mvar, inline_generated_include_signature env prg_sig sig_)
+      ]
     | S_include { wrap_content = sig_expr; location = _ } ->
       let f = inline_generated_include_sig_item env prg_sig in
       (match sig_expr with
@@ -415,7 +423,8 @@ module Of_Ast_core = struct
 
 
   and sig_item : t -> Ast_core.sig_item -> t =
-   fun bindings -> function
+   fun bindings sig_item ->
+    match Location.unwrap sig_item with
     | S_value (var, ty_expr, _attrs) ->
       let binder = Binder.make var ty_expr in
       add_binder bindings binder
@@ -493,7 +502,9 @@ module Typing_env = struct
   let rec add_stdlib_modules : t -> Ast_typed.signature -> t =
    fun env stdlib_sig ->
     List.fold_left stdlib_sig.sig_items ~init:env ~f:(fun env -> function
-      | S_module (name, sig_) | S_module_type (name, sig_) ->
+      | { wrap_content = S_module (name, sig_) | S_module_type (name, sig_)
+        ; location = _
+        } ->
         let env = add_stdlib_modules env sig_ in
         Of_Ast_typed.add_binding env (Module_binding (name, sig_))
       | _ -> env)

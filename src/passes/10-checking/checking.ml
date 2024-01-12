@@ -244,74 +244,98 @@ module With_default_layout = struct
     let open Let_syntax in
     match sig_.items with
     | [] -> return @@ (Signature.{ items = []; sort = Signature.Ss_module }, ())
-    | Ast_core.S_value (v, ty, attr) :: sig_ ->
-      let%bind ty = evaluate_type ty in
-      let%bind attr = evaluate_signature_item_attribute attr in
-      let%bind { items; sort }, () = evaluate_signature { items = sig_ } in
-      return @@ (Signature.{ sort; items = S_value (v, ty, attr) :: items }, ())
-    | S_type (v, ty, attr) :: sig_ ->
-      let%bind ty = evaluate_type ty in
-      let%bind { sort; items }, () =
-        def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
-      in
-      return
-      @@ ( Signature.
-             { sort
-             ; items =
-                 S_type
-                   (v, ty, { public = true; leading_comments = attr.leading_comments })
-                 :: items
-             }
-         , () )
-    | S_type_var (v, attr) :: sig_ ->
-      let%bind { sort; items }, () =
-        def_type_var [ v, Type ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
-      in
-      return
-      @@ ( Signature.
-             { sort
-             ; items =
-                 S_type_var
-                   ( v
-                   , { Attrs.Type.default with leading_comments = attr.leading_comments }
-                   )
-                 :: items
-             }
-         , () )
-    | S_module (v, items) :: sig_ ->
-      let%bind signature, () = evaluate_signature items in
-      let%bind { sort; items }, () =
-        def_module
-          [ v, signature ]
-          ~on_exit:Drop
-          ~in_:(evaluate_signature { items = sig_ })
-      in
-      return
-      @@ ( Signature.{ sort; items = S_module (v, signature, Attrs.Type.default) :: items }
-         , () )
-    | S_module_type (v, items) :: sig_ ->
-      let%bind signature, () = evaluate_signature items in
-      let%bind { sort; items }, () =
-        def_module_type
-          [ v, signature ]
-          ~on_exit:Drop
-          ~in_:(evaluate_signature { items = sig_ })
-      in
-      return
-      @@ ( Signature.
-             { sort
-             ; items = S_module_type (v, signature, Attrs.Signature.default) :: items
-             }
-         , () )
-    | S_include s_ :: sig_ ->
-      let%bind signature = evaluate_signature_expr s_ in
-      let%bind { sort; items }, () =
-        def_sig_item
-          signature.items
-          ~on_exit:Drop
-          ~in_:(evaluate_signature { items = sig_ })
-      in
-      return @@ (Signature.{ sort; items = signature.items @ items }, ())
+    | { wrap_content = sig_item; location = loc } :: sig_ ->
+      (match sig_item with
+      | Ast_core.S_value (v, ty, attr) ->
+        let%bind ty = evaluate_type ty in
+        let%bind attr = evaluate_signature_item_attribute attr in
+        let%bind { items; sort }, () = evaluate_signature { items = sig_ } in
+        return
+        @@ ( Signature.
+               { sort; items = Location.wrap ~loc (S_value (v, ty, attr)) :: items }
+           , () )
+      | S_type (v, ty, attr) ->
+        let%bind ty = evaluate_type ty in
+        let%bind { sort; items }, () =
+          def_type [ v, ty ] ~on_exit:Drop ~in_:(evaluate_signature { items = sig_ })
+        in
+        return
+        @@ ( Signature.
+               { sort
+               ; items =
+                   Location.wrap
+                     ~loc
+                     (S_type
+                        ( v
+                        , ty
+                        , { public = true; leading_comments = attr.leading_comments } ))
+                   :: items
+               }
+           , () )
+      | S_type_var (v, attr) ->
+        let%bind { sort; items }, () =
+          def_type_var
+            [ v, Type ]
+            ~on_exit:Drop
+            ~in_:(evaluate_signature { items = sig_ })
+        in
+        return
+        @@ ( Signature.
+               { sort
+               ; items =
+                   Location.wrap
+                     ~loc
+                     (S_type_var
+                        ( v
+                        , { Attrs.Type.default with
+                            leading_comments = attr.leading_comments
+                          } ))
+                   :: items
+               }
+           , () )
+      | S_module (v, items) ->
+        let%bind signature, () = evaluate_signature items in
+        let%bind { sort; items }, () =
+          def_module
+            [ v, signature ]
+            ~on_exit:Drop
+            ~in_:(evaluate_signature { items = sig_ })
+        in
+        return
+        @@ ( Signature.
+               { sort
+               ; items =
+                   Location.wrap ~loc (S_module (v, signature, Attrs.Type.default))
+                   :: items
+               }
+           , () )
+      | S_module_type (v, items) ->
+        let%bind signature, () = evaluate_signature items in
+        let%bind { sort; items }, () =
+          def_module_type
+            [ v, signature ]
+            ~on_exit:Drop
+            ~in_:(evaluate_signature { items = sig_ })
+        in
+        return
+        @@ ( Signature.
+               { sort
+               ; items =
+                   Location.wrap
+                     ~loc
+                     (S_module_type (v, signature, Attrs.Signature.default))
+                   :: items
+               }
+           , () )
+      | S_include s_ ->
+        let%bind signature = evaluate_signature_expr s_ in
+        let%bind { sort; items }, () =
+          def_sig_item
+            signature.items
+            ~on_exit:Drop
+            ~in_:(evaluate_signature { items = sig_ })
+        in
+        return @@ (Signature.{ sort; items = signature.items @ items }, ()))
 
 
   and evaluate_signature_expr (sig_expr : Ast_core.signature_expr)
@@ -1512,7 +1536,10 @@ and cast_items
     if Type.equal ty ty'
     then (
       let%bind sig_, entries = cast_items inferred_sig sig_ in
-      return (Signature.S_type (v, ty', Attrs.Module.default) :: sig_, entries))
+      let%bind loc = loc () in
+      return
+        ( Location.wrap ~loc (Signature.S_type (v, ty', Attrs.Module.default)) :: sig_
+        , entries ))
     else raise (signature_not_match_type v ty ty')
   | `S_value (v, ty, attr) :: sig_ ->
     let%bind () =
@@ -1527,7 +1554,8 @@ and cast_items
     in
     let%bind sig_, entries = cast_items inferred_sig sig_ in
     let entries = entries @ if attr.entry then [ v ] else [] in
-    return (Signature.S_value (v, ty, attr) :: sig_, entries)
+    let%bind loc = loc () in
+    return (Location.wrap ~loc (Signature.S_value (v, ty, attr)) :: sig_, entries)
 
 
 and instantiate_var mt ~tvar ~type_ =
@@ -1558,8 +1586,9 @@ and cast_signature (inferred_sig : Signature.t) (annoted_sig : Signature.t)
         (Signature.get_type inferred_sig tvar)
         ~error:(signature_not_found_type tvar)
     in
+    let%bind loc = loc () in
     return
-      ( Signature.S_type (tvar, type_, Attrs.Type.default) :: insts
+      ( Location.wrap ~loc (Signature.S_type (tvar, type_, Attrs.Type.default)) :: insts
       , instantiate_var items ~tvar ~type_ )
   in
   let%bind insts, items =
@@ -1608,12 +1637,12 @@ and infer_module_expr ?is_annoted_entry (mod_expr : I.module_expr)
 
 
 and infer_declaration (decl : I.declaration)
-    : (Signature.item list * O.declaration list E.t, _, _) C.t
+    : (Signature.item Location.wrap list * O.declaration list E.t, _, _) C.t
   =
   let open C in
   let open Let_syntax in
   let%bind syntax = Options.syntax () in
-  let const content (sig_item : Signature.item list) =
+  let const content (sig_item : Signature.item Location.wrap list) =
     let%bind loc = loc () in
     return
       ( sig_item
@@ -1637,8 +1666,8 @@ and infer_declaration (decl : I.declaration)
     *)
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
-    let%bind expr =
-      let%map loc = loc () in
+    let%bind loc = loc () in
+    let expr =
       Option.value_map ascr ~default:expr ~f:(fun ascr -> I.e_ascription ~loc expr ascr)
     in
     let%bind expr_type, expr = infer_expression expr in
@@ -1654,7 +1683,9 @@ and infer_declaration (decl : I.declaration)
         let%bind lhs_type = decode lhs_type
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder lhs_type; expr; attr })
-      [ S_value (var, lhs_type, Context.Attr.of_core_attr attr) ]
+      [ Location.wrap ~loc
+        @@ Signature.S_value (var, lhs_type, Context.Attr.of_core_attr attr)
+      ]
   | D_irrefutable_match { pattern; expr; attr } ->
     let%bind matchee_type, expr = infer_expression expr in
     let attr = infer_value_attr attr in
@@ -1662,6 +1693,7 @@ and infer_declaration (decl : I.declaration)
     let%bind frags, pattern =
       With_frag.run @@ check_pattern ~mut:false pattern matchee_type
     in
+    let%bind loc = loc () in
     const
       E.(
         let%bind expr = expr
@@ -1670,21 +1702,24 @@ and infer_declaration (decl : I.declaration)
         return @@ O.D_irrefutable_match { pattern; expr; attr })
       (List.map
          ~f:(fun (v, _, ty) ->
-           Context.Signature.S_value (v, ty, Context.Attr.of_core_attr attr))
+           Location.wrap ~loc @@ Signature.S_value (v, ty, Context.Attr.of_core_attr attr))
          frags)
   | D_type { type_binder; type_expr; type_attr } ->
     let%bind type_expr = With_default_layout.evaluate_type type_expr in
     let type_expr = { type_expr with orig_var = Some type_binder } in
+    let%bind loc = loc () in
     const
       E.(
         let%bind type_expr = decode type_expr in
         return @@ O.D_type { type_binder; type_expr; type_attr })
-      [ S_type (type_binder, type_expr, Attrs.Type.of_core_attr type_attr) ]
+      [ Location.wrap ~loc
+        @@ Signature.S_type (type_binder, type_expr, Attrs.Type.of_core_attr type_attr)
+      ]
   | D_value { binder; attr; expr } ->
     let var = Binder.get_var binder in
     let ascr = Binder.get_ascr binder in
-    let%bind expr =
-      let%map loc = loc () in
+    let%bind loc = loc () in
+    let expr =
       Option.value_map ascr ~default:expr ~f:(fun ascr -> I.e_ascription ~loc expr ascr)
     in
     let%bind expr_type, expr = infer_expression expr in
@@ -1694,7 +1729,9 @@ and infer_declaration (decl : I.declaration)
         let%bind expr_type = decode expr_type
         and expr = expr in
         return @@ O.D_value { binder = Binder.set_ascr binder expr_type; expr; attr })
-      [ S_value (var, expr_type, Context.Attr.of_core_attr attr) ]
+      [ Location.wrap ~loc
+        @@ Signature.S_value (var, expr_type, Context.Attr.of_core_attr attr)
+      ]
   | D_module { module_binder; module_; module_attr; annotation } ->
     let%bind module_, sig_ =
       match annotation with
@@ -1708,7 +1745,8 @@ and infer_declaration (decl : I.declaration)
         let annoted_entries =
           List.filter_map
             ~f:(function
-              | S_value (v, _, attr) when attr.entry -> Some v
+              | { wrap_content = S_value (v, _, attr); location = _ } when attr.entry ->
+                Some v
               | _ -> None)
             annoted_sig.items
         in
@@ -1722,6 +1760,7 @@ and infer_declaration (decl : I.declaration)
         let final_sig = if filter then annoted_sig else inferred_sig in
         return (module_, remove_non_public final_sig)
     in
+    let%bind loc = loc () in
     const
       E.(
         let%bind module_ = module_ in
@@ -1733,15 +1772,19 @@ and infer_declaration (decl : I.declaration)
              ; module_attr
              ; annotation = ()
              })
-      [ S_module (module_binder, sig_, Attrs.Module.of_core_attr module_attr) ]
+      [ Location.wrap ~loc
+        @@ Signature.S_module (module_binder, sig_, Attrs.Module.of_core_attr module_attr)
+      ]
   | D_signature { signature_binder; signature; signature_attr } ->
     let%bind signature = With_default_layout.evaluate_signature_expr signature in
+    let%bind loc = loc () in
     const
       E.(
         let%bind signature = decode_signature signature in
         return @@ O.D_signature { signature_binder; signature; signature_attr })
-      [ S_module_type
-          (signature_binder, signature, Attrs.Signature.of_core_attr signature_attr)
+      [ Location.wrap ~loc
+        @@ Signature.S_module_type
+             (signature_binder, signature, Attrs.Signature.of_core_attr signature_attr)
       ]
   | D_module_include module_ ->
     let%bind sig_, module_ = infer_module_expr module_ in
@@ -1792,8 +1835,8 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
   let is_annoted_entry = Option.value ~default:(Fn.const true) is_annoted_entry in
   let entrypoints =
     List.filter_map old_sig.items ~f:(function
-        | S_value (var, type_, attr) when attr.entry && is_annoted_entry var ->
-          Some (var, type_)
+        | { wrap_content = S_value (var, type_, attr); location = _ }
+          when attr.entry && is_annoted_entry var -> Some (var, type_)
         | _ -> None)
   in
   match List.Ne.of_list_opt entrypoints with
@@ -1820,7 +1863,8 @@ and infer_signature_sort ?is_annoted_entry (old_sig : Signature.t)
 
 and remove_non_public (sig_ : Signature.t) =
   let items =
-    List.filter sig_.items ~f:(function
+    List.filter sig_.items ~f:(fun { wrap_content; location = _ } ->
+        match wrap_content with
         | Signature.S_value (_, _, attr) -> attr.public || attr.entry || attr.view
         | Signature.S_type (_, _, attr) -> attr.public
         | Signature.S_type_var (_, attr) -> attr.public
