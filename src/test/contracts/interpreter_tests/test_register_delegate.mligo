@@ -11,8 +11,12 @@ let test =
 
   let _ = Test.transfer_to_contract_exn c () 1000000tez in
   let () = Test.register_delegate pkh in
+  (*
+   * since Oxford 2, we do not allow manual staking:
   let () = Test.stake pkh 1000000tez in
   let () = Test.bake_until_n_cycle_end 4n in
+  *)
+  let () = Test.bake_until_n_cycle_end 8n in
 
   let () = Test.log "STARTING BALANCE AND VOTING POWER" in
   let () = Test.log(Test.get_balance_of_address a) in

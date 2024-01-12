@@ -10,7 +10,7 @@
   self_michelson
   mini_c
   environment
-  octez-libs.tezos-hacl)
+  octez-libs.hacl)
  (inline_tests
   (libraries simple-utils-unix simple-utils-unix.http_uri))
  (preprocess

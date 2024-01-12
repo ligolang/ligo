@@ -10,4 +10,6 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 ## Description
 
-Oxford don't bring any feature to Ligo. But Ligo still manage every tezos protocols and you are able to compile onto it.
+Oxford does not bring any particular feature reflected directly on LIGO, but the compiler still manages every Tezos protocol, and contracts for Oxford can be compiled.
+
+With Oxford 2, the function `Test.stake` now results in an error when called, as by default the testing mode uses auto staking.

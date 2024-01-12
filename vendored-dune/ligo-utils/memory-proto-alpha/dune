@@ -2,9 +2,8 @@
  (name memory_proto_alpha)
  (public_name tezos-memory-proto-alpha)
  (libraries
-  octez-libs.tezos-protocol-environment
-  tezos-protocol-018-Proxford
-  tezos-client-018-Proxford
+  tezos-protocol-018-Proxford.protocol
+  octez-protocol-018-Proxford-libs.client
   tezos-protocol-018-Proxford.parameters
-  tezos-protocol-018-Proxford.environment
-  tezos-018-Proxford-test-helpers))
+  tezos-protocol-018-Proxford.protocol.environment
+  octez-protocol-018-Proxford-libs.test-helpers))

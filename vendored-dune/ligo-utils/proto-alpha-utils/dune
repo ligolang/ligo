@@ -2,7 +2,7 @@
  (name proto_alpha_utils)
  (public_name proto-alpha-utils)
  (libraries
-  tezos-protocol-018-Proxford
+  tezos-protocol-018-Proxford.protocol
   tezos-memory-proto-alpha
   data-encoding
   simple-utils

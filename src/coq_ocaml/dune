@@ -5,7 +5,7 @@
   (:standard \ -open Core)
   -w
   "-33-39")
- (libraries core zarith octez-libs.tezos-micheline sexplib)
+ (libraries core zarith octez-libs.micheline sexplib)
  (preprocess
   (pps ppx_sexp_conv)))
 
