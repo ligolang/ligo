@@ -615,10 +615,10 @@ let%expect_test _ =
     3800000000000mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    3800005999999mutez
+    3800005749999mutez
     4000000000000n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    3800011999998mutez
+    3800011499998mutez
     4000000000000n
     Everything at the top-level was executed.
     - test exited with value (). |}]
@@ -628,14 +628,14 @@ let%expect_test _ =
   [%expect
     {|
     "STARTING BALANCE AND VOTING POWER"
-    0mutez
-    1000000000000n
+    950000000000mutez
+    0n
     "BALANCE AND VOTING POWER AFTER ORIGINATE"
-    5999999mutez
-    1000000000000n
+    950005749999mutez
+    0n
     "BALANCE AND VOTING POWER AFTER TRANSFER"
-    11999998mutez
-    1000000000000n
+    950011499998mutez
+    0n
     Everything at the top-level was executed.
     - test exited with value (). |}]
 
@@ -1356,8 +1356,24 @@ let%expect_test _ =
 
     Baker cannot bake. Enough rolls? Enough cycles passed?
     "STARTING BALANCE AND VOTING POWER"
-    100000000000mutez
-    0n |}]
+    95000000000mutez
+    100000000000n |}];
+  run_ligo_bad [ "run"; "test"; bad_test "test_register_delegate_stake.mligo" ];
+  [%expect
+    {|
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36:
+     11 |   let () = Test.register_delegate pkh in
+     12 |   let () = Test.stake pkh 1000000tez in
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+     13 |   ()
+
+    An uncaught error occured:
+    { "id": "proto.018-Proxford.operation.manual_staking_forbidden",
+      "description":
+        "Manual staking operations are forbidden because staking is currently automated.",
+      "data": {} }
+    Trace:
+    File "../../test/contracts/negative//interpreter_tests/test_register_delegate_stake.mligo", line 12, characters 11-36 |}]
 
 let pwd = Caml.Sys.getcwd ()
 let () = Caml.Sys.chdir "../../test/contracts/negative/interpreter_tests/"

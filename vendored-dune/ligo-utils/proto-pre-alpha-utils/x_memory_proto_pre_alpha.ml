@@ -28,6 +28,9 @@ module X = struct
     let error_details = Informative 0 in
     match ta, tb with
     | Item_t (tva, ra), Item_t (tvb, rb) ->
+      let (>>?) v f =
+        let open Result_syntax in
+        let* x = v in f x in
       let x = ty_eq ~error_details tva tvb in
       Gas_monad.run ctxt x
       >>? fun (x, ctxt) ->

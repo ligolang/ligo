@@ -73,8 +73,8 @@
  (libraries
   ast_unified
   syntax_types
-  octez-libs.tezos-crypto
-  octez-libs.tezos-base
+  octez-libs.crypto
+  octez-libs.base
   compiler_options
   main_warnings)
  (inline_tests

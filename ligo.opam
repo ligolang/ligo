@@ -48,8 +48,8 @@ depends: [
   # Analytics
   "asetmap" {= "0.8.1"}
   "prometheus" {>= "1.2"}
-  # work around tezos' failure to constrain
-  "lwt" {= "5.6.1"}
+  # work around tezos' failure to constrain: still the case?
+  "lwt" {= "5.7.0"}
   "lwt_ppx"
   "bisect_ppx" {>= "2.3"}
   "irmin"
