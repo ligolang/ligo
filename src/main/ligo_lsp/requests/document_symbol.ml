@@ -177,7 +177,7 @@ let on_req_document_symbol (path : Path.t)
     : [> `DocumentSymbol of DocumentSymbol.t list ] option Handler.t
   =
   with_cached_doc_pure path ~default:None
-  @@ fun { syntax; code = _; definitions } ->
+  @@ fun { syntax; code = _; definitions; scopes = _ } ->
   let definitions =
     List.filter definitions ~f:(fun def ->
         match Scopes.Types.get_range def with

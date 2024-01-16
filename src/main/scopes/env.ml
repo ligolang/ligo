@@ -60,6 +60,7 @@ open Ligo_prim
 open Simple_utils
 module LSet = Types.LSet
 module LMap = Map.Make (Location_ordered)
+module Uid_map = Types.Uid_map
 
 (******************************************************************************)
 
@@ -70,6 +71,14 @@ module Def = struct
     | Module of Module_var.t
 
   type t = def
+
+  let make_uid = function
+    | Variable v -> Types.Uid.make_var (module Value_var) v
+    | Type v -> Types.Uid.make_var (module Type_var) v
+    | Module v -> Types.Uid.make_var (module Module_var) v
+
+
+  type def_map = Types.def Uid_map.t
 
   let get_location = function
     | Variable v -> Value_var.get_location v
@@ -85,22 +94,18 @@ module Def = struct
     | Module mvar -> Format.fprintf ppf "Module <%a>" Module_var.pp mvar
 
 
-  let to_types_def_opt (prg_defs : Types.def list) : def -> Types.def option =
+  let to_types_def_opt (prg_defs : def_map) : def -> Types.def option =
    fun new_def ->
-    let find_def_opt (def : def) (old_defs : Types.def list) : Types.def option =
-      let f (types_def : Types.def) : bool =
-        Location.equal (Types.get_range types_def) (get_location def)
-      in
-      List.find ~f old_defs
-    in
-    find_def_opt new_def prg_defs
+    let open Option.Let_syntax in
+    let%bind def_uid = make_uid new_def in
+    Uid_map.find_opt def_uid prg_defs
 
 
   (* match find_def_opt new_def prg_defs with
     | Some _ as ok -> ok
     | None -> pp Format.err_formatter new_def; None *)
 
-  let defs_to_types_defs (prg_defs : Types.def list) : def list -> Types.def list =
+  let defs_to_types_defs (prg_defs : def_map) : def list -> Types.def list =
    fun new_defs -> List.filter_map ~f:(to_types_def_opt prg_defs) new_defs
 end
 

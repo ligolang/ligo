@@ -1,5 +1,4 @@
-open Simple_utils
-module LMap : Map.S with type key = Location.t
+module LMap = Types.LMap
 
 type t = Env.def list LMap.t
 
@@ -10,4 +9,4 @@ module Of_Ast : sig
     -> t
 end
 
-val to_old_scopes : Types.def list -> t -> Types.scopes
+val inline_scopes : Env.Def.def_map -> t -> Types.inlined_scopes

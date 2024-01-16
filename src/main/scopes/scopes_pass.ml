@@ -4,7 +4,7 @@ open Ligo_prim
 open Simple_utils
 open Env
 module LSet = Types.LSet
-module LMap = Map.Make (Location_ordered)
+module LMap = Types.LMap
 module Trace = Simple_utils.Trace
 module AST = Ast_core
 
@@ -368,6 +368,6 @@ module Of_Ast = struct
     scopes
 end
 
-let to_old_scopes : Types.def list -> t -> Types.scopes =
- fun prg_defs new_scopes ->
-  new_scopes |> LMap.map (Env.Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list
+let inline_scopes : Env.Def.def_map -> t -> Types.inlined_scopes =
+ fun prg_defs scopes ->
+  scopes |> LMap.map (Env.Def.defs_to_types_defs prg_defs) |> LMap.to_kv_list

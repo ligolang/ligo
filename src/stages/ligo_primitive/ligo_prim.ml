@@ -71,3 +71,5 @@ module Pattern_decl (Pattern : Pattern.S) (Attr : Declaration.Attr) =
 
 (* Misc *)
 module Error = Error
+
+module type Var = Var.VAR

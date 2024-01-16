@@ -1,65 +1,61 @@
 open Common
 open Lsp_helpers
 
-(* Definitions that are available at given position.
-   Returns [None] if position is not contained in any scopes.
-   This can happen only due to bug in scopes, since e.g.stdlib definitions
-   should be in all scopes.
-   We want to show only completions with non-qualified names, e.g.
-   instead of showing [List.map], [List.append], etc we'll just show the [List] module,
-   and if user choose [List], the [Fields.get_fields_completions] will show [map], etc *)
-let get_defs_completions
+(* We should handle the case when the given position goes right after the scope.
+   Suppose we have:
+   {[
+     let x =  |
+   ]}
+   where `|` is a cursor. In scopes the range would be a point right after `=` sign (i.e. [let x =|]).
+   So, here we're getting the closest token position to the given one. *)
+let pick_closest_pos (cst : Dialect_cst.t) (pos : Position.t) : Position.t =
+  let open Cst_shared.Fold in
+  (* Get the closest position *)
+  let folder acc cur_pos =
+    Option.value_map
+      ~default:(Some cur_pos)
+      ~f:(fun acc -> if Position.(acc <= cur_pos) then Some cur_pos else Some acc)
+      acc
+  in
+  (* Accept position if it goes before the given *)
+  let fold_control reg =
+    let open Position in
+    let cur_pos = of_pos reg#start in
+    if cur_pos <= pos then Continue cur_pos else Stop
+  in
+  Option.value ~default:pos
+  @@
+  match cst with
+  | CameLIGO cst ->
+    let open Cst_cameligo.Fold in
+    let collect (Some_node (node, sing)) =
+      match sing with
+      | S_reg _ -> fold_control node.region
+      | S_wrap _ -> fold_control node#region
+      | _ -> Skip
+    in
+    fold_cst None folder collect cst
+  | JsLIGO cst ->
+    let open Cst_jsligo.Fold in
+    let collect (Some_node (node, sing)) =
+      match sing with
+      | S_reg _ -> fold_control node.region
+      | S_wrap _ -> fold_control node#region
+      | _ -> Skip
+    in
+    fold_cst None folder collect cst
+
+
+let pick_scope
+    ~(definitions : Def.t list)
     (cst : Dialect_cst.t)
     (pos : Position.t)
     (scopes : Ligo_interface.scopes)
     (current_file : Path.t)
     : Def.t list option
   =
-  (* We should handle the case when the given position goes right after the scope.
-     Suppose we have:
-     {[
-      let x =  |
-     ]}
-     where `|` is a cursor. In scopes the range would be a point right after `=` sign (i.e. [let x =|]).
-     So, here we're getting the closest token position to the given one. *)
-  let pos =
-    let open Cst_shared.Fold in
-    (* Get the closest position *)
-    let folder acc cur_pos =
-      Option.value_map
-        ~default:(Some cur_pos)
-        ~f:(fun acc -> if Position.(acc <= cur_pos) then Some cur_pos else Some acc)
-        acc
-    in
-    (* Accept position if it goes before the given *)
-    let fold_control reg =
-      let open Position in
-      let cur_pos = of_pos reg#start in
-      if cur_pos <= pos then Continue cur_pos else Stop
-    in
-    Option.value ~default:pos
-    @@
-    match cst with
-    | CameLIGO cst ->
-      let open Cst_cameligo.Fold in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_reg _ -> fold_control node.region
-        | S_wrap _ -> fold_control node#region
-        | _ -> Skip
-      in
-      fold_cst None folder collect cst
-    | JsLIGO cst ->
-      let open Cst_jsligo.Fold in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_reg _ -> fold_control node.region
-        | S_wrap _ -> fold_control node#region
-        | _ -> Skip
-      in
-      fold_cst None folder collect cst
-  in
-  let scope_defs =
+  let pos = pick_closest_pos cst pos in
+  let scope =
     List.find_map scopes ~f:(fun (loc, defs) ->
         let scope_file =
           Def.Def_location.of_loc loc
@@ -68,12 +64,37 @@ let get_defs_completions
           | StdLib _ | Virtual _ -> None
         in
         match scope_file with
-        | Some path when Path.equal path current_file ->
+        | Some scope_file when Path.equal scope_file current_file ->
           (match Range.of_loc loc with
           | Some loc when Range.contains_position pos loc -> Some defs
           | _ -> None)
         | _ -> None)
   in
+  Option.map
+    scope
+    ~f:
+      (let open Scopes in
+      let uid_to_def = Types.Uid_map.of_defs_list definitions in
+      Types.fix_shadowing_in_defs
+      <@ List.filter_map ~f:(fun uid -> Types.Uid_map.find_opt uid uid_to_def))
+
+
+(* Definitions that are available at given position.
+   Returns [None] if position is not contained in any scopes.
+   This can happen only due to bug in scopes, since e.g.stdlib definitions
+   should be in all scopes.
+   We want to show only completions with non-qualified names, e.g.
+   instead of showing [List.map], [List.append], etc we'll just show the [List] module,
+   and if user choose [List], the [Fields.get_fields_completions] will show [map], etc *)
+let get_defs_completions
+    ~(definitions : Def.t list)
+    (cst : Dialect_cst.t)
+    (pos : Position.t)
+    (scopes : Ligo_interface.scopes)
+    (current_file : Path.t)
+    : Def.t list option
+  =
+  let scope_defs = pick_scope ~definitions cst pos scopes current_file in
   (* Is cursor located in some module? *)
   let module_path =
     let open Cst_shared.Fold in
@@ -123,6 +144,6 @@ let get_scope_completions
   let with_possible_duplicates =
     defs_to_completion_items Scope path syntax
     @@ Option.value ~default:definitions
-    @@ get_defs_completions cst pos scopes path
+    @@ get_defs_completions ~definitions cst pos scopes path
   in
   Common.nub_sort_items with_possible_duplicates
