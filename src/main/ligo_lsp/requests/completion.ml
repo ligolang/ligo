@@ -27,7 +27,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
          | `Only_keywords_and_fields -> "Only_keywords_and_fields")
   in
   with_cached_doc ~default:None path
-  @@ fun { definitions; code; syntax } ->
+  @@ fun { definitions; code; syntax; scopes } ->
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
   let project_root = Project_root.get_project_root path in
   let@ mod_res = ask_mod_res in
@@ -68,24 +68,6 @@ let on_req_completion (pos : Position.t) (path : Path.t)
                 definitions)
         @ completions_without_cst
       | `With_scopes ->
-        let time_scopes_start = Time_ns.now () in
-        let scopes = Ligo_interface.get_scopes ~project_root ~definitions ~code path in
-        let time_scopes_end = Time_ns.now () in
-        let@ () =
-          let open Time_ns.Span in
-          (* We'll show a warning that suggest user to change the completion implementation
-             if calculating scopes took too long *)
-          let max_time_no_warning = 5 (* seconds *) in
-          when_
-            (Time_ns.diff time_scopes_end time_scopes_start
-            > create ~sec:max_time_no_warning ())
-          @@ send_message ~type_:Warning
-          @@ sprintf
-               "Getting in-scope identifiers for completions took more than %n seconds. \
-                You may change 'Ligo Language Server: Completion Implementation' in \
-                workspace settings to prevent LIGO LSP from being stuck."
-               max_time_no_warning
-        in
         return
         @@ Completion_lib.Scope.get_scope_completions input scopes
         @ completions_without_cst)

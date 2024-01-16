@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Improve performance for scope completions. Now they're working significantly faster.\\n\\n\\n"
+merge_request: '3033'
+title: "[#1985] Optimize scope completions"
+type: performance
+            

@@ -21,9 +21,9 @@ let signature_case : signature_case Fmt.t =
   resolve_case Ast_core.PP.signature Ast_typed.PP.signature
 
 
-let scopes : Format.formatter -> scopes -> unit =
+let scopes : Format.formatter -> inlined_scopes -> unit =
  fun f s ->
-  let pp_scope f (scope : scope) =
+  let pp_scope f (scope : inlined_scope) =
     let loc, defs = scope in
     let defs =
       List.sort defs ~compare:(fun d1 d2 ->
@@ -314,7 +314,7 @@ and defs_json (defs : def list) : Yojson.Safe.t =
   `Assoc (get_defs defs)
 
 
-let scopes_json (scopes : scopes) : Yojson.Safe.t =
+let scopes_json (scopes : inlined_scopes) : Yojson.Safe.t =
   `List
     (List.map
        ~f:(fun scope ->

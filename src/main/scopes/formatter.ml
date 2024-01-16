@@ -15,7 +15,7 @@ let scope_ppformat ~display_format ~no_colour f (d, s) =
 type get_scope_output =
   { errors : Main_errors.all list
   ; warns : Main_warnings.all list
-  ; info : (Types.def list * Types.scopes) option
+  ; info : (Types.def list * Types.inlined_scopes) option
   }
 
 let error_format = Main_errors.Formatter.error_format

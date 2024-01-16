@@ -17,11 +17,13 @@ let get_mod_binder_name : Module_var.t -> string =
 module Location = Simple_utils.Location
 module List = Simple_utils.List
 module LSet = Caml.Set.Make (Simple_utils.Location_ordered)
+module LMap = Simple_utils.Map.Make (Simple_utils.Location_ordered)
 
 module Uid : sig
   type t [@@deriving compare, sexp]
 
   val make : string -> Location.t -> t
+  val make_var : (module Var with type t = 'v) -> 'v -> t option
   val ( = ) : t -> t -> bool
   val equal : t -> t -> bool
   val to_name : t -> string
@@ -34,6 +36,18 @@ end = struct
   type t = Uid of string * Location.t [@@deriving compare, sexp]
 
   let make name loc = Uid (name, loc)
+
+  let make_var (type v) : (module Var with type t = v) -> v -> t option =
+   fun (module V) v ->
+    if V.is_generated v
+    then None
+    else
+      let open V in
+      let name = to_name_exn v in
+      let loc = get_location v in
+      Option.some @@ make name loc
+
+
   let ( = ) (Uid (n1, l1)) (Uid (n2, l2)) = String.equal n1 n2 && Location.equal l1 l2
   let equal = ( = )
 
@@ -239,8 +253,15 @@ let mvar_to_id (m : Module_var.t) : Uid.t =
   Uid.make name loc
 
 
-type scope = Location.t * def list
+type 'scope scope_case = Location.t * 'scope list
+
+(* Used in LSP *)
+type scope = Uid.t scope_case
 type scopes = scope list
+
+(* Used in debugger *)
+type inlined_scope = def scope_case
+type inlined_scopes = inlined_scope list
 
 let rec flatten_defs : def list -> def list = function
   | [] -> []
@@ -261,11 +282,19 @@ let rec shadow_defs : def list -> def list = function
     def :: shadow_defs (List.filter defs ~f:shadow_def)
 
 
-let fix_shadowing_in_scope : scope -> scope =
- fun (loc, defs) ->
-  let defs = flatten_defs defs in
-  let defs = shadow_defs defs in
-  loc, defs
+let fix_shadowing_in_defs : def list -> def list =
+  Simple_utils.Function.(shadow_defs <@ flatten_defs)
 
 
-let fix_shadowing_in_scopes : scopes -> scopes = List.map ~f:fix_shadowing_in_scope
+let fix_shadowing_in_scopes : inlined_scopes -> inlined_scopes =
+  List.map ~f:(Tuple2.map_snd ~f:fix_shadowing_in_defs)
+
+
+module Uid_map = struct
+  include Simple_utils.Map.Make (Uid)
+
+  let of_defs_list (definitions : def list) : def t =
+    definitions
+    |> flatten_defs
+    |> List.fold_left ~init:empty ~f:(fun acc elt -> add (get_def_uid elt) elt acc)
+end

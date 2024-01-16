@@ -86,7 +86,9 @@ let get_scope_raw
     (source_file : BuildSystem.Source_input.code_input)
     ~defs_only
     ~raise
-    : def list * (Ast_typed.signature * Ast_typed.declaration list) option * scopes
+    : def list
+      * (Ast_typed.signature * Ast_typed.declaration list) option
+      * inlined_scopes
   =
   let with_types = raw_options.with_types in
   with_code_input
@@ -135,14 +137,17 @@ let get_scope_cli_result
 let get_scopes
     (raw_options : Raw_options.t)
     (code_input : BuildSystem.Source_input.code_input)
-    (definitions : Def.t list)
     : scopes
   =
   Trace.try_with
     ~fast_fail:false
     (fun ~raise ~catch:_ ->
-      with_code_input ~raw_options ~raise ~code_input ~f:(fun ~options ~syntax:_ ->
-          Scopes.scopes ~definitions ~options))
+      with_code_input
+        ~raw_options
+        ~raise
+        ~code_input
+        ~f:(fun ~options ~syntax:_ ~stdlib ~prg ~module_deps:_ ->
+          Scopes.scopes ~options ~stdlib ~prg))
     (fun ~catch:_ _ -> [])
 
 
