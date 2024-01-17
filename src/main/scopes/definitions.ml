@@ -305,7 +305,10 @@ module Of_Ast = struct
       in
       (* fun_name is already added by the parent E_let_in so don't need to add it here *)
       defs_of_lambda ~decl_range lambda acc
-    | E_type_abstraction { type_binder; result } -> self result acc
+    | E_type_abstraction { type_binder; result } ->
+      let decl_range = TVar.get_location type_binder in
+      defs_of_tvar ~decl_range ~attributes:None type_binder Parameter mod_path
+      @@ self result acc
     | E_let_in { let_binder; rhs; let_result; attributes }
     | E_let_mut_in { let_binder; rhs; let_result; attributes } ->
       let decl_range = uncover_let_result let_result in

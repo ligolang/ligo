@@ -266,7 +266,9 @@ let rec expression : AST.expression -> references -> env -> references =
     let refs = type_expression (Param.get_ascr binder) refs env in
     let env = env |> Env.add_vvar fun_name |> Env.add_vvar (Param.get_var binder) in
     expression result refs env
-  | E_type_abstraction { type_binder = _; result } -> expression result refs env
+  | E_type_abstraction { type_binder; result } ->
+    let env = Env.add_tvar type_binder env in
+    expression result refs env
   | E_let_mut_in { let_binder; rhs; let_result; attributes = _ }
   | E_let_in { let_binder; rhs; let_result; attributes = _ } ->
     let binders = Linear_pattern.binders let_binder in
