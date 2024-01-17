@@ -66,14 +66,6 @@ let test_cases =
           "contracts/lsp/references_michelson_inj.mligo"
           [ interval 0 4 5; interval 4 8 9; interval 4 11 12 ]
     }
-  ; { test_name = "references in a file with michelson injections"
-    ; test_file = "contracts/lsp/references_michelson_inj.mligo"
-    ; reference = Position.create ~line:4 ~character:8
-    ; references =
-        intervals
-          "contracts/lsp/references_michelson_inj.mligo"
-          [ interval 0 4 5; interval 4 8 9; interval 4 11 12 ]
-    }
   ; { test_name = "references of term with sig items and top level ref"
     ; test_file = "contracts/lsp/go_to_implementations/ref_from_top_level.mligo"
     ; reference = Position.create ~line:9 ~character:6
