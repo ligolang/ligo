@@ -261,6 +261,17 @@ class lsp_server (capability_mode : capability_mode) =
             ~partialResultToken:None
             ()
         in
+        let notif_run_handler action =
+          (* Cannot eta-reduce, mutable `config` must be taken upon `action` run *)
+          run_handler
+            { notify_back = Normal new_notify_back
+            ; config
+            ; docs_cache = get_scope_buffers
+            ; last_project_file
+            ; mod_res
+            }
+            action
+        in
         let ( let* ) = IO.( let* ) in
         function
         | Client_notification.Initialized ->
@@ -331,6 +342,9 @@ class lsp_server (capability_mode : capability_mode) =
             (match configuration with
             | None | Some false -> IO.return ()
             | Some true ->
+              (* A soft restriction on number of files for which we can
+                 simultaneously update diagnostics - prevents bursts of workload *)
+              let max_files_for_diagnostics_update_at_once = 20 in
               let* _req_id =
                 new_notify_back#send_request
                   (Server_request.WorkspaceConfiguration
@@ -356,8 +370,16 @@ class lsp_server (capability_mode : capability_mode) =
                                     Format.fprintf ppf "%s" (Yojson.Safe.to_string json)))
                                configs)
                       in
-                      IO.return
-                        (List.iter ~f:self#decode_apply_ligo_language_server configs))
+                      let () =
+                        List.iter ~f:self#decode_apply_ligo_language_server configs
+                      in
+                      (* Update diagnostics *)
+                      Lwt_list.iter_p
+                        (fun (path, Ligo_interface.{ code; _ }) ->
+                          notif_run_handler @@ on_doc path code)
+                        (List.take
+                           (Docs_cache.to_alist get_scope_buffers)
+                           max_files_for_diagnostics_update_at_once))
               in
               IO.return ()))
         | Client_notification.DidChangeWatchedFiles { changes } ->
