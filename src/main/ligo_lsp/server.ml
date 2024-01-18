@@ -340,19 +340,21 @@ class lsp_server (capability_mode : capability_mode) =
                   (function
                     | Error err ->
                       new_notify_back#send_log_msg ~type_:MessageType.Error err.message
-                    | Ok [ config ] ->
-                      IO.return (self#decode_apply_ligo_language_server config)
                     | Ok configs ->
                       let* () =
-                        new_notify_back#send_log_msg
-                          ~type_:MessageType.Warning
-                          (Format.asprintf
-                             "Expected 1 workspace configuration, but got %d. Attempting \
-                              to decode in order. Configurations received: %a"
-                             (List.length configs)
-                             (Fmt.Dump.list (fun ppf json ->
-                                  Format.fprintf ppf "%s" (Yojson.Safe.to_string json)))
-                             configs)
+                        if List.length configs = 1
+                        then IO.return ()
+                        else
+                          new_notify_back#send_log_msg
+                            ~type_:MessageType.Warning
+                            (Format.asprintf
+                               "Expected 1 workspace configuration, but got %d. \
+                                Attempting to decode in order. Configurations received: \
+                                %a"
+                               (List.length configs)
+                               (Fmt.Dump.list (fun ppf json ->
+                                    Format.fprintf ppf "%s" (Yojson.Safe.to_string json)))
+                               configs)
                       in
                       IO.return
                         (List.iter ~f:self#decode_apply_ligo_language_server configs))
