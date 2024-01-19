@@ -138,6 +138,37 @@ module MarkedString = struct
   let testable = Alcotest.testable pp eq
 end
 
+module DocumentHighlightKind = struct
+  include Lsp.Types.DocumentHighlightKind
+
+  let pp fmt k =
+    Format.fprintf fmt "%s"
+    @@
+    match k with
+    | Text -> "Text"
+    | Read -> "Read"
+    | Write -> "Write"
+
+
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
+module DocumentHighlight = struct
+  include Lsp.Types.DocumentHighlight
+
+  let pp fmt (hi : t) =
+    let kind_opt_pp fmt = function
+      | None -> Format.fprintf fmt "%s" "<no kind>"
+      | Some k -> DocumentHighlightKind.pp fmt k
+    in
+    Format.fprintf fmt "%a [%a]" Range.pp hi.range kind_opt_pp hi.kind
+
+
+  let eq = Caml.( = )
+  let testable = Alcotest.testable pp eq
+end
+
 module ApplyWorkspaceEditParams = Lsp.Types.ApplyWorkspaceEditParams
 module ClientCapabilities = Lsp.Types.ClientCapabilities
 module CompletionItemKind = Lsp.Types.CompletionItemKind

@@ -10,6 +10,7 @@ include On_doc
 include Prepare_rename
 include Range_formatting
 include References
+include Highlight
 include Rename
 include Semantic_highlight
 include Type_definition

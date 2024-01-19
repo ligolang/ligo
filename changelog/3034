@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nAdded highlighting of all encounters of the variable/type/module under the cursor. \\n\\n"
+merge_request: '3034'
+title: "[#1647] Implement document highlight request"
+type: added
+            

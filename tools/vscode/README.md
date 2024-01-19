@@ -31,6 +31,7 @@ Those are being actively worked on.
 - [x] Document symbols
 - [x] Document links
 - [ ] Workspace symbols
+- [x] Term occurrences highlight (your color theme should be aware of LSPs, see [one example](https://github.com/folke/tokyonight.nvim) of such theme)
 
 ### Diagnostics
 
@@ -115,6 +116,7 @@ The supported features that may be disabled are listed below:
 - `textDocument/codeAction`
 - `textDocument/semanticTokens/full`
 - `textDocument/semanticTokens/range`
+- `textDocument/documentHighlight`
 
 **Note**: Please restart the LIGO Language Server after changing this configuration.
 
