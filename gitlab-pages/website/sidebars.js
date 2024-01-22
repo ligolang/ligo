@@ -239,6 +239,23 @@ const sidebars = {
     ],
   },
   "API": {
+    "Language": [
+      "reference/toplevel",
+      "reference/big-map-reference",
+      "reference/bitwise-reference",
+      "reference/bytes-reference",
+      "reference/crypto-reference",
+      "reference/dynamic-entrypoints-reference",
+      "reference/list-reference",
+      "reference/map-reference",
+      "reference/set-reference",
+      "reference/string-reference",
+      "reference/option-reference",
+      "reference/current-reference",
+      "reference/test",
+      "reference/proxy-ticket-reference",
+      "contract/tickets"
+    ],
     "CLI": [
       {
         "type": "doc",
@@ -342,23 +359,6 @@ const sidebars = {
         "label": "ligo repl",
         "id": "manpages/repl"
       }
-    ],
-    "Language": [
-      "reference/toplevel",
-      "reference/big-map-reference",
-      "reference/bitwise-reference",
-      "reference/bytes-reference",
-      "reference/crypto-reference",
-      "reference/dynamic-entrypoints-reference",
-      "reference/list-reference",
-      "reference/map-reference",
-      "reference/set-reference",
-      "reference/string-reference",
-      "reference/option-reference",
-      "reference/current-reference",
-      "reference/test",
-      "reference/proxy-ticket-reference",
-      "contract/tickets"
     ],
     "Changelog": [
       "intro/changelog",
