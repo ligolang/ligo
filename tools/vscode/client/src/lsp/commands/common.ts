@@ -8,22 +8,13 @@ import { extensions } from '../common'
 
 import * as ex from '../exceptions'
 import { Maybe } from '../../common/base';
+import { BinaryInfo } from '../../common/config';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
 /* eslint-disable no-bitwise */
 
 let lastContractPath: string;
-
-type BinaryInfo = {
-  name: string,
-  path: string,
-}
-
-export const ligoBinaryInfo = {
-  name: 'ligo',
-  path: 'ligoLanguageServer.ligoBinaryPath'
-}
 
 export function changeLastContractPath(newPath: string) {
   lastContractPath = newPath

@@ -10,12 +10,13 @@ import {
   LanguageClient,
 } from 'vscode-languageclient/node'
 import { extensionName } from './common'
-import { getBinaryPath, ligoBinaryInfo } from './commands/common'
+import { getBinaryPath } from './commands/common'
 import { BinaryNotFoundException } from './exceptions'
 
 import detectInstaller from 'detect-installer'
 import { Readable } from 'stream'
 import { Maybe } from '../common/base'
+import { ligoBinaryInfo } from '../common/config'
 
 type TagName = 'Static Linux binary' | 'Ligo Windows installer'
 
@@ -53,7 +54,7 @@ async function withClientRestart<T>(client: LanguageClient, action: () => T): Pr
 
 async function updateLigoPath(config: vscode.WorkspaceConfiguration, path: string): Promise<void> {
   return await config.update(
-    'ligoLanguageServer.ligoBinaryPath',
+    ligoBinaryInfo.path,
     path,
     vscode.ConfigurationTarget.Global,
     true,

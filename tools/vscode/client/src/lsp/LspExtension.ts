@@ -18,11 +18,12 @@ import { BinaryNotFoundException } from './exceptions'
 import { LigoExtension } from "../LigoExtension";
 
 import { extensions } from './common'
-import { changeLastContractPath, getBinaryPath, ligoBinaryInfo } from './commands/common';
+import { changeLastContractPath, getBinaryPath } from './commands/common';
 import { LigoContext } from '../common/LigoContext';
 import { LigoProtocolClient } from '../common/LigoProtocolClient';
 
 import LigoServer from '../debugger/LigoServer';
+import { ligoBinaryInfo } from '../common/config';
 
 export class LspExtension extends LigoExtension {
   private languageServerClient: LanguageClient;

@@ -1,8 +1,6 @@
-import * as vscode from 'vscode';
-
 import { createRememberingInputBox, createQuickPickBox } from '../ui'
 import {
-  CommandRequiredArguments, executeCommand, getBinaryPath, getLastContractPath, ligoBinaryInfo
+  CommandRequiredArguments, executeCommand, getBinaryPath, getLastContractPath,
 } from './common';
 import * as ex from '../exceptions'
 import { InputBoxType, InputValueLang, isDefined, Maybe } from '../../common/base';
@@ -12,6 +10,7 @@ import { LigoProtocolClient } from '../../common/LigoProtocolClient';
 import { getModuleName, getParameterOrStorage } from '../../debugger/ui';
 import { ContractMetadata } from '../../debugger/base';
 import { ValidateValueCategory } from '../../debugger/messages';
+import { ligoBinaryInfo } from '../../common/config';
 
 /* eslint-disable no-bitwise */
 
