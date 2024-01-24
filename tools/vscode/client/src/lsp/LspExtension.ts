@@ -83,10 +83,9 @@ export class LspExtension extends LigoExtension {
 
 
   public activate(context: LigoContext, _server: LigoServer, protocolClient: LigoProtocolClient): void {
-    const config = vscode.workspace.getConfiguration()
     let ligoPath: string
     try {
-      ligoPath = getBinaryPath(ligoBinaryInfo, config)
+      ligoPath = getBinaryPath(ligoBinaryInfo)
     } catch (err) {
       if (err instanceof BinaryNotFoundException) {
         ligoPath = undefined

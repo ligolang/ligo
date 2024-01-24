@@ -42,7 +42,7 @@ const withProjectRootFlag = (args: string[]) => (projectRootDirectory: Maybe<str
 }
 
 async function prepareState(client: LigoProtocolClient): Promise<[string, string][]> {
-  const binaryPath = getBinaryPath(ligoBinaryInfo, vscode.workspace.getConfiguration())
+  const binaryPath = getBinaryPath(ligoBinaryInfo)
   await client.sendMsg('initializeLanguageServerState', { binaryPath });
   return (await client.sendMsg('setProgramPath', { program: getLastContractPath().path })).body.moduleNames.reverse();
 }

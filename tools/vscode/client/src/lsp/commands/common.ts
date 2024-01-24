@@ -34,7 +34,8 @@ export function findBinaryPath(binaryName: string): string {
   return execFileSync(find, [binaryName]).toString().trim().split('\n')[0]
 }
 
-export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfiguration) {
+export function getBinaryPath(info: BinaryInfo) {
+  const config = vscode.workspace.getConfiguration()
   let binaryPath = config.get<string>(info.path)
   if (binaryPath) {
     return binaryPath
@@ -109,7 +110,7 @@ export function executeCommand(
   showOutput = true,
 ): string {
   const contractInfo = getLastContractPath()
-  const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
+  const ligoPath = getBinaryPath(binary);
   const ligoJsonPath = findPackage(dirname(contractInfo.path))
 
   if (commandArgs & CommandRequiredArguments.Path) {
