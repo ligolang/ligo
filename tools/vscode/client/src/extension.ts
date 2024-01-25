@@ -14,6 +14,7 @@ import { LigoProtocolClient } from './common/LigoProtocolClient';
 import { DebuggerExtension } from './debugger/DebuggerExtension';
 import LigoServer from './debugger/LigoServer';
 import { getCurrentWorkspacePath } from './debugger/base';
+import { trackLigoPathChanges } from './common/config';
 
 const lspExtension = new LspExtension();
 const debuggerExtension = new DebuggerExtension();
@@ -24,6 +25,10 @@ export async function activate(context: vscode.ExtensionContext) {
   const adapterPath = join(context.extensionPath, 'bin', `ligo-debugger${platform === 'win32' ? '.exe' : ''}`);
   const server = new LigoServer(getCurrentWorkspacePath()?.fsPath, adapterPath, []);
   const client = new LigoProtocolClient(server.address());
+
+  context.subscriptions.push(
+    trackLigoPathChanges()
+  )
 
   lspExtension.activate(ligoContext, server, client);
   debuggerExtension.activate(ligoContext, server, client);
