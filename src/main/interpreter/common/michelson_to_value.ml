@@ -190,6 +190,8 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
     V_Ct (C_bls12_381_fr (Bls12_381_Fr.of_z n))
   | Prim (_, "signature", [], _), String (_, n) ->
     V_Ct (C_signature (signature_of_string ~raise n))
+  | Prim (_, "chest", [], _), Bytes (_, b) -> V_Ct (C_chest b)
+  | Prim (_, "chest_key", [], _), Bytes (_, b) -> V_Ct (C_chest_key b)
   | Prim (_, "timestamp", [], _), Int (_, n) -> V_Ct (C_timestamp n)
   | Prim (_, "timestamp", [], _), String (_, n) ->
     let open Tezos_base.TzPervasives.Time.Protocol in
@@ -272,9 +274,6 @@ let rec decompile_to_untyped_value ~raise ~bigmaps
       List.map ~f:aux lst'
     in
     V_Set lst''
-  (* | Prim (_, "operation", [], _), Bytes (_, op) -> (
-   *     D_operation op
-   *   ) *)
   | Prim (_, "lambda", [ _; _ ], _), (Seq (_, _) as c) ->
     let open! Ast_aggregated in
     let arg_binder = Value_var.fresh ~loc () in
@@ -449,7 +448,9 @@ let rec decompile_value
         | External _
         | Views
         | Dynamic_entrypoint
-        | Tx_rollup_l2_address )
+        | Tx_rollup_l2_address
+        | Chest
+        | Chest_key )
       , _ ) -> v)
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_bool t) -> v
   | T_sum _ when Option.is_some (Ast_aggregated.get_t_option t) ->

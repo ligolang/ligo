@@ -99,6 +99,8 @@ type constant_val =
   | C_bls12_381_g2 of Bls12_381_G2.t [@name "bls12_381_g2"]
   | C_bls12_381_fr of Bls12_381_Fr.t [@name "bls12_381_fr"]
   | C_chain_id of Chain_id.t [@name "chain_id"]
+  | C_chest of bytes [@name "chest"]
+  | C_chest_key of bytes [@name "chest_key"]
 [@@deriving yojson]
 
 type micheline_value =

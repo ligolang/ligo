@@ -1064,6 +1064,29 @@ let assert_with_error: (condition: bool, message: string) => unit
 Check if a certain condition has been met. If not the testing
 framework will fail with the string passed as message.
 
+### Timelock
+
+<SyntaxTitle syntax="cameligo">
+val create_chest : bytes -> nat -> chest * chest_key
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let create_chest: (payload: bytes, time: nat) => [chest, chest_key]
+</SyntaxTitle>
+
+Function which given a payload and time, generates a `chest` and
+`chest_key`.
+
+<SyntaxTitle syntax="cameligo">
+val create_chest_key : chest -> nat -> chest_key
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let create_chest_key: (chest: chest, time: nat) => chest_key
+</SyntaxTitle>
+
+Function to unlock the value and create a proof.
+
 ### Proxy_ticket
 
 Helper functions for working with tickets in the LIGO Testing framework.

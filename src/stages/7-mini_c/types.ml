@@ -48,6 +48,8 @@ and type_base =
   | TB_never
   | TB_tx_rollup_l2_address
   | TB_type_int of Z.t
+  | TB_chest
+  | TB_chest_key
 
 and environment_element = Value_var.t * type_expression
 and environment = environment_element list

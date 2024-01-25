@@ -74,6 +74,8 @@ let rec translate_type ?var : I.type_expression -> oty =
   | I.T_base I.TB_tx_rollup_l2_address ->
     T_base (nil, Prim (nil, "tx_rollup_l2_address", [], []))
   | I.T_base (I.TB_type_int memo_size) -> T_base (nil, Int (nil, memo_size))
+  | I.T_base I.TB_chest -> T_base (nil, Prim (nil, "chest", [], []))
+  | I.T_base I.TB_chest_key -> T_base (nil, Prim (nil, "chest_key", [], []))
   | I.T_ticket x -> T_ticket (nil, translate_type x)
   | I.T_sapling_transaction memo_size ->
     T_base (nil, Prim (nil, "sapling_transaction", [ Int (nil, memo_size) ], []))

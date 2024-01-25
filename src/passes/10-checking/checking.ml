@@ -387,6 +387,8 @@ let infer_literal lit : (Type.t * O.expression E.t, _, _) C.t =
   | Literal_bls12_381_g1 _ -> const Type.t_bls12_381_g1
   | Literal_bls12_381_g2 _ -> const Type.t_bls12_381_g2
   | Literal_bls12_381_fr _ -> const Type.t_bls12_381_fr
+  | Literal_chest _ -> const Type.t_chest
+  | Literal_chest_key _ -> const Type.t_chest_key
 
 
 let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =

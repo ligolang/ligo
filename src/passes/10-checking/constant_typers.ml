@@ -1519,6 +1519,20 @@ let constant_typer_tbl : (Errors.typer_error, Main_warnings.all) t Const_map.t =
           @@ fun a ->
           create ~mode_annot:[ Inferred; Inferred ] ~types:[ a ^-> a ^~> t_int ~loc () ])
       )
+    ; ( C_TEST_CREATE_CHEST
+      , of_type
+          (create
+             ~mode_annot:[ Checked; Checked ]
+             ~types:
+               [ t_bytes ~loc ()
+                 ^-> t_nat ~loc ()
+                 ^~> t_pair (t_chest ~loc ()) (t_chest_key ~loc ()) ~loc ()
+               ]) )
+    ; ( C_TEST_CREATE_CHEST_KEY
+      , of_type
+          (create
+             ~mode_annot:[ Checked; Checked ]
+             ~types:[ t_chest ~loc () ^-> t_nat ~loc () ^~> t_chest_key ~loc () ]) )
     ; C_EQ, of_comparator Comparable.comparator
     ; C_NEQ, of_comparator Comparable.comparator
     ; C_LT, of_comparator Comparable.comparator

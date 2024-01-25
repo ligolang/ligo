@@ -4,6 +4,17 @@ let test basename = "./" ^ basename
 let pwd = Caml.Sys.getcwd ()
 let () = Caml.Sys.chdir "../../test/contracts/interpreter_tests/"
 
+(* tests for timelock primitives *)
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; test "test_timelock.mligo" ];
+  [%expect
+    {|
+    (0x4141 , 0x4141)
+    (0xff , 0xff)
+    (0x , 0x)
+    Everything at the top-level was executed.
+    - test exited with value [() ; () ; ()]. |}]
+
 (* tests replacing Hashlock tests *)
 let%expect_test _ =
   run_ligo_good [ "run"; "test"; test "test_hashlock.mligo" ];

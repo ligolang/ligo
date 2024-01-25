@@ -1516,6 +1516,14 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     let type_ = nth_type 0 in
     apply_comparison_int ~no_colour ~raise loc calltrace type_ c operand operand'
   | C_TEST_COMPARE, _ -> fail @@ error_type ()
+  | C_TEST_CREATE_CHEST, [ V_Ct (C_bytes payload); V_Ct (C_nat time) ] ->
+    let chest, chest_key = Michelson_backend.create_chest payload (Z.to_int time) in
+    return @@ v_pair (V_Ct (C_chest chest), V_Ct (C_chest_key chest_key))
+  | C_TEST_CREATE_CHEST, _ -> fail @@ error_type ()
+  | C_TEST_CREATE_CHEST_KEY, [ V_Ct (C_chest chest); V_Ct (C_nat time) ] ->
+    let chest_key = Michelson_backend.create_chest_key chest (Z.to_int time) in
+    return @@ v_chest_key chest_key
+  | C_TEST_CREATE_CHEST_KEY, _ -> fail @@ error_type ()
   | C_POLYMORPHIC_ADD, _ ->
     fail @@ Errors.generic_error loc "POLYMORPHIC_ADD is solved in checking."
   | C_POLYMORPHIC_SUB, _ ->
@@ -1586,6 +1594,8 @@ and eval_literal : Ligo_prim.Literal_value.t -> value Monad.t = function
     (match Tezos_crypto.Hashed.Chain_id.of_b58check_opt c with
     | Some t -> Monad.return @@ v_chain_id t
     | None -> Monad.fail @@ Errors.literal Location.generated (Literal_chain_id c))
+  | Literal_chest b -> Monad.return @@ v_chest b
+  | Literal_chest_key b -> Monad.return @@ v_chest_key b
   | l -> Monad.fail @@ Errors.literal Location.generated l
 
 

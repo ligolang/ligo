@@ -42,6 +42,8 @@ let rec is_dup (t : type_expression) =
           | Bls12_381_fr
           | Sapling_transaction
           | Sapling_state
+          | Chest
+          | Chest_key
           (* Test primitives are dup *)
           | Typed_address
           | Mutation

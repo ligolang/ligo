@@ -8,6 +8,48 @@ let bad_contract = bad_test
 let () = Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 let%expect_test _ =
+  run_ligo_good [ "compile"; "contract"; contract "timelock_flip.mligo"; "-m"; "C" ];
+  [%expect
+    {|
+    { parameter (or (chest %initialize) (or (bytes %guess) (chest_key %finish))) ;
+      storage (pair (nat %level) (chest %chest) (bytes %guess) (bytes %result)) ;
+      code { UNPAIR ;
+             IF_LEFT
+               { SWAP ; DROP ; PUSH bytes 0xa0 ; DUP ; DIG 2 ; LEVEL ; PAIR 4 }
+               { IF_LEFT
+                   { PUSH nat 10 ;
+                     DUP 3 ;
+                     CAR ;
+                     ADD ;
+                     LEVEL ;
+                     COMPARE ;
+                     LE ;
+                     IF { PUSH bytes 0xb0 ; SWAP ; DUP 3 ; GET 3 ; DIG 3 ; CAR ; PAIR 4 }
+                        { DROP } }
+                   { PUSH nat 1024 ;
+                     DUP 3 ;
+                     GET 3 ;
+                     DIG 2 ;
+                     OPEN_CHEST ;
+                     IF_NONE
+                       { PUSH bytes 0x10 }
+                       { DUP 2 ;
+                         GET 5 ;
+                         SWAP ;
+                         COMPARE ;
+                         EQ ;
+                         IF { PUSH bytes 0x00 } { PUSH bytes 0x01 } } ;
+                     DUP 2 ;
+                     GET 5 ;
+                     DUP 3 ;
+                     GET 3 ;
+                     DIG 3 ;
+                     CAR ;
+                     PAIR 4 } } ;
+             NIL operation ;
+             PAIR } } |}]
+
+let%expect_test _ =
   run_ligo_good [ "run"; "test"; contract "deprecated.mligo" ];
   [%expect
     {|
@@ -1054,7 +1096,7 @@ File "../../test/contracts/negative/create_contract_toplevel.mligo", line 5, cha
       ^^^^^^^^
  10 |   in
 
-Not all free variables could be inlined in Tezos.create_contract usage: gen#255. |}];
+Not all free variables could be inlined in Tezos.create_contract usage: gen#258. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract_var.mligo" ];
   [%expect
     {|
@@ -1146,7 +1188,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#255.
           ^^^^^^^^^^
      15 |   ([toto.0], store)
 
-    Not all free variables could be inlined in Tezos.create_contract usage: gen#256. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: gen#259. |}];
   run_ligo_bad [ "compile"; "contract"; bad_contract "create_contract_no_inline.mligo" ];
   [%expect
     {|
@@ -1209,7 +1251,7 @@ Not all free variables could be inlined in Tezos.create_contract usage: gen#255.
           ^^^^^^^
      15 |   let toto : operation list = [op] in
 
-    Not all free variables could be inlined in Tezos.create_contract usage: foo#270. |}];
+    Not all free variables could be inlined in Tezos.create_contract usage: foo#273. |}];
   run_ligo_good [ "compile"; "contract"; contract "create_contract.mligo" ];
   [%expect
     {|

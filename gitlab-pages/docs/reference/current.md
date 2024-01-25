@@ -675,3 +675,16 @@ function main (i: parameter, store : storage): result {
 ```
 
 </Syntax>
+
+
+## Timelock
+
+<SyntaxTitle syntax="cameligo">
+val open_chest : chest_key -> chest -> nat -> bytes option
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+let open_chest : (key: chest_key, chest: chest, time: nat) => option&lt;bytes&gt;
+</SyntaxTitle>
+
+Open a timelocked chest given its key and the time.

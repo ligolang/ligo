@@ -64,6 +64,8 @@ let t__type_ ~loc () : type_expression = t_constant ~loc _type_ []
       , "bls12_381_g1"
       , "bls12_381_g2"
       , "bls12_381_fr"
+      , "chest"
+      , "chest_key"
       , "never"
       , "mutation"
       , "pvss_key"
@@ -200,7 +202,9 @@ let get_t__type_ (t : type_expression) : unit option = get_t_base_inj t _type_
       , "michelson_program"
       , "bls12_381_g1"
       , "bls12_381_g2"
-      , "bls12_381_fr" )]
+      , "bls12_381_fr"
+      , "chest"
+      , "chest_key" )]
 
 
 let get_t__type_ (t : type_expression) : type_expression option = get_t_unary_inj t _type_
@@ -327,7 +331,9 @@ let e__type_ p : expression_content = E_literal (Literal__type_ p)
       , "operation"
       , "bls12_381_g1"
       , "bls12_381_g2"
-      , "bls12_381_fr" )]
+      , "bls12_381_fr"
+      , "chest"
+      , "chest_key" )]
 
 
 let e_unit () : expression_content = E_literal Literal_unit
@@ -359,6 +365,8 @@ let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
       , "bls12_381_g1"
       , "bls12_381_g2"
       , "bls12_381_fr"
+      , "chest"
+      , "chest_key"
       , "chain_id" )]
 
 

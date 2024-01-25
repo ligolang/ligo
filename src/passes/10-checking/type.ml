@@ -226,6 +226,8 @@ let t__type_ ~loc () : t = t_construct Literal_types._type_ [] ~loc ()
       , "bls12_381_g1"
       , "bls12_381_g2"
       , "bls12_381_fr"
+      , "chest"
+      , "chest_key"
       , "never"
       , "mutation"
       , "pvss_key"
