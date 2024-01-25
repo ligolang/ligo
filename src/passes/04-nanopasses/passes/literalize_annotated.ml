@@ -83,6 +83,10 @@ let compile ~raise =
         e_bls12_381_g2 ~loc lit
       | E_literal (Literal_bytes lit) when is_ty_var ty (to_string Bls12_381_fr) ->
         e_bls12_381_fr ~loc lit
+      | E_literal (Literal_bytes lit) when is_ty_var ty (to_string Chest) ->
+        e_chest ~loc lit
+      | E_literal (Literal_bytes lit) when is_ty_var ty (to_string Chest_key) ->
+        e_chest_key ~loc lit
       | E_literal (Literal_string lit)
         when is_ty_var ty (to_string Bytes) && Caml.(Ligo_string.get_type lit = `Standard)
         ->

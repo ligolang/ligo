@@ -180,7 +180,9 @@ let e__type_ ~loc p : expr = make_e ~loc @@ E_literal (Literal__type_ p)
       , "chain_id"
       , "bls12_381_g1"
       , "bls12_381_g2"
-      , "bls12_381_fr" )]
+      , "bls12_381_fr"
+      , "chest"
+      , "chest_key" )]
 
 
 let e__type__z ~loc n : expr = make_e ~loc @@ E_literal (Literal__type_ n)

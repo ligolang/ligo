@@ -74,6 +74,8 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
     | Bls12_381_fr, [] -> return (T_base TB_bls12_381_fr)
     | Never, [] -> return (T_base TB_never)
     | Dynamic_entrypoint, [ _p; _s ] -> return (T_base TB_nat)
+    | Chest, [] -> return (T_base TB_chest)
+    | Chest_key, [] -> return (T_base TB_chest_key)
     | Ticket, [ x ] ->
       let x' = compile_type x in
       return (T_ticket x')
@@ -217,7 +219,9 @@ let rec compile_type ~raise (t : AST.type_expression) : type_expression =
         | List
         | Tx_rollup_l2_address
         | Views
-        | Dynamic_entrypoint )
+        | Dynamic_entrypoint
+        | Chest
+        | Chest_key )
       , _ :: _ ) ->
       raise.error
       @@ corner_case

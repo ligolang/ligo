@@ -31,6 +31,8 @@ let v_bls12_381_g1 : Bls12_381.G1.t -> value = fun v -> V_Ct (C_bls12_381_g1 v)
 let v_bls12_381_g2 : Bls12_381.G2.t -> value = fun v -> V_Ct (C_bls12_381_g2 v)
 let v_bls12_381_fr : Bls12_381.Fr.t -> value = fun v -> V_Ct (C_bls12_381_fr v)
 let v_chain_id : Chain_id.t -> value = fun c -> V_Ct (C_chain_id c)
+let v_chest : bytes -> value = fun b -> V_Ct (C_chest b)
+let v_chest_key : bytes -> value = fun b -> V_Ct (C_chest_key b)
 
 let v_key_hash : Tezos_crypto.Signature.public_key_hash -> value =
  fun v -> V_Ct (C_key_hash v)
@@ -235,6 +237,8 @@ let tag_constant_val : constant_val -> int = function
   | C_bls12_381_fr _ -> 15
   | C_int64 _ -> 16
   | C_chain_id _ -> 17
+  | C_chest _ -> 18
+  | C_chest_key _ -> 19
 
 
 let compare_constant_val (c : constant_val) (c' : constant_val) : int =
@@ -265,6 +269,8 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
     Bytes.compare (Bls12_381.Fr.to_bytes b) (Bls12_381.Fr.to_bytes b')
   | C_int64 i, C_int64 i' -> Int64.compare i i'
   | C_chain_id i, C_chain_id i' -> Chain_id.compare i i'
+  | C_chest c, C_chest c' -> Bytes.compare c c'
+  | C_chest_key ck, C_chest_key ck' -> Bytes.compare ck ck'
   | ( ( C_unit
       | C_bool _
       | C_int _
@@ -282,7 +288,9 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
       | C_bls12_381_g2 _
       | C_bls12_381_fr _
       | C_int64 _
-      | C_chain_id _ )
+      | C_chain_id _
+      | C_chest _
+      | C_chest_key _ )
     , ( C_unit
       | C_bool _
       | C_int _
@@ -300,7 +308,9 @@ let compare_constant_val (c : constant_val) (c' : constant_val) : int =
       | C_bls12_381_g2 _
       | C_bls12_381_fr _
       | C_int64 _
-      | C_chain_id _ ) ) -> Int.compare (tag_constant_val c) (tag_constant_val c')
+      | C_chain_id _
+      | C_chest _
+      | C_chest_key _ ) ) -> Int.compare (tag_constant_val c) (tag_constant_val c')
 
 
 let tag_value : value -> int = function

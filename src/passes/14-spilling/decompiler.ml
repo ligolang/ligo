@@ -55,6 +55,12 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
     | Bls12_381_fr, [] ->
       let n = trace_option ~raise (wrong_mini_c_value t v) @@ get_bytes v in
       return (E_literal (Literal_bls12_381_fr n))
+    | Chest, [] ->
+      let n = trace_option ~raise (wrong_mini_c_value t v) @@ get_bytes v in
+      return (E_literal (Literal_chest n))
+    | Chest_key, [] ->
+      let n = trace_option ~raise (wrong_mini_c_value t v) @@ get_bytes v in
+      return (E_literal (Literal_chest_key n))
     | Address, [] ->
       let n = trace_option ~raise (wrong_mini_c_value t v) @@ get_string v in
       return (E_literal (Literal_address n))
@@ -172,7 +178,9 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         | Tx_rollup_l2_address
         | External _
         | Views
-        | Dynamic_entrypoint )
+        | Dynamic_entrypoint
+        | Chest
+        | Chest_key )
       , _ ) ->
       let () = Format.printf "%a" AST.PP.type_content t.type_content in
       raise.error

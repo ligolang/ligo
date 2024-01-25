@@ -73,6 +73,8 @@ type t =
   | Gen [@only_interpreter]
   | Int64 [@only_interpreter]
   | Views [@only_interpreter]
+  | Chest
+  | Chest_key
 [@@deriving ord, eq, yojson, hash, sexp, is { tags = [ "only_interpreter" ] }]
 
 let to_string = function
@@ -116,6 +118,8 @@ let to_string = function
   | Int64 -> "int64"
   | Views -> "views"
   | Dynamic_entrypoint -> "dynamic_entrypoint"
+  | Chest -> "chest"
+  | Chest_key -> "chest_key"
 
 
 let of_string_opt = function
@@ -170,6 +174,8 @@ let of_string_opt = function
   | "external_map_remove" -> Some (External Map_remove)
   | "external_map_remove_value" -> Some (External Map_remove_value)
   | "dynamic_entrypoint" -> Some Dynamic_entrypoint
+  | "chest" -> Some Chest
+  | "chest_key" -> Some Chest_key
   | _ -> None
 
 
@@ -225,6 +231,8 @@ let to_arity = function
   | Int64 -> 0
   | Views -> 1
   | Dynamic_entrypoint -> 2
+  | Chest -> 0
+  | Chest_key -> 0
 
 
 let string = String
@@ -268,6 +276,8 @@ let external_ediv = External Ediv
 let gen = Gen
 let int64 = Int64
 let views = Views
+let chest = Chest
+let chest_key = Chest_key
 let v_bool = Type_var.of_input_var "bool"
 let v_string = Type_var.of_input_var (to_string String)
 let v_bytes = Type_var.of_input_var (to_string Bytes)
@@ -324,3 +334,5 @@ let v_external_map_remove_value =
 let v_gen = Type_var.of_input_var (to_string @@ Gen)
 let v_int64 = Type_var.of_input_var (to_string @@ Int64)
 let v_views = Type_var.of_input_var (to_string @@ Views)
+let v_chest = Type_var.of_input_var (to_string @@ Chest)
+let v_chest_key = Type_var.of_input_var (to_string @@ Chest_key)

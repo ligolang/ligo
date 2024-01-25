@@ -31,6 +31,8 @@ type bls12_381_g2 = "%constant:bls12_381_g2"
 type bls12_381_fr = "%constant:bls12_381_fr"
 type never = "%constant:never"
 type ticket = "%constant:ticket"
+type chest = "%constant:chest"
+type chest_key = "%constant:chest_key"
 
 (* external "custom" typers *)
 type external_bytes = "%constant:external_bytes"
@@ -118,6 +120,8 @@ module Tezos = struct
     let _ : unit = [%external ("CHECK_EMIT_EVENT", s, v)] in
     [%michelson ({| { EMIT (annot $0) (typeopt $1) } |} (s : string) (None : a option) v : operation)]
   [@inline] [@thunk] let sapling_verify_update (type sap_a) (t : sap_a sapling_transaction) (s : sap_a sapling_state) : (bytes * (int * sap_a sapling_state)) option = [%michelson ({| { SAPLING_VERIFY_UPDATE } |} t s : (bytes * (int * sap_a sapling_state)) option)]
+  let open_chest (ck : chest_key) (c : chest) (n : nat) : bytes option =
+    [%michelson ({| { OPEN_CHEST } |} ck c n : bytes option)]
 
 end
 
@@ -624,6 +628,9 @@ module Test = struct
   let less (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs < 0
   let greater_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs >= 0
   let less_or_equal (type a) (lhs : a) (rhs : a) : bool = compare lhs rhs <= 0
+
+  let create_chest (b : bytes) (n : nat) : chest * chest_key = [%external ("TEST_CREATE_CHEST", b, n)]
+  let create_chest_key (c : chest) (n : nat) : chest_key = [%external ("TEST_CREATE_CHEST_KEY", c, n)]
 
   module Proxy_ticket = struct
     [@private] let proxy_transfer_contract (type vt whole_p)

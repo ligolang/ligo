@@ -238,6 +238,26 @@ type timestamp
 A date in the real world.
 
 <SyntaxTitle syntax="cameligo">
+type chest
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+type chest
+</SyntaxTitle>
+
+A timelocked chest.
+
+<SyntaxTitle syntax="cameligo">
+type chest_key
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+type chest_key
+</SyntaxTitle>
+
+A key to open a timelocked chest.
+
+<SyntaxTitle syntax="cameligo">
 type unit
 </SyntaxTitle>
 
