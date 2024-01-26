@@ -1,0 +1,82 @@
+module X = struct
+  module Next = struct
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+    let x () = 0
+  end
+end
+
+module X = struct
+  include X.Next
+
+end
+
+let test = X.x ()

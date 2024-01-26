@@ -193,13 +193,31 @@ module Data = struct
     resolve_variable x.env v
 
 
+  let memo_rec
+      ?(size = 30)
+      ?(hash = (Caml.Hashtbl.hash : 'a -> int))
+      (f : ('a -> 'b) -> 'a -> 'b)
+    =
+    let h = Caml.Hashtbl.create size in
+    let rec g x =
+      let k = hash x in
+      match Caml.Hashtbl.find_opt h k with
+      | None ->
+        let z = f g x in
+        Caml.Hashtbl.add h k z;
+        z
+      | Some z -> z
+    in
+    g
+
+
   let rec refresh
       :  new_bindings:(Module_var.t list * var_binding) list -> t -> path
       -> (Module_var.t list * var_binding) list * t
     =
    fun ~new_bindings data path ->
-    let rec refresh_env : (Module_var.t list * var_binding) list -> env -> env =
-     fun new_bindings { exp; mod_ } ->
+    let refresh_env : _ -> (Module_var.t list * var_binding) list * env -> env =
+     fun refresh_env (new_bindings, { exp; mod_ }) ->
       let exp =
         (* select new bindings at top-level only *)
         let news =
@@ -226,10 +244,11 @@ module Data = struct
                     | _ -> None))
                 new_bindings
             in
-            { name; in_ = { in_ with env = refresh_env news in_.env } })
+            { name; in_ = { in_ with env = refresh_env (news, in_.env) } })
       in
       { exp; mod_ }
     in
+    let refresh_env x y = memo_rec refresh_env (x, y) in
     let new_bindings, content =
       List.fold_map data.content ~init:new_bindings ~f:(fun new_bindings -> function
         | Pat ({ binding = { old; fresh = _ }; env; _ } as x) ->
