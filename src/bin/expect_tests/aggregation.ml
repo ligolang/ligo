@@ -86,3 +86,17 @@ let%expect_test _ =
     ];
   [%expect {|
     42 |}]
+
+(* These tests should be about performance, rather than functionality *)
+let%expect_test _ =
+  run_ligo_good [ "run"; "test"; contract "modules_include.mligo" ];
+  [%expect
+    {|
+    Everything at the top-level was executed.
+    - test exited with value 0. |}];
+  run_ligo_good [ "compile"; "contract"; contract "modules_include2.mligo"; "-m"; "A11" ];
+  [%expect
+    {|
+    { parameter unit ;
+      storage unit ;
+      code { DROP ; UNIT ; NIL operation ; PAIR } } |}]

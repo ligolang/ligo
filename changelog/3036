@@ -1,0 +1,7 @@
+
+author: er433
+description: "\\n\\n"
+merge_request: '3036'
+title: "Fix: use memoization for `refresh_env` in aggregation"
+type: fixed
+            
