@@ -21,6 +21,7 @@ module type S = sig
   val map : ('a -> 'b) -> 'a t -> 'b t
   val fold_map : ('a -> 'b -> 'a * 'b) -> 'a -> 'b t -> 'a * 'b t
   val binders : 'a t -> 'a Binder.t list
+  val labels : 'a t -> Label.t list
   val var : loc:Location.t -> 'a Binder.t -> 'a t
   val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end
@@ -226,6 +227,25 @@ module Make (Container : Container) = struct
         | _ -> binders)
       []
       t
+
+
+  let labels : 'a t -> Label.t list =
+   fun p ->
+    let rec aux : 'a t -> Label.t list -> Label.t list =
+     fun p acc ->
+      match p.wrap_content with
+      | P_unit | P_var _ -> acc
+      | P_list (Cons (p, ps)) -> aux p @@ aux ps acc
+      | P_tuple ps | P_list (List ps) ->
+        List.fold_left ~init:acc ~f:(fun acc p -> aux p acc) ps
+      | P_variant (label, p) -> label :: aux p acc
+      | P_record record ->
+        List.fold_left
+          ~init:acc
+          ~f:(fun acc (label, p) -> label :: aux p acc)
+          (Container.to_list record)
+    in
+    aux p []
 end
 
 module Non_linear_pattern = Make (Label.Assoc)

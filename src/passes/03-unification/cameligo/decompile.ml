@@ -285,9 +285,15 @@ and pattern : (CST.pattern, CST.type_expr) AST.pattern_ -> CST.pattern =
          (AST.sexp_of_pattern_ (fun _ -> Sexp.Atom "xx") (fun _ -> Sexp.Atom "xx") p))
 
 
-and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
- fun te ->
-  let w = Region.wrap_ghost in
+and parens : CST.type_expr -> CST.type_expr =
+ fun t ->
+  T_Par (Region.wrap_ghost CST.{ lpar = ghost_lpar; inside = t; rpar = ghost_rpar })
+
+
+(* Since [a -> (b -> c)] is identical to [a -> (b -> c)], if a [T_Fun] is an rhs of another [T_Fun],
+   we don't need parens. So we call `p ~arrow_rhs:true` for the rhs of a T_Fun *)
+and p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
+ fun ?(arrow_rhs = false) t ->
   let needs_parens : CST.type_expr -> bool = function
     (* When we apply type constr to some type, sometimes we need to add parens
       e.g. [A of int] -> [(A of int) option] vs [{a : int}] -> [{ a : int }] option. *)
@@ -302,23 +308,30 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     | T_Int _
     | T_String _ -> false
   in
-  let parens : CST.type_expr -> CST.type_expr =
-   fun t -> T_Par (w CST.{ lpar = ghost_lpar; inside = t; rpar = ghost_rpar })
-  in
-  (* Since [a -> (b -> c)] is identical to [a -> (b -> c)], if a [T_Fun] is an rhs of another [T_Fun],
-     we don't need parens. So we call `p ~arrow_rhs:true` for the rhs of a T_Fun *)
-  let p : ?arrow_rhs:bool -> CST.type_expr -> CST.type_expr =
-   fun ?(arrow_rhs = false) t ->
-    if needs_parens t
-    then
-      if arrow_rhs
-      then (
-        match t with
-        | T_Fun _ -> t
-        | _ -> parens t)
-      else parens t
-    else t
-  in
+  if needs_parens t
+  then
+    if arrow_rhs
+    then (
+      match t with
+      | T_Fun _ -> t
+      | _ -> parens t)
+    else parens t
+  else t
+
+
+and decompile_variant
+    : AST.Label.t -> CST.type_expr option -> AST.Attribute.t list -> CST.variant
+  =
+ fun (AST.Label.Label (constr_name, _)) t attributes ->
+  let ctor = ghost_ident constr_name in
+  let ctor_args = Option.map ~f:(fun t -> ghost_of, p t) t in
+  let attributes = List.map ~f:decompile_attr attributes in
+  CST.{ ctor; ctor_args; attributes }
+
+
+and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
+ fun te ->
+  let w = Region.wrap_ghost in
   (* ^ XXX we should split generated names on '#'? Can we just extract the name somehow?
       Why [t.name] is not working?? *)
   match Location.unwrap te with
@@ -336,26 +349,20 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
   | T_sum ({ fields; layout = _ }, _) ->
     (* XXX those are not initial, but backwards nanopass T_sum -> T_sum_row and
        T_record -> T_record_raw is not implemented, so we need to handle those here*)
+    let f : AST.Label.t * CST.type_expr -> CST.variant CST.reg =
+     fun (constr, t) -> w @@ decompile_variant constr (Some t) []
+    in
     (* TODO #1758 support nullary constructors *)
     let pairs =
       match Utils.list_to_sepseq (Label.Map.to_alist fields) ghost_vbar with
       | None -> failwith "Decompiler: got a T_sum with no elements"
-      | Some nsepseq ->
-        Utils.nsepseq_map
-          (fun (Label.Label constr, t) ->
-            w
-              CST.
-                { ctor = ghost_ident constr
-                ; ctor_args = Some (ghost_of, p t)
-                ; attributes = []
-                })
-          nsepseq
+      | Some nsepseq -> Utils.nsepseq_map f nsepseq
     in
     T_Variant (w CST.{ lead_vbar = Some ghost_vbar; variants = pairs })
   | T_record { fields; layout = _ } ->
     (* XXX again not-initial node workaround *)
     let pairs =
-      Utils.sepseq_map (fun (Label.Label field, t) ->
+      Utils.sepseq_map (fun (Label.Label (field, _), t) ->
           w
             CST.
               { field_name = Var (ghost_ident field)
@@ -383,7 +390,8 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     let pairs =
       Utils.list_to_sepseq
         (List.map
-           ~f:(fun (Label.Label field, { associated_type; attributes; decl_pos = _ }) ->
+           ~f:
+             (fun (Label.Label (field, _), { associated_type; attributes; decl_pos = _ }) ->
              w
                CST.
                  { field_name = Var (ghost_ident field)
@@ -395,28 +403,14 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
     in
     T_Record (w CST.{ lbrace = ghost_lbrace; inside = pairs; rbrace = ghost_rbrace })
   | T_sum_raw (row, _) ->
-    let pairs =
-      Utils.list_to_sepseq
-        (List.map
-           ~f:(fun (Label.Label constr, { associated_type; attributes; decl_pos = _ }) ->
-             w
-               CST.
-                 { ctor = ghost_ident constr
-                 ; ctor_args = Option.map ~f:(fun t -> ghost_of, p t) associated_type
-                 ; attributes = List.map ~f:decompile_attr attributes
-                 })
-           row)
-        ghost_vbar
+    let f : CST.type_expr option AST.Non_linear_rows.row -> CST.variant CST.reg =
+     fun (constr, { associated_type; attributes; _ }) ->
+      w @@ decompile_variant constr associated_type attributes
     in
-    T_Variant
-      (w
-         CST.
-           { lead_vbar = Some ghost_vbar
-           ; variants =
-               (match pairs with
-               | None -> failwith "Decompiler: got a T_sum_raw with no elements"
-               | Some nsepseq -> nsepseq)
-           })
+    (match Utils.list_to_sepseq (List.map ~f row) ghost_vbar with
+    | None -> failwith "Decompiler: got a T_sum_raw with no fields"
+    | Some nsepseq ->
+      T_Variant (w CST.{ lead_vbar = Some ghost_vbar; variants = nsepseq }))
   | T_module_open_in { module_path; field; field_as_open } ->
     T_ModPath
       (w

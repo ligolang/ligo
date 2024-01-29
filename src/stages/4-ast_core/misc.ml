@@ -21,7 +21,7 @@ let rec assert_value_eq ((a, b) : expression * expression) : unit option =
     let lst = List.zip_exn ca.arguments cb.arguments in
     let all = List.map ~f:assert_value_eq lst in
     if List.exists ~f:Option.is_none all then None else Some ()
-  | E_constructor ca, E_constructor cb when Caml.( = ) ca.constructor cb.constructor ->
+  | E_constructor ca, E_constructor cb when Label.equal ca.constructor cb.constructor ->
     assert_value_eq (ca.element, cb.element)
   | ( E_module_accessor { module_path = maa; element = a }
     , E_module_accessor { module_path = mab; element = b } ) ->

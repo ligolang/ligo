@@ -258,6 +258,36 @@ and expr : (CST.expr, CST.type_expr, CST.pattern, unit, unit) AST.expression_ ->
             e))
 
 
+and decompile_variant
+    :  AST.Label.t -> CST.type_expr option -> AST.Attribute.t list
+    -> CST.type_expr CST.legacy_variant
+  =
+ fun (AST.Label.Label (constr_name, _)) t attributes ->
+  let ctor_params : (CST.comma * (CST.type_expr, CST.comma) Utils.nsep_or_term) option =
+    Option.map
+      ~f:(fun t ->
+        match t with
+        | T_Array { value; _ } ->
+          let (CST.{ inside; _ } : (_, _) Utils.nsep_or_term CST.brackets') = value in
+          ghost_comma, inside
+        | t -> ghost_comma, `Sep (t, []))
+      t
+  in
+  let ctor = ghost_string constr_name in
+  let args : (CST.comma * CST.type_expr) list =
+    match ctor_params with
+    | None -> []
+    | Some (comma, args) ->
+      List.map ~f:(fun arg -> comma, arg) @@ Utils.nsep_or_term_to_list args
+  in
+  let inside : CST.type_expr CST.legacy_variant_args = { ctor; args } in
+  let attributes = List.map ~f:decompile_attr attributes in
+  let tuple =
+    Region.wrap_ghost CST.{ lbracket = ghost_lbracket; inside; rbracket = ghost_rbracket }
+  in
+  { attributes; tuple }
+
+
 and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
  fun te ->
   let w = Region.wrap_ghost in
@@ -265,36 +295,10 @@ and ty_expr : CST.type_expr AST.ty_expr_ -> CST.type_expr =
         Why [t.name] is not working?? *)
   (* XXX we should split generated names on '#'? Can we just extract the name somehow?
          Why [t.name] is not working?? *)
-  let decompile_variant
-      :  AST.Label.t -> CST.type_expr option -> AST.Attribute.t list
-      -> CST.type_expr CST.legacy_variant
-    =
-   fun (AST.Label.Label constr_name) t attributes ->
-    let ctor_params : (CST.comma * (CST.type_expr, CST.comma) Utils.nsep_or_term) option =
-      Option.map
-        ~f:(fun t ->
-          match t with
-          | T_Array { value; _ } ->
-            let (CST.{ inside; _ } : (_, _) Utils.nsep_or_term CST.brackets') = value in
-            ghost_comma, inside
-          | t -> ghost_comma, `Sep (t, []))
-        t
-    in
-    let ctor = ghost_string constr_name in
-    let args : (CST.comma * CST.type_expr) list =
-      match ctor_params with
-      | None -> []
-      | Some (comma, args) ->
-        List.map ~f:(fun arg -> comma, arg) @@ Utils.nsep_or_term_to_list args
-    in
-    let inside : CST.type_expr CST.legacy_variant_args = { ctor; args } in
-    let attributes = List.map ~f:decompile_attr attributes in
-    let tuple = w CST.{ lbracket = ghost_lbracket; inside; rbracket = ghost_rbracket } in
-    { attributes; tuple }
-  and decompile_field
+  let decompile_field
       : AST.Label.t -> CST.type_expr -> AST.Attribute.t list -> _ CST.property
     =
-   fun (AST.Label.Label field_name) t attributes ->
+   fun (AST.Label.Label (field_name, _)) t attributes ->
     { property_id = F_Name (CST.Var (ghost_string field_name))
     ; property_rhs = Some (ghost_colon, t)
     ; attributes = List.map ~f:decompile_attr attributes

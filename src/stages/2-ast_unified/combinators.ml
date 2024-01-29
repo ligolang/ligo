@@ -255,11 +255,11 @@ end
 
 let e_unopt ~loc matchee none_body (var_some, some_body) =
   let some_case =
-    let pattern = p_variant ~loc (Label "Some") (Some (p_var ~loc var_some)) in
+    let pattern = p_variant ~loc (Label.of_string "Some") (Some (p_var ~loc var_some)) in
     Case.{ pattern = Some pattern; rhs = some_body }
   in
   let none_case =
-    let pattern = p_variant ~loc (Label "None") None in
+    let pattern = p_variant ~loc (Label.of_string "None") None in
     Case.{ pattern = Some pattern; rhs = none_body }
   in
   e_match ~loc { expr = matchee; cases = some_case, [ none_case ] }

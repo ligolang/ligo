@@ -1,0 +1,6 @@
+type t =
+  | ["Foo"]
+  | ["Bar", int]
+  | ["Baz", unit]
+  | ["Aaa", { a : int, b : bool }]
+  | #["Bbb", bool]

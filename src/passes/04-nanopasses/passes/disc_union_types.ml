@@ -155,7 +155,9 @@ let decompile ~raise:_ =
   let pass_ty : _ ty_expr_ -> ty_expr = function
     | { location = loc; wrap_content = T_sum_raw (rows, Some orig_name) } ->
       let singleton_rows =
-        List.map rows ~f:(fun (Label id, Non_linear_rows.{ associated_type = ty; _ }) ->
+        List.map
+          rows
+          ~f:(fun (Label (id, _), Non_linear_rows.{ associated_type = ty; _ }) ->
             orig_name, id, ty)
       in
       let rows_record =

@@ -889,7 +889,7 @@ let%expect_test _ =
   [%expect
     {|
     ["typed_address","KT19SRGEVxDMKdou6Fu7vZrtPy6X9GB7Dwna"]
-    ["record",[[["Label","bar"],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo"],["constant",["int","42"]]]]] |}]
+    ["record",[[["Label","bar",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":3,"pos_bol":0,"pos_cnum":31},"point_num":139,"point_bol":108},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":3,"pos_bol":0,"pos_cnum":34},"point_num":142,"point_bol":108}}]],["list",[["constant",["string","hello"]],["constant",["string","world"]]]]],[["Label","foo",["File",{"start":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":3,"pos_bol":0,"pos_cnum":19},"point_num":127,"point_bol":108},"stop":{"byte":{"pos_fname":"./test_to_json.mligo","pos_lnum":3,"pos_bol":0,"pos_cnum":22},"point_num":130,"point_bol":108}}]],["constant",["int","42"]]]]] |}]
 
 (*
 let%expect_test _ =

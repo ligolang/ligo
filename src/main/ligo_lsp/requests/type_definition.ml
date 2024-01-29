@@ -30,6 +30,10 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
          Option.some
          @@ Option.value ~default:Def.Loc_in_file.{ range; path }
          @@ (Def.get_definition range.start file definitions >>= from_def_location))
-     | Module _mdef -> None)
+     | Module _mdef -> None
+     | Label ldef ->
+       (match Def.Def_location.of_loc ldef.orig_type_loc with
+       | StdLib _ | Virtual _ -> None
+       | File file_loc -> Some file_loc))
   @@ fun { range; path } ->
   return @@ Some (`Location [ Location.create ~range ~uri:(DocumentUri.of_path path) ])

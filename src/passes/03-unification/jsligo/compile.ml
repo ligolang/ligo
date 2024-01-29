@@ -53,7 +53,7 @@ module TODO_do_in_parsing = struct
   let conv_attrs = List.map ~f:conv_attr
   let weird_attr _ = ()
   let unused_node () = failwith "unused node, can we clean ?"
-  let labelize x = O.Label.of_string x
+  let labelize x = O.Label.T.create ~loc:(w_snd x) (w_fst x)
   let pattern_to_param pattern = O.Param.{ pattern; param_kind = `Const }
 
   let field_as_open_t (ma : I.type_expr) =
@@ -248,7 +248,7 @@ let rec expr : Eq.expr -> Folding.expr =
       let open O.Object_ in
       let field_id =
         match property_id with
-        | F_Name n -> F_Name (O.Label.of_string (TODO_do_in_parsing.get_var n)#payload)
+        | F_Name n -> F_Name TODO_do_in_parsing.(labelize @@ get_var n)
         | F_Int i -> F_Int (snd i#payload)
         | F_Str s -> F_Str s#payload
       in
@@ -263,7 +263,7 @@ let rec expr : Eq.expr -> Folding.expr =
       let open O.Object_ in
       let field_id =
         match property_id with
-        | F_Name n -> F_Name (O.Label.of_string (TODO_do_in_parsing.get_var n)#payload)
+        | F_Name n -> F_Name TODO_do_in_parsing.(labelize @@ get_var n)
         | F_Int i -> F_Int (snd i#payload)
         | F_Str s -> F_Str s#payload
       in
@@ -275,7 +275,7 @@ let rec expr : Eq.expr -> Folding.expr =
     let f : I.selection -> _ O.Selection.t = function
       | I.PropertyStr fstr -> Component_expr I.(E_String fstr.value.inside)
       | I.PropertyName (_dot, name) ->
-        FieldName (O.Label.of_string (TODO_do_in_parsing.get_var name)#payload)
+        FieldName TODO_do_in_parsing.(labelize @@ get_var name)
       | Component comp ->
         let comp = (r_fst comp).inside#payload in
         Component_num comp
@@ -482,9 +482,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
             in
             Some (I.T_Array inside)
         in
-        ( TODO_do_in_parsing.labelize ctor#payload
-        , ty
-        , TODO_do_in_parsing.conv_attrs attributes )
+        TODO_do_in_parsing.labelize ctor, ty, TODO_do_in_parsing.conv_attrs attributes
       | Bracketed { value = { tuple; sharp; attributes }; region = _ } ->
         let ({ ctor; args } : I.type_expr I.bracketed_variant_args) =
           tuple.value.inside
@@ -511,9 +509,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
             in
             Some (I.T_Array inside)
         in
-        ( TODO_do_in_parsing.labelize ctor#payload
-        , ty
-        , TODO_do_in_parsing.conv_attrs attributes )
+        TODO_do_in_parsing.labelize ctor, ty, TODO_do_in_parsing.conv_attrs attributes
       | Legacy { value = { attributes; tuple }; region } ->
         let ({ ctor; args } : I.type_expr I.legacy_variant_args) = tuple.value.inside in
         let ctor_params =
@@ -532,9 +528,7 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
             in
             Some (I.T_Array inside)
         in
-        ( TODO_do_in_parsing.labelize ctor#payload
-        , ty
-        , TODO_do_in_parsing.conv_attrs attributes )
+        TODO_do_in_parsing.labelize ctor, ty, TODO_do_in_parsing.conv_attrs attributes
     in
     let variants = variants |> List.map ~f:destruct |> TODO_do_in_parsing.compile_rows in
     return @@ T_sum_raw (variants, None)
@@ -543,9 +537,9 @@ let rec ty_expr : Eq.ty_expr -> Folding.ty_expr =
       let destruct (I.{ property_id; property_rhs; attributes } : _ I.property) =
         let property_id =
           match property_id with
-          | F_Name n -> O.Label.of_string (TODO_do_in_parsing.get_var n)#payload
+          | F_Name n -> TODO_do_in_parsing.(labelize @@ get_var n)
           | F_Int i -> O.Label.of_string @@ fst i#payload
-          | F_Str s -> O.Label.of_string s#payload
+          | F_Str s -> TODO_do_in_parsing.labelize s
         in
         let property_rhs = Option.map ~f:snd property_rhs in
         property_id, property_rhs, TODO_do_in_parsing.conv_attrs attributes
@@ -665,9 +659,9 @@ let pattern : Eq.pattern -> Folding.pattern =
       let property_id = value.property_id in
       let property_id =
         match property_id with
-        | F_Name n -> O.Label.of_string (TODO_do_in_parsing.get_var n)#payload
+        | F_Name n -> TODO_do_in_parsing.(labelize @@ get_var n)
         | F_Int i -> O.Label.of_string @@ fst i#payload
-        | F_Str s -> O.Label.of_string s#payload
+        | F_Str s -> TODO_do_in_parsing.labelize s
       in
       match value.property_rhs with
       | Some (_, p) -> O.Field.Complete (property_id, p)

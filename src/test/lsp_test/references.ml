@@ -140,6 +140,51 @@ let test_cases =
           "contracts/lsp/go_to_implementations/shadow.mligo"
           [ interval 1 7 8; interval 10 7 8; interval 13 11 12 ]
     }
+  ; { test_name = "references of record field"
+    ; test_file = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:19 ~character:28
+    ; references =
+        intervals
+          "contracts/lsp/references_ctors_and_fields.mligo"
+          [ interval 2 20 21
+          ; interval 8 23 24
+          ; interval 17 24 25
+          ; interval 18 12 13
+          ; interval 19 28 29
+          ; interval 23 20 21
+          ]
+    }
+  ; { test_name = "references of poly record field"
+    ; test_file = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:6 ~character:33
+    ; references =
+        intervals
+          "contracts/lsp/references_ctors_and_fields.mligo"
+          [ interval 6 33 34; interval 20 40 41; interval 21 38 39; interval 22 13 14 ]
+    }
+  ; { test_name = "references of constructor"
+    ; test_file = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:9 ~character:16
+    ; references =
+        intervals
+          "contracts/lsp/references_ctors_and_fields.mligo"
+          [ interval 0 12 15
+          ; interval 8 6 9
+          ; interval 9 7 10
+          ; interval 9 16 19
+          ; interval 10 11 14
+          ; interval 10 20 23
+          ; interval 23 2 5
+          ]
+    }
+  ; { test_name = "references of poly constructor"
+    ; test_file = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:11 ~character:31
+    ; references =
+        intervals
+          "contracts/lsp/references_ctors_and_fields.mligo"
+          [ interval 4 23 25; interval 11 31 33; interval 14 6 8 ]
+    }
   ]
 
 

@@ -88,6 +88,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -168,6 +169,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -228,6 +230,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Parameter
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -244,19 +247,19 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-40
-    [ mytype#1:5-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 8-9
-    [ mytype#1:5-11 a#3:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 17-18
-    [ mytype#1:5-11 a#3:4-5 c#6:13-14  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 26-27
-    [ mytype#1:5-11 a#3:4-5 x#7:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 13-18
-    [ mytype#1:5-11 a#3:4-5 y#8:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 13-18
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 11, characters 9-21
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 12-13
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 c#13:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 14, characters 4-5
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 hd#15:4-6 tl#15:8-10  ] File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 c#10:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 17-18
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 c#10:4-5 d#18:13-14  ] File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 28-31
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 c#10:4-5 s#19:10-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 16-21
-    [ mytype#1:5-11 a#3:4-5 b#5:4-5 c#10:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30  ] File "../../test/contracts/get_scope_tests/match.mligo", line 3, characters 8-9
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 17-18
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 c#6:13-14  ] File "../../test/contracts/get_scope_tests/match.mligo", line 6, characters 26-27
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 x#7:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 13-18
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 y#8:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 13-18
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 11, characters 9-21
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 13, characters 12-13
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 c#13:8-9  ] File "../../test/contracts/get_scope_tests/match.mligo", line 14, characters 4-5
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 hd#15:4-6 tl#15:8-10  ] File "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 c#10:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 17-18
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 c#10:4-5 d#18:13-14  ] File "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 28-31
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 c#10:4-5 s#19:10-11  ] File "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 16-21
+    [ mytype#1:5-11 Foo#1:14-17 Bar#1:27-30 a#3:4-5 b#5:4-5 c#10:4-5  ] File "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
 
     Variable definitions:
     (a#3:4-5 -> a)
@@ -360,6 +363,19 @@ let%expect_test _ =
     Decl Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
     Content: |sum[Bar -> string , Foo -> int({ name: Foo }, { name: Bar })]|
     references: []
+    Constructors and fields:
+    (Foo#1:14-17 -> Foo)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-17
+    Decl Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 14-24
+    Content: int
+    Constructor
+
+    (Bar#1:27-30 -> Bar)
+    Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 27-30
+    Decl Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 27-40
+    Content: string
+    Constructor
+
     Module definitions: |}]
 
 let%expect_test _ =
@@ -500,6 +516,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Parameter
     Type definitions:
+    Constructors and fields:
     Module definitions:
  |}]
 
@@ -579,6 +596,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -662,6 +680,19 @@ let%expect_test _ =
     Decl Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
     Content: |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
     references: []
+    Constructors and fields:
+    (foo#1:14-17 -> foo)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 14-17
+    Decl Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 14-23
+    Content: int
+    Field
+
+    (bar#1:26-29 -> bar)
+    Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 26-29
+    Decl Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 26-35
+    Content: int
+    Field
+
     Module definitions: |}];
   run_ligo_good
     [ "info"
@@ -725,6 +756,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -794,6 +826,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions:
  |}]
 
@@ -892,6 +925,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -908,12 +942,12 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-45
-    [ foo_variant#1:5-16  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
-    [ foo_variant#1:5-16 foo_record#2:5-15  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 12-13
-    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 12-14
-    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
-    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
-    [ foo_variant#1:5-16 foo_record#2:5-15 a#4:4-5 b#6:4-5 c#8:4-5 p#13:11-12  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-44
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 18-58
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35 foo_record#2:5-15  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 4, characters 12-13
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35 foo_record#2:5-15 a#4:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 6, characters 12-14
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 9, characters 8-9
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35 foo_record#2:5-15 a#4:4-5 b#6:4-5  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 10, characters 8-9
+    [ foo_variant#1:5-16 Foo#1:19-22 Bar#1:32-35 foo_record#2:5-15 a#4:4-5 b#6:4-5 c#8:4-5 p#13:11-12  ] File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 43-44
 
     Variable definitions:
     (a#4:4-5 -> a)
@@ -970,6 +1004,31 @@ let%expect_test _ =
                      foo -> foo_variant({ name: foo }, { name: bar })]|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 15-25
+    Constructors and fields:
+    (Foo#1:19-22 -> Foo)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-22
+    Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 19-29
+    Content: int
+    Constructor
+
+    (Bar#1:32-35 -> Bar)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 32-35
+    Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 32-45
+    Content: string
+    Constructor
+
+    (foo#2:20-23 -> foo)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 20-23
+    Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 20-37
+    Content: foo_variant
+    Field
+
+    (bar#2:40-43 -> bar)
+    Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 40-43
+    Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 40-57
+    Content: foo_variant
+    Field
+
     Module definitions: |}]
 
 let%expect_test _ =
@@ -1025,6 +1084,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/module.mligo", line 1, characters 7-8
@@ -1040,6 +1100,7 @@ let%expect_test _ =
                       Mod Path = "A"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -1070,6 +1131,7 @@ let%expect_test _ =
                       Mod Path = "C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -1163,6 +1225,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 1, characters 7-8
@@ -1188,6 +1251,7 @@ let%expect_test _ =
                       Mod Path = "A""B"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (B#3:11-12 -> B)
                       Range: File "../../test/contracts/get_scope_tests/module2.mligo", line 3, characters 11-12
@@ -1204,6 +1268,7 @@ let%expect_test _ =
                                         Mod Path = "A""B"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -1247,6 +1312,7 @@ let%expect_test _ =
                       Mod Path = "A""B"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -1445,6 +1511,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 1, characters 7-8
@@ -1459,6 +1526,7 @@ let%expect_test _ =
                       Mod Path = "A"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -1521,6 +1589,7 @@ let%expect_test _ =
                       Mod Path = "B""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (C#9:15-16 -> C)
                       Range: File "../../test/contracts/get_scope_tests/module3.mligo", line 9, characters 15-16
@@ -1557,6 +1626,7 @@ let%expect_test _ =
                                         Mod Path = "B""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -1636,6 +1706,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (B#3:11-12 -> B)
     Range: File "../../test/contracts/get_scope_tests/module4.mligo", line 3, characters 11-12
@@ -1650,6 +1721,7 @@ let%expect_test _ =
                       Mod Path = "B"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -1753,6 +1825,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 1, characters 7-8
@@ -1774,6 +1847,7 @@ let%expect_test _ =
                       Mod Path = "A""B""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (B#2:11-12 -> B)
                       Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 2, characters 11-12
@@ -1795,6 +1869,7 @@ let%expect_test _ =
                                         Mod Path = "A""B""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
                                         (C#3:15-16 -> C)
                                         Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, characters 15-16
@@ -1816,6 +1891,7 @@ let%expect_test _ =
                                                           Mod Path = "A""B""C"
                                                           Def Type = Module_field
                                                           Type definitions:
+                                                          Constructors and fields:
                                                           Module definitions:
 
                                         references:
@@ -1870,6 +1946,7 @@ let%expect_test _ =
                                         Mod Path = "A""B""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -1937,6 +2014,7 @@ let%expect_test _ =
                       Mod Path = "A""B""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (C#3:15-16 -> C)
                       Range: File "../../test/contracts/get_scope_tests/module5.mligo", line 3, characters 15-16
@@ -1958,6 +2036,7 @@ let%expect_test _ =
                                         Mod Path = "A""B""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -2012,6 +2091,7 @@ let%expect_test _ =
                       Mod Path = "A""B""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -2111,6 +2191,7 @@ let%expect_test _ =
       Mod Path =
       Def Type = Local
       Type definitions:
+      Constructors and fields:
       Module definitions:
       (A#1:7-8 -> A)
       Range: File "../../test/contracts/get_scope_tests/module_shadowing.mligo", line 1, characters 7-8
@@ -2125,6 +2206,7 @@ let%expect_test _ =
                         Mod Path = "A"
                         Def Type = Module_field
                         Type definitions:
+                        Constructors and fields:
                         Module definitions:
 
       references:
@@ -2154,6 +2236,7 @@ let%expect_test _ =
                         Mod Path = "A"
                         Def Type = Module_field
                         Type definitions:
+                        Constructors and fields:
                         Module definitions:
 
       references:
@@ -2190,29 +2273,29 @@ let%expect_test _ =
       [ t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 foo#9:13-16 bar#10:16-19 g#12:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 16-22
       [ t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 foo#9:13-16 bar#10:16-19 g#12:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 37-44
       [ t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 15, characters 8-10
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 18, characters 11-12
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-11
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-14
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 8-11
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 8-11
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 11-14
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5 idk#29:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 8-12
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5 idk#29:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 32, characters 9-12
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6  ] File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 12-21
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 8-9
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 8-12
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 qux#41:9-12  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 12-15
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 qux#41:9-12  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 12-15
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15 j#46:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
-      [ A#1:7-8 t#2:9-10 x#3:12-13 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 e#36:4-5 f#38:4-5 exp2#40:4-8 x#49:14-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13  ] File "../../test/contracts/get_scope_tests/types.mligo", line 18, characters 11-12
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 8-11
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 14-15
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 11-14
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 8-11
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 26-28
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 8-11
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 c#21:4-5 hmm#23:5-8 d#24:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 27, characters 14-15
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 11-14
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5 idk#29:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 8-12
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 d#24:4-5 c#27:4-5 idk#29:5-8  ] File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 27-31
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 32, characters 9-12
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6  ] File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 12-21
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 8-9
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 12-14
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 8-12
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5  ] File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 21-26
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 qux#41:9-12  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 12-15
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 qux#41:9-12  ] File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 18-23
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 12-15
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 27-29
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 qux#41:9-12 i#43:8-9 boo#44:12-15 j#46:8-9  ] File "../../test/contracts/get_scope_tests/types.mligo", line 47, characters 4-6
+      [ A#1:7-8 t#2:9-10 x#3:12-13 foo#3:18-21 a#5:8-9 b#6:8-9 exp1#8:8-12 foo#9:13-16 bar#10:16-19 bar#10:24-27 g#12:12-13 h#14:12-13 B#18:7-8 hmm#23:5-8 c#27:4-5 idk#29:5-8 d#30:4-5 s#32:5-6 q#33:8-9 Baz#33:12-15 e#36:4-5 f#38:4-5 exp2#40:4-8 x#49:14-15  ] File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 30-35
 
       Variable definitions:
       (a#5:8-9 -> a)
@@ -2395,6 +2478,25 @@ let%expect_test _ =
       Content: |funtype 'a : * . option ('a)|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 16-19
+      Constructors and fields:
+      (foo#3:18-21 -> foo)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 18-21
+      Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 18-26
+      Content: 'a
+      Field
+
+      (bar#10:24-27 -> bar)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 24-27
+      Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 24-32
+      Content: 'a
+      Field
+
+      (Baz#33:12-15 -> Baz)
+      Range: File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 12-15
+      Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 12-21
+      Content: 'a
+      Constructor
+
       Module definitions:
       (A#1:7-8 -> A)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 1, characters 7-8
@@ -2465,6 +2567,19 @@ let%expect_test _ =
                         Content: |funtype 'a : * . record[bar -> 'a({ name: bar })]|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 23-26
+                        Constructors and fields:
+                        (foo#3:18-21 -> foo)
+                        Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 18-21
+                        Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 18-26
+                        Content: 'a
+                        Field
+
+                        (bar#10:24-27 -> bar)
+                        Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 24-27
+                        Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 24-32
+                        Content: 'a
+                        Field
+
                         Module definitions:
 
       references:
@@ -2495,7 +2610,7 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 11-94
-    [ X#1:7-8 x#1:5-6 y#3:4-5 x#4:4-5  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
+    [ X#1:7-8 x#1:5-6 a#1:11-12 b#1:21-22 y#3:4-5 x#4:4-5  ] File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 8-13
     [  ] File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 9-33
     [ x#1:5-6  ] File "../../test/contracts/get_scope_tests/x.mligo", line 3, characters 8-9
     [ x#1:5-6 y#3:4-5  ] File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 14-15
@@ -2531,6 +2646,19 @@ let%expect_test _ =
     Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 0-33
     Content: |record[a -> int , b -> string({ name: a }, { name: b })]|
     references: []
+    Constructors and fields:
+    (a#1:11-12 -> a)
+    Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 11-12
+    Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 11-18
+    Content: int
+    Field
+
+    (b#1:21-22 -> b)
+    Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 21-22
+    Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 21-31
+    Content: string
+    Field
+
     Module definitions:
     (X#1:7-8 -> X)
     Range: File "../../test/contracts/get_scope_tests/import_x.mligo", line 1, characters 7-8
@@ -2559,6 +2687,19 @@ let%expect_test _ =
                       Content: |record[a -> int ,
                                        b -> string({ name: a }, { name: b })]|
                       references: []
+                      Constructors and fields:
+                      (a#1:11-12 -> a)
+                      Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 11-12
+                      Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 11-18
+                      Content: int
+                      Field
+
+                      (b#1:21-22 -> b)
+                      Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 21-22
+                      Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 21-31
+                      Content: string
+                      Field
+
                       Module definitions:
 
     references:
@@ -2630,6 +2771,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#5:11-12 -> A)
     Range: File "../../test/contracts/get_scope_tests/local_module_using_local_binding.mligo", line 5, characters 11-12
@@ -2644,6 +2786,7 @@ let%expect_test _ =
                       Mod Path = "A"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -2672,6 +2815,7 @@ let%expect_test _ =
                       Mod Path = "C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -2696,13 +2840,13 @@ let%expect_test _ =
     [ a#1:4-5 b#1:7-8 t#3:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 17-18
     [ a#1:4-5 b#1:7-8 t#3:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 4, characters 20-21
     [ t#3:5-6 a#4:6-7 b#4:9-10  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 9-19
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 7, characters 18-20
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-28
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 24-25
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 27-28
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-17
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14 w#12:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 24-25
-    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 x#7:9-10 v#9:5-6 i#10:10-11 j#10:13-14 w#12:5-6  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 27-28
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 7, characters 18-20
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-28
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10 v#9:5-6 Bar#9:9-12  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 24-25
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10 v#9:5-6 Bar#9:9-12  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 10, characters 27-28
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10 v#9:5-6 Bar#9:9-12 i#10:10-11 j#10:13-14  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-17
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10 v#9:5-6 Bar#9:9-12 i#10:10-11 j#10:13-14 w#12:5-6 Qux#12:9-12  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 24-25
+    [ t#3:5-6 a#4:6-7 b#4:9-10 u#6:5-6 Foo#6:9-12 x#7:9-10 v#9:5-6 Bar#9:9-12 i#10:10-11 j#10:13-14 w#12:5-6 Qux#12:9-12  ] File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 13, characters 27-28
 
     Variable definitions:
     (a#1:4-5 -> a)
@@ -2796,6 +2940,37 @@ let%expect_test _ =
     Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 0-17
     Content: |sum[Qux -> t({ name: Qux })]|
     references: []
+    Constructors and fields:
+    (a#3:11-12 -> a)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 11-12
+    Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 11-18
+    Content: int
+    Field
+
+    (b#3:20-21 -> b)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 20-21
+    Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 20-30
+    Content: string
+    Field
+
+    (Foo#6:9-12 -> Foo)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 9-12
+    Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 9-19
+    Content: int
+    Constructor
+
+    (Bar#9:9-12 -> Bar)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-12
+    Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 9-28
+    Content: ( int * string )
+    Constructor
+
+    (Qux#12:9-12 -> Qux)
+    Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-12
+    Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 9-17
+    Content: t
+    Constructor
+
     Module definitions:
  |}]
 

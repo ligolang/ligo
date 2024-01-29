@@ -1046,7 +1046,7 @@ let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) optio
               List.for_all2
                 record_type_kv
                 record_type_kv'
-                ~f:(fun (Label ka, va) (Label kb, vb) ->
+                ~f:(fun (Label (ka, _), va) (Label (kb, _), vb) ->
                   String.equal ka kb && Type.equal va vb)
             with
            | Ok result -> Option.some_if result (type_.orig_var, record_type')

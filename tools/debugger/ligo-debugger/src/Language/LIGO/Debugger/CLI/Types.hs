@@ -602,7 +602,7 @@ instance MessagePack LigoTypeTable where
       parseElem = withMsgArray "TypeTableField" \arr -> do
         case V.toList arr of
           [ctor, content] -> do
-            (_ :: Object, ctorName) <- fromObjectWith cfg ctor
+            (_ :: Object, ctorName, _ :: Object) <- fromObjectWith cfg ctor
             typeExpr <- fromObjectWith cfg content
             pure (ctorName, typeExpr)
           _ -> refute "Expected two element array"
@@ -624,7 +624,7 @@ instance MessagePack LigoLayout where
         | ctor == "Field" ->
             case val of
               ObjectMap (M.fromList . toList -> obj) -> do
-                (_ :: Object, name) <- obj .: "name"
+                (_ :: Object, name, _ :: Object) <- obj .: "name"
                 pure $ LLField name
               _ -> refute $ decodeError [int||Expected object in constructor "Field"|]
         | otherwise -> refute $ decodeError [int||Unexpected constructor #{ctor}|]

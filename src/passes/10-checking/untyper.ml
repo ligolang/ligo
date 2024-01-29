@@ -92,12 +92,11 @@ and untype_expression_content ~loc (ec : O.expression_content) : I.expression =
     return (e_record ~loc r' ())
   | E_accessor { struct_; path } ->
     let r' = self struct_ in
-    let (Label s) = path in
-    return (e_record_accessor ~loc r' (Label s))
-  | E_update { struct_ = r; path = Label l; update = e } ->
+    return (e_record_accessor ~loc r' path)
+  | E_update { struct_ = r; path; update = e } ->
     let r' = self r in
     let e = self e in
-    return (e_record_update ~loc r' (Label l) e)
+    return (e_record_update ~loc r' path e)
   | E_matching m ->
     let I.Match_expr.{ matchee; cases } = untype_match_expr m in
     return (e_matching ~loc matchee cases)

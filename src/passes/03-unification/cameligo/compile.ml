@@ -52,7 +52,7 @@ module TODO_do_in_parsing = struct
   let mvar x = Ligo_prim.Module_var.of_input_var ~loc:(w_snd x) (w_fst x)
   let var x = Ligo_prim.Value_var.of_input_var ~loc:(w_snd x) (w_fst x)
   let tvar x = Ligo_prim.Type_var.of_input_var ~loc:(w_snd x) (w_fst x)
-  let labelize x = Ligo_prim.Label.of_string (w_fst x)
+  let labelize x = Ligo_prim.Label.T.create ~loc:(w_snd x) (w_fst x)
 
   (* (Potentially) Escaped variables *)
 

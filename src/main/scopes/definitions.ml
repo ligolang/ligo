@@ -40,6 +40,80 @@ let defs_of_vvar ~(decl_range : Location.t) ~(attributes : vdef_attributes optio
     Variable vdef :: acc)
 
 
+let rec defs_of_ty_expr ?(orig_type_loc : Location.t option)
+    : AST.type_expression option -> def_type -> Uid.t list -> t -> t
+  =
+ fun ty_expr def_type mod_path acc ->
+  match ty_expr with
+  | None -> acc
+  | Some ty_expr ->
+    let self ty_expr = defs_of_ty_expr (Some ty_expr) def_type mod_path in
+    let orig_type_loc = Option.value ~default:ty_expr.location orig_type_loc in
+    (match ty_expr.type_content with
+    (* Actual traversals *)
+    | T_sum (row, _) ->
+      defs_of_row
+        ~label_case:Ctor
+        orig_type_loc
+        (Label.Map.to_alist row.fields)
+        def_type
+        mod_path
+        acc
+    | T_record row ->
+      defs_of_row
+        ~label_case:Field
+        orig_type_loc
+        (Label.Map.to_alist row.fields)
+        def_type
+        mod_path
+        acc
+    (* Structure traversals *)
+    | T_arrow { type1; type2; param_names = _ } -> self type2 @@ self type1 acc
+    | T_app { arguments; type_operator = _ } ->
+      List.fold_right ~init:acc ~f:self arguments
+    | T_abstraction { type_; ty_binder = _; kind = _ }
+    | T_for_all { type_; ty_binder = _; kind = _ } -> self type_ acc
+    | T_variable _
+    | T_constant _
+    | T_contract_parameter _
+    | T_module_accessor _
+    | T_singleton _ -> acc)
+
+
+and defs_of_row ~(label_case : label_case) (orig_type_loc : Location.t)
+    : (Label.t * AST.type_expression) list -> def_type -> Uid.t list -> t -> t
+  =
+ fun row def_type mod_path acc ->
+  List.fold_right
+    ~init:acc
+    ~f:(fun (Label (label, loc), ty_expr) acc ->
+      if Location.is_dummy_or_generated loc
+      then acc
+      else (
+        let acc = defs_of_ty_expr (Some ty_expr) def_type mod_path acc in
+        let ldef : ldef =
+          let name = label in
+          let range = loc in
+          let uid = Uid.make name range in
+          let decl_range = Location.cover loc ty_expr.location in
+          let references = LSet.empty (* Filled in a later pass *) in
+          let content = ty_expr in
+          { name
+          ; uid
+          ; range
+          ; decl_range
+          ; references
+          ; content
+          ; def_type
+          ; orig_type_loc
+          ; label_case
+          ; mod_path
+          }
+        in
+        Label ldef :: acc))
+    row
+
+
 (**
     Add a variable definition to the provided list of definitions `t`,
     using the information provided in the given `binder`.
@@ -50,10 +124,14 @@ let defs_of_vvar ~(decl_range : Location.t) ~(attributes : vdef_attributes optio
     @return The provided list of definitions augmented with the given binder.
     *)
 let defs_of_binder ~(decl_range : Location.t) ~(attributes : vdef_attributes option)
-    : 'a Binder.t -> def_type -> Uid.t list -> t -> t
+    : AST.type_expression option Binder.t -> def_type -> Uid.t list -> t -> t
   =
  fun binder def_type mod_path acc ->
-  defs_of_vvar ~attributes ~decl_range (Binder.get_var binder) def_type mod_path acc
+  defs_of_vvar ~attributes ~decl_range (Binder.get_var binder) def_type mod_path
+  @@
+  if Location.is_dummy_or_generated (Binder.get_loc binder)
+  then acc
+  else defs_of_ty_expr (Binder.get_ascr binder) Local mod_path acc
 
 
 (**
@@ -249,10 +327,13 @@ module Of_Ast = struct
       @@ fun (decls, def_type, mod_path) ->
       defs_of_decls ~waivers module_deps mod_path def_type decls
     in
-    let defs_of_lambda ~decl_range : _ Lambda.t -> t -> t =
+    let defs_of_lambda ~decl_range : (_, AST.type_expression option) Lambda.t -> t -> t =
      fun { binder; output_type; result } acc ->
       let vvar = Param.get_var binder in
-      self result @@ defs_of_vvar ~attributes:None ~decl_range vvar Parameter mod_path acc
+      let ty_expr = Param.get_ascr binder in
+      self result
+      @@ defs_of_vvar ~attributes:None ~decl_range vvar Parameter mod_path
+      @@ defs_of_ty_expr ty_expr Parameter mod_path acc
     in
     let uncover_let_result (let_result : AST.expression) : Location.t =
       let uncover (l1 : Location.t) (l2 : Location.t) : Location.t =
@@ -304,7 +385,8 @@ module Of_Ast = struct
         Location.cover var_loc (Param.get_ascr lambda.binder).location
       in
       (* fun_name is already added by the parent E_let_in so don't need to add it here *)
-      defs_of_lambda ~decl_range lambda acc
+      defs_of_lambda ~decl_range (Lambda.map Fn.id Option.some lambda)
+      @@ defs_of_ty_expr (Some fun_type) Local mod_path acc
     | E_type_abstraction { type_binder; result } ->
       let decl_range = TVar.get_location type_binder in
       defs_of_tvar ~decl_range ~attributes:None type_binder Parameter mod_path
@@ -318,6 +400,11 @@ module Of_Ast = struct
     | E_type_in { type_binder; rhs; let_result } ->
       let decl_range = uncover_let_result let_result in
       defs_of_tvar ~decl_range ~attributes:None ~bindee:rhs type_binder Local mod_path
+      @@ defs_of_ty_expr
+           ~orig_type_loc:(TVar.get_location type_binder)
+           (Some rhs)
+           Local
+           mod_path
       @@ self let_result acc
     | E_mod_in { module_binder; rhs; let_result } ->
       let decl_range = uncover_let_result let_result in
@@ -354,7 +441,8 @@ module Of_Ast = struct
       self struct_ acc (* Is it possible to have decl in there ? *)
     | E_update { struct_; path; update } -> self struct_ @@ self update acc
     (* Advanced *)
-    | E_ascription { anno_expr; type_annotation } -> self anno_expr acc
+    | E_ascription { anno_expr; type_annotation } ->
+      self anno_expr @@ defs_of_ty_expr (Some type_annotation) Local mod_path acc
     | E_module_accessor macc -> acc
     (* Imperative *)
     | E_assign { binder; expression } ->
@@ -588,13 +676,8 @@ module Of_Ast = struct
     let decl_range = Location.get_location item in
     match Location.unwrap item with
     | S_value (var, ty_expr, attr) ->
-      defs_of_vvar
-        ~decl_range
-        ~attributes:(Some (Sig_item attr))
-        var
-        def_type
-        mod_path
-        acc
+      defs_of_vvar ~decl_range ~attributes:(Some (Sig_item attr)) var def_type mod_path
+      @@ defs_of_ty_expr (Some ty_expr) def_type mod_path acc
     | S_type (var, ty_expr, attr) ->
       defs_of_tvar
         ~decl_range
@@ -603,7 +686,12 @@ module Of_Ast = struct
         var
         def_type
         mod_path
-        acc
+      @@ defs_of_ty_expr
+           ~orig_type_loc:(TVar.get_location var)
+           (Some ty_expr)
+           def_type
+           mod_path
+           acc
     | S_type_var (var, attr) ->
       defs_of_tvar
         ~decl_range
@@ -665,7 +753,12 @@ module Of_Ast = struct
         type_binder
         def_type
         mod_path
-        acc
+      @@ defs_of_ty_expr
+           ~orig_type_loc:(TVar.get_location type_binder)
+           (Some type_expr)
+           def_type
+           mod_path
+           acc
     | D_module { module_binder; module_; module_attr; annotation } ->
       let sig_defs_and_mod_cases =
         Option.map annotation ~f:(fun annotation ->

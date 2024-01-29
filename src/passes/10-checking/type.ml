@@ -346,7 +346,9 @@ let get_t_bool (t : t) : unit option =
   match t.content with
   | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "True")
+       && Set.mem keys (Label.of_string "False")
     then Some ()
     else None
   | _ -> None
