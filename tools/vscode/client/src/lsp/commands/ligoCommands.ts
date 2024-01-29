@@ -211,6 +211,7 @@ export async function executeCompileStorage(
       ['compile', 'storage', path, storage],
       Boolean(entrypoint) ? ['-m', entrypoint] : [],
       ['--michelson-format', format],
+      ['--allow-json-download']
     ].flat()),
     CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
     showOutput,
