@@ -155,7 +155,7 @@ export async function executeCompileContract(
     throw new ex.InvalidChoiceException(format, formats)
   }
 
-  const result = executeCommand(
+  const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'contract', path],
@@ -205,7 +205,7 @@ export async function executeCompileStorage(
     throw new ex.InvalidChoiceException(format, ['text', 'hex', 'json'])
   }
 
-  const result = executeCommand(
+  const result = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['compile', 'storage', path, storage],
@@ -225,7 +225,7 @@ export async function executeCompileStorage(
 }
 
 export async function executeCompileExpression() {
-  const declarations = executeCommand(
+  const declarations = await executeCommand(
     ligoBinaryInfo,
     (path: string) => withProjectRootFlag([
       ['info', 'list-declarations', path],
