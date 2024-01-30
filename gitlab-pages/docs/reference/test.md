@@ -11,6 +11,8 @@ import SyntaxTitle from '@theme/SyntaxTitle';
 
 > Important: The `Test` module is only available inside the `ligo run test` command. See also [Testing LIGO](../advanced/testing.md).
 
+> Explore [Test.Next](./test.next.md) that will eventually replace the `Test` module.
+
 <SyntaxTitle syntax="cameligo">
 type michelson_program
 </SyntaxTitle>
@@ -1092,3 +1094,21 @@ Function to unlock the value and create a proof.
 Helper functions for working with tickets in the LIGO Testing framework.
 
 Find the complete API reference [here](./proxy_ticket.md)
+
+### Next
+
+This is a testing module that will eventually replace the `Test` module.
+
+Users can do
+
+<SyntaxTitle syntax="cameligo">
+module Test = Test.Next
+</SyntaxTitle>
+
+<SyntaxTitle syntax="jsligo">
+import Test = Test.Next
+</SyntaxTitle>
+
+and use it in replacement of `Test`.
+
+Find the complete API reference [here](./test.next.md)

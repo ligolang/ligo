@@ -253,6 +253,7 @@ const sidebars = {
       "reference/option-reference",
       "reference/current-reference",
       "reference/test",
+      "reference/test-next",
       "reference/proxy-ticket-reference",
       "contract/tickets"
     ],
