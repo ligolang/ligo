@@ -696,4 +696,118 @@ module Test = struct
       let s : michelson_program = [%external ("TEST_GET_STORAGE", t)] in
       (decompile s : s2)
   end
+  module Next = struct
+    module Mutation = struct
+      let func = mutation_test
+      let from_file = originate_from_file_and_mutate
+      let contract = originate_module_and_mutate
+      module All = struct
+          let func = mutation_test_all
+          let from_file = originate_from_file_and_mutate_all
+          let contract = originate_and_mutate_all
+      end
+      let value = mutate_value
+      let save = save_mutation
+    end
+    module PBT = PBT
+    module State = struct
+      let restore = restore_context
+      let save = save_context
+      let drop = drop_context
+      let reset = reset_state
+      let reset_at = reset_state_at
+      let register_delegate = register_delegate
+      let register_constant = register_constant
+    end
+    module Account = struct
+      let alice () = nth_bootstrap_account 0
+      let bob () = nth_bootstrap_account 1
+      let carol () = nth_bootstrap_account 2
+      let dan () = nth_bootstrap_account 3
+      let add = add_account
+      let address (n : nat) = nth_bootstrap_account (int n)
+      type info = { addr: address; pk: key; sk: string }
+      let info (n : nat) : info =
+        let (addr, pk, sk) = get_bootstrap_account n in
+	{ addr ; pk ; sk }
+    end
+    module Compare = struct
+      let eq = equal
+      let neq = not_equal
+      let gt = greater
+      let lt = less
+      let ge = greater_or_equal
+      let le = less_or_equal
+    end
+    module Michelson = struct
+      let run = run
+      let eval = eval
+      let decompile = decompile
+      let parse = parse_michelson
+      module Contract = struct
+        let compile = compile_contract
+	let compile_with_views = compile_contract_with_views
+	let size = size
+	let from_file = read_contract_from_file
+      end
+    end
+    module IO = struct
+      let print = print
+      let println = println
+      let eprint = eprint
+      let log = log
+      let set_test_print = set_print_values
+      let unset_test_print = unset_print_values
+    end
+    module Assert = struct
+      let assert = assert
+      let some = assert_some
+      let none = assert_none
+      module Error = struct
+        let assert = assert_with_error
+        let some_with_error = assert_some_with_error
+        let none_with_error = assert_none_with_error
+      end
+    end
+    module String = struct
+      let chr = chr
+      let nl = nl
+      let show = to_string
+      let json = to_json
+      let debugger_json = to_debugger_json
+    end
+    module Ticket = struct
+      module Proxy = Proxy_ticket
+    end
+    module Originate = struct
+      type ('p, 's) origination_result =
+        { taddr : ('p, 's) typed_address
+        ; code : ('p, 's) michelson_contract
+        ; size : int
+        }
+      let contract (type p s) (c : (p, s) module_contract) (s : s) (t : tez) : (p, s) origination_result =
+        let { addr; code ; size } = originate c s t in
+        let taddr = addr in
+        { taddr ; code ; size }
+      let from_file (type p s) (fn : string) (s : s)  (t : tez) : (p, s) origination_result =
+        let { addr ; code ; size } = originate_from_file fn s t in
+	let taddr = addr in
+	{ taddr ; code ; size }
+    end
+    module Contract = struct
+      let transfer = transfer_to_contract
+      let transfer_exn = transfer_to_contract_exn
+    end
+    module Typed_address = struct
+      let transfer = transfer
+      let transfer_exn = transfer_exn
+      let get_storage = get_storage
+    end
+    module Address = struct
+      let get_balance = get_balance_of_address
+      let to_typed_address = cast_address
+    end
+    let originate = Originate.contract
+    include Typed_address
+  end
 end

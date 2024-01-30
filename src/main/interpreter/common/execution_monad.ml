@@ -687,7 +687,7 @@ module Command = struct
         in
         record, ctxt
       | None ->
-        raise.error (Errors.generic_error loc "This bootstrap account do not exist"))
+        raise.error (Errors.generic_error loc "This bootstrap account does not exist"))
     | Sign (loc, calltrace, sk, data) ->
       let signature = Tezos_state.sign_message ~raise ~loc ~calltrace data sk in
       Lwt.return (LT.V_Ct (LT.C_signature signature), ctxt)

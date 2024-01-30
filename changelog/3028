@@ -1,0 +1,7 @@
+
+author: er433
+description: "This MR introduces `Test.Next`, a submodule to `Test` that is a re-organization, and that could be used to replace `Test`.\\n\\nFor now, we avoid using `include`, as there are some performance issues related to it.\\n\\n"
+merge_request: '3028'
+title: "Stdlib: introduce `Test.Next`"
+type: added
+            
