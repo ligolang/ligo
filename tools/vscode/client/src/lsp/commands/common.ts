@@ -6,7 +6,7 @@ import { execFileSync } from 'child_process';
 
 import { extensions } from '../common'
 
-import * as ex from '../exceptions'
+import * as ex from '../../common/exceptions'
 import { Maybe } from '../../common/base';
 import { BinaryInfo } from '../../common/config';
 

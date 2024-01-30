@@ -2,7 +2,7 @@ import { createRememberingInputBox, createQuickPickBox } from '../ui'
 import {
   CommandRequiredArguments, executeCommand, getBinaryPath, getLastContractPath,
 } from './common';
-import * as ex from '../exceptions'
+import * as ex from '../../common/exceptions'
 import { InputBoxType, InputValueLang, isDefined, Maybe } from '../../common/base';
 import { LigoContext } from '../../common/LigoContext';
 import { LigoProtocolClient } from '../../common/LigoProtocolClient';

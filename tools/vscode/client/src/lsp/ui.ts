@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { isDefined, Maybe } from '../common/base';
 import { LigoContext } from '../common/LigoContext';
-import * as ex from './exceptions'
+import * as ex from '../common/exceptions'
 
 // All keys are expected to be in kebab-case.
 export type LspRememberingKey
