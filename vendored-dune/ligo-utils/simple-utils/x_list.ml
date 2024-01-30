@@ -59,6 +59,13 @@ let rec deoptionalize xs =
     | None -> None
     | Some xs -> Some (x :: xs))
 
+let rec drop_common_prefix ~(equal : 'a -> 'b -> bool) ~(prefix : 'a t) (list : 'b t)
+    : 'b t
+  =
+  match prefix, list with
+  | x :: xs, y :: ys when equal x y -> drop_common_prefix ~equal ~prefix:xs ys
+  | _, _ -> list
+
 module Ne = struct
   type 'a t = 'a * 'a list [@@deriving eq, compare, yojson, hash, sexp, fold]
 

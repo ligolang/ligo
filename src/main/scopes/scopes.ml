@@ -5,6 +5,7 @@ module TVar = Type_var
 module MVar = Module_var
 module Formatter = Formatter
 module Api_helper = Api_helper
+module Misc = Misc
 module LSet = Types.LSet
 module Location = Simple_utils.Location
 module Trace = Simple_utils.Trace

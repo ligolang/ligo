@@ -18,7 +18,7 @@ let on_req_type_definition : Position.t -> Path.t -> Locations.t option Handler.
      | Type _ -> from_def_location def
      | Variable vdef ->
        let open Option.Monad_infix in
-       Def.get_type vdef
+       Def.get_type ~use_module_accessor:false vdef
        >>= fun type_expression ->
        let location =
          Def.Def_location.of_loc (Def.use_var_name_if_available type_expression).location

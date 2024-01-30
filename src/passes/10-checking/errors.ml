@@ -42,13 +42,8 @@ let type_improve t =
       t_variable ~loc (Type_var.of_input_var ~loc (x ^ "." ^ y)) ()
   in
   match t.content with
-  | T_construct { parameters; _ } when List.length parameters = 0 -> t
-  | _ ->
-    (match Context.Hashes.find_type t with
-    | Some t ->
-      let t = make_type t in
-      { t with orig_var = t.orig_var }
-    | _ -> t)
+  | T_construct { parameters; _ } when List.is_empty parameters -> t
+  | _ -> Option.value_map ~default:t ~f:make_type (Context.Hashes.find_type t)
 
 
 let rec type_mapper ~f (t : Type.t) =

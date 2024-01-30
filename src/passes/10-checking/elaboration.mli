@@ -24,4 +24,9 @@ val check_anomalies
   -> Ast_typed.type_expression
   -> unit t
 
-val run : 'a t -> raise:(error, warning) raise -> Substitution.t -> 'a
+val run
+  :  'a t
+  -> path:Module_var.t list
+  -> raise:(error, warning) raise
+  -> Substitution.t
+  -> 'a

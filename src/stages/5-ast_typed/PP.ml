@@ -10,17 +10,21 @@ open Format
 open Types
 open Simple_utils.PP_helpers
 
-let rec type_content : formatter -> type_content -> unit =
+let rec type_content_impl type_expression_impl : formatter -> type_content -> unit =
  fun ppf tc ->
   match tc with
   | T_variable tv -> Type_var.pp ppf tv
-  | T_sum row -> Row.PP.sum_type type_expression layout ppf row
-  | T_record row -> Row.PP.tuple_or_record_type type_expression layout ppf row
-  | T_arrow a -> Arrow.pp type_expression ppf a
+  | T_sum row -> Row.PP.sum_type type_expression_impl layout ppf row
+  | T_record row -> Row.PP.tuple_or_record_type type_expression_impl layout ppf row
+  | T_arrow a -> Arrow.pp type_expression_impl ppf a
   | T_constant tc -> type_injection ppf tc
   | T_singleton x -> Literal_value.pp ppf x
-  | T_abstraction x -> Abstraction.pp_type_abs type_expression ppf x
-  | T_for_all x -> Abstraction.pp_forall type_expression ppf x
+  | T_abstraction x -> Abstraction.pp_type_abs type_expression_impl ppf x
+  | T_for_all x -> Abstraction.pp_forall type_expression_impl ppf x
+
+
+and type_content : formatter -> type_content -> unit =
+ fun ppf tc -> type_content_impl type_expression ppf tc
 
 
 (* and row : formatter -> row_element -> unit =
@@ -50,13 +54,17 @@ and option ppf (te : type_expression) : unit =
   | None -> fprintf ppf "option ('a)"
 
 
-and type_expression ppf (te : type_expression) : unit =
+and type_expression_impl type_content_impl ppf (te : type_expression) : unit =
   (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   if Option.is_some (Combinators.get_t_bool te)
   then bool ppf
   else if Option.is_some (Combinators.get_t_option te)
   then option ppf te
-  else fprintf ppf "%a" type_content te.type_content
+  else type_content_impl ppf te.type_content
+
+
+and type_expression ppf (te : type_expression) : unit =
+  type_expression_impl type_content ppf te
 
 
 let type_expression_annot ppf (te : type_expression) : unit =
@@ -64,28 +72,18 @@ let type_expression_annot ppf (te : type_expression) : unit =
 
 
 let rec type_content_orig : formatter -> type_content -> unit =
- fun ppf tc ->
-  match tc with
-  | T_variable tv -> Type_var.pp ppf tv
-  | T_sum row -> Row.PP.sum_type type_expression layout ppf row
-  | T_record row -> Row.PP.tuple_or_record_type type_expression layout ppf row
-  | T_arrow a -> Arrow.pp type_expression ppf a
-  | T_constant tc -> type_injection ppf tc
-  | T_singleton x -> Literal_value.pp ppf x
-  | T_abstraction x -> Abstraction.pp_type_abs type_expression ppf x
-  | T_for_all x -> Abstraction.pp_forall type_expression ppf x
+ fun ppf tc -> type_content_impl type_expression_orig ppf tc
 
 
 and type_expression_orig ppf (te : type_expression) : unit =
-  (* TODO: we should have a way to hook custom pretty-printers for some types and/or track the "origin" of types as they flow through the constraint solver. This is a temporary quick fix *)
   match te.orig_var with
-  | None ->
-    if Option.is_some (Combinators.get_t_bool te)
-    then bool ppf
-    else if Option.is_some (Combinators.get_t_option te)
-    then option ppf te
-    else fprintf ppf "%a" type_content_orig te.type_content
-  | Some v -> type_expression ppf (Combinators.t_variable ~loc:te.location v ())
+  | None -> type_expression_impl type_content_orig ppf te
+  | Some (path, v) ->
+    let rec module_path ppf = function
+      | [] -> type_expression ppf (Combinators.t_variable ~loc:te.location v ())
+      | m :: ms -> fprintf ppf "%a.%a" Module_var.pp m module_path ms
+    in
+    module_path ppf path
 
 
 let rec expression ppf (e : expression) =

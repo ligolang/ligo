@@ -30,7 +30,9 @@ module Row = Row.Make (Layout)
 
 type t =
   { content : content
-  ; orig_var : (Type_var.t option[@equal.ignore] [@compare.ignore] [@hash.ignore])
+  ; orig_var :
+      ((Module_var.t list * Type_var.t) option
+      [@equal.ignore] [@compare.ignore] [@hash.ignore])
   ; location : (Location.t[@equal.ignore] [@compare.ignore] [@hash.ignore] [@sexp.opaque])
   }
 

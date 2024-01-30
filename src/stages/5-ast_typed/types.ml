@@ -29,7 +29,8 @@ and row_element = ty_expr Row.t
 
 and type_expression =
   { type_content : type_content
-  ; orig_var : Type_var.t option [@eq.ignore] [@hash.ignore] [@compare.ignore]
+  ; orig_var : (Module_var.t list * Type_var.t) option
+        [@eq.ignore] [@hash.ignore] [@compare.ignore]
   ; location : Location.t [@eq.ignore] [@hash.ignore] [@compare.ignore]
   }
 

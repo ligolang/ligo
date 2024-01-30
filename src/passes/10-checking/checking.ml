@@ -402,9 +402,10 @@ let t_record_with_orig_var (fields : Type.t Record.t) : (Type.t, _, _) C.t =
     (match orig_var with
     | None -> create_type @@ Type.t_record row
     | Some orig_var ->
+      let%bind path = path () in
       return
         { (Type.t_record row ~loc:(Type_var.get_location orig_var) ()) with
-          orig_var = Some orig_var
+          orig_var = Some (path, orig_var)
         })
 
 
@@ -1708,7 +1709,8 @@ and infer_declaration (decl : I.declaration)
          frags)
   | D_type { type_binder; type_expr; type_attr } ->
     let%bind type_expr = With_default_layout.evaluate_type type_expr in
-    let type_expr = { type_expr with orig_var = Some type_binder } in
+    let%bind path = path () in
+    let type_expr = { type_expr with orig_var = Some (path, type_binder) } in
     let%bind loc = loc () in
     const
       E.(
@@ -1735,11 +1737,15 @@ and infer_declaration (decl : I.declaration)
         @@ Signature.S_value (var, expr_type, Context.Attr.of_core_attr attr)
       ]
   | D_module { module_binder; module_; module_attr; annotation } ->
+    let%bind path = path () in
+    let inner_path = path @ [ module_binder ] in
     let%bind module_, sig_ =
       match annotation with
       | None ->
         (* For non-annoted signatures, we use the one inferred *)
-        let%bind inferred_sig, module_ = infer_module_expr module_ in
+        let%bind inferred_sig, module_ =
+          set_path inner_path @@ infer_module_expr module_
+        in
         return (module_, remove_non_public inferred_sig)
       | Some { signature; filter } ->
         (* For annoted signtures, we evaluate the signature, cast the inferred signature to it, and check that all entries implemented where declared *)
@@ -1757,37 +1763,43 @@ and infer_declaration (decl : I.declaration)
           then List.mem annoted_entries ~equal:Value_var.equal
           else fun _ -> true
         in
-        let%bind inferred_sig, module_ = infer_module_expr ~is_annoted_entry module_ in
-        let%bind annoted_sig, _ = cast_signature inferred_sig annoted_sig in
-        let final_sig = if filter then annoted_sig else inferred_sig in
-        return (module_, remove_non_public final_sig)
+        set_path inner_path
+        @@ let%bind inferred_sig, module_ = infer_module_expr ~is_annoted_entry module_ in
+           let%bind annoted_sig, _ = cast_signature inferred_sig annoted_sig in
+           let final_sig = if filter then annoted_sig else inferred_sig in
+           return (module_, remove_non_public final_sig)
     in
     let%bind loc = loc () in
-    const
-      E.(
-        let%bind module_ = module_ in
-        let%bind signature = decode_signature sig_ in
-        return
-        @@ O.D_module
-             { module_binder
-             ; module_ = { module_ with signature }
-             ; module_attr
-             ; annotation = ()
-             })
-      [ Location.wrap ~loc
-        @@ Signature.S_module (module_binder, sig_, Attrs.Module.of_core_attr module_attr)
-      ]
+    set_path inner_path
+    @@ const
+         E.(
+           let%bind module_ = module_ in
+           let%bind signature = decode_signature sig_ in
+           return
+           @@ O.D_module
+                { module_binder
+                ; module_ = { module_ with signature }
+                ; module_attr
+                ; annotation = ()
+                })
+         [ Location.wrap ~loc
+           @@ Signature.S_module
+                (module_binder, sig_, Attrs.Module.of_core_attr module_attr)
+         ]
   | D_signature { signature_binder; signature; signature_attr } ->
-    let%bind signature = With_default_layout.evaluate_signature_expr signature in
+    let%bind path = path () in
+    let inner_path = path @ [ signature_binder ] in
     let%bind loc = loc () in
-    const
-      E.(
-        let%bind signature = decode_signature signature in
-        return @@ O.D_signature { signature_binder; signature; signature_attr })
-      [ Location.wrap ~loc
-        @@ Signature.S_module_type
-             (signature_binder, signature, Attrs.Signature.of_core_attr signature_attr)
-      ]
+    set_path inner_path
+    @@ let%bind signature = With_default_layout.evaluate_signature_expr signature in
+       const
+         E.(
+           let%bind signature = decode_signature signature in
+           return @@ O.D_signature { signature_binder; signature; signature_attr })
+         [ Location.wrap ~loc
+           @@ Signature.S_module_type
+                (signature_binder, signature, Attrs.Signature.of_core_attr signature_attr)
+         ]
   | D_module_include module_ ->
     let%bind sig_, module_ = infer_module_expr module_ in
     const
@@ -1896,22 +1908,24 @@ let type_program ~raise ~options ?env program =
     ~raise
     ~options
     ~loc:(loc_of_program program)
+    ~path:[]
     ?env
     ()
 
 
-let type_declaration ~raise ~options ?env decl =
+let type_declaration ~raise ~options ~path ?env decl =
   C.run_elab
     (let%map.C _, decl = infer_declaration decl in
      decl)
     ~raise
     ~options
     ~loc:decl.location
+    ~path
     ?env
     ()
 
 
-let type_expression ~raise ~options ?env ?tv_opt expr =
+let type_expression ~raise ~options ~path ?env ?tv_opt expr =
   C.run_elab
     (match tv_opt with
     | Some type_ ->
@@ -1923,16 +1937,18 @@ let type_expression ~raise ~options ?env ?tv_opt expr =
     ~raise
     ~options
     ~loc:expr.location
+    ~path
     ?env
     ()
 
 
-let eval_signature_sort ~raise ~options ~loc ?env old_sig =
+let eval_signature_sort ~raise ~options ~loc ~path ?env old_sig =
   C.run_elab
     (let%map.C sig_sort = infer_signature_sort (C.encode_signature old_sig) in
      E.(decode_sig_sort sig_sort))
     ~raise
     ~options
     ~loc
+    ~path
     ?env
     ()

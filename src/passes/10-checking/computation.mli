@@ -12,15 +12,23 @@ include Monad.S3 with type ('a, 'err, 'wrn) t := ('a, 'err, 'wrn) t
 val all_lmap : ('a, 'err, 'wrn) t Label.Map.t -> ('a Label.Map.t, 'err, 'wrn) t
 val all_lmap_unit : (unit, 'err, 'wrn) t Label.Map.t -> (unit, 'err, 'wrn) t
 
-(** {1 Location Handling} *)
+(** {1 Module Path Handling} *)
 
-(** [loc ()] returns the current location *)
+(** [path ()] returns the current module path. *)
+val path : unit -> (Module_var.t list, 'err, 'wrn) t
+
+(** [set_path path t] sets the current module path to [path] in computation [t]. *)
+val set_path : Module_var.t list -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
+
+(** {2 Location Handling} *)
+
+(** [loc ()] returns the current location. *)
 val loc : unit -> (Location.t, 'err, 'wrn) t
 
-(** [set_loc loc t] sets the current location to [loc] in computation [t] *)
+(** [set_loc loc t] sets the current location to [loc] in computation [t]. *)
 val set_loc : Location.t -> ('a, 'err, 'wrn) t -> ('a, 'err, 'wrn) t
 
-(** {2 Error Handling} *)
+(** {3 Error Handling} *)
 
 (** [lift_raise f] lifts f (which may raise an error/warning) to a computation. *)
 val lift_raise : (('err, 'wrn) raise -> 'a) -> ('a, 'err, 'wrn) t
@@ -57,7 +65,7 @@ val try_all
   :  ('a, ([> `Typer_corner_case of string * Location.t ] as 'err), 'wrn) t list
   -> ('a, 'err, 'wrn) t
 
-(** {3 Compiler Options} *)
+(** {4 Compiler Options} *)
 
 (** [options ()] returns the compiler computations. *)
 val options : unit -> (Compiler_options.middle_end, 'err, 'wrn) t
@@ -76,7 +84,7 @@ module Options : sig
   val no_color : unit -> (bool, 'err, 'wrn) t
 end
 
-(** {4 Context} *)
+(** {5 Context} *)
 
 (** [context ()] returns the context. *)
 val context : unit -> (Context.t, 'err, 'wrn) t
@@ -321,7 +329,7 @@ val generalize
   :  (Type.t * 'a, 'err, 'wrn) t
   -> (Type.t * (Type_var.t * Kind.t) list * 'a, 'err, 'wrn) t
 
-(** {5 Unification and Subtyping} *)
+(** {6 Unification and Subtyping} *)
 
 type unify_error =
   [ `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
@@ -359,7 +367,7 @@ val subtype
      , 'wrn )
      t
 
-(** {6 Fragments} *)
+(** {7 Fragments} *)
 
 (** A fragment is defined as a collection of variable bindings. They're used in the typing
     of patterns.
@@ -428,7 +436,7 @@ module With_frag : sig
   val run : ('a, 'err, 'wrn) t -> (fragment * 'a, 'err, 'wrn) e
 end
 
-(** {7 Execution}*)
+(** {8 Execution}*)
 
 (** This section defines functions related to running computations. *)
 
@@ -445,6 +453,7 @@ val run_elab
   -> raise:(Errors.typer_error, Main_warnings.all) raise
   -> options:Compiler_options.middle_end
   -> loc:Location.t
+  -> path:Module_var.t list
   -> ?env:Ast_typed.signature
   -> unit
   -> 'a

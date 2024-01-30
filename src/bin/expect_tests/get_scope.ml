@@ -358,7 +358,7 @@ let%expect_test _ =
     (mytype#1:5-11 -> mytype)
     Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 5-11
     Decl Range: File "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
-    Content: : |sum[Bar -> string , Foo -> int({ name: Foo }, { name: Bar })]|
+    Content: |sum[Bar -> string , Foo -> int({ name: Foo }, { name: Bar })]|
     references: []
     Module definitions: |}]
 
@@ -660,7 +660,7 @@ let%expect_test _ =
     (myrec#1:5-10 -> myrec)
     Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 5-10
     Decl Range: File "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
-    Content: : |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
+    Content: |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
     references: []
     Module definitions: |}];
   run_ligo_good
@@ -958,7 +958,7 @@ let%expect_test _ =
     (foo_variant#1:5-16 -> foo_variant)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 5-16
     Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45
-    Content: : |sum[Bar -> string , Foo -> int({ name: Foo }, { name: Bar })]|
+    Content: |sum[Bar -> string , Foo -> int({ name: Foo }, { name: Bar })]|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 26-37 ,
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 46-57 ,
@@ -966,8 +966,8 @@ let%expect_test _ =
     (foo_record#2:5-15 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 5-15
     Decl Range: File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58
-    Content: : |record[bar -> foo_variant ,
-                       foo -> foo_variant({ name: foo }, { name: bar })]|
+    Content: |record[bar -> foo_variant ,
+                     foo -> foo_variant({ name: foo }, { name: bar })]|
     references:
       File "../../test/contracts/get_scope_tests/nominal_types.mligo", line 13, characters 15-25
     Module definitions: |}]
@@ -2316,7 +2316,7 @@ let%expect_test _ =
       (fn#49:4-6 -> fn)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 4-6
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 0-35
-      Content: |resolved: [x]int -> nat|
+      Content: |resolved: [x]A.t -> s|
       references: []
       Mod Path =
       Def Type = Global
@@ -2332,7 +2332,7 @@ let%expect_test _ =
       (t#2:9-10 -> t)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 9-10
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 4-16
-      Content: : |int|
+      Content: |int|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 12-13 ,
         File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 10-11 ,
@@ -2341,7 +2341,7 @@ let%expect_test _ =
       (x#3:12-13 -> x)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 12-13
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 4-28
-      Content: : |funtype 'a : * . record[foo -> 'a({ name: foo })]|
+      Content: |funtype 'a : * . record[foo -> 'a({ name: foo })]|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 19-20 ,
         File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 13-14 ,
@@ -2349,50 +2349,50 @@ let%expect_test _ =
       (foo#9:13-16 -> foo)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, characters 13-16
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, character 8 to line 10, character 8
-      Content: : |string|
+      Content: |string|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 16-19
       (bar#10:16-19 -> bar)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 16-19
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, character 8 to line 12, character 8
-      Content: : |funtype 'a : * . record[bar -> 'a({ name: bar })]|
+      Content: |funtype 'a : * . record[bar -> 'a({ name: bar })]|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 23-26
       (hmm#23:5-8 -> hmm)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 5-8
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 0-14
-      Content: : |B.x|
+      Content: |B.x|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 24, characters 12-15
       (idk#29:5-8 -> idk)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 5-8
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 29, characters 0-14
-      Content: : |A.x|
+      Content: |A.x|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 30, characters 13-16
       (s#32:5-6 -> s)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 32, characters 5-6
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 32, characters 0-12
-      Content: : |nat|
+      Content: |nat|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 36, characters 8-9 ,
         File "../../test/contracts/get_scope_tests/types.mligo", line 49, characters 25-26
       (q#33:8-9 -> q)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 8-9
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 33, characters 0-21
-      Content: : |funtype 'a : * . sum[Baz -> 'a({ name: Baz })]|
+      Content: |funtype 'a : * . sum[Baz -> 'a({ name: Baz })]|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 38, characters 13-14
       (qux#41:9-12 -> qux)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 41, characters 9-12
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 41, character 4 to line 43, character 4
-      Content: : |bool|
+      Content: |bool|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 43, characters 12-15
       (boo#44:12-15 -> boo)
       Range: File "../../test/contracts/get_scope_tests/types.mligo", line 44, characters 12-15
       Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 44, character 4 to line 46, character 4
-      Content: : |funtype 'a : * . option ('a)|
+      Content: |funtype 'a : * . option ('a)|
       references:
         File "../../test/contracts/get_scope_tests/types.mligo", line 46, characters 16-19
       Module definitions:
@@ -2439,7 +2439,7 @@ let%expect_test _ =
                         (t#2:9-10 -> t)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 9-10
                         Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 2, characters 4-16
-                        Content: : |int|
+                        Content: |int|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 5, characters 12-13 ,
                           File "../../test/contracts/get_scope_tests/types.mligo", line 21, characters 10-11 ,
@@ -2448,7 +2448,7 @@ let%expect_test _ =
                         (x#3:12-13 -> x)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 12-13
                         Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 3, characters 4-28
-                        Content: : |funtype 'a : * . record[foo -> 'a({ name: foo })]|
+                        Content: |funtype 'a : * . record[foo -> 'a({ name: foo })]|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 6, characters 19-20 ,
                           File "../../test/contracts/get_scope_tests/types.mligo", line 23, characters 13-14 ,
@@ -2456,13 +2456,13 @@ let%expect_test _ =
                         (foo#9:13-16 -> foo)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, characters 13-16
                         Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 9, character 8 to line 10, character 8
-                        Content: : |string|
+                        Content: |string|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 12, characters 16-19
                         (bar#10:16-19 -> bar)
                         Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, characters 16-19
                         Decl Range: File "../../test/contracts/get_scope_tests/types.mligo", line 10, character 8 to line 12, character 8
-                        Content: : |funtype 'a : * . record[bar -> 'a({ name: bar })]|
+                        Content: |funtype 'a : * . record[bar -> 'a({ name: bar })]|
                         references:
                           File "../../test/contracts/get_scope_tests/types.mligo", line 14, characters 23-26
                         Module definitions:
@@ -2520,7 +2520,7 @@ let%expect_test _ =
     (x#4:4-5 -> x)
     Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 4-5
     Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 0-25
-    Content: |resolved: x|
+    Content: |resolved: X.x|
     references:
       File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 10-11
     Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
@@ -2529,7 +2529,7 @@ let%expect_test _ =
     (x#1:5-6 -> x)
     Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 5-6
     Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 0-33
-    Content: : |record[a -> int , b -> string({ name: a }, { name: b })]|
+    Content: |record[a -> int , b -> string({ name: a }, { name: b })]|
     references: []
     Module definitions:
     (X#1:7-8 -> X)
@@ -2547,7 +2547,7 @@ let%expect_test _ =
                       (x#4:4-5 -> x)
                       Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 4-5
                       Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 4, characters 0-25
-                      Content: |resolved: x|
+                      Content: |resolved: X.x|
                       references:
                         File "../../test/contracts/get_scope_tests/import_x.mligo", line 3, characters 10-11
                       Mod Path = "Mangled_module__p__p__s__p__p__s_test_s_contracts_s_get_u_scope_u_tests_s_x_p_mligo"
@@ -2556,8 +2556,8 @@ let%expect_test _ =
                       (x#1:5-6 -> x)
                       Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 5-6
                       Decl Range: File "../../test/contracts/get_scope_tests/x.mligo", line 1, characters 0-33
-                      Content: : |record[a -> int ,
-                                         b -> string({ name: a }, { name: b })]|
+                      Content: |record[a -> int ,
+                                       b -> string({ name: a }, { name: b })]|
                       references: []
                       Module definitions:
 
@@ -2778,23 +2778,23 @@ let%expect_test _ =
     (t#3:5-6 -> t)
     Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 5-6
     Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 3, characters 0-32
-    Content: : |record[a -> int , b -> string({ name: a }, { name: b })]|
+    Content: |record[a -> int , b -> string({ name: a }, { name: b })]|
     references:
       File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 16-17
     (u#6:5-6 -> u)
     Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 5-6
     Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 6, characters 0-19
-    Content: : |sum[Foo -> int({ name: Foo })]|
+    Content: |sum[Foo -> int({ name: Foo })]|
     references: []
     (v#9:5-6 -> v)
     Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 5-6
     Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 9, characters 0-28
-    Content: : |sum[Bar -> ( int * string )({ name: Bar })]|
+    Content: |sum[Bar -> ( int * string )({ name: Bar })]|
     references: []
     (w#12:5-6 -> w)
     Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 5-6
     Decl Range: File "../../test/contracts/get_scope_tests/complex_patterns.mligo", line 12, characters 0-17
-    Content: : |sum[Qux -> t({ name: Qux })]|
+    Content: |sum[Qux -> t({ name: Qux })]|
     references: []
     Module definitions:
  |}]

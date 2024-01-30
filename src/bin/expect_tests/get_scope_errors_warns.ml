@@ -67,7 +67,7 @@ let%expect_test _ =
     (foo_record#1:5-15 -> foo_record)
     Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 5-15
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
-    Content: : |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
+    Content: |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
     references: []
     Module definitions:
     Errors:
@@ -145,7 +145,7 @@ let%expect_test _ =
     (toto#3:7-11 -> toto)
     Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 3, characters 7-11
     Decl Range: File "../../test/contracts/get_scope_tests/local_type.mligo", line 3, character 2 to line 4, character 2
-    Content: : |int|
+    Content: |int|
     references:
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 15-19 ,
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 23-27
@@ -276,9 +276,7 @@ let%expect_test _ =
     (main#12:4-8 -> main)
     Range: File "../../test/contracts/warning_unused.mligo", line 12, characters 4-8
     Decl Range: File "../../test/contracts/warning_unused.mligo", line 12, character 0 to line 16, character 39
-    Content: |resolved: [_, s]int -> record[x -> int , y -> int] -> ( list (operation) *
-                                                                      record[x -> int ,
-                                                                        y -> int] )|
+    Content: |resolved: [_, s]int -> storage -> ( list (operation) * storage )|
     references: []
     Mod Path =
     Def Type = Global
@@ -326,7 +324,7 @@ let%expect_test _ =
     (storage#1:5-12 -> storage)
     Range: File "../../test/contracts/warning_unused.mligo", line 1, characters 5-12
     Decl Range: File "../../test/contracts/warning_unused.mligo", line 1, character 0 to line 5, character 3
-    Content: : |record[x -> int , y -> int({ name: x }, { name: y })]|
+    Content: |record[x -> int , y -> int({ name: x }, { name: y })]|
     references:
       File "../../test/contracts/warning_unused.mligo", line 12, characters 24-31
     Module definitions: |}];

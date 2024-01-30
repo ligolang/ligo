@@ -45,7 +45,7 @@ let compile_expression
   =
   let typed =
     trace ~raise checking_tracer
-    @@ Checking.type_expression ~options:options.middle_end ~env:context expr
+    @@ Checking.type_expression ~options:options.middle_end ~env:context expr ~path:[]
   in
   typed
 

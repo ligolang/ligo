@@ -2,7 +2,7 @@ type 'a t =
   { module_path : Var.Module_var.t list
   ; element : 'a
   }
-[@@deriving eq, compare, yojson, hash]
+[@@deriving eq, compare, yojson, hash, sexp]
 
 let pp f ppf { module_path; element } =
   match module_path with

@@ -99,7 +99,10 @@ let rec decompile : I.expression -> O.expression =
 and decompile_type : I.type_expression -> O.type_expression =
  fun ty ->
   let return type_content : O.type_expression =
-    { type_content; location = ty.location; orig_var = ty.orig_var }
+    { type_content
+    ; location = ty.location
+    ; orig_var = Option.map ty.orig_var ~f:(fun v -> [], v)
+    }
   in
   match ty.type_content with
   | T_variable v -> return (O.T_variable v)

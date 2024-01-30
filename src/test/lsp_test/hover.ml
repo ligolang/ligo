@@ -381,7 +381,7 @@ let test_cases =
          ; ( pos ~line:22 ~character:7
            , List [ "type t = {foo : nat}", Ligo; "TYPE IN MODULE", Markdown ] )
          ; ( pos ~line:25 ~character:6
-           , List [ "p : t option", Ligo; "TERM IN MODULE", Markdown ] )
+           , List [ "p : M.t option", Ligo; "TERM IN MODULE", Markdown ] )
          ; ( pos ~line:29 ~character:8
            , List [ "type 'a t = 'a list", Ligo; "JUST A TYPE", Markdown ] )
          ; pos ~line:38 ~character:4, hover_for_term_x
@@ -457,7 +457,7 @@ let test_cases =
          ; ( pos ~line:20 ~character:14
            , List [ "type t = { foo: nat }", Ligo; "TYPE IN NAMESPACE", Markdown ] )
          ; ( pos ~line:22 ~character:15
-           , List [ "p : option<t>", Ligo; "TERM IN NAMESPACE", Markdown ] )
+           , List [ "p : option<M.t>", Ligo; "TERM IN NAMESPACE", Markdown ] )
          ; ( pos ~line:26 ~character:5
            , List [ "type t<a> = list<a>", Ligo; "JUST A TYPE", Markdown ] )
          ; pos ~line:35 ~character:6, hover_for_term_x
@@ -542,6 +542,60 @@ let test_cases =
         ; pos ~line:9 ~character:13, one "j : string"
         ; pos ~line:12 ~character:10, one "a : int"
         ; pos ~line:12 ~character:13, one "b : string"
+        ]
+    }
+  ; { test_name = "The original var preserves the module path"
+    ; file = "contracts/lsp/hover/module_in_type.mligo"
+    ; hovers =
+        [ pos ~line:6 ~character:4, one "x1 : M.t"
+        ; pos ~line:7 ~character:4, one "y1 : M.t"
+        ; pos ~line:9 ~character:4, one "x2 : M.u"
+        ; pos ~line:10 ~character:7, one "y2 : unit"
+        ; pos ~line:12 ~character:4, one "x3 : M.v"
+        ; pos ~line:13 ~character:7, one "y3 : M.u"
+        ; pos ~line:14 ~character:7, one "z3 : unit"
+        ; pos ~line:20 ~character:4, one "x4 : N.t"
+        ; pos ~line:21 ~character:7, one "y4 : M.t"
+        ; pos ~line:22 ~character:7, one "z4 : unit"
+        ; pos ~line:29 ~character:4, one "x5 : O.u"
+        ; pos ~line:30 ~character:7, one "y5 : N.t"
+        ]
+    }
+  ; { test_name = "Preserves module path in failwith"
+    ; file = "contracts/lsp/hover/failwith_module_path.mligo"
+    ; hovers =
+        [ pos ~line:6 ~character:4, one "x : A.B.t"
+        ; pos ~line:7 ~character:4, one "y : A.B.t"
+        ]
+    }
+  ; { test_name = "Preserves module path inside option type"
+    ; file = "contracts/lsp/hover/option_module_path.mligo"
+    ; hovers = [ pos ~line:4 ~character:4, one "x : A.t option" ]
+    }
+  ; { test_name = "Preserves module path of an imported module"
+    ; file = "contracts/lsp/hover/imported_module.mligo"
+    ; hovers =
+        [ pos ~line:2 ~character:4, one "x : M.t"
+        ; pos ~line:3 ~character:4, one "y : M.t option"
+        ]
+    }
+  ; { test_name = "Shows the correct path relative to the current env"
+    ; file = "contracts/lsp/hover/module_access.mligo"
+    ; hovers =
+        [ pos ~line:3 ~character:6, one "x : t"
+        ; pos ~line:6 ~character:4, one "y : M.t"
+        ; pos ~line:6 ~character:10, one "x : M.t"
+        ]
+    }
+  ; { test_name = "Shows the correct path relative to the current envs"
+    ; file = "contracts/lsp/hover/module_accesses.mligo"
+    ; hovers =
+        [ pos ~line:14 ~character:10, one "x : (M.u * O.t * O.u) option"
+        ; (* TODO: perhaps should yield the same type as above? *)
+          pos ~line:14 ~character:4, one "y : (Import.M.u * N.t * N.u) option"
+        ; (* TODO: type M.export? *)
+          pos ~line:16 ~character:11, one "type export = M.u * O.t * O.u"
+        ; pos ~line:16 ~character:5, one "type t = O.export"
         ]
     }
   ]
