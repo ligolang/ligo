@@ -83,16 +83,7 @@ export class LspExtension extends LigoExtension {
 
 
   public activate(context: LigoContext, _server: LigoServer, protocolClient: LigoProtocolClient): void {
-    let ligoPath: string
-    try {
-      ligoPath = getBinaryPath(ligoBinaryInfo)
-    } catch (err) {
-      if (err instanceof BinaryNotFoundException) {
-        ligoPath = undefined
-      } else {
-        throw err
-      }
-    }
+    let ligoPath: string = getBinaryPath(ligoBinaryInfo)
 
     const languageServerServerOptions: ServerOptions = {
       command: ligoPath,
@@ -166,10 +157,8 @@ export class LspExtension extends LigoExtension {
     );
 
     // Start the client. This will also launch the server
-    if (ligoPath) {
-      this.semanticTokensClient.start()
-      this.languageServerClient.start()
-    }
+    this.semanticTokensClient.start()
+    this.languageServerClient.start()
   }
 
   public deactivate(): Thenable<void> | undefined {
