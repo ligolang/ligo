@@ -46,3 +46,5 @@ Resolves <!-- insert the related issue here, or none if not appliable -->.
 * [ ] Start titles under `## Changelog` section with #### (if appropriate).
 * [ ] There is no image or uploaded file in changelog
 * [ ] Examples in changed behaviour have been added to the changelog (for breaking change / feature).
+
+/label ~"direction::Language Server"
