@@ -194,6 +194,7 @@ let make_lsp_virtual_main
     @@ Checking.eval_signature_sort
          ~options:options.middle_end
          ~loc:Location.dummy
+         ~path:[]
          { typed.pr_sig with sig_items = typed.pr_sig.sig_items @ context.sig_items }
   in
   { typed with pr_sig = { typed.pr_sig with sig_sort } }, core

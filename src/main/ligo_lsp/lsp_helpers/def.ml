@@ -100,23 +100,34 @@ let use_var_name_if_available : type_info -> Ast_core.type_expression =
  fun { var_name; contents } -> Option.value ~default:contents var_name
 
 
-let get_type (vdef : Scopes.Types.vdef) : type_info option =
+(** Get the [type_info] from [vdef.t]. If the type is [Resolved] and [use_module_accessor]
+    is [true], then this function will try to create a [T_module_accessor] using the
+    module path in which the [orig_var] was defined. For example, if we have
+    [module M = struct type t = int end], then the user will see [M.t] when hovering over
+    something of this type. Returns [None] if the type is [Unresolved]. *)
+let get_type ~(use_module_accessor : bool) (vdef : Scopes.Types.vdef) : type_info option =
   match vdef.t with
-  | Core ty -> Some { var_name = None; contents = ty }
-  | Resolved ({ location; _ } as ty) ->
-    let orig_var =
-      Option.map
-        ~f:(fun x -> Ast_core.{ type_content = T_variable x; location })
-        ty.orig_var (* This is non-empty in case there is a name for our type *)
-    in
+  | Core contents -> Some { var_name = None; contents }
+  | Resolved { type_content; orig_var; location } ->
     Some
-      { var_name = orig_var
+      { var_name =
+          (* This is non-empty in case there is a name for our type. *)
+          Option.map orig_var ~f:(fun (module_path, element) ->
+              { Ast_core.type_content =
+                  (match module_path with
+                  | _ :: _ when use_module_accessor ->
+                    T_module_accessor { module_path; element }
+                  | _ -> T_variable element)
+              ; location
+              })
       ; contents =
-          (* We want to preserve both the type var and type expression here, so we
-             set [use_orig_var = True] so this expression will be pretty,
-             and we also set [orig_var = None] before untyping so we're getting
-             full expression and not just `T_variable` *)
-          Checking.untype_type_expression ~use_orig_var:true { ty with orig_var = None }
+          (* We want to preserve both the type var and type expression here, so we set
+             [use_orig_var = True] so this expression will be pretty, and we also set
+             [orig_var = None] before untyping so we're getting full expression and not
+             just [T_variable]. *)
+          Checking.untype_type_expression
+            ~use_orig_var:true
+            { type_content; orig_var = None; location }
       }
   | Unresolved -> None
 

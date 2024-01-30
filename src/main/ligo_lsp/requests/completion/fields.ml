@@ -193,11 +193,15 @@ let completion_distance_monoid : completion_distance Cst_shared.Fold.monoid =
   }
 
 
-let complete_fields
+type linearized_path =
+  | Projection of (Position.t * lexeme option list)
+  | Module of (Modules.def_scope * lexeme wrap list)
+
+let get_linearized_path
     (type a)
     (module C : Compatible_CST with type cst = a)
-    ({ cst; pos; _ } as input : a Common.input)
-    : CompletionItem.t list
+    ({ cst; pos; _ } : a Common.input)
+    : linearized_path option
   =
   (* Find the greatest dot position that is less than or equal to the position
      of the cursor. *)
@@ -279,24 +283,15 @@ let complete_fields
         Position.(is_to_the_left (of_pos name#region#stop))
           farthest_dot_position_before_cursor)
   in
-  let expr_path_impl
+  let linearize_expr_path
       (node : (C.expr_module_path, C.type_expr_module_path, C.module_name_path) expr_kind)
-      : CompletionItem.t list option
+      : Modules.def_scope * lexeme wrap list
     =
+    let linearized = linearize_module_path node in
     match node with
-    | Module_path_expr expr ->
-      let module_names_before_cursor = linearize_module_path (Module_path_expr expr) in
-      Modules.module_path_impl module_names_before_cursor input Term_scope
-    | Module_path_type_expr type_expr ->
-      let module_names_before_cursor =
-        linearize_module_path (Module_path_type_expr type_expr)
-      in
-      Modules.module_path_impl module_names_before_cursor input Type_scope
-    | Module_path_selection module_name ->
-      let module_names_before_cursor =
-        linearize_module_path (Module_path_selection module_name)
-      in
-      Modules.module_path_impl module_names_before_cursor input Module_scope
+    | Module_path_expr _ -> Term_scope, linearized
+    | Module_path_type_expr _ -> Type_scope, linearized
+    | Module_path_selection _ -> Module_scope, linearized
   in
   let is_region_of_interest (region : Region.t) : bool =
     let open Range in
@@ -311,9 +306,9 @@ let complete_fields
     contains_position farthest_dot_position_before_cursor range
     && contains_position farthest_lexeme_position_before_cursor range
   in
-  let field_completion () =
-    Option.value ~default:[]
-    @@
+  if Position.equal pos farthest_dot_position_before_cursor
+  then None
+  else (
     match C.cst_witness with
     | Witness_CameLIGO ->
       let open Cst_cameligo.Fold in
@@ -327,39 +322,46 @@ let complete_fields
            cursor is part of this projection. Then, we take every field whose
            selector (the dot) is before such token. *)
           when is_region_of_interest node.region ->
-          let struct_pos, proj_fields_before_cursor = linearize_projection node.value in
-          Fold.Continue
-            (Records.projection_impl input struct_pos proj_fields_before_cursor)
+          Fold.Continue (Projection (linearize_projection node.value))
         | S_reg (S_module_path S_expr) when is_region_of_interest node.region ->
-          Continue (expr_path_impl (Module_path_expr node.value))
+          Continue (Module (linearize_expr_path (Module_path_expr node.value)))
         | S_reg (S_module_path S_type_expr) when is_region_of_interest node.region ->
-          Continue (expr_path_impl (Module_path_type_expr node.value))
+          Continue (Module (linearize_expr_path (Module_path_type_expr node.value)))
         | S_reg (S_module_path S_module_name) when is_region_of_interest node.region ->
-          Continue (expr_path_impl (Module_path_selection node.value))
+          Continue (Module (linearize_expr_path (Module_path_selection node.value)))
         | _ -> Skip
       in
-      fold_map_cst Fold.last_monoid instruction cst
+      fold_cst None (Fn.const Option.some) instruction cst
     | Witness_JsLIGO ->
       let open Cst_jsligo.Fold in
       let instruction (Some_node (node, sing)) =
         match sing with
         | S_reg S_projection when is_region_of_interest node.region ->
-          let struct_pos, proj_fields_before_cursor = linearize_projection node.value in
-          Fold.Continue
-            (Records.projection_impl input struct_pos proj_fields_before_cursor)
+          Fold.Continue (Projection (linearize_projection node.value))
         | S_reg (S_namespace_path S_expr) when is_region_of_interest node.region ->
-          Continue (expr_path_impl (Module_path_expr node.value))
+          Continue (Module (linearize_expr_path (Module_path_expr node.value)))
         | S_reg (S_namespace_path S_type_expr) when is_region_of_interest node.region ->
-          Continue (expr_path_impl (Module_path_type_expr node.value))
+          Continue (Module (linearize_expr_path (Module_path_type_expr node.value)))
         | S_reg (S_namespace_path S_namespace_name) when is_region_of_interest node.region
-          -> Continue (expr_path_impl (Module_path_selection node.value))
+          -> Continue (Module (linearize_expr_path (Module_path_selection node.value)))
         | _ -> Skip
       in
-      fold_map_cst Fold.last_monoid instruction cst
-  in
-  if Position.equal pos farthest_dot_position_before_cursor
-  then []
-  else field_completion ()
+      fold_cst None (Fn.const Option.some) instruction cst)
+
+
+let complete_fields
+    (type a)
+    (module C : Compatible_CST with type cst = a)
+    (input : a Common.input)
+    : CompletionItem.t list
+  =
+  Option.value ~default:[]
+  @@ Option.bind ~f:(function
+         | Projection (struct_pos, proj_fields_before_cursor) ->
+           Records.projection_impl input struct_pos proj_fields_before_cursor
+         | Module (def_scope, module_names_before_cursor) ->
+           Modules.module_path_impl module_names_before_cursor input def_scope)
+  @@ get_linearized_path (module C) input
 
 
 let get_fields_completions (input : Common.input_d) : CompletionItem.t list =

@@ -955,7 +955,7 @@ let add_shadowed_nested_t_sum tsum_list (tvar, type_) =
    fun shadower_tvar (acc, is_top_level) type_ ->
     let return x = x, false in
     match type_.content, type_.orig_var with
-    | T_sum _, Some tvar ->
+    | T_sum _, Some (_, tvar) ->
       if Type_var.equal tvar shadower_tvar && not is_top_level
       then return ((tvar, type_) :: acc)
       else return acc
@@ -1061,7 +1061,7 @@ let get_record : t -> Type.t Label.Map.t -> (Type_var.t option * Type.row) optio
            |> Map.to_alist
            |> List.find_map ~f:(fun (_, type_) -> is_record_type type_)
          with
-         | Some _ as result -> result
+         | Some (orig_var_opt, row) -> Some (Option.map orig_var_opt ~f:snd, row)
          | None ->
            let modules = to_module_map t in
            List.fold_left

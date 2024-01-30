@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\nPreserve a type's module location in hover. So if there is `M.t`, it will be displayed as such rather than just `t`.\\n\\n"
+merge_request: '3027'
+title: "[#1964] Preserve module path in orig_var"
+type: fixed
+            

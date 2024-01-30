@@ -10,6 +10,51 @@ let empty : t = UidMap.empty
 (** Mapping from file name to mangled module's definitions *)
 type mangled_mdefs = mdef SMap.t
 
+(** Mapping from mangled UIDs to resolved UIDs. *)
+type mangled_to_resolved = Uid.t UidMap.t
+
+let extracted_mangled_uids : def list -> mangled_to_resolved =
+  List.fold ~init:UidMap.empty ~f:(fun acc -> function
+    | Variable _ | Type _ -> acc
+    | Module mdef ->
+      (match mdef.mod_case with
+      | Alias { resolve_mod_name = Unresolved_path _ } | Def _ -> acc
+      | Alias { resolve_mod_name = Resolved_path resolved } ->
+        if Location.equal (Uid.to_location resolved.resolved_module) Location.env
+           && String.is_prefix
+                (Uid.to_name resolved.resolved_module)
+                ~prefix:"Mangled_module_"
+        then
+          (* n.b.: If the same module is imported twice (or some constructor is exported
+             twice from different imports), then by my observations, we'll pick the one
+             that was imported first. *)
+          UidMap.add resolved.resolved_module mdef.uid acc
+        else acc))
+
+
+let (unmangle_module_names_in_core_type, unmangle_module_names_in_typed_type) :
+      (mangled_to_resolved -> Ast_core.type_expression -> Ast_core.type_expression)
+      * (mangled_to_resolved -> Ast_typed.type_expression -> Ast_typed.type_expression)
+  =
+  let find_if_not_generated mangled_to_resolved mvar =
+    if Ligo_prim.Module_var.is_generated mvar
+    then mvar
+    else
+      Option.value_map ~default:mvar ~f:id_to_mvar
+      @@ UidMap.find_opt (mvar_to_id mvar) mangled_to_resolved
+  in
+  let unmangle_module_list mangled_to_resolved =
+    List.map ~f:(find_if_not_generated mangled_to_resolved)
+  in
+  ( (fun mangled_to_resolved ->
+      Misc.map_core_type_expression_module_path
+        (unmangle_module_list mangled_to_resolved)
+        (List.Ne.map (find_if_not_generated mangled_to_resolved)))
+  , fun mangled_to_resolved ->
+      Misc.map_typed_type_expression_module_path
+        (unmangle_module_list mangled_to_resolved) )
+
+
 let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
  fun mangled_uids defs ->
   let rec collect : def -> (string * mdef) list = function
@@ -47,10 +92,28 @@ let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
   List.filter_map ~f:mangled_alias_filter
 
 
-let inline_mangled : mangled_mdefs -> t -> def list -> def list =
- fun mangled_file_name_to_mdef mangled_uids ->
+let inline_mangled : mangled_mdefs -> t -> mangled_to_resolved -> def list -> def list =
+ fun mangled_file_name_to_mdef mangled_uids mangled_to_resolved ->
   let rec inline : def -> def = function
-    | (Variable _ | Type _) as def -> def
+    | Variable vdef ->
+      Variable
+        { vdef with
+          t =
+            (match vdef.t with
+            | Core core ->
+              Core (unmangle_module_names_in_core_type mangled_to_resolved core)
+            | Resolved typed ->
+              Resolved (unmangle_module_names_in_typed_type mangled_to_resolved typed)
+            | Unresolved -> Unresolved)
+        }
+    | Type tdef ->
+      Type
+        { tdef with
+          content =
+            Option.map
+              ~f:(unmangle_module_names_in_core_type mangled_to_resolved)
+              tdef.content
+        }
     | Module mdef ->
       let inlined_mdef =
         match mdef.mod_case with
@@ -90,6 +153,7 @@ let inline_mangled : mangled_mdefs -> t -> def list -> def list =
 let patch : t -> def list -> def list =
  fun mangled_uids defs ->
   let mangled_file_name_to_mdef = extract_mangled_mdefs mangled_uids defs in
+  let mangled_to_resolved = extracted_mangled_uids defs in
   defs
   |> strip_mangled_defs mangled_file_name_to_mdef mangled_uids
-  |> inline_mangled mangled_file_name_to_mdef mangled_uids
+  |> inline_mangled mangled_file_name_to_mdef mangled_uids mangled_to_resolved

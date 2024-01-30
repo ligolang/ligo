@@ -245,12 +245,19 @@ let get_mod_path = function
   | Module m -> m.mod_path
 
 
-(** [mvar_to_id] takes and [Module_var.t] and gives id of the form
-    [{name}#{line}:{start_col}-{end_col}] *)
+(** [mvar_to_id] takes a [Module_var.t] and gives an [Uid.t] of the form
+    [{name}#{line}:{start_col}-{end_col}]. *)
 let mvar_to_id (m : Module_var.t) : Uid.t =
   let name = Format.asprintf "%a" Module_var.pp m in
   let loc = Module_var.get_location m in
   Uid.make name loc
+
+
+(** The opposite operation of [mvar_to_id]. This function is unsafe. *)
+let id_to_mvar (uid : Uid.t) : Module_var.t =
+  let name = Uid.to_name uid in
+  let loc = Uid.to_location uid in
+  Module_var.of_input_var name ~loc
 
 
 type 'scope scope_case = Location.t * 'scope list

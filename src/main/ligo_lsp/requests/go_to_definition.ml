@@ -80,17 +80,14 @@ let find_module_by_string_path
 let find_last_def_by_name_and_level (def : Scopes.def)
     : Scopes.def list -> Scopes.def option
   =
+  let open Scopes.Types in
   List.max_elt ~compare:(fun def1 def2 ->
-      let open Scopes.Types in
       Simple_utils.Location_ordered.compare (get_range def1) (get_range def2))
-  <@ List.filter
-       ~f:
-         Scopes.Types.(
-           fun def' ->
-             match def, def' with
-             | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
-               String.equal (get_def_name def) (get_def_name def')
-             | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
+  <@ List.filter ~f:(fun def' ->
+         match def, def' with
+         | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
+           String.equal (get_def_name def) (get_def_name def')
+         | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
 
 
 module Mod_identifier = struct

@@ -51,9 +51,9 @@ let add_module_signature loc signature env =
                   Typed signatures already handle this, so, we'll do the next hack:
                   1. If we want to add a resolved signature then put it in the map.
                   2. Otherwise add it only when the key is absent.*)
-                 match old, signature with
-                 | _, Resolved _ -> signature
-                 | _ -> old)
+                 match signature with
+                 | Resolved _ -> signature
+                 | Core _ | Unresolved -> old)
                old)
         env.module_signatures
   }
@@ -80,7 +80,7 @@ module Of_Ast_typed = struct
     | Type_binding (v, t) ->
       let t =
         match t.orig_var with
-        | Some t' -> { t with type_content = T_variable t' }
+        | Some (path, t') -> { t with type_content = T_variable t' }
         | None -> t
       in
       let loc = Value_var.get_location v in
@@ -550,26 +550,25 @@ module Typing_env = struct
     =
     let typed_prg =
       Simple_utils.Trace.to_stdlib_result
-      @@ Checking.type_declaration ~options ~env:tenv.type_env decl
+      @@ Checking.type_declaration ~options ~env:tenv.type_env ~path:[] decl
     in
-    Result.(
-      match typed_prg with
-      | Ok (decls, ws) ->
-        List.fold_left decls ~init:tenv ~f:(fun tenv decl ->
-            let bindings =
-              Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
-            in
-            let type_env =
-              { tenv.type_env with
-                sig_items = tenv.type_env.sig_items @ Ast_typed.Misc.to_sig_items [ decl ]
-              }
-            in
-            let decls = tenv.decls @ [ decl ] in
-            let () = List.iter ws ~f:raise.warning in
-            { type_env; bindings; decls })
-      | Error (e, ws) ->
-        collect_warns_and_errs ~raise Main_errors.checking_tracer (e, ws);
-        tenv)
+    match typed_prg with
+    | Ok (decls, ws) ->
+      List.fold_left decls ~init:tenv ~f:(fun tenv decl ->
+          let bindings =
+            Of_Ast_typed.extract_binding_types tenv.bindings decl.wrap_content
+          in
+          let type_env =
+            { tenv.type_env with
+              sig_items = tenv.type_env.sig_items @ Ast_typed.Misc.to_sig_items [ decl ]
+            }
+          in
+          let decls = tenv.decls @ [ decl ] in
+          let () = List.iter ws ~f:raise.warning in
+          { type_env; bindings; decls })
+    | Error (e, ws) ->
+      collect_warns_and_errs ~raise Main_errors.checking_tracer (e, ws);
+      tenv
 
 
   (* If our file contains entrypoints, we should type-check them (e.g. check that
@@ -585,7 +584,7 @@ module Typing_env = struct
     let sig_sort : Ast_typed.sig_sort =
       match
         Simple_utils.Trace.to_stdlib_result
-        @@ Checking.eval_signature_sort ~options ~loc tenv.type_env
+        @@ Checking.eval_signature_sort ~options ~loc ~path:[] tenv.type_env
       with
       | Ok (sig_sort, ws) ->
         List.iter ws ~f:raise.warning;

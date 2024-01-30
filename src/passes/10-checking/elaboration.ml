@@ -8,32 +8,32 @@ module O = Ast_typed
 
 type error = Errors.typer_error
 type warning = Main_warnings.all
-type 'a t = raise:(error, warning) raise -> Substitution.t -> 'a
+type 'a t = path:Module_var.t list -> raise:(error, warning) raise -> Substitution.t -> 'a
 
 include Monad.Make (struct
   type nonrec 'a t = 'a t
 
-  let return result ~raise:_ _subst = result
-  let bind t ~f ~raise subst = (f (t ~raise subst)) ~raise subst
+  let return result ~path:_ ~raise:_ _subst = result
+  let bind t ~f ~path ~raise subst = (f (t ~path ~raise subst)) ~path ~raise subst
   let map = `Define_using_bind
 end)
 
 let all_lmap (lmap : 'a t Label.Map.t) : 'a Label.Map.t t =
- fun ~raise subst -> Map.map ~f:(fun t -> t ~raise subst) lmap
+ fun ~path ~raise subst -> Map.map ~f:(fun t -> t ~path ~raise subst) lmap
 
 
 let all_lmap_unit (lmap : unit t Label.Map.t) : unit t =
- fun ~raise subst -> Label.Map.iter ~f:(fun t -> t ~raise subst) lmap
+ fun ~path ~raise subst -> Label.Map.iter ~f:(fun t -> t ~path ~raise subst) lmap
 
 
 include Let_syntax
 
-let rec decode (type_ : Type.t) ~raise subst =
+let rec decode (type_ : Type.t) ~path ~raise subst =
   let return type_content : O.type_expression =
     { type_content; orig_var = type_.orig_var; location = type_.location }
   in
-  let decode type_ = decode type_ ~raise subst in
-  let decode_row row = decode_row row ~raise subst in
+  let decode type_ = decode type_ ~raise ~path subst in
+  let decode_row row = decode_row row ~path ~raise subst in
   match type_.content with
   | I.T_variable tvar -> return @@ O.T_variable tvar
   | I.T_exists tvar ->
@@ -64,6 +64,7 @@ let rec decode (type_ : Type.t) ~raise subst =
 and decode_layout
     (fields : O.type_expression Label.Map.t)
     (layout : Type.layout)
+    ~path
     ~raise
     subst
   =
@@ -71,7 +72,7 @@ and decode_layout
   | L_concrete layout -> layout
   | L_exists lvar ->
     (match Substitution.find_lexists_eq subst lvar with
-    | Some (_, layout) -> decode_layout fields layout ~raise subst
+    | Some (_, layout) -> decode_layout fields layout ~path ~raise subst
     | None ->
       let default_layout_from_field_set fields =
         O.default_layout
@@ -82,16 +83,16 @@ and decode_layout
       default_layout_from_field_set (Map.key_set fields))
 
 
-and decode_row ({ fields; layout } : Type.row) ~raise subst =
-  let fields = Map.map ~f:(fun row_elem -> decode row_elem ~raise subst) fields in
-  let layout = decode_layout fields layout ~raise subst in
+and decode_row ({ fields; layout } : Type.row) ~path ~raise subst =
+  let fields = Map.map ~f:(fun row_elem -> decode row_elem ~path ~raise subst) fields in
+  let layout = decode_layout fields layout ~path ~raise subst in
   { fields; layout }
 
 
-let decode type_ ~raise subst =
+let decode type_ ~path ~raise subst =
   (* Attempt to lift the error to the originally decoded type (improves error reporting) *)
   Trace.try_with
-    (fun ~raise ~catch:_ -> decode type_ ~raise subst)
+    (fun ~raise ~catch:_ -> decode type_ ~path ~raise subst)
     (fun ~catch:_ (`Typer_cannot_decode_texists (_type, loc)) ->
       raise.error
         (cannot_decode_texists
@@ -110,44 +111,48 @@ let decode_attribute (attr : Context.Attrs.Value.t) : Sig_item_attr.t =
   }
 
 
-let rec decode_sig_item (item : Context.Signature.item Location.wrap) ~raise subst
+let rec decode_sig_item (item : Context.Signature.item Location.wrap) ~path ~raise subst
     : O.sig_item option
   =
   Option.map ~f:(Location.wrap ~loc:(Location.get_location item))
   @@
   match Location.unwrap item with
   | S_value (var, type_, attr) ->
-    Some (O.S_value (var, decode ~raise type_ subst, decode_attribute attr))
+    Some (O.S_value (var, decode ~path ~raise type_ subst, decode_attribute attr))
   | S_type (var, type_, attr) ->
     Some
       (S_type
-         (var, decode ~raise type_ subst, { leading_comments = attr.leading_comments }))
+         ( var
+         , decode ~path ~raise type_ subst
+         , { leading_comments = attr.leading_comments } ))
   | S_type_var (var, attr) ->
     Some (S_type_var (var, { leading_comments = attr.leading_comments }))
   | S_module (var, sig_, _attr) ->
-    Some (S_module (var, decode_signature ~raise sig_ subst))
+    Some (S_module (var, decode_signature ~path:(path @ [ var ]) ~raise sig_ subst))
   | S_module_type (var, sig_, attr) ->
-    Some (S_module_type (var, decode_signature ~raise sig_ subst))
+    Some (S_module_type (var, decode_signature ~path:(path @ [ var ]) ~raise sig_ subst))
 
 
-and decode_sig_sort (sort : Context.Signature.sort) ~raise subst : O.signature_sort =
+and decode_sig_sort (sort : Context.Signature.sort) ~path ~raise subst : O.signature_sort =
   match sort with
   | Ss_module -> Ss_module
   | Ss_contract { storage; parameter } ->
     Ss_contract
-      { storage = decode ~raise storage subst; parameter = decode ~raise parameter subst }
+      { storage = decode ~path ~raise storage subst
+      ; parameter = decode ~path ~raise parameter subst
+      }
 
 
-and decode_signature (sig_ : Context.Signature.t) ~raise subst : O.signature =
+and decode_signature (sig_ : Context.Signature.t) ~path ~raise subst : O.signature =
   let sig_items =
-    List.filter_map ~f:(fun item -> decode_sig_item item ~raise subst) sig_.items
+    List.filter_map ~f:(fun item -> decode_sig_item item ~path ~raise subst) sig_.items
   in
-  let sig_sort = decode_sig_sort sig_.sort ~raise subst in
+  let sig_sort = decode_sig_sort sig_.sort ~path ~raise subst in
   { sig_items; sig_sort }
 
 
-let check_anomalies ~syntax ~loc eqs matchee_type ~raise _subst =
+let check_anomalies ~syntax ~loc eqs matchee_type ~path:_ ~raise _subst =
   Pattern_anomalies.check_anomalies ~raise ~syntax ~loc eqs matchee_type
 
 
-let run t ~raise subst = t ~raise subst
+let run t ~path ~raise subst = t ~path ~raise subst

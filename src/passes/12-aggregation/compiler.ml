@@ -5,7 +5,7 @@ open Ligo_prim
 (*
   This pass flattens programs with module declarations into a list of simple top-level declarations.
   Later, this list is morphed into a single expression of chained let-ins.
-  
+
   It works as follow:
   - morph input program I into the Data IR (see doc bellow)
   - morph the IR into a list of top-level declaration
@@ -25,7 +25,7 @@ module Data = struct
       end
       ```
     [content]
-      Actual module content. It is used to build the final result of this pass (the list of top-level declarations) and 
+      Actual module content. It is used to build the final result of this pass (the list of top-level declarations) and
       also to build expression when encountering the `E_mod_in` node.
       For each declaration it holds the binding and the payload (expression or another module)
       together with its own environment.
@@ -77,7 +77,7 @@ module Data = struct
   and pat_binding = (O.ty_expr[@sexp.opaque]) O.Pattern.t binding_ [@@deriving sexp_of]
 
   (*
-    Important note: path is _ONLY_ used for naming of fresh variables, so that debuging a printed AST is easier.  
+    Important note: path is _ONLY_ used for naming of fresh variables, so that debuging a printed AST is easier.
     e.g. module access `A.B.x` will become variable `#A#B#x`
     IT SHOULD NEVER BE USED FOR INTERNAL COMPUTATION OR RESOLVING
   *)
@@ -399,7 +399,7 @@ and compile_declarations : Data.t -> Data.path -> I.module_ -> Data.t =
 
 
 (*
-  [copy_content] let you control if the module content should be entirely copied 
+  [copy_content] let you control if the module content should be entirely copied
   as a new set of bindings, or if we should just make reference to it
 *)
 and compile_module_expr ?(copy_content = false)
@@ -421,7 +421,7 @@ and compile_type : I.type_expression -> O.type_expression =
   let self = compile_type in
   let return type_content : O.type_expression =
     { type_content
-    ; orig_var = ty.orig_var
+    ; orig_var = Option.map ty.orig_var ~f:snd
     ; location = ty.location
     ; source_type = Some ty
     }

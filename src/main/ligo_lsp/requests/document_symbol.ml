@@ -25,7 +25,7 @@ let make_def_info (syntax : Syntax_types.t) (def : Def.t)
   let detail, kind, name, decl_range, range =
     match def with
     | Variable ({ name; range; decl_range; def_type; _ } as vdef) ->
-      let type_info = Def.get_type vdef in
+      let type_info = Def.get_type ~use_module_accessor:true vdef in
       let detail =
         Option.map type_info ~f:(Pretty.show_type ~syntax <@ Def.use_var_name_if_available)
       in

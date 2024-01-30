@@ -6,11 +6,11 @@ open Ligo_prim
 
 let untype_value_attr : O.ValueAttr.t -> I.ValueAttr.t = fun x -> x
 
-(* use_orig_var param allows us to preserve the orininal type variables names, e.g. if
-   we have [type t = A | B] then type of [Some A] will be transformed to [t option]
-  instead of default [(A | B) option].
-  It needs to be done during untyping, since O.type_expression can have orig_var
-  and I.type_expression can't *)
+(** [use_orig_var] param allows us to preserve the original type variables names, e.g. if
+    we have [type t = A | B] then type of [Some A] will be transformed to [t option]
+    instead of default [(A | B) option].
+      It needs to be done during untyping, since [O.type_expression] can have [orig_var]
+    and [I.type_expression] can't. *)
 let rec untype_type_expression ?(use_orig_var = false) (t : O.type_expression)
     : I.type_expression
   =
@@ -20,7 +20,10 @@ let rec untype_type_expression ?(use_orig_var = false) (t : O.type_expression)
   return
   @@
   match t.orig_var with
-  | Some orig_var when use_orig_var -> I.T_variable orig_var
+  | Some (module_path, element) when use_orig_var ->
+    (match module_path with
+    | [] -> T_variable element
+    | _ :: _ as module_path -> T_module_accessor { module_path; element })
   | _ ->
     (match t.type_content with
     | O.T_sum { fields; layout } ->

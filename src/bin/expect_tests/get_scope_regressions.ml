@@ -146,9 +146,9 @@ let%expect_test _ =
     (user#1:5-9 -> user)
     Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, characters 5-9
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 1, character 0 to line 5, character 1
-    Content: : |record[id -> nat ,
-                       is_admin -> bool ,
-                       name -> string({ name: id }, { name: is_admin }, { name: name })]|
+    Content: |record[id -> nat ,
+                     is_admin -> bool ,
+                     name -> string({ name: id }, { name: is_admin }, { name: name })]|
     references:
       File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 7, characters 14-18
     Module definitions:
@@ -387,7 +387,7 @@ let%expect_test _ =
     (titi#2:9-13 -> titi)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 9-13
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 4-19
-    Content: : |int|
+    Content: |int|
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17
@@ -408,7 +408,7 @@ let%expect_test _ =
                       (titi#2:9-13 -> titi)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 9-13
                       Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 4-19
-                      Content: : |int|
+                      Content: |int|
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17

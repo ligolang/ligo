@@ -14,7 +14,7 @@ let resolve_case
 
 
 let type_case : type_case Fmt.t =
-  resolve_case Ast_core.PP.type_expression Ast_typed.PP.type_expression
+  resolve_case Ast_core.PP.type_expression Ast_typed.PP.type_expression_orig
 
 
 let signature_case : signature_case Fmt.t =
@@ -86,7 +86,7 @@ let tdef : Format.formatter -> tdef -> unit =
     | None -> Format.fprintf ppf ""
     | Some content -> Format.fprintf ppf "%a" Ast_core.PP.type_expression content
   in
-  Format.fprintf ppf ": |%a|@ %a" pp_content content refs references
+  Format.fprintf ppf "|%a|@ %a" pp_content content refs references
 
 
 let rec path : Uid.t list Fmt.t =

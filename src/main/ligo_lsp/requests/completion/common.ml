@@ -66,7 +66,7 @@ let defs_to_completion_items
             @@ Option.value_map
                  ~default:(Helpers_pretty.unresolved_type_as_comment syntax)
                  ~f:(Pretty.show_type ~syntax <@ Def.use_var_name_if_available)
-            @@ Def.get_type vdef )
+            @@ Def.get_type ~use_module_accessor:false vdef )
         | Scopes.Types.Type _ -> CompletionItemKind.TypeParameter, None
         | Scopes.Types.Module _ -> CompletionItemKind.Module, None
       in

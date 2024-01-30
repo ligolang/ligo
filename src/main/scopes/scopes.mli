@@ -4,6 +4,7 @@ module Trace = Simple_utils.Trace
 module Types = Types
 module PP = PP
 module Uid = Types.Uid
+module Misc = Misc
 
 type def = Types.def
 type scopes = Types.scopes

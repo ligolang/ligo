@@ -17,6 +17,11 @@ let from_dialect : ('a, 'b, 'result) from_dialect -> ('a, 'b) dialect -> 'result
   | JsLIGO x -> f.jsligo x
 
 
+let to_syntax_type : ('cameligo, 'jsligo) dialect -> Syntax_types.t = function
+  | CameLIGO _ -> CameLIGO
+  | JsLIGO _ -> JsLIGO
+
+
 type t = (Parsing.Cameligo.CST.t, Parsing.Jsligo.CST.t) dialect
 type parsing_raise = (Parsing.Errors.t, Main_warnings.all) Simple_utils.Trace.raise
 
