@@ -1,0 +1,2 @@
+let three : nat = 2n ^ 1n;
+let one_byte : bytes = 0x11 ^ 0x10

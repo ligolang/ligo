@@ -1,0 +1,6 @@
+const origination = Tezos.create_contract(
+  (p: nat, s: string) => [list([]), s],
+  None(),
+  3tez,
+  "initial_storage"
+);

@@ -1,0 +1,10 @@
+function match_with_block (x : option<int>) : int {
+  return
+    match(x) {
+      when(None): 0;
+      when(Some(n)): do {
+        let y = n + 1;
+        return y
+      }
+    };
+};

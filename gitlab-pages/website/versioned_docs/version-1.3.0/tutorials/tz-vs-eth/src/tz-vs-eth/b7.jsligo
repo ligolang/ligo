@@ -1,0 +1,5 @@
+type committee = {members: list<address>, quorum: nat };
+
+type leader = {name: string, address: address };
+
+type authority = ["Dictatorship", leader] | ["Democracy", committee];

@@ -1,0 +1,10 @@
+let zero : nat = Bitwise.and 2n 1n
+let two_bytes : bytes = Bitwise.and 0x11 0x10
+let five : nat = Bitwise.or 4n 1n
+let three_bytes : bytes = Bitwise.or 0x11 0x10
+let three : nat = Bitwise.xor 2n 1n
+let one_byte : bytes = Bitwise.xor 0x11 0x10
+let four : nat = Bitwise.shift_left 2n 1n
+let five_one_two : bytes = Bitwise.shift_left 0x0100 1n
+let one : nat = Bitwise.shift_right 2n 1n
+let zero_bytes : bytes = Bitwise.shift_right 0x01 1n

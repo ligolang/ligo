@@ -1,0 +1,14 @@
+function hello (day: nat) : string {
+  let greeting = "Hello";
+  switch (day) {
+    case 1n: greeting += " Monday!"; break;
+    case 2n: greeting += " Tuesday!"; break;
+    case 3n: greeting += " Wednesday!"; break;
+    case 4n: greeting += " Thursday!"; break;
+    case 5n: greeting += " Friday!"; break;
+    case 6n: greeting += " Saturday!"; break;
+    case 7n: greeting += " Sunday!"; break;
+    default: greeting += "!"; break;
+  };
+  return greeting;
+}

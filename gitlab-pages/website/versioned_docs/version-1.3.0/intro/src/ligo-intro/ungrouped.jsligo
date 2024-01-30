@@ -1,0 +1,5 @@
+  type storage = string;
+
+  @entry
+  const store_hello = (delta: int, store: storage): [list<operation>, storage] =>
+    [list([]), "Hello"];

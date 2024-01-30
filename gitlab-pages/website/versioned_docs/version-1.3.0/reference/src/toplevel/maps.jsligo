@@ -1,0 +1,2 @@
+type move = [int, int];
+type register = map <address, move>;

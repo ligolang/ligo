@@ -1,0 +1,2 @@
+const michelson_add = n =>
+  (Michelson `{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);

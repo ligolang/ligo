@@ -1,0 +1,5 @@
+type storage = int
+
+@entry
+const main = (_action : unit, store : storage) : [list<operation>, storage] =>
+  [list([]), store + 1]
