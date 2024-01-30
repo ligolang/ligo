@@ -1,0 +1,79 @@
+namespace TacoShop {
+  export type taco_supply = { current_stock: nat, max_price: tez };
+  export type taco_shop_storage = map<nat, taco_supply>;
+
+  const ownerAddress = ("tz1TGu6TN5GSez2ndXXeDX6LgUDvLzPLqgYV" as address);
+
+  const donationAddress = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+
+  @entry
+  function buy_taco(taco_kind_index: nat, taco_shop_storage: taco_shop_storage): [
+    list<operation>,
+    taco_shop_storage
+  ]  {
+    /* Retrieve the taco_kind from the contracts storage or fail */
+
+    const taco_kind: taco_supply =
+      match(Map.find_opt(taco_kind_index, taco_shop_storage)) {
+        when (Some(kind)):
+          kind
+        when (None):
+          failwith("Unknown kind of taco")
+      };
+    const current_purchase_price: tez =
+      taco_kind.max_price / taco_kind.current_stock;
+    /* We won't sell tacos if the amount is not correct */
+
+    if ((Tezos.get_amount()) != current_purchase_price) {
+      return failwith(
+        "Sorry, the taco you are trying to purchase has a different price"
+      )
+    } else {
+      /* Update the storage decreasing the stock by 1n */
+
+      const taco_shop_storage =
+        Map.update(
+          taco_kind_index,
+          (
+            Some({
+              ...taco_kind, current_stock: abs(taco_kind.current_stock - 1n)
+            })
+          ),
+          taco_shop_storage
+        );
+
+      const receiver : contract<unit> =
+      match ((Tezos.get_contract_opt (ownerAddress))) {
+        when(Some(contract)): contract;
+        when(None()): ((failwith ("Not a contract")))
+      };
+
+      const donationReceiver : contract<unit>  =
+        match ((Tezos.get_contract_opt (donationAddress))) {
+          when(Some(contract)): contract;
+          when(None()): ((failwith ("Not a contract")))
+        };
+
+      const donationAmount = ((Tezos.get_amount ()) / 10n) as tez;
+
+      // Pedro will get 90% of the amount
+      const op1 = match ((Tezos.get_amount ()) - donationAmount) {
+        when(Some(x)): Tezos.transaction (unit, x, receiver);
+        when(None()): failwith ("Insufficient balance")
+      };
+      const op2 = Tezos.transaction (unit, donationAmount, donationReceiver);
+      const operations : list<operation> = list([ op1 , op2 ]);
+
+      return [operations, taco_shop_storage]
+    }
+  };
+}
+const default_storage: TacoShop.taco_shop_storage =
+  Map.literal(
+    list(
+      [
+        [1n, { current_stock: 50n, max_price: 50000000mutez }],
+        [2n, { current_stock: 20n, max_price: 75000000mutez }]
+      ]
+    )
+  );

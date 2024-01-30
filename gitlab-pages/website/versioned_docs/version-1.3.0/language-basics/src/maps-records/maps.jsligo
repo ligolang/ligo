@@ -1,0 +1,35 @@
+type move = [int, int];
+type register = map<address, move>;
+const empty: register = Map.empty;
+const moves : register =
+  Map.literal (list([
+    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
+const my_balance: option<move> =
+  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
+let force_access = (key: address, moves: register) => {
+  return match(Map.find_opt (key, moves)) {
+    when(Some(move)): move;
+    when(None()): failwith("No move.")
+  };
+};
+const assign = (m: register) =>
+  Map.update
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some ([4, 9]), m);
+const add = (m: register) =>
+  Map.add
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [4, 9], m);
+const delete = (key: address, moves: register) =>
+  Map.remove(key, moves);
+const assert_all_greater_than_three = (m: register) => {
+  let predicate = ([i, j]: [address, move]) => assert(j[0] > 3);
+  Map.iter(predicate, m);
+};
+const map_op = (m: register) => {
+  let increment = ([_a, j]: [address, move]) => [j[0], j[1] + 1];
+  return Map.map(increment, m);
+};
+const fold_op = (m: register): int => {
+  let folded = ([i, j]: [int, [address, move]]) => i + j[1][1];
+  return Map.fold(folded, m, 5);
+};

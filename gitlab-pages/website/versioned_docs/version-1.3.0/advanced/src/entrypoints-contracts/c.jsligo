@@ -1,0 +1,18 @@
+type parameter = unit;
+type storage = unit;
+type result = [list<operation>, storage];
+
+@entry
+const no_tokens = (action: parameter, store: storage): result => {
+  if (Tezos.get_amount() > 0tez) {
+    return failwith("This contract does not accept tokens.");
+  } else {
+    return [list([]), store];
+  };
+};
+const owner = "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
+
+const owner_only = (action: parameter, store: storage): result => {
+  if (Tezos.get_sender() != owner) { return failwith("Access denied."); }
+  else { return [list([]), store]; };
+};

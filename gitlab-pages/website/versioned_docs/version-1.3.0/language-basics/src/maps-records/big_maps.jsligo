@@ -1,0 +1,14 @@
+type move = [int, int];
+type register = big_map<address, move>;
+const empty: register = Big_map.empty;
+const moves : register =
+  Big_map.literal (list([
+    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1, 2]],
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0, 3]]]));
+const my_balance: option<move> =
+  Big_map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
+const updated_map: register =
+  Big_map.update
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4, 9]), moves);
+const updated_map_: register =
+  Big_map.remove("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);

@@ -1,0 +1,19 @@
+// int + int yields int
+const a = 5 + 10;
+
+// nat + int yields int
+const b = 5n + 10;
+
+// tez + tez yields tez
+const c: tez = 5mutez + 1tez;
+
+// tez + int or tez + nat is invalid:
+// const d : tez = 5mutez + 10n;
+
+// two nats yield a nat
+const e: nat = 5n + 10n;
+
+// nat + int yields an int: invalid
+// const f : nat = 5n + 10;
+
+const g = 1_000_000;

@@ -1,0 +1,4 @@
+function id_string (p: string) {
+  let packed : bytes = Bytes.pack(p);
+  return Bytes.unpack(packed);
+};

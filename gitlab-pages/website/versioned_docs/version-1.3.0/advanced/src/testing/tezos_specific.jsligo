@@ -1,0 +1,17 @@
+namespace C {
+  type storage = int;
+
+  @entry
+  const increment = (action: int, store: storage) : [list <operation>, storage] => [list([]), store + action];
+
+  @entry
+  const decrement = (action: int, store: storage) : [list <operation>, storage] => [list([]), store - action];
+};
+
+const testC = do {
+    let initial_storage = 42;
+    let orig = Test.originate(contract_of(C), initial_storage, 0tez);
+    let p : parameter_of C = Increment(1);
+    Test.transfer_exn(orig.addr, p, 1mutez);
+    return assert(Test.get_storage(orig.addr) == initial_storage + 1);
+};

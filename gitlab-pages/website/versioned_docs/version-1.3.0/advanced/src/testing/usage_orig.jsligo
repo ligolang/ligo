@@ -1,0 +1,34 @@
+type storage = option< ticket<bytes> >
+type unforged_storage = option< unforged_ticket<bytes> >
+
+const main = (_p: unit, s: storage) : [ list<operation> , storage] => {
+  let x =
+    match (s) {
+      when(Some(ticket)): ((ticket: ticket<bytes>) => {
+        let [_v , t] = Tezos.read_ticket (ticket) ;
+        return Some (t)
+      })(ticket);
+      when(None()): None()
+    };
+  return [list ([]), x]
+};
+
+const test_originate_contract = do {
+  const mk_storage = (t:ticket<bytes>) : storage => { return (Some (t)) } ;
+  let ticket_info = [0x0202, 15n];
+  let addr = Test.Proxy_ticket.originate (ticket_info, mk_storage, main) ;
+  let unforged_storage = (Test.Proxy_ticket.get_storage (addr) as unforged_storage) ;
+
+  /* the ticket 'unforged_storage' can be manipulated freely without caring about ticket linearity */
+
+  match (unforged_storage) {
+    when(Some(x)): do {
+      Test.log (["unforged_ticket", x]) ;
+      let { ticketer , value , amount } = x ;
+      assert (value == ticket_info[0]) ;
+      assert (amount == ticket_info[1]) ;
+      return unit
+    };
+    when(None()): failwith ("impossible")
+  }
+};

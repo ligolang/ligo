@@ -1,0 +1,2 @@
+const one : int = int(1n); // Explicit cast from nat to int
+const two : nat = abs(2);  // Explicit cast from int to nat

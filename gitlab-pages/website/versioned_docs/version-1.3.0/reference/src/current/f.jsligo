@@ -1,0 +1,4 @@
+let check = (p : key_hash) => {
+  let c = Tezos.implicit_account(p);
+  return Tezos.address(c);
+};

@@ -1,0 +1,12 @@
+type coin = ["Head"] | ["Tail"];
+let head: coin = Head();
+let tail: coin = Tail();
+type id = nat;
+
+type user =
+  ["Admin", id]
+| ["Manager", id]
+| ["Guest"];
+
+const bob : user = Admin(1000n);
+const carl : user = Guest();

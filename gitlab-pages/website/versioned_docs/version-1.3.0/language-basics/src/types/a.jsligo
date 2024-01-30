@@ -1,0 +1,2 @@
+type breed = string;
+const dog_breed: breed = "Saluki";

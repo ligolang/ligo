@@ -1,0 +1,33 @@
+type delta =
+  {kind: "increment", amount: int}
+| {kind: "decrement", amount: int}
+| {kind: "reset"};
+const incr : delta = {kind: "increment", amount: 3};
+function apply (action: delta) {
+  let state = 0;
+  switch(action.kind) {
+    case "increment":
+      state += action.amount;
+      break
+    case "decrement":
+      state -= action.amount;
+      break
+    case "reset":
+      state = 0;
+      break
+  };
+};
+function apply_with_default (action: delta) {
+  let state = 0;
+  switch(action.kind) {
+    case "increment":
+      state += action.amount;
+      break
+    case "decrement":
+      state -= action.amount;
+      break
+    default:
+      state = 0;
+      break
+  };
+};

@@ -1,0 +1,2 @@
+const assert_all_greater_than_three = (l: list<int>): unit =>
+  List.iter (i => assert (i > 3), l);
