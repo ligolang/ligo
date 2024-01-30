@@ -186,6 +186,9 @@ export async function executeCompileStorage(
 
   if (!isDefined(entrypoint)) {
     entrypoint = await getEntrypoint(context, client, entrypoints);
+    if (!isDefined(entrypoint)) {
+      throw new ex.UserInterruptionException()
+    }
   }
 
   if (!isDefined(storage)) {
