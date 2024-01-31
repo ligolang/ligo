@@ -8,22 +8,13 @@ import { extensions } from '../common'
 
 import * as ex from '../exceptions'
 import { Maybe } from '../../common/base';
+import { BinaryInfo } from '../../common/config';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
 /* eslint-disable no-bitwise */
 
 let lastContractPath: string;
-
-type BinaryInfo = {
-  name: string,
-  path: string,
-}
-
-export const ligoBinaryInfo = {
-  name: 'ligo',
-  path: 'ligoLanguageServer.ligoBinaryPath'
-}
 
 export function changeLastContractPath(newPath: string) {
   lastContractPath = newPath
@@ -43,7 +34,8 @@ export function findBinaryPath(binaryName: string): string {
   return execFileSync(find, [binaryName]).toString().trim().split('\n')[0]
 }
 
-export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfiguration) {
+export function getBinaryPath(info: BinaryInfo) {
+  const config = vscode.workspace.getConfiguration()
   let binaryPath = config.get<string>(info.path)
   if (binaryPath) {
     return binaryPath
@@ -118,7 +110,7 @@ export function executeCommand(
   showOutput = true,
 ): string {
   const contractInfo = getLastContractPath()
-  const ligoPath = getBinaryPath(binary, vscode.workspace.getConfiguration());
+  const ligoPath = getBinaryPath(binary);
   const ligoJsonPath = findPackage(dirname(contractInfo.path))
 
   if (commandArgs & CommandRequiredArguments.Path) {
