@@ -31,7 +31,7 @@ Those are being actively worked on.
 - [x] Document symbols
 - [x] Document links
 - [ ] Workspace symbols
-- [x] Term occurrences highlight (your color theme should be aware of LSPs, see [one example](https://github.com/folke/tokyonight.nvim) of such theme)
+- [x] Term occurrences highlight (your color theme should be aware of LSPs, for Neovim see [one example](https://github.com/folke/tokyonight.nvim) of such theme)
 
 ### Diagnostics
 
