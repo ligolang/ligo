@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\n\\n'LIGO Options -> Compile storage' now handles cancellations gracefully. \\n\\n"
+merge_request: '3044'
+title: "[#2128] Fix cancelation for storage value popup"
+type: fixed
+            
