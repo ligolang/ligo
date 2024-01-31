@@ -8,7 +8,7 @@ import { ligoOutput } from './commands/common'
 import * as lc from './commands/ligoCommands'
 import * as tc from './commands/tezosCommands'
 import * as ui from './ui'
-import * as ex from './exceptions'
+import * as ex from '../common/exceptions'
 import { LigoContext } from '../common/LigoContext'
 import { LigoProtocolClient } from '../common/LigoProtocolClient'
 
@@ -92,11 +92,11 @@ const LigoCommands = {
   },
   RestartServer: {
     name: 'ligo.restartServer',
-    run: async (client: LanguageClient,semanticTokensClient: LanguageClient) => {
+    run: async (client: LanguageClient, semanticTokensClient: LanguageClient) => {
       await LigoCommands.StopServer.run(client, semanticTokensClient)
       await LigoCommands.StartServer.run(client, semanticTokensClient)
     },
-    register: (client: LanguageClient,semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
+    register: (client: LanguageClient, semanticTokensClient: LanguageClient) => vscode.commands.registerCommand(
       LigoCommands.RestartServer.name,
       async () => LigoCommands.RestartServer.run(client, semanticTokensClient).catch(reportException),
     ),
