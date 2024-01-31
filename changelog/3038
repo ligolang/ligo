@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nDiagnostics will be updated automatically after changing `Max Number of Problems` config option.\\n\\n"
+merge_request: '3038'
+title: "[#2113] Update diagnostics as soon `max diagnostics` setting changes"
+type: fixed
+            
