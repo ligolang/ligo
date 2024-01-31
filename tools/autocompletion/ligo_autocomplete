@@ -1,0 +1,10 @@
+function _ligo {
+  export COMP_CWORD
+  COMP_WORDS[0]=ligo
+  if type readarray > /dev/null
+  then readarray -t COMPREPLY < <("${COMP_WORDS[@]}")
+  else IFS="
+" read -d "" -A COMPREPLY < <("${COMP_WORDS[@]}")
+  fi
+}
+complete -F _ligo ligo

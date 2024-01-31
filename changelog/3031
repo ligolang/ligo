@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Added CLI autocompletion script. All the instructions are available in [README.md](https://gitlab.com/ligolang/ligo/-/blob/dk318/%232120-implement-cli-autocompletions/tools/autocompletion/README.md)\\n\\n\\n"
+merge_request: '3031'
+title: "[#2120] Implement autocompletion for CLI"
+type: added
+            

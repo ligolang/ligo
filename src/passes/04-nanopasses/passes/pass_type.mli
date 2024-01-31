@@ -81,6 +81,10 @@ module Selector : sig
   val sig_expr : Ast_unified.sig_expr t
 end
 
+(* Convenient function which transforms ugly [Passes__Pass_Name]
+   into pretty [pass_name] *)
+val process_name : string -> string
+
 (* [decompile_passes] decompile any value of of type 'a of the sort [sort] stoping
    before pass [stop_before] if specified *)
 val decompile_passes
