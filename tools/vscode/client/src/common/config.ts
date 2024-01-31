@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { Disposable } from "vscode-languageclient";
+import { isDefined } from './base';
 
 export type BinaryInfo = {
   name: string,
@@ -9,6 +10,16 @@ export type BinaryInfo = {
 export const ligoBinaryInfo = {
   name: 'ligo',
   path: 'ligoLanguageServer.ligoBinaryPath'
+}
+
+export function getBinaryPath(info: BinaryInfo) {
+  const config = vscode.workspace.getConfiguration()
+  let binaryPath = config.get<string>(info.path)
+  if (!isDefined(binaryPath)) {
+    // We always expect some value because a default value is registered in package.json
+    throw new Error("Unexpectedly no LIGO path from config")
+  }
+  return binaryPath
 }
 
 /** Start detecting when path to LIGO is changed in config, and initiate client

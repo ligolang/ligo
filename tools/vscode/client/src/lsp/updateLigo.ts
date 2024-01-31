@@ -10,12 +10,11 @@ import {
   LanguageClient,
 } from 'vscode-languageclient/node'
 import { extensionName } from './common'
-import { getBinaryPath } from './commands/common'
-import { ligoBinaryInfo } from '../common/config'
+import { ligoBinaryInfo, getBinaryPath } from '../common/config'
+import { Maybe } from '../common/base'
 
 import detectInstaller from 'detect-installer'
 import { Readable } from 'stream'
-import { Maybe } from '../common/base'
 
 type TagName = 'Static Linux binary' | 'Ligo Windows installer'
 

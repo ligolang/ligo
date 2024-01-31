@@ -1,6 +1,6 @@
 import { createRememberingInputBox, createQuickPickBox } from '../ui'
 import {
-  CommandRequiredArguments, executeCommand, getBinaryPath, getLastContractPath,
+  CommandRequiredArguments, executeCommand, getLastContractPath,
 } from './common';
 import * as ex from '../../common/exceptions'
 import { InputBoxType, InputValueLang, isDefined, Maybe } from '../../common/base';
@@ -10,7 +10,7 @@ import { LigoProtocolClient } from '../../common/LigoProtocolClient';
 import { getModuleName, getParameterOrStorage } from '../../debugger/ui';
 import { ContractMetadata } from '../../debugger/base';
 import { ValidateValueCategory } from '../../debugger/messages';
-import { ligoBinaryInfo } from '../../common/config';
+import { getBinaryPath, ligoBinaryInfo } from '../../common/config';
 
 /* eslint-disable no-bitwise */
 

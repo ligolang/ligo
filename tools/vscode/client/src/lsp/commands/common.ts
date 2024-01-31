@@ -5,10 +5,10 @@ import { existsSync } from 'fs'
 import { execFileSync } from 'child_process';
 
 import { extensions } from '../common'
-import { Maybe, isDefined } from '../../common/base';
+import { Maybe } from '../../common/base';
 
 import * as ex from '../../common/exceptions'
-import { BinaryInfo } from '../../common/config';
+import { BinaryInfo, getBinaryPath } from '../../common/config';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
@@ -27,16 +27,6 @@ function extToDialect(ext: string) {
     default:
       throw new ex.UnknownLigoDialectExtensionException(ext)
   }
-}
-
-export function getBinaryPath(info: BinaryInfo) {
-  const config = vscode.workspace.getConfiguration()
-  let binaryPath = config.get<string>(info.path)
-  if (!isDefined(binaryPath)) {
-    // We always expect some value because a default value is registered in package.json
-    throw new Error("Unexpectedly no LIGO path from config")
-  }
-  return binaryPath
 }
 
 /* eslint-disable no-shadow */
