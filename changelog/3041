@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\nWhen changing LIGO path in settings, a suggestion will pop up to restart VSCode.\\n\\n"
+merge_request: '3041'
+title: "[#1922] Suggest restarting when LIGO path is changed"
+type: fixed
+            
