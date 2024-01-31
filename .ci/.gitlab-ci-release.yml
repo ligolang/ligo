@@ -175,10 +175,10 @@ release:
           --assets-link '{"name": "Static Linux binary", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo"}' \
           --assets-link '{"name": "deb package", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo.deb"}' \
           --assets-link '{"name": "ligo ARM64 Unix", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/ligo_arm64_unix"}' \
-          --assets-link '{"name": "jsligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/jsligo.configuration.json"}' \
-          --assets-link '{"name": "jsligo highlighting", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/jsligo.tmLanguage.json"}' \
-          --assets-link '{"name": "mligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/mligo.configuration.json"}' \
-          --assets-link '{"name": "mligo highlighting", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/highlighting/vscode/mligo.tmLanguage.json"}'
+          --assets-link '{"name": "jsligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/highlighting/vscode/jsligo.configuration.json"}' \
+          --assets-link '{"name": "jsligo highlighting", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/highlighting/vscode/jsligo.tmLanguage.json"}' \
+          --assets-link '{"name": "mligo configuration", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/highlighting/vscode/mligo.configuration.json"}' \
+          --assets-link '{"name": "mligo highlighting", "url": "'"$CI_PROJECT_URL"'/-/jobs/'"$CI_JOB_ID"'/artifacts/raw/highlighting/vscode/mligo.tmLanguage.json"}'
     - echo "RELEASE_CI_JOB_ID=${CI_JOB_ID}" >> releaseCiJobId.env
 
 create_docker_stable_version:
