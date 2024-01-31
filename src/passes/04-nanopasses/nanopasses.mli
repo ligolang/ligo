@@ -1,6 +1,9 @@
 module Errors = Passes.Errors
 module Selector = Passes.Pass_type.Selector
 
+(* Names for all passes. Useful for CLI completions. *)
+val passes_names : string list
+
 (* [execute_nanopasses] only execute the pass list until it reaches the [stop_before]
    pass (corresponds to the module name of that pass)
    [disable_initial_check] disable the pass responsible to prevent initial nodes
