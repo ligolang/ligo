@@ -14,7 +14,7 @@ import {
 import { registerCommands } from './command'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
-import { BinaryNotFoundException } from './exceptions'
+import { BinaryNotFoundException } from '../common/exceptions'
 import { LigoExtension } from "../LigoExtension";
 
 import { extensions } from './common'

@@ -17,6 +17,7 @@ import { LigoContext, ValueAccess } from '../common/LigoContext'
 import * as fs from 'fs'
 import { MultiStepInput } from '../common/ui';
 import { InputBoxType, InputValueLang, isDefined, Maybe, Ref } from '../common/base';
+import * as ex from '../common/exceptions'
 
 export type SteppingGranularity
   = 'statement'
@@ -383,7 +384,7 @@ export async function getParameterOrStorage(
   contractMetadata: ContractMetadata,
   entrypoint: string,
   showSwitchButton = true,
-): Promise<Maybe<[string, InputValueLang]>> {
+): Promise<[string, InputValueLang]> {
 
   const totalSteps = 1;
 
@@ -511,6 +512,8 @@ export async function getParameterOrStorage(
   if (isDefined(result.value) && isDefined(result.currentSwitch.lang)) {
     rememberedVal.value = [result.value, result.currentSwitch.lang];
     return [result.value, result.currentSwitch.lang];
+  } else {
+    throw new ex.UserInterruptionException()
   }
 }
 
