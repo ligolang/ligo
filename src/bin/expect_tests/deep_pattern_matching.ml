@@ -16,8 +16,9 @@ let%expect_test _ =
                                                     ^
      16 |     (a 1) + (fo b)
 
-    Invalid type(s)
-    Cannot unify "[b]int -> int" with "optioni". |}]
+    This expression has type "[b]int -> int", but an expression was expected of type
+    "optioni".
+    Type "[b]int -> int" is not compatible with type "optioni". |}]
 
 (* wrong type on constructor argument pattern *)
 let%expect_test _ =
@@ -45,8 +46,8 @@ let%expect_test _ =
       9 |   | Reset            -> 0
           ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "( ^a * ^b )" with "( int * int * int )".
+    Can not unify the types "( ^a * ^b )" and "( int * int * int )".
+    Type "( ^a * ^b )" is not compatible with type "( int * int * int )".
     Difference between the types:
     - ^a
     + int
@@ -118,8 +119,8 @@ let%expect_test _ =
       8 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "myt".
+    Can not unify the types "record[a -> ^a , b -> ^b , c -> ^c]" and "myt".
+    Type "record[a -> ^a , b -> ^b , c -> ^c]" is not compatible with type "myt".
     Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
@@ -137,8 +138,8 @@ let%expect_test _ =
       7 |   | Cons (a,b) , Cons (c,d) -> a + b + c + d
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "( ^a * ^b * ^c )" with "myt".
+    Can not unify the types "( ^a * ^b * ^c )" and "myt".
+    Type "( ^a * ^b * ^c )" is not compatible with type "myt".
     Hint: "^a", "^b", "^c" represent placeholder type(s). |}]
 
 let%expect_test _ =
@@ -164,8 +165,9 @@ let%expect_test _ =
       6 |   | B -> 2
                    ^
 
-    Invalid type(s)
-    Cannot unify "int" with "string". |}]
+    This expression has type "int", but an expression was expected of type
+    "string".
+    Type "int" is not compatible with type "string". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "pm_fail8.mligo" ];
@@ -177,8 +179,9 @@ let%expect_test _ =
                                 ^^^^^^^^^
      20 |     in
 
-    Invalid type(s)
-    Cannot unify "string" with "int". |}]
+    This expression has type "string", but an expression was expected of type
+    "int".
+    Type "string" is not compatible with type "int". |}]
 
 (* rendundancy detected while compiling the pattern matching *)
 let%expect_test _ =

@@ -63,7 +63,10 @@ let test_cases =
     ; file_path = "contracts/negative/error_typer_1.mligo"
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
-          ; message = "Invalid type(s)\nCannot unify \"int\" with \"string\"."
+          ; message =
+              "This expression has type \"int\", but an expression was expected of type \n\
+               \"string\".\n\
+               Type \"int\" is not compatible with type \"string\"."
           ; location =
               { range = interval 2 19 27
               ; path = Path.from_relative "contracts/negative/error_typer_1.mligo"
@@ -193,8 +196,9 @@ let test_cases =
     ; diagnostics =
         [ { severity = DiagnosticSeverity.Error
           ; message =
-              "Invalid type(s)\n\
-               Cannot unify \"int\" with \"( ^a * ^b ) -> ^a\".\n\
+              "This expression has type \"int\", but an expression was expected of type \n\
+               \"( ^a * ^b ) -> ^a\".\n\
+               Type \"int\" is not compatible with type \"( ^a * ^b ) -> ^a\".\n\
                Hint: \"^b\", \"^a\" represent placeholder type(s).\n"
           ; location =
               { range = interval 0 21 22

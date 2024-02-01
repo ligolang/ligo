@@ -584,7 +584,7 @@ let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.lay
   match layout1, layout2 with
   | L_concrete layout1, L_concrete layout2 when Layout.equal layout1 layout2 -> return ()
   | L_concrete _, L_concrete _ ->
-    raise (cannot_unify_diff_layout type1 type2 layout1 layout2)
+    raise (cannot_unify_local_diff_layout type1 type2 layout1 layout2)
   | L_exists lvar1, L_exists lvar2 when Layout_var.equal lvar1 lvar2 -> return ()
   | L_exists lvar, layout | layout, L_exists lvar ->
     let%bind layout = lift_layout ~at:(C_lexists_var (lvar, fields)) ~fields layout in
@@ -593,25 +593,18 @@ let unify_layout type1 type2 ~fields (layout1 : Type.layout) (layout2 : Type.lay
 
 let equal_domains lmap1 lmap2 = Set.equal (Map.key_set lmap1) (Map.key_set lmap2)
 
-type unify_error =
-  [ `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
-  | `Typer_cannot_unify_diff_layout of
-    Type.t * Type.t * Type.layout * Type.layout * Location.t
-  | `Typer_ill_formed_type of Type.t * Location.t
-  | `Typer_occurs_check_failed of Type_var.t * Type.t * Location.t
-  | `Typer_unbound_texists_var of Type_var.t * Location.t
-  ]
-
-let rec unify (type1 : Type.t) (type2 : Type.t) =
+let rec unify_aux (type1 : Type.t) (type2 : Type.t)
+    : (unit, Errors.local_unify_error, 'wrn) t
+  =
   let open Let_syntax in
   let unify_ type1 type2 =
     let%bind type1 = Context.tapply type1 in
     let%bind type2 = Context.tapply type2 in
-    unify type1 type2
+    unify_aux type1 type2
   in
   let fail () =
     let%bind no_color = Options.no_color () in
-    raise (cannot_unify no_color type1 type2)
+    raise (cannot_unify_local no_color type1 type2)
   in
   match type1.content, type2.content with
   | T_singleton lit1, T_singleton lit2 when Literal_value.equal lit1 lit2 -> return ()
@@ -627,7 +620,7 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     | Unequal_lengths -> raise (assert false))
   | ( T_arrow { type1 = type11; type2 = type12; param_names = _ }
     , T_arrow { type1 = type21; type2 = type22; param_names = _ } ) ->
-    let%bind () = unify type11 type21 in
+    let%bind () = unify_aux type11 type21 in
     unify_ type12 type22
   | ( T_for_all { ty_binder = tvar1; kind = kind1; type_ = type1 }
     , T_for_all { ty_binder = tvar2; kind = kind2; type_ = type2 } )
@@ -637,7 +630,7 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
     let%bind tvar = fresh_type_var () in
     let type1 = Type.subst_var type1 ~tvar:tvar1 ~tvar':tvar in
     let type2 = Type.subst_var type2 ~tvar:tvar2 ~tvar':tvar in
-    Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(unify type1 type2)
+    Context.add [ C_type_var (tvar, kind1) ] ~on_exit:Drop ~in_:(unify_aux type1 type2)
   | ( T_sum { fields = fields1; layout = layout1 }
     , T_sum { fields = fields2; layout = layout2 } )
   | ( T_record { fields = fields1; layout = layout1 }
@@ -654,6 +647,14 @@ let rec unify (type1 : Type.t) (type2 : Type.t) =
            unify_ row_elem1 row_elem2)
     |> all_lmap_unit
   | _ -> fail ()
+
+
+let unify (type1 : Type.t) (type2 : Type.t) : (unit, [> Errors.unify_error ], 'wrn) t =
+  let open Let_syntax in
+  let%bind unification_loc = loc () in
+  Trace.map_error
+    ~f:(fun err -> cannot_unify err type1 type2 unification_loc)
+    (unify_aux type1 type2)
 
 
 let rec eq (type1 : Type.t) (type2 : Type.t) =
@@ -709,16 +710,14 @@ let rec eq (type1 : Type.t) (type2 : Type.t) =
   | _ -> return false
 
 
-type subtype_error = unify_error
-
 module O = Ast_typed
 module E = Elaboration
 
-let rec subtype ~(received : Type.t) ~(expected : Type.t)
+let rec subtype_aux ~(received : Type.t) ~(expected : Type.t)
     : (O.expression -> O.expression Elaboration.t, _, _) t
   =
   let open Let_syntax in
-  let subtype received expected = subtype ~received ~expected in
+  let subtype received expected = subtype_aux ~received ~expected in
   let subtype_texists ~mode tvar type_ =
     let%bind () = occurs_check ~tvar type_ in
     let%bind kind = Context.get_texists_var tvar ~error:(unbound_texists_var tvar) in
@@ -800,8 +799,18 @@ let rec subtype ~(received : Type.t) ~(expected : Type.t)
           return
           @@ O.e_coerce ~loc { anno_expr = hole; type_annotation = expected } expected)
   | _, _ ->
-    let%bind () = unify received expected in
+    let%bind () = unify_aux received expected in
     return E.return
+
+
+let subtype ~(received : Type.t) ~(expected : Type.t)
+    : (O.expression -> O.expression Elaboration.t, _, _) t
+  =
+  let open Let_syntax in
+  let%bind subtyping_loc = loc () in
+  Trace.map_error
+    ~f:(fun err -> cannot_subtype err received expected subtyping_loc)
+    (subtype_aux ~received ~expected)
 
 
 let exists kind =
@@ -926,6 +935,7 @@ module With_frag = struct
 
   let extend frag = return (frag, ())
   let run t = t
+  let map_error ~f t ~raise = Trace.map_error ~f ~raise t
 
   include Monad.Make3 (struct
     type nonrec ('a, 'err, 'wrn) t = ('a, 'err, 'wrn) t

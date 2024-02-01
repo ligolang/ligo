@@ -24,8 +24,9 @@ let%expect_test _ =
       1 | let main (a:int) : unit = a
                                     ^
 
-    Invalid type(s)
-    Cannot unify "int" with "unit". |}];
+    This expression has type "int", but an expression was expected of type
+    "unit".
+    Type "int" is not compatible with type "unit". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -39,8 +40,9 @@ let%expect_test _ =
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 | let g (x, y : int * int) : int = f (x, y)
 
-    Invalid type(s)
-    Cannot unify "[_]( int * int ) -> int" with "int". |}];
+    This expression has type "[_]( int * int ) -> int", but an expression was expected of type
+    "int".
+    Type "[_]( int * int ) -> int" is not compatible with type "int". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -55,8 +57,9 @@ let%expect_test _ =
                         ^^^^^^
       9 |   | Sub si -> Sub si
 
-    Invalid type(s)
-    Cannot unify "op" with "( list (operation) * op )". |}];
+    This expression has type "op", but an expression was expected of type
+    "( list (operation) * op )".
+    Type "op" is not compatible with type "( list (operation) * op )". |}];
   (*
   run_ligo_bad
     [ "compile"
@@ -87,8 +90,9 @@ let%expect_test _ =
                              ^^^
       7 |   42
 
-    Invalid type(s)
-    Cannot unify "int" with "string". |}];
+    This expression has type "int", but an expression was expected of type
+    "string".
+    Type "int" is not compatible with type "string". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -103,8 +107,9 @@ let%expect_test _ =
                                  ^^^
       8 |   x
 
-    Invalid type(s)
-    Cannot unify "bool" with "int". |}];
+    This expression has type "bool", but an expression was expected of type
+    "int".
+    Type "bool" is not compatible with type "int". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -119,8 +124,9 @@ let%expect_test _ =
                              ^^^^^^^^
       4 |
 
-    Invalid type(s)
-    Cannot unify "int" with "string". |}];
+    This expression has type "int", but an expression was expected of type
+    "string".
+    Type "int" is not compatible with type "string". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -135,8 +141,9 @@ let%expect_test _ =
                                   ^^^^^^^^^^^^^^^
       4 |
 
-    Invalid type(s)
-    Cannot unify "toto" with "list (string)". |}];
+    This expression has type "toto", but an expression was expected of type
+    "list (string)".
+    Type "toto" is not compatible with type "list (string)". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -151,8 +158,9 @@ let%expect_test _ =
                                             ^^^^^^^^^^^^^^^^^^^
       4 |
 
-    Invalid type(s)
-    Cannot unify "toto" with "( int * string * bool )". |}];
+    This expression has type "toto", but an expression was expected of type
+    "( int * string * bool )".
+    Type "toto" is not compatible with type "( int * string * bool )". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -167,8 +175,9 @@ let%expect_test _ =
                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       5 |
 
-    Invalid type(s)
-    Cannot unify "toto" with "tata". |}];
+    This expression has type "toto", but an expression was expected of type
+    "tata".
+    Type "toto" is not compatible with type "tata". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -196,8 +205,10 @@ let%expect_test _ =
                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       2 | let main (p:int) (storage : int) =
 
-    Invalid type(s)
-    Cannot unify "bool" with "string". |}];
+    This expression has type "map (int , bool)", but an expression was expected of type
+    "map (int ,
+    string)".
+    Type "bool" is not compatible with type "string". |}];
   run_ligo_bad
     [ "compile"
     ; "contract"
@@ -264,8 +275,9 @@ let%expect_test _ =
                                     ^^^^^^^^^^^^^^
      46 |   in
 
-    Invalid type(s)
-    Cannot unify "id_details" with "option (^a)".
+    This expression has type "id_details", but an expression was expected of type
+    "option (^a)".
+    Type "id_details" is not compatible with type "option (^a)".
     Hint: "^a" represent placeholder type(s). |}]
 
 (*
@@ -332,8 +344,7 @@ let%expect_test _ =
                                                          ^^^^^^^^
       8 |         Some (contract) -> contract
 
-    Invalid type
-    Ill formed type "contract".Hint: you might be missing some type arguments. |}]
+    Ill formed type "contract". Hint: you might be missing some type arguments. |}]
 
 (*
 let%expect_test _ =
@@ -409,8 +420,8 @@ let%expect_test _ =
                           ^
       5 |   ([] : operation list), s
 
-    Invalid type(s)
-    Cannot unify "int" with "nat". |}]
+    This expression has type "int", but an expression was expected of type "nat".
+    Type "int" is not compatible with type "nat". |}]
 
 (* In this case, one of the types is a tuple but not the other
    no diff should be displayed *)
@@ -429,8 +440,9 @@ let%expect_test _ =
                                          ^
       5 |   ([] : operation list), s
 
-    Invalid type(s)
-    Cannot unify "int" with "( nat * int * string )". |}]
+    This expression has type "int", but an expression was expected of type
+    "( nat * int * string )".
+    Type "int" is not compatible with type "( nat * int * string )". |}]
 
 (*
   Here, the two tuples have no types in common and different sizes.
@@ -477,8 +489,11 @@ let%expect_test _ =
                                                   ^
       5 |   ([] : operation list), s
 
-    Invalid type(s)
-    Cannot unify "( string * int * int * string )" with "( tez * nat * tez )".
+    This expression has type "( string * int * int * string )", but an expression was expected of type
+    "( tez * nat * tez )".
+    Type "( string * int * int * string )" is not compatible with type "( tez *
+                                                                        nat *
+                                                                        tez )".
     Difference between the types:
     - string
     + tez
@@ -508,8 +523,9 @@ let%expect_test _ =
                                                                ^
       5 |   //       ^^^^^^         ^^^         ^^^
 
-    Invalid type(s)
-    Cannot unify "string" with "tez". |}]
+    This expression has type "( string * int * nat * int * string )", but an expression was expected of type
+    "( tez * int * tez * nat * string )".
+    Type "string" is not compatible with type "tez". |}]
 
 (*
   Here, the two tuples have 4 changes and different sizes.
@@ -530,12 +546,10 @@ let%expect_test _ =
                                                                      ^
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
-    Invalid type(s)
-    Cannot unify "( string * int * nat * tez * string * int )" with "( tez *
-                                                                       int *
-                                                                       tez *
-                                                                       nat *
-                                                                       string )".
+    This expression has type "( string * int * nat * tez * string * int )", but an expression was expected of type
+    "( tez * int * tez * nat * string )".
+    Type "( string * int * nat * tez * string * int )" is not compatible with type
+    "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez
@@ -562,16 +576,10 @@ let%expect_test _ =
                                                                                   ^
       5 | //               ^^^   ^^^^^^               ^^^^^^^         ^^^
 
-    Invalid type(s)
-    Cannot unify "( int * nat * int * nat * int * nat )" with "( int *
-                                                                 tez *
-                                                                 string *
-                                                                 nat *
-                                                                 int *
-                                                                 address *
-                                                                 int *
-                                                                 tez *
-                                                                 nat )".
+    This expression has type "( int * nat * int * nat * int * nat )", but an expression was expected of type
+    "( int * tez * string * nat * int * address * int * tez * nat )".
+    Type "( int * nat * int * nat * int * nat )" is not compatible with type
+    "( int * tez * string * nat * int * address * int * tez * nat )".
     Difference between the types:
       int
     + tez
@@ -635,14 +643,10 @@ let%expect_test _ =
                                                                                  ^
       5 |   //             ^^^^^^                ^^^    ^^^^^^         ^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "( int * string * ( nat * tez * nat ) * tez )" with "( int *
-                                                                        ( nat *
-                                                                        tez *
-                                                                        int ) *
-                                                                        string *
-                                                                        tez *
-                                                                        address )".
+    This expression has type "( int * string * ( nat * tez * nat ) * tez )", but an expression was expected of type
+    "( int * ( nat * tez * int ) * string * tez * address )".
+    Type "( int * string * ( nat * tez * nat ) * tez )" is not compatible with type
+    "( int * ( nat * tez * int ) * string * tez * address )".
     Difference between the types:
       int
     - string
@@ -680,8 +684,14 @@ let%expect_test _ =
                                                           ^
      10 |   ([] : operation list), s
 
-    Invalid type(s)
-    Cannot unify "( int * s * nat )" with "( int * s1 * s2 * s_close * s2 * nat )".
+    This expression has type "( int * s * nat )", but an expression was expected of type
+    "( int * s1 * s2 * s_close * s2 * nat )".
+    Type "( int * s * nat )" is not compatible with type "( int *
+                                                            s1 *
+                                                            s2 *
+                                                            s_close *
+                                                            s2 *
+                                                            nat )".
     Difference between the types:
       int
     - s
@@ -714,12 +724,10 @@ let%expect_test _ =
                                                                            ^
       5 |   //       ^^^^^^         ^^^         ^^^            ^^^
 
-    Invalid type(s)
-    Cannot unify "( string * int * nat * int * string * int )" with "( tez *
-                                                                       int *
-                                                                       tez *
-                                                                       nat *
-                                                                       string )".
+    This expression has type "list (( string * int * nat * int * string * int ))", but an expression was expected of type
+    "list (( tez * int * tez * nat * string ))".
+    Type "( string * int * nat * int * string * int )" is not compatible with type
+    "( tez * int * tez * nat * string )".
     Difference between the types:
     - string
     + tez
@@ -757,8 +765,9 @@ let%expect_test _ =
                                                          ^
       5 |   //                                ^^^^^^
 
-    Invalid type(s)
-    Cannot unify "string" with "nat". |}]
+    This expression has type "record[bar -> ( nat * string ) , foo -> int]", but an expression was expected of type
+    "record[bar -> ( nat * nat ) , foo -> int]".
+    Type "string" is not compatible with type "nat". |}]
 
 (*
   In this case, the two records DON'T have the same field labels.
@@ -781,11 +790,12 @@ let%expect_test _ =
                                                                              ^
       5 |   //                                ^^^^^^    ^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "record[bar -> ( nat * string ) ,
-                         foo -> int ,
-                         third_field -> tez]" with "record[bar -> ( nat * nat ) ,
-                                                           foo -> int]". |}]
+    This expression has type "record[bar -> ( nat * string ) ,
+                                     foo -> int ,
+                                     third_field -> tez]", but an expression was expected of type
+    "record[bar -> ( nat * nat ) , foo -> int]".
+    Type "record[bar -> ( nat * string ) , foo -> int , third_field -> tez]" is not compatible with type
+    "record[bar -> ( nat * nat ) , foo -> int]". |}]
 
 (*
   In this case, the typer will stop at the first mismatch
@@ -810,5 +820,42 @@ let%expect_test _ =
                                                        ^
       5 |   //              ^^^    ^^^    ^^^    ^^^
 
-    Invalid type(s)
-    Cannot unify "int" with "nat". |}]
+    This expression has type "int -> nat -> nat -> tez", but an expression was expected of type
+    "int -> int -> int -> int -> nat".
+    Type "int" is not compatible with type "nat". |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-color"
+    ; "../../test/contracts/negative/error_subtyping_id.mligo"
+    ];
+  [%expect {|
+    File "../../test/contracts/negative/error_subtyping_id.mligo", line 3, characters 49-50:
+      2 | let main (_p: unit) (_s : unit) : operation list * unit =
+      3 |   let f : int * bool -> string * bool = fun x -> x in
+                                                           ^
+      4 |   ([], ())
+
+    This expression has type "( int * bool )", but an expression was expected of type
+    "( string * bool )".
+    Type "int" is not compatible with type "string". |}]
+
+let%expect_test _ =
+  run_ligo_bad
+    [ "compile"
+    ; "contract"
+    ; "--no-color"
+    ; "../../test/contracts/negative/error_subtyping_id_pair.mligo"
+    ];
+  [%expect {|
+    File "../../test/contracts/negative/error_subtyping_id_pair.mligo", line 3, characters 55-56:
+      2 | let main (_p: unit) (_s : unit) : operation list * unit =
+      3 |   let f : int * bool -> string * bool = fun (x, y) -> (x, y) in
+                                                                 ^
+      4 |   ([], ())
+
+    This expression has type "int", but an expression was expected of type
+    "string".
+    Type "int" is not compatible with type "string". |}]

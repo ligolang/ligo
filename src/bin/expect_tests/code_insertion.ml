@@ -27,5 +27,6 @@ File "../../test/contracts/negative/bad_michelson_insertion_2.mligo", line 5, ch
   5 |   in [], f (p, s)
                   ^^^^
 
-Invalid type(s)
-Cannot unify "( nat * nat )" with "nat". |test}]
+This expression has type "( nat * nat )", but an expression was expected of type
+"nat".
+Type "( nat * nat )" is not compatible with type "nat". |test}]

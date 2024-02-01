@@ -30,6 +30,11 @@ type ('error, 'warning) raise =
   ; fast_fail : bool
   }
 
+val raise_map_error
+  :  f:('error1 -> 'error2)
+  -> ('error2, 'warning) raise
+  -> ('error1, 'warning) raise
+
 type ('error, 'warning) catch =
   { warnings : unit -> 'warning list
   ; errors : unit -> 'error list
@@ -62,6 +67,12 @@ val to_stdlib_result
 val to_stdlib_result_lwt
   :  (raise:('error, 'warn) raise -> 'value Lwt.t)
   -> ('value * 'warn list, 'error * 'warn list) Lwt_result.t
+
+val map_error
+  :  f:('error1 -> 'error2)
+  -> raise:('error2, 'warn) raise
+  -> (raise:('error1, 'warn) raise -> 'value)
+  -> 'value
 
 (** Wrap [try_wait'] and return value and all logged errors with fatal one if it happens *)
 val extract_all_errors
