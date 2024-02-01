@@ -831,7 +831,8 @@ let%expect_test _ =
     ; "--no-color"
     ; "../../test/contracts/negative/error_subtyping_id.mligo"
     ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/error_subtyping_id.mligo", line 3, characters 49-50:
       2 | let main (_p: unit) (_s : unit) : operation list * unit =
       3 |   let f : int * bool -> string * bool = fun x -> x in
@@ -849,7 +850,8 @@ let%expect_test _ =
     ; "--no-color"
     ; "../../test/contracts/negative/error_subtyping_id_pair.mligo"
     ];
-  [%expect {|
+  [%expect
+    {|
     File "../../test/contracts/negative/error_subtyping_id_pair.mligo", line 3, characters 55-56:
       2 | let main (_p: unit) (_s : unit) : operation list * unit =
       3 |   let f : int * bool -> string * bool = fun (x, y) -> (x, y) in

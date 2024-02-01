@@ -147,8 +147,19 @@ class lsp_server (capability_mode : capability_mode) =
       client_capabilities <- init_params.capabilities;
       super#on_req_initialize ~notify_back init_params
 
-    method is_request_enabled : string -> bool =
-      not <@ List.mem config.disabled_features ~equal:String.equal
+    method private is_supported_semantic_tokens : string -> bool =
+      function
+      | "textDocument/semanticTokens"
+      | "textDocument/semanticTokens/range"
+      | "textDocument/semanticTokens/full" -> true
+      | "textDocument/semanticTokens/full/delta" | _ -> false
+
+    method is_request_enabled (req : string) : bool =
+      match self#is_supported_semantic_tokens req, capability_mode with
+      | false, (All_capabilities | No_semantic_tokens)
+      | true, (Only_semantic_tokens | All_capabilities) ->
+        not @@ List.mem config.disabled_features ~equal:String.equal req
+      | false, Only_semantic_tokens | true, No_semantic_tokens -> false
 
     (* TODO: When the document closes, we should thinking about removing the
        state associated to the file from the global hashtable state, to avoid
@@ -204,33 +215,39 @@ class lsp_server (capability_mode : capability_mode) =
       Some (`Bool (self#is_request_enabled "textDocument/foldingRange"))
 
     method! config_completion =
-      let completionItem =
-        CompletionOptions.create_completionItem ~labelDetailsSupport:true ()
-      in
-      let completion_options =
-        CompletionOptions.create ~completionItem ~triggerCharacters:[ "."; "@" ] ()
-      in
-      Some completion_options
+      if self#is_request_enabled "textDocument/completion"
+      then (
+        let completionItem =
+          CompletionOptions.create_completionItem ~labelDetailsSupport:true ()
+        in
+        let completion_options =
+          CompletionOptions.create ~completionItem ~triggerCharacters:[ "."; "@" ] ()
+        in
+        Some completion_options)
+      else None
 
     method config_semantic_tokens =
-      match capability_mode with
-      | All_capabilities | Only_semantic_tokens ->
-        let legend =
-          SemanticTokensLegend.create
-            ~tokenModifiers:
-              (Array.to_list
-              @@ Array.map ~f:Requests.mk_modifier_legend Requests.all_modifiers)
-            ~tokenTypes:
-              (Array.to_list @@ Array.map ~f:Requests.mk_type_legend Requests.all_types)
-        in
-        Some
-          (`SemanticTokensOptions
-            (SemanticTokensOptions.create
-               ~full:(`Full { delta = Some false })
-               ~legend
-               ~range:true
-               ()))
-      | No_semantic_tokens -> None
+      if self#is_request_enabled "textDocument/semanticTokens"
+      then (
+        match capability_mode with
+        | All_capabilities | Only_semantic_tokens ->
+          let legend =
+            SemanticTokensLegend.create
+              ~tokenModifiers:
+                (Array.to_list
+                @@ Array.map ~f:Requests.mk_modifier_legend Requests.all_modifiers)
+              ~tokenTypes:
+                (Array.to_list @@ Array.map ~f:Requests.mk_type_legend Requests.all_types)
+          in
+          Some
+            (`SemanticTokensOptions
+              (SemanticTokensOptions.create
+                 ~full:(`Full { delta = Some false })
+                 ~legend
+                 ~range:true
+                 ()))
+        | No_semantic_tokens -> None)
+      else None
 
     method! config_modify_capabilities (c : ServerCapabilities.t) : ServerCapabilities.t =
       { c with
