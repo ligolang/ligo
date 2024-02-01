@@ -1549,8 +1549,9 @@ let%expect_test _ =
       1 | let x = (Bytes.unpack (Bytes.pack "hello") : string)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "option (^a)" with "string".
+    This expression has type "option (^a)", but an expression was expected of type
+    "string".
+    Type "option (^a)" is not compatible with type "string".
     Hint: "^a" represent placeholder type(s). |}]
 
 (* check annotations' capitalization *)

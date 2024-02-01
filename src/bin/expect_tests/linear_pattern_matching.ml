@@ -10,8 +10,9 @@ let%expect_test _ =
       4 |   | { a = a ;  b = b ; c = c } -> a
                                             ^
 
-    Invalid type(s)
-    Cannot unify "int" with "string". |}];
+    This expression has type "int", but an expression was expected of type
+    "string".
+    Type "int" is not compatible with type "string". |}];
   run_ligo_good
     [ "run"
     ; "interpret"

@@ -79,8 +79,8 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    Invalid type(s)
-    Cannot unify "record[a -> ^a]" with "t".
+    Can not unify the types "record[a -> ^a]" and "t".
+    Type "record[a -> ^a]" is not compatible with type "t".
     Hint: "^a" represent placeholder type(s). |}];
   run_ligo_bad
     [ "run"
@@ -91,8 +91,8 @@ let%expect_test _ =
     ];
   [%expect
     {|
-    Invalid type(s)
-    Cannot unify "record[a -> ^a , b -> ^b , c -> ^c]" with "t".
+    Can not unify the types "record[a -> ^a , b -> ^b , c -> ^c]" and "t".
+    Type "record[a -> ^a , b -> ^b , c -> ^c]" is not compatible with type "t".
     Hint: "^a", "^b", "^c" represent placeholder type(s). |}];
   run_ligo_good
     [ "run"; "interpret"; "t1"; "--init-file"; test "let_destructuring.jsligo" ];

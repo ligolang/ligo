@@ -31,5 +31,6 @@ let%expect_test _ =
       6 | let typing_error = f 42 |> gg |> h
                              ^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "[y]int -> int" with "int". |}]
+    This expression has type "[y]int -> int", but an expression was expected of type
+    "int".
+    Type "[y]int -> int" is not compatible with type "int". |}]

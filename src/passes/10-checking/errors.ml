@@ -106,11 +106,28 @@ let type_improve t =
   type_mapper ~f:type_improve t
 
 
+(** Local unification error *)
+type local_unify_error =
+  [ `Typer_cannot_unify_local of bool * Type.t * Type.t * Location.t
+  | `Typer_cannot_unify_local_diff_layout of
+    Type.t * Type.t * Type.layout * Type.layout * Location.t
+  | `Typer_ill_formed_type of Type.t * Location.t
+  | `Typer_occurs_check_failed of Type_var.t * Type.t * Location.t
+  | `Typer_unbound_texists_var of Type_var.t * Location.t
+  ]
+
+(** Unification error containing both the types that we initially wanted to unify, and the local unification error raised by a recursive unification call *)
+type unify_error =
+  [ `Typer_cannot_unify of local_unify_error * Type.t * Type.t * Location.t ]
+
+type subtype_error =
+  [ `Typer_cannot_subtype of local_unify_error * Type.t * Type.t * Location.t ]
+
 type typer_error =
   [ `Typer_mut_var_captured of Value_var.t * Location.t
   | `Typer_ill_formed_type of Type.t * Location.t
   | `Typer_record_mismatch of Ast_core.expression * Type.t * Location.t
-  | `Typer_cannot_subtype of Type.t * Type.t * Location.t
+  | `Typer_cannot_subtype of local_unify_error * Type.t * Type.t * Location.t
   | `Typer_corner_case of string * Location.t
   | `Typer_occurs_check_failed of Type_var.t * Type.t * Location.t
   | `Typer_pattern_missing_cases of
@@ -118,9 +135,11 @@ type typer_error =
     * Ast_core.type_expression option Ast_typed.Pattern.t list
     * Location.t
   | `Typer_pattern_redundant_case of Location.t
-  | `Typer_cannot_unify_diff_layout of
+  | (* Removing `Typer_cannot_unify_local_diff_layout and `Typer_cannot_unify_local below should be doable, but one should take the poly_constructor annotation into account *)
+    `Typer_cannot_unify_local_diff_layout of
     Type.t * Type.t * Type.layout * Type.layout * Location.t
-  | `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
+  | `Typer_cannot_unify_local of bool * Type.t * Type.t * Location.t
+  | `Typer_cannot_unify of local_unify_error * Type.t * Type.t * Location.t
   | `Typer_assert_equal of
     Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_unbound_module of Module_var.t list * Location.t
@@ -163,13 +182,49 @@ type typer_error =
   ]
 [@@deriving poly_constructor { prefix = "typer_" }]
 
-let extract_loc_and_message : typer_error -> Location.t * string =
- fun a ->
-  (* Create a fresh name table for printing types in errors *)
-  Type.Type_var_name_tbl.Exists.clear ();
-  let name_tbl = Type.Type_var_name_tbl.create () in
+let rec extract_loc_and_message
+    : ?name_tbl:Type_var_name_tbl.t -> typer_error -> Location.t * string
+  =
+ fun ?name_tbl a ->
+  let name_tbl =
+    name_tbl
+    |> Option.value_or_thunk ~default:(fun () ->
+           (* Create a fresh name table for printing types in errors *)
+           Type.Type_var_name_tbl.Exists.clear ();
+           Type.Type_var_name_tbl.create ())
+  in
   let pp_type = Type.pp_with_name_tbl ~tbl:name_tbl in
   match a with
+  | ( `Typer_cannot_unify (local_err, type1, type2, loc)
+    | `Typer_cannot_subtype (local_err, type1, type2, loc) ) as err ->
+    let local_loc, local_error_message =
+      extract_loc_and_message ~name_tbl (local_err :> typer_error)
+    in
+    (match local_err with
+    | `Typer_cannot_unify_local _ | `Typer_cannot_unify_local_diff_layout _ ->
+      let type1 = type_improve type1 in
+      let type2 = type_improve type2 in
+      let error_message =
+        match err with
+        | `Typer_cannot_unify _ ->
+          Format.asprintf
+            "@[<hv>Can not unify the types @[<hv>\"%a\"@] and @[<hv>\"%a\".@]@]"
+            pp_type
+            type1
+            pp_type
+            type2
+        | `Typer_cannot_subtype _ ->
+          Format.asprintf
+            "@[<hv>This expression has type @[<hv>\"%a\"@], but an expression was \
+             expected of type @[<hv>\"%a\".@]@]"
+            pp_type
+            type1
+            pp_type
+            type2
+      in
+      (* TODO loc instead of local_loc? But then need to remove dummy loc *)
+      loc, String.concat ~sep:"\n" [ error_message; local_error_message ]
+    | _ -> local_loc, local_error_message)
   | `Typer_wrong_dynamic_storage_definition (t, loc) ->
     ( loc
     , Format.asprintf
@@ -205,7 +260,7 @@ let extract_loc_and_message : typer_error -> Location.t * string =
     let type_ = type_improve type_ in
     ( loc
     , Format.asprintf
-        "@[<hv>Invalid type@.Ill formed type \"%a\".Hint: you might be missing some type \
+        "@[<hv>Ill formed type \"%a\". Hint: you might be missing some type \
          arguments.%a@]"
         pp_type
         type_
@@ -220,18 +275,6 @@ let extract_loc_and_message : typer_error -> Location.t * string =
         type_
         (pp_texists_hint ~requires_annotations:true ())
         [ type_ ] )
-  | `Typer_cannot_subtype (type1, type2, loc) ->
-    let type1 = type_improve type1 in
-    let type2 = type_improve type2 in
-    ( loc
-    , Format.asprintf
-        "@[<hv>Expected \"%a\", but received \"%a\". Types are not compatitable.%a@]"
-        pp_type
-        type2
-        pp_type
-        type1
-        (pp_texists_hint ())
-        [ type1; type2 ] )
   | `Typer_corner_case (desc, loc) ->
     loc, Format.asprintf "@[<hv>A type system corner case occurred:@.%s@]" desc
   | `Typer_occurs_check_failed (tvar, type_, loc) ->
@@ -257,12 +300,12 @@ let extract_loc_and_message : typer_error -> Location.t * string =
         ps )
   | `Typer_pattern_redundant_case loc ->
     loc, Format.asprintf "@[<hv>Error : this match case is unused.@]"
-  | `Typer_cannot_unify (no_color, type1, type2, loc) ->
+  | `Typer_cannot_unify_local (no_color, type1, type2, loc) ->
     let type1 = type_improve type1 in
     let type2 = type_improve type2 in
     ( loc
     , Format.asprintf
-        "@[<hv>Invalid type(s)@.Cannot unify \"%a\" with \"%a\".%a%a@]"
+        "@[<hv>Type @[<hv>\"%a\"@] is not compatible with type @[<hv>\"%a\".@]%a%a@]"
         pp_type
         type1
         pp_type
@@ -271,13 +314,13 @@ let extract_loc_and_message : typer_error -> Location.t * string =
         (Typediff.diff type1 type2)
         (pp_texists_hint ())
         [ type1; type2 ] )
-  | `Typer_cannot_unify_diff_layout (type1, type2, layout1, layout2, loc) ->
+  | `Typer_cannot_unify_local_diff_layout (type1, type2, layout1, layout2, loc) ->
     let type1 = type_improve type1 in
     let type2 = type_improve type2 in
     ( loc
     , Format.asprintf
-        "@[<hv>Invalid type(s)@.Cannot unify \"%a\" with \"%a\" due to differing layouts \
-         \"%a\" and \"%a\".%a@]"
+        "@[<hv>Type @[<hv>\"%a\"@] is not compatible with type @[<hv>\"%a\"@] due to \
+         differing layouts \"%a\" and \"%a\".%a@]"
         pp_type
         type1
         pp_type

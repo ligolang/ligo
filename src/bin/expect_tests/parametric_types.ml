@@ -105,8 +105,7 @@ let%expect_test _ =
       1 | type x = option list
                    ^^^^^^
 
-    Invalid type
-    Ill formed type "option".Hint: you might be missing some type arguments. |}]
+    Ill formed type "option". Hint: you might be missing some type arguments. |}]
 
 let%expect_test _ =
   run_ligo_bad [ "print"; "ast-typed"; bad_test "parametric_types5.mligo" ];

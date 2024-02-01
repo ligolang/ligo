@@ -1329,8 +1329,9 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, "toto");
                                     ^^^^^^
 
-    Invalid type(s)
-    Cannot unify "string" with "record[b -> int]". |}]
+    This expression has type "string", but an expression was expected of type
+    "record[b -> int]".
+    Type "string" is not compatible with type "record[b -> int]". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_run_types3.jsligo" ];
@@ -1341,8 +1342,9 @@ let%expect_test _ =
       2 | const bar = Test.run(foo, {field: "toto"});
                                     ^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "record[field -> string]" with "int". |}]
+    This expression has type "record[field -> string]", but an expression was expected of type
+    "int".
+    Type "record[field -> string]" is not compatible with type "int". |}]
 
 let%expect_test _ =
   run_ligo_bad [ "run"; "test"; bad_test "test_decompile.mligo" ];

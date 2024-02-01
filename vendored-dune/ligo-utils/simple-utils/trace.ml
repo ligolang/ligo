@@ -15,6 +15,12 @@ type ('error, 'warning) raise =
   ; fast_fail : bool
   }
 
+let raise_map_error ~f raise =
+  { raise with
+    error = Fn.compose raise.error f
+  ; log_error = Fn.compose raise.log_error f
+  }
+
 type ('error, 'warning) catch =
   { warnings : unit -> 'warning list
   ; errors : unit -> 'error list
@@ -95,6 +101,8 @@ let to_stdlib_result_lwt
     (fun ~catch e ->
       let warn = catch.warnings () in
       Lwt.return @@ Error (e, warn))
+
+let map_error ~f ~raise t = t ~raise:(raise_map_error ~f raise)
 
 let extract_all_errors
     : (raise:('error, _) raise -> 'value) -> 'error list * 'value option

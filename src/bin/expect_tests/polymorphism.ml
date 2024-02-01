@@ -327,8 +327,10 @@ let%expect_test _ =
       5 | let m = merge (Map.empty : (int, string) foo)
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "string" with "int". |}]
+    This expression has type "map (int , string)", but an expression was expected of type
+    "map (^a ,
+    ^a)".
+    Type "string" is not compatible with type "int". |}]
 
 let%expect_test _ =
   run_ligo_good

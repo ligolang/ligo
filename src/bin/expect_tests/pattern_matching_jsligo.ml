@@ -57,8 +57,8 @@ let%expect_test _ =
           ^^^
       6 | }
 
-    Invalid type(s)
-    Cannot unify "( ^a * ^b )" with "nat".
+    Can not unify the types "( ^a * ^b )" and "nat".
+    Type "( ^a * ^b )" is not compatible with type "nat".
     Hint: "^a", "^b" represent placeholder type(s). |}]
 
 let%expect_test _ =
@@ -101,8 +101,8 @@ let%expect_test _ =
       1 | let foo = ([a,b,c,d] : [int,int,int]) : int => a + b + c + d;
                                                          ^^^^^^^^^^^^^
 
-    Invalid type(s)
-    Cannot unify "( ^a * ^b * ^c * ^d )" with "( int * int * int )".
+    Can not unify the types "( ^a * ^b * ^c * ^d )" and "( int * int * int )".
+    Type "( ^a * ^b * ^c * ^d )" is not compatible with type "( int * int * int )".
     Difference between the types:
     - ^a
     + int

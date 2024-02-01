@@ -323,29 +323,18 @@ val generalize
 
 (** {5 Unification and Subtyping} *)
 
-type unify_error =
-  [ `Typer_cannot_unify of bool * Type.t * Type.t * Location.t
-  | `Typer_cannot_unify_diff_layout of
-    Type.t * Type.t * Type.layout * Type.layout * Location.t
-  | `Typer_ill_formed_type of Type.t * Location.t
-  | `Typer_occurs_check_failed of Type_var.t * Type.t * Location.t
-  | `Typer_unbound_texists_var of Type_var.t * Location.t
-  ]
-
 (** [unify_texists tvar type_] unifies the existential (unification) variable [tvar] with the type [type_]. *)
-val unify_texists : Type_var.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
+val unify_texists : Type_var.t -> Type.t -> (unit, [> Errors.local_unify_error ], 'wrn) t
 
 (** [unify type1 type2] unifies the types [type1] and [type2].
 
     Hint: In general, use [unify] over [subtype]. *)
-val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
+val unify : Type.t -> Type.t -> (unit, [> Errors.unify_error ], 'wrn) t
 
 (** [eq type1 type2] unifies the types [type1] and [type2].
 
     Hint: In general, use [unify] over [subtype]. *)
-val eq : Type.t -> Type.t -> (bool, [> unify_error ], 'wrn) t
-
-type subtype_error = unify_error
+val eq : Type.t -> Type.t -> (bool, [> Errors.local_unify_error ], 'wrn) t
 
 (** [subtype ~received ~expected] ensures [received] is the subtype of [expected]
     and returns a coercion [f] that accepts an expression of type [received] and
@@ -355,7 +344,7 @@ val subtype
   :  received:Type.t
   -> expected:Type.t
   -> ( Ast_typed.expression -> Ast_typed.expression Elaboration.t
-     , [> subtype_error ]
+     , [> Errors.subtype_error ]
      , 'wrn )
      t
 
@@ -399,6 +388,7 @@ module With_frag : sig
   val raise_l : loc:Location.t -> 'err Errors.with_loc -> ('a, 'err, 'wrn) t
   val warn : 'wrn Errors.with_loc -> (unit, 'err, 'wrn) t
   val assert_ : bool -> error:'err Errors.with_loc -> (unit, 'err, 'wrn) t
+  val map_error : f:('err2 -> 'err1) -> ('a, 'err2, 'wrn) t -> ('a, 'err1, 'wrn) t
 
   module Context : sig
     val get_sum
@@ -414,13 +404,13 @@ module With_frag : sig
 
   val exists : Kind.t -> (Type.t, 'err, 'wrn) t
   val lexists : Label.Set.t -> (Type.layout, 'err, 'wrn) t
-  val unify : Type.t -> Type.t -> (unit, [> unify_error ], 'wrn) t
+  val unify : Type.t -> Type.t -> (unit, Errors.unify_error, 'wrn) t
 
   val subtype
     :  received:Type.t
     -> expected:Type.t
     -> ( Ast_typed.expression -> Ast_typed.expression Elaboration.t
-       , [> subtype_error ]
+       , Errors.subtype_error
        , 'wrn )
        t
 

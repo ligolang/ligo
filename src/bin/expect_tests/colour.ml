@@ -29,8 +29,8 @@ let%expect_test _ =
       6 |   let x : nat = [1m[31m1 + 2 + 3[0m (* int *) in
       7 |   [],s
 
-    Invalid type(s)
-    Cannot unify "int" with "nat". |}];
+    This expression has type "int", but an expression was expected of type "nat".
+    Type "int" is not compatible with type "nat". |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 (* Test of [compile contract] with --no-color set *)
@@ -49,8 +49,8 @@ let%expect_test _ =
                             ^^^^^^^^^
         7 |   [],s
 
-      Invalid type(s)
-      Cannot unify "int" with "nat". |}];
+      This expression has type "int", but an expression was expected of type "nat".
+      Type "int" is not compatible with type "nat". |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 (* Test of [run test] with --no-color unset *)
@@ -108,8 +108,8 @@ let%expect_test _ =
       6 |   let x : nat = [1m[31m1 + 2 + 3[0m (* int *) in
       7 |   [],s
 
-    Invalid type(s)
-    Cannot unify "int" with "nat". |}];
+    This expression has type "int", but an expression was expected of type "nat".
+    Type "int" is not compatible with type "nat". |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"
 
 (* Test of [compile contract] with NO_COLOR env var set *)
@@ -129,6 +129,6 @@ let%expect_test _ =
                           ^^^^^^^^^
       7 |   [],s
 
-    Invalid type(s)
-    Cannot unify "int" with "nat". |}];
+    This expression has type "int", but an expression was expected of type "nat".
+    Type "int" is not compatible with type "nat". |}];
   Ligo_unix.putenv ~key:"TERM" ~data:"dumb"

@@ -1228,6 +1228,10 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
   let open C.With_frag in
   let open Let_syntax in
   let module P = O.Pattern in
+  let unify_with_typer_error type1 type2 =
+    unify type1 type2
+    |> Computation.With_frag.map_error ~f:(fun err -> (err :> typer_error))
+  in
   let check = check_pattern ~mut in
   let infer = infer_pattern ~mut in
   let const content =
@@ -1250,7 +1254,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       match Binder.get_ascr binder with
       | Some ascr ->
         let%bind ascr = lift @@ With_default_layout.evaluate_type ascr in
-        unify ascr type_
+        unify_with_typer_error ascr type_
       | None -> return ()
     in
     let%bind () =
@@ -1319,7 +1323,7 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
     let%bind () =
       let%bind type_' = Context.tapply type_' in
       let%bind type_ = Context.tapply type_ in
-      unify type_' type_
+      unify_with_typer_error type_' type_
     in
     return pat
 
