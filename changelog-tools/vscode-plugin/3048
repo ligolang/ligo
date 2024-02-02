@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\n\\nNow LIGO path option in the extension settings will never be filled on itself.\\n\\n"
+merge_request: '3048'
+title: "[#1807] Avoid auto-filling LIGO path config"
+type: fixed
+            

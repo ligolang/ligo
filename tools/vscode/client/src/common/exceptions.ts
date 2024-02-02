@@ -1,14 +1,3 @@
-export class BinaryNotFoundException extends Error {
-  binaryName: string;
-
-  constructor(binaryName) {
-    super(`'${binaryName}' binary not found in PATH. You won't be able to compile and deploy contracts
-          without providing path to ${binaryName} using ${binaryName} variable,
-          located in VSCode settings`)
-    this.binaryName = binaryName
-  }
-}
-
 export class UnknownLigoDialectExtensionException extends Error {
   extension: string
 
