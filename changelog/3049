@@ -1,0 +1,7 @@
+
+author: heitor.toledo
+description: "\\n\\nThe LSP server will now correctly declare its list of supported server capabilities in the presence of all capabilities, only semantic tokens, or no semantic tokens flags.\\n\\n"
+merge_request: '3049'
+title: "[#2131] Handle capability modes when declaring capabilities"
+type: fixed
+            
