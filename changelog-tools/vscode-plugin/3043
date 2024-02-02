@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\n\"Compile storage\" command now will invoke full TZIP-16 compliance checks, downloading JSONs if necessary.\\n\\nIf the storage does not satisfy the TZIP-16 invariants, warnings will be printed to the extension output.\\nOther commands may print warnings now too. \\n\\n"
+merge_request: '3043'
+title: "[#2083] Print TZIP-16 check warnings in compile storage"
+type: fixed
+            
