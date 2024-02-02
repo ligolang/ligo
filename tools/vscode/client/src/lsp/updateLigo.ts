@@ -107,7 +107,7 @@ export async function downloadLigo(latest: Release, targetAsset: TagName): Promi
         },
       )
       let loaded = 0
-      const chunks = []
+      const chunks: Buffer[] = []
       return await new Promise((resolve, reject) => {
         const stream = response.data
         const total = response.headers['content-length']
