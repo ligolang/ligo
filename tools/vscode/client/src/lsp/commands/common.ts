@@ -5,10 +5,10 @@ import { existsSync } from 'fs'
 import { execFileSync } from 'child_process';
 
 import { extensions } from '../common'
+import { Maybe } from '../../common/base';
 
 import * as ex from '../../common/exceptions'
-import { Maybe } from '../../common/base';
-import { BinaryInfo } from '../../common/config';
+import { BinaryInfo, getBinaryPath } from '../../common/config';
 
 export const ligoOutput = vscode.window.createOutputChannel('LIGO Compiler')
 
@@ -26,29 +26,6 @@ function extToDialect(ext: string) {
     case '.jsligo': return 'jsligo'
     default:
       throw new ex.UnknownLigoDialectExtensionException(ext)
-  }
-}
-
-export function findBinaryPath(binaryName: string): string {
-  const find = os.platform() === 'win32' ? 'where.exe' : 'which'
-  return execFileSync(find, [binaryName]).toString().trim().split('\n')[0]
-}
-
-export function getBinaryPath(info: BinaryInfo) {
-  const config = vscode.workspace.getConfiguration()
-  let binaryPath = config.get<string>(info.path)
-  if (binaryPath) {
-    return binaryPath
-  }
-
-  try {
-    vscode.window.showWarningMessage(`'${info.name}' binary not found through the LIGO configuration. Searching in PATH.`)
-    binaryPath = findBinaryPath(info.name)
-    config.update(info.path, binaryPath)
-    vscode.window.showWarningMessage(`'${info.path}' variable was updated to ${binaryPath}`)
-    return binaryPath
-  } catch {
-    throw new ex.BinaryNotFoundException(info.name)
   }
 }
 

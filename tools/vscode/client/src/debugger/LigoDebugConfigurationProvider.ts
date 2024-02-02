@@ -1,12 +1,12 @@
 import * as fs from 'fs'
 import * as vscode from 'vscode'
-import { ContractMetadata, generatedModuleName, getBinaryPath, interruptExecution, tryExecuteCommand } from './base'
+import { ContractMetadata, generatedModuleName, interruptExecution, tryExecuteCommand } from './base'
 import { LigoContext } from '../common/LigoContext'
 import { LigoProtocolClient, showErrorWithOpenLaunchJson } from '../common/LigoProtocolClient'
 import { ValidateValueCategory } from './messages'
 import { createConfigSnippet, createRememberingQuickPick, getConfigPath, getModuleName, getParameterOrStorage } from './ui'
 import { InputValueLang, isDefined, Maybe } from '../common/base'
-import { ligoBinaryInfo } from '../common/config'
+import { getBinaryPath, ligoBinaryInfo } from '../common/config'
 
 function createLogDir(logDir: string): void | undefined {
   if (!fs.existsSync(logDir)) {
@@ -42,8 +42,8 @@ export default class LigoDebugConfigurationProvider implements vscode.DebugConfi
   }
 
   private async tryToResolveConfigFromLigo(config: vscode.DebugConfiguration): Promise<vscode.DebugConfiguration> {
+    const binaryPath = getBinaryPath(ligoBinaryInfo);
     const pluginConfig = vscode.workspace.getConfiguration();
-    const binaryPath = getBinaryPath(ligoBinaryInfo, pluginConfig);
     const maxSteps = pluginConfig.get<Maybe<number>>('ligoDebugger.maxSteps');
     await this.client.sendMsg('setLigoConfig', { binaryPath, maxSteps });
 

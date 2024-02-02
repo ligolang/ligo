@@ -68,34 +68,6 @@ export interface ContractMetadata {
 
 export type ContractMetadataFetcher = (file: string, logDir: string) => Promise<ContractMetadata>
 
-type BinaryInfo = {
-  name: string,
-  path: string,
-}
-
-export function getBinaryPath(info: BinaryInfo, config: vscode.WorkspaceConfiguration) {
-  let binaryPath = config.get<string>(info.path)
-  if (binaryPath) {
-    return binaryPath
-  }
-
-  try {
-    vscode.window.showWarningMessage(`'${info.name}' binary not found through the configuration for the Visual Studio Code extension. Using PATH.`)
-
-    binaryPath = execFileSync('which', [info.name]).toString().trim()
-
-    vscode.window.showWarningMessage(`${info.path} variable was updated to ${binaryPath}`)
-    config.update(info.path, binaryPath)
-    return binaryPath
-  } catch {
-    vscode.window.showWarningMessage(`'${info.name}' binary not found in PATH. You won't be able to compile and deploy contracts
-                                      without providing path to ${info.name} using ${info.path} variable,
-                                      located in VSCode settings`)
-
-    return undefined
-  }
-}
-
 export async function tryExecuteCommand<T extends Maybe<string>>(
   field: ConfigField,
   expectedExtractedCommand: ConfigCommand,
