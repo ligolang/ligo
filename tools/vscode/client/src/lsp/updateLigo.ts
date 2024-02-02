@@ -187,7 +187,7 @@ async function runBrewUpgrade(client: LanguageClient): Promise<null> {
 }
 
 async function runWindowsGuiInstaller(client: LanguageClient, latestRelease: Release): Promise<null> {
-  const runAsAdmin = (command: string): string =>
+  const runAsAdmin = (command: string): void =>
     void execFileSync(
       'powershell',
       [`Start-Process -FilePath ${command} -Verb RunAs -PassThru -Wait`],
