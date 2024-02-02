@@ -6,6 +6,12 @@
         "rootDir": "src",
         "sourceMap": true,
         "esModuleInterop": true,
+        "noImplicitReturns": true,
+        "noImplicitOverride": true,
+        "noImplicitThis": true,
+        "noFallthroughCasesInSwitch": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true
     },
     "include": ["src", "commands/ligoCommands.ts"],
     "exclude": ["node_modules", ".vscode-test"]
