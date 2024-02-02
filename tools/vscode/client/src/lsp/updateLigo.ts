@@ -15,6 +15,7 @@ import { Maybe } from '../common/base'
 
 import detectInstaller from 'detect-installer'
 import { Readable } from 'stream'
+import { NoReleasesAccess } from '../common/exceptions'
 
 type TagName = 'Static Linux binary' | 'Ligo Windows installer'
 
@@ -144,10 +145,10 @@ async function getLigoReleases(): Promise<Release[] | undefined> {
     })
 }
 
-async function getLatestLigoRelease(): Promise<Release | undefined> {
+async function getLatestLigoRelease(): Promise<Release> {
   const releases = await getLigoReleases()
   if (!releases || releases.length === 0) {
-    return undefined
+    throw new NoReleasesAccess()
   }
 
   return releases[0]
@@ -492,9 +493,6 @@ async function promptLigoUpdate(
   installedVersionIdentifier: string | number,
 ): Promise<string | number> {
   const latestRelease = await getLatestLigoRelease()
-  if (!latestRelease) {
-    return
-  }
 
   switch (typeof installedVersionIdentifier) {
     // Semantic version

@@ -54,3 +54,9 @@ export class NoContractPathException extends Error {
     this.activeTextEditor = activeTextEditor
   }
 }
+
+export class NoReleasesAccess extends Error {
+  constructor() {
+    super('Could not check for the recent LIGO release')
+  }
+}
