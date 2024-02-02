@@ -540,10 +540,8 @@ async function showUpdateError(
 
 export default async function updateLigo(client: LanguageClient): Promise<void> {
   let ligoPath: string = getBinaryPath(ligoBinaryInfo)
-
-  let data: string
   try {
-    data = execFileSync(ligoPath, ['--version']).toString().trim()
+    await updateLigoUnchecked(client, ligoPath)
   } catch (err) {
     const isLikelyNotFoundError = /ENOENT/.test(err.message)
     const isLikelyPermissionDeniedError = /EACCES/.test(err.message)
@@ -562,11 +560,11 @@ export default async function updateLigo(client: LanguageClient): Promise<void> 
       false,
       ligoPath,
     )
-
-    if (!shouldContinue) {
-      return
-    }
   }
+}
+
+async function updateLigoUnchecked(client: LanguageClient, ligoPath: string): Promise<void> {
+  let data: string = execFileSync(ligoPath, ['--version']).toString().trim()
 
   if (data === '') {
     // We purposefully omit the `await` here to avoid the extension hanging.
