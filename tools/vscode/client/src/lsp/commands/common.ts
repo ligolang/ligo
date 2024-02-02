@@ -2,7 +2,8 @@ import * as os from 'os'
 import * as vscode from 'vscode'
 import { extname, join, dirname } from 'path';
 import { existsSync } from 'fs'
-import { execFileSync } from 'child_process';
+import { execFile, execFileSync } from 'child_process';
+import { promisify } from 'util';
 
 import { extensions } from '../common'
 import { Maybe } from '../../common/base';
@@ -80,12 +81,16 @@ function findPackage(dirname: string): Maybe<string> {
   return findPackage(dirname.substring(0, dirname.lastIndexOf('/')));
 }
 
-export function executeCommand(
+function prefixLines(s: string, p: string): string {
+  return s.split('\n').map(l => `${p}${l}`).join("\n")
+}
+
+export async function executeCommand(
   binary: BinaryInfo,
   command: any,
   commandArgs = CommandRequiredArguments.Path | CommandRequiredArguments.ProjectRoot,
   showOutput = true,
-): string {
+): Promise<string> {
   const contractInfo = getLastContractPath()
   const ligoPath = getBinaryPath(binary);
   const ligoJsonPath = findPackage(dirname(contractInfo.path))
@@ -104,12 +109,13 @@ export function executeCommand(
       throw new ex.UserInterruptionException()
     }
 
-    const result = execFileSync(ligoPath, command, { cwd: ligoJsonPath }).toString()
+    var result = await promisify(execFile)(ligoPath, command, { cwd: ligoJsonPath },)
     if (showOutput) {
-      ligoOutput.appendLine(result)
+      ligoOutput.appendLine(prefixLines(result.stderr, "!> "))
+      ligoOutput.appendLine(result.stdout)
       ligoOutput.show();
     }
-    return result;
+    return result.stdout;
   } catch (error) {
     throw new ex.ExecutionException(error)
   }
