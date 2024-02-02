@@ -351,7 +351,7 @@ type InstallMethod = LinuxInstallMethod | MacOSInstallMethod | WindowsInstallMet
 type ChosenUpgradeMethod = 'Static Binary' | 'Upgrade' | 'Open Downloads' | 'Cancel'
 type ChosenInstallMethod = 'Static Binary' | 'GUI installer' | 'NPM' | 'Yarn' | 'Homebrew' | 'AUR' | 'Open Downloads' | 'Choose path' | 'Cancel'
 
-async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<ChosenInstallMethod> {
+async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<Maybe<ChosenInstallMethod>> {
   type DefaultOptions = 'Choose path' | 'Open Downloads' | 'Cancel'
   const defaultOptions: DefaultOptions[] = ['Choose path', 'Open Downloads', 'Cancel']
   switch (platform) {
@@ -376,7 +376,7 @@ async function askUserToInstall(platform: NodeJS.Platform, message: string): Pro
   }
 }
 
-async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMethod, message: string): Promise<ChosenUpgradeMethod> {
+async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMethod, message: string): Promise<Maybe<ChosenUpgradeMethod>> {
   switch (installer) {
     case 'GUI Installer':
       return await vscode.window.showInformationMessage(
@@ -416,7 +416,7 @@ async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMet
 async function runInstaller(
   client: LanguageClient,
   platform: NodeJS.Platform,
-  answer: ChosenInstallMethod,
+  answer: Maybe<ChosenInstallMethod>,
 ): Promise<boolean> {
   switch (answer) {
     case 'Static Binary': {
@@ -464,7 +464,7 @@ async function runUpgrade(
   latestRelease: Release,
   platform: NodeJS.Platform,
   installer: InstallMethod,
-  answer: ChosenUpgradeMethod,
+  answer: Maybe<ChosenUpgradeMethod>,
 ): Promise<string | null> {
   switch (answer) {
     case 'Static Binary': return await runStaticLinuxBinaryUpgrade(client, ligoPath, latestRelease)
@@ -532,10 +532,10 @@ async function showUpdateError(
 
   if (suggestUpdate) {
     const latestRelease = getLatestLigoRelease()
-    const answer: ChosenUpgradeMethod = await askUserToUpgrade(platform, installer, errorMessage)
+    const answer: Maybe<ChosenUpgradeMethod> = await askUserToUpgrade(platform, installer, errorMessage)
     return !!await runUpgrade(client, ligoPath, await latestRelease, platform, installer, answer)
   } else {
-    const answer: ChosenInstallMethod = await askUserToInstall(platform, errorMessage)
+    const answer: Maybe<ChosenInstallMethod> = await askUserToInstall(platform, errorMessage)
     return await runInstaller(client, platform, answer)
   }
 }
