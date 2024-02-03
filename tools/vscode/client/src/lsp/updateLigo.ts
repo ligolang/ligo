@@ -201,10 +201,10 @@ async function runWindowsGuiInstaller(client: LanguageClient, latestRelease: Rel
 
   const showErrorMessage = (err: string) =>
     vscode.window.showErrorMessage(`Error installing LIGO with Windows installer: ${err}`)
-  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir): Promise<void> => {
     if (err) {
       showErrorMessage(err.message)
-      return null
+      return
     }
 
     const fileOptions = {
@@ -286,10 +286,10 @@ async function runNpmUpgrade(client: LanguageClient, platform: NodeJS.Platform, 
 }
 
 async function runPacmanInstaller(client: LanguageClient): Promise<null> {
-  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir): Promise<void> => {
     if (err) {
       vscode.window.showErrorMessage(`Error installing LIGO with pacman: ${err.message}`)
-      return null
+      return
     }
 
     const terminal = mkTerminal()
@@ -584,7 +584,7 @@ async function updateLigoUnchecked(client: LanguageClient, ligoPath: string): Pr
     throw new Error("Unsupported version")
   }
 
-  async function validateSemver(version: string) {
+  async function validateSemver(version: string): Promise<void> {
     const semverTest = semver.valid(semver.coerce(version))
     if (semverTest) {
       const newVersion = await promptLigoUpdate(client, ligoPath, semverTest)
@@ -606,7 +606,7 @@ async function updateLigoUnchecked(client: LanguageClient, ligoPath: string): Pr
     }
   }
 
-  async function validateRollingRelease(version: string) {
+  async function validateRollingRelease(version: string): Promise<void> {
     const commitTest =
       /Rolling release\nCommit SHA: [0-9a-f]{40}\nCommit Date: ([^\n]+)|[0-9a-f]{40}\n([^\n]+)/
     const commitDate = commitTest.exec(version)
