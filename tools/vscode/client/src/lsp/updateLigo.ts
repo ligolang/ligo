@@ -15,6 +15,7 @@ import { Maybe } from '../common/base'
 
 import detectInstaller from 'detect-installer'
 import { Readable } from 'stream'
+import { NoReleasesAccess } from '../common/exceptions'
 
 type TagName = 'Static Linux binary' | 'Ligo Windows installer'
 
@@ -107,7 +108,7 @@ export async function downloadLigo(latest: Release, targetAsset: TagName): Promi
         },
       )
       let loaded = 0
-      const chunks = []
+      const chunks: Buffer[] = []
       return await new Promise((resolve, reject) => {
         const stream = response.data
         const total = response.headers['content-length']
@@ -144,10 +145,10 @@ async function getLigoReleases(): Promise<Release[] | undefined> {
     })
 }
 
-async function getLatestLigoRelease(): Promise<Release | undefined> {
+async function getLatestLigoRelease(): Promise<Release> {
   const releases = await getLigoReleases()
   if (!releases || releases.length === 0) {
-    return undefined
+    throw new NoReleasesAccess()
   }
 
   return releases[0]
@@ -187,7 +188,7 @@ async function runBrewUpgrade(client: LanguageClient): Promise<null> {
 }
 
 async function runWindowsGuiInstaller(client: LanguageClient, latestRelease: Release): Promise<null> {
-  const runAsAdmin = (command: string): string =>
+  const runAsAdmin = (command: string): void =>
     void execFileSync(
       'powershell',
       [`Start-Process -FilePath ${command} -Verb RunAs -PassThru -Wait`],
@@ -200,10 +201,10 @@ async function runWindowsGuiInstaller(client: LanguageClient, latestRelease: Rel
 
   const showErrorMessage = (err: string) =>
     vscode.window.showErrorMessage(`Error installing LIGO with Windows installer: ${err}`)
-  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir): Promise<void> => {
     if (err) {
       showErrorMessage(err.message)
-      return null
+      return
     }
 
     const fileOptions = {
@@ -285,10 +286,10 @@ async function runNpmUpgrade(client: LanguageClient, platform: NodeJS.Platform, 
 }
 
 async function runPacmanInstaller(client: LanguageClient): Promise<null> {
-  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir) => {
+  fs.mkdtemp(ligoTempDownloadTemplate, async (err, dir): Promise<void> => {
     if (err) {
       vscode.window.showErrorMessage(`Error installing LIGO with pacman: ${err.message}`)
-      return null
+      return
     }
 
     const terminal = mkTerminal()
@@ -351,7 +352,7 @@ type InstallMethod = LinuxInstallMethod | MacOSInstallMethod | WindowsInstallMet
 type ChosenUpgradeMethod = 'Static Binary' | 'Upgrade' | 'Open Downloads' | 'Cancel'
 type ChosenInstallMethod = 'Static Binary' | 'GUI installer' | 'NPM' | 'Yarn' | 'Homebrew' | 'AUR' | 'Open Downloads' | 'Choose path' | 'Cancel'
 
-async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<ChosenInstallMethod> {
+async function askUserToInstall(platform: NodeJS.Platform, message: string): Promise<Maybe<ChosenInstallMethod>> {
   type DefaultOptions = 'Choose path' | 'Open Downloads' | 'Cancel'
   const defaultOptions: DefaultOptions[] = ['Choose path', 'Open Downloads', 'Cancel']
   switch (platform) {
@@ -376,7 +377,7 @@ async function askUserToInstall(platform: NodeJS.Platform, message: string): Pro
   }
 }
 
-async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMethod, message: string): Promise<ChosenUpgradeMethod> {
+async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMethod, message: string): Promise<Maybe<ChosenUpgradeMethod>> {
   switch (installer) {
     case 'GUI Installer':
       return await vscode.window.showInformationMessage(
@@ -416,7 +417,7 @@ async function askUserToUpgrade(platform: NodeJS.Platform, installer: InstallMet
 async function runInstaller(
   client: LanguageClient,
   platform: NodeJS.Platform,
-  answer: ChosenInstallMethod,
+  answer: Maybe<ChosenInstallMethod>,
 ): Promise<boolean> {
   switch (answer) {
     case 'Static Binary': {
@@ -464,7 +465,7 @@ async function runUpgrade(
   latestRelease: Release,
   platform: NodeJS.Platform,
   installer: InstallMethod,
-  answer: ChosenUpgradeMethod,
+  answer: Maybe<ChosenUpgradeMethod>,
 ): Promise<string | null> {
   switch (answer) {
     case 'Static Binary': return await runStaticLinuxBinaryUpgrade(client, ligoPath, latestRelease)
@@ -492,9 +493,6 @@ async function promptLigoUpdate(
   installedVersionIdentifier: string | number,
 ): Promise<string | number> {
   const latestRelease = await getLatestLigoRelease()
-  if (!latestRelease) {
-    return
-  }
 
   switch (typeof installedVersionIdentifier) {
     // Semantic version
@@ -532,20 +530,18 @@ async function showUpdateError(
 
   if (suggestUpdate) {
     const latestRelease = getLatestLigoRelease()
-    const answer: ChosenUpgradeMethod = await askUserToUpgrade(platform, installer, errorMessage)
+    const answer: Maybe<ChosenUpgradeMethod> = await askUserToUpgrade(platform, installer, errorMessage)
     return !!await runUpgrade(client, ligoPath, await latestRelease, platform, installer, answer)
   } else {
-    const answer: ChosenInstallMethod = await askUserToInstall(platform, errorMessage)
+    const answer: Maybe<ChosenInstallMethod> = await askUserToInstall(platform, errorMessage)
     return await runInstaller(client, platform, answer)
   }
 }
 
 export default async function updateLigo(client: LanguageClient): Promise<void> {
   let ligoPath: string = getBinaryPath(ligoBinaryInfo)
-
-  let data: string
   try {
-    data = execFileSync(ligoPath, ['--version']).toString().trim()
+    await updateLigoUnchecked(client, ligoPath)
   } catch (err) {
     const isLikelyNotFoundError = /ENOENT/.test(err.message)
     const isLikelyPermissionDeniedError = /EACCES/.test(err.message)
@@ -564,11 +560,11 @@ export default async function updateLigo(client: LanguageClient): Promise<void> 
       false,
       ligoPath,
     )
-
-    if (!shouldContinue) {
-      return
-    }
   }
+}
+
+async function updateLigoUnchecked(client: LanguageClient, ligoPath: string): Promise<void> {
+  let data: string = execFileSync(ligoPath, ['--version']).toString().trim()
 
   if (data === '') {
     // We purposefully omit the `await` here to avoid the extension hanging.
@@ -588,7 +584,7 @@ export default async function updateLigo(client: LanguageClient): Promise<void> 
     throw new Error("Unsupported version")
   }
 
-  async function validateSemver(version: string) {
+  async function validateSemver(version: string): Promise<void> {
     const semverTest = semver.valid(semver.coerce(version))
     if (semverTest) {
       const newVersion = await promptLigoUpdate(client, ligoPath, semverTest)
@@ -610,7 +606,7 @@ export default async function updateLigo(client: LanguageClient): Promise<void> 
     }
   }
 
-  async function validateRollingRelease(version: string) {
+  async function validateRollingRelease(version: string): Promise<void> {
     const commitTest =
       /Rolling release\nCommit SHA: [0-9a-f]{40}\nCommit Date: ([^\n]+)|[0-9a-f]{40}\n([^\n]+)/
     const commitDate = commitTest.exec(version)

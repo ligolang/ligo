@@ -14,8 +14,6 @@ import {
 import { registerCommands } from './command'
 import updateExtension from './updateExtension'
 import updateLigo from './updateLigo'
-import { BinaryNotFoundException } from '../common/exceptions'
-import { LigoExtension } from "../LigoExtension";
 
 import { extensions } from './common'
 import { changeLastContractPath } from './commands/common';
@@ -25,7 +23,7 @@ import { LigoProtocolClient } from '../common/LigoProtocolClient';
 import LigoServer from '../debugger/LigoServer';
 import { getBinaryPath, ligoBinaryInfo } from '../common/config';
 
-export class LspExtension extends LigoExtension {
+export class LspExtension implements vscode.Disposable {
   private languageServerClient: LanguageClient;
   private semanticTokensClient: LanguageClient;
   private ligoOptionButton: vscode.StatusBarItem;
@@ -82,7 +80,7 @@ export class LspExtension extends LigoExtension {
   }
 
 
-  public activate(context: LigoContext, _server: LigoServer, protocolClient: LigoProtocolClient): void {
+  public constructor(context: LigoContext, protocolClient: LigoProtocolClient) {
     let ligoPath: string = getBinaryPath(ligoBinaryInfo)
 
     const languageServerServerOptions: ServerOptions = {
@@ -161,7 +159,7 @@ export class LspExtension extends LigoExtension {
     this.languageServerClient.start()
   }
 
-  public deactivate(): Thenable<void> | undefined {
+  public dispose(): Thenable<void> | undefined {
     this.semanticTokensClient?.stop();
     this.languageServerClient?.stop();
     return;
