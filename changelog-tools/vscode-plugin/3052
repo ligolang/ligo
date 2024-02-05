@@ -1,0 +1,7 @@
+
+author: Martoon
+description: "\\n\\nFixed internal errors popping up in some rare corner cases.\\n\\n"
+merge_request: '3052'
+title: "[#2134] Make typescript typechecker stricter"
+type: fixed
+            

@@ -7,15 +7,14 @@ import LigoServer from './LigoServer'
 import { DebugSteppingGranularityStatus, createConfigSnippet } from './ui'
 import { LigoContext } from '../common/LigoContext'
 import { LigoDebugAdapterTrackerFactory } from './LigoDebugAdapterTrackerFactory'
-import { LigoExtension } from '../LigoExtension'
 import { isDefined } from '../common/base'
 
-export class DebuggerExtension extends LigoExtension {
+export class DebuggerExtension implements vscode.Disposable {
   private server: LigoServer;
   private client: LigoProtocolClient;
   private stepStatus = new DebugSteppingGranularityStatus(async _granularity => { });
 
-  public activate(context: LigoContext, server: LigoServer, client: LigoProtocolClient): void {
+  public constructor(context: LigoContext, server: LigoServer, client: LigoProtocolClient) {
     const documentProvider = new class implements vscode.TextDocumentContentProvider {
       onDidChangeEmitter = new vscode.EventEmitter<vscode.Uri>();
       onDidChange = this.onDidChangeEmitter.event;
@@ -73,7 +72,7 @@ export class DebuggerExtension extends LigoExtension {
     );
   }
 
-  public deactivate(): void {
-    this.server.dispose();
+  public dispose(): void {
+    this.stepStatus.dispose();
   }
 }
