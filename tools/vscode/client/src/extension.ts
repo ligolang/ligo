@@ -16,9 +16,6 @@ import LigoServer from './debugger/LigoServer';
 import { getCurrentWorkspacePath } from './debugger/base';
 import { trackLigoPathChanges } from './common/config';
 
-const lspExtension = new LspExtension();
-const debuggerExtension = new DebuggerExtension();
-
 export async function activate(context: vscode.ExtensionContext) {
   const ligoContext = new LigoContext(context);
 
@@ -30,11 +27,9 @@ export async function activate(context: vscode.ExtensionContext) {
     trackLigoPathChanges()
   )
 
-  lspExtension.activate(ligoContext, server, client);
-  debuggerExtension.activate(ligoContext, server, client);
+  context.subscriptions.push(
+    new LspExtension(ligoContext, client),
+    new DebuggerExtension(ligoContext, server, client),
+  )
 }
 
-export function deactivate() {
-  lspExtension.deactivate();
-  debuggerExtension.deactivate();
-}
