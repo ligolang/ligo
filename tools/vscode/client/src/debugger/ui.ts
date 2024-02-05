@@ -35,6 +35,7 @@ export type SteppingGranularity
  */
 export class DebugSteppingGranularityStatus implements vscode.Disposable {
   private bar: vscode.StatusBarItem;
+  // @ts-ignore uninitialized (set in smart setter)
   private _status: SteppingGranularity;
   private lastStatus: Maybe<SteppingGranularity>
   private readonly statusChangeEvent = new vscode.EventEmitter<SteppingGranularity>();
