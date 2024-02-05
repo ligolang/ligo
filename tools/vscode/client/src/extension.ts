@@ -27,6 +27,8 @@ export async function activate(context: vscode.ExtensionContext) {
     trackLigoPathChanges()
   )
 
+  context.subscriptions.push(server)
+
   context.subscriptions.push(
     new LspExtension(ligoContext, client),
     new DebuggerExtension(ligoContext, server, client),

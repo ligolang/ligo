@@ -73,6 +73,6 @@ export class DebuggerExtension implements vscode.Disposable {
   }
 
   public dispose(): void {
-    this.server.dispose();
+    this.stepStatus.dispose();
   }
 }
