@@ -369,6 +369,7 @@ let on_req_impl : decl_def_or_impl -> Position.t -> Path.t -> Locations.t option
  fun decl_def_or_impl pos file ->
   with_cached_doc_pure file ~default:None
   @@ fun { definitions; _ } ->
+  let%bind.Option definitions = definitions in
   let%bind.Option definition = Def.get_definition pos file definitions in
   let definitions =
     (match decl_def_or_impl with

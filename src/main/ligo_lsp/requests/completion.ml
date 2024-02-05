@@ -28,6 +28,8 @@ let on_req_completion (pos : Position.t) (path : Path.t)
   in
   with_cached_doc ~default:None path
   @@ fun { definitions; code; syntax; scopes } ->
+  when_some' definitions
+  @@ fun definitions ->
   let keyword_completions = Completion_lib.Keywords.get_keyword_completions syntax in
   let project_root = Project_root.get_project_root path in
   let@ mod_res = ask_mod_res in
@@ -69,7 +71,10 @@ let on_req_completion (pos : Position.t) (path : Path.t)
         @ completions_without_cst
       | `With_scopes ->
         return
-        @@ Completion_lib.Scope.get_scope_completions input scopes
+        @@ Option.value_map
+             scopes
+             ~default:[]
+             ~f:(Completion_lib.Scope.get_scope_completions input)
         @ completions_without_cst)
   in
   return @@ mk_completion_list all_completions

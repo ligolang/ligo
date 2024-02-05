@@ -160,8 +160,8 @@ let try_to_get_syntax : Path.t -> Syntax_types.t Handler.t =
 
 
 let set_cache
-    :  Syntax_types.t -> Def.definitions -> Path.t -> string -> Ligo_interface.scopes
-    -> unit Handler.t
+    :  Syntax_types.t -> Def.definitions option -> Path.t -> string
+    -> Ligo_interface.scopes option -> unit Handler.t
   =
  fun syntax definitions file contents scopes ->
   let@ docs_cache = ask_docs_cache in
@@ -181,23 +181,22 @@ let on_doc
     : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
   =
  fun ?changes:_ file contents ->
-  let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
-  let@ { config = { max_number_of_problems; _ }; last_project_file; _ } = ask in
+  let@ () = send_debug_msg @@ Format.asprintf "Updating doc: %a" Path.pp file in
+  let@ { config = { max_number_of_problems; _ }; last_project_dir; _ } = ask in
   let@ syntax = try_to_get_syntax file in
   let@ () = detect_or_ask_to_create_project_file file in
+  let project_root = !last_project_dir in
   let@ ({ definitions; _ } as defs_and_diagnostics) =
     with_run_in_IO
     @@ fun { unlift_IO } ->
     Ligo_interface.get_defs_and_diagnostics
-      ~project_root:!last_project_file
+      ~project_root
       ~code:contents
       ~logger:(fun ~type_ msg -> unlift_IO @@ send_log_msg ~type_ msg)
       file
   in
-  let scopes =
-    Ligo_interface.get_scope ~project_root:!last_project_file ~code:contents file
-  in
-  let@ () = set_cache syntax definitions file contents scopes in
+  let scopes = Ligo_interface.get_scope ~project_root ~code:contents file in
+  let@ () = set_cache syntax (Some definitions) file contents (Some scopes) in
   let diags_by_file =
     let simple_diags = Diagnostics.get_diagnostics file defs_and_diagnostics in
     Diagnostics.partition_simple_diagnostics
@@ -215,11 +214,90 @@ let on_doc
   iter diags_by_file ~f:(Simple_utils.Utils.uncurry send_diagnostic)
 
 
-(** The same as [on_doc] but only updates file caches. *)
+(** The same as [on_doc] but only updates file caches. Sets [syntax] and [code] but leaves
+    all other fields with empty values. *)
 let on_doc_semantic_tokens
     : ?changes:TextDocumentContentChangeEvent.t list -> Path.t -> string -> unit Handler.t
   =
  fun ?changes:_ file contents ->
-  let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
+  let@ () =
+    send_debug_msg @@ Format.asprintf "Updating doc (semantic tokens): %a" Path.pp file
+  in
   let@ syntax = try_to_get_syntax file in
-  set_cache syntax { definitions = [] } file contents []
+  set_cache syntax None file contents None
+
+
+(** The same as [on_doc] but uses cached file content to get the list of [definitions]. We
+    use this during [on_req_references] request on files that import the current file,
+    since it's possible that we never opened this file in order to cache the correct
+    [code], but empty an list of [definitions]. *)
+let on_doc_references : Path.t -> unit Handler.t =
+ fun file ->
+  let@ docs_cache = ask_docs_cache in
+  match Docs_cache.find docs_cache file with
+  | None -> return ()
+  | Some { code; _ } ->
+    let@ () =
+      send_debug_msg @@ Format.asprintf "Updating doc (references): %a" Path.pp file
+    in
+    let@ last_project_dir = ask_last_project_dir in
+    let project_root = !last_project_dir in
+    let@ syntax = try_to_get_syntax file in
+    let@ definitions = lift_IO @@ Ligo_interface.get_defs ~project_root ~code file in
+    let scopes = Ligo_interface.get_scope ~project_root ~code file in
+    set_cache syntax (Some definitions) file code (Some scopes)
+
+
+(** This function checks if the given [Path.t] is cached, and if it's not, will read its
+    contents from the disk and set the cache, using [[]] for definitions and scopes. If
+    the file is cached, it will do nothing. *)
+let cache_doc_minimal : Path.t -> unit Handler.t =
+ fun file ->
+  let@ docs_cache = ask_docs_cache in
+  if Docs_cache.mem docs_cache file
+  then return ()
+  else
+    let@ () =
+      send_debug_msg @@ Format.asprintf "Reading doc (minimal): %a" Path.pp file
+    in
+    let@ contents =
+      lift_IO
+      @@ Lwt_io.with_file ~mode:Input (Path.to_string file) (Lwt_io.read ?count:None)
+    in
+    let@ syntax = try_to_get_syntax file in
+    set_cache syntax None file contents None
+
+
+module File_graph = Lsp_helpers.Graph.Make (Path)
+
+let build_file_graph : File_graph.t option Handler.t =
+  let@ last_project_dir = ask_last_project_dir in
+  match !last_project_dir with
+  | None -> return None
+  | Some project_root ->
+    let@ mod_res = fmap ( ! ) ask_mod_res in
+    let files = Files.list_directory ~include_library:true project_root in
+    let@ graph =
+      fold_left files ~init:File_graph.empty ~f:(fun g file ->
+          let@ () = cache_doc_minimal file in
+          let@ directives =
+            with_cst ~default:[] ~strict:false ~on_error:(const pass) file
+            @@ function
+            | CameLIGO cst -> return @@ Directive.extract_directives_cameligo cst
+            | JsLIGO cst -> return @@ Directive.extract_directives_jsligo cst
+          in
+          (* Collect all links from [#include] and [#import] directives and remove as many
+             indirections as possible, so duplicates won't exist in the file graph and
+             cause problems. *)
+          let deps =
+            List.filter_map
+              directives
+              ~f:
+                (Option.map ~f:snd
+                <@ Directive.extract_range_and_target
+                     ~relative_to_dir:(Path.dirname file)
+                     ~mod_res)
+          in
+          return @@ File_graph.from_assocs [ file, deps ] g)
+    in
+    return @@ Some graph

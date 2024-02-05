@@ -191,6 +191,7 @@ let on_req_document_symbol (path : Path.t)
   =
   with_cached_doc_pure path ~default:None
   @@ fun { syntax; code = _; definitions; scopes = _ } ->
+  let%bind.Option definitions = definitions in
   let definitions =
     Def.filter definitions ~f:(fun def ->
         match Scopes.Types.get_range def with

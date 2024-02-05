@@ -39,7 +39,10 @@ let get_all_references_grouped_by_file
   =
  fun locations cache ->
   let go (_path, { definitions; _ }) =
-    get_references locations @@ Sequence.of_list (Scopes.Types.flatten_defs definitions)
+    Option.value_map
+      definitions
+      ~default:Sequence.empty
+      ~f:(get_references locations <@ Sequence.of_list <@ Scopes.Types.flatten_defs)
   in
   cache
   |> Docs_cache.to_alist
@@ -84,6 +87,13 @@ let try_to_get_all_linked_locations
       Def.get_location def)
 
 
+(** Tries to get all locations from definitions that relate to the given definition by
+    name, or returns just the location of the given definition instead ([None] case from
+    [try_to_get_all_linked_locations]). We say that the definition is related to another
+    definition if their names are equal and one is a definition, implementation, or
+    reference (or reference of implementation/definition) of the other.
+      In other words, linked locations are those that, if you rename one of them, all of
+    the others should be rename as well. *)
 let get_all_linked_locations_or_def : Def.t -> Def.definitions -> Def_location.t list =
  fun definition definitions ->
   Option.value
@@ -91,24 +101,61 @@ let get_all_linked_locations_or_def : Def.t -> Def.definitions -> Def_location.t
     ~default:[ Def.get_location definition ]
 
 
+let get_reverse_dependencies : Path.t -> Path.t list Handler.t =
+ fun file ->
+  let module File_graph = On_doc.File_graph in
+  let@ file_graph = On_doc.build_file_graph in
+  let reverse_deps =
+    Option.value_map
+      ~default:[ file ]
+      ~f:File_graph.to_vertices
+      (File_graph.reachable file
+      @@ File_graph.transpose
+      @@ Option.value ~default:File_graph.empty file_graph)
+  in
+  return reverse_deps
+
+
+(** Open all unopened files that are our reverse dependencies that may have a reference.
+    We don't open direct dependencies since we already know the references from scopes. *)
+let prepare_caches_for_references : Path.t list -> unit Handler.t =
+  iter ~f:On_doc.on_doc_references
+
+
+let get_all_reverse_dependencies_definitions : Path.t list -> definitions Handler.t =
+  fmap Scopes.Types.wrap_definitions
+  <@ concat_map ~f:(fun file ->
+         with_cached_doc_pure file ~default:[]
+         @@ fun { definitions; _ } ->
+         Option.value_map definitions ~default:[] ~f:(fun { definitions } -> definitions))
+
+
 let on_req_references : Position.t -> Path.t -> Location.t list option Handler.t =
  fun pos file ->
   with_cached_doc file ~default:None
   @@ fun { definitions; _ } ->
+  when_some' definitions
+  @@ fun definitions ->
   when_some (Def.get_definition pos file definitions)
   @@ fun definition ->
   let@ cache = ask_docs_cache in
-  let locations = get_all_linked_locations_or_def definition definitions in
+  let@ files = get_reverse_dependencies file in
+  let@ () = prepare_caches_for_references files in
+  let@ all_definitions = get_all_reverse_dependencies_definitions files in
+  let locations = get_all_linked_locations_or_def definition all_definitions in
   let references = get_all_references locations cache in
   let show_reference fmt Loc_in_file.{ path; range } =
     Format.fprintf fmt "%a\n%a" Path.pp path Range.pp range
   in
   let@ () =
+    let@ project_root = ask_last_project_dir in
     send_debug_msg
     @@ Format.asprintf
-         "On references request on %a\n%a"
+         "On references request on %a (project root: %a)\n%a"
          Path.pp
          file
+         (Fmt.option Path.pp)
+         !project_root
          (Format.pp_print_list ~pp_sep:Format.pp_force_newline show_reference)
          references
   in

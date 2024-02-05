@@ -20,7 +20,7 @@ let test_run_session ?(config = default_test_config) (session : 'a Handler.t)
       { notify_back = Mock mocked_notify_back
       ; config
       ; docs_cache = Docs_cache.create ()
-      ; last_project_file = ref None
+      ; last_project_dir = ref None
       ; mod_res = ref None
       }
       session

@@ -43,7 +43,7 @@ class lsp_server (capability_mode : capability_mode) =
     val mutable client_capabilities : ClientCapabilities.t = ClientCapabilities.create ()
 
     (** Stores the path to the last ligo.json file, if found. *)
-    val last_project_file : Path.t option ref = ref None
+    val last_project_dir : Path.t option ref = ref None
 
     val mod_res : Preprocessor.ModRes.t option ref = ref None
 
@@ -60,7 +60,7 @@ class lsp_server (capability_mode : capability_mode) =
         { notify_back = Normal notify_back
         ; config
         ; docs_cache = get_scope_buffers
-        ; last_project_file
+        ; last_project_dir
         ; mod_res
         }
       @@ on_doc file content
@@ -79,7 +79,7 @@ class lsp_server (capability_mode : capability_mode) =
         { notify_back = Normal notify_back
         ; config
         ; docs_cache = get_scope_buffers
-        ; last_project_file
+        ; last_project_dir
         ; mod_res
         }
       @@ on_doc ~changes file new_content
@@ -288,7 +288,7 @@ class lsp_server (capability_mode : capability_mode) =
             { notify_back = Normal new_notify_back
             ; config
             ; docs_cache = get_scope_buffers
-            ; last_project_file
+            ; last_project_dir
             ; mod_res
             }
             action
@@ -411,7 +411,7 @@ class lsp_server (capability_mode : capability_mode) =
                  let path = Path.to_string (DocumentUri.to_path uri) in
                  Filename.(basename path = Project_root.ligoproject))
           then (
-            last_project_file := None;
+            last_project_dir := None;
             mod_res := None);
           IO.return ()
         | notification -> super#on_notification ~notify_back ~server_request notification
@@ -440,10 +440,10 @@ class lsp_server (capability_mode : capability_mode) =
                cache. *)
             | None -> pass
             | Some { code; _ } ->
-              let last_project_file = !last_project_file in
+              let last_project_dir = !last_project_dir in
               if Option.equal
                    Path.equal
-                   last_project_file
+                   last_project_dir
                    (Project_root.get_project_root file)
               then pass
               else on_doc ?changes:None file code
@@ -463,7 +463,7 @@ class lsp_server (capability_mode : capability_mode) =
                        ())
               ; config
               ; docs_cache = get_scope_buffers
-              ; last_project_file
+              ; last_project_dir
               ; mod_res
               }
               (bind repopulate_cache (fun () -> handler))

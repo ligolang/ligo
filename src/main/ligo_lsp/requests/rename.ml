@@ -11,9 +11,16 @@ let on_req_rename : string -> Position.t -> Path.t -> WorkspaceEdit.t Handler.t 
   with_cached_doc file ~default:(WorkspaceEdit.create ())
   @@ fun { definitions; _ } ->
   let@ value =
+    when_some' definitions
+    @@ fun definitions ->
     when_some' (Def.get_definition pos file definitions)
     @@ fun definition ->
-    let locations = References.get_all_linked_locations_or_def definition definitions in
+    let@ files = References.get_reverse_dependencies file in
+    let@ () = References.prepare_caches_for_references files in
+    let@ all_definitions = References.get_all_reverse_dependencies_definitions files in
+    let locations =
+      References.get_all_linked_locations_or_def definition all_definitions
+    in
     let references =
       References.get_all_references_grouped_by_file
         (Sequence.of_list locations)

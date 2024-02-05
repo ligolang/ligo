@@ -19,7 +19,7 @@ module Project_root_test = struct
       @@
       let open Requests.Handler in
       let@ _uri = Handlers.open_file normalized_file_name in
-      ask_last_project_file
+      ask_last_project_dir
     in
     let all_diags = Requests.Handler.Path_hashtbl.to_alist diagnostics in
     Alcotest.(check' (option Path.testable))

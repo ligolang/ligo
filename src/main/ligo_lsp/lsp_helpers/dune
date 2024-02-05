@@ -6,6 +6,7 @@
  (instrumentation
   (backend bisect_ppx))
  (libraries
+  core_unix.filename_unix
   ligo_api
   linol
   linol-lwt
