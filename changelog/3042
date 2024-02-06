@@ -1,0 +1,7 @@
+
+author: DK318
+description: "Support function type parameters.Add support for constructors and record fields into LSP. Now you can see their types on hover and use other capabilities like \"go to definition\".\\n\\n"
+merge_request: '3042'
+title: "Draft: [#1676] Add missing items to scopes"
+type: added
+            
