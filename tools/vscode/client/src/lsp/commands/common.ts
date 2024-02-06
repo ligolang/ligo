@@ -82,6 +82,9 @@ function findPackage(dirname: string): Maybe<string> {
 }
 
 function prefixLines(s: string, p: string): string {
+  if (s.trim().length == 0) {
+    return s
+  }
   return s.split('\n').map(l => `${p}${l}`).join("\n")
 }
 
