@@ -165,7 +165,7 @@ export class MultiStepInput<S> {
         const validationTrigger = new class extends ValidationTrigger<string>{
           validate = validate
 
-          isObviouslyInvalid(text: string): boolean {
+          override isObviouslyInvalid(text: string): boolean {
             return text === '';
           }
 
