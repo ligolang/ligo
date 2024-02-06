@@ -360,7 +360,7 @@ abstract class ValidationTrigger<V> implements vscode.Disposable {
     return {
       // This is not entirely correct definition, it should be generic in
       // the type of returned `Thenable`; but for our cases this is enough.
-      then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<void> {
+      then(onFulfilled: (passingValue: Maybe<V>) => void, onRejected: (reason: any) => void): Thenable<Maybe<V>> {
         switch (this0.status.type) {
           case "neverCalled":
             onRejected("Validation has never been called");
