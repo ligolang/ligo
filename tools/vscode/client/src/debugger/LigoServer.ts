@@ -15,19 +15,20 @@ export default class LigoServer implements vscode.Disposable {
   adapterProcess: cp.ChildProcess
   adapterIsDead: boolean = false
 
-  private createAdapterProcess(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>) {
-    this.adapterProcess = cp.spawn(command, args, { cwd })
-    if (!this.adapterProcess || !this.adapterProcess.pid) {
+  private static createAdapterProcess(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>): cp.ChildProcess {
+    const adapterProcess = cp.spawn(command, args, { cwd })
+    if (!adapterProcess || !adapterProcess.pid) {
       this.showError("Couldn't run debugger adapter")
     }
+    return adapterProcess
   }
 
   public constructor(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>) {
     if (!fs.existsSync(command)) {
-      this.showError("Couldn't find debugger adapter executable")
+      LigoServer.showError("Couldn't find debugger adapter executable")
     }
 
-    this.createAdapterProcess(cwd, command, args)
+    this.adapterProcess = LigoServer.createAdapterProcess(cwd, command, args)
 
     // start listening on a random named pipe path
     const pipeName = "ligo-debugger-pipe-" + randomBytes(10).toString('hex')
@@ -46,7 +47,7 @@ export default class LigoServer implements vscode.Disposable {
       const requestsListener = (bytes: Buffer) => {
         // If adapter got killed then we need to reanimate this process
         if (this.adapterIsDead) {
-          this.createAdapterProcess(cwd, command, args)
+          this.adapterProcess = LigoServer.createAdapterProcess(cwd, command, args)
           this.adapterProcess.stdout.on('data', responsesListener)
           this.adapterIsDead = false
         }
@@ -66,7 +67,7 @@ export default class LigoServer implements vscode.Disposable {
     }).listen(pipePath)
 
     if (!this.server.listening) {
-      this.showError("Adapter server couldn't start listening on pipe " + pipePath + ". Try again")
+      LigoServer.showError("Adapter server couldn't start listening on pipe " + pipePath + ". Try again")
     }
   }
 
@@ -84,7 +85,7 @@ export default class LigoServer implements vscode.Disposable {
     this.server.close()
   }
 
-  private showError(msg: string) {
+  private static showError(msg: string) {
     vscode.window.showErrorMessage(msg).
       then(_ => undefined)
     throw new Error(msg)
