@@ -170,11 +170,12 @@ module Of_Ast = struct
       let scopes = self body scopes env in
       scopes
     | E_mod_in { module_binder; rhs; let_result } ->
-      let scopes, defs_or_alias_opt, module_map =
+      let scopes, defs_or_alias_opt, module_map, ctors =
         module_expression (Some module_binder) rhs scopes env
       in
       (* Env update logic from References *)
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
+      let env = List.fold_right ~init:env ~f:Env.add_label ctors in
       let scopes = self ~env_changed:true let_result scopes env in
       scopes
 
@@ -222,7 +223,7 @@ module Of_Ast = struct
     and updates the [references] & the [module_map] *)
   and module_expression
       :  Module_var.t option -> AST.module_expr -> t -> env
-      -> t * defs_or_alias option * module_map
+      -> t * defs_or_alias option * module_map * Label.t list
     =
    fun parent_mod me scopes env ->
     (* Env update logic from References *)
@@ -258,7 +259,14 @@ module Of_Ast = struct
         in
         scopes, defs_or_alias_opt, env
     in
-    refs, defs_or_alias_opt, env.module_map
+    let ctors =
+      List.filter_map
+        ~f:(function
+          | Label l -> Some l
+          | Variable _ | Type _ | Module _ -> None)
+        env.avail_defs
+    in
+    refs, defs_or_alias_opt, env.module_map, ctors
 
 
   and signature : AST.signature -> t -> env -> t * defs_or_alias option * env =
@@ -333,10 +341,11 @@ module Of_Ast = struct
       let env = Env.add_tvar type_binder env in
       scopes, env
     | D_module { module_binder; module_; module_attr = _; annotation } ->
-      let scopes, defs_or_alias_opt, module_map =
+      let scopes, defs_or_alias_opt, module_map, ctors =
         module_expression (Some module_binder) module_ scopes env
       in
       let env = Env.add_mvar module_binder defs_or_alias_opt module_map env in
+      let env = List.fold_right ~init:env ~f:Env.add_label ctors in
       let scopes, defs_or_alias_opt, module_map =
         Option.value_map
           annotation
@@ -349,10 +358,11 @@ module Of_Ast = struct
       let env = Env.add_mvar signature_binder defs_or_alias_opt module_map env in
       scopes, env
     | D_module_include mod_expr ->
-      let scopes, defs_or_alias_opt, module_map =
+      let scopes, defs_or_alias_opt, module_map, ctors =
         module_expression env.parent_mod mod_expr scopes env
       in
       let env = Env.include_mvar defs_or_alias_opt module_map env in
+      let env = List.fold_right ~init:env ~f:Env.add_label ctors in
       scopes, env
 
 
@@ -403,6 +413,15 @@ module Of_Ast = struct
     scopes, env
 
 
+  let rec shadow_defs : def list -> def list = function
+    | [] -> []
+    | def :: defs ->
+      let shadow_def def' = not @@ Def.equal_def_by_name def def' in
+      def :: shadow_defs (List.filter defs ~f:shadow_def)
+
+
+  let fix_shadowing_in_scopes : t -> t = LMap.map shadow_defs
+
   let declarations ~(env_preload_decls : AST.declaration list) : AST.declaration list -> t
     =
    fun decls ->
@@ -412,7 +431,7 @@ module Of_Ast = struct
       declarations env_preload_decls scopes env (* Preload env with stdlib if provided *)
     in
     let scopes, _ = declarations decls scopes env in
-    scopes
+    fix_shadowing_in_scopes scopes
 end
 
 let inline_scopes : Env.Def.def_map -> t -> Types.inlined_scopes =

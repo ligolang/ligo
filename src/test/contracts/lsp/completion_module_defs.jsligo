@@ -1,0 +1,9 @@
+namespace A {
+  export namespace B {
+    export const bbb = 42
+  }
+
+  export const aaa = 42
+}
+
+const xxx = A.

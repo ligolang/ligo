@@ -40,7 +40,7 @@ let get_defs ~(code : string) ~(syntax : Syntax_types.t) : Scopes.def list Lwt.t
            ~display_format:Human_readable
     in
     failf "%a" formatter errors);
-  definitions
+  Scopes.Types.flatten_defs definitions
 
 
 type decompiler_test_ty_expr =

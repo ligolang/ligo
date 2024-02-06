@@ -65,7 +65,7 @@ let on_req_completion (pos : Position.t) (path : Path.t)
                 Scope
                 path
                 syntax
-                definitions)
+                (Scopes.Types.flatten_defs definitions))
         @ completions_without_cst
       | `With_scopes ->
         return

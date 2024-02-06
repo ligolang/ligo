@@ -7,6 +7,7 @@ module Uid = Types.Uid
 module Misc = Misc
 
 type def = Types.def
+type definitions = Types.definitions
 type scopes = Types.scopes
 type inlined_scopes = Types.inlined_scopes
 
@@ -17,13 +18,13 @@ val defs_and_typed_program
   -> prg:Ast_core.module_
   -> module_deps:string Map.Make(String).t
   -> with_types:bool
-  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
+  -> definitions * (Ast_typed.signature * Ast_typed.declaration list) option
 
 val inlined_scopes
   :  options:Compiler_options.middle_end
   -> stdlib:Ast_typed.program * Ast_core.program
   -> prg:Ast_core.module_
-  -> definitions:def list
+  -> definitions:definitions
   -> inlined_scopes
 
 val scopes
@@ -39,4 +40,6 @@ val defs_and_typed_program_and_scopes
   -> prg:Ast_core.module_
   -> module_deps:string Map.Make(String).t
   -> with_types:bool
-  -> def list * (Ast_typed.signature * Ast_typed.declaration list) option * inlined_scopes
+  -> definitions
+     * (Ast_typed.signature * Ast_typed.declaration list) option
+     * inlined_scopes

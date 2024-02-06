@@ -111,6 +111,18 @@ module Def = struct
 
   let defs_to_types_defs (prg_defs : def_map) : def list -> Types.def list =
    fun new_defs -> List.filter_map ~f:(to_types_def_opt prg_defs) new_defs
+
+
+  let equal_def_by_name (a : def) (b : def) : bool =
+    let open Types in
+    match a, b with
+    | Variable x, Variable y -> String.equal (get_binder_name x) (get_binder_name y)
+    | Type x, Type y -> String.equal (get_type_binder_name x) (get_type_binder_name y)
+    | Module x, Module y ->
+      compare_mod_name (get_mod_binder_name x) (get_mod_binder_name y) = 0
+    | Label (Label (x, _)), Label (Label (y, _)) -> String.equal x y
+    | ( (Variable _ | Type _ | Module _ | Label _)
+      , (Variable _ | Type _ | Module _ | Label _) ) -> false
 end
 
 type def = Def.t

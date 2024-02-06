@@ -47,7 +47,7 @@ let pick_closest_pos (cst : Dialect_cst.t) (pos : Position.t) : Position.t =
 
 
 let pick_scope
-    ~(definitions : Def.t list)
+    ~(definitions : Def.definitions)
     (cst : Dialect_cst.t)
     (pos : Position.t)
     (scopes : Ligo_interface.scopes)
@@ -75,8 +75,7 @@ let pick_scope
     ~f:
       (let open Scopes in
       let uid_to_def = Types.Uid_map.of_defs_list definitions in
-      Types.fix_shadowing_in_defs
-      <@ List.filter_map ~f:(fun uid -> Types.Uid_map.find_opt uid uid_to_def))
+      List.filter_map ~f:(fun uid -> Types.Uid_map.find_opt uid uid_to_def))
 
 
 (* Definitions that are available at given position.
@@ -87,55 +86,14 @@ let pick_scope
    instead of showing [List.map], [List.append], etc we'll just show the [List] module,
    and if user choose [List], the [Fields.get_fields_completions] will show [map], etc *)
 let get_defs_completions
-    ~(definitions : Def.t list)
+    ~(definitions : Def.definitions)
     (cst : Dialect_cst.t)
     (pos : Position.t)
     (scopes : Ligo_interface.scopes)
     (current_file : Path.t)
     : Def.t list option
   =
-  let scope_defs = pick_scope ~definitions cst pos scopes current_file in
-  (* Is cursor located in some module? *)
-  let module_path =
-    let open Cst_shared.Fold in
-    List.rev
-    @@
-    match cst with
-    | CameLIGO cst ->
-      let open Cst_cameligo.Fold in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_reg S_module_decl when Range.(contains_position pos (of_region node.region))
-          -> Continue node.value.name
-        | _ -> Skip
-      in
-      fold_cst [] (Fn.flip List.cons) collect cst
-    | JsLIGO cst ->
-      let open Cst_jsligo.Fold in
-      let collect (Some_node (node, sing)) =
-        match sing with
-        | S_reg S_namespace_decl
-          when Range.(contains_position pos (of_region node.region)) ->
-          Continue node.value.namespace_name
-        | _ -> Skip
-      in
-      fold_cst [] (Fn.flip List.cons) collect cst
-  in
-  (* We want to show [M1.M2.x] in completions only if cursor is located in [M1.M2]
-     (or [M1.M2.M3]), since if we're at toplevel we're already showing [M1] *)
-  let available_in_current_module (def : Def.t) : bool =
-    let is_ctor =
-      match def with
-      | Label { label_case = Ctor; _ } -> true
-      | Variable _ | Type _ | Module _ | Label { label_case = Field; _ } -> false
-    in
-    is_ctor
-    || (List.is_prefix
-          ~prefix:Scopes.Types.(List.map ~f:Uid.to_name @@ get_mod_path def)
-          ~equal:String.equal
-       @@ List.map ~f:(fun x -> x#payload) module_path)
-  in
-  Option.map ~f:(List.filter ~f:available_in_current_module) scope_defs
+  pick_scope ~definitions cst pos scopes current_file
 
 
 let get_scope_completions
@@ -149,7 +107,7 @@ let get_scope_completions
      improved, we should remove this workaround. *)
   let with_possible_duplicates =
     defs_to_completion_items Scope path syntax
-    @@ Option.value ~default:definitions
+    @@ Option.value ~default:(Scopes.Types.flatten_defs definitions)
     @@ get_defs_completions ~definitions cst pos scopes path
   in
   Common.nub_sort_items with_possible_duplicates

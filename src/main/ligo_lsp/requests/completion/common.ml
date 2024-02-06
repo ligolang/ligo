@@ -89,7 +89,7 @@ type 'cst input =
   { cst : 'cst
   ; syntax : Syntax_types.t
   ; path : Path.t
-  ; definitions : Def.t list
+  ; definitions : Def.definitions
   ; pos : Position.t
   }
 

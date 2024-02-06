@@ -1,7 +1,7 @@
 open Handler
 open Lsp_helpers
 
-let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
+let prepare_rename : Position.t -> Path.t -> Scopes.definitions -> Range.t option =
  fun pos file defs ->
   let open Option in
   Def.get_definition pos file defs
@@ -14,7 +14,9 @@ let prepare_rename : Position.t -> Path.t -> Scopes.def list -> Range.t option =
   >>= fun () ->
   let locations = References.get_all_linked_locations_or_def def defs in
   let locations =
-    References.get_references (Sequence.of_list locations) (Sequence.of_list defs)
+    References.get_references
+      (Sequence.of_list locations)
+      (Sequence.of_list (Scopes.Types.flatten_defs defs))
   in
   Option.map
     ~f:(fun loc -> loc.range)

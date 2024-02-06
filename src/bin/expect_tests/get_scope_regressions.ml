@@ -253,25 +253,10 @@ let%expect_test _ =
     {|
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 19-20
-    [ A#2:7-8 B#3:11-12 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-18
-    [ A#2:7-8 B#3:11-12 toto#4:12-16 D#9:11-12  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
+    [ A#2:7-8  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 15-18
+    [ A#2:7-8 D#9:11-12  ] File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-21
 
     Variable definitions:
-    (toto#4:12-16 -> toto)
-    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 12-16
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 8-20
-    Content: |resolved: int|
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 17-21
-    Mod Path = "A""B"
-    Def Type = Module_field
-    (tata#10:8-12 -> tata)
-    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 8-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 4-21
-    Content: |resolved: int|
-    references: []
-    Mod Path = "C"
-    Def Type = Module_field
     Type definitions:
     Constructors and fields:
     Module definitions:
@@ -279,14 +264,6 @@ let%expect_test _ =
     Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 2, characters 7-8
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 2, character 0 to line 6, character 3
     Content: Members: Variable definitions:
-                      (toto#4:12-16 -> toto)
-                      Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 12-16
-                      Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 8-20
-                      Content: |resolved: int|
-                      references:
-                        File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 17-21
-                      Mod Path = "A""B"
-                      Def Type = Module_field
                       Type definitions:
                       Constructors and fields:
                       Module definitions:
@@ -317,27 +294,6 @@ let%expect_test _ =
 
 
 
-    (B#3:11-12 -> B)
-    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 3, characters 11-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 3, character 4 to line 5, character 7
-    Content: Members: Variable definitions:
-                      (toto#4:12-16 -> toto)
-                      Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 12-16
-                      Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 4, characters 8-20
-                      Content: |resolved: int|
-                      references:
-                        File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 17-21
-                      Mod Path = "A""B"
-                      Def Type = Module_field
-                      Type definitions:
-                      Constructors and fields:
-                      Module definitions:
-
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 17-18
-
-
-
     (C#8:7-8 -> C)
     Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 8, characters 7-8
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 8, character 0 to line 11, character 3
@@ -362,16 +318,7 @@ let%expect_test _ =
 
 
 
-    references: []
-
-
-
-    (D#9:11-12 -> D)
-    Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 11-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 4-18
-    Content: A#9:15-16.B#9:17-18 (-> A#2:7-8.B#3:11-12)
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 10, characters 15-16 |}]
+    references: [] |}]
 
 let%expect_test _ =
   run_ligo_good
@@ -389,20 +336,12 @@ let%expect_test _ =
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 16-19
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22
     [ titi#2:9-13  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 25-27
-    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12
-    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
-    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-18
-    [ A#1:7-8 titi#2:9-13 C#3:11-12 toto#4:12-16 D#8:7-8 E#11:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
+    [ A#1:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 11-12
+    [ A#1:7-8 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 11-17
+    [ A#1:7-8 D#8:7-8  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 15-18
+    [ A#1:7-8 D#8:7-8 E#11:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 4-10
 
     Variable definitions:
-    (toto#4:12-16 -> toto)
-    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 12-16
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 8-27
-    Content: |core: titi|
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 6-10
-    Mod Path = "A""C"
-    Def Type = Module_field
     (toto#10:4-8 -> toto)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 4-8
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, character 0 to line 12, character 10
@@ -411,27 +350,12 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
-    (titi#2:9-13 -> titi)
-    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 9-13
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 4-19
-    Content: |int|
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
-      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17
     Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 1, characters 7-8
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 1, character 0 to line 6, character 3
     Content: Members: Variable definitions:
-                      (toto#4:12-16 -> toto)
-                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 12-16
-                      Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 8-27
-                      Content: |core: titi|
-                      references:
-                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 6-10
-                      Mod Path = "A""C"
-                      Def Type = Module_field
                       Type definitions:
                       (titi#2:9-13 -> titi)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 2, characters 9-13
@@ -470,27 +394,6 @@ let%expect_test _ =
 
 
 
-    (C#3:11-12 -> C)
-    Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 3, characters 11-12
-    Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 3, character 4 to line 5, character 7
-    Content: Members: Variable definitions:
-                      (toto#4:12-16 -> toto)
-                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 12-16
-                      Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 8-27
-                      Content: |core: titi|
-                      references:
-                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 12, characters 6-10
-                      Mod Path = "A""C"
-                      Def Type = Module_field
-                      Type definitions:
-                      Constructors and fields:
-                      Module definitions:
-
-    references:
-      File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 11, characters 17-18
-
-
-
     (D#8:7-8 -> D)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 7-8
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 8, characters 0-12
@@ -522,9 +425,9 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 1, characters 11-14
     [  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 23-24
-    [ A#2:11-12 C#3:15-16 toto#4:16-20  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-22
-    [ A#2:11-12 C#3:15-16 toto#4:16-20 F#8:15-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
-    [ A#2:11-12 C#3:15-16 toto#4:16-20 E#7:11-12 F#8:15-16 toto#9:12-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
+    [ A#2:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 19-22
+    [ A#2:11-12 F#8:15-16  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 19-25
+    [ A#2:11-12 E#7:11-12  ] File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 11, characters 4-10
 
     Variable definitions:
     (toto#1:4-8 -> toto)
@@ -541,14 +444,6 @@ let%expect_test _ =
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, characters 11-12
     Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, character 4 to line 7, character 4
     Content: Members: Variable definitions:
-                      (toto#4:16-20 -> toto)
-                      Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 16-20
-                      Decl Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 4, characters 12-24
-                      Content: |resolved: int|
-                      references:
-                        File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 9, characters 21-25
-                      Mod Path = "A""C"
-                      Def Type = Module_field
                       Type definitions:
                       Constructors and fields:
                       Module definitions:

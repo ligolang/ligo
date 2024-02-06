@@ -407,19 +407,10 @@ let%expect_test _ =
     Scopes:
     [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 10-13
     [  ] File "../../test/contracts/warning_duplicate.mligo", line 2, characters 23-65
-    [ Foo#1:7-10 x#2:6-7  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14
-    [ Foo#1:7-10 x#2:6-7  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-21
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 9-14
+    [ Foo#1:7-10  ] File "../../test/contracts/warning_duplicate.mligo", line 5, characters 16-21
 
     Variable definitions:
-    (x#2:6-7 -> x)
-    Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 6-7
-    Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 2, characters 2-65
-    Content: |core: ticket (nat)|
-    references:
-      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 13-14 ,
-      File "../../test/contracts/warning_duplicate.mligo", line 5, characters 20-21
-    Mod Path = "Foo"
-    Def Type = Module_field
     (x#5:4-5 -> x)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 4-5
     Decl Range: File "../../test/contracts/warning_duplicate.mligo", line 5, characters 0-22

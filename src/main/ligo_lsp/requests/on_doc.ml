@@ -134,7 +134,7 @@ let try_to_get_syntax : Path.t -> Syntax_types.t Handler.t =
 
 
 let set_cache
-    :  Syntax_types.t -> Def.t list -> Path.t -> string -> Ligo_interface.scopes
+    :  Syntax_types.t -> Def.definitions -> Path.t -> string -> Ligo_interface.scopes
     -> unit Handler.t
   =
  fun syntax definitions file contents scopes ->
@@ -196,4 +196,4 @@ let on_doc_semantic_tokens
  fun ?changes:_ file contents ->
   let@ () = send_debug_msg @@ "Updating doc: " ^ Path.to_string file in
   let@ syntax = try_to_get_syntax file in
-  set_cache syntax [] file contents []
+  set_cache syntax { definitions = [] } file contents []
