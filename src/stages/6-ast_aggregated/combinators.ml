@@ -110,9 +110,9 @@ let t_tuple ~loc ts : type_expression =
 let t_unforged_ticket ~loc ty : type_expression =
   ez_t_record
     ~loc
-    [ Label "ticketer", t_address ~loc ()
-    ; Label "value", ty
-    ; Label "amount", t_nat ~loc ()
+    [ Label.of_string "ticketer", t_address ~loc ()
+    ; Label.of_string "value", ty
+    ; Label.of_string "amount", t_nat ~loc ()
     ]
 
 
@@ -141,7 +141,9 @@ let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
   | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    if Set.length keys = 2
+       && Set.mem keys (Label.T.create "True")
+       && Set.mem keys (Label.T.create "False")
     then Some ()
     else None
   | _ -> None
@@ -342,10 +344,14 @@ let e_bool ~loc b : expression_content =
   if b
   then
     E_constructor
-      { constructor = Label "True"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
+      { constructor = Label.of_string "True"
+      ; element = make_e ~loc (e_unit ()) (t_unit ~loc ())
+      }
   else
     E_constructor
-      { constructor = Label "False"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
+      { constructor = Label.of_string "False"
+      ; element = make_e ~loc (e_unit ()) (t_unit ~loc ())
+      }
 
 
 let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
@@ -371,7 +377,7 @@ let e_a__type_ ~loc p = make_e ~loc (e__type_ p) (t__type_ ~loc ())
 
 
 let e_a_constructor ~loc constructor element t =
-  e_constructor ~loc { constructor = Label constructor; element } t
+  e_constructor ~loc { constructor = Label.of_string constructor; element } t
 
 
 let e_a_record ~loc ?(layout = default_layout) r =

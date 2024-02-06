@@ -139,17 +139,18 @@ module Normalize_no_layout = struct
   let%expect_test "type punning" =
     {|
     (T_record_raw
-      (((Label x) ((associated_type ()) (decl_pos 0)))
-       ((Label y) ((associated_type ()) (decl_pos 1)))))
+      (((Label x (Virtual generated)) ((associated_type ()) (decl_pos 0)))
+       ((Label y (Virtual generated)) ((associated_type ()) (decl_pos 1)))))
   |}
     |-> compile;
     [%expect
       {|
-      (T_record
-       ((fields (((Label x) (T_var x)) ((Label y) (T_var y))))
-        (layout
-         ((Inner
-           ((Field ((name (Label x)) (annot ())))
-            (Field ((name (Label y)) (annot ())))))))))
-    |}]
+        (T_record
+         ((fields
+           (((Label x (Virtual generated)) (T_var x))
+            ((Label y (Virtual generated)) (T_var y))))
+          (layout
+           ((Inner
+             ((Field ((name (Label x (Virtual generated))) (annot ())))
+              (Field ((name (Label y (Virtual generated))) (annot ()))))))))) |}]
 end

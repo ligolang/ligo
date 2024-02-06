@@ -91,6 +91,78 @@ let pretty_print_signature
         @@ PPrint.(string (Format.asprintf "%a" Ast_core.PP.signature core_sig)) )
 
 
+let decompile_type
+    :  syntax:Syntax_types.t -> Ast_core.ty_expr
+    -> ( (Cst.Cameligo.type_expr, Cst.Jsligo.type_expr) Dialect_cst.dialect
+       , [> `Exn of exn | `PassesError of Nanopasses.Errors.t ] )
+       result
+  =
+ fun ~syntax te ->
+  try
+    (* Both Ast_core -> Ast_unified and Ast_unified -> CST decompilers can throw exceptions :( *)
+    match
+      Simple_utils.Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ~syntax te
+    with
+    | Error (err, _warnings) -> Error (`PassesError err)
+    | Ok (s, _warnings) ->
+      Ok
+        (match syntax with
+        | JsLIGO -> JsLIGO (Unification_jsligo.Decompile.decompile_type_expression s)
+        | CameLIGO ->
+          CameLIGO (Unification_cameligo.Decompile.decompile_type_expression s))
+  with
+  | exn -> Error (`Exn exn)
+
+
+let pretty_print_variant
+    :  pp_mode -> syntax:Syntax_types.t -> Ligo_prim.Label.t * Ast_core.ty_expr
+    -> pretty_print_result
+  =
+ fun pp_mode ~syntax (label, typ) ->
+  let decompiled_cst_result =
+    (* Let's handle generated unit type *)
+    if Loc.is_dummy_or_generated typ.location
+    then (
+      match syntax with
+      | CameLIGO -> Ok (Dialect_cst.CameLIGO None)
+      | JsLIGO -> Ok (JsLIGO None))
+    else (
+      match decompile_type ~syntax typ with
+      | Ok (CameLIGO typ) -> Ok (CameLIGO (Some typ))
+      | Ok (JsLIGO typ) -> Ok (JsLIGO (Some typ))
+      | Error err -> Error err)
+  in
+  match decompiled_cst_result with
+  | Ok cst ->
+    let print =
+      let print_cameligo (state, te) =
+        let variant =
+          Region.wrap_ghost
+          @@ Unification_cameligo.Decompile.decompile_variant label te []
+        in
+        Parsing.Cameligo.Pretty.(print_variant state variant)
+      in
+      let print_jsligo (state, te) =
+        let variant =
+          Region.wrap_ghost @@ Unification_jsligo.Decompile.decompile_variant label te []
+        in
+        Parsing.Jsligo.Pretty.(print_legacy_variant print_type_expr state variant)
+      in
+      Dialect_cst.{ cameligo = print_cameligo; jsligo = print_jsligo }
+    in
+    `Ok (with_pp_mode pp_mode print cst)
+  | Error err ->
+    `Nonpretty
+      ( err
+      , Helpers_pretty.doc_to_string ~width:10000
+        @@
+        let (Label (label, _)) = label in
+        let prefix_doc = PPrint.(string label ^//^ string "->") in
+        PPrint.(
+          prefix_doc ^//^ string (Format.asprintf "%a" Ast_core.PP.type_expression typ))
+      )
+
+
 let pretty_print_type_expression
     (* We try to decompile Ast_core to Ast_unified and then to CST.
      If this fails, we use the pretty printer for AST which gives nonpretty result *)
@@ -101,26 +173,7 @@ let pretty_print_type_expression
     -> pp_mode -> syntax:Syntax_types.t -> Ast_core.type_expression -> pretty_print_result
   =
  fun ?prefix pp_mode ~syntax te ->
-  let decompiled_cst_result
-      : ( (Cst.Cameligo.type_expr, Cst.Jsligo.type_expr) Dialect_cst.dialect
-      , [> `Exn of exn | `PassesError of Nanopasses.Errors.t ] ) result
-    =
-    try
-      (* Both Ast_core -> Ast_unified and Ast_unified -> CST decompilers can throw exceptions :( *)
-      match
-        Simple_utils.Trace.to_stdlib_result @@ Nanopasses.decompile_ty_expr ~syntax te
-      with
-      | Error (err, _warnings) -> Error (`PassesError err)
-      | Ok (s, _warnings) ->
-        Ok
-          (match syntax with
-          | JsLIGO -> JsLIGO (Unification_jsligo.Decompile.decompile_type_expression s)
-          | CameLIGO ->
-            CameLIGO (Unification_cameligo.Decompile.decompile_type_expression s))
-    with
-    | exn -> Error (`Exn exn)
-  in
-  match decompiled_cst_result with
+  match decompile_type ~syntax te with
   | Ok cst ->
     let add_prefix = Option.value_map prefix ~default:Fun.id ~f:PPrint.( ^//^ ) in
     let print =

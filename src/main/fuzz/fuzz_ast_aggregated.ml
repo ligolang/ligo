@@ -361,7 +361,7 @@ module Mutator = struct
       let+ args, mutation = args in
       let m =
         List.foldi (hd :: args) ~init:[] ~f:(fun i r e ->
-            (Label.Label (Int.to_string i), e) :: r)
+            (Label.create (Int.to_string i), e) :: r)
         |> Record.of_list
       in
       ( return

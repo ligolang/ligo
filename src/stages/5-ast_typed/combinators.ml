@@ -205,7 +205,9 @@ let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
   | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "True")
+       && Set.mem keys (Label.of_string "False")
     then Some ()
     else None
   | _ -> None
@@ -215,8 +217,10 @@ let get_t_option (t : type_expression) : type_expression option =
   match t.type_content with
   | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "Some") && Set.mem keys (Label "None")
-    then Map.find fields (Label "Some")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "Some")
+       && Set.mem keys (Label.of_string "None")
+    then Map.find fields (Label.of_string "Some")
     else None
   | _ -> None
 

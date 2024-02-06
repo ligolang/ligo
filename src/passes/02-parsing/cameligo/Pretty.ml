@@ -1318,9 +1318,12 @@ let print_pattern     = print_pattern
 let print_expr        = print_expr
 let print_declaration = print_declaration
 
+type 'a reg = 'a CST.reg
+
 type cst         = CST.t
 type expr        = CST.expr
 type type_expr   = CST.type_expr
 type pattern     = CST.pattern
 type declaration = CST.declaration
+type variant     = CST.variant
 type signature_expr = CST.signature_expr

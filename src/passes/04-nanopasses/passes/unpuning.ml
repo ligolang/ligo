@@ -48,8 +48,10 @@ let%expect_test _ =
   Pattern.(
     {|
       (P_pun_record
-        ((Punned (Label a)) (Punned (Label b)))) |} |-> compile;
+        ((Punned (Label a (Virtual generated))) (Punned (Label b (Virtual generated))))) |}
+    |-> compile;
     [%expect
       {|
       (P_pun_record
-       ((Complete ((Label a) (P_var a))) (Complete ((Label b) (P_var b)))))|}])
+       ((Complete ((Label a (Virtual generated)) (P_var a)))
+        (Complete ((Label b (Virtual generated)) (P_var b)))))|}])

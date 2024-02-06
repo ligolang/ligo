@@ -1,8 +1,9 @@
 open Simple_utils
-module LMap : Map.S with type key = Location.t
+module LMap = Types.LMap
 
 type t =
   { type_cases : Types.type_case LMap.t
+  ; label_cases : Ast_core.ty_expr LMap.t
   ; module_signatures : Types.signature_case LMap.t
   ; module_env : Env.t
   }

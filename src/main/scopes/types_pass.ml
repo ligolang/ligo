@@ -1,23 +1,26 @@
 open Simple_utils
 open Ligo_prim
 open Types
-module LMap = Simple_utils.Map.Make (Location_ordered)
+module LMap = Types.LMap
 module Pattern = Ast_typed.Pattern
 
 type t =
   { type_cases : type_case LMap.t
+  ; label_cases : Ast_core.ty_expr LMap.t
   ; module_signatures : signature_case LMap.t
   ; module_env : Env.t
   }
 
 (** For debugging. *)
 let pp : t Fmt.t =
- fun ppf { type_cases; module_signatures; module_env } ->
+ fun ppf { type_cases; module_signatures; module_env; label_cases } ->
   Format.fprintf
     ppf
-    "{ type_cases: %a\n; module_signatures: %a\n; module_env: %a\n}"
+    "{ type_cases: %a\n; label_cases: %a\n; module_signatures: %a\n; module_env: %a\n}"
     Fmt.Dump.(seq (pair Location.pp PP.type_case))
     (LMap.to_seq type_cases)
+    Fmt.Dump.(seq (pair Location.pp Ast_core.PP.type_expression))
+    (LMap.to_seq label_cases)
     Fmt.Dump.(seq (pair Location.pp PP.signature_case))
     (LMap.to_seq module_signatures)
     Env.pp
@@ -25,11 +28,27 @@ let pp : t Fmt.t =
 
 
 let empty (module_env : Env.t) =
-  { type_cases = LMap.empty; module_signatures = LMap.empty; module_env }
+  { type_cases = LMap.empty
+  ; label_cases = LMap.empty
+  ; module_signatures = LMap.empty
+  ; module_env
+  }
 
 
 let add_type_case loc type_case env =
   { env with type_cases = LMap.add loc type_case env.type_cases }
+
+
+let add_label_case loc label_case env =
+  { env with
+    label_cases =
+      LMap.update
+        loc
+        (function
+          | Some t -> Some t
+          | None -> Some label_case)
+        env.label_cases
+  }
 
 
 let add_module_signature loc signature env =
@@ -59,6 +78,63 @@ let add_module_signature loc signature env =
   }
 
 
+(** Collects labels with types that they belong from patterns. *)
+let label_bindings : _ Pattern.t -> Ast_core.ty_expr -> (Label.t * Ast_core.ty_expr) list =
+ fun p ty_expr ->
+  let rec aux
+      :  _ Pattern.t -> Ast_core.ty_expr -> (Label.t * Ast_core.ty_expr) list
+      -> (Label.t * Ast_core.ty_expr) list
+    =
+   fun p ty_expr acc ->
+    let process
+        :  Label.t * _ Pattern.t -> Ast_core.ty_expr Row.With_optional_layout.t
+        -> (Label.t * Ast_core.ty_expr) list -> (Label.t * Ast_core.ty_expr) list
+      =
+     fun (label, inner) row acc ->
+      let open Option.Let_syntax in
+      Option.value
+        ~default:acc
+        (let%bind field_type = Row.With_optional_layout.find_type row label in
+         return ((label, ty_expr) :: aux inner field_type acc))
+    in
+    let ty_expr = Ast_core.strip_abstraction ty_expr in
+    let get_t_list : Ast_core.ty_expr -> Ast_core.ty_expr option =
+     fun ty_expr ->
+      match ty_expr.type_content with
+      | T_app { type_operator = { module_path = []; element }; arguments = [ argument ] }
+        when not (Type_var.is_generated element) ->
+        Option.some_if (String.equal (Type_var.to_name_exn element) "list") argument
+      | _ -> None
+    in
+    match p.wrap_content, ty_expr.type_content with
+    | P_variant (label, inner), T_sum (t_sum, _) -> process (label, inner) t_sum acc
+    | P_record p_record, T_record t_record ->
+      List.fold_left
+        ~init:acc
+        ~f:(fun acc label_and_inner -> process label_and_inner t_record acc)
+        (Record.to_list p_record)
+    | P_tuple p_tuple, T_record t_record when Row.With_optional_layout.is_tuple t_record
+      ->
+      let t_tuple = Row.With_optional_layout.to_tuple t_record in
+      let elt_and_type, _ = Core.List.zip_with_remainder p_tuple t_tuple in
+      List.fold_left ~init:acc ~f:(fun acc (elt, typ) -> aux elt typ acc) elt_and_type
+    | P_list (Cons (x, xs)), _ ->
+      Option.value
+        ~default:acc
+        (let open Option.Let_syntax in
+        let%bind inner = get_t_list ty_expr in
+        return @@ aux x inner @@ aux xs ty_expr acc)
+    | P_list (List lst), _ ->
+      Option.value
+        ~default:acc
+        (let open Option.Let_syntax in
+        let%bind inner = get_t_list ty_expr in
+        return @@ List.fold_left ~init:acc ~f:(fun acc elt -> aux elt inner acc) lst)
+    | _, _ -> acc
+  in
+  aux p ty_expr []
+
+
 let lookup_signature : Location.t -> t -> signature_case option =
  fun key { module_signatures; _ } -> LMap.find_opt key module_signatures
 
@@ -73,7 +149,19 @@ let resolve_module_path : Module_var.t Types.List.Ne.t -> t -> Module_var.t opti
 module Of_Ast_typed = struct
   type binding =
     | Type_binding of (Ast_typed.expression_variable * Ast_typed.type_expression)
+    | Label_binding of (Label.t * Ast_core.type_expression)
     | Module_binding of (Ast_typed.module_variable * Ast_typed.signature)
+
+  let label_bindings : _ Pattern.t -> Ast_typed.ty_expr -> binding list =
+   fun p ty_expr ->
+    List.map ~f:(fun elt -> Label_binding elt)
+    @@ label_bindings p (Checking.untype_type_expression ~use_orig_var:false ty_expr)
+
+
+  let mk_label_binding : Label.t -> Ast_typed.ty_expr -> binding =
+   fun label ty_expr ->
+    Label_binding (label, Checking.untype_type_expression ~use_orig_var:false ty_expr)
+
 
   let add_binding : t -> binding -> t =
    fun env -> function
@@ -86,6 +174,7 @@ module Of_Ast_typed = struct
       let loc = Value_var.get_location v in
       let type_case = Resolved t in
       add_type_case loc type_case env
+    | Label_binding (Label (_, loc), t) -> add_label_case loc t env
     | Module_binding (v, s) ->
       let loc = Module_var.get_location v in
       add_module_signature loc (Resolved s) env
@@ -125,19 +214,23 @@ module Of_Ast_typed = struct
       | E_literal _
       | E_application _
       | E_raw_code _
-      | E_constructor _
       | E_assign _
       | E_deref _
       | E_while _
       | E_type_abstraction _
-      | E_record _
-      | E_accessor _
-      | E_update _
       | E_contract _
       | E_constant _ -> return []
       | E_type_inst _ -> return []
       | E_coerce _ -> return []
       | E_variable v -> return [ Type_binding (v, exp.type_expression) ]
+      | E_record record ->
+        let labels = Record.labels record in
+        return
+        @@ List.map ~f:(fun label -> mk_label_binding label exp.type_expression) labels
+      | E_accessor { struct_; path } | E_update { struct_; path; update = _ } ->
+        return [ mk_label_binding path struct_.type_expression ]
+      | E_constructor { constructor; element = _ } ->
+        return [ mk_label_binding constructor exp.type_expression ]
       | E_lambda { binder; _ } ->
         return [ Type_binding (Param.get_var binder, Param.get_ascr binder) ]
       | E_recursive { fun_name; fun_type; lambda = { binder; _ }; force_lambdarec = _ } ->
@@ -145,21 +238,25 @@ module Of_Ast_typed = struct
           [ Type_binding (fun_name, fun_type)
           ; Type_binding (Param.get_var binder, Param.get_ascr binder)
           ]
-      | E_let_mut_in { let_binder; rhs = _; _ } | E_let_in { let_binder; rhs = _; _ } ->
+      | E_let_mut_in { let_binder; rhs; _ } | E_let_in { let_binder; rhs; _ } ->
+        let labels = label_bindings let_binder rhs.type_expression in
         return
         @@ List.map
              ~f:(fun binder ->
                Type_binding (Binder.get_var binder, Binder.get_ascr binder))
              (Pattern.binders let_binder)
-      | E_matching { matchee = _; cases } ->
+        @ labels
+      | E_matching { matchee; cases } ->
+        let ty_expr = matchee.type_expression in
+        let pats = List.map ~f:(fun elt -> elt.pattern) cases in
+        let labels = List.concat_map ~f:(fun elt -> label_bindings elt ty_expr) pats in
         let bindings =
-          List.concat
-          @@ List.map cases ~f:(fun { pattern; _ } ->
-                 let binders = Pattern.binders pattern in
-                 List.map binders ~f:(fun b ->
-                     Type_binding (Binder.get_var b, Binder.get_ascr b)))
+          List.concat_map cases ~f:(fun { pattern; _ } ->
+              let binders = Pattern.binders pattern in
+              List.map binders ~f:(fun b ->
+                  Type_binding (Binder.get_var b, Binder.get_ascr b)))
         in
-        return bindings
+        return (bindings @ labels)
       | E_module_accessor { element = e; _ } ->
         return [ Type_binding (e, exp.type_expression) ]
       | E_for { binder; start; _ } ->
@@ -191,6 +288,7 @@ module Of_Ast_typed = struct
       in
       Self_ast_typed.Helpers.fold_expression aux prev expr
     | D_irrefutable_match { pattern; expr; _ } ->
+      let prev = add_bindings prev (label_bindings pattern expr.type_expression) in
       let prev =
         let f acc binder =
           add_bindings
@@ -216,6 +314,10 @@ end
 module Of_Ast_core = struct
   let add_binding_in_map : t -> Location.t * type_case -> t =
    fun env (loc, type_case) -> add_type_case loc type_case env
+
+
+  let add_label_in_map : t -> Location.t * Ast_core.ty_expr -> t =
+   fun env (loc, type_case) -> add_label_case loc type_case env
 
 
   let add_bindings_in_map : t -> (Location.t * type_case) list -> t =
@@ -311,6 +413,10 @@ module Of_Ast_core = struct
     add_binding_in_map env (loc, t)
 
 
+  let add_label_type : t -> Label.t * Ast_core.type_expression -> t =
+   fun env (Label (_, loc), t) -> add_label_in_map env (loc, t)
+
+
   let add_param_type : t -> Ast_core.type_expression Param.t -> t =
    fun env param -> add_vvar_type env (Param.get_var param, Param.get_ascr param)
 
@@ -353,16 +459,22 @@ module Of_Ast_core = struct
       else binders
     in
     match binders, expr.expression_content with
-    | [ binder ], Ast_core.E_ascription { anno_expr; type_annotation } when not dyn_entry
-      ->
+    | [ binder ], Ast_core.E_ascription { anno_expr = _; type_annotation }
+      when not dyn_entry ->
       let binder = Binder.set_ascr binder (Some type_annotation) in
-      [ binder ], anno_expr
+      [ binder ], expr
     | _ -> binders, expr
 
 
   let rec expression : Ast_typed.signature -> t -> Ast_core.expression -> t =
    fun prg_sig bindings expr ->
     let expression = expression prg_sig in
+    let get_type : Ast_core.expression -> Ast_core.ty_expr option =
+     fun expr ->
+      match expr.expression_content with
+      | E_ascription { anno_expr = _; type_annotation } -> Some type_annotation
+      | _ -> None
+    in
     match expr.expression_content with
     | E_literal _ | E_variable _ | E_module_accessor _ | E_contract _ -> bindings
     | E_raw_code { code; _ } -> expression bindings code
@@ -374,11 +486,37 @@ module Of_Ast_core = struct
     | E_type_in { let_result; _ } -> expression bindings let_result
     | E_constructor { element; _ } -> expression bindings element
     | E_record lmap -> Record.fold lmap ~init:bindings ~f:expression
-    | E_accessor { struct_; _ } -> expression bindings struct_
-    | E_update { struct_; update; _ } ->
+    | E_accessor { struct_; path } ->
+      let bindings =
+        Option.value_map
+          ~default:bindings
+          ~f:(fun ty_expr -> add_label_type bindings (path, ty_expr))
+          (get_type struct_)
+      in
+      expression bindings struct_
+    | E_update { struct_; update; path } ->
+      let bindings =
+        Option.value_map
+          ~default:bindings
+          ~f:(fun ty_expr -> add_label_type bindings (path, ty_expr))
+          (get_type struct_)
+      in
       let bindings = expression bindings struct_ in
       expression bindings update
-    | E_ascription { anno_expr; _ } -> expression bindings anno_expr
+    | E_ascription { anno_expr; type_annotation } ->
+      let bindings =
+        match anno_expr.expression_content with
+        | E_record record ->
+          let labels = Record.labels record in
+          List.fold_left
+            ~init:bindings
+            ~f:(fun acc label -> add_label_type acc (label, type_annotation))
+            labels
+        | E_constructor { constructor; element = _ } ->
+          add_label_type bindings (constructor, type_annotation)
+        | _ -> bindings
+      in
+      expression bindings anno_expr
     | E_assign { binder; expression = e } ->
       let bindings = add_binders bindings [ binder ] in
       expression bindings e
@@ -401,6 +539,17 @@ module Of_Ast_core = struct
       let bindings = add_param_type bindings binder in
       expression bindings result
     | E_matching { matchee; cases } ->
+      let bindings =
+        Option.value_map
+          ~default:bindings
+          ~f:(fun ty_expr ->
+            let pats = List.map ~f:(fun elt -> elt.pattern) cases in
+            let labels =
+              List.concat_map ~f:(fun pat -> label_bindings pat ty_expr) pats
+            in
+            List.fold_left ~init:bindings ~f:add_label_type labels)
+          (get_type matchee)
+      in
       let bindings = expression bindings matchee in
       List.fold cases ~init:bindings ~f:(fun bindings { pattern; body } ->
           let bindings = expression bindings body in
@@ -408,6 +557,14 @@ module Of_Ast_core = struct
           add_binders bindings binders)
     | E_let_mut_in { let_binder; rhs; let_result; attributes = { dyn_entry; _ } }
     | E_let_in { let_binder; rhs; let_result; attributes = { dyn_entry; _ } } ->
+      let bindings =
+        Option.value_map
+          ~default:bindings
+          ~f:(fun ty_expr ->
+            let labels = label_bindings let_binder ty_expr in
+            List.fold_left ~init:bindings ~f:add_label_type labels)
+          (get_type rhs)
+      in
       let binders = Pattern.binders let_binder in
       let binders, rhs = set_core_type_if_possible ~dyn_entry binders rhs in
       let bindings = add_binders bindings binders in
@@ -455,6 +612,13 @@ module Of_Ast_core = struct
       let bindings = add_binders bindings binders in
       expression prg_sig bindings expr
     | D_irrefutable_match { pattern; expr; attr = { dyn_entry; _ } } ->
+      let bindings =
+        match expr.expression_content with
+        | E_ascription { anno_expr = _; type_annotation } ->
+          let labels = label_bindings pattern type_annotation in
+          List.fold_left ~init:bindings ~f:add_label_type labels
+        | _ -> bindings
+      in
       let binders = Pattern.binders pattern in
       let binders, expr = set_core_type_if_possible ~dyn_entry binders expr in
       let bindings = add_binders bindings binders in
@@ -682,4 +846,5 @@ let rec patch : t -> Types.def list -> Types.def list =
           { m with
             mod_case = patch_mod_case m.mod_case
           ; implements = List.map ~f:patch_implementation m.implements
-          })
+          }
+      | Label l -> Label l)

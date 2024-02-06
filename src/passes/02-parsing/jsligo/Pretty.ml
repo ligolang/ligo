@@ -1506,9 +1506,12 @@ let print_expr      = print_expr
 let print_statement = print_statement
 let print_signature_expr = print_intf_expr
 
+type 'a reg = 'a CST.reg
+
 type cst       = CST.t
 type expr      = CST.expr
 type type_expr = CST.type_expr
 type pattern   = CST.pattern
 type statement = CST.statement
-type signature_expr = CST.intf_expr
+type 'a legacy_variant = 'a CST.legacy_variant
+type signature_expr    = CST.intf_expr

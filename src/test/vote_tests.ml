@@ -47,7 +47,7 @@ let init_vote ~raise () =
   in
   (*  let votes = List.assoc (Label "voters") storage' in
   let votes' = extract_map votes in *)
-  let yea = List.Assoc.find_exn ~equal:Caml.( = ) storage' (Label "yea") in
+  let yea = List.Assoc.find_exn ~equal:Label.equal storage' (Label.create "yea") in
   let () =
     trace_option ~raise (test_internal __LOC__)
     @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat ~loc Z.one)

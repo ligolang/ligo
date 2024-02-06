@@ -15,7 +15,7 @@ type mangled_to_resolved = Uid.t UidMap.t
 
 let extracted_mangled_uids : def list -> mangled_to_resolved =
   List.fold ~init:UidMap.empty ~f:(fun acc -> function
-    | Variable _ | Type _ -> acc
+    | Variable _ | Type _ | Label _ -> acc
     | Module mdef ->
       (match mdef.mod_case with
       | Alias { resolve_mod_name = Unresolved_path _ } | Def _ -> acc
@@ -58,7 +58,7 @@ let (unmangle_module_names_in_core_type, unmangle_module_names_in_typed_type) :
 let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
  fun mangled_uids defs ->
   let rec collect : def -> (string * mdef) list = function
-    | Variable _ | Type _ -> []
+    | Variable _ | Type _ | Label _ -> []
     | Module mdef ->
       let first_mapping =
         match UidMap.find_opt mdef.uid mangled_uids with
@@ -77,7 +77,7 @@ let extract_mangled_mdefs : t -> def list -> mangled_mdefs =
 let strip_mangled_defs : mangled_mdefs -> t -> def list -> def list =
  fun mangled_file_name_to_mdef mangled_uids ->
   let rec mangled_alias_filter : def -> def option = function
-    | (Variable _ | Type _) as def -> Some def
+    | (Variable _ | Type _ | Label _) as def -> Some def
     | Module mdef as def ->
       if UidMap.mem mdef.uid mangled_uids
       then None
@@ -113,6 +113,11 @@ let inline_mangled : mangled_mdefs -> t -> mangled_to_resolved -> def list -> de
             Option.map
               ~f:(unmangle_module_names_in_core_type mangled_to_resolved)
               tdef.content
+        }
+    | Label ldef ->
+      Label
+        { ldef with
+          content = unmangle_module_names_in_core_type mangled_to_resolved ldef.content
         }
     | Module mdef ->
       let inlined_mdef =

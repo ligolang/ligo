@@ -827,9 +827,12 @@ end = struct
     in
     let conv_fields (x : I.type_expression O.Record.t) =
       List.mapi (O.Record.to_list x) ~f:(fun decl_pos (label, associated_type) ->
-          ( label
-          , O.Non_linear_rows.
-              { associated_type = Some associated_type; attributes = []; decl_pos } ))
+          let associated_type =
+            Option.some_if
+              (not @@ Location.is_dummy_or_generated associated_type.location)
+              associated_type
+          in
+          label, O.Non_linear_rows.{ associated_type; attributes = []; decl_pos })
     in
     match ty.type_content with
     | T_variable v -> ret @@ T_var v
@@ -856,7 +859,7 @@ end = struct
       ret @@ T_var (O.Ty_variable.of_input_var ~loc "bool")
     | T_sum ({ fields; layout = _ }, _) when is_some (I.get_t_option ty) ->
       let constr = I.make_t ~loc (T_variable (O.Ty_variable.of_input_var ~loc "option"))
-      and arg = Ligo_prim.Label.Map.find_exn fields (Label "Some") in
+      and arg = Ligo_prim.Label.Map.find_exn fields (Ligo_prim.Label.create "Some") in
       ret
       @@ T_app
            { constr

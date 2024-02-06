@@ -14,7 +14,7 @@ let rec find_record_from_path
         (List.find_map definitions ~f:(function
             | Type tdef ->
               if Ligo_prim.Type_var.is_name var tdef.name then Some tdef else None
-            | Variable _ | Module _ -> None))
+            | Variable _ | Module _ | Label _ -> None))
         ~f:(fun tdef ->
           match tdef.content with
           | None -> None
@@ -40,7 +40,7 @@ let rec find_record_from_path
    type and proceeds to try to resolve it as a record with the remainder of
    the field path. Once there is no more fields, we return the current record. *)
 let core_record_to_completion_items ~syntax (row : Ast_core.row) : CompletionItem.t list =
-  List.map (Map.to_alist row.fields) ~f:(fun (Label label, texp) ->
+  List.map (Map.to_alist row.fields) ~f:(fun (Label (label, _), texp) ->
       let detail = Pretty.show_type ~syntax texp in
       let sortText = completion_context_priority Record_field in
       CompletionItem.create ~label ~kind:CompletionItemKind.Field ~detail ~sortText ())
@@ -62,4 +62,4 @@ let projection_impl
     | Core t -> mk_completions t
     | Resolved t -> mk_completions (Checking.untype_type_expression t)
     | Unresolved -> None)
-  | None | Some (Type _ | Module _) -> None
+  | None | Some (Type _ | Module _ | Label _) -> None

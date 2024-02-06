@@ -69,6 +69,14 @@ let defs_to_completion_items
             @@ Def.get_type ~use_module_accessor:false vdef )
         | Scopes.Types.Type _ -> CompletionItemKind.TypeParameter, None
         | Scopes.Types.Module _ -> CompletionItemKind.Module, None
+        | Scopes.Types.Label { label_case = Ctor; content; _ } ->
+          ( CompletionItemKind.Constructor
+          , if Loc.is_dummy_or_generated content.location
+            then None
+            else Option.some @@ Pretty.show_type ~syntax content )
+        | Scopes.Types.Label { label_case = Field; _ } ->
+          (* Should be unreachable since we show fields only in fields completions. *)
+          CompletionItemKind.Field, None
       in
       CompletionItem.create ~label:name ~kind ~sortText ?detail ())
 

@@ -37,19 +37,7 @@ module Def_locations = Set.Make (Def_location)
 let to_string (def : t) = Format.asprintf "%a" Scopes.PP.definitions [ def ]
 
 let get_location : Scopes.def -> Def_location.t =
- fun def ->
-  Def_location.of_loc
-  @@
-  match def with
-  | Variable vdef -> vdef.range
-  | Type tdef -> tdef.range
-  | Module mdef -> mdef.range
-
-
-let get_plain_location : Scopes.def -> Loc.t = function
-  | Variable vdef -> vdef.range
-  | Type tdef -> tdef.range
-  | Module mdef -> mdef.range
+  Def_location.of_loc <@ Scopes.Types.get_range
 
 
 let get_path : Scopes.def -> Path.t option =
@@ -68,6 +56,7 @@ let references_getter : Scopes.def -> Def_locations.t =
     | Variable vdef -> LSet.add vdef.range vdef.references
     | Type tdef -> LSet.add tdef.range tdef.references
     | Module mdef -> LSet.add mdef.range mdef.references
+    | Label ldef -> LSet.add ldef.range ldef.references
   in
   Def_locations.of_sequence
   @@ Sequence.map ~f:Def_location.of_loc
@@ -148,3 +137,4 @@ let get_comments : t -> string list = function
     | Module_attr attr -> attr.leading_comments
     | Signature_attr attr -> attr.leading_comments
     | No_attributes -> [])
+  | Label _ -> []

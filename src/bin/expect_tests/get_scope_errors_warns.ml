@@ -69,6 +69,19 @@ let%expect_test _ =
     Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
     Content: |record[bar -> int , foo -> int({ name: foo }, { name: bar })]|
     references: []
+    Constructors and fields:
+    (foo#1:20-23 -> foo)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 20-23
+    Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 20-29
+    Content: int
+    Field
+
+    (bar#1:32-35 -> bar)
+    Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 32-35
+    Decl Range: File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 32-41
+    Content: int
+    Field
+
     Module definitions:
     Errors:
     File "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 10-15:
@@ -149,6 +162,7 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 15-19 ,
       File "../../test/contracts/get_scope_tests/local_type.mligo", line 4, characters 23-27
+    Constructors and fields:
     Module definitions:
     Errors:
     File "../../test/contracts/get_scope_tests/local_type.mligo", line 5, characters 2-6:
@@ -174,6 +188,7 @@ let%expect_test _ =
 
     Variable definitions:
     Type definitions:
+    Constructors and fields:
     Module definitions:
     Errors:
     File "../../test/contracts/get_scope_tests/errors/syntax_error.mligo", line 1, characters 0-4:
@@ -208,6 +223,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     Errors:
     File "../../test/contracts/get_scope_tests/errors/type_error.mligo", line 1, characters 14-21:
@@ -327,6 +343,19 @@ let%expect_test _ =
     Content: |record[x -> int , y -> int({ name: x }, { name: y })]|
     references:
       File "../../test/contracts/warning_unused.mligo", line 12, characters 24-31
+    Constructors and fields:
+    (x#3:3-4 -> x)
+    Range: File "../../test/contracts/warning_unused.mligo", line 3, characters 3-4
+    Decl Range: File "../../test/contracts/warning_unused.mligo", line 3, characters 3-10
+    Content: int
+    Field
+
+    (y#4:3-4 -> y)
+    Range: File "../../test/contracts/warning_unused.mligo", line 4, characters 3-4
+    Decl Range: File "../../test/contracts/warning_unused.mligo", line 4, characters 3-10
+    Content: int
+    Field
+
     Module definitions: |}];
   run_ligo_good
     [ "info"
@@ -362,6 +391,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions: |}];
   run_ligo_good
     [ "info"
@@ -398,6 +428,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (Foo#1:7-10 -> Foo)
     Range: File "../../test/contracts/warning_duplicate.mligo", line 1, characters 7-10
@@ -413,6 +444,7 @@ let%expect_test _ =
                       Mod Path = "Foo"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:

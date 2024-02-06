@@ -799,7 +799,7 @@ and infer_expression (expr : I.expression)
         and update = update in
         return @@ O.E_update { struct_; path; update })
       record_type
-  | E_constructor { constructor = Label label as constructor; _ }
+  | E_constructor { constructor = Label (label, _) as constructor; _ }
     when String.(label = "M_right" || label = "M_left") ->
     raise (michelson_or_no_annotation constructor)
   | E_constructor { constructor; element = arg } ->
@@ -1293,7 +1293,8 @@ and check_pattern ~mut (pat : I.type_expression option I.Pattern.t) (type_ : Typ
       tuple_pat
       |> List.mapi ~f:(fun i pat ->
              let%bind pat_row_elem =
-               raise_opt ~error:err @@ Map.find row.fields (Label (Int.to_string i))
+               raise_opt ~error:err
+               @@ Map.find row.fields (Label.create (Int.to_string i))
              in
              let%bind pat_type = Context.tapply pat_row_elem in
              check pat pat_type)
@@ -1397,7 +1398,7 @@ and infer_pattern ~mut (pat : I.type_expression option I.Pattern.t)
       tuple_pat
       |> List.mapi ~f:(fun i pat ->
              let%bind pat_type, pat = infer pat in
-             return ((Label.Label (Int.to_string i), pat_type), pat))
+             return ((Label.create (Int.to_string i), pat_type), pat))
       |> all
       >>| List.unzip
     in
