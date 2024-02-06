@@ -37,11 +37,12 @@ interface InputBoxParameters {
 }
 
 export class MultiStepInput<S> {
-  static async run<S>(start: InputStep<S>, state: S) {
-    const input = new MultiStepInput<S>();
-    input.state = { ref: state };
+  private constructor(state: S) {
+    this.state = { ref: state };
+  }
 
-    return input.stepThrough(start);
+  static async run<S>(start: InputStep<S>, state: S) {
+    return new MultiStepInput<S>(state).stepThrough(start);
   }
 
   private state: Ref<S>;
