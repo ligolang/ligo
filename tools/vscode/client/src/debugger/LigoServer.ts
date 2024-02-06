@@ -12,10 +12,10 @@ import { Maybe } from '../common/base'
 // stdout of the process to the client.
 export default class LigoServer implements vscode.Disposable {
   server: net.Server
-  adapterProcess: cp.ChildProcess
+  adapterProcess: cp.ChildProcessWithoutNullStreams
   adapterIsDead: boolean = false
 
-  private static createAdapterProcess(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>): cp.ChildProcess {
+  private static createAdapterProcess(cwd: Maybe<string>, command: string, args: ReadonlyArray<string>): cp.ChildProcessWithoutNullStreams {
     const adapterProcess = cp.spawn(command, args, { cwd })
     if (!adapterProcess || !adapterProcess.pid) {
       this.showError("Couldn't run debugger adapter")
