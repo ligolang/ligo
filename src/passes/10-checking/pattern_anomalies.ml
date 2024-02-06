@@ -31,7 +31,7 @@ let list_constructors = LSet.of_list [ cons_label; nil_label ]
 let rec pp_simple_pattern ppf sp =
   match sp with
   | SP_Wildcard t -> Format.fprintf ppf "_ : %a" AST.PP.type_expression t
-  | SP_Constructor (Label c, ps, _) ->
+  | SP_Constructor (Label (c, _), ps, _) ->
     Format.fprintf
       ppf
       "%s (%s)"
@@ -98,7 +98,7 @@ let rec to_simple_pattern (ty_pattern : _ AST.Pattern.t * AST.type_expression) =
           let row_elem =
             Option.value_exn
               ~here:[%here]
-              (LMap.find row.fields (Label (Int.to_string i)))
+              (LMap.find row.fields (Label.create (Int.to_string i)))
           in
           to_simple_pattern (p, row_elem))
     in
@@ -120,16 +120,16 @@ let are_keys_numeric keys =
 let rec to_list_pattern ~(raise : raise) ~loc simple_pattern : _ AST.Pattern.t =
   match simple_pattern with
   | SP_Wildcard _ -> Location.wrap ~loc @@ AST.Pattern.P_var (wild_binder ~loc)
-  | SP_Constructor (Label "#NIL", _, _) ->
+  | SP_Constructor (Label ("#NIL", _), _, _) ->
     Location.wrap ~loc @@ AST.Pattern.P_list (List [])
-  | SP_Constructor (Label "#CONS", sps, t) ->
+  | SP_Constructor (Label ("#CONS", _), sps, t) ->
     let rsps = List.rev sps in
     let tl = List.hd_exn rsps in
     let hd = List.rev (List.tl_exn rsps) in
     let hd = to_original_pattern ~raise ~loc hd (C.get_t_list_exn t) in
     let tl = to_list_pattern ~raise ~loc tl in
     Location.wrap ~loc @@ AST.Pattern.P_list (Cons (hd, tl))
-  | SP_Constructor (Label c, _, _) ->
+  | SP_Constructor (Label (c, _), _, _) ->
     raise.error
     @@ Errors.corner_case (Format.sprintf "edge case: %s in to_list_pattern" c) loc
 
@@ -141,8 +141,8 @@ and to_original_pattern ~raise ~loc simple_patterns (ty : AST.type_expression) =
     raise.error @@ Errors.corner_case "edge case: to_original_pattern empty patterns" loc
   | [ SP_Wildcard t ] when AST.is_t_unit t -> Location.wrap ~loc @@ P_unit
   | [ SP_Wildcard _ ] -> Location.wrap ~loc @@ P_var (wild_binder ~loc)
-  | [ (SP_Constructor (Label "#CONS", _, _) as simple_pattern) ]
-  | [ (SP_Constructor (Label "#NIL", _, _) as simple_pattern) ] ->
+  | [ (SP_Constructor (Label ("#CONS", _), _, _) as simple_pattern) ]
+  | [ (SP_Constructor (Label ("#NIL", _), _, _) as simple_pattern) ] ->
     to_list_pattern ~raise ~loc simple_pattern
   | [ SP_Constructor (c, sps, t) ] ->
     let t = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
@@ -253,10 +253,10 @@ let default_matrix matrix =
 
 let find_constuctor_arity c (t : AST.type_expression) =
   match (c : Label.t) with
-  | Label "#CONS" ->
+  | Label ("#CONS", _) ->
     let t' = C.get_t_list_exn t in
     destructure_type t' @ [ t ]
-  | Label "#NIL" -> [ t ]
+  | Label ("#NIL", _) -> [ t ]
   | _ ->
     let te = get_variant_nested_type c (Option.value_exn ~here:[%here] (C.get_t_sum t)) in
     destructure_type te

@@ -513,6 +513,76 @@ let test_cases_cameligo =
         ]
     ; negative_labels = [ "t"; "y" ]
     }
+  ; { test_name = "Constructor completions"
+    ; file_name = "contracts/lsp/completion_ctors.mligo"
+    ; position = Position.create ~line:3 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Excluding"
+            ~detail:"address list"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\t"
+            ()
+        ]
+    ; negative_labels = [ "Baz"; "Aaa" ]
+    }
+  ; { test_name = "Constructor completions with local defined one"
+    ; file_name = "contracts/lsp/completion_ctors.mligo"
+    ; position = Position.create ~line:5 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Baz"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "Aaa" ]
+    }
+  ; { test_name = "Constructor completions with type defined in module"
+    ; file_name = "contracts/lsp/completion_ctors.mligo"
+    ; position = Position.create ~line:12 ~character:8
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Aaa"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "Baz" ]
+    }
   ]
 
 
@@ -860,6 +930,76 @@ let test_cases_jsligo =
             ()
         ]
     ; negative_labels = [ "t"; "y" ]
+    }
+  ; { test_name = "Constructor completions"
+    ; file_name = "contracts/lsp/completion_ctors.jsligo"
+    ; position = Position.create ~line:3 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Excluding"
+            ~detail:"list<address>"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\t"
+            ()
+        ]
+    ; negative_labels = [ "Baz"; "Aaa" ]
+    }
+  ; { test_name = "Constructor completions with local defined one"
+    ; file_name = "contracts/lsp/completion_ctors.jsligo"
+    ; position = Position.create ~line:5 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Baz"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "Aaa" ]
+    }
+  ; { test_name = "Constructor completions with type defined in namespace"
+    ; file_name = "contracts/lsp/completion_ctors.jsligo"
+    ; position = Position.create ~line:13 ~character:10
+    ; completions =
+        [ CompletionItem.create
+            ~label:"Foo"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Bar"
+            ~detail:"int"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ; CompletionItem.create
+            ~label:"Aaa"
+            ~kind:CompletionItemKind.Constructor
+            ~sortText:"\b"
+            ()
+        ]
+    ; negative_labels = [ "Baz" ]
     }
   ]
 

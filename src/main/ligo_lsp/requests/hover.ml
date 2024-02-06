@@ -28,7 +28,7 @@ let insert_module_path
       let open Ligo_prim in
       let mdefs =
         List.filter_map input_d.definitions ~f:(function
-            | Variable _ | Type _ -> None
+            | Variable _ | Type _ | Label _ -> None
             | Module mdef -> Some mdef)
       in
       let rec resolve_alias (mdef : Scopes.Types.mdef) : Scopes.Uid.t option =
@@ -59,7 +59,7 @@ let insert_module_path
       let get_module_uid (module_path : Scopes.Uid.t list) : Scopes.Uid.t option =
         let%bind.Option module_name = List.last module_path in
         match%bind.Option get_definition_of_uid module_name with
-        | Variable _ | Type _ -> None
+        | Variable _ | Type _ | Label _ -> None
         | Module mdef -> resolve_alias mdef
       in
       let module_path =
@@ -100,20 +100,34 @@ let hover_string
   =
  fun input_d def ->
   let syntax = Dialect_cst.to_syntax_type input_d.cst in
-  let print_type_with_prefix ?prefix t =
-    match Pretty.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t with
+  let handle_pretty_print_result (name : string) = function
     | `Ok str -> return str
-    | `Nonpretty (err, nonpretty_type) ->
+    | `Nonpretty (err, nonpretty_result) ->
       let@ () =
         send_log_msg ~type_:Error
         @@
         match err with
-        | `Exn exn -> "pretty_print_type_expression: exception: " ^ Exn.to_string exn
+        | `Exn exn -> Format.asprintf "%s: exception: %a" name Exn.pp exn
         | `PassesError e ->
-          "pretty_print_type_expression: passes error: "
-          ^ Helpers_pretty.passes_error_to_string e
+          Format.asprintf
+            "%s: passes error: %a"
+            name
+            (Nanopasses.Errors.error_ppformat
+               ~display_format:Human_readable
+               ~no_colour:false)
+            e
       in
-      return nonpretty_type
+      return nonpretty_result
+  in
+  let print_type_with_prefix ?prefix t =
+    handle_pretty_print_result
+      "pretty_print_type_expression"
+      (Pretty.pretty_print_type_expression hovers_pp_mode ~syntax ?prefix t)
+  in
+  let print_variant label te =
+    handle_pretty_print_result
+      "print_variant"
+      (Pretty.pretty_print_variant hovers_pp_mode ~syntax (label, te))
   in
   let language = Some (Syntax.to_string syntax) in
   let doc_comment_hovers =
@@ -206,6 +220,20 @@ let hover_string
     | Some content ->
       let prefix = PPrint.(string "type" ^//^ string name_with_params ^//^ equals) in
       let@ value = print_type_with_prefix ~prefix @@ insert_module_path input_d content in
+      return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
+  | Label ldef ->
+    (match ldef.label_case with
+    | Ctor ->
+      let open Ligo_prim in
+      let label : Label.t =
+        let open Scopes.Types in
+        Label (Uid.to_name ldef.uid, Uid.to_location ldef.uid)
+      in
+      let@ value = print_variant label ldef.content in
+      return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers)
+    | Field ->
+      let prefix = PPrint.(string ldef.name ^//^ colon) in
+      let@ value = print_type_with_prefix ~prefix ldef.content in
       return @@ `List (MarkedString.{ language; value } :: doc_comment_hovers))
   | Module mdef ->
     let rec strip_generated : Ast_core.signature -> Ast_core.signature =

@@ -74,8 +74,8 @@ let rec pattern_env_extend_ ~(no_colour : bool) ~(attributes : ValueAttr.t) ~(mu
     | None -> fail @@ error_type ()
   in
   match pattern.wrap_content, value with
-  | P_variant (Label "True", _), V_Ct (C_bool true)
-  | P_variant (Label "False", _), V_Ct (C_bool false)
+  | P_variant (Label ("True", _), _), V_Ct (C_bool true)
+  | P_variant (Label ("False", _), _), V_Ct (C_bool false)
   | P_unit, V_Ct C_unit -> return (locs, env)
   | P_var x, v ->
     let* locs, v =
@@ -94,7 +94,7 @@ let rec pattern_env_extend_ ~(no_colour : bool) ~(attributes : ValueAttr.t) ~(mu
           ?no_mutation:(if mut then None else Some attributes.no_mutation)
           (Binder.get_ascr x, v) )
   | P_variant (label, p), V_Construct (label', value) ->
-    if not (Label.equal label (Label label'))
+    if not (Label.equal label (Label.create label'))
     then fail @@ error_type ()
     else
       let* ty = get_sum_ty ty label in
@@ -319,14 +319,16 @@ let rec apply_comparison ~no_colour ~raise
     in
     let order = Layout.to_list layout in
     let ith_a, _ =
-      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_a)
+      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label (l, _)) ->
+          String.equal l ctor_a)
     in
     let ith_b, _ =
-      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label l) -> String.equal l ctor_b)
+      List.findi_exn order ~f:(fun _i (Ligo_prim.Label.Label (l, _)) ->
+          String.equal l ctor_b)
     in
     (match Int.compare ith_a ith_b with
     | 0 ->
-      let associated_type = Record.find fields (Label ctor_a) in
+      let associated_type = Record.find fields (Label.create ctor_a) in
       apply_comparison ~no_colour ~raise loc calltrace associated_type args_a args_b
     | c -> c)
   | V_Func_val _, V_Func_val _
@@ -1270,7 +1272,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
       @@ v_some
            (V_Record
               (Record.of_list
-                 [ Label "0", V_Ast_contract { main; views }; Label "1", V_Mutation m ])))
+                 [ Label.create "0", V_Ast_contract { main; views }
+                 ; Label.create "1", V_Mutation m
+                 ])))
   | C_TEST_MUTATE_CONTRACT, _ -> fail @@ error_type ()
   | C_TEST_MUTATE_VALUE, [ V_Ct (C_nat n); v ] ->
     let* () = check_value v in
@@ -1282,7 +1286,9 @@ let rec apply_operator ~raise ~steps ~(options : Compiler_options.t)
     | Some (e, m) ->
       let* v = eval_ligo e calltrace env in
       return
-      @@ v_some (V_Record (Record.of_list [ Label "0", v; Label "1", V_Mutation m ])))
+      @@ v_some
+           (V_Record
+              (Record.of_list [ Label.create "0", v; Label.create "1", V_Mutation m ])))
   | C_TEST_MUTATE_VALUE, _ -> fail @@ error_type ()
   | C_TEST_SAVE_MUTATION, [ V_Ct (C_string dir); V_Mutation ((loc, _, _) as mutation) ] ->
     let* reg =
@@ -1733,21 +1739,21 @@ and eval_ligo ~raise ~steps ~options : AST.expression -> calltrace -> env -> val
       cons_name
       arguments'
   | E_constructor
-      { constructor = Label "True"
+      { constructor = Label ("True", _)
       ; element = { expression_content = E_literal Literal_unit; _ }
       } -> return @@ V_Ct (C_bool true)
   | E_constructor
-      { constructor = Label "False"
+      { constructor = Label ("False", _)
       ; element = { expression_content = E_literal Literal_unit; _ }
       } -> return @@ V_Ct (C_bool false)
-  | E_constructor { constructor = Label "Some"; element } ->
+  | E_constructor { constructor = Label ("Some", _); element } ->
     let* v = eval_ligo element (term.location :: calltrace) env in
     return @@ v_some v
   | E_constructor
-      { constructor = Label "None"
+      { constructor = Label ("None", _)
       ; element = { expression_content = E_literal Literal_unit; _ }
       } -> return @@ v_none ()
-  | E_constructor { constructor = Label c; element } ->
+  | E_constructor { constructor = Label (c, _); element } ->
     let* v' = eval_ligo element calltrace env in
     return @@ V_Construct (c, v')
   | E_matching { matchee; cases } ->
@@ -2259,7 +2265,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> (bool * toplevel_env
     let var = Binder.get_var n in
     let loc = Value_var.get_location var in
     let s, _ = Value_var.internal_get_name_and_counter var in
-    Record.set r ~key:(Ligo_prim.Label.Label s) ~data:(Ast_typed.e_a_variable ~loc var t)
+    Record.set r ~key:(Ligo_prim.Label.create s) ~data:(Ast_typed.e_a_variable ~loc var t)
   in
   let map = List.fold_right lst ~f ~init:Record.empty in
   let expr = Ast_typed.e_a_record ~loc:Location.dummy map in
@@ -2269,7 +2275,7 @@ let eval_test ~raise ~steps ~options : Ast_typed.program -> (bool * toplevel_env
   | b, V_Record m ->
     let f (n, _) r =
       let s, _ = Value_var.internal_get_name_and_counter @@ Binder.get_var n in
-      match Record.find_opt m (Label s) with
+      match Record.find_opt m (Label.create s) with
       | None -> failwith "Cannot find"
       | Some v -> (s, v) :: r
     in

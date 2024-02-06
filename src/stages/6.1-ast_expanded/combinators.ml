@@ -281,7 +281,9 @@ let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
   | T_sum { fields; _ } ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "True")
+       && Set.mem keys (Label.of_string "False")
     then Some ()
     else None
   | _ -> None
@@ -309,7 +311,8 @@ let is_michelson_or (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   match layout with
   | Inner [ Field { name = _; annot = ann_a }; Field { name = _; annot = ann_b } ] ->
     (match
-       Record.find_opt fields (Label "M_left"), Record.find_opt fields (Label "M_right")
+       ( Record.find_opt fields (Label.of_string "M_left")
+       , Record.find_opt fields (Label.of_string "M_right") )
      with
     | Some l, Some r -> Some ((l, ann_a), (r, ann_b))
     | _ -> None)
@@ -319,7 +322,10 @@ let is_michelson_or (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
 let is_michelson_pair (fields : _ Record.t) (layout : Ligo_prim.Layout.t) =
   match layout with
   | Inner [ Field { name = _; annot = ann_a }; Field { name = _; annot = ann_b } ] ->
-    (match Record.find_opt fields (Label "0"), Record.find_opt fields (Label "1") with
+    (match
+       ( Record.find_opt fields (Label.of_string "0")
+       , Record.find_opt fields (Label.of_string "1") )
+     with
     | Some l, Some r -> Some ((l, ann_a), (r, ann_b))
     | _ -> None)
   | _ -> None
@@ -337,7 +343,11 @@ let e_bool ~loc b : expression_content =
   if b
   then
     E_constructor
-      { constructor = Label "True"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
+      { constructor = Label.of_string "True"
+      ; element = make_e ~loc (e_unit ()) (t_unit ~loc ())
+      }
   else
     E_constructor
-      { constructor = Label "False"; element = make_e ~loc (e_unit ()) (t_unit ~loc ()) }
+      { constructor = Label.of_string "False"
+      ; element = make_e ~loc (e_unit ()) (t_unit ~loc ())
+      }

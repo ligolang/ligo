@@ -97,7 +97,9 @@ let get_t_bool (t : type_expression) : unit option =
   match t.type_content with
   | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "True") && Set.mem keys (Label "False")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "True")
+       && Set.mem keys (Label.of_string "False")
     then Some ()
     else None
   | _ -> None
@@ -107,8 +109,10 @@ let get_t_option (t : type_expression) : type_expression option =
   match t.type_content with
   | T_sum ({ fields; _ }, _) ->
     let keys = Map.key_set fields in
-    if Set.length keys = 2 && Set.mem keys (Label "Some") && Set.mem keys (Label "None")
-    then Map.find fields (Label "Some")
+    if Set.length keys = 2
+       && Set.mem keys (Label.of_string "Some")
+       && Set.mem keys (Label.of_string "None")
+    then Map.find fields (Label.of_string "Some")
     else None
   | _ -> None
 
@@ -223,8 +227,8 @@ let extract_pair : expression -> (expression * expression) option =
   match e.expression_content with
   | E_record record ->
     (match Record.to_list record with
-    | [ (Label "0", a); (Label "1", b) ] | [ (Label "1", b); (Label "0", a) ] ->
-      Some (a, b)
+    | [ (Label ("0", _), a); (Label ("1", _), b) ]
+    | [ (Label ("1", _), b); (Label ("0", _), a) ] -> Some (a, b)
     | _ -> None)
   | _ -> None
 
@@ -234,3 +238,22 @@ let extract_record : expression -> (Label.t * expression) list option =
   match e.expression_content with
   | E_record lst -> Some (Record.to_list lst)
   | _ -> None
+
+
+(** Removes [T_abstraction] and [T_for_all] from the top-level. *)
+let rec strip_abstraction : ty_expr -> ty_expr =
+ fun ty_expr ->
+  match ty_expr.type_content with
+  | T_abstraction { type_; ty_binder = _; kind = _ }
+  | T_for_all { type_; ty_binder = _; kind = _ } ->
+    let stripped = strip_abstraction type_ in
+    { ty_expr with type_content = stripped.type_content }
+  | T_variable _
+  | T_constant _
+  | T_sum _
+  | T_record _
+  | T_arrow _
+  | T_singleton _
+  | T_contract_parameter _
+  | T_app _
+  | T_module_accessor _ -> ty_expr

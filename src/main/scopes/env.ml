@@ -59,7 +59,7 @@
 open Ligo_prim
 open Simple_utils
 module LSet = Types.LSet
-module LMap = Map.Make (Location_ordered)
+module LMap = Types.LMap
 module Uid_map = Types.Uid_map
 
 (******************************************************************************)
@@ -69,6 +69,7 @@ module Def = struct
     | Variable of Value_var.t
     | Type of Type_var.t
     | Module of Module_var.t
+    | Label of Label.t
 
   type t = def
 
@@ -76,6 +77,7 @@ module Def = struct
     | Variable v -> Types.Uid.make_var (module Value_var) v
     | Type v -> Types.Uid.make_var (module Type_var) v
     | Module v -> Types.Uid.make_var (module Module_var) v
+    | Label (Label (label, loc)) -> Some (Types.Uid.make label loc)
 
 
   type def_map = Types.def Uid_map.t
@@ -84,6 +86,7 @@ module Def = struct
     | Variable v -> Value_var.get_location v
     | Type t -> Type_var.get_location t
     | Module m -> Module_var.get_location m
+    | Label (Label (_, loc)) -> loc
 
 
   let pp : Format.formatter -> t -> unit =
@@ -92,6 +95,7 @@ module Def = struct
     | Variable vvar -> Format.fprintf ppf "Variable <%a>" Value_var.pp vvar
     | Type tvar -> Format.fprintf ppf "Type <%a>" Type_var.pp tvar
     | Module mvar -> Format.fprintf ppf "Module <%a>" Module_var.pp mvar
+    | Label (Label (label, _)) -> Format.fprintf ppf "Label <%s>" label
 
 
   let to_types_def_opt (prg_defs : def_map) : def -> Types.def option =
@@ -185,26 +189,46 @@ type module_map = Module_map.t
         representation of modules & its contents, this simplifies the handling
         for nested modules.
     4. [parent_mod] is the last seen module ([None] means global), used for handling
-       inclusions. *)
+       inclusions.
+    5. [label_types] is a map from all constructors/record fields locations to the types that they belong to.
+        {[
+          type t = Foo | Bar of int
+
+          let x = Foo
+        ]}
+        The location of [Foo] inside [let x = ...] would be mapped into
+        [type t = Foo | Bar of int]. We need this info to properly
+        implement references for constructors and record fields. *)
 type env =
   { parent : def list
   ; avail_defs : def list
   ; module_map : module_map
   ; parent_mod : Module_var.t option
+  ; label_types : Ast_core.ty_expr LMap.t
   }
 
 type t = env
 
 let empty =
-  { parent = []; avail_defs = []; module_map = Module_map.empty; parent_mod = None }
+  { parent = []
+  ; avail_defs = []
+  ; module_map = Module_map.empty
+  ; parent_mod = None
+  ; label_types = LMap.empty
+  }
 
 
 (** For debugging. *)
 let pp : env Fmt.t =
- fun ppf { parent; avail_defs; module_map; parent_mod } ->
+ fun ppf { parent; avail_defs; module_map; parent_mod; label_types } ->
   Format.fprintf
     ppf
-    "{ parent: %a\n; avail_defs: %a\n; module_map: %a\n; parent_mod: %a\n}"
+    "{ parent: %a\n\
+     ; avail_defs: %a\n\
+     ; module_map: %a\n\
+     ; parent_mod: %a\n\
+     ; label_types: %a\n\
+     }"
     Fmt.Dump.(list Def.pp)
     parent
     Fmt.Dump.(list Def.pp)
@@ -213,6 +237,8 @@ let pp : env Fmt.t =
     module_map
     Fmt.Dump.(option Module_var.pp)
     parent_mod
+    Fmt.Dump.(list (pair Location.pp Ast_core.PP.type_expression))
+    (LMap.to_kv_list label_types)
 
 
 (******************************************************************************)
@@ -236,7 +262,7 @@ let lookup_vvar_opt : env -> Value_var.t -> def option =
  fun env v ->
   lookup_def_opt env (function
       | Variable v' -> Value_var.equal v v'
-      | Type _ | Module _ -> false)
+      | Type _ | Module _ | Label _ -> false)
 
 
 (** [lookup_tvar_opt] looks up the [Type_var.t] in the [env] with the
@@ -245,7 +271,7 @@ let lookup_tvar_opt : env -> Type_var.t -> def option =
  fun env t ->
   lookup_def_opt env (function
       | Type t' -> Type_var.equal t t'
-      | Variable _ | Module _ -> false)
+      | Variable _ | Module _ | Label _ -> false)
 
 
 (* TODO : Shouldn't this one be the same as the two functions above ?? *)
@@ -254,7 +280,7 @@ let lookup_tvar_opt : env -> Type_var.t -> def option =
 let lookup_mvar_in_defs_opt : Module_var.t -> def list -> Module_var.t option =
  fun m defs ->
   List.find_map defs ~f:(function
-      | Variable _ | Type _ -> None
+      | Variable _ | Type _ | Label _ -> None
       | Module m' -> Option.some_if (Module_var.equal m m') m')
 
 
@@ -379,6 +405,11 @@ let add_vvar : Value_var.t -> env -> env =
 (** [add_tvar] adds [Type_var.t] to [avail_defs] in the [env]. *)
 let add_tvar : Type_var.t -> env -> env =
  fun t env -> { env with avail_defs = Type t :: env.avail_defs }
+
+
+(** [add_label] adds [Label.t] to [avail_defs] in the [env]. *)
+let add_label : Label.t -> env -> env =
+ fun c env -> { env with avail_defs = Label c :: env.avail_defs }
 
 
 (** [add_mvar] adds the [Module_var.t] to the [avail_defs]. It also adds a [defs_or_alias]

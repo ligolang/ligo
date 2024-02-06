@@ -176,7 +176,7 @@ let get_pair : value -> (value * value) option =
   | V_Record lm ->
     let x = Record.to_list lm in
     (match x with
-    | [ (Label "0", x); (Label "1", y) ] -> Some (x, y)
+    | [ (Label ("0", _), x); (Label ("1", _), y) ] -> Some (x, y)
     | _ -> None)
   | _ -> None
 

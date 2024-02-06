@@ -17,13 +17,16 @@ let t_michelson_or ~loc (l : ty_expr) l_ann (r : ty_expr) r_ann =
   t_sum_raw
     ~loc
     (Non_linear_rows.make
-       [ Label "M_left", Some l, [ l_ann ]; Label "M_right", Some r, [ r_ann ] ])
+       [ Label.create "M_left", Some l, [ l_ann ]
+       ; Label.create "M_right", Some r, [ r_ann ]
+       ])
 
 
 let t_michelson_pair ~loc l l_ann r r_ann =
   t_record_raw
     ~loc
-    (Non_linear_rows.make [ Label "0", Some l, [ l_ann ]; Label "1", Some r, [ r_ann ] ])
+    (Non_linear_rows.make
+       [ Label.create "0", Some l, [ l_ann ]; Label.create "1", Some r, [ r_ann ] ])
 
 
 let compile ~raise =
@@ -103,10 +106,10 @@ let%expect_test "compile_michelson_pair" =
   [%expect
     {|
         (T_record_raw
-         (((Label 0)
+         (((Label 0 (Virtual generated))
            ((associated_type ((TY_EXPR1))) (attributes (((key annot) (value w))))
             (decl_pos 0)))
-          ((Label 1)
+          ((Label 1 (Virtual generated))
            ((associated_type ((TY_EXPR2))) (attributes (((key annot) (value v))))
             (decl_pos 1))))) |}]
 
@@ -121,10 +124,10 @@ let%expect_test "compile_michelson_or" =
   [%expect
     {|
         (T_sum_raw
-         (((Label M_left)
+         (((Label M_left (Virtual generated))
            ((associated_type ((TY_EXPR1))) (attributes (((key annot) (value w))))
             (decl_pos 0)))
-          ((Label M_right)
+          ((Label M_right (Virtual generated))
            ((associated_type ((TY_EXPR2))) (attributes (((key annot) (value v))))
             (decl_pos 1))))
          ()) |}]

@@ -71,7 +71,8 @@ let mk_decompiler_test { code; expected; syntax; name } =
       Option.value_or_thunk
         ~default:(fun () -> fail "Expected tdef with Some type contents, but got None")
         tdef.content
-    | Module _ :: _ -> fail "Expected vdef or tdef at the beginning of defs list"
+    | (Module _ | Label _) :: _ ->
+      fail "Expected vdef or tdef at the beginning of defs list"
   in
   (* uncomment code below if you want to print Ast_core (no sexps here for some reason) *)
   (* let () =
@@ -171,7 +172,7 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "union"
       ; code = "type t = A of int | B of string | C"
-      ; expected = "A of int | B of string | C of unit" (* TODO #1758 *)
+      ; expected = "A of int | B of string | C"
       ; syntax = CameLIGO
       }
     ; { name = "record"
@@ -309,7 +310,7 @@ let decompiler_ty_expr_tests =
       }
     ; { name = "union"
       ; code = {|type t = ["A", int] | ["B", string] | ["C"]|}
-      ; expected = {|["A", int] | ["B", string] | ["C", unit]|} (* TODO #1758 *)
+      ; expected = {|["A", int] | ["B", string] | ["C"]|}
       ; syntax = JsLIGO
       }
     ; { name = "nested union"

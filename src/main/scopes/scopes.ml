@@ -33,17 +33,19 @@ let defs_and_typed_program
     -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
-  let stdlib_decls, stdlib_core = stdlib in
-  let stdlib_defs =
+  let stdlib_decls, stdlib_core, stdlib_defs =
     if options.no_stdlib
-    then []
+    then fst stdlib, [], []
     else (
+      let stdlib_decls, stdlib_core = stdlib in
       let stdlib_core_types =
         Types_pass.(
           Of_Ast_core.declarations (empty Env.empty) stdlib_decls.pr_sig stdlib_core)
       in
-      Definitions.Of_Stdlib_Ast.definitions stdlib_core module_deps
-      |> Types_pass.patch stdlib_core_types)
+      ( stdlib_decls
+      , stdlib_core
+      , Definitions.Of_Stdlib_Ast.definitions stdlib_core module_deps
+        |> Types_pass.patch stdlib_core_types ))
   in
   let m_alias, env = Module_aliases_pass.declarations prg in
   let bindings, typed =
@@ -59,7 +61,7 @@ let defs_and_typed_program
   ( defs
     |> Module_aliases_pass.patch m_alias
     |> (if with_types then Types_pass.patch bindings else Fn.id)
-    |> References.patch (References.declarations (stdlib_core @ prg))
+    |> References.patch (References.declarations (stdlib_core @ prg) bindings.label_cases)
     |> Inline_mangled_modules_pass.patch mangled_uids
   , typed )
 

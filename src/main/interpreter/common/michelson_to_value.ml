@@ -462,7 +462,7 @@ let rec decompile_value
       let s' = self s o in
       v_some s')
   | T_sum row ->
-    let Label constructor, v, tv =
+    let Label (constructor, _), v, tv =
       Row.extract_constructor
         row
         v

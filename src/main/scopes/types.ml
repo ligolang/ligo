@@ -164,6 +164,27 @@ let get_module_path : resolve_mod_name -> Uid.t list = function
 
 type extension = resolve_mod_name [@@deriving compare]
 
+type label_case =
+  | Ctor
+  | Field
+
+type ldef =
+  { name : string
+  ; uid : Uid.t
+  ; range : Location.t
+  ; decl_range : Location.t
+  ; references : LSet.t
+  ; content : Ast_core.type_expression
+  ; def_type : def_type
+  ; orig_type_loc : Location.t
+        (* Location that points to type variable definition
+           or to the declaration itself if variable is absent. *)
+  ; label_case : label_case
+  ; mod_path : Uid.t list
+  }
+
+let compare_ldef (l1 : ldef) (l2 : ldef) : int = Uid.compare l1.uid l2.uid
+
 type implementation =
   | Ad_hoc_signature of def list
   | Standalone_signature_or_module of resolve_mod_name
@@ -196,6 +217,7 @@ and def =
   | Variable of vdef
   | Type of tdef
   | Module of mdef
+  | Label of ldef
 [@@deriving compare]
 
 let compare_mdef (m1 : mdef) (m2 : mdef) : int = Uid.compare m1.uid m2.uid
@@ -206,43 +228,51 @@ let equal_def_by_name (a : def) (b : def) : bool =
   | Variable x, Variable y -> String.equal x.name y.name
   | Type x, Type y -> String.equal x.name y.name
   | Module x, Module y -> compare_mod_name x.name y.name = 0
-  | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false
+  | Label x, Label y -> String.equal x.name y.name
+  | (Variable _ | Type _ | Module _ | Label _), (Variable _ | Type _ | Module _ | Label _)
+    -> false
 
 
 let get_def_name = function
   | Variable d -> d.name
   | Type d -> d.name
   | Module d -> d.name
+  | Label d -> d.name
 
 
 let get_def_uid = function
   | Variable d -> d.uid
   | Type d -> d.uid
   | Module d -> d.uid
+  | Label d -> d.uid
 
 
 let get_range = function
   | Type t -> t.range
   | Variable v -> v.range
   | Module m -> m.range
+  | Label l -> l.range
 
 
 let get_decl_range = function
   | Type t -> t.decl_range
   | Variable v -> v.decl_range
   | Module m -> m.decl_range
+  | Label l -> l.decl_range
 
 
 let get_def_type = function
   | Type t -> t.def_type
   | Variable v -> v.def_type
   | Module m -> m.def_type
+  | Label l -> l.def_type
 
 
 let get_mod_path = function
   | Type t -> t.mod_path
   | Variable v -> v.mod_path
   | Module m -> m.mod_path
+  | Label l -> l.mod_path
 
 
 (** [mvar_to_id] takes a [Module_var.t] and gives an [Uid.t] of the form

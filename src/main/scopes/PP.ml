@@ -13,6 +13,14 @@ let resolve_case
   | Unresolved -> Format.fprintf ppf "unresolved"
 
 
+let label_case : label_case Fmt.t =
+ fun ppf ->
+  Format.fprintf ppf
+  <@ function
+  | Ctor -> "Constructor"
+  | Field -> "Field"
+
+
 let type_case : type_case Fmt.t =
   resolve_case Ast_core.PP.type_expression Ast_typed.PP.type_expression_orig
 
@@ -115,6 +123,11 @@ let resolve_mod_name : resolve_mod_name Fmt.t =
         resolved_module
 
 
+let ldef : Format.formatter -> ldef -> unit =
+ fun ppf { content; label_case = case; _ } ->
+  Format.fprintf ppf "%a @ %a @ " Ast_core.PP.type_expression content label_case case
+
+
 let rec mdef : Format.formatter -> mdef -> unit =
  fun ppf { mod_case = mod_case'; references; implements; extends; _ } ->
   let pp_implements ppf =
@@ -155,6 +168,7 @@ and definition : Format.formatter -> def -> unit =
     | Variable v -> vdef ppf v
     | Type t -> tdef ppf t
     | Module m -> mdef ppf m
+    | Label l -> ldef ppf l
   in
   let pp_def ppf def =
     Format.fprintf
@@ -178,28 +192,38 @@ and definitions : Format.formatter -> def list -> unit =
     List.sort defs ~compare:(fun d1 d2 ->
         Simple_utils.Location_ordered.compare (get_range d1) (get_range d2))
   in
-  let variables, types_modules =
+  let variables, labels_types_modules =
     List.partition_tf
       ~f:(function
-        | Type _ | Module _ -> false
+        | Type _ | Module _ | Label _ -> false
         | Variable _ -> true)
       defs
+  in
+  let labels, types_modules =
+    List.partition_tf
+      ~f:(function
+        | Variable _ | Type _ | Module _ -> false
+        | Label _ -> true)
+      labels_types_modules
   in
   let types, modules =
     List.partition_tf
       ~f:(function
         | Type _ -> true
-        | Variable _ | Module _ -> false)
+        | Variable _ | Module _ | Label _ -> false)
       types_modules
   in
   let pp_defs ppf = List.iter ~f:(definition ppf) in
   Format.fprintf
     ppf
-    "@[<v>Variable definitions:@ %aType definitions:@ %aModule definitions:@ %a@]"
+    "@[<v>Variable definitions:@ %aType definitions:@ %aConstructors and fields:@ \
+     %aModule definitions:@ %a@]"
     pp_defs
     variables
     pp_defs
     types
+    pp_defs
+    labels
     pp_defs
     modules
 
@@ -257,6 +281,18 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
         ; mod_path = _
         ; attributes = _
         } -> uid, type_definition ~name ~range ~content ~references
+    | Label
+        { name
+        ; range
+        ; uid
+        ; references
+        ; content
+        ; decl_range = _
+        ; def_type = _
+        ; mod_path = _
+        ; orig_type_loc = _
+        ; label_case = _
+        } -> uid, type_definition ~name ~range ~content:(Some content) ~references
     | Module
         { name
         ; range
@@ -290,23 +326,29 @@ let rec def_to_yojson : def -> string * Yojson.Safe.t =
 
 and defs_json (defs : def list) : Yojson.Safe.t =
   let get_defs defs =
-    let variables, types_modules =
+    let variables, labels_types_modules =
       List.partition_tf defs ~f:(function
           | Variable _ -> true
-          | Type _ | Module _ -> false)
+          | Type _ | Module _ | Label _ -> false)
+    in
+    let labels, types_modules =
+      List.partition_tf labels_types_modules ~f:(function
+          | Label _ -> true
+          | Variable _ | Type _ | Module _ -> false)
     in
     let types, modules =
       List.partition_tf types_modules ~f:(function
           | Type _ -> true
-          | Variable _ | Module _ -> false)
+          | Variable _ | Module _ | Label _ -> false)
     in
     let modules, module_aliases =
       List.partition_tf modules ~f:(function
           | Module { mod_case = Def _; _ } -> true
-          | Variable _ | Type _ | Module { mod_case = Alias _; _ } -> false)
+          | Variable _ | Type _ | Module { mod_case = Alias _; _ } | Label _ -> false)
     in
     [ "variables", `Assoc (List.map ~f:(fun def -> def_to_yojson def) variables)
     ; "types", `Assoc (List.map ~f:(fun def -> def_to_yojson def) types)
+    ; "labels", `Assoc (List.map ~f:(fun def -> def_to_yojson def) labels)
     ; "modules", `Assoc (List.map ~f:(fun def -> def_to_yojson def) modules)
     ; "module_aliases", `Assoc (List.map ~f:(fun def -> def_to_yojson def) module_aliases)
     ]
@@ -319,21 +361,29 @@ let scopes_json (scopes : inlined_scopes) : Yojson.Safe.t =
     (List.map
        ~f:(fun scope ->
          let loc, defs = scope in
-         let variables, types_modules =
+         let variables, labels_types_modules =
            List.partition_tf defs ~f:(function
-               | Type _ | Module _ -> false
+               | Type _ | Module _ | Label _ -> false
                | Variable _ -> true)
+         in
+         let labels, types_modules =
+           List.partition_tf labels_types_modules ~f:(function
+               | Variable _ | Type _ | Module _ -> false
+               | Label _ -> true)
          in
          let types, modules =
            List.partition_tf types_modules ~f:(function
                | Type _ -> true
-               | Module _ | Variable _ -> false)
+               | Module _ | Variable _ | Label _ -> false)
          in
          let vs =
            List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) variables
          in
          let ts =
            List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) types
+         in
+         let ls =
+           List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) labels
          in
          let ms =
            List.map ~f:(fun def -> `String (Uid.to_string @@ get_def_uid def)) modules
@@ -342,6 +392,7 @@ let scopes_json (scopes : inlined_scopes) : Yojson.Safe.t =
            [ "range", Location.to_yojson loc
            ; "expression_environment", `List vs
            ; "type_environment", `List ts
+           ; "label_environment", `List ls
            ; "module_environment", `List ms
            ])
        scopes)

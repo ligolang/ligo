@@ -85,9 +85,10 @@ let find_last_def_by_name_and_level (def : Scopes.def)
       Simple_utils.Location_ordered.compare (get_range def1) (get_range def2))
   <@ List.filter ~f:(fun def' ->
          match def, def' with
-         | Variable _, Variable _ | Type _, Type _ | Module _, Module _ ->
-           String.equal (get_def_name def) (get_def_name def')
-         | (Variable _ | Type _ | Module _), (Variable _ | Type _ | Module _) -> false)
+         | Variable _, Variable _ | Type _, Type _ | Module _, Module _ | Label _, Label _
+           -> String.equal (get_def_name def) (get_def_name def')
+         | ( (Variable _ | Type _ | Module _ | Label _)
+           , (Variable _ | Type _ | Module _ | Label _) ) -> false)
 
 
 module Mod_identifier = struct
@@ -250,7 +251,7 @@ let get_implementations : Scopes.def -> Scopes.Types.mdef list -> Scopes.def lis
      want to just look for its implementing modules. *)
   let sig_uid_opt =
     match def with
-    | Variable _ | Type _ -> None
+    | Variable _ | Type _ | Label _ -> None
     | Module mdef ->
       (match mdef.mdef_type with
       | Module -> None
@@ -359,7 +360,7 @@ let get_definitions : Scopes.def -> Scopes.Types.mdef list -> Scopes.def list =
 
 let filter_mdefs : Scopes.def list -> Scopes.Types.mdef list =
   List.filter_map ~f:(function
-      | Scopes.Types.Variable _ | Type _ -> None
+      | Scopes.Types.Variable _ | Type _ | Label _ -> None
       | Module mdef -> Some mdef)
 
 

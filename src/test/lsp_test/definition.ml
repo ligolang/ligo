@@ -305,6 +305,182 @@ let test_cases =
     ; definitions = Some [ interval 1 6 7 ]
     ; def_type = Decl
     }
+  ; { test_name = "Go to definition of record field in top-level"
+    ; file_with_reference = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:18 ~character:14
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/references_ctors_and_fields.mligo"
+    ; definitions = Some [ interval 2 36 37 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor in top-level"
+    ; file_with_reference = "contracts/lsp/references_ctors_and_fields.mligo"
+    ; reference = Position.create ~line:9 ~character:16
+    ; file_with_definition =
+        Path.from_relative "contracts/lsp/references_ctors_and_fields.mligo"
+    ; definitions = Some [ interval 0 12 15 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of collided constructor (local scope)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:4 ~character:3
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 3 11 14 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of collided constructor in (global scope)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:8 ~character:2
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 0 9 12 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to type definition of collided constructor (local scope)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:4 ~character:3
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 3 7 8 ]
+    ; def_type = Type_def
+    }
+  ; { test_name = "Go to type definition of collided constructor in (global scope)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:8 ~character:2
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 0 5 6 ]
+    ; def_type = Type_def
+    }
+  ; { test_name = "Go to definition of constructor in match clause"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:12 ~character:4
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 3 11 14 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in module"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:20 ~character:8
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 16 13 16 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of poly record field inside constructor"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:24 ~character:14
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 22 21 22 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of record field definied in signature"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:34 ~character:10
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 27 13 14 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to declaration of record field definied in signature"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:34 ~character:10
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 31 13 14 ]
+    ; def_type = Decl
+    }
+  ; { test_name = "Go to type definition of record field in unnamed type"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:24 ~character:14
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 22 19 39 ]
+    ; def_type = Type_def
+    }
+  ; { test_name = "Go to definition of constructor (Core)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; reference = Position.create ~line:11 ~character:12
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; definitions = Some [ interval 8 9 12 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in module (Core)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; reference = Position.create ~line:12 ~character:13
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; definitions = Some [ interval 1 11 14 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in nested module (Core)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; reference = Position.create ~line:13 ~character:11
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; definitions = Some [ interval 4 13 16 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in matchee (Core)"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; reference = Position.create ~line:16 ~character:7
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_core.mligo"
+    ; definitions = Some [ interval 15 17 20 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in pattern"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:42 ~character:4
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 40 11 12 ]
+    ; def_type = Def
+    }
+  ; { test_name = "Go to definition of constructor defined in return type"
+    ; file_with_reference =
+        "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; reference = Position.create ~line:42 ~character:11
+    ; file_with_definition =
+        Path.from_relative
+          "contracts/lsp/go_to_implementations/ctors_and_fields_complex.mligo"
+    ; definitions = Some [ interval 40 23 24 ]
+    ; def_type = Def
+    }
   ]
 
 

@@ -723,7 +723,7 @@ let rec val_to_ast ~raise ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ty' = Ligo_prim.Record.find map_ty.fields (Label ctor) in
+    let ty' = Ligo_prim.(Record.find map_ty.fields (Label.create ctor)) in
     let arg = val_to_ast ~raise ~loc arg ty' in
     e_a_constructor ~loc ctor arg ty
   | V_Construct _ ->
@@ -776,16 +776,19 @@ let rec val_to_ast ~raise ~loc
           (Ligo_prim.Record.find_opt map l)
       in
       (*  at this point the record value is a nested pair (extracted from michelson), e.g. (KT1RYW6Zm24t3rSquhw1djfcgQeH9gBdsmiL , (0x05010000000474657374 , 10n)) *)
-      let ticketer = get (Label "0") map in
+      let ticketer = get (Ligo_prim.Label.create "0") map in
       let map =
-        match get (Label "1") map with
+        match get (Ligo_prim.Label.create "1") map with
         | V_Record map -> map
         | _ -> raise.error @@ Errors.generic_error loc "unforged ticket badly decompiled"
       in
-      let value = get (Label "0") map in
-      let amt = get (Label "1") map in
+      let value = get (Ligo_prim.Label.create "0") map in
+      let amt = get (Ligo_prim.Label.create "1") map in
       Ligo_prim.Record.of_list
-        [ Label "ticketer", ticketer; Label "value", value; Label "amount", amt ]
+        [ Ligo_prim.Label.create "ticketer", ticketer
+        ; Ligo_prim.Label.create "value", value
+        ; Ligo_prim.Label.create "amount", amt
+        ]
     in
     make_ast_record ~raise ~loc row map
   | V_Record _ ->
@@ -1325,7 +1328,7 @@ let rec compile_value ~raise ~options ~loc
               ty))
       @@ get_t_sum_opt ty
     in
-    let ty' = Ligo_prim.Record.find map_ty.fields (Label ctor) in
+    let ty' = Ligo_prim.(Record.find map_ty.fields (Label.create ctor)) in
     let%map arg = self arg ty' in
     let ty' = Ligo_compile.Of_expanded.compile_type ~raise ty in
     let ty_variant =
@@ -1333,7 +1336,10 @@ let rec compile_value ~raise ~options ~loc
       @@ get_t_sum_opt ty
     in
     let path =
-      Spilling.Layout.constructor_to_lr ~layout:ty_variant.layout ty' (Label ctor)
+      Spilling.Layout.constructor_to_lr
+        ~layout:ty_variant.layout
+        ty'
+        (Ligo_prim.Label.create ctor)
     in
     let aux pred (_ty, lr) =
       match lr with

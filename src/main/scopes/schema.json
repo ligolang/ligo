@@ -421,6 +421,12 @@
             ".{1,}": { "$ref": "#/$defs/type_definition" }
           }
         },
+        "labels": {
+          "type": "object",
+          "properties": {
+            ".{1,}": { "$ref": "#/$defs/type_definition" }
+          }
+        },
         "modules": {
           "type": "object",
           "properties": {
@@ -464,12 +470,16 @@
             "type": "array",
             "items": { "type": "string" }
           },
+          "label_environment": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
           "module_environment": {
             "type": "array",
             "items": { "type": "string" }
           }
         },
-        "required": ["range", "expression_environment", "type_environment"],
+        "required": ["range", "expression_environment", "type_environment", "label_environment"],
         "additionalProperties": false
       }
     }

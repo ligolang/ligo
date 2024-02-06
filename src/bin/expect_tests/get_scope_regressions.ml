@@ -59,6 +59,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -103,6 +104,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -151,6 +153,25 @@ let%expect_test _ =
                      name -> string({ name: id }, { name: is_admin }, { name: name })]|
     references:
       File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 7, characters 14-18
+    Constructors and fields:
+    (id#2:2-4 -> id)
+    Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 2, characters 2-4
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 2, characters 2-16
+    Content: nat
+    Field
+
+    (is_admin#3:2-10 -> is_admin)
+    Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 3, characters 2-10
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 3, characters 2-17
+    Content: bool
+    Field
+
+    (name#4:2-6 -> name)
+    Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 4, characters 2-6
+    Decl Range: File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 4, characters 2-19
+    Content: string
+    Field
+
     Module definitions:
     Errors:
     File "../../test/contracts/get_scope_tests/regressions/buggy_file_with_core_types.jsligo", line 13, characters 25-32:
@@ -215,6 +236,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]
 
 let%expect_test _ =
@@ -251,6 +273,7 @@ let%expect_test _ =
     Mod Path = "C"
     Def Type = Module_field
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#2:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 2, characters 7-8
@@ -265,6 +288,7 @@ let%expect_test _ =
                       Mod Path = "A""B"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (B#3:11-12 -> B)
                       Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 3, characters 11-12
@@ -279,6 +303,7 @@ let%expect_test _ =
                                         Mod Path = "A""B"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -305,6 +330,7 @@ let%expect_test _ =
                       Mod Path = "A""B"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -324,6 +350,7 @@ let%expect_test _ =
                       Mod Path = "C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (D#9:11-12 -> D)
                       Range: File "../../test/contracts/get_scope_tests/regressions/module_alias_def_reference.mligo", line 9, characters 11-12
@@ -391,6 +418,7 @@ let%expect_test _ =
     references:
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
       File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17
+    Constructors and fields:
     Module definitions:
     (A#1:7-8 -> A)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 1, characters 7-8
@@ -412,6 +440,7 @@ let%expect_test _ =
                       references:
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 4, characters 18-22 ,
                         File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 10, characters 13-17
+                      Constructors and fields:
                       Module definitions:
                       (C#3:11-12 -> C)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference.mligo", line 3, characters 11-12
@@ -426,6 +455,7 @@ let%expect_test _ =
                                         Mod Path = "A""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -453,6 +483,7 @@ let%expect_test _ =
                       Mod Path = "A""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
 
     references:
@@ -504,6 +535,7 @@ let%expect_test _ =
     Mod Path =
     Def Type = Global
     Type definitions:
+    Constructors and fields:
     Module definitions:
     (A#2:11-12 -> A)
     Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 2, characters 11-12
@@ -518,6 +550,7 @@ let%expect_test _ =
                       Mod Path = "A""C"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (C#3:15-16 -> C)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 3, characters 15-16
@@ -532,6 +565,7 @@ let%expect_test _ =
                                         Mod Path = "A""C"
                                         Def Type = Module_field
                                         Type definitions:
+                                        Constructors and fields:
                                         Module definitions:
 
                       references:
@@ -558,6 +592,7 @@ let%expect_test _ =
                       Mod Path = "E"
                       Def Type = Module_field
                       Type definitions:
+                      Constructors and fields:
                       Module definitions:
                       (F#8:15-16 -> F)
                       Range: File "../../test/contracts/get_scope_tests/regressions/local_module_alias_def_reference2.mligo", line 8, characters 15-16
@@ -622,4 +657,5 @@ let%expect_test _ =
     Mod Path =
     Def Type = Local
     Type definitions:
+    Constructors and fields:
     Module definitions: |}]

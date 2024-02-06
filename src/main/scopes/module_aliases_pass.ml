@@ -382,4 +382,4 @@ let rec patch : t -> Types.def list -> Types.def list =
           ; implements = List.map ~f:patch_implementation m.implements
           ; extends = List.map ~f:patch_extension m.extends
           }
-      | (Variable _ | Type _) as def -> def)
+      | (Variable _ | Type _ | Label _) as def -> def)

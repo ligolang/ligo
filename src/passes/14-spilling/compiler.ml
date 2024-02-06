@@ -310,15 +310,15 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
     let a = self lamb in
     let b = self args in
     return @@ E_application (a, b)
-  | E_constructor { constructor = Label "True"; element }
+  | E_constructor { constructor = Label ("True", _); element }
     when AST.compare_expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_TRUE; arguments = [] }
-  | E_constructor { constructor = Label "False"; element }
+  | E_constructor { constructor = Label ("False", _); element }
     when AST.compare_expression_content element.expression_content (AST.e_unit ()) = 0 ->
     return @@ E_constant { cons_name = C_FALSE; arguments = [] }
-  | E_constructor { constructor = Label "None"; _ } ->
+  | E_constructor { constructor = Label ("None", _); _ } ->
     return @@ E_constant { cons_name = C_NONE; arguments = [] }
-  | E_constructor { constructor = Label "Some"; element } ->
+  | E_constructor { constructor = Label ("Some", _); element } ->
     let e = compile_expression ~raise element in
     return @@ E_constant { cons_name = C_SOME; arguments = [ e ] }
   | E_constructor { constructor; element } ->
@@ -594,7 +594,7 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
           trace_option
             ~raise
             (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
-            (Record.find_opt cases (Label c))
+            (Record.find_opt cases (Label.create c))
         in
         let match_true = get_case "True" in
         let match_false = get_case "False" in
@@ -615,12 +615,12 @@ let rec compile_expression ~raise (ae : AST.expression) : expression =
         in
         let rec aux top t =
           match t with
-          | `Leaf (Label.Label constructor_name), tv ->
+          | `Leaf (Label.Label (constructor_name, _)), tv ->
             let ({ constructor = _; pattern; body } : _ AST.matching_content_case) =
               trace_option ~raise (corner_case ~loc:__LOC__ "missing match clause")
               @@
               let aux
-                  ({ constructor = Label c; pattern = _; body = _ } :
+                  ({ constructor = Label (c, _); pattern = _; body = _ } :
                     _ AST.matching_content_case)
                 =
                 String.equal c constructor_name
@@ -980,7 +980,7 @@ and compile_recursive ~raise Recursive.{ fun_name; fun_type; lambda; force_lambd
           trace_option
             ~raise
             (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
-            (Record.find_opt cases (Label c))
+            (Record.find_opt cases (Label.create c))
         in
         let match_true = get_case "True" in
         let match_false = get_case "False" in
@@ -1001,12 +1001,12 @@ and compile_recursive ~raise Recursive.{ fun_name; fun_type; lambda; force_lambd
         in
         let rec aux top t =
           match t with
-          | `Leaf (Label.Label constructor_name), tv ->
+          | `Leaf (Label.Label (constructor_name, _)), tv ->
             let ({ constructor = _; pattern; body } : _ AST.matching_content_case) =
               trace_option ~raise (corner_case ~loc:__LOC__ "missing match clause")
               @@
               let aux
-                  ({ constructor = Label c; pattern = _; body = _ } :
+                  ({ constructor = Label (c, _); pattern = _; body = _ } :
                     _ AST.matching_content_case)
                 =
                 String.equal c constructor_name

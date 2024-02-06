@@ -26,7 +26,7 @@ let simple_decl ~loc lhs args let_rhs =
 let gen_enum : ty_expr option Non_linear_rows.t * Location.t -> declaration list =
  fun (rows, loc) ->
   rows
-  |> List.mapi ~f:(fun i (Label.Label x, _) -> i, x)
+  |> List.mapi ~f:(fun i (Label.Label (x, _), _) -> i, x)
   |> List.map ~f:(fun (i, str) ->
          simple_decl ~loc (prefix_let_lhs ~loc "enum" str) [] (e_nat ~loc i))
 
@@ -132,8 +132,8 @@ let%expect_test "compile" =
       ((name dyn_param)
        (type_expr
         (T_sum_raw
-         (((Label Foo) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-          ((Label Bar) ((associated_type ()) (decl_pos 1))))()))))))))
+         (((Label Foo (Virtual generated)) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
+          ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))()))))))))
   |}
   |-> compile;
   [%expect
@@ -143,21 +143,24 @@ let%expect_test "compile" =
        ((name dyn_param)
         (type_expr
          (T_sum_raw
-          (((Label Foo) ((associated_type ((TY_EXPR1))) (decl_pos 0)))
-           ((Label Bar) ((associated_type ()) (decl_pos 1))))
+          (((Label Foo (Virtual generated))
+            ((associated_type ((TY_EXPR1))) (decl_pos 0)))
+           ((Label Bar (Virtual generated)) ((associated_type ()) (decl_pos 1))))
           ())))))
      (PE_declaration
       (D_let
        ((pattern ((P_var make_foo) (P_var x)))
         (let_rhs
          (E_applied_constructor
-          ((constructor (Label Foo)) (element (E_variable x))))))))
+          ((constructor (Label Foo (Virtual generated)))
+           (element (E_variable x))))))))
      (PE_declaration
       (D_let
        ((pattern ((P_var make_bar) (P_var x)))
         (let_rhs
          (E_applied_constructor
-          ((constructor (Label Bar)) (element (E_variable x))))))))
+          ((constructor (Label Bar (Virtual generated)))
+           (element (E_variable x))))))))
      (PE_declaration
       (D_let
        ((pattern ((P_var get_foo) (P_var x)))
@@ -165,14 +168,16 @@ let%expect_test "compile" =
          (E_match
           ((expr (E_variable x))
            (cases
-            (((pattern ((P_variant (Label Foo) ((P_var x)))))
+            (((pattern ((P_variant (Label Foo (Virtual generated)) ((P_var x)))))
               (rhs
                (E_applied_constructor
-                ((constructor (Label Some)) (element (E_variable x))))))
+                ((constructor (Label Some (Virtual generated)))
+                 (element (E_variable x))))))
              ((pattern ((P_var gen)))
               (rhs
                (E_applied_constructor
-                ((constructor (Label None)) (element (E_literal Literal_unit))))))))))))))
+                ((constructor (Label None (Virtual generated)))
+                 (element (E_literal Literal_unit))))))))))))))
      (PE_declaration
       (D_let
        ((pattern ((P_var get_bar) (P_var x)))
@@ -180,14 +185,16 @@ let%expect_test "compile" =
          (E_match
           ((expr (E_variable x))
            (cases
-            (((pattern ((P_variant (Label Bar) ((P_var x)))))
+            (((pattern ((P_variant (Label Bar (Virtual generated)) ((P_var x)))))
               (rhs
                (E_applied_constructor
-                ((constructor (Label Some)) (element (E_variable x))))))
+                ((constructor (Label Some (Virtual generated)))
+                 (element (E_variable x))))))
              ((pattern ((P_var gen)))
               (rhs
                (E_applied_constructor
-                ((constructor (Label None)) (element (E_literal Literal_unit))))))))))))))
+                ((constructor (Label None (Virtual generated)))
+                 (element (E_literal Literal_unit))))))))))))))
      (PE_declaration
       (D_let
        ((pattern ((P_var enum_foo))) (let_rhs (E_literal (Literal_nat 0))))))

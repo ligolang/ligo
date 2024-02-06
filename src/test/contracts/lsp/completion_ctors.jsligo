@@ -1,0 +1,14 @@
+type t = ["Foo"] | ["Bar", int]
+
+const x = do {
+  let a =  ;
+  type k = ["Baz"];
+  let b =  ;
+  42
+}
+
+namespace M {
+  export type t = ["Aaa"]
+}
+
+const y = 

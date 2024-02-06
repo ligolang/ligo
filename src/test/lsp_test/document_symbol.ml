@@ -55,6 +55,15 @@ let test_cases =
     ; symbols =
         [ DocumentSymbol.create
             ~detail:"Foo of (int * string)"
+            ~children:
+              [ DocumentSymbol.create
+                  ~detail:"int * string"
+                  ~kind:SymbolKind.EnumMember
+                  ~name:"Foo"
+                  ~range:(interval 0 9 28)
+                  ~selectionRange:(interval 0 9 12)
+                  ()
+              ]
             ~kind:SymbolKind.Enum
             ~name:"v"
             ~range:(interval 0 0 28)
@@ -161,6 +170,79 @@ let test_cases =
             ~selectionRange:(point 0 6)
             ()
         ]
+    }
+  ; { test_name = "Type hierarchy"
+    ; file_name = "contracts/lsp/hover/ctors_and_fields.mligo"
+    ; symbols =
+        (let foo =
+           DocumentSymbol.create
+             ~kind:SymbolKind.EnumMember
+             ~name:"Foo"
+             ~range:(interval 1 4 7)
+             ~selectionRange:(interval 1 4 7)
+             ()
+         in
+         let bar =
+           DocumentSymbol.create
+             ~kind:SymbolKind.EnumMember
+             ~name:"Bar"
+             ~detail:"int"
+             ~range:(interval 2 4 14)
+             ~selectionRange:(interval 2 4 7)
+             ()
+         in
+         let baz =
+           DocumentSymbol.create
+             ~kind:SymbolKind.EnumMember
+             ~name:"Baz"
+             ~detail:"unit"
+             ~range:(interval 3 4 15)
+             ~selectionRange:(interval 3 4 7)
+             ()
+         in
+         let a_b =
+           [ DocumentSymbol.create
+               ~kind:SymbolKind.Field
+               ~name:"a"
+               ~detail:"int"
+               ~range:(interval 4 13 20)
+               ~selectionRange:(interval 4 13 14)
+               ()
+           ; DocumentSymbol.create
+               ~kind:SymbolKind.Field
+               ~name:"b"
+               ~detail:"bool"
+               ~range:(interval 4 22 30)
+               ~selectionRange:(interval 4 22 23)
+               ()
+           ]
+         in
+         let aaa =
+           DocumentSymbol.create
+             ~children:a_b
+             ~kind:SymbolKind.EnumMember
+             ~name:"Aaa"
+             ~detail:"{\n a : int;\n b : bool\n}"
+             ~range:(interval 4 4 32)
+             ~selectionRange:(interval 4 4 7)
+             ()
+         in
+         [ DocumentSymbol.create
+             ~children:[ foo; bar; baz; aaa ]
+             ~detail:
+               "| Aaa of {\n\
+               \   a : int;\n\
+               \   b : bool\n\
+               \  }\n\
+                | Bar of int\n\
+                | Baz of unit\n\
+                | Foo"
+             ~kind:SymbolKind.Enum
+             ~name:"t"
+             ~range:(range (0, 0) (4, 32))
+             ~selectionRange:(interval 0 5 6)
+             ()
+         ])
     }
   ]
 

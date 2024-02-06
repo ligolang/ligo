@@ -27,7 +27,7 @@ let get_module_from_pos
     | Unresolved_path { module_path = _ } -> None
     | Resolved_path { module_path = _; resolved_module_path = _; resolved_module } ->
       List.find_map definitions ~f:(function
-          | Variable _ | Type _ -> None
+          | Variable _ | Type _ | Label _ -> None
           | Module m ->
             if Scopes.Uid.(m.uid = resolved_module) then get_defs_from_mdef m else None)
   and get_defs_from_mdef (m : Scopes.Types.mdef) : CompletionItem.t list option =
@@ -49,7 +49,7 @@ let get_module_from_pos
   in
   match%bind.Option Def.get_definition module_pos path definitions with
   | Module m -> get_defs_from_mdef m
-  | Variable _ | Type _ -> None
+  | Variable _ | Type _ | Label _ -> None
 
 
 let module_path_impl

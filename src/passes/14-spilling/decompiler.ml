@@ -195,11 +195,12 @@ let rec decompile ~raise (v : value) (t : AST.type_expression) : AST.expression 
         @@ Ast_aggregated.get_t_option t
       in
       let sub = self v tv in
-      return (E_constructor { constructor = Label "Some"; element = sub })
+      return
+        (E_constructor { constructor = Ligo_prim.Label.create "Some"; element = sub })
     | D_none ->
       return
         (E_constructor
-           { constructor = Label "None"
+           { constructor = Ligo_prim.Label.create "None"
            ; element = make_e ~loc (e_unit ()) (t_unit ~loc ())
            })
     | _ -> raise.error @@ corner_case ~loc:"unspiller" "impossible")

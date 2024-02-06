@@ -8,7 +8,7 @@ module Location = Simple_utils.Location
 (*
   this pass morph "structural assignments" where lhs is an expression,
   to simple assigments where lhs is a variable.
-  
+
   `m.["foo"].y := baz`
   |->
   ```
@@ -32,7 +32,7 @@ let label_of_access =
     The path is extracted as an access list, and can be used to construct the right side of the assigment
       - ((r.x).y).z         |-> (r, [x;y;z])
       - (m.["foo"]).["bar"] |-> (m, ["foo";"bar"])
-  
+
     Restrictions on [lvalue]:
       - the left-most accessed element must be a variable (e.g. `{ x = 1 ; y = 2}.x = 2` is rejected)
       - module access are forbidden (we do not support effects on module declarations)
@@ -57,12 +57,12 @@ let path_of_lvalue ~raise : expr -> Variable.t * expr Selection.t list =
 
 (*
     `compile_assignment [~loc] [~last_proj_update] [~lhs] [~path] [~default_rhs]` build the assignment of [lhs] accessed by [path].
-  
+
     This function is used in case of patches (`patch <X> with <Y>`) ; assignments (`<X> := <Y>`) or removals (`remove <X> from <Y>`).
-  
+
     The produced assignment will only update [lhs] if all the accessed map element in [path] are already present, i.e. we match
     on all the elements in [path] : `match Map.find_opt .. with | None -> <lhs> -> Some -> ...`.
-  
+
     [default_rhs] is used as a default assigned value when path is empty, if the path isn't empty [last_proj_update] will be used as follow:
       - Internally, compile_assignment accumulate a "context" (updator: expression -> expression) building the whole access expression on
         the right-end side while processing [path]
@@ -299,29 +299,30 @@ let%expect_test "compile" =
       ((lhs_expr
         (E_proj
           (E_map_lookup ((map (E_variable m)) (keys ((EXPR1)))))
-          ((FieldName (Label bar)))))
+          ((FieldName (Label bar (Virtual generated))))))
        (rhs_expr (EXPR2))))
   |}
   |-> compile;
   [%expect
     {|
-    (I_assign m
-     (E_match
-      ((expr
-        (E_constant
-         ((cons_name C_MAP_FIND_OPT) (arguments ((EXPR1) (E_variable m))))))
-       (cases
-        (((pattern ((P_variant (Label Some) ((P_var gen)))))
-          (rhs
-           (E_constant
-            ((cons_name C_MAP_ADD)
-             (arguments
-              ((EXPR1)
-               (E_record_update
-                ((struct_ (E_variable gen)) (label (Label bar)) (update (EXPR2))))
-               (E_variable m)))))))
-         ((pattern ((P_variant (Label None) ()))) (rhs (E_variable m))))))))
-|}]
+      (I_assign m
+       (E_match
+        ((expr
+          (E_constant
+           ((cons_name C_MAP_FIND_OPT) (arguments ((EXPR1) (E_variable m))))))
+         (cases
+          (((pattern ((P_variant (Label Some (Virtual generated)) ((P_var gen)))))
+            (rhs
+             (E_constant
+              ((cons_name C_MAP_ADD)
+               (arguments
+                ((EXPR1)
+                 (E_record_update
+                  ((struct_ (E_variable gen))
+                   (label (Label bar (Virtual generated))) (update (EXPR2))))
+                 (E_variable m)))))))
+           ((pattern ((P_variant (Label None (Virtual generated)) ())))
+            (rhs (E_variable m)))))))) |}]
 
 let%expect_test "compile_wrong_lvalue" =
   {|

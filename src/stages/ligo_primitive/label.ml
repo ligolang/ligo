@@ -1,10 +1,13 @@
+open Simple_utils
+
 module T = struct
-  type t = Label of string [@@deriving eq, yojson, hash, sexp, iter, sexp]
+  type t = Label of string * (Location.t[@eq.ignore] [@hash.ignore])
+  [@@deriving eq, yojson, hash, sexp, iter]
 
   (* hack to order tuples correctly (tuples are currently encoded as
      records with field names equal to int_of_string of the
      indices) *)
-  let compare (Label l1 : t) (Label l2 : t) : int =
+  let compare (Label (l1, _) : t) (Label (l2, _) : t) : int =
     (* arbitrary choice: strings come before ints *)
     match int_of_string_opt l1, int_of_string_opt l2 with
     | None, Some _ -> -1
@@ -13,8 +16,8 @@ module T = struct
     | Some i1, Some i2 -> Int.compare i1 i2
 
 
-  let join (Label l1) (Label l2) = Label (l1 ^ l2)
-  let create x = Label x
+  let join (Label (l1, _)) (Label (l2, _)) = Label (l1 ^ l2, Location.generated)
+  let create ?(loc = Location.generated) x = Label (x, loc)
 end
 
 include T
@@ -62,7 +65,7 @@ module Map = struct
     let%bind alist = M.of_yojson json in
     match of_alist alist with
     | `Ok t -> Ok t
-    | `Duplicate_key (Label label) -> Error ("Duplicate label: " ^ label)
+    | `Duplicate_key (Label (label, _)) -> Error ("Duplicate label: " ^ label)
 
 
   let fold_map t ~init ~f =
@@ -73,13 +76,16 @@ module Map = struct
 end
 
 let pp ppf (l : t) : unit =
-  let (Label l) = l in
+  let (Label (l, _)) = l in
   Format.fprintf ppf "%s" l
 
 
-let range i j = List.map ~f:(fun i -> Label (string_of_int i)) @@ List.range i j
-let of_string str = Label str
-let to_string (Label str) = str
+let range i j =
+  List.map ~f:(fun i -> Label (string_of_int i, Location.generated)) @@ List.range i j
+
+
+let of_string str = T.create str
+let to_string (Label (str, _)) = str
 let of_int i = string_of_int i |> of_string
 let of_z i = Z.to_string i |> of_string
 

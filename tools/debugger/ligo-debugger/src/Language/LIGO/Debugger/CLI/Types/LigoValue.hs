@@ -261,7 +261,7 @@ instance FromJSON LigoValue where
 instance FromJSON LigoLabel where
   parseJSON = withArray "LigoLabel" \arr -> do
     case V.toList arr of
-      [String ctor, label]
+      [String ctor, label, _]
         | ctor == "Label" -> LLabel <$> parseJSON label
       _ -> fail "Expected 2 elements array"
 

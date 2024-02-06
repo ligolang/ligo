@@ -598,6 +598,29 @@ let test_cases =
         ; pos ~line:16 ~character:5, one "type t = O.export"
         ]
     }
+  ; { test_name = "Constructors and record fields hovers (CameLIGO)"
+    ; file = "contracts/lsp/hover/ctors_and_fields.mligo"
+    ; hovers =
+        [ pos ~line:1 ~character:5, one "Foo"
+        ; pos ~line:2 ~character:4, one "Bar of int"
+        ; pos ~line:3 ~character:4, one "Baz of unit"
+        ; pos ~line:4 ~character:6, one "Aaa of {\n a : int;\n b : bool\n}"
+        ; pos ~line:4 ~character:13, one "a : int"
+        ; pos ~line:4 ~character:22, one "b : bool"
+        ]
+    }
+  ; { test_name = "Constructors and record fields hovers (JsLIGO)"
+    ; file = "contracts/lsp/hover/ctors_and_fields.jsligo"
+    ; hovers =
+        [ pos ~line:1 ~character:7, one "[\"Foo\"]"
+        ; pos ~line:2 ~character:8, one "[\"Bar\", int]"
+        ; pos ~line:3 ~character:8, one "[\"Baz\", unit]"
+        ; pos ~line:4 ~character:9, one "[\"Aaa\", { a: int; b: bool }]"
+        ; pos ~line:4 ~character:14, one "a : int"
+        ; pos ~line:4 ~character:23, one "b : bool"
+        ; pos ~line:5 ~character:8, one "[\"Bbb\", bool]"
+        ]
+    }
   ]
 
 

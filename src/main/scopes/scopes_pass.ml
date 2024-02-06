@@ -74,18 +74,30 @@ module Of_Ast = struct
       let scopes = self ~env_changed:false lamb scopes env in
       let scopes = self ~env_changed:false args scopes env in
       scopes
-    | E_lambda { binder; output_type = _; result } ->
+    | E_lambda { binder; output_type; result } ->
       (* OK, c.f. lambda.mligo : adding i and j to range of result 'j + i' *)
       let env = Env.add_vvar (Param.get_var binder) env in
+      let env =
+        Option.value_map
+          ~default:env
+          ~f:(fun te -> collect_labels te env)
+          (Param.get_ascr binder)
+      in
+      let env =
+        Option.value_map ~default:env ~f:(fun te -> collect_labels te env) output_type
+      in
       self ~env_changed:true result scopes env
     | E_recursive
         { fun_name
-        ; fun_type = _
-        ; lambda = { binder; output_type = _; result }
+        ; fun_type
+        ; lambda = { binder; output_type; result }
         ; force_lambdarec = _
         } ->
       (* Env logic from References *)
       let env = env |> Env.add_vvar fun_name |> Env.add_vvar (Param.get_var binder) in
+      let env = collect_labels fun_type env in
+      let env = collect_labels (Param.get_ascr binder) env in
+      let env = collect_labels output_type env in
       self ~env_changed:true result scopes env
     | E_type_abstraction { type_binder; result } ->
       let env = Env.add_tvar type_binder env in
@@ -97,13 +109,18 @@ module Of_Ast = struct
       (* Env logic from References *)
       let env =
         let binders = Linear_pattern.binders let_binder in
+        let types = List.filter_map ~f:Binder.get_ascr binders in
         let vars = List.map binders ~f:Binder.get_var in
+        let env =
+          List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) types
+        in
         List.fold_right vars ~init:env ~f:Env.add_vvar
       in
       let scopes = self ~env_changed:true let_result scopes env in
       scopes
-    | E_type_in { type_binder; rhs = _; let_result } ->
+    | E_type_in { type_binder; rhs; let_result } ->
       let env = Env.add_tvar type_binder env in
+      let env = collect_labels rhs env in
       let scopes = self ~env_changed:true let_result scopes env in
       scopes
     | E_raw_code { language = _; code = _ } -> add_current_expr scopes
@@ -113,7 +130,11 @@ module Of_Ast = struct
       (* Env update logic from References *)
       List.fold cases ~init:scopes ~f:(fun scopes { pattern; body } ->
           let binders = Linear_pattern.binders pattern in
+          let types = List.filter_map ~f:Binder.get_ascr binders in
           let vars = List.map binders ~f:Binder.get_var in
+          let env =
+            List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) types
+          in
           let env = List.fold_right vars ~init:env ~f:Env.add_vvar in
           self ~env_changed:true body scopes env (* c.f. match.mligo *))
     | E_record e_label_map ->
@@ -125,7 +146,7 @@ module Of_Ast = struct
       let scopes = self update scopes env in
       scopes
     | E_ascription { anno_expr; type_annotation } ->
-      let scopes = type_expression type_annotation scopes env in
+      let scopes, env = type_expression type_annotation scopes env in
       let scopes = self anno_expr scopes env in
       scopes
     | E_assign { binder = _; expression = e } -> self e scopes env
@@ -158,19 +179,38 @@ module Of_Ast = struct
       scopes
 
 
-  and type_expression : AST.type_expression -> t -> env -> t =
+  (* Traverse [AST.type_expression] and pick all labels from sum types. *)
+  and collect_labels : AST.type_expression -> env -> env =
+   fun te env ->
+    match te.type_content with
+    | T_sum (row, _) ->
+      let labels = Record.labels row.fields in
+      let types = Record.values row.fields in
+      let env =
+        List.fold_left ~init:env ~f:(fun acc label -> Env.add_label label acc) labels
+      in
+      List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) types
+    | T_record row ->
+      let types = Record.values row.fields in
+      List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) types
+    | T_arrow { type1; type2; param_names = _ } ->
+      collect_labels type1 @@ collect_labels type2 env
+    | T_app { arguments; type_operator = _ } ->
+      List.fold_left ~init:env ~f:(fun acc typ -> collect_labels typ acc) arguments
+    | T_abstraction { type_; ty_binder = _; kind = _ }
+    | T_for_all { type_; ty_binder = _; kind = _ } -> collect_labels type_ env
+    | T_variable _
+    | T_constant _
+    | T_contract_parameter _
+    | T_module_accessor _
+    | T_singleton _ -> env
+
+
+  and type_expression : AST.type_expression -> t -> env -> t * env =
    fun te scopes env ->
-    (* TODO : Add scopes entries with avail types, call recursively on T_for_all / T_abstraction *)
-    add scopes te.location (env.avail_defs @ env.parent)
-  (* match te.type_content with
-  | T_variable tv ->
-  | T_module_accessor { module_path; element } ->
-  | T_app { type_operator = { module_path; element }; arguments } ->
-  | T_singleton _ -> refs
-  | T_sum { layout = _; fields } | T_record { layout = _; fields } ->
-  | T_arrow { type1; type2 } ->
-  | T_for_all { ty_binder = _; kind = _; type_ }
-  | T_abstraction { ty_binder = _; kind = _; type_ } -> type_expression type_ refs env *)
+    let scopes = add scopes te.location (env.avail_defs @ env.parent) in
+    let env = collect_labels te env in
+    scopes, env
 
 
   (** [module_expression] takes a [AST.module_expr] and depending on the type of
@@ -266,16 +306,22 @@ module Of_Ast = struct
       if Value_var.is_generated var
       then scopes, env
       else (
+        let env =
+          Option.value_map
+            ~default:env
+            ~f:(fun te -> collect_labels te env)
+            (Binder.get_ascr binder)
+        in
         let scopes = expression ~env_changed:true expr scopes env in
         let env = Env.add_vvar var env in
         scopes, env)
     | D_irrefutable_match { pattern; expr; attr = _ } ->
       let binder = Linear_pattern.binders pattern in
       let tys = List.map binder ~f:Binder.get_ascr in
-      let scopes =
-        List.fold tys ~init:scopes ~f:(fun scopes ty_opt ->
+      let scopes, env =
+        List.fold tys ~init:(scopes, env) ~f:(fun (scopes, env) ty_opt ->
             match ty_opt with
-            | None -> scopes
+            | None -> scopes, env
             | Some ty -> type_expression ty scopes env)
       in
       let vars = List.map binder ~f:Binder.get_var in
@@ -283,7 +329,7 @@ module Of_Ast = struct
       let env = List.fold_right vars ~init:env ~f:Env.add_vvar in
       scopes, env
     | D_type { type_binder; type_expr; type_attr = _ } ->
-      let scopes = type_expression type_expr scopes env in
+      let scopes, env = type_expression type_expr scopes env in
       let env = Env.add_tvar type_binder env in
       scopes, env
     | D_module { module_binder; module_; module_attr = _; annotation } ->
@@ -313,14 +359,15 @@ module Of_Ast = struct
   and sig_item : AST.sig_item -> t -> env -> t * env =
    fun s scopes env ->
     match Location.unwrap s with
-    | S_value (var, _ty_expr, _attr) ->
+    | S_value (var, ty_expr, _attr) ->
       if Value_var.is_generated var
       then scopes, env
       else (
         let env = Env.add_vvar var env in
+        let env = collect_labels ty_expr env in
         scopes, env)
     | S_type (type_binder, type_expr, _) ->
-      let scopes = type_expression type_expr scopes env in
+      let scopes, env = type_expression type_expr scopes env in
       let env = Env.add_tvar type_binder env in
       scopes, env
     | S_type_var (type_binder, _) ->
