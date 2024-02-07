@@ -42,10 +42,16 @@ let compile ~raise =
     let loc = Location.get_location e in
     let same = make_e ~loc e.wrap_content in
     match Location.unwrap e with
-    | E_call (f, { wrap_content = [ args ]; location = _ }) ->
-      (match get_e f, get_e args with
-      | E_variable v, E_array args when Variable.is_name v "list" ->
-        array_to_list ~raise ~loc args
+    | E_call (f, { wrap_content = args; location = _ }) ->
+      (match get_e f with
+      | E_variable v when Variable.is_name v "list" ->
+        (match args with
+        | [ arg ] ->
+          (match get_e arg with
+          | E_array elems -> array_to_list ~raise ~loc elems
+          | _ -> raise.error @@ list_called_not_on_array same false)
+        | [] -> raise.error @@ list_called_not_on_array same true
+        | _ -> raise.error @@ list_called_not_on_array same false)
       | _ -> same)
     | _ -> same
   in

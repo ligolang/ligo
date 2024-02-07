@@ -43,6 +43,7 @@ type t =
   | `Small_passes_sys_error of Location.t * string
   | `Small_passes_invariant_trivial of Location.t * string
   | `Small_passes_unsupported_parametric_type_in_signature of Location.t
+  | `Small_passes_list_called_not_on_array of expr * bool
   ]
 [@@deriving poly_constructor { prefix = "small_passes_" }, sexp]
 
@@ -262,7 +263,15 @@ let error_ppformat
         f
         "@[<hv>%a@ Parametric types are not supported in interfaces yet. @]"
         snippet_pp
-        l)
+        l
+    | `Small_passes_list_called_not_on_array (e, empty) ->
+      Format.fprintf
+        f
+        "@[<hv>%a@. %s @]"
+        snippet_pp
+        (get_e_loc e)
+        ("The list function can only be called on array literals, e.g. list([1,2])."
+        ^ if empty then " To create empty list, use list([]) instead of list()." else ""))
 
 
 let error_json : t -> Simple_utils.Error.t =
@@ -497,4 +506,11 @@ let error_json : t -> Simple_utils.Error.t =
       Format.sprintf "Parametric types are not supported in interfaces yet."
     in
     let content = make_content ~message ~location () in
+    make ~stage ~content
+  | `Small_passes_list_called_not_on_array (e, empty) ->
+    let message =
+      "The list function can only be called on array literals, e.g. list([1,2])."
+      ^ if empty then " To create empty list, use list([]) instead of list()." else ""
+    in
+    let content = make_content ~message ~location:(get_e_loc e) () in
     make ~stage ~content
