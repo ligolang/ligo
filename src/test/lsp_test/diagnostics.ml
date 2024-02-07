@@ -457,6 +457,32 @@ let test_cases =
     ; diagnostics = []
     ; max_number_of_problems = None
     }
+  ; { test_name = "Shows errors for unsupported record fields (jsligo)."
+    ; file_path = "contracts/lsp/unsupported_record_field.jsligo"
+    ; diagnostics =
+        [ { message = "Unsupported object field"
+          ; location =
+              { range = interval 6 32 33
+              ; path = Path.from_relative "contracts/lsp/unsupported_record_field.jsligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
+  ; { test_name = "Shows errors for unbound variables in records (jsligo)."
+    ; file_path = "contracts/lsp/unbound_var_in_record.jsligo"
+    ; diagnostics =
+        [ { message = "Variable \"a\" not found. "
+          ; location =
+              { range = interval 1 37 38
+              ; path = Path.from_relative "contracts/lsp/unbound_var_in_record.jsligo"
+              }
+          ; severity = DiagnosticSeverity.Error
+          }
+        ]
+    ; max_number_of_problems = None
+    }
   ]
 
 
