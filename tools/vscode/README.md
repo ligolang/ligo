@@ -24,7 +24,7 @@ Those are being actively worked on.
 
 - [x] Jump to definition
 - [x] Jump to implementation
-- [x] Find references (only in open files)
+- [x] Find references
 - [x] Folding range
 - [ ] Selection range
 - [x] Jump to type definition
@@ -41,7 +41,7 @@ Those are being actively worked on.
 ### Code editing
 
 - [x] Hovers
-- [x] Rename symbol (only in open files)
+- [x] Rename symbol
 - [ ] Signature help
 - [ ] Refactorings
 
@@ -51,7 +51,7 @@ Those are being actively worked on.
 - [X] Record fields
 - [X] Module fields
 - [X] Keywords and operators
-- [ ] Constructors
+- [x] Constructors
 - [x] Files
 - [ ] Type-aware code completion
 
