@@ -10,7 +10,7 @@ type scopes = Scopes.scopes
 type file_data =
   { syntax : Syntax_types.t
   ; code : string
-  ; definitions : Def.t list
+  ; definitions : Def.definitions
   ; scopes : scopes
   }
 

@@ -1,6 +1,7 @@
 open Imports
 
 type t = Scopes.def
+type definitions = Scopes.definitions
 
 (* TODO use this in Scopes instead of `Loc` and `LSet` *)
 
@@ -72,8 +73,44 @@ let is_reference : Position.t -> Path.t -> Scopes.def -> bool =
   Def_locations.exists ~f:check_pos @@ references_getter definition
 
 
-let get_definition : Position.t -> Path.t -> t list -> t option =
- fun pos uri definitions -> List.find ~f:(is_reference pos uri) definitions
+let rec fold_definitions : init:'a -> f:('a -> t -> 'a) -> definitions -> 'a =
+ fun ~init ~f { definitions } ->
+  List.fold_left
+    ~init
+    ~f:(fun acc def ->
+      let acc = f acc def in
+      match def with
+      | Module { mod_case = Def definitions; _ } ->
+        fold_definitions ~init:acc ~f { definitions }
+      | Module { mod_case = Alias _; _ } | Variable _ | Type _ | Label _ -> acc)
+    definitions
+
+
+let find_map : f:(t -> 'a option) -> definitions -> 'a option =
+ fun ~f ->
+  fold_definitions ~init:None ~f:(fun acc def ->
+      match acc with
+      | Some _ -> acc
+      | None -> f def)
+
+
+let find : f:(t -> bool) -> definitions -> t option =
+ fun ~f -> find_map ~f:(fun def -> Option.some_if (f def) def)
+
+
+let filter_map : f:(t -> 'a option) -> definitions -> 'a list =
+ fun ~f ->
+  List.rev
+  <@ fold_definitions ~init:[] ~f:(fun acc def ->
+         Option.value_map ~default:acc ~f:(fun x -> x :: acc) (f def))
+
+
+let filter : f:(t -> bool) -> definitions -> t list =
+ fun ~f -> filter_map ~f:(fun def -> Option.some_if (f def) def)
+
+
+let get_definition : Position.t -> Path.t -> definitions -> t option =
+ fun pos uri definitions -> find ~f:(is_reference pos uri) definitions
 
 
 (* E.g. when [type t = A | B], the type info for A would have

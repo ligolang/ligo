@@ -777,12 +777,6 @@ module Of_Ast = struct
         mod_case_of_mod_expr ~defs_of_decls module_deps module_ inner_mod_path
       in
       let extends = extends module_ in
-      let defs =
-        match mod_case with
-        | Def defs -> defs
-        | Alias _ -> []
-      in
-      let acc = defs @ acc in
       defs_of_mvar_mod_expr
         ~mod_case
         ~attributes:(Some (Module_attr module_attr))

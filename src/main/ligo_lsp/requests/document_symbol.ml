@@ -192,7 +192,7 @@ let on_req_document_symbol (path : Path.t)
   with_cached_doc_pure path ~default:None
   @@ fun { syntax; code = _; definitions; scopes = _ } ->
   let definitions =
-    List.filter definitions ~f:(fun def ->
+    Def.filter definitions ~f:(fun def ->
         match Scopes.Types.get_range def with
         | File reg -> Path.equal path (Path.from_absolute reg#file)
         | Virtual _ -> false)

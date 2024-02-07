@@ -23,6 +23,7 @@ module SMap = Map.Make (String)
 module PP = PP
 
 type def = Types.def
+type definitions = Types.definitions
 type scopes = Types.scopes
 type inlined_scopes = Types.inlined_scopes
 
@@ -30,7 +31,7 @@ let defs_and_typed_program
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
-    -> def list * (Ast_typed.signature * Ast_typed.declaration list) option
+    -> definitions * (Ast_typed.signature * Ast_typed.declaration list) option
   =
  fun ~raise ~options ~stdlib ~prg ~module_deps ~with_types ->
   let stdlib_decls, stdlib_core, stdlib_defs =
@@ -47,7 +48,7 @@ let defs_and_typed_program
       , Definitions.Of_Stdlib_Ast.definitions stdlib_core module_deps
         |> Types_pass.patch stdlib_core_types ))
   in
-  let m_alias, env = Module_aliases_pass.declarations prg in
+  let m_alias, env = Module_aliases_pass.declarations (stdlib_core @ prg) in
   let bindings, typed =
     if with_types
     then (
@@ -63,6 +64,7 @@ let defs_and_typed_program
     |> (if with_types then Types_pass.patch bindings else Fn.id)
     |> References.patch (References.declarations (stdlib_core @ prg) bindings.label_cases)
     |> Inline_mangled_modules_pass.patch mangled_uids
+    |> wrap_definitions
   , typed )
 
 
@@ -80,12 +82,11 @@ let scopes_declarations
    backward compatibility (e,g, for the debugger) *)
 let inlined_scopes
     :  options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
-    -> prg:Ast_core.module_ -> definitions:def list -> inlined_scopes
+    -> prg:Ast_core.module_ -> definitions:definitions -> inlined_scopes
   =
  fun ~options ~stdlib ~prg ~definitions ->
   scopes_declarations ~options ~stdlib ~prg
   |> Scopes_pass.inline_scopes (Uid_map.of_defs_list definitions)
-  |> fix_shadowing_in_scopes
 
 
 (* Fast scopes calculation that is used in LSP *)
@@ -103,7 +104,7 @@ let defs_and_typed_program_and_scopes
     :  raise:(Main_errors.all, Main_warnings.all) Trace.raise
     -> options:Compiler_options.middle_end -> stdlib:Ast_typed.program * Ast_core.program
     -> prg:Ast_core.module_ -> module_deps:string SMap.t -> with_types:bool
-    -> def list
+    -> definitions
        * (Ast_typed.signature * Ast_typed.declaration list) option
        * inlined_scopes
   =

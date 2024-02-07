@@ -275,6 +275,10 @@ let get_mod_path = function
   | Label l -> l.mod_path
 
 
+type definitions = { definitions : def list }
+
+let wrap_definitions definitions = { definitions }
+
 (** [mvar_to_id] takes a [Module_var.t] and gives an [Uid.t] of the form
     [{name}#{line}:{start_col}-{end_col}]. *)
 let mvar_to_id (m : Module_var.t) : Uid.t =
@@ -300,37 +304,23 @@ type scopes = scope list
 type inlined_scope = def scope_case
 type inlined_scopes = inlined_scope list
 
-let rec flatten_defs : def list -> def list = function
+let rec flatten_defs : definitions -> def list =
+ fun { definitions } ->
+  match definitions with
   | [] -> []
-  | (Module { mod_case = Def d; _ } as def) :: defs ->
-    def :: List.concat_map ~f:flatten_defs [ d; defs ]
-  | def :: defs -> def :: flatten_defs defs
-
-
-let rec shadow_defs : def list -> def list = function
-  | [] -> []
-  | def :: defs ->
-    let shadow_def def' =
-      not
-      @@ (equal_def_by_name def def'
-         && List.is_prefix ~equal:Uid.equal ~prefix:(get_mod_path def') (get_mod_path def)
-         )
-    in
-    def :: shadow_defs (List.filter defs ~f:shadow_def)
-
-
-let fix_shadowing_in_defs : def list -> def list =
-  Simple_utils.Function.(shadow_defs <@ flatten_defs)
-
-
-let fix_shadowing_in_scopes : inlined_scopes -> inlined_scopes =
-  List.map ~f:(Tuple2.map_snd ~f:fix_shadowing_in_defs)
+  | Module ({ mod_case = Def d; _ } as mdef) :: defs ->
+    (* All definitions are flattened. We're not interested in [Def] mod case. *)
+    Module { mdef with mod_case = Def [] }
+    :: List.concat_map
+         ~f:Simple_utils.Function.(flatten_defs <@ wrap_definitions)
+         [ d; defs ]
+  | def :: defs -> def :: flatten_defs (wrap_definitions defs)
 
 
 module Uid_map = struct
   include Simple_utils.Map.Make (Uid)
 
-  let of_defs_list (definitions : def list) : def t =
+  let of_defs_list (definitions : definitions) : def t =
     definitions
     |> flatten_defs
     |> List.fold_left ~init:empty ~f:(fun acc elt -> add (get_def_uid elt) elt acc)
